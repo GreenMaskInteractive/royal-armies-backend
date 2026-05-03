@@ -530,37 +530,6 @@ body {
     }
 }
 
-/* --- SIDE PILLARS --- */
-
-.pillar-fixed {
-    position: fixed;
-    top: 90px; /* Aligns with the bottom of your Stone Nav bar */
-    bottom: 0;
-    width: 150px; /* Matches the margin of the game container */
-    
-    /* 1. PATH FIX: Uses the absolute path for backend/public structure */
-    background-image: url('/images/pillarbg.png') !important;
-    background-repeat: no-repeat !important;
-    background-size: 100% 100% !important;
-    
-    /* 2. VISIBILITY FIXES */
-    display: block !important;
-    z-index: 10005; /* High enough to be over content, but under Logo (99k) */
-    pointer-events: none; /* Crucial: ensures pillars don't block clicks */
-}
-
-.pillar-left {
-    left: 0;
-    filter: drop-shadow(8px 0 12px rgba(0,0,0,0.6));
-}
-
-.pillar-right {
-    right: 0;
-    /* Mirror the image so detail faces inward */
-    transform: scaleX(-1); 
-    filter: drop-shadow(-8px 0 12px rgba(0,0,0,0.6));
-}
-
 /* 3. CONTAINER SYNC: Pushes content out from behind the pillars */
 #game-container {
     margin-left: 160px !important;
@@ -634,7 +603,7 @@ body {
 
 /* Mystical Logo Energy */
 .logo-wrapper { position: relative; text-align: center; margin-bottom: -40px; }
-.main-logo { width: 750px; position: relative; z-index: 5; }
+.main-logo { width: 750px; position: relative; z-index: 5; top: -200px; }
 .mystical-energy {
     position: absolute;
     top: 50%; left: 50%;
@@ -651,22 +620,47 @@ body {
 }
 
 .login-box {
-    width: 600px; 
-    height: auto;
-    aspect-ratio: 450 / 300; 
-    background: transparent; /* Removed the PNG background */
-    position: relative;
-    margin: 0 auto;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 20px;
+    width: 100%;
+    
+    /* 1. This is your anchor point */
+    position: relative; 
+    
+    /* 2. THE INDEPENDENT LEVER */
+    /* Use a negative number to move UP. Increase to move higher (e.g., -100px) */
+    top: -250px; left: 85px;
+    
+    /* 3. Ensure no margin is fighting the buttons */
+    margin-top: 0 !important; 
+    
+    z-index: 10;
+}
+.login-input {
+    background: #000 !important;
+    border: 2px solid var(--accent);
+    color: #fff;
+    padding: 12px;
+    width: 250px;           /* Slightly narrower so they fit side-by-side better */
+    font-family: 'Georgia', serif;
+    font-size: 1.1rem;
+    outline: none;
+    border-radius: 4px;
 }
 
-.login-input {
-    /* Keep your existing positioning, but add these: */
-    background: rgba(0, 0, 0, 0.6); /* Semi-transparent black */
-    border: 1px solid var(--accent); /* Thin gold border to match the game */
-    padding: 10px;
-    border-radius: 5px;
-    color: white;
+/* We don't need top/left positioning anymore because of Flexbox */
+.username-pos, .password-pos {
+    position: static !important; 
 }
+
+/* Optional: Placeholder color (the "Enter Username" hint text) */
+.login-input::placeholder {
+    color: #666;
+    font-style: italic;
+}
+
 .login-input:focus {
     box-shadow: 0 0 10px var(--accent); /* Glow when typing */
     background: rgba(0, 0, 0, 0.8);
@@ -676,13 +670,13 @@ body {
 .username-pos { 
     top: 30%; 
     left: 50%; 
-    transform: translateX(-50%);
+    transform: translateX(-30%);
 }
 
 .password-pos { 
-    top: 50%; 
+    top: 30%; 
     left: 50%; 
-    transform: translateX(-50%);
+    transform: translateX(-30%);
 }
 
 .login-actions {
@@ -704,15 +698,15 @@ body {
 /* --- INDEPENDENT BUTTON NUDGES --- */
 
 #btn-login-main {
-    bottom: 160px; /* Adjust this to move just the Login button up/down */
-    left: 275px;   /* Adjust this to move just the Login button left/right */
-    width: 250px; height: auto;
+    bottom: -75px; /* Adjust this to move just the Login button up/down */
+    left: 300px;   /* Adjust this to move just the Login button left/right */
+    width: 115px; height: auto;
 }
 
 #btn-register-main {
-    bottom: 90px; /* Adjust this to move just the Register button up/down */
-    right: 300px;  /* Adjust this to move just the Register button left/right */
-    width: 200px; height: auto;
+    bottom: -75px; /* Adjust this to move just the Register button up/down */
+    right: 170px;  /* Adjust this to move just the Register button left/right */
+    width: 140px; height: auto;
 }
     
     /* Give the button initial "height" with a dark shadow */
@@ -838,3 +832,77 @@ body {
     color: #666;
     font-style: italic;
 }
+
+/* --- AUDIO ICON FIX --- */
+
+#audio-icon {
+    width: 24px;
+    height: 24px;
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    /* This makes the black SVG white to match your game's gold/white theme */
+    filter: brightness(0) invert(1); 
+    display: inline-block;
+}
+
+/* Muted Icon: Encoded for maximum stability */
+.icon-muted {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M11 5L6 9H2v6h4l5 4V5z'%3E%3C/path%3E%3Cline x1='23' y1='9' x2='17' y2='15'%3E%3C/line%3E%3Cline x1='17' y1='9' x2='23' y2='15'%3E%3C/line%3E%3C/svg%3E");
+}
+
+/* Unmuted Icon: Encoded for maximum stability */
+.icon-unmuted {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M11 5L6 9H2v6h4l5 4V5z'%3E%3C/path%3E%3Cpath d='M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07'%3E%3C/path%3E%3C/svg%3E");
+}
+
+/* --- REGISTRATION MODAL --- */
+.modal-overlay {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: rgba(0, 0, 0, 0.85); /* Darkens the background slideshow */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 300000; /* Above everything */
+    backdrop-filter: blur(8px); /* Optional: blurs the background */
+}
+
+.modal-content {
+    background: #1a1a1a;
+    border: 2px solid var(--accent);
+    padding: 40px;
+    width: 400px;
+    position: relative;
+    box-shadow: 0 0 50px rgba(0,0,0,1);
+    border-radius: 8px;
+    text-align: center;
+}
+
+.modal-title { font-family: 'Georgia', serif; color: var(--accent); margin-bottom: 5px; }
+.modal-subtitle { color: #888; font-size: 0.9rem; margin-bottom: 25px; }
+
+.reg-group { text-align: left; margin-bottom: 15px; }
+.reg-group label { display: block; color: #ccc; font-size: 0.8rem; margin-bottom: 5px; }
+
+.reg-input {
+    width: 100%;
+    background: #000;
+    border: 1px solid #444;
+    color: #fff;
+    padding: 10px;
+    box-sizing: border-box;
+    outline: none;
+}
+
+.reg-input:focus { border-color: var(--accent); }
+
+.close-modal {
+    position: absolute;
+    top: 15px; right: 20px;
+    color: #888;
+    font-size: 28px;
+    cursor: pointer;
+}
+.close-modal:hover { color: #fff; }

@@ -44,6 +44,64 @@
 
         <!-- Intro Content -->
         <div class="intro-content">
+    <!-- 1. Logo Area -->
+    <div class="logo-wrapper">
+        <img src="images/royalarmiestitle.png" class="main-logo" alt="Royal Armies">
+        <div class="mystical-energy"></div>
+    </div>
+
+    <!-- 2. The Text Inputs (Independent) -->
+    <div class="login-box">
+        <input type="text" id="login-username" class="login-input" placeholder="Username">
+        <input type="password" id="login-password" class="login-input" placeholder="Password">
+    </div>
+
+    <!-- 3. The Action Buttons (Independent) -->
+    <div class="login-actions">
+        <img src="images/loginbutton.png" class="img-btn" onclick="handleLogin()">
+        <img src="images/registerbutton.png" class="img-btn" onclick="handleRegister()">
+    </div>
+</div>
+        </div>
+
+ <!-- 1. MAIN LANDING PAGE (Covers everything until Login) -->
+    <div id="page-landing" class="full-page-overlay">
+        <!-- Background Slideshow -->
+        <div class="slideshow-container">
+            <div class="slide slide1"></div>
+            <div class="slide slide2"></div>
+            <div class="slide slide3"></div>
+            <div class="slide slide4"></div>
+        </div>
+
+<!-- UPDATES PANEL -->
+<div class="updates-panel">
+    <div class="updates-header">Game Updates</div>
+    <div class="updates-scroll">
+        <!-- Update Entry -->
+        <div class="update-item">
+            <span class="update-date">May 3, 2024</span>
+            <h4 class="update-title">Battle Engine Refined</h4>
+            <p class="update-text">Standardized army weight and Aether Surcharge logic across all tiers.</p>
+        </div>
+        <!-- Update Entry -->
+        <div class="update-item">
+            <span class="update-date">April 28, 2024</span>
+            <h4 class="update-title">The Gates Open</h4>
+            <p class="update-text">New stone-wall navigation and pillar framing installed at the capital.</p>
+        </div>
+        <!-- Update Entry -->
+        <div class="update-item">
+            <span class="update-date">April 20, 2024</span>
+            <h4 class="update-title">Bug Fixes</h4>
+            <p class="update-text">Resolved the "ghost button" transparency issues on the navigation bar.</p>
+        </div>
+    </div>
+    <div class="updates-footer">Scroll for more chronicles...</div>
+</div>
+
+        <!-- Intro Content -->
+        <div class="intro-content">
             <!-- Logo with Mystical Energy -->
             <div class="logo-wrapper">
                 <img src="images/royalarmiestitle.png" class="main-logo" alt="Royal Armies">
@@ -51,15 +109,23 @@
             </div>
 
             <!-- Login UI -->
-            <div class="login-box" style="background-image: url('images/royalarmiesloginUI.png');">
-                <input type="text" id="login-username" class="login-input username-pos" placeholder="Username">
-                <input type="password" id="login-password" class="login-input password-pos" placeholder="Password">
-                <div class="login-actions">
-                    <img src="images/loginbutton.png" id="btn-login-main" class="img-btn" onclick="handleLogin()">
-                    <img src="images/registerbutton.png" id="btn-register-main" class="img-btn" onclick="handleRegister()">
-                </div>
-            </div>
+            <div class="login-box">
+    <!-- Username Input -->
+    <input type="text" id="login-username" class="login-input username-pos" 
+           placeholder="Enter Username" required autocomplete="username">
+    
+    <!-- Password Input (Masked) -->
+    <input type="password" id="login-password" class="login-input password-pos" 
+           placeholder="Enter Password" required autocomplete="current-password">
+    
+    <div class="login-actions">
+        <!-- Your existing login/register buttons -->
+        <img src="images/loginbutton.png" id="btn-login-main" class="img-btn" onclick="handleLogin()">
+        <img src="images/registerbutton.png" id="btn-register-main" class="img-btn" onclick="handleRegister()">
+    </div>
+</div>
         </div>
+    </div>
     </div>
 
     <!-- 2. TOP NAVIGATION BAR (Hidden behind landing page initially) -->
@@ -129,8 +195,9 @@
     </audio>
 
     <div id="audio-control" class="audio-toggle-container" onclick="toggleMute()">
-        <img id="audio-icon" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9IndoaXRlIiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCI+PHBhdGggZD0iTTExIDVMNiA5SDJ2Nmg0bDUgNFY1eiI+PC9wYXRoPjxsaW5lIHgxPSIyMyIgeTE9IjkiIHgyPSIxNyIgeTE9IjE1Ij48L2xpbmU+PGxpbmUgeDE9IjE3IiB5MT0iOSIgeDI9IjIzIiB5MT0iMTUiPjwvbGluZT48L3N2Zz4=" alt="Muted">
-    </div>
+    <!-- Removed src here so CSS can take over -->
+    <div id="audio-icon" class="icon-muted"></div>
+</div>
 
     <!-- 6. SCRIPTS -->
     <script src="rank-data.js"></script>

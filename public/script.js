@@ -274,40 +274,92 @@ async function handleLogin() {
     const userField = document.getElementById('login-username').value;
     const passField = document.getElementById('login-password').value;
 
-    const response = await fetch('/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username: userField, password: passField })
-    });
+    // 1. Basic validation to save a server trip
+    if (!userField || !passField) {
+        alert("Commander, credentials are required to pass the gates.");
+        return;
+    }
 
-    const data = await response.json();
+    try {
+        const response = await fetch('/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username: userField, password: passField })
+        });
 
-    if (response.ok) {
-        // Sync global player object with database data
-        player.name = data.user.username;
-        player.gold = data.user.gold;
-        player.rank = data.user.rank;
-        
-        enterGame(); // Your existing transition function
-    } else {
-        alert(data.msg);
+        const data = await response.json();
+
+        if (response.ok) {
+            // 2. Sync global player object with database data
+            player.name = data.user.username;
+            player.gold = data.user.gold;
+            player.rank = data.user.rank;
+            player.xp = data.user.xp || 0; // Ensure XP is synced too
+
+            // 3. Refresh the UI before entering
+            if (typeof updateHUD === "function") updateHUD();
+            
+            enterGame(); 
+        } else {
+            // Shows "Invalid credentials" or "User not found" from server.js
+            alert(data.msg); 
+        }
+    } catch (error) {
+        console.error("Login Error:", error);
+        alert("The kingdom gates are heavy... (Server is likely waking up, please try again in 30 seconds).");
     }
 }
 
-async function handleRegister() {
-    const userField = document.getElementById('login-username').value;
-    const passField = document.getElementById('login-password').value;
-
-    const response = await fetch('/register', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username: userField, password: passField })
-    });
-
-    const data = await response.json();
-    alert(data.msg);
+// This function should ONLY open the modal
+function handleRegister() {
+    const modal = document.getElementById('register-modal');
+    if (modal) {
+        modal.style.display = 'flex'; // This forces the modal to show up
+    } else {
+        console.error("The registration modal could not be found in the HTML.");
+    }
 }
 
+// Add this function to close it when the player clicks the 'X'
+function closeRegister() {
+    const modal = document.getElementById('register-modal');
+    if (modal) {
+        modal.style.display = 'none';
+    }
+}
+
+// This is the NEW function that actually sends the data to your database
+async function submitRegistration() {
+    const userField = document.getElementById('reg-username').value;
+    const passField = document.getElementById('reg-password').value;
+    const emailField = document.getElementById('reg-email').value;
+
+    if (!userField || !passField) {
+        alert("A username and Password are required to continue with account creation.");
+        return;
+    }
+
+    try {
+        const response = await fetch('/register', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+                username: userField, 
+                password: passField,
+                email: emailField 
+            })
+        });
+
+        const data = await response.json();
+        alert(data.msg);
+
+        if (response.ok) {
+            closeRegister(); // Close the popup on success
+        }
+    } catch (error) {
+        alert("The record-keeper is busy. (Server may be waking up).");
+    }
+}
 function enterGame() {
     const landing = document.getElementById('page-landing');
     const audio = document.getElementById('main-theme');
@@ -329,21 +381,22 @@ document.addEventListener('click', () => {
 }, { once: true });
 
 // Base64 SVGs for Muted and Unmuted states
-const ICON_MUTED = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9IndoaXRlIiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCI+PHBhdGggZD0iTTExIDVMNiA5SDJ2Nmg0bDUgNFY1eiI+PC9wYXRoPjxsaW5lIHgxPSIyMyIgeTE9IjkiIHgyPSIxNyIgeTE9IjE1Ij48L2xpbmU+PGxpbmUgeDE9IjE3IiB5MT0iOSIgeDI9IjIzIiB5MT0iMTUiPjwvbGluZT48L3N2Zz4=";
+const ICON_MUTED = `data:image/svg+xml;utf8,<svg xmlns='http://w3.org' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M11 5L6 9H2v6h4l5 4V5z'></path><line x1='18' y1='9' x2='22' y2='13'></line><line x1='22' y1='9' x2='18' y2='13'></line></svg>`;
 const ICON_UNMUTED = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9IndoaXRlIiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCI+PHBhdGggZD0iTTExIDVMNiA5SDJ2Nmg0bDUgNFY1eiI+PC9wYXRoPjxwYXRoIGQ9Ik0xOS4wNyA0LjkzYTEwIDEwIDAgMCAxIDAgMTQuMTRNMTUuNTQgOC40NmE1IDUgMCAwIDEgMCA3LjA3Ij48L3BhdGg+PC9zdmc+";
 
 function toggleMute() {
     const audio = document.getElementById('main-theme');
     const icon = document.getElementById('audio-icon');
 
+    if (!audio || !icon) return;
+
+    audio.muted = !audio.muted;
+
     if (audio.muted) {
-        audio.muted = false;
-        // Attempt to play if it was blocked by autoplay
-        audio.play().catch(e => console.log("Unmute interaction required."));
-        icon.src = ICON_UNMUTED;
+        icon.className = 'icon-muted';
     } else {
-        audio.muted = true;
-        icon.src = ICON_MUTED;
+        icon.className = 'icon-unmuted';
+        audio.play().catch(e => console.log("Interaction required to unmute."));
     }
 }
 
