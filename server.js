@@ -14,7 +14,6 @@ const db = new Datastore({
 });
 
 // --- DATABASE & SESSION SETUP ---
-const db = new Datastore({ filename: './players.db', autoload: true });
 app.use(express.json());
 app.use(express.static('public')); // Serves your HTML, CSS, JS
 app.use(session({
