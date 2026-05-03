@@ -3,6 +3,15 @@
  * Master UI & Simulation Controller
  */
 
+const eventSource = new EventSource('/listen-for-verify');
+
+eventSource.onmessage = (event) => {
+    const data = JSON.parse(event.data);
+    if (data.verified) {
+        alert("Thank you for joining in the war effort! Your nation awaits you!");
+    }
+};
+
 // Add this to your existing initialization logic
 document.addEventListener('click', function startMusic() {
     const audio = document.getElementById('main-theme');
@@ -326,11 +335,17 @@ function closeRegister() {
 async function submitRegistration() {
     const user = document.getElementById('reg-username').value;
     const pass = document.getElementById('reg-password').value;
+    const confirmPass = document.getElementById('reg-password-confirm').value;
     const email = document.getElementById('reg-email').value;
 
-    if (!user || !pass) {
-        alert("Commander, Username and Password are required!");
+   if (!user || !pass || !confirmPass) {
+        alert("Commander, all required fields (*) must be forged!");
         return;
+    }
+
+    if (pass !== confirmPass) {
+        alert("The passwords do not match, Commander! Re-check your secret phrase.");
+        return; // This stops the code from reaching the "fetch" below
     }
 
     try {
