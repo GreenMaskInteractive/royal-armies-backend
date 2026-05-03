@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>The Last Knights | Commander Dashboard</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- 1. MAIN LANDING PAGE (Covers everything until Login) -->
+    <div id="page-landing" class="full-page-overlay">
+        <!-- Background Slideshow -->
+        <div class="slideshow-container">
+            <div class="slide slide1"></div>
+            <div class="slide slide2"></div>
+            <div class="slide slide3"></div>
+            <div class="slide slide4"></div>
+        </div>
+
+<!-- UPDATES PANEL -->
+<div class="updates-panel">
+    <div class="updates-header">Game Updates</div>
+    <div class="updates-scroll">
+        <!-- Update Entry -->
+        <div class="update-item">
+            <span class="update-date">May 3, 2024</span>
+            <h4 class="update-title">Battle Engine Refined</h4>
+            <p class="update-text">Standardized army weight and Aether Surcharge logic across all tiers.</p>
+        </div>
+        <!-- Update Entry -->
+        <div class="update-item">
+            <span class="update-date">April 28, 2024</span>
+            <h4 class="update-title">The Gates Open</h4>
+            <p class="update-text">New stone-wall navigation and pillar framing installed at the capital.</p>
+        </div>
+        <!-- Update Entry -->
+        <div class="update-item">
+            <span class="update-date">April 20, 2024</span>
+            <h4 class="update-title">Bug Fixes</h4>
+            <p class="update-text">Resolved the "ghost button" transparency issues on the navigation bar.</p>
+        </div>
+    </div>
+    <div class="updates-footer">Scroll for more chronicles...</div>
+</div>
+
+        <!-- Intro Content -->
+        <div class="intro-content">
+            <!-- Logo with Mystical Energy -->
+            <div class="logo-wrapper">
+                <img src="images/royalarmiestitle.png" class="main-logo" alt="Royal Armies">
+                <div class="mystical-energy"></div>
+            </div>
+
+            <!-- Login UI -->
+            <div class="login-box" style="background-image: url('images/royalarmiesloginUI.png');">
+                <input type="text" id="login-username" class="login-input username-pos" placeholder="Username">
+                <input type="password" id="login-password" class="login-input password-pos" placeholder="Password">
+                <div class="login-actions">
+                    <img src="images/loginbutton.png" id="btn-login-main" class="img-btn" onclick="handleLogin()">
+                    <img src="images/registerbutton.png" id="btn-register-main" class="img-btn" onclick="handleRegister()">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 2. TOP NAVIGATION BAR (Hidden behind landing page initially) -->
+    <nav class="top-nav">
+        <button class="nav-btn" disabled>Headquarters</button>
+        <button class="nav-btn" disabled>Hospital</button>
+        <button class="nav-btn" disabled>Armory</button>
+        <button class="nav-btn" disabled>Border</button>
+        <button id="nav-quests" class="nav-btn active">Quests</button>
+        <button class="nav-btn" disabled>Map</button>
+        
+        <img src="images/royalarmiestitle.png" class="nav-logo" alt="Royal Armies">
+        <div style="width: 250px;"></div> <!-- Logo Spacer -->
+
+        <button class="nav-btn" disabled>Friends</button>
+        <button class="nav-btn" disabled>Messages</button>
+        <button class="nav-btn" disabled>Notifications</button>
+        <button class="nav-btn store">Royalty Store</button>
+        <button class="nav-btn">Settings</button>
+<button class="nav-btn login-out" onclick="handleLogout()">Log Out</button>
+    </nav>
+
+    <!-- 3. DYNAMIC PAGE CONTAINER -->
+    <main id="game-container">
+        <!-- QUESTS PAGE -->
+        <div id="page-quests" class="page">
+            <h1 class="page-title">Available Quests</h1>
+            <div class="quest-grid">
+                <!-- Market Patrol -->
+                <div class="quest-card" id="quest-market" onclick="startQuest('market')">
+                    <img src="images/marketpatrolquestcard.png" class="quest-image" alt="Market Patrol">
+                    <div class="quest-plaque">Market Patrol</div>
+                </div>
+                <!-- Border Patrol -->
+                <div class="quest-card locked" id="quest-border" onclick="startQuest('border')">
+                    <img src="images/borderpatrolquestcard.png" class="quest-image" alt="Border Patrol">
+                    <div class="quest-plaque">Border Patrol</div>
+                </div>
+                <!-- Escort -->
+                <div class="quest-card locked" id="quest-escort" onclick="startQuest('escort')">
+                    <img src="images/escortquestcard.png" class="quest-image" alt="Escort">
+                    <div class="quest-plaque">Escort</div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- 4. PERSISTENT UI (HUD & PILLARS) -->
+    <div id="player-hud" class="hud-fixed-container">
+        <div class="hud-bars-background">
+            <div class="bar-wrap xp-wrap"><div id="hud-xp-fill" class="bar-fill xp-fill"></div></div>
+            <div class="bar-wrap prov-wrap"><div id="hud-prov-fill" class="bar-fill prov-fill"></div></div>
+        </div>
+        <img src="images/royalarmiesHUD.png" class="hud-image-overlay" alt="HUD">
+        <div class="hud-text-overlay">
+            <div id="hud-unit-ratio" class="unit-count-circle">0/0</div>
+        </div>
+    </div>
+
+    <div class="pillar-fixed pillar-left"></div>
+    <div class="pillar-fixed pillar-right"></div>
+
+    <!-- 5. AUDIO & CONTROLS -->
+    <!-- Single Overture File, Starts Muted for Autoplay -->
+    <audio id="main-theme" loop autoplay muted>
+        <source src="audio/Crown Hall Overture.wav" type="audio/wav">
+    </audio>
+
+    <div id="audio-control" class="audio-toggle-container" onclick="toggleMute()">
+        <img id="audio-icon" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9IndoaXRlIiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCI+PHBhdGggZD0iTTExIDVMNiA5SDJ2Nmg0bDUgNFY1eiI+PC9wYXRoPjxsaW5lIHgxPSIyMyIgeTE9IjkiIHgyPSIxNyIgeTE9IjE1Ij48L2xpbmU+PGxpbmUgeDE9IjE3IiB5MT0iOSIgeDI9IjIzIiB5MT0iMTUiPjwvbGluZT48L3N2Zz4=" alt="Muted">
+    </div>
+
+    <!-- 6. SCRIPTS -->
+    <script src="rank-data.js"></script>
+    <script src="unit-data.js"></script>
+    <script src="battle-logic.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>

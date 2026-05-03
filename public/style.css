@@ -1,0 +1,846 @@
+/**
+ * style.css - THE LAST KNIGHTS
+ * Master Visual Stylesheet
+ */
+
+:root {
+    --bg: #1a1a1a;
+    --card: #2d2d2d;
+    --text: #e0e0e0;
+    --accent: #d4af37; /* Aether Gold */
+    --danger: #8b0000;
+    --success: #228b22;
+    --border: #444;
+}
+
+body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    margin: 0;
+    padding: 0;
+}
+
+/* --- NAVIGATION --- */
+.top-nav {
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    
+    /* --- STONE WALL BACKGROUND START --- */
+    background-image: url('images/stonewallbg.png') !important;
+    background-repeat: repeat; 
+    background-size: auto;
+    background-color: rgba(0, 0, 0, 0.5); /* Darkens the stone for better button contrast */
+    background-blend-mode: overlay;
+    /* --- STONE WALL BACKGROUND END --- */
+
+    padding: 0 20px;
+    height: 90px;
+    gap: 15px;
+    overflow: visible !important;
+    z-index: 10002;
+    box-shadow: 0 10px 20px rgba(0,0,0,0.8);
+}
+
+.top-nav::after {
+    content: "";
+    position: absolute;
+    bottom: -15px;
+    left: 0;
+    width: 100%;
+    height: 30px;
+    background: url('images/topnavigationlowbar.png') no-repeat center bottom;
+    background-size: 100% 100%;
+    z-index: 10003;
+    pointer-events: none;
+}
+
+.nav-logo {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    top: -45px;
+    height: 280px;
+    width: auto;
+    z-index: 99999;
+    display: block;
+    filter: drop-shadow(0 8px 12px rgba(0,0,0,0.9));
+    pointer-events: none;
+}
+
+.nav-btn {
+    /* 1. REMOVE THE RECTANGLE BOX */
+    background-color: transparent !important; /* The "Box Killer" */
+    border: none !important;
+    outline: none !important;
+    box-shadow: none !important;
+    appearance: none;
+    -webkit-appearance: none;
+
+    /* 2. THE IMAGE (Shape-Focused) */
+    background-image: url('images/navbartextbtn.png') !important;
+    background-repeat: no-repeat !important;
+    background-position: center center !important;
+    background-size: 100% 100% !important; /* Stretches to the padding limits */
+
+    /* 3. DIMENSIONS & ALIGNMENT */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 18px 35px;
+    min-width: 160px;
+    height: 65px;
+    white-space: nowrap;
+    cursor: pointer;
+
+    /* 4. TYPOGRAPHY (Matching Quest Cards & HUD) */
+    font-family: 'Georgia', serif;
+    color: #f0e68c; 
+    text-transform: uppercase;
+    font-weight: bold;
+    font-size: 0.95rem;
+    text-shadow: 2px 2px 3px rgba(0, 0, 0, 0.9), 
+                 0px 0px 5px rgba(212, 175, 55, 0.4);
+    
+    /* 5. SHAPE-FOLLOWING SOLIDITY */
+    /* This applies a dark backing ONLY to the PNG shape, blocking the stone wall */
+    filter: drop-shadow(0 0 1px #1a1a1a); 
+
+    /* 6. MOTION */
+    transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+/* INTERACTION STATES */
+
+.nav-btn:hover:not([disabled]) {
+    /* Brightens the shape and the text, adds the golden "reach" aura */
+    filter: brightness(1.2) drop-shadow(0 0 8px rgba(212, 175, 55, 0.5));
+    transform: translateY(-3px) scale(1.04);
+    color: #ffffff;
+}
+
+.nav-btn.active {
+    color: #ffffff;
+    filter: brightness(1.3) saturate(1.2) drop-shadow(0 0 10px var(--accent));
+}
+
+.nav-btn[disabled] {
+    opacity: 0.5;
+    filter: grayscale(1) brightness(0.7);
+    cursor: not-allowed;
+}
+
+/* Spacer for the Logo */
+.nav-spacer {
+    width: 250px;
+    flex-shrink: 0;
+    pointer-events: none;
+}
+/* --- PAGE LAYOUT --- */
+.page {
+    padding: 20px;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.page-title {
+    color: var(--accent);
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    text-align: center;
+}
+
+.card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    padding: 20px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+}
+
+.quest-grid {
+    display: flex;
+    justify-content: center; /* Centers the cards */
+    align-items: flex-start;
+    gap: 40px;               /* Adds space between the cards */
+    padding: 40px;
+    flex-wrap: wrap;         /* Allows them to wrap on smaller screens */
+}
+
+/* QUEST CARD STYLING */
+/* --- 1. THE GRID CONTAINER --- */
+.quest-grid {
+    display: flex;
+    justify-content: center; 
+    align-items: center; /* Center alignment helps with differing image sizes */
+    gap: 40px;               
+    padding: 40px;
+    flex-wrap: wrap;
+}
+
+/* --- 2. GLOBAL CARD BASE --- */
+.quest-card {
+    position: relative;
+    width: 280px; 
+    background: none;
+    border: none;
+    cursor: pointer;
+    transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    
+    /* ALIGNMENT & BLUR FIXES */
+    display: flex;
+    flex-direction: column;
+    align-self: center; 
+    transform-style: preserve-3d;
+    backface-visibility: hidden;
+    will-change: transform;
+}
+
+/* --- 3. GLOBAL PLAQUE TEXT BASE --- */
+.quest-plaque {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 80%;
+    text-align: center;
+    
+    /* Font Styling */
+    font-family: 'Georgia', serif;
+    font-size: 0.7rem;
+    font-weight: bold;
+    color: #3d2b1f; /* Dark wood/iron color */
+    text-transform: uppercase;
+    text-shadow: 1px 1px 0px rgba(255,255,255,0.1);
+    pointer-events: none;
+    z-index: 2;
+}
+
+/* --- 4. INDIVIDUAL PLACEMENT CONTROLS --- */
+
+/* MARKET PATROL */
+#quest-market {
+    top: 0px; 
+}
+#quest-market .quest-plaque {
+    bottom: 9%; /* Nudge text into Market plaque */
+}
+
+/* BORDER PATROL - The one with extra padding */
+#quest-border {
+    top: -7px; /* THE FIX: Adjust this until it looks level with others */
+}
+#quest-border .quest-plaque {
+    bottom: 7%; /* Nudge text into Border plaque */
+}
+
+/* ESCORT */
+#quest-escort {
+    top: 0px;
+}
+#quest-escort .quest-plaque {
+    bottom: 9%; /* Nudge text into Escort plaque */
+}
+
+/* --- 5. ANIMATIONS & STATES --- */
+
+.quest-card:hover:not(.locked) {
+    transform: scale(1.1) translateY(-10px) rotateX(5deg);
+    z-index: 10;
+    
+    /* Apply the pulse: 2 seconds per loop, infinite duration */
+    animation: glowPulse 2s infinite ease-in-out;
+}
+
+.quest-card.locked {
+    filter: grayscale(1) brightness(0.6);
+    cursor: not-allowed;
+}
+
+.quest-card.locked:hover {
+    transform: none;
+}
+
+.quest-image {
+    width: 100%;
+    height: auto;
+    display: block;
+    /* This handles the natural shadow when NOT hovering */
+    filter: drop-shadow(0 10px 10px rgba(0,0,0,0.6));
+    transition: filter 0.3s ease;
+}
+.easy { background: #228b22; color: white; }
+.mid { background: #b8860b; color: white; }
+.hard { background: #8b0000; color: white; }
+
+.start-quest-btn {
+    background: var(--accent);
+    border: none;
+    padding: 10px 20px;
+    border-radius: 4px;
+    font-weight: bold;
+    cursor: pointer;
+    margin-top: 15px;
+}
+
+/* --- BATTLE SIMULATOR TABLE --- */
+.battle-stats-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 20px 0;
+    background: #111;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.battle-stats-table th {
+    background: #222;
+    color: var(--accent);
+    text-transform: uppercase;
+    font-size: 0.8rem;
+    padding: 15px;
+}
+
+.battle-stats-table td {
+    padding: 12px;
+    text-align: center;
+    color: #bbb;
+    border-bottom: 1px solid #222;
+}
+
+.battle-stats-table tr { border: none; }
+.battle-stats-table th, .battle-stats-table td { border: none; }
+
+.table-spacer {
+    width: 60px;
+    background: var(--bg) !important; /* Forces the invisible gap */
+    border: none !important;
+}
+
+/* --- BATTLE CONTROLS & PROGRESS --- */
+.action-btn {
+    background: var(--success);
+    color: white;
+    width: 100%;
+    padding: 15px;
+    font-size: 1.1rem;
+    font-weight: bold;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    text-transform: uppercase;
+}
+
+.action-btn:active {
+    transform: scale(0.99);
+    filter: brightness(1.1);
+}
+
+#hold-progress-bar {
+    pointer-events: none;
+}
+
+/* --- CONCLUSION & HOSPITAL --- */
+.conclusion-box {
+    background: #000;
+    color: #00ff00;
+    padding: 20px;
+    border-left: 4px solid var(--accent);
+    margin-top: 20px;
+    font-family: 'Courier New', Courier, monospace;
+    min-height: 150px;
+}
+
+.log-entry {
+    margin-bottom: 6px;
+    font-size: 0.95rem;
+}
+
+.log-entry.highlight { color: #fff; font-weight: bold; }
+.log-entry.xp { color: #00ffff; }
+
+.quick-hospital {
+    margin-top: 30px;
+    max-width: 400px;
+}
+
+.hospital-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 15px;
+}
+
+.primary-btn { background: var(--accent); border: none; padding: 8px 15px; cursor: pointer; border-radius: 4px; font-weight: bold; }
+.secondary-btn { background: #444; border: none; color: white; padding: 8px 15px; cursor: pointer; border-radius: 4px; }
+.danger-btn { background: var(--danger); border: none; color: white; padding: 8px 15px; cursor: pointer; border-radius: 4px; }
+
+/* Utility Classes */
+#sf-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+#sf-list li {
+    padding: 8px;
+    border-bottom: 1px solid #333;
+    font-size: 0.9rem;
+}
+
+.hud-fixed-container {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    width: 350px; /* Adjust to your PNG width */
+    height: 120px; /* Adjust to your PNG height */
+    z-index: 10000;
+}
+
+/* THE BARS */
+.hud-bars-background {
+    position: absolute;
+    top: 0; left: 0; width: 100%; height: 100%;
+    z-index: 1; /* Behind image */
+}
+
+.bar-wrap {
+    position: absolute;
+    background: rgba(0,0,0,0.5); 
+    overflow: hidden;
+    display: flex;
+    justify-content: flex-end; /* This forces children to align to the right */
+}
+
+.bar-fill {
+    height: 100%;
+    /* No longer need left: 0, it will now grow from the right */
+    transition: width 0.5s ease;
+}
+
+/* XP BAR - Gold */
+.xp-wrap {
+    top: 35px; left: 13px; /* Tweak these to fit your PNG holes */
+    width: 228px; height: 21px;
+}
+.xp-fill {
+    height: 100%; width: 50%; /* Dynamic */
+    background: linear-gradient(90deg, #ffd700, #d4af37);
+    transition: width 0.5s ease;
+}
+
+/* PROVISIONS BAR - Green Segmented */
+.prov-wrap {
+    top: 65px; left: 134px; /* Tweak these to fit your PNG holes */
+    width: 112px; height: 20px;
+}
+.prov-fill {
+    height: 100%; width: 70%; /* Dynamic */
+    background: repeating-linear-gradient(
+        90deg,
+        #228b22,
+        #228b22 18px,
+        #1a1a1a 18px,
+        #1a1a1a 20px /* This creates the "segments" */
+    );
+    transition: width 0.5s ease;
+}
+
+/* THE IMAGE */
+.hud-image-overlay {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    z-index: 2; /* Sits on top of bars */
+    pointer-events: none;
+}
+
+/* THE TEXT */
+.hud-text-overlay {
+    position: absolute;
+    top: 0; left: 0; width: 100%; height: 100%;
+    z-index: 3; /* Sits on top of everything */
+}
+
+/* Update this in style.css */
+.unit-count-circle {
+    position: absolute;
+    top: 40px;      /* Tweak to center vertically in your circle */
+    right: 30px;    /* Tweak to center horizontally in your circle */
+    width: 70px;    
+    
+    /* Font Styling */
+    font-family: 'Georgia', serif; /* Gives a more classic/engraved feel */
+    font-size: 1.4rem;             /* Increased size */
+    font-weight: 900;              /* Extra bold */
+    
+    /* Blending Effects */
+    color: #f0e68c;               /* Khaki/Pale Gold to match the HUD */
+    text-shadow: 
+        0px 0px 3px rgba(212, 175, 55, 0.8), /* Aether Gold glow */
+        2px 2px 3px rgba(0, 0, 0, 0.9);      /* Deep drop shadow for depth */
+    
+    letter-spacing: -1px;          /* Tightens the numbers together */
+    text-align: center;
+    z-index: 3;
+    pointer-events: none;
+}
+
+/* THE GOLD XP FILL */
+.xp-fill {
+    height: 100%;
+    /* Glowing Gold Gradient */
+    background: linear-gradient(270deg, #d4af37 0%, #f0e68c 50%, #d4af37 100%);
+    box-shadow: 0 0 10px rgba(212, 175, 55, 0.6); /* Outer glow */
+    border-radius: 2px;
+}
+
+/* THE GREEN SEGMENTED PROVISIONS FILL */
+.prov-fill {
+    height: 100%;
+    /* Glowing Green with Segments */
+    background: repeating-linear-gradient(
+        270deg,
+        #228b22 0px,
+        #228b22 14px, /* The green segment width */
+        #111 14px,    /* The dark "divider" start */
+        #111 16px     /* The dark "divider" end (2px wide) */
+    );
+    box-shadow: 0 0 10px rgba(34, 139, 34, 0.5);
+    border-radius: 2px;
+}
+
+/* THE GLOW PULSE ANIMATION */
+/* UPDATED: Tighter Glow Pulse */
+@keyframes glowPulse {
+    0% {
+        filter: brightness(1.1) 
+                drop-shadow(0 0 5px rgba(212, 175, 55, 0.8)) 
+                drop-shadow(0 0 10px rgba(212, 175, 55, 0.4));
+    }
+    50% {
+        filter: brightness(1.15) 
+                drop-shadow(0 0 12px rgba(212, 175, 55, 0.9)) 
+                drop-shadow(0 0 18px rgba(212, 175, 55, 0.6));
+    }
+    100% {
+        filter: brightness(1.1) 
+                drop-shadow(0 0 5px rgba(212, 175, 55, 0.8)) 
+                drop-shadow(0 0 10px rgba(212, 175, 55, 0.4));
+    }
+}
+
+/* --- SIDE PILLARS --- */
+
+.pillar-fixed {
+    position: fixed;
+    top: 90px; /* Aligns with the bottom of your Stone Nav bar */
+    bottom: 0;
+    width: 150px; /* Matches the margin of the game container */
+    
+    /* 1. PATH FIX: Uses the absolute path for backend/public structure */
+    background-image: url('/images/pillarbg.png') !important;
+    background-repeat: no-repeat !important;
+    background-size: 100% 100% !important;
+    
+    /* 2. VISIBILITY FIXES */
+    display: block !important;
+    z-index: 10005; /* High enough to be over content, but under Logo (99k) */
+    pointer-events: none; /* Crucial: ensures pillars don't block clicks */
+}
+
+.pillar-left {
+    left: 0;
+    filter: drop-shadow(8px 0 12px rgba(0,0,0,0.6));
+}
+
+.pillar-right {
+    right: 0;
+    /* Mirror the image so detail faces inward */
+    transform: scaleX(-1); 
+    filter: drop-shadow(-8px 0 12px rgba(0,0,0,0.6));
+}
+
+/* 3. CONTAINER SYNC: Pushes content out from behind the pillars */
+#game-container {
+    margin-left: 160px !important;
+    margin-right: 160px !important;
+    position: relative;
+    z-index: 1;
+}
+
+/* --- LANDING PAGE STYLES --- */
+.full-page-overlay {
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    z-index: 200000; /* Over everything */
+    background: #000;
+    overflow: hidden;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.slideshow-container { 
+    position: absolute; 
+    width: 100%; 
+    height: 100%; 
+    z-index: -1; 
+    overflow: hidden;
+    /* FIX 1: Ensures the parent doesn't cause sub-pixel blurring */
+    background: #000;
+}
+
+.slide {
+    position: absolute; 
+    width: 115%; 
+    height: 115%; 
+    background-size: cover;
+    background-position: center;
+    opacity: 0; /* Default for the loop */
+    animation: panEffect 32s infinite linear, fadeEffect 32s infinite;
+    
+    /* High-Res Fixes */
+    image-rendering: -webkit-optimize-contrast; 
+    transform: translateZ(0); 
+    backface-visibility: hidden;
+}
+
+/* FIX: Forces the first slide to be visible immediately on load */
+.slide1 { 
+    background-image: url('images/mainbg1.png'); 
+    animation-delay: 0s; 
+    opacity: 1; 
+}
+
+.slide1 { background-image: url('images/mainbg1.png'); animation-delay: 0s; }
+.slide2 { background-image: url('images/mainbg2.png'); animation-delay: 8s; }
+.slide3 { background-image: url('images/mainbg3.png'); animation-delay: 16s; }
+.slide4 { background-image: url('images/mainbg4.png'); animation-delay: 24s; }
+
+/* NEW KEYFRAMES: 0% is now fully visible to prevent the "Black Screen" start */
+@keyframes fadeEffect {
+    0%   { opacity: 0; }
+    5%   { opacity: 1; }  /* Fade In */
+    25%  { opacity: 1; }  /* Stay Solid */
+    30%  { opacity: 0; }  /* Fade Out */
+    100% { opacity: 0; }
+}
+
+@keyframes panEffect {
+    0% { transform: scale(1.05) translate(0, 0); }
+    100% { transform: scale(1.1) translate(-2%, -2%); }
+}
+
+/* Mystical Logo Energy */
+.logo-wrapper { position: relative; text-align: center; margin-bottom: -40px; }
+.main-logo { width: 750px; position: relative; z-index: 5; }
+.mystical-energy {
+    position: absolute;
+    top: 50%; left: 50%;
+    width: 110%; height: 110%;
+    transform: translate(-50%, -50%);
+    background: radial-gradient(circle, rgba(212, 175, 55, 0.4) 0%, transparent 70%);
+    filter: blur(20px);
+    animation: energyPulse 4s infinite ease-in-out;
+    mix-blend-mode: screen;
+}
+@keyframes energyPulse {
+    0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.5; }
+    50% { transform: translate(-50%, -50%) scale(1.2); opacity: 0.8; box-shadow: 0 0 50px var(--accent); }
+}
+
+.login-box {
+    /* 1. Change this single number to grow the whole UI */
+    width: 800px; 
+    
+    /* 2. Automatically calculates height to prevent distortion */
+    height: auto;
+    aspect-ratio: 450 / 300; 
+    
+    background-image: url('images/royalarmiesloginUI.png');
+    background-size: 100% 100%;
+    top: -100px;
+    position: relative;
+    margin: 0 auto;
+    filter: drop-shadow(0 15px 30px rgba(0,0,0,0.8));
+}
+
+.login-input {
+    position: absolute;
+    background: transparent;
+    border: none;
+    color: #fff;
+    font-size: 1.2rem; /* Scaled up text */
+    outline: none;
+    
+    /* Percentage width ensures it fits the slot as the box grows */
+    width: 55%; 
+    font-family: 'Georgia', serif;
+}
+
+/* 3. COORDINATES: Nudge these % values to perfectly align with your PNG slots */
+.username-pos { 
+    top: 29.5%; 
+    left: 32%; 
+}
+
+.password-pos { 
+    top: 42%; 
+    left: 32%; 
+}
+
+.login-actions {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 100px; /* Adjust height to match your button area */
+    pointer-events: none; /* Let clicks pass through to inputs if they overlap */
+}
+
+.img-btn {
+    position: absolute; /* This is the key to independent movement */
+    pointer-events: auto;
+    height: 60px;
+    cursor: pointer;
+    transition: all 0.1s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+/* --- INDEPENDENT BUTTON NUDGES --- */
+
+#btn-login-main {
+    bottom: 160px; /* Adjust this to move just the Login button up/down */
+    left: 275px;   /* Adjust this to move just the Login button left/right */
+    width: 250px; height: auto;
+}
+
+#btn-register-main {
+    bottom: 90px; /* Adjust this to move just the Register button up/down */
+    right: 300px;  /* Adjust this to move just the Register button left/right */
+    width: 200px; height: auto;
+}
+    
+    /* Give the button initial "height" with a dark shadow */
+    filter: drop-shadow(0 4px 0px rgba(0,0,0,0.8));
+    position: relative;
+    top: 0;
+}
+
+.img-btn:hover {
+    filter: brightness(1.1) drop-shadow(0 4px 0px rgba(0,0,0,0.8));
+}
+
+/* THE "KEYPRESS" EFFECT */
+.img-btn:active {
+    /* 1. Push the button down slightly */
+    transform: translateY(4px); 
+    
+    /* 2. Flatten the shadow so it looks like it hit the "board" */
+    filter: brightness(0.9) drop-shadow(0 0px 0px rgba(0,0,0,0));
+    
+    /* 3. Slight scale down to mimic a finger press */
+    transform: translateY(4px) scale(0.96);
+}
+.audio-toggle-container {
+    position: fixed;
+    bottom: 20px;
+    left: 20px;
+    z-index: 200001; /* Sits above the landing page (200k) */
+    background: rgba(0, 0, 0, 0.6);
+    border: 1px solid var(--accent);
+    border-radius: 50%;
+    padding: 10px;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    transition: transform 0.2s, background 0.2s;
+}
+
+.audio-toggle-container:hover {
+    background: rgba(212, 175, 55, 0.3);
+    transform: scale(1.1);
+}
+
+#audio-icon {
+    width: 24px;
+    height: 24px;
+}
+
+.updates-panel {
+    position: absolute;
+    right: 40px;
+    top: 25%;
+    transform: translateY(-50%);
+    width: 320px;
+    height: 500px;
+    background: rgba(0, 0, 0, 0.8);
+    border: 2px solid var(--accent);
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    z-index: 200005;
+    box-shadow: 0 0 30px rgba(0, 0, 0, 0.9);
+}
+
+.updates-header {
+    background: var(--accent);
+    color: #000;
+    padding: 10px;
+    text-align: center;
+    font-family: 'Georgia', serif;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+}
+
+.updates-scroll {
+    flex-grow: 1;
+    overflow-y: auto;
+    padding: 15px;
+    /* Custom Scrollbar styling */
+    scrollbar-width: thin;
+    scrollbar-color: var(--accent) #111;
+}
+
+.updates-scroll::-webkit-scrollbar { width: 6px; }
+.updates-scroll::-webkit-scrollbar-thumb { background: var(--accent); }
+
+.update-item {
+    border-bottom: 1px solid #444;
+    padding-bottom: 12px;
+    margin-bottom: 15px;
+}
+
+.update-item:last-child { border: none; }
+
+.update-date {
+    font-size: 0.75rem;
+    color: var(--accent);
+    font-family: monospace;
+}
+
+.update-title {
+    margin: 5px 0;
+    font-family: 'Georgia', serif;
+    color: #fff;
+    font-size: 1rem;
+}
+
+.update-text {
+    font-size: 0.85rem;
+    color: #bbb;
+    line-height: 1.4;
+    margin: 0;
+}
+
+.updates-footer {
+    padding: 8px;
+    font-size: 0.7rem;
+    text-align: center;
+    color: #666;
+    font-style: italic;
+}
