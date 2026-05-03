@@ -7,6 +7,12 @@ const path = require('path');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+const db = new Datastore({ 
+    // If running on Render, use the disk path; otherwise use local for your PC
+    filename: process.env.RENDER ? '/data/players.db' : 'players.db', 
+    autoload: true 
+});
+
 // --- DATABASE & SESSION SETUP ---
 const db = new Datastore({ filename: './players.db', autoload: true });
 app.use(express.json());

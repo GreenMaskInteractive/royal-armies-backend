@@ -680,12 +680,19 @@ body {
 }
 
 .login-actions {
-    position: absolute;
-    top: 75%; /* Pushed down below the inputs */
+    display: flex;          /* This forces them into a row */
+    justify-content: center; /* Centers the pair in the middle */
+    gap: 15px;              /* The space between the two buttons */
+    margin-top: 20px;       /* Distance from the text boxes above */
     width: 100%;
-    display: flex;
-    justify-content: center;
-    gap: 30px;
+    position: relative;
+    z-index: 100;
+}
+
+.img-btn {
+    position: static !important; /* This prevents them from stacking on top of each other */
+    height: 60px;               /* Adjust size as needed */
+    cursor: pointer;
 }
 .img-btn {
     position: absolute; /* This is the key to independent movement */
@@ -859,20 +866,22 @@ body {
 /* --- REGISTRATION MODAL --- */
 .modal-overlay {
     position: fixed;
-    top: 0; left: 0;
-    width: 100%; height: 100%;
-    background: rgba(0, 0, 0, 0.85); /* Darkens the background slideshow */
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.85); /* Dims the background */
     display: flex;
     justify-content: center;
     align-items: center;
-    z-index: 300000; /* Above everything */
-    backdrop-filter: blur(8px); /* Optional: blurs the background */
+    z-index: 300000; /* Stays on top of everything */
+    backdrop-filter: blur(8px); /* Blurs the game world behind the popup */
 }
 
 .modal-content {
-    background: #1a1a1a;
+    background: #1a1a1a; /* Dark theme to match game */
     border: 2px solid var(--accent);
-    padding: 40px;
+    padding: 30px 40px;
     width: 400px;
     position: relative;
     box-shadow: 0 0 50px rgba(0,0,0,1);
@@ -900,9 +909,41 @@ body {
 
 .close-modal {
     position: absolute;
-    top: 15px; right: 20px;
+    top: 15px;
+    right: 20px;
     color: #888;
     font-size: 28px;
     cursor: pointer;
 }
 .close-modal:hover { color: #fff; }
+
+.modal-actions { margin-top: 25px; }
+
+/* --- THE NEW CONTAINER BOX --- */
+.login-form-container {
+    background: rgba(0, 0, 0, 0.65); /* Dark background tint */
+    border: 2px solid var(--accent); /* Aether Gold border */
+    padding: 40px;
+    border-radius: 12px;
+    
+    display: flex;
+    flex-direction: column; /* Stacks the boxes over the buttons */
+    align-items: center;
+    gap: 10px; /* Spacing between input row and button row */
+    
+    /* Center it under the logo */
+    margin: -30px auto 0 auto; 
+    width: fit-content;
+    
+    /* Adds depth by blurring background images behind the box */
+    backdrop-filter: blur(5px); 
+    box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+}
+
+/* Adjust the existing containers so they don't have their own margins */
+.login-box, .login-actions {
+    margin: 0 !important;
+    transform: none !important;
+    top: auto !important;
+    left: auto !important;
+}

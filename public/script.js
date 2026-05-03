@@ -310,32 +310,26 @@ async function handleLogin() {
     }
 }
 
-// This function should ONLY open the modal
+// Opens the modal when Register is clicked
 function handleRegister() {
     const modal = document.getElementById('register-modal');
-    if (modal) {
-        modal.style.display = 'flex'; // This forces the modal to show up
-    } else {
-        console.error("The registration modal could not be found in the HTML.");
-    }
+    if (modal) modal.style.display = 'flex';
 }
 
-// Add this function to close it when the player clicks the 'X'
+// Closes the modal
 function closeRegister() {
     const modal = document.getElementById('register-modal');
-    if (modal) {
-        modal.style.display = 'none';
-    }
+    if (modal) modal.style.display = 'none';
 }
 
-// This is the NEW function that actually sends the data to your database
+// Submits data to server
 async function submitRegistration() {
-    const userField = document.getElementById('reg-username').value;
-    const passField = document.getElementById('reg-password').value;
-    const emailField = document.getElementById('reg-email').value;
+    const user = document.getElementById('reg-username').value;
+    const pass = document.getElementById('reg-password').value;
+    const email = document.getElementById('reg-email').value;
 
-    if (!userField || !passField) {
-        alert("A username and Password are required to continue with account creation.");
+    if (!user || !pass) {
+        alert("Commander, Username and Password are required!");
         return;
     }
 
@@ -343,24 +337,16 @@ async function submitRegistration() {
         const response = await fetch('/register', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ 
-                username: userField, 
-                password: passField,
-                email: emailField 
-            })
+            body: JSON.stringify({ username: user, password: pass, email: email })
         });
-
         const data = await response.json();
         alert(data.msg);
-
-        if (response.ok) {
-            closeRegister(); // Close the popup on success
-        }
-    } catch (error) {
-        alert("The record-keeper is busy. (Server may be waking up).");
+        if (response.ok) closeRegister();
+    } catch (err) {
+        alert("The kingdom's record-keeper is busy. Try again soon!");
     }
-}
-function enterGame() {
+
+}function enterGame() {
     const landing = document.getElementById('page-landing');
     const audio = document.getElementById('main-theme');
     
