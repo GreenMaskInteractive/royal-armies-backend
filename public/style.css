@@ -651,54 +651,48 @@ body {
 }
 
 .login-box {
-    /* 1. Change this single number to grow the whole UI */
-    width: 800px; 
-    
-    /* 2. Automatically calculates height to prevent distortion */
+    width: 600px; 
     height: auto;
     aspect-ratio: 450 / 300; 
-    
-background-image: url('/images/royalarmiesloginUI.png') !important;
-    background-size: 100% 100%;
-    top: -100px;
+    background: transparent; /* Removed the PNG background */
     position: relative;
     margin: 0 auto;
-    filter: drop-shadow(0 15px 30px rgba(0,0,0,0.8));
 }
 
 .login-input {
-    position: absolute;
-    background: transparent;
-    border: none;
-    color: #fff;
-    font-size: 1.2rem; /* Scaled up text */
-    outline: none;
-    
-    /* Percentage width ensures it fits the slot as the box grows */
-    width: 55%; 
-    font-family: 'Georgia', serif;
+    /* Keep your existing positioning, but add these: */
+    background: rgba(0, 0, 0, 0.6); /* Semi-transparent black */
+    border: 1px solid var(--accent); /* Thin gold border to match the game */
+    padding: 10px;
+    border-radius: 5px;
+    color: white;
+}
+.login-input:focus {
+    box-shadow: 0 0 10px var(--accent); /* Glow when typing */
+    background: rgba(0, 0, 0, 0.8);
 }
 
-/* 3. COORDINATES: Nudge these % values to perfectly align with your PNG slots */
+/* Positioning them in the center of the landing area */
 .username-pos { 
-    top: 29.5%; 
-    left: 32%; 
+    top: 30%; 
+    left: 50%; 
+    transform: translateX(-50%);
 }
 
 .password-pos { 
-    top: 42%; 
-    left: 32%; 
+    top: 50%; 
+    left: 50%; 
+    transform: translateX(-50%);
 }
 
 .login-actions {
     position: absolute;
-    bottom: 0;
-    left: 0;
+    top: 75%; /* Pushed down below the inputs */
     width: 100%;
-    height: 100px; /* Adjust height to match your button area */
-    pointer-events: none; /* Let clicks pass through to inputs if they overlap */
+    display: flex;
+    justify-content: center;
+    gap: 30px;
 }
-
 .img-btn {
     position: absolute; /* This is the key to independent movement */
     pointer-events: auto;
