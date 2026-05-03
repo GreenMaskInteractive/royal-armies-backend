@@ -658,7 +658,7 @@ body {
     height: auto;
     aspect-ratio: 450 / 300; 
     
-    background-image: url('images/royalarmiesloginUI.png');
+background-image: url('/images/royalarmiesloginUI.png') !important;
     background-size: 100% 100%;
     top: -100px;
     position: relative;
