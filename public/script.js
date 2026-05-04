@@ -448,7 +448,7 @@ function startClassSelectionSequence() {
             setTimeout(() => revealCard('card-battlemaster'), 1000);
             setTimeout(() => revealCard('card-archmage'), 2000);
         }, 100);
-    }, 8000); 
+    }, 13000); 
 }
 
 function revealCard(id) {
