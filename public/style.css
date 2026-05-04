@@ -982,22 +982,19 @@ body {
 
 /* --- THE CLASS SELECTION SCREEN --- */
 .class-bg {
-    position: fixed;
-    top: 60px; /* Space for Nav Bar */
-    left: 0; width: 100%; height: calc(100vh - 60px);
-    background: url('images/classchoosebg.png') no-repeat center center;
-    background-size: cover;
-    z-index: -1;
-    opacity: 0;
-    transition: opacity 1.5s ease;
+    position: absolute;
+    top: 0; left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: url('images/classchoosebg.png') no-repeat center center/cover !important;
+    z-index: 2; /* Lift it above the landing page blackness */
+    opacity: 1 !important;
 }
 
+/* Ensure the cards are even higher */
 .class-options-container {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 50px;
-    height: 100%;
+    position: relative;
+    z-index: 10; /* The highest layer */
 }
 
 .class-card {
