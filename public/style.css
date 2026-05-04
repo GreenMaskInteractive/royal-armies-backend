@@ -997,21 +997,31 @@ body {
 
 /* Ensure the cards are even higher */
 .class-options-container {
-    position: relative;
-    z-index: 10; /* The highest layer */
+    display: flex;
+    justify-content: center;
+    align-items: flex-end; /* Keeps statues sitting on the "floor" */
+    gap: 100px; /* More space between the big statues */
+    width: 100vw;
+    padding-bottom: 50px;
+    position: absolute;
+    bottom: 0; /* Sits them at the bottom of the screen */
 }
 
 .class-card {
     position: relative;
-    opacity: 0;
-    transition: all 0.4s ease;
+    width: 450px; /* Increased from ~300px */
+    transition: transform 0.5s ease, filter 0.5s ease;
     cursor: pointer;
+    opacity: 0; /* Keeps your explosion reveal working */
+    text-align: center;
 }
 
 .class-card img {
-    width: 250px;
-    filter: brightness(0.7);
-    transition: all 0.4s ease;
+    width: 100%; /* Fills the 450px width */
+    height: auto;
+    /* This keeps the edges crisp even when scaled */
+    image-rendering: -webkit-optimize-contrast; 
+    filter: drop-shadow(0 0 15px rgba(0, 0, 0, 0.8));
 }
 
 /* Explosion reveal animation */
@@ -1025,23 +1035,24 @@ body {
 }
 
 /* Hover effects */
-.class-card:hover img {
-    transform: scale(1.15);
-    filter: brightness(1.2);
-    box-shadow: 0 0 30px #d4af37;
+.class-card:hover {
+    transform: scale(1.1);
+    filter: brightness(1.2) drop-shadow(0 0 30px #d4af37);
 }
 
-.class-card .class-info {
-    display: none;
-    position: absolute;
-    bottom: -150px;
-    background: rgba(0,0,0,0.9);
+.class-info {
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    background: rgba(0, 0, 0, 0.7);
     padding: 15px;
+    border-radius: 10px;
     border: 1px solid #d4af37;
-    width: 300px;
+    margin-top: 20px;
 }
 
-.class-card:hover .class-info { display: block; }
+.class-card:hover .class-info {
+    opacity: 1;
+}
 
 #game-container, #player-hud, .top-nav {
     display: none !important;
