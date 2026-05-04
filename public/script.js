@@ -406,6 +406,10 @@ async function handleLogin() {
 
         if (response.ok) {
             // SUCCESS: This starts your zoom text and explosions
+
+            document.getElementById('auth-buttons').style.display = 'none';
+            document.getElementById('auth-loading').style.display = 'block';
+
             startClassSelectionSequence();
         } else {
             // FAILURE: Shows "Invalid credentials" or "Must verify email"

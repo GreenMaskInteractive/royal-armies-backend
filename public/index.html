@@ -54,10 +54,16 @@
             <input type="password" id="login-password" class="login-input" placeholder="Password">
         </div>
 
-        <div class="login-actions">
-            <img src="images/loginbutton.png" class="img-btn" onclick="handleLogin()">
-            <img src="images/registerbutton.png" class="img-btn" onclick="handleRegister()">
-        </div>
+<div class="login-actions">
+    <!-- These will be hidden on success -->
+    <div id="auth-buttons">
+        <img src="images/loginbutton.png" class="img-btn" onclick="handleLogin()">
+        <img src="images/registerbutton.png" class="img-btn" onclick="handleRegister()">
+    </div>
+    
+    <!-- This will be shown on success -->
+    <div id="auth-loading" style="display: none; color: #d4af37; font-family: 'Georgia', serif; font-size: 1.2rem; text-shadow: 0 0 10px #d4af37;">
+        Logging in... Please Wait
     </div>
 </div>
 
