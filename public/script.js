@@ -476,12 +476,6 @@ function confirmSelection() {
         header.innerHTML = `<h1>Blessed are you, Commander.</h1><small>The arcane spirits spoke highly of you. May you bring us victory this day.</small>`;
     }
 
-#class-selection-screen {
-    background: black; /* This acts as the floor if the image takes a second to load */
-    opacity: 1 !important;
-    display: none; /* Controlled by script */
-}
-
 function enterMainGame() {
     // Show the game container
     document.getElementById('game-container').style.setProperty('display', 'block', 'important');
