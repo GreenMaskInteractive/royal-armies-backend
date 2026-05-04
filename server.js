@@ -35,45 +35,40 @@ const { groundRanks } = require('./rank-data');
 // --- AUTHENTICATION ROUTES ---
 
 app.post('/register', async (req, res) => {
-    // .trim().toLowerCase() removes spaces and makes it lowercase
+    // 1. Clean the username
     const username = req.body.username.trim().toLowerCase();
     const { password, email } = req.body;
     
+    // 2. Hash the password and create token
     const hashedPassword = await bcrypt.hash(password, 10);
     const verificationToken = Math.random().toString(36).substring(2, 15);
 
     const newUser = { 
-        username, // Saved as "iambeyondlegend"
+        username, 
         password: hashedPassword, 
         email, 
         isVerified: false, 
-        verificationToken,
-        gold: 100,
-        rank: 'Novice'
+        verificationToken, 
+        gold: 100, 
+        rank: 'Novice' 
     };
 
-    db.insert(newUser, (err) => {
-        if (err) return res.status(500).json({ msg: "Forge failed." });
-        res.json({ msg: "Registration successful! Check email." });
-    });
-});
-
+    // 3. Insert into Database AND send email in one go
     db.insert(newUser, async (err, user) => {
+        if (err) return res.status(500).json({ msg: "Forge failed." });
+
         try {
-            // 2. Send the actual email
             await resend.emails.send({
                 from: 'Royal Armies <noreply@royalarmies.com>',
                 to: [email],
-                subject: 'Create New Account',
-                html: `<p>Click here to verify your email address: <a href="https://royalarmies.com/verify?token=${verificationToken}">Verify Account</a></p>`
+                subject: 'Forge Your Account',
+                html: `<p>Commander, click here to verify your rank: <a href="https://royalarmies.com/verify?token=${verificationToken}">Verify Account</a></p>`
             });
-            res.json({ msg: "Registration successful! Check your email to verify." });
+            res.json({ msg: "Registration successful! Check email." });
         } catch (mailError) {
-    // This will print the EXACT error from Resend (like "Invalid API Key" or "403 Forbidden") 
-    // to your Render logs so we can see it.
-    console.error("RESEND ERROR DETAILS:", mailError); 
-    res.status(500).json({ msg: "Account forged, but the messenger failed." });
-}
+            console.error("RESEND ERROR:", mailError);
+            res.json({ msg: "Account forged, but email failed. Check Logs." });
+        }
     });
 });
 
