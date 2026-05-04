@@ -428,19 +428,33 @@ async function handleLogin() {
 function startClassSelectionSequence() {
     const landing = document.getElementById('page-landing');
     const classScreen = document.getElementById('class-selection-screen');
+    const nav = document.querySelector('.top-nav');
 
-landing.style.display = 'none';
+    landing.style.display = 'none';
+    
+    // 1. Show the navigation bar container
+    nav.style.setProperty('display', 'flex', 'important');
+
+    // 2. Filter the elements inside the nav
+    document.querySelectorAll('.top-nav > *').forEach(element => {
+        // KEEP: The Logout button
+        if (element.classList.contains('login-out')) {
+            element.style.display = 'block';
+            element.style.marginLeft = 'auto'; // Push to the far right
+        } 
+        // KEEP: The Logo (Title)
+        else if (element.classList.contains('nav-logo')) {
+            element.style.display = 'block';
+        } 
+        // HIDE: Everything else (Headquarters, Armory, etc.)
+        else {
+            element.style.display = 'none';
+        }
+    });
+
+    // 3. Reveal the class screen
     classScreen.style.display = 'block';
-    classScreen.style.opacity = '1';
-
-    const classBg = document.querySelector('.class-bg');
-    if (classBg) {
-        classBg.style.display = 'block';
-        classBg.style.opacity = '1';
-    }
-
-    setTimeout(() => revealCard('card-battlemaster'), 800);
-    setTimeout(() => revealCard('card-archmage'), 2000);
+    // ... rest of your statue reveal code ...
 }
 
 function selectClass(className) {
@@ -474,14 +488,20 @@ function confirmSelection() {
 }
 
 function enterMainGame() {
-    // Correct way to break the !important lock
+    // Show the game container
     document.getElementById('game-container').style.setProperty('display', 'block', 'important');
-    document.querySelector('.top-nav').style.setProperty('display', 'flex', 'important');
     
-    // Hide the selection screen
+    // Show all navigation buttons again
+    document.querySelectorAll('.top-nav .nav-btn').forEach(btn => {
+        btn.style.display = 'block';
+        // Reset the auto margin on logout button if needed
+        if (btn.classList.contains('login-out')) {
+            btn.style.marginLeft = '0'; 
+        }
+    });
+
     document.getElementById('class-selection-screen').style.display = 'none';
 }
-
 // THE FINAL FUNCTION AT THE VERY BOTTOM
 function revealCard(id) {
     const card = document.getElementById(id);
