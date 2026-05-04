@@ -35,20 +35,28 @@ const { groundRanks } = require('./rank-data');
 // --- AUTHENTICATION ROUTES ---
 
 app.post('/register', async (req, res) => {
-    const { username, password, email } = req.body;
+    // .trim().toLowerCase() removes spaces and makes it lowercase
+    const username = req.body.username.trim().toLowerCase();
+    const { password, email } = req.body;
     
-    // 1. Create a secret token for this player
+    const hashedPassword = await bcrypt.hash(password, 10);
     const verificationToken = Math.random().toString(36).substring(2, 15);
 
     const newUser = { 
-        username, 
-        password: await bcrypt.hash(password, 10), 
+        username, // Saved as "iambeyondlegend"
+        password: hashedPassword, 
         email, 
-        isVerified: false, // Locked until they click the email
+        isVerified: false, 
         verificationToken,
         gold: 100,
         rank: 'Novice'
     };
+
+    db.insert(newUser, (err) => {
+        if (err) return res.status(500).json({ msg: "Forge failed." });
+        res.json({ msg: "Registration successful! Check email." });
+    });
+});
 
     db.insert(newUser, async (err, user) => {
         try {
@@ -71,34 +79,28 @@ app.post('/register', async (req, res) => {
 
 // LOGIN: Entering the gates
 app.post('/login', (req, res) => {
-    const { username, password } = req.body;
+    // We lowercase the login attempt to match the database
+    const username = req.body.username.trim().toLowerCase();
+    const { password } = req.body;
 
     db.findOne({ username }, async (err, user) => {
-        // --- DEBUG LOGS ---
-        console.log("--- LOGIN ATTEMPT ---");
-        console.log("Username searched:", username);
-        console.log("User found in DB:", user ? "YES" : "NO");
+        console.log("--- LOGIN DEBUG ---");
+        console.log("Searching for:", username);
+        console.log("Found in DB:", user ? "YES" : "NO");
 
-        if (!user) {
-            return res.status(400).json({ msg: "Invalid credentials, traveler." });
-        }
-
-        const isMatch = await bcrypt.compare(password, user.password);
-        console.log("Password Match:", isMatch);
-        console.log("Verified Status:", user.isVerified);
-
-        if (!isMatch) {
-            return res.status(400).json({ msg: "Invalid credentials, traveler." });
+        if (!user || !(await bcrypt.compare(password, user.password))) {
+            return res.status(400).json({ msg: "Invalid credentials." });
         }
         
         if (user.isVerified === false) {
-            return res.status(400).json({ msg: "Commander, you must verify your email before entering the field." });
+            return res.status(400).json({ msg: "You must verify your email first!" });
         }
 
         req.session.userId = user._id;
         res.json({ msg: "Welcome back, Commander.", user });
     });
 });
+
 // --- THE VERIFY GATE (Sitting outside on its own) ---
 app.get('/verify', (req, res) => {
     const token = req.query.token;
