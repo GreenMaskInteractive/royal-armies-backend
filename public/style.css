@@ -918,6 +918,10 @@ body {
     border: 2px solid var(--accent); /* Aether Gold border */
     padding: 40px;
     border-radius: 12px;
+    position: relative;
+    z-index: 999999 !important; /* PLACES IT ABOVE ALL OVERLAYS */
+    pointer-events: auto !important; /* FORCES IT TO BE CLICKABLE */
+}
     
     display: flex;
     flex-direction: column; /* Stacks the boxes over the buttons */
