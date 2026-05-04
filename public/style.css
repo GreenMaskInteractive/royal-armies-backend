@@ -985,7 +985,7 @@ body {
     position: fixed;
     top: 60px; /* Space for Nav Bar */
     left: 0; width: 100%; height: calc(100vh - 60px);
-    background: url('images/chooseclassbg.png') no-repeat center center;
+    background: url('images/classchoosebg.png') no-repeat center center;
     background-size: cover;
     z-index: -1;
     opacity: 0;
