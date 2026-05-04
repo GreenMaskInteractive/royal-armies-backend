@@ -426,36 +426,22 @@ async function handleLogin() {
     }
 }
 
-function startClassSelectionSequence() {
-    const landing = document.getElementById('page-landing');
-    const bgLayer = document.getElementById('landing-bg-layer');
-    const classScreen = document.getElementById('class-selection-screen');
+function startClassSelectionSequence() { 
+    const landing = document.getElementById('page-landing'); 
+    const classScreen = document.getElementById('class-selection-screen'); 
 
-    // 1. Start the slow-burn fade to total black
-    bgLayer.classList.add('fade-bg-black');
+    // 1. THE INSTANT SWAP (Crucial! This makes the screens change)
+    landing.style.display = 'none'; 
+    classScreen.style.display = 'block'; 
+    classScreen.style.opacity = '1';
 
-    // 2. The 13-second wait (8s fade + 5s total darkness)
-    setTimeout(() => {
-        // 3. CRITICAL: Completely kill the landing page before showing the new screen
-        landing.style.display = 'none';
+    // 2. Ensure the new background is visible
+    const classBg = document.querySelector('.class-bg');
+    if (classBg) classBg.style.opacity = '1';
 
-        // 4. Set up the Class Selection Screen while it's still pitch black
-        classScreen.style.display = 'block';
-        classScreen.style.opacity = '0';
-
-        // 5. Fade the Class Selection Screen IN
-        setTimeout(() => {
-            classScreen.style.transition = "opacity 2.5s ease";
-            classScreen.style.opacity = '1';
-
-document.querySelector('.class-bg').style.opacity = '1';
-            
-            // 6. Sequential magic reveals
-            setTimeout(() => revealCard('card-battlemaster'), 3000);
-            setTimeout(() => revealCard('card-archmage'), 4500);
-        }, 100);
-
-    }, 5000); 
+    // 3. Sequential statue reveals
+    setTimeout(() => revealCard('card-battlemaster'), 800); 
+    setTimeout(() => revealCard('card-archmage'), 2000); 
 }
 
 function revealCard(id) {
@@ -494,11 +480,18 @@ function confirmSelection() {
 }
 
 function enterMainGame() {
-    // This removes the !important lock and reveals the game
+    // Correct way to break the !important lock
     document.getElementById('game-container').style.setProperty('display', 'block', 'important');
     document.querySelector('.top-nav').style.setProperty('display', 'flex', 'important');
-    document.getElementById('player-hud').style.setProperty('display', 'flex', 'important');
     
-    // Final cleanup
+    // Hide the selection screen
     document.getElementById('class-selection-screen').style.display = 'none';
+}
+
+// THE FINAL FUNCTION AT THE VERY BOTTOM
+function revealCard(id) {
+    const card = document.getElementById(id);
+    if (card) {
+        card.classList.add('reveal-explosion');
+    }
 }
