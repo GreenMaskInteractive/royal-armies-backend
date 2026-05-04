@@ -55,7 +55,11 @@ app.post('/register', async (req, res) => {
 
     // 3. Insert into Database AND send email in one go
     db.insert(newUser, async (err, user) => {
-        if (err) return res.status(500).json({ msg: "Forge failed." });
+    if (err) {
+        // --- ADD THIS LOG TO SEE THE TRUTH ---
+        console.error("DATABASE INSERT ERROR:", err);
+        return res.status(500).json({ msg: "Forge failed." });
+    }
 
         try {
             await resend.emails.send({
