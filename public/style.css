@@ -607,10 +607,9 @@ body {
 .main-logo {
     width: 1000px;
     position: relative;
-    z-index: 5;
     top: 200px;
-    /* --- ADD THIS LINE --- */
-    pointer-events: none; 
+    z-index: 5;
+    pointer-events: none; /* Mouse ignores the logo */
 }
 
 .mystical-energy {
@@ -923,13 +922,19 @@ body {
 
 /* --- THE NEW CONTAINER BOX --- */
 .login-form-container {
-    background: rgba(0, 0, 0, 0.65); /* Dark background tint */
-    border: 2px solid var(--accent); /* Aether Gold border */
+    /* --- Your Original Positioning --- */
+    position: relative;
+    top: -250px; /* Adjust this to the exact number you had before */
+    
+    /* --- The Styling --- */
+    background: rgba(0, 0, 0, 0.65);
+    border: 2px solid #d4af37;
     padding: 40px;
     border-radius: 12px;
-    position: relative;
-    z-index: 999999 !important; /* PLACES IT ABOVE ALL OVERLAYS */
-    pointer-events: auto !important; /* FORCES IT TO BE CLICKABLE */
+    
+    /* --- The Click Fix (Keep these!) --- */
+    z-index: 10000; 
+    pointer-events: auto !important;
 }
     
     display: flex;
