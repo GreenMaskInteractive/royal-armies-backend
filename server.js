@@ -26,25 +26,6 @@ app.use(session({
     saveUninitialized: false
 }));
 
-// --- ADMIN ONLY LOCK ---
-app.use((req, res, next) => {
-    // We only check the first two parts of your IP to be safe
-    const myIPPart = '99.59.'; 
-    const visitorIP = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
-
-    // Check if the visitor's ID starts with your numbers
-    if (visitorIP && visitorIP.includes(myIPPart)) {
-        next(); // Welcome back, Commander!
-    } else {
-        res.status(503).send(`
-            <style>body{background:#111;color:#d4af37;text-align:center;padding-top:100px;font-family:serif;}</style>
-            <h1>Royal Armies is currently under development.</h1>
-            <p>We apologize for any inconvenience if you stumbled upon this website and was curious about it. We are working to ensure that everything is in playable condition before we allow anyone to access the site. For information on this games progress you may contact admin@royalarmies.com. Thank you.</p>
-<p>A webpage will soon become available for people to connect with the games development.</p>
-        `);
-    }
-});
-
 // --- EXISTING ENGINE REQUIREMENTS ---
 // Ensure these files exist in your /backend folder!
 const { resolveBattle } = require('./battle-engine'); 
