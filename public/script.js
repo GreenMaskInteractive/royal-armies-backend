@@ -404,21 +404,20 @@ async function handleLogin() {
         const data = await response.json();
 
         if (response.ok) {
-            // 1. Hide buttons & show Loading text
+            // 1. Hide buttons, logo, and the music icon immediately
             document.getElementById('auth-buttons').style.display = 'none';
             document.getElementById('auth-loading').style.display = 'block';
+            document.getElementById('audio-control').style.display = 'none';
 
             // 2. The 5-second "Fake Load" pause
             setTimeout(() => {
-                // 3. Clear UI & Logo
                 document.querySelector('.login-form-container').style.display = 'none';
                 document.querySelector('.logo-wrapper').style.display = 'none';
                 
-                // 4. Trigger the separate cinematic function
+                // 3. Trigger the cinematic
                 startClassSelectionSequence();
             }, 5000);
         } else {
-            // This is ONLY for errors
             alert(data.msg);
         }
     } catch (err) {
@@ -426,27 +425,22 @@ async function handleLogin() {
     }
 }
 
-function startClassSelectionSequence() { 
-    const landing = document.getElementById('page-landing'); 
-    const classScreen = document.getElementById('class-selection-screen'); 
+function startClassSelectionSequence() {
+    const landing = document.getElementById('page-landing');
+    const classScreen = document.getElementById('class-selection-screen');
 
-    // 1. THE INSTANT SWAP (Crucial! This makes the screens change)
-    landing.style.display = 'none'; 
-    classScreen.style.display = 'block'; 
+landing.style.display = 'none';
+    classScreen.style.display = 'block';
     classScreen.style.opacity = '1';
 
-    // 2. Ensure the new background is visible
     const classBg = document.querySelector('.class-bg');
-    if (classBg) classBg.style.opacity = '1';
+    if (classBg) {
+        classBg.style.display = 'block';
+        classBg.style.opacity = '1';
+    }
 
-    // 3. Sequential statue reveals
-    setTimeout(() => revealCard('card-battlemaster'), 800); 
-    setTimeout(() => revealCard('card-archmage'), 2000); 
-}
-
-function revealCard(id) {
-    const card = document.getElementById(id);
-    card.classList.add('reveal-explosion');
+    setTimeout(() => revealCard('card-battlemaster'), 800);
+    setTimeout(() => revealCard('card-archmage'), 2000);
 }
 
 function selectClass(className) {
