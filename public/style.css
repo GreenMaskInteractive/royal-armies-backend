@@ -922,18 +922,22 @@ body {
 
 /* --- THE NEW CONTAINER BOX --- */
 .login-form-container {
-    /* --- Your Original Positioning --- */
-    position: relative;
-    top: -250px; /* Adjust this to the exact number you had before */
-    
-    /* --- The Styling --- */
     background: rgba(0, 0, 0, 0.65);
     border: 2px solid #d4af37;
     padding: 40px;
     border-radius: 12px;
     
-    /* --- The Click Fix (Keep these!) --- */
-    z-index: 10000; 
+    position: relative;
+    top: -150px; /* Adjust this to move the WHOLE box up or down */
+    
+    width: 400px; /* Or whatever width looks best */
+    height: auto; /* CRITICAL: This makes the box wrap around the fields */
+    
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    
+    z-index: 10000;
     pointer-events: auto !important;
 }
     
