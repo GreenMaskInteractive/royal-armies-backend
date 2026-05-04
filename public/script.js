@@ -428,27 +428,34 @@ async function handleLogin() {
 
 function startClassSelectionSequence() {
     const landing = document.getElementById('page-landing');
+    const bgLayer = document.getElementById('landing-bg-layer');
     const classScreen = document.getElementById('class-selection-screen');
 
-    // 1. Start the 8-second background fade
-    landing.classList.add('fade-out-black');
+    // 1. Start the slow-burn fade to total black
+    bgLayer.classList.add('fade-bg-black');
 
-    // 2. Wait 8 seconds for the fade to finish
+    // 2. The 13-second wait (8s fade + 5s total darkness)
     setTimeout(() => {
+        // 3. CRITICAL: Completely kill the landing page before showing the new screen
         landing.style.display = 'none';
+
+        // 4. Set up the Class Selection Screen while it's still pitch black
         classScreen.style.display = 'block';
         classScreen.style.opacity = '0';
 
-        // 3. Fade the new Class Selection Screen IN
+        // 5. Fade the Class Selection Screen IN
         setTimeout(() => {
-            classScreen.style.transition = "opacity 2s ease";
+            classScreen.style.transition = "opacity 2.5s ease";
             classScreen.style.opacity = '1';
+
+document.querySelector('.class-bg').style.opacity = '1';
             
-            // 4. Sequential magic explosions
-            setTimeout(() => revealCard('card-battlemaster'), 1000);
-            setTimeout(() => revealCard('card-archmage'), 2000);
+            // 6. Sequential magic reveals
+            setTimeout(() => revealCard('card-battlemaster'), 3000);
+            setTimeout(() => revealCard('card-archmage'), 4500);
         }, 100);
-    }, 13000); 
+
+    }, 5000); 
 }
 
 function revealCard(id) {
@@ -487,11 +494,11 @@ function confirmSelection() {
 }
 
 function enterMainGame() {
-    // This command is the only thing strong enough to break the !important lock
+    // This removes the !important lock and reveals the game
     document.getElementById('game-container').style.setProperty('display', 'block', 'important');
     document.querySelector('.top-nav').style.setProperty('display', 'flex', 'important');
     document.getElementById('player-hud').style.setProperty('display', 'flex', 'important');
     
-    // Hide the class selection screen
+    // Final cleanup
     document.getElementById('class-selection-screen').style.display = 'none';
 }

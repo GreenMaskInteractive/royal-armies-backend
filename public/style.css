@@ -967,7 +967,7 @@ body {
 /* The Landing Page Fade Out */
 .fade-out-black {
     filter: brightness(0);
-    transition: filter 5s ease; /* Slow 5 second fade */
+    transition: filter 8s ease; /* Slow 5 second fade */
 }
 
 .animate-zoom {
