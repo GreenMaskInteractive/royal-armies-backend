@@ -4,6 +4,9 @@ const bcrypt = require('bcryptjs');
 const session = require('express-session');
 const path = require('path');
 
+const { Resend } = require('resend');
+const resend = new Resend(process.env.RESEND_API_KEY);
+
 const app = express();
 const PORT = process.env.PORT || 3000;
 let activeClients = [];
@@ -58,9 +61,11 @@ app.post('/register', async (req, res) => {
             });
             res.json({ msg: "Registration successful! Check your email to verify." });
         } catch (mailError) {
-            console.log(mailError);
-            res.status(500).json({ msg: "Account forged, but the messenger pigeon failed. Try again!" });
-        }
+    // This will print the EXACT error from Resend (like "Invalid API Key" or "403 Forbidden") 
+    // to your Render logs so we can see it.
+    console.error("RESEND ERROR DETAILS:", mailError); 
+    res.status(500).json({ msg: "Account forged, but the messenger failed." });
+}
     });
 });
 
