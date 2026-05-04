@@ -401,57 +401,54 @@ async function handleLogin() {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ username: userVal, password: passVal })
         });
-
         const data = await response.json();
 
         if (response.ok) {
-            // 1. Instantly hide buttons and show "Logging in..."
+            // 1. Hide buttons & show Loading text
             document.getElementById('auth-buttons').style.display = 'none';
             document.getElementById('auth-loading').style.display = 'block';
 
-            // 2. The 5-second "Fake Loading" pause
+            // 2. The 5-second "Fake Load" pause
             setTimeout(() => {
-                // 3. NOW remove the UI and the Logo
+                // 3. Clear UI & Logo
                 document.querySelector('.login-form-container').style.display = 'none';
                 document.querySelector('.logo-wrapper').style.display = 'none';
                 
-                // 4. Start the cinematic (Zoom text and explosions)
+                // 4. Trigger the separate cinematic function
                 startClassSelectionSequence();
-            }, 5000); 
-
+            }, 5000);
         } else {
+            // This is ONLY for errors
+            alert(data.msg);
+        }
+    } catch (err) {
+        alert("The kingdom's gatekeepers are unreachable.");
+    }
+}
 
-    // 1. Instantly hide the Login UI (boxes and buttons)
-    loginUI.style.opacity = '0';
-    loginUI.style.pointerEvents = 'none';
+function startClassSelectionSequence() {
+    const landing = document.getElementById('page-landing');
+    const classScreen = document.getElementById('class-selection-screen');
 
-    // 2. Show the "Welcome" text and start fading the background to black
-    zoomText.style.opacity = '1';
-    zoomText.style.transform = 'translate(-50%, -50%) scale(1.2)';
+    // 1. Start the 8-second background fade
     landing.classList.add('fade-out-black');
 
-    // 3. Wait 5 seconds (while it's black and text is visible)
+    // 2. Wait 8 seconds for the fade to finish
     setTimeout(() => {
-        // 4. Vanish the text and the landing page
-        zoomText.style.opacity = '0';
         landing.style.display = 'none';
-
-        // 5. Reveal the Class Selection Screen
         classScreen.style.display = 'block';
-        classScreen.style.opacity = '0'; // Start invisible
-        
-        // 6. Fade the Class Screen IN as the black fades OUT
+        classScreen.style.opacity = '0';
+
+        // 3. Fade the new Class Selection Screen IN
         setTimeout(() => {
             classScreen.style.transition = "opacity 2s ease";
             classScreen.style.opacity = '1';
-            document.querySelector('.class-bg').style.opacity = '1';
             
-            // 7. Start the explosions after it's faded in
+            // 4. Sequential magic explosions
             setTimeout(() => revealCard('card-battlemaster'), 1000);
             setTimeout(() => revealCard('card-archmage'), 2000);
         }, 100);
-
-    }, 8000); // The 8 second "Impact" pause
+    }, 8000); 
 }
 
 function revealCard(id) {
