@@ -487,9 +487,11 @@ function confirmSelection() {
 }
 
 function enterMainGame() {
-    console.log("Sequence complete. Preparing country randomization...");
-    // We will build the country logic here in the next step!
+    // This command is the only thing strong enough to break the !important lock
+    document.getElementById('game-container').style.setProperty('display', 'block', 'important');
+    document.querySelector('.top-nav').style.setProperty('display', 'flex', 'important');
+    document.getElementById('player-hud').style.setProperty('display', 'flex', 'important');
+    
+    // Hide the class selection screen
     document.getElementById('class-selection-screen').style.display = 'none';
-    document.querySelector('.top-nav').style.display = 'flex';
-    document.getElementById('game-container').style.display = 'block';
 }

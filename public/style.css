@@ -1041,3 +1041,7 @@ body {
 }
 
 .class-card:hover .class-info { display: block; }
+
+#game-container, #player-hud, .top-nav {
+    display: none !important;
+}
