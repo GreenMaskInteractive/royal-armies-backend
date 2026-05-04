@@ -428,35 +428,31 @@ async function handleLogin() {
 function startClassSelectionSequence() {
     const landing = document.getElementById('page-landing');
     const classScreen = document.getElementById('class-selection-screen');
-    const nav = document.querySelector('.top-nav');
+    const classBg = document.querySelector('.class-bg');
 
+    // 1. THE SNAP: Hide landing, show class screen instantly
     landing.style.display = 'none';
+    classScreen.style.display = 'block';
     
-    // 1. Show the navigation bar container
-    nav.style.setProperty('display', 'flex', 'important');
+    // 2. Ensure everything is visible (No more opacity delays)
+    classScreen.style.opacity = '1';
+    if (classBg) {
+        classBg.style.display = 'block';
+        classBg.style.opacity = '1';
+    }
 
-    // 2. Filter the elements inside the nav
-    document.querySelectorAll('.top-nav > *').forEach(element => {
-        // KEEP: The Logout button
-        if (element.classList.contains('login-out')) {
-            element.style.display = 'block';
-            element.style.marginLeft = 'auto'; // Push to the far right
-        } 
-        // KEEP: The Logo (Title)
-        else if (element.classList.contains('nav-logo')) {
-            element.style.display = 'block';
-        } 
-        // HIDE: Everything else (Headquarters, Armory, etc.)
-        else {
-            element.style.display = 'none';
-        }
+    // 3. Show the Navigation Bar Logo & Logout
+    const nav = document.querySelector('.top-nav');
+    nav.style.setProperty('display', 'flex', 'important');
+    
+    document.querySelectorAll('.top-nav .nav-btn').forEach(btn => {
+        btn.style.display = btn.classList.contains('login-out') ? 'block' : 'none';
     });
 
-    // 3. Reveal the class screen
-    classScreen.style.display = 'block';
-    // ... rest of your statue reveal code ...
+    // 4. Reveal the giant statues
+    setTimeout(() => revealCard('card-battlemaster'), 500);
+    setTimeout(() => revealCard('card-archmage'), 1200);
 }
-
 function selectClass(className) {
     selectedClassId = className;
     document.querySelectorAll('.class-card').forEach(c => c.style.border = "none");
@@ -480,11 +476,10 @@ function confirmSelection() {
         header.innerHTML = `<h1>Blessed are you, Commander.</h1><small>The arcane spirits spoke highly of you. May you bring us victory this day.</small>`;
     }
 
-    // Final Fade to Gameplay
-    setTimeout(() => {
-        document.getElementById('class-selection-screen').style.opacity = '0';
-        setTimeout(() => enterMainGame(), 3000); // We'll build enterMainGame next!
-    }, 4000);
+#class-selection-screen {
+    background: black; /* This acts as the floor if the image takes a second to load */
+    opacity: 1 !important;
+    display: none; /* Controlled by script */
 }
 
 function enterMainGame() {
