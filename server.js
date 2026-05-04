@@ -57,7 +57,7 @@ app.post('/register', async (req, res) => {
                 from: 'Royal Armies <noreply@royalarmies.com>',
                 to: [email],
                 subject: 'Create New Account',
-                html: `<p>Click here to verify your email address: <a href="https://royalarmies.com{verificationToken}">Verify Account</a></p>`
+                html: `<p>Click here to verify your email address: <a href="https://royalarmies.com/verify?token=${verificationToken}">Verify Account</a></p>`
             });
             res.json({ msg: "Registration successful! Check your email to verify." });
         } catch (mailError) {
