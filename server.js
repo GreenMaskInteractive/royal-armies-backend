@@ -72,13 +72,25 @@ app.post('/register', async (req, res) => {
 // LOGIN: Entering the gates
 app.post('/login', (req, res) => {
     const { username, password } = req.body;
+
     db.findOne({ username }, async (err, user) => {
-        if (!user || !(await bcrypt.compare(password, user.password))) {
+        // --- DEBUG LOGS ---
+        console.log("--- LOGIN ATTEMPT ---");
+        console.log("Username searched:", username);
+        console.log("User found in DB:", user ? "YES" : "NO");
+
+        if (!user) {
+            return res.status(400).json({ msg: "Invalid credentials, traveler." });
+        }
+
+        const isMatch = await bcrypt.compare(password, user.password);
+        console.log("Password Match:", isMatch);
+        console.log("Verified Status:", user.isVerified);
+
+        if (!isMatch) {
             return res.status(400).json({ msg: "Invalid credentials, traveler." });
         }
         
-        // --- ADD THIS CHECK ---
-        // This prevents unverified players from entering
         if (user.isVerified === false) {
             return res.status(400).json({ msg: "Commander, you must verify your email before entering the field." });
         }
@@ -86,8 +98,7 @@ app.post('/login', (req, res) => {
         req.session.userId = user._id;
         res.json({ msg: "Welcome back, Commander.", user });
     });
-}); // This }); closes the Login route properly.
-
+});
 // --- THE VERIFY GATE (Sitting outside on its own) ---
 app.get('/verify', (req, res) => {
     const token = req.query.token;
