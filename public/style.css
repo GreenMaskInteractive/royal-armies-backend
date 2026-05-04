@@ -949,16 +949,25 @@ body {
 }
 
 /* --- THE ZOOM TEXT ANIMATION --- */
+/* Ensure the zoom text is bold and visible */
 .zoom-text {
     position: fixed;
     top: 50%; left: 50%;
-    transform: translate(-50%, -50%) scale(0);
+    transform: translate(-50%, -50%) scale(0.8);
     font-size: 3rem;
-    color: #d4af37; /* Aether Gold */
+    color: #d4af37;
     text-align: center;
-    font-family: 'Georgia', serif;
+    text-shadow: 0 0 20px rgba(212, 175, 55, 0.8);
     opacity: 0;
-    z-index: 500000;
+    z-index: 9999;
+    transition: all 1s ease;
+    pointer-events: none; /* Player can't click it */
+}
+
+/* The Landing Page Fade Out */
+.fade-out-black {
+    filter: brightness(0);
+    transition: filter 5s ease; /* Slow 5 second fade */
 }
 
 .animate-zoom {

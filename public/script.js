@@ -424,20 +424,39 @@ function startClassSelectionSequence() {
     const landing = document.getElementById('page-landing');
     const zoomText = document.getElementById('zoom-welcome');
     const classScreen = document.getElementById('class-selection-screen');
+    const loginUI = document.querySelector('.login-form-container');
 
-    // 1. Zoom Text
-    zoomText.classList.add('animate-zoom');
-    
-    // 2. Go Black & Reveal Background
+    // 1. Instantly hide the Login UI (boxes and buttons)
+    loginUI.style.opacity = '0';
+    loginUI.style.pointerEvents = 'none';
+
+    // 2. Show the "Welcome" text and start fading the background to black
+    zoomText.style.opacity = '1';
+    zoomText.style.transform = 'translate(-50%, -50%) scale(1.2)';
+    landing.classList.add('fade-out-black');
+
+    // 3. Wait 5 seconds (while it's black and text is visible)
     setTimeout(() => {
+        // 4. Vanish the text and the landing page
+        zoomText.style.opacity = '0';
         landing.style.display = 'none';
-        classScreen.style.display = 'block';
-        document.querySelector('.class-bg').style.opacity = '1';
-    }, 2800);
 
-    // 3. Sequential Explosions
-    setTimeout(() => revealCard('card-battlemaster'), 3500);
-    setTimeout(() => revealCard('card-archmage'), 4500);
+        // 5. Reveal the Class Selection Screen
+        classScreen.style.display = 'block';
+        classScreen.style.opacity = '0'; // Start invisible
+        
+        // 6. Fade the Class Screen IN as the black fades OUT
+        setTimeout(() => {
+            classScreen.style.transition = "opacity 2s ease";
+            classScreen.style.opacity = '1';
+            document.querySelector('.class-bg').style.opacity = '1';
+            
+            // 7. Start the explosions after it's faded in
+            setTimeout(() => revealCard('card-battlemaster'), 1000);
+            setTimeout(() => revealCard('card-archmage'), 2000);
+        }, 100);
+
+    }, 8000); // The 8 second "Impact" pause
 }
 
 function revealCard(id) {
