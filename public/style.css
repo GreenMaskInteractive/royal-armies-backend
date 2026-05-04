@@ -603,7 +603,16 @@ body {
 
 /* Mystical Logo Energy */
 .logo-wrapper { position: relative; text-align: center; margin-bottom: -40px; }
-.main-logo { width: 1000px; position: relative; z-index: 5; top: 200px; }
+
+.main-logo {
+    width: 1000px;
+    position: relative;
+    z-index: 5;
+    top: 200px;
+    /* --- ADD THIS LINE --- */
+    pointer-events: none; 
+}
+
 .mystical-energy {
     position: absolute;
     top: 50%; left: 50%;
