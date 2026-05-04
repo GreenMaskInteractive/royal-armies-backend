@@ -405,26 +405,21 @@ async function handleLogin() {
         const data = await response.json();
 
         if (response.ok) {
-            // SUCCESS: This starts your zoom text and explosions
-
+            // 1. Instantly hide buttons and show "Logging in..."
             document.getElementById('auth-buttons').style.display = 'none';
             document.getElementById('auth-loading').style.display = 'block';
 
-            startClassSelectionSequence();
-        } else {
-            // FAILURE: Shows "Invalid credentials" or "Must verify email"
-            alert(data.msg);
-        }
-    } catch (err) {
-        alert("The kingdom's gatekeepers are unreachable.");
-    }
-}
+            // 2. The 5-second "Fake Loading" pause
+            setTimeout(() => {
+                // 3. NOW remove the UI and the Logo
+                document.querySelector('.login-form-container').style.display = 'none';
+                document.querySelector('.logo-wrapper').style.display = 'none';
+                
+                // 4. Start the cinematic (Zoom text and explosions)
+                startClassSelectionSequence();
+            }, 5000); 
 
-function startClassSelectionSequence() {
-    const landing = document.getElementById('page-landing');
-    const zoomText = document.getElementById('zoom-welcome');
-    const classScreen = document.getElementById('class-selection-screen');
-    const loginUI = document.querySelector('.login-form-container');
+        } else {
 
     // 1. Instantly hide the Login UI (boxes and buttons)
     loginUI.style.opacity = '0';
