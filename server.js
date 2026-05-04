@@ -13,7 +13,7 @@ let activeClients = [];
 
 const db = new Datastore({ 
     // If running on Render, use the disk path; otherwise use local for your PC
-    filename: 'players.db', 
+    filename: process.env.RENDER ? '/data/players.db' : 'players.db', 
     autoload: true 
 });
 
