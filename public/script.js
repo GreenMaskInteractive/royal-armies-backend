@@ -279,46 +279,6 @@ function updateHUD() {
     document.getElementById('hud-unit-ratio').textContent = `${healthy}/${total}`;
 }
 
-async function handleLogin() {
-    const userField = document.getElementById('login-username').value;
-    const passField = document.getElementById('login-password').value;
-
-    // 1. Basic validation to save a server trip
-    if (!userField || !passField) {
-        alert("Commander, credentials are required to pass the gates.");
-        return;
-    }
-
-    try {
-        const response = await fetch('/login', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ username: userField, password: passField })
-        });
-
-        const data = await response.json();
-
-        if (response.ok) {
-            // 2. Sync global player object with database data
-            player.name = data.user.username;
-            player.gold = data.user.gold;
-            player.rank = data.user.rank;
-            player.xp = data.user.xp || 0; // Ensure XP is synced too
-
-            // 3. Refresh the UI before entering
-            if (typeof updateHUD === "function") updateHUD();
-            
-            enterGame(); 
-        } else {
-            // Shows "Invalid credentials" or "User not found" from server.js
-            alert(data.msg); 
-        }
-    } catch (error) {
-        console.error("Login Error:", error);
-        alert("The kingdom gates are heavy... (Server is likely waking up, please try again in 30 seconds).");
-    }
-}
-
 // Opens the modal when Register is clicked
 function handleRegister() {
     const modal = document.getElementById('register-modal');
@@ -427,4 +387,94 @@ function handleLogout() {
             audio.play().catch(e => console.log("Audio waiting for user interaction..."));
         }
     }
+}
+
+let selectedClassId = null;
+
+async function handleLogin() {
+    const userVal = document.getElementById('login-username').value;
+    const passVal = document.getElementById('login-password').value;
+
+    try {
+        const response = await fetch('/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username: userVal, password: passVal })
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+            // SUCCESS: This starts your zoom text and explosions
+            startClassSelectionSequence();
+        } else {
+            // FAILURE: Shows "Invalid credentials" or "Must verify email"
+            alert(data.msg);
+        }
+    } catch (err) {
+        alert("The kingdom's gatekeepers are unreachable.");
+    }
+}
+
+function startClassSelectionSequence() {
+    const landing = document.getElementById('page-landing');
+    const zoomText = document.getElementById('zoom-welcome');
+    const classScreen = document.getElementById('class-selection-screen');
+
+    // 1. Zoom Text
+    zoomText.classList.add('animate-zoom');
+    
+    // 2. Go Black & Reveal Background
+    setTimeout(() => {
+        landing.style.display = 'none';
+        classScreen.style.display = 'block';
+        document.querySelector('.class-bg').style.opacity = '1';
+    }, 2800);
+
+    // 3. Sequential Explosions
+    setTimeout(() => revealCard('card-battlemaster'), 3500);
+    setTimeout(() => revealCard('card-archmage'), 4500);
+}
+
+function revealCard(id) {
+    const card = document.getElementById(id);
+    card.classList.add('reveal-explosion');
+}
+
+function selectClass(className) {
+    selectedClassId = className;
+    document.querySelectorAll('.class-card').forEach(c => c.style.border = "none");
+    document.getElementById(`card-${className}`).style.border = "3px solid #d4af37";
+    document.getElementById('btn-confirm-class').disabled = false;
+}
+
+function confirmSelection() {
+    const header = document.getElementById('class-selection-header');
+    const battlemaster = document.getElementById('card-battlemaster');
+    const archmage = document.getElementById('card-archmage');
+
+    // Keep chosen, remove other
+    if (selectedClassId === 'battlemaster') {
+        archmage.style.display = 'none';
+        battlemaster.style.margin = "0 auto";
+        header.innerHTML = `<h1>Welcome to the new age, Commander.</h1><small>Just as the battlefield is our only home, so are the plentiful rewards claimed through victory!</small>`;
+    } else {
+        battlemaster.style.display = 'none';
+        archmage.style.margin = "0 auto";
+        header.innerHTML = `<h1>Blessed are you, Commander.</h1><small>The arcane spirits spoke highly of you. May you bring us victory this day.</small>`;
+    }
+
+    // Final Fade to Gameplay
+    setTimeout(() => {
+        document.getElementById('class-selection-screen').style.opacity = '0';
+        setTimeout(() => enterMainGame(), 3000); // We'll build enterMainGame next!
+    }, 4000);
+}
+
+function enterMainGame() {
+    console.log("Sequence complete. Preparing country randomization...");
+    // We will build the country logic here in the next step!
+    document.getElementById('class-selection-screen').style.display = 'none';
+    document.querySelector('.top-nav').style.display = 'flex';
+    document.getElementById('game-container').style.display = 'block';
 }

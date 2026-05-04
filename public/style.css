@@ -947,3 +947,88 @@ body {
     top: auto !important;
     left: auto !important;
 }
+
+/* --- THE ZOOM TEXT ANIMATION --- */
+.zoom-text {
+    position: fixed;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%) scale(0);
+    font-size: 3rem;
+    color: #d4af37; /* Aether Gold */
+    text-align: center;
+    font-family: 'Georgia', serif;
+    opacity: 0;
+    z-index: 500000;
+}
+
+.animate-zoom {
+    animation: zoomInText 3s forwards;
+}
+
+@keyframes zoomInText {
+    0% { transform: translate(-50%, -50%) scale(0.1); opacity: 0; }
+    50% { transform: translate(-50%, -50%) scale(1.5); opacity: 1; }
+    100% { transform: translate(-50%, -50%) scale(5); opacity: 0; visibility: hidden; }
+}
+
+/* --- THE CLASS SELECTION SCREEN --- */
+.class-bg {
+    position: fixed;
+    top: 60px; /* Space for Nav Bar */
+    left: 0; width: 100%; height: calc(100vh - 60px);
+    background: url('images/chooseclassbg.png') no-repeat center center;
+    background-size: cover;
+    z-index: -1;
+    opacity: 0;
+    transition: opacity 1.5s ease;
+}
+
+.class-options-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 50px;
+    height: 100%;
+}
+
+.class-card {
+    position: relative;
+    opacity: 0;
+    transition: all 0.4s ease;
+    cursor: pointer;
+}
+
+.class-card img {
+    width: 250px;
+    filter: brightness(0.7);
+    transition: all 0.4s ease;
+}
+
+/* Explosion reveal animation */
+.reveal-explosion {
+    animation: explosionReveal 1s forwards;
+}
+
+@keyframes explosionReveal {
+    0% { opacity: 0; transform: scale(0.5); filter: brightness(5); }
+    100% { opacity: 1; transform: scale(1); filter: brightness(1); }
+}
+
+/* Hover effects */
+.class-card:hover img {
+    transform: scale(1.15);
+    filter: brightness(1.2);
+    box-shadow: 0 0 30px #d4af37;
+}
+
+.class-card .class-info {
+    display: none;
+    position: absolute;
+    bottom: -150px;
+    background: rgba(0,0,0,0.9);
+    padding: 15px;
+    border: 1px solid #d4af37;
+    width: 300px;
+}
+
+.class-card:hover .class-info { display: block; }

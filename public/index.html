@@ -166,6 +166,46 @@
     <div id="audio-icon" class="icon-muted"></div>
 </div>
 
+<!-- THE CLASS SELECTION CINEMATIC -->
+<div id="class-selection-screen" class="full-page-overlay" style="display: none;">
+    <!-- Background is set in CSS for high resolution -->
+    <div class="class-bg"></div>
+
+    <!-- The Zooming Welcome Text -->
+    <div id="zoom-welcome" class="zoom-text">Welcome, commander.<br>Time to Prepare for the War!</div>
+
+    <!-- The Class Images Container -->
+    <div class="class-options-container">
+        <div class="class-card" id="card-battlemaster" onclick="selectClass('battlemaster')">
+            <div class="explosion-effect"></div>
+            <img src="images/battlemasterclass.png" alt="Battlemaster">
+            <div class="class-info">
+                <h3>Battlemaster</h3>
+                <p>History: Masters of the blade and tactical field maneuvers.</p>
+                <p>Units: Knights, Paladins, Iron Guards.</p>
+                <p>Buffs: +15% Physical Defense, -10% Recruitment Cost.</p>
+            </div>
+        </div>
+
+        <div class="class-card" id="card-archmage" onclick="selectClass('archmage')">
+            <div class="explosion-effect"></div>
+            <img src="images/archmageclass.png" alt="Archmage">
+            <div class="class-info">
+                <h3>Archmage</h3>
+                <p>History: Wielders of ancient arcane spirits and cosmic energy.</p>
+                <p>Units: Sorcerers, Arcane Golems, Spirit Wraiths.</p>
+                <p>Buffs: +20% Magical Power, +5% Resource Regeneration.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- The Dynamic Message Area -->
+    <div id="class-selection-header" class="selection-message"></div>
+
+    <!-- The Action Button -->
+    <button id="btn-confirm-class" class="confirm-btn" disabled onclick="confirmSelection()">Confirm Class</button>
+</div>
+
     <!-- 6. SCRIPTS -->
     <script src="rank-data.js"></script>
     <script src="unit-data.js"></script>

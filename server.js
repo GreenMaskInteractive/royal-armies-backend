@@ -51,10 +51,10 @@ app.post('/register', async (req, res) => {
         try {
             // 2. Send the actual email
             await resend.emails.send({
-                from: 'The Watchtower <onboarding@resend.dev>',
+                from: 'Royal Armies <noreply@royalarmies.com>',
                 to: [email],
-                subject: 'Forge Your Account, Commander',
-                html: `<p>Commander, click here to verify your rank: <a href="https://royalarmies.com{verificationToken}">Verify Account</a></p>`
+                subject: 'Create New Account',
+                html: `<p>Click here to verify your email address: <a href="https://royalarmies.com{verificationToken}">Verify Account</a></p>`
             });
             res.json({ msg: "Registration successful! Check your email to verify." });
         } catch (mailError) {
