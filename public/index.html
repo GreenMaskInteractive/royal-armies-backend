@@ -181,21 +181,32 @@
     <!-- 1. Background Layer -->
     <div class="class-bg"></div> 
 
-    <!-- 4. Archmage Side Panel (Slides from Right) -->
-    <div id="info-archmage" class="side-info-panel right-panel"> 
-        <img src="images/sideborder.png" class="panel-border-img"> 
-        <div class="info-content">
-<img src="images/archmagecrest.png" alt="Archmage Crest" class="class-crest"> 
-            <h2>Archmage</h2> 
-            <div class="info-category"><h4>History</h4><p>Wielders of ancient arcane spirits and cosmic energy.</p></div> 
-            <div class="info-category"><h4>Units</h4><p>Sorcerers, Arcane Golems, Spirit Wraiths.</p></div> 
-            <div class="info-category"><h4>Buffs</h4><p>+20% Magical Power, +5% Resource Regeneration.</p></div>
- <div class="info-content">
-    <!-- ... History/Units/Buffs ... -->
-    <button class="panel-confirm-btn" onclick="confirmSelection()">Ascend as Archmage</button>
+<!-- 4. Archmage Side Panel (Slides from Right) -->
+<div id="info-archmage" class="side-info-panel right-panel">
+    <img src="images/sideborder.png" class="panel-border-img">
+    <div class="info-content">
+        <img src="images/archmagecrest.png" alt="Archmage Crest" class="class-crest">
+        <h2>Archmage</h2>
+        
+        <div class="info-category">
+            <h4>History</h4>
+            <p>Wielders of ancient arcane spirits and cosmic energy.</p>
+        </div>
+        
+        <div class="info-category">
+            <h4>Units</h4>
+            <p>Sorcerers, Arcane Golems, Spirit Wraiths.</p>
+        </div>
+        
+        <div class="info-category">
+            <h4>Buffs</h4>
+            <p>+20% Magical Power, +5% Resource Regeneration.</p>
+        </div>
+
+        <!-- Button is now a direct child of the single info-content div -->
+        <button class="panel-confirm-btn" onclick="confirmSelection()">Ascend as Archmage</button>
+    </div>
 </div>
-        </div> 
-    </div> 
 
     <!-- 2. Battlemaster Side Panel (Slides from Left) -->
     <div id="info-battlemaster" class="side-info-panel left-panel"> 

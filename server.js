@@ -117,6 +117,7 @@ app.get('/verify', (req, res) => {
 
 // --- EXISTING GAME ROUTES ---
 
+/*
 app.get('/get-rank-data', (req, res) => {
     res.json(groundRanks);
 });
@@ -125,6 +126,7 @@ app.get('/test-sim', (req, res) => {
     const sim = generateRankedSimulation(1);
     res.json(sim);
 });
+*/
 
 app.get('/listen-for-verify', (req, res) => {
     res.setHeader('Content-Type', 'text/event-stream');
