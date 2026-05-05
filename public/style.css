@@ -1075,7 +1075,10 @@ body {
     transition: all 0.5s ease-in-out;
     cursor: pointer;
     z-index: 10;
-    
+    pointer-events: none; 
+    cursor: pointer;
+}   
+
     /* 3. FORCE VISIBILITY: Ensures no old code is hiding him */
     opacity: 1 !important;
     visibility: visible !important;
@@ -1102,6 +1105,8 @@ body {
     height: auto;
     transition: filter 0.5s ease;
     image-rendering: -webkit-optimize-contrast;
+    pointer-events: auto; /* Tells the browser to ONLY click the actual statue */
+    cursor: pointer;
 }
 
 /* --- 5. THE STONE STATE --- */

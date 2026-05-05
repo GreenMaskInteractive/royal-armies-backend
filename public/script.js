@@ -16,7 +16,8 @@ if (typeof unitDatabase === 'undefined') {
 
 // --- 2. GLOBAL STATE ---
 let selectedClassId = null;
-let narrativeFinished = false;
+let narrativeFinished = false; // The lock that prevents clicking during dialogue
+
 var player = {
     name: "Commander Name",
     rank: 1,
@@ -26,6 +27,7 @@ var player = {
     terrain: "Standard",
     army: [] 
 };
+
 var currentSFChain = [];
 var battleHoldInterval = null;
 var holdTimer = null;
@@ -149,46 +151,56 @@ function startClassSelectionSequence() {
 }
 
 function selectClass(className) {
-    
-if (!narrativeFinished) {
+    // 1. Guard Clause: Check if the Old Man is still speaking
+    if (!narrativeFinished) {
         console.log("Patience, traveler. The Old Man is speaking.");
-        return; // This stops the function from running
+        return; 
     }
+
+    // 2. State Management
+    selectedClassId = className;
+
+    // 3. UI Cleanup: Reset cards and hide all panels
+    document.querySelectorAll('.class-card').forEach(card => {
+        card.classList.remove('selected');
+    });
     
-    const bmImg = document.getElementById('img-battlemaster');
-    if (bmImg) {
-        bmImg.classList.remove('stone-form');
-    }
+    document.querySelectorAll('.side-info-panel').forEach(panel => {
+        panel.classList.remove('show');
+    });
 
-selectedClassId = className;
-    document.querySelectorAll('.class-card').forEach(card => card.classList.remove('selected'));
-    document.querySelectorAll('.side-info-panel').forEach(panel => panel.classList.remove('show'));
-
+    // 4. Update Statue Visuals (Remove stone form and handle colors)
     const bmImg = document.getElementById('img-battlemaster');
     const amImg = document.getElementById('img-archmage');
 
     if (className === 'battlemaster') {
-        bmImg.src = 'images/battlemasterclass.png';
-        amImg.src = 'images/classarchmagestone.png';
-    } else {
-        amImg.src = 'images/classarchmage.png';
-        bmImg.src = 'images/classbattlemasterstone.png';
+        if (bmImg) {
+            bmImg.src = 'images/battlemasterclass.png';
+            bmImg.classList.remove('stone-form'); // Bring back color/glow
+        }
+        if (amImg) {
+            amImg.src = 'images/classarchmagestone.png';
+        }
+    } else if (className === 'archmage') {
+        if (amImg) {
+            amImg.src = 'images/classarchmage.png';
+            amImg.classList.remove('stone-form');
+        }
+        if (bmImg) {
+            bmImg.src = 'images/classbattlemasterstone.png';
+        }
     }
 
-    document.getElementById(`card-${className}`).classList.add('selected');
-    document.getElementById(`info-${className}`).classList.add('show');
-}
+    // 5. Show Selected Effects
+    const selectedCard = document.getElementById(`card-${className}`);
+    if (selectedCard) {
+        selectedCard.classList.add('selected');
+    }
 
-function confirmSelection() {
-    document.querySelectorAll('.side-info-panel').forEach(panel => panel.classList.remove('show'));
-    const selectionScreen = document.getElementById('class-selection-screen');
-    selectionScreen.style.transition = "opacity 0.8s ease";
-    selectionScreen.style.opacity = "0";
-
-    setTimeout(() => {
-        selectionScreen.style.display = 'none';
-        enterMainGame();
-    }, 800);
+    const infoPanel = document.getElementById(`info-${className}`);
+    if (infoPanel) {
+        infoPanel.classList.add('show');
+    }
 }
 
 // --- 7. NARRATIVE ENGINE ---
