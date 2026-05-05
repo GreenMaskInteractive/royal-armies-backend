@@ -3,6 +3,7 @@
  * Master UI & Simulation Controller
  */
 
+const groundRanks = ["Recruit", "Soldier", "Warrior"];
 const eventSource = new EventSource('/listen-for-verify');
 
 eventSource.onmessage = (event) => {
@@ -427,16 +428,32 @@ function startClassSelectionSequence() {
     const classScreen = document.getElementById('class-selection-screen');
     const classBg = document.querySelector('.class-bg');
 
-    // 1. THE SNAP: Hide landing, show class screen instantly
+    // 1. HIDE Landing, SHOW Class Screen
     landing.style.display = 'none';
     classScreen.style.display = 'block';
-    
-    // 2. Ensure everything is visible (No more opacity delays)
     classScreen.style.opacity = '1';
+
     if (classBg) {
         classBg.style.display = 'block';
         classBg.style.opacity = '1';
     }
+
+    // 2. SHOW Navigation Bar (MOVED HERE)
+    const nav = document.querySelector('.top-nav');
+    if (nav) {
+        nav.style.setProperty('display', 'flex', 'important');
+        document.querySelectorAll('.top-nav .nav-btn').forEach(btn => {
+            btn.style.display = btn.classList.contains('login-out') ? 'block' : 'none';
+        });
+    }
+
+    // 3. START Narrative (MOVED HERE)
+    playTutorialNarrative();
+
+    // 4. REVEAL Statues (MOVED HERE)
+    setTimeout(() => revealCard('card-battlemaster'), 500);
+    setTimeout(() => revealCard('card-archmage'), 1200);
+}
 
 /* --- NARRATIVE SYSTEM DATA --- */
 const dialogueLines = [
@@ -463,6 +480,11 @@ const voicePlayer = new Audio();
 /* --- NARRATIVE ENGINE --- */
 function playTutorialNarrative() {
     if (localStorage.getItem('royalArmies_tutorialSeen')) return;
+
+    voicePlayer.play().then(() => {
+        voicePlayer.pause();
+        voicePlayer.currentTime = 0;
+    }).catch(e => console.log("Waiting for user gesture..."));
 
     const box = document.getElementById('narrative-box');
     box.style.display = 'flex'; // ADD THIS LINE
