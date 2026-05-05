@@ -175,47 +175,72 @@
     <div id="audio-icon" class="icon-muted"></div>
 </div>
 
-<!-- THE CLASS SELECTION CINEMATIC -->
-<div id="class-selection-screen" class="full-page-overlay" style="display: none;">
-    <!-- Background is set in CSS for high resolution -->
-    <div class="class-bg"></div>
+<!-- THE CLASS SELECTION CINEMATIC --> 
+<div id="class-selection-screen" class="full-page-overlay" style="display: none;"> 
+    
+    <!-- 1. Background Layer -->
+    <div class="class-bg"></div> 
 
-    <!-- The Class Images Container -->
-    <div class="class-options-container">
-        <div class="class-card" id="card-battlemaster" onclick="selectClass('battlemaster')">
-            <div class="explosion-effect"></div>
-            <img src="images/battlemasterclass.png" alt="Battlemaster">
-            <div class="class-info">
-                <h3>Battlemaster</h3>
-                <p>History: Masters of the blade and tactical field maneuvers.</p>
-                <p>Units: Knights, Paladins, Iron Guards.</p>
-                <p>Buffs: +15% Physical Defense, -10% Recruitment Cost.</p>
-            </div>
-        </div>
+    <!-- 4. Archmage Side Panel (Slides from Right) -->
+    <div id="info-archmage" class="side-info-panel right-panel"> 
+        <img src="images/sideborder.png" class="panel-border-img"> 
+        <div class="info-content">
+<img src="images/archmagecrest.png" alt="Archmage Crest" class="class-crest"> 
+            <h2>Archmage</h2> 
+            <div class="info-category"><h4>History</h4><p>Wielders of ancient arcane spirits and cosmic energy.</p></div> 
+            <div class="info-category"><h4>Units</h4><p>Sorcerers, Arcane Golems, Spirit Wraiths.</p></div> 
+            <div class="info-category"><h4>Buffs</h4><p>+20% Magical Power, +5% Resource Regeneration.</p></div>
+ <div class="info-content">
+    <!-- ... History/Units/Buffs ... -->
+    <button class="panel-confirm-btn" onclick="confirmSelection()">Ascend as Archmage</button>
+</div>
+        </div> 
+    </div> 
 
-        <div class="class-card" id="card-archmage" onclick="selectClass('archmage')">
-            <div class="explosion-effect"></div>
-            <img src="images/classarchmage.png" alt="Archmage">
-            <div class="class-info">
-                <h3>Archmage</h3>
-                <p>History: Wielders of ancient arcane spirits and cosmic energy.</p>
-                <p>Units: Sorcerers, Arcane Golems, Spirit Wraiths.</p>
-                <p>Buffs: +20% Magical Power, +5% Resource Regeneration.</p>
-            </div>
-        </div>
+    <!-- 2. Battlemaster Side Panel (Slides from Left) -->
+    <div id="info-battlemaster" class="side-info-panel left-panel"> 
+        <div class="info-content">
+<img src="images/battlemastercrest.png" alt="Battlemaster Crest" class="class-crest"> 
+            <h2>Battlemaster</h2> 
+            <div class="info-category"><h4>History</h4><p>Masters of the blade and tactical field maneuvers.</p></div> 
+            <div class="info-category"><h4>Units</h4><p>Knights, Paladins, Iron Guards.</p></div> 
+            <div class="info-category"><h4>Buffs</h4><p>+15% Physical Defense, -10% Recruitment Cost.</p></div>
+<div class="info-content">
+    <!-- ... History/Units/Buffs ... -->
+    <button class="panel-confirm-btn" onclick="confirmSelection()">Enlist as Battlemaster</button>
+</div>
+        </div> 
+        <img src="images/sideborder.png" class="panel-border-img"> 
+    </div> 
+
+    <!-- 3. The Statues -->
+<div class="class-options-container">
+    <!-- Battlemaster starts as the colored version -->
+    <div class="class-card selected" id="card-battlemaster" onclick="selectClass('battlemaster')">
+        <img src="images/battlemasterclass.png" alt="Battlemaster" id="img-battlemaster">
     </div>
 
-    <!-- The Dynamic Message Area -->
-    <div id="class-selection-header" class="selection-message"></div>
+    <!-- Archmage starts as the stone version -->
+    <div class="class-card" id="card-archmage" onclick="selectClass('archmage')">
+        <img src="images/classarchmagestone.png" alt="Archmage" id="img-archmage">
+    </div>
+</div>
+</div> <!-- This closes the #class-selection-screen -->
 
-    <!-- The Action Button -->
-    <button id="btn-confirm-class" class="confirm-btn" disabled onclick="confirmSelection()">Confirm Class</button>
+<!-- NARRATIVE DIALOGUE BOX -->
+<div id="narrative-box" class="narrative-container">
+    <div class="narrative-portrait">
+        <img src="images/old-man-portrait.png" alt="Mysterious Traveler">
+    </div>
+    <div class="narrative-text-area">
+        <p id="narrative-text">Welcome, traveler, to the Royal Armies.</p>
+    </div>
 </div>
 
-    <!-- 6. SCRIPTS -->
-    <script src="rank-data.js"></script>
-    <script src="unit-data.js"></script>
-    <script src="battle-logic.js"></script>
-    <script src="script.js"></script>
-</body>
+<!-- 6. SCRIPTS (Keep these at the bottom) --> 
+<script src="rank-data.js"></script> 
+<script src="unit-data.js"></script> 
+<script src="battle-logic.js"></script> 
+<script src="script.js"></script> 
+</body> 
 </html>

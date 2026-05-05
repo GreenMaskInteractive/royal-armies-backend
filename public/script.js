@@ -404,19 +404,16 @@ async function handleLogin() {
         const data = await response.json();
 
         if (response.ok) {
-            // 1. Hide buttons, logo, and the music icon immediately
+            // 1. Immediately hide the landing page elements
+            document.querySelector('.login-form-container').style.display = 'none';
+            document.querySelector('.logo-wrapper').style.display = 'none';
             document.getElementById('auth-buttons').style.display = 'none';
-            document.getElementById('auth-loading').style.display = 'block';
-            document.getElementById('audio-control').style.display = 'none';
+            
+            // 2. Trigger the narrative AND the cinematic instantly
+            // This ensures the browser respects the 'Login' click as the trigger
+            playTutorialNarrative();
+            startClassSelectionSequence();
 
-            // 2. The 5-second "Fake Load" pause
-            setTimeout(() => {
-                document.querySelector('.login-form-container').style.display = 'none';
-                document.querySelector('.logo-wrapper').style.display = 'none';
-                
-                // 3. Trigger the cinematic
-                startClassSelectionSequence();
-            }, 5000);
         } else {
             alert(data.msg);
         }
@@ -441,6 +438,66 @@ function startClassSelectionSequence() {
         classBg.style.opacity = '1';
     }
 
+/* --- NARRATIVE SYSTEM DATA --- */
+const dialogueLines = [
+    "Welcome, traveler, to the Royal Armies.",
+    "You have ventured far and seen much, I can tell... and most likely, you seek to finally settle your weary bones and find rest.",
+    "But your legend is not yet written to its end. Across the horizon, the banners of desperate nations flutter in the wind, crying out for a savior.",
+    "I ask you... indulge an old man’s final wish. Aid these people.",
+    "They require a soul of iron and nobility—one who will not flinch when the frontlines bleed.",
+    "Yet, before you take your rightful place among the Great Hosts of your nation, I must ask... what is your title?"
+];
+
+const dialogueAudio = [
+    "audio/tutorial_oldman1.wav",
+    "audio/tutorial_oldman2.wav",
+    "audio/tutorial_oldman3.wav",
+    "audio/tutorial_oldman4.wav",
+    "audio/tutorial_oldman5.wav",
+    "audio/tutorial_oldman6.wav"
+];
+
+let currentLineIndex = 0;
+const voicePlayer = new Audio();
+
+/* --- NARRATIVE ENGINE --- */
+function playTutorialNarrative() {
+    if (localStorage.getItem('royalArmies_tutorialSeen')) return;
+
+    const box = document.getElementById('narrative-box');
+    box.style.display = 'flex'; // ADD THIS LINE
+    box.style.opacity = "1";
+    
+    currentLineIndex = 0;
+    runCinematicStep();
+    localStorage.setItem('royalArmies_tutorialSeen', 'true');
+}
+
+function runCinematicStep() {
+    const textElement = document.getElementById('narrative-text');
+    
+    // Update Text
+    textElement.innerText = dialogueLines[currentLineIndex];
+
+    // Load and Play Audio
+    voicePlayer.src = dialogueAudio[currentLineIndex];
+    voicePlayer.play().catch(e => console.log("Audio waiting for interaction..."));
+
+    // AUTO-ADVANCE LOGIC
+    voicePlayer.onended = () => {
+        currentLineIndex++;
+        if (currentLineIndex < dialogueLines.length) {
+            setTimeout(runCinematicStep, 800); // Dramatic pause
+        } else {
+            // Fade out when finished
+            const box = document.getElementById('narrative-box');
+            box.style.transition = "opacity 1.5s ease";
+            box.style.opacity = "0";
+            setTimeout(() => box.style.display = 'none', 1500);
+        }
+    };
+}
+
     // 3. Show the Navigation Bar Logo & Logout
     const nav = document.querySelector('.top-nav');
     nav.style.setProperty('display', 'flex', 'important');
@@ -449,54 +506,94 @@ function startClassSelectionSequence() {
         btn.style.display = btn.classList.contains('login-out') ? 'block' : 'none';
     });
 
+playTutorialNarrative(); 
+
     // 4. Reveal the giant statues
     setTimeout(() => revealCard('card-battlemaster'), 500);
     setTimeout(() => revealCard('card-archmage'), 1200);
 }
+
 function selectClass(className) {
     selectedClassId = className;
-    document.querySelectorAll('.class-card').forEach(c => c.style.border = "none");
-    document.getElementById(`card-${className}`).style.border = "3px solid #d4af37";
+
+    // 1. Reset Classes and Panels
+    document.querySelectorAll('.class-card').forEach(card => card.classList.remove('selected'));
+    document.querySelectorAll('.side-info-panel').forEach(panel => panel.classList.remove('show'));
+
+    // 2. Define our image elements
+    const bmImg = document.getElementById('img-battlemaster');
+    const amImg = document.getElementById('img-archmage');
+
+    // 3. Perform the Swap
+    if (className === 'battlemaster') {
+        // Wake up Battlemaster
+        bmImg.src = 'images/battlemasterclass.png';
+        // Turn Archmage to Stone
+        amImg.src = 'images/classarchmagestone.png';
+    } else {
+        // Wake up Archmage
+        amImg.src = 'images/classarchmage.png';
+        // Turn Battlemaster to Stone
+        bmImg.src = 'images/classbattlemasterstone.png';
+    }
+
+    // 4. Show the new visuals
+    document.getElementById(`card-${className}`).classList.add('selected');
+    document.getElementById(`info-${className}`).classList.add('show');
     document.getElementById('btn-confirm-class').disabled = false;
 }
 
 function confirmSelection() {
-    const header = document.getElementById('class-selection-header');
-    const battlemaster = document.getElementById('card-battlemaster');
-    const archmage = document.getElementById('card-archmage');
+    // 1. Instantly hide the selection UI
+    document.querySelectorAll('.side-info-panel').forEach(panel => {
+        panel.classList.remove('show');
+    });
+    
+    // Hide the whole selection screen
+    const selectionScreen = document.getElementById('class-selection-screen');
+    selectionScreen.style.transition = "opacity 0.8s ease";
+    selectionScreen.style.opacity = "0";
 
-    // Keep chosen, remove other
-    if (selectedClassId === 'battlemaster') {
-        archmage.style.display = 'none';
-        battlemaster.style.margin = "0 auto";
-        header.innerHTML = `<h1>Welcome to the new age, Commander.</h1><small>Just as the battlefield is our only home, so are the plentiful rewards claimed through victory!</small>`;
-    } else {
-        battlemaster.style.display = 'none';
-        archmage.style.margin = "0 auto";
-        header.innerHTML = `<h1>Blessed are you, Commander.</h1><small>The arcane spirits spoke highly of you. May you bring us victory this day.</small>`;
-    }
-
+    // 2. Trigger the game entry immediately
+    setTimeout(() => {
+        selectionScreen.style.display = 'none';
+        enterMainGame();
+    }, 800); // Wait for the fade-out to finish
 }
 
 function enterMainGame() {
-    // Show the game container
-    document.getElementById('game-container').style.setProperty('display', 'block', 'important');
-    
-    // Show all navigation buttons again
+    const gameContainer = document.getElementById('game-container');
+    const selectionScreen = document.getElementById('class-selection-screen');
+
+    // 1. Prepare the game container (still invisible due to opacity: 0)
+    gameContainer.style.setProperty('display', 'block', 'important');
+
+    // 2. Reveal all navigation buttons
     document.querySelectorAll('.top-nav .nav-btn').forEach(btn => {
         btn.style.display = 'block';
-        // Reset the auto margin on logout button if needed
         if (btn.classList.contains('login-out')) {
-            btn.style.marginLeft = '0'; 
+            btn.style.marginLeft = '0';
         }
     });
 
-    document.getElementById('class-selection-screen').style.display = 'none';
+    // 3. Reveal the Top Nav and HUD (if they were hidden)
+    document.querySelector('.top-nav').style.display = 'flex';
+    document.getElementById('player-hud').style.display = 'block';
+
+    // 4. Trigger the smooth fade-in
+    setTimeout(() => {
+        gameContainer.style.opacity = "1";
+    }, 50);
+
+    // 5. Finally, remove the selection screen from the background
+    selectionScreen.style.display = 'none';
 }
+
 // THE FINAL FUNCTION AT THE VERY BOTTOM
 function revealCard(id) {
     const card = document.getElementById(id);
     if (card) {
-        card.classList.add('reveal-explosion');
+        // This links directly to your new CSS fade-in
+        card.classList.add('reveal-statue'); 
     }
 }

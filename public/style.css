@@ -536,6 +536,10 @@ body {
     margin-right: 160px !important;
     position: relative;
     z-index: 1;
+
+    /* ADD THESE TWO LINES */
+    opacity: 0; 
+    transition: opacity 1.5s ease-in-out;
 }
 
 /* --- LANDING PAGE STYLES --- */
@@ -1044,65 +1048,265 @@ body {
     opacity: 1;
     transition: opacity 2s ease;
 }
-/* Ensure the cards are even higher */
+
+/* --- 1. THE LAYOUT CONTAINER --- */
 .class-options-container {
     display: flex;
     justify-content: center;
-    align-items: flex-end; /* Keeps statues sitting on the "floor" */
-    gap: 100px; /* More space between the big statues */
+    align-items: flex-end;
     width: 100vw;
-    padding-bottom: 50px;
     position: absolute;
-    bottom: 0; /* Sits them at the bottom of the screen */
+    bottom: 0;
+    padding-bottom: 150px;
+    /* 4. PREVENT OVERFLOW: This stops the browser from 'launching' the right card */
+    overflow: hidden; 
 }
 
+/* --- 2. THE STATUE CARDS --- */
 .class-card {
     position: relative;
-    width: 450px; /* Increased from ~300px */
-    transition: transform 0.5s ease, filter 0.5s ease;
+    /* 1. USE VIEWPORT WIDTH: This forces them to fit any screen */
+    width: 52vw; 
+    max-width: 1200px; /* Caps the size so they don't get TOO big on 4k monitors */
+    
+    /* 2. THE TIGHT HUG: Negative margin pulls them in from the edges */
+    margin: 0 -10vw; 
+    
+    transition: all 0.5s ease-in-out;
     cursor: pointer;
-    opacity: 0; /* Keeps your explosion reveal working */
-    text-align: center;
+    z-index: 10;
+    
+    /* 3. FORCE VISIBILITY: Ensures no old code is hiding him */
+    opacity: 1 !important;
+    visibility: visible !important;
 }
 
+/* Ensure the Archmage specifically stays in the frame */
+#card-archmage {
+    transform-origin: left center;
+}
+/* --- 2. THE ANCHORS (Place them right here) --- */
+#card-battlemaster { transform-origin: right center; }
+#card-archmage { transform-origin: left center; }
+
+/* --- 3. THE AWAKENED STATE --- */
+.class-card.selected {
+    z-index: 100;
+    filter: drop-shadow(0 0 30px var(--accent));
+    opacity: 1 !important; /* Ensures the selected one is visible */
+}
+
+/* --- 4. THE IMAGES --- */
 .class-card img {
-    width: 100%; /* Fills the 450px width */
+    width: 100%;
     height: auto;
-    /* This keeps the edges crisp even when scaled */
-    image-rendering: -webkit-optimize-contrast; 
-    filter: drop-shadow(0 0 15px rgba(0, 0, 0, 0.8));
+    transition: filter 0.5s ease;
+    image-rendering: -webkit-optimize-contrast;
 }
 
-/* Explosion reveal animation */
-.reveal-explosion {
-    animation: explosionReveal 1s forwards;
+/* --- 5. THE STONE STATE --- */
+.class-card:not(.selected) img {
+    filter: brightness(0.7) contrast(0.9);
 }
 
-@keyframes explosionReveal {
-    0% { opacity: 0; transform: scale(0.5); filter: brightness(5); }
-    100% { opacity: 1; transform: scale(1); filter: brightness(1); }
+#card-archmage {
+    /* Adjust this number (e.g., -10px, -20px) until he looks level with the Battlemaster */
+    top: 20px; 
+    
+    /* Keep the transform-origin we used to prevent him from 'launching' */
+    transform-origin: left center;
 }
 
-/* Hover effects */
-.class-card:hover {
-    transform: scale(1.1);
-    filter: brightness(1.2) drop-shadow(0 0 30px #d4af37);
+/* --- 4. THE SLIDING SIDE PANELS --- */
+.side-info-panel {
+    position: fixed; 
+    top: 0;
+    /* 1. FORCE THE PANEL TO THE BOTTOM */
+    bottom: 0 !important;
+    height: 104vh !important; 
+    
+    width: 450px; 
+
+    /* 2. FORCE THE STONEWALL TO STRETCH */
+    background: 
+        linear-gradient(rgba(0, 0, 0, 0.75), rgba(0, 0, 0, 0.75)), 
+        url('images/stonewallbg.png');
+    background-size: 100% 100% !important; /* Stretches the image top-to-bottom */
+    background-repeat: no-repeat;
+    
+    display: flex;
+    transition: transform 0.8s cubic-bezier(0.075, 0.82, 0.165, 1);
+    z-index: 10005;
 }
 
-.class-info {
-    opacity: 0;
-    transition: opacity 0.3s ease;
-    background: rgba(0, 0, 0, 0.7);
-    padding: 15px;
-    border-radius: 10px;
-    border: 1px solid #d4af37;
-    margin-top: 20px;
+/* Ensure they still slide from the screen edges */
+.left-panel { left: 0; transform: translateX(-100%); }
+.right-panel { right: 0; transform: translateX(100%); }
+
+.left-panel.show, .right-panel.show { transform: translateX(0); }
+
+.panel-border-img {
+    height: 100%;
+    width: 25px;
+    object-fit: fill;
 }
 
-.class-card:hover .class-info {
-    opacity: 1;
+.info-content {
+    padding: 50px 30px;
+    flex-grow: 1;
+    font-family: 'Georgia', serif;
+    color: white;
+    z-index: 2; /* Ensures text sits above the background stack */
+}
+
+.info-category h4 {
+    color: var(--accent);
+    border-bottom: 2px solid var(--accent);
+    margin-bottom: 10px;
+    padding-bottom: 4px;
+    text-transform: uppercase;
+    font-size: 0.9rem;
+    text-shadow: 1px 1px 2px black; /* Makes gold pop against the stone texture */
 }
 
 #game-container, #player-hud, .top-nav {
     display: none !important;
 }
+
+.info-content h2 {
+    font-family: 'Georgia', serif;
+    font-size: 2.2rem;
+    color: var(--accent); /* Aether Gold */
+    text-transform: uppercase;
+    letter-spacing: 4px;
+    text-align: center;
+    margin-bottom: 30px;
+    
+    /* 1. VISUAL SEPARATION: The Underline */
+    border-bottom: 3px double var(--accent);
+    padding-bottom: 15px;
+    
+    /* 2. THE GLOW: Makes it look like it's etched in light */
+    text-shadow: 0 0 10px rgba(212, 175, 55, 0.6), 
+                 2px 2px 4px rgba(0, 0, 0, 0.9);
+    
+    /* 3. LIGHTING EFFECT */
+    background: linear-gradient(to right, transparent, rgba(212, 175, 55, 0.1), transparent);
+}
+
+.panel-confirm-btn {
+    margin-top: auto; /* Pushes the button to the bottom of the content */
+    margin-bottom: 80px;
+    width: 100%;
+    padding: 15px;
+    background: linear-gradient(to bottom, #2a2a2a, #000);
+    border: 2px solid var(--accent);
+    color: var(--accent);
+    font-family: 'Georgia', serif;
+    font-size: 1.1rem;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.6);
+    border-radius: 4px;
+}
+
+.panel-confirm-btn:hover {
+    background: var(--accent);
+    color: #000;
+    box-shadow: 0 0 20px var(--accent);
+    transform: translateY(-3px);
+}
+
+.panel-confirm-btn:active {
+    transform: translateY(1px);
+}
+
+/* Ensure the info-content allows the button to sit at the bottom */
+.info-content {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+/* --- THE CLASS CRESTS --- */
+.class-crest {
+    width: 300px; /* Adjust size to fit your design */
+    height: auto;
+    margin: 0 auto 15px auto; /* Centered with space below it */
+    display: block;
+    filter: drop-shadow(0 0 10px rgba(212, 175, 55, 0.5)); /* Subtle Aether Gold glow */
+    transition: transform 0.3s ease;
+}
+
+/* Target only the crest inside the Battlemaster panel */
+#info-battlemaster .class-crest {
+    /* Increase this number until it visually matches the Archmage */
+    width: 350px; 
+    
+    /* Optional: If it looks too low after resizing, adjust this margin */
+    margin-bottom: 10px; 
+}
+
+/* Subtle "pulse" effect when the panel shows up */
+.side-info-panel.show .class-crest {
+    animation: crestPulse 2s infinite ease-in-out;
+}
+
+@keyframes crestPulse {
+    0%, 100% { transform: scale(1); filter: brightness(1); }
+    50% { transform: scale(1.05); filter: brightness(1.2); }
+}
+
+.narrative-container {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    width: 500px;
+    height: 150px;
+    background: linear-gradient(rgba(0, 0, 0, 0.9), rgba(0, 0, 0, 0.8)), url('images/stonewallbg.png');
+    background-size: cover;
+    border: 2px solid var(--accent);
+    border-radius: 8px;
+    display: none; /* Hidden by default */
+    flex-direction: row;
+    align-items: center;
+    padding: 15px;
+    z-index: 100000;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.8);
+    cursor: pointer;
+}
+
+.narrative-portrait {
+    width: 120px;
+    height: 120px;
+    border: 2px solid var(--accent);
+    margin-right: 15px;
+    overflow: hidden;
+    background: #000;
+}
+
+.narrative-portrait img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.narrative-text-area {
+    flex: 1;
+    color: #fff;
+    font-family: 'Georgia', serif;
+    font-size: 1.1rem;
+    line-height: 1.4;
+}
+
+.narrative-continue {
+    font-size: 0.7rem;
+    color: var(--accent);
+    text-transform: uppercase;
+    text-align: right;
+    margin-top: 10px;
+    letter-spacing: 1px;
+    opacity: 0.7;
+}narraatr
