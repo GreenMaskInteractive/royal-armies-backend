@@ -139,6 +139,9 @@ function startClassSelectionSequence() {
         });
     }
 
+    const bmImg = document.getElementById('img-battlemaster');
+    if (bmImg) bmImg.classList.add('stone-form');
+
     // 3. Trigger Narrative & Statues
     playTutorialNarrative();
     setTimeout(() => revealCard('card-battlemaster'), 500);
@@ -152,6 +155,11 @@ if (!narrativeFinished) {
         return; // This stops the function from running
     }
     
+    const bmImg = document.getElementById('img-battlemaster');
+    if (bmImg) {
+        bmImg.classList.remove('stone-form');
+    }
+
 selectedClassId = className;
     document.querySelectorAll('.class-card').forEach(card => card.classList.remove('selected'));
     document.querySelectorAll('.side-info-panel').forEach(panel => panel.classList.remove('show'));

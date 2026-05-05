@@ -1273,7 +1273,7 @@ body {
     flex-direction: row;
     align-items: center;
     padding: 15px;
-    z-index: 100000;
+    z-index: 1000000 !important;
     box-shadow: 0 0 20px rgba(0, 0, 0, 0.8);
     cursor: pointer;
 }
@@ -1309,4 +1309,10 @@ body {
     margin-top: 10px;
     letter-spacing: 1px;
     opacity: 0.7;
-}narraatr
+}
+
+.stone-form {
+    filter: grayscale(100%) brightness(0.8) !important; /* Pure stone look */
+    animation: none !important;
+    box-shadow: none !important;
+}
