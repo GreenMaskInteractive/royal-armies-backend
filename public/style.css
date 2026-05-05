@@ -1132,18 +1132,6 @@ body {
     
     width: 450px; 
 
-    /* 2. FORCE THE STONEWALL TO STRETCH */
-    background: 
-        linear-gradient(rgba(0, 0, 0, 0.75), rgba(0, 0, 0, 0.75)), 
-        url('images/stonewallbg.png');
-    background-size: 100% 100% !important; /* Stretches the image top-to-bottom */
-    background-repeat: no-repeat;
-    
-    display: flex;
-    transition: transform 0.8s cubic-bezier(0.075, 0.82, 0.165, 1);
-    z-index: 10005;
-}
-
 /* Ensure they still slide from the screen edges */
 .left-panel { left: 0; transform: translateX(-100%); }
 .right-panel { right: 0; transform: translateX(100%); }
@@ -1264,25 +1252,6 @@ body {
     50% { transform: scale(1.05); filter: brightness(1.2); }
 }
 
-.narrative-container {
-    position: fixed;
-    bottom: 30px;
-    right: 30px;
-    width: 500px;
-    height: 150px;
-    background: linear-gradient(rgba(0, 0, 0, 0.9), rgba(0, 0, 0, 0.8)), url('images/stonewallbg.png');
-    background-size: cover;
-    border: 2px solid var(--accent);
-    border-radius: 8px;
-    display: none; /* Hidden by default */
-    flex-direction: row;
-    align-items: center;
-    padding: 15px;
-    z-index: 1000000 !important;
-    box-shadow: 0 0 20px rgba(0, 0, 0, 0.8);
-    cursor: pointer;
-}
-
 .narrative-portrait {
     width: 120px;
     height: 120px;
@@ -1298,12 +1267,20 @@ body {
     object-fit: cover;
 }
 
-.narrative-text-area {
-    flex: 1;
-    color: #fff;
+#narrative-text {
     font-family: 'Georgia', serif;
-    font-size: 1.1rem;
-    line-height: 1.4;
+    font-size: 1.25rem;
+    color: var(--accent); /* Aether Gold */
+    line-height: 1.6;
+    font-style: italic;
+    letter-spacing: 0.5px;
+
+    /* THE GOLD OUTLINE (Text Stroke) */
+    /* This creates a clean 1px gold border around every letter */
+    -webkit-text-stroke: 0.5px var(--accent);
+    
+    /* Adds a tiny black drop shadow for extra sharpness */
+    text-shadow: 2px 2px 2px rgba(0, 0, 0, 1);
 }
 
 .narrative-continue {
@@ -1320,4 +1297,53 @@ body {
     filter: grayscale(100%) brightness(0.8) !important; /* Pure stone look */
     animation: none !important;
     box-shadow: none !important;
+}
+
+.side-info-panel, .narrative-container {
+    /* 1. Layer the tint and image (Long-form is safer) */
+    background-image: linear-gradient(rgba(0, 0, 0, 0.85), rgba(0, 0, 0, 0.85)), 
+                      url('../images/stonewallbg.png');
+    
+    /* 2. Unified stretching logic */
+    background-size: cover !important; 
+    background-repeat: no-repeat;
+    background-position: center;
+    
+    /* 3. Solid Black Fallback (If image fails to load) */
+    background-color: #000000;
+}
+
+/* --- PANEL SPECIFIC --- */
+.side-info-panel {
+    position: fixed;
+    top: 0;
+    bottom: 0 !important;
+    height: 104vh !important;
+    width: 450px;
+    display: flex;
+    transition: transform 0.8s cubic-bezier(0.075, 0.82, 0.165, 1);
+    z-index: 10005;
+}
+
+/* --- NARRATIVE SPECIFIC --- */
+.narrative-container {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    width: 550px;
+    min-height: 150px;
+    
+    /* Solid Black Tint over the Stonewall */
+    background: linear-gradient(rgba(0, 0, 0, 0.92), rgba(0, 0, 0, 0.92)), 
+                url('../images/stonewallbg.png') !important;
+    background-size: cover !important;
+    
+    border: 2px solid var(--accent);
+    border-radius: 4px;
+    display: none; 
+    flex-direction: row;
+    align-items: center;
+    padding: 20px;
+    z-index: 1000000 !important;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 1);
 }
