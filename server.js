@@ -28,9 +28,9 @@ app.use(session({
 
 // --- EXISTING ENGINE REQUIREMENTS ---
 // Ensure these files exist in your /backend folder!
-const { resolveBattle } = require('./battle-engine'); 
-const { generateRankedSimulation } = require('./training-sim');
-const { groundRanks } = require('./rank-data');
+// const { resolveBattle } = require('./battle-engine'); 
+// const { generateRankedSimulation } = require('./training-sim'); 
+// const { groundRanks } = require('./public/rank-data'); 
 
 // --- AUTHENTICATION ROUTES ---
 
