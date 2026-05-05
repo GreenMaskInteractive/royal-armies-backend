@@ -3,6 +3,10 @@
 * Master UI & Simulation Controller
 */
 
+var handleLogin;
+var selectClass;
+var confirmSelection;
+
 // --- 1. DATA SAFETY NETS (Unlocks the script if server is offline) ---
 if (typeof groundRanks === 'undefined') {
     var groundRanks = {
@@ -141,7 +145,7 @@ function startClassSelectionSequence() {
         });
     }
 
-    const bmImg = document.getElementById('img-battlemaster');
+ let bmImg = document.getElementById('img-battlemaster'); 
     if (bmImg) bmImg.classList.add('stone-form');
 
     // 3. Trigger Narrative & Statues
@@ -176,7 +180,7 @@ function selectClass(className) {
     if (className === 'battlemaster') {
         if (bmImg) {
             bmImg.src = 'images/battlemasterclass.png';
-            bmImg.classList.remove('stone-form'); // Bring back color/glow
+            bmImg.classList.remove('stone-form'); 
         }
         if (amImg) {
             amImg.src = 'images/classarchmagestone.png';
