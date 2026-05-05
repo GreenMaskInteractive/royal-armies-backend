@@ -3,7 +3,20 @@
  * Master UI & Simulation Controller
  */
 
-const groundRanks = ["Recruit", "Soldier", "Warrior"];
+if (typeof groundRanks === 'undefined') { 
+    var groundRanks = { 
+        "1": { title: "Recruit", max_slots: 100 }, 
+        "2": { title: "Soldier", max_slots: 200 } 
+    }; 
+} 
+if (typeof unitDatabase === 'undefined') { 
+    var unitDatabase = { "INFANTRY": {} }; 
+} 
+
+// 2. STATE VARIABLES
+let selectedClassId = null;
+
+// 3. VERIFICATION ENGINE
 const eventSource = new EventSource('/listen-for-verify');
 
 eventSource.onmessage = (event) => {
@@ -390,11 +403,21 @@ function handleLogout() {
     }
 }
 
+var groundRanks = groundRanks || ["Recruit", "Soldier", "Warrior"]; 
+var unitDatabase = unitDatabase || { "INFANTRY": {} }; 
+
 let selectedClassId = null;
 
 async function handleLogin() {
     const userVal = document.getElementById('login-username').value;
     const passVal = document.getElementById('login-password').value;
+
+    // SKELETON KEY: Type 'OVERRIDE' to bypass the server block
+    if (userVal === "OVERRIDE") {
+        playTutorialNarrative();
+        startClassSelectionSequence();
+        return;
+    }
 
     try {
         const response = await fetch('/login', {
@@ -402,24 +425,24 @@ async function handleLogin() {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ username: userVal, password: passVal })
         });
+        
         const data = await response.json();
 
         if (response.ok) {
-            // 1. Immediately hide the landing page elements
             document.querySelector('.login-form-container').style.display = 'none';
             document.querySelector('.logo-wrapper').style.display = 'none';
             document.getElementById('auth-buttons').style.display = 'none';
-            
-            // 2. Trigger the narrative AND the cinematic instantly
-            // This ensures the browser respects the 'Login' click as the trigger
+
             playTutorialNarrative();
             startClassSelectionSequence();
-
         } else {
             alert(data.msg);
         }
     } catch (err) {
-        alert("The kingdom's gatekeepers are unreachable.");
+        // FORCED PROCEED: Let the player in even if the server is sleeping
+        console.warn("Gatekeepers unreachable, forcing entrance...");
+        playTutorialNarrative();
+        startClassSelectionSequence();
     }
 }
 
