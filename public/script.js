@@ -16,6 +16,7 @@ if (typeof unitDatabase === 'undefined') {
 
 // --- 2. GLOBAL STATE ---
 let selectedClassId = null;
+let narrativeFinished = false;
 var player = {
     name: "Commander Name",
     rank: 1,
@@ -145,7 +146,13 @@ function startClassSelectionSequence() {
 }
 
 function selectClass(className) {
-    selectedClassId = className;
+    
+if (!narrativeFinished) {
+        console.log("Patience, traveler. The Old Man is speaking.");
+        return; // This stops the function from running
+    }
+    
+selectedClassId = className;
     document.querySelectorAll('.class-card').forEach(card => card.classList.remove('selected'));
     document.querySelectorAll('.side-info-panel').forEach(panel => panel.classList.remove('show'));
 
@@ -199,14 +206,13 @@ let currentLineIndex = 0;
 const voicePlayer = new Audio();
 
 function playTutorialNarrative() {
-    if (localStorage.getItem('royalArmies_tutorialSeen')) return;
+    // If they've seen it before, unlock immediately
+    if (localStorage.getItem('royalArmies_tutorialSeen')) {
+        narrativeFinished = true; 
+        return;
+    }
 
-    // Primer for audio
-    voicePlayer.play().then(() => {
-        voicePlayer.pause();
-        voicePlayer.currentTime = 0;
-    }).catch(() => {});
-
+    narrativeFinished = false; // Lock it for new players
     const box = document.getElementById('narrative-box');
     if (box) {
         box.style.display = 'flex';
@@ -226,17 +232,14 @@ function runCinematicStep() {
     voicePlayer.src = dialogueAudio[currentLineIndex];
     voicePlayer.play().catch(e => console.log("Audio waiting..."));
 
-    voicePlayer.onended = () => {
+       voicePlayer.onended = () => {
         currentLineIndex++;
         if (currentLineIndex < dialogueLines.length) {
             setTimeout(runCinematicStep, 800); 
         } else {
+            narrativeFinished = true; // UNLOCK the statues here!
             const box = document.getElementById('narrative-box');
-            if (box) {
-                box.style.transition = "opacity 1.5s ease";
-                box.style.opacity = "0";
-                setTimeout(() => box.style.display = 'none', 1500);
-            }
+            // ... (rest of your fade out code)
         }
     };
 }
