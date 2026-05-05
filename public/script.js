@@ -410,3 +410,7 @@ function handleLogout() {
         }, 10);
     }
 }
+
+window.handleLogin = handleLogin;
+window.confirmSelection = confirmSelection;
+window.selectClass = selectClass;
