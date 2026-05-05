@@ -1333,14 +1333,15 @@ body {
     width: 550px;
     min-height: 150px;
     
-    /* Solid Black Tint over the Stonewall */
-    background: linear-gradient(rgba(0, 0, 0, 0.92), rgba(0, 0, 0, 0.92)), 
-                url('../images/stonewallbg.png') !important;
-    background-size: cover !important;
+    /* PURE SOLID BLACK - No transparency, no stone */
+    background-color: #000000 !important;
+    background-image: none !important;
     
+    /* Keep the gold frame to match the theme */
     border: 2px solid var(--accent);
     border-radius: 4px;
-    display: none; 
+    
+    display: none; /* Controlled by JS */
     flex-direction: row;
     align-items: center;
     padding: 20px;
