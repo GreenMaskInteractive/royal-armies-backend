@@ -42,14 +42,17 @@ const db = new Datastore({
 // --- 1. DATA PARSING ---
 app.use(express.json());
 
-// --- 2. THE BRIDGE (Serves ARCH, AVI, and RAGE files) ---
-app.use(express.static('public')); 
+// --- 2. THE BRIDGE (Improved for Deployment) ---
+// Using path.join(__dirname) is the professional way to ensure 
+// Render always finds your "public" folder.
+app.use(express.static(path.join(__dirname, 'public')));
 
-// --- 3. SESSION LOCK (Gatekeeper Memory) ---
+// --- 3. SESSION LOCK ---
 app.use(session({
     secret: 'crown-hall-secret-key',
     resave: false,
     saveUninitialized: false
+    // Note: We'll add 'cookie: { secure: true }' later when you have SSL!
 }));
 
 /* ============================================================
