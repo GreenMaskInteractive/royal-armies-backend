@@ -1,30 +1,19 @@
+/**
+ * server.js - Royal Armies
+ * The NEXUS (Node-Encryption X-System & Utility Server)
+ * The Heart of the RAGE Engine & AVI Interface
+ */
+
+/* ============================================================
+   NEXUS SECTION 0: CORE MODULES & ENVIRONMENT
+   ============================================================ */
+
 const express = require('express');
 const Datastore = require('@seald-io/nedb');
 const bcrypt = require('bcryptjs');
 const session = require('express-session');
 const path = require('path');
-
 const { Resend } = require('resend');
-const resend = new Resend(process.env.RESEND_API_KEY);
-
-const app = express();
-const PORT = process.env.PORT || 3000;
-let activeClients = [];
-
-const db = new Datastore({ 
-    // If running on Render, use the disk path; otherwise use local for your PC
-    filename: process.env.RENDER ? '/data/players.db' : 'players.db', 
-    autoload: true 
-});
-
-// --- DATABASE & SESSION SETUP ---
-app.use(express.json());
-app.use(express.static('public')); // Serves your HTML, CSS, JS
-app.use(session({
-    secret: 'crown-hall-secret-key',
-    resave: false,
-    saveUninitialized: false
-}));
 
 // --- EXISTING ENGINE REQUIREMENTS ---
 // Ensure these files exist in your /backend folder!
@@ -32,13 +21,69 @@ app.use(session({
 // const { generateRankedSimulation } = require('./training-sim'); 
 // const { groundRanks } = require('./public/rank-data'); 
 
-// --- AUTHENTICATION ROUTES ---
+// --- SYSTEM INITIALIZATION ---
+const resend = new Resend(process.env.RESEND_API_KEY);
+const app = express();
+const PORT = process.env.PORT || 3000;
 
+let activeClients = [];
+
+// --- DATABASE LINK (NEXUS Heart) ---
+const db = new Datastore({
+    // If running on Render, use the disk path; otherwise use local for your PC
+    filename: process.env.RENDER ? '/data/players.db' : 'players.db',
+    autoload: true
+});
+
+/* ============================================================
+   NEXUS SECTION 1: SECURITY & MIDDLEWARE
+   ============================================================ */
+
+// --- 1. DATA PARSING ---
+app.use(express.json());
+
+// --- 2. THE BRIDGE (Serves ARCH, AVI, and RAGE files) ---
+app.use(express.static('public')); 
+
+// --- 3. SESSION LOCK (Gatekeeper Memory) ---
+app.use(session({
+    secret: 'crown-hall-secret-key',
+    resave: false,
+    saveUninitialized: false
+}));
+
+/* ============================================================
+   NEXUS SECTION 2: DATA REPOSITORIES
+   ============================================================ */
+
+// [FUTURE DATA: Unit Databases, Terrain Multipliers, Game Constants]
+// This section is currently empty as data is handled via NEXUS Section 0 (NeDB).
+
+/* ============================================================
+   NEXUS SECTION 3: Static Routing (The Bridge)
+   ============================================================ */
+
+// --- ROOT ROUTE (Serves the ARCH) ---
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
+// --- EXISTING GAME ROUTES (Placeholder Sub-Systems) ---
+/* 
+app.get('/get-rank-data', (req, res) => { res.json(groundRanks); });
+app.get('/test-sim', (req, res) => { const sim = generateRankedSimulation(1); res.json(sim); });
+*/
+
+/* ============================================================
+   NEXUS SECTION 4: AUTHENTICATION API
+   ============================================================ */
+
+// --- ACCOUNT REGISTRATION (The Forge) ---
 app.post('/register', async (req, res) => {
     // 1. Clean the username
     const username = req.body.username.trim().toLowerCase();
     const { password, email } = req.body;
-    
+
     // 2. Hash the password and create token
     const hashedPassword = await bcrypt.hash(password, 10);
     const verificationToken = Math.random().toString(36).substring(2, 15);
@@ -48,18 +93,17 @@ app.post('/register', async (req, res) => {
         password: hashedPassword, 
         email, 
         isVerified: false, 
-        verificationToken, 
-        gold: 100, 
-        rank: 'Novice' 
+        verificationToken,
+        gold: 100,
+        rank: 'Novice'
     };
 
-    // 3. Insert into Database AND send email in one go
+    // 3. Insert into Database AND send email
     db.insert(newUser, async (err, user) => {
-    if (err) {
-        // --- ADD THIS LOG TO SEE THE TRUTH ---
-        console.error("DATABASE INSERT ERROR:", err);
-        return res.status(500).json({ msg: "Forge failed." });
-    }
+        if (err) {
+            console.error("DATABASE INSERT ERROR:", err);
+            return res.status(500).json({ msg: "Forge failed." });
+        }
 
         try {
             await resend.emails.send({
@@ -76,7 +120,9 @@ app.post('/register', async (req, res) => {
     });
 });
 
-// LOGIN: Entering the gates
+// ... (Registration code from previous turn) ...
+
+// --- LOGIN (Entering the Gates) ---
 app.post('/login', (req, res) => {
     // We lowercase the login attempt to match the database
     const username = req.body.username.trim().toLowerCase();
@@ -87,25 +133,36 @@ app.post('/login', (req, res) => {
         console.log("Searching for:", username);
         console.log("Found in DB:", user ? "YES" : "NO");
 
+        // 1. CREDENTIAL CHECK
         if (!user || !(await bcrypt.compare(password, user.password))) {
             return res.status(400).json({ msg: "Invalid credentials." });
         }
-        
+
+        // 2. VERIFICATION CHECK
         if (user.isVerified === false) {
             return res.status(400).json({ msg: "You must verify your email first!" });
         }
 
+        // 3. SESSION ESTABLISHMENT
         req.session.userId = user._id;
         res.json({ msg: "Welcome back, Commander.", user });
     });
 });
 
-// --- THE VERIFY GATE (Sitting outside on its own) ---
+/* ============================================================
+   NEXUS SECTION 5: REAL-TIME EVENT STREAM (The Pulse)
+   ============================================================ */
+
+// --- THE VERIFY GATE (External Signal) ---
 app.get('/verify', (req, res) => {
     const token = req.query.token;
+
+    // 1. UPDATE THE DATABASE
     db.update({ verificationToken: token }, { $set: { isVerified: true } }, {}, (err) => {
         if (err) return res.send("Verification failed.");
 
+        // 2. BROADCAST TO THE GAME ENGINE
+        // This alerts the 'activeClients' (the player's open tab)
         activeClients.forEach(client => {
             client.res.write(`data: ${JSON.stringify({ verified: true })}\n\n`);
         });
@@ -114,25 +171,12 @@ app.get('/verify', (req, res) => {
     });
 });
 
-
-// --- EXISTING GAME ROUTES ---
-
-/*
-app.get('/get-rank-data', (req, res) => {
-    res.json(groundRanks);
-});
-
-app.get('/test-sim', (req, res) => {
-    const sim = generateRankedSimulation(1);
-    res.json(sim);
-});
-*/
-
+// --- VERIFICATION LISTENER ---
 app.get('/listen-for-verify', (req, res) => {
     res.setHeader('Content-Type', 'text/event-stream');
     res.setHeader('Cache-Control', 'no-cache');
     res.setHeader('Connection', 'keep-alive');
-    
+
     const clientId = Date.now();
     const newClient = { id: clientId, res };
     activeClients.push(newClient);
@@ -140,14 +184,4 @@ app.get('/listen-for-verify', (req, res) => {
     req.on('close', () => {
         activeClients = activeClients.filter(c => c.id !== clientId);
     });
-});
-
-
-// Root Route
-app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'index.html'));
-});
-
-app.listen(PORT, () => {
-    console.log(`Kingdom Server online at http://localhost:${PORT}`);
 });

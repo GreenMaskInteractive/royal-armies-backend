@@ -1,7 +1,12 @@
 /**
-* style.css - THE LAST KNIGHTS
-* Master Visual Stylesheet
+* style.css - Royal Armies
+* The AVI (AETHER Visual Interface) Framework
+* A sub-system of the RAGE Game Engine
 */
+
+/* ============================================================
+   AVI SECTION A: THE AETHER CORE (Global Variables)
+   ============================================================ */
 
 :root {
     --bg: #1a1a1a;
@@ -13,6 +18,9 @@
     --border: #444;
 }
 
+/* ============================================================
+   SECTION 0: GLOBAL RESET & ROOT
+   ============================================================ */
 body {
     background: var(--bg);
     color: var(--text);
@@ -21,600 +29,22 @@ body {
     padding: 0;
 }
 
-/* --- NAVIGATION --- */
-.top-nav {
-    position: relative;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    background-image: url('../images/stonewallbg.png') !important;
-    background-repeat: repeat;
-    background-size: auto;
-    background-color: rgba(0, 0, 0, 0.5);
-    background-blend-mode: overlay;
-    padding: 0 20px;
-    height: 90px;
-    gap: 15px;
-    overflow: visible !important;
-    z-index: 10002;
-    box-shadow: 0 10px 20px rgba(0,0,0,0.8);
-    display: none !important; /* Managed by JS */
-}
-
-.nav-btn {
-    background-color: transparent !important;
-    border: none !important;
-    background-image: url('../images/navbartextbtn.png') !important;
-    background-repeat: no-repeat !important;
-    background-position: center center !important;
-    background-size: 100% 100% !important;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 18px 35px;
-    min-width: 160px;
-    height: 65px;
-    cursor: pointer;
-    font-family: 'Georgia', serif;
-    color: #f0e68c;
-    text-transform: uppercase;
-    font-weight: bold;
-    font-size: 0.95rem;
-    transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-}
-
-/* --- CLASS SELECTION SCREEN --- */
-.class-bg {
-    position: absolute;
-    top: 80px;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 80%;
-    aspect-ratio: 16 / 9;
-    background: url('../images/classchoosebg.png') no-repeat center center/cover;
-    z-index: -1;
-    opacity: 1;
-    transition: opacity 2s ease;
-}
-
-.class-options-container {
-    display: flex;
-    justify-content: center;
-    align-items: flex-end;
-    width: 100vw;
-    position: absolute;
-    bottom: 0;
-    padding-bottom: 150px;
-    overflow: hidden;
-}
-
-.class-card {
-    position: relative;
-    width: 52vw;
-    max-width: 1200px;
-    margin: 0 -10vw;
-    transition: all 0.5s ease-in-out;
-    z-index: 10;
-    pointer-events: none; /* Allows clicking through transparent edges */
-    cursor: pointer;
-}
-
-.class-card img {
-    width: 100%;
-    height: auto;
-    transition: filter 0.5s ease;
-    image-rendering: -webkit-optimize-contrast;
-    pointer-events: auto; /* Clicks only hit the actual statue */
-}
-
-.stone-form {
-    filter: grayscale(100%) brightness(0.8) !important;
-    animation: none !important;
-    box-shadow: none !important;
-}
-
-/* --- SLIDING SIDE PANELS --- */
-.side-info-panel {
-    position: fixed;
-    top: 0;
-    bottom: 0 !important;
-    height: 104vh !important;
-    width: 450px;
-    display: flex;
-    z-index: 10005;
-    
-    /* 1. SOLID OBSIDIAN STYLE */
-    background-color: #000000 !important;
-    background-image: linear-gradient(rgba(0, 0, 0, 0.92), rgba(0, 0, 0, 0.92)), 
-                      url('../images/stonewallbg.png') !important;
-    background-size: cover !important;
-    background-repeat: no-repeat;
-    background-position: center;
-
-    /* 2. SLIDING LOGIC */
-    transition: transform 0.8s cubic-bezier(0.075, 0.82, 0.165, 1), opacity 0.5s ease;
-    opacity: 0;
-    pointer-events: none;
-}
-
-.left-panel { left: 0; transform: translateX(-100%); }
-.right-panel { right: 0; transform: translateX(100%); }
-
-.side-info-panel.show {
-    transform: translateX(0);
-    opacity: 1;
-    pointer-events: auto;
-}
-
-.info-content {
-    padding: 50px 30px;
-    flex-grow: 1;
-    display: flex;
-    flex-direction: column;
-    height: 100%;
-    font-family: 'Georgia', serif;
-    color: white;
-    z-index: 2;
-}
-
-.info-content h2 {
-    font-size: 2.2rem;
-    color: var(--accent);
-    text-transform: uppercase;
-    text-align: center;
-    border-bottom: 3px double var(--accent);
-    padding-bottom: 15px;
-    margin-bottom: 30px;
-    text-shadow: 0 0 10px rgba(212, 175, 55, 0.6), 2px 2px 4px rgba(0, 0, 0, 0.9);
-}
-
-.panel-confirm-btn {
-    margin-top: auto;
-    margin-bottom: 80px;
-    width: 100%;
-    padding: 15px;
-    background: linear-gradient(to bottom, #2a2a2a, #000);
-    border: 2px solid var(--accent);
-    color: var(--accent);
-    font-family: 'Georgia', serif;
-    text-transform: uppercase;
-    cursor: pointer;
-    transition: all 0.3s ease;
-}
-
-.panel-confirm-btn:hover {
-    background: var(--accent);
-    color: #000;
-    box-shadow: 0 0 20px var(--accent);
-}
-
-/* --- NARRATIVE ENGINE --- */
-.narrative-container {
-    position: fixed;
-    bottom: 30px;
-    right: 30px;
-    width: 550px;
-    min-height: 150px;
-    z-index: 1000000 !important; /* Always on top */
-    
-    /* PURE SOLID BLACK */
-    background-color: #000000 !important;
-    background-image: none !important;
-    
-    border: 2px solid var(--accent);
-    border-radius: 4px;
-    display: none; 
-    flex-direction: row;
-    align-items: center;
+.page {
     padding: 20px;
-    box-shadow: 0 10px 40px rgba(0, 0, 0, 1);
-}
-
-#narrative-text {
-    font-family: 'Georgia', serif;
-    font-size: 1.25rem;
-    color: var(--accent);
-    line-height: 1.6;
-    font-style: italic;
-    
-    /* GOLD OUTLINE STYLE */
-    -webkit-text-stroke: 0.5px var(--accent);
-    text-shadow: 2px 2px 2px rgba(0, 0, 0, 1);
-}
-
-.narrative-portrait {
-    width: 120px;
-    height: 120px;
-    border: 2px solid var(--accent);
-    margin-right: 20px;
-    overflow: hidden;
-    background: #000;
-}
-
-.narrative-portrait img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-}
-
-/* Utility for Statues */
-.selected {
-    filter: drop-shadow(0 0 30px var(--accent));
-}
-/* --- THE NEW CONTAINER BOX --- */
-.login-form-container {
-    background: rgba(0, 0, 0, 0.65);
-    border: 2px solid #d4af37;
-    padding: 40px;
-    border-radius: 12px;
-    
-    position: relative;
-    top: -150px; /* Moves the whole box up/down */
-    width: 400px;
-    height: auto; /* Box grows to fit the fields */
-    
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 20px; /* Space between inputs and buttons */
-    
+    max-width: 1200px;
     margin: 0 auto;
-    backdrop-filter: blur(5px);
-    box-shadow: 0 10px 30px rgba(0,0,0,0.8);
-    z-index: 10000;
-    pointer-events: auto !important;
 }
 
-/* Adjust the existing containers so they don't have their own margins */
-.login-box, .login-actions {
-    margin: 0 !important;
-    transform: none !important;
-    top: auto !important;
-    left: auto !important;
-}
-
-/* --- THE ZOOM TEXT ANIMATION --- */
-/* Ensure the zoom text is bold and visible */
-.zoom-text {
-    position: fixed;
-    top: 50%; left: 50%;
-    transform: translate(-50%, -50%) scale(0.8);
-    font-size: 3rem;
-    color: #d4af37;
-    text-align: center;
-    text-shadow: 0 0 20px rgba(212, 175, 55, 0.8);
-    opacity: 0;
-    z-index: 9999;
-    transition: all 1s ease;
-    pointer-events: none; /* Player can't click it */
-}
-
-/* The Landing Page Fade Out */
-.fade-out-black {
-    filter: brightness(0);
-    transition: filter 8s ease; /* Slow 5 second fade */
-}
-
-.animate-zoom {
-    animation: zoomInText 3s forwards;
-}
-
-@keyframes zoomInText {
-    0% { transform: translate(-50%, -50%) scale(0.1); opacity: 0; }
-    50% { transform: translate(-50%, -50%) scale(1.5); opacity: 1; }
-    100% { transform: translate(-50%, -50%) scale(5); opacity: 0; visibility: hidden; }
-}
-
-/* --- THE CLASS SELECTION SCREEN --- */
-.class-bg {
-    position: absolute;
-    top: 80px; /* Stays below the nav bar */
-    left: 50%;
-    transform: translateX(-50%); /* Keeps it centered */
-    
-    /* SET YOUR WIDTH HERE */
-    width: 80%; /* Shrinks the width to 80% of the screen */
-    height: auto; /* Let the height follow the width */
-    
-    /* KEEP THE DIMENSIONS PERFECT */
-    aspect-ratio: 16 / 9; /* Use the ratio of your original image (e.g., 16:9) */
-    
-    background: url('images/classchoosebg.png') no-repeat center center/cover;
-    z-index: -1;
-    opacity: 1;
-    transition: opacity 2s ease;
-}
-
-/* --- 1. THE LAYOUT CONTAINER --- */
-.class-options-container {
-    display: flex;
-    justify-content: center;
-    align-items: flex-end;
-    width: 100vw;
-    position: absolute;
-    bottom: 0;
-    padding-bottom: 150px;
-    /* 4. PREVENT OVERFLOW: This stops the browser from 'launching' the right card */
-    overflow: hidden; 
-}
-
-/* --- 2. THE STATUE CARDS --- */
-.class-card {
-    position: relative;
-    /* 1. USE VIEWPORT WIDTH: This forces them to fit any screen */
-    width: 52vw; 
-    max-width: 1200px; /* Caps the size so they don't get TOO big on 4k monitors */
-    
-    /* 2. THE TIGHT HUG: Negative margin pulls them in from the edges */
-    margin: 0 -10vw; 
-    
-    transition: all 0.5s ease-in-out;
-    cursor: pointer;
-    z-index: 10;
-    pointer-events: none; 
-    cursor: pointer;
-}   
-
-    /* 3. FORCE VISIBILITY: Ensures no old code is hiding him */
-    opacity: 1 !important;
-    visibility: visible !important;
-}
-
-/* Ensure the Archmage specifically stays in the frame */
-#card-archmage {
-    transform-origin: left center;
-}
-/* --- 2. THE ANCHORS (Place them right here) --- */
-#card-battlemaster { transform-origin: right center; }
-#card-archmage { transform-origin: left center; }
-
-/* --- 3. THE AWAKENED STATE --- */
-.class-card.selected {
-    z-index: 100;
-    filter: drop-shadow(0 0 30px var(--accent));
-    opacity: 1 !important; /* Ensures the selected one is visible */
-}
-
-/* --- 4. THE IMAGES --- */
-.class-card img {
-    width: 100%;
-    height: auto;
-    transition: filter 0.5s ease;
-    image-rendering: -webkit-optimize-contrast;
-    pointer-events: auto; /* Tells the browser to ONLY click the actual statue */
-    cursor: pointer;
-}
-
-/* --- 5. THE STONE STATE --- */
-.class-card:not(.selected) img {
-    filter: brightness(0.7) contrast(0.9);
-}
-
-#card-archmage {
-    /* Adjust this number (e.g., -10px, -20px) until he looks level with the Battlemaster */
-    top: 20px; 
-    
-    /* Keep the transform-origin we used to prevent him from 'launching' */
-    transform-origin: left center;
-}
-
-/* --- 4. THE SLIDING SIDE PANELS --- */
-.side-info-panel {
-    position: fixed;
-    top: 0;
-    bottom: 0 !important;
-    height: 104vh !important;
-    width: 450px;
-    display: flex;
-    z-index: 10005;
-    
-    /* THE FIX: Hide panels off-screen by default */
-    transition: transform 0.8s cubic-bezier(0.075, 0.82, 0.165, 1), opacity 0.5s ease;
-    opacity: 0; 
-    pointer-events: none; /* Prevents clicking through invisible panels */
-}
-
-/* Specific side positioning */
-.left-panel { 
-    left: 0; 
-    transform: translateX(-100%); /* Pushes Battlemaster left */
-}
-
-.right-panel { 
-    right: 0; 
-    transform: translateX(100%); /* Pushes Archmage right */
-}
-
-/* THE "SHOW" STATE: Triggered by selectClass() in JS */
-.left-panel.show, .right-panel.show { 
-    transform: translateX(0); 
-    opacity: 1;
-    pointer-events: auto;
-}
-
-.info-content {
-    padding: 50px 30px;
-    flex-grow: 1;
-    font-family: 'Georgia', serif;
-    color: white;
-    z-index: 2; /* Ensures text sits above the background stack */
-}
-
-.info-category h4 {
+.page-title {
     color: var(--accent);
-    border-bottom: 2px solid var(--accent);
-    margin-bottom: 10px;
-    padding-bottom: 4px;
-    text-transform: uppercase;
-    font-size: 0.9rem;
-    text-shadow: 1px 1px 2px black; /* Makes gold pop against the stone texture */
-}
-
-#game-container, #player-hud, .top-nav {
-    display: none !important;
-}
-
-.info-content h2 {
-    font-family: 'Georgia', serif;
-    font-size: 2.2rem;
-    color: var(--accent); /* Aether Gold */
-    text-transform: uppercase;
-    letter-spacing: 4px;
-    text-align: center;
-    margin-bottom: 30px;
-    
-    /* 1. VISUAL SEPARATION: The Underline */
-    border-bottom: 3px double var(--accent);
-    padding-bottom: 15px;
-    
-    /* 2. THE GLOW: Makes it look like it's etched in light */
-    text-shadow: 0 0 10px rgba(212, 175, 55, 0.6), 
-                 2px 2px 4px rgba(0, 0, 0, 0.9);
-    
-    /* 3. LIGHTING EFFECT */
-    background: linear-gradient(to right, transparent, rgba(212, 175, 55, 0.1), transparent);
-}
-
-.panel-confirm-btn {
-    margin-top: auto; /* Pushes the button to the bottom of the content */
-    margin-bottom: 80px;
-    width: 100%;
-    padding: 15px;
-    background: linear-gradient(to bottom, #2a2a2a, #000);
-    border: 2px solid var(--accent);
-    color: var(--accent);
-    font-family: 'Georgia', serif;
-    font-size: 1.1rem;
     text-transform: uppercase;
     letter-spacing: 2px;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.6);
-    border-radius: 4px;
+    text-align: center;
 }
 
-.panel-confirm-btn:hover {
-    background: var(--accent);
-    color: #000;
-    box-shadow: 0 0 20px var(--accent);
-    transform: translateY(-3px);
-}
-
-.panel-confirm-btn:active {
-    transform: translateY(1px);
-}
-
-/* Ensure the info-content allows the button to sit at the bottom */
-.info-content {
-    display: flex;
-    flex-direction: column;
-    height: 100%;
-}
-
-/* --- THE CLASS CRESTS --- */
-.class-crest {
-    width: 300px; /* Adjust size to fit your design */
-    height: auto;
-    margin: 0 auto 15px auto; /* Centered with space below it */
-    display: block;
-    filter: drop-shadow(0 0 10px rgba(212, 175, 55, 0.5)); /* Subtle Aether Gold glow */
-    transition: transform 0.3s ease;
-}
-
-/* Target only the crest inside the Battlemaster panel */
-#info-battlemaster .class-crest {
-    /* Increase this number until it visually matches the Archmage */
-    width: 350px; 
-    
-    /* Optional: If it looks too low after resizing, adjust this margin */
-    margin-bottom: 10px; 
-}
-
-/* Subtle "pulse" effect when the panel shows up */
-.side-info-panel.show .class-crest {
-    animation: crestPulse 2s infinite ease-in-out;
-}
-
-@keyframes crestPulse {
-    0%, 100% { transform: scale(1); filter: brightness(1); }
-    50% { transform: scale(1.05); filter: brightness(1.2); }
-}
-
-.narrative-portrait {
-    width: 120px;
-    height: 120px;
-    border: 2px solid var(--accent);
-    margin-right: 15px;
-    overflow: hidden;
-    background: #000;
-}
-
-.narrative-portrait img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-}
-
-#narrative-text {
-    font-family: 'Georgia', serif;
-    font-size: 1.25rem;
-    color: var(--accent); /* Aether Gold */
-    line-height: 1.6;
-    font-style: italic;
-    letter-spacing: 0.5px;
-
-    /* THE GOLD OUTLINE (Text Stroke) */
-    /* This creates a clean 1px gold border around every letter */
-    -webkit-text-stroke: 0.5px var(--accent);
-    
-    /* Adds a tiny black drop shadow for extra sharpness */
-    text-shadow: 2px 2px 2px rgba(0, 0, 0, 1);
-}
-
-.narrative-continue {
-    font-size: 0.7rem;
-    color: var(--accent);
-    text-transform: uppercase;
-    text-align: right;
-    margin-top: 10px;
-    letter-spacing: 1px;
-    opacity: 0.7;
-}
-
-.stone-form {
-    filter: grayscale(100%) brightness(0.8) !important; /* Pure stone look */
-    animation: none !important;
-    box-shadow: none !important;
-}
-
-.side-info-panel, .narrative-container {
-    /* 1. Layer the tint and image (Long-form is safer) */
-    background-image: linear-gradient(rgba(0, 0, 0, 0.85), rgba(0, 0, 0, 0.85)), 
-                      url('../images/stonewallbg.png');
-    
-    /* 2. Unified stretching logic */
-    background-size: cover !important; 
-    background-repeat: no-repeat;
-    background-position: center;
-    
-    /* 3. Solid Black Fallback (If image fails to load) */
-    background-color: #000000;
-}
-
-/* --- PANEL SPECIFIC --- */
-.side-info-panel {
-    position: fixed;
-    top: 0;
-    bottom: 0 !important;
-    height: 104vh !important;
-    width: 450px;
-    display: flex;
-    transition: transform 0.8s cubic-bezier(0.075, 0.82, 0.165, 1);
-    z-index: 10005;
-}
-
-/* --- NARRATIVE SPECIFIC --- */
+/* ============================================================
+   SECTION 1: NARRATIVE
+   ============================================================ */
 .narrative-container {
     position: fixed;
     bottom: 30px;
@@ -636,4 +66,1029 @@ body {
     padding: 20px;
     z-index: 1000000 !important;
     box-shadow: 0 10px 40px rgba(0, 0, 0, 1);
+}
+
+/* 1. BASE LAYOUT & SLIDING LOGIC */
+.side-info-panel {
+    position: fixed;
+    top: 0;
+    bottom: 0 !important;
+    height: 104vh !important;
+    width: 450px;
+    display: flex;
+    flex-direction: column;
+    z-index: 10005;
+    
+    /* Transition for the slide and opacity */
+    transition: transform 0.8s cubic-bezier(0.075, 0.82, 0.165, 1), opacity 0.5s ease;
+    opacity: 0; 
+    pointer-events: none; /* Prevents clicking through until shown */
+}
+
+/* 2. SIDE-SPECIFIC POSITIONING */
+/* Battlemaster (Left) */
+.left-panel { 
+    left: 0; 
+    transform: translateX(-100%); 
+}
+
+/* Archmage (Right) */
+.right-panel { 
+    right: 0; 
+    transform: translateX(100%); 
+}
+
+/* 3. THE "SHOW" STATE (Triggered by selectClass) */
+.left-panel.show, .right-panel.show { 
+    transform: translateX(0); 
+    opacity: 1;
+    pointer-events: auto;
+}
+
+/* 4. VISUAL THEME (Solid Obsidian Black + Stone Texture) */
+.side-info-panel {
+    /* Pure Solid Black Base - Eliminates transparency */
+    background-color: #000000 !important;
+
+    /* Deep Tinted Stone Wall Overlay */
+    background-image: linear-gradient(rgba(0, 0, 0, 0.92), rgba(0, 0, 0, 0.92)), 
+                      url('../images/stonewallbg.png') !important;
+    
+    background-size: cover !important;
+    background-repeat: no-repeat;
+    background-position: center;
+}
+
+.narrative-portrait { 
+    width: 120px; 
+    height: 120px; 
+    border: 2px solid var(--accent); 
+    margin-right: 15px; 
+    overflow: hidden; 
+    background: #000; 
+} 
+
+.narrative-portrait img { 
+    width: 100%; 
+    height: 100%; 
+    object-fit: cover; 
+} 
+
+#narrative-text { 
+    font-family: 'Georgia', serif; 
+    font-size: 1.25rem; 
+    color: var(--accent); 
+    line-height: 1.6; 
+    font-style: italic; 
+    letter-spacing: 0.5px; 
+    -webkit-text-stroke: 0.5px var(--accent); 
+    text-shadow: 2px 2px 2px rgba(0, 0, 0, 1); 
+} 
+
+.narrative-continue { 
+    font-size: 0.7rem; 
+    color: var(--accent); 
+    text-transform: uppercase; 
+    text-align: right; 
+    margin-top: 10px; 
+    letter-spacing: 1px; 
+    opacity: 0.7; 
+}
+
+.narrative-continue {
+    font-size: 0.7rem;
+    color: var(--accent); /* Aether Gold */
+    text-transform: uppercase;
+    text-align: right;
+    margin-top: 10px;
+    letter-spacing: 1px;
+    opacity: 0.7;
+    font-family: 'Georgia', serif;
+    font-style: italic;
+}
+
+/* ============================================================
+   SECTION 2: CORE GAME & OVERLAY CONTAINERS
+   ============================================================ */
+
+#game-container {
+    margin-left: 160px !important;
+    margin-right: 160px !important;
+    position: relative;
+    z-index: 1;
+    opacity: 0;
+    transition: opacity 1.5s ease-in-out;
+}
+
+.full-page-overlay {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    z-index: 200000;
+    background: #000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.slideshow-container {
+    position: absolute;
+    width: 100%; height: 100%;
+    z-index: -1;
+    overflow: hidden;
+    background: #000;
+}
+
+.slide1 { background-image: url('images/mainbg1.png'); animation-delay: 0s; opacity: 1; }
+.slide2 { background-image: url('images/mainbg2.png'); animation-delay: 8s; }
+.slide3 { background-image: url('images/mainbg3.png'); animation-delay: 16s; }
+.slide4 { background-image: url('images/mainbg4.png'); animation-delay: 24s; }
+
+@keyframes fadeEffect {
+    0% { opacity: 0; }
+    5% { opacity: 1; }
+    25% { opacity: 1; }
+    30% { opacity: 0; }
+    100% { opacity: 0; }
+}
+
+@keyframes panEffect {
+    0% { transform: scale(1.05) translate(0, 0); }
+    100% { transform: scale(1.1) translate(-2%, -2%); }
+}
+
+.updates-panel {
+    position: absolute;
+    right: 40px;
+    top: 25%;
+    transform: translateY(-50%);
+    width: 320px;
+    height: 500px;
+    background: #000000 !important; /* Pure Black */
+    border: 2px solid var(--accent);
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    z-index: 200005;
+    box-shadow: 0 0 30px rgba(0, 0, 0, 0.9);
+}
+
+.updates-header { background: var(--accent); color: #000; padding: 10px; text-align: center; font-family: 'Georgia', serif; font-weight: bold; text-transform: uppercase; letter-spacing: 2px; }
+.updates-scroll { flex-grow: 1; overflow-y: auto; padding: 15px; scrollbar-width: thin; scrollbar-color: var(--accent) #111; }
+.updates-scroll::-webkit-scrollbar { width: 6px; }
+.updates-scroll::-webkit-scrollbar-thumb { background: var(--accent); }
+.update-item { border-bottom: 1px solid #444; padding-bottom: 12px; margin-bottom: 15px; }
+.update-item:last-child { border: none; }
+.update-date { font-size: 0.75rem; color: var(--accent); font-family: monospace; }
+.update-title { margin: 5px 0; font-family: 'Georgia', serif; color: #fff; font-size: 1rem; }
+.update-text { font-size: 0.85rem; color: #bbb; line-height: 1.4; margin: 0; }
+.updates-footer { padding: 8px; font-size: 0.7rem; text-align: center; color: #666; font-style: italic;
+
+}
+
+.modal-overlay {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: rgba(0, 0, 0, 0.9);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 300000;
+    backdrop-filter: blur(8px);
+}
+
+.modal-content {
+    background: #1a1a1a;
+    border: 2px solid var(--accent);
+    padding: 30px 40px;
+    width: 400px;
+    position: relative;
+    box-shadow: 0 0 50px rgba(0,0,0,1);
+    border-radius: 8px;
+    text-align: center;
+}
+
+.modal-title { font-family: 'Georgia', serif; color: var(--accent); margin-bottom: 5px; }
+.modal-subtitle { color: #888; font-size: 0.9rem; margin-bottom: 25px; }
+
+.reg-group { text-align: left; margin-bottom: 15px; }
+.reg-group label { display: block; color: #ccc; font-size: 0.8rem; margin-bottom: 5px; }
+
+.reg-input {
+    width: 100%;
+    background: #000;
+    border: 1px solid #444;
+    color: #fff;
+    padding: 10px;
+    box-sizing: border-box;
+    outline: none;
+}
+
+.reg-input:focus { border-color: var(--accent); }
+
+.close-modal {
+    position: absolute;
+    top: 15px;
+    right: 20px;
+    color: #888;
+    font-size: 28px;
+    cursor: pointer;
+}
+.close-modal:hover { color: #fff; }
+
+.modal-actions { margin-top: 25px;
+
+}
+
+.conclusion-box {
+    background: #000;
+    color: #00ff00;
+    padding: 20px;
+    border-left: 4px solid var(--accent);
+    margin-top: 20px;
+    font-family: 'Courier New', Courier, monospace;
+    min-height: 150px;
+}
+
+.login-form-container {
+    background: #000000 !important; /* FIXED: No transparency */
+    border: 2px solid var(--accent);
+    padding: 40px;
+    border-radius: 12px;
+    position: relative;
+    top: -150px; 
+    width: 400px;
+    height: auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+    margin: 0 auto;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+    z-index: 10000;
+    pointer-events: auto !important;
+}
+
+.fade-out-black {
+    filter: brightness(0);
+    transition: filter 8s ease; 
+}
+
+.class-bg {
+    position: absolute;
+    top: 80px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 80%;
+    height: auto;
+    aspect-ratio: 16 / 9;
+    background: url('images/classchoosebg.png') no-repeat center center/cover;
+    z-index: -1;
+    opacity: 1;
+    transition: opacity 2s ease;
+}
+
+.class-options-container {
+    display: flex;
+    justify-content: center;
+    align-items: flex-end;
+    width: 100vw;
+    position: absolute;
+    bottom: 0;
+    padding-bottom: 150px;
+    overflow: hidden;
+}
+
+.side-info-panel { 
+    position: fixed; 
+    top: 0; 
+    bottom: 0 !important; 
+    height: 104vh !important; 
+    width: 450px; 
+    display: flex; 
+    transition: transform 0.8s cubic-bezier(0.075, 0.82, 0.165, 1); 
+    z-index: 10005; 
+}
+
+/* ============================================================
+   SECTION 3: INTERACTIVE ARSENAL (Buttons & Inputs)
+   ============================================================ */
+
+/* THE COMMANDER INPUTS */
+.login-input {
+    background-color: #000000 !important;
+    color: #ffffff;
+    border: 2px solid var(--accent);
+    border-left: 6px solid var(--accent);
+    font-family: 'Georgia', serif;
+    padding: 14px 20px;
+    width: 300px;
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.login-input:focus {
+    border-color: #ffffff;
+    box-shadow: 0 0 20px rgba(212, 175, 55, 0.6);
+    transform: scale(1.03);
+}
+
+/* THE IMAGE-BASED ACTION BUTTONS */
+.img-btn {
+    cursor: pointer;
+    transition: all 0.2s ease;
+    filter: drop-shadow(0 4px 0px rgba(0,0,0,0.8));
+}
+
+.img-btn:active {
+    transform: translateY(4px) scale(0.96);
+    filter: brightness(0.9) drop-shadow(0 0px 0px rgba(0,0,0,0));
+}
+
+/* THE PRIMARY ACTION BUTTON (Battle/Confirm) */
+.action-btn {
+    background: var(--success);
+    color: white;
+    padding: 15px;
+    font-size: 1.1rem;
+    font-weight: bold;
+    border-radius: 4px;
+    text-transform: uppercase;
+    cursor: pointer;
+}
+
+.quick-hospital {
+    margin-top: 30px;
+    max-width: 400px;
+}
+
+.hospital-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 15px;
+}
+
+.primary-btn { background: var(--accent); border: none; padding: 8px 15px; cursor: pointer; border-radius: 4px; font-weight: bold; }
+.secondary-btn { background: #444; border: none; color: white; padding: 8px 15px; cursor: pointer; border-radius: 4px; }
+.danger-btn { background: var(--danger); border: none; color: white; padding: 8px 15px; cursor: pointer; border-radius: 4px;
+
+}
+
+.login-input {
+    /* 1. SOLID BLACK BACKGROUND */
+    background-color: #000000 !important;
+    color: #ffffff;
+
+    /* 2. AETHER GOLD BORDER DESIGN */
+    border: 2px solid var(--accent);
+    border-left: 6px solid var(--accent); /* Status Bar look */
+    border-radius: 4px;
+
+    /* 3. TYPOGRAPHY & SPACING */
+    font-family: 'Georgia', serif;
+    font-size: 1.1rem;
+    letter-spacing: 1px;
+    padding: 14px 20px;
+    width: 300px;
+
+    /* 4. VISUAL DEPTH */
+    outline: none;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+    transition: all 0.3s ease;
+}
+
+/* --- PLACEHOLDER STYLE --- */
+.login-input::placeholder {
+    color: #555;
+    text-transform: uppercase;
+    font-size: 0.8rem;
+    letter-spacing: 2px;
+}
+
+/* --- ACTIVE STATE (The "Naked" Code Fixed) --- */
+.login-input:focus {
+    /* 1. MAINTAIN SOLID BLACK */
+    background-color: #000000 !important;
+
+    /* 2. ENHANCED AETHER GLOW */
+    border-color: #ffffff; 
+    box-shadow: 0 0 20px rgba(212, 175, 55, 0.6), inset 0 0 10px rgba(212, 175, 55, 0.2);
+
+    /* 3. PHYSICAL FEEDBACK */
+    transform: scale(1.03); 
+    filter: brightness(1.1);
+
+    /* 4. SMOOTHNESS */
+    outline: none;
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.img-btn {
+    /* Give the button initial "height" with a dark shadow */
+    filter: drop-shadow(0 4px 0px rgba(0,0,0,0.8));
+    position: relative;
+    top: 0;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+/* --- BUTTON HOVER STATE --- */
+.img-btn:hover {
+    filter: brightness(1.1) drop-shadow(0 4px 0px rgba(0,0,0,0.8));
+}
+
+/* ============================================================
+   SECTION 4: THE COMMAND HUD (Player Vitals)
+   ============================================================ */
+
+.hud-fixed-container {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 10000;
+}
+
+/* PROGRESS BAR WRAPPERS */
+.bar-wrap {
+    position: absolute;
+    background: rgba(0,0,0,0.7); /* Darker for obsidian look */
+    overflow: hidden;
+    display: flex;
+    justify-content: flex-end;
+}
+
+/* GOLD XP BAR */
+.xp-fill {
+    background: linear-gradient(270deg, #d4af37 0%, #f0e68c 50%, #d4af37 100%);
+    box-shadow: 0 0 10px rgba(212, 175, 55, 0.6);
+}
+
+/* SEGMENTED PROVISIONS BAR */
+.prov-fill {
+    background: repeating-linear-gradient(
+        270deg,
+        #228b22 0px, #228b22 14px, 
+        #111 14px, #111 16px
+    );
+    box-shadow: 0 0 10px rgba(34, 139, 34, 0.5);
+}
+
+.unit-count-circle {
+    font-family: 'Georgia', serif;
+    font-size: 1.4rem;
+    font-weight: 900;
+    color: #f0e68c;
+    text-shadow: 0 0 3px var(--accent), 2px 2px 3px #000;
+}
+
+#hold-progress-bar {
+    pointer-events: none;
+}
+
+.bar-fill {
+    height: 100%;
+    /* No longer need left: 0, it will now grow from the right */
+    transition: width 0.5s ease;
+}
+
+.xp-wrap {
+    top: 35px; left: 13px; /* Tweak these to fit your PNG holes */
+    width: 228px; height: 21px;
+}
+
+.prov-wrap {
+    top: 65px; left: 134px; /* Tweak these to fit your PNG holes */
+    width: 112px; height: 20px;
+}
+
+.hud-image-overlay {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    z-index: 2; /* Sits on top of bars */
+    pointer-events: none;
+}
+
+/* ============================================================
+   SECTION 5: THE QUESTING WORLD (Cards & Animations)
+   ============================================================ */
+
+.quest-grid {
+    display: flex;
+    justify-content: center;
+    gap: 40px;
+    padding: 40px;
+}
+
+.quest-card {
+    position: relative;
+    width: 280px;
+    transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.quest-card:hover:not(.locked) {
+    transform: scale(1.1) translateY(-10px);
+    animation: glowPulse 2s infinite ease-in-out;
+    z-index: 10;
+}
+
+.quest-plaque {
+    font-family: 'Georgia', serif;
+    color: #3d2b1f; /* Engraved look */
+    text-transform: uppercase;
+}
+
+/* THE PULSE EFFECT */
+@keyframes glowPulse {
+    0%, 100% { filter: brightness(1.1) drop-shadow(0 0 5px var(--accent)); }
+    50% { filter: brightness(1.2) drop-shadow(0 0 15px var(--accent)); }
+}
+
+#quest-market {
+    top: 0px; 
+}
+
+/* ESCORT */
+#quest-escort {
+    top: 0px;
+}
+
+.quest-card.locked {
+    filter: grayscale(1) brightness(0.6);
+    cursor: not-allowed;
+    pointer-events: none; 
+}
+
+.quest-card.locked:hover {
+    transform: none;
+}
+
+.easy { background: #228b22; color: white; }
+.mid { background: #b8860b; color: white; }
+.hard { background: #8b0000; color: white;
+
+}
+
+.start-quest-btn {
+    background: var(--accent);
+    border: none;
+    padding: 10px 20px;
+    border-radius: 4px;
+    font-weight: bold;
+    cursor: pointer;
+    margin-top: 15px;
+}
+
+.hud-bars-background {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    z-index: 1;
+}
+
+.hud-text-overlay {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    z-index: 3;
+    /* FIXED NAKED CODE BELOW */
+    font-family: 'Georgia', serif;
+    font-size: 1.4rem;
+    font-weight: 900;
+    color: #f0e68c;
+    text-shadow: 0px 0px 3px rgba(212, 175, 55, 0.8), 2px 2px 3px rgba(0, 0, 0, 0.9);
+    letter-spacing: -1px;
+    text-align: center;
+    pointer-events: none;
+}
+
+.xp-fill {
+    height: 100%;
+    background: linear-gradient(270deg, #d4af37 0%, #f0e68c 50%, #d4af37 100%);
+    box-shadow: 0 0 10px rgba(212, 175, 55, 0.6);
+    border-radius: 2px;
+}
+
+.prov-fill {
+    height: 100%;
+    background: repeating-linear-gradient(
+        270deg, 
+        #228b22 0px, #228b22 14px, 
+        #111 14px, #111 16px
+    );
+
+    box-shadow: 0 0 10px rgba(34, 139, 34, 0.5);
+    border-radius: 2px;
+}
+
+/* ============================================================
+   SECTION 6: NAVIGATION ENHANCEMENTS
+   ============================================================ */
+.top-nav {
+    /* Layout already established; adding the "Aether" styling */
+    background-image: url('images/stonewallbg.png') !important;
+    background-blend-mode: overlay;
+    background-color: rgba(0, 0, 0, 0.5);
+    box-shadow: 0 10px 20px rgba(0,0,0,0.8);
+}
+
+.top-nav::after {
+    /* The ornate lower trim bar */
+    content: "";
+    position: absolute;
+    bottom: -15px;
+    left: 0;
+    width: 100%;
+    height: 30px;
+    background: url('images/topnavigationlowbar.png') no-repeat center bottom;
+    background-size: 100% 100%;
+    z-index: 10003;
+}
+
+.nav-logo {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    top: -45px;
+    height: 280px;
+    z-index: 99999;
+    filter: drop-shadow(0 8px 12px rgba(0,0,0,0.9));
+    pointer-events: none;
+}
+
+.nav-btn {
+    /* 1. REMOVE THE RECTANGLE BOX */
+    background-color: transparent !important; /* The "Box Killer" */
+    border: none !important;
+    outline: none !important;
+    box-shadow: none !important;
+    appearance: none;
+    -webkit-appearance: none;
+
+    /* 2. THE IMAGE (Shape-Focused) */
+    background-image: url('images/navbartextbtn.png') !important;
+    background-repeat: no-repeat !important;
+    background-position: center center !important;
+    background-size: 100% 100% !important; /* Stretches to the padding limits */
+
+    /* 3. DIMENSIONS & ALIGNMENT */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 18px 35px;
+    min-width: 160px;
+    height: 65px;
+    white-space: nowrap;
+    cursor: pointer;
+
+    /* 4. TYPOGRAPHY (Matching Quest Cards & HUD) */
+    font-family: 'Georgia', serif;
+    color: #f0e68c; 
+    text-transform: uppercase;
+    font-weight: bold;
+    font-size: 0.95rem;
+    text-shadow: 2px 2px 3px rgba(0, 0, 0, 0.9), 
+                 0px 0px 5px rgba(212, 175, 55, 0.4);
+
+    /* 5. SHAPE-FOLLOWING SOLIDITY */
+    /* This applies a dark backing ONLY to the PNG shape, blocking the stone wall */
+    filter: drop-shadow(0 0 1px #1a1a1a); 
+
+    /* 6. MOTION */
+    transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+
+}
+
+/* INTERACTION STATES */
+
+.nav-btn:hover:not([disabled]) {
+    /* Brightens the shape and the text, adds the golden "reach" aura */
+    filter: brightness(1.2) drop-shadow(0 0 8px rgba(212, 175, 55, 0.5));
+    transform: translateY(-3px) scale(1.04);
+    color: #ffffff;
+}
+
+.nav-btn.active {
+    color: #ffffff;
+    filter: brightness(1.3) saturate(1.2) drop-shadow(0 0 10px var(--accent));
+}
+
+.nav-btn[disabled] {
+    opacity: 0.5;
+    filter: grayscale(1) brightness(0.7);
+    cursor: not-allowed;
+}
+
+.nav-spacer {
+    width: 250px;
+    flex-shrink: 0;
+    pointer-events: none;
+}
+
+.logo-wrapper { position: relative; text-align: center; margin-bottom: -40px; }
+
+.main-logo {
+    width: 1000px;
+    position: relative;
+    top: 50px;
+    z-index: 5;
+    pointer-events: none; /* Mouse ignores the logo */
+}
+
+.mystical-energy {
+    position: absolute;
+    top: 50%; left: 50%;
+    width: 110%; height: 110%;
+    transform: translate(-50%, -50%);
+    background: radial-gradient(circle, rgba(212, 175, 55, 0.4) 0%, transparent 70%);
+    filter: blur(20px);
+    animation: energyPulse 4s infinite ease-in-out;
+    mix-blend-mode: screen;
+}
+@keyframes energyPulse {
+    0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.5; }
+    50% { transform: translate(-50%, -50%) scale(1.2); opacity: 0.8; box-shadow: 0 0 50px var(--accent); }
+}
+
+/* ============================================================
+   SECTION 7: BATTLE TERMINAL (Tables & Logs)
+   ============================================================ */
+.battle-stats-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: #111;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.battle-stats-table th {
+    background: #222;
+    color: var(--accent);
+    text-transform: uppercase;
+    font-size: 0.8rem;
+    padding: 15px;
+}
+
+.log-entry {
+    margin-bottom: 6px;
+    font-size: 0.95rem;
+}
+
+.log-entry.highlight { color: #fff; font-weight: bold; }
+.log-entry.xp { color: #00ffff; } /* Teal color for experience gains */
+
+.table-spacer {
+    width: 60px;
+    background: var(--bg) !important; /* Creates the visual gap in the table */
+}
+
+.battle-stats-table td {
+    padding: 12px;
+    text-align: center;
+    color: #bbb;
+    border-bottom: 1px solid #222;
+}
+
+.battle-stats-table tr { border: none; }
+.battle-stats-table th, .battle-stats-table td { border: none;
+
+}
+
+#sf-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+#sf-list li {
+    padding: 8px;
+    border-bottom: 1px solid #333;
+    font-size: 0.9rem;
+}
+
+
+/* ============================================================
+   SECTION 8: WORLD INTERACTIONS (Special FX)
+   ============================================================ */
+.zoom-text {
+    position: fixed;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%) scale(0.8);
+    font-size: 3rem;
+    color: var(--accent);
+    text-shadow: 0 0 20px rgba(212, 175, 55, 0.8);
+    opacity: 0;
+    z-index: 9999;
+    pointer-events: none;
+}
+
+.animate-zoom {
+    animation: zoomInText 3s forwards;
+}
+
+@keyframes zoomInText {
+    0% { transform: translate(-50%, -50%) scale(0.1); opacity: 0; }
+    50% { transform: translate(-50%, -50%) scale(1.5); opacity: 1; }
+    100% { transform: translate(-50%, -50%) scale(5); opacity: 0; visibility: hidden; }
+}
+
+.action-btn:active {
+    transform: scale(0.99);
+    filter: brightness(1.1);
+}
+
+.page {
+    padding: 20px;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.page-title {
+    color: var(--accent);
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    text-align: center;
+}
+
+.audio-toggle-container {
+    position: fixed;
+    bottom: 20px;
+    left: 20px;
+    z-index: 200001; /* Sits above the landing page (200k) */
+    background: rgba(0, 0, 0, 0.6);
+    border: 1px solid var(--accent);
+    border-radius: 50%;
+    padding: 10px;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    transition: transform 0.2s, background 0.2s;
+}
+
+.audio-toggle-container:hover {
+    background: rgba(212, 175, 55, 0.3);
+    transform: scale(1.1);
+}
+
+#audio-icon {
+    width: 24px;
+    height: 24px;
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    /* This makes the black SVG white to match your game's gold/white theme */
+    filter: brightness(0) invert(1); 
+    display: inline-block;
+}
+
+.icon-muted {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M11 5L6 9H2v6h4l5 4V5z'%3E%3C/path%3E%3Cline x1='23' y1='9' x2='17' y2='15'%3E%3C/line%3E%3Cline x1='17' y1='9' x2='23' y2='15'%3E%3C/line%3E%3C/svg%3E");
+}
+
+.icon-unmuted {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M11 5L6 9H2v6h4l5 4V5z'%3E%3C/path%3E%3Cpath d='M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07'%3E%3C/path%3E%3C/svg%3E");
+}
+
+/* ============================================================
+   SECTION 9: THE RENDERING SHIELD (Optimization)
+   ============================================================ */
+
+.class-card img, .slide, .quest-image {
+    /* Prevents blurry edges and flickering during motion */
+    image-rendering: -webkit-optimize-contrast;
+    transform: translateZ(0);
+    backface-visibility: hidden;
+    will-change: transform;
+}
+
+.class-options-container {
+    /* Ensures statues don't "clip" through the floor during reveals */
+    transform-style: preserve-3d;
+    backface-visibility: hidden;
+    display: flex;
+    flex-direction: column;
+    align-self: center;
+    will-change: transform;
+}
+
+.class-card {
+    position: relative;
+    width: 52vw;
+    max-width: 1200px;
+    margin: 0 -10vw;
+    transition: all 0.5s ease-in-out;
+    cursor: pointer;
+    z-index: 10;
+    pointer-events: none;
+    opacity: 1 !important;
+    visibility: visible !important;
+}
+
+.class-card.selected {
+    z-index: 100;
+    filter: drop-shadow(0 0 30px var(--accent));
+}
+
+.class-card:not(.selected) img {
+    filter: brightness(0.7) contrast(0.9);
+}
+
+.info-content {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    padding: 50px 30px;
+    flex-grow: 1;
+    font-family: 'Georgia', serif;
+    color: white;
+    z-index: 2;
+}
+
+.info-content h2 {
+    font-size: 2.2rem;
+    color: var(--accent);
+    text-transform: uppercase;
+    text-align: center;
+    border-bottom: 3px double var(--accent);
+    padding-bottom: 15px;
+    text-shadow: 0 0 10px rgba(212, 175, 55, 0.6), 2px 2px 4px rgba(0, 0, 0, 0.9);
+}
+
+.panel-confirm-btn {
+    margin-top: auto;
+    margin-bottom: 80px;
+    padding: 15px;
+    background: linear-gradient(to bottom, #2a2a2a, #000);
+    border: 2px solid var(--accent);
+    color: var(--accent);
+    font-family: 'Georgia', serif;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.panel-confirm-btn:hover {
+    background: var(--accent);
+    color: #000;
+    box-shadow: 0 0 20px var(--accent);
+    transform: translateY(-3px);
+}
+
+.class-crest {
+    width: 300px;
+    margin: 0 auto 15px auto;
+    display: block;
+    filter: drop-shadow(0 0 10px rgba(212, 175, 55, 0.5));
+}
+
+.side-info-panel.show .class-crest {
+    animation: crestPulse 2s infinite ease-in-out;
+}
+
+@keyframes crestPulse {
+    0%, 100% { transform: scale(1); filter: brightness(1); }
+    50% { transform: scale(1.05); filter: brightness(1.2);
+
+}
+
+.stone-form { 
+    filter: grayscale(100%) brightness(0.8) !important; 
+    animation: none !important; 
+    box-shadow: none !important; 
+}
+
+/* ============================================================
+   SECTION 10: PRECISE ALIGNMENT CONTROLS
+   ============================================================ */
+
+#card-battlemaster { transform-origin: right center; }
+
+#card-archmage { 
+    transform-origin: left center; 
+    top: 20px; /* Aligns Archmage vertically with the Battlemaster */
+}
+
+/* Quest Plaque Nudges (Matching text to specific plaque shapes) */
+#quest-market .quest-plaque, 
+#quest-escort .quest-plaque {
+    bottom: 9%; 
+}
+
+#quest-border {
+    top: -7px; /* Levels the Border Patrol card with the others */
+}
+
+#quest-border .quest-plaque {
+    bottom: 7%;
+
+}
+
+/* Battlemaster Crest Nudge */
+#info-battlemaster .class-crest {
+    width: 350px;
+    margin-bottom: 10px;
 }

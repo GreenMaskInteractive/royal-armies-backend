@@ -1,259 +1,308 @@
+<!--
+  index.html - Royal Armies
+  The ARCH (AETHER-RAGE Central Host)
+  The Foundation of the RAGE Engine & AVI Interface
+-->
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
+
+    <!-- ============================================================
+         ARCH SECTION 0: THE HEAD (Meta & Links)
+         ============================================================ -->
+    
     <meta charset="UTF-8">
     <title>Royal Armies | An MMORTS Strategy Game</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <!-- 1. MAIN LANDING PAGE (Covers everything until Login) -->
+
+    <!-- ============================================================
+         ARCH SECTION 1: THE LANDING (Slideshow & Login)
+         ============================================================ -->
+
     <div id="page-landing" class="full-page-overlay">
-        <!-- Background Slideshow -->
+        
         <div class="slideshow-container">
             <div class="slide slide1"></div>
             <div class="slide slide2"></div>
             <div class="slide slide3"></div>
             <div class="slide slide4"></div>
 
-<!-- UPDATES PANEL -->
 <div class="updates-panel">
-    <div class="updates-header">Game Updates</div>
-    <div class="updates-scroll">
-        <!-- Update Entry -->
-        <div class="update-item">
-            <span class="update-date">May 3, 2024</span>
-            <h4 class="update-title">Battle Engine Refined</h4>
-            <p class="update-text">Standardized army weight and Aether Surcharge logic across all tiers.</p>
+            <div class="updates-header">Game Updates</div>
+            <div class="updates-scroll">
+                
+                <!-- Update Entry -->
+                <div class="update-item">
+                    <span class="update-date">May 3, 2024</span>
+                    <h4 class="update-title">Battle Engine Refined</h4>
+                    <p class="update-text">Standardized army weight and Aether Surcharge logic across all tiers.</p>
+                </div>
+
+                <!-- Update Entry -->
+                <div class="update-item">
+                    <span class="update-date">April 28, 2024</span>
+                    <h4 class="update-title">The Gates Open</h4>
+                    <p class="update-text">New stone-wall navigation and pillar framing installed at the capital.</p>
+                </div>
+
+                <div class="update-item">
+                    <span class="update-date">April 20, 2024</span>
+                    <h4 class="update-title">Bug Fixes</h4>
+                    <p class="update-text">Resolved the "ghost button" transparency issues on the navigation bar.</p>
+                </div>
+
+            </div>
+            <div class="updates-footer">Scroll for more chronicles...</div>
         </div>
-        <!-- Update Entry -->
-        <div class="update-item">
-            <span class="update-date">April 28, 2024</span>
-            <h4 class="update-title">The Gates Open</h4>
-            <p class="update-text">New stone-wall navigation and pillar framing installed at the capital.</p>
-        </div>
-        <!-- Update Entry -->
-        <div class="update-item">
-            <span class="update-date">April 20, 2024</span>
-            <h4 class="update-title">Bug Fixes</h4>
-            <p class="update-text">Resolved the "ghost button" transparency issues on the navigation bar.</p>
-        </div>
+
+        <div class="intro-content">
+            <div class="logo-wrapper">
+                <img src="images/royalarmiestitle.png" class="main-logo" alt="Royal Armies">
+                <div class="mystical-energy"></div>
+            </div>
+
+            <!-- The Zooming Welcome Text (AVI Section 8 FX) -->
+            <div id="zoom-welcome" class="zoom-text">
+                Welcome, commander.<br>Time to Prepare for the War!
+            </div>
+
+            <div class="login-form-container">
+                <div class="login-box">
+                    <input type="text" id="login-username" class="login-input" placeholder="Username">
+                    <input type="password" id="login-password" class="login-input" placeholder="Password">
+                </div>
+
+                <div class="login-actions">
+                    <!-- Standard Auth View -->
+                    <div id="auth-buttons">
+                        <img src="images/loginbutton.png" class="img-btn" onclick="handleLogin()">
+                        <img src="images/registerbutton.png" class="img-btn" onclick="handleRegister()">
+                    </div>
+
+                    <div id="auth-loading" style="display: none; color: #d4af37; font-family: 'Georgia', serif; font-size: 1.2rem; text-shadow: 0 0 10px #d4af37;">
+                        Logging in... Please Wait
+                    </div>
+                </div>
+            </div>
+        </div> 
     </div>
-    <div class="updates-footer">Scroll for more chronicles...</div>
-</div>
 
-<div class="intro-content">
-    <div class="logo-wrapper">
-        <img src="images/royalarmiestitle.png" class="main-logo" alt="Royal Armies">
-        <div class="mystical-energy"></div>
-    </div>
-
-<!-- The Zooming Welcome Text -->
-    <div id="zoom-welcome" class="zoom-text">Welcome, commander.<br>Time to Prepare for the War!</div>
-
-    <!-- NEW: The Bordered, Tinted Box -->
-    <div class="login-form-container">
-        <div class="login-box">
-            <input type="text" id="login-username" class="login-input" placeholder="Username">
-            <input type="password" id="login-password" class="login-input" placeholder="Password">
-        </div>
-
-<div class="login-actions">
-    <!-- These will be hidden on success -->
-    <div id="auth-buttons">
-        <img src="images/loginbutton.png" class="img-btn" onclick="handleLogin()">
-        <img src="images/registerbutton.png" class="img-btn" onclick="handleRegister()">
-    </div>
+<!-- ============================================================
+     ARCH SECTION 2: THE HALL OF STATUES (Class Selection)
+     ============================================================ -->
+<div id="class-selection-screen" class="full-page-overlay" style="display: none;">
     
-    <!-- This will be shown on success -->
-    <div id="auth-loading" style="display: none; color: #d4af37; font-family: 'Georgia', serif; font-size: 1.2rem; text-shadow: 0 0 10px #d4af37;">
-        Logging in... Please Wait
+    <!-- 1. Background Layer (AVI Section 2 Styles) -->
+    <div class="class-bg"></div>
+
+    <!-- 2. Battlemaster Side Panel (Slides from Left) -->
+    <div id="info-battlemaster" class="side-info-panel left-panel">
+        <div class="info-content">
+            <img src="images/battlemastercrest.png" alt="Battlemaster Crest" class="class-crest">
+            <h2>Battlemaster</h2>
+            <div class="info-category"><h4>History</h4><p>Masters of the blade and tactical field maneuvers.</p></div>
+            <div class="info-category"><h4>Units</h4><p>Knights, Paladins, Iron Guards.</p></div>
+            <div class="info-category"><h4>Buffs</h4><p>+15% Physical Defense, -10% Recruitment Cost.</p></div>
+            
+            <button class="panel-confirm-btn" onclick="confirmSelection()">Enlist as Battlemaster</button>
+        </div>
+        <img src="images/sideborder.png" class="panel-border-img">
     </div>
-</div>
 
- <div id="register-modal" class="modal-overlay" style="display: none;">
-        <div class="modal-content">
-            <span class="close-modal" onclick="closeRegister()">&times;</span>
-            <h2 class="modal-title">Forge New Account</h2>
-            <div class="register-form">
-                
-<div class="reg-group">
-                    <label>Preferred Username*</label>
-                    <input type="text" id="reg-username" class="reg-input">
-                </div>
-                
-<div class="reg-group">
-                    <label>Password*</label>
-                    <input type="password" id="reg-password" class="reg-input">
-                </div>
-
-<div class="reg-group">
-    <label>Confirm Password*</label>
-    <input type="password" id="reg-password-confirm" class="reg-input" placeholder="Repeat Secret Phrase" required>
-</div>
-
-                    <label>Email Address</label>
-                    <input type="email" id="reg-email" class="reg-input">
-                </div>
-                <div class="modal-actions">
-                    <img src="images/registerbutton.png" class="img-btn" onclick="submitRegistration()">
-                </div>
-            </div>
+    <!-- 3. Archmage Side Panel (Slides from Right) -->
+    <div id="info-archmage" class="side-info-panel right-panel">
+        <img src="images/sideborder.png" class="panel-border-img">
+        <div class="info-content">
+            <img src="images/archmagecrest.png" alt="Archmage Crest" class="class-crest">
+            <h2>Archmage</h2>
+            <div class="info-category"><h4>History</h4><p>Wielders of ancient arcane spirits and cosmic energy.</p></div>
+            <div class="info-category"><h4>Units</h4><p>Sorcerers, Arcane Golems, Spirit Wraiths.</p></div>
+            <div class="info-category"><h4>Buffs</h4><p>+20% Magical Power, +5% Resource Regeneration.</p></div>
+            
+            <button class="panel-confirm-btn" onclick="confirmSelection()">Ascend as Archmage</button>
         </div>
     </div>
-</div>
-</div>
+
+    <!-- 4. The Statues (AVI Section 9 Rendering Shield) -->
+    <div class="class-options-container">
+        <!-- Battlemaster (Interactive Statue) -->
+        <div class="class-card selected" id="card-battlemaster" onclick="selectClass('battlemaster')">
+            <img src="images/classbattlemasterstone.png" alt="Battlemaster" id="img-battlemaster">
+        </div>
+
+        <!-- Archmage (Interactive Statue) -->
+        <div class="class-card" id="card-archmage" onclick="selectClass('archmage')">
+            <img src="images/classarchmagestone.png" alt="Archmage" id="img-archmage">
+        </div>
+    </div>
+
 </div>
 
-    <!-- 2. TOP NAVIGATION BAR (Hidden behind landing page initially) -->
-    <nav class="top-nav">
-        <button class="nav-btn" disabled>Headquarters</button>
-        <button class="nav-btn" disabled>Hospital</button>
-        <button class="nav-btn" disabled>Armory</button>
-        <button class="nav-btn" disabled>Border</button>
-        <button id="nav-quests" class="nav-btn active">Quests</button>
-        <button class="nav-btn" disabled>Map</button>
+<!-- ============================================================
+     ARCH SECTION 3: THE WORLD STAGE (Main Game Container)
+     ============================================================ -->
+
+<!-- 1. TOP NAVIGATION BAR -->
+<nav class="top-nav">
+    <!-- AVI Section 6 Styles these buttons and the logo -->
+    <button class="nav-btn" disabled>Headquarters</button>
+    <button class="nav-btn" disabled>Hospital</button>
+    <button class="nav-btn" disabled>Armory</button>
+    <button class="nav-btn" disabled>Border</button>
+    <button id="nav-quests" class="nav-btn active">Quests</button>
+    <button class="nav-btn" disabled>Map</button>
+    
+    <img src="images/royalarmiestitle.png" class="nav-logo" alt="Royal Armies">
+    
+    <!-- Logo Spacer (AVI Section 6) -->
+    <div style="width: 250px;"></div> 
+
+    <button class="nav-btn" disabled>Friends</button>
+    <button class="nav-btn" disabled>Messages</button>
+    <button class="nav-btn" disabled>Notifications</button>
+    <button class="nav-btn store">Royalty Store</button>
+    <button class="nav-btn">Settings</button>
+    <button class="nav-btn login-out" onclick="handleLogout()">Log Out</button>
+</nav>
+
+<!-- ============================================================
+     ARCH SECTION 4: THE COMMANDER’S HUD (Vitals & Bars)
+     ============================================================ -->
+
+<div id="player-hud" class="hud-fixed-container">
+    
+    <!-- 1. The Dynamic Fills (Layered behind the image) -->
+    <div class="hud-bars-background">
+        <!-- XP Bar (RAGE Section 4 logic updates this width) -->
+        <div class="bar-wrap xp-wrap">
+            <div id="hud-xp-fill" class="bar-fill xp-fill"></div>
+        </div>
         
-        <img src="images/royalarmiestitle.png" class="nav-logo" alt="Royal Armies">
-        <div style="width: 250px;"></div> <!-- Logo Spacer -->
-
-        <button class="nav-btn" disabled>Friends</button>
-        <button class="nav-btn" disabled>Messages</button>
-        <button class="nav-btn" disabled>Notifications</button>
-        <button class="nav-btn store">Royalty Store</button>
-        <button class="nav-btn">Settings</button>
-<button class="nav-btn login-out" onclick="handleLogout()">Log Out</button>
-    </nav>
-
-    <!-- 3. DYNAMIC PAGE CONTAINER -->
-    <main id="game-container">
-        <!-- QUESTS PAGE -->
-        <div id="page-quests" class="page">
-            <h1 class="page-title">Available Quests</h1>
-            <div class="quest-grid">
-                <!-- Market Patrol -->
-                <div class="quest-card" id="quest-market" onclick="startQuest('market')">
-                    <img src="images/marketpatrolquestcard.png" class="quest-image" alt="Market Patrol">
-                    <div class="quest-plaque">Market Patrol</div>
-                </div>
-                <!-- Border Patrol -->
-                <div class="quest-card locked" id="quest-border" onclick="startQuest('border')">
-                    <img src="images/borderpatrolquestcard.png" class="quest-image" alt="Border Patrol">
-                    <div class="quest-plaque">Border Patrol</div>
-                </div>
-                <!-- Escort -->
-                <div class="quest-card locked" id="quest-escort" onclick="startQuest('escort')">
-                    <img src="images/escortquestcard.png" class="quest-image" alt="Escort">
-                    <div class="quest-plaque">Escort</div>
-                </div>
-            </div>
-        </div>
-    </main>
-
-    <!-- 4. PERSISTENT UI (HUD & PILLARS) -->
-    <div id="player-hud" class="hud-fixed-container">
-        <div class="hud-bars-background">
-            <div class="bar-wrap xp-wrap"><div id="hud-xp-fill" class="bar-fill xp-fill"></div></div>
-            <div class="bar-wrap prov-wrap"><div id="hud-prov-fill" class="bar-fill prov-fill"></div></div>
-        </div>
-        <img src="images/royalarmiesHUD.png" class="hud-image-overlay" alt="HUD">
-        <div class="hud-text-overlay">
-            <div id="hud-unit-ratio" class="unit-count-circle">0/0</div>
+        <!-- Provisions Bar (AVI Section 4 styles the segments) -->
+        <div class="bar-wrap prov-wrap">
+            <div id="hud-prov-fill" class="bar-fill prov-fill"></div>
         </div>
     </div>
 
-    <div class="pillar-fixed pillar-left"></div>
-    <div class="pillar-fixed pillar-right"></div>
+    <!-- 2. The Frame (The Gold/Stone HUD Image) -->
+    <img src="images/royalarmiesHUD.png" class="hud-image-overlay" alt="HUD">
 
-    <!-- 5. AUDIO & CONTROLS -->
-    <!-- Single Overture File, Starts Muted for Autoplay -->
-    <audio id="main-theme" loop autoplay muted>
+    <!-- 3. The Digital Overlay (Engraved Numbers) -->
+    <div class="hud-text-overlay">
+        <!-- AVI Section 4 styles this font as 'Georgia' -->
+        <div id="hud-unit-ratio" class="unit-count-circle">0/0</div>
+    </div>
+
+</div>
+
+<!-- ============================================================
+         ARCH SECTION 5: THE WAR MAP (Quest System)
+         ============================================================ -->
+
+    <div id="page-quests" class="page">
+        <h1 class="page-title">Available Quests</h1>
+        
+        <div class="quest-grid">
+            <!-- Market Patrol (AVI Section 5 Hover Effects) -->
+            <div class="quest-card" id="quest-market" onclick="startQuest('market')">
+                <img src="images/marketpatrolquestcard.png" class="quest-image" alt="Market Patrol">
+                <div class="quest-plaque">Market Patrol</div>
+            </div>
+
+            <!-- Border Patrol (Locked State - AVI Section 9) -->
+            <div class="quest-card locked" id="quest-border" onclick="startQuest('border')">
+                <img src="images/borderpatrolquestcard.png" class="quest-image" alt="Border Patrol">
+                <div class="quest-plaque">Border Patrol</div>
+            </div>
+
+            <!-- Escort -->
+            <div class="quest-card locked" id="quest-escort" onclick="startQuest('escort')">
+                <img src="images/escortquestcard.png" class="quest-image" alt="Escort">
+                            <div class="quest-plaque">Escort</div>
+        </div>
+    </div>
+</div>
+</main>
+
+<!-- ============================================================
+     ARCH SECTION 7: GLOBAL OVERLAYS (Modals & Narratives)
+     ============================================================ -->
+
+<div id="narrative-box" class="narrative-container">
+    <div class="narrative-portrait">
+        <!-- The Old Man's Visage -->
+        <img src="images/retiredoldman.png" alt="Mysterious Traveler">
+    </div>
+    <div class="narrative-text-area">
+        <!-- Text is injected here by RAGE Section 3 -->
+        <p id="narrative-text">Welcome, traveler, to the Royal Armies.</p>
+        
+        <!-- PROACTIVE ADDITION: The 'Click to Continue' prompt we discussed earlier -->
+        <div class="narrative-continue">Click to continue...</div>
+    </div>
+</div>
+
+<div id="register-modal" class="modal-overlay" style="display: none;">
+    <div class="modal-content">
+        <!-- AVI Section 2 Styles the "X" and the Box -->
+        <span class="close-modal" onclick="closeRegister()">&times;</span>
+        
+        <h2 class="modal-title">Forge New Account</h2>
+        
+        <div class="register-form">
+            <div class="reg-group">
+                <label>Preferred Username*</label>
+                <input type="text" id="reg-username" class="reg-input">
+            </div>
+
+            <div class="reg-group">
+                <label>Password*</label>
+                <input type="password" id="reg-password" class="reg-input">
+            </div>
+
+            <div class="reg-group">
+                <label>Confirm Password*</label>
+                <input type="password" id="reg-password-confirm" class="reg-input" placeholder="Repeat Secret Phrase" required>
+            </div>
+
+            <div class="reg-group">
+                <label>Email Address</label>
+                <input type="email" id="reg-email" class="reg-input">
+            </div>
+
+            <div class="modal-actions">
+                <!-- AVI Section 5 Styles the Click Effect -->
+                <img src="images/registerbutton.png" class="img-btn" onclick="submitRegistration()">
+            </div>
+        </div> 
+    </div>
+</div>
+
+<audio id="main-theme" loop autoplay muted>
         <source src="audio/Crown Hall Overture.wav" type="audio/wav">
     </audio>
 
     <div id="audio-control" class="audio-toggle-container" onclick="toggleMute()">
-    <!-- Removed src here so CSS can take over -->
-    <div id="audio-icon" class="icon-muted"></div>
-</div>
+        <!-- The icon class is managed by RAGE Section 1 logic -->
+        <div id="audio-icon" class="icon-muted"></div>
+    </div>
 
-<!-- THE CLASS SELECTION CINEMATIC --> 
-<div id="class-selection-screen" class="full-page-overlay" style="display: none;"> 
+    <!-- ============================================================
+         ARCH SECTION 8: THE BRIDGE (System Scripts)
+         ============================================================ -->
     
-    <!-- 1. Background Layer -->
-    <div class="class-bg"></div> 
-
-<!-- 4. Archmage Side Panel (Slides from Right) -->
-<div id="info-archmage" class="side-info-panel right-panel">
-    <img src="images/sideborder.png" class="panel-border-img">
-    <div class="info-content">
-        <img src="images/archmagecrest.png" alt="Archmage Crest" class="class-crest">
-        <h2>Archmage</h2>
-        
-        <div class="info-category">
-            <h4>History</h4>
-            <p>Wielders of ancient arcane spirits and cosmic energy.</p>
-        </div>
-        
-        <div class="info-category">
-            <h4>Units</h4>
-            <p>Sorcerers, Arcane Golems, Spirit Wraiths.</p>
-        </div>
-        
-        <div class="info-category">
-            <h4>Buffs</h4>
-            <p>+20% Magical Power, +5% Resource Regeneration.</p>
-        </div>
-
-        <!-- Button is now a direct child of the single info-content div -->
-        <button class="panel-confirm-btn" onclick="confirmSelection()">Ascend as Archmage</button>
-    </div>
-</div>
-
-    <!-- 2. Battlemaster Side Panel (Slides from Left) -->
-    <div id="info-battlemaster" class="side-info-panel left-panel"> 
-        <div class="info-content">
-<img src="images/battlemastercrest.png" alt="Battlemaster Crest" class="class-crest"> 
-            <h2>Battlemaster</h2> 
-            <div class="info-category"><h4>History</h4><p>Masters of the blade and tactical field maneuvers.</p></div> 
-            <div class="info-category"><h4>Units</h4><p>Knights, Paladins, Iron Guards.</p></div> 
-            <div class="info-category"><h4>Buffs</h4><p>+15% Physical Defense, -10% Recruitment Cost.</p></div>
-<div class="info-content">
-    <!-- ... History/Units/Buffs ... -->
-    <button class="panel-confirm-btn" onclick="confirmSelection()">Enlist as Battlemaster</button>
-</div>
-        </div> 
-        <img src="images/sideborder.png" class="panel-border-img"> 
-    </div> 
-
-    <!-- 3. The Statues -->
-<div class="class-options-container">
-    <!-- Battlemaster starts as the colored version -->
-    <div class="class-card selected" id="card-battlemaster" onclick="selectClass('battlemaster')">
-        <img src="images/classbattlemasterstone.png" alt="Battlemaster" id="img-battlemaster">
-    </div>
-
-    <!-- Archmage starts as the stone version -->
-    <div class="class-card" id="card-archmage" onclick="selectClass('archmage')">
-        <img src="images/classarchmagestone.png" alt="Archmage" id="img-archmage">
-    </div>
-</div>
-</div> <!-- This closes the #class-selection-screen -->
-
-<!-- NARRATIVE DIALOGUE BOX -->
-<div id="narrative-box" class="narrative-container">
-    <div class="narrative-portrait">
-        <img src="images/retiredoldman.png" alt="Mysterious Traveler">
-    </div>
-    <div class="narrative-text-area">
-        <p id="narrative-text">Welcome, traveler, to the Royal Armies.</p>
-    </div>
-</div>
-
-<!-- 6. SCRIPTS (Keep these at the bottom) --> 
-<script src="rank-data.js"></script> 
-<script src="unit-data.js"></script> 
-<script src="battle-logic.js"></script> 
-<script src="script.js"></script> 
-
+    <!-- 1. DATA LIBRARIES (Must load before RAGE) -->
+    <script src="rank-data.js"></script>
+    <script src="unit-data.js"></script>
+    
+    <!-- 2. GAME ENGINES -->
+    <script src="battle-logic.js"></script>
+    
+    <!-- 3. PRIMARY LOGIC CONTROLLER (The RAGE Engine) -->
     <script src="script.js"></script>
-</body> 
+
+</body>
 </html>

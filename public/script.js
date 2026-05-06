@@ -1,42 +1,53 @@
 /**
-* script.js - THE LAST KNIGHTS
-* Master UI & Simulation Controller
-*/
+ * script.js - Royal Armies
+ * The RAGE (Royal Armies Game Engine) Framework
+ * Primary Logic Controller for the AVI Interface
+ */
+
+/* ============================================================
+   TOP: BRIDGE PART 1
+   ============================================================ */
 
 var handleLogin;
 var selectClass;
 var confirmSelection;
 
-// --- 1. DATA SAFETY NETS (Unlocks the script if server is offline) ---
+/* ============================================================
+   SECTION 0: GLOBAL STATE & SAFETY NETS
+   ============================================================ */
+
 if (typeof groundRanks === 'undefined') {
     var groundRanks = {
         "1": { title: "Recruit", max_slots: 100 },
         "2": { title: "Soldier", max_slots: 200 }
     };
 }
+
 if (typeof unitDatabase === 'undefined') {
     var unitDatabase = { "INFANTRY": {} };
 }
 
-// --- 2. GLOBAL STATE ---
 let selectedClassId = null;
-let narrativeFinished = false; // The lock that prevents clicking during dialogue
+let narrativeFinished = false; 
 
 var player = {
     name: "Commander Name",
     rank: 1,
-    path: "PHYS", 
+    path: "PHYS",
     gold: 1000,
     xp: 0,
     terrain: "Standard",
-    army: [] 
+    army: []
 };
 
 var currentSFChain = [];
 var battleHoldInterval = null;
 var holdTimer = null;
 
-// --- 3. VERIFICATION ENGINE ---
+/* ============================================================
+   SECTION 1: INITIALIZATION & EVENT LISTENERS
+   ============================================================ */
+
 const eventSource = new EventSource('/listen-for-verify');
 eventSource.onmessage = (event) => {
     const data = JSON.parse(event.data);
@@ -45,7 +56,6 @@ eventSource.onmessage = (event) => {
     }
 };
 
-// --- 4. INITIALIZATION ---
 var initInterval = setInterval(function() {
     if (typeof groundRanks !== 'undefined' && typeof unitDatabase !== 'undefined') {
         console.log("Data Linked. Initializing Dashboard...");
@@ -87,7 +97,10 @@ function attachEventListeners() {
     }
 }
 
-// --- 5. AUTHENTICATION & LOGIN ---
+/* ============================================================
+   SECTION 2: AUTHENTICATION & LOGIN FLOW
+   ============================================================ */
+
 async function handleLogin() {
     const userVal = document.getElementById('login-username').value;
     const passVal = document.getElementById('login-password').value;
@@ -104,8 +117,9 @@ async function handleLogin() {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ username: userVal, password: passVal })
         });
-        
+
         if (response.ok) {
+            // Hide login UI elements
             document.querySelector('.login-form-container').style.display = 'none';
             document.querySelector('.logo-wrapper').style.display = 'none';
             document.getElementById('auth-buttons').style.display = 'none';
@@ -115,12 +129,79 @@ async function handleLogin() {
             alert(data.msg);
         }
     } catch (err) {
+        // Fallback for offline development
         console.warn("Gatekeepers unreachable, forcing entrance...");
         startClassSelectionSequence();
     }
 }
 
-// --- 6. CLASS SELECTION SEQUENCE ---
+/* ============================================================
+   SECTION 3: CINEMATIC & NARRATIVE ENGINES
+   ============================================================ */
+
+const dialogueLines = [
+    "Welcome, traveler, to the Royal Armies.",
+    "You have ventured far and seen much, I can tell... and most likely, you seek to finally settle your weary bones and find rest.",
+    "But your legend is not yet written to its end. Across the horizon, the banners of desperate nations flutter in the wind, crying out for a savior.",
+    "I ask you... indulge an old man’s final wish. Aid these people.",
+    "They require a soul of iron and nobility—one who will not flinch when the frontlines bleed.",
+    "Yet, before you take your rightful place among the Great Hosts of your nation, I must ask... what is your title?"
+];
+
+const dialogueAudio = [
+    "audio/tutorial_oldman1.wav",
+    "audio/tutorial_oldman2.wav",
+    "audio/tutorial_oldman3.wav",
+    "audio/tutorial_oldman4.wav",
+    "audio/tutorial_oldman5.wav",
+    "audio/tutorial_oldman6.wav"
+];
+
+let currentLineIndex = 0;
+const voicePlayer = new Audio();
+
+function playTutorialNarrative() {
+    // If they've seen it before, unlock immediately
+    if (localStorage.getItem('royalArmies_tutorialSeen')) {
+        narrativeFinished = true;
+        return;
+    }
+
+    narrativeFinished = false; // Lock it for new players
+    const box = document.getElementById('narrative-box');
+    if (box) {
+        box.style.display = 'flex';
+        box.style.opacity = "1";
+    }
+    currentLineIndex = 0;
+    runCinematicStep();
+    localStorage.setItem('royalArmies_tutorialSeen', 'true');
+}
+
+function runCinematicStep() {
+    const textElement = document.getElementById('narrative-text');
+    if (!textElement) return;
+
+    textElement.innerText = dialogueLines[currentLineIndex];
+    voicePlayer.src = dialogueAudio[currentLineIndex];
+    voicePlayer.play().catch(e => console.log("Audio waiting..."));
+
+    voicePlayer.onended = () => {
+        currentLineIndex++;
+        if (currentLineIndex < dialogueLines.length) {
+            setTimeout(runCinematicStep, 800);
+        } else {
+            narrativeFinished = true; // UNLOCK the statues here!
+            const box = document.getElementById('narrative-box');
+            // ... (rest of your fade out code)
+        }
+    };
+}
+
+/* ============================================================
+   SECTION 4: CLASS SELECTION & REVEAL LOGIC
+   ============================================================ */
+
 function startClassSelectionSequence() {
     const landing = document.getElementById('page-landing');
     const classScreen = document.getElementById('class-selection-screen');
@@ -145,7 +226,7 @@ function startClassSelectionSequence() {
         });
     }
 
- let bmImg = document.getElementById('img-battlemaster'); 
+    let bmImg = document.getElementById('img-battlemaster');
     if (bmImg) bmImg.classList.add('stone-form');
 
     // 3. Trigger Narrative & Statues
@@ -158,8 +239,16 @@ function selectClass(className) {
     // 1. Guard Clause: Check if the Old Man is still speaking
     if (!narrativeFinished) {
         console.log("Patience, traveler. The Old Man is speaking.");
-        return; 
+        return;
     }
+
+function revealCard(id) {
+    const card = document.getElementById(id);
+    if (card) {
+        card.style.opacity = "1";
+        card.classList.add('reveal-statue');
+    }
+}
 
     // 2. State Management
     selectedClassId = className;
@@ -180,7 +269,7 @@ function selectClass(className) {
     if (className === 'battlemaster') {
         if (bmImg) {
             bmImg.src = 'images/battlemasterclass.png';
-            bmImg.classList.remove('stone-form'); 
+            bmImg.classList.remove('stone-form');
         }
         if (amImg) {
             amImg.src = 'images/classarchmagestone.png';
@@ -207,80 +296,24 @@ function selectClass(className) {
     }
 }
 
-// --- 7. NARRATIVE ENGINE ---
-const dialogueLines = [
-    "Welcome, traveler, to the Royal Armies.",
-    "You have ventured far and seen much, I can tell... and most likely, you seek to finally settle your weary bones and find rest.",
-    "But your legend is not yet written to its end. Across the horizon, the banners of desperate nations flutter in the wind, crying out for a savior.",
-    "I ask you... indulge an old man’s final wish. Aid these people.",
-    "They require a soul of iron and nobility—one who will not flinch when the frontlines bleed.",
-    "Yet, before you take your rightful place among the Great Hosts of your nation, I must ask... what is your title?"
-];
+/* ============================================================
+   SECTION 5: HUD & PAGE MANAGEMENT
+   ============================================================ */
 
-const dialogueAudio = [
-    "audio/tutorial_oldman1.wav",
-    "audio/tutorial_oldman2.wav",
-    "audio/tutorial_oldman3.wav",
-    "audio/tutorial_oldman4.wav",
-    "audio/tutorial_oldman5.wav",
-    "audio/tutorial_oldman6.wav"
-];
-
-let currentLineIndex = 0;
-const voicePlayer = new Audio();
-
-function playTutorialNarrative() {
-    // If they've seen it before, unlock immediately
-    if (localStorage.getItem('royalArmies_tutorialSeen')) {
-        narrativeFinished = true; 
-        return;
-    }
-
-    narrativeFinished = false; // Lock it for new players
-    const box = document.getElementById('narrative-box');
-    if (box) {
-        box.style.display = 'flex';
-        box.style.opacity = "1";
-    }
-    
-    currentLineIndex = 0;
-    runCinematicStep();
-    localStorage.setItem('royalArmies_tutorialSeen', 'true');
-}
-
-function runCinematicStep() {
-    const textElement = document.getElementById('narrative-text');
-    if (!textElement) return;
-
-    textElement.innerText = dialogueLines[currentLineIndex];
-    voicePlayer.src = dialogueAudio[currentLineIndex];
-    voicePlayer.play().catch(e => console.log("Audio waiting..."));
-
-       voicePlayer.onended = () => {
-        currentLineIndex++;
-        if (currentLineIndex < dialogueLines.length) {
-            setTimeout(runCinematicStep, 800); 
-        } else {
-            narrativeFinished = true; // UNLOCK the statues here!
-            const box = document.getElementById('narrative-box');
-            // ... (rest of your fade out code)
-        }
-    };
-}
-
-// --- 8. GAME SYSTEMS & HUD ---
 function enterMainGame() {
     const gameContainer = document.getElementById('game-container');
     const selectionScreen = document.getElementById('class-selection-screen');
 
     gameContainer.style.setProperty('display', 'block', 'important');
 
+    // Show all navigation buttons now that the game has started
     document.querySelectorAll('.top-nav .nav-btn').forEach(btn => {
         btn.style.display = 'block';
         if (btn.classList.contains('login-out')) btn.style.marginLeft = '0';
     });
 
     document.querySelector('.top-nav').style.display = 'flex';
+    
     const hud = document.getElementById('player-hud');
     if(hud) hud.style.display = 'block';
 
@@ -291,15 +324,6 @@ function enterMainGame() {
     selectionScreen.style.display = 'none';
 }
 
-function revealCard(id) {
-    const card = document.getElementById(id);
-    if (card) {
-        card.style.opacity = "1";
-        card.classList.add('reveal-statue');
-    }
-}
-
-// --- 9. UTILITIES (Existing Battle & Logic) ---
 function showPage(pageId) {
     document.querySelectorAll('.page').forEach(p => p.style.display = 'none');
     document.getElementById(pageId).style.display = 'block';
@@ -318,6 +342,10 @@ function populateCommanderRanks() {
     });
 }
 
+/* ============================================================
+   SECTION 6: Army Management & Recruitment
+   ============================================================ */
+
 function updateUnitDropdown() {
     const cat = document.getElementById('unit-category').value;
     const unitSelect = document.getElementById('unit-select');
@@ -326,7 +354,8 @@ function updateUnitDropdown() {
     if(!unitDatabase[cat]) return;
     Object.keys(unitDatabase[cat]).forEach(uName => {
         const opt = document.createElement('option');
-        opt.value = uName; opt.textContent = uName;
+        opt.value = uName;
+        opt.textContent = uName;
         unitSelect.appendChild(opt);
     });
     updateRankDropdown();
@@ -342,7 +371,8 @@ function updateRankDropdown() {
     if(!unit) return;
     Object.keys(unit.stats).forEach(r => {
         const opt = document.createElement('option');
-        opt.value = r; opt.textContent = r.toUpperCase();
+        opt.value = r;
+        opt.textContent = r.toUpperCase();
         rankSelect.appendChild(opt);
     });
 }
@@ -388,6 +418,10 @@ function clearSFChain() {
     renderSFUI();
 }
 
+/* ============================================================
+   SECTION 7: Battle Simulation & Resolve
+   ============================================================ */
+
 function runUnifiedAssault() {
     if (currentSFChain.length === 0) {
         stopHoldTimer();
@@ -419,13 +453,19 @@ function stopHoldTimer() {
     if (progressBar) {
         progressBar.style.transition = "none";
         progressBar.style.width = "0%";
-        setTimeout(() => { progressBar.style.transition = "width 1s linear"; }, 50);
+        setTimeout(() => {
+            progressBar.style.transition = "width 1s linear";
+        }, 50);
     }
     clearTimeout(holdTimer);
     clearInterval(battleHoldInterval);
     holdTimer = null;
     battleHoldInterval = null;
 }
+
+/* ============================================================
+   SECTION 8: SESSION CONTROL
+   ============================================================ */
 
 function handleLogout() {
     const landing = document.getElementById('page-landing');
@@ -436,7 +476,13 @@ function handleLogout() {
             landing.style.opacity = "1";
         }, 10);
     }
+    // Optional: Reset player state here if needed
+    // selectedClassId = null;
 }
+
+/* ============================================================
+   BOTTOM: BRIDGE PART 2
+   ============================================================ */
 
 window.handleLogin = handleLogin;
 window.confirmSelection = confirmSelection;
