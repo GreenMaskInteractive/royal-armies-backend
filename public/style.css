@@ -178,17 +178,18 @@ body {
     z-index: 1;
     opacity: 0;
     transition: opacity 1.5s ease-in-out;
+    display: none !important;
 }
 
 .full-page-overlay {
     position: fixed;
-    top: 0; left: 0;
-    width: 100%; height: 100%;
-    z-index: 200000;
-    background: #000;
-    display: flex;
-    justify-content: center;
-    align-items: center;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 200000; /* Stays in front of everything */
+    background: #000; /* Solid black base */
+    display: flex; /* Centers your login box */
 }
 
 .slideshow-container {
@@ -502,6 +503,16 @@ body {
    SECTION 4: THE COMMAND HUD (Player Vitals)
    ============================================================ */
 
+#player-hud {
+    display: none; /* Hide until login is successful */
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    z-index: 1000;
+}
+
+
 .hud-fixed-container {
     position: fixed;
     bottom: 20px;
@@ -691,6 +702,7 @@ body {
     background-blend-mode: overlay;
     background-color: rgba(0, 0, 0, 0.5);
     box-shadow: 0 10px 20px rgba(0,0,0,0.8);
+    display: none !important;
 }
 
 .top-nav::after {
@@ -902,6 +914,7 @@ body {
     padding: 20px;
     max-width: 1200px;
     margin: 0 auto;
+    display: none !important;
 }
 
 .page-title {
