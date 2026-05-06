@@ -48,69 +48,58 @@ var holdTimer = null;
    SECTION 1: INITIALIZATION & EVENT LISTENERS
    ============================================================ */
 
+let currentUser = null;
+
+// --- 1. THE NEXUS PULSE (Live Verification) ---
 const eventSource = new EventSource('/listen-for-verify');
 eventSource.onmessage = (event) => {
     const data = JSON.parse(event.data);
     if (data.verified) {
-        alert("Thank you for joining in the war effort! Your nation awaits you!");
+        alert("Thank you for joining the war effort! Your nation awaits you!");
+        // Refresh or unlock the portal here
+        location.reload(); 
     }
 };
 
-var initInterval = setInterval(function() {
-    if (typeof groundRanks !== 'undefined' && typeof unitDatabase !== 'undefined') {
-        console.log("Data Linked. Initializing Dashboard...");
-        clearInterval(initInterval);
-        initDashboard();
-    }
-}, 100);
+// --- 2. THE BOOT SEQUENCE ---
+window.onload = () => {
+    console.log("Aether Engine Synchronized.");
+    
+    // Check for existing session or just show landing
+    const landing = document.getElementById('page-landing');
+    if (landing) landing.style.display = 'flex';
 
-function initDashboard() {
-    populateCommanderRanks();
-    updateUnitDropdown();
-    attachEventListeners();
+    // Start looking for game data (The Link)
+    initializeDataLink();
+};
+
+// --- 3. THE DATA LINK ---
+function initializeDataLink() {
+    const initInterval = setInterval(() => {
+        if (typeof groundRanks !== 'undefined' && typeof unitDatabase !== 'undefined') {
+            console.log("Data Linked. War Room Ready.");
+            clearInterval(initInterval);
+            initDashboard(); // Only fires if the data exists
+        }
+    }, 100);
 }
-
-function attachEventListeners() {
-    const unitCat = document.getElementById('unit-category');
-    if(unitCat) unitCat.addEventListener('change', updateUnitDropdown);
-    
-    const unitSel = document.getElementById('unit-select');
-    if(unitSel) unitSel.addEventListener('change', updateRankDropdown);
-    
-    const btnMax = document.getElementById('btn-max');
-    if(btnMax) btnMax.addEventListener('click', handleMaxClick);
-    
-    const btnAddSf = document.getElementById('btn-add-sf');
-    if(btnAddSf) btnAddSf.addEventListener('click', addCommanderToChain);
-    
-    const btnClearSf = document.getElementById('btn-clear-sf');
-    if(btnClearSf) btnClearSf.addEventListener('click', clearSFChain);
-
-    const battleBtn = document.getElementById('btn-hold-battle');
-    if (battleBtn) {
-        battleBtn.onclick = runUnifiedAssault;
-        battleBtn.onmousedown = startHoldTimer;
-        battleBtn.onmouseup = stopHoldTimer;
-        battleBtn.onmouseleave = stopHoldTimer;
-        battleBtn.ontouchstart = startHoldTimer;
-        battleBtn.ontouchend = stopHoldTimer;
-    }
-}
-
 /* ============================================================
    SECTION 2: AUTHENTICATION & LOGIN FLOW
    ============================================================ */
 
+// --- THE LOGIN ENGINE ---
 async function handleLogin() {
     const userVal = document.getElementById('login-username').value;
     const passVal = document.getElementById('login-password').value;
 
-    // SKELETON KEY / BYPASS
+    // 1. SKELETON KEY (DEV BYPASS)
     if (userVal === "OVERRIDE" || userVal === "DEV") {
-        startClassSelectionSequence();
+        console.log("Dev Override Active. Bypassing Nexus...");
+        enterMainGame({ username: "Developer", rank: "Admin" });
         return;
     }
 
+    // 2. THE NEXUS REQUEST
     try {
         const response = await fetch('/login', {
             method: 'POST',
@@ -119,20 +108,24 @@ async function handleLogin() {
         });
 
         if (response.ok) {
-            // Hide login UI elements
-            document.querySelector('.login-form-container').style.display = 'none';
-            document.querySelector('.logo-wrapper').style.display = 'none';
-            document.getElementById('auth-buttons').style.display = 'none';
-            startClassSelectionSequence();
+            const data = await response.json();
+            console.log("Access Granted. Welcome, Commander.");
+            enterMainGame(data.user);
         } else {
             const data = await response.json();
-            alert(data.msg);
+            alert(data.msg || "The Gatekeepers refuse entry.");
         }
     } catch (err) {
-        // Fallback for offline development
-        console.warn("Gatekeepers unreachable, forcing entrance...");
-        startClassSelectionSequence();
+        // Safe Fallback for Local Testing
+        console.warn("Nexus unreachable. Forcing entrance for local testing...");
+        enterMainGame({ username: "LocalPlayer", rank: "Novice" });
     }
+}
+
+// --- THE REGISTRATION TRIGGER ---
+function handleRegister() {
+    // Purged old modals. Logic for the Registration Stone goes here next cycle.
+    alert("The Forge is currently under maintenance. Use 'DEV' to enter.");
 }
 
 /* ============================================================
@@ -300,46 +293,48 @@ function revealCard(id) {
    SECTION 5: HUD & PAGE MANAGEMENT
    ============================================================ */
 
-function enterMainGame() {
-    const gameContainer = document.getElementById('game-container');
-    const selectionScreen = document.getElementById('class-selection-screen');
+/**
+ * THE MASTER SWITCH: Transitions from the Landing Portal to the Kingdom.
+ */
+function enterMainGame(userData) {
+    currentUser = userData; // Store the player's data from NEXUS
 
-    gameContainer.style.setProperty('display', 'block', 'important');
-
-    // Show all navigation buttons now that the game has started
-    document.querySelectorAll('.top-nav .nav-btn').forEach(btn => {
-        btn.style.display = 'block';
-        if (btn.classList.contains('login-out')) btn.style.marginLeft = '0';
-    });
-
-    document.querySelector('.top-nav').style.display = 'flex';
-    
-    const hud = document.getElementById('player-hud');
-    if(hud) hud.style.display = 'block';
+    // 1. DISMISS THE LANDING SHIELD
+    const landing = document.getElementById('page-landing');
+    landing.style.transition = "opacity 1s ease";
+    landing.style.opacity = "0";
 
     setTimeout(() => {
-        gameContainer.style.opacity = "1";
-    }, 50);
+        landing.style.display = 'none';
 
-    selectionScreen.style.display = 'none';
+        // 2. REVEAL THE WORLD STAGE (The Game Container)
+        const stage = document.getElementById('game-container');
+        stage.style.display = 'block';
+        
+        // 3. ACTIVATE THE HUD & NAVIGATION
+        // These are set to display:none in AVI, we flip them here.
+        document.querySelector('.top-nav').style.display = 'flex';
+        const hud = document.getElementById('player-hud');
+        if (hud) hud.style.display = 'block';
+
+        // 4. FINAL FADE IN
+        setTimeout(() => { stage.style.opacity = '1'; }, 100);
+
+        // 5. BOOT INTERNAL SYSTEMS
+        // This ensures the War Room is ready for the Commander
+        if (typeof populateCommanderRanks === "function") {
+            populateCommanderRanks();
+        }
+    }, 1000);
 }
 
+/**
+ * THE NAVIGATION ENGINE: Swaps between different game rooms (Quests, War Room, etc.)
+ */
 function showPage(pageId) {
     document.querySelectorAll('.page').forEach(p => p.style.display = 'none');
-    document.getElementById(pageId).style.display = 'block';
-}
-
-function populateCommanderRanks() {
-    const rankSelect = document.getElementById('commander-rank');
-    if (!rankSelect) return;
-    rankSelect.innerHTML = "";
-    Object.keys(groundRanks).forEach(lvl => {
-        const data = groundRanks[lvl];
-        const opt = document.createElement('option');
-        opt.value = lvl;
-        opt.textContent = `Rank ${lvl}: ${data.title} (${data.max_slots}p)`;
-        rankSelect.appendChild(opt);
-    });
+    const targetPage = document.getElementById(pageId);
+    if (targetPage) targetPage.style.display = 'block';
 }
 
 /* ============================================================

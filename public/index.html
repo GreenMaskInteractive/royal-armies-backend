@@ -22,120 +22,107 @@
          ARCH SECTION 1: THE LANDING (Slideshow & Login)
          ============================================================ -->
 
-    <div id="page-landing" class="full-page-overlay">
-        
-        <div class="slideshow-container">
-            <div class="slide slide1"></div>
-            <div class="slide slide2"></div>
-            <div class="slide slide3"></div>
-            <div class="slide slide4"></div>
+ <div id="page-landing" class="full-page-overlay">
+    
+    <!-- 1. THE AMBIANCE (Slideshow) -->
+    <div class="slideshow-container">
+        <div class="slide slide1"></div>
+        <div class="slide slide2"></div>
+        <div class="slide slide3"></div>
+        <div class="slide slide4"></div>
+    </div>
 
-<div class="updates-panel">
-            <div class="updates-header">Game Updates</div>
-            <div class="updates-scroll">
-                
-                <!-- Update Entry -->
-                <div class="update-item">
-                    <span class="update-date">May 3, 2024</span>
-                    <h4 class="update-title">Battle Engine Refined</h4>
-                    <p class="update-text">Standardized army weight and Aether Surcharge logic across all tiers.</p>
-                </div>
-
-                <!-- Update Entry -->
-                <div class="update-item">
-                    <span class="update-date">April 28, 2024</span>
-                    <h4 class="update-title">The Gates Open</h4>
-                    <p class="update-text">New stone-wall navigation and pillar framing installed at the capital.</p>
-                </div>
-
-                <div class="update-item">
-                    <span class="update-date">April 20, 2024</span>
-                    <h4 class="update-title">Bug Fixes</h4>
-                    <p class="update-text">Resolved the "ghost button" transparency issues on the navigation bar.</p>
-                </div>
-
+    <!-- 2. THE CHRONICLES (Updates Panel) -->
+    <div class="updates-panel">
+        <div class="updates-header">Game Updates</div>
+        <div class="updates-scroll">
+            <div class="update-item">
+                <span class="update-date">May 6, 2024</span>
+                <h4 class="update-title">The Portal Opens</h4>
+                <p class="update-text">Commander Portal synchronized with Aether-Rage engine.</p>
             </div>
-            <div class="updates-footer">Scroll for more chronicles...</div>
+            <!-- More updates can be added here -->
+        </div>
+        <div class="updates-footer">Scroll for more chronicles...</div>
+    </div>
+
+    <!-- 3. THE COMMANDER'S PORTAL (The Stone Box) -->
+    <div class="login-form-container">
+        <!-- BRANDING (Now inside the stone frame for perfect alignment) -->
+        <div class="portal-header">
+            <img src="images/royalarmiestitle.png" class="main-logo" alt="Royal Armies">
+            <div id="zoom-welcome" class="zoom-text">Welcome, commander.<br>Time to Prepare for the War!</div>
+        </div>
+        
+        <!-- AURORA INPUTS -->
+        <input type="text" id="login-username" class="login-input" placeholder="USERNAME">
+        <input type="password" id="login-password" class="login-input" placeholder="PASSWORD">
+
+        <!-- THE BUTTON ROW -->
+        <div id="auth-buttons">
+            <button id="btn-login-main" class="img-btn" onclick="handleLogin()">Login</button>
+            <button id="btn-register-main" class="img-btn" onclick="handleRegister()">Register</button>
         </div>
 
-        <div class="intro-content">
-            <div class="logo-wrapper">
-                <img src="images/royalarmiestitle.png" class="main-logo" alt="Royal Armies">
-                <div class="mystical-energy"></div>
-            </div>
-
-            <!-- The Zooming Welcome Text (AVI Section 8 FX) -->
-            <div id="zoom-welcome" class="zoom-text">
-                Welcome, commander.<br>Time to Prepare for the War!
-            </div>
-
-            <div class="login-form-container">
-                <div class="login-box">
-                    <input type="text" id="login-username" class="login-input" placeholder="Username">
-                    <input type="password" id="login-password" class="login-input" placeholder="Password">
-                </div>
-
-                <div class="login-actions">
-                    <!-- Standard Auth View -->
-                    <div id="auth-buttons">
-                        <img src="images/loginbutton.png" class="img-btn" onclick="handleLogin()">
-                        <img src="images/registerbutton.png" class="img-btn" onclick="handleRegister()">
-                    </div>
-
-                    <div id="auth-loading" style="display: none; color: #d4af37; font-family: 'Georgia', serif; font-size: 1.2rem; text-shadow: 0 0 10px #d4af37;">
-                        Logging in... Please Wait
-                    </div>
-                </div>
-            </div>
-        </div> 
+        <!-- AUTH STATE -->
+        <div id="auth-loading" style="display: none; color: #d4af37; font-family: 'Georgia', serif; margin-top: 15px;">
+            Authenticating...
+        </div>
     </div>
+
+</div>
 
 <!-- ============================================================
      ARCH SECTION 2: THE HALL OF STATUES (Class Selection)
      ============================================================ -->
+
 <div id="class-selection-screen" class="full-page-overlay" style="display: none;">
     
-    <!-- 1. Background Layer (AVI Section 2 Styles) -->
+    <!-- 1. AMBIANCE LAYER -->
     <div class="class-bg"></div>
 
-    <!-- 2. Battlemaster Side Panel (Slides from Left) -->
+    <!-- 2. THE BATTLEMASTER SCROLL (Left Slide) -->
     <div id="info-battlemaster" class="side-info-panel left-panel">
         <div class="info-content">
-            <img src="images/battlemastercrest.png" alt="Battlemaster Crest" class="class-crest">
-            <h2>Battlemaster</h2>
-            <div class="info-category"><h4>History</h4><p>Masters of the blade and tactical field maneuvers.</p></div>
-            <div class="info-category"><h4>Units</h4><p>Knights, Paladins, Iron Guards.</p></div>
-            <div class="info-category"><h4>Buffs</h4><p>+15% Physical Defense, -10% Recruitment Cost.</p></div>
+            <img src="images/battlemastercrest.png" alt="Crest" class="class-crest">
+            <h2 class="aurora-title">Battlemaster</h2>
             
-            <button class="panel-confirm-btn" onclick="confirmSelection()">Enlist as Battlemaster</button>
+            <div class="class-details">
+                <p><strong>History:</strong> Masters of the blade and tactical field maneuvers.</p>
+                <p><strong>Units:</strong> Knights, Paladins, Iron Guards.</p>
+                <p><strong>Buffs:</strong> +15% Phys Def, -10% Recruitment.</p>
+            </div>
+
+            <button class="action-btn" onclick="confirmSelection('battlemaster')">Enlist</button>
         </div>
-        <img src="images/sideborder.png" class="panel-border-img">
     </div>
 
-    <!-- 3. Archmage Side Panel (Slides from Right) -->
+    <!-- 3. THE ARCHMAGE SCROLL (Right Slide) -->
     <div id="info-archmage" class="side-info-panel right-panel">
-        <img src="images/sideborder.png" class="panel-border-img">
         <div class="info-content">
-            <img src="images/archmagecrest.png" alt="Archmage Crest" class="class-crest">
-            <h2>Archmage</h2>
-            <div class="info-category"><h4>History</h4><p>Wielders of ancient arcane spirits and cosmic energy.</p></div>
-            <div class="info-category"><h4>Units</h4><p>Sorcerers, Arcane Golems, Spirit Wraiths.</p></div>
-            <div class="info-category"><h4>Buffs</h4><p>+20% Magical Power, +5% Resource Regeneration.</p></div>
+            <img src="images/archmagecrest.png" alt="Crest" class="class-crest">
+            <h2 class="aurora-title">Archmage</h2>
             
-            <button class="panel-confirm-btn" onclick="confirmSelection()">Ascend as Archmage</button>
+            <div class="class-details">
+                <p><strong>History:</strong> Wielders of ancient arcane spirits and cosmic energy.</p>
+                <p><strong>Units:</strong> Sorcerers, Arcane Golems, Spirit Wraiths.</p>
+                <p><strong>Buffs:</strong> +20% Mag Power, +5% Resource Regen.</p>
+            </div>
+
+            <button class="action-btn" onclick="confirmSelection('archmage')">Ascend</button>
         </div>
     </div>
 
-    <!-- 4. The Statues (AVI Section 9 Rendering Shield) -->
+    <!-- 4. THE STATUE ROW (Visual Selection) -->
     <div class="class-options-container">
-        <!-- Battlemaster (Interactive Statue) -->
-        <div class="class-card selected" id="card-battlemaster" onclick="selectClass('battlemaster')">
-            <img src="images/classbattlemasterstone.png" alt="Battlemaster" id="img-battlemaster">
+        <!-- Battlemaster Statue -->
+        <div class="class-card" id="card-battlemaster" onclick="selectClass('battlemaster')">
+            <img src="images/classbattlemasterstone.png" alt="Battlemaster" class="statue-img">
         </div>
 
-        <!-- Archmage (Interactive Statue) -->
+        <!-- Archmage Statue -->
         <div class="class-card" id="card-archmage" onclick="selectClass('archmage')">
-            <img src="images/classarchmagestone.png" alt="Archmage" id="img-archmage">
+            <img src="images/classarchmagestone.png" alt="Archmage" class="statue-img">
         </div>
     </div>
 
@@ -294,15 +281,21 @@
          ARCH SECTION 8: THE BRIDGE (System Scripts)
          ============================================================ -->
     
-    <!-- 1. DATA LIBRARIES (Must load before RAGE) -->
-    <script src="rank-data.js"></script>
-    <script src="unit-data.js"></script>
-    
-    <!-- 2. GAME ENGINES -->
-    <script src="battle-logic.js"></script>
-    
-    <!-- 3. PRIMARY LOGIC CONTROLLER (The RAGE Engine) -->
-    <script src="script.js"></script>
+    <!-- 1. DATA REPOSITORIES (The Knowledge Base) -->
+<!-- Load these first so the game knows what Units and Ranks are! -->
+<script src="rank-data.js"></script>
+<script src="unit-data.js"></script>
+
+<!-- 2. SUB-SYSTEM ENGINES -->
+<!-- Specialized logic for the battlefield -->
+<script src="battle-logic.js"></script>
+
+<!-- 3. THE RAGE ENGINE (Primary Logic Controller) -->
+<!-- This must ALWAYS be last so it can see everything above it -->
+<script src="script.js"></script>
+
+<!-- 4. NEXUS PULSE (Live Connection) -->
+<!-- Optional: If you prefer the Pulse listener in a separate file later -->
 
 </body>
 </html>

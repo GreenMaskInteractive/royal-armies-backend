@@ -172,278 +172,117 @@ body {
    ============================================================ */
 
 #game-container {
-    margin-left: 160px !important;
-    margin-right: 160px !important;
-    position: relative;
-    z-index: 1;
+    display: none;
     opacity: 0;
+    width: 100%;
+    min-height: 100vh;
+    background: var(--bg);
     transition: opacity 1.5s ease-in-out;
-    display: none !important;
+    z-index: 10;
 }
 
 .full-page-overlay {
     position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    z-index: 200000; /* Stays in front of everything */
-    background: #000; /* Solid black base */
-    display: flex; /* Centers your login box */
-}
-
-.slideshow-container {
-    position: absolute;
-    width: 100%; height: 100%;
-    z-index: -1;
-    overflow: hidden;
+    inset: 0;
     background: #000;
-}
-
-.slide1 { background-image: url('images/mainbg1.png'); animation-delay: 0s; opacity: 1; }
-.slide2 { background-image: url('images/mainbg2.png'); animation-delay: 8s; }
-.slide3 { background-image: url('images/mainbg3.png'); animation-delay: 16s; }
-.slide4 { background-image: url('images/mainbg4.png'); animation-delay: 24s; }
-
-@keyframes fadeEffect {
-    0% { opacity: 0; }
-    5% { opacity: 1; }
-    25% { opacity: 1; }
-    30% { opacity: 0; }
-    100% { opacity: 0; }
-}
-
-@keyframes panEffect {
-    0% { transform: scale(1.05) translate(0, 0); }
-    100% { transform: scale(1.1) translate(-2%, -2%); }
-}
-
-.updates-panel {
-    position: absolute;
-    right: 40px;
-    top: 25%;
-    transform: translateY(-50%);
-    width: 320px;
-    height: 500px;
-    background: #000000 !important; /* Pure Black */
-    border: 2px solid var(--accent);
-    border-radius: 8px;
-    display: flex;
-    flex-direction: column;
-    z-index: 200005;
-    box-shadow: 0 0 30px rgba(0, 0, 0, 0.9);
-}
-
-.updates-header { background: var(--accent); color: #000; padding: 10px; text-align: center; font-family: 'Georgia', serif; font-weight: bold; text-transform: uppercase; letter-spacing: 2px; }
-.updates-scroll { flex-grow: 1; overflow-y: auto; padding: 15px; scrollbar-width: thin; scrollbar-color: var(--accent) #111; }
-.updates-scroll::-webkit-scrollbar { width: 6px; }
-.updates-scroll::-webkit-scrollbar-thumb { background: var(--accent); }
-.update-item { border-bottom: 1px solid #444; padding-bottom: 12px; margin-bottom: 15px; }
-.update-item:last-child { border: none; }
-.update-date { font-size: 0.75rem; color: var(--accent); font-family: monospace; }
-.update-title { margin: 5px 0; font-family: 'Georgia', serif; color: #fff; font-size: 1rem; }
-.update-text { font-size: 0.85rem; color: #bbb; line-height: 1.4; margin: 0; }
-.updates-footer { padding: 8px; font-size: 0.7rem; text-align: center; color: #666; font-style: italic;
-
-}
-
-.modal-overlay {
-    position: fixed;
-    top: 0; left: 0;
-    width: 100%; height: 100%;
-    background: rgba(0, 0, 0, 0.9);
     display: flex;
     justify-content: center;
     align-items: center;
-    z-index: 300000;
-    backdrop-filter: blur(8px);
+    z-index: 200000;
 }
 
-.modal-content {
-    background: #1a1a1a;
-    border: 2px solid var(--accent);
-    padding: 30px 40px;
-    width: 400px;
-    position: relative;
-    box-shadow: 0 0 50px rgba(0,0,0,1);
-    border-radius: 8px;
-    text-align: center;
-}
-
-.modal-title { font-family: 'Georgia', serif; color: var(--accent); margin-bottom: 5px; }
-.modal-subtitle { color: #888; font-size: 0.9rem; margin-bottom: 25px; }
-
-.reg-group { text-align: left; margin-bottom: 15px; }
-.reg-group label { display: block; color: #ccc; font-size: 0.8rem; margin-bottom: 5px; }
-
-.reg-input {
-    width: 100%;
-    background: #000;
-    border: 1px solid #444;
-    color: #fff;
-    padding: 10px;
-    box-sizing: border-box;
-    outline: none;
-}
-
-.reg-input:focus { border-color: var(--accent); }
-
-.close-modal {
-    position: absolute;
-    top: 15px;
-    right: 20px;
-    color: #888;
-    font-size: 28px;
-    cursor: pointer;
-}
-.close-modal:hover { color: #fff; }
-
-.modal-actions { margin-top: 25px;
-
-}
-
-.conclusion-box {
-    background: #000;
-    color: #00ff00;
-    padding: 20px;
-    border-left: 4px solid var(--accent);
-    margin-top: 20px;
-    font-family: 'Courier New', Courier, monospace;
-    min-height: 150px;
-}
-
+/* --- THE NEW STONE FRAME --- */
 .login-form-container {
-    background: #000000 !important; /* FIXED: No transparency */
-    border: 2px solid var(--accent);
-    padding: 40px;
-    border-radius: 12px;
-    position: relative;
-    top: -150px; 
-    width: 400px;
-    height: auto;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 20px;
+    background: url('images/mainloginbox.png') no-repeat center center;
+    background-size: 100% 100%;
+    width: 800px;
+    height: 500px; /* INCREASED to fit Logo + Inputs + Buttons */
+    box-sizing: border-box !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding-top: 60px; /* Moves content down into the stone area */
     margin: 0 auto;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.8);
-    z-index: 10000;
-    pointer-events: auto !important;
+    position: relative;
+    z-index: 100;
 }
 
-.fade-out-black {
-    filter: brightness(0);
-    transition: filter 8s ease; 
-}
-
-.class-bg {
-    position: absolute;
-    top: 80px;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 80%;
-    height: auto;
-    aspect-ratio: 16 / 9;
-    background: url('images/classchoosebg.png') no-repeat center center/cover;
-    z-index: -1;
-    opacity: 1;
-    transition: opacity 2s ease;
-}
-
-.class-options-container {
-    display: flex;
-    justify-content: center;
-    align-items: flex-end;
-    width: 100vw;
-    position: absolute;
-    bottom: 0;
-    padding-bottom: 150px;
-    overflow: hidden;
-}
-
-.side-info-panel { 
-    position: fixed; 
-    top: 0; 
-    bottom: 0 !important; 
-    height: 104vh !important; 
-    width: 450px; 
-    display: flex; 
-    transition: transform 0.8s cubic-bezier(0.075, 0.82, 0.165, 1); 
-    z-index: 10005; 
-}
+/* --- THE SLIDESHOW (Ambience) --- */
+.slideshow-container { position: absolute; inset: 0; z-index: -1; overflow: hidden; }
+.slide { position: absolute; inset: 0; background-size: cover; background-position: center; opacity: 0; animation: fadeEffect 32s infinite; }
+.slide1 { background-image: url('images/mainbg1.png'); animation-delay: 0s; opacity: 1; }
+/* ... (slide 2, 3, 4 stay same as your current code) ... */
 
 /* ============================================================
    SECTION 3: INTERACTIVE ARSENAL (Buttons & Inputs)
    ============================================================ */
 
+/* --- THE AURORA COMMANDER INPUTS --- */
 .login-input {
-    background-color: #000000 !important;
-    color: #ffffff;
-    border: 2px solid var(--accent);
-    border-left: 6px solid var(--accent);
+    display: block !important;
+    margin: 10px auto !important; 
+    width: 350px !important;
+    position: relative !important;
+    z-index: 110 !important; /* Higher than buttons */
+    pointer-events: auto !important;
+    box-sizing: border-box !important;
+    background: linear-gradient(to bottom, #1a1e23, #0d0f11) !important;
+    color: #a0c4d1;
+    border: 1px solid rgba(0, 255, 255, 0.3);
     border-radius: 4px;
+    padding: 12px 15px;
     font-family: 'Georgia', serif;
-    font-size: 1.1rem;
-    letter-spacing: 1px;
-    padding: 14px 20px;
-    width: 300px;
+    box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.8);
     outline: none;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
-    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    transition: all 0.3s ease;
 }
 
-.login-input::placeholder {
-    color: #555;
-    text-transform: uppercase;
-    font-size: 0.8rem;
-    letter-spacing: 2px;
-}
-
-.login-input:focus {
-    background-color: #000000 !important;
-    border-color: #ffffff;
-    box-shadow: 0 0 20px rgba(212, 175, 55, 0.6), inset 0 0 10px rgba(212, 175, 55, 0.2);
-    transform: scale(1.03);
-    filter: brightness(1.1);
-    outline: none;
-}
-
-/* 2. BUTTON BASE STYLE */
-.img-btn {
-    cursor: pointer;
+/* --- THE BUTTON ROW --- */
+#auth-buttons {
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    width: 100% !important;
+    height: 80px !important;
     position: relative;
-    display: inline-block; /* Essential for sizing */
-    top: 0;
-    filter: drop-shadow(0 4px 0px rgba(0,0,0,0.8));
+    top: -20px; /* Nudge UP closer to password field */
+    z-index: 105;
+    pointer-events: none; 
+}
+
+#btn-login-main, #btn-register-main {
+    flex: none !important;
+    width: 180px !important;
+    height: 60px !important;
+    background-size: 100% 100% !important;
+    background-color: transparent !important;
+    border: none !important;
+    display: flex !important;
+    justify-content: center;
+    align-items: center;
+    font-family: 'Georgia', serif;
+    font-size: 14px !important;
+    color: #ffffff !important;
+    text-transform: uppercase;
+    cursor: pointer;
+    pointer-events: auto !important;
     transition: all 0.2s ease;
 }
 
-.img-btn:hover {
-    filter: brightness(1.1) drop-shadow(0 4px 0px rgba(0,0,0,0.8));
+#btn-login-main { 
+    background-image: url('images/loginbtn.png') !important; 
+    margin-right: -15px; /* REELS them together */
+}
+#btn-register-main { 
+    background-image: url('images/registerbtn.png') !important; 
+    margin-left: -15px; /* REELS them together */
 }
 
-.img-btn:active {
-    transform: translateY(4px);
-    filter: brightness(0.9);
+#btn-login-main:hover, #btn-register-main:hover {
+    filter: brightness(1.3) drop-shadow(0 0 10px rgba(212, 175, 55, 0.6));
+    transform: scale(1.05);
 }
-
-/* 3. FORCED BUTTON SIZING */
-#btn-login-main {
-    width: 80px !important;
-    height: auto !important;
-}
-
-#btn-register-main {
-    width: 140px !important;
-    height: auto !important;
-}
-
-/* 4. HOSPITAL & ACTION BUTTONS */
-.primary-btn { background: var(--accent); border: none; padding: 8px 15px; cursor: pointer; border-radius: 4px; font-weight: bold; }
-.secondary-btn { background: #444; border: none; color: white; padding: 8px 15px; cursor: pointer; border-radius: 4px; }
-.danger-btn { background: var(--danger); border: none; color: white; padding: 8px 15px; cursor: pointer; border-radius: 4px; }
-.action-btn { background: var(--success); color: white; padding: 15px; font-size: 1.1rem; font-weight: bold; border-radius: 4px; text-transform: uppercase; cursor: pointer; }
 
 /* ============================================================
    SECTION 4: THE COMMAND HUD (Player Vitals)
