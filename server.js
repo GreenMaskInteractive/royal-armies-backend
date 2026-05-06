@@ -74,127 +74,99 @@ app.get('/get-rank-data', (req, res) => { res.json(groundRanks); });
 app.get('/test-sim', (req, res) => { const sim = generateRankedSimulation(1); res.json(sim); });
 */
 
-/* ============================================================
-   NEXUS SECTION 4: AUTHENTICATION API
-   ============================================================ */
+/* ============================================================ 
+   NEXUS SECTION 4: AUTHENTICATION API 
+   ============================================================ */ 
 
-// --- ACCOUNT REGISTRATION (The Forge) ---
-app.post('/register', async (req, res) => {
-    // 1. Clean the username
-    const username = req.body.username.trim().toLowerCase();
-    const { password, email } = req.body;
-
-    // 2. Hash the password and create token
-    const hashedPassword = await bcrypt.hash(password, 10);
-    const verificationToken = Math.random().toString(36).substring(2, 15);
-
+// --- ACCOUNT REGISTRATION (The Forge) --- 
+app.post('/register', async (req, res) => { 
+    const username = req.body.username.trim().toLowerCase(); 
+    const { password, email } = req.body; 
+    const hashedPassword = await bcrypt.hash(password, 10); 
+    const verificationToken = Math.random().toString(36).substring(2, 15); 
+    
     const newUser = { 
         username, 
         password: hashedPassword, 
         email, 
         isVerified: false, 
-        verificationToken,
-        gold: 100,
-        rank: 'Novice'
-    };
+        verificationToken, 
+        gold: 100, 
+        rank: 'Novice' 
+    }; 
 
-    // 3. Insert into Database AND send email
-    db.insert(newUser, async (err, user) => {
-        if (err) {
-            console.error("DATABASE INSERT ERROR:", err);
-            return res.status(500).json({ msg: "Forge failed." });
-        }
+    db.insert(newUser, async (err, user) => { 
+        if (err) { 
+            console.error("DATABASE INSERT ERROR:", err); 
+            return res.status(500).json({ msg: "Forge failed." }); 
+        } 
+        try { 
+            await resend.emails.send({ 
+                from: 'Royal Armies <noreply@royalarmies.com>', 
+                to: [email], 
+                subject: 'Forge Your Account', 
+                html: `<p>Commander, click here to verify your rank: <a href="https://royalarmies.com/verify?token=${verificationToken}">Verify Account</a></p>` 
+            }); 
+            res.json({ msg: "Registration successful! Check email." }); 
+        } catch (mailError) { 
+            console.error("RESEND ERROR:", mailError); 
+            res.json({ msg: "Account forged, but email failed. Check Logs." }); 
+        } 
+    }); 
+}); 
 
-        try {
-            await resend.emails.send({
-                from: 'Royal Armies <noreply@royalarmies.com>',
-                to: [email],
-                subject: 'Forge Your Account',
-                html: `<p>Commander, click here to verify your rank: <a href="https://royalarmies.com/verify?token=${verificationToken}">Verify Account</a></p>`
-            });
-            res.json({ msg: "Registration successful! Check email." });
-        } catch (mailError) {
-            console.error("RESEND ERROR:", mailError);
-            res.json({ msg: "Account forged, but email failed. Check Logs." });
-        }
-    });
-});
+// --- LOGIN (Entering the Gates) --- 
+app.post('/login', (req, res) => { 
+    const username = req.body.username.trim().toLowerCase(); 
+    const { password } = req.body; 
+    db.findOne({ username }, async (err, user) => { 
+        if (!user || !(await bcrypt.compare(password, user.password))) { 
+            return res.status(400).json({ msg: "Invalid credentials." }); 
+        } 
+        if (user.isVerified === false) { 
+            return res.status(400).json({ msg: "You must verify your email first!" }); 
+        } 
+        req.session.userId = user._id; 
+        res.json({ msg: "Welcome back, Commander.", user }); 
+    }); 
+}); 
 
-// ... (Registration code from previous turn) ...
+/* ============================================================ 
+   NEXUS SECTION 5: REAL-TIME EVENT STREAM & BOOT
+   ============================================================ */ 
 
-// --- LOGIN (Entering the Gates) ---
-app.post('/login', (req, res) => {
-    // We lowercase the login attempt to match the database
-    const username = req.body.username.trim().toLowerCase();
-    const { password } = req.body;
+// --- THE VERIFY GATE ---
+app.get('/verify', (req, res) => { 
+    const token = req.query.token; 
+    db.update({ verificationToken: token }, { $set: { isVerified: true } }, {}, (err) => { 
+        if (err) return res.send("Verification failed."); 
+        activeClients.forEach(client => { 
+            try { 
+                if (client.res && !client.res.writableEnded) { 
+                    client.res.write(`data: ${JSON.stringify({ verified: true })}\n\n`); 
+                } 
+            } catch (broadcastError) { 
+                console.error("Pulse broadcast failed:", broadcastError); 
+            } 
+        }); 
+        res.send("<h1>Verified!</h1><p>You can close this tab and return to the game.</p>"); 
+    }); 
+}); 
 
-    db.findOne({ username }, async (err, user) => {
-        console.log("--- LOGIN DEBUG ---");
-        console.log("Searching for:", username);
-        console.log("Found in DB:", user ? "YES" : "NO");
+// --- VERIFICATION LISTENER --- 
+app.get('/listen-for-verify', (req, res) => { 
+    res.setHeader('Content-Type', 'text/event-stream'); 
+    res.setHeader('Cache-Control', 'no-cache'); 
+    res.setHeader('Connection', 'keep-alive'); 
+    const clientId = Date.now(); 
+    const newClient = { id: clientId, res }; 
+    activeClients.push(newClient); 
+    req.on('close', () => { 
+        activeClients = activeClients.filter(c => c.id !== clientId); 
+    }); 
+}); 
 
-        // 1. CREDENTIAL CHECK
-        if (!user || !(await bcrypt.compare(password, user.password))) {
-            return res.status(400).json({ msg: "Invalid credentials." });
-        }
-
-        // 2. VERIFICATION CHECK
-        if (user.isVerified === false) {
-            return res.status(400).json({ msg: "You must verify your email first!" });
-        }
-
-        // 3. SESSION ESTABLISHMENT
-        req.session.userId = user._id;
-        res.json({ msg: "Welcome back, Commander.", user });
-    });
-});
-
-/* ============================================================
-   NEXUS SECTION 5: REAL-TIME EVENT STREAM (The Pulse)
-   ============================================================ */
-
-res.send("<h1>Verified!</h1><p>You can close this tab and return to the game.</p>");
-    });
-}); // This is correct
-}); // THIS ONE IS EXTRA AND WILL CRASH THE SERVER
-Use code with caution.The Cleanup (NEXUS Section 5)To fix the crash, ensure your Section 5 transition from the /verify route to the /listen-for-verify route looks exactly like this:javascript/* ============================================================
-   NEXUS SECTION 5: REAL-TIME EVENT STREAM (The Pulse)
-   ============================================================ */
-app.get('/verify', (req, res) => {
-    const token = req.query.token;
-    db.update({ verificationToken: token }, { $set: { isVerified: true } }, {}, (err) => {
-        if (err) return res.send("Verification failed.");
-
-        activeClients.forEach(client => {
-            try {
-                if (client.res && !client.res.writableEnded) {
-                    client.res.write(`data: ${JSON.stringify({ verified: true })}\n\n`);
-                }
-            } catch (broadcastError) {
-                console.error("Pulse broadcast failed for one client:", broadcastError);
-            }
-        });
-        res.send("<h1>Verified!</h1><p>You can close this tab and return to the game.</p>");
-    });
-}); // <--- Only ONE of these here!
-
-// --- VERIFICATION LISTENER ---
-app.get('/listen-for-verify', (req, res) => {
-    // ... rest of code
-Use code with caution.Secondary Check: The resend InitializationOn Page 1, your resend setup is correct, but remember that Render will crash if the RESEND_API_KEY isn't in your Environment Variables. If you haven't added it to Render yet, the server will "exit early" the moment it tries to run that line.Does removing that extra }); from Page 3 allow the Kingdom Server to finally come online?Proactive Follow-up: After fixing the brace, check the very bottom of your file to ensure you still have the NEXUS Section 7 app.listen(PORT...) line, as it wasn't visible on the last page of the PDF!
-    res.setHeader('Content-Type', 'text/event-stream');
-    res.setHeader('Cache-Control', 'no-cache');
-    res.setHeader('Connection', 'keep-alive');
-
-    const clientId = Date.now();
-    const newClient = { id: clientId, res };
-    activeClients.push(newClient);
-
-    req.on('close', () => {
-        activeClients = activeClients.filter(c => c.id !== clientId);
-    });
-});
-
-app.listen(PORT, () => {
-    console.log(`Kingdom Server online at http://localhost:${PORT}`);
+// --- THE IGNITION ---
+app.listen(PORT, () => { 
+    console.log(`Kingdom Server online at http://localhost:${PORT}`); 
 });
