@@ -377,89 +377,22 @@ body {
    SECTION 3: INTERACTIVE ARSENAL (Buttons & Inputs)
    ============================================================ */
 
-/* THE COMMANDER INPUTS */
 .login-input {
     background-color: #000000 !important;
     color: #ffffff;
     border: 2px solid var(--accent);
     border-left: 6px solid var(--accent);
-    font-family: 'Georgia', serif;
-    padding: 14px 20px;
-    width: 300px;
-    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-}
-
-.login-input:focus {
-    border-color: #ffffff;
-    box-shadow: 0 0 20px rgba(212, 175, 55, 0.6);
-    transform: scale(1.03);
-}
-
-/* THE IMAGE-BASED ACTION BUTTONS */
-.img-btn {
-    cursor: pointer;
-    transition: all 0.2s ease;
-    filter: drop-shadow(0 4px 0px rgba(0,0,0,0.8));
-}
-
-.img-btn:active {
-    transform: translateY(4px) scale(0.96);
-    filter: brightness(0.9) drop-shadow(0 0px 0px rgba(0,0,0,0));
-}
-
-/* THE PRIMARY ACTION BUTTON (Battle/Confirm) */
-.action-btn {
-    background: var(--success);
-    color: white;
-    padding: 15px;
-    font-size: 1.1rem;
-    font-weight: bold;
     border-radius: 4px;
-    text-transform: uppercase;
-    cursor: pointer;
-}
-
-.quick-hospital {
-    margin-top: 30px;
-    max-width: 400px;
-}
-
-.hospital-actions {
-    display: flex;
-    gap: 10px;
-    margin-top: 15px;
-}
-
-.primary-btn { background: var(--accent); border: none; padding: 8px 15px; cursor: pointer; border-radius: 4px; font-weight: bold; }
-.secondary-btn { background: #444; border: none; color: white; padding: 8px 15px; cursor: pointer; border-radius: 4px; }
-.danger-btn { background: var(--danger); border: none; color: white; padding: 8px 15px; cursor: pointer; border-radius: 4px;
-
-}
-
-.login-input {
-    /* 1. SOLID BLACK BACKGROUND */
-    background-color: #000000 !important;
-    color: #ffffff;
-
-    /* 2. AETHER GOLD BORDER DESIGN */
-    border: 2px solid var(--accent);
-    border-left: 6px solid var(--accent); /* Status Bar look */
-    border-radius: 4px;
-
-    /* 3. TYPOGRAPHY & SPACING */
     font-family: 'Georgia', serif;
     font-size: 1.1rem;
     letter-spacing: 1px;
     padding: 14px 20px;
     width: 300px;
-
-    /* 4. VISUAL DEPTH */
     outline: none;
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
-    transition: all 0.3s ease;
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
-/* --- PLACEHOLDER STYLE --- */
 .login-input::placeholder {
     color: #555;
     text-transform: uppercase;
@@ -467,37 +400,50 @@ body {
     letter-spacing: 2px;
 }
 
-/* --- ACTIVE STATE (The "Naked" Code Fixed) --- */
 .login-input:focus {
-    /* 1. MAINTAIN SOLID BLACK */
     background-color: #000000 !important;
-
-    /* 2. ENHANCED AETHER GLOW */
-    border-color: #ffffff; 
+    border-color: #ffffff;
     box-shadow: 0 0 20px rgba(212, 175, 55, 0.6), inset 0 0 10px rgba(212, 175, 55, 0.2);
-
-    /* 3. PHYSICAL FEEDBACK */
-    transform: scale(1.03); 
+    transform: scale(1.03);
     filter: brightness(1.1);
-
-    /* 4. SMOOTHNESS */
     outline: none;
-    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
+/* 2. BUTTON BASE STYLE */
 .img-btn {
-    /* Give the button initial "height" with a dark shadow */
-    filter: drop-shadow(0 4px 0px rgba(0,0,0,0.8));
-    position: relative;
-    top: 0;
     cursor: pointer;
+    position: relative;
+    display: inline-block; /* Essential for sizing */
+    top: 0;
+    filter: drop-shadow(0 4px 0px rgba(0,0,0,0.8));
     transition: all 0.2s ease;
 }
 
-/* --- BUTTON HOVER STATE --- */
 .img-btn:hover {
     filter: brightness(1.1) drop-shadow(0 4px 0px rgba(0,0,0,0.8));
 }
+
+.img-btn:active {
+    transform: translateY(4px);
+    filter: brightness(0.9);
+}
+
+/* 3. FORCED BUTTON SIZING */
+#btn-login-main {
+    width: 80px !important;
+    height: auto !important;
+}
+
+#btn-register-main {
+    width: 140px !important;
+    height: auto !important;
+}
+
+/* 4. HOSPITAL & ACTION BUTTONS */
+.primary-btn { background: var(--accent); border: none; padding: 8px 15px; cursor: pointer; border-radius: 4px; font-weight: bold; }
+.secondary-btn { background: #444; border: none; color: white; padding: 8px 15px; cursor: pointer; border-radius: 4px; }
+.danger-btn { background: var(--danger); border: none; color: white; padding: 8px 15px; cursor: pointer; border-radius: 4px; }
+.action-btn { background: var(--success); color: white; padding: 15px; font-size: 1.1rem; font-weight: bold; border-radius: 4px; text-transform: uppercase; cursor: pointer; }
 
 /* ============================================================
    SECTION 4: THE COMMAND HUD (Player Vitals)
