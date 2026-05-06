@@ -153,26 +153,35 @@ app.post('/login', (req, res) => {
    NEXUS SECTION 5: REAL-TIME EVENT STREAM (The Pulse)
    ============================================================ */
 
-// --- THE VERIFY GATE (External Signal) ---
+res.send("<h1>Verified!</h1><p>You can close this tab and return to the game.</p>");
+    });
+}); // This is correct
+}); // THIS ONE IS EXTRA AND WILL CRASH THE SERVER
+Use code with caution.The Cleanup (NEXUS Section 5)To fix the crash, ensure your Section 5 transition from the /verify route to the /listen-for-verify route looks exactly like this:javascript/* ============================================================
+   NEXUS SECTION 5: REAL-TIME EVENT STREAM (The Pulse)
+   ============================================================ */
 app.get('/verify', (req, res) => {
     const token = req.query.token;
-
-    // 1. UPDATE THE DATABASE
     db.update({ verificationToken: token }, { $set: { isVerified: true } }, {}, (err) => {
         if (err) return res.send("Verification failed.");
 
-        // 2. BROADCAST TO THE GAME ENGINE
-        // This alerts the 'activeClients' (the player's open tab)
         activeClients.forEach(client => {
-            client.res.write(`data: ${JSON.stringify({ verified: true })}\n\n`);
+            try {
+                if (client.res && !client.res.writableEnded) {
+                    client.res.write(`data: ${JSON.stringify({ verified: true })}\n\n`);
+                }
+            } catch (broadcastError) {
+                console.error("Pulse broadcast failed for one client:", broadcastError);
+            }
         });
-
         res.send("<h1>Verified!</h1><p>You can close this tab and return to the game.</p>");
     });
-});
+}); // <--- Only ONE of these here!
 
 // --- VERIFICATION LISTENER ---
 app.get('/listen-for-verify', (req, res) => {
+    // ... rest of code
+Use code with caution.Secondary Check: The resend InitializationOn Page 1, your resend setup is correct, but remember that Render will crash if the RESEND_API_KEY isn't in your Environment Variables. If you haven't added it to Render yet, the server will "exit early" the moment it tries to run that line.Does removing that extra }); from Page 3 allow the Kingdom Server to finally come online?Proactive Follow-up: After fixing the brace, check the very bottom of your file to ensure you still have the NEXUS Section 7 app.listen(PORT...) line, as it wasn't visible on the last page of the PDF!
     res.setHeader('Content-Type', 'text/event-stream');
     res.setHeader('Cache-Control', 'no-cache');
     res.setHeader('Connection', 'keep-alive');
@@ -184,4 +193,8 @@ app.get('/listen-for-verify', (req, res) => {
     req.on('close', () => {
         activeClients = activeClients.filter(c => c.id !== clientId);
     });
+});
+
+app.listen(PORT, () => {
+    console.log(`Kingdom Server online at http://localhost:${PORT}`);
 });
