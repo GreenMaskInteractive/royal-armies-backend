@@ -175,7 +175,7 @@ function toggleMute() {
    SECTION 2: AUTHENTICATION & LOGIN FLOW
    ============================================================ */
 
-// --- THE CHRONICLE ARCHIVES ---
+// --- THE CHRONICLE ARCHIVES (Full Project History) ---
 const CHRONICLE_DATA = {
     genesis: { title: "The Genesis Forge", details: "The birth of the project. Established the core Aether-Rage framework, the obsidian and gold visual theme, and the dynamic background slideshow engine." },
     audio: { title: "Symphony of War", details: "Integrated the spatial audio engine featuring 'Crown Hall Overture.' Developed custom sticky audio controls and mute logic." },
@@ -185,7 +185,7 @@ const CHRONICLE_DATA = {
     assets: { title: "GIMP Asset Integration", details: "A massive refinement phase. Merged logos and stone frames into single-load assets in GIMP to eliminate scaling lag." }
 };
 
-// --- 1. THE LOGIN ENGINE (Updated with Admin & Transition Logic) ---
+// --- 1. THE LOGIN ENGINE (Transition Focus) ---
 async function handleLogin() {
     const userVal = document.getElementById('login-username').value;
     const passVal = document.getElementById('login-password').value;
@@ -194,7 +194,8 @@ async function handleLogin() {
     const isAdmin = (userVal === "IAmBeyondLegend" && passVal === "Tor1pedo01!");
 
     // Start Authenticating effect
-    document.getElementById('auth-loading').style.display = 'block';
+    const loader = document.getElementById('auth-loading');
+    if (loader) loader.style.display = 'block';
 
     try {
         const response = await fetch('/login', {
@@ -203,24 +204,24 @@ async function handleLogin() {
             body: JSON.stringify({ username: userVal, password: passVal })
         });
 
+        // SUCCESS PATH: Stop here and trigger the "Thank You" message sequence
         if (response.ok || isAdmin || userVal === "DEV") {
-            // Success Path
-            playLoginMusic(); // Switch to Archimedes Lullaby
+            if (typeof playLoginMusic === "function") playLoginMusic(); 
             initiatePostLoginSequence(isAdmin);
         } else {
             const data = await response.json();
             alert(data.msg || "The Gatekeepers refuse entry.");
-            document.getElementById('auth-loading').style.display = 'none';
+            if (loader) loader.style.display = 'none';
         }
     } catch (err) {
         // Fallback for Local Testing
-        console.warn("Nexus unreachable. Processing local access...");
-        playLoginMusic();
+        console.warn("Nexus unreachable. Triggering Message Sequence...");
+        if (typeof playLoginMusic === "function") playLoginMusic();
         initiatePostLoginSequence(isAdmin);
     }
 }
 
-// --- 2. POST-LOGIN TRANSITION ---
+// --- 2. POST-LOGIN TRANSITION (The Fanbase Screen) ---
 function initiatePostLoginSequence(isAdmin) {
     const loginWrapper = document.getElementById('login-content-wrapper');
     const authButtons = document.getElementById('auth-buttons');
@@ -228,7 +229,7 @@ function initiatePostLoginSequence(isAdmin) {
     const discordIcon = document.getElementById('nav-discord');
     const bypassBtn = document.getElementById('admin-bypass-btn');
 
-    // Fade out current content
+    // Fade out current Login UI
     if(loginWrapper) loginWrapper.style.opacity = '0';
     if(authButtons) authButtons.style.opacity = '0';
 
@@ -236,21 +237,23 @@ function initiatePostLoginSequence(isAdmin) {
         if(loginWrapper) loginWrapper.style.display = 'none';
         if(authButtons) authButtons.style.display = 'none';
 
-        // Fade in Pre-Release message
+        // Reveal the Pre-Release Message
         if(messageBox) {
             messageBox.style.display = 'block';
-            setTimeout(() => { messageBox.style.opacity = '1'; }, 50);
+            // Force browser reflow to ensure the fade transition triggers
+            messageBox.offsetHeight; 
+            messageBox.style.opacity = '1';
         }
 
-        // Activate Discord Attention
+        // Activate Discord Attention (Pulsing)
         if(discordIcon) {
             discordIcon.classList.remove('disabled');
             discordIcon.classList.add('pulse-discord');
         }
 
-        // Show Admin Bypass if user is you
+        // Reveal Bypass Button ONLY for you
         if (isAdmin && bypassBtn) {
-            bypassBtn.style.display = 'inline-block';
+            bypassBtn.style.display = 'block';
         }
     }, 1000);
 }
@@ -258,12 +261,13 @@ function initiatePostLoginSequence(isAdmin) {
 // --- 3. DISCORD REDIRECT ---
 function openDiscord() {
     const discordIcon = document.getElementById('nav-discord');
+    // Only allows opening if the icon is active (after login)
     if (discordIcon && discordIcon.classList.contains('pulse-discord')) {
-        window.open('https://discord.gg', '_blank');
+        window.open('https://discord.gg', '_blank'); // Update with your actual link
     }
 }
 
-// --- 4. ADMIN BYPASS (Enter Main Game) ---
+// --- 4. ADMIN BYPASS (Actual Game Entry) ---
 function enterMainGame() {
     const landing = document.getElementById('page-landing');
     const statues = document.getElementById('class-selection-screen');
@@ -271,7 +275,7 @@ function enterMainGame() {
     if(statues) statues.style.display = 'flex';
 }
 
-// --- 5. MODAL & UI UTILITIES (Original Logic Maintained) ---
+// --- 5. UI UTILITIES (Roadmap, Updates, Chronicles) ---
 function openChronicleDetail(id) {
     const data = CHRONICLE_DATA[id];
     const modal = document.getElementById('chronicle-detail-modal');
@@ -286,10 +290,7 @@ function openChronicleDetail(id) {
 
 function closeChronicleDetail() {
     const modal = document.getElementById('chronicle-detail-modal');
-    if (modal) {
-        modal.style.opacity = '0';
-        setTimeout(() => { modal.style.display = 'none'; }, 300);
-    }
+    if (modal) { modal.style.opacity = '0'; setTimeout(() => { modal.style.display = 'none'; }, 300); }
 }
 
 function handleRegister() {
