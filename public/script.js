@@ -174,54 +174,41 @@ function toggleMute() {
 /* ============================================================
    SECTION 2: AUTHENTICATION & LOGIN FLOW
    ============================================================ */
-
-// --- THE CHRONICLE ARCHIVES (Full Project History) ---
+// --- THE CHRONICLE ARCHIVES ---
 const CHRONICLE_DATA = {
     genesis: { title: "The Genesis Forge", details: "The birth of the project. Established the core Aether-Rage framework, the obsidian and gold visual theme, and the dynamic background slideshow engine." },
-    audio: { title: "Symphony of War", details: "Integrated the spatial audio engine featuring 'Crown Hall Overture.' Developed custom sticky audio controls and mute logic." },
+    audio: { title: "Symphony of War", details: "Integrated the spatial audio engine featuring 'Stone and Water.' Developed custom sticky audio controls and mute logic." },
     narrative: { title: "The Traveler's Guidance", details: "Built the Narrative System and the mysterious 'Retired Old Man' portrait interaction. Engineered the typing text effect." },
     interface: { title: "Navigator & Roadmap", details: "Deployed the Widescreen Roadmap system (95vw) with Star Citizen-inspired 'Deep Dive' expansion logic." },
     security: { title: "Nexus Gatekeeping", details: "Established the Secure Login Engine. Developed the Developer Override (Skeleton Key) bypass system for rapid testing." },
     assets: { title: "GIMP Asset Integration", details: "A massive refinement phase. Merged logos and stone frames into single-load assets in GIMP to eliminate scaling lag." }
 };
 
-// --- 1. THE LOGIN ENGINE (Transition Focus) ---
+// --- 1. THE LOGIN ENGINE (Local Only - Pre-Release Mode) ---
 async function handleLogin() {
     const userVal = document.getElementById('login-username').value;
     const passVal = document.getElementById('login-password').value;
     
-    // Check for Admin Credentials
+    // Admin Credentials Check
     const isAdmin = (userVal === "IAmBeyondLegend" && passVal === "Tor1pedo01!");
 
-    // Start Authenticating effect
+    // Visual loading state
     const loader = document.getElementById('auth-loading');
     if (loader) loader.style.display = 'block';
 
-    try {
-        const response = await fetch('/login', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ username: userVal, password: passVal })
-        });
-
-        // SUCCESS PATH: Stop here and trigger the "Thank You" message sequence
-        if (response.ok || isAdmin || userVal === "DEV") {
-            if (typeof playLoginMusic === "function") playLoginMusic(); 
+    // SUCCESS SIMULATION: Fires locally for any filled fields (No external fetch)
+    setTimeout(() => {
+        if (userVal !== "" && passVal !== "") {
+            // Landing song continues here. No music swap yet.
             initiatePostLoginSequence(isAdmin);
         } else {
-            const data = await response.json();
-            alert(data.msg || "The Gatekeepers refuse entry.");
+            alert("Please provide credentials to the Gatekeepers.");
             if (loader) loader.style.display = 'none';
         }
-    } catch (err) {
-        // Fallback for Local Testing
-        console.warn("Nexus unreachable. Triggering Message Sequence...");
-        if (typeof playLoginMusic === "function") playLoginMusic();
-        initiatePostLoginSequence(isAdmin);
-    }
+    }, 800);
 }
 
-// --- 2. POST-LOGIN TRANSITION (The Fanbase Screen) ---
+// --- 2. POST-LOGIN TRANSITION (Fanbase Message) ---
 function initiatePostLoginSequence(isAdmin) {
     const loginWrapper = document.getElementById('login-content-wrapper');
     const authButtons = document.getElementById('auth-buttons');
@@ -229,7 +216,7 @@ function initiatePostLoginSequence(isAdmin) {
     const discordIcon = document.getElementById('nav-discord');
     const bypassBtn = document.getElementById('admin-bypass-btn');
 
-    // Fade out current Login UI
+    // Fade out Login UI
     if(loginWrapper) loginWrapper.style.opacity = '0';
     if(authButtons) authButtons.style.opacity = '0';
 
@@ -240,42 +227,48 @@ function initiatePostLoginSequence(isAdmin) {
         // Reveal the Pre-Release Message
         if(messageBox) {
             messageBox.style.display = 'block';
-            // Force browser reflow to ensure the fade transition triggers
-            messageBox.offsetHeight; 
+            messageBox.offsetHeight; // Force reflow for transition
             messageBox.style.opacity = '1';
         }
 
-        // Activate Discord Attention (Pulsing)
+        // Pulse the Discord Icon
         if(discordIcon) {
             discordIcon.classList.remove('disabled');
             discordIcon.classList.add('pulse-discord');
         }
 
-        // Reveal Bypass Button ONLY for you
+        // Show Admin Bypass Button only if credentials match
         if (isAdmin && bypassBtn) {
             bypassBtn.style.display = 'block';
         }
     }, 1000);
 }
 
-// --- 3. DISCORD REDIRECT ---
+// --- 3. ADMIN BYPASS (The actual entry to selection) ---
+function enterMainGame() {
+    // 1. Swap Music: Swaps to Archimedes Lullaby only at this jump
+    if (typeof playLoginMusic === "function") {
+        playLoginMusic(); 
+    }
+
+    // 2. Hide Landing / Show Statues
+    const landing = document.getElementById('page-landing');
+    const statues = document.getElementById('class-selection-screen');
+    if(landing) landing.style.display = 'none';
+    if(statues) statues.style.display = 'flex';
+    
+    console.log("Welcome to the Hall of Statues, Commander.");
+}
+
+// --- 4. DISCORD REDIRECT ---
 function openDiscord() {
     const discordIcon = document.getElementById('nav-discord');
-    // Only allows opening if the icon is active (after login)
     if (discordIcon && discordIcon.classList.contains('pulse-discord')) {
         window.open('https://discord.gg', '_blank'); // Update with your actual link
     }
 }
 
-// --- 4. ADMIN BYPASS (Actual Game Entry) ---
-function enterMainGame() {
-    const landing = document.getElementById('page-landing');
-    const statues = document.getElementById('class-selection-screen');
-    if(landing) landing.style.display = 'none';
-    if(statues) statues.style.display = 'flex';
-}
-
-// --- 5. UI UTILITIES (Roadmap, Updates, Chronicles) ---
+/* --- UI UTILITIES --- */
 function openChronicleDetail(id) {
     const data = CHRONICLE_DATA[id];
     const modal = document.getElementById('chronicle-detail-modal');
@@ -296,7 +289,6 @@ function closeChronicleDetail() {
 function handleRegister() {
     const modal = document.getElementById('register-modal');
     if (modal) modal.style.display = 'flex';
-    else alert("The Forge is currently under maintenance.");
 }
 
 function closeRegister() {
