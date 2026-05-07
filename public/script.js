@@ -92,14 +92,11 @@ async function handleLogin() {
     const userVal = document.getElementById('login-username').value;
     const passVal = document.getElementById('login-password').value;
 
-    // 1. SKELETON KEY (DEV BYPASS)
     if (userVal === "OVERRIDE" || userVal === "DEV") {
-        console.log("Dev Override Active. Bypassing Nexus...");
         enterMainGame({ username: "Developer", rank: "Admin" });
         return;
     }
 
-    // 2. THE NEXUS REQUEST
     try {
         const response = await fetch('/login', {
             method: 'POST',
@@ -109,14 +106,12 @@ async function handleLogin() {
 
         if (response.ok) {
             const data = await response.json();
-            console.log("Access Granted. Welcome, Commander.");
             enterMainGame(data.user);
         } else {
             const data = await response.json();
-            alert(data.msg || "The Gatekeepers refuse entry.");
+            alert(data.msg || "Gate access denied.");
         }
     } catch (err) {
-        // Safe Fallback for Local Testing
         console.warn("Nexus unreachable. Forcing entrance for local testing...");
         enterMainGame({ username: "LocalPlayer", rank: "Novice" });
     }
@@ -124,9 +119,37 @@ async function handleLogin() {
 
 // --- THE REGISTRATION TRIGGER ---
 function handleRegister() {
-    // Purged old modals. Logic for the Registration Stone goes here next cycle.
-    alert("The Forge is currently under maintenance. Use 'DEV' to enter.");
+    const modal = document.getElementById('register-modal');
+    if (modal) modal.style.display = 'flex';
 }
+
+function closeRegister() {
+    const modal = document.getElementById('register-modal');
+    if (modal) modal.style.display = 'none';
+}
+
+// --- THE ROADMAP INTERFACE ---
+function toggleRoadmap(show) {
+    const modal = document.getElementById('roadmap-modal');
+    if (!modal) return;
+
+    if (show) {
+        modal.style.display = 'flex';
+        // Force a tiny reflow for the CSS transition
+        setTimeout(() => { modal.style.opacity = '1'; }, 10);
+    } else {
+        modal.style.opacity = '0';
+        setTimeout(() => { modal.style.display = 'none'; }, 300);
+    }
+}
+
+// --- NAVIGATOR BAR UTILITIES ---
+// This handles the "Coming Soon" alerts for the greyed-out icons
+document.querySelectorAll('.nav-icon.disabled').forEach(icon => {
+    icon.onclick = () => {
+        alert("This chronicle is currently being forged in the fires of development.");
+    };
+});
 
 /* ============================================================
    SECTION 3: CINEMATIC & NARRATIVE ENGINES
