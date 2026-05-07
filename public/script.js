@@ -53,17 +53,7 @@ let isMuted = false;
 let activeTrackId = 'main-theme';
 let audioContext, gainNode, source;
 
-// --- 1. THE NEXUS PULSE (Live Verification) ---
-const eventSource = new EventSource('/listen-for-verify');
-eventSource.onmessage = (event) => {
-    const data = JSON.parse(event.data);
-    if (data.verified) {
-        alert("Thank you for joining the war effort! Your nation awaits you!");
-        location.reload();
-    }
-};
-
-// --- 2. THE AUDIO OVERDRIVE ENGINE ---
+// --- 1. THE AUDIO OVERDRIVE ENGINE ---
 function boostVolume(multiplier) {
     const music = document.getElementById(activeTrackId);
     if (!music) return;
@@ -71,7 +61,7 @@ function boostVolume(multiplier) {
         if (!audioContext) {
             audioContext = new (window.AudioContext || window.webkitAudioContext)();
         }
-        // Re-connect source whenever track changes
+        // Re-connect source whenever track changes or boost is called
         const currentSource = audioContext.createMediaElementSource(music);
         gainNode = audioContext.createGain();
         currentSource.connect(gainNode);
@@ -82,14 +72,15 @@ function boostVolume(multiplier) {
     } catch (e) { console.warn("Browser restricted high-gain audio."); }
 }
 
-// --- 3. THE SYMPHONY HANDSHAKE (Landing Unlock) ---
+// --- 2. THE SYMPHONY HANDSHAKE (Landing Unlock) ---
 const unlockAudio = () => {
     const music = document.getElementById('main-theme');
     if (music && music.paused && !isMuted) {
         music.volume = 1.0; 
-        music.play().then(() => console.log("Banner Hall Ascension Authorized."))
+        music.play().then(() => console.log("Stone and Water Authorized."))
             .catch(() => console.log("Interaction required for audio."));
     }
+    // Remove listeners after first successful interaction
     ['click', 'keydown', 'mousedown', 'touchstart'].forEach(e => 
         document.removeEventListener(e, unlockAudio));
 };
@@ -97,27 +88,48 @@ const unlockAudio = () => {
 ['click', 'keydown', 'mousedown', 'touchstart'].forEach(e => 
     document.addEventListener(e, unlockAudio, { once: true }));
 
-// --- 4. SUCCESSFUL LOGIN THEME ---
+// --- 3. SUCCESSFUL ENTRY THEME (Triggered by Admin Bypass) ---
 function playLoginMusic() {
     const mainTheme = document.getElementById('main-theme');
     const loginTheme = document.getElementById('login-theme');
     
     if (!mainTheme || !loginTheme) return;
 
-    // Silence landing theme
+    // 1. Silence and reset landing theme
     mainTheme.pause();
     mainTheme.currentTime = 0;
 
-    // Activate Archimedes Lullaby
+    // 2. Switch control to Archimedes Lullaby
     activeTrackId = 'login-theme';
     if (!isMuted) {
         loginTheme.volume = 1.0;
-        loginTheme.play().then(() => console.log("Playing: Archimedes Lullaby"))
-            .catch(e => console.log("Login music waiting for final gesture."));
+        loginTheme.play().then(() => console.log("Now Playing: Archimedes Lullaby"))
+            .catch(e => console.log("Login music waiting for final click."));
     }
 }
 
-// --- 5. AUDIO CONTROLS ---
+// --- 4. THE BOOT SEQUENCE (Local Only Mode) ---
+window.onload = () => {
+    console.log("Aether Engine Synchronized. Local Logic Active.");
+    const landing = document.getElementById('page-landing');
+    if (landing) {
+        landing.style.display = 'flex';
+        landing.style.opacity = '1';
+    }
+    initializeDataLink();
+};
+
+function initializeDataLink() {
+    const initInterval = setInterval(() => {
+        // Only stops looking once game data variables are found in memory
+        if (typeof groundRanks !== 'undefined' && typeof unitDatabase !== 'undefined') {
+            clearInterval(initInterval);
+            if (typeof initDashboard === "function") initDashboard();
+        }
+    }, 100);
+}
+
+// --- 5. AUDIO CONTROLS (Universal Toggle) ---
 function toggleMute() {
     const music = document.getElementById(activeTrackId);
     const icon = document.getElementById('audio-icon');
@@ -126,54 +138,23 @@ function toggleMute() {
     if (!music.muted) {
         music.muted = true;
         isMuted = true;
-        icon.className = 'icon-muted';
+        if (icon) icon.className = 'icon-muted';
+        console.log("Ambiance Silenced.");
     } else {
         music.muted = false;
         isMuted = false;
         music.play();
+        // If overdrive was active, resume the context
         if (audioContext) audioContext.resume();
-        icon.className = 'icon-unmuted';
-    }
-}
-
-// --- 6. BOOT SEQUENCE ---
-window.onload = () => {
-    console.log("Aether Engine Synchronized.");
-    const landing = document.getElementById('page-landing');
-    if (landing) landing.style.display = 'flex';
-    initializeDataLink();
-};
-
-function initializeDataLink() {
-    const initInterval = setInterval(() => {
-        if (typeof groundRanks !== 'undefined' && typeof unitDatabase !== 'undefined') {
-            clearInterval(initInterval);
-            initDashboard();
-        }
-    }, 100);
-}
-// --- 6. AUDIO CONTROLS ---
-function toggleMute() {
-    const music = document.getElementById('main-theme');
-    const icon = document.getElementById('audio-icon');
-    if (!music) return;
-
-    if (!music.muted) {
-        music.muted = true;
-        isMuted = true;
-        icon.className = 'icon-muted';
-    } else {
-        music.muted = false;
-        isMuted = false;
-        music.play();
-        if (audioContext) audioContext.resume();
-        icon.className = 'icon-unmuted';
+        if (icon) icon.className = 'icon-unmuted';
+        console.log("Symphony Resumed.");
     }
 }
 
 /* ============================================================
    SECTION 2: AUTHENTICATION & LOGIN FLOW
    ============================================================ */
+
 // --- THE CHRONICLE ARCHIVES ---
 const CHRONICLE_DATA = {
     genesis: { title: "The Genesis Forge", details: "The birth of the project. Established the core Aether-Rage framework, the obsidian and gold visual theme, and the dynamic background slideshow engine." },
@@ -196,10 +177,10 @@ async function handleLogin() {
     const loader = document.getElementById('auth-loading');
     if (loader) loader.style.display = 'block';
 
-    // SUCCESS SIMULATION: Fires locally for any filled fields (No external fetch)
+    // SUCCESS SIMULATION: Processing locally
     setTimeout(() => {
         if (userVal !== "" && passVal !== "") {
-            // Landing song continues here. No music swap yet.
+            // Song does NOT swap yet. Transition to message begins.
             initiatePostLoginSequence(isAdmin);
         } else {
             alert("Please provide credentials to the Gatekeepers.");
@@ -216,7 +197,7 @@ function initiatePostLoginSequence(isAdmin) {
     const discordIcon = document.getElementById('nav-discord');
     const bypassBtn = document.getElementById('admin-bypass-btn');
 
-    // Fade out Login UI
+    // 2A. Fade out Login UI
     if(loginWrapper) loginWrapper.style.opacity = '0';
     if(authButtons) authButtons.style.opacity = '0';
 
@@ -224,20 +205,20 @@ function initiatePostLoginSequence(isAdmin) {
         if(loginWrapper) loginWrapper.style.display = 'none';
         if(authButtons) authButtons.style.display = 'none';
 
-        // Reveal the Pre-Release Message
+        // 2B. Reveal the Pre-Release Message
         if(messageBox) {
             messageBox.style.display = 'block';
-            messageBox.offsetHeight; // Force reflow for transition
+            messageBox.offsetHeight; // Force browser reflow
             messageBox.style.opacity = '1';
         }
 
-        // Pulse the Discord Icon
+        // 2C. Pulse the Discord Icon for attention
         if(discordIcon) {
             discordIcon.classList.remove('disabled');
             discordIcon.classList.add('pulse-discord');
         }
 
-        // Show Admin Bypass Button only if credentials match
+        // 2D. Show Admin Bypass Button if credentials match
         if (isAdmin && bypassBtn) {
             bypassBtn.style.display = 'block';
         }
@@ -246,25 +227,27 @@ function initiatePostLoginSequence(isAdmin) {
 
 // --- 3. ADMIN BYPASS (The actual entry to selection) ---
 function enterMainGame() {
-    // 1. Swap Music: Swaps to Archimedes Lullaby only at this jump
+    // Song Swaps ONLY when entering the game
     if (typeof playLoginMusic === "function") {
         playLoginMusic(); 
     }
 
-    // 2. Hide Landing / Show Statues
+    // Hide Landing and Reveal the Statues
     const landing = document.getElementById('page-landing');
     const statues = document.getElementById('class-selection-screen');
+    
     if(landing) landing.style.display = 'none';
     if(statues) statues.style.display = 'flex';
     
-    console.log("Welcome to the Hall of Statues, Commander.");
+    console.log("Welcome to the Hall of Statues, Commander Beyond Legend.");
 }
 
 // --- 4. DISCORD REDIRECT ---
 function openDiscord() {
     const discordIcon = document.getElementById('nav-discord');
+    // Logic only allows activation if the icon is pulsing (logged in)
     if (discordIcon && discordIcon.classList.contains('pulse-discord')) {
-        window.open('https://discord.gg', '_blank'); // Update with your actual link
+        window.open('https://discord.gg', '_blank'); 
     }
 }
 
@@ -283,23 +266,15 @@ function openChronicleDetail(id) {
 
 function closeChronicleDetail() {
     const modal = document.getElementById('chronicle-detail-modal');
-    if (modal) { modal.style.opacity = '0'; setTimeout(() => { modal.style.display = 'none'; }, 300); }
-}
-
-function handleRegister() {
-    const modal = document.getElementById('register-modal');
-    if (modal) modal.style.display = 'flex';
-}
-
-function closeRegister() {
-    const modal = document.getElementById('register-modal');
-    if (modal) modal.style.display = 'none';
+    if (modal) { 
+        modal.style.opacity = '0'; 
+        setTimeout(() => { modal.style.display = 'none'; }, 300); 
+    }
 }
 
 function toggleUpdates() {
     const panel = document.getElementById('updates-panel');
-    if (!panel) return;
-    panel.style.display = (panel.style.display === 'none' || panel.style.display === '') ? 'flex' : 'none';
+    if (panel) panel.style.display = (panel.style.display === 'none' || panel.style.display === '') ? 'flex' : 'none';
 }
 
 function toggleRoadmap(show) {
@@ -324,6 +299,15 @@ function expandCard(cardElement) {
     }
 }
 
+function handleRegister() {
+    const modal = document.getElementById('register-modal');
+    if (modal) modal.style.display = 'flex';
+}
+
+function closeRegister() {
+    const modal = document.getElementById('register-modal');
+    if (modal) modal.style.display = 'none';
+}
 
 /* ============================================================
    SECTION 3: CINEMATIC & NARRATIVE ENGINES
