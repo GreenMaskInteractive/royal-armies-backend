@@ -175,68 +175,26 @@ function toggleMute() {
    SECTION 2: AUTHENTICATION & LOGIN FLOW
    ============================================================ */
 
-// --- THE CHRONICLE ARCHIVES (Full Project History) ---
+// --- THE CHRONICLE ARCHIVES ---
 const CHRONICLE_DATA = {
-    genesis: {
-        title: "The Genesis Forge",
-        details: "The birth of the project. Established the core Aether-Rage framework, the obsidian and gold visual theme, and the dynamic background slideshow engine that drives the ambiance of the landing theater."
-    },
-    audio: {
-        title: "Symphony of War",
-        details: "Integrated the spatial audio engine featuring 'Crown Hall Overture.' Developed custom sticky audio controls and mute logic to ensure commander immersion without interruption."
-    },
-    narrative: {
-        title: "The Traveler's Guidance",
-        details: "Built the Narrative System and the mysterious 'Retired Old Man' portrait interaction. Engineered the typing text effect and the sequential story engine for the game's initial tutorial phase."
-    },
-    interface: {
-        title: "Navigator & Roadmap",
-        details: "Deployed the Widescreen Roadmap system (95vw) with Star Citizen-inspired 'Deep Dive' expansion logic. Anchored the Navigator Bar in the top-right hub to tether project tools (Discord, Support, Updates)."
-    },
-    security: {
-        title: "Nexus Gatekeeping",
-        details: "Established the Secure Login Engine. Developed the Developer Override (Skeleton Key) bypass system for rapid testing and established the initial database handshaking protocols."
-    },
-    assets: {
-        title: "GIMP Asset Integration",
-        details: "A massive refinement phase. Merged logos and stone frames into single-load assets in GIMP to eliminate scaling lag. Perfected the 'Aurora' text fields and surgical click-masking for the independent button row."
-    }
+    genesis: { title: "The Genesis Forge", details: "The birth of the project. Established the core Aether-Rage framework, the obsidian and gold visual theme, and the dynamic background slideshow engine." },
+    audio: { title: "Symphony of War", details: "Integrated the spatial audio engine featuring 'Crown Hall Overture.' Developed custom sticky audio controls and mute logic." },
+    narrative: { title: "The Traveler's Guidance", details: "Built the Narrative System and the mysterious 'Retired Old Man' portrait interaction. Engineered the typing text effect." },
+    interface: { title: "Navigator & Roadmap", details: "Deployed the Widescreen Roadmap system (95vw) with Star Citizen-inspired 'Deep Dive' expansion logic." },
+    security: { title: "Nexus Gatekeeping", details: "Established the Secure Login Engine. Developed the Developer Override (Skeleton Key) bypass system for rapid testing." },
+    assets: { title: "GIMP Asset Integration", details: "A massive refinement phase. Merged logos and stone frames into single-load assets in GIMP to eliminate scaling lag." }
 };
 
-// --- CHRONICLE INTERACTION ---
-function openChronicleDetail(id) {
-    const data = CHRONICLE_DATA[id];
-    const modal = document.getElementById('chronicle-detail-modal');
-    const titleEl = document.getElementById('chronicle-detail-title');
-    const textEl = document.getElementById('chronicle-detail-text');
-
-    if (!data || !modal) return;
-
-    // Inject the historical data
-    titleEl.innerText = data.title;
-    textEl.innerText = data.details;
-
-    // Show the modal
-    modal.style.display = 'flex';
-    setTimeout(() => { modal.style.opacity = '1'; }, 10);
-}
-
-function closeChronicleDetail() {
-    const modal = document.getElementById('chronicle-detail-modal');
-    if (!modal) return;
-    modal.style.opacity = '0';
-    setTimeout(() => { modal.style.display = 'none'; }, 300);
-}
-
-// --- THE LOGIN ENGINE ---
+// --- 1. THE LOGIN ENGINE (Updated with Admin & Transition Logic) ---
 async function handleLogin() {
     const userVal = document.getElementById('login-username').value;
     const passVal = document.getElementById('login-password').value;
+    
+    // Check for Admin Credentials
+    const isAdmin = (userVal === "IAmBeyondLegend" && passVal === "Tor1pedo01!");
 
-    if (userVal === "OVERRIDE" || userVal === "DEV") {
-        enterMainGame({ username: "Developer", rank: "Admin" });
-        return;
-    }
+    // Start Authenticating effect
+    document.getElementById('auth-loading').style.display = 'block';
 
     try {
         const response = await fetch('/login', {
@@ -245,27 +203,99 @@ async function handleLogin() {
             body: JSON.stringify({ username: userVal, password: passVal })
         });
 
-        if (response.ok) {
-            const data = await response.json();
-            enterMainGame(data.user);
+        if (response.ok || isAdmin || userVal === "DEV") {
+            // Success Path
+            playLoginMusic(); // Switch to Archimedes Lullaby
+            initiatePostLoginSequence(isAdmin);
         } else {
             const data = await response.json();
             alert(data.msg || "The Gatekeepers refuse entry.");
+            document.getElementById('auth-loading').style.display = 'none';
         }
     } catch (err) {
-        console.warn("Nexus unreachable. Forcing entrance for local testing...");
-        enterMainGame({ username: "LocalPlayer", rank: "Novice" });
+        // Fallback for Local Testing
+        console.warn("Nexus unreachable. Processing local access...");
+        playLoginMusic();
+        initiatePostLoginSequence(isAdmin);
     }
 }
 
-// --- THE REGISTRATION TRIGGER ---
+// --- 2. POST-LOGIN TRANSITION ---
+function initiatePostLoginSequence(isAdmin) {
+    const loginWrapper = document.getElementById('login-content-wrapper');
+    const authButtons = document.getElementById('auth-buttons');
+    const messageBox = document.getElementById('post-login-message');
+    const discordIcon = document.getElementById('nav-discord');
+    const bypassBtn = document.getElementById('admin-bypass-btn');
+
+    // Fade out current content
+    if(loginWrapper) loginWrapper.style.opacity = '0';
+    if(authButtons) authButtons.style.opacity = '0';
+
+    setTimeout(() => {
+        if(loginWrapper) loginWrapper.style.display = 'none';
+        if(authButtons) authButtons.style.display = 'none';
+
+        // Fade in Pre-Release message
+        if(messageBox) {
+            messageBox.style.display = 'block';
+            setTimeout(() => { messageBox.style.opacity = '1'; }, 50);
+        }
+
+        // Activate Discord Attention
+        if(discordIcon) {
+            discordIcon.classList.remove('disabled');
+            discordIcon.classList.add('pulse-discord');
+        }
+
+        // Show Admin Bypass if user is you
+        if (isAdmin && bypassBtn) {
+            bypassBtn.style.display = 'inline-block';
+        }
+    }, 1000);
+}
+
+// --- 3. DISCORD REDIRECT ---
+function openDiscord() {
+    const discordIcon = document.getElementById('nav-discord');
+    if (discordIcon && discordIcon.classList.contains('pulse-discord')) {
+        window.open('https://discord.gg', '_blank');
+    }
+}
+
+// --- 4. ADMIN BYPASS (Enter Main Game) ---
+function enterMainGame() {
+    const landing = document.getElementById('page-landing');
+    const statues = document.getElementById('class-selection-screen');
+    if(landing) landing.style.display = 'none';
+    if(statues) statues.style.display = 'flex';
+}
+
+// --- 5. MODAL & UI UTILITIES (Original Logic Maintained) ---
+function openChronicleDetail(id) {
+    const data = CHRONICLE_DATA[id];
+    const modal = document.getElementById('chronicle-detail-modal');
+    const titleEl = document.getElementById('chronicle-detail-title');
+    const textEl = document.getElementById('chronicle-detail-text');
+    if (!data || !modal) return;
+    titleEl.innerText = data.title;
+    textEl.innerText = data.details;
+    modal.style.display = 'flex';
+    setTimeout(() => { modal.style.opacity = '1'; }, 10);
+}
+
+function closeChronicleDetail() {
+    const modal = document.getElementById('chronicle-detail-modal');
+    if (modal) {
+        modal.style.opacity = '0';
+        setTimeout(() => { modal.style.display = 'none'; }, 300);
+    }
+}
+
 function handleRegister() {
     const modal = document.getElementById('register-modal');
-    if (modal) {
-        modal.style.display = 'flex';
-    } else {
-        alert("The Forge is currently under maintenance. Use 'DEV' to enter.");
-    }
+    if (modal) modal.style.display = 'flex';
+    else alert("The Forge is currently under maintenance.");
 }
 
 function closeRegister() {
@@ -273,45 +303,31 @@ function closeRegister() {
     if (modal) modal.style.display = 'none';
 }
 
-// --- UPDATES PANEL TOGGLE ---
 function toggleUpdates() {
     const panel = document.getElementById('updates-panel');
     if (!panel) return;
-    if (panel.style.display === 'none' || panel.style.display === '') {
-        panel.style.display = 'flex';
-    } else {
-        panel.style.display = 'none';
-    }
+    panel.style.display = (panel.style.display === 'none' || panel.style.display === '') ? 'flex' : 'none';
 }
 
-// --- ROADMAP MASTER TOGGLE ---
 function toggleRoadmap(show) {
     const modal = document.getElementById('roadmap-modal');
     if (!modal) return;
-
     if (show) {
         modal.style.display = 'flex';
         setTimeout(() => { modal.style.opacity = '1'; }, 10);
     } else {
         modal.style.opacity = '0';
-        document.querySelectorAll('.roadmap-phase').forEach(card => {
-            card.classList.remove('expanded');
-        });
+        document.querySelectorAll('.roadmap-phase').forEach(card => card.classList.remove('expanded'));
         setTimeout(() => { modal.style.display = 'none'; }, 300);
     }
 }
 
-// --- DEEP DIVE EXPANSION (One-at-a-time Logic) ---
 function expandCard(cardElement) {
     const isExpanded = cardElement.classList.contains('expanded');
-    document.querySelectorAll('.roadmap-phase').forEach(card => {
-        card.classList.remove('expanded');
-    });
+    document.querySelectorAll('.roadmap-phase').forEach(card => card.classList.remove('expanded'));
     if (!isExpanded) {
         cardElement.classList.add('expanded');
-        setTimeout(() => { 
-            cardElement.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); 
-        }, 300);
+        setTimeout(() => { cardElement.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); }, 300);
     }
 }
 

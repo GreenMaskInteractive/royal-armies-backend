@@ -34,43 +34,37 @@
 
     <!-- 2. THE NAVIGATOR BAR -->
     <div class="navigator-bar">
-        <!-- 2A. UPDATES HUB (Right-most Anchor) -->
+        <!-- 2A. UPDATES HUB -->
         <div class="updates-hub">
             <img src="images/devupdatesicon.png" id="updates-icon" class="nav-icon" alt="Updates" onclick="toggleUpdates()">
             <div id="updates-panel" class="updates-panel">
                 <div class="updates-header">Chronicles</div>
                 <div class="updates-scroll">
-                    <!-- Update Entry 1: Genesis -->
                     <div class="update-item" onclick="openChronicleDetail('genesis')">
                         <span class="update-date">Day 1</span>
                         <h4 class="update-title">The Genesis Forge</h4>
                         <p class="update-click-hint">Click for details...</p>
                     </div>
-                    <!-- Update Entry 2: Audio -->
                     <div class="update-item" onclick="openChronicleDetail('audio')">
                         <span class="update-date">Day 5</span>
                         <h4 class="update-title">Symphony of War</h4>
                         <p class="update-click-hint">Click for details...</p>
                     </div>
-                    <!-- Update Entry 3: Narrative -->
                     <div class="update-item" onclick="openChronicleDetail('narrative')">
                         <span class="update-date">Day 10</span>
                         <h4 class="update-title">The Traveler's Guidance</h4>
                         <p class="update-click-hint">Click for details...</p>
                     </div>
-                    <!-- Update Entry 4: Interface -->
                     <div class="update-item" onclick="openChronicleDetail('interface')">
                         <span class="update-date">Day 15</span>
                         <h4 class="update-title">Navigator & Roadmap</h4>
                         <p class="update-click-hint">Click for details...</p>
                     </div>
-                    <!-- Update Entry 5: Security -->
                     <div class="update-item" onclick="openChronicleDetail('security')">
                         <span class="update-date">Day 18</span>
                         <h4 class="update-title">Nexus Gatekeeping</h4>
                         <p class="update-click-hint">Click for details...</p>
                     </div>
-                    <!-- Update Entry 6: Assets -->
                     <div class="update-item" onclick="openChronicleDetail('assets')">
                         <span class="update-date">Current</span>
                         <h4 class="update-title">GIMP Asset Integration</h4>
@@ -79,34 +73,45 @@
                 </div>
             </div>
         </div>
-        
-        <!-- 2B. ROADMAP TRIGGER -->
+
+        <!-- 2B. ROADMAP -->
         <img src="images/roadmapicon.png" id="roadmap-trigger" class="nav-icon" onclick="toggleRoadmap(true)" alt="Roadmap">
         
-        <!-- 2C. DISCORD (Greyed Out) -->
-        <img src="images/discordicon.png" class="nav-icon disabled" alt="Discord">
+        <!-- 2C. DISCORD (ID added for pulsing logic) -->
+        <img src="images/discordicon.png" id="nav-discord" class="nav-icon disabled" alt="Discord" onclick="openDiscord()">
         
-        <!-- 2D. SUPPORT (Greyed Out) -->
+        <!-- 2D. SUPPORT -->
         <img src="images/supporticon.png" class="nav-icon disabled" alt="Support">
     </div>
 
-    <!-- 3. THE NARRATIVE SYSTEM (The Traveler) -->
+    <!-- 3. THE NARRATIVE SYSTEM -->
     <div id="narrative-box" class="narrative-container">
-        <div class="narrative-portrait">
-            <img src="images/retiredoldman.png" alt="Mysterious Traveler">
-        </div>
+        <div class="narrative-portrait"><img src="images/retiredoldman.png" alt="Traveler"></div>
         <div class="narrative-text-area">
             <p id="narrative-text">Welcome, traveler, to the Royal Armies.</p>
             <div class="narrative-continue">Click to continue...</div>
         </div>
     </div>
 
-    <!-- 4. THE COMMANDER'S PORTAL (Merged Assets) -->
+    <!-- 4. THE COMMANDER'S PORTAL (Content Swapping Hub) -->
     <div class="login-form-container">
-        <input type="text" id="login-username" class="login-input" placeholder="USERNAME">
-        <input type="password" id="login-password" class="login-input" placeholder="PASSWORD">
-        <div id="auth-loading" style="display: none; color: #d4af37; font-family: 'Georgia', serif; margin-top: 15px;">
-            Authenticating...
+        
+        <!-- WRAPPER: Original Login Content -->
+        <div id="login-content-wrapper" style="width: 100%; display: flex; flex-direction: column; align-items: center;">
+            <input type="text" id="login-username" class="login-input" placeholder="USERNAME">
+            <input type="password" id="login-password" class="login-input" placeholder="PASSWORD">
+            <div id="auth-loading" style="display: none; color: #d4af37; font-family: 'Georgia', serif; margin-top: 15px;">
+                Authenticating...
+            </div>
+        </div>
+
+        <!-- NEW: Pre-Release Fanbase Message (Hidden by Default) -->
+        <div id="post-login-message" style="display: none; opacity: 0; text-align: center; padding: 0 60px;">
+            <p style="font-family: 'Georgia', serif; color: #f1e0ac; font-size: 1.15rem; line-height: 1.6; font-style: italic;">
+                Thank you so much for registering for the pre-release of the Royal Armies. We are working extremely hard to create an immersive and exciting experience for all of our awaiting fanbase! Join our discord to stay up-to-date on its progression.
+            </p>
+            <!-- ADMIN BYPASS (Only for Legend) -->
+            <button id="admin-bypass-btn" class="img-btn" style="display: none; margin: 20px auto 0 auto; width: 180px; height: 50px; background-image: url('images/login_btn.png'); background-size: contain; background-repeat: no-repeat; background-color: transparent; border: none; color: #f1e0ac; font-family: 'Georgia', serif; cursor: pointer;" onclick="enterMainGame()">Bypass to Hall</button>
         </div>
     </div>
 
@@ -117,9 +122,8 @@
     </div>
 
     <!-- 6. THE AUDIO ENGINE -->
-    <audio id="main-theme" loop preload="auto">
-        <source src="audio/Stone and Water.wav" type="audio/wav">
-    </audio>
+    <audio id="main-theme" loop preload="auto"><source src="audio/bannerhallascension.wav" type="audio/wav"></audio>
+    <audio id="login-theme" loop preload="auto"><source src="audio/Archimedes Lullaby.wav" type="audio/wav"></audio>
 
     <div id="audio-control" class="audio-toggle-container" onclick="toggleMute()">
         <div id="audio-icon" class="icon-unmuted"></div>
