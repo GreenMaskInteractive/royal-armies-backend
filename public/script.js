@@ -49,6 +49,9 @@ var holdTimer = null;
    ============================================================ */
 
 let currentUser = null;
+let isMuted = false;
+let activeTrackId = 'main-theme';
+let audioContext, gainNode, source;
 
 // --- 1. THE NEXUS PULSE (Live Verification) ---
 const eventSource = new EventSource('/listen-for-verify');
@@ -56,33 +59,118 @@ eventSource.onmessage = (event) => {
     const data = JSON.parse(event.data);
     if (data.verified) {
         alert("Thank you for joining the war effort! Your nation awaits you!");
-        // Refresh or unlock the portal here
-        location.reload(); 
+        location.reload();
     }
 };
 
-// --- 2. THE BOOT SEQUENCE ---
+// --- 2. THE AUDIO OVERDRIVE ENGINE ---
+function boostVolume(multiplier) {
+    const music = document.getElementById(activeTrackId);
+    if (!music) return;
+    try {
+        if (!audioContext) {
+            audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        }
+        // Re-connect source whenever track changes
+        const currentSource = audioContext.createMediaElementSource(music);
+        gainNode = audioContext.createGain();
+        currentSource.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+        
+        gainNode.gain.value = multiplier;
+        console.log(`Aether Amplification: ${multiplier * 100}%`);
+    } catch (e) { console.warn("Browser restricted high-gain audio."); }
+}
+
+// --- 3. THE SYMPHONY HANDSHAKE (Landing Unlock) ---
+const unlockAudio = () => {
+    const music = document.getElementById('main-theme');
+    if (music && music.paused && !isMuted) {
+        music.volume = 1.0; 
+        music.play().then(() => console.log("Banner Hall Ascension Authorized."))
+            .catch(() => console.log("Interaction required for audio."));
+    }
+    ['click', 'keydown', 'mousedown', 'touchstart'].forEach(e => 
+        document.removeEventListener(e, unlockAudio));
+};
+
+['click', 'keydown', 'mousedown', 'touchstart'].forEach(e => 
+    document.addEventListener(e, unlockAudio, { once: true }));
+
+// --- 4. SUCCESSFUL LOGIN THEME ---
+function playLoginMusic() {
+    const mainTheme = document.getElementById('main-theme');
+    const loginTheme = document.getElementById('login-theme');
+    
+    if (!mainTheme || !loginTheme) return;
+
+    // Silence landing theme
+    mainTheme.pause();
+    mainTheme.currentTime = 0;
+
+    // Activate Archimedes Lullaby
+    activeTrackId = 'login-theme';
+    if (!isMuted) {
+        loginTheme.volume = 1.0;
+        loginTheme.play().then(() => console.log("Playing: Archimedes Lullaby"))
+            .catch(e => console.log("Login music waiting for final gesture."));
+    }
+}
+
+// --- 5. AUDIO CONTROLS ---
+function toggleMute() {
+    const music = document.getElementById(activeTrackId);
+    const icon = document.getElementById('audio-icon');
+    if (!music) return;
+
+    if (!music.muted) {
+        music.muted = true;
+        isMuted = true;
+        icon.className = 'icon-muted';
+    } else {
+        music.muted = false;
+        isMuted = false;
+        music.play();
+        if (audioContext) audioContext.resume();
+        icon.className = 'icon-unmuted';
+    }
+}
+
+// --- 6. BOOT SEQUENCE ---
 window.onload = () => {
     console.log("Aether Engine Synchronized.");
-    
-    // Check for existing session or just show landing
     const landing = document.getElementById('page-landing');
     if (landing) landing.style.display = 'flex';
-
-    // Start looking for game data (The Link)
     initializeDataLink();
 };
 
-// --- 3. THE DATA LINK ---
 function initializeDataLink() {
     const initInterval = setInterval(() => {
         if (typeof groundRanks !== 'undefined' && typeof unitDatabase !== 'undefined') {
-            console.log("Data Linked. War Room Ready.");
             clearInterval(initInterval);
-            initDashboard(); // Only fires if the data exists
+            initDashboard();
         }
     }, 100);
 }
+// --- 6. AUDIO CONTROLS ---
+function toggleMute() {
+    const music = document.getElementById('main-theme');
+    const icon = document.getElementById('audio-icon');
+    if (!music) return;
+
+    if (!music.muted) {
+        music.muted = true;
+        isMuted = true;
+        icon.className = 'icon-muted';
+    } else {
+        music.muted = false;
+        isMuted = false;
+        music.play();
+        if (audioContext) audioContext.resume();
+        icon.className = 'icon-unmuted';
+    }
+}
+
 /* ============================================================
    SECTION 2: AUTHENTICATION & LOGIN FLOW
    ============================================================ */
@@ -226,6 +314,7 @@ function expandCard(cardElement) {
         }, 300);
     }
 }
+
 
 /* ============================================================
    SECTION 3: CINEMATIC & NARRATIVE ENGINES

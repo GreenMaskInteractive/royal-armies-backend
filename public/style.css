@@ -45,22 +45,19 @@ body {
 /* ============================================================
    SECTION 1: NARRATIVE
    ============================================================ */
+
+/* --- 1. THE NARRATIVE SYSTEM (The Old Man) --- */
 .narrative-container {
     position: fixed;
     bottom: 30px;
     right: 30px;
     width: 550px;
     min-height: 150px;
-    
-    /* PURE SOLID BLACK - No transparency, no stone */
     background-color: #000000 !important;
     background-image: none !important;
-    
-    /* Keep the gold frame to match the theme */
     border: 2px solid var(--accent);
     border-radius: 4px;
-    
-    display: none; /* Controlled by JS */
+    display: none; 
     flex-direction: row;
     align-items: center;
     padding: 20px;
@@ -68,104 +65,96 @@ body {
     box-shadow: 0 10px 40px rgba(0, 0, 0, 1);
 }
 
-/* 1. BASE LAYOUT & SLIDING LOGIC */
-.side-info-panel {
-    position: fixed;
-    top: 0;
-    bottom: 0 !important;
-    height: 104vh !important;
-    width: 450px;
-    display: flex;
-    flex-direction: column;
-    z-index: 10005;
-    
-    /* Transition for the slide and opacity */
-    transition: transform 0.8s cubic-bezier(0.075, 0.82, 0.165, 1), opacity 0.5s ease;
-    opacity: 0; 
-    pointer-events: none; /* Prevents clicking through until shown */
+.narrative-portrait {
+    width: 120px; height: 120px;
+    border: 2px solid var(--accent);
+    margin-right: 15px; overflow: hidden; background: #000;
 }
 
-/* 2. SIDE-SPECIFIC POSITIONING */
-/* Battlemaster (Left) */
-.left-panel { 
-    left: 0; 
-    transform: translateX(-100%); 
-}
+.narrative-portrait img { width: 100%; height: 100%; object-fit: cover; }
 
-/* Archmage (Right) */
-.right-panel { 
-    right: 0; 
-    transform: translateX(100%); 
-}
-
-/* 3. THE "SHOW" STATE (Triggered by selectClass) */
-.left-panel.show, .right-panel.show { 
-    transform: translateX(0); 
-    opacity: 1;
-    pointer-events: auto;
-}
-
-/* 4. VISUAL THEME (Solid Obsidian Black + Stone Texture) */
-.side-info-panel {
-    /* Pure Solid Black Base - Eliminates transparency */
-    background-color: #000000 !important;
-
-    /* Deep Tinted Stone Wall Overlay */
-    background-image: linear-gradient(rgba(0, 0, 0, 0.92), rgba(0, 0, 0, 0.92)), 
-                      url('../images/stonewallbg.png') !important;
-    
-    background-size: cover !important;
-    background-repeat: no-repeat;
-    background-position: center;
-}
-
-.narrative-portrait { 
-    width: 120px; 
-    height: 120px; 
-    border: 2px solid var(--accent); 
-    margin-right: 15px; 
-    overflow: hidden; 
-    background: #000; 
-} 
-
-.narrative-portrait img { 
-    width: 100%; 
-    height: 100%; 
-    object-fit: cover; 
-} 
-
-#narrative-text { 
-    font-family: 'Georgia', serif; 
-    font-size: 1.25rem; 
-    color: var(--accent); 
-    line-height: 1.6; 
-    font-style: italic; 
-    letter-spacing: 0.5px; 
-    -webkit-text-stroke: 0.5px var(--accent); 
-    text-shadow: 2px 2px 2px rgba(0, 0, 0, 1); 
-} 
-
-.narrative-continue { 
-    font-size: 0.7rem; 
-    color: var(--accent); 
-    text-transform: uppercase; 
-    text-align: right; 
-    margin-top: 10px; 
-    letter-spacing: 1px; 
-    opacity: 0.7; 
+#narrative-text {
+    font-family: 'Georgia', serif; font-size: 1.25rem; color: var(--accent);
+    line-height: 1.6; font-style: italic; letter-spacing: 0.5px;
+    text-shadow: 2px 2px 2px rgba(0, 0, 0, 1);
 }
 
 .narrative-continue {
-    font-size: 0.7rem;
-    color: var(--accent); /* Aether Gold */
-    text-transform: uppercase;
-    text-align: right;
-    margin-top: 10px;
-    letter-spacing: 1px;
-    opacity: 0.7;
-    font-family: 'Georgia', serif;
-    font-style: italic;
+    font-size: 0.7rem; color: var(--accent); text-transform: uppercase;
+    text-align: right; margin-top: 10px; letter-spacing: 1px;
+    opacity: 0.7; font-family: 'Georgia', serif; font-style: italic;
 }
+
+/* --- 2. AUDIO INTERFACE (Mute Logic) --- */
+.audio-toggle-container {
+    position: fixed !important;
+    bottom: 25px !important;
+    left: 25px !important;
+    z-index: 9999999 !important;
+    cursor: pointer;
+    background: rgba(0, 0, 0, 0.6) !important;
+    border: 1px solid #d4af37;
+    border-radius: 50%;
+    width: 44px !important;
+    height: 44px !important;
+    display: flex !important;
+    justify-content: center;
+    align-items: center;
+    transition: all 0.3s ease;
+}
+
+.audio-toggle-container:hover {
+    background: rgba(212, 175, 55, 0.2) !important;
+    transform: scale(1.1);
+}
+
+/* THE SPEAKER ICON (CSS-ONLY REPLACEMENT) */
+#audio-icon {
+    width: 12px;
+    height: 12px;
+    background: #ffffff; /* The Solid White */
+    position: relative;
+    margin-left: -5px; /* Centers the complex shape */
+    transition: opacity 0.4s ease, transform 0.3s ease;
+}
+
+/* Creating the "Speaker Horn" with CSS triangles */
+#audio-icon::before {
+    content: "";
+    position: absolute;
+    top: -6px;
+    left: 5px;
+    border-top: 12px solid transparent;
+    border-bottom: 12px solid transparent;
+    border-right: 15px solid #ffffff; /* The Solid White */
+}
+
+/* UNMUTED STATE: Solid White */
+.icon-unmuted {
+    opacity: 1 !important;
+}
+
+/* MUTED STATE: Transparent White */
+.icon-muted {
+    opacity: 0.2 !important; /* Ghostly look */
+    transform: scale(0.8);
+}
+
+/* --- 3. CLASS SELECTION SIDE PANELS --- */
+.side-info-panel {
+    position: fixed; top: 0; bottom: 0 !important;
+    height: 104vh !important; width: 450px;
+    display: flex; flex-direction: column; z-index: 10005;
+    transition: transform 0.8s cubic-bezier(0.075, 0.82, 0.165, 1), opacity 0.5s ease;
+    opacity: 0; pointer-events: none;
+    background-color: #000000 !important;
+    background-image: linear-gradient(rgba(0, 0, 0, 0.92), rgba(0, 0, 0, 0.92)), url('../images/stonewallbg.png') !important;
+    background-size: cover !important; background-repeat: no-repeat; background-position: center;
+}
+
+.left-panel { left: 0; transform: translateX(-100%); }
+.right-panel { right: 0; transform: translateX(100%); }
+.left-panel.show, .right-panel.show { transform: translateX(0); opacity: 1; pointer-events: auto; }
 
 /* ============================================================
    SECTION 2: CORE GAME & OVERLAY CONTAINERS
@@ -939,17 +928,6 @@ body {
 .audio-toggle-container:hover {
     background: rgba(212, 175, 55, 0.3);
     transform: scale(1.1);
-}
-
-#audio-icon {
-    width: 24px;
-    height: 24px;
-    background-size: contain;
-    background-repeat: no-repeat;
-    background-position: center;
-    /* This makes the black SVG white to match your game's gold/white theme */
-    filter: brightness(0) invert(1); 
-    display: inline-block;
 }
 
 .icon-muted {

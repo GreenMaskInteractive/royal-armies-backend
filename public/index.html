@@ -40,37 +40,37 @@
             <div id="updates-panel" class="updates-panel">
                 <div class="updates-header">Chronicles</div>
                 <div class="updates-scroll">
-                    <!-- Milestone 1: Genesis -->
+                    <!-- Update Entry 1: Genesis -->
                     <div class="update-item" onclick="openChronicleDetail('genesis')">
                         <span class="update-date">Day 1</span>
                         <h4 class="update-title">The Genesis Forge</h4>
                         <p class="update-click-hint">Click for details...</p>
                     </div>
-                    <!-- Milestone 2: Audio -->
+                    <!-- Update Entry 2: Audio -->
                     <div class="update-item" onclick="openChronicleDetail('audio')">
                         <span class="update-date">Day 5</span>
                         <h4 class="update-title">Symphony of War</h4>
                         <p class="update-click-hint">Click for details...</p>
                     </div>
-                    <!-- Milestone 3: Narrative -->
+                    <!-- Update Entry 3: Narrative -->
                     <div class="update-item" onclick="openChronicleDetail('narrative')">
                         <span class="update-date">Day 10</span>
                         <h4 class="update-title">The Traveler's Guidance</h4>
                         <p class="update-click-hint">Click for details...</p>
                     </div>
-                    <!-- Milestone 4: Interface -->
+                    <!-- Update Entry 4: Interface -->
                     <div class="update-item" onclick="openChronicleDetail('interface')">
                         <span class="update-date">Day 15</span>
                         <h4 class="update-title">Navigator & Roadmap</h4>
                         <p class="update-click-hint">Click for details...</p>
                     </div>
-                    <!-- Milestone 5: Security -->
+                    <!-- Update Entry 5: Security -->
                     <div class="update-item" onclick="openChronicleDetail('security')">
                         <span class="update-date">Day 18</span>
                         <h4 class="update-title">Nexus Gatekeeping</h4>
                         <p class="update-click-hint">Click for details...</p>
                     </div>
-                    <!-- Milestone 6: Assets -->
+                    <!-- Update Entry 6: Assets -->
                     <div class="update-item" onclick="openChronicleDetail('assets')">
                         <span class="update-date">Current</span>
                         <h4 class="update-title">GIMP Asset Integration</h4>
@@ -79,8 +79,14 @@
                 </div>
             </div>
         </div>
+        
+        <!-- 2B. ROADMAP TRIGGER -->
         <img src="images/roadmapicon.png" id="roadmap-trigger" class="nav-icon" onclick="toggleRoadmap(true)" alt="Roadmap">
+        
+        <!-- 2C. DISCORD (Greyed Out) -->
         <img src="images/discordicon.png" class="nav-icon disabled" alt="Discord">
+        
+        <!-- 2D. SUPPORT (Greyed Out) -->
         <img src="images/supporticon.png" class="nav-icon disabled" alt="Support">
     </div>
 
@@ -95,7 +101,7 @@
         </div>
     </div>
 
-    <!-- 4. THE COMMANDER'S PORTAL -->
+    <!-- 4. THE COMMANDER'S PORTAL (Merged Assets) -->
     <div class="login-form-container">
         <input type="text" id="login-username" class="login-input" placeholder="USERNAME">
         <input type="password" id="login-password" class="login-input" placeholder="PASSWORD">
@@ -111,11 +117,12 @@
     </div>
 
     <!-- 6. THE AUDIO ENGINE -->
-    <audio id="main-theme" loop autoplay muted>
-        <source src="audio/Crown Hall Overture.wav" type="audio/wav">
+    <audio id="main-theme" loop preload="auto">
+        <source src="audio/Stone and Water.wav" type="audio/wav">
     </audio>
+
     <div id="audio-control" class="audio-toggle-container" onclick="toggleMute()">
-        <div id="audio-icon" class="icon-muted"></div>
+        <div id="audio-icon" class="icon-unmuted"></div>
     </div>
 
 </div>
@@ -277,9 +284,8 @@
     </div>
 </div>
 
-<!-- 2. THE CHRONICLE DETAIL POP-UP (New: Integrated for Update Panel) -->
+<!-- 2. THE CHRONICLE DETAIL POP-UP (For Update Panel Details) -->
 <div id="chronicle-detail-modal" class="modal-overlay" style="display: none; opacity: 0; transition: opacity 0.3s ease;">
-    <!-- Container styled to match the obsidian/gold theme -->
     <div class="roadmap-container" style="background: rgba(10,10,10,0.98); border: 2px solid #d4af37; height: auto; min-height: 300px; width: 50vw; max-width: 600px; padding: 40px; justify-content: center;">
         <span class="close-modal" onclick="closeChronicleDetail()">&times;</span>
         <h2 id="chronicle-detail-title" style="color: #d4af37; font-family: 'Georgia', serif; margin-bottom: 20px; text-transform: uppercase; text-align: center; letter-spacing: 2px;">Chronicle Title</h2>
@@ -287,24 +293,15 @@
     </div>
 </div>
 
-<!-- 3. THE UNIFIED AUTH MODAL (Registration & Verification) -->
+<!-- 3. THE UNIFIED AUTH MODAL (Registration) -->
 <div id="register-modal" class="modal-overlay" style="display: none;">
     <div class="modal-content">
         <span class="close-modal" onclick="closeRegister()">&times;</span>
         <h2 class="modal-title">Forge New Account</h2>
         <div class="register-form">
-            <div class="reg-group">
-                <label>Preferred Username*</label>
-                <input type="text" id="reg-username" class="reg-input">
-            </div>
-            <div class="reg-group">
-                <label>Password*</label>
-                <input type="password" id="reg-password" class="reg-input">
-            </div>
-            <div class="reg-group">
-                <label>Email Address</label>
-                <input type="email" id="reg-email" class="reg-input">
-            </div>
+            <div class="reg-group"><label>Preferred Username*</label><input type="text" id="reg-username" class="reg-input"></div>
+            <div class="reg-group"><label>Password*</label><input type="password" id="reg-password" class="reg-input"></div>
+            <div class="reg-group"><label>Email Address</label><input type="email" id="reg-email" class="reg-input"></div>
             <div class="modal-actions">
                 <img src="images/login_btn.png" class="img-btn" onclick="toggleToLogin()" alt="Back to Login" style="width: 140px; margin-right: 10px;">
                 <img src="images/register_btn.png" class="img-btn" onclick="submitRegistration()" alt="Register">
@@ -313,19 +310,21 @@
     </div>
 </div>
 
-<!-- 4. THE ROADMAP POP-UP (Widescreen Style) -->
+<!-- 4. THE ROADMAP POP-UP (Widescreen Full-Detail Version) -->
 <div id="roadmap-modal" class="modal-overlay" style="display: none; opacity: 0; transition: opacity 0.3s ease;">
     <div class="roadmap-container">
         <span class="close-modal" onclick="toggleRoadmap(false)">&times;</span>
-        
         <h1 class="roadmap-main-title">Project Roadmap</h1>
-
+        
         <div class="roadmap-grid">
             <!-- Pre-Alpha -->
             <div class="roadmap-phase" onclick="expandCard(this)">
                 <div class="phase-tag">Completed</div>
                 <h3>Pre-Alpha</h3>
-                <div class="deep-dive"><hr><p>World-building documents and initial art direction finalized.</p></div>
+                <div class="deep-dive">
+                    <hr>
+                    <p>Initial conceptualization, asset gathering, world-building documents, and initial art direction finalized.</p>
+                </div>
             </div>
 
             <!-- Alpha 1.0 -->
@@ -335,9 +334,9 @@
                 <div class="deep-dive">
                     <hr>
                     <ul>
-                        <li>Scalable infrastructure deployment</li>
-                        <li>Core logic stabilization & error handling</li>
-                        <li>Database security handshaking</li>
+                        <li>Foundational Aether-code logic for stable expansion</li>
+                        <li>Scalable infrastructure and core logic stabilization</li>
+                        <li>Database security handshaking and error handling</li>
                     </ul>
                 </div>
             </div>
@@ -349,9 +348,9 @@
                 <div class="deep-dive">
                     <hr>
                     <ul>
-                        <li>Partial playability for game testers</li>
-                        <li>Intricate webpage layout designs</li>
-                        <li>Ambient orchestral background music</li>
+                        <li>Creation of base functionality for initial game testers</li>
+                        <li>Intricate layout designs for primary webpages</li>
+                        <li>Integration of ambient orchestral background music engine</li>
                     </ul>
                 </div>
             </div>
@@ -363,9 +362,9 @@
                 <div class="deep-dive">
                     <hr>
                     <ul>
-                        <li>Unit and Rank data standardization</li>
-                        <li>Trait-related bonus balancing</li>
-                        <li>Map navigation and lore integration</li>
+                        <li>Polishing of Unit Data and Rank Data standards</li>
+                        <li>Trait-related bonus balancing to ensure game fairness</li>
+                        <li>Comprehensive map and lore synchronization</li>
                     </ul>
                 </div>
             </div>
@@ -374,22 +373,32 @@
             <div class="roadmap-phase" onclick="expandCard(this)">
                 <div class="phase-tag">Upcoming</div>
                 <h3>Alpha 4.0</h3>
-                <div class="deep-dive"><hr><p>Addressing final technical requirements and unmentioned Alpha features.</p></div>
+                <div class="deep-dive">
+                    <hr>
+                    <p>Addressing final technical requirements, unmentioned features, and system stress testing prior to Beta transition.</p>
+                </div>
             </div>
 
             <!-- Alpha 5.0 -->
             <div class="roadmap-phase" onclick="expandCard(this)">
                 <div class="phase-tag">Upcoming</div>
                 <h3>Alpha 5.0</h3>
-                <div class="deep-dive"><hr><p>Final polishing cycle and Beta transition protocols.</p></div>
+                <div class="deep-dive">
+                    <hr>
+                    <p>Final polishing cycle, bug squashing, and Beta readiness protocols.</p>
+                </div>
             </div>
         </div>
     </div>
 </div>
 
-<!-- 5. THE AUDIO ENGINE -->
-<audio id="main-theme" loop autoplay muted>
-    <source src="audio/Crown Hall Overture.wav" type="audio/wav">
+<!-- 5. THE AUDIO ENGINE (Dual Tracks) -->
+<audio id="main-theme" loop preload="auto">
+    <source src="audio/bannerhallascension.wav" type="audio/wav">
+</audio>
+
+<audio id="login-theme" loop preload="auto">
+    <source src="audio/Archimedes Lullaby.wav" type="audio/wav">
 </audio>
 
 <div id="audio-control" class="audio-toggle-container" onclick="toggleMute()">
