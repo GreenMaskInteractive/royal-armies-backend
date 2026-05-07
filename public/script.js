@@ -87,6 +87,59 @@ function initializeDataLink() {
    SECTION 2: AUTHENTICATION & LOGIN FLOW
    ============================================================ */
 
+// --- THE CHRONICLE ARCHIVES (Full Project History) ---
+const CHRONICLE_DATA = {
+    genesis: {
+        title: "The Genesis Forge",
+        details: "The birth of the project. Established the core Aether-Rage framework, the obsidian and gold visual theme, and the dynamic background slideshow engine that drives the ambiance of the landing theater."
+    },
+    audio: {
+        title: "Symphony of War",
+        details: "Integrated the spatial audio engine featuring 'Crown Hall Overture.' Developed custom sticky audio controls and mute logic to ensure commander immersion without interruption."
+    },
+    narrative: {
+        title: "The Traveler's Guidance",
+        details: "Built the Narrative System and the mysterious 'Retired Old Man' portrait interaction. Engineered the typing text effect and the sequential story engine for the game's initial tutorial phase."
+    },
+    interface: {
+        title: "Navigator & Roadmap",
+        details: "Deployed the Widescreen Roadmap system (95vw) with Star Citizen-inspired 'Deep Dive' expansion logic. Anchored the Navigator Bar in the top-right hub to tether project tools (Discord, Support, Updates)."
+    },
+    security: {
+        title: "Nexus Gatekeeping",
+        details: "Established the Secure Login Engine. Developed the Developer Override (Skeleton Key) bypass system for rapid testing and established the initial database handshaking protocols."
+    },
+    assets: {
+        title: "GIMP Asset Integration",
+        details: "A massive refinement phase. Merged logos and stone frames into single-load assets in GIMP to eliminate scaling lag. Perfected the 'Aurora' text fields and surgical click-masking for the independent button row."
+    }
+};
+
+// --- CHRONICLE INTERACTION ---
+function openChronicleDetail(id) {
+    const data = CHRONICLE_DATA[id];
+    const modal = document.getElementById('chronicle-detail-modal');
+    const titleEl = document.getElementById('chronicle-detail-title');
+    const textEl = document.getElementById('chronicle-detail-text');
+
+    if (!data || !modal) return;
+
+    // Inject the historical data
+    titleEl.innerText = data.title;
+    textEl.innerText = data.details;
+
+    // Show the modal
+    modal.style.display = 'flex';
+    setTimeout(() => { modal.style.opacity = '1'; }, 10);
+}
+
+function closeChronicleDetail() {
+    const modal = document.getElementById('chronicle-detail-modal');
+    if (!modal) return;
+    modal.style.opacity = '0';
+    setTimeout(() => { modal.style.display = 'none'; }, 300);
+}
+
 // --- THE LOGIN ENGINE ---
 async function handleLogin() {
     const userVal = document.getElementById('login-username').value;
@@ -109,7 +162,7 @@ async function handleLogin() {
             enterMainGame(data.user);
         } else {
             const data = await response.json();
-            alert(data.msg || "Gate access denied.");
+            alert(data.msg || "The Gatekeepers refuse entry.");
         }
     } catch (err) {
         console.warn("Nexus unreachable. Forcing entrance for local testing...");
@@ -120,7 +173,11 @@ async function handleLogin() {
 // --- THE REGISTRATION TRIGGER ---
 function handleRegister() {
     const modal = document.getElementById('register-modal');
-    if (modal) modal.style.display = 'flex';
+    if (modal) {
+        modal.style.display = 'flex';
+    } else {
+        alert("The Forge is currently under maintenance. Use 'DEV' to enter.");
+    }
 }
 
 function closeRegister() {
@@ -128,28 +185,47 @@ function closeRegister() {
     if (modal) modal.style.display = 'none';
 }
 
-// --- THE ROADMAP INTERFACE ---
+// --- UPDATES PANEL TOGGLE ---
+function toggleUpdates() {
+    const panel = document.getElementById('updates-panel');
+    if (!panel) return;
+    if (panel.style.display === 'none' || panel.style.display === '') {
+        panel.style.display = 'flex';
+    } else {
+        panel.style.display = 'none';
+    }
+}
+
+// --- ROADMAP MASTER TOGGLE ---
 function toggleRoadmap(show) {
     const modal = document.getElementById('roadmap-modal');
     if (!modal) return;
 
     if (show) {
         modal.style.display = 'flex';
-        // Force a tiny reflow for the CSS transition
         setTimeout(() => { modal.style.opacity = '1'; }, 10);
     } else {
         modal.style.opacity = '0';
+        document.querySelectorAll('.roadmap-phase').forEach(card => {
+            card.classList.remove('expanded');
+        });
         setTimeout(() => { modal.style.display = 'none'; }, 300);
     }
 }
 
-// --- NAVIGATOR BAR UTILITIES ---
-// This handles the "Coming Soon" alerts for the greyed-out icons
-document.querySelectorAll('.nav-icon.disabled').forEach(icon => {
-    icon.onclick = () => {
-        alert("This chronicle is currently being forged in the fires of development.");
-    };
-});
+// --- DEEP DIVE EXPANSION (One-at-a-time Logic) ---
+function expandCard(cardElement) {
+    const isExpanded = cardElement.classList.contains('expanded');
+    document.querySelectorAll('.roadmap-phase').forEach(card => {
+        card.classList.remove('expanded');
+    });
+    if (!isExpanded) {
+        cardElement.classList.add('expanded');
+        setTimeout(() => { 
+            cardElement.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); 
+        }, 300);
+    }
+}
 
 /* ============================================================
    SECTION 3: CINEMATIC & NARRATIVE ENGINES

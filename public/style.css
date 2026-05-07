@@ -200,27 +200,20 @@ body {
     top: 30px !important;
     right: 40px !important;
     display: flex !important;
-    flex-direction: row-reverse !important; /* Right to Left flow */
+    flex-direction: row-reverse !important; 
     align-items: center !important; 
-    
-    /* THE SPACING COMMAND: This forces the exact same distance between ALL icons */
     gap: 25px !important; 
-    
     z-index: 200020;
 }
 
 /* --- UNIFIED NAVIGATOR ICONS --- */
 .nav-icon, #updates-icon {
-    /* Identical Hitboxes and Sizes */
     width: 60px !important;
     height: 60px !important;
     object-fit: contain;
     cursor: pointer;
-    
-    /* Resetting all margins to ensure the 'gap' is the only thing moving them */
     margin: 0 !important; 
     padding: 0 !important;
-
     transition: transform 0.2s ease, filter 0.2s ease;
     filter: drop-shadow(0 0 10px #000);
 }
@@ -240,20 +233,22 @@ body {
     display: flex;
     flex-direction: column;
     align-items: flex-end;
-    /* Keeps the hub width identical to the icon so spacing remains even */
     width: 60px; 
 }
 
 .updates-panel {
-    /* Positioned absolute to the hub so it doesn't push adjacent icons */
-    position: absolute;
-    top: 70px; 
-    right: 0;
+    position: absolute !important;
+    top: 75px !important; 
+    right: 0 !important;
     width: 320px;
-    height: 400px;
-    background: rgba(0, 0, 0, 0.9);
+    
+    /* 1. STRETCHED HEIGHT: Doubled from 400px to 800px */
+    height: 800px !important;
+    
+    display: none; 
+    z-index: 300000 !important; 
+    background: rgba(0, 0, 0, 0.95) !important;
     border: 2px solid #d4af37;
-    display: none; /* Controlled by RAGE */
     flex-direction: column;
     box-shadow: 0 0 30px rgba(0, 0, 0, 0.9);
 }
@@ -266,6 +261,46 @@ body {
     font-family: 'Georgia', serif;
     font-weight: bold;
     text-transform: uppercase;
+    flex-shrink: 0;
+}
+
+.updates-scroll {
+    flex-grow: 1;
+    overflow-y: auto;
+    padding: 15px;
+    
+    /* 2. GHOST SCROLL (Optional: Hides bar while keeping wheel active) */
+    scrollbar-width: thin;
+    scrollbar-color: #d4af37 transparent;
+}
+
+/* --- CHRONICLE ENTRY STYLING --- */
+.update-item {
+    padding: 12px;
+    margin-bottom: 10px;
+    background: rgba(212, 175, 55, 0.05);
+    border-left: 3px solid #d4af37;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.update-item:hover {
+    background: rgba(212, 175, 55, 0.15);
+    transform: translateX(-5px);
+}
+
+.update-date {
+    font-size: 0.7rem;
+    color: #888;
+    text-transform: uppercase;
+    display: block;
+}
+
+.update-title {
+    font-family: 'Georgia', serif;
+    color: #f1e0ac;
+    margin: 5px 0;
+    font-size: 1rem;
 }
 
 /* --- THE STONE PORTAL (GIMP Merged Asset Version) --- */
@@ -384,94 +419,162 @@ body {
    SECTION 4: THE COMMAND HUD (Player Vitals)
    ============================================================ */
 
-.roadmap-container {
-    width: 75vw; /* 75% of screen width */
-    height: 80vh; /* 80% of screen height */
-    background-size: 100% 100%;
-    background-repeat: no-repeat;
-    position: relative;
-    padding: 60px;
-    display: flex;
-    flex-direction: column;
+/* THE MASTER OVERLAY (Translucent Obsidian Shield) */
+#roadmap-modal.modal-overlay, 
+#chronicle-detail-modal.modal-overlay {
+    position: fixed !important;
+    inset: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    background: rgba(0, 0, 0, 0.85) !important; 
+    z-index: 500000 !important; 
+    display: none; 
+    justify-content: center;
     align-items: center;
-    box-shadow: 0 0 50px rgba(0,0,0,1);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+/* THE ROADMAP & CHRONICLE CONTAINER */
+.roadmap-container {
+    /* DEFAULT WIDESCREEN (Used by Roadmap) */
+    width: 95vw !important;
+    height: 80vh !important;
+    max-width: 1800px;
+    
+    /* THE VISUAL THEME */
+    background: rgba(15, 15, 15, 0.95) !important;
+    border: 2px solid #d4af37;
+    box-shadow: 0 0 60px rgba(0, 0, 0, 1), inset 0 0 30px rgba(212, 175, 55, 0.15);
+    
+    position: relative;
+    padding: 20px 80px 60px 80px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
     color: #f1e0ac;
-    overflow-y: auto;
+
+    /* SCROLL ENGINE */
+    overflow-y: scroll !important;
+    scrollbar-width: none !important;
+    -ms-overflow-style: none !important;
 }
 
-.roadmap-header {
-    text-align: center;
-    margin-bottom: 40px;
+/* SURGICAL OVERRIDE: Makes the Chronicle Detail Modal more compact */
+#chronicle-detail-modal .roadmap-container {
+    width: 50vw !important;
+    height: auto !important;
+    min-height: 400px !important;
+    max-width: 750px !important;
 }
 
-.roadmap-logo {
-    width: 300px; /* Approximately 3/4 of typical logo size */
-    height: auto;
-    filter: drop-shadow(0 0 10px #000);
+.roadmap-container::-webkit-scrollbar {
+    display: none !important;
 }
 
-.roadmap-main-title {
+/* --- THE LOCKED WINDOW CLOSING "X" --- */
+.close-modal {
+    position: sticky !important;
+    align-self: flex-end; 
+    top: 0 !important;   
+    margin-right: -40px; 
+    margin-top: 10px;
+    
+    font-size: 55px !important;
+    color: #d4af37 !important;
+    cursor: pointer;
+    z-index: 500020 !important;
+    line-height: 1;
+    
+    text-shadow: 0 0 15px rgba(0, 0, 0, 1), 0 0 5px #d4af37;
+    transition: color 0.2s, transform 0.2s;
+    user-select: none;
+}
+
+.close-modal:hover { 
+    color: #ffffff !important; 
+    transform: scale(1.1);
+}
+
+/* HEADER & TITLES */
+.roadmap-main-title, #chronicle-detail-title {
     font-family: 'Georgia', serif;
-    font-size: 3rem;
+    font-size: 3.5rem;
     color: #d4af37;
     text-transform: uppercase;
-    letter-spacing: 5px;
-    text-shadow: 0 0 15px rgba(212, 175, 55, 0.6), 2px 2px 0px #000;
-    margin-top: 10px;
+    letter-spacing: 10px;
+    text-shadow: 0 0 20px rgba(212, 175, 55, 0.4), 3px 3px 6px #000;
+    margin-top: -30px; 
+    margin-bottom: 50px;
+    text-align: center;
+    flex-shrink: 0;
 }
 
-/* STAR CITIZEN STYLE GRID */
+#chronicle-detail-text {
+    font-family: 'Georgia', serif;
+    line-height: 1.8;
+    font-size: 1.2rem;
+    text-align: center;
+    font-style: italic;
+    color: #f1e0ac;
+    max-width: 90%;
+}
+
+/* THE VERTICAL STACK (Grid) */
 .roadmap-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    gap: 20px;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 12px !important;
     width: 100%;
-    padding: 20px;
+    max-width: 1400px; 
+    padding-bottom: 80px;
 }
 
+/* THE HORIZONTAL CATEGORY BAR */
 .roadmap-phase {
-    background: rgba(20, 20, 20, 0.8);
-    border: 1px solid #444;
-    padding: 20px;
-    position: relative;
-    transition: transform 0.3s ease;
+    width: 100%;
+    background: rgba(30, 30, 30, 0.7);
+    border: 1px solid rgba(212, 175, 55, 0.3);
+    padding: 15px 40px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-sizing: border-box;
+    flex-shrink: 0;
 }
 
-.roadmap-phase.active {
-    border-left: 4px solid #00ffff;
-    background: rgba(0, 255, 255, 0.05);
+.roadmap-phase:hover {
+    background: rgba(50, 50, 50, 0.9);
+    border-color: #d4af37;
 }
 
-.phase-tag {
-    font-size: 0.7rem;
-    text-transform: uppercase;
-    color: #888;
-    margin-bottom: 10px;
-    letter-spacing: 1px;
-}
+.roadmap-phase.active { border-left: 10px solid #00ffff; }
 
 .roadmap-phase h3 {
     font-family: 'Georgia', serif;
-    color: #d4af37;
-    margin-bottom: 15px;
+    font-size: 1.4rem;
+    margin: 0;
+    color: #f1e0ac;
+    letter-spacing: 2px;
 }
 
-.roadmap-phase ul {
-    padding-left: 20px;
-    font-size: 0.9rem;
-    line-height: 1.6;
-    color: #bbb;
+/* THE DETAIL DEEP-DIVE */
+.deep-dive {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.4s ease, opacity 0.3s ease;
+    opacity: 0;
 }
 
-.close-modal {
-    position: absolute;
-    top: 30px;
-    right: 40px;
-    font-size: 40px;
-    color: #d4af37;
-    cursor: pointer;
-    z-index: 10;
+.roadmap-phase.expanded .deep-dive {
+    max-height: 1200px;
+    opacity: 1;
+    margin-top: 20px;
+    padding: 25px;
+    background: rgba(0, 0, 0, 0.7);
+    border: 1px solid rgba(212, 175, 55, 0.2);
 }
+
 /* ============================================================
    SECTION 5: THE QUESTING WORLD (Cards & Animations)
    ============================================================ */
