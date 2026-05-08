@@ -305,42 +305,45 @@ body {
     z-index: 100;
 }
 
-/* Keep the core transition for both wrappers */
+/* Keep the core fade transition */
 #login-content-wrapper, #post-login-message {
     transition: opacity 1s ease-in-out;
     width: 100%;
     pointer-events: auto;
 }
 
-/* Specific containment for the message so it doesn't spill out */
 #post-login-message {
-    display: none; /* Managed by JS */
+    display: none; 
     opacity: 0;
     flex-direction: column;
     align-items: center;
     justify-content: center;
     text-align: center;
+    /* Extra vertical breathing room */
+    padding-top: 20px; 
 }
 
 #post-login-message p {
-    /* THE "DNA" FIX: Limits width to keep text away from ornate stone edges */
-    max-width: 70%; 
+    /* TIGHTENED BUMPERS: Forces text into the center 60% of the box */
+    max-width: 60% !important; 
     margin: 0 auto !important;
     
     font-family: 'Georgia', serif;
     color: #f1e0ac;
-    font-size: 1.1rem;
-    line-height: 1.6;
+    font-size: 1.05rem; /* Slightly smaller to accommodate the narrower width */
+    line-height: 1.5;
     font-style: italic;
     text-shadow: 1px 1px 3px #000;
 }
 
-/* Fix for the buttons inside the message area */
+/* Button stack alignment */
 #post-login-message div {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 10px;
+    gap: 12px;
+    width: 100%;
+    margin-top: 15px;
 }
 
 /* --- 6. THE SLIDESHOW AMBIENCE --- */
