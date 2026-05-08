@@ -35,12 +35,11 @@ app.use(express.static(__dirname));
    ============================================================ */
 
 app.get('/', (req, res) => {
-    // Serves the landing page from your main directory
-    res.sendFile(path.join(__dirname, 'index.html'));
+    res.sendFile(path.resolve(__dirname, 'index.html'));
 });
 
-// Redirects any "ghost" pages back to landing
-app.get('*', (req, res) => {
+// NEW EXPRESS 5 SYNTAX: Replace '*' with '(.*)'
+app.get('/:path(.*)', (req, res) => {
     res.redirect('/');
 });
 
