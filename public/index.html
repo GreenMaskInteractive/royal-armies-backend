@@ -135,143 +135,21 @@
      ARCH SECTION 2: THE HALL OF STATUES (Class Selection)
      ============================================================ -->
 
-<div id="class-selection-screen" class="full-page-overlay" style="display: none;">
-    
-    <!-- 1. AMBIANCE LAYER -->
-    <div class="class-bg"></div>
-
-    <!-- 2. THE BATTLEMASTER SCROLL (Left Slide) -->
-    <div id="info-battlemaster" class="side-info-panel left-panel">
-        <div class="info-content">
-            <img src="images/battlemastercrest.png" alt="Crest" class="class-crest">
-            <h2 class="aurora-title">Battlemaster</h2>
-            
-            <div class="class-details">
-                <p><strong>History:</strong> Masters of the blade and tactical field maneuvers.</p>
-                <p><strong>Units:</strong> Knights, Paladins, Iron Guards.</p>
-                <p><strong>Buffs:</strong> +15% Phys Def, -10% Recruitment.</p>
-            </div>
-
-            <button class="action-btn" onclick="confirmSelection('battlemaster')">Enlist</button>
-        </div>
-    </div>
-
-    <!-- 3. THE ARCHMAGE SCROLL (Right Slide) -->
-    <div id="info-archmage" class="side-info-panel right-panel">
-        <div class="info-content">
-            <img src="images/archmagecrest.png" alt="Crest" class="class-crest">
-            <h2 class="aurora-title">Archmage</h2>
-            
-            <div class="class-details">
-                <p><strong>History:</strong> Wielders of ancient arcane spirits and cosmic energy.</p>
-                <p><strong>Units:</strong> Sorcerers, Arcane Golems, Spirit Wraiths.</p>
-                <p><strong>Buffs:</strong> +20% Mag Power, +5% Resource Regen.</p>
-            </div>
-
-            <button class="action-btn" onclick="confirmSelection('archmage')">Ascend</button>
-        </div>
-    </div>
-
-    <!-- 4. THE STATUE ROW (Visual Selection) -->
-    <div class="class-options-container">
-        <!-- Battlemaster Statue -->
-        <div class="class-card" id="card-battlemaster" onclick="selectClass('battlemaster')">
-            <img src="images/classbattlemasterstone.png" alt="Battlemaster" class="statue-img">
-        </div>
-
-        <!-- Archmage Statue -->
-        <div class="class-card" id="card-archmage" onclick="selectClass('archmage')">
-            <img src="images/classarchmagestone.png" alt="Archmage" class="statue-img">
-        </div>
-    </div>
-
-</div>
 
 <!-- ============================================================
      ARCH SECTION 3: THE WORLD STAGE (Main Game Container)
      ============================================================ -->
 
-<!-- 1. TOP NAVIGATION BAR -->
-<nav class="top-nav">
-    <!-- AVI Section 6 Styles these buttons and the logo -->
-    <button class="nav-btn" disabled>Headquarters</button>
-    <button class="nav-btn" disabled>Hospital</button>
-    <button class="nav-btn" disabled>Armory</button>
-    <button class="nav-btn" disabled>Border</button>
-    <button id="nav-quests" class="nav-btn active">Quests</button>
-    <button class="nav-btn" disabled>Map</button>
-    
-    <img src="images/royalarmiestitle.png" class="nav-logo" alt="Royal Armies">
-    
-    <!-- Logo Spacer (AVI Section 6) -->
-    <div style="width: 250px;"></div> 
-
-    <button class="nav-btn" disabled>Friends</button>
-    <button class="nav-btn" disabled>Messages</button>
-    <button class="nav-btn" disabled>Notifications</button>
-    <button class="nav-btn store">Royalty Store</button>
-    <button class="nav-btn">Settings</button>
-    <button class="nav-btn login-out" onclick="handleLogout()">Log Out</button>
-</nav>
 
 <!-- ============================================================
      ARCH SECTION 4: THE COMMANDER’S HUD (Vitals & Bars)
      ============================================================ -->
 
-<div id="player-hud" class="hud-fixed-container">
-    
-    <!-- 1. The Dynamic Fills (Layered behind the image) -->
-    <div class="hud-bars-background">
-        <!-- XP Bar (RAGE Section 4 logic updates this width) -->
-        <div class="bar-wrap xp-wrap">
-            <div id="hud-xp-fill" class="bar-fill xp-fill"></div>
-        </div>
-        
-        <!-- Provisions Bar (AVI Section 4 styles the segments) -->
-        <div class="bar-wrap prov-wrap">
-            <div id="hud-prov-fill" class="bar-fill prov-fill"></div>
-        </div>
-    </div>
-
-    <!-- 2. The Frame (The Gold/Stone HUD Image) -->
-    <img src="images/royalarmiesHUD.png" class="hud-image-overlay" alt="HUD">
-
-    <!-- 3. The Digital Overlay (Engraved Numbers) -->
-    <div class="hud-text-overlay">
-        <!-- AVI Section 4 styles this font as 'Georgia' -->
-        <div id="hud-unit-ratio" class="unit-count-circle">0/0</div>
-    </div>
-
-</div>
 
 <!-- ============================================================
          ARCH SECTION 5: THE WAR MAP (Quest System)
          ============================================================ -->
 
-    <div id="page-quests" class="page">
-        <h1 class="page-title">Available Quests</h1>
-        
-        <div class="quest-grid">
-            <!-- Market Patrol (AVI Section 5 Hover Effects) -->
-            <div class="quest-card" id="quest-market" onclick="startQuest('market')">
-                <img src="images/marketpatrolquestcard.png" class="quest-image" alt="Market Patrol">
-                <div class="quest-plaque">Market Patrol</div>
-            </div>
-
-            <!-- Border Patrol (Locked State - AVI Section 9) -->
-            <div class="quest-card locked" id="quest-border" onclick="startQuest('border')">
-                <img src="images/borderpatrolquestcard.png" class="quest-image" alt="Border Patrol">
-                <div class="quest-plaque">Border Patrol</div>
-            </div>
-
-            <!-- Escort -->
-            <div class="quest-card locked" id="quest-escort" onclick="startQuest('escort')">
-                <img src="images/escortquestcard.png" class="quest-image" alt="Escort">
-                            <div class="quest-plaque">Escort</div>
-        </div>
-    </div>
-</div>
-</main>
 
 <!-- ============================================================
      ARCH SECTION 7: GLOBAL OVERLAYS (Modals & Narratives)
