@@ -27,8 +27,14 @@ app.use(express.urlencoded({ extended: true }));
    NEXUS SECTION 2: DATA REPOSITORIES
    ============================================================ */
 
-// This serves everything in your main folder (images, audio, etc.)
+// This tells Express that EVERYTHING in your main folder is a public asset
 app.use(express.static(__dirname));
+
+// Specifically mapping these to be safe
+app.use('/images', express.static(path.join(__dirname, 'images')));
+app.use('/audio', express.static(path.join(__dirname, 'audio')));
+app.use('/js', express.static(path.join(__dirname, 'js')));
+app.use('/css', express.static(path.join(__dirname, 'css')));
 
 /* ============================================================
    NEXUS SECTION 3: Static Routing (The Bridge)
@@ -36,11 +42,16 @@ app.use(express.static(__dirname));
 
 // 1. THE MAIN GATE
 app.get('/', (req, res) => {
-    res.sendFile(path.resolve(__dirname, 'index.html'));
+    // We use path.join with __dirname to force the server to look in the root folder
+    res.sendFile(path.join(__dirname, 'index.html'), (err) => {
+        if (err) {
+            console.error("GENETIC ERROR: index.html not found in " + __dirname);
+            res.status(404).send("The Portal file is missing from the root directory.");
+        }
+    });
 });
 
-// 2. THE CATCH-ALL (Universal Express 5 Fix)
-// This captures everything that isn't the root and sends it home
+// 2. THE CATCH-ALL
 app.use((req, res) => {
     res.redirect('/');
 });
