@@ -34,12 +34,14 @@ app.use(express.static(__dirname));
    NEXUS SECTION 3: Static Routing (The Bridge)
    ============================================================ */
 
+// 1. THE MAIN GATE
 app.get('/', (req, res) => {
     res.sendFile(path.resolve(__dirname, 'index.html'));
 });
 
-// NEW EXPRESS 5 SYNTAX: Replace '*' with '(.*)'
-app.get('/:path(.*)', (req, res) => {
+// 2. THE CATCH-ALL (Universal Express 5 Fix)
+// This captures everything that isn't the root and sends it home
+app.use((req, res) => {
     res.redirect('/');
 });
 
