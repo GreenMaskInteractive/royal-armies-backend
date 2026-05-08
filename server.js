@@ -27,31 +27,25 @@ app.use(express.urlencoded({ extended: true }));
    NEXUS SECTION 2: DATA REPOSITORIES
    ============================================================ */
 
-// This tells Express that EVERYTHING in your main folder is a public asset
-app.use(express.static(__dirname));
-
-// Specifically mapping these to be safe
-app.use('/images', express.static(path.join(__dirname, 'images')));
-app.use('/audio', express.static(path.join(__dirname, 'audio')));
-app.use('/js', express.static(path.join(__dirname, 'js')));
-app.use('/css', express.static(path.join(__dirname, 'css')));
+// 1. Point the static engine to the 'public' folder
+// This makes everything inside /public (images, audio, css, js) accessible
+app.use(express.static(path.join(__dirname, 'public')));
 
 /* ============================================================
    NEXUS SECTION 3: Static Routing (The Bridge)
    ============================================================ */
 
-// 1. THE MAIN GATE
+// 2. Map the root URL to the index.html inside /public
 app.get('/', (req, res) => {
-    // We use path.join with __dirname to force the server to look in the root folder
-    res.sendFile(path.join(__dirname, 'index.html'), (err) => {
+    res.sendFile(path.join(__dirname, 'public', 'index.html'), (err) => {
         if (err) {
-            console.error("GENETIC ERROR: index.html not found in " + __dirname);
-            res.status(404).send("The Portal file is missing from the root directory.");
+            console.error("SEARCH FAILED: index.html not found in /public/");
+            res.status(404).send("The Portal file is trapped in a subfolder.");
         }
     });
 });
 
-// 2. THE CATCH-ALL
+// 3. THE CATCH-ALL (Universal Express 5 Fix)
 app.use((req, res) => {
     res.redirect('/');
 });
