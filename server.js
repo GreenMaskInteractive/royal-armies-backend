@@ -39,55 +39,36 @@ const sendWelcomeEmail = async (playerEmail, playerName, token) => {
     try {
         const verificationLink = `https://royalarmies.com{token}`;
         
-        // Safety: Check if file exists so the server doesn't crash
-        const logoPath = path.join(__dirname, 'public', 'images', 'royalarmiestitle.png');
-        const fs = require('fs');
-        const hasLogo = fs.existsSync(logoPath);
+        // USE A HOSTED URL (e.g., from your own site or an image host)
+        const logoUrl = "https://royalarmies.com";
 
         const { data, error } = await resend.emails.send({
             from: 'Royal Armies <noreply@royalarmies.com>',
             to: [playerEmail],
             subject: '📜 Email Verification: Royal Armies',
-            // Only attach if the file actually exists
-            attachments: hasLogo ? [{
-                path: logoPath,
-                filename: 'logo.png',
-                contentId: 'logo-image'
-            }] : [],
+            // No local attachments = No server-side file errors
             html: `
                 <div style="font-family: 'Georgia', serif; background-color: #000; color: #f1e0ac; padding: 40px; border: 2px solid #d4af37; text-align: center;">
-                    
-                    ${hasLogo ? `
                     <div style="margin-bottom: 30px; text-align: center;">
-                        <img src="cid:logo-image" alt="Royal Armies Logo" style="width: 300px; max-width: 80%; height: auto; display: block; margin: 0 auto;">
-                    </div>` : ''}
-
-                    <h1 style="color: #d4af37; text-align: center;">WELCOME, COMMANDER ${playerName.toUpperCase()}</h1>
-                    
+                        <img src="${logoUrl}" alt="Royal Armies Logo" style="width: 300px; max-width: 80%; height: auto; display: block; margin: 0 auto;">
+                    </div>
+                    <h1 style="color: #d4af37;">WELCOME, COMMANDER ${playerName.toUpperCase()}</h1>
                     <p style="font-size: 1.1rem; line-height: 1.6; font-style: italic;">
-                        Your registration for the Royal Armies MMORTS Browser-Based Strategy Game has been logged. 
-                        Please proceed to verify your e-mail by clicking the link below.
+                        Your registration for the Royal Armies has been logged. Please verify your e-mail by clicking the link below.
                     </p>
-                    
                     <div style="margin: 30px 0;">
                         <a href="${verificationLink}" style="background-color: #d4af37; color: #000; padding: 15px 30px; text-decoration: none; font-weight: bold; border-radius: 4px; text-transform: uppercase; display: inline-block;">
                             Verify E-Mail
                         </a>
                     </div>
-
-                    <p style="font-size: 0.8rem; color: #888;">If the button above does not work, copy and paste this link:<br>${verificationLink}</p>
-                    
-                    <hr style="border: 0; border-top: 1px solid #d4af37; margin: 20px 0;" />
-                    <p style="text-align: center; color: #888;">© 2026 GREEN MASK INTERACTIVE</p>
-                </div>
-            `
+                </div>`
         });
 
         if (error) throw error;
         console.log("📜 Verification Scroll Sent! ID:", data.id);
     } catch (err) {
         console.error("❌ Post Office Error:", err);
-        throw err;
+        throw err; // Sends the 500 error to script.js if it fails
     }
 };
 
