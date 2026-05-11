@@ -461,7 +461,6 @@ function handleLogout() {
     // 3. Deactivate Discord Pulse
     if (discordIcon) {
         discordIcon.classList.remove('pulse-discord');
-        discordIcon.classList.add('disabled');
     }
 
     // 4. Restore Login UI & re-enable button hitboxes

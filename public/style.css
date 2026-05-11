@@ -240,6 +240,13 @@ body {
 
 .nav-icon:hover, #updates-icon:hover { transform: scale(1.1); }
 
+/* --- Support Icon Grey-out (The "Disabled" Flag) --- */
+.nav-icon.disabled {
+    filter: grayscale(1) brightness(0.4) opacity(0.3) !important;
+    cursor: not-allowed !important;
+    pointer-events: none !important; /* Makes it unclickable */
+}
+
 /* --- Block 3: Discord Pulse Animation --- */
 @keyframes discordAttention {
     0% { transform: scale(1); filter: drop-shadow(0 0 5px #d4af37); }
@@ -280,8 +287,8 @@ body {
     position: absolute !important;
     right: 0 !important;
     top: 75px !important;
-    width: 320px; /* Restored PC width */
-    height: 800px !important; /* Restored PC vertical span */
+    width: 320px; 
+    height: 800px !important; 
     display: none;
     z-index: 300000 !important;
     background: rgba(0, 0, 0, 0.95) !important;
@@ -292,7 +299,7 @@ body {
 
 .updates-header {
     background: #d4af37;
-    color: #000;
+    color: #000; /* Black text on Gold background is correct/visible */
     padding: 8px;
     text-align: center;
     font-family: 'Georgia', serif;
@@ -306,12 +313,91 @@ body {
     padding: 15px;
 }
 
+/* FIX: Ensure Category Titles (Genesis Forge, Phase 1, etc.) are visible */
+.update-title, .roadmap-phase h3 {
+    color: #f1e0ac !important; /* Pale Gold */
+    font-family: 'Georgia', serif;
+    margin: 5px 0;
+    font-size: 1rem;
+    text-shadow: 1px 1px 2px #000;
+}
+
+/* FIX: Ensure Phase/Date tags are visible */
+.update-date, .phase-tag {
+    color: #d4af37 !important; /* Aether Gold */
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    display: block;
+    margin-bottom: 2px;
+}
+
+.update-item {
+    padding: 12px;
+    margin-bottom: 10px;
+    background: rgba(212, 175, 55, 0.05); /* Subtle gold tint */
+    border: 1px solid rgba(212, 175, 55, 0.3); /* The requested border */
+    border-left: 4px solid #d4af37; /* Cinematic "Left Edge" accent */
+    cursor: pointer; /* Essential for "Clickable" feel */
+    transition: all 0.2s ease-in-out;
+    position: relative;
+    z-index: 10;
+}
+
+.update-item:hover {
+    background: rgba(212, 175, 55, 0.15);
+    border-color: #d4af37;
+    transform: translateX(5px); /* Visual "Pop" when hovering */
+    box-shadow: 0 0 15px rgba(212, 175, 55, 0.1);
+}
+
+/* FIX: Ensure Roadmap descriptions and list items are visible */
+.deep-dive p, .deep-dive li {
+    color: #e0e0e0 !important; /* Off-white/Silver */
+    font-size: 0.85rem;
+    line-height: 1.4;
+}
+
+/* FIX: Horizontal lines inside panels */
+.deep-dive hr {
+    border: 0;
+    border-top: 1px solid rgba(212, 175, 55, 0.3);
+    margin: 10px 0;
+}
+
+.roadmap-phase {
+    width: 100%;
+    background: rgba(30, 30, 30, 0.7);
+    border: 1px solid rgba(212, 175, 55, 0.3); /* Border restored */
+    padding: 15px 40px;
+    margin-bottom: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-sizing: border-box;
+}
+
+.roadmap-phase:hover {
+    background: rgba(50, 50, 50, 0.9);
+    border-color: #d4af37;
+}
+
+/* The Active State (Archived/Selected) */
+.roadmap-phase.active {
+    border-left: 10px solid #00ffff; /* Teal indicator for "In Progress" */
+    background: rgba(0, 255, 255, 0.05);
+}
+
+/* --- 3. CLICK PROTECTION (Layering Fix) --- */
+.updates-scroll {
+    pointer-events: auto !important; /* Forces the panel to accept clicks */
+    overflow-y: auto;
+}
+
 /* --- Block 5: Unified Auth Modal Layout --- */
 .modal-content {
     background: rgba(10, 10, 10, 0.98);
     border: 2px solid #d4af37;
     padding: 40px;
-    width: 450px; /* Restored PC Modal size */
+    width: 450px; 
     max-width: 90%;
     text-align: center;
     box-shadow: 0 0 30px rgba(212, 175, 55, 0.2);
@@ -319,11 +405,30 @@ body {
     min-height: 520px;
 }
 
+/* FIX: Added title color */
+.modal-title {
+    color: #d4af37 !important; /* Forces Aether Gold */
+    font-family: 'Cinzel', serif;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    margin-bottom: 25px;
+}
+
+/* FIX: Added label color (Username, Email, etc.) */
+.reg-group label {
+    display: block;
+    color: #f1e0ac !important; /* Pale Gold for high visibility */
+    font-size: 0.8rem;
+    margin-bottom: 5px;
+    text-transform: uppercase;
+    text-align: left;
+}
+
 .reg-input {
     width: 100%;
     background: rgba(255, 255, 255, 0.05);
     border: 1px solid #d4af37;
-    color: #fff;
+    color: #fff; /* Pure white text while typing */
     padding: 10px;
     font-family: 'Cinzel', serif;
     outline: none;
@@ -332,7 +437,7 @@ body {
 
 .modal-actions {
     display: flex !important;
-    flex-direction: row !important; /* Reverted to side-by-side */
+    flex-direction: row !important;
     justify-content: center;
     gap: 15px;
     margin-top: 30px;
@@ -343,13 +448,15 @@ body {
     background-size: 100% 100%;
     width: 160px;
     height: 50px;
-    color: #ffd700;
+    color: #ffd700; /* Bright gold for button text */
     font-family: 'Cinzel', serif;
     font-size: 0.85rem;
     font-weight: bold;
     display: flex;
     align-items: center;
     justify-content: center;
+    border: none;
+    cursor: pointer;
 }
 
 /* --- Block 5: The Master Anchor & Stone Portal (Stability Lockdown) --- */
@@ -1212,31 +1319,38 @@ body {
 }
 
 /* --- Block 6: Detail Modal Styling --- */
-.detail-card {
-    background: #000;
-    border: 2px solid #d4af37;
-    width: 600px; /* Restored fixed PC modal width */
-    max-height: 80vh;
-    padding: 40px;
-    display: flex;
-    flex-direction: column;
+.detail-overlay, .modal-overlay {
+    position: fixed !important;
+    inset: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    
+    /* 1. THE DIMMER: Darkens the screen behind the pop-up */
+    background: rgba(0, 0, 0, 0.92) !important; 
+    
+    /* 2. THE LAYER FIX: Higher than the login portal (200k) and panels (300k) */
+    z-index: 3000000 !important; 
+    
+    display: none; 
+    justify-content: center;
     align-items: center;
+}
+
+.detail-card {
+    background: #0a0a0a !important; /* Solid black background */
+    border: 2px solid #d4af37;
+    width: 600px;
+    padding: 40px;
     box-shadow: 0 0 50px rgba(0, 0, 0, 1);
 }
 
-.registration-card {
-    width: 500px !important; /* Restored fixed PC registration box */
-    padding: 50px !important;
+/* Ensure the text inside the pop-up is ALSO visible */
+#chronicle-detail-title {
+    color: #d4af37 !important;
 }
 
-/* --- Block 8: Recovery Link Accessibility Fix --- */
-.forgot-link-container {
-    pointer-events: auto !important;
-    position: relative;
-    z-index: 200020 !important;
-    margin-top: 10px;
-    display: flex;
-    justify-content: center;
+#chronicle-detail-text {
+    color: #f1e0ac !important;
 }
 
 /* ============================================================
@@ -1283,9 +1397,12 @@ body {
     width: 100% !important; 
 } 
 
-.forgot-link { 
-    pointer-events: auto !important; 
-    cursor: pointer !important; 
-    position: relative !important; 
-    z-index: 200060 !important; 
+.forgot-link {
+    color: #f1e0ac !important; /* Pale Gold */
+    text-shadow: 1px 1px 3px #000;
+    opacity: 0.9;
+}
+.forgot-link:hover {
+    color: var(--accent) !important; /* Bright Gold */
+    opacity: 1;
 }
