@@ -15,6 +15,7 @@ const express = require('express');
 const path = require('path');
 const compression = require('compression');
 const { Resend } = require('resend');
+const crypto = require('crypto');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -32,21 +33,30 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public'))); // Serves ARCH, AVI, and GIMP files
 
-/* --- Block 3: The Royal Post Office (Resend Restoration) --- */
-const sendWelcomeEmail = async (playerEmail, playerName) => {
+/* --- Block 3: The Royal Post Office (Verification Link) --- */
+const sendWelcomeEmail = async (playerEmail, playerName, token) => { // Added 'token' here
     try {
+        const verificationLink = `https://royalarmies.com{token}`;
+
         const { data, error } = await resend.emails.send({
             from: 'Royal Armies <noreply@royalarmies.com>',
             to: [playerEmail],
-            subject: '📜 Command Application Received: Welcome to Argaute',
+            subject: '📜 Verify Your Command: Royal Armies',
             html: `
-                <div style="font-family: 'Georgia', serif; background-color: #000; color: #f1e0ac; padding: 40px; border: 2px solid #d4af37;">
+                <div style="font-family: 'Georgia', serif; background-color: #000; color: #f1e0ac; padding: 40px; border: 2px solid #d4af37; text-align: center;">
                     <h1 style="color: #d4af37; text-align: center;">WELCOME, COMMANDER ${playerName.toUpperCase()}</h1>
-                    <p style="font-size: 1.1rem; line-height: 1.6; text-align: center; font-style: italic;">
-                        Your application for the Royal Armies has been logged in the Great Ledger.
+                    <p style="font-size: 1.1rem; line-height: 1.6; font-style: italic;">
+                        Your application for the Royal Armies has been logged. You must verify your command to proceed to the front lines.
                     </p>
+                    
+                    <div style="margin: 30px 0;">
+                        <a href="${verificationLink}" style="background-color: #d4af37; color: #000; padding: 15px 30px; text-decoration: none; font-weight: bold; border-radius: 4px; text-transform: uppercase; display: inline-block;">
+                            Verify Command
+                        </a>
+                    </div>
+
+                    <p style="font-size: 0.8rem; color: #888;">If the button above does not work, copy and paste this link:<br>${verificationLink}</p>
                     <hr style="border: 0; border-top: 1px solid #d4af37; margin: 20px 0;" />
-                    <p style="text-align: center;">The gates of the Hall of Statues are currently undergoing maintenance for Alpha 0.2.0.</p>
                     <p style="text-align: center; color: #888;">© 2026 GREEN MASK INTERACTIVE</p>
                 </div>
             `
@@ -56,7 +66,7 @@ const sendWelcomeEmail = async (playerEmail, playerName) => {
             console.error("❌ Resend Error:", error);
             throw error; 
         }
-        console.log("📜 Transmission Success! ID:", data.id);
+        console.log("📜 Verification Scroll Sent! ID:", data.id);
         return data;
     } catch (err) {
         console.error("❌ Fatal Connection Error in Post Office:", err);
@@ -66,25 +76,44 @@ const sendWelcomeEmail = async (playerEmail, playerName) => {
 
 /* --- Block 4: Routing & Handshakes --- */
 
-// 1. The Registration Endpoint
+// 1. The Registration Endpoint (Updated with Token generation)
 app.post('/register', async (req, res) => {
     const { username, email } = req.body;
-    console.log(`[NEXUS] Handshake Received: Application for ${username}`);
+    
+    // Generate a secure 32-character token
+    const token = crypto.randomBytes(16).toString('hex');
+    
+    console.log(`[NEXUS] Handshake Received: Creating Token for ${username}`);
     
     try {
-        await sendWelcomeEmail(email, username);
-        console.log(`[NEXUS] Success: Welcome scroll dispatched to ${email}`);
+        // Pass the token into the email function
+        await sendWelcomeEmail(email, username, token);
+        
+        console.log(`[NEXUS] Success: Verification dispatched to ${email}`);
         res.status(200).json({ status: "logged" });
     } catch (error) {
         console.error("❌ NEXUS Critical Error during registration:", error);
-        res.status(500).json({
-            status: "error",
-            message: "The Royal Post Office is currently unreachable."
-        });
+        res.status(500).json({ status: "error", message: "Post Office failure." });
     }
 });
 
-// 2. The Final Portal (Home Route)
+// 2. NEW: The Verification Landing Pad
+app.get('/verify', (req, res) => {
+    const token = req.query.token;
+    console.log(`[NEXUS] Verification Attempt: Token ${token}`);
+
+    // Verification Success UI
+    res.send(`
+        <body style="background: #000; color: #d4af37; font-family: Georgia, serif; text-align: center; padding: 100px 20px; border: 10px solid #1a1a1a; height: 100vh; margin: 0;">
+            <h1 style="font-size: 3rem; text-shadow: 0 0 20px #d4af37;">COMMAND VERIFIED</h1>
+            <p style="font-size: 1.2rem; font-style: italic; color: #f1e0ac;">Your ranks have been synchronized, Commander.</p>
+            <br>
+            <a href="https://royalarmies.com" style="color: #fff; text-decoration: underline; font-size: 1rem;">Return to the Front Lines</a>
+        </body>
+    `);
+});
+
+// 3. The Final Portal (Home Route)
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
