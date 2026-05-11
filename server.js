@@ -25,59 +25,59 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static('public')); // Serves your ARCH, AVI, and GIMP files
 
-/* --- Block 3: The Royal Post Office (Email Logic) --- */
-const transporter = nodemailer.createTransport({
-  service: 'gmail',
-  auth: {
-    user: 'envis.ionarygreenmask@gmail.com', // Your verified Green Mask email
-    pass: 'inwm ztvt gypm mwwz'              // Your 16-character App Password
+/* --- Block 3: The Royal Post Office (Resend Restoration) --- */
+const { Resend } = require('resend');
+
+// REPLACE the text below with your actual API Key from the Resend Dashboard
+const resend = new Resend('re_your_actual_api_key_here'); 
+
+const sendWelcomeEmail = async (playerEmail, playerName) => {
+  try {
+    const { data, error } = await resend.emails.send({
+      // THIS USES YOUR VERIFIED DOMAIN
+      from: 'Royal Armies <noreply@royalarmies.com>', 
+      to: [playerEmail],
+      subject: '📜 Command Application Received: Welcome to Argaute',
+      html: `
+        <div style="font-family: 'Georgia', serif; background-color: #000; color: #f1e0ac; padding: 40px; border: 2px solid #d4af37;">
+          <h1 style="color: #d4af37; text-align: center;">WELCOME, COMMANDER ${playerName.toUpperCase()}</h1>
+          <p style="font-size: 1.1rem; line-height: 1.6; text-align: center; font-style: italic;">
+            Your application for the Royal Armies has been logged in the Great Ledger.
+          </p>
+          <hr style="border: 0; border-top: 1px solid #d4af37; margin: 20px 0;" />
+          <p style="text-align: center;">The gates of the Hall of Statues are currently undergoing maintenance for Alpha 0.2.0.</p>
+          <p style="text-align: center; color: #888;">© 2026 GREEN MASK INTERACTIVE</p>
+        </div>
+      `
+    });
+
+    if (error) {
+      return console.error("❌ Resend Error:", error);
+    }
+    console.log("📜 Post Office Online: Royal Scroll dispatched via Resend. ID:", data.id);
+
+  } catch (err) {
+    console.error("❌ Fatal Connection Error in Post Office:", err);
   }
-});
-
-// THE HANDSHAKE CHECK: Verifies Gmail connection on server start
-transporter.verify((error, success) => {
-  if (error) {
-    console.log("❌ Post Office Error: Nexus cannot reach Gmail. check App Password.");
-  } else {
-    console.log("📜 Post Office Online: Royal Scrolls are ready for dispatch.");
-  }
-});
-
-const sendWelcomeEmail = (playerEmail, playerName) => {
-  const mailOptions = {
-    from: '"The Royal Guard" <envis.ionarygreenmask@gmail.com>', // Must match 'user' above
-    to: playerEmail,
-    subject: '📜 Command Application Received: Welcome to Argaute',
-    html: `
-      <div style="font-family: 'Georgia', serif; background-color: #000; color: #f1e0ac; padding: 40px; border: 2px solid #d4af37;">
-        <h1 style="color: #d4af37; text-align: center;">WELCOME, COMMANDER ${playerName.toUpperCase()}</h1>
-        <p style="font-size: 1.1rem; line-height: 1.6; text-align: center; font-style: italic;">
-          Your application for the Royal Armies has been logged in the Great Ledger.
-        </p>
-        <hr style="border: 0; border-top: 1px solid #d4af37; margin: 20px 0;" />
-        <p style="text-align: center;">The gates of the Hall of Statues are currently undergoing maintenance for Alpha 0.2.0.</p>
-        <p style="text-align: center; color: #888;">© 2026 GREEN MASK INTERACTIVE</p>
-      </div>
-    `
-  };
-
-  transporter.sendMail(mailOptions, (error, info) => {
-    if (error) console.log("Post Office Error:", error);
-    else console.log("Transmission Sent: " + info.response);
-  });
 };
 
 /* --- Block 4: Routing & Handshakes --- */
-// The Registration Endpoint (Catches the RAGE Section 2 Fetch)
-app.post('/register', (req, res) => {
-  const { username, email } = req.body;
-  console.log(`[NEXUS] Handshake Received: Application for ${username}`);
-  
-  // Trigger the email
-  sendWelcomeEmail(email, username);
+// The Registration Endpoint
+app.post('/register', async (req, res) => {
+    const { username, email } = req.body;
+    console.log(`[NEXUS] Handshake Received: Application for ${username}`);
 
-  // Send success back to the browser
-  res.status(200).json({ status: "logged" });
+    try {
+        // Wait for the Resend engine to dispatch the scroll
+        await sendWelcomeEmail(email, username);
+        
+        console.log(`[NEXUS] Success: Welcome scroll dispatched to ${email}`);
+        res.status(200).json({ status: "logged" });
+
+    } catch (error) {
+        console.error("❌ NEXUS Critical Error:", error);
+        res.status(500).json({ error: "The Royal Post Office is closed." });
+    }
 });
 
 /* --- Block 5: The Final Portal --- */
