@@ -285,6 +285,23 @@ function closeRegister() {
     }
 }
 
+function handleForgot() {
+    closeAllActiveUI();
+    const modal = document.getElementById('forgot-modal');
+    if (modal) {
+        modal.style.display = 'flex';
+        setTimeout(() => { modal.style.opacity = '1'; }, 10);
+    }
+}
+
+function closeForgot() {
+    const modal = document.getElementById('forgot-modal');
+    if (modal) {
+        modal.style.opacity = '0';
+        setTimeout(() => { modal.style.display = 'none'; }, 300);
+    }
+}
+
 /* --- THE SUBMISSION PROTOCOL (NEXUS Handshake Enabled) --- */
 function submitRegistration() {
     const user = document.getElementById('reg-username').value;

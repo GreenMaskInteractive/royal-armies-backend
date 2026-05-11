@@ -4,40 +4,36 @@
  * The Heart of the RAGE Engine & AVI Interface
  */
 
-/* ============================================================
-   NEXUS SECTION 0: CORE MODULES & ENVIRONMENT
+/* ============================================================ 
+   NEXUS SECTION 0: CORE MODULES & ENVIRONMENT 
    ============================================================ */
-
-// 1. Require the tools
+const path = require('path'); // <--- MOVED TO THE TOP
 const low = require('lowdb');
 const FileSync = require('lowdb/adapters/FileSync');
 
 // 2. Define the Smart Path
-// This detects if we are on Render or your local PC
 const isProduction = process.env.RENDER === 'true';
 const dbPath = isProduction ? '/data/db.json' : path.join(__dirname, 'db.json');
 
-// 3. Initialize the database using the correct path
+// 3. Initialize the database
 const adapter = new FileSync(dbPath);
 const db = low(adapter);
 
 // 4. Set the default structure
 db.defaults({ commanders: [] }).write();
 
-/* ============================================================
-   NEXUS SECTION 1: CORE MODULES & ENVIRONMENT
+/* ============================================================ 
+   NEXUS SECTION 1: SERVER CONFIGURATION 
    ============================================================ */
 const express = require('express');
-const path = require('path');
 const fs = require('fs');
 const compression = require('compression');
 const { Resend } = require('resend');
 const crypto = require('crypto');
+const bcrypt = require('bcrypt');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-
-// THE KEY IS NOW ACTIVE
 const resend = new Resend('re_eMzwshB5_EmorLivvuzwbHk6jpAzWtpWE');
 
 /* ============================================================
@@ -103,7 +99,6 @@ app.post('/register', async (req, res) => {
 
     // A. LEDGER SEARCH: Check if this email is already registered
     const existingCommander = db.get('commanders').find({ email }).value();
-
     if (existingCommander) {
         console.log(`[NEXUS] Registration Denied: ${email} already exists.`);
         return res.status(400).json({ 
@@ -112,19 +107,23 @@ app.post('/register', async (req, res) => {
         });
     }
 
-    // B. GENERATE TOKEN
-    const token = crypto.randomBytes(16).toString('hex');
-    console.log(`[NEXUS] Handshake Received: Creating Token for ${username}`);
-
     try {
+        // 🛡️ THE SHIELD: Hash the password before saving
+        const saltRounds = 10;
+        const hashedPassword = await bcrypt.hash(password, saltRounds);
+
+        // B. GENERATE TOKEN
+        const token = crypto.randomBytes(16).toString('hex');
+        console.log(`[NEXUS] Handshake Received: Creating Token for ${username}`);
+
         // C. DISPATCH EMAIL
         await sendWelcomeEmail(email, username, token);
 
-        // D. SAVE TO LEDGER: Record the new Commander
+        // D. SAVE TO LEDGER: Record the new Commander with the SECURE password
         db.get('commanders').push({ 
             username, 
             email, 
-            password, // We will hash this in the next update for security
+            password: hashedPassword, // <--- Now saving the scrambled version!
             token,
             verified: false,
             joinedAt: new Date().toISOString()
@@ -139,17 +138,14 @@ app.post('/register', async (req, res) => {
     }
 });
 
-// 2. The Verification Landing Pad (Now updates the database!)
+// 2. The Verification Landing Pad
 app.get('/verify', (req, res) => {
     const token = req.query.token;
     
-    // Search the ledger for this token
     const commander = db.get('commanders').find({ token }).value();
 
     if (commander) {
-        // Mark them as verified in the database
         db.get('commanders').find({ token }).assign({ verified: true }).write();
-        
         console.log(`[NEXUS] Verified: ${commander.username} has confirmed their E-Mail.`);
 
         res.send(`

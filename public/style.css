@@ -1448,6 +1448,28 @@ body {
     transform: scale(1.05) !important;
 }
 
+/* --- SECTION 9, Block 7: Forgot Password Styling --- */
+.forgot-link-container {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    margin-top: 15px; /* Spacing below the main buttons */
+}
+
+.forgot-link {
+    color: #f1e0ac;
+    font-family: 'Cinzel', serif;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    cursor: pointer;
+    text-decoration: underline;
+    transition: color 0.3s ease;
+}
+
+.forgot-link:hover {
+    color: #d4af37; /* Royal gold on hover */
+}
+
 /* ============================================================
    SECTION 10: PRECISE ALIGNMENT CONTROLS
    ============================================================ */
