@@ -321,15 +321,17 @@ function submitRegistration() {
     }
 
 function submitForgot() {
-    const email = document.getElementById('forgot-email').value;
+    const emailInput = document.getElementById('forgot-email');
+    const email = emailInput.value;
+    const btn = event.target; // Grabs the button you just clicked
 
     if (!email || !email.includes('@')) {
-        alert("The Royal Guard requires a valid email address to locate your records.");
+        alert("The Royal Guard requires a valid email address.");
         return;
     }
 
-    // Disable the button temporarily to prevent double-clicks
-    const btn = event.target;
+    // 1. VISUAL LOCK: Change text and disable to show it's working
+    const originalText = btn.innerText;
     btn.disabled = true;
     btn.innerText = "Dispatching...";
 
@@ -338,44 +340,24 @@ function submitForgot() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: email })
     })
-    .then(res => res.json())
-    .then(data => {
-        alert("If that email is in our ledger, a Reset Scroll is being dispatched via Resend.");
-        closeForgot();
-    })
-    .catch(err => {
-        console.error("Nexus Recovery Error:", err);
-        alert("The connection to the Nexus is unstable. Try again later.");
-    })
-    .finally(() => {
-        btn.disabled = false;
-        btn.innerText = "Request Reset";
-    });
-}
-
-    // 2. NEXUS SERVER HANDSHAKE
-    // This sends the data to your Node.js server to trigger the email relay
-    fetch('/register', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-            username: user, 
-            email: email, 
-            password: pass 
-        })
-    })
     .then(response => {
-        if (response.ok) {
-            console.log("Transmission Established: Application Sent to Nexus.");
-            alert("Application submitted. The Royal Guard has dispatched a confirmation scroll to your email.");
-            closeRegister();
-        } else {
-            alert("The Nexus connection is unstable. Try again, Commander.");
-        }
+        // 2. CRITICAL CHECK: Fetch doesn't "fail" on 404/500 errors automatically
+        if (!response.ok) throw new Error("Server Rejected Connection");
+        return response.json();
+    })
+    .then(data => {
+        // 3. SUCCESS ALERT: This confirms the email was sent
+        alert("A one-time password link will be sent to the e-mail you provided if it is in our records.");
+        closeForgot(); // Closes the modal
     })
     .catch(err => {
         console.error("Nexus Link Error:", err);
-        alert("Transmission Failed. Ensure the Nexus Server is online and active.");
+        alert("Transmission Failed: The Nexus Server is unresponsive.");
+    })
+    .finally(() => {
+        // 4. RESTORE: Put the button back to normal
+        btn.disabled = false;
+        btn.innerText = originalText;
     });
 }
 
