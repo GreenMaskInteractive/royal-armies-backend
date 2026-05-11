@@ -1453,7 +1453,7 @@ body {
     width: 100%;
     display: flex;
     justify-content: center;
-    margin-top: 15px; /* Spacing below the main buttons */
+    margin-top: 10px; /* Spacing below the main buttons */
 }
 
 .forgot-link {
