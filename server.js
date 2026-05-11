@@ -124,9 +124,9 @@ app.post('/register', async (req, res) => {
         console.error("❌ NEXUS Critical Error:", error);
         res.status(500).json({ status: "error", message: "Post Office failure." });
     }
-}); // <--- REGISTER ENDS HERE
+});
 
-// 2. Password Reset Logic
+// 2. Password Reset Request (Dispatches the Scroll)
 app.post('/request-reset', async (req, res) => {
     const { email } = req.body;
     console.log(`[NEXUS] Recovery Handshake: Request for ${email}`);
@@ -134,7 +134,7 @@ app.post('/request-reset', async (req, res) => {
 
     if (!commander) {
         console.log("⚠️ Recovery Denied: Email not in Ledger.");
-        return res.status(200).json({ status: "success" }); // Success anyway for security
+        return res.status(200).json({ status: "success" }); 
     }
 
     const resetToken = crypto.randomBytes(16).toString('hex');
@@ -145,11 +145,11 @@ app.post('/request-reset', async (req, res) => {
         await resend.emails.send({
             from: 'Royal Armies <noreply@royalarmies.com>',
             to: [email],
-            subject: '📜 Lost Command: Password Reset Request',
+            subject: '📜 Forgotten Password: Password Reset Request',
             html: `
                 <div style="background:#000; color:#d4af37; padding:40px; text-align:center; border:2px solid #d4af37; font-family: Georgia, serif;">
                     <h1>COMMANDER ${commander.username.toUpperCase()}</h1>
-                    <p style="font-style: italic;">A request to reset your access keys has been logged in the Ledger.</p>
+                    <p style="font-style: italic;">Here is your password reset link below.</p>
                     <div style="margin:30px 0;">
                         <a href="${resetLink}" style="background:#d4af37; color:#000; padding:15px 30px; text-decoration:none; font-weight:bold; text-transform:uppercase; display:inline-block;">
                             Reset Password
@@ -161,9 +161,37 @@ app.post('/request-reset', async (req, res) => {
     } catch (err) {
         res.status(500).json({ status: "error" });
     }
-}); // <--- RESET ENDS HERE
+});
 
-// 3. The Verification Landing Pad
+// 3. NEW: The Reset Page Deliverer (Fixes the "Cannot GET" error)
+app.get('/reset-password', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'reset-password.html'));
+});
+
+// 4. NEW: Final Password Reset Execution (Bcrypt Shield)
+app.post('/reset-password', async (req, res) => {
+    const { token, newPassword } = req.body;
+    const commander = db.get('commanders').find({ resetToken: token }).value();
+
+    if (!commander) {
+        return res.status(400).json({ status: "error", message: "Invalid or expired reset link." });
+    }
+
+    try {
+        const hashedPassword = await bcrypt.hash(newPassword, 10);
+        db.get('commanders').find({ email: commander.email }).assign({ 
+            password: hashedPassword, 
+            resetToken: null 
+        }).write();
+        
+        console.log(`[NEXUS] Password Updated for Commander: ${commander.username}`);
+        res.status(200).json({ status: "success" });
+    } catch (err) {
+        res.status(500).json({ status: "error" });
+    }
+});
+
+// 5. The Verification Landing Pad
 app.get('/verify', (req, res) => {
     const token = req.query.token;
     const commander = db.get('commanders').find({ token }).value();
@@ -180,7 +208,7 @@ app.get('/verify', (req, res) => {
     }
 });
 
-// 4. The Final Portal
+// 6. The Final Portal
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
