@@ -42,16 +42,23 @@ const sendWelcomeEmail = async (playerEmail, playerName, token) => { // Added 't
             from: 'Royal Armies <noreply@royalarmies.com>',
             to: [playerEmail],
             subject: '📜 Email Verification: Royal Armies',
+
+            attachments: [
+                {
+                    path: path.join(__dirname, 'public', 'images', 'royalarmiestitle.png'),
+                    filename: 'logo.png',
+                    contentId: 'logo-image' // Unique ID for the image
+                }
+            ],
             html: `
 
                 <div style="font-family: 'Georgia', serif; background-color: #000; color: #f1e0ac; padding: 40px; border: 2px solid #d4af37; text-align: center;">
 
-<!-- Centered & Resized Logo -->
-<div style="margin-bottom: 30px; text-align: center;">
-    <img src="https://your-public-url.com" 
-         alt="Royal Armies Logo" 
-         style="width: 350px; max-width: 90%; height: auto; display: block; margin: 0 auto;">
-</div>
+                    <div style="margin-bottom: 30px; text-align: center;">
+                        <img src="cid:logo-image" 
+                             alt="Royal Armies Logo" 
+                             style="width: 300px; max-width: 80%; height: auto; display: block; margin: 0 auto;">
+                    </div>
 
                     <h1 style="color: #d4af37; text-align: center;">WELCOME, COMMANDER ${playerName.toUpperCase()}</h1>
                     <p style="font-size: 1.1rem; line-height: 1.6; font-style: italic;">
