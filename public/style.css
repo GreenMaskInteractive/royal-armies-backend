@@ -41,94 +41,150 @@ body {
     text-align: center;
 }
 
-/* --- 1. THE NARRATIVE SYSTEM (Stacked for Phones) --- */
+/* ============================================================
+   SECTION 1: NARRATIVE
+   ============================================================ */
+
+/* --- 1. THE NARRATIVE SYSTEM (The Old Man) --- */
 .narrative-container {
     position: fixed;
-    bottom: 20px;
-    right: 5vw;
-    left: 5vw; /* Centered on mobile */
-    width: 90vw; /* Responsive width */
-    min-height: 120px;
+    bottom: 30px;
+    right: 30px;
+    width: 550px; /* Restored to original PC width */
+    min-height: 150px;
     background-color: #000000 !important;
+    background-image: none !important;
     border: 2px solid var(--accent);
     border-radius: 4px;
-    display: none; 
-    flex-direction: row; /* Keep row for now, but allow scaling */
+    display: none;
+    flex-direction: row;
     align-items: center;
-    padding: 15px;
+    padding: 20px;
     z-index: 1000000 !important;
     box-shadow: 0 10px 40px rgba(0, 0, 0, 1);
 }
 
 .narrative-portrait {
-    width: 80px; /* Scaled down for mobile */
-    height: 80px;
+    width: 120px;
+    height: 120px;
     border: 2px solid var(--accent);
-    margin-right: 12px;
+    margin-right: 15px;
     overflow: hidden;
     background: #000;
-    flex-shrink: 0; /* Prevents portrait from squishing */
+}
+
+.narrative-portrait img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
 }
 
 #narrative-text {
     font-family: 'Georgia', serif;
-    font-size: 1rem; /* Smaller font for mobile readability */
+    font-size: 1.25rem;
     color: var(--accent);
-    line-height: 1.4;
+    line-height: 1.6;
     font-style: italic;
+    letter-spacing: 0.5px;
+    text-shadow: 2px 2px 2px rgba(0, 0, 0, 1);
 }
 
 .narrative-continue {
-    font-size: 0.6rem;
-    position: absolute;
-    bottom: 8px;
-    right: 15px;
+    font-size: 0.7rem;
+    color: var(--accent);
+    text-transform: uppercase;
+    text-align: right;
+    margin-top: 10px;
+    letter-spacing: 1px;
+    opacity: 0.7;
+    font-family: 'Georgia', serif;
+    font-style: italic;
 }
 
-/* --- 2. AUDIO INTERFACE (Touch-Ready) --- */
+/* --- 2. AUDIO INTERFACE (Mute Logic) --- */
 .audio-toggle-container {
     position: fixed !important;
-    bottom: 20px !important;
-    left: 20px !important;
+    bottom: 25px !important;
+    left: 25px !important;
     z-index: 9999999 !important;
-    background: rgba(0, 0, 0, 0.8) !important; /* Darker for contrast */
+    cursor: pointer;
+    background: rgba(0, 0, 0, 0.6) !important;
     border: 1px solid #d4af37;
     border-radius: 50%;
-    width: var(--touch-target) !important; /* 44px for fingers */
-    height: var(--touch-target) !important;
+    width: 44px !important;
+    height: 44px !important;
     display: flex !important;
     justify-content: center;
     align-items: center;
+    transition: all 0.3s ease;
 }
 
-/* --- 3. CLASS SELECTION SIDE PANELS (Fullscreen Mobile) --- */
+.audio-toggle-container:hover {
+    background: rgba(212, 175, 55, 0.2) !important;
+    transform: scale(1.1);
+}
+
+/* THE SPEAKER ICON (CSS-ONLY REPLACEMENT) */
+#audio-icon {
+    width: 12px;
+    height: 12px;
+    background: #ffffff;
+    position: relative;
+    margin-left: -5px;
+    transition: opacity 0.4s ease, transform 0.3s ease;
+}
+
+#audio-icon::before {
+    content: "";
+    position: absolute;
+    top: -6px;
+    left: 5px;
+    border-top: 12px solid transparent;
+    border-bottom: 12px solid transparent;
+    border-right: 15px solid #ffffff;
+}
+
+/* UNMUTED STATE: Solid White */
+.icon-unmuted { opacity: 1 !important; }
+/* MUTED STATE: Transparent White */
+.icon-muted {
+    opacity: 0.2 !important;
+    transform: scale(0.8);
+}
+
+/* --- 3. CLASS SELECTION SIDE PANELS --- */
 .side-info-panel {
     position: fixed;
     top: 0;
     bottom: 0 !important;
-    height: 100vh !important;
-    width: 100vw; /* Fill screen on mobile */
+    height: 104vh !important; /* Restored PC height */
+    width: 450px; /* Restored fixed PC width */
     display: flex;
     flex-direction: column;
     z-index: 10005;
-    transition: transform 0.6s ease-in-out;
+    transition: transform 0.8s cubic-bezier(0.075, 0.82, 0.165, 1), opacity 0.5s ease;
     opacity: 0;
     pointer-events: none;
     background-color: #000000 !important;
-    /* Removed heavy background images for mobile performance */
-    background-image: linear-gradient(rgba(0, 0, 0, 0.95), rgba(0, 0, 0, 0.95)) !important;
+    background-image: linear-gradient(rgba(0, 0, 0, 0.92), rgba(0, 0, 0, 0.92)), url('../images/stonewallbg.png') !important;
+    background-size: cover !important;
+    background-repeat: no-repeat;
+    background-position: center;
 }
 
-.left-panel { left: 0; transform: translateY(-100%); } /* Slide from top on mobile */
-.right-panel { right: 0; transform: translateY(100%); } /* Slide from bottom on mobile */
-
+.left-panel { left: 0; transform: translateX(-100%); }
+.right-panel { right: 0; transform: translateX(100%); }
 .left-panel.show, .right-panel.show {
-    transform: translateY(0);
+    transform: translateX(0);
     opacity: 1;
     pointer-events: auto;
 }
 
-/* --- Block 1: The World Stage --- */
+/* ============================================================
+   SECTION 2: CORE GAME & OVERLAY CONTAINERS
+   ============================================================ */
+
+/* --- Block 1: The World Stage & Overlay --- */
 #game-container {
     display: none;
     opacity: 0;
@@ -150,86 +206,153 @@ body {
     overflow: hidden;
 }
 
-/* --- Block 2: The Navigator Bar (Mobile Touch Fix) --- */
+/* --- Block 2: The Navigator Bar --- */
 .navigator-bar {
     position: absolute !important;
-    top: 15px !important; /* Brought closer to top */
-    right: var(--safe-zone) !important; /* Uses our 15px safe zone */
-    left: var(--safe-zone) !important; /* Anchors to both sides for centering */
+    top: 30px !important;
+    right: 40px !important; /* Restored PC gutter */
     display: flex !important;
-    flex-direction: row-reverse !important; 
-    justify-content: flex-end; /* Keeps icons grouped together */
+    flex-direction: row-reverse !important;
     align-items: center !important;
-    gap: 15px !important; /* Tighter gap for smaller screens */
+    gap: 25px !important;
     z-index: 200020;
 }
 
 .nav-icon, #updates-icon {
-    width: 50px !important; /* Scaled down from 60px */
-    height: 50px !important;
-    pointer-events: auto !important;
-    z-index: 999999 !important;
+    width: 60px !important;
+    height: 60px !important;
+    object-fit: contain;
+    cursor: pointer;
+    margin: 0 !important;
+    padding: 0 !important;
+    transition: transform 0.2s ease, filter 0.2s ease;
+    filter: drop-shadow(0 0 10px #000);
+    pointer-events: auto !important; 
+    z-index: 999999 !important; 
 }
 
-/* --- Block 4: Hub Logic & Panel Fixes --- */
+.nav-icon img {
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: contain !important;
+    display: block;
+}
+
+.nav-icon:hover, #updates-icon:hover { transform: scale(1.1); }
+
+/* --- Block 3: Discord Pulse Animation --- */
+@keyframes discordAttention {
+    0% { transform: scale(1); filter: drop-shadow(0 0 5px #d4af37); }
+    50% { transform: scale(1.15); filter: drop-shadow(0 0 20px #5865F2); }
+    100% { transform: scale(1); filter: drop-shadow(0 0 5px #d4af37); }
+}
+
+.pulse-discord {
+    animation: discordAttention 1.5s infinite ease-in-out !important;
+    filter: none !important;
+    opacity: 1 !important;
+    cursor: pointer !important;
+}
+
+.modal-overlay {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    background: rgba(0, 0, 0, 0.9) !important;
+    z-index: 2147483647 !important;
+    display: none;
+    justify-content: center;
+    align-items: center;
+}
+
+/* --- Block 4: The Updates & Roadmap Hub Logic --- */
 .updates-hub {
     display: flex;
     flex-direction: column;
     align-items: flex-end;
-    width: 50px;
+    width: 60px;
     position: relative !important;
 }
 
 .updates-panel, #roadmap-modal {
-    position: fixed !important; /* Fixed to viewport so it can't slide away */
-    right: 5vw !important;
-    left: 5vw !important;
-    top: 80px !important; /* Sits below the nav bar */
-    width: 90vw !important;
-    height: 70vh !important; /* Prevents overflow off bottom of screen */
-    background: rgba(10, 10, 10, 0.98) !important;
-    border: 2px solid var(--accent);
+    position: absolute !important;
+    right: 0 !important;
+    top: 75px !important;
+    width: 320px; /* Restored PC width */
+    height: 800px !important; /* Restored PC vertical span */
+    display: none;
     z-index: 300000 !important;
+    background: rgba(0, 0, 0, 0.95) !important;
+    border: 2px solid #d4af37;
+    flex-direction: column;
+    box-shadow: 0 0 30px rgba(0, 0, 0, 0.9);
+}
+
+.updates-header {
+    background: #d4af37;
+    color: #000;
+    padding: 8px;
+    text-align: center;
+    font-family: 'Georgia', serif;
+    font-weight: bold;
+    text-transform: uppercase;
 }
 
 .updates-scroll {
-    padding: 10px;
-    /* Forces smooth scrolling on mobile iOS */
-    -webkit-overflow-scrolling: touch; 
+    flex-grow: 1;
+    overflow-y: auto;
+    padding: 15px;
 }
 
-/* --- Block 5: Unified Auth Modal (Registration Fix) --- */
+/* --- Block 5: Unified Auth Modal Layout --- */
 .modal-content {
     background: rgba(10, 10, 10, 0.98);
-    border: 2px solid var(--accent);
-    padding: 20px; /* Reduced from 40px */
-    width: 92vw; /* Use viewport width */
-    max-width: 450px;
+    border: 2px solid #d4af37;
+    padding: 40px;
+    width: 450px; /* Restored PC Modal size */
+    max-width: 90%;
     text-align: center;
+    box-shadow: 0 0 30px rgba(212, 175, 55, 0.2);
     position: relative;
-    max-height: 90vh; /* Ensures tall modals are scrollable */
-    overflow-y: auto;
+    min-height: 520px;
 }
 
 .reg-input {
     width: 100%;
-    padding: 12px; /* Thicker for easier finger tapping */
-    font-size: 16px !important; /* Prevents iOS from auto-zooming on focus */
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid #d4af37;
+    color: #fff;
+    padding: 10px;
+    font-family: 'Cinzel', serif;
+    outline: none;
+    box-sizing: border-box;
 }
 
 .modal-actions {
-    flex-direction: column !important; /* Stack buttons vertically on mobile */
-    align-items: center;
-    gap: 12px;
+    display: flex !important;
+    flex-direction: row !important; /* Reverted to side-by-side */
+    justify-content: center;
+    gap: 15px;
+    margin-top: 30px;
 }
 
 .modal-actions .img-btn {
-    width: 100% !important; /* Buttons fill the modal width */
-    max-width: 220px;
+    background-image: url('images/register_btn.png') !important;
+    background-size: 100% 100%;
+    width: 160px;
     height: 50px;
+    color: #ffd700;
+    font-family: 'Cinzel', serif;
+    font-size: 0.85rem;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
-/* --- Block 5: The Master Anchor & Stone Portal --- */
+/* --- Block 5: The Master Anchor & Stone Portal (Stability Lockdown) --- */
 .portal-master-anchor {
     position: fixed !important;
     top: 50% !important;
@@ -238,11 +361,12 @@ body {
     display: flex !important;
     flex-direction: column !important;
     align-items: center !important;
-    justify-content: center !important; /* Changed from start to center for mobile */
-    gap: 20px; /* Reduced gap */
-    width: 95vw; /* Fluid width for phones */
-    height: auto;
+    justify-content: flex-start !important;
+    gap: 40px;
+    width: 800px; /* Restored PC fixed width */
+    height: 600px;
     z-index: 200000;
+    margin: 0 !important;
     pointer-events: none;
 }
 
@@ -250,397 +374,745 @@ body {
     background-image: url('images/mainloginbox.png');
     background-repeat: no-repeat;
     background-position: center center;
-    background-size: 100% 100%; /* Forces the GIMP asset to scale with the screen */
-    width: 100%; /* Fills the 95vw anchor */
-    height: 320px; /* Lowered height for mobile aspect ratios */
+    background-size: 100% 100%;
+    width: 800px; /* Restored PC fixed width */
+    height: 500px;
     position: relative;
     z-index: 100;
     flex-shrink: 0;
     display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
     padding: 0 !important;
     pointer-events: auto;
 }
 
+/* Ensure BOTH states stack on the same center coordinate */
+#login-content-wrapper, #post-login-message {
+    width: 100%;
+    transition: opacity 1s ease-in-out;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+}
+
 #login-content-wrapper {
-    margin-top: 20px !important; /* Adjusted spacing for the smaller box */
+    margin-top: 30px !important;
 }
 
 #post-login-message {
-    margin-top: 40px !important;
+    display: none;
+    opacity: 0;
+    margin-top: 80px !important;
 }
 
 #post-login-message p {
-    max-width: 85% !important; /* Expanded to use more of the phone screen */
-    font-size: 0.9rem; /* Slightly smaller text */
+    max-width: 60% !important; /* Reverted to 60% for wider PC text blocks */
+    margin: 0 auto !important;
+    font-family: 'Georgia', serif;
+    color: #f1e0ac;
+    font-size: 1rem;
+    line-height: 1.6;
+    font-style: italic;
+    text-shadow: 1px 1px 3px #000;
+    padding-bottom: 10px;
+    pointer-events: none;
 }
 
 #post-login-message div {
-    flex-direction: column; /* Stack Return/Bypass buttons on mobile */
-    gap: 10px;
+    display: flex;
+    flex-direction: row; /* Reverted to horizontal buttons */
+    justify-content: center;
+    align-items: center;
+    gap: 15px;
+    width: 100%;
+    margin-top: 10px !important;
+    position: relative !important;
+    z-index: 999999 !important;
+    pointer-events: auto !important;
 }
 
-/* --- Block 6: Cinematic Slideshow Engine (Performance Optimization) --- */
+#btn-logout-reset, #admin-bypass-btn {
+    position: relative !important;
+    z-index: 1000000 !important;
+    pointer-events: auto !important;
+    display: block !important;
+}
+
+/* --- Block 6: Cinematic Slideshow Engine --- */
 .slideshow-container {
-    position: fixed; /* Fixed is more stable for mobile background shifts */
+    position: absolute;
     inset: 0;
     z-index: -1;
+    overflow: hidden;
+    background-color: #000;
 }
 
 .slide {
-    inset: -10%; /* Reduced inset to save mobile processing power */
-    /* Add will-change to help mobile GPUs handle the pan/zoom animations */
-    will-change: transform, opacity; 
+    position: absolute;
+    inset: -20%; /* Restored deep inset for better PC pan-zoom range */
+    background-size: cover;
+    background-position: center;
+    opacity: 0;
+    animation: fadeEffect 72s infinite;
 }
 
-/* --- Block 6: Identity Stamps (Screen Edge Safety) --- */
+/* Slide Assets remain the same as they utilize background-size: cover */
+.slide1 { background-image: url('images/mainbg1.png'); animation-delay: 0s; animation-name: fadeEffect, panZoomIn_UL; }
+.slide2 { background-image: url('images/mainbg2.png'); animation-delay: 8s; animation-name: fadeEffect, panZoomOut_DR; }
+.slide3 { background-image: url('images/mainbg3.png'); animation-delay: 16s; animation-name: fadeEffect, panZoomIn_R; }
+.slide4 { background-image: url('images/mainbg4.png'); animation-delay: 24s; animation-name: fadeEffect, panZoomOut_U; }
+.slide5 { background-image: url('images/amnekart1.png'); animation-delay: 32s; animation-name: fadeEffect, panZoomIn_DL; }
+.slide6 { background-image: url('images/amnekart2.png'); animation-delay: 40s; animation-name: fadeEffect, panZoomOut_L; }
+.slide7 { background-image: url('images/amnekart3.png'); animation-delay: 48s; animation-name: fadeEffect, panZoomIn_UR; }
+.slide8 { background-image: url('images/amnekart4.png'); animation-delay: 56s; animation-name: fadeEffect, panZoomOut_D; }
+.slide9 { background-image: url('images/amnekart5.png'); animation-delay: 64s; animation-name: fadeEffect, panZoomIn_C; }
+
+@keyframes fadeEffect { 0% { opacity: 0; } 2% { opacity: 1; } 11% { opacity: 1; } 14% { opacity: 0; } 100% { opacity: 0; } }
+
+/* --- Block 7: Motion Library --- */
+@keyframes panZoomIn_UL { 0% { transform: scale(1) translate(0, 0); } 35% { transform: scale(1.15) translate(-3%, -3%); } 100% { transform: scale(1) translate(0, 0); } }
+@keyframes panZoomOut_DR { 0% { transform: scale(1.15) translate(0, 0); } 35% { transform: scale(1) translate(3%, 3%); } 100% { transform: scale(1.15) translate(0, 0); } }
+@keyframes panZoomIn_R { 0% { transform: scale(1) translate(-3%, 0); } 35% { transform: scale(1.15) translate(3%, 0); } 100% { transform: scale(1) translate(-3%, 0); } }
+@keyframes panZoomOut_U { 0% { transform: scale(1.15) translate(0, 3%); } 35% { transform: scale(1) translate(0, -3%); } 100% { transform: scale(1.15) translate(0, 3%); } }
+@keyframes panZoomIn_DL { 0% { transform: scale(1) translate(3%, -3%); } 35% { transform: scale(1.15) translate(-3%, 3%); } 100% { transform: scale(1) translate(3%, -3%); } }
+@keyframes panZoomOut_L { 0% { transform: scale(1.15) translate(3%, 0); } 35% { transform: scale(1) translate(-3%, 0); } 100% { transform: scale(1.15) translate(3%, 0); } }
+@keyframes panZoomIn_UR { 0% { transform: scale(1) translate(-3%, 3%); } 35% { transform: scale(1.15) translate(3%, -3%); } 100% { transform: scale(1) translate(-3%, 3%); } }
+@keyframes panZoomOut_D { 0% { transform: scale(1.15) translate(0, -3%); } 35% { transform: scale(1) translate(0, 3%); } 100% { transform: scale(1.15) translate(0, -3%); } }
+@keyframes panZoomIn_C { 0% { transform: scale(1); } 35% { transform: scale(1.2); } 100% { transform: scale(1); } }
+
+/* --- Block 8: Identity Stamps --- */
 .version-stamp {
     position: fixed;
-    top: 15px; /* Tighter to the corner */
-    left: 15px;
-    font-size: 0.6rem;
-    letter-spacing: 2px;
-    opacity: 0.5;
+    top: 25px;
+    left: 30px;
+    font-family: 'Georgia', serif;
+    font-size: 0.8rem;
+    color: #d4af37;
+    letter-spacing: 3px;
+    text-shadow: 2px 2px 5px #000;
+    z-index: 200030;
+    opacity: 0.6;
 }
 
 .copyright-stamp {
-    font-size: 0.5rem;
-    bottom: 10px;
-    width: 90%;
-    text-align: center;
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-family: 'Georgia', serif;
+    font-size: 0.7rem;
+    color: #f1e0ac;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    text-shadow: 1px 1px 3px #000;
+    z-index: 200030;
+    opacity: 0.5;
 }
+
+/* ============================================================
+   SECTION 3: INTERACTIVE ARSENAL (Buttons & Inputs)
+   ============================================================ */
 
 /* --- 1. THE AURORA COMMANDER INPUTS --- */
 .login-input {
     display: block !important;
-    margin: 10px auto !important; /* Increased spacing for thumb accuracy */
-    width: 85% !important; /* Scaled down from 400px to fit phone screens */
-    height: 48px !important; /* Slightly taller for touch targets */
+    margin: 5px auto !important;
+    width: 400px !important; /* Restored fixed PC width */
+    height: 45px !important;
     position: relative !important;
     z-index: 1000 !important;
+    opacity: 1 !important;
     pointer-events: auto !important;
-    font-size: 16px !important; /* CRITICAL: Prevents iOS auto-zoom on focus */
-    padding: 12px !important;
+    box-sizing: border-box !important;
+    background: linear-gradient(to bottom, #1a1e23, #0d0f11) !important;
+    color: #a0c4d1;
+    border: 1px solid rgba(0, 255, 255, 0.3);
+    border-radius: 4px;
+    padding: 15px 15px;
+    font-family: 'Georgia', serif;
+    font-size: 1.1rem;
+    box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.8);
+    outline: none;
+    transition: all 0.3s ease;
 }
 
-/* --- Block 2: Independent Button Hub (Mobile Layout) --- */
+.login-input:focus {
+    border-color: #00ffff;
+    box-shadow: 0 0 15px rgba(0, 255, 255, 0.4);
+}
+
+/* --- Block 2: Independent Button Hub (Ghost Fix) --- */
 #auth-buttons {
     position: relative !important;
     display: flex;
-    flex-direction: column !important; /* Stack buttons vertically for mobile */
     justify-content: center;
-    align-items: center;
-    gap: 15px !important; /* Closer gap for vertical stacking */
+    gap: 40px;
     width: 100%;
-    margin-top: -120px !important; /* Reduced offset to keep hitboxes inside the portal */
-    z-index: 200050 !important; /* Raised to ensure it's above the slideshow layers */
+    margin-top: -200px; /* Restored negative margin for PC alignment */
+    z-index: 200010;
+    transition: opacity 0.5s ease-in-out;
 }
 
-/* --- 3. SHARED BUTTON DNA (Touch-Ready) --- */
+/* --- 3. SHARED BUTTON DNA (The Cinematic Base) --- */
 .img-btn, #btn-login-main, #btn-register-main {
     pointer-events: auto !important;
     position: relative;
-    z-index: 200060 !important; /* HIGHEST layer for interaction */
-    width: 200px !important; /* Wider buttons for easier side-to-side tapping */
-    height: 55px !important;
-    background-size: 100% 100% !important; /* Ensures the GIMP frame asset scales correctly */
-    font-size: 13px !important;
+    z-index: 100000 !important;
+    width: 175px !important;
+    height: 50px !important;
+    background-size: contain !important;
+    background-repeat: no-repeat !important;
+    background-position: center !important;
+    background-color: transparent !important;
+    border: none !important;
+    font-family: 'Georgia', serif;
+    font-size: 14px !important;
+    color: #f1e0ac !important;
+    text-transform: uppercase;
     display: flex;
     justify-content: center;
     align-items: center;
+    cursor: pointer;
+    transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
-/* --- 4. INTERACTIVE EFFECTS (Mobile Optimization) --- */
-/* Remove Hover on mobile to prevent "sticky" states */
-@media (hover: hover) {
-    .img-btn:hover { transform: scale(1.05); }
+/* Asset Assignments */
+#btn-login-main, #admin-bypass-btn {
+    background-image: url('images/login_btn.png') !important;
 }
 
-/* Active State: The "Sink" effect is great for haptic-style feedback on tap */
-.img-btn:active {
-    transform: scale(0.95) translateY(2px) !important;
-    filter: brightness(0.8); /* Visual confirmation of press */
+#btn-register-main, #btn-logout-reset {
+    background-image: url('images/register_btn.png') !important;
+}
+
+/* --- 4. INTERACTIVE EFFECTS --- */
+.img-btn:hover, #btn-login-main:hover, #btn-register-main:hover {
+    transform: scale(1.05);
+}
+
+.img-btn:active, #btn-login-main:active, #btn-register-main:active {
+    transform: scale(0.92) translateY(3px);
+    transition: transform 0.1s ease;
 }
 
 /* THE "NO-JUMP" LOADER FIX */
 #auth-loading {
     position: absolute;
-    bottom: -30px;
-    left: 50%;
-    transform: translateX(-50%); /* Center it under the portal */
-    font-size: 0.8rem;
-    color: var(--accent);
+    bottom: -40px;
+    font-family: 'Georgia', serif;
+    color: #d4af37;
+    text-shadow: 1px 1px 5px #000;
+    white-space: nowrap;
 }
 
-/* THE MASTER OVERLAY */
-#roadmap-modal.modal-overlay, 
+/* ============================================================
+   SECTION 4: THE COMMAND HUD (Player Vitals)
+   ============================================================ */
+
+/* THE MASTER OVERLAY (Translucent Obsidian Shield) */
+#roadmap-modal.modal-overlay,
 #chronicle-detail-modal.modal-overlay {
+    position: fixed !important;
+    inset: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    background: rgba(0, 0, 0, 0.85) !important;
     z-index: 500000 !important;
-    background: rgba(0, 0, 0, 0.95) !important; /* Darker for focus */
+    display: none;
+    justify-content: center;
+    align-items: center;
+    opacity: 0;
+    transition: opacity 0.3s ease;
 }
 
 /* THE ROADMAP & CHRONICLE CONTAINER */
 .roadmap-container {
-    width: 92vw !important; /* Use almost full width */
-    height: 85vh !important; /* Taller to allow for scrolling */
-    padding: 20px 20px 40px 20px !important; /* Removed the massive 80px side gutters */
-    box-sizing: border-box;
-    /* Ensure scrolling is smooth on touch devices */
-    -webkit-overflow-scrolling: touch; 
+    /* DEFAULT WIDESCREEN (Used by Roadmap) */
+    width: 95vw !important;
+    height: 80vh !important;
+    max-width: 1800px;
+    /* THE VISUAL THEME */
+    background: rgba(15, 15, 15, 0.95) !important;
+    border: 2px solid #d4af37;
+    box-shadow: 0 0 60px rgba(0, 0, 0, 1), inset 0 0 30px rgba(212, 175, 55, 0.15);
+    position: relative;
+    padding: 20px 80px 60px 80px !important; /* Restored massive PC gutters */
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    color: #f1e0ac;
+    /* SCROLL ENGINE */
+    overflow-y: scroll !important;
+    scrollbar-width: none !important;
+    -ms-overflow-style: none !important;
 }
 
-/* SURGICAL OVERRIDE: Normalize Detail Modal for Mobile */
+/* SURGICAL OVERRIDE: Makes the Chronicle Detail Modal more compact on PC */
 #chronicle-detail-modal .roadmap-container {
-    width: 92vw !important; /* Detail modal should match Roadmap width on mobile */
-    min-height: 300px !important;
+    width: 50vw !important; /* Reverted to compact PC width */
     height: auto !important;
+    min-height: 400px !important;
+    max-width: 750px !important;
 }
 
-/* --- THE LOCKED WINDOW CLOSING "X" (Mobile Touch Fix) --- */
+.roadmap-container::-webkit-scrollbar {
+    display: none !important;
+}
+
+/* --- THE LOCKED WINDOW CLOSING "X" --- */
 .close-modal {
-    margin-right: 0 !important; /* Pull it back from the negative margin */
-    font-size: 45px !important; /* Slightly smaller to fit header */
-    padding: 10px; /* Bigger invisible tap area */
-    position: absolute !important; /* Anchor to top-right of container */
-    top: 5px !important;
-    right: 15px !important;
+    position: sticky !important;
+    align-self: flex-end;
+    top: 0 !important;
+    margin-right: -40px; /* Restored negative PC offset */
+    margin-top: 10px;
+    font-size: 55px !important;
+    color: #d4af37 !important;
+    cursor: pointer;
+    z-index: 500020 !important;
+    line-height: 1;
+    text-shadow: 0 0 15px rgba(0, 0, 0, 1), 0 0 5px #d4af37;
+    transition: color 0.2s, transform 0.2s;
+    user-select: none;
+}
+
+.close-modal:hover {
+    color: #ffffff !important;
+    transform: scale(1.1);
 }
 
 /* HEADER & TITLES */
 .roadmap-main-title, #chronicle-detail-title {
-    font-size: 1.4rem !important; /* Scaled down from 2rem */
-    letter-spacing: 4px !important; /* Reduced spacing */
-    margin-top: 10px !important; /* Standardized spacing */
-    margin-bottom: 30px !important;
+    font-family: 'Georgia', serif;
+    font-size: 2rem;
+    color: #d4af37;
+    text-transform: uppercase;
+    letter-spacing: 10px;
+    text-shadow: 0 0 20px rgba(212, 175, 55, 0.4), 3px 3px 6px #000;
+    margin-top: -30px;
+    margin-bottom: 50px;
+    text-align: center;
+    flex-shrink: 0;
 }
 
 #chronicle-detail-text {
-    font-size: 1rem !important; /* Larger for mobile readability */
-    line-height: 1.4;
-    max-width: 100%;
+    font-family: 'Georgia', serif;
+    line-height: 1.6;
+    font-size: 0.8rem;
+    text-align: center;
+    font-style: italic;
+    color: #f1e0ac;
+    max-width: 90%;
+}
+
+/* THE VERTICAL STACK (Grid) */
+.roadmap-grid {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 12px !important;
+    width: 100%;
+    max-width: 1400px;
+    padding-bottom: 80px;
 }
 
 /* THE HORIZONTAL CATEGORY BAR */
 .roadmap-phase {
-    padding: 15px 20px !important; /* Tighter padding */
+    width: 100%;
+    background: rgba(30, 30, 30, 0.7);
+    border: 1px solid rgba(212, 175, 55, 0.3);
+    padding: 15px 40px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-sizing: border-box;
+    flex-shrink: 0;
 }
 
+.roadmap-phase:hover {
+    background: rgba(50, 50, 50, 0.9);
+    border-color: #d4af37;
+}
+
+.roadmap-phase.active { border-left: 10px solid #00ffff; }
+
 .roadmap-phase h3 {
-    font-size: 1.1rem !important; /* Scaled down for one-line fitting */
+    font-family: 'Georgia', serif;
+    font-size: 1.4rem;
+    margin: 0;
+    color: #f1e0ac;
+    letter-spacing: 2px;
 }
 
 /* THE DETAIL DEEP-DIVE */
-.roadmap-phase.expanded .deep-dive {
-    padding: 15px !important; /* Reduced padding inside the dive */
-    font-size: 0.9rem;
+.deep-dive {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.4s ease, opacity 0.3s ease;
+    opacity: 0;
 }
+
+.roadmap-phase.expanded .deep-dive {
+    max-height: 1200px;
+    opacity: 1;
+    margin-top: 20px;
+    padding: 25px;
+    background: rgba(0, 0, 0, 0.7);
+    border: 1px solid rgba(212, 175, 55, 0.2);
+}
+
+/* ============================================================
+   SECTION 5: THE QUESTING WORLD (Cards & Animations)
+   ============================================================ */
 
 .quest-grid {
     display: flex;
-    flex-direction: column; /* Stack cards vertically for vertical scrolling */
-    align-items: center;
-    gap: 30px; /* Tighter gap for mobile flow */
-    padding: 20px; /* Safe zone padding */
+    justify-content: center; /* Restored horizontal row */
+    gap: 40px;
+    padding: 40px;
 }
 
 .quest-card {
     position: relative;
-    width: 85vw; /* Fluid width so cards fill the phone screen */
-    max-width: 320px; /* Prevents them from getting too huge on tablets */
-    transition: transform 0.3s ease;
+    width: 280px; /* Restored fixed PC width */
+    transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
-/* Remove Hover scaling on mobile to prevent accidental zoom/misclicks */
-@media (hover: hover) {
-    .quest-card:hover:not(.locked) {
-        transform: scale(1.05) translateY(-5px);
-    }
-}
-
-/* Visual feedback for tapping a card */
-.quest-card:active:not(.locked) {
-    transform: scale(0.98);
+.quest-card:hover:not(.locked) {
+    transform: scale(1.1) translateY(-10px); /* Re-enabled hover lift */
+    animation: glowPulse 2s infinite ease-in-out;
+    z-index: 10;
 }
 
 .quest-plaque {
-    font-size: 0.9rem; /* Slightly smaller for mobile layout */
+    font-family: 'Georgia', serif;
+    color: #3d2b1f; 
+    text-transform: uppercase;
 }
 
-/* --- HUD & BARS (Mobile Scaling) --- */
-.hud-text-overlay {
-    font-size: 1.1rem !important; /* Scaled down from 1.4rem */
-    letter-spacing: 0px;
-    line-height: 1.2;
+/* THE PULSE EFFECT */
+@keyframes glowPulse {
+    0%, 100% { filter: brightness(1.1) drop-shadow(0 0 5px var(--accent)); }
+    50% { filter: brightness(1.2) drop-shadow(0 0 15px var(--accent)); }
 }
 
-.xp-fill, .prov-fill {
-    /* Ensure the fills maintain their glowing gradients on lower-power devices */
-    will-change: width;
+#quest-market { top: 0px; }
+#quest-escort { top: 0px; }
+
+.quest-card.locked {
+    filter: grayscale(1) brightness(0.6);
+    cursor: not-allowed;
+    pointer-events: none;
 }
+
+.easy { background: #228b22; color: white; }
+.mid { background: #b8860b; color: white; }
+.hard { background: #8b0000; color: white; }
 
 .start-quest-btn {
-    width: 100%; /* Make button full-width of the card for easy tapping */
-    height: var(--touch-target); /* Use our 44px standard */
-    font-size: 1rem;
-    margin-top: 10px;
+    background: var(--accent);
+    border: none;
+    padding: 10px 20px;
+    border-radius: 4px;
+    font-weight: bold;
+    cursor: pointer;
+    margin-top: 15px;
 }
 
+/* --- HUD BARS & OVERLAYS --- */
+.hud-bars-background {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    z-index: 1;
+}
+
+.hud-text-overlay {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    z-index: 3;
+    font-family: 'Georgia', serif;
+    font-size: 1.4rem; /* Restored large PC typography */
+    font-weight: 900;
+    color: #f0e68c;
+    text-shadow: 0px 0px 3px rgba(212, 175, 55, 0.8), 2px 2px 3px rgba(0, 0, 0, 0.9);
+    letter-spacing: -1px;
+    text-align: center;
+    pointer-events: none;
+}
+
+.xp-fill {
+    height: 100%;
+    background: linear-gradient(270deg, #d4af37 0%, #f0e68c 50%, #d4af37 100%);
+    box-shadow: 0 0 10px rgba(212, 175, 55, 0.6);
+    border-radius: 2px;
+}
+
+.prov-fill {
+    height: 100%;
+    background: repeating-linear-gradient(
+        270deg,
+        #228b22 0px, #228b22 14px,
+        #111 14px, #111 16px
+    );
+    box-shadow: 0 0 10px rgba(34, 139, 34, 0.5);
+    border-radius: 2px;
+}
+
+/* ============================================================
+   SECTION 6: NAVIGATION ENHANCEMENTS
+   ============================================================ */
 .top-nav {
     background-image: url('images/stonewallbg.png') !important;
-    display: none !important; /* Keep hidden until game-state activation */
-    height: auto !important;
-    padding-bottom: 20px;
+    background-blend-mode: overlay;
+    background-color: rgba(0, 0, 0, 0.5);
+    box-shadow: 0 10px 20px rgba(0,0,0,0.8);
+    display: none !important;
+    position: relative;
 }
 
 .top-nav::after {
-    height: 15px; /* Thinner trim for mobile screens */
-    bottom: -10px;
+    content: "";
+    position: absolute;
+    bottom: -15px;
+    left: 0;
+    width: 100%;
+    height: 30px;
+    background: url('images/topnavigationlowbar.png') no-repeat center bottom;
+    background-size: 100% 100%;
+    z-index: 10003;
 }
 
 .nav-logo {
-    position: relative !important; /* Change from absolute to flow with content */
-    left: 0 !important;
-    transform: none !important;
-    top: 0 !important;
-    height: 120px !important; /* Scaled down from 280px */
-    margin: 10px auto;
-    display: block;
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%); /* Precise PC centering */
+    top: -45px;
+    height: 280px;
+    z-index: 99999;
+    filter: drop-shadow(0 8px 12px rgba(0,0,0,0.9));
+    pointer-events: none;
 }
 
-/* --- THE MOBILE NAV BUTTONS --- */
 .nav-btn {
-    padding: 12px 20px !important; /* Balanced for thumbs */
-    min-width: 120px !important;
-    height: 50px !important; /* Standardized touch height */
-    font-size: 0.8rem !important; /* Smaller text to prevent wrapping */
+    background-color: transparent !important;
+    border: none !important;
+    outline: none !important;
+    box-shadow: none !important;
+    appearance: none;
+    -webkit-appearance: none;
+    background-image: url('images/navbartextbtn.png') !important;
+    background-repeat: no-repeat !important;
+    background-position: center center !important;
     background-size: 100% 100% !important;
-    margin: 5px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 18px 35px;
+    min-width: 160px; /* Restored fixed PC button width */
+    height: 65px;
+    white-space: nowrap;
+    cursor: pointer;
+    font-family: 'Georgia', serif;
+    color: #f0e68c;
+    text-transform: uppercase;
+    font-weight: bold;
+    font-size: 0.95rem;
+    text-shadow: 2px 2px 3px rgba(0, 0, 0, 0.9), 0px 0px 5px rgba(212, 175, 55, 0.4);
+    filter: drop-shadow(0 0 1px #1a1a1a);
+    transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
-/* Interaction: Touch feedback instead of Hover */
-.nav-btn:active:not([disabled]) {
-    filter: brightness(1.4);
-    transform: scale(0.95);
+.nav-btn:hover:not([disabled]) {
+    filter: brightness(1.2) drop-shadow(0 0 8px rgba(212, 175, 55, 0.5));
+    transform: translateY(-3px) scale(1.04);
+    color: #ffffff;
+}
+
+.nav-btn.active {
+    color: #ffffff;
+    filter: brightness(1.3) saturate(1.2) drop-shadow(0 0 10px var(--accent));
 }
 
 .nav-spacer {
-    display: none !important; /* Kill spacers on mobile to save room */
+    width: 250px; /* Restored wide spacer for PC logo gap */
+    flex-shrink: 0;
+    pointer-events: none;
 }
 
-/* --- LOGO & ENERGY (The Kinetic Fix) --- */
 .logo-wrapper {
-    margin-bottom: 0 !important;
-    width: 100vw;
-    overflow: hidden;
+    position: relative;
+    text-align: center;
+    margin-bottom: -40px;
 }
 
 .main-logo {
-    width: 90vw !important; /* Responsive width scaled from 1000px */
-    max-width: 400px;
-    height: auto;
-    top: 10px !important;
+    width: 1000px; /* Restored original cinematic scale */
+    position: relative;
+    top: 30px;
+    z-index: 5;
+    pointer-events: none;
 }
 
 .mystical-energy {
-    width: 80% !important;
-    height: 80% !important;
-    filter: blur(15px); /* Reduced blur for performance */
-    animation: energyPulse 6s infinite ease-in-out; /* Slower pulse to save battery */
+    position: absolute;
+    top: 50%; left: 50%;
+    width: 110%; height: 110%;
+    transform: translate(-50%, -50%);
+    background: radial-gradient(circle, rgba(212, 175, 55, 0.4) 0%, transparent 70%);
+    filter: blur(20px);
+    animation: energyPulse 4s infinite ease-in-out;
+    mix-blend-mode: screen;
 }
 
-/* Optimize animation for mobile GPUs */
 @keyframes energyPulse {
-    0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.3; }
-    50% { transform: translate(-50%, -50%) scale(1.1); opacity: 0.6; }
+    0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.5; }
+    50% { transform: translate(-50%, -50%) scale(1.2); opacity: 0.8; box-shadow: 0 0 50px var(--accent); }
 }
 
+/* ============================================================
+   SECTION 7: BATTLE TERMINAL (Tables & Logs)
+   ============================================================ */
 .battle-stats-table {
     width: 100%;
-    display: block; /* Allows the table to be scrollable */
-    overflow-x: auto; /* Enables horizontal swipe for long data */
-    -webkit-overflow-scrolling: touch;
-    white-space: nowrap; /* Prevents text from wrapping into weird shapes */
-    border-radius: 4px;
+    border-collapse: collapse;
+    background: #111;
+    border-radius: 8px;
+    overflow: hidden;
 }
 
 .battle-stats-table th {
-    padding: 10px; /* Tighter padding for mobile screens */
-    font-size: 0.7rem; /* Smaller headers */
+    background: #222;
+    color: var(--accent);
+    text-transform: uppercase;
+    font-size: 0.8rem;
+    padding: 15px;
+}
+
+.log-entry {
+    margin-bottom: 6px;
+    font-size: 0.95rem;
+}
+
+.log-entry.highlight { 
+    color: #fff; 
+    font-weight: bold; 
+}
+
+.log-entry.xp { 
+    color: #00ffff; 
+} /* Teal color for experience gains */
+
+.table-spacer {
+    width: 60px; /* Restored wide PC gap */
+    background: var(--bg) !important;
 }
 
 .battle-stats-table td {
-    padding: 10px;
-    font-size: 0.85rem;
+    padding: 12px;
+    text-align: center;
+    color: #bbb;
+    border-bottom: 1px solid #222;
 }
 
-/* --- THE LOGS (Readability Fix) --- */
-.log-entry {
-    margin-bottom: 4px;
-    font-size: 0.85rem; /* Slightly smaller for phone reading */
-    line-height: 1.3;
+.battle-stats-table tr { border: none; }
+
+.battle-stats-table th, 
+.battle-stats-table td { 
+    border: none;
 }
 
-.table-spacer {
-    width: 20px; /* Reduced gap from 60px to save screen real estate */
+#sf-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
 }
 
-/* --- UNIT LISTS --- */
 #sf-list li {
-    padding: 12px; /* Taller for easier finger-scrolling */
-    font-size: 0.85rem;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
+    padding: 8px;
+    border-bottom: 1px solid #333;
+    font-size: 0.9rem;
 }
 
 
+/* ============================================================
+   SECTION 8: WORLD INTERACTIONS (Special FX)
+   ============================================================ */
 .zoom-text {
     position: fixed;
-    top: 45%; /* Slightly higher than center to accommodate the keyboard/HUD */
+    top: 50%; 
     left: 50%;
-    transform: translate(-50%, -50%) scale(0.6); /* Smaller base scale */
-    font-size: 2rem; /* Scaled down from 3rem */
+    transform: translate(-50%, -50%) scale(0.8);
+    font-size: 3rem; /* Restored large PC cinematic typography */
     color: var(--accent);
-    text-shadow: 0 0 15px rgba(212, 175, 55, 0.8);
+    text-shadow: 0 0 20px rgba(212, 175, 55, 0.8);
+    opacity: 0;
     z-index: 9999;
+    pointer-events: none;
+}
+
+.animate-zoom {
+    animation: zoomInText 3s forwards;
 }
 
 @keyframes zoomInText {
-    0% { transform: translate(-50%, -50%) scale(0.2); opacity: 0; }
-    50% { transform: translate(-50%, -50%) scale(1.2); opacity: 1; }
-    100% { transform: translate(-50%, -50%) scale(3); opacity: 0; visibility: hidden; }
+    0% { transform: translate(-50%, -50%) scale(0.1); opacity: 0; }
+    50% { transform: translate(-50%, -50%) scale(1.5); opacity: 1; }
+    100% { transform: translate(-50%, -50%) scale(5); opacity: 0; visibility: hidden; }
 }
 
 .action-btn:active {
-    transform: scale(0.96); /* More pronounced "press" for tactile mobile feel */
-    filter: brightness(1.2);
+    transform: scale(0.99);
+    filter: brightness(1.1);
 }
 
 .page {
-    padding: var(--safe-zone); /* Use the standard 15px mobile padding */
-    width: 100vw;
-    box-sizing: border-box;
+    padding: 20px;
+    max-width: 1200px; /* Restored PC content width */
+    margin: 0 auto;
+    display: none !important;
 }
 
-/* --- THE MOBILE AUDIO ANCHOR (Touch-Target Fix) --- */
+.page-title {
+    color: var(--accent);
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    text-align: center;
+}
+
 .audio-toggle-container {
-    position: fixed !important;
-    bottom: 25px !important;
-    left: 25px !important;
-    z-index: 200001;
-    background: rgba(0, 0, 0, 0.8) !important; /* Higher opacity for mobile visibility */
+    position: fixed;
+    bottom: 20px;
+    left: 20px;
+    z-index: 200001; 
+    background: rgba(0, 0, 0, 0.6);
     border: 1px solid var(--accent);
-    width: 48px !important; /* Scaled up for "Fat Finger" accessibility */
-    height: 48px !important;
-    padding: 0 !important; /* Center the icon precisely */
+    border-radius: 50%;
+    padding: 10px;
+    width: 40px; /* Restored standard PC size */
+    height: 40px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    transition: transform 0.2s, background 0.2s;
 }
 
-/* Ensure the SVG icons inside are centered and large enough to see */
-.icon-muted, .icon-unmuted {
-    width: 24px !important;
-    height: 24px !important;
-    background-size: contain;
-    background-repeat: no-repeat;
-    background-position: center;
+.audio-toggle-container:hover {
+    background: rgba(212, 175, 55, 0.3);
+    transform: scale(1.1);
+}
+
+.icon-muted {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M11 5L6 9H2v6h4l5 4V5z'%3E%3C/path%3E%3Cline x1='23' y1='9' x2='17' y2='15'%3E%3C/line%3E%3Cline x1='17' y1='9' x2='23' y2='15'%3E%3C/line%3E%3C/svg%3E");
+}
+
+.icon-unmuted {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M11 5L6 9H2v6h4l5 4V5z'%3E%3C/path%3E%3Cpath d='M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07'%3E%3C/path%3E%3C/svg%3E");
 }
 
 /* ============================================================
@@ -649,117 +1121,171 @@ body {
 
 /* --- Block 1: Cinematic Rendering Shields --- */
 .class-card img, .slide, .quest-image {
-    image-rendering: auto; /* Standard for mobile displays */
+    image-rendering: -webkit-optimize-contrast;
     transform: translateZ(0);
     backface-visibility: hidden;
+    will-change: transform;
 }
 
-/* --- Block 2: Statue Gallery Layout (Mobile Stack) --- */
+/* --- Block 2: Statue Gallery Layout --- */
 .class-options-container {
-    flex-direction: column !important;
-    align-items: center;
-    gap: 20px;
+    transform-style: preserve-3d;
+    backface-visibility: hidden;
+    display: flex;
+    flex-direction: row; /* Restored horizontal row for PC */
+    justify-content: center;
+    align-self: center;
+    will-change: transform;
 }
 
 .class-card {
-    width: 80vw !important; /* Scale statues to fit mobile screen */
-    margin: 10px 0 !important; /* Remove negative desktop margins */
-    pointer-events: auto !important; /* Ensure they are tappable */
+    position: relative;
+    width: 30vw; /* Reverted from mobile width */
+    max-width: 1200px;
+    margin: 0 -10vw; /* Restored the cinematic overlap effect */
+    transition: all 0.5s ease-in-out;
+    cursor: pointer;
+    z-index: 10;
+    pointer-events: auto !important; /* Re-enabled for PC interaction */
+    opacity: 1 !important;
+    visibility: visible !important;
+}
+
+.class-card.selected {
+    z-index: 100;
+    filter: drop-shadow(0 0 30px var(--accent));
+}
+
+.class-card:not(.selected) img {
+    filter: brightness(0.7) contrast(0.9);
 }
 
 /* --- Block 3: Side Info Panel Content --- */
 .info-content {
-    padding: 20px !important;
-    justify-content: flex-start;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    padding: 50px 30px;
+    flex-grow: 1;
+    font-family: 'Georgia', serif;
+    color: white;
+    z-index: 2;
 }
 
 .info-content h2 {
-    font-size: 1.5rem !important; /* Scaled down from 2.2rem */
+    font-size: 2.2rem;
+    color: var(--accent);
+    text-transform: uppercase;
+    text-align: center;
+    border-bottom: 3px double var(--accent);
+    padding-bottom: 15px;
+    text-shadow: 0 0 10px rgba(212, 175, 55, 0.6), 2px 2px 4px rgba(0, 0, 0, 0.9);
 }
 
 .panel-confirm-btn {
-    margin-bottom: 40px !important; /* Bring button up from bottom edge */
-    width: 100%;
+    margin-top: auto;
+    margin-bottom: 80px;
+    padding: 15px;
+    background: linear-gradient(to bottom, #2a2a2a, #000);
+    border: 2px solid var(--accent);
+    color: var(--accent);
+    font-family: 'Georgia', serif;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.3s ease;
 }
 
-/* --- Block 5 & 6: Unified Panel & Detail Styling --- */
-.updates-panel, .full-page-panel, .detail-card {
-    width: 92vw !important;
-    left: 4vw !important;
-    right: 4vw !important;
-    top: 80px !important; /* Sit below the mobile nav icons */
-    padding: 20px !important;
-    max-height: 80vh !important;
+/* --- Block 5: Unified Panel Styling --- */
+.updates-panel, .full-page-panel {
+    position: fixed !important;
+    top: 115px !important;
+    right: 40px !important; /* Fixed PC gutter */
+    width: 350px;
+    height: 70vh !important;
+    background: rgba(0, 0, 0, 0.95) !important;
+    border: 2px solid #d4af37;
+    box-shadow: 0 0 30px rgba(0, 0, 0, 0.9);
+    display: none;
+    flex-direction: column;
+    z-index: 1000000 !important;
+    overflow: hidden;
 }
 
-#chronicle-detail-title {
-    font-size: 1.4rem !important;
+/* --- Block 6: Detail Modal Styling --- */
+.detail-card {
+    background: #000;
+    border: 2px solid #d4af37;
+    width: 600px; /* Restored fixed PC modal width */
+    max-height: 80vh;
+    padding: 40px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    box-shadow: 0 0 50px rgba(0, 0, 0, 1);
 }
 
-/* --- Block 7: Registration & Recovery (Touch Fix) --- */
 .registration-card {
-    width: 95vw !important;
-    padding: 20px !important; /* Reduced from 50px to save space */
+    width: 500px !important; /* Restored fixed PC registration box */
+    padding: 50px !important;
 }
 
-.registration-card .img-btn {
-    width: 180px !important; /* Larger touch area */
-    height: 55px !important;
-    font-size: 0.8rem !important;
-}
-
+/* --- Block 8: Recovery Link Accessibility Fix --- */
 .forgot-link-container {
-    z-index: 200050 !important; /* Ensure it stays above the portal glass */
-    padding: 15px; /* Bigger tap target */
-}
-
-.forgot-link {
-    font-size: 0.9rem !important; /* Easier to read on small screens */
-}
-
-/* --- Class Selection Centering --- */
-#card-battlemaster, #card-archmage {
-    transform-origin: center center !important; /* Reset from side-origin for mobile stacking */
-    top: 0 !important; /* Remove vertical offsets so they align in the column */
-    margin: 15px 0 !important;
-}
-
-/* --- Quest Plaque Nudges (Mobile Scaling) --- */
-#quest-market .quest-plaque, 
-#quest-escort .quest-plaque,
-#quest-border .quest-plaque {
-    bottom: 10% !important; /* Uniform bottom alignment for mobile cards */
-    font-size: 0.8rem;
-}
-
-#quest-border {
-    top: 0 !important; /* Remove the -7px PC leveler */
-}
-
-/* --- Battlemaster Crest Scaling --- */
-#info-battlemaster .class-crest {
-    width: 80% !important; /* Scaled from fixed 350px */
-    max-width: 280px;
-    margin-bottom: 15px;
-}
-
-/* --- Block 2: Recovery Link Shield Breaker (Touch Mastery) --- */
-.forgot-link-container {
-    pointer-events: auto !important; 
-    position: relative !important;
-    z-index: 200050 !important; 
-    display: flex !important;
-    justify-content: center !important;
-    width: 100% !important;
-    padding: 10px 0; /* Creates a larger vertical tap buffer */
-    margin-top: 20px !important; /* Pushes it away from the Login buttons */
-}
-
-.forgot-link {
     pointer-events: auto !important;
-    cursor: pointer !important;
-    position: relative !important;
-    z-index: 200060 !important;
-    font-size: 0.85rem !important; /* Ensure it's legible without zooming */
-    padding: 5px 10px; /* Expands the clickable "hitbox" around the text */
+    position: relative;
+    z-index: 200020 !important;
+    margin-top: 10px;
+    display: flex;
+    justify-content: center;
+}
+
+/* ============================================================
+   SECTION 10: PRECISE ALIGNMENT CONTROLS
+   ============================================================ */
+
+#card-battlemaster { 
+    transform-origin: right center; /* Restored side-origin for cinematic overlap */
+} 
+
+#card-archmage { 
+    transform-origin: left center; 
+    top: 20px; /* Aligns Archmage vertically with the Battlemaster on PC */
+} 
+
+/* Quest Plaque Nudges (Matching text to specific plaque shapes) */ 
+#quest-market .quest-plaque, 
+#quest-escort .quest-plaque { 
+    bottom: 9%; 
+} 
+
+#quest-border { 
+    top: -7px; /* Levels the Border Patrol card with the others in the row */
+} 
+
+#quest-border .quest-plaque { 
+    bottom: 7%; 
+} 
+
+/* Battlemaster Crest Nudge */ 
+#info-battlemaster .class-crest { 
+    width: 350px; 
+    margin-bottom: 10px; 
+} 
+
+/* --- Block 2: Recovery Link Shield Breaker --- */ 
+.forgot-link-container { 
+    pointer-events: auto !important; 
+    position: relative !important; 
+    z-index: 200050 !important; 
+    cursor: pointer !important; 
+    display: flex !important; 
+    justify-content: center !important; 
+    width: 100% !important; 
+} 
+
+.forgot-link { 
+    pointer-events: auto !important; 
+    cursor: pointer !important; 
+    position: relative !important; 
+    z-index: 200060 !important; 
 }
