@@ -13,6 +13,7 @@
    ============================================================ */
 const express = require('express');
 const path = require('path');
+const fs = require('fs');
 const compression = require('compression');
 const { Resend } = require('resend');
 const crypto = require('crypto');
@@ -34,35 +35,38 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public'))); // Serves ARCH, AVI, and GIMP files
 
 /* --- Block 3: The Royal Post Office (Verification Link) --- */
-const sendWelcomeEmail = async (playerEmail, playerName, token) => { // Added 'token' here
+const sendWelcomeEmail = async (playerEmail, playerName, token) => {
     try {
         const verificationLink = `https://royalarmies.com{token}`;
+        
+        // Safety: Check if file exists so the server doesn't crash
+        const logoPath = path.join(__dirname, 'public', 'images', 'royalarmiestitle.png');
+        const fs = require('fs');
+        const hasLogo = fs.existsSync(logoPath);
 
         const { data, error } = await resend.emails.send({
             from: 'Royal Armies <noreply@royalarmies.com>',
             to: [playerEmail],
             subject: '📜 Email Verification: Royal Armies',
-
-            attachments: [
-                {
-                    path: path.join(__dirname, 'public', 'images', 'royalarmiestitle.png'),
-                    filename: 'logo.png',
-                    contentId: 'logo-image' // Unique ID for the image
-                }
-            ],
+            // Only attach if the file actually exists
+            attachments: hasLogo ? [{
+                path: logoPath,
+                filename: 'logo.png',
+                contentId: 'logo-image'
+            }] : [],
             html: `
-
                 <div style="font-family: 'Georgia', serif; background-color: #000; color: #f1e0ac; padding: 40px; border: 2px solid #d4af37; text-align: center;">
-
+                    
+                    ${hasLogo ? `
                     <div style="margin-bottom: 30px; text-align: center;">
-                        <img src="cid:logo-image" 
-                             alt="Royal Armies Logo" 
-                             style="width: 300px; max-width: 80%; height: auto; display: block; margin: 0 auto;">
-                    </div>
+                        <img src="cid:logo-image" alt="Royal Armies Logo" style="width: 300px; max-width: 80%; height: auto; display: block; margin: 0 auto;">
+                    </div>` : ''}
 
                     <h1 style="color: #d4af37; text-align: center;">WELCOME, COMMANDER ${playerName.toUpperCase()}</h1>
+                    
                     <p style="font-size: 1.1rem; line-height: 1.6; font-style: italic;">
-                        Your registration for the Royal Armies MMORTS Browser-Based Strategy Game has been logged. Please proceed to verify your e-mail by clicking the link below.
+                        Your registration for the Royal Armies MMORTS Browser-Based Strategy Game has been logged. 
+                        Please proceed to verify your e-mail by clicking the link below.
                     </p>
                     
                     <div style="margin: 30px 0;">
@@ -72,21 +76,18 @@ const sendWelcomeEmail = async (playerEmail, playerName, token) => { // Added 't
                     </div>
 
                     <p style="font-size: 0.8rem; color: #888;">If the button above does not work, copy and paste this link:<br>${verificationLink}</p>
+                    
                     <hr style="border: 0; border-top: 1px solid #d4af37; margin: 20px 0;" />
                     <p style="text-align: center; color: #888;">© 2026 GREEN MASK INTERACTIVE</p>
                 </div>
             `
         });
 
-        if (error) {
-            console.error("❌ Resend Error:", error);
-            throw error; 
-        }
+        if (error) throw error;
         console.log("📜 Verification Scroll Sent! ID:", data.id);
-        return data;
     } catch (err) {
-        console.error("❌ Fatal Connection Error in Post Office:", err);
-        throw err; 
+        console.error("❌ Post Office Error:", err);
+        throw err;
     }
 };
 
