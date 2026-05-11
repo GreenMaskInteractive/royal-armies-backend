@@ -37,7 +37,7 @@ app.use(express.static(path.join(__dirname, 'public'))); // Serves ARCH, AVI, an
 /* --- Block 3: The Royal Post Office (Verification Link) --- */
 const sendWelcomeEmail = async (playerEmail, playerName, token) => {
     try {
-        const verificationLink = `https://royalarmies.com{token}`;
+        const verificationLink = `https://royalarmies.com/verify?token=${token}`;
 
         const { data, error } = await resend.emails.send({
             from: 'Royal Armies <noreply@royalarmies.com>',
