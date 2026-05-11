@@ -235,6 +235,13 @@ body {
     z-index: 999999 !important;      /* Pulls it to the very front */
 }
 
+.nav-icon img {
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: contain !important;
+    display: block;
+}
+
 .nav-icon:hover, #updates-icon:hover { transform: scale(1.1); }
 .nav-icon.disabled { filter: grayscale(1) opacity(0.3) !important; cursor: not-allowed; }
 
