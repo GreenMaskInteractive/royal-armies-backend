@@ -219,16 +219,22 @@ body {
     gap: 25px !important;
     z-index: 200020;
 }
-.nav-icon, #updates-icon {
-    width: 60px !important;
-    height: 60px !important;
-    object-fit: contain;
-    cursor: pointer;
-    margin: 0 !important;
-    padding: 0 !important;
-    transition: transform 0.2s ease, filter 0.2s ease;
+
+.nav-icon, #updates-icon { 
+    width: 60px !important; 
+    height: 60px !important; 
+    object-fit: contain; 
+    cursor: pointer; 
+    margin: 0 !important; 
+    padding: 0 !important; 
+    transition: transform 0.2s ease, filter 0.2s ease; 
     filter: drop-shadow(0 0 10px #000);
+
+    /* --- ADD THESE TWO LINES --- */
+    pointer-events: auto !important; /* Forces the click through the portal */
+    z-index: 999999 !important;      /* Pulls it to the very front */
 }
+
 .nav-icon:hover, #updates-icon:hover { transform: scale(1.1); }
 .nav-icon.disabled { filter: grayscale(1) opacity(0.3) !important; cursor: not-allowed; }
 

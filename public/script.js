@@ -221,7 +221,10 @@ function initiatePostLoginSequence(isAdmin) {
         if(loginWrapper) loginWrapper.style.display = 'none';
         if(authButtons) authButtons.style.display = 'none';
         if(messageBox) { messageBox.style.display = 'block'; messageBox.offsetHeight; messageBox.style.opacity = '1'; }
-        if(discordIcon) { discordIcon.classList.remove('disabled'); discordIcon.classList.add('pulse-discord'); }
+        if (discordIcon) {
+            discordIcon.classList.remove('disabled'); //
+            discordIcon.classList.add('pulse-discord'); // Optional: adds your existing pulse effect
+            console.log("NEXUS: Discord access granted to Commander.");}
         if (isAdmin && bypassBtn) { bypassBtn.style.display = 'block'; }
     }, 1000);
 }
@@ -262,10 +265,8 @@ function enterMainGame() {
 }
 
 function openDiscord() {
-    const discordIcon = document.getElementById('nav-discord');
-    if (discordIcon && discordIcon.classList.contains('pulse-discord')) {
-        window.open('https://discord.gg', '_blank');
-    }
+    // ⚔️ NEXUS: Access granted to all Commanders immediately
+    window.open('https://discord.gg/7tGBCt7cXX', '_blank');
 }
 
 function handleRegister() {
