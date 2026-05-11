@@ -168,23 +168,31 @@ app.get('/reset-password', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'reset-password.html'));
 });
 
-// 4. NEW: Final Password Reset Execution (Bcrypt Shield)
+// 4. Final Reset (Saves the New Password & BURNS the Token)
 app.post('/reset-password', async (req, res) => {
     const { token, newPassword } = req.body;
+    
+    // Find commander where resetToken matches the provided token
     const commander = db.get('commanders').find({ resetToken: token }).value();
 
     if (!commander) {
-        return res.status(400).json({ status: "error", message: "Invalid or expired reset link." });
+        console.log("⚠️ Invalid or already-used token attempted.");
+        return res.status(400).json({ status: "error", message: "Invalid Scroll." });
     }
 
     try {
         const hashedPassword = await bcrypt.hash(newPassword, 10);
-        db.get('commanders').find({ email: commander.email }).assign({ 
-            password: hashedPassword, 
-            resetToken: null 
-        }).write();
         
-        console.log(`[NEXUS] Password Updated for Commander: ${commander.username}`);
+        // Update password AND set resetToken to null to disable the link
+        db.get('commanders')
+          .find({ email: commander.email })
+          .assign({ 
+              password: hashedPassword, 
+              resetToken: null  // This makes the link single-use
+          })
+          .write();
+
+        console.log(`[NEXUS] Password reset successful for: ${commander.username}`);
         res.status(200).json({ status: "success" });
     } catch (err) {
         res.status(500).json({ status: "error" });
