@@ -8,8 +8,24 @@
    NEXUS SECTION 0: CORE MODULES & ENVIRONMENT
    ============================================================ */
 
+// 1. Require the tools
+const low = require('lowdb');
+const FileSync = require('lowdb/adapters/FileSync');
+
+// 2. Define the Smart Path
+// This detects if we are on Render or your local PC
+const isProduction = process.env.RENDER === 'true';
+const dbPath = isProduction ? '/data/db.json' : path.join(__dirname, 'db.json');
+
+// 3. Initialize the database using the correct path
+const adapter = new FileSync(dbPath);
+const db = low(adapter);
+
+// 4. Set the default structure
+db.defaults({ commanders: [] }).write();
+
 /* ============================================================
-   NEXUS SECTION 0: CORE MODULES & ENVIRONMENT
+   NEXUS SECTION 1: CORE MODULES & ENVIRONMENT
    ============================================================ */
 const express = require('express');
 const path = require('path');
@@ -25,7 +41,7 @@ const PORT = process.env.PORT || 3000;
 const resend = new Resend('re_eMzwshB5_EmorLivvuzwbHk6jpAzWtpWE');
 
 /* ============================================================
-   NEXUS SECTION 1: SECURITY & MIDDLEWARE
+   NEXUS SECTION 2: SECURITY & MIDDLEWARE
    ============================================================ */
 
 /* --- Block 2: Middleware --- */
@@ -81,41 +97,72 @@ const sendWelcomeEmail = async (playerEmail, playerName, token) => {
 
 /* --- Block 4: Routing & Handshakes --- */
 
-// 1. The Registration Endpoint (Updated with Token generation)
+// 1. The Registration Endpoint
 app.post('/register', async (req, res) => {
-    const { username, email } = req.body;
-    
-    // Generate a secure 32-character token
+    const { username, email, password } = req.body;
+
+    // A. LEDGER SEARCH: Check if this email is already registered
+    const existingCommander = db.get('commanders').find({ email }).value();
+
+    if (existingCommander) {
+        console.log(`[NEXUS] Registration Denied: ${email} already exists.`);
+        return res.status(400).json({ 
+            status: "error", 
+            message: "This E-Mail is already registered. If you have any questions or concerns about the account associated with this e-mail, contact accountsdept@royalarmies.com!" 
+        });
+    }
+
+    // B. GENERATE TOKEN
     const token = crypto.randomBytes(16).toString('hex');
-    
     console.log(`[NEXUS] Handshake Received: Creating Token for ${username}`);
-    
+
     try {
-        // Pass the token into the email function
+        // C. DISPATCH EMAIL
         await sendWelcomeEmail(email, username, token);
-        
-        console.log(`[NEXUS] Success: Verification dispatched to ${email}`);
+
+        // D. SAVE TO LEDGER: Record the new Commander
+        db.get('commanders').push({ 
+            username, 
+            email, 
+            password, // We will hash this in the next update for security
+            token,
+            verified: false,
+            joinedAt: new Date().toISOString()
+        }).write();
+
+        console.log(`[NEXUS] Success: ${username} added to the Ledger.`);
         res.status(200).json({ status: "logged" });
+
     } catch (error) {
-        console.error("❌ NEXUS Critical Error during registration:", error);
+        console.error("❌ NEXUS Critical Error:", error);
         res.status(500).json({ status: "error", message: "Post Office failure." });
     }
 });
 
-// 2. NEW: The Verification Landing Pad
+// 2. The Verification Landing Pad (Now updates the database!)
 app.get('/verify', (req, res) => {
     const token = req.query.token;
-    console.log(`[NEXUS] Verification Attempt: Token ${token}`);
+    
+    // Search the ledger for this token
+    const commander = db.get('commanders').find({ token }).value();
 
-    // Verification Success UI
-    res.send(`
-        <body style="background: #000; color: #d4af37; font-family: Georgia, serif; text-align: center; padding: 100px 20px; border: 10px solid #1a1a1a; height: 100vh; margin: 0;">
-            <h1 style="font-size: 3rem; text-shadow: 0 0 20px #d4af37;">COMMAND VERIFIED</h1>
-            <p style="font-size: 1.2rem; font-style: italic; color: #f1e0ac;">Your ranks have been synchronized, Commander.</p>
-            <br>
-            <a href="https://royalarmies.com" style="color: #fff; text-decoration: underline; font-size: 1rem;">Return to the Front Lines</a>
-        </body>
-    `);
+    if (commander) {
+        // Mark them as verified in the database
+        db.get('commanders').find({ token }).assign({ verified: true }).write();
+        
+        console.log(`[NEXUS] Verified: ${commander.username} has confirmed their E-Mail.`);
+
+        res.send(`
+            <body style="background: #000; color: #d4af37; font-family: Georgia, serif; text-align: center; padding: 100px 20px; border: 10px solid #1a1a1a; height: 100vh; margin: 0;">
+                <h1 style="font-size: 3rem; text-shadow: 0 0 20px #d4af37;">EMAIL VERIFIED</h1>
+                <p style="font-size: 1.2rem; font-style: italic; color: #f1e0ac;">Thank You for verifying your E-Mail, ${commander.username}.</p>
+                <br>
+                <a href="https://royalarmies.com" style="color: #fff; text-decoration: underline; font-size: 1rem;">Return to Royal Armies</a>
+            </body>
+        `);
+    } else {
+        res.status(400).send("<h1>❌ INVALID TOKEN</h1><p>This verification link has expired or is incorrect.</p>");
+    }
 });
 
 // 3. The Final Portal (Home Route)
