@@ -36,50 +36,47 @@ app.use(express.static(path.join(__dirname, 'public'))); // Serves ARCH, AVI, an
 
 /* --- Block 3: The Royal Post Office (Verification Link) --- */
 const sendWelcomeEmail = async (playerEmail, playerName, token) => {
-  try {
-    const verificationLink = `https://royalarmies.com{token}`;
-    
-    // THE CRITICAL PATH: Must match your actual file name exactly
-    const logoPath = path.join(__dirname, 'public', 'images', 'royalarmiestitle.png');
+    try {
+        const verificationLink = `https://royalarmies.com{token}`;
 
-    const { data, error } = await resend.emails.send({
-      from: 'Royal Armies <noreply@royalarmies.com>',
-      to: [playerEmail],
-      subject: '📜 Email Verification: Royal Armies',
-      attachments: [
-        {
-          path: logoPath,            // <--- This looks for 'royalarmiestitle.png'
-          filename: 'logo.png',      // <--- This is just the label for the email
-          contentId: 'logo-image' 
+        const { data, error } = await resend.emails.send({
+            from: 'Royal Armies <noreply@royalarmies.com>',
+            to: [playerEmail],
+            subject: '📜 Email Verification: Royal Armies',
+            /* LOGO REMOVED FOR MAXIMUM STABILITY */
+            html: `
+                <div style="font-family: 'Georgia', serif; background-color: #000; color: #f1e0ac; padding: 40px; border: 2px solid #d4af37; text-align: center;">
+                    <h1 style="color: #d4af37; text-align: center;">WELCOME, COMMANDER ${playerName.toUpperCase()}</h1>
+                    
+                    <p style="font-size: 1.1rem; line-height: 1.6; font-style: italic;">
+                        Your registration for the Royal Armies MMORTS has been logged. 
+                        Please proceed to verify your e-mail by clicking the link below.
+                    </p>
+                    
+                    <div style="margin: 30px 0;">
+                        <a href="${verificationLink}" style="background-color: #d4af37; color: #000; padding: 15px 30px; text-decoration: none; font-weight: bold; border-radius: 4px; text-transform: uppercase; display: inline-block;">
+                            Verify E-Mail
+                        </a>
+                    </div>
+
+                    <p style="font-size: 0.8rem; color: #888;">If the button above does not work, copy and paste this link:<br>${verificationLink}</p>
+                    
+                    <hr style="border: 0; border-top: 1px solid #d4af37; margin: 20px 0;" />
+                    <p style="text-align: center; color: #888;">© 2026 GREEN MASK INTERACTIVE</p>
+                </div>
+            `
+        });
+
+        if (error) {
+            console.error("❌ Resend Error:", error);
+            throw error; 
         }
-      ],
-      html: `
-        <div style="font-family: 'Georgia', serif; background-color: #000; color: #f1e0ac; padding: 40px; border: 2px solid #d4af37; text-align: center;">
-          <div style="margin-bottom: 30px;">
-            <img src="cid:logo-image" alt="Royal Armies Logo" style="width: 300px; max-width: 80%; height: auto; display: block; margin: 0 auto;">
-          </div>
-          <h1 style="color: #d4af37; text-align: center;">WELCOME, COMMANDER ${playerName.toUpperCase()}</h1>
-          <p style="font-size: 1.1rem; line-height: 1.6; font-style: italic;">
-              Your registration for the Royal Armies MMORTS Browser-Based Strategy Game has been logged. 
-              Please proceed to verify your e-mail by clicking the link below.
-          </p>
-          <div style="margin: 30px 0;">
-            <a href="${verificationLink}" style="background-color: #d4af37; color: #000; padding: 15px 30px; text-decoration: none; font-weight: bold; border-radius: 4px; text-transform: uppercase; display: inline-block;">
-                Verify E-Mail
-            </a>
-          </div>
-          <p style="font-size: 0.8rem; color: #888;">If the button above does not work, copy and paste this link:<br>${verificationLink}</p>
-          <hr style="border: 0; border-top: 1px solid #d4af37; margin: 20px 0;" />
-          <p style="text-align: center; color: #888;">© 2026 GREEN MASK INTERACTIVE</p>
-        </div>`
-    });
-
-    if (error) throw error;
-    console.log("📜 Verification Scroll Sent! ID:", data.id);
-  } catch (err) {
-    console.error("❌ Post Office Error:", err);
-    throw err;
-  }
+        console.log("📜 Verification Scroll Sent! ID:", data.id);
+        return data;
+    } catch (err) {
+        console.error("❌ Fatal Post Office Failure:", err);
+        throw err; 
+    }
 };
 
 /* --- Block 4: Routing & Handshakes --- */
