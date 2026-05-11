@@ -22,25 +22,33 @@
 /* ============================================================
    SECTION 0: GLOBAL RESET & ROOT (Mobile Optimized)
 ============================================================ */
-body {
+html, body {
+    /* 1. THE PEAKING BOX KILLER: Forces the absolute base layer to be black */
+    background-color: #000 !important; 
     background: var(--bg);
     color: var(--text);
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     margin: 0;
     padding: 0;
-    /* --- MOBILE STABILITY --- */
-    overflow-x: hidden; /* Prevents the screen from sliding horizontally */
-    width: 100vw;
-    -webkit-font-smoothing: antialiased; /* Crisper text on mobile Safari/Chrome */
+    /* 2. STABILITY LOCKDOWN: Prevents horizontal scroll leaks */
+    overflow-x: hidden !important;
+    width: 100% !important;
+    position: relative;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
 }
 
 .page {
-    padding: var(--safe-zone); /* Uses the 15px safe zone from the Core */
+    padding: var(--safe-zone);
     max-width: 1200px;
     margin: 0 auto;
-    /* --- FLUID WIDTH --- */
     width: 100%;
-    box-sizing: border-box; /* Ensures padding doesn't push width over 100% */
+    box-sizing: border-box;
+    /* 3. HIDDEN STATE PROTECTION: Ensures non-active pages don't "peak" out */
+    display: none; 
 }
 
 .page-title {
@@ -48,8 +56,7 @@ body {
     text-transform: uppercase;
     letter-spacing: 2px;
     text-align: center;
-    /* --- RESPONSIVE TYPOGRAPHY --- */
-    font-size: 1.5rem; /* Slightly smaller for mobile headers */
+    font-size: 1.5rem;
     margin-top: 10px;
 }
 
@@ -57,91 +64,56 @@ body {
    SECTION 1: NARRATIVE & INTERFACE (Mobile Optimized)
 ============================================================ */
 
-/* --- 1. THE NARRATIVE SYSTEM (Stacked for Phones) --- */
+/* --- 1. THE NARRATIVE SYSTEM (Mobile Safety Lockdown) --- */
 .narrative-container {
     position: fixed;
     bottom: 20px;
     right: 5vw;
-    left: 5vw; /* Centered on mobile */
-    width: 90vw; /* Responsive width */
-    min-height: 120px;
-    background-color: #000000 !important;
+    left: 5vw; 
+    width: 90vw;
+    /* CHANGE: Remove min-height here to prevent it from "ghosting" when empty */
+    background-color: rgba(0, 0, 0, 0.95) !important; 
     border: 2px solid var(--accent);
     border-radius: 4px;
     display: none; 
-    flex-direction: row; /* Keep row for now, but allow scaling */
+    flex-direction: row; 
     align-items: center;
     padding: 15px;
+    /* SHIELD FIX: Ensure it doesn't block the login buttons if it's inactive */
+    pointer-events: none; 
     z-index: 1000000 !important;
-    box-shadow: 0 10px 40px rgba(0, 0, 0, 1);
 }
 
-.narrative-portrait {
-    width: 80px; /* Scaled down for mobile */
-    height: 80px;
-    border: 2px solid var(--accent);
-    margin-right: 12px;
-    overflow: hidden;
-    background: #000;
-    flex-shrink: 0; /* Prevents portrait from squishing */
+/* Add this to allow clicking ONLY when the text is actually visible */
+.narrative-container.active {
+    display: flex !important;
+    pointer-events: auto !important;
 }
 
-#narrative-text {
-    font-family: 'Georgia', serif;
-    font-size: 1rem; /* Smaller font for mobile readability */
-    color: var(--accent);
-    line-height: 1.4;
-    font-style: italic;
-}
-
-.narrative-continue {
-    font-size: 0.6rem;
-    position: absolute;
-    bottom: 8px;
-    right: 15px;
-}
-
-/* --- 2. AUDIO INTERFACE (Touch-Ready) --- */
+/* --- 2. AUDIO INTERFACE (Touch-Target Fix) --- */
 .audio-toggle-container {
     position: fixed !important;
     bottom: 20px !important;
     left: 20px !important;
-    z-index: 9999999 !important;
-    background: rgba(0, 0, 0, 0.8) !important; /* Darker for contrast */
-    border: 1px solid #d4af37;
-    border-radius: 50%;
-    width: var(--touch-target) !important; /* 44px for fingers */
-    height: var(--touch-target) !important;
-    display: flex !important;
-    justify-content: center;
-    align-items: center;
+    z-index: 2000050 !important; /* Raised to match navigator buttons */
+    background: rgba(0, 0, 0, 0.8) !important;
+    border: 1px solid var(--accent);
+    width: 48px !important; /* Slightly larger for easier thumb access */
+    height: 48px !important;
 }
 
-/* --- 3. CLASS SELECTION SIDE PANELS (Fullscreen Mobile) --- */
+/* --- 3. CLASS SELECTION SIDE PANELS --- */
 .side-info-panel {
     position: fixed;
     top: 0;
-    bottom: 0 !important;
-    height: 100vh !important;
-    width: 100vw; /* Fill screen on mobile */
-    display: flex;
-    flex-direction: column;
+    /* CHANGE: use 100% instead of 100vh to avoid browser bar clipping */
+    height: 100% !important; 
+    width: 100vw;
     z-index: 10005;
-    transition: transform 0.6s ease-in-out;
-    opacity: 0;
-    pointer-events: none;
-    background-color: #000000 !important;
-    /* Removed heavy background images for mobile performance */
-    background-image: linear-gradient(rgba(0, 0, 0, 0.95), rgba(0, 0, 0, 0.95)) !important;
-}
-
-.left-panel { left: 0; transform: translateY(-100%); } /* Slide from top on mobile */
-.right-panel { right: 0; transform: translateY(100%); } /* Slide from bottom on mobile */
-
-.left-panel.show, .right-panel.show {
-    transform: translateY(0);
-    opacity: 1;
-    pointer-events: auto;
+    background-color: #000 !important;
+    /* KILL the peaking boxes by ensuring no margin/overflow */
+    margin: 0;
+    overflow-y: auto; 
 }
 
 /* ============================================================
@@ -153,107 +125,67 @@ body {
     display: none;
     opacity: 0;
     width: 100%;
-    min-height: 100vh;
+    min-height: 100% !important; /* Changed from vh to % for mobile browser stability */
     background: var(--bg);
-    transition: opacity 1.5s ease-in-out;
     z-index: 10;
 }
 
-.full-page-overlay {
-    position: fixed;
-    inset: 0;
-    background: #000;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 200000;
+/* --- Block 2: The Navigator Bar (Centering Fix) --- */
+.navigator-bar {
+    position: fixed !important; /* Fixed is more reliable than absolute on mobile */
+    top: 15px !important;
+    right: 15px !important;
+    /* Remove 'left' to prevent the bar from stretching invisibly across the screen */
+    left: auto !important; 
+    display: flex !important;
+    flex-direction: row-reverse !important;
+    gap: 12px !important;
+    z-index: 200020;
+    /* Ensure the bar itself doesn't block taps to the center of the screen */
+    pointer-events: none; 
+}
+
+.nav-icon, #updates-icon, .pulse-discord {
+    width: 48px !important;
+    height: 48px !important;
+    pointer-events: auto !important; /* Re-enables taps for just the icons */
+}
+
+/* --- Block 4: Hub Logic & Panel Fixes (The "Wall" Fix) --- */
+.updates-panel, #roadmap-modal {
+    display: none !important; /* HARD LOCK: Only JS can open this */
+    position: fixed !important;
+    right: 5vw !important;
+    left: 5vw !important;
+    top: 75px !important; 
+    width: 90vw !important;
+    height: 70vh !important;
+    background: rgba(5, 5, 5, 0.98) !important; /* Darker to hide "peaking" white boxes */
+    border: 2px solid var(--accent);
+    z-index: 300000 !important;
     overflow: hidden;
 }
 
-/* --- Block 2: The Navigator Bar (Mobile Touch Fix) --- */
-.navigator-bar {
-    position: absolute !important;
-    top: 15px !important; /* Brought closer to top */
-    right: var(--safe-zone) !important; /* Uses our 15px safe zone */
-    left: var(--safe-zone) !important; /* Anchors to both sides for centering */
-    display: flex !important;
-    flex-direction: row-reverse !important; 
-    justify-content: flex-end; /* Keeps icons grouped together */
-    align-items: center !important;
-    gap: 15px !important; /* Tighter gap for smaller screens */
-    z-index: 200020;
-}
-
-.nav-icon, #updates-icon {
-    width: 50px !important; /* Scaled down from 60px */
-    height: 50px !important;
-    pointer-events: auto !important;
-    z-index: 999999 !important;
-}
-
-/* --- Block 4: Hub Logic & Panel Fixes --- */
-.updates-hub {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-end;
-    width: 50px;
+/* --- Block 5: Discord Icon (The Drift Fix) --- */
+.pulse-discord {
     position: relative !important;
+    animation: discordAttention 3s infinite ease-in-out !important;
+    /* Ensure it stays in the row */
+    margin: 0 !important; 
 }
 
-.updates-panel, #roadmap-modal {
-    position: fixed !important; /* Fixed to viewport so it can't slide away */
-    right: 5vw !important;
-    left: 5vw !important;
-    top: 80px !important; /* Sits below the nav bar */
-    width: 90vw !important;
-    height: 70vh !important; /* Prevents overflow off bottom of screen */
-    background: rgba(10, 10, 10, 0.98) !important;
-    border: 2px solid var(--accent);
-    z-index: 300000 !important;
-}
-
-.updates-scroll {
-    padding: 10px;
-    /* Forces smooth scrolling on mobile iOS */
-    -webkit-overflow-scrolling: touch; 
-}
-
-/* --- Block 5: Unified Auth Modal (Registration Fix) --- */
-.modal-content {
-    background: rgba(10, 10, 10, 0.98);
-    border: 2px solid var(--accent);
-    padding: 20px; /* Reduced from 40px */
-    width: 92vw; /* Use viewport width */
-    max-width: 450px;
-    text-align: center;
-    position: relative;
-    max-height: 90vh; /* Ensures tall modals are scrollable */
-    overflow-y: auto;
-}
-
-.reg-input {
-    width: 100%;
-    padding: 12px; /* Thicker for easier finger tapping */
-    font-size: 16px !important; /* Prevents iOS from auto-zooming on focus */
-}
-
+/* --- Block 6: Modal Actions (Vertical Stack) --- */
 .modal-actions {
-    flex-direction: column !important; /* Stack buttons vertically on mobile */
+    flex-direction: column !important;
+    width: 100% !important;
     align-items: center;
-    gap: 12px;
-}
-
-.modal-actions .img-btn {
-    width: 100% !important; /* Buttons fill the modal width */
-    max-width: 220px;
-    height: 50px;
 }
 
 /* ============================================================
-   PORTAL & KINETIC ENGINE (Mobile Optimized)
+   Section 3: PORTAL & KINETIC ENGINE (Mobile Optimized)
 ============================================================ */
 
-/* --- Block 5: The Master Anchor & Stone Portal --- */
+/* --- Block 1: The Master Anchor & Stone Portal --- */
 .portal-master-anchor {
     position: fixed !important;
     top: 50% !important;
@@ -262,9 +194,9 @@ body {
     display: flex !important;
     flex-direction: column !important;
     align-items: center !important;
-    justify-content: center !important; /* Changed from start to center for mobile */
-    gap: 20px; /* Reduced gap */
-    width: 95vw; /* Fluid width for phones */
+    justify-content: center !important;
+    gap: 15px; /* Tighter gap for mobile height */
+    width: 95vw !important; /* Added !important to ensure fluid scaling */
     height: auto;
     z-index: 200000;
     pointer-events: none;
@@ -274,532 +206,454 @@ body {
     background-image: url('images/mainloginbox.png');
     background-repeat: no-repeat;
     background-position: center center;
-    background-size: 100% 100%; /* Forces the GIMP asset to scale with the screen */
-    width: 100%; /* Fills the 95vw anchor */
-    height: 320px; /* Lowered height for mobile aspect ratios */
+    background-size: 100% 100% !important; /* Force GIMP asset to shrink */
+    width: 100% !important; 
+    height: 300px !important; /* Slightly shorter to avoid keyboard overlap */
     position: relative;
     z-index: 100;
-    flex-shrink: 0;
-    display: flex !important;
-    padding: 0 !important;
-    pointer-events: auto;
+    pointer-events: auto !important; /* Ensures inputs can be tapped */
 }
 
-#login-content-wrapper {
-    margin-top: 20px !important; /* Adjusted spacing for the smaller box */
-}
-
-#post-login-message {
-    margin-top: 40px !important;
-}
-
-#post-login-message p {
-    max-width: 85% !important; /* Expanded to use more of the phone screen */
-    font-size: 0.9rem; /* Slightly smaller text */
-}
-
-#post-login-message div {
-    flex-direction: column; /* Stack Return/Bypass buttons on mobile */
-    gap: 10px;
-}
-
-/* --- Block 6: Cinematic Slideshow Engine (Performance Optimization) --- */
+/* --- Block 2: Cinematic Slideshow Engine (Overflow Lockdown) --- */
 .slideshow-container {
-    position: fixed; /* Fixed is more stable for mobile background shifts */
-    inset: 0;
-    z-index: -1;
+    position: fixed !important;
+    inset: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    z-index: -1 !important; /* Pins it behind EVERYTHING */
+    overflow: hidden !important; /* Prevents "giant image" leaks */
 }
 
 .slide {
-    inset: -10%; /* Reduced inset to save mobile processing power */
-    /* Add will-change to help mobile GPUs handle the pan/zoom animations */
-    will-change: transform, opacity; 
+    inset: 0 !important; /* Remove negative inset to prevent bleed-out */
+    width: 100vw !important;
+    height: 100vh !important;
+    background-size: cover !important;
+    background-position: center !important;
+    will-change: transform, opacity;
 }
 
-/* --- Block 6: Identity Stamps (Screen Edge Safety) --- */
+/* --- Block 3: Identity Stamps --- */
 .version-stamp {
     position: fixed;
-    top: 15px; /* Tighter to the corner */
+    top: 15px;
     left: 15px;
     font-size: 0.6rem;
-    letter-spacing: 2px;
-    opacity: 0.5;
+    z-index: 200030;
+    pointer-events: none; /* Stops it from blocking taps */
 }
 
 .copyright-stamp {
     font-size: 0.5rem;
-    bottom: 10px;
-    width: 90%;
+    bottom: 15px; /* Raised slightly for mobile home-bars */
+    width: 100%;
     text-align: center;
+    pointer-events: none;
 }
 
 /* ============================================================
-   SECTION 3: INTERACTIVE ARSENAL (Mobile Optimized)
+   SECTION 4: INTERACTIVE ARSENAL (Mobile Optimized)
 ============================================================ */
 
 /* --- 1. THE AURORA COMMANDER INPUTS --- */
 .login-input {
     display: block !important;
-    margin: 10px auto !important; /* Increased spacing for thumb accuracy */
-    width: 85% !important; /* Scaled down from 400px to fit phone screens */
-    height: 48px !important; /* Slightly taller for touch targets */
+    margin: 8px auto !important; 
+    width: 80% !important; /* Slightly narrower to ensure it fits all phone models */
+    height: 48px !important;
     position: relative !important;
-    z-index: 1000 !important;
+    z-index: 200010 !important; /* Raised to be above the stone portal background */
     pointer-events: auto !important;
-    font-size: 16px !important; /* CRITICAL: Prevents iOS auto-zoom on focus */
+    font-size: 16px !important; 
     padding: 12px !important;
+    background: rgba(10, 15, 20, 0.9) !important; /* Darker for better contrast */
 }
 
-/* --- Block 2: Independent Button Hub (Mobile Layout) --- */
+/* --- Block 2: Independent Button Hub (The "Wall" Fix) --- */
 #auth-buttons {
     position: relative !important;
     display: flex;
-    flex-direction: column !important; /* Stack buttons vertically for mobile */
+    flex-direction: column !important;
     justify-content: center;
     align-items: center;
-    gap: 15px !important; /* Closer gap for vertical stacking */
+    gap: 12px !important;
     width: 100%;
-    margin-top: -120px !important; /* Reduced offset to keep hitboxes inside the portal */
-    z-index: 200050 !important; /* Raised to ensure it's above the slideshow layers */
+    /* CHANGE: Use transform instead of negative margin to avoid ghost hitboxes */
+    margin-top: 0 !important; 
+    transform: translateY(-80px) !important; 
+    z-index: 200050 !important;
 }
 
 /* --- 3. SHARED BUTTON DNA (Touch-Ready) --- */
 .img-btn, #btn-login-main, #btn-register-main {
     pointer-events: auto !important;
     position: relative;
-    z-index: 200060 !important; /* HIGHEST layer for interaction */
-    width: 200px !important; /* Wider buttons for easier side-to-side tapping */
-    height: 55px !important;
-    background-size: 100% 100% !important; /* Ensures the GIMP frame asset scales correctly */
+    z-index: 200060 !important; 
+    width: 190px !important; /* Balanced width for mobile */
+    height: 52px !important;
+    background-size: 100% 100% !important;
     font-size: 13px !important;
     display: flex;
     justify-content: center;
     align-items: center;
 }
 
-/* --- 4. INTERACTIVE EFFECTS (Mobile Optimization) --- */
-/* Remove Hover on mobile to prevent "sticky" states */
-@media (hover: hover) {
-    .img-btn:hover { transform: scale(1.05); }
-}
-
-/* Active State: The "Sink" effect is great for haptic-style feedback on tap */
+/* --- 4. INTERACTIVE EFFECTS --- */
 .img-btn:active {
-    transform: scale(0.95) translateY(2px) !important;
-    filter: brightness(0.8); /* Visual confirmation of press */
+    transform: scale(0.92) !important; /* More obvious "press" feedback */
+    filter: brightness(1.2) !important; /* Brighten on tap instead of darken for clarity */
 }
 
 /* THE "NO-JUMP" LOADER FIX */
 #auth-loading {
     position: absolute;
-    bottom: -30px;
+    bottom: -20px;
     left: 50%;
-    transform: translateX(-50%); /* Center it under the portal */
-    font-size: 0.8rem;
+    transform: translateX(-50%);
+    font-size: 0.75rem;
     color: var(--accent);
+    white-space: nowrap;
 }
 
 /* ============================================================
-   SECTION 4: THE COMMAND HUD (Mobile Optimized)
+   SECTION 5: THE COMMAND HUD (Mobile Optimized)
 ============================================================ */
 
-/* THE MASTER OVERLAY */
+/* --- THE MASTER OVERLAY (The "Wall" Fix) --- */
 #roadmap-modal.modal-overlay, 
 #chronicle-detail-modal.modal-overlay {
+    display: none !important; /* HARD LOCK: Prevent it from showing on load */
+    position: fixed !important;
+    inset: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
     z-index: 500000 !important;
-    background: rgba(0, 0, 0, 0.95) !important; /* Darker for focus */
+    background: rgba(0, 0, 0, 0.92) !important; 
+    /* The "Shield" Fix: Prevents invisible layers from blocking taps */
+    pointer-events: none; 
+}
+
+/* Re-enable interaction ONLY when the modal is active */
+#roadmap-modal.modal-overlay.show, 
+#chronicle-detail-modal.modal-overlay.show {
+    display: flex !important;
+    pointer-events: auto !important;
 }
 
 /* THE ROADMAP & CHRONICLE CONTAINER */
 .roadmap-container {
-    width: 92vw !important; /* Use almost full width */
-    height: 85vh !important; /* Taller to allow for scrolling */
-    padding: 20px 20px 40px 20px !important; /* Removed the massive 80px side gutters */
-    box-sizing: border-box;
-    /* Ensure scrolling is smooth on touch devices */
-    -webkit-overflow-scrolling: touch; 
+    width: 90vw !important; 
+    height: 80vh !important; /* Slightly shorter to ensure "X" is always visible */
+    padding: 15px !important;
+    background: #0a0a0a !important; /* Solid black to kill white peaking boxes */
+    border: 2px solid var(--accent);
+    box-shadow: 0 0 40px rgba(0,0,0,1);
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch;
 }
 
-/* SURGICAL OVERRIDE: Normalize Detail Modal for Mobile */
-#chronicle-detail-modal .roadmap-container {
-    width: 92vw !important; /* Detail modal should match Roadmap width on mobile */
-    min-height: 300px !important;
-    height: auto !important;
-}
-
-/* --- THE LOCKED WINDOW CLOSING "X" (Mobile Touch Fix) --- */
+/* --- THE LOCKED WINDOW CLOSING "X" --- */
 .close-modal {
-    margin-right: 0 !important; /* Pull it back from the negative margin */
-    font-size: 45px !important; /* Slightly smaller to fit header */
-    padding: 10px; /* Bigger invisible tap area */
-    position: absolute !important; /* Anchor to top-right of container */
-    top: 5px !important;
+    position: absolute !important;
+    top: 10px !important;
     right: 15px !important;
-}
-
-/* HEADER & TITLES */
-.roadmap-main-title, #chronicle-detail-title {
-    font-size: 1.4rem !important; /* Scaled down from 2rem */
-    letter-spacing: 4px !important; /* Reduced spacing */
-    margin-top: 10px !important; /* Standardized spacing */
-    margin-bottom: 30px !important;
-}
-
-#chronicle-detail-text {
-    font-size: 1rem !important; /* Larger for mobile readability */
-    line-height: 1.4;
-    max-width: 100%;
+    font-size: 38px !important; /* Scaled for thumb-accuracy */
+    z-index: 500020 !important;
+    color: var(--accent) !important;
+    line-height: 1;
 }
 
 /* THE HORIZONTAL CATEGORY BAR */
 .roadmap-phase {
-    padding: 15px 20px !important; /* Tighter padding */
+    width: 100% !important;
+    padding: 12px 15px !important;
+    margin-bottom: 8px;
+    background: rgba(255, 255, 255, 0.05) !important;
 }
 
 .roadmap-phase h3 {
-    font-size: 1.1rem !important; /* Scaled down for one-line fitting */
-}
-
-/* THE DETAIL DEEP-DIVE */
-.roadmap-phase.expanded .deep-dive {
-    padding: 15px !important; /* Reduced padding inside the dive */
-    font-size: 0.9rem;
+    font-size: 1rem !important;
+    letter-spacing: 1px !important;
 }
 
 /* ============================================================
-   SECTION 5: THE QUESTING WORLD (Mobile Optimized)
+   SECTION 6: THE QUESTING WORLD (Mobile Optimized)
 ============================================================ */
 
 .quest-grid {
     display: flex;
-    flex-direction: column; /* Stack cards vertically for vertical scrolling */
+    flex-direction: column;
     align-items: center;
-    gap: 30px; /* Tighter gap for mobile flow */
-    padding: 20px; /* Safe zone padding */
+    gap: 25px; /* Slightly tighter for better vertical rhythm */
+    padding: 20px 10px !important; 
+    width: 100% !important; /* Force grid to stay within phone width */
+    box-sizing: border-box;
+    overflow: hidden; /* Prevents cards from peaking out the sides */
 }
 
 .quest-card {
     position: relative;
-    width: 85vw; /* Fluid width so cards fill the phone screen */
-    max-width: 320px; /* Prevents them from getting too huge on tablets */
-    transition: transform 0.3s ease;
+    width: 88vw !important; /* Slightly wider for better use of space */
+    max-width: 340px; 
+    margin: 0 auto; /* Ensures perfect centering */
+    transition: transform 0.2s ease;
 }
 
-/* Remove Hover scaling on mobile to prevent accidental zoom/misclicks */
-@media (hover: hover) {
-    .quest-card:hover:not(.locked) {
-        transform: scale(1.05) translateY(-5px);
-    }
-}
-
-/* Visual feedback for tapping a card */
-.quest-card:active:not(.locked) {
-    transform: scale(0.98);
-}
-
-.quest-plaque {
-    font-size: 0.9rem; /* Slightly smaller for mobile layout */
-}
-
-/* --- HUD & BARS (Mobile Scaling) --- */
+/* --- HUD & BARS (Clarity Fix) --- */
 .hud-text-overlay {
-    font-size: 1.1rem !important; /* Scaled down from 1.4rem */
-    letter-spacing: 0px;
-    line-height: 1.2;
-}
-
-.xp-fill, .prov-fill {
-    /* Ensure the fills maintain their glowing gradients on lower-power devices */
-    will-change: width;
+    font-size: 1rem !important; /* Sharper size for mobile */
+    letter-spacing: 1px !important;
+    line-height: 1.1;
+    /* Reduce shadow blur to prevent "fuzzy" text on small screens */
+    text-shadow: 1px 1px 2px #000 !important; 
 }
 
 .start-quest-btn {
-    width: 100%; /* Make button full-width of the card for easy tapping */
-    height: var(--touch-target); /* Use our 44px standard */
+    width: 100%;
+    height: 48px !important; /* Slightly taller for thick thumbs */
     font-size: 1rem;
-    margin-top: 10px;
+    margin-top: 8px;
+    background-color: var(--accent) !important;
+    color: #000 !important;
+    border-radius: 4px;
+    font-weight: bold;
+}
+
+/* Visual feedback for tapping a card (The "Tactile" Fix) */
+.quest-card:active {
+    transform: scale(0.96) !important;
+    filter: brightness(1.2);
 }
 
 /* ============================================================
-   SECTION 6: NAVIGATION ENHANCEMENTS (Mobile Optimized)
+   SECTION 7: NAVIGATION ENHANCEMENTS (Mobile Optimized)
 ============================================================ */
 
 .top-nav {
     background-image: url('images/stonewallbg.png') !important;
-    display: none !important; /* Keep hidden until game-state activation */
+    display: none !important; 
+    width: 100% !important;
     height: auto !important;
-    padding-bottom: 20px;
-}
-
-.top-nav::after {
-    height: 15px; /* Thinner trim for mobile screens */
-    bottom: -10px;
+    padding: 10px 0 30px 0 !important;
+    /* Kills the white peaking boxes by locking the nav width */
+    overflow: hidden !important; 
 }
 
 .nav-logo {
-    position: relative !important; /* Change from absolute to flow with content */
-    left: 0 !important;
-    transform: none !important;
-    top: 0 !important;
-    height: 120px !important; /* Scaled down from 280px */
-    margin: 10px auto;
+    position: relative !important;
+    margin: 0 auto !important;
+    height: 100px !important; /* Scaled down further for vertical room */
+    width: auto !important;
     display: block;
 }
 
-/* --- THE MOBILE NAV BUTTONS --- */
+/* --- THE MOBILE NAV BUTTONS (Overlap Fix) --- */
 .nav-btn {
-    padding: 12px 20px !important; /* Balanced for thumbs */
-    min-width: 120px !important;
-    height: 50px !important; /* Standardized touch height */
-    font-size: 0.8rem !important; /* Smaller text to prevent wrapping */
+    padding: 10px 15px !important;
+    min-width: 140px !important;
+    height: 48px !important;
+    font-size: 0.75rem !important; /* Prevents text from breaking out of the button shape */
     background-size: 100% 100% !important;
-    margin: 5px;
+    margin: 8px auto !important; /* Stacked with spacing */
+    display: flex !important;
 }
 
-/* Interaction: Touch feedback instead of Hover */
-.nav-btn:active:not([disabled]) {
-    filter: brightness(1.4);
-    transform: scale(0.95);
-}
-
-.nav-spacer {
-    display: none !important; /* Kill spacers on mobile to save room */
-}
-
-/* --- LOGO & ENERGY (The Kinetic Fix) --- */
+/* --- LOGO & ENERGY (The "Peaking Box" Killer) --- */
 .logo-wrapper {
     margin-bottom: 0 !important;
-    width: 100vw;
-    overflow: hidden;
+    width: 100% !important;
+    max-width: 100vw !important; /* Strict boundary */
+    overflow: hidden !important;
+    display: flex;
+    justify-content: center;
+    position: relative;
 }
 
 .main-logo {
-    width: 90vw !important; /* Responsive width scaled from 1000px */
-    max-width: 400px;
-    height: auto;
-    top: 10px !important;
+    width: 85vw !important; /* Forced scaling */
+    max-width: 350px !important;
+    height: auto !important;
+    top: 0 !important;
+    z-index: 5;
 }
 
 .mystical-energy {
-    width: 80% !important;
-    height: 80% !important;
-    filter: blur(15px); /* Reduced blur for performance */
-    animation: energyPulse 6s infinite ease-in-out; /* Slower pulse to save battery */
-}
-
-/* Optimize animation for mobile GPUs */
-@keyframes energyPulse {
-    0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.3; }
-    50% { transform: translate(-50%, -50%) scale(1.1); opacity: 0.6; }
+    width: 100% !important; /* Contained to the wrapper */
+    height: 100% !important;
+    filter: blur(10px) !important; /* Lower blur = better mobile performance */
+    pointer-events: none;
 }
 
 /* ============================================================
-   SECTION 7: BATTLE TERMINAL (Mobile Optimized)
+   SECTION 8: BATTLE TERMINAL (Mobile Optimized)
 ============================================================ */
 
 .battle-stats-table {
-    width: 100%;
-    display: block; /* Allows the table to be scrollable */
-    overflow-x: auto; /* Enables horizontal swipe for long data */
+    width: 100% !important;
+    display: block !important; 
+    /* THE STABILITY FIX: Force horizontal swiping inside the table only */
+    overflow-x: auto !important; 
+    overflow-y: hidden;
     -webkit-overflow-scrolling: touch;
-    white-space: nowrap; /* Prevents text from wrapping into weird shapes */
-    border-radius: 4px;
+    /* Prevents the table from "stretching" the phone's width */
+    max-width: 100vw; 
+    background: rgba(10, 10, 10, 0.9) !important;
+    border: 1px solid rgba(212, 175, 55, 0.2);
 }
 
 .battle-stats-table th {
-    padding: 10px; /* Tighter padding for mobile screens */
-    font-size: 0.7rem; /* Smaller headers */
+    padding: 8px !important;
+    font-size: 0.65rem !important; /* Scaled down for high-density mobile screens */
+    letter-spacing: 1px;
 }
 
 .battle-stats-table td {
-    padding: 10px;
-    font-size: 0.85rem;
+    padding: 8px !important;
+    font-size: 0.8rem !important;
+    color: #f1e0ac;
 }
 
-/* --- THE LOGS (Readability Fix) --- */
+/* --- THE LOGS (Screen Space Preservation) --- */
 .log-entry {
-    margin-bottom: 4px;
-    font-size: 0.85rem; /* Slightly smaller for phone reading */
-    line-height: 1.3;
+    margin-bottom: 3px !important;
+    font-size: 0.8rem !important;
+    line-height: 1.2 !important;
+    padding-left: 5px;
+    border-left: 2px solid var(--accent);
 }
 
 .table-spacer {
-    width: 20px; /* Reduced gap from 60px to save screen real estate */
+    width: 10px !important; /* Minimal gap to save horizontal space */
 }
 
-/* --- UNIT LISTS --- */
+/* --- UNIT LISTS (Touch-Target Fix) --- */
 #sf-list li {
-    padding: 12px; /* Taller for easier finger-scrolling */
-    font-size: 0.85rem;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
+    padding: 10px 15px !important;
+    font-size: 0.8rem !important;
+    background: rgba(255, 255, 255, 0.03);
+    margin-bottom: 2px;
 }
 
 /* ============================================================
-   SECTION 8: WORLD INTERACTIONS (Mobile Optimized)
+   SECTION 9: WORLD INTERACTIONS (Mobile Optimized)
 ============================================================ */
 
-.zoom-text {
-    position: fixed;
-    top: 45%; /* Slightly higher than center to accommodate the keyboard/HUD */
-    left: 50%;
-    transform: translate(-50%, -50%) scale(0.6); /* Smaller base scale */
-    font-size: 2rem; /* Scaled down from 3rem */
-    color: var(--accent);
-    text-shadow: 0 0 15px rgba(212, 175, 55, 0.8);
-    z-index: 9999;
-}
-
-@keyframes zoomInText {
-    0% { transform: translate(-50%, -50%) scale(0.2); opacity: 0; }
-    50% { transform: translate(-50%, -50%) scale(1.2); opacity: 1; }
-    100% { transform: translate(-50%, -50%) scale(3); opacity: 0; visibility: hidden; }
-}
-
-.action-btn:active {
-    transform: scale(0.96); /* More pronounced "press" for tactile mobile feel */
-    filter: brightness(1.2);
-}
-
-.page {
-    padding: var(--safe-zone); /* Use the standard 15px mobile padding */
-    width: 100vw;
-    box-sizing: border-box;
-}
-
-/* --- THE MOBILE AUDIO ANCHOR (Touch-Target Fix) --- */
-.audio-toggle-container {
-    position: fixed !important;
-    bottom: 25px !important;
-    left: 25px !important;
-    z-index: 200001;
-    background: rgba(0, 0, 0, 0.8) !important; /* Higher opacity for mobile visibility */
-    border: 1px solid var(--accent);
-    width: 48px !important; /* Scaled up for "Fat Finger" accessibility */
-    height: 48px !important;
-    padding: 0 !important; /* Center the icon precisely */
-}
-
-/* Ensure the SVG icons inside are centered and large enough to see */
-.icon-muted, .icon-unmuted {
-    width: 24px !important;
-    height: 24px !important;
-    background-size: contain;
-    background-repeat: no-repeat;
-    background-position: center;
-}
-
-/* --- Block 1: Cinematic Rendering Shields --- */
+/* --- Block 1: Cinematic Scaling --- */
 .class-card img, .slide, .quest-image {
-    image-rendering: auto; /* Standard for mobile displays */
-    transform: translateZ(0);
+    /* THE SIZE KILLER: Forces every large image to stay within its container */
+    max-width: 100% !important;
+    height: auto !important; 
+    image-rendering: auto;
+    /* Prevents flickering "white boxes" during animations */
     backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
 }
 
-/* --- Block 2: Statue Gallery Layout (Mobile Stack) --- */
+/* --- Block 2: Statue Gallery Layout (The Centering Fix) --- */
 .class-options-container {
     flex-direction: column !important;
     align-items: center;
-    gap: 20px;
+    gap: 15px !important;
+    padding: 20px 0;
+    width: 100vw;
+    overflow: hidden; /* Stops statues from peaking out the sides */
 }
 
 .class-card {
-    width: 80vw !important; /* Scale statues to fit mobile screen */
-    margin: 10px 0 !important; /* Remove negative desktop margins */
-    pointer-events: auto !important; /* Ensure they are tappable */
+    width: 75vw !important; /* Slightly smaller to prevent edge-clipping */
+    margin: 0 auto !important; 
+    z-index: 10;
+    /* Clean tap targets for mobile fingers */
+    padding: 10px;
 }
 
-/* --- Block 3: Side Info Panel Content --- */
-.info-content {
-    padding: 20px !important;
-    justify-content: flex-start;
-}
-
-.info-content h2 {
-    font-size: 1.5rem !important; /* Scaled down from 2.2rem */
-}
-
-.panel-confirm-btn {
-    margin-bottom: 40px !important; /* Bring button up from bottom edge */
-    width: 100%;
-}
-
-/* --- Block 5 & 6: Unified Panel & Detail Styling --- */
+/* --- Block 5 & 6: Unified Panel & Detail Styling (The "Wall" Fix) --- */
 .updates-panel, .full-page-panel, .detail-card {
-    width: 92vw !important;
-    left: 4vw !important;
-    right: 4vw !important;
-    top: 80px !important; /* Sit below the mobile nav icons */
-    padding: 20px !important;
-    max-height: 80vh !important;
+    position: fixed !important;
+    width: 90vw !important;
+    left: 5vw !important;
+    right: 5vw !important;
+    top: 50% !important;
+    transform: translateY(-50%) !important; /* Center vertically on screen */
+    background: rgba(10, 10, 10, 0.98) !important; /* Solid black to block white boxes */
+    border: 2px solid var(--accent);
+    z-index: 300000 !important;
+    /* Ensure the "wall" doesn't grow too tall for the phone */
+    max-height: 85vh !important;
+    overflow-y: auto !important;
 }
 
-#chronicle-detail-title {
-    font-size: 1.4rem !important;
-}
-
-/* --- Block 7: Registration & Recovery (Touch Fix) --- */
+/* --- Block 7: Registration (Touch Clarity) --- */
 .registration-card {
-    width: 95vw !important;
-    padding: 20px !important; /* Reduced from 50px to save space */
+    width: 92vw !important;
+    padding: 20px !important;
+    box-sizing: border-box;
 }
 
 .registration-card .img-btn {
-    width: 180px !important; /* Larger touch area */
-    height: 55px !important;
-    font-size: 0.8rem !important;
+    width: 190px !important;
+    height: 52px !important;
+    margin: 10px auto !important;
 }
 
+/* THE FORGOT LINK (Hitbox Expansion) */
 .forgot-link-container {
-    z-index: 200050 !important; /* Ensure it stays above the portal glass */
-    padding: 15px; /* Bigger tap target */
-}
-
-.forgot-link {
-    font-size: 0.9rem !important; /* Easier to read on small screens */
+    width: 100% !important;
+    display: flex !important;
+    justify-content: center !important;
+    padding: 15px !important;
+    margin-top: 10px !important;
 }
 
 /* ============================================================
    SECTION 10: PRECISE ALIGNMENT CONTROLS (Mobile Optimized)
 ============================================================ */
 
-/* --- Class Selection Centering --- */
+/* --- Class Selection Centering (Overlap & Size Fix) --- */
 #card-battlemaster, #card-archmage {
-    transform-origin: center center !important; /* Reset from side-origin for mobile stacking */
-    top: 0 !important; /* Remove vertical offsets so they align in the column */
-    margin: 15px 0 !important;
+    transform-origin: center center !important;
+    position: relative !important; /* Force out of absolute positioning */
+    top: 0 !important; 
+    left: 0 !important;
+    margin: 20px auto !important; /* Forces vertical stacking and centering */
+    width: 80vw !important; /* Strictly controls the image size */
+    height: auto !important;
 }
 
 /* --- Quest Plaque Nudges (Mobile Scaling) --- */
 #quest-market .quest-plaque, 
-#quest-escort .quest-plaque,
+#quest-escort .quest-plaque, 
 #quest-border .quest-plaque {
-    bottom: 10% !important; /* Uniform bottom alignment for mobile cards */
-    font-size: 0.8rem;
+    bottom: 8% !important; /* Standardized for mobile aspect ratios */
+    font-size: 0.75rem !important;
+    width: 100% !important;
+    text-align: center;
 }
 
 #quest-border {
-    top: 0 !important; /* Remove the -7px PC leveler */
+    top: 0 !important; 
+    position: relative !important;
 }
 
 /* --- Battlemaster Crest Scaling --- */
 #info-battlemaster .class-crest {
-    width: 80% !important; /* Scaled from fixed 350px */
-    max-width: 280px;
-    margin-bottom: 15px;
+    width: 70% !important; 
+    max-width: 250px !important;
+    height: auto !important;
+    margin: 0 auto 15px auto !important;
 }
 
 /* --- Block 2: Recovery Link Shield Breaker (Touch Mastery) --- */
 .forgot-link-container {
-    pointer-events: auto !important; 
+    pointer-events: auto !important;
     position: relative !important;
-    z-index: 200050 !important; 
+    z-index: 200050 !important;
     display: flex !important;
     justify-content: center !important;
     width: 100% !important;
-    padding: 10px 0; /* Creates a larger vertical tap buffer */
-    margin-top: 20px !important; /* Pushes it away from the Login buttons */
+    /* Pushes away from buttons to prevent "Fat Finger" accidental logins */
+    margin-top: 30px !important; 
+    padding: 10px 0 !important;
 }
 
 .forgot-link {
@@ -807,6 +661,8 @@ body {
     cursor: pointer !important;
     position: relative !important;
     z-index: 200060 !important;
-    font-size: 0.85rem !important; /* Ensure it's legible without zooming */
-    padding: 5px 10px; /* Expands the clickable "hitbox" around the text */
+    font-size: 0.85rem !important;
+    padding: 12px !important; /* Maximum tap area for fingers */
+    color: var(--accent) !important;
+    text-decoration: underline;
 }
