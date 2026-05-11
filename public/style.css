@@ -1448,7 +1448,7 @@ body {
     transform: scale(1.05) !important;
 }
 
-/* --- SECTION 9, Block 7: Forgot Password Styling --- */
+/* --- Block 7: Forgot Password Styling --- */
 .forgot-link-container {
     width: 100%;
     display: flex;
@@ -1468,6 +1468,12 @@ body {
 
 .forgot-link:hover {
     color: #d4af37; /* Royal gold on hover */
+}
+
+#forgot-modal .img-btn:active {
+    transform: scale(0.95) !important; /* The "Squeeze" effect */
+    filter: brightness(0.8) !important; /* Darkens slightly on press */
+    box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.5);
 }
 
 /* ============================================================

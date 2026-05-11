@@ -320,6 +320,39 @@ function submitRegistration() {
         return;
     }
 
+function submitForgot() {
+    const email = document.getElementById('forgot-email').value;
+
+    if (!email || !email.includes('@')) {
+        alert("The Royal Guard requires a valid email address to locate your records.");
+        return;
+    }
+
+    // Disable the button temporarily to prevent double-clicks
+    const btn = event.target;
+    btn.disabled = true;
+    btn.innerText = "Dispatching...";
+
+    fetch('/request-reset', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: email })
+    })
+    .then(res => res.json())
+    .then(data => {
+        alert("If that email is in our ledger, a Reset Scroll is being dispatched via Resend.");
+        closeForgot();
+    })
+    .catch(err => {
+        console.error("Nexus Recovery Error:", err);
+        alert("The connection to the Nexus is unstable. Try again later.");
+    })
+    .finally(() => {
+        btn.disabled = false;
+        btn.innerText = "Request Reset";
+    });
+}
+
     // 2. NEXUS SERVER HANDSHAKE
     // This sends the data to your Node.js server to trigger the email relay
     fetch('/register', {
