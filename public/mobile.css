@@ -1,37 +1,46 @@
-* style.css - Royal Armies
+* mobile.css - Royal Armies
 * The AVI (AETHER Visual Interface) Framework
 * A sub-system of the RAGE Game Engine
 */
 
-/* ============================================================
-   AVI SECTION A: THE AETHER CORE (Global Variables)
-   ============================================================ */
-
 :root {
-    --bg: #1a1a1a;
-    --card: #2d2d2d;
+    /* Existing Colors */
+    --bg: #0a0a0a; /* Slightly deeper black for better mobile OLED contrast */
+    --card: #1f1f1f;
     --text: #e0e0e0;
     --accent: #d4af37; /* Aether Gold */
     --danger: #8b0000;
     --success: #228b22;
     --border: #444;
+
+    /* --- NEW MOBILE UTILITIES --- */
+    --touch-target: 44px; /* Minimum size for finger-friendly buttons */
+    --safe-zone: 15px;    /* Prevents UI from hitting the edge of the phone */
+    --blur-strength: 8px; /* Standardized blur for mobile performance */
 }
 
 /* ============================================================
-   SECTION 0: GLOBAL RESET & ROOT
-   ============================================================ */
+   SECTION 0: GLOBAL RESET & ROOT (Mobile Optimized)
+============================================================ */
 body {
     background: var(--bg);
     color: var(--text);
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     margin: 0;
     padding: 0;
+    /* --- MOBILE STABILITY --- */
+    overflow-x: hidden; /* Prevents the screen from sliding horizontally */
+    width: 100vw;
+    -webkit-font-smoothing: antialiased; /* Crisper text on mobile Safari/Chrome */
 }
 
 .page {
-    padding: 20px;
+    padding: var(--safe-zone); /* Uses the 15px safe zone from the Core */
     max-width: 1200px;
     margin: 0 auto;
+    /* --- FLUID WIDTH --- */
+    width: 100%;
+    box-sizing: border-box; /* Ensures padding doesn't push width over 100% */
 }
 
 .page-title {
@@ -39,7 +48,14 @@ body {
     text-transform: uppercase;
     letter-spacing: 2px;
     text-align: center;
+    /* --- RESPONSIVE TYPOGRAPHY --- */
+    font-size: 1.5rem; /* Slightly smaller for mobile headers */
+    margin-top: 10px;
 }
+
+/* ============================================================
+   SECTION 1: NARRATIVE & INTERFACE (Mobile Optimized)
+============================================================ */
 
 /* --- 1. THE NARRATIVE SYSTEM (Stacked for Phones) --- */
 .narrative-container {
@@ -127,6 +143,10 @@ body {
     opacity: 1;
     pointer-events: auto;
 }
+
+/* ============================================================
+   SECTION 2: CORE GAME & OVERLAY CONTAINERS (Mobile Optimized)
+============================================================ */
 
 /* --- Block 1: The World Stage --- */
 #game-container {
@@ -229,6 +249,10 @@ body {
     height: 50px;
 }
 
+/* ============================================================
+   PORTAL & KINETIC ENGINE (Mobile Optimized)
+============================================================ */
+
 /* --- Block 5: The Master Anchor & Stone Portal --- */
 .portal-master-anchor {
     position: fixed !important;
@@ -309,6 +333,10 @@ body {
     text-align: center;
 }
 
+/* ============================================================
+   SECTION 3: INTERACTIVE ARSENAL (Mobile Optimized)
+============================================================ */
+
 /* --- 1. THE AURORA COMMANDER INPUTS --- */
 .login-input {
     display: block !important;
@@ -370,6 +398,10 @@ body {
     font-size: 0.8rem;
     color: var(--accent);
 }
+
+/* ============================================================
+   SECTION 4: THE COMMAND HUD (Mobile Optimized)
+============================================================ */
 
 /* THE MASTER OVERLAY */
 #roadmap-modal.modal-overlay, 
@@ -434,6 +466,10 @@ body {
     font-size: 0.9rem;
 }
 
+/* ============================================================
+   SECTION 5: THE QUESTING WORLD (Mobile Optimized)
+============================================================ */
+
 .quest-grid {
     display: flex;
     flex-direction: column; /* Stack cards vertically for vertical scrolling */
@@ -483,6 +519,10 @@ body {
     font-size: 1rem;
     margin-top: 10px;
 }
+
+/* ============================================================
+   SECTION 6: NAVIGATION ENHANCEMENTS (Mobile Optimized)
+============================================================ */
 
 .top-nav {
     background-image: url('images/stonewallbg.png') !important;
@@ -553,6 +593,10 @@ body {
     50% { transform: translate(-50%, -50%) scale(1.1); opacity: 0.6; }
 }
 
+/* ============================================================
+   SECTION 7: BATTLE TERMINAL (Mobile Optimized)
+============================================================ */
+
 .battle-stats-table {
     width: 100%;
     display: block; /* Allows the table to be scrollable */
@@ -592,6 +636,9 @@ body {
     align-items: center;
 }
 
+/* ============================================================
+   SECTION 8: WORLD INTERACTIONS (Mobile Optimized)
+============================================================ */
 
 .zoom-text {
     position: fixed;
@@ -642,10 +689,6 @@ body {
     background-repeat: no-repeat;
     background-position: center;
 }
-
-/* ============================================================
-   SECTION 9: THE RENDERING SHIELD (Optimization)
-   ============================================================ */
 
 /* --- Block 1: Cinematic Rendering Shields --- */
 .class-card img, .slide, .quest-image {
@@ -716,6 +759,10 @@ body {
 .forgot-link {
     font-size: 0.9rem !important; /* Easier to read on small screens */
 }
+
+/* ============================================================
+   SECTION 10: PRECISE ALIGNMENT CONTROLS (Mobile Optimized)
+============================================================ */
 
 /* --- Class Selection Centering --- */
 #card-battlemaster, #card-archmage {
