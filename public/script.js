@@ -323,7 +323,7 @@ function submitRegistration() {
 function submitForgot() {
     const emailInput = document.getElementById('forgot-email');
     const email = emailInput.value;
-    const btn = event.target; // Grabs the button you just clicked
+    const btn = e.target; // Grabs the button you just clicked
 
     if (!email || !email.includes('@')) {
         alert("The Royal Guard requires a valid email address.");
