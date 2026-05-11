@@ -251,7 +251,7 @@ function toggleRoadmap(show, event) {
     }
 }
 
-/* --- Block 6: Redirects & Modals (Registration System) --- */
+/* --- Block 6: Redirects & Modals (Registration & Recovery) --- */
 
 function enterMainGame() {
     if (typeof playLoginMusic === "function") { playLoginMusic(); }
@@ -264,12 +264,12 @@ function enterMainGame() {
 function openDiscord() {
     const discordIcon = document.getElementById('nav-discord');
     if (discordIcon && discordIcon.classList.contains('pulse-discord')) {
-        window.open('https://discord.gg', '_blank'); // Update with your permanent link
+        window.open('https://discord.gg', '_blank');
     }
 }
 
 function handleRegister() {
-    closeAllActiveUI(); 
+    closeAllActiveUI();
     const modal = document.getElementById('register-modal');
     if (modal) {
         modal.style.display = 'flex';
@@ -285,8 +285,13 @@ function closeRegister() {
     }
 }
 
-function handleForgot() {
-    closeAllActiveUI();
+function handleForgot(e) {
+    if (e) e.preventDefault();
+    try {
+        if (typeof closeAllActiveUI === "function") closeAllActiveUI();
+    } catch (err) {
+        console.warn("NEXUS: UI Cleanup bypassed.");
+    }
     const modal = document.getElementById('forgot-modal');
     if (modal) {
         modal.style.display = 'flex';
@@ -303,34 +308,48 @@ function closeForgot() {
 }
 
 /* --- THE SUBMISSION PROTOCOL (NEXUS Handshake Enabled) --- */
+
 function submitRegistration() {
     const user = document.getElementById('reg-username').value;
     const email = document.getElementById('reg-email').value;
     const pass = document.getElementById('reg-password').value;
     const confirm = document.getElementById('reg-confirm').value;
 
-    // 1. Client-Side Validation
     if (!user || !email || !pass || !confirm) {
         alert("The Gatekeepers require all fields to be filled, Commander.");
         return;
     }
-
     if (pass !== confirm) {
         alert("Your passwords do not match. Re-verify your credentials.");
         return;
     }
 
-function submitForgot() {
+    fetch('/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: user, email: email, password: pass })
+    })
+    .then(response => {
+        if (response.ok) {
+            alert("Application submitted. Check your email for the confirmation scroll.");
+            closeRegister();
+        } else {
+            alert("The Nexus connection is unstable.");
+        }
+    })
+    .catch(err => console.error("Nexus Link Error:", err));
+} // <--- Added this to close submitRegistration properly
+
+function submitForgot(e) {
     const emailInput = document.getElementById('forgot-email');
-    const email = emailInput.value;
-    const btn = e.target; // Grabs the button you just clicked
+    const email = emailInput ? emailInput.value : '';
+    const btn = e ? e.target : event.target;
 
     if (!email || !email.includes('@')) {
         alert("The Royal Guard requires a valid email address.");
         return;
     }
 
-    // 1. VISUAL LOCK: Change text and disable to show it's working
     const originalText = btn.innerText;
     btn.disabled = true;
     btn.innerText = "Dispatching...";
@@ -341,21 +360,18 @@ function submitForgot() {
         body: JSON.stringify({ email: email })
     })
     .then(response => {
-        // 2. CRITICAL CHECK: Fetch doesn't "fail" on 404/500 errors automatically
         if (!response.ok) throw new Error("Server Rejected Connection");
         return response.json();
     })
     .then(data => {
-        // 3. SUCCESS ALERT: This confirms the email was sent
-        alert("A one-time password link will be sent to the e-mail you provided if it is in our records.");
-        closeForgot(); // Closes the modal
+        alert("A one-time password link will be sent to the e-mail provided if it is in our records.");
+        closeForgot();
     })
     .catch(err => {
         console.error("Nexus Link Error:", err);
         alert("Transmission Failed: The Nexus Server is unresponsive.");
     })
     .finally(() => {
-        // 4. RESTORE: Put the button back to normal
         btn.disabled = false;
         btn.innerText = originalText;
     });
