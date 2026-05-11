@@ -352,7 +352,7 @@ function submitForgot(e) {
 
     const originalText = btn.innerText;
     btn.disabled = true;
-    btn.innerText = "Dispatching...";
+    btn.innerText = "Sending...";
 
     fetch('/request-reset', {
         method: 'POST',

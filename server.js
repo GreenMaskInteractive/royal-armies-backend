@@ -96,72 +96,91 @@ const sendWelcomeEmail = async (playerEmail, playerName, token) => {
 // 1. The Registration Endpoint
 app.post('/register', async (req, res) => {
     const { username, email, password } = req.body;
-
-    // A. LEDGER SEARCH: Check if this email is already registered
     const existingCommander = db.get('commanders').find({ email }).value();
+
     if (existingCommander) {
         console.log(`[NEXUS] Registration Denied: ${email} already exists.`);
         return res.status(400).json({ 
             status: "error", 
-            message: "This E-Mail is already registered. If you have any questions or concerns about the account associated with this e-mail, contact accountsdept@royalarmies.com!" 
+            message: "This E-Mail is already registered. Contact accountsdept@royalarmies.com!" 
         });
     }
 
     try {
-        // 🛡️ THE SHIELD: Hash the password before saving
         const saltRounds = 10;
         const hashedPassword = await bcrypt.hash(password, saltRounds);
-
-        // B. GENERATE TOKEN
         const token = crypto.randomBytes(16).toString('hex');
         console.log(`[NEXUS] Handshake Received: Creating Token for ${username}`);
 
-        // C. DISPATCH EMAIL
         await sendWelcomeEmail(email, username, token);
 
-        // D. SAVE TO LEDGER: Record the new Commander with the SECURE password
         db.get('commanders').push({ 
-            username, 
-            email, 
-            password: hashedPassword, // <--- Now saving the scrambled version!
-            token,
-            verified: false,
-            joinedAt: new Date().toISOString()
+            username, email, password: hashedPassword, token, verified: false, joinedAt: new Date().toISOString() 
         }).write();
 
         console.log(`[NEXUS] Success: ${username} added to the Ledger.`);
         res.status(200).json({ status: "logged" });
-
     } catch (error) {
         console.error("❌ NEXUS Critical Error:", error);
         res.status(500).json({ status: "error", message: "Post Office failure." });
     }
-});
+}); // <--- REGISTER ENDS HERE
 
-// 2. The Verification Landing Pad
+// 2. Password Reset Logic
+app.post('/request-reset', async (req, res) => {
+    const { email } = req.body;
+    console.log(`[NEXUS] Recovery Handshake: Request for ${email}`);
+    const commander = db.get('commanders').find({ email }).value();
+
+    if (!commander) {
+        console.log("⚠️ Recovery Denied: Email not in Ledger.");
+        return res.status(200).json({ status: "success" }); // Success anyway for security
+    }
+
+    const resetToken = crypto.randomBytes(16).toString('hex');
+    db.get('commanders').find({ email }).assign({ resetToken }).write();
+
+    try {
+        const resetLink = `https://royalarmies.com/reset-password?token=${resetToken}`;
+        await resend.emails.send({
+            from: 'Royal Armies <noreply@royalarmies.com>',
+            to: [email],
+            subject: '📜 Lost Command: Password Reset Request',
+            html: `
+                <div style="background:#000; color:#d4af37; padding:40px; text-align:center; border:2px solid #d4af37; font-family: Georgia, serif;">
+                    <h1>COMMANDER ${commander.username.toUpperCase()}</h1>
+                    <p style="font-style: italic;">A request to reset your access keys has been logged in the Ledger.</p>
+                    <div style="margin:30px 0;">
+                        <a href="${resetLink}" style="background:#d4af37; color:#000; padding:15px 30px; text-decoration:none; font-weight:bold; text-transform:uppercase; display:inline-block;">
+                            Reset Password
+                        </a>
+                    </div>
+                </div>`
+        });
+        res.status(200).json({ status: "success" });
+    } catch (err) {
+        res.status(500).json({ status: "error" });
+    }
+}); // <--- RESET ENDS HERE
+
+// 3. The Verification Landing Pad
 app.get('/verify', (req, res) => {
     const token = req.query.token;
-    
     const commander = db.get('commanders').find({ token }).value();
-
     if (commander) {
         db.get('commanders').find({ token }).assign({ verified: true }).write();
-        console.log(`[NEXUS] Verified: ${commander.username} has confirmed their E-Mail.`);
-
         res.send(`
             <body style="background: #000; color: #d4af37; font-family: Georgia, serif; text-align: center; padding: 100px 20px; border: 10px solid #1a1a1a; height: 100vh; margin: 0;">
-                <h1 style="font-size: 3rem; text-shadow: 0 0 20px #d4af37;">EMAIL VERIFIED</h1>
-                <p style="font-size: 1.2rem; font-style: italic; color: #f1e0ac;">Thank You for verifying your E-Mail, ${commander.username}.</p>
-                <br>
-                <a href="https://royalarmies.com" style="color: #fff; text-decoration: underline; font-size: 1rem;">Return to Royal Armies</a>
-            </body>
-        `);
+                <h1 style="font-size: 3rem;">EMAIL VERIFIED</h1>
+                <p>Thank You for verifying your E-Mail, ${commander.username}.</p>
+                <a href="https://royalarmies.com" style="color: #fff;">Return to Royal Armies</a>
+            </body>`);
     } else {
-        res.status(400).send("<h1>❌ INVALID TOKEN</h1><p>This verification link has expired or is incorrect.</p>");
+        res.status(400).send("<h1>❌ INVALID TOKEN</h1>");
     }
 });
 
-// 3. The Final Portal (Home Route)
+// 4. The Final Portal
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
