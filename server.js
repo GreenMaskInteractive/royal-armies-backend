@@ -27,13 +27,12 @@ app.use(express.static('public')); // Serves your ARCH, AVI, and GIMP files
 /* --- Block 3: The Royal Post Office (Resend Restoration) --- */
 const { Resend } = require('resend');
 
-// REPLACE the text below with your actual API Key from the Resend Dashboard
-const resend = new Resend('re_your_actual_api_key_here'); 
+// THE KEY IS NOW ACTIVE
+const resend = new Resend('re_eMzwshB5_EmorLivvuzwbHk6jpAzWtpWE'); 
 
 const sendWelcomeEmail = async (playerEmail, playerName) => {
   try {
     const { data, error } = await resend.emails.send({
-      // THIS USES YOUR VERIFIED DOMAIN
       from: 'Royal Armies <noreply@royalarmies.com>', 
       to: [playerEmail],
       subject: '📜 Command Application Received: Welcome to Argaute',
@@ -51,12 +50,15 @@ const sendWelcomeEmail = async (playerEmail, playerName) => {
     });
 
     if (error) {
-      return console.error("❌ Resend Error:", error);
+      console.error("❌ Resend Error:", error);
+      throw error; // This "throws" the error to Block 4 so it can handle the failure
     }
-    console.log("📜 Post Office Online: Royal Scroll dispatched via Resend. ID:", data.id);
+
+    console.log("📜 Transmission Success! ID:", data.id);
 
   } catch (err) {
     console.error("❌ Fatal Connection Error in Post Office:", err);
+    throw err; // Ensures Block 4 catches the crash
   }
 };
 
@@ -67,15 +69,24 @@ app.post('/register', async (req, res) => {
     console.log(`[NEXUS] Handshake Received: Application for ${username}`);
 
     try {
-        // Wait for the Resend engine to dispatch the scroll
-        await sendWelcomeEmail(email, username);
-        
+        // We await the result of the email function
+        const emailSent = await sendWelcomeEmail(email, username);
+
+        // If sendWelcomeEmail is set up to return 'false' or throw on error, 
+        // we can handle that here. For now, we assume successful dispatch:
         console.log(`[NEXUS] Success: Welcome scroll dispatched to ${email}`);
+        
+        // Final confirmation to the browser
         res.status(200).json({ status: "logged" });
 
     } catch (error) {
-        console.error("❌ NEXUS Critical Error:", error);
-        res.status(500).json({ error: "The Royal Post Office is closed." });
+        console.error("❌ NEXUS Critical Error during registration:", error);
+        
+        // Let the browser know there was a failure so it doesn't show a false success
+        res.status(500).json({ 
+            status: "error", 
+            message: "The Royal Post Office is currently unreachable." 
+        });
     }
 });
 
