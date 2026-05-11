@@ -41,17 +41,26 @@ const sendWelcomeEmail = async (playerEmail, playerName, token) => { // Added 't
         const { data, error } = await resend.emails.send({
             from: 'Royal Armies <noreply@royalarmies.com>',
             to: [playerEmail],
-            subject: '📜 Verify Your Command: Royal Armies',
+            subject: '📜 Email Verification: Royal Armies',
             html: `
+
                 <div style="font-family: 'Georgia', serif; background-color: #000; color: #f1e0ac; padding: 40px; border: 2px solid #d4af37; text-align: center;">
+
+<!-- Centered & Resized Logo -->
+<div style="margin-bottom: 30px; text-align: center;">
+    <img src="https://your-public-url.com" 
+         alt="Royal Armies Logo" 
+         style="width: 350px; max-width: 90%; height: auto; display: block; margin: 0 auto;">
+</div>
+
                     <h1 style="color: #d4af37; text-align: center;">WELCOME, COMMANDER ${playerName.toUpperCase()}</h1>
                     <p style="font-size: 1.1rem; line-height: 1.6; font-style: italic;">
-                        Your application for the Royal Armies has been logged. You must verify your command to proceed to the front lines.
+                        Your registration for the Royal Armies MMORTS Browser-Based Strategy Game has been logged. Please proceed to verify your e-mail by clicking the link below.
                     </p>
                     
                     <div style="margin: 30px 0;">
                         <a href="${verificationLink}" style="background-color: #d4af37; color: #000; padding: 15px 30px; text-decoration: none; font-weight: bold; border-radius: 4px; text-transform: uppercase; display: inline-block;">
-                            Verify Command
+                            Verify E-Mail
                         </a>
                     </div>
 
