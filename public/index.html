@@ -158,22 +158,24 @@
     </div>
 </div>
 
-<!-- 3. THE UNIFIED AUTH MODAL (Registration) -->
-<div id="register-modal" class="modal-overlay" style="display: none; opacity: 0;"> 
-    <div class="modal-content"> 
-        <span class="close-modal" onclick="closeRegister()">&times;</span> 
-        <h2 class="modal-title">Create New Account</h2> 
-        <div class="register-form"> 
-            <div class="reg-group"><label>Preferred Username*</label><input type="text" id="reg-username" class="reg-input"></div> 
-            <div class="reg-group"><label>Password*</label><input type="password" id="reg-password" class="reg-input"></div> 
-            <div class="reg-group"><label>Email Address</label><input type="email" id="reg-email" class="reg-input"></div> 
-            <div class="modal-actions"> 
-                <img src="images/login_btn.png" class="img-btn" onclick="toggleToLogin()" alt="Back to Login" style="width: 140px; margin-right: 10px;"> 
-                <!-- This button is your main trigger -->
-                <img src="images/register_btn.png" class="img-btn" onclick="submitRegistration()" alt="Register"> 
-            </div> 
-        </div> 
-    </div> 
+<!-- 3. THE UNIFIED AUTH MODAL (Registration) --> 
+<div id="register-modal" class="modal-overlay" style="display: none; opacity: 0;">
+    <div class="modal-content">
+        <span class="close-modal" onclick="closeRegister()">&times;</span>
+        <h2 class="modal-title">Create New Account</h2>
+        <div class="register-form">
+            <div class="reg-group"><label>Preferred Username*</label><input type="text" id="reg-username" class="reg-input"></div>
+            <div class="reg-group"><label>Email Address*</label><input type="email" id="reg-email" class="reg-input"></div>
+            <div class="reg-group"><label>Password*</label><input type="password" id="reg-password" class="reg-input"></div>
+            <!-- Added the Confirmation Field -->
+            <div class="reg-group"><label>Confirm Password*</label><input type="password" id="reg-confirm" class="reg-input"></div>
+            
+<div class="modal-actions">
+    <button class="img-btn" onclick="submitRegistration()">Confirm</button>
+    <button class="img-btn" onclick="closeRegister()">Cancel</button>
+</div>
+        </div>
+    </div>
 </div>
 
 <!-- 4. THE ROADMAP POP-UP (Widescreen Full-Detail Version) -->

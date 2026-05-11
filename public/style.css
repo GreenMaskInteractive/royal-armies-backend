@@ -333,6 +333,91 @@ body {
     font-size: 1rem; 
 }
 
+/* --- Block 4: Unified Auth Modal Layout --- */
+.modal-content {
+    background: rgba(10, 10, 10, 0.98); 
+    border: 2px solid #d4af37; 
+    padding: 40px;
+    width: 450px;
+    max-width: 90%;
+    text-align: center;
+    box-shadow: 0 0 30px rgba(212, 175, 55, 0.2);
+    position: relative;
+    min-height: 520px; /* Increased to fit Confirm Password */
+}
+
+.reg-group {
+    margin-bottom: 15px;
+    text-align: left;
+}
+
+.reg-group label {
+    display: block;
+    color: #f1e0ac;
+    font-size: 0.8rem;
+    margin-bottom: 5px;
+    text-transform: uppercase;
+    font-family: 'Georgia', serif;
+}
+
+.reg-input {
+    width: 100%;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid #d4af37;
+    color: #fff;
+    padding: 10px;
+    font-family: 'Cinzel', serif;
+    outline: none;
+    box-sizing: border-box; 
+}
+
+.modal-actions {
+    display: flex !important;
+    flex-direction: row !important; /* Forces side-by-side */
+    justify-content: center;
+    gap: 15px;
+    margin-top: 30px;
+}
+
+.modal-actions .img-btn {
+    /* THE GOLDEN FRAME ASSET */
+    background-image: url('images/register_btn.png') !important;
+    background-size: 100% 100%;
+    background-color: transparent;
+    border: none;
+    
+    /* DIMENSIONS */
+    width: 160px;
+    height: 50px;
+    
+    /* HORIZONTAL TEXT STYLING */
+    color: #ffd700;
+    font-family: 'Cinzel', serif;
+    font-size: 0.85rem;
+    font-weight: bold;
+    text-transform: uppercase;
+    
+    /* CENTERING LOGIC */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: transform 0.2s ease, filter 0.2s ease;
+}
+
+.modal-actions .img-btn:hover {
+    filter: brightness(1.2);
+    transform: scale(1.05);
+}
+
+.modal-title {
+    color: #d4af37;
+    font-family: 'Cinzel', serif; /* Matching the game font */
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    margin-bottom: 25px;
+}
+
 /* --- Block 5: The Master Anchor & Stone Portal (Stability Lockdown) --- */
 
 .portal-master-anchor {
@@ -1315,21 +1400,52 @@ body {
     text-align: center;
 }
 
-/* --- Block 7: Registration UI Polish --- */
 .registration-card {
     width: 500px !important;
     padding: 50px !important;
 }
 
-.reg-form input::placeholder {
-    color: rgba(160, 196, 209, 0.4);
-    font-size: 0.9rem;
-}
-
-/* Ensure modal buttons don't inherit the -200px lift from the landing page */
+/* KILL THE OLD BUTTON TYPE & APPLY THE GOLDEN FRAME */
 .registration-card .img-btn {
+    /* 1. RESET: Wipe out default button borders and colors */
+    border: none !important;
+    outline: none !important;
+    background-color: transparent !important;
+    box-shadow: none !important;
+    appearance: none !important;
+
+    /* 2. THE ASSET: Apply the golden frame */
+    background-image: url('images/register_btn.png') !important;
+    background-size: 100% 100% !important;
+    background-repeat: no-repeat !important;
+
+    /* 3. SHAPE: Force correct dimensions */
+    width: 160px !important;
+    height: 50px !important;
+    margin: 0 !important;
+    padding: 0 !important;
     top: 0 !important;
     transform: none !important;
+    position: relative !important;
+
+    /* 4. TEXT: Centered and Horizontal */
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    color: #ffd700 !important;
+    font-family: 'Cinzel', serif !important;
+    font-size: 0.9rem !important;
+    font-weight: bold !important;
+    text-transform: uppercase !important;
+    text-shadow: 1px 1px 3px #000 !important;
+    white-space: nowrap !important;
+    cursor: pointer !important;
+}
+
+/* 5. HOVER EFFECT */
+.registration-card .img-btn:hover {
+    filter: brightness(1.2) !important;
+    transform: scale(1.05) !important;
 }
 
 /* ============================================================
