@@ -23,10 +23,6 @@ if (typeof groundRanks === 'undefined') {
     };
 }
 
-if (typeof unitDatabase === 'undefined') {
-    var unitDatabase = { "INFANTRY": {} };
-}
-
 let selectedClassId = null;
 let narrativeFinished = false; 
 
@@ -155,158 +151,215 @@ function toggleMute() {
    SECTION 2: AUTHENTICATION & LOGIN FLOW
    ============================================================ */
 
-// --- THE CHRONICLE ARCHIVES ---
+/* --- Block 1: The Chronicle Archives (Full Data Set) --- */
 const CHRONICLE_DATA = {
-    genesis: { title: "The Genesis Forge", details: "The birth of the project. Established the core Aether-Rage framework, the obsidian and gold visual theme, and the dynamic background slideshow engine." },
-    audio: { title: "Symphony of War", details: "Integrated the spatial audio engine featuring 'Stone and Water.' Developed custom sticky audio controls and mute logic." },
-    narrative: { title: "The Traveler's Guidance", details: "Built the Narrative System and the mysterious 'Retired Old Man' portrait interaction. Engineered the typing text effect." },
-    interface: { title: "Navigator & Roadmap", details: "Deployed the Widescreen Roadmap system (95vw) with Star Citizen-inspired 'Deep Dive' expansion logic." },
-    security: { title: "Nexus Gatekeeping", details: "Established the Secure Login Engine. Developed the Developer Override (Skeleton Key) bypass system for rapid testing." },
-    assets: { title: "GIMP Asset Integration", details: "A massive refinement phase. Merged logos and stone frames into single-load assets in GIMP to eliminate scaling lag." }
+    genesis: { title: "The Genesis Forge", details: "Established the core Aether-Rage framework. This includes the obsidian and gold visual theme, the dynamic background slideshow engine, and the initial server handshakes." },
+    audio: { title: "Symphony of War", details: "Integrated the spatial audio engine featuring 'Stone and Water.' Developed the custom sticky audio controls and the smooth cross-fade mute logic." },
+    narrative: { title: "The Traveler's Guidance", details: "Built the Narrative System and the mysterious 'Retired Old Man' portrait interaction. Engineered the typing text effect for immersive lore delivery." },
+    interface: { title: "Navigator & Roadmap", details: "Deployed the Widescreen Roadmap system (95vw) and developed the 'Hub Docking' logic to ensure panels align perfectly with navigator icons." },
+    security: { title: "Nexus Gatekeeping", details: "Established the Secure Login Engine. Developed the Developer Override (Skeleton Key) bypass system for rapid internal testing and legend-tier access." },
+    assets: { title: "GIMP Asset Integration", details: "A massive refinement phase. Merged logos and stone frames into high-performance single-load assets in GIMP to eliminate scaling lag and flickering." },
+    optimization: { title: "Engine Optimization", details: "Refined frame-timings and background transition smooth-scaling. Implemented the 'Absolute-Zero' centering fix for the Commander's Portal." },
+    networking: { title: "Nexus Socket Sync", details: "Developed the real-time synchronization between the client and the Nexus server to handle player state and global event notifications." },
+    roadmap_foundation: { title: "Phase 1: The Foundation", details: "Core architecture build-out. Focusing on Nexus login systems, high-resolution GIMP asset pipelines, and the cinematic landing portal currently active." },
+    roadmap_combat: { title: "Phase 2: Aether Combat Sync", details: "Implementing real-time hit detection and spell-casting animations. Synchronizing state between players within the Hall of Statues environment." },
+    roadmap_classes: { title: "Phase 3: Class Specialization", details: "Finalizing the Battlemaster and Archmage skill trees. Adding unique crest animations and specific ability loadouts for both legendary paths." },
+    roadmap_world: { title: "Phase 4: The Outer Realms", details: "Expanding the walkable map beyond the initial statues. Adding environmental audio triggers and multi-zone narrative checkpoints." },
+    roadmap_economy: { title: "Phase 5: Royal Trade & Economy", details: "Integrating gold-flow systems, vendor interactions, and the personal inventory vault for items acquired in the Outer Realms." },
+    roadmap_launch: { title: "Phase 6: Royal Ascension", details: "The final transition to a live environment. Includes community discord events, global player database deployment, and the grand opening of the gates." },
+    networking_nexus: { title: "Nexus Handshake", details: "Established the server-side communication link for the registration engine. Automated the 'Gatekeeper' email confirmation system for new Commanders." 
+    },
 };
 
-// --- 1. THE LOGIN ENGINE (Local Only - Pre-Release Mode) ---
+/* --- Block 2: The Master Close Protocol (The UI Sync) --- */
+function closeAllActiveUI(e) {
+    if (e && e.target) {
+        if (e.target.classList.contains('nav-icon') || e.target.closest('.updates-hub') || e.target.id === 'roadmap-trigger') {
+            return; 
+        }
+    }
+    const updates = document.getElementById('updates-panel');
+    if (updates) updates.style.display = 'none';
+    const roadmap = document.getElementById('roadmap-modal');
+    if (roadmap) { roadmap.style.display = 'none'; roadmap.style.opacity = '0'; }
+    const detail = document.getElementById('chronicle-detail-modal');
+    if (detail) { detail.style.display = 'none'; detail.style.opacity = '0'; }
+    const register = document.getElementById('register-modal');
+    if (register) register.style.display = 'none';
+}
+
+/* --- Block 3: The Login Engine --- */
 async function handleLogin() {
     const userVal = document.getElementById('login-username').value;
     const passVal = document.getElementById('login-password').value;
-    
-    // Admin Credentials Check
     const isAdmin = (userVal === "IAmBeyondLegend" && passVal === "Tor1pedo01!");
-
-    // Visual loading state
+    const authButtons = document.getElementById('auth-buttons');
+    if (authButtons) { authButtons.style.display = 'none'; authButtons.style.opacity = '0'; }
     const loader = document.getElementById('auth-loading');
     if (loader) loader.style.display = 'block';
-
-    // SUCCESS SIMULATION: Processing locally
     setTimeout(() => {
         if (userVal !== "" && passVal !== "") {
-            // Song does NOT swap yet. Transition to message begins.
             initiatePostLoginSequence(isAdmin);
         } else {
             alert("Please provide credentials to the Gatekeepers.");
             if (loader) loader.style.display = 'none';
+            if (authButtons) { authButtons.style.display = 'flex'; authButtons.style.opacity = '1'; }
         }
     }, 800);
 }
 
-// --- 2. POST-LOGIN TRANSITION (Fanbase Message) ---
+/* --- Block 4: Post-Login Transition --- */
 function initiatePostLoginSequence(isAdmin) {
     const loginWrapper = document.getElementById('login-content-wrapper');
     const authButtons = document.getElementById('auth-buttons');
     const messageBox = document.getElementById('post-login-message');
     const discordIcon = document.getElementById('nav-discord');
     const bypassBtn = document.getElementById('admin-bypass-btn');
-
-    // 2A. Fade out Login UI
     if(loginWrapper) loginWrapper.style.opacity = '0';
     if(authButtons) authButtons.style.opacity = '0';
-
     setTimeout(() => {
         if(loginWrapper) loginWrapper.style.display = 'none';
         if(authButtons) authButtons.style.display = 'none';
-
-        // 2B. Reveal the Pre-Release Message
-        if(messageBox) {
-            messageBox.style.display = 'block';
-            messageBox.offsetHeight; // Force browser reflow
-            messageBox.style.opacity = '1';
-        }
-
-        // 2C. Pulse the Discord Icon for attention
-        if(discordIcon) {
-            discordIcon.classList.remove('disabled');
-            discordIcon.classList.add('pulse-discord');
-        }
-
-        // 2D. Show Admin Bypass Button if credentials match
-        if (isAdmin && bypassBtn) {
-            bypassBtn.style.display = 'block';
-        }
+        if(messageBox) { messageBox.style.display = 'block'; messageBox.offsetHeight; messageBox.style.opacity = '1'; }
+        if(discordIcon) { discordIcon.classList.remove('disabled'); discordIcon.classList.add('pulse-discord'); }
+        if (isAdmin && bypassBtn) { bypassBtn.style.display = 'block'; }
     }, 1000);
 }
 
-// --- 3. ADMIN BYPASS (The actual entry to selection) ---
-function enterMainGame() {
-    // Song Swaps ONLY when entering the game
-    if (typeof playLoginMusic === "function") {
-        playLoginMusic(); 
+/* --- Block 5: Navigation Toggle Sync --- */
+function toggleUpdates(event) {
+    if (event) event.stopPropagation();
+    const panel = document.getElementById('updates-panel');
+    const roadmap = document.getElementById('roadmap-modal');
+    if (panel.style.display === 'none' || panel.style.display === '') {
+        if (roadmap) roadmap.style.display = 'none'; 
+        panel.style.display = 'flex';
+    } else {
+        panel.style.display = 'none';
     }
+}
 
-    // Hide Landing and Reveal the Statues
+function toggleRoadmap(show, event) {
+    if (event) event.stopPropagation();
+    const roadmap = document.getElementById('roadmap-modal');
+    const updates = document.getElementById('updates-panel');
+    if (roadmap.style.display === 'none' || roadmap.style.display === '') {
+        if (updates) updates.style.display = 'none'; 
+        roadmap.style.display = 'flex';
+    } else {
+        roadmap.style.display = 'none';
+    }
+}
+
+/* --- Block 6: Redirects & Modals (Registration System) --- */
+
+function enterMainGame() {
+    if (typeof playLoginMusic === "function") { playLoginMusic(); }
     const landing = document.getElementById('page-landing');
     const statues = document.getElementById('class-selection-screen');
-    
     if(landing) landing.style.display = 'none';
     if(statues) statues.style.display = 'flex';
-    
-    console.log("Welcome to the Hall of Statues, Commander Beyond Legend.");
 }
 
-// --- 4. DISCORD REDIRECT ---
 function openDiscord() {
     const discordIcon = document.getElementById('nav-discord');
-    // Logic only allows activation if the icon is pulsing (logged in)
     if (discordIcon && discordIcon.classList.contains('pulse-discord')) {
-        window.open('https://discord.gg', '_blank'); 
-    }
-}
-
-/* --- UI UTILITIES --- */
-function openChronicleDetail(id) {
-    const data = CHRONICLE_DATA[id];
-    const modal = document.getElementById('chronicle-detail-modal');
-    const titleEl = document.getElementById('chronicle-detail-title');
-    const textEl = document.getElementById('chronicle-detail-text');
-    if (!data || !modal) return;
-    titleEl.innerText = data.title;
-    textEl.innerText = data.details;
-    modal.style.display = 'flex';
-    setTimeout(() => { modal.style.opacity = '1'; }, 10);
-}
-
-function closeChronicleDetail() {
-    const modal = document.getElementById('chronicle-detail-modal');
-    if (modal) { 
-        modal.style.opacity = '0'; 
-        setTimeout(() => { modal.style.display = 'none'; }, 300); 
-    }
-}
-
-function toggleUpdates() {
-    const panel = document.getElementById('updates-panel');
-    if (panel) panel.style.display = (panel.style.display === 'none' || panel.style.display === '') ? 'flex' : 'none';
-}
-
-function toggleRoadmap(show) {
-    const modal = document.getElementById('roadmap-modal');
-    if (!modal) return;
-    if (show) {
-        modal.style.display = 'flex';
-        setTimeout(() => { modal.style.opacity = '1'; }, 10);
-    } else {
-        modal.style.opacity = '0';
-        document.querySelectorAll('.roadmap-phase').forEach(card => card.classList.remove('expanded'));
-        setTimeout(() => { modal.style.display = 'none'; }, 300);
-    }
-}
-
-function expandCard(cardElement) {
-    const isExpanded = cardElement.classList.contains('expanded');
-    document.querySelectorAll('.roadmap-phase').forEach(card => card.classList.remove('expanded'));
-    if (!isExpanded) {
-        cardElement.classList.add('expanded');
-        setTimeout(() => { cardElement.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); }, 300);
+        window.open('https://discord.gg', '_blank'); // Update with your permanent link
     }
 }
 
 function handleRegister() {
+    closeAllActiveUI(); 
     const modal = document.getElementById('register-modal');
-    if (modal) modal.style.display = 'flex';
+    if (modal) {
+        modal.style.display = 'flex';
+        setTimeout(() => { modal.style.opacity = '1'; }, 10);
+    }
 }
 
 function closeRegister() {
     const modal = document.getElementById('register-modal');
-    if (modal) modal.style.display = 'none';
+    if (modal) {
+        modal.style.opacity = '0';
+        setTimeout(() => { modal.style.display = 'none'; }, 300);
+    }
+}
+
+/* --- THE SUBMISSION PROTOCOL (NEXUS Handshake Enabled) --- */
+function submitRegistration() {
+    const user = document.getElementById('reg-username').value;
+    const email = document.getElementById('reg-email').value;
+    const pass = document.getElementById('reg-password').value;
+    const confirm = document.getElementById('reg-confirm').value;
+
+    // 1. Client-Side Validation
+    if (!user || !email || !pass || !confirm) {
+        alert("The Gatekeepers require all fields to be filled, Commander.");
+        return;
+    }
+
+    if (pass !== confirm) {
+        alert("Your passwords do not match. Re-verify your credentials.");
+        return;
+    }
+
+    // 2. NEXUS SERVER HANDSHAKE
+    // This sends the data to your Node.js server to trigger the email relay
+    fetch('/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+            username: user, 
+            email: email, 
+            password: pass 
+        })
+    })
+    .then(response => {
+        if (response.ok) {
+            console.log("Transmission Established: Application Sent to Nexus.");
+            alert("Application submitted. The Royal Guard has dispatched a confirmation scroll to your email.");
+            closeRegister();
+        } else {
+            alert("The Nexus connection is unstable. Try again, Commander.");
+        }
+    })
+    .catch(err => {
+        console.error("Nexus Link Error:", err);
+        alert("Transmission Failed. Ensure the Nexus Server is online and active.");
+    });
+}
+
+/* --- Block 7: Archive Detail Logic (NEWLY RESTORED) --- */
+function openChronicleDetail(id, event) {
+    if (event) event.stopPropagation();
+    const data = CHRONICLE_DATA[id];
+    const modal = document.getElementById('chronicle-detail-modal');
+    const titleEl = document.getElementById('chronicle-detail-title');
+    const textEl = document.getElementById('chronicle-detail-text');
+
+    if (!data || !modal) return;
+
+    // Inject Content
+    titleEl.innerText = data.title;
+    textEl.innerText = data.details;
+
+    // Show Modal
+    modal.style.display = 'flex';
+    // Small delay to trigger the CSS opacity transition
+    setTimeout(() => {
+        modal.style.opacity = '1';
+    }, 10);
+}
+
+function closeChronicleDetail() {
+    const modal = document.getElementById('chronicle-detail-modal');
+    if (modal) {
+        modal.style.opacity = '0';
+        // Wait for fade to finish before hiding
+        setTimeout(() => {
+            modal.style.display = 'none';
+        }, 300);
+    }
 }
 
 /* ============================================================
@@ -337,7 +390,43 @@ function closeRegister() {
    SECTION 8: SESSION CONTROL
    ============================================================ */
 
+/* --- Block 1: Logout and Portal Reset --- */
 function handleLogout() {
+    // 1. Target all interactive components
+    const loginWrapper = document.getElementById('login-content-wrapper');
+    const authButtons = document.getElementById('auth-buttons');
+    const messageBox = document.getElementById('post-login-message');
+    const discordIcon = document.getElementById('nav-discord');
+    const bypassBtn = document.getElementById('admin-bypass-btn');
+    const loader = document.getElementById('auth-loading');
+
+    // 2. Hide post-login elements & loader
+    if (loader) loader.style.display = 'none';
+    
+    if (messageBox) { 
+        messageBox.style.display = 'none'; 
+        messageBox.style.opacity = '0'; 
+    }
+    if (bypassBtn) bypassBtn.style.display = 'none';
+    
+    // 3. Deactivate Discord Pulse
+    if (discordIcon) {
+        discordIcon.classList.remove('pulse-discord');
+        discordIcon.classList.add('disabled');
+    }
+
+    // 4. Restore Login UI & re-enable button hitboxes
+    if (loginWrapper) { 
+        loginWrapper.style.display = 'flex'; 
+        loginWrapper.style.opacity = '1'; 
+    }
+    if (authButtons) { 
+        authButtons.style.display = 'flex'; 
+        authButtons.style.opacity = '1'; 
+        authButtons.style.pointerEvents = 'auto'; // Re-enables clicking
+    }
+
+    // 5. Original Transition Logic (Landing Page Fade)
     const landing = document.getElementById('page-landing');
     if (landing) {
         landing.style.display = "flex";
@@ -346,8 +435,14 @@ function handleLogout() {
             landing.style.opacity = "1";
         }, 10);
     }
-    // Optional: Reset player state here if needed
-    // selectedClassId = null;
+
+    // 6. Security Cleanup: Wipe inputs
+    const userIn = document.getElementById('login-username');
+    const passIn = document.getElementById('login-password');
+    if (userIn) userIn.value = "";
+    if (passIn) passIn.value = "";
+
+    console.log("Portal Reset: Authenticating text cleared and UI restored.");
 }
 
 /* ============================================================
