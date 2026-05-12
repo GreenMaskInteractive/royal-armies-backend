@@ -493,6 +493,77 @@ function handleLogout() {
     console.log("Portal Reset: Authenticating text cleared and UI restored.");
 }
 
+/* --- Block 9: Lore Nexus Controller --- */
+function openLoreModal() {
+    const modal = document.getElementById('lore-modal');
+    if (modal) {
+        modal.style.display = 'flex';
+        setTimeout(() => {
+            modal.style.opacity = '1';
+        }, 10);
+        
+        // ADD THIS LINE: Automatically loads the 15 nations on open
+        loadLore('archives'); 
+    }
+}
+
+function closeLoreModal() {
+    const modal = document.getElementById('lore-modal');
+    if (modal) {
+        modal.style.opacity = '0';
+        setTimeout(() => {
+            modal.style.display = 'none';
+        }, 300);
+    }
+}
+
+/* [LABEL] SECTION 10: LORE CONTENT ENGINE | Block 10: The Great Library */
+const nationLore = {
+    archives: [
+        { name: "The Kingdom of Vaelior", detail: "Centerpiece of the Gilded Sovereignties. Known for its rolling golden fields and the high citadel of Aethelgard. They trace their bloodline to the Aidoriian kings." },
+        { name: "The Empire of Zevros", detail: "A militaristic titan of the Iron Vanguards. Forged in volcanic fire, they prioritize strength and strict hierarchy above all else." },
+        { name: "The Kingdom of Aesthene", detail: "Ancient protectors of the northern peaks. Their architecture and laws are the bedrock of modern Aidoriian civilization." },
+        { name: "The Khanate of Khaerant", detail: "Lords of the Great Steppe. Their horsemen are unmatched, governed by the nomadic laws of the Primal Hordes." },
+        { name: "The Krall Tribes", detail: "A fierce coalition of the southern jungles. They reject the 'civilized' laws of the north, living by primal instinct." },
+        { name: "The Republic of Mynor", detail: "Master engineers and architects. They were the first to transition from the old ways to the age of Iron Vanguards." },
+        { name: "The Duchy of Dravic", detail: "A coastal powerhouse known for its naval supremacy and heavy defensive stone fortifications." },
+        { name: "The Gorz Warlords", detail: "Brutal and unpredictable. They represent the most chaotic elements of the Primal Hordes." },
+        { name: "The Order of Trex", detail: "A holy covenant of knights and scholars dedicated to preserving ancient Aidoriian artifacts." },
+        { name: "The High Elves of Silthas", detail: "An Ethereal Covenant hidden deep within the whispering woods. They are masters of archery and ancient magic." },
+        { name: "The Iron Barons of Krell", detail: "Industrialists of the Iron Vanguards. They believe in progress at any cost, often clashing with the Covenants." },
+        { name: "The Sun-Kings of Helios", detail: "A Gilded Sovereignty from the desert wastes. Their power comes from the blistering heat and hidden gold mines." },
+        { name: "The Shadow Isles of Nyx", detail: "A mysterious collection of islands where the Ethereal Covenants communicate with the spirits." },
+        { name: "The Frost-Giants of Jotun", detail: "Massive warriors of the frozen wastes. They are the strongest of the Primal Hordes." },
+        { name: "The Merchant Lords of Venice", detail: "The bankers of the world. While not militaristic, their gold funds the wars of all other nations." }
+    ],
+    manuscripts: [
+        { name: "The First Era", detail: "The lost writings detailing the arrival of the Aidoriian bloodline." }
+    ],
+    letters: [
+        { name: "Letter to Aethelgard", detail: "A frantic warning sent during the Great Transition." }
+    ]
+};
+
+function loadLore(type) {
+    const container = document.getElementById('lore-titles-container');
+    const body = document.getElementById('lore-details-body');
+    
+    // Clear previous view
+    container.innerHTML = "";
+    body.innerHTML = "Select an entry to view details.";
+
+    // Inject titles for the selected type
+    nationLore[type].forEach(item => {
+        const div = document.createElement('div');
+        div.className = 'update-item'; // Reuse your existing clickable style
+        div.innerText = item.name;
+        div.onclick = () => {
+            body.innerText = item.detail;
+        };
+        container.appendChild(div);
+    });
+}
+
 /* ============================================================
    BOTTOM: BRIDGE PART 2
    ============================================================ */

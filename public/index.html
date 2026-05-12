@@ -70,6 +70,7 @@
 <div id="nav-discord" class="nav-icon" onclick="openDiscord()">
     <img src="images/discordicon.png" alt="Discord">
 </div>
+<img src="images/loreicon.png" class="nav-icon" id="nav-lore" onclick="openLoreModal()" alt="Lore">
         <img src="images/supporticon.png" class="nav-icon disabled" alt="Support">
     </div>
 
@@ -320,6 +321,40 @@
 
 <!-- 4. NEXUS PULSE (Live Connection) -->
 <!-- This is where future socket.io or live-update scripts will go -->
+
+    <!-- ============================================================
+         SECTION 9: THE RENDERING SHIELD
+         ============================================================
+
+<div id="lore-modal" class="modal-overlay">
+    <div class="radial-container">
+        <span class="close-modal" onclick="closeLoreModal()">&times;</span>
+
+        <!-- Floating Slots Positioning handled in Section 10 -->
+        <img src="images/lostmanuscripts.png" class="radial-slot" id="slot-manuscripts" onclick="loadLore('manuscripts')">
+        <img src="images/letters.png" class="radial-slot" id="slot-letters" onclick="loadLore('letters')">
+        <img src="images/historicalarchives.png" class="radial-slot" id="slot-archives" onclick="loadLore('archives')">
+
+        <div class="lore-content-area">
+            <div class="lore-pane-left">
+                <h4 class="pane-label">Titles</h4>
+                <div class="lore-titles-list" id="lore-titles-container"></div>
+            </div>
+
+            <!-- The Vertical Divider Asset -->
+            <div class="lore-divider-container">
+                <img src="images/divider.png" class="divider-img" alt="Divider">
+            </div>
+
+            <div class="lore-pane-right">
+                <h4 class="pane-label">Details</h4>
+                <div class="lore-details-view" id="lore-details-body">
+                    Select a manuscript to begin...
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 
 </body>
 </html>
