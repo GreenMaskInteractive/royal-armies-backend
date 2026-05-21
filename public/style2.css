@@ -154,7 +154,7 @@
     width: 300px !important;
     min-width: 0 !important;
     box-sizing: border-box !important;
-    overflow: hidden !important;
+    overflow: visible !important;
 }
 
 .nav-account-identity-cluster {
@@ -3690,7 +3690,9 @@
     position: relative !important;
     display: inline-block !important;
     padding-bottom: 10px !important; /* Safety buffer prevents tracking drop drops on cursor movement gaps */
-    top: 4px !important; 
+    top: 4px !important;
+    z-index: 20 !important;
+    overflow: visible !important;
 }
 
 /* THE EXTENSIBLE HIDDEN ACCORDION FRAME CONSOLE CHASSIS */
@@ -3722,7 +3724,8 @@
 }
 
 /* TRIGGER HOVER SYSTEM EVENT PASSTHROUGH STATIONS */
-.nav-avatar-hub-wrapper:hover .avatar-hover-dropdown-menu {
+.nav-avatar-hub-wrapper:hover .avatar-hover-dropdown-menu,
+.nav-avatar-hub-wrapper:focus-within .avatar-hover-dropdown-menu {
     opacity: 1 !important;
     visibility: visible !important;
     transform: translateY(0) scale(1) !important;
