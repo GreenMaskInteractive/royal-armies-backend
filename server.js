@@ -1751,9 +1751,9 @@ app.post('/api/portal/age/leave', (req, res) => {
     res.json({ status: 'ok', ...getPortalLiveMetricsPayload() });
 });
 
-/* Block 14: Main Portal Route */
-app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+/* Block 14: Site root — Age Portal hub (landing page offline) */
+app.get(['/', '/index', '/index.html'], (req, res) => {
+    res.redirect(301, '/main.html');
 });
 
 /* ==========================================

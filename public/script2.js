@@ -7,7 +7,9 @@ window.onload = () => {
     console.log("Age Portal Matrix Loaded. Isolated Core Active.");
     
     // A. SECURE LOCAL RETRIEVAL HANDSHAKES: Pull saved keys directly out from device profile caches
-    const savedCommanderUser = localStorage.getItem("activeCommanderUser") || "testaccount";
+    const savedCommanderUser = (typeof getActiveCommanderUsername === 'function')
+        ? getActiveCommanderUsername()
+        : (localStorage.getItem('activeCommanderUser') || '').trim();
 
     if (typeof syncPlayerFromActiveCommanderStorage === "function") {
         syncPlayerFromActiveCommanderStorage();
@@ -24,7 +26,12 @@ window.onload = () => {
     // B. TARGET DOM INJECTIONS: Populate text and image fields simultaneously on screen load
     const userTagElement = document.getElementById("logged-user-tag");
     if (userTagElement) {
-        userTagElement.innerText = (typeof player !== "undefined" && player.name) ? player.name : savedCommanderUser;
+        const displayName = (typeof player !== 'undefined' && player.name) ? player.name : savedCommanderUser;
+        userTagElement.innerText = displayName || 'Guest Commander';
+    }
+
+    if (typeof refreshMainPortalAuthChrome === 'function') {
+        refreshMainPortalAuthChrome();
     }
     const avatarCrestElement = document.getElementById("nav-embedded-avatar-crest");
     if (avatarCrestElement) {
@@ -553,7 +560,10 @@ function executeLogoutRedirect() {
     const redirectHome = () => {
         localStorage.removeItem('activeCommanderUser');
         sessionStorage.removeItem('royalArmiesAuthAudioPlay');
-        window.location.href = 'index.html';
+        if (typeof refreshMainPortalAuthChrome === 'function') {
+            refreshMainPortalAuthChrome();
+        }
+        window.location.replace('/main.html');
     };
 
     clearPortalPresenceSession().finally(redirectHome);
@@ -1337,7 +1347,10 @@ function escapeChatMentionAlertHtml(str) {
 }
 
 function getLoggedCommunityChatUsername() {
-    return localStorage.getItem('activeCommanderUser') || 'testaccount';
+    if (typeof getActiveCommanderUsername === 'function') {
+        return getActiveCommanderUsername() || '';
+    }
+    return localStorage.getItem('activeCommanderUser') || '';
 }
 
 function normalizeCommunityChatUsername(name) {

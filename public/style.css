@@ -778,16 +778,18 @@ body {
     box-shadow: 0 0 15px rgba(0, 255, 255, 0.4);
 }
 
-/* --- Block 10: Independent Button Hub (Ghost Fix) --- */
+/* --- Block 10: Auth buttons inside stone portal frame --- */
 #auth-buttons {
     position: relative !important;
     display: flex;
     justify-content: center;
     gap: 40px;
     width: 100%;
-    margin-top: -200px; /* Restored negative margin for PC alignment */
+    margin-top: 16px !important;
     z-index: 200010;
     transition: opacity 0.5s ease-in-out;
+    pointer-events: auto !important;
+    flex-shrink: 0;
 }
 
 /* --- 3. SHARED BUTTON DNA (The Cinematic Base) --- */

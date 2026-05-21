@@ -1,0 +1,330 @@
+/* ==========================================================================
+   Landing login portal (index.html only) — self-contained layout
+   Load after style.css / mobile-responsive.css
+   ========================================================================== */
+
+#page-landing .landing-login-root {
+    position: fixed;
+    top: calc(50% - 5px);
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 200100;
+    width: min(720px, calc(100vw - 8px));
+    margin: 0;
+    padding: 0;
+    pointer-events: none;
+    box-sizing: border-box;
+}
+
+#page-landing .landing-login-portal {
+    pointer-events: auto;
+    width: 100%;
+    aspect-ratio: 8 / 5;
+    margin: 0;
+    /* Top padding aligns content with frame cutout (lower % = buttons sit higher) */
+    padding: 21% 14% 8% 14%;
+    box-sizing: border-box;
+    background: url('images/mainloginbox.png') center center / 100% 100% no-repeat;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+}
+
+#page-landing .landing-login-portal__body {
+    width: 100% !important;
+    max-width: min(385px, 78%) !important;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    justify-content: center;
+    gap: 5px;
+    box-sizing: border-box;
+    margin: 0 !important;
+}
+
+#page-landing #login-content-wrapper,
+#page-landing #post-login-message {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    margin-top: 0 !important;
+    padding: 0 !important;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    transition: opacity 1s ease-in-out;
+    box-sizing: border-box;
+}
+
+#page-landing #post-login-message {
+    display: none;
+    opacity: 0;
+}
+
+#page-landing #post-login-message p {
+    max-width: 100%;
+    margin: 0 auto 10px;
+    font-family: 'Georgia', serif;
+    color: #f1e0ac;
+    font-size: 1rem;
+    line-height: 1.6;
+    font-style: italic;
+    text-shadow: 1px 1px 3px #000;
+    pointer-events: none;
+    text-align: center;
+}
+
+#page-landing #post-login-message .message-actions {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    pointer-events: auto;
+}
+
+#page-landing .landing-login-field {
+    display: block;
+    width: 100% !important;
+    max-width: 100% !important;
+    height: 38px !important;
+    margin: 4px 0 !important;
+    padding: 8px 10px !important;
+    box-sizing: border-box !important;
+    position: relative;
+    z-index: 2;
+    opacity: 1;
+    pointer-events: auto;
+    background: linear-gradient(to bottom, #1a1e23, #0d0f11);
+    color: #a0c4d1;
+    border: 1px solid rgba(0, 255, 255, 0.3);
+    border-radius: 4px;
+    font-family: 'Georgia', serif;
+    font-size: 1rem;
+    box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.8);
+    outline: none;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+#page-landing .landing-login-field:focus {
+    border-color: #00ffff;
+    box-shadow: 0 0 15px rgba(0, 255, 255, 0.4);
+}
+
+#page-landing .landing-login-portal .forgot-link-container {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    margin: 2px 0 4px;
+    pointer-events: auto;
+    position: relative;
+    z-index: 2;
+}
+
+#page-landing .landing-login-portal .forgot-link {
+    color: #f1e0ac;
+    text-shadow: 1px 1px 3px #000;
+    font-size: 0.85rem;
+    cursor: pointer;
+}
+
+#page-landing .landing-login-portal .forgot-link:hover {
+    color: #ffd978;
+}
+
+#page-landing #auth-buttons {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+    gap: 12px !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 4px 0 0 !important;
+    padding: 0 !important;
+    position: relative;
+    z-index: 2;
+    pointer-events: auto;
+    transition: opacity 0.5s ease-in-out;
+}
+
+#page-landing #auth-buttons .img-btn,
+#page-landing #btn-login-main,
+#page-landing #btn-register-main,
+#page-landing #btn-logout-reset,
+#page-landing #admin-bypass-btn {
+    width: 140px !important;
+    height: 42px !important;
+    min-height: 0 !important;
+    max-height: 42px !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    flex: 0 1 auto;
+    pointer-events: auto;
+    position: relative;
+    z-index: 3;
+    background-size: contain !important;
+    background-repeat: no-repeat !important;
+    background-position: center !important;
+    background-color: transparent !important;
+    border: none !important;
+    font-family: 'Georgia', serif;
+    font-size: 12px !important;
+    color: #f1e0ac !important;
+    text-transform: uppercase;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    transition: transform 0.2s ease;
+}
+
+#page-landing #btn-login-main,
+#page-landing #admin-bypass-btn {
+    background-image: url('images/login_btn.png') !important;
+}
+
+#page-landing #btn-register-main,
+#page-landing #btn-logout-reset {
+    background-image: url('images/register_btn.png') !important;
+}
+
+#page-landing #auth-buttons .img-btn:hover,
+#page-landing #btn-login-main:hover,
+#page-landing #btn-register-main:hover {
+    transform: scale(1.05);
+}
+
+#page-landing #auth-loading {
+    position: relative;
+    margin-top: 4px;
+    font-family: 'Georgia', serif;
+    color: #d4af37;
+    text-shadow: 1px 1px 5px #000;
+    white-space: nowrap;
+    text-align: center;
+}
+
+/* Tablet / phone — same proportions as desktop, scaled to viewport */
+@media (max-width: 1024px) {
+    #page-landing .landing-login-root {
+        width: min(720px, calc(100vw - 8px));
+    }
+
+    #page-landing .landing-login-portal {
+        padding: 20% 12% 7% 12%;
+    }
+
+    #page-landing .landing-login-portal__body {
+        max-width: min(385px, 80%) !important;
+        gap: 5px !important;
+    }
+
+    #page-landing .landing-login-field {
+        height: 30px !important;
+        margin: 2px 0 !important;
+        padding: 5px 8px !important;
+        font-size: 0.8125rem !important;
+        border-radius: 3px;
+    }
+
+    #page-landing .landing-login-portal .forgot-link {
+        font-size: 0.75rem !important;
+    }
+
+    #page-landing #auth-buttons {
+        gap: 10px !important;
+        margin-top: 2px !important;
+    }
+
+    #page-landing #auth-buttons .img-btn,
+    #page-landing #btn-login-main,
+    #page-landing #btn-register-main,
+    #page-landing #btn-logout-reset,
+    #page-landing #admin-bypass-btn {
+        width: min(130px, 38vw) !important;
+        height: 38px !important;
+        max-height: 38px !important;
+        font-size: 11px !important;
+    }
+}
+
+@media (max-width: 480px) {
+    #page-landing .landing-login-root {
+        width: min(720px, calc(100vw - 6px));
+    }
+
+    #page-landing .landing-login-portal {
+        padding: 19% 11% 6% 11%;
+    }
+
+    #page-landing .landing-login-portal__body {
+        max-width: min(385px, 82%) !important;
+    }
+
+    #page-landing .landing-login-field {
+        height: 28px !important;
+        margin: 2px 0 !important;
+        padding: 4px 7px !important;
+        font-size: 0.75rem !important;
+    }
+
+    #page-landing #auth-buttons .img-btn,
+    #page-landing #btn-login-main,
+    #page-landing #btn-register-main {
+        width: min(118px, 40vw) !important;
+        height: 36px !important;
+        max-height: 36px !important;
+        font-size: 10px !important;
+    }
+}
+
+@media (max-width: 360px) {
+    #page-landing #auth-buttons {
+        flex-direction: column !important;
+        gap: 8px !important;
+    }
+
+    #page-landing #auth-buttons .img-btn,
+    #page-landing #btn-login-main,
+    #page-landing #btn-register-main {
+        width: min(200px, 72vw) !important;
+    }
+}
+
+/* Desktop — 880×550 frame (8∶5), same inner proportions */
+@media (min-width: 1025px) {
+    #page-landing .landing-login-root {
+        width: 880px;
+    }
+
+    #page-landing .landing-login-portal {
+        padding: 21% 14% 8% 14%;
+    }
+
+    #page-landing .landing-login-portal__body {
+        max-width: min(385px, 78%) !important;
+    }
+
+    #page-landing .landing-login-field {
+        height: 38px !important;
+        margin: 4px 0 !important;
+        padding: 8px 10px !important;
+        font-size: 1rem !important;
+    }
+
+    #page-landing #auth-buttons .img-btn,
+    #page-landing #btn-login-main,
+    #page-landing #btn-register-main {
+        width: 160px !important;
+        height: 46px !important;
+        max-height: 46px !important;
+        font-size: 13px !important;
+    }
+}

@@ -1099,6 +1099,197 @@
     letter-spacing: 0.6px !important;
 }
 
+/* Block 17b: Main portal login / register / forgot (borderedcontainer_thin + closebtn) */
+#main-portal-login-modal,
+#register-modal.main-portal-auth-overlay,
+#forgot-modal.main-portal-auth-overlay {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    background: rgba(0, 0, 0, 0.8) !important;
+    backdrop-filter: blur(4px) !important;
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    z-index: 999998 !important;
+    padding: max(12px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right)) max(12px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left)) !important;
+    box-sizing: border-box !important;
+}
+
+#main-portal-login-modal .main-portal-login-bezel,
+#register-modal .main-portal-register-bezel,
+#forgot-modal .main-portal-forgot-bezel {
+    position: relative !important;
+    width: min(420px, 94vw) !important;
+    max-width: min(420px, 94vw) !important;
+    min-height: 0 !important;
+    height: auto !important;
+    padding: 28px 28px 24px !important;
+    gap: 12px !important;
+    align-items: stretch !important;
+    text-align: center !important;
+}
+
+.main-portal-modal-close-btn {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    width: 36px;
+    height: 36px;
+    padding: 0;
+    margin: 0;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.main-portal-modal-close-icon {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    pointer-events: none;
+}
+
+.main-portal-auth-modal-title {
+    font-family: 'Cinzel', serif !important;
+    font-size: 1rem !important;
+    color: #d4af37 !important;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    margin: 0 0 8px !important;
+    padding: 0 28px !important;
+}
+
+.main-portal-login-form-stack,
+.main-portal-register-form,
+.main-portal-forgot-form {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    width: 100%;
+    text-align: left;
+}
+
+.main-portal-auth-field,
+#register-modal .reg-input,
+#forgot-modal .reg-input {
+    width: 100% !important;
+    max-width: 100% !important;
+    height: 40px !important;
+    margin: 0 !important;
+    padding: 8px 12px !important;
+    box-sizing: border-box !important;
+    background: linear-gradient(to bottom, #1a1e23, #0d0f11) !important;
+    color: #a0c4d1 !important;
+    border: 1px solid rgba(212, 175, 55, 0.45) !important;
+    border-radius: 4px !important;
+    font-family: 'Georgia', serif !important;
+    font-size: 0.95rem !important;
+    outline: none !important;
+    box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.8);
+}
+
+.main-portal-auth-field:focus,
+#register-modal .reg-input:focus,
+#forgot-modal .reg-input:focus {
+    border-color: #00ffff !important;
+    box-shadow: 0 0 12px rgba(0, 255, 255, 0.35);
+}
+
+.main-portal-forgot-link-row {
+    display: flex;
+    justify-content: center;
+    margin: 2px 0 4px;
+}
+
+.main-portal-forgot-link {
+    background: none;
+    border: none;
+    padding: 0;
+    color: #f1e0ac;
+    font-family: 'Georgia', serif;
+    font-size: 0.82rem;
+    font-style: italic;
+    cursor: pointer;
+    text-shadow: 1px 1px 3px #000;
+}
+
+.main-portal-forgot-link:hover {
+    color: #ffd978;
+}
+
+.main-portal-auth-loading {
+    font-family: 'Georgia', serif;
+    color: #d4af37;
+    text-align: center;
+    font-size: 0.9rem;
+}
+
+.main-portal-auth-btn-row,
+#register-modal .modal-action-btn-row,
+#forgot-modal .modal-action-btn-row {
+    display: flex !important;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 12px !important;
+    margin-top: 6px !important;
+}
+
+#main-portal-login-modal #auth-buttons {
+    position: relative !important;
+    display: flex !important;
+    flex-wrap: wrap !important;
+    justify-content: center !important;
+    gap: 12px !important;
+    width: 100% !important;
+    margin: 4px 0 0 !important;
+    z-index: 2 !important;
+    pointer-events: auto !important;
+}
+
+#main-portal-login-modal #auth-loading {
+    position: relative !important;
+    bottom: auto !important;
+    margin-top: 4px !important;
+}
+
+.main-portal-forgot-copy {
+    color: #f1e0ac;
+    font-family: 'Georgia', serif;
+    font-size: 0.82rem;
+    line-height: 1.45;
+    margin: 0 0 6px;
+    text-align: center;
+}
+
+#register-modal .reg-group label,
+#forgot-modal .reg-group label {
+    color: #f1e0ac !important;
+}
+
+@media (max-width: 1024px) {
+    #main-portal-login-modal .main-portal-login-bezel,
+    #register-modal .main-portal-register-bezel,
+    #forgot-modal .main-portal-forgot-bezel {
+        width: min(400px, 96vw) !important;
+        max-width: min(400px, 96vw) !important;
+        padding: 24px 20px 20px !important;
+    }
+
+    .main-portal-auth-field,
+    #register-modal .reg-input,
+    #forgot-modal .reg-input {
+        height: 36px !important;
+        font-size: 16px !important;
+    }
+}
+
 .modal-alert-header { 
     font-family: 'Cinzel', serif !important; 
     font-size: 0.9rem !important; 

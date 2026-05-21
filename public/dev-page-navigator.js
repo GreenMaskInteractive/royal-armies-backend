@@ -7,7 +7,7 @@
     const DEV_NAV_PORTS = new Set(['3000', '5500']);
 
     const DEV_SITE_PAGES = [
-        { id: 'index', label: 'Landing / Login', file: 'index.html' },
+        { id: 'index', label: 'Landing (redirect → main)', file: 'index.html' },
         { id: 'main', label: 'Age Portal', file: 'main.html' },
         { id: 'ageportal', label: 'Age Portal (legacy redirect)', file: 'ageportal.html' },
         { id: 'reset-password', label: 'Reset Password', file: 'reset-password.html' }

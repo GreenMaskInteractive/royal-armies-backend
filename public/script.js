@@ -59,9 +59,13 @@ let stagedVerbosity = confirmedVerbosity;
 let stagedPings = confirmedPings; 
 let stagedSafetyLock = confirmedSafetyLock; 
 
-// RUN INSTANTLY ON BOOT: Sync visual styles and dimensions immediately before rendering page loops 
-document.documentElement.style.setProperty('--ui-scale', confirmedScale);
-applyTextScaleToDocument(confirmedTextScale, { silent: true });
+// RUN INSTANTLY ON BOOT: Sync visual styles (skip landing index — uses landing-login.css)
+if (document.getElementById('page-landing')) {
+    document.documentElement.style.setProperty('--text-scale', String(confirmedTextScale));
+} else {
+    document.documentElement.style.setProperty('--ui-scale', confirmedScale);
+    applyTextScaleToDocument(confirmedTextScale, { silent: true });
+}
 if (localStorage.getItem('savedHighContrast') === 'true') { 
     document.body.classList.add('high-contrast-mode'); 
 }
@@ -110,7 +114,80 @@ const allianceAddressBook = {
 function getActiveCommanderUsername() {
     const saved = localStorage.getItem('activeCommanderUser');
     if (saved && saved.trim() !== '') return saved.trim();
+    if (document.getElementById('main-dashboard-canvas')) return '';
     return 'testaccount';
+}
+
+function isMainPortalHub() {
+    return !!document.getElementById('main-dashboard-canvas');
+}
+
+function isPortalUserAuthenticated() {
+    const saved = localStorage.getItem('activeCommanderUser');
+    return !!(saved && saved.trim() !== '');
+}
+
+function refreshMainPortalAuthChrome() {
+    if (!isMainPortalHub()) return;
+
+    const label = document.getElementById('header-auth-action-label');
+    const icon = document.getElementById('header-auth-action-icon');
+    const btn = document.getElementById('header-auth-action-btn');
+    const authed = isPortalUserAuthenticated();
+
+    if (label) label.textContent = authed ? 'Log Out' : 'Log In';
+    if (icon) icon.src = authed ? 'images/logouticon.png' : 'images/profileicon.png';
+    if (btn) {
+        btn.setAttribute('aria-label', authed ? 'Log out of Age Portal' : 'Log in to Age Portal');
+    }
+
+    if (typeof refreshLoggedUserTagDisplay === 'function') {
+        refreshLoggedUserTagDisplay();
+    }
+}
+
+function handleHeaderAuthAction() {
+    if (!isMainPortalHub()) return;
+    if (isPortalUserAuthenticated()) {
+        if (typeof triggerMainDashboardLogout === 'function') {
+            triggerMainDashboardLogout();
+        }
+        return;
+    }
+    openMainPortalLoginModal();
+}
+
+function openMainPortalLoginModal() {
+    const modal = document.getElementById('main-portal-login-modal');
+    if (!modal) return;
+
+    closeRegister();
+    closeForgot();
+
+    modal.classList.remove('main-portal-modal-hidden');
+    modal.style.setProperty('display', 'flex', 'important');
+    modal.setAttribute('aria-hidden', 'false');
+
+    const userField = document.getElementById('login-username');
+    if (userField) {
+        setTimeout(() => userField.focus(), 50);
+    }
+
+    if (!modal.dataset.boundBackdropClose) {
+        modal.dataset.boundBackdropClose = 'true';
+        modal.addEventListener('click', (event) => {
+            if (event.target === modal) closeMainPortalLoginModal();
+        });
+    }
+}
+
+function closeMainPortalLoginModal() {
+    const modal = document.getElementById('main-portal-login-modal');
+    if (!modal) return;
+    modal.style.setProperty('display', 'none', 'important');
+    modal.classList.add('main-portal-modal-hidden');
+    modal.setAttribute('aria-hidden', 'true');
+    restoreLoginAuthButtons();
 }
 
 function hydratePlayerPublicDossierFromStorage() {
@@ -161,7 +238,10 @@ function refreshProfileCommanderNameDisplay() {
 
 function refreshLoggedUserTagDisplay() {
     const tag = document.getElementById('logged-user-tag');
-    if (tag) tag.innerText = getActiveCommanderUsername();
+    if (tag) {
+        const name = getActiveCommanderUsername();
+        tag.innerText = name || (isMainPortalHub() ? 'Guest Commander' : 'Loading...');
+    }
 }
 
 var player = { 
@@ -1103,7 +1183,18 @@ function closeAllActiveUI(e) {
     const detail = document.getElementById('chronicle-detail-modal');
     if (detail) { detail.style.display = 'none'; detail.style.opacity = '0'; }
     const register = document.getElementById('register-modal');
-    if (register) register.style.display = 'none';
+    if (register) {
+        register.style.opacity = '0';
+        register.style.display = 'none';
+        register.classList.add('main-portal-modal-hidden');
+    }
+    const forgot = document.getElementById('forgot-modal');
+    if (forgot) {
+        forgot.style.opacity = '0';
+        forgot.style.display = 'none';
+        forgot.classList.add('main-portal-modal-hidden');
+    }
+    closeMainPortalLoginModal();
 }
 
 /* --- Block 4: The Login Engine --- */
@@ -1186,7 +1277,11 @@ async function handleLogin() {
         if (typeof player !== 'undefined') player.name = userVal;
         refreshProfileCommanderNameDisplay();
         refreshLoggedUserTagDisplay();
-        redirectToAgePortal();
+        if (isMainPortalHub()) {
+            finishMainPortalLoginSession(true);
+        } else {
+            redirectToAgePortal();
+        }
         return;
     }
 
@@ -1210,7 +1305,11 @@ async function handleLogin() {
         if (typeof player !== 'undefined') player.name = ledgerUsername;
         refreshProfileCommanderNameDisplay();
         refreshLoggedUserTagDisplay();
-        initiatePostLoginSequence(false);
+        if (isMainPortalHub()) {
+            finishMainPortalLoginSession(false);
+        } else {
+            initiatePostLoginSequence(false);
+        }
     } catch (err) {
         console.error('NEXUS login link error:', err);
         await showPortalAlert('Cannot reach the Royal Armies server. Run node server.js locally (or use the live site) and try again.', 'Connection error');
@@ -1218,8 +1317,28 @@ async function handleLogin() {
     }
 }
 
+function finishMainPortalLoginSession(isAdmin) {
+    restoreLoginAuthButtons();
+    closeMainPortalLoginModal();
+    refreshMainPortalAuthChrome();
+    syncPlayerFromActiveCommanderStorage();
+    if (typeof hydrateCommanderMembershipFromStorage === 'function') {
+        hydrateCommanderMembershipFromStorage();
+    }
+    if (typeof initializePortalLivePlayerMetrics === 'function') {
+        initializePortalLivePlayerMetrics();
+    }
+    if (!isAdmin) {
+        console.log('Login accepted. Age Portal session active.');
+    }
+}
+
 /* --- Block 5: Post-Login Transition --- */
 function initiatePostLoginSequence(isAdmin) {
+    if (isMainPortalHub()) {
+        finishMainPortalLoginSession(isAdmin);
+        return;
+    }
     const loginWrapper = document.getElementById('login-content-wrapper');
     const authButtons = document.getElementById('auth-buttons');
     const messageBox = document.getElementById('post-login-message');
@@ -1296,10 +1415,16 @@ function openDiscord() {
 }
 
 function handleRegister() {
-    closeAllActiveUI();
+    if (isMainPortalHub()) {
+        closeMainPortalLoginModal();
+    } else {
+        closeAllActiveUI();
+    }
     const modal = document.getElementById('register-modal');
     if (modal) {
+        modal.classList.remove('main-portal-modal-hidden');
         modal.style.display = 'flex';
+        modal.setAttribute('aria-hidden', 'false');
         setTimeout(() => { modal.style.opacity = '1'; }, 10);
     }
 }
@@ -1308,20 +1433,30 @@ function closeRegister() {
     const modal = document.getElementById('register-modal');
     if (modal) {
         modal.style.opacity = '0';
-        setTimeout(() => { modal.style.display = 'none'; }, 300);
+        modal.setAttribute('aria-hidden', 'true');
+        setTimeout(() => {
+            modal.style.display = 'none';
+            modal.classList.add('main-portal-modal-hidden');
+        }, 300);
     }
 }
 
 function handleForgot(e) {
     if (e) e.preventDefault();
-    try {
-        if (typeof closeAllActiveUI === "function") closeAllActiveUI();
-    } catch (err) {
-        console.warn("NEXUS: UI Cleanup bypassed.");
+    if (isMainPortalHub()) {
+        closeMainPortalLoginModal();
+    } else {
+        try {
+            if (typeof closeAllActiveUI === 'function') closeAllActiveUI();
+        } catch (err) {
+            console.warn('NEXUS: UI Cleanup bypassed.');
+        }
     }
     const modal = document.getElementById('forgot-modal');
     if (modal) {
+        modal.classList.remove('main-portal-modal-hidden');
         modal.style.display = 'flex';
+        modal.setAttribute('aria-hidden', 'false');
         setTimeout(() => { modal.style.opacity = '1'; }, 10);
     }
 }
@@ -1330,7 +1465,11 @@ function closeForgot() {
     const modal = document.getElementById('forgot-modal');
     if (modal) {
         modal.style.opacity = '0';
-        setTimeout(() => { modal.style.display = 'none'; }, 300);
+        modal.setAttribute('aria-hidden', 'true');
+        setTimeout(() => {
+            modal.style.display = 'none';
+            modal.classList.add('main-portal-modal-hidden');
+        }, 300);
     }
 }
 
@@ -2908,13 +3047,25 @@ window.applyProfileRankResetButtonState = applyProfileRankResetButtonState;
 window.syncPlayerFromActiveCommanderStorage = syncPlayerFromActiveCommanderStorage;
 window.refreshProfileCommanderNameDisplay = refreshProfileCommanderNameDisplay;
 window.refreshLoggedUserTagDisplay = refreshLoggedUserTagDisplay;
+window.refreshMainPortalAuthChrome = refreshMainPortalAuthChrome;
+window.handleHeaderAuthAction = handleHeaderAuthAction;
+window.openMainPortalLoginModal = openMainPortalLoginModal;
+window.closeMainPortalLoginModal = closeMainPortalLoginModal;
+window.isPortalUserAuthenticated = isPortalUserAuthenticated;
 window.showSaveChangesConfirmation = showSaveChangesConfirmation;
 window.hideSaveChangesConfirmation = hideSaveChangesConfirmation;
 
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', syncPlayerFromActiveCommanderStorage);
-} else {
+function bootstrapMainPortalAuthOnLoad() {
     syncPlayerFromActiveCommanderStorage();
+    if (isMainPortalHub()) {
+        refreshMainPortalAuthChrome();
+    }
+}
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', bootstrapMainPortalAuthOnLoad);
+} else {
+    bootstrapMainPortalAuthOnLoad();
 } 
 
 /* --- Block 25: Intercept Security Warning Overlay Engine --- */ 

@@ -93,9 +93,9 @@
             </div>
 
             <div class="nav-right-logout-action-dock">
-                <button type="button" class="header-logout-btn" onclick="triggerMainDashboardLogout()" aria-label="Log out of Age Portal">
-                    <img src="images/logouticon.png" alt="" class="header-logout-icon" aria-hidden="true">
-                    <span class="header-logout-label">Log Out</span>
+                <button type="button" id="header-auth-action-btn" class="header-logout-btn" onclick="handleHeaderAuthAction()" aria-label="Log in to Age Portal">
+                    <img id="header-auth-action-icon" src="images/profileicon.png" alt="" class="header-logout-icon" aria-hidden="true">
+                    <span id="header-auth-action-label" class="header-logout-label">Log In</span>
                 </button>
             </div>
         </nav>
@@ -403,10 +403,70 @@
 
     <div id="chat-mention-alert-stack" class="chat-mention-alert-stack" aria-live="polite" aria-label="Community chat shoutout alerts"></div>
 
+    <div id="main-portal-login-modal" class="main-portal-modal-hidden" style="display: none !important;" role="dialog" aria-modal="true" aria-labelledby="main-portal-login-title">
+        <div class="portal-overlay-modal-bezel main-portal-login-bezel bordered-modal-panel">
+            <button type="button" class="main-portal-modal-close-btn" onclick="closeMainPortalLoginModal()" aria-label="Close login">
+                <img src="images/closebtn.png" alt="" class="main-portal-modal-close-icon" aria-hidden="true">
+            </button>
+            <h3 id="main-portal-login-title" class="main-portal-auth-modal-title">Commander Access</h3>
+            <div id="login-content-wrapper" class="main-portal-login-form-stack">
+                <input type="text" id="login-username" class="main-portal-auth-field" placeholder="USERNAME" autocomplete="username">
+                <input type="password" id="login-password" class="main-portal-auth-field" placeholder="PASSWORD" autocomplete="current-password">
+                <div class="main-portal-forgot-link-row">
+                    <button type="button" class="main-portal-forgot-link" onclick="handleForgot(event)">Forgot my Password</button>
+                </div>
+                <div id="auth-loading" class="main-portal-auth-loading" style="display: none;">Authenticating...</div>
+                <div id="auth-buttons" class="main-portal-auth-btn-row">
+                    <button type="button" id="btn-login-main" class="modal-action-btn confirm" onclick="handleLogin()">Login</button>
+                    <button type="button" id="btn-register-main" class="modal-action-btn cancel" onclick="handleRegister()">Create Account</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="register-modal" class="main-portal-auth-overlay main-portal-modal-hidden" style="display: none; opacity: 0;" role="dialog" aria-modal="true" aria-labelledby="register-modal-title">
+        <div class="portal-overlay-modal-bezel main-portal-register-bezel bordered-modal-panel">
+            <button type="button" class="main-portal-modal-close-btn" onclick="closeRegister()" aria-label="Close registration">
+                <img src="images/closebtn.png" alt="" class="main-portal-modal-close-icon" aria-hidden="true">
+            </button>
+            <h2 id="register-modal-title" class="main-portal-auth-modal-title">Create New Account</h2>
+            <div class="register-form main-portal-register-form">
+                <div class="reg-group"><label>Preferred Username*</label><input type="text" id="reg-username" class="reg-input" autocomplete="username"></div>
+                <div class="reg-group"><label>Email Address*</label><input type="email" id="reg-email" class="reg-input" autocomplete="email"></div>
+                <div class="reg-group"><label>Password*</label><input type="password" id="reg-password" class="reg-input" autocomplete="new-password"></div>
+                <div class="reg-group"><label>Confirm Password*</label><input type="password" id="reg-confirm" class="reg-input" autocomplete="new-password"></div>
+                <div class="modal-action-btn-row">
+                    <button type="button" class="modal-action-btn confirm" onclick="submitRegistration()">Confirm</button>
+                    <button type="button" class="modal-action-btn cancel" onclick="closeRegister()">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="forgot-modal" class="main-portal-auth-overlay main-portal-modal-hidden" style="display: none; opacity: 0;" role="dialog" aria-modal="true" aria-labelledby="forgot-modal-title">
+        <div class="portal-overlay-modal-bezel main-portal-forgot-bezel bordered-modal-panel">
+            <button type="button" class="main-portal-modal-close-btn" onclick="closeForgot()" aria-label="Close password recovery">
+                <img src="images/closebtn.png" alt="" class="main-portal-modal-close-icon" aria-hidden="true">
+            </button>
+            <h2 id="forgot-modal-title" class="main-portal-auth-modal-title">Account Recovery</h2>
+            <div class="register-form main-portal-forgot-form">
+                <p class="main-portal-forgot-copy">Enter your email address to receive a one-time password reset link.</p>
+                <div class="reg-group">
+                    <label>Email Address*</label>
+                    <input type="email" id="forgot-email" class="reg-input" placeholder="commander@example.com" autocomplete="email">
+                </div>
+                <div class="modal-action-btn-row">
+                    <button type="button" class="modal-action-btn confirm" onclick="submitForgot(event)">Send</button>
+                    <button type="button" class="modal-action-btn cancel" onclick="closeForgot()">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div id="main-logout-confirmation-modal" class="main-portal-modal-hidden" style="display: none !important;" role="dialog" aria-modal="true" aria-labelledby="logout-modal-title">
         <div class="portal-overlay-modal-bezel logout-confirmation-bezel bordered-modal-panel">
             <h3 id="logout-modal-title" class="modal-alert-header">Log out?</h3>
-            <p class="modal-alert-body">You will leave the Age Portal and return to the Royal Armies landing page. Your online status will clear immediately.</p>
+            <p class="modal-alert-body">Your session will end and your online status will clear immediately. You can sign in again from the Age Portal.</p>
             <div class="modal-action-btn-row">
                 <button type="button" class="modal-action-btn confirm" onclick="executeLogoutRedirect()">Log out</button>
                 <button type="button" class="modal-action-btn cancel" onclick="closeMainLogoutConfirmationWindow()">Stay signed in</button>
