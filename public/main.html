@@ -17,7 +17,7 @@
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="style2.css">
     <link rel="stylesheet" href="custom-cursor.css">
-    <link rel="stylesheet" href="mobile-responsive.css?v=commander-page-1">
+    <link rel="stylesheet" href="mobile-responsive.css?v=commander-page-2">
     <link rel="stylesheet" href="dev-page-navigator.css">
 </head>
 <body id="main-dashboard-canvas">
@@ -384,9 +384,10 @@
 
             <nav class="commander-hub-top-nav" aria-label="Account hub sections">
                 <div class="commander-hub-top-nav-bg" aria-hidden="true"></div>
-                <button type="button" class="commander-hub-top-tab active" data-hub-tab="profile" onclick="loadCommanderHubSection('profile', event)">Profile</button>
-                <button type="button" class="commander-hub-top-tab" data-hub-tab="messages" onclick="loadCommanderHubSection('messages', event)">Messages</button>
-                <button type="button" class="commander-hub-top-tab" data-hub-tab="settings" onclick="loadCommanderHubSection('settings', event)">Settings</button>
+                <button type="button" class="commander-hub-top-tab" data-hub-tab="view-profile" onclick="handleCommanderHubTopTabClick('view-profile', event)">View Profile</button>
+                <button type="button" class="commander-hub-top-tab active" data-hub-tab="profile" onclick="handleCommanderHubTopTabClick('profile', event)">Profile</button>
+                <button type="button" class="commander-hub-top-tab" data-hub-tab="messages" onclick="handleCommanderHubTopTabClick('messages', event)">Communication</button>
+                <button type="button" class="commander-hub-top-tab" data-hub-tab="settings" onclick="handleCommanderHubTopTabClick('settings', event)">Settings</button>
             </nav>
 
             <div id="portal-save-confirmation-toast" class="portal-save-confirmation-toast" aria-live="polite" hidden></div>

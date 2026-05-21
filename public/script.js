@@ -2289,6 +2289,25 @@ function activateMessagesHubChannel(trackKey, mount, activeBtn) {
     }
 }
 
+function isCommanderHubPortalSubnavCompact() {
+    return typeof isCommanderHubPortalPageActive === 'function' && isCommanderHubPortalPageActive();
+}
+
+function getCommanderHubCompactSubnavLabel(label) {
+    if (!isCommanderHubPortalSubnavCompact()) return label;
+
+    const shortLabels = {
+        'Send Message': 'Send',
+        'Messages': 'Mail',
+        'System Messages': 'System',
+        'Visuals & Interface': 'Visuals',
+        'Audio & Narration': 'Audio',
+        'Gameplay & Strategy': 'Gameplay'
+    };
+
+    return shortLabels[label] || label;
+}
+
 function mountMessagesHubView(mount, preferredChannel) {
     const body = mount.body;
     const container = mount.container;
@@ -2336,7 +2355,7 @@ function mountMessagesHubView(mount, preferredChannel) {
         const btn = document.createElement('div');
         btn.className = subnavItemClass;
         btn.dataset.msgChannel = trackKey;
-        btn.innerText = tabNamesMapping[idx];
+        btn.innerText = getCommanderHubCompactSubnavLabel(tabNamesMapping[idx]);
         btn.onclick = () => activateMessagesHubChannel(trackKey, mount, btn);
         container.appendChild(btn);
         channelButtons.push({ trackKey, btn });
@@ -2599,7 +2618,7 @@ function loadLore(type, customMount) {
 
             const div = document.createElement('div');
             div.className = subnavItemClass;
-            div.innerText = item.name;
+            div.innerText = getCommanderHubCompactSubnavLabel(item.name);
             div.onclick = () => {
                 markHubChannelTabActive(div, containerBox);
                 body.innerHTML = item.detail;

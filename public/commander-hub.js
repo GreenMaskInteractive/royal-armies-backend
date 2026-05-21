@@ -48,7 +48,21 @@ function isCommanderHubSurfaceActive() {
 
 function normalizeCommanderHubTabName(tabName) {
     if (tabName === 'edit-profile') return 'profile';
+    if (tabName === 'view-profile') return 'view-profile';
     return tabName || 'profile';
+}
+
+function handleCommanderHubTopTabClick(tabId, clickEvent) {
+    if (clickEvent) clickEvent.stopPropagation();
+
+    if (tabId === 'view-profile') {
+        if (typeof openPublicCommanderProfileCard === 'function') {
+            openPublicCommanderProfileCard(clickEvent);
+        }
+        return;
+    }
+
+    loadCommanderHubSection(tabId, clickEvent);
 }
 
 function openCommanderHubPortalPage(initialTab, clickEvent) {
@@ -209,12 +223,17 @@ function syncCommanderHubModalSectionState(tabName) {
 }
 
 function loadCommanderHubSection(tabName, clickEvent) {
+    const resolvedTab = normalizeCommanderHubTabName(tabName);
+    if (resolvedTab === 'view-profile') {
+        handleCommanderHubTopTabClick('view-profile', clickEvent);
+        return;
+    }
+
     if (typeof loadLore !== 'function') {
         console.warn('loadLore is unavailable — include script.js on main.html');
         return;
     }
 
-    const resolvedTab = normalizeCommanderHubTabName(tabName);
     window.activeCommanderHubPortalTab = resolvedTab;
 
     setCommanderHubTopNavActive(resolvedTab, clickEvent);
@@ -228,14 +247,15 @@ function loadCommanderHubSection(tabName, clickEvent) {
 
 function buildCommanderHubTopTabMarkup(activeTab) {
     const tabs = [
+        { id: 'view-profile', label: 'View Profile' },
         { id: 'profile', label: 'Profile' },
-        { id: 'messages', label: 'Messages' },
+        { id: 'messages', label: 'Communication' },
         { id: 'settings', label: 'Settings' },
     ];
 
     return tabs.map((entry) => {
         const isActive = activeTab === entry.id;
-        return `<button type="button" class="commander-hub-top-tab${isActive ? ' active' : ''}" data-hub-tab="${entry.id}" onclick="loadCommanderHubSection('${entry.id}', event)">${entry.label}</button>`;
+        return `<button type="button" class="commander-hub-top-tab${isActive ? ' active' : ''}" data-hub-tab="${entry.id}" onclick="handleCommanderHubTopTabClick('${entry.id}', event)">${entry.label}</button>`;
     }).join('');
 }
 
@@ -249,7 +269,7 @@ function renderCommanderHubPortalCanvas(viewport, initialTab) {
         <div id="portal-commander-hub-page" class="portal-commander-hub-page commander-hub-page-canvas" role="region" aria-label="Commander account">
             <header class="portal-commander-hub-intro">
                 <h2 class="portal-commander-hub-title">My Commander</h2>
-                <p class="portal-commander-hub-subtitle">Manage your profile, messages, and account settings.</p>
+                <p class="portal-commander-hub-subtitle">View your public card, edit your profile, communication, and settings.</p>
             </header>
 
             <nav class="commander-hub-top-nav portal-commander-hub-top-nav" aria-label="Account sections">
@@ -591,6 +611,7 @@ window.openCommanderHubPortalPage = openCommanderHubPortalPage;
 window.openCommanderHubMessagesInbox = openCommanderHubMessagesInbox;
 window.closeCommanderHubModal = closeCommanderHubModal;
 window.loadCommanderHubSection = loadCommanderHubSection;
+window.handleCommanderHubTopTabClick = handleCommanderHubTopTabClick;
 window.renderCommanderHubPortalCanvas = renderCommanderHubPortalCanvas;
 window.hydrateCommanderHubPortalPage = hydrateCommanderHubPortalPage;
 window.teardownCommanderHubPortalView = teardownCommanderHubPortalView;

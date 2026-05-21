@@ -258,8 +258,9 @@ const PORTAL_MOBILE_NAV_VIEW_LABELS = {
 
 const PORTAL_COMMANDER_HUB_TAB_LABELS = {
     profile: 'Edit Profile',
-    messages: 'Messages',
-    settings: 'Settings'
+    messages: 'Communication',
+    settings: 'Settings',
+    'view-profile': 'View Profile'
 };
 
 function isPortalMobileNavLayout() {

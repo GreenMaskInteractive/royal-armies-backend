@@ -397,14 +397,95 @@ body {
         padding: 18px 14px 16px !important;
     }
 
-    .portal-commander-hub-page .commander-hub-body {
-        min-height: 0 !important;
+    .portal-commander-hub-page .commander-hub-body,
+    .portal-commander-hub-page .commander-hub-content-pane,
+    .portal-commander-hub-page .commander-hub-body-frame,
+    .portal-commander-hub-page .settings-scroll-wrapper,
+    .portal-commander-hub-page .message-workspace-canvas,
+    .portal-commander-hub-page .message-mailbox-canvas,
+    .portal-commander-hub-page .message-compose-canvas,
+    .portal-commander-hub-page .msg-folder-panel,
+    .portal-commander-hub-page .msg-portal-scroll-bin,
+    .portal-commander-hub-page .profile-fullscreen-canvas,
+    .portal-commander-hub-page .compact-grid-scroll-track {
+        overflow: visible !important;
+        overflow-x: visible !important;
+        overflow-y: visible !important;
         max-height: none !important;
+        min-height: 0 !important;
+        height: auto !important;
+    }
+
+    #portal-commander-hub-page.commander-hub-settings-active .commander-hub-body,
+    #portal-commander-hub-page.commander-hub-settings-active .commander-hub-body > .settings-scroll-wrapper,
+    #portal-commander-hub-page.commander-hub-messages-active .commander-hub-body,
+    #portal-commander-hub-page.commander-hub-messages-active .message-workspace-canvas,
+    #portal-commander-hub-page.commander-hub-profile-active .commander-hub-body,
+    #portal-commander-hub-page.commander-hub-profile-active .settings-scroll-wrapper.profile-fullscreen-canvas {
+        overflow: visible !important;
+        overflow-y: visible !important;
+        max-height: none !important;
+        height: auto !important;
     }
 
     .portal-commander-hub-page .message-workspace-canvas {
-        min-height: 280px !important;
+        min-height: 0 !important;
         height: auto !important;
+    }
+
+    .portal-commander-hub-page .commander-hub-subnav-list {
+        flex-wrap: wrap !important;
+        overflow: visible !important;
+        overflow-x: visible !important;
+        gap: 6px !important;
+        padding-bottom: 2px !important;
+    }
+
+    .portal-commander-hub-page .commander-hub-subnav-column {
+        padding-bottom: 6px !important;
+    }
+
+    .portal-commander-hub-page .commander-hub-subnav-label {
+        font-size: 0.68rem !important;
+        letter-spacing: 1px !important;
+        margin-bottom: 4px !important;
+    }
+
+    .portal-commander-hub-page .commander-hub-subnav-item {
+        padding: 5px 9px !important;
+        font-size: 0.62rem !important;
+        letter-spacing: 0.2px !important;
+        min-height: 0 !important;
+        line-height: 1.2 !important;
+        border-left-width: 2px !important;
+    }
+
+    .portal-commander-hub-page .msg-folder-tab-bar {
+        flex-wrap: wrap !important;
+        gap: 4px !important;
+        margin-bottom: 6px !important;
+        padding: 0 !important;
+        border-bottom: none !important;
+    }
+
+    .portal-commander-hub-page .msg-folder-tab {
+        flex: 0 1 auto !important;
+        padding: 4px 8px !important;
+        font-size: 0.58rem !important;
+        letter-spacing: 0.03em !important;
+        min-height: 0 !important;
+    }
+
+    .portal-commander-hub-page .commander-hub-top-tab {
+        font-size: 0.68rem !important;
+        padding: 8px 6px !important;
+        letter-spacing: 0.5px !important;
+    }
+
+    .portal-commander-hub-page .commander-hub-top-nav {
+        min-height: 48px !important;
+        padding: 6px 8px !important;
+        gap: 4px !important;
     }
 
     .portal-commander-hub-page > .portal-save-confirmation-toast {
@@ -1247,6 +1328,10 @@ body {
         max-width: 100% !important;
         padding-left: 0 !important;
         padding-right: 0 !important;
+        overflow: visible !important;
+        overflow-y: visible !important;
+        max-height: none !important;
+        height: auto !important;
     }
 
     .profile-identity-title-row {
