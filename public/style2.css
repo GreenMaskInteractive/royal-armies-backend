@@ -5128,6 +5128,31 @@ body:not(.portal-guest-mode) #portal-deployment-guest-cta {
     box-sizing: border-box !important;
 }
 
+.portal-commander-hub-page .commander-hub-top-nav-bg {
+    background-size: auto 100% !important;
+    background-repeat: repeat-x !important;
+    background-position: center center !important;
+}
+
+.portal-commander-hub-page .commander-hub-top-nav {
+    flex-wrap: nowrap !important;
+    justify-content: space-between !important;
+    gap: 4px !important;
+}
+
+.portal-commander-hub-page .commander-hub-top-tab {
+    flex: 1 1 0 !important;
+    min-width: 0 !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+}
+
+.public-profile-hub-inline {
+    width: 100% !important;
+    box-sizing: border-box !important;
+}
+
 .portal-commander-hub-intro {
     text-align: left !important;
 }
@@ -5466,7 +5491,9 @@ body:not(.portal-guest-mode) #portal-deployment-guest-cta {
 }
 
 /* Profile layout inside commander hub */
-#commander-hub-modal.commander-hub-profile-active .commander-hub-subnav-column, #portal-commander-hub-page.commander-hub-profile-active .commander-hub-subnav-column {
+#commander-hub-modal.commander-hub-profile-active .commander-hub-subnav-column,
+#portal-commander-hub-page.commander-hub-profile-active .commander-hub-subnav-column,
+#portal-commander-hub-page.commander-hub-view-profile-active .commander-hub-subnav-column {
     display: none !important;
 }
 
@@ -5474,7 +5501,9 @@ body:not(.portal-guest-mode) #portal-deployment-guest-cta {
     padding-top: 20px !important;
 }
 
-#commander-hub-modal.commander-hub-profile-active .commander-hub-section-title, #portal-commander-hub-page.commander-hub-profile-active .commander-hub-section-title {
+#commander-hub-modal.commander-hub-profile-active .commander-hub-section-title,
+#portal-commander-hub-page.commander-hub-profile-active .commander-hub-section-title,
+#portal-commander-hub-page.commander-hub-view-profile-active .commander-hub-section-title {
     display: none !important;
 }
 

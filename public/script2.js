@@ -435,7 +435,11 @@ function portalMobileNavCommanderAction(action, event) {
 
     switch (action) {
         case 'view-profile':
-            if (typeof openPublicCommanderProfileCard === 'function') {
+            if (typeof isPortalMobileNavLayout === 'function' && isPortalMobileNavLayout()) {
+                if (typeof openCommanderHubPortalPage === 'function') {
+                    openCommanderHubPortalPage('view-profile', event);
+                }
+            } else if (typeof openPublicCommanderProfileCard === 'function') {
                 openPublicCommanderProfileCard(event);
             }
             break;

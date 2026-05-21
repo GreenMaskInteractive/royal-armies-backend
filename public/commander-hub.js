@@ -54,14 +54,6 @@ function normalizeCommanderHubTabName(tabName) {
 
 function handleCommanderHubTopTabClick(tabId, clickEvent) {
     if (clickEvent) clickEvent.stopPropagation();
-
-    if (tabId === 'view-profile') {
-        if (typeof openPublicCommanderProfileCard === 'function') {
-            openPublicCommanderProfileCard(clickEvent);
-        }
-        return;
-    }
-
     loadCommanderHubSection(tabId, clickEvent);
 }
 
@@ -89,6 +81,7 @@ function teardownCommanderHubPortalView() {
     if (pageRoot) {
         pageRoot.classList.remove(
             'commander-hub-profile-active',
+            'commander-hub-view-profile-active',
             'commander-hub-settings-active',
             'commander-hub-messages-active'
         );
@@ -211,11 +204,13 @@ function syncCommanderHubModalSectionState(tabName) {
 
     frame.classList.remove(
         'commander-hub-profile-active',
+        'commander-hub-view-profile-active',
         'commander-hub-settings-active',
         'commander-hub-messages-active'
     );
 
     if (tabName === 'profile') frame.classList.add('commander-hub-profile-active');
+    else if (tabName === 'view-profile') frame.classList.add('commander-hub-view-profile-active');
     else if (tabName === 'settings') frame.classList.add('commander-hub-settings-active');
     else if (tabName === 'messages') frame.classList.add('commander-hub-messages-active');
 
@@ -224,8 +219,15 @@ function syncCommanderHubModalSectionState(tabName) {
 
 function loadCommanderHubSection(tabName, clickEvent) {
     const resolvedTab = normalizeCommanderHubTabName(tabName);
+
     if (resolvedTab === 'view-profile') {
-        handleCommanderHubTopTabClick('view-profile', clickEvent);
+        window.activeCommanderHubPortalTab = resolvedTab;
+        setCommanderHubTopNavActive(resolvedTab, clickEvent);
+        syncCommanderHubModalSectionState(resolvedTab);
+        mountCommanderHubViewProfileSection(getCommanderHubUIMount());
+        if (isCommanderHubPortalPageActive() && typeof syncPortalMobileNavChrome === 'function') {
+            syncPortalMobileNavChrome('commander');
+        }
         return;
     }
 
@@ -247,16 +249,40 @@ function loadCommanderHubSection(tabName, clickEvent) {
 
 function buildCommanderHubTopTabMarkup(activeTab) {
     const tabs = [
-        { id: 'view-profile', label: 'View Profile' },
-        { id: 'profile', label: 'Profile' },
-        { id: 'messages', label: 'Communication' },
-        { id: 'settings', label: 'Settings' },
+        { id: 'view-profile', label: 'View', title: 'View Profile' },
+        { id: 'profile', label: 'Edit', title: 'Edit Profile' },
+        { id: 'messages', label: 'Comms', title: 'Communication' },
+        { id: 'settings', label: 'Settings', title: 'Settings' },
     ];
 
     return tabs.map((entry) => {
         const isActive = activeTab === entry.id;
-        return `<button type="button" class="commander-hub-top-tab${isActive ? ' active' : ''}" data-hub-tab="${entry.id}" onclick="handleCommanderHubTopTabClick('${entry.id}', event)">${entry.label}</button>`;
+        const titleAttr = entry.title ? ` title="${entry.title}"` : '';
+        return `<button type="button" class="commander-hub-top-tab${isActive ? ' active' : ''}" data-hub-tab="${entry.id}"${titleAttr} onclick="handleCommanderHubTopTabClick('${entry.id}', event)">${entry.label}</button>`;
     }).join('');
+}
+
+function mountCommanderHubViewProfileSection(mount) {
+    const body = mount.body;
+    if (!body) return;
+
+    if (mount.container) mount.container.innerHTML = '';
+    if (mount.leftHeader) mount.leftHeader.style.display = 'none';
+    if (mount.detailsHeader) {
+        mount.detailsHeader.style.display = 'none';
+        mount.detailsHeader.innerHTML = '';
+    }
+    if (mount.profileHeaderHost) mount.profileHeaderHost.innerHTML = '';
+    if (mount.profileFooterHost) mount.profileFooterHost.innerHTML = '';
+
+    syncCommanderHubPlayerFromStorage();
+    const snapshot = getPublicProfileSnapshot();
+    if (!snapshot) {
+        body.innerHTML = '<p class="public-profile-empty-state">Profile unavailable.</p>';
+        return;
+    }
+
+    body.innerHTML = `<div class="public-profile-hub-inline">${renderPublicProfileCardContent(snapshot, { context: 'hub' })}</div>`;
 }
 
 function renderCommanderHubPortalCanvas(viewport, initialTab) {
@@ -484,7 +510,8 @@ function buildPublicProfileAwardsHtml(awards) {
     return `<div class="public-profile-awards-grid" role="list">${chips}</div>`;
 }
 
-function renderPublicProfileCardContent(snapshot) {
+function renderPublicProfileCardContent(snapshot, options) {
+    const context = options?.context === 'hub' ? 'hub' : 'overlay';
     const isPublic = snapshot.privacy === 'Public';
     const viewingSelf = !!snapshot.viewingSelf;
     const hideSensitiveDetails = !isPublic && !viewingSelf;
@@ -536,8 +563,19 @@ function renderPublicProfileCardContent(snapshot) {
     `;
 
     const editProfileBtn = viewingSelf
-        ? `<button type="button" class="public-profile-edit-link-btn" onclick="closePublicCommanderProfileCard(event); openCommanderHubModal('profile', event);">Edit My Profile</button>`
+        ? (context === 'hub'
+            ? `<button type="button" class="public-profile-edit-link-btn" onclick="loadCommanderHubSection('profile', event)">Edit My Profile</button>`
+            : `<button type="button" class="public-profile-edit-link-btn" onclick="closePublicCommanderProfileCard(event); openCommanderHubModal('profile', event);">Edit My Profile</button>`)
         : '';
+
+    const footerMarkup = context === 'hub'
+        ? (editProfileBtn
+            ? `<footer class="public-profile-card-actions public-profile-card-actions--hub">${editProfileBtn}</footer>`
+            : '')
+        : `<footer class="public-profile-card-actions">
+            ${editProfileBtn}
+            <button type="button" class="public-profile-dismiss-btn" onclick="closePublicCommanderProfileCard(event)">Close</button>
+        </footer>`;
 
     return `
         <header class="public-profile-identity-header">
@@ -558,15 +596,18 @@ function renderPublicProfileCardContent(snapshot) {
             </div>
         </header>
         ${splitBodySection}
-        <footer class="public-profile-card-actions">
-            ${editProfileBtn}
-            <button type="button" class="public-profile-dismiss-btn" onclick="closePublicCommanderProfileCard(event)">Close</button>
-        </footer>
+        ${footerMarkup}
     `;
 }
 
 function openPublicCommanderProfileCard(clickEvent, subjectPlayer) {
     if (clickEvent) clickEvent.stopPropagation();
+
+    if (!subjectPlayer && isCommanderHubPortalPageActive()) {
+        loadCommanderHubSection('view-profile', clickEvent);
+        return;
+    }
+
     syncCommanderHubPlayerFromStorage();
 
     const snapshot = getPublicProfileSnapshot(subjectPlayer);

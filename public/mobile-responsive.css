@@ -387,6 +387,24 @@ body {
     .portal-commander-hub-page .commander-hub-top-nav {
         position: relative !important;
         width: 100% !important;
+        display: flex !important;
+        flex-direction: row !important;
+        flex-wrap: nowrap !important;
+        align-items: stretch !important;
+        justify-content: space-between !important;
+        gap: 2px !important;
+        padding: 4px 6px !important;
+        min-height: 52px !important;
+        height: 52px !important;
+        max-height: 52px !important;
+        box-sizing: border-box !important;
+        overflow: hidden !important;
+    }
+
+    .portal-commander-hub-page .commander-hub-top-nav-bg {
+        background-size: auto 100% !important;
+        background-repeat: repeat-x !important;
+        background-position: center center !important;
     }
 
     .portal-commander-hub-page .commander-hub-body-frame {
@@ -421,11 +439,48 @@ body {
     #portal-commander-hub-page.commander-hub-messages-active .commander-hub-body,
     #portal-commander-hub-page.commander-hub-messages-active .message-workspace-canvas,
     #portal-commander-hub-page.commander-hub-profile-active .commander-hub-body,
-    #portal-commander-hub-page.commander-hub-profile-active .settings-scroll-wrapper.profile-fullscreen-canvas {
+    #portal-commander-hub-page.commander-hub-profile-active .settings-scroll-wrapper.profile-fullscreen-canvas,
+    #portal-commander-hub-page.commander-hub-view-profile-active .commander-hub-body {
         overflow: visible !important;
         overflow-y: visible !important;
         max-height: none !important;
         height: auto !important;
+    }
+
+    #portal-commander-hub-page.commander-hub-view-profile-active .commander-hub-subnav-column,
+    #portal-commander-hub-page.commander-hub-view-profile-active .commander-hub-section-title {
+        display: none !important;
+    }
+
+    #portal-commander-hub-page.commander-hub-view-profile-active .commander-hub-body-frame {
+        padding-top: 18px !important;
+    }
+
+    .portal-commander-hub-page .public-profile-hub-inline {
+        width: 100% !important;
+        max-width: 100% !important;
+    }
+
+    .portal-commander-hub-page .public-profile-hub-inline .public-profile-identity-header {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        gap: 10px !important;
+    }
+
+    .portal-commander-hub-page .public-profile-hub-inline .public-profile-split-body {
+        flex-direction: column !important;
+        gap: 12px !important;
+    }
+
+    .portal-commander-hub-page .public-profile-hub-inline .public-profile-split-column {
+        width: 100% !important;
+        max-width: 100% !important;
+    }
+
+    .portal-commander-hub-page .public-profile-hub-inline .public-profile-card-actions--hub {
+        margin-top: 12px !important;
+        padding-top: 0 !important;
+        border-top: none !important;
     }
 
     .portal-commander-hub-page .message-workspace-canvas {
@@ -477,15 +532,17 @@ body {
     }
 
     .portal-commander-hub-page .commander-hub-top-tab {
-        font-size: 0.68rem !important;
-        padding: 8px 6px !important;
-        letter-spacing: 0.5px !important;
-    }
-
-    .portal-commander-hub-page .commander-hub-top-nav {
-        min-height: 48px !important;
-        padding: 6px 8px !important;
-        gap: 4px !important;
+        flex: 1 1 0 !important;
+        min-width: 0 !important;
+        max-width: 25% !important;
+        font-size: 0.58rem !important;
+        padding: 4px 2px !important;
+        letter-spacing: 0 !important;
+        line-height: 1.15 !important;
+        white-space: nowrap !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+        align-self: center !important;
     }
 
     .portal-commander-hub-page > .portal-save-confirmation-toast {
@@ -1302,8 +1359,7 @@ body {
         padding: 16px 8px !important;
     }
 
-    .commander-hub-top-nav,
-    .portal-commander-hub-page .commander-hub-top-nav {
+    .commander-hub-top-nav {
         height: auto !important;
         min-height: 56px !important;
         padding: 8px 12px !important;
@@ -1311,8 +1367,7 @@ body {
         flex-wrap: wrap !important;
     }
 
-    .commander-hub-top-tab,
-    .portal-commander-hub-page .commander-hub-top-tab {
+    .commander-hub-top-tab {
         font-size: 0.82rem !important;
         padding: 10px 12px !important;
         flex: 1 1 auto !important;
