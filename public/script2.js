@@ -1653,12 +1653,20 @@ if (!greatTransitionTargetTimestamp) {
     localStorage.setItem('savedGreatTransitionTargetTimestamp', greatTransitionTargetTimestamp);
 }
 
-function runDynamicAgeLifecycleTrackingEngine() {
-    // Metric Bar DOM Element Injections Hook Handles
+function applyPlaceholderAgeMetricBannerValues() {
     const ageCycleDisplay = document.getElementById('metrics-age-cycle-display');
     const gameModeDisplay = document.getElementById('metrics-game-mode-display');
-    const transitionCountdownDisplay = document.getElementById('metrics-transition-countdown-display');
     const leadingNationDisplay = document.getElementById('metrics-leading-nation-display');
+
+    if (ageCycleDisplay) ageCycleDisplay.innerText = 'N/A';
+    if (gameModeDisplay) gameModeDisplay.innerText = 'N/A';
+    if (leadingNationDisplay) leadingNationDisplay.innerText = 'N/A';
+}
+
+function runDynamicAgeLifecycleTrackingEngine() {
+    const transitionCountdownDisplay = document.getElementById('metrics-transition-countdown-display');
+
+    applyPlaceholderAgeMetricBannerValues();
 
     // Central Deployment Corridor Handle hooks maintained perfectly intact
     const statusHeader = document.getElementById('dynamic-age-status-header');
@@ -1667,15 +1675,8 @@ function runDynamicAgeLifecycleTrackingEngine() {
 
     setInterval(() => {
         const currentTime = Date.now();
-        
-        // ============================================================
-        // 🎮 GAME MODE ROTATION AUTOMATION (Calculated modulo against current Age track)
-        // ============================================================
-        const currentModeIndex = (currentCampaignAgeNumber - 1) % royalArmiesGameModeLoopLedger.length;
-        const activeGameModeName = royalArmiesGameModeLoopLedger[currentModeIndex];
-        
-        if (gameModeDisplay) gameModeDisplay.innerText = activeGameModeName;
-        if (leadingNationDisplay) leadingNationDisplay.innerText = nationLeadersMatrixMockData[activeGameModeName];
+
+        applyPlaceholderAgeMetricBannerValues();
 
         // ============================================================
         // 🌌 THE REPEATING 3-MONTH GREAT TRANSITION COUNTDOWN INTERPOLATOR
@@ -1700,13 +1701,7 @@ function runDynamicAgeLifecycleTrackingEngine() {
         // ============================================================
         if (activeCampaignState === "active") {
             const totalElapsedMilliseconds = currentTime - ageStateTargetTimestamp;
-            
-            // 🌟 15-DAY LIFESPAN CLAMP: Converts raw elapsed times back into standard 24h day units
-            const calculatedElapsedDays = Math.floor(totalElapsedMilliseconds / (24 * 60 * 60 * 1000)) + 1;
-            const clampedDisplayDay = Math.min(calculatedElapsedDays, 15); // Hard-locked at day 15 maximum boundary limits
-            
-            if (ageCycleDisplay) ageCycleDisplay.innerText = `Day ${clampedDisplayDay} / 15`;
-            
+
             // Central Deployment Corridor Text String Sync Injections
             if (statusHeader) statusHeader.innerText = `⚔️ AGE ${currentCampaignAgeNumber} HAS BEGUN`;
             if (subTimerDisplay && !subTimerDisplay.classList.contains('timer-hidden-state-lock')) {
@@ -1733,8 +1728,6 @@ function runDynamicAgeLifecycleTrackingEngine() {
         } else if (activeCampaignState === "transition") {
             const remainingTransitionMilliseconds = ageStateTargetTimestamp - currentTime;
             const nextAgeNumber = currentCampaignAgeNumber + 1;
-            
-            if (ageCycleDisplay) ageCycleDisplay.innerText = "Intermission Lock";
             
             if (remainingTransitionMilliseconds <= 0) {
                 // Intermission cleared: Step the game version number and release the campaign mode flags
