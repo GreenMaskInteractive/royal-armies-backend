@@ -950,6 +950,10 @@ function launchGameRoundSector(isTutorialModeActive, clickEvent) {
     let deployPulseFinished = false;
     let selectAudioFinished = false;
 
+    if (typeof beginCommanderAgeResetSession === 'function') {
+        beginCommanderAgeResetSession();
+    }
+
     const attemptGamePageHandoff = () => {
         if (!deployPulseFinished || !selectAudioFinished) return;
         const destination = `game.html?tutorial=${isTutorialModeActive}`;
@@ -1638,6 +1642,9 @@ function initializePortalLivePlayerMetrics() {
     fetchPortalLiveMetrics();
     sendPortalPresenceHeartbeat();
     if (isCommanderPlayingActiveAgeLocally()) {
+        if (typeof ensureCommanderAgeResetSessionContinuity === 'function') {
+            ensureCommanderAgeResetSessionContinuity();
+        }
         notifyPortalAgeSessionJoin();
     }
 

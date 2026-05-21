@@ -156,6 +156,10 @@ function refreshMainPortalAuthChrome() {
     if (typeof syncPortalMobileNavIdentity === 'function') {
         syncPortalMobileNavIdentity();
     }
+
+    if (typeof applyProfileRankResetButtonState === 'function') {
+        applyProfileRankResetButtonState();
+    }
 }
 
 function openMainPortalGuestRegister(event) {
@@ -2087,8 +2091,8 @@ const nationLore = {
                             <div class="profile-section-box footer-box-third critical-danger-zone">
                                 <label class="settings-label warning-title">Rank Reset</label>
                                 <div class="profile-btn-row-stacked">
-                                    <button class="danger-action-btn" onclick="triggerCommanderSuicide('rank')">Secede Rank</button>
-                                    <button class="danger-action-btn" onclick="triggerCommanderSuicide('exile')">Suicide out of Country</button>
+                                    <button type="button" class="danger-action-btn rank-reset-action-btn" data-commander-reset-mode="rank" onclick="triggerCommanderSuicide('rank')">Secede Rank</button>
+                                    <button type="button" class="danger-action-btn rank-reset-action-btn" data-commander-reset-mode="exile" onclick="triggerCommanderSuicide('exile')">Suicide out of Country</button>
                                 </div>
                             </div>
                         </div>
@@ -2390,6 +2394,162 @@ function isCommanderEnrolledInActiveAgeRound() {
     return localStorage.getItem('savedCommanderInActiveAge') === 'true';
 }
 
+const COMMANDER_RANK_RESET_LIMIT = 3;
+const COMMANDER_EXILE_RESET_LIMIT = 1;
+const COMMANDER_AGE_RESET_USAGE_KEY = 'savedCommanderAgeResetUsage';
+const COMMANDER_ACTIVE_AGE_SESSION_KEY = 'savedCommanderActiveAgeSessionKey';
+
+function resolveCommanderResetStorageKey() {
+    const name = typeof getActiveCommanderUsername === 'function' ? getActiveCommanderUsername() : '';
+    if (name && name.trim()) return name.trim().toLowerCase();
+    const saved = localStorage.getItem('activeCommanderUser');
+    return saved && saved.trim() ? saved.trim().toLowerCase() : '';
+}
+
+function loadCommanderAgeResetStore() {
+    try {
+        const raw = localStorage.getItem(COMMANDER_AGE_RESET_USAGE_KEY);
+        const parsed = raw ? JSON.parse(raw) : {};
+        return parsed && typeof parsed === 'object' ? parsed : {};
+    } catch (err) {
+        return {};
+    }
+}
+
+function saveCommanderAgeResetStore(store) {
+    localStorage.setItem(COMMANDER_AGE_RESET_USAGE_KEY, JSON.stringify(store || {}));
+}
+
+function createFreshCommanderAgeResetEntry(sessionKey) {
+    return {
+        sessionKey,
+        rankResetsUsed: 0,
+        exileResetsUsed: 0
+    };
+}
+
+function getCommanderAgeResetEntry() {
+    const userKey = resolveCommanderResetStorageKey();
+    const sessionKey = localStorage.getItem(COMMANDER_ACTIVE_AGE_SESSION_KEY);
+    if (!userKey || !sessionKey) {
+        return { rankResetsUsed: 0, exileResetsUsed: 0, sessionKey: sessionKey || null };
+    }
+
+    const store = loadCommanderAgeResetStore();
+    const entry = store[userKey];
+    if (!entry || entry.sessionKey !== sessionKey) {
+        return { rankResetsUsed: 0, exileResetsUsed: 0, sessionKey };
+    }
+
+    return entry;
+}
+
+function getCommanderResetLimit(mode) {
+    return mode === 'exile' ? COMMANDER_EXILE_RESET_LIMIT : COMMANDER_RANK_RESET_LIMIT;
+}
+
+function getCommanderResetRemaining(mode) {
+    const entry = getCommanderAgeResetEntry();
+    const used = mode === 'exile' ? entry.exileResetsUsed : entry.rankResetsUsed;
+    return Math.max(0, getCommanderResetLimit(mode) - used);
+}
+
+function canUseCommanderReset(mode) {
+    if (mode !== 'rank' && mode !== 'exile') return true;
+    if (!isCommanderEnrolledInActiveAgeRound()) return false;
+    return getCommanderResetRemaining(mode) > 0;
+}
+
+function incrementCommanderResetUsage(mode) {
+    if (mode !== 'rank' && mode !== 'exile') return;
+
+    const userKey = resolveCommanderResetStorageKey();
+    if (!userKey) return;
+
+    let sessionKey = localStorage.getItem(COMMANDER_ACTIVE_AGE_SESSION_KEY);
+    if (!sessionKey) {
+        sessionKey = `age-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+        localStorage.setItem(COMMANDER_ACTIVE_AGE_SESSION_KEY, sessionKey);
+    }
+
+    const store = loadCommanderAgeResetStore();
+    const existing = store[userKey];
+    const entry = (existing && existing.sessionKey === sessionKey)
+        ? existing
+        : createFreshCommanderAgeResetEntry(sessionKey);
+
+    if (mode === 'exile') {
+        entry.exileResetsUsed = Math.min(COMMANDER_EXILE_RESET_LIMIT, entry.exileResetsUsed + 1);
+    } else {
+        entry.rankResetsUsed = Math.min(COMMANDER_RANK_RESET_LIMIT, entry.rankResetsUsed + 1);
+    }
+
+    store[userKey] = entry;
+    saveCommanderAgeResetStore(store);
+}
+
+function beginCommanderAgeResetSession() {
+    const userKey = resolveCommanderResetStorageKey();
+    if (!userKey) return;
+
+    const wasPlaying = localStorage.getItem('savedCommanderInActiveAge') === 'true';
+    const existingKey = localStorage.getItem(COMMANDER_ACTIVE_AGE_SESSION_KEY);
+    const store = loadCommanderAgeResetStore();
+    const entry = store[userKey];
+
+    if (wasPlaying && existingKey && entry && entry.sessionKey === existingKey) {
+        return;
+    }
+
+    const sessionKey = `age-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    localStorage.setItem(COMMANDER_ACTIVE_AGE_SESSION_KEY, sessionKey);
+    store[userKey] = createFreshCommanderAgeResetEntry(sessionKey);
+    saveCommanderAgeResetStore(store);
+}
+
+function ensureCommanderAgeResetSessionContinuity() {
+    if (!isCommanderEnrolledInActiveAgeRound()) return;
+
+    const userKey = resolveCommanderResetStorageKey();
+    if (!userKey) return;
+
+    let sessionKey = localStorage.getItem(COMMANDER_ACTIVE_AGE_SESSION_KEY);
+    if (!sessionKey) {
+        sessionKey = `age-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+        localStorage.setItem(COMMANDER_ACTIVE_AGE_SESSION_KEY, sessionKey);
+    }
+
+    const store = loadCommanderAgeResetStore();
+    const entry = store[userKey];
+    if (!entry || entry.sessionKey !== sessionKey) {
+        store[userKey] = createFreshCommanderAgeResetEntry(sessionKey);
+        saveCommanderAgeResetStore(store);
+    }
+}
+
+function clearCommanderAgeResetSession() {
+    localStorage.removeItem(COMMANDER_ACTIVE_AGE_SESSION_KEY);
+}
+
+function getCommanderResetButtonTitle(mode) {
+    const limit = getCommanderResetLimit(mode);
+    const remaining = getCommanderResetRemaining(mode);
+
+    if (!isCommanderEnrolledInActiveAgeRound()) {
+        return 'Available only while actively playing an Age.';
+    }
+
+    if (remaining <= 0) {
+        return mode === 'exile'
+            ? `Suicide reset already used for this Age (${limit} per Age).`
+            : `All rank resets used for this Age (${limit} per Age).`;
+    }
+
+    return mode === 'exile'
+        ? `${remaining} of ${limit} suicide reset remaining this Age.`
+        : `${remaining} of ${limit} rank resets remaining this Age.`;
+}
+
 function markHubChannelTabActive(activeBtn, container) {
     if (!container) return;
     container.querySelectorAll('.commander-hub-subnav-item, .update-item').forEach((tab) => {
@@ -2399,17 +2559,15 @@ function markHubChannelTabActive(activeBtn, container) {
 }
 
 function applyProfileRankResetButtonState() {
-    const enrolledInAge = isCommanderEnrolledInActiveAgeRound();
-    document.querySelectorAll('.rank-reset-action-btn').forEach((btn) => {
-        btn.disabled = !enrolledInAge;
-        btn.classList.toggle('rank-reset-disabled', !enrolledInAge);
-        if (!enrolledInAge) {
-            btn.setAttribute('aria-disabled', 'true');
-            btn.title = 'Available only while enrolled in an active Age round.';
-        } else {
-            btn.removeAttribute('aria-disabled');
-            btn.removeAttribute('title');
-        }
+    document.querySelectorAll('.rank-reset-action-btn, [data-commander-reset-mode]').forEach((btn) => {
+        const mode = btn.dataset.commanderResetMode;
+        if (mode !== 'rank' && mode !== 'exile') return;
+
+        const allowed = canUseCommanderReset(mode);
+        btn.disabled = !allowed;
+        btn.classList.toggle('rank-reset-disabled', !allowed);
+        btn.setAttribute('aria-disabled', allowed ? 'false' : 'true');
+        btn.title = getCommanderResetButtonTitle(mode);
     });
 }
 
@@ -2587,8 +2745,8 @@ function loadLore(type, customMount) {
                         <div class="profile-section-box footer-box-third">
                             <label class="settings-label">Rank Reset</label>
                             <div class="profile-btn-row-stacked">
-                                <button type="button" class="settings-btn rank-reset-action-btn" onclick="triggerCommanderSuicide('rank')">Secede Rank</button>
-                                <button type="button" class="settings-btn rank-reset-action-btn" onclick="triggerCommanderSuicide('exile')">Suicide out of Country</button>
+                                <button type="button" class="settings-btn rank-reset-action-btn" data-commander-reset-mode="rank" onclick="triggerCommanderSuicide('rank')">Secede Rank</button>
+                                <button type="button" class="settings-btn rank-reset-action-btn" data-commander-reset-mode="exile" onclick="triggerCommanderSuicide('exile')">Suicide out of Country</button>
                             </div>
                         </div>
                     </div>
@@ -3112,6 +3270,9 @@ window.confirmSelection = confirmSelection;
 window.selectClass = selectClass;
 window.isCommanderEnrolledInActiveAgeRound = isCommanderEnrolledInActiveAgeRound;
 window.applyProfileRankResetButtonState = applyProfileRankResetButtonState;
+window.beginCommanderAgeResetSession = beginCommanderAgeResetSession;
+window.ensureCommanderAgeResetSessionContinuity = ensureCommanderAgeResetSessionContinuity;
+window.canUseCommanderReset = canUseCommanderReset;
 window.syncPlayerFromActiveCommanderStorage = syncPlayerFromActiveCommanderStorage;
 window.refreshProfileCommanderNameDisplay = refreshProfileCommanderNameDisplay;
 window.refreshLoggedUserTagDisplay = refreshLoggedUserTagDisplay;
@@ -3344,7 +3505,8 @@ let currentSuicideStep = 0;
 /* Block 30: Commander Profile Multi-Stage Warning Engine */
 
 function triggerCommanderSuicide(mode) {
-    if ((mode === 'rank' || mode === 'exile') && !isCommanderEnrolledInActiveAgeRound()) {
+    if ((mode === 'rank' || mode === 'exile') && !canUseCommanderReset(mode)) {
+        applyProfileRankResetButtonState();
         return;
     }
 
@@ -3417,6 +3579,16 @@ function handleSuicideActionSelection(action) {
         currentSuicideStep++;
         renderSuicideDialogStep();
     } else if (action === 'commit') {
+        if ((currentSuicideMode === 'rank' || currentSuicideMode === 'exile') && !canUseCommanderReset(currentSuicideMode)) {
+            closeSuicideOverlayWindow();
+            applyProfileRankResetButtonState();
+            return;
+        }
+
+        if (currentSuicideMode === 'rank' || currentSuicideMode === 'exile') {
+            incrementCommanderResetUsage(currentSuicideMode);
+        }
+
         // ACCOUNT DEFAULT STRUCTURAL DISK WIPING SIMULATION
         if (currentSuicideMode === 'rank') {
             player.rank = 1;
@@ -3434,13 +3606,18 @@ function handleSuicideActionSelection(action) {
         // Push step index pointer to the final confirmation panel text box block row
         currentSuicideStep++;
         renderSuicideDialogStep();
+        applyProfileRankResetButtonState();
     } else if (action === 'finalize') {
         // Clear variables, commit changes to disk memory cache records, re-render, and clear the screen
         hasUnsavedChanges = false;
         localStorage.removeItem('savedCommanderInActiveAge');
+        if (currentSuicideMode === 'exile') {
+            clearCommanderAgeResetSession();
+        }
         if (typeof notifyPortalAgeSessionLeave === 'function') notifyPortalAgeSessionLeave();
         if (typeof saveSettings === 'function') saveSettings();
         reloadProfilePanelView();
+        applyProfileRankResetButtonState();
 
         closeSuicideOverlayWindow();
     }

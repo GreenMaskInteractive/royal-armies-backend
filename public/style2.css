@@ -5672,10 +5672,19 @@ body:not(.portal-guest-mode) #portal-deployment-guest-cta {
     background: linear-gradient(180deg, #ffd700 0%, #9a7a32 100%) !important;
 }
 
-/* Rank reset controls locked until enrolled in an active Age round */
+/* Rank reset controls locked until enrolled in an active Age round or uses exhausted */
 #commander-hub-modal .rank-reset-action-btn.rank-reset-disabled,
 #portal-commander-hub-page .rank-reset-action-btn.rank-reset-disabled,
-#commander-hub-modal .rank-reset-action-btn:disabled , #portal-commander-hub-page .rank-reset-action-btn:disabled {
+#commander-hub-modal .danger-action-btn.rank-reset-disabled,
+#portal-commander-hub-page .danger-action-btn.rank-reset-disabled,
+#commander-hub-modal .rank-reset-action-btn:disabled,
+#portal-commander-hub-page .rank-reset-action-btn:disabled,
+#commander-hub-modal .danger-action-btn.rank-reset-disabled:disabled,
+#portal-commander-hub-page .danger-action-btn.rank-reset-disabled:disabled,
+#commander-hub-modal [data-commander-reset-mode].rank-reset-disabled,
+#portal-commander-hub-page [data-commander-reset-mode].rank-reset-disabled,
+#commander-hub-modal [data-commander-reset-mode]:disabled,
+#portal-commander-hub-page [data-commander-reset-mode]:disabled {
     opacity: 0.38 !important;
     filter: grayscale(0.85) !important;
     cursor: not-allowed !important;
