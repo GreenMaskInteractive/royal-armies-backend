@@ -272,6 +272,10 @@ if (typeof window !== 'undefined') {
         if (typeof applyPortalMobileVisualSettingsRestrictions === 'function') {
             applyPortalMobileVisualSettingsRestrictions();
         }
+        const drawer = document.getElementById('msg-directory-floating-drawer');
+        if (drawer && typeof syncRecipientDirectoryMobilePresentation === 'function') {
+            syncRecipientDirectoryMobilePresentation(!drawer.classList.contains('msg-floating-drawer-hidden'));
+        }
     });
 }
 

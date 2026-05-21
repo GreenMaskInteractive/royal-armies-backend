@@ -1810,8 +1810,8 @@ const nationLore = {
                             <span class="pill-placeholder-txt">Select Recipients</span>
                         </div>
                         <button type="button" class="msg-recipient-add-btn" id="msg-recipient-add-btn" onclick="toggleRecipientDirectory(event)">➕</button>
-                        
-                        <!-- THE DYNAMIC FLOATING TARGET DIRECTORY DRAWER (FIXED INITIAL HIDDEN HANDLE) -->
+                    </div>
+                    <div id="msg-recipient-directory-slot" class="msg-recipient-directory-slot msg-recipient-directory-slot--collapsed" aria-hidden="true">
                         <div id="msg-directory-floating-drawer" class="msg-floating-drawer-hidden" onclick="event.stopPropagation()">
                             <div class="drawer-header-title">📜 Recipients</div>
                             <div class="msg-directory-drawer-body">
@@ -2380,6 +2380,9 @@ function mountMessagesHubView(mount, preferredChannel) {
     window.setTimeout(() => {
         const drawer = document.getElementById('msg-directory-floating-drawer');
         if (drawer) drawer.className = 'msg-floating-drawer-hidden';
+        if (typeof syncRecipientDirectoryMobilePresentation === 'function') {
+            syncRecipientDirectoryMobilePresentation(false);
+        }
         fetchCommanderMailboxFromServer().then(() => {
             if (startChannel === 'messages') {
                 activateMessagesFolder(startFolder);
@@ -3906,6 +3909,26 @@ function openMessageComposeFromDossier(msg, mode) {
 }
 
 /* --- INTERACTIVE MULTI-RECIPIENT RADAR PATH CONTROLLERS --- */
+function isPortalMobileMessageComposeLayout() {
+    return typeof isPortalMobileNavLayout === 'function' && isPortalMobileNavLayout();
+}
+
+function syncRecipientDirectoryMobilePresentation(isOpen) {
+    const slot = document.getElementById('msg-recipient-directory-slot');
+    if (!slot) return;
+
+    if (!isPortalMobileMessageComposeLayout()) {
+        slot.classList.add('msg-recipient-directory-slot--collapsed');
+        slot.classList.remove('msg-recipient-directory-slot--open');
+        slot.setAttribute('aria-hidden', 'true');
+        return;
+    }
+
+    slot.classList.toggle('msg-recipient-directory-slot--open', isOpen);
+    slot.classList.toggle('msg-recipient-directory-slot--collapsed', !isOpen);
+    slot.setAttribute('aria-hidden', isOpen ? 'false' : 'true');
+}
+
 function toggleRecipientDirectory(e) {
     if (messageComposeMode === 'reply') return;
     if (e) e.stopPropagation();
@@ -3917,6 +3940,7 @@ function toggleRecipientDirectory(e) {
     if (drawer.classList.contains('msg-floating-drawer-hidden')) {
         const openDrawer = () => {
             drawer.classList.remove('msg-floating-drawer-hidden');
+            syncRecipientDirectoryMobilePresentation(true);
             drillDownDirectory('root');
             resetRecipientDrawerScrollPosition();
             document.addEventListener('click', closeRecipientDrawerOutsideDismissalLatch);
@@ -3935,13 +3959,18 @@ function toggleRecipientDirectory(e) {
 function hideRecipientDirectoryDrawer() {
     const drawer = document.getElementById('msg-directory-floating-drawer');
     if (drawer) drawer.classList.add('msg-floating-drawer-hidden');
+    syncRecipientDirectoryMobilePresentation(false);
     document.removeEventListener('click', closeRecipientDrawerOutsideDismissalLatch);
 }
 
 function closeRecipientDrawerOutsideDismissalLatch(e) {
     const drawer = document.getElementById('msg-directory-floating-drawer');
     const addBtn = document.querySelector('.msg-recipient-add-btn');
-    if (drawer && !drawer.contains(e.target) && e.target !== addBtn) {
+    const slot = document.getElementById('msg-recipient-directory-slot');
+    const clickedInsideDrawer = drawer && drawer.contains(e.target);
+    const clickedAddBtn = e.target === addBtn || (addBtn && addBtn.contains(e.target));
+
+    if (!clickedInsideDrawer && !clickedAddBtn) {
         hideRecipientDirectoryDrawer();
     }
 }

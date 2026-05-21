@@ -1439,6 +1439,88 @@ body {
         transform: translateX(0) !important;
     }
 
+    /* Message compose: recipient directory expands in-flow between To and Subject */
+    .message-compose-canvas {
+        height: auto !important;
+        min-height: 0 !important;
+        max-height: none !important;
+        gap: 10px !important;
+    }
+
+    .msg-send-to-row {
+        position: relative !important;
+    }
+
+    .msg-recipient-directory-slot {
+        width: 100% !important;
+        max-width: 100% !important;
+        box-sizing: border-box !important;
+        overflow: hidden !important;
+        transition: max-height 0.22s ease, margin 0.22s ease, opacity 0.18s ease !important;
+    }
+
+    .msg-recipient-directory-slot--collapsed {
+        max-height: 0 !important;
+        min-height: 0 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        border: none !important;
+        opacity: 0 !important;
+        pointer-events: none !important;
+    }
+
+    .msg-recipient-directory-slot--collapsed #msg-directory-floating-drawer {
+        display: none !important;
+    }
+
+    .msg-recipient-directory-slot--open {
+        max-height: min(52dvh, 320px) !important;
+        margin: 0 0 10px 0 !important;
+        padding: 0 !important;
+        opacity: 1 !important;
+        pointer-events: auto !important;
+        overflow: hidden !important;
+    }
+
+    .msg-recipient-directory-slot--open #msg-directory-floating-drawer {
+        position: static !important;
+        top: auto !important;
+        right: auto !important;
+        left: auto !important;
+        bottom: auto !important;
+        display: flex !important;
+        flex-direction: column !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        height: auto !important;
+        min-height: 0 !important;
+        max-height: min(48dvh, 300px) !important;
+        margin: 0 !important;
+        padding: 10px 12px !important;
+        box-sizing: border-box !important;
+        transform: none !important;
+        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.55) !important;
+        z-index: 1 !important;
+    }
+
+    .msg-recipient-directory-slot .msg-directory-drawer-body {
+        min-height: 120px !important;
+        max-height: min(40dvh, 240px) !important;
+    }
+
+    .msg-recipient-directory-slot .drawer-category-scroll-bin,
+    .msg-recipient-directory-slot #drawer-main-category-view,
+    .msg-recipient-directory-slot #drawer-drilldown-category-view {
+        position: relative !important;
+        top: auto !important;
+        left: auto !important;
+        right: auto !important;
+        bottom: auto !important;
+        height: auto !important;
+        max-height: min(38dvh, 220px) !important;
+        min-height: 100px !important;
+    }
+
     .profile-identity-title-row {
         flex-direction: column !important;
         align-items: flex-start !important;

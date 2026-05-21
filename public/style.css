@@ -3344,6 +3344,36 @@ body #commander-penalty-overlay,
 
 .message-compose-canvas {
     min-height: 0 !important;
+    position: relative !important;
+}
+
+.msg-recipient-directory-slot {
+    width: 100% !important;
+    box-sizing: border-box !important;
+}
+
+@media (min-width: 1025px) {
+    .msg-recipient-directory-slot {
+        height: 0 !important;
+        min-height: 0 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        overflow: visible !important;
+        border: none !important;
+        position: static !important;
+    }
+
+    .msg-recipient-directory-slot #msg-directory-floating-drawer:not(.msg-floating-drawer-hidden) {
+        position: absolute !important;
+        top: 46px !important;
+        right: 12px !important;
+        left: auto !important;
+        bottom: auto !important;
+        width: 320px !important;
+        height: 360px !important;
+        max-height: 360px !important;
+        z-index: 100000 !important;
+    }
 }
 
 
