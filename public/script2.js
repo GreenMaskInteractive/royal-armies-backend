@@ -2455,6 +2455,7 @@ window.stopPortalLoreNarration = stopPortalLoreNarration;
 
 const CHRONICLE_TIER_MAX_LEVEL = 50;
 const CHRONICLE_XP_STORAGE_KEY = 'savedChronicleMeritProgress';
+const CHRONICLE_XP_PROGRESS_VERSION = 2;
 
 /** Success rarity tiers — game server or client rolls rarity, then XP is drawn from the action table. */
 const CHRONICLE_XP_SUCCESS_RARITIES = {
@@ -2489,9 +2490,6 @@ const CHRONICLE_XP_BY_ACTIVITY_AND_RARITY = {
         legendary: [72, 98]
     }
 };
-
-/** @deprecated Legacy flat weights used only when migrating old saved progress. */
-const CHRONICLE_LEGACY_XP_PER_ACTION = { cityBattles: 25, pvpAttacks: 12, loreDiscoveries: 18 };
 
 const CHRONICLE_ACTIVITY_META = [
     { key: 'cityBattles', label: 'City battles', icon: '🏛️', hint: 'Join siege or defense of a city on the map' },
@@ -2554,6 +2552,7 @@ function getChronicleTierRewardsByRankMap(trackKey) {
 }
 
 function getChronicleTierRewardEntry(rank, trackKey) {
+    if (trackKey === 'basic' && rank === 1) return null;
     const reward = getChronicleTierRewardsByRankMap(trackKey)[rank];
     if (!reward) return null;
     return { rank, ...reward };
@@ -2579,7 +2578,7 @@ function createEmptyChronicleXpProgress() {
     CHRONICLE_ACTIVITY_META.forEach(({ key }) => {
         byActivity[key] = { actions: 0, xp: 0 };
     });
-    return { totalXp: 0, byActivity, lastGain: null };
+    return { version: CHRONICLE_XP_PROGRESS_VERSION, totalXp: 0, byActivity, lastGain: null };
 }
 
 function normalizeChronicleSuccessRarity(rarityKey) {
@@ -2611,7 +2610,9 @@ function formatChronicleXpRangeLabel(range) {
 }
 
 function normalizeChronicleXpProgress(raw) {
-    if (!raw || typeof raw !== 'object') return createEmptyChronicleXpProgress();
+    if (!raw || typeof raw !== 'object' || raw.version !== CHRONICLE_XP_PROGRESS_VERSION) {
+        return createEmptyChronicleXpProgress();
+    }
 
     if (Number.isFinite(raw.totalXp) && raw.byActivity && typeof raw.byActivity === 'object') {
         const normalized = createEmptyChronicleXpProgress();
@@ -2625,22 +2626,24 @@ function normalizeChronicleXpProgress(raw) {
         if (raw.lastGain && typeof raw.lastGain === 'object') {
             normalized.lastGain = raw.lastGain;
         }
+        normalized.totalXp = CHRONICLE_ACTIVITY_META.reduce(
+            (sum, { key }) => sum + (normalized.byActivity[key].xp || 0),
+            0
+        );
         return normalized;
     }
 
-    const migrated = createEmptyChronicleXpProgress();
-    CHRONICLE_ACTIVITY_META.forEach(({ key }) => {
-        const legacyCount = parseInt(raw[key], 10);
-        if (!Number.isFinite(legacyCount) || legacyCount <= 0) return;
-        const legacyWeight = CHRONICLE_LEGACY_XP_PER_ACTION[key] || 0;
-        migrated.byActivity[key].actions = legacyCount;
-        migrated.byActivity[key].xp = legacyCount * legacyWeight;
-    });
-    migrated.totalXp = CHRONICLE_ACTIVITY_META.reduce(
-        (sum, { key }) => sum + (migrated.byActivity[key].xp || 0),
-        0
-    );
-    return migrated;
+    return createEmptyChronicleXpProgress();
+}
+
+function resetChronicleXpProgress() {
+    persistChronicleXpProgress(createEmptyChronicleXpProgress());
+    const snapshot = getCommanderChronicleProgressSnapshot();
+    if (typeof refreshChronicleRewardsTrackPanels === 'function') {
+        refreshChronicleRewardsTrackPanels();
+    }
+    refreshChronicleProgressHeader(snapshot);
+    return snapshot;
 }
 
 function persistChronicleXpProgress(progress) {
@@ -2753,19 +2756,24 @@ function recordChronicleActivity(activityKey, options = {}) {
     return recordChronicleXp(activityKey, options).snapshot;
 }
 
-function isChronicleTierLevelReached(level) {
+function isChronicleBasicTierStartingLevel(level) {
+    return level === 1;
+}
+
+function isChronicleTierLevelReached(level, trackKey) {
+    if (trackKey === 'basic' && isChronicleBasicTierStartingLevel(level)) return false;
     const { currentLevel } = getCommanderChronicleProgressSnapshot();
     return currentLevel >= level;
 }
 
 function isChronicleRewardUnlocked(entry, trackKey) {
-    const levelMet = isChronicleTierLevelReached(entry.rank);
+    const levelMet = isChronicleTierLevelReached(entry.rank, trackKey);
     if (trackKey === 'premium' && !isCommanderRoyaltyMember()) return false;
     return levelMet && entry.state === 'unlocked';
 }
 
 function isChronicleRewardEligible(entry, trackKey) {
-    if (!isChronicleTierLevelReached(entry.rank)) return false;
+    if (!isChronicleTierLevelReached(entry.rank, trackKey)) return false;
     if (trackKey === 'premium' && !isCommanderRoyaltyMember()) return false;
     return entry.state !== 'unlocked';
 }
@@ -2811,23 +2819,30 @@ function buildChronicleMilestoneCardMarkup(entry, trackKey) {
 }
 
 function buildChronicleLevelPassthroughMarkup(level, trackKey) {
-    const levelMet = isChronicleTierLevelReached(level);
+    const isBasicStart = trackKey === 'basic' && isChronicleBasicTierStartingLevel(level);
+    const levelMet = isChronicleTierLevelReached(level, trackKey);
     const premiumLocked = trackKey === 'premium' && !isCommanderRoyaltyMember();
-    const statusLabel = levelMet
-        ? 'Reached'
-        : (premiumLocked ? 'Royalty' : 'Locked');
-    const statusClass = levelMet
-        ? 'status-reached-text-tag'
-        : (premiumLocked ? 'status-premium-required-tag' : 'status-locked-text-tag');
+    const statusLabel = isBasicStart
+        ? 'Starting tier'
+        : (levelMet ? 'Reached' : (premiumLocked ? 'Royalty' : 'Locked'));
+    const statusClass = isBasicStart
+        ? 'status-locked-text-tag'
+        : (levelMet
+            ? 'status-reached-text-tag'
+            : (premiumLocked ? 'status-premium-required-tag' : 'status-locked-text-tag'));
     const levelTitle = getChronicleTierLevelTitle(level);
+    const titleString = isBasicStart ? 'Free tier — level 1' : 'Chronicle milestone';
+    const description = isBasicStart
+        ? 'All commanders start at 0 Chronicle XP. The free track has no reward for level 1 — earn XP in Ages to climb higher.'
+        : 'No tier reward at this level — keep earning Chronicle XP in the world to advance.';
 
     return `
-        <div class="milestone-landmark-capsule-card milestone-landmark-no-reward ${levelMet ? 'landmark-node-unlocked' : 'landmark-node-locked'} ${premiumLocked ? 'landmark-node-premium-gated' : ''}">
+        <div class="milestone-landmark-capsule-card milestone-landmark-no-reward ${levelMet ? 'landmark-node-unlocked' : 'landmark-node-locked'} ${premiumLocked ? 'landmark-node-premium-gated' : ''} ${isBasicStart ? 'milestone-basic-tier-start' : ''}">
             <span class="milestone-badge-hexagon-icon milestone-badge-level-only" aria-hidden="true">◇</span>
             <div class="milestone-meta-contents">
                 <span class="milestone-tier-level-label">Level ${level} · ${levelTitle}${trackKey === 'premium' ? ' · Premium' : ''}</span>
-                <span class="milestone-title-string">Chronicle milestone</span>
-                <p class="milestone-reward-description-text">No tier reward at this level — keep earning Chronicle XP in the world to advance.</p>
+                <span class="milestone-title-string">${titleString}</span>
+                <p class="milestone-reward-description-text">${description}</p>
             </div>
             <span class="milestone-status-action-deck ${statusClass}">${statusLabel}</span>
         </div>
@@ -2963,6 +2978,7 @@ window.beginRoyaltyMembershipDowngrade = beginRoyaltyMembershipDowngrade;
 window.getCommanderChronicleProgressSnapshot = getCommanderChronicleProgressSnapshot;
 window.recordChronicleXp = recordChronicleXp;
 window.recordChronicleActivity = recordChronicleActivity;
+window.resetChronicleXpProgress = resetChronicleXpProgress;
 window.rollChronicleXpForAction = rollChronicleXpForAction;
 window.resolveChronicleXpRange = resolveChronicleXpRange;
 

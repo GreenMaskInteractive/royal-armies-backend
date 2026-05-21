@@ -26,10 +26,14 @@ db.defaults({
     commanders: [],
     portal: {
         maintenanceAlert: {
-            active: false,
-            title: 'Scheduled maintenance',
-            message: '',
-            windowLabel: ''
+            active: !isProduction,
+            title: isProduction ? 'Scheduled maintenance' : 'Site under active development',
+            message: isProduction
+                ? ''
+                : 'Royal Armies is still being built. You may hit brief outages, broken pages, or restarts while we finish the main website and game portal. Thanks for your patience during early access.',
+            windowLabel: isProduction
+                ? ''
+                : 'Expect occasional downtime until the main site launch is complete.'
         }
     },
     mailbox: {
@@ -470,6 +474,24 @@ app.use(express.urlencoded({ extended: true }));
 /* Legacy portal filename → main hub (bookmarks, old deploys, cached login script) */
 app.get(['/ageportal.html', '/ageportal'], (req, res) => {
     res.redirect(301, '/main.html');
+});
+
+/* Block 6b: Portal maintenance alert API (before static so routes are never shadowed) */
+app.get('/api/portal/maintenance-alert', (req, res) => {
+    res.json(getPortalMaintenanceAlert());
+});
+
+app.post('/api/portal/maintenance-alert', (req, res) => {
+    const devKey = String(req.headers['x-dev-key'] || req.body?.devKey || '').trim();
+    if (!devKey || devKey !== MAINTENANCE_ALERT_DEV_KEY) {
+        return res.status(403).json({
+            status: 'error',
+            message: 'Invalid or missing developer key (X-Dev-Key header).'
+        });
+    }
+
+    const payload = setPortalMaintenanceAlert(req.body || {});
+    res.json({ status: 'ok', ...payload });
 });
 
 app.use(express.static(path.join(__dirname, 'public')));
@@ -966,23 +988,6 @@ app.get('/verify-email-change', (req, res) => {
 });
 
 /* Block 13: Age Portal live metrics & presence */
-app.get('/api/portal/maintenance-alert', (req, res) => {
-    res.json(getPortalMaintenanceAlert());
-});
-
-app.post('/api/portal/maintenance-alert', (req, res) => {
-    const devKey = String(req.headers['x-dev-key'] || req.body?.devKey || '').trim();
-    if (!devKey || devKey !== MAINTENANCE_ALERT_DEV_KEY) {
-        return res.status(403).json({
-            status: 'error',
-            message: 'Invalid or missing developer key (X-Dev-Key header).'
-        });
-    }
-
-    const payload = setPortalMaintenanceAlert(req.body || {});
-    res.json({ status: 'ok', ...payload });
-});
-
 app.get('/api/portal/metrics', (req, res) => {
     res.json(getPortalLiveMetricsPayload());
 });

@@ -10,6 +10,18 @@
 const MAINTENANCE_ALERT_POLL_MS = 60000;
 const MAINTENANCE_ALERT_DEFAULT_DEV_KEY = 'local-dev-maintenance';
 
+const PORTAL_DEVELOPMENT_MAINTENANCE_FALLBACK = {
+    active: true,
+    title: 'Site under active development',
+    message: 'Royal Armies is still being built. You may hit brief outages, broken pages, or restarts while we finish the main website and game portal. Thanks for your patience during early access.',
+    windowLabel: 'Expect occasional downtime until the main site launch is complete.'
+};
+
+function isMainPortalPage() {
+    const path = (window.location.pathname || '').toLowerCase();
+    return path.endsWith('/main.html') || path.endsWith('/main');
+}
+
 let maintenanceAlertPollTimer = null;
 let maintenanceAlertLastPayload = null;
 
@@ -80,6 +92,10 @@ async function refreshDeveloperMaintenanceAlert() {
         return payload;
     } catch (err) {
         console.warn('Developer maintenance alert unavailable:', err.message);
+        if (isMainPortalPage()) {
+            applyDeveloperMaintenanceAlert(PORTAL_DEVELOPMENT_MAINTENANCE_FALLBACK);
+            return PORTAL_DEVELOPMENT_MAINTENANCE_FALLBACK;
+        }
         applyDeveloperMaintenanceAlert({ active: false });
         return null;
     }

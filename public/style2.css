@@ -4991,13 +4991,18 @@
     display: none !important;
 }
 
-body.developer-maintenance-alert-active #main-dashboard-canvas {
+body#main-dashboard-canvas.developer-maintenance-alert-active {
     padding-top: var(--developer-maintenance-alert-offset, 0px) !important;
+    box-sizing: border-box !important;
 }
 
 body.developer-maintenance-alert-active #page-landing {
     padding-top: var(--developer-maintenance-alert-offset, 0px) !important;
     box-sizing: border-box !important;
+}
+
+body#main-dashboard-canvas.developer-maintenance-alert-active .main-portal-nav-bar {
+    top: var(--developer-maintenance-alert-offset, 0px) !important;
 }
 
 /* ============================================================
