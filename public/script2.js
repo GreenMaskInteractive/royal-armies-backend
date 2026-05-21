@@ -257,7 +257,9 @@ function launchGameRoundSector(isTutorialModeActive, clickEvent) {
         const destination = `game.html?tutorial=${isTutorialModeActive}`;
         window.setTimeout(() => {
             localStorage.setItem('savedCommanderInActiveAge', 'true');
-            window.location.href = destination;
+            notifyPortalAgeSessionJoin().finally(() => {
+                window.location.href = destination;
+            });
         }, JOIN_AGE_POST_SELECT_DELAY_MS);
     };
 
@@ -327,12 +329,7 @@ function clearPortalPresenceSession() {
     const username = resolvePortalPresenceUsername();
     if (!username) return Promise.resolve();
 
-    return fetch('/api/portal/presence/leave', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username }),
-        keepalive: true
-    }).catch(() => {});
+    return notifyPortalAgeSessionLeave().catch(() => {});
 }
 
 function executeLogoutRedirect() {
@@ -357,9 +354,15 @@ let portalPresenceHeartbeatTimer = null;
 let portalLiveMetricsCache = {
     registeredCount: 0,
     recentRegistrations: [],
-    activeCount: 0,
-    activePlayers: []
+    ageOnlineCount: 0,
+    agePlayingCount: 0,
+    ageOnlinePlayers: [],
+    agePlayingPlayers: []
 };
+
+function isCommanderPlayingActiveAgeLocally() {
+    return localStorage.getItem('savedCommanderInActiveAge') === 'true';
+}
 
 function formatPortalRegistrationTimestamp(isoString) {
     if (!isoString) return '—';
@@ -406,22 +409,25 @@ function applyPortalLiveMetricsToBanner(metrics) {
     const activeList = document.getElementById('metrics-active-roster-list');
 
     const registeredCount = Number(metrics?.registeredCount) || 0;
-    const activeCount = Number(metrics?.activeCount) || 0;
+    const ageOnlineCount = Number(metrics?.ageOnlineCount) || 0;
+    const agePlayingCount = Number(metrics?.agePlayingCount) || 0;
     const recentRegistrations = Array.isArray(metrics?.recentRegistrations) ? metrics.recentRegistrations : [];
-    const activePlayers = Array.isArray(metrics?.activePlayers) ? metrics.activePlayers : [];
+    const ageOnlinePlayers = Array.isArray(metrics?.ageOnlinePlayers) ? metrics.ageOnlinePlayers : [];
 
     portalLiveMetricsCache = {
         registeredCount,
         recentRegistrations,
-        activeCount,
-        activePlayers
+        ageOnlineCount,
+        agePlayingCount,
+        ageOnlinePlayers,
+        agePlayingPlayers: Array.isArray(metrics?.agePlayingPlayers) ? metrics.agePlayingPlayers : []
     };
 
     if (registeredPlayersDisplay) {
         registeredPlayersDisplay.innerText = registeredCount.toLocaleString();
     }
     if (activePlayersDisplay) {
-        activePlayersDisplay.innerText = activeCount.toLocaleString();
+        activePlayersDisplay.innerText = `${ageOnlineCount.toLocaleString()} / ${agePlayingCount.toLocaleString()}`;
     }
 
     renderMetricRosterList(
@@ -431,8 +437,8 @@ function applyPortalLiveMetricsToBanner(metrics) {
     );
     renderMetricRosterList(
         activeList,
-        activePlayers,
-        'No commanders online on the portal right now.'
+        ageOnlinePlayers,
+        'No commanders are online in the active Age right now.'
     );
 }
 
@@ -447,8 +453,10 @@ async function fetchPortalLiveMetrics() {
         applyPortalLiveMetricsToBanner({
             registeredCount: 0,
             recentRegistrations: [],
-            activeCount: 0,
-            activePlayers: []
+            ageOnlineCount: 0,
+            agePlayingCount: 0,
+            ageOnlinePlayers: [],
+            agePlayingPlayers: []
         });
     }
 }
@@ -461,10 +469,44 @@ async function sendPortalPresenceHeartbeat() {
         await fetch('/api/portal/presence', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ username })
+            body: JSON.stringify({
+                username,
+                inAge: isCommanderPlayingActiveAgeLocally()
+            })
         });
     } catch (err) {
         console.warn('Portal presence heartbeat failed:', err);
+    }
+}
+
+async function notifyPortalAgeSessionJoin() {
+    const username = resolvePortalPresenceUsername();
+    if (!username) return;
+
+    try {
+        await fetch('/api/portal/age/join', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username })
+        });
+    } catch (err) {
+        console.warn('Portal age join sync failed:', err);
+    }
+}
+
+async function notifyPortalAgeSessionLeave() {
+    const username = resolvePortalPresenceUsername();
+    if (!username) return;
+
+    try {
+        await fetch('/api/portal/age/leave', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username }),
+            keepalive: true
+        });
+    } catch (err) {
+        console.warn('Portal age leave sync failed:', err);
     }
 }
 
@@ -508,6 +550,9 @@ function initializePortalLivePlayerMetrics() {
 
     fetchPortalLiveMetrics();
     sendPortalPresenceHeartbeat();
+    if (isCommanderPlayingActiveAgeLocally()) {
+        notifyPortalAgeSessionJoin();
+    }
 
     if (portalMetricsPollTimer) clearInterval(portalMetricsPollTimer);
     portalMetricsPollTimer = setInterval(fetchPortalLiveMetrics, 15000);
@@ -2258,3 +2303,5 @@ window.hydratePortalVolumeStateFromStorage = hydratePortalVolumeStateFromStorage
 window.triggerMainDashboardLogout = triggerMainDashboardLogout;
 window.closeMainLogoutConfirmationWindow = closeMainLogoutConfirmationWindow;
 window.executeLogoutRedirect = executeLogoutRedirect;
+window.notifyPortalAgeSessionLeave = notifyPortalAgeSessionLeave;
+window.notifyPortalAgeSessionJoin = notifyPortalAgeSessionJoin;

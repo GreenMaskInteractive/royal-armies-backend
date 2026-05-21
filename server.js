@@ -25,21 +25,71 @@ const db = low(adapter);
 db.defaults({ commanders: [] }).write();
 
 /* --- Section: Age Portal live presence (in-memory; no mock accounts) --- */
-const PORTAL_PRESENCE_TTL_MS = 5 * 60 * 1000;
-const portalPresenceByUser = new Map();
+const AGE_SESSION_ONLINE_TTL_MS = 5 * 60 * 1000;
+const HIDDEN_REGISTRATION_USERNAMES = new Set(['testaccount']);
+const ageSessionByUser = new Map();
 
-function prunePortalPresence() {
+function isHiddenRegistrationUsername(username) {
+    return HIDDEN_REGISTRATION_USERNAMES.has(String(username || '').trim().toLowerCase());
+}
+
+function pruneAgeSessionOnlineState() {
     const now = Date.now();
-    for (const [username, lastSeen] of portalPresenceByUser.entries()) {
-        if (now - lastSeen > PORTAL_PRESENCE_TTL_MS) {
-            portalPresenceByUser.delete(username);
-        }
+    for (const [username, session] of ageSessionByUser.entries()) {
+        if (!session) continue;
+        session.isOnline = (now - session.lastSeen) <= AGE_SESSION_ONLINE_TTL_MS;
+        ageSessionByUser.set(username, session);
     }
 }
 
-function getActivePortalUsernames() {
-    prunePortalPresence();
-    return [...portalPresenceByUser.keys()].sort((a, b) => a.localeCompare(b));
+function getAgeSessionMetrics() {
+    pruneAgeSessionOnlineState();
+
+    const playingEntries = [...ageSessionByUser.entries()]
+        .filter(([username]) => !isHiddenRegistrationUsername(username))
+        .map(([username, session]) => ({
+            username,
+            joinedAt: session.joinedAt || null,
+            isOnline: !!session.isOnline
+        }));
+
+    const agePlayingPlayers = playingEntries
+        .map((entry) => entry.username)
+        .sort((a, b) => a.localeCompare(b));
+
+    const ageOnlinePlayers = playingEntries
+        .filter((entry) => entry.isOnline)
+        .map((entry) => entry.username)
+        .sort((a, b) => a.localeCompare(b));
+
+    return {
+        ageOnlineCount: ageOnlinePlayers.length,
+        agePlayingCount: agePlayingPlayers.length,
+        ageOnlinePlayers,
+        agePlayingPlayers
+    };
+}
+
+function touchAgeSession(username, options = {}) {
+    const normalized = normalizeLedgerUsername(username);
+    if (!normalized || isHiddenRegistrationUsername(normalized)) return null;
+
+    const now = Date.now();
+    const existing = ageSessionByUser.get(normalized);
+    const nextSession = {
+        joinedAt: existing?.joinedAt || now,
+        lastSeen: now,
+        isOnline: options.markOnline !== false
+    };
+
+    ageSessionByUser.set(normalized, nextSession);
+    return nextSession;
+}
+
+function removeAgeSession(username) {
+    const normalized = normalizeLedgerUsername(username);
+    if (!normalized) return;
+    ageSessionByUser.delete(normalized);
 }
 
 function normalizeLedgerUsername(value) {
@@ -350,8 +400,11 @@ app.get('/verify', (req, res) => {
 /* Block 13: Age Portal live metrics & presence */
 app.get('/api/portal/metrics', (req, res) => {
     const commanders = db.get('commanders').value() || [];
-    const recentRegistrations = [...commanders]
-        .filter((entry) => entry && entry.username)
+    const visibleCommanders = commanders.filter(
+        (entry) => entry && entry.username && !isHiddenRegistrationUsername(entry.username)
+    );
+
+    const recentRegistrations = [...visibleCommanders]
         .sort((a, b) => {
             const aTime = Date.parse(a.joinedAt || 0) || 0;
             const bTime = Date.parse(b.joinedAt || 0) || 0;
@@ -363,30 +416,61 @@ app.get('/api/portal/metrics', (req, res) => {
             joinedAt: entry.joinedAt || null
         }));
 
-    const activePlayers = getActivePortalUsernames();
+    const ageMetrics = getAgeSessionMetrics();
 
     res.json({
-        registeredCount: commanders.length,
+        registeredCount: visibleCommanders.length,
         recentRegistrations,
-        activeCount: activePlayers.length,
-        activePlayers
+        ...ageMetrics
     });
 });
 
 app.post('/api/portal/presence', (req, res) => {
     const username = String(req.body?.username || '').trim();
+    const inAge = req.body?.inAge === true;
+
     if (!username) {
         return res.status(400).json({ status: 'error', message: 'Username required.' });
     }
-    portalPresenceByUser.set(username, Date.now());
-    prunePortalPresence();
-    res.json({ status: 'ok', activeCount: getActivePortalUsernames().length });
+
+    if (inAge) {
+        touchAgeSession(username, { markOnline: true });
+    } else {
+        const normalized = normalizeLedgerUsername(username);
+        const existing = normalized ? ageSessionByUser.get(normalized) : null;
+        if (existing) {
+            existing.isOnline = false;
+            ageSessionByUser.set(normalized, existing);
+        }
+    }
+
+    res.json({ status: 'ok', ...getAgeSessionMetrics() });
 });
 
 app.post('/api/portal/presence/leave', (req, res) => {
     const username = String(req.body?.username || '').trim();
-    if (username) portalPresenceByUser.delete(username);
-    res.json({ status: 'ok', activeCount: getActivePortalUsernames().length });
+    if (username) removeAgeSession(username);
+    res.json({ status: 'ok', ...getAgeSessionMetrics() });
+});
+
+app.post('/api/portal/age/join', (req, res) => {
+    const username = String(req.body?.username || '').trim();
+    if (!username) {
+        return res.status(400).json({ status: 'error', message: 'Username required.' });
+    }
+
+    touchAgeSession(username, { markOnline: true });
+    res.json({ status: 'ok', ...getAgeSessionMetrics() });
+});
+
+app.post('/api/portal/age/leave', (req, res) => {
+    const username = String(req.body?.username || '').trim();
+    if (!username) {
+        return res.status(400).json({ status: 'error', message: 'Username required.' });
+    }
+
+    removeAgeSession(username);
+    res.json({ status: 'ok', ...getAgeSessionMetrics() });
 });
 
 /* Block 14: Main Portal Route */

@@ -2712,6 +2712,7 @@ function handleSuicideActionSelection(action) {
         // Clear variables, commit changes to disk memory cache records, re-render, and clear the screen
         hasUnsavedChanges = false;
         localStorage.removeItem('savedCommanderInActiveAge');
+        if (typeof notifyPortalAgeSessionLeave === 'function') notifyPortalAgeSessionLeave();
         if (typeof saveSettings === 'function') saveSettings();
         reloadProfilePanelView();
 
