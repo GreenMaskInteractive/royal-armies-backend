@@ -358,6 +358,35 @@ body.portal-guest-mode .portal-mobile-nav-page-item[data-portal-view="chronicles
     display: none !important;
 }
 
+/* Desktop guest nav: center visible page tabs on the bar (no left profile column) */
+@media (min-width: 1025px) {
+    body.portal-guest-mode .main-portal-nav-bar {
+        justify-content: center !important;
+    }
+
+    body.portal-guest-mode .nav-tabs-centered-flex-dock {
+        position: absolute !important;
+        left: 50% !important;
+        top: 50% !important;
+        transform: translate(-50%, -50%) !important;
+        flex: 0 1 auto !important;
+        width: max-content !important;
+        max-width: calc(100% - 280px) !important;
+        justify-content: center !important;
+        text-align: center !important;
+    }
+
+    body.portal-guest-mode .nav-right-logout-action-dock {
+        position: absolute !important;
+        right: 20px !important;
+        top: 50% !important;
+        transform: translateY(-50%) !important;
+        width: auto !important;
+        min-width: 250px !important;
+        margin-left: 0 !important;
+    }
+}
+
 .nav-tab.nav-tab-preview-locked,
 .nav-tab.nav-tab-preview-locked:hover,
 .nav-tab.nav-tab-preview-locked.active {
