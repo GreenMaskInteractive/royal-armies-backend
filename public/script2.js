@@ -129,7 +129,7 @@ function initializeServerAgeClockTickerCountdown() {
 
 let activeMainPortalView = 'portal';
 
-const PORTAL_PREVIEW_ONLY_VIEWS = ['lore', 'royalty', 'chronicles'];
+const PORTAL_PREVIEW_ONLY_VIEWS = ['royalty', 'chronicles'];
 
 /** True on Live Server :5500 and other local dev hosts; false on royalarmies.com production. */
 function isPortalPreviewNavEnabled() {
@@ -1274,6 +1274,8 @@ let playerSuspicionScoreRegistry = {};   // Structure format: { "testaccount": 2
 let playerTeasingTranscriptHistory = {};  // Structure format: { "testaccount": ["[23:02]: get good"] }
 
 let communityChatLogsDirectory = [];
+/** @type {{ mode: 'reply'|'edit', messageId: number, sender?: string, snippet?: string }|null} */
+let communityChatComposeState = null;
 
 const restrictedProfanityLexiconPattern = /\b(fuck|fucking|bitch|ass|shit|asshole|cunt|retard|retarded)\b/gi;
 const adversarialSentimentTriggers = [
@@ -1339,7 +1341,10 @@ function appendCommunityChatMessage(logEntry) {
         time: logEntry.time || cleanTimeStr,
         visible: logEntry.visible !== false,
         originalText: logEntry.originalText || logEntry.text,
-        recipientAlertOnly: !!logEntry.recipientAlertOnly
+        recipientAlertOnly: !!logEntry.recipientAlertOnly,
+        replyTo: logEntry.replyTo || null,
+        editedAt: logEntry.editedAt || null,
+        isEdited: !!logEntry.isEdited
     };
 
     communityChatLogsDirectory.push(entry);
@@ -1470,6 +1475,9 @@ function openCommunityChatFromMentionAlert(channel, alertId) {
 window.dismissChatMentionAlert = dismissChatMentionAlert;
 window.openCommunityChatFromMentionAlert = openCommunityChatFromMentionAlert;
 window.appendCommunityChatMessage = appendCommunityChatMessage;
+window.beginReplyToCommunityChatMessage = beginReplyToCommunityChatMessage;
+window.beginEditCommunityChatMessage = beginEditCommunityChatMessage;
+window.cancelCommunityChatComposeMode = cancelCommunityChatComposeMode;
 
 /* Block 11: MULTI-COLUMN COMPLIANCE CHAT COMPILER */
 function renderCommunityChatPortalCanvas(viewport) {
@@ -1522,7 +1530,182 @@ function renderCommunityChatPortalCanvas(viewport) {
 function toggleActiveChatChannelStream(targetChannel) {
     if (typeof playToggleLeverSFX === 'function') playToggleLeverSFX();
     activeChatChannelTrack = targetChannel;
+    cancelCommunityChatComposeMode(false);
     executeCommunityChatTabRenderingSequence();
+}
+
+function escapeCommunityChatDisplayHtml(str) {
+    return String(str ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+}
+
+function findCommunityChatMessageById(messageId) {
+    const id = Number(messageId);
+    if (!Number.isFinite(id)) return null;
+    return communityChatLogsDirectory.find((log) => log.id === id) || null;
+}
+
+function formatCommunityChatMessageBodyHtml(text) {
+    return escapeCommunityChatDisplayHtml(text).replace(
+        /(@[a-zA-Z0-9_\-]+)/g,
+        '<span class="chat-shoutout-mention-badge">$1</span>'
+    );
+}
+
+function isCommunityChatMessageActionable(log) {
+    if (!log || log.visible === false || log.recipientAlertOnly) return false;
+    if (isRoyalGuardBotUsername(log.sender)) return false;
+    return true;
+}
+
+function buildCommunityChatReplyQuoteMarkup(replyTo) {
+    if (!replyTo || !replyTo.sender) return '';
+    const snippet = escapeCommunityChatDisplayHtml(replyTo.snippet || '');
+    const sender = escapeCommunityChatDisplayHtml(replyTo.sender);
+    return `
+        <div class="chat-message-reply-quote" aria-label="Replying to earlier message">
+            <span class="chat-message-reply-quote-label">↳ ${sender}</span>
+            <span class="chat-message-reply-quote-text">${snippet}</span>
+        </div>
+    `;
+}
+
+function buildCommunityChatMessageHoverActionsMarkup(log, loggedUser) {
+    if (!isCommunityChatMessageActionable(log)) return '';
+    const canEdit = log.sender === loggedUser;
+    return `
+        <div class="chat-message-hover-actions" aria-label="Message actions">
+            <button type="button" class="chat-message-action-btn" onclick="beginReplyToCommunityChatMessage(${log.id}, event)">Reply</button>
+            ${canEdit ? `<button type="button" class="chat-message-action-btn" onclick="beginEditCommunityChatMessage(${log.id}, event)">Edit</button>` : ''}
+        </div>
+    `;
+}
+
+function cancelCommunityChatComposeMode(shouldRecompile = true) {
+    communityChatComposeState = null;
+    if (shouldRecompile) {
+        renderCommunityChatInputTray();
+    }
+}
+
+function beginReplyToCommunityChatMessage(messageId, clickEvent) {
+    if (clickEvent) clickEvent.stopPropagation();
+    const target = findCommunityChatMessageById(messageId);
+    if (!target || !isCommunityChatMessageActionable(target)) return;
+
+    communityChatComposeState = {
+        mode: 'reply',
+        messageId: target.id,
+        sender: target.sender,
+        snippet: buildChatMentionPreviewSnippet(target.text)
+    };
+
+    if (typeof playToggleLeverSFX === 'function') playToggleLeverSFX();
+    renderCommunityChatInputTray();
+
+    const field = document.getElementById('chat-portal-message-input-field');
+    if (field) {
+        field.focus();
+        field.placeholder = `Reply to ${target.sender}…`;
+    }
+}
+
+function beginEditCommunityChatMessage(messageId, clickEvent) {
+    if (clickEvent) clickEvent.stopPropagation();
+    const loggedUser = getLoggedCommunityChatUsername();
+    const target = findCommunityChatMessageById(messageId);
+    if (!target || target.sender !== loggedUser) return;
+
+    communityChatComposeState = {
+        mode: 'edit',
+        messageId: target.id,
+        sender: target.sender,
+        snippet: target.text
+    };
+
+    if (typeof playToggleLeverSFX === 'function') playToggleLeverSFX();
+    renderCommunityChatInputTray();
+
+    const field = document.getElementById('chat-portal-message-input-field');
+    if (field) {
+        field.value = target.text;
+        field.focus();
+        field.select();
+    }
+}
+
+function updateCommunityChatMessageText(messageId, newText) {
+    const loggedUser = getLoggedCommunityChatUsername();
+    const target = findCommunityChatMessageById(messageId);
+    if (!target || target.sender !== loggedUser) return false;
+
+    const trimmed = String(newText || '').trim();
+    if (!trimmed) return false;
+
+    const currentClockTime = new Date();
+    target.text = trimmed;
+    target.originalText = trimmed;
+    target.isEdited = true;
+    target.editedAt = `${currentClockTime.getHours().toString().padStart(2, '0')}:${currentClockTime.getMinutes().toString().padStart(2, '0')}`;
+    return true;
+}
+
+function renderCommunityChatInputTray() {
+    const tray = document.getElementById('chat-portal-input-interaction-tray');
+    if (!tray) return;
+
+    const loggedUser = getLoggedCommunityChatUsername();
+    const currentEpochTimestamp = Date.now();
+
+    if (userBanExpirationRegistry[loggedUser] && currentEpochTimestamp < userBanExpirationRegistry[loggedUser]) {
+        tray.innerHTML = `<div class="chat-restriction-alert-banner system-banned">🔴 You are banned from chat for 15 days because of repeated rule violations.</div>`;
+        return;
+    }
+    if (userMuteExpirationRegistry[loggedUser] && currentEpochTimestamp < userMuteExpirationRegistry[loggedUser]) {
+        tray.innerHTML = `<div class="chat-restriction-alert-banner system-muted">⏳ You are temporarily muted from chat. The mute lifts in 30 minutes.</div>`;
+        return;
+    }
+
+    const channelLabel = getChatChannelDisplayLabel(activeChatChannelTrack);
+    let composeBanner = '';
+
+    if (communityChatComposeState) {
+        if (communityChatComposeState.mode === 'reply') {
+            composeBanner = `
+                <div class="chat-compose-context-banner chat-compose-context-banner--reply">
+                    <span class="chat-compose-context-copy">↳ Replying to <strong>${escapeCommunityChatDisplayHtml(communityChatComposeState.sender)}</strong>: "${escapeCommunityChatDisplayHtml(communityChatComposeState.snippet)}"</span>
+                    <button type="button" class="chat-compose-context-cancel" onclick="cancelCommunityChatComposeMode()">Cancel</button>
+                </div>
+            `;
+        } else if (communityChatComposeState.mode === 'edit') {
+            composeBanner = `
+                <div class="chat-compose-context-banner chat-compose-context-banner--edit">
+                    <span class="chat-compose-context-copy">✎ Editing your message</span>
+                    <button type="button" class="chat-compose-context-cancel" onclick="cancelCommunityChatComposeMode()">Cancel</button>
+                </div>
+            `;
+        }
+    }
+
+    const sendLabel = communityChatComposeState?.mode === 'edit' ? 'Save' : 'Send';
+
+    tray.innerHTML = `
+        <div class="chat-input-toolbar-stack">
+            ${composeBanner}
+            <div class="chat-input-toolbar-row-inner">
+                <input type="text" id="chat-portal-message-input-field" placeholder="Message ${escapeCommunityChatDisplayHtml(channelLabel)}… Use @username to shout out" onkeydown="handleChatInputFieldSubmit(event)">
+                <button type="button" class="settings-btn mini-btn" onclick="executeSubmitNewPortalChatMessage()">${sendLabel}</button>
+            </div>
+        </div>
+    `;
+
+    if (communityChatComposeState?.mode === 'edit') {
+        const field = document.getElementById('chat-portal-message-input-field');
+        if (field) field.value = communityChatComposeState.snippet || '';
+    }
 }
 
 function updateAdministrativeReviewBadgeMetrics() {
@@ -1547,22 +1730,7 @@ function executeCompileActiveChannelMessageStrips() {
  bin.innerHTML = "";
  
  const loggedUser = localStorage.getItem("activeCommanderUser") || "testaccount";
- const tray = document.getElementById("chat-portal-input-interaction-tray");
- const currentEpochTimestamp = Date.now();
-
- if (userBanExpirationRegistry[loggedUser] && currentEpochTimestamp < userBanExpirationRegistry[loggedUser]) {
- if (tray) tray.innerHTML = `<div class="chat-restriction-alert-banner system-banned">🔴 You are banned from chat for 15 days because of repeated rule violations.</div>`;
- } else if (userMuteExpirationRegistry[loggedUser] && currentEpochTimestamp < userMuteExpirationRegistry[loggedUser]) {
- if (tray) tray.innerHTML = `<div class="chat-restriction-alert-banner system-muted">⏳ You are temporarily muted from chat. The mute lifts in 30 minutes.</div>`;
- } else {
- if (tray) {
- const channelLabel = getChatChannelDisplayLabel(activeChatChannelTrack);
- tray.innerHTML = `
- <input type="text" id="chat-portal-message-input-field" placeholder="Message ${channelLabel}… Use @username to shout out" onkeydown="handleChatInputFieldSubmit(event)">
- <button class="settings-btn mini-btn" onclick="executeSubmitNewPortalChatMessage()">Send</button>
- `;
- }
- }
+ renderCommunityChatInputTray();
 
  if (activeChatChannelTrack === 'review') {
  if (administrativeBehavioralReviewQueue.length === 0) {
@@ -1608,19 +1776,28 @@ function executeCompileActiveChannelMessageStrips() {
 
  const messageRow = document.createElement('div');
  messageRow.className = 'chat-message-strip-row';
+ messageRow.dataset.messageId = String(log.id);
  if (log.sender === loggedUser) messageRow.classList.add('local-sender-highlight-strip');
  if (isRoyalGuardBotUsername(log.sender)) messageRow.classList.add('system-bot-message-highlight');
  const staffRole = typeof getPortalStaffRole === 'function' ? getPortalStaffRole(log.sender) : null;
  if (staffRole === 'owner') messageRow.classList.add('chat-message-strip-row--owner');
  if (staffRole === 'moderator') messageRow.classList.add('chat-message-strip-row--moderator');
 
- let formattedTextContent = log.text.replace(/(@[a-zA-Z0-9_\-]+)/g, '<span class="chat-shoutout-mention-badge">$1</span>');
+ const editedTag = log.isEdited
+     ? `<span class="chat-message-edited-tag" title="Edited ${escapeCommunityChatDisplayHtml(log.editedAt || '')}">(edited)</span>`
+     : '';
+ const formattedTextContent = formatCommunityChatMessageBodyHtml(log.text);
  messageRow.innerHTML = `
+ <div class="chat-message-content-stack">
  <div class="chat-message-meta-left">
  <span class="chat-message-timestamp">[${log.time}]</span>
  ${formatCommunityChatSenderMarkup(log.sender)}
+ ${editedTag}
  </div>
+ ${buildCommunityChatReplyQuoteMarkup(log.replyTo)}
  <span class="chat-message-body-text-content">${formattedTextContent}</span>
+ </div>
+ ${buildCommunityChatMessageHoverActionsMarkup(log, loggedUser)}
  `;
  bin.appendChild(messageRow);
  });
@@ -1645,6 +1822,28 @@ function executeSubmitNewPortalChatMessage() {
  if (!textContent) return;
 
  const loggedUser = localStorage.getItem("activeCommanderUser") || "testaccount";
+
+ if (communityChatComposeState?.mode === 'edit') {
+     const updated = updateCommunityChatMessageText(communityChatComposeState.messageId, textContent);
+     if (updated) {
+         cancelCommunityChatComposeMode(false);
+         field.value = '';
+         executeCompileActiveChannelMessageStrips();
+         if (typeof playToggleLeverSFX === 'function') playToggleLeverSFX();
+     }
+     return;
+ }
+
+ const replyTarget = communityChatComposeState?.mode === 'reply'
+     ? findCommunityChatMessageById(communityChatComposeState.messageId)
+     : null;
+ const replyPayload = replyTarget
+     ? {
+         id: replyTarget.id,
+         sender: replyTarget.sender,
+         snippet: buildChatMentionPreviewSnippet(replyTarget.text)
+     }
+     : null;
  const currentClockTime = new Date();
  const cleanTimeStr = `${currentClockTime.getHours().toString().padStart(2, '0')}:${currentClockTime.getMinutes().toString().padStart(2, '0')}`;
  let isViolationFound = false;
@@ -1710,9 +1909,11 @@ function executeSubmitNewPortalChatMessage() {
  text: textContent,
  time: cleanTimeStr,
  visible: true,
- originalText: originalRawText
+ originalText: originalRawText,
+ replyTo: replyPayload
  });
 
+ cancelCommunityChatComposeMode(false);
  field.value = "";
  executeCompileActiveChannelMessageStrips();
 
