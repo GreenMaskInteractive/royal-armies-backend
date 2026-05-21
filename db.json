@@ -7,5 +7,9 @@
       "message": "Royal Armies is still being built. You may hit brief outages, broken pages, or restarts while we finish the main website and game portal. Thanks for your patience during early access.",
       "windowLabel": "Expect occasional downtime until the main site launch is complete."
     }
+  },
+  "mailbox": {
+    "messages": [],
+    "drafts": []
   }
 }

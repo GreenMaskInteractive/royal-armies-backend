@@ -34,6 +34,9 @@ function openCommanderHubModal(initialTab, clickEvent) {
     if (!modal) return;
 
     syncCommanderHubPlayerFromStorage();
+    if (typeof loadCommanderMailboxDossiersFromStorage === 'function') {
+        loadCommanderMailboxDossiersFromStorage();
+    }
     if (typeof autoDetectPlayerLocale === 'function') autoDetectPlayerLocale();
 
     modal.classList.add('is-visible');
@@ -44,6 +47,12 @@ function openCommanderHubModal(initialTab, clickEvent) {
 
     const tab = initialTab || 'profile';
     loadCommanderHubSection(tab, clickEvent);
+}
+
+function openCommanderHubMessagesInbox(clickEvent) {
+    if (clickEvent) clickEvent.stopPropagation();
+    window.pendingMessagesHubChannel = 'inbox';
+    openCommanderHubModal('messages', clickEvent);
 }
 
 function closeCommanderHubModal() {
@@ -229,12 +238,13 @@ function getPublicProfileSnapshot(subjectPlayer) {
     const storedBio = viewingSelf ? localStorage.getItem('savedCommanderBio') : null;
     const storedPrivacy = viewingSelf ? localStorage.getItem('savedCommanderPrivacy') : null;
     const description = storedBio !== null ? storedBio : (source.description || '');
-    const privacy = storedPrivacy === 'Public' || storedPrivacy === 'Private'
-        ? storedPrivacy
-        : (source.privacy || 'Public');
+    const privacy = viewingSelf
+        ? (storedPrivacy === 'Public' || storedPrivacy === 'Private' ? storedPrivacy : (source.privacy || 'Public'))
+        : (source.privacy === 'Private' ? 'Private' : 'Public');
 
     return {
         name: source.name || 'Unknown Commander',
+        viewingSelf,
         avatarUrl: source.avatarUrl || 'images/avatars/commanderprofile01.png',
         country: source.country || '—',
         timezone: source.timezone || '—',
@@ -297,25 +307,27 @@ function buildPublicProfileAwardsHtml(awards) {
 
 function renderPublicProfileCardContent(snapshot) {
     const isPublic = snapshot.privacy === 'Public';
+    const viewingSelf = !!snapshot.viewingSelf;
+    const hideSensitiveDetails = !isPublic && !viewingSelf;
+
     const membershipClass = `public-profile-membership tier-${String(snapshot.membershipTitle).toLowerCase()}`;
     const rankTitle = getCommanderRankTitle(snapshot.rank, snapshot.path);
     const classTitle = getCommanderClassTitle(snapshot.path);
 
-    const bioColumnContent = isPublic && snapshot.description
+    const bioColumnContent = snapshot.description
         ? `<p class="public-profile-bio-text">${escapePublicProfileHtml(snapshot.description)}</p>`
-        : (!isPublic
-            ? '<p class="public-profile-private-msg">This player keeps their bio private.</p>'
-            : '<p class="public-profile-empty-state public-profile-bio-empty">No bio written yet.</p>');
+        : '<p class="public-profile-empty-state public-profile-bio-empty">No bio written yet.</p>';
 
-    const splitBodySection = `
-        <div class="public-profile-split-body">
-            <div class="public-profile-split-column public-profile-split-left">
-                <section class="public-profile-section public-profile-bio-section">
-                    <h4 class="public-profile-section-label">Bio</h4>
-                    <div class="public-profile-bio-panel">${bioColumnContent}</div>
-                </section>
-            </div>
-            <div class="public-profile-split-column public-profile-split-right">
+    const locationMetaRow = hideSensitiveDetails
+        ? ''
+        : `<div class="public-profile-meta-row">
+                <span><strong>Nation:</strong> ${escapePublicProfileHtml(snapshot.country)}</span>
+                <span><strong>Time Zone:</strong> ${escapePublicProfileHtml(snapshot.timezone)}</span>
+           </div>`;
+
+    const statsColumnSection = hideSensitiveDetails
+        ? ''
+        : `<div class="public-profile-split-column public-profile-split-right">
                 <section class="public-profile-section public-profile-awards-section">
                     <h4 class="public-profile-section-label">Achievements</h4>
                     ${buildPublicProfileAwardsHtml(snapshot.awards)}
@@ -324,9 +336,23 @@ function renderPublicProfileCardContent(snapshot) {
                     <h4 class="public-profile-section-label">Last 5 Ages (24+ Hours Served)</h4>
                     ${buildPublicProfileAgeHistoryHtml(snapshot.ageHistory)}
                 </section>
+           </div>`;
+
+    const splitBodySection = `
+        <div class="public-profile-split-body${hideSensitiveDetails ? ' public-profile-split-body--restricted' : ''}">
+            <div class="public-profile-split-column public-profile-split-left">
+                <section class="public-profile-section public-profile-bio-section">
+                    <h4 class="public-profile-section-label">Bio</h4>
+                    <div class="public-profile-bio-panel">${bioColumnContent}</div>
+                </section>
             </div>
+            ${statsColumnSection}
         </div>
     `;
+
+    const editProfileBtn = viewingSelf
+        ? `<button type="button" class="public-profile-edit-link-btn" onclick="closePublicCommanderProfileCard(event); openCommanderHubModal('profile', event);">Edit My Profile</button>`
+        : '';
 
     return `
         <header class="public-profile-identity-header">
@@ -338,12 +364,8 @@ function renderPublicProfileCardContent(snapshot) {
                 <h2 id="public-profile-card-title" class="public-profile-commander-name">${escapePublicProfileHtml(snapshot.name)}</h2>
                 <div class="public-profile-badge-row">
                     <span class="${membershipClass}">${escapePublicProfileHtml(snapshot.membershipTitle)} Member</span>
-                    <span class="public-profile-visibility-pill ${isPublic ? 'is-public' : 'is-private'}">${isPublic ? 'Public' : 'Private'}</span>
                 </div>
-                <div class="public-profile-meta-row">
-                    <span><strong>Nation:</strong> ${escapePublicProfileHtml(snapshot.country)}</span>
-                    <span><strong>Time Zone:</strong> ${escapePublicProfileHtml(snapshot.timezone)}</span>
-                </div>
+                ${locationMetaRow}
                 <div class="public-profile-meta-row">
                     <span><strong>Rank:</strong> ${escapePublicProfileHtml(rankTitle)}</span>
                     <span><strong>Class:</strong> ${escapePublicProfileHtml(classTitle)}</span>
@@ -352,7 +374,7 @@ function renderPublicProfileCardContent(snapshot) {
         </header>
         ${splitBodySection}
         <footer class="public-profile-card-actions">
-            <button type="button" class="public-profile-edit-link-btn" onclick="closePublicCommanderProfileCard(event); openCommanderHubModal('profile', event);">Edit My Profile</button>
+            ${editProfileBtn}
             <button type="button" class="public-profile-dismiss-btn" onclick="closePublicCommanderProfileCard(event)">Close</button>
         </footer>
     `;
@@ -400,6 +422,7 @@ function handlePublicProfileCardEscapeKey(e) {
 }
 
 window.openCommanderHubModal = openCommanderHubModal;
+window.openCommanderHubMessagesInbox = openCommanderHubMessagesInbox;
 window.closeCommanderHubModal = closeCommanderHubModal;
 window.loadCommanderHubSection = loadCommanderHubSection;
 window.openPublicCommanderProfileCard = openPublicCommanderProfileCard;

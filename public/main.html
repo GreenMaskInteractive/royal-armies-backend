@@ -62,7 +62,11 @@
                     <div class="avatar-hover-dropdown-menu">
                         <button type="button" class="dropdown-action-item dropdown-action-item-view-profile" onclick="openPublicCommanderProfileCard(event)">View Profile</button>
                         <button type="button" class="dropdown-action-item" onclick="openCommanderHubModal('profile', event)">Edit Profile</button>
-                        <button type="button" class="dropdown-action-item" onclick="openCommanderHubModal('messages', event)">Messages</button>
+                        <button type="button" id="nav-dropdown-messages-btn" class="dropdown-action-item dropdown-action-item-messages" onclick="openCommanderHubMessagesInbox(event)">
+                            <span id="nav-messages-unread-count" class="dropdown-messages-unread-count" hidden></span>
+                            <span class="dropdown-messages-label">Messages</span>
+                            <span class="dropdown-messages-new-dot" aria-hidden="true"></span>
+                        </button>
                         <button type="button" class="dropdown-action-item" onclick="openCommanderHubModal('settings', event)">Settings</button>
                     </div>
                 </div>
@@ -415,7 +419,7 @@
     <script src="rank-data.js"></script>
     <script src="script.js"></script>
     <script src="commander-hub.js"></script>
-    <script src="maintenance-alert.js"></script>
+    <script src="maintenance-alert.js?v=0.1.11"></script>
     <script src="script2.js"></script>
 
 </body>

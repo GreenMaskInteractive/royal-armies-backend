@@ -98,14 +98,11 @@ applyDyslexiaFontPreferenceFromStorage();
 let selectedRecipients = [];
 let savedMessageDrafts = [];
 
-// Global address book containing player lists broken into country categories
+// Legacy address book placeholder (unused — recipient lists use globalFactionServerDirectory)
 const allianceAddressBook = {
-    country: ["Vaelior_Guard", "Archon_Prime", "Aesthene_Scout"],
-    allies: {
-        "Vaelior": ["Guard_Captain", "Elder_Scribe"],
-        "Aesthene": ["Mage_Vanguard", "Pyromancer_X"]
-    },
-    other: ["Grief_King_99", "Rogue_Trader", "Void_Wanderer"]
+    country: [],
+    allies: {},
+    other: []
 };
 
 /* --- Section: Player Profile & Penalty Catalog --- */
@@ -144,8 +141,11 @@ function syncPlayerFromActiveCommanderStorage() {
     const savedAvatar = localStorage.getItem('savedProfileAvatarUrl');
     if (savedAvatar) player.avatarUrl = savedAvatar;
     hydratePlayerPublicDossierFromStorage();
+    loadCommanderMailboxDossiersFromStorage();
+    fetchCommanderMailboxFromServer();
     refreshProfileCommanderNameDisplay();
     refreshLoggedUserTagDisplay();
+    syncNavMailboxIndicators();
 }
 
 function refreshProfileCommanderNameDisplay() {
@@ -185,8 +185,8 @@ var player = {
     privacy: "Public", 
     
     // Social Node Arrays 
-    friends: ["Vaelior_Guard", "Aesthene_Scout"], 
-    blocked: ["Grief_King_99"],
+    friends: [],
+    blocked: [],
 
     // Public dossier: ages served 24+ hours (newest first, max 5 shown on profile card)
     ageHistory: [],
@@ -383,42 +383,324 @@ var messageComposeMode = null;
 var messageComposeSource = null;
 var messageComposeApplyingFromDossier = false;
 
-// MOCK GLOBAL SERVER PLAYER AND REALM DIRECTORY ROSTER MATRIX
+/** Live recipient directory — populated from the server when messaging is wired; no placeholder accounts. */
 const globalFactionServerDirectory = {
     country: {
-        name: "United Kingdom",
-        council: ["Archon_Regent", "High_Paladin"],
-        players: ["Archon_Regent", "High_Paladin", "testaccount", "Sovereign_Shield", "Garrick_Iron"]
+        name: 'Your Country',
+        council: [],
+        players: []
     },
-    allies: [
-        {
-            name: "Aesthene",
-            council: ["Frost_Seer_Vael"],
-            players: ["Frost_Seer_Vael", "Aesthene_Scout", "Ymir_Vanguard", "Kaelen_Guard"]
-        },
-        {
-            name: "Vaelior",
-            council: ["High_Warden_Celeste"],
-            players: ["High_Warden_Celeste", "Vaelior_Guard", "Silversmith_Elena"]
-        }
-    ],
-    other: ["Rogue_Shadow_99", "Mercenary_X", "Lonesome_Knight", "Exiled_Scribe"]
+    allies: [],
+    other: []
 };
 
-// SIMULATION ENVELOPE DATABASES
-var playerInboundInboxDossier = [
-    { id: 101, from: "Archon_Regent", topic: "DEFENSE OF SECTOR 7", body: "We require immediate heavy reinforcements at the western stone lines. The sand empires are moving catapult positions.", read: false, date: "2026-05-17 10:14" },
-    { id: 102, from: "High_Paladin", topic: "Gold Reserves Allocation", body: "The crown has distributed 1,000 gold currency parameters to your secure profile wallet for sector provisions.", read: true, date: "2026-05-16 18:42" }
-];
+/** Owner mailbox: full registered-commander roster (categories from GET /api/portal/mailbox-recipient-roster). */
+const MAILBOX_RECIPIENT_ROSTER_ADMIN_USERNAMES = new Set(['caleb_admin']);
+let mailboxAdminRecipientCategories = null;
+let mailboxAdminRecipientRosterLoadPromise = null;
 
-var playerSystemInboxDossier = [
-    { id: 501, from: "DEVELOPMENT TEAM", topic: "Patch Update 1.04", body: "Fullscreen profile editing and moderation overlays are now live. Account security checks are enabled.", read: false, date: "2026-05-17 08:00" },
-    { id: 502, from: "DEVELOPMENT TEAM", topic: "Daily Safety reminder Loop", body: "Maintain immersive fair play interactions within sector grids. 3 strike penalties result in IP automated blockades.", read: true, date: "2026-05-15 12:00" }
-];
+function isMailboxRecipientRosterAdmin() {
+    const user = String(
+        typeof getActiveCommanderUsername === 'function' ? getActiveCommanderUsername() : ''
+    ).trim().toLowerCase();
+    return MAILBOX_RECIPIENT_ROSTER_ADMIN_USERNAMES.has(user);
+}
 
-var playerDraftsInboxDossier = [
-    { id: 901, recipients: ["Frost_Seer_Vael"], topic: "Drafted Peace Treaty Request", body: "Proposed alliance structures across northern mountain passes..." }
-];
+async function loadMailboxAdminRecipientRoster(forceReload) {
+    if (!isMailboxRecipientRosterAdmin()) {
+        mailboxAdminRecipientCategories = null;
+        return null;
+    }
+    if (!forceReload && mailboxAdminRecipientCategories) {
+        return mailboxAdminRecipientCategories;
+    }
+    if (!forceReload && mailboxAdminRecipientRosterLoadPromise) {
+        return mailboxAdminRecipientRosterLoadPromise;
+    }
+
+    const requester = typeof getActiveCommanderUsername === 'function' ? getActiveCommanderUsername() : '';
+    mailboxAdminRecipientRosterLoadPromise = fetch(
+        `/api/portal/mailbox-recipient-roster?requester=${encodeURIComponent(requester)}`,
+        { cache: 'no-store' }
+    )
+        .then((response) => response.json())
+        .then((payload) => {
+            if (payload && payload.allowed && payload.categories) {
+                mailboxAdminRecipientCategories = payload.categories;
+            } else {
+                mailboxAdminRecipientCategories = null;
+            }
+            return mailboxAdminRecipientCategories;
+        })
+        .catch(() => {
+            mailboxAdminRecipientCategories = null;
+            return null;
+        })
+        .finally(() => {
+            mailboxAdminRecipientRosterLoadPromise = null;
+        });
+
+    return mailboxAdminRecipientRosterLoadPromise;
+}
+
+function escapeRecipientDrawerJsLiteral(value) {
+    return String(value)
+        .replace(/\\/g, '\\\\')
+        .replace(/'/g, "\\'")
+        .replace(/\r/g, '')
+        .replace(/\n/g, '\\n');
+}
+
+function getMailboxAdminRecipientRosterForCategory(categoryKey) {
+    if (!mailboxAdminRecipientCategories) return [];
+    const bucket = mailboxAdminRecipientCategories[categoryKey];
+    return Array.isArray(bucket) ? bucket.slice() : [];
+}
+
+function renderRecipientDrawerRootCategories() {
+    const mainPane = document.getElementById('drawer-main-category-view');
+    if (!mainPane) return;
+
+    if (isMailboxRecipientRosterAdmin() && mailboxAdminRecipientCategories) {
+        const allCount = getMailboxAdminRecipientRosterForCategory('all').length;
+        const verifiedCount = getMailboxAdminRecipientRosterForCategory('verified').length;
+        const unverifiedCount = getMailboxAdminRecipientRosterForCategory('unverified').length;
+        mainPane.innerHTML = `
+            <div class="drawer-node-row" onclick="drillDownDirectory('registered-all')">📋 All Registered <span class="drawer-node-count">${allCount}</span><span>►</span></div>
+            <div class="drawer-node-row" onclick="drillDownDirectory('registered-verified')">✅ Verified <span class="drawer-node-count">${verifiedCount}</span><span>►</span></div>
+            <div class="drawer-node-row" onclick="drillDownDirectory('registered-unverified')">⏳ Pending Verification <span class="drawer-node-count">${unverifiedCount}</span><span>►</span></div>
+        `;
+        return;
+    }
+
+    mainPane.innerHTML = `
+        <div class="drawer-node-row" onclick="drillDownDirectory('country')">Country<span>►</span></div>
+        <div class="drawer-node-row" onclick="drillDownDirectory('allies')">🤝 Allies <span>►</span></div>
+        <div class="drawer-node-row" onclick="drillDownDirectory('other')">🌐 Other<span>►</span></div>
+    `;
+}
+
+// Commander message folders (inbox, system, drafts) — persisted per commander in localStorage
+var playerInboundInboxDossier = [];
+var playerSystemInboxDossier = [];
+var playerDraftsInboxDossier = [];
+
+function getCommanderMailboxStorageKey() {
+    const user = typeof getActiveCommanderUsername === 'function' ? getActiveCommanderUsername() : '';
+    return `royalArmiesMailbox:${user || 'guest'}`;
+}
+
+function loadCommanderMailboxDossiersFromStorage() {
+    try {
+        const raw = localStorage.getItem(getCommanderMailboxStorageKey());
+        if (!raw) return;
+        const data = JSON.parse(raw);
+        if (Array.isArray(data.inbox)) playerInboundInboxDossier = data.inbox;
+        if (Array.isArray(data.system)) playerSystemInboxDossier = data.system;
+        if (Array.isArray(data.drafts)) playerDraftsInboxDossier = data.drafts;
+    } catch (err) {
+        console.warn('Mailbox restore skipped:', err.message);
+    }
+}
+
+function saveCommanderMailboxDossiersToStorage() {
+    try {
+        localStorage.setItem(getCommanderMailboxStorageKey(), JSON.stringify({
+            inbox: playerInboundInboxDossier,
+            system: playerSystemInboxDossier,
+            drafts: playerDraftsInboxDossier
+        }));
+    } catch (err) {
+        console.warn('Mailbox save skipped:', err.message);
+    }
+}
+
+function getMailboxApiUsername() {
+    const user = typeof getActiveCommanderUsername === 'function' ? getActiveCommanderUsername() : '';
+    const trimmed = String(user || '').trim();
+    if (!trimmed || trimmed.toLowerCase() === 'testaccount') return '';
+    return trimmed;
+}
+
+function isMailboxApiAvailable() {
+    return typeof isLandingServedByNexusBackend === 'function' && isLandingServedByNexusBackend();
+}
+
+async function fetchCommanderMailboxFromServer() {
+    const username = getMailboxApiUsername();
+    if (!username || !isMailboxApiAvailable()) return false;
+
+    try {
+        const response = await fetch(
+            `/api/portal/mailbox?username=${encodeURIComponent(username)}`,
+            { cache: 'no-store' }
+        );
+        const payload = await response.json();
+        if (!response.ok || payload.status !== 'ok') return false;
+
+        playerInboundInboxDossier = Array.isArray(payload.inbox) ? payload.inbox : [];
+        playerSystemInboxDossier = Array.isArray(payload.system) ? payload.system : [];
+        playerDraftsInboxDossier = Array.isArray(payload.drafts) ? payload.drafts : [];
+        persistMailboxAndSyncNav();
+        return true;
+    } catch (err) {
+        console.warn('Mailbox sync failed:', err.message);
+        return false;
+    }
+}
+
+async function patchMailboxMessageReadOnServer(messageId) {
+    const username = getMailboxApiUsername();
+    if (!username || !isMailboxApiAvailable() || !Number.isFinite(Number(messageId))) return false;
+
+    try {
+        const response = await fetch(`/api/portal/mailbox/${messageId}/read`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username })
+        });
+        return response.ok;
+    } catch (err) {
+        return false;
+    }
+}
+
+async function deleteMailboxMessageOnServer(messageId, channel) {
+    const username = getMailboxApiUsername();
+    if (!username || !isMailboxApiAvailable() || !Number.isFinite(Number(messageId))) return false;
+
+    try {
+        const response = await fetch(`/api/portal/mailbox/${messageId}?username=${encodeURIComponent(username)}&channel=${encodeURIComponent(channel)}`, {
+            method: 'DELETE'
+        });
+        return response.ok;
+    } catch (err) {
+        return false;
+    }
+}
+
+async function purgeMailboxMessagesOnServer(channel, ids) {
+    const username = getMailboxApiUsername();
+    if (!username || !isMailboxApiAvailable() || !Array.isArray(ids) || !ids.length) return false;
+
+    try {
+        const response = await fetch('/api/portal/mailbox/purge', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username, channel, ids })
+        });
+        const payload = await response.json();
+        return response.ok && payload.status === 'ok';
+    } catch (err) {
+        return false;
+    }
+}
+
+async function saveMailboxDraftOnServer(recipients, topic, body, draftId) {
+    const owner = getMailboxApiUsername();
+    if (!owner || !isMailboxApiAvailable()) return null;
+
+    try {
+        const response = await fetch('/api/portal/mailbox/drafts', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ owner, recipients, topic, body, id: draftId })
+        });
+        const payload = await response.json();
+        if (!response.ok || payload.status !== 'ok') return null;
+        return payload.draft || null;
+    } catch (err) {
+        return null;
+    }
+}
+
+async function deleteMailboxDraftOnServer(draftId) {
+    const username = getMailboxApiUsername();
+    if (!username || !isMailboxApiAvailable() || !Number.isFinite(Number(draftId))) return false;
+
+    try {
+        const response = await fetch(`/api/portal/mailbox/drafts/${draftId}?username=${encodeURIComponent(username)}`, {
+            method: 'DELETE'
+        });
+        return response.ok;
+    } catch (err) {
+        return false;
+    }
+}
+
+function countUnreadPlayerInboxMessages() {
+    return playerInboundInboxDossier.filter((msg) => msg && msg.from && !msg.read).length;
+}
+
+function syncNavMailboxIndicators() {
+    const unreadCount = countUnreadPlayerInboxMessages();
+    const wrapper = document.querySelector('.nav-avatar-hub-wrapper');
+    const countEl = document.getElementById('nav-messages-unread-count');
+    const messagesBtn = document.getElementById('nav-dropdown-messages-btn');
+
+    if (wrapper) wrapper.classList.toggle('has-unread-messages', unreadCount > 0);
+
+    if (countEl) {
+        if (unreadCount > 0) {
+            countEl.textContent = String(unreadCount);
+            countEl.hidden = false;
+        } else {
+            countEl.textContent = '';
+            countEl.hidden = true;
+        }
+    }
+
+    if (messagesBtn) {
+        messagesBtn.classList.toggle('has-unread-messages', unreadCount > 0);
+        messagesBtn.setAttribute(
+            'aria-label',
+            unreadCount > 0 ? `Messages, ${unreadCount} unread` : 'Messages'
+        );
+    }
+}
+
+function persistMailboxAndSyncNav() {
+    saveCommanderMailboxDossiersToStorage();
+    syncNavMailboxIndicators();
+}
+
+/** Delivers test/player mail via the ledger API (console: receiveCommanderInboxMessage('Sender', 'Subject', 'Body')). */
+async function receiveCommanderInboxMessage(from, topic, body) {
+    if (!from || !String(from).trim()) return null;
+
+    const to = getMailboxApiUsername();
+    if (!to) {
+        console.warn('Mailbox inject skipped: log in with a registered commander on port 3000.');
+        return null;
+    }
+
+    if (isMailboxApiAvailable()) {
+        try {
+            const response = await fetch('/api/portal/mailbox/inject', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    to,
+                    from: String(from).trim(),
+                    topic: String(topic || 'No subject').trim(),
+                    body: String(body || '').trim()
+                })
+            });
+            const payload = await response.json();
+            if (response.ok && payload.status === 'ok') {
+                await fetchCommanderMailboxFromServer();
+                return payload.message || null;
+            }
+            console.warn('Mailbox inject failed:', payload.message || response.status);
+        } catch (err) {
+            console.warn('Mailbox inject failed:', err.message);
+        }
+    }
+
+    return null;
+}
+
+loadCommanderMailboxDossiersFromStorage();
 
 let currentUser = null;
 let isMuted = false;
@@ -529,12 +811,14 @@ function initializeDataLink() {
 function toggleMute() {
     const music = document.getElementById(activeTrackId);
     const icon = document.getElementById('audio-icon');
+    const control = document.getElementById('audio-control');
     if (!music) return;
 
     if (!music.muted) {
         music.muted = true;
         isMuted = true;
-        if (icon) icon.className = 'icon-muted';
+        if (icon) icon.className = 'landing-audio-icon icon-muted';
+        if (control) control.setAttribute('aria-pressed', 'true');
         console.log("Ambiance Silenced.");
     } else {
         music.muted = false;
@@ -542,7 +826,8 @@ function toggleMute() {
         music.play();
         // If overdrive was active, resume the context
         if (audioContext) audioContext.resume();
-        if (icon) icon.className = 'icon-unmuted';
+        if (icon) icon.className = 'landing-audio-icon icon-unmuted';
+        if (control) control.setAttribute('aria-pressed', 'false');
         console.log("Symphony Resumed.");
     }
 }
@@ -1556,10 +1841,103 @@ function reloadProfilePanelView() {
 
 function reloadMessagesPanelView() {
     if (document.getElementById('commander-hub-modal')?.classList.contains('is-visible')) {
-        if (typeof loadCommanderHubSection === 'function') loadCommanderHubSection('messages');
+        if (typeof loadCommanderHubSection === 'function') {
+            window.pendingMessagesHubChannel = 'inbox';
+            loadCommanderHubSection('messages');
+        }
         return;
     }
     if (typeof loadLore === 'function') loadLore('messages');
+}
+
+function activateMessagesHubChannel(trackKey, mount, activeBtn) {
+    const body = mount.body;
+    const container = mount.container;
+    const leftHeader = mount.leftHeader;
+    const detailsHeader = mount.detailsHeader;
+    const subnavItemClass = mount.subnavItemClass;
+
+    const tabNamesMapping = ['Send Message', 'Inbox', 'System Messages', 'Drafts'];
+    const trackIdentifiers = ['send', 'inbox', 'system', 'drafts'];
+    const channelIndex = trackIdentifiers.indexOf(trackKey);
+    const tabLabel = tabNamesMapping[channelIndex >= 0 ? channelIndex : 1] || 'Inbox';
+
+    if (typeof playToggleLeverSFX === 'function') playToggleLeverSFX();
+    markHubChannelTabActive(activeBtn, container);
+
+    if (body) body.innerHTML = nationLore.messages[channelIndex >= 0 ? channelIndex : 1].detail;
+
+    if (leftHeader) leftHeader.innerText = 'CHANNELS';
+    if (detailsHeader) detailsHeader.innerHTML = tabLabel.toUpperCase();
+
+    if (trackKey !== 'send') {
+        clearMessageComposeContext();
+        fetchCommanderMailboxFromServer().finally(() => renderDossierPortalListHTML(trackKey));
+    } else {
+        const drawer = document.getElementById('msg-directory-floating-drawer');
+        if (drawer) drawer.className = 'msg-floating-drawer-hidden';
+        if (!messageComposeApplyingFromDossier) {
+            clearMessageComposeContext();
+        }
+    }
+}
+
+function mountMessagesHubView(mount, preferredChannel) {
+    const body = mount.body;
+    const container = mount.container;
+    const leftHeader = mount.leftHeader;
+    const detailsHeader = mount.detailsHeader;
+    const subnavItemClass = mount.subnavItemClass;
+
+    if (!body || !container) return;
+
+    const tabNamesMapping = ['Send Message', 'Inbox', 'System Messages', 'Drafts'];
+    const trackIdentifiers = ['send', 'inbox', 'system', 'drafts'];
+    const startChannel = trackIdentifiers.includes(preferredChannel) ? preferredChannel : 'inbox';
+    const startIndex = trackIdentifiers.indexOf(startChannel);
+
+    if (leftHeader) leftHeader.innerText = 'CHANNELS';
+    if (detailsHeader) detailsHeader.innerHTML = tabNamesMapping[startIndex].toUpperCase();
+
+    const centerWheelLabelDisplay = document.getElementById('slot-label-display');
+    if (centerWheelLabelDisplay) centerWheelLabelDisplay.innerText = 'MESSAGES';
+
+    body.innerHTML = nationLore.messages[startIndex].detail;
+    container.innerHTML = '';
+
+    const channelButtons = [];
+
+    trackIdentifiers.forEach((trackKey, idx) => {
+        const btn = document.createElement('div');
+        btn.className = subnavItemClass;
+        btn.dataset.msgChannel = trackKey;
+        btn.innerText = tabNamesMapping[idx];
+        btn.onclick = () => activateMessagesHubChannel(trackKey, mount, btn);
+        container.appendChild(btn);
+        channelButtons.push({ trackKey, btn });
+    });
+
+    const defaultEntry = channelButtons.find((entry) => entry.trackKey === startChannel) || channelButtons[1];
+    if (defaultEntry) {
+        defaultEntry.btn.classList.add('active');
+        window.setTimeout(() => {
+            activateMessagesHubChannel(defaultEntry.trackKey, mount, defaultEntry.btn);
+        }, 0);
+    }
+
+    window.setTimeout(() => {
+        const drawer = document.getElementById('msg-directory-floating-drawer');
+        if (drawer) drawer.className = 'msg-floating-drawer-hidden';
+        fetchCommanderMailboxFromServer().then(() => {
+            renderDossierPortalListHTML('inbox');
+            renderDossierPortalListHTML('system');
+            renderDossierPortalListHTML('drafts');
+            syncNavMailboxIndicators();
+        });
+        loadMailboxAdminRecipientRoster().then(() => {
+            renderRecipientDrawerRootCategories();
+        });
+    }, 15);
 }
 
 function isCommanderEnrolledInActiveAgeRound() {
@@ -1632,67 +2010,8 @@ function loadLore(type, customMount) {
     // 📬 INTERCEPT INTEGRATION 1: STANDALONE TACTICAL MESSAGES SUB-TAB CONNECTIONS
     // ==========================================================================
     if (type === 'messages') {
-        // Set the left pane to instantly read CHANNELS on click, right stays empty initially
-        if (leftHeader) leftHeader.innerText = "CHANNELS";
-        if (detailsHeader) detailsHeader.innerHTML = "";
-        
-        // FIXED THE CENTER WHEEL LABEL GLOW DISPLAY ACCORDINGLY:
-        const centerWheelLabelDisplay = document.getElementById('slot-label-display');
-        if (centerWheelLabelDisplay) {
-            centerWheelLabelDisplay.innerText = "MESSAGES";
-        }
-        
-        // CORRECTION: Targets the base layout index explicitly to clear out the "undefined" bug!
-        body.innerHTML = nationLore.messages[0].detail;
-        container.innerHTML = "";
-        
-        const tabNamesMapping = ["Send Message", "Inbox", "System Messages", "Drafts"];
-        const trackIdentifiers = ["send", "inbox", "system", "drafts"];
-        
-        trackIdentifiers.forEach((trackKey, idx) => {
-            const btn = document.createElement('div');
-            btn.className = subnavItemClass;
-            btn.innerText = tabNamesMapping[idx];
-            if (idx === 0) btn.classList.add('active');
-            btn.onclick = () => {
-                if (typeof playToggleLeverSFX === 'function') playToggleLeverSFX();
-                markHubChannelTabActive(btn, container);
-
-                // Render the precise inner panel template matching your clicked tab row index
-                body.innerHTML = nationLore.messages[idx].detail;
-                
-                // Left pane stays constant, right details title reveals on sub-tab click
-                if (leftHeader) leftHeader.innerText = "CHANNELS";
-                if (detailsHeader) detailsHeader.innerHTML = tabNamesMapping[idx].toUpperCase();
-                
-                if (trackKey !== 'send') {
-                    clearMessageComposeContext();
-                    renderDossierPortalListHTML(trackKey);
-                } else {
-                    const drawer = document.getElementById('msg-directory-floating-drawer');
-                    if (drawer) drawer.className = 'msg-floating-drawer-hidden';
-                    if (!messageComposeApplyingFromDossier) {
-                        clearMessageComposeContext();
-                    }
-                }
-            };
-            container.appendChild(btn);
-        });
-        
-        // 🔒 UNIFIED TIMEOUT CLOSURE HOOKS:
-        // Safely closes your dropdown and pre-caches mailbox lists inside one clean thread loop
-        setTimeout(() => {
-            const drawer = document.getElementById('msg-directory-floating-drawer');
-            if (drawer) {
-                drawer.className = 'msg-floating-drawer-hidden';
-            }
-            // Safely initialize lists in background arrays so dynamic items are logged
-            if (typeof renderDossierPortalListHTML === 'function') {
-                renderDossierPortalListHTML('inbox');
-                renderDossierPortalListHTML('system');
-                renderDossierPortalListHTML('drafts');
-            }
-        }, 15);
+        mountMessagesHubView(mount, window.pendingMessagesHubChannel || 'inbox');
+        window.pendingMessagesHubChannel = null;
         return;
     }
     
@@ -2944,12 +3263,18 @@ function toggleRecipientDirectory(e) {
     if (!drawer) return;
     
     if (drawer.classList.contains('msg-floating-drawer-hidden')) {
-        drawer.classList.remove('msg-floating-drawer-hidden');
-        drillDownDirectory('root'); // Re-initialize map menu parameters
-        resetRecipientDrawerScrollPosition();
-        
-        // WIRE UP GLOBAL CLICK LATCH DISMISSAL PASS
-        document.addEventListener('click', closeRecipientDrawerOutsideDismissalLatch);
+        const openDrawer = () => {
+            drawer.classList.remove('msg-floating-drawer-hidden');
+            drillDownDirectory('root');
+            resetRecipientDrawerScrollPosition();
+            document.addEventListener('click', closeRecipientDrawerOutsideDismissalLatch);
+        };
+
+        if (isMailboxRecipientRosterAdmin()) {
+            loadMailboxAdminRecipientRoster().then(() => openDrawer());
+        } else {
+            openDrawer();
+        }
     } else {
         hideRecipientDirectoryDrawer();
     }
@@ -2976,12 +3301,22 @@ function resetRecipientDrawerScrollPosition() {
     if (drillPane) drillPane.scrollTop = 0;
 }
 
+function appendRecipientDrawerEmptyNote(drillPane, message) {
+    drillPane.innerHTML += `<div class="drawer-node-row drawer-node-empty">${message}</div>`;
+}
+
+function getActiveCommanderDisplayName() {
+    if (typeof player !== 'undefined' && player.name) return String(player.name).trim();
+    return String(localStorage.getItem('activeCommanderUser') || '').trim();
+}
+
 function drillDownDirectory(tier, payload) {
     const mainPane = document.getElementById('drawer-main-category-view');
     const drillPane = document.getElementById('drawer-drilldown-category-view');
     if (!mainPane || !drillPane) return;
 
     if (tier === 'root') {
+        renderRecipientDrawerRootCategories();
         mainPane.classList.remove('msg-drawer-pane-hidden');
         drillPane.classList.add('msg-drawer-pane-hidden');
         resetRecipientDrawerScrollPosition();
@@ -2993,40 +3328,85 @@ function drillDownDirectory(tier, payload) {
     drillPane.classList.remove('msg-drawer-pane-hidden');
     drillPane.innerHTML = `<div class="drawer-back-node-row" onclick="drillDownDirectory('root')">◀ Back to Radar Tracks</div>`;
 
+    const selfName = getActiveCommanderDisplayName();
+
     /* --- PARSE TIER A: NATIVE SOVEREIGN COUNTRY REALM --- */
     if (tier === 'country') {
         const data = globalFactionServerDirectory.country;
-        drillPane.innerHTML += `<div class="drawer-node-row selection-action-node" onclick="appendRecipientPill('Country: All Players')">📢 All Players (${data.name})</div>`;
-        drillPane.innerHTML += `<div class="drawer-node-row selection-action-node" onclick="appendRecipientPill('Country: Royal Council')">👑 Royal Council Leaders</div>`;
-        data.players.forEach(p => {
-            if (p !== player.name) {
-                drillPane.innerHTML += `<div class="drawer-node-row selection-action-node" onclick="appendRecipientPill('${p}')">👤 ${p}</div>`;
-            }
-        });
+        const roster = (data.players || []).filter((p) => p && p !== selfName);
+        if (!roster.length) {
+            appendRecipientDrawerEmptyNote(drillPane, 'No commanders in your country roster yet.');
+        } else {
+            roster.forEach((p) => {
+                const safe = escapeRecipientDrawerJsLiteral(p);
+                drillPane.innerHTML += `<div class="drawer-node-row selection-action-node" onclick="appendRecipientPill('${safe}')">👤 ${p}</div>`;
+            });
+        }
     }
     /* --- PARSE TIER B: NATIVE INTERNATIONAL COUNTRY ALLIES SYSTEM --- */
     else if (tier === 'allies') {
         if (!payload) {
-            // First step view inside Allies category: Print selectable ally country matrices
-            globalFactionServerDirectory.allies.forEach((allyNation, index) => {
-                drillPane.innerHTML += `<div class="drawer-node-row" onclick="drillDownDirectory('ally-nation', ${index})">🤝 ${allyNation.name} Sector <span>►</span></div>`;
-            });
+            const allies = globalFactionServerDirectory.allies || [];
+            if (!allies.length) {
+                appendRecipientDrawerEmptyNote(drillPane, 'No allied nation rosters available yet.');
+            } else {
+                allies.forEach((allyNation, index) => {
+                    drillPane.innerHTML += `<div class="drawer-node-row" onclick="drillDownDirectory('ally-nation', ${index})">🤝 ${allyNation.name} Sector <span>►</span></div>`;
+                });
+            }
         }
     }
     else if (tier === 'ally-nation') {
         const allyNation = globalFactionServerDirectory.allies[payload];
+        if (!allyNation) return;
         drillPane.innerHTML = `<div class="drawer-back-node-row" onclick="drillDownDirectory('allies')">◀ Back to Allies list</div>`;
-        drillPane.innerHTML += `<div class="drawer-node-row selection-action-node" onclick="appendRecipientPill('Allies: All ${allyNation.name}')">📢 All Players (${allyNation.name})</div>`;
-        drillPane.innerHTML += `<div class="drawer-node-row selection-action-node" onclick="appendRecipientPill('Allies: Council ${allyNation.name}')">👑 Council Leaders (${allyNation.name})</div>`;
-        allyNation.players.forEach(p => {
-            drillPane.innerHTML += `<div class="drawer-node-row selection-action-node" onclick="appendRecipientPill('${p}')">👤 ${p}</div>`;
-        });
+        const roster = (allyNation.players || []).filter((p) => p && p !== selfName);
+        if (!roster.length) {
+            appendRecipientDrawerEmptyNote(drillPane, `No commanders listed for ${allyNation.name} yet.`);
+        } else {
+            roster.forEach((p) => {
+                const safe = escapeRecipientDrawerJsLiteral(p);
+                drillPane.innerHTML += `<div class="drawer-node-row selection-action-node" onclick="appendRecipientPill('${safe}')">👤 ${p}</div>`;
+            });
+        }
     }
     /* --- PARSE TIER C: SPAM PROTECTED LONE OPERATIONS TRACKS --- */
     else if (tier === 'other') {
-        globalFactionServerDirectory.other.forEach(p => {
-            drillPane.innerHTML += `<div class="drawer-node-row selection-action-node" onclick="appendRecipientPill('${p}')">👤 ${p}</div>`;
-        });
+        const roster = (globalFactionServerDirectory.other || []).filter((p) => p && p !== selfName);
+        if (!roster.length) {
+            appendRecipientDrawerEmptyNote(drillPane, 'No other commanders available to message yet.');
+        } else {
+            roster.forEach((p) => {
+                const safe = escapeRecipientDrawerJsLiteral(p);
+                drillPane.innerHTML += `<div class="drawer-node-row selection-action-node" onclick="appendRecipientPill('${safe}')">👤 ${p}</div>`;
+            });
+        }
+    }
+    /* --- PARSE TIER D: OWNER LEDGER ROSTER (caleb_admin only) --- */
+    else if (tier === 'registered-all' || tier === 'registered-verified' || tier === 'registered-unverified') {
+        const categoryKey = tier === 'registered-all'
+            ? 'all'
+            : (tier === 'registered-verified' ? 'verified' : 'unverified');
+        const titles = {
+            all: 'All Registered Commanders',
+            verified: 'Verified Commanders',
+            unverified: 'Pending Verification'
+        };
+
+        if (!isMailboxRecipientRosterAdmin() || !mailboxAdminRecipientCategories) {
+            appendRecipientDrawerEmptyNote(drillPane, 'Recipient roster unavailable.');
+        } else {
+            const roster = getMailboxAdminRecipientRosterForCategory(categoryKey)
+                .filter((p) => p && p !== selfName);
+            if (!roster.length) {
+                appendRecipientDrawerEmptyNote(drillPane, `No commanders in ${titles[categoryKey]} yet.`);
+            } else {
+                roster.forEach((p) => {
+                    const safe = escapeRecipientDrawerJsLiteral(p);
+                    drillPane.innerHTML += `<div class="drawer-node-row selection-action-node" onclick="appendRecipientPill('${safe}')">👤 ${p}</div>`;
+                });
+            }
+        }
     }
 
     resetRecipientDrawerScrollPosition();
@@ -3071,7 +3451,7 @@ function removeRecipientPill(targetName, e) {
 }
 
 /* --- DISPATCH EXECUTION WORKER FLOWS --- */
-function executeOutgoingMessageDispatch() {
+async function executeOutgoingMessageDispatch() {
     const topic = document.getElementById('msg-subject-input-element').value.trim();
     const bodyText = document.getElementById('msg-body-input-element').value.trim();
 
@@ -3080,23 +3460,63 @@ function executeOutgoingMessageDispatch() {
         return;
     }
 
-    alert(`Message sent to: ${activeWartimeRecipients.join(', ')}`);
-    
-    clearMessageComposeContext();
-    resetMessageComposeFields();
+    const sender = getMailboxApiUsername();
+    if (!sender) {
+        alert('Log in with a registered commander on the game server (port 3000) to send messages.');
+        return;
+    }
+
+    if (!isMailboxApiAvailable()) {
+        alert('Messages require the Royal Armies server. Start it with node server.js and open http://localhost:3000');
+        return;
+    }
+
+    try {
+        const response = await fetch('/api/portal/mailbox/send', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                sender,
+                recipients: [...activeWartimeRecipients],
+                topic,
+                body: bodyText
+            })
+        });
+        const payload = await response.json();
+        if (!response.ok || payload.status !== 'ok') {
+            alert(payload.message || 'Could not send message. Check recipients and try again.');
+            return;
+        }
+
+        alert(`Message sent to: ${(payload.recipients || activeWartimeRecipients).join(', ')}`);
+        clearMessageComposeContext();
+        resetMessageComposeFields();
+    } catch (err) {
+        alert('Could not reach the message server. Is node server.js running?');
+    }
 }
 
-function commitMessageToDraftCache() {
+async function commitMessageToDraftCache() {
     const topic = document.getElementById('msg-subject-input-element').value.trim() || "Untitled Draft";
     const bodyText = document.getElementById('msg-body-input-element').value.trim() || "";
 
-    playerDraftsInboxDossier.unshift({
-        id: Date.now(),
-        recipients: [...activeWartimeRecipients],
-        topic: topic,
-        body: bodyText
-    });
+    if (!getMailboxApiUsername()) {
+        alert('Log in with a registered commander to save drafts.');
+        return;
+    }
 
+    if (!isMailboxApiAvailable()) {
+        alert('Drafts require the Royal Armies server (node server.js on port 3000).');
+        return;
+    }
+
+    const saved = await saveMailboxDraftOnServer([...activeWartimeRecipients], topic, bodyText);
+    if (!saved) {
+        alert('Could not save draft.');
+        return;
+    }
+
+    await fetchCommanderMailboxFromServer();
     alert("Draft saved.");
     reloadMessagesPanelView();
 }
@@ -3158,15 +3578,20 @@ function renderDossierPortalListHTML(targetTrack) {
         `;
         bin.appendChild(row);
     });
+
+    if (targetTrack === 'inbox') syncNavMailboxIndicators();
 }
 
 /* --- HIGH FANTASY POPUP DISPATCH READING WINDOW --- */
 function openFocusedDossierReadingOverlay(msg, track) {
     if (typeof playToggleLeverSFX === 'function') playToggleLeverSFX();
     
-    // Mark as read natively inside arrays
     msg.read = true;
     renderDossierPortalListHTML(track);
+    persistMailboxAndSyncNav();
+    if (track === 'inbox' || track === 'system') {
+        patchMailboxMessageReadOnServer(msg.id);
+    }
 
     // Reuse your absolute body center overlay layer blueprints for reading popups
     const overlay = document.getElementById('commander-suicide-overlay');
@@ -3207,13 +3632,22 @@ function openFocusedDossierReadingOverlay(msg, track) {
     const deleteBtn = document.createElement('button');
     deleteBtn.className = 'suicide-danger-confirm-btn';
     deleteBtn.innerText = "Delete";
-    deleteBtn.onclick = () => {
-        if (track === 'inbox') playerInboundInboxDossier = playerInboundInboxDossier.filter(m => m.id !== msg.id);
-        else if (track === 'system') playerSystemInboxDossier = playerSystemInboxDossier.filter(m => m.id !== msg.id);
-        else if (track === 'drafts') playerDraftsInboxDossier = playerDraftsInboxDossier.filter(m => m.id !== msg.id);
-        
+    deleteBtn.onclick = async () => {
+        if (track === 'inbox') {
+            await deleteMailboxMessageOnServer(msg.id, 'inbox');
+            playerInboundInboxDossier = playerInboundInboxDossier.filter((m) => m.id !== msg.id);
+        } else if (track === 'system') {
+            await deleteMailboxMessageOnServer(msg.id, 'system');
+            playerSystemInboxDossier = playerSystemInboxDossier.filter((m) => m.id !== msg.id);
+        } else if (track === 'drafts') {
+            await deleteMailboxDraftOnServer(msg.id);
+            playerDraftsInboxDossier = playerDraftsInboxDossier.filter((m) => m.id !== msg.id);
+        }
+
         closeSuicideOverlayWindow();
+        await fetchCommanderMailboxFromServer();
         renderDossierPortalListHTML(track);
+        persistMailboxAndSyncNav();
     };
 
     const returnBtn = document.createElement('button');
@@ -3257,19 +3691,30 @@ function executeSelectAllMessageCheckboxes(track) {
     checkboxes.forEach(box => box.checked = true);
 }
 
-function executeMassDossierPurge(track) {
+async function executeMassDossierPurge(track) {
     if (typeof playToggleLeverSFX === 'function') playToggleLeverSFX();
     
     const checkboxes = document.querySelectorAll(`#msg-${track}-render-dock .msg-purge-checkbox-lever:checked`);
     if (checkboxes.length === 0) return;
 
-    const idsToPurge = Array.from(checkboxes).map(box => parseInt(box.getAttribute('data-id')));
+    const idsToPurge = Array.from(checkboxes).map((box) => Number(box.getAttribute('data-id'))).filter((id) => Number.isFinite(id));
 
-    if (track === 'inbox') playerInboundInboxDossier = playerInboundInboxDossier.filter(m => !idsToPurge.includes(m.id));
-    else if (track === 'system') playerSystemInboxDossier = playerSystemInboxDossier.filter(m => !idsToPurge.includes(m.id));
+    if (track === 'inbox' || track === 'system') {
+        await purgeMailboxMessagesOnServer(track, idsToPurge);
+    }
+
+    if (track === 'inbox') playerInboundInboxDossier = playerInboundInboxDossier.filter((m) => !idsToPurge.includes(m.id));
+    else if (track === 'system') playerSystemInboxDossier = playerSystemInboxDossier.filter((m) => !idsToPurge.includes(m.id));
 
     isMassDeletionActive[track] = false;
-    toggleMassDeletionMode(track); // Revert toolbars toggles back to base properties
+    toggleMassDeletionMode(track);
+    await fetchCommanderMailboxFromServer();
     renderDossierPortalListHTML(track);
-    alert(`Purged ${idsToPurge.length} historical diplomatic entries completely from system disk cache.`);
+    persistMailboxAndSyncNav();
+    alert(`Purged ${idsToPurge.length} message(s) from your ${track} folder.`);
 }
+
+window.syncNavMailboxIndicators = syncNavMailboxIndicators;
+window.receiveCommanderInboxMessage = receiveCommanderInboxMessage;
+window.fetchCommanderMailboxFromServer = fetchCommanderMailboxFromServer;
+window.loadCommanderMailboxDossiersFromStorage = loadCommanderMailboxDossiersFromStorage;

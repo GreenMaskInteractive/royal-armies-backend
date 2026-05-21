@@ -135,3 +135,9 @@ const DeveloperMaintenanceAlert = {
 
 window.initializeDeveloperMaintenanceAlert = initializeDeveloperMaintenanceAlert;
 window.DeveloperMaintenanceAlert = DeveloperMaintenanceAlert;
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initializeDeveloperMaintenanceAlert);
+} else {
+    initializeDeveloperMaintenanceAlert();
+}

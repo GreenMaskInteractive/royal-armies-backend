@@ -46,6 +46,17 @@ window.onload = () => {
     applyPortalNavPreviewRestrictions();
     hydrateDevelopersLogDock();
 
+    if (typeof loadCommanderMailboxDossiersFromStorage === 'function') {
+        loadCommanderMailboxDossiersFromStorage();
+    }
+    if (typeof fetchCommanderMailboxFromServer === 'function') {
+        fetchCommanderMailboxFromServer().then(() => {
+            if (typeof syncNavMailboxIndicators === 'function') syncNavMailboxIndicators();
+        });
+    } else if (typeof syncNavMailboxIndicators === 'function') {
+        syncNavMailboxIndicators();
+    }
+
     const viewport = document.getElementById('main-portal-dynamic-viewport');
     if (viewport) {
         window.cachedAgePortalViewportHTML = viewport.innerHTML;

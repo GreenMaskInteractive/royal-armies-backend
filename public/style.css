@@ -214,48 +214,57 @@ body {
     left: 25px !important;
     z-index: 9999999 !important;
     cursor: pointer;
-    background: rgba(0, 0, 0, 0.6) !important;
-    border: 1px solid #d4af37;
+    background: radial-gradient(circle at 35% 30%, rgba(48, 38, 22, 0.95) 0%, rgba(8, 6, 4, 0.92) 72%) !important;
+    border: 1px solid rgba(212, 175, 55, 0.7) !important;
     border-radius: 50%;
-    width: 44px !important;
-    height: 44px !important;
+    width: 48px !important;
+    height: 48px !important;
     display: flex !important;
     justify-content: center;
     align-items: center;
-    transition: all 0.3s ease;
+    box-shadow:
+        0 0 14px rgba(212, 175, 55, 0.22),
+        inset 0 0 10px rgba(0, 0, 0, 0.55) !important;
+    transition: transform 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
 }
 
 .audio-toggle-container:hover {
-    background: rgba(212, 175, 55, 0.2) !important;
-    transform: scale(1.1);
+    background: radial-gradient(circle at 35% 30%, rgba(62, 48, 26, 0.98) 0%, rgba(12, 9, 6, 0.94) 72%) !important;
+    border-color: #f1e0ac !important;
+    transform: scale(1.06);
+    box-shadow:
+        0 0 18px rgba(255, 215, 0, 0.35),
+        inset 0 0 10px rgba(0, 0, 0, 0.5) !important;
 }
 
-/* THE SPEAKER ICON (CSS-ONLY REPLACEMENT) */
-#audio-icon {
-    width: 12px;
-    height: 12px;
-    background: #ffffff;
-    position: relative;
-    margin-left: -5px;
-    transition: opacity 0.4s ease, transform 0.3s ease;
+.landing-audio-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    color: #e8c878;
+    filter: drop-shadow(0 0 5px rgba(255, 215, 0, 0.35));
+    transition: color 0.25s ease, filter 0.25s ease;
 }
 
-#audio-icon::before {
-    content: "";
-    position: absolute;
-    top: -6px;
-    left: 5px;
-    border-top: 12px solid transparent;
-    border-bottom: 12px solid transparent;
-    border-right: 15px solid #ffffff;
+.landing-audio-icon .audio-glyphs {
+    width: 24px;
+    height: 24px;
+    display: none;
 }
 
-/* UNMUTED STATE: Solid White */
-.icon-unmuted { opacity: 1 !important; }
-/* MUTED STATE: Transparent White */
-.icon-muted {
-    opacity: 0.2 !important;
-    transform: scale(0.8);
+.landing-audio-icon.icon-unmuted .audio-glyphs--on {
+    display: block;
+}
+
+.landing-audio-icon.icon-muted {
+    color: #8a7a5a;
+    filter: drop-shadow(0 0 2px rgba(0, 0, 0, 0.6));
+}
+
+.landing-audio-icon.icon-muted .audio-glyphs--off {
+    display: block;
 }
 
 /* --- 3. CLASS SELECTION SIDE PANELS --- */
@@ -1327,36 +1336,6 @@ body {
     text-align: center;
 }
 
-.audio-toggle-container {
-    position: fixed;
-    bottom: 20px;
-    left: 20px;
-    z-index: 200001; 
-    background: rgba(0, 0, 0, 0.6);
-    border: 1px solid var(--accent);
-    border-radius: 50%;
-    padding: 10px;
-    width: 40px; /* Restored standard PC size */
-    height: 40px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    cursor: pointer;
-    transition: transform 0.2s, background 0.2s;
-}
-
-.audio-toggle-container:hover {
-    background: rgba(212, 175, 55, 0.3);
-    transform: scale(1.1);
-}
-
-.icon-muted {
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M11 5L6 9H2v6h4l5 4V5z'%3E%3C/path%3E%3Cline x1='23' y1='9' x2='17' y2='15'%3E%3C/line%3E%3Cline x1='17' y1='9' x2='23' y2='15'%3E%3C/line%3E%3C/svg%3E");
-}
-
-.icon-unmuted {
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M11 5L6 9H2v6h4l5 4V5z'%3E%3C/path%3E%3Cpath d='M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07'%3E%3C/path%3E%3C/svg%3E");
-}
 
 /* ==========================================
    AVI MODULE: RENDERING SHIELD
@@ -3617,9 +3596,29 @@ body #commander-penalty-overlay,
     color: #ffffff !important; 
 }
 
+.drawer-node-row.drawer-node-empty {
+    cursor: default !important;
+    color: rgba(241, 224, 172, 0.55) !important;
+    font-style: italic !important;
+    justify-content: flex-start !important;
+}
+
+.drawer-node-row.drawer-node-empty:hover {
+    background-color: transparent !important;
+    color: rgba(241, 224, 172, 0.55) !important;
+}
+
 .drawer-node-row span { 
     opacity: 0.4 !important; 
     font-size: 0.65rem !important; 
+}
+
+.drawer-node-row .drawer-node-count {
+    opacity: 0.75 !important;
+    font-size: 0.62rem !important;
+    color: #c9a227 !important;
+    margin-left: auto !important;
+    margin-right: 6px !important;
 }
 
 #lore-modal .drawer-back-node-row,

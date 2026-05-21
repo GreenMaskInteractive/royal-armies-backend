@@ -31,6 +31,10 @@ db.defaults({
             message: '',
             windowLabel: ''
         }
+    },
+    mailbox: {
+        messages: [],
+        drafts: []
     }
 }).write();
 
@@ -76,6 +80,105 @@ const ageSessionByUser = new Map();
 
 function isHiddenRegistrationUsername(username) {
     return HIDDEN_REGISTRATION_USERNAMES.has(String(username || '').trim().toLowerCase());
+}
+
+/** Accounts that may load the full ledger recipient roster in Messages (compose ➕ list). */
+function isMailboxRecipientRosterAdmin(username) {
+    return String(username || '').trim().toLowerCase() === 'caleb_admin';
+}
+
+/* --- Section: Commander mailbox (ledger-backed player mail) --- */
+const MAILBOX_TOPIC_MAX = 60;
+const MAILBOX_BODY_MAX = 4000;
+const MAILBOX_RECIPIENTS_MAX = 25;
+
+function formatMailboxDisplayDate(isoValue) {
+    const parsed = Date.parse(isoValue || '');
+    if (!Number.isFinite(parsed)) return '';
+    return new Date(parsed).toISOString().slice(0, 16).replace('T', ' ');
+}
+
+function createMailboxRecordId(seed = Date.now()) {
+    return Number(seed);
+}
+
+function resolveLedgerCommanderUsername(username) {
+    const needle = normalizeLedgerUsername(username);
+    if (!needle || isHiddenRegistrationUsername(needle)) return null;
+
+    const commanders = db.get('commanders').value() || [];
+    const hit = commanders.find(
+        (entry) => String(entry?.username || '').trim().toLowerCase() === needle.toLowerCase()
+    );
+    return hit ? String(hit.username).trim() : null;
+}
+
+function getMailboxMessageStore() {
+    const rows = db.get('mailbox.messages').value();
+    return Array.isArray(rows) ? rows : [];
+}
+
+function getMailboxDraftStore() {
+    const rows = db.get('mailbox.drafts').value();
+    return Array.isArray(rows) ? rows : [];
+}
+
+function writeMailboxMessageStore(rows) {
+    db.set('mailbox.messages', rows).write();
+}
+
+function writeMailboxDraftStore(rows) {
+    db.set('mailbox.drafts', rows).write();
+}
+
+function serializeMailboxMessageForClient(row) {
+    if (!row) return null;
+    return {
+        id: row.id,
+        from: row.from || '',
+        to: row.to || '',
+        topic: row.topic || 'No subject',
+        body: row.body || '',
+        read: !!row.read,
+        date: formatMailboxDisplayDate(row.sentAt),
+        sentAt: row.sentAt || null
+    };
+}
+
+function serializeMailboxDraftForClient(row) {
+    if (!row) return null;
+    return {
+        id: row.id,
+        recipients: Array.isArray(row.recipients) ? row.recipients : [],
+        topic: row.topic || 'Untitled Draft',
+        body: row.body || '',
+        date: formatMailboxDisplayDate(row.updatedAt) || 'Draft'
+    };
+}
+
+function getMailboxPayloadForUser(username) {
+    const owner = resolveLedgerCommanderUsername(username);
+    if (!owner) {
+        return { status: 'error', message: 'Unknown commander account.' };
+    }
+
+    const ownerLower = owner.toLowerCase();
+    const inbox = getMailboxMessageStore()
+        .filter((row) => row && row.channel === 'inbox' && String(row.to || '').toLowerCase() === ownerLower)
+        .sort((a, b) => Date.parse(b.sentAt || 0) - Date.parse(a.sentAt || 0))
+        .map(serializeMailboxMessageForClient);
+
+    const system = getMailboxMessageStore()
+        .filter((row) => row && row.channel === 'system' && String(row.to || '').toLowerCase() === ownerLower)
+        .sort((a, b) => Date.parse(b.sentAt || 0) - Date.parse(a.sentAt || 0))
+        .map(serializeMailboxMessageForClient);
+
+    const drafts = getMailboxDraftStore()
+        .filter((row) => row && String(row.owner || '').toLowerCase() === ownerLower)
+        .sort((a, b) => Date.parse(b.updatedAt || 0) - Date.parse(a.updatedAt || 0))
+        .map(serializeMailboxDraftForClient);
+
+    return { status: 'ok', username: owner, inbox, system, drafts };
 }
 
 function pruneAgeSessionOnlineState() {
@@ -491,6 +594,303 @@ app.get('/api/portal/metrics', (req, res) => {
         recentRegistrations,
         ...ageMetrics
     });
+});
+
+app.get('/api/portal/mailbox-recipient-roster', (req, res) => {
+    const requester = normalizeLedgerUsername(req.query?.requester || '');
+    if (!isMailboxRecipientRosterAdmin(requester)) {
+        return res.json({ allowed: false });
+    }
+
+    const commanders = db.get('commanders').value() || [];
+    const visible = commanders
+        .filter((entry) => entry?.username && !isHiddenRegistrationUsername(entry.username))
+        .map((entry) => ({
+            username: entry.username,
+            verified: !!entry.verified
+        }))
+        .sort((a, b) => a.username.localeCompare(b.username, undefined, { sensitivity: 'base' }));
+
+    const all = visible.map((entry) => entry.username);
+    const verified = visible.filter((entry) => entry.verified).map((entry) => entry.username);
+    const unverified = visible.filter((entry) => !entry.verified).map((entry) => entry.username);
+
+    res.json({
+        allowed: true,
+        categories: { all, verified, unverified }
+    });
+});
+
+app.get('/api/portal/mailbox', (req, res) => {
+    const username = normalizeLedgerUsername(req.query?.username || '');
+    if (!username) {
+        return res.status(400).json({ status: 'error', message: 'Username required.' });
+    }
+
+    const payload = getMailboxPayloadForUser(username);
+    if (payload.status === 'error') {
+        return res.status(404).json(payload);
+    }
+
+    res.json(payload);
+});
+
+app.post('/api/portal/mailbox/send', (req, res) => {
+    const sender = resolveLedgerCommanderUsername(req.body?.sender || '');
+    const recipientsRaw = Array.isArray(req.body?.recipients) ? req.body.recipients : [];
+    const topic = String(req.body?.topic || '').trim().slice(0, MAILBOX_TOPIC_MAX);
+    const body = String(req.body?.body || '').trim().slice(0, MAILBOX_BODY_MAX);
+
+    if (!sender) {
+        return res.status(400).json({ status: 'error', message: 'Valid sender commander required.' });
+    }
+    if (!topic || !body) {
+        return res.status(400).json({ status: 'error', message: 'Subject and message body are required.' });
+    }
+
+    const recipients = [];
+    const seen = new Set();
+    for (const entry of recipientsRaw) {
+        const resolved = resolveLedgerCommanderUsername(entry);
+        if (!resolved) continue;
+        const key = resolved.toLowerCase();
+        if (seen.has(key)) continue;
+        seen.add(key);
+        recipients.push(resolved);
+        if (recipients.length >= MAILBOX_RECIPIENTS_MAX) break;
+    }
+
+    if (!recipients.length) {
+        return res.status(400).json({ status: 'error', message: 'Choose at least one valid recipient.' });
+    }
+
+    const sentAt = new Date().toISOString();
+    const messages = getMailboxMessageStore();
+    const created = [];
+    let idSeed = Date.now();
+
+    recipients.forEach((recipient) => {
+        const row = {
+            id: createMailboxRecordId(idSeed),
+            channel: 'inbox',
+            from: sender,
+            to: recipient,
+            topic,
+            body,
+            read: false,
+            sentAt
+        };
+        idSeed += 1;
+        messages.push(row);
+        created.push(serializeMailboxMessageForClient(row));
+    });
+
+    writeMailboxMessageStore(messages);
+
+    res.status(200).json({
+        status: 'ok',
+        delivered: created.length,
+        recipients,
+        messages: created
+    });
+});
+
+app.post('/api/portal/mailbox/inject', (req, res) => {
+    const to = resolveLedgerCommanderUsername(req.body?.to || req.body?.recipient || '');
+    const from = String(req.body?.from || '').trim().slice(0, 80);
+    const topic = String(req.body?.topic || '').trim().slice(0, MAILBOX_TOPIC_MAX) || 'No subject';
+    const body = String(req.body?.body || '').trim().slice(0, MAILBOX_BODY_MAX);
+
+    if (!to) {
+        return res.status(400).json({ status: 'error', message: 'Valid recipient commander required.' });
+    }
+    if (!from) {
+        return res.status(400).json({ status: 'error', message: 'Sender name required.' });
+    }
+
+    const sentAt = new Date().toISOString();
+    const row = {
+        id: createMailboxRecordId(),
+        channel: 'inbox',
+        from,
+        to,
+        topic,
+        body,
+        read: false,
+        sentAt
+    };
+
+    const messages = getMailboxMessageStore();
+    messages.push(row);
+    writeMailboxMessageStore(messages);
+
+    res.status(200).json({ status: 'ok', message: serializeMailboxMessageForClient(row) });
+});
+
+app.patch('/api/portal/mailbox/:messageId/read', (req, res) => {
+    const username = resolveLedgerCommanderUsername(req.body?.username || req.query?.username || '');
+    const messageId = Number(req.params.messageId);
+
+    if (!username) {
+        return res.status(400).json({ status: 'error', message: 'Valid commander username required.' });
+    }
+    if (!Number.isFinite(messageId)) {
+        return res.status(400).json({ status: 'error', message: 'Invalid message id.' });
+    }
+
+    const ownerLower = username.toLowerCase();
+    const messages = getMailboxMessageStore();
+    const hit = messages.find(
+        (row) => row.id === messageId && String(row.to || '').toLowerCase() === ownerLower
+    );
+
+    if (!hit) {
+        return res.status(404).json({ status: 'error', message: 'Message not found for this commander.' });
+    }
+
+    hit.read = true;
+    writeMailboxMessageStore(messages);
+
+    res.json({ status: 'ok', message: serializeMailboxMessageForClient(hit) });
+});
+
+app.delete('/api/portal/mailbox/:messageId', (req, res) => {
+    const username = resolveLedgerCommanderUsername(req.body?.username || req.query?.username || '');
+    const messageId = Number(req.params.messageId);
+    const channel = String(req.body?.channel || req.query?.channel || 'inbox').toLowerCase();
+
+    if (!username) {
+        return res.status(400).json({ status: 'error', message: 'Valid commander username required.' });
+    }
+    if (!Number.isFinite(messageId)) {
+        return res.status(400).json({ status: 'error', message: 'Invalid message id.' });
+    }
+
+    const ownerLower = username.toLowerCase();
+    const messages = getMailboxMessageStore();
+    const nextMessages = messages.filter((row) => {
+        if (row.id !== messageId) return true;
+        if (String(row.to || '').toLowerCase() !== ownerLower) return true;
+        if (channel === 'system') return row.channel === 'system';
+        return row.channel === 'inbox';
+    });
+
+    if (nextMessages.length === messages.length) {
+        return res.status(404).json({ status: 'error', message: 'Message not found for this commander.' });
+    }
+
+    writeMailboxMessageStore(nextMessages);
+    res.json({ status: 'ok', removedId: messageId });
+});
+
+app.post('/api/portal/mailbox/purge', (req, res) => {
+    const username = resolveLedgerCommanderUsername(req.body?.username || '');
+    const channel = String(req.body?.channel || 'inbox').toLowerCase();
+    const idsRaw = Array.isArray(req.body?.ids) ? req.body.ids : [];
+    const ids = new Set(idsRaw.map((id) => Number(id)).filter((id) => Number.isFinite(id)));
+
+    if (!username) {
+        return res.status(400).json({ status: 'error', message: 'Valid commander username required.' });
+    }
+    if (!ids.size) {
+        return res.status(400).json({ status: 'error', message: 'No message ids supplied.' });
+    }
+
+    const ownerLower = username.toLowerCase();
+    const messages = getMailboxMessageStore();
+    let removed = 0;
+    const nextMessages = messages.filter((row) => {
+        if (!ids.has(row.id)) return true;
+        if (String(row.to || '').toLowerCase() !== ownerLower) return true;
+        if (channel === 'system' && row.channel !== 'system') return true;
+        if (channel !== 'system' && row.channel !== 'inbox') return true;
+        removed += 1;
+        return false;
+    });
+
+    writeMailboxMessageStore(nextMessages);
+    res.json({ status: 'ok', removed });
+});
+
+app.post('/api/portal/mailbox/drafts', (req, res) => {
+    const owner = resolveLedgerCommanderUsername(req.body?.owner || req.body?.username || '');
+    const recipientsRaw = Array.isArray(req.body?.recipients) ? req.body.recipients : [];
+    const topic = String(req.body?.topic || '').trim().slice(0, MAILBOX_TOPIC_MAX) || 'Untitled Draft';
+    const body = String(req.body?.body || '').trim().slice(0, MAILBOX_BODY_MAX);
+    const draftId = Number(req.body?.id);
+
+    if (!owner) {
+        return res.status(400).json({ status: 'error', message: 'Valid commander account required.' });
+    }
+
+    const recipients = [];
+    const seen = new Set();
+    for (const entry of recipientsRaw) {
+        const resolved = resolveLedgerCommanderUsername(entry);
+        if (!resolved) continue;
+        const key = resolved.toLowerCase();
+        if (seen.has(key)) continue;
+        seen.add(key);
+        recipients.push(resolved);
+    }
+
+    const updatedAt = new Date().toISOString();
+    const drafts = getMailboxDraftStore();
+    let row;
+
+    if (Number.isFinite(draftId)) {
+        const hit = drafts.find(
+            (entry) => entry.id === draftId && String(entry.owner || '').toLowerCase() === owner.toLowerCase()
+        );
+        if (hit) {
+            hit.recipients = recipients;
+            hit.topic = topic;
+            hit.body = body;
+            hit.updatedAt = updatedAt;
+            row = hit;
+        }
+    }
+
+    if (!row) {
+        row = {
+            id: createMailboxRecordId(),
+            owner,
+            recipients,
+            topic,
+            body,
+            updatedAt
+        };
+        drafts.unshift(row);
+    }
+
+    writeMailboxDraftStore(drafts);
+    res.status(200).json({ status: 'ok', draft: serializeMailboxDraftForClient(row) });
+});
+
+app.delete('/api/portal/mailbox/drafts/:draftId', (req, res) => {
+    const owner = resolveLedgerCommanderUsername(req.body?.username || req.query?.username || '');
+    const draftId = Number(req.params.draftId);
+
+    if (!owner) {
+        return res.status(400).json({ status: 'error', message: 'Valid commander account required.' });
+    }
+    if (!Number.isFinite(draftId)) {
+        return res.status(400).json({ status: 'error', message: 'Invalid draft id.' });
+    }
+
+    const ownerLower = owner.toLowerCase();
+    const drafts = getMailboxDraftStore();
+    const nextDrafts = drafts.filter((row) => {
+        if (row.id !== draftId) return true;
+        return String(row.owner || '').toLowerCase() !== ownerLower;
+    });
+
+    if (nextDrafts.length === drafts.length) {
+        return res.status(404).json({ status: 'error', message: 'Draft not found for this commander.' });
+    }
+
+    writeMailboxDraftStore(nextDrafts);
+    res.json({ status: 'ok', removedId: draftId });
 });
 
 app.post('/api/portal/presence', (req, res) => {
