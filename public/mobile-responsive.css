@@ -686,12 +686,15 @@ body {
         z-index: 999999980 !important;
         width: 100% !important;
         max-width: 100% !important;
-        min-height: 100px !important;
-        height: 100% !important;
+        min-height: 0 !important;
+        height: auto !important;
         margin: 0 !important;
         flex: 1 1 auto !important;
         isolation: isolate !important;
         pointer-events: auto !important;
+        background: none !important;
+        border: none !important;
+        box-shadow: none !important;
     }
 
     .main-portal-nav-bar > .portal-mobile-nav-shell {
@@ -706,19 +709,22 @@ body {
         width: 100% !important;
         overflow-x: hidden !important;
         overflow-y: visible !important;
-        height: 100px !important;
-        min-height: 100px !important;
+        height: auto !important;
+        min-height: 0 !important;
         max-height: none !important;
         position: relative !important;
         flex-shrink: 0 !important;
         z-index: 999999970 !important;
         isolation: isolate !important;
+        background: none !important;
+        border: none !important;
+        box-shadow: none !important;
     }
 
     .main-portal-nav-bar {
-        height: 100px !important;
-        min-height: 100px !important;
-        max-height: 100px !important;
+        height: auto !important;
+        min-height: 0 !important;
+        max-height: none !important;
         width: 100% !important;
         min-width: 100% !important;
         max-width: 100% !important;
@@ -730,26 +736,22 @@ body {
         margin: 0 !important;
         flex-wrap: nowrap !important;
         justify-content: stretch !important;
-        align-items: center !important;
+        align-items: stretch !important;
         padding: 0 max(0px, env(safe-area-inset-right)) 0 max(0px, env(safe-area-inset-left)) !important;
         overflow: visible !important;
         z-index: 999999975 !important;
         isolation: isolate !important;
+        background: none !important;
+        background-color: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
     }
 
-    /* Bar artwork at native aspect (2863×117 asset → 71px tall strip), centered; ends clip in .portal-mobile-nav-bar-clip */
     .main-portal-nav-bar::before {
-        top: 50% !important;
-        left: 50% !important;
-        right: auto !important;
-        width: calc(71px * 2863 / 117) !important;
-        height: 71px !important;
-        transform: translate(-50%, -50%) !important;
-        background-size: 100% 100% !important;
-        background-position: center center !important;
-        background-repeat: no-repeat !important;
-        pointer-events: none !important;
-        z-index: 0 !important;
+        display: none !important;
+        content: none !important;
+        background: none !important;
+        background-image: none !important;
     }
 
     .portal-mobile-nav-shell {
@@ -763,13 +765,14 @@ body {
         gap: 8px !important;
         width: 100% !important;
         max-width: 100% !important;
-        min-height: 100px !important;
-        height: 100% !important;
+        min-height: 48px !important;
+        height: auto !important;
         flex: 1 1 auto !important;
-        padding: 10px max(14px, env(safe-area-inset-right)) 10px max(14px, env(safe-area-inset-left)) !important;
+        padding: 12px max(14px, env(safe-area-inset-right)) 12px max(14px, env(safe-area-inset-left)) !important;
         border: none !important;
+        border-bottom: 1px solid rgba(184, 144, 48, 0.18) !important;
         border-radius: 0 !important;
-        background: rgba(10, 12, 16, 0.55) !important;
+        background: transparent !important;
         color: #ffd700 !important;
         font-family: 'Cinzel', serif !important;
         font-size: 0.82rem !important;
@@ -782,7 +785,7 @@ body {
         pointer-events: auto !important;
         touch-action: manipulation !important;
         -webkit-tap-highlight-color: rgba(255, 215, 0, 0.22) !important;
-        box-shadow: inset 0 0 12px rgba(0, 0, 0, 0.75), 0 4px 14px rgba(0, 0, 0, 0.55) !important;
+        box-shadow: none !important;
     }
 
     .portal-mobile-nav-toggle-label {
@@ -1387,6 +1390,53 @@ body {
         overflow-y: visible !important;
         max-height: none !important;
         height: auto !important;
+    }
+
+    /* Mobile portal: dark layout — lock desktop-only visual tuning controls */
+    #portal-commander-hub-page .preview-sandbox-window,
+    .portal-commander-hub-page .preview-sandbox-window {
+        display: none !important;
+    }
+
+    .portal-mobile-setting-locked,
+    .portal-mobile-setting-locked .settings-label {
+        opacity: 0.42 !important;
+        color: rgba(241, 224, 172, 0.45) !important;
+    }
+
+    .portal-mobile-setting-locked .settings-right-wrapper,
+    .portal-mobile-setting-locked .settings-hint-line {
+        opacity: 0.42 !important;
+    }
+
+    .portal-mobile-setting-locked input[type="range"] {
+        opacity: 0.38 !important;
+        filter: grayscale(0.85) !important;
+        cursor: not-allowed !important;
+        pointer-events: none !important;
+    }
+
+    .portal-mobile-setting-locked .settings-value-label {
+        color: rgba(241, 224, 172, 0.45) !important;
+    }
+
+    .portal-mobile-setting-locked .switch-toggle-bar {
+        opacity: 0.38 !important;
+        filter: grayscale(0.85) !important;
+        cursor: not-allowed !important;
+        pointer-events: none !important;
+    }
+
+    .portal-mobile-setting-locked .switch-toggle-bar input {
+        pointer-events: none !important;
+    }
+
+    .portal-mobile-setting-locked .switch-toggle-bar input:checked + .toggle-slider-track {
+        background: rgba(60, 60, 60, 0.55) !important;
+    }
+
+    .portal-mobile-setting-locked .switch-toggle-bar input:checked + .toggle-slider-track::before {
+        transform: translateX(0) !important;
     }
 
     .profile-identity-title-row {

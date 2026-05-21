@@ -267,6 +267,14 @@ function isPortalMobileNavLayout() {
     return window.matchMedia('(max-width: 1024px)').matches;
 }
 
+if (typeof window !== 'undefined') {
+    window.addEventListener('resize', () => {
+        if (typeof applyPortalMobileVisualSettingsRestrictions === 'function') {
+            applyPortalMobileVisualSettingsRestrictions();
+        }
+    });
+}
+
 function snapshotAgePortalViewportForCache() {
     const viewport = document.getElementById('main-portal-dynamic-viewport');
     if (!viewport) return '';

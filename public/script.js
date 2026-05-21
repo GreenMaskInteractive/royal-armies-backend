@@ -160,6 +160,10 @@ function refreshMainPortalAuthChrome() {
     if (typeof applyProfileRankResetButtonState === 'function') {
         applyProfileRankResetButtonState();
     }
+
+    if (typeof applyPortalMobileVisualSettingsRestrictions === 'function') {
+        applyPortalMobileVisualSettingsRestrictions();
+    }
 }
 
 function openMainPortalGuestRegister(event) {
@@ -2799,6 +2803,9 @@ function loadLore(type, customMount) {
                             if (hcCheck) hcCheck.checked = document.body.classList.contains('high-contrast-mode');
                             const fontCheck = document.getElementById('font-toggle-check');
                             if (fontCheck) fontCheck.checked = isDyslexiaFontEnabled();
+                            if (typeof applyPortalMobileVisualSettingsRestrictions === 'function') {
+                                applyPortalMobileVisualSettingsRestrictions();
+                            }
                         }
                         else if (item.name === "Audio & Narration") {
                             const masterSlider = document.getElementById('master-vol-slider');
@@ -2872,11 +2879,78 @@ function applyTextScaleToDocument(scale, options = {}) {
     return safeScale;
 }
 
+function isPortalMobileVisualSettingsLayout() {
+    return typeof isPortalMobileNavLayout === 'function' && isPortalMobileNavLayout();
+}
+
+function applyPortalMobileVisualSettingsRestrictions() {
+    const mobile = isPortalMobileVisualSettingsLayout();
+
+    const uiSlider = document.getElementById('ui-scale-slider');
+    const textSlider = document.getElementById('text-scale-slider');
+    const hcCheck = document.getElementById('hc-toggle-check');
+    const uiGroup = uiSlider?.closest('.settings-group');
+    const textGroup = textSlider?.closest('.settings-group');
+    const hcGroup = hcCheck?.closest('.settings-group');
+    const previewBackdrop = document.getElementById('preview-backdrop-zone');
+
+    const scaleLockTitle = 'Interface scaling is adjusted automatically on mobile.';
+    const hcLockTitle = 'High contrast is not used on the mobile portal layout.';
+
+    [uiGroup, textGroup, hcGroup].forEach((groupEl) => {
+        if (!groupEl) return;
+        groupEl.classList.remove('portal-mobile-setting-locked');
+        groupEl.removeAttribute('title');
+    });
+
+    if (!mobile) {
+        if (uiSlider) uiSlider.disabled = false;
+        if (textSlider) textSlider.disabled = false;
+        if (hcCheck) hcCheck.disabled = false;
+        return;
+    }
+
+    if (uiSlider) {
+        uiSlider.disabled = true;
+        uiSlider.value = confirmedScale;
+        const scaleLabel = document.getElementById('scale-value');
+        if (scaleLabel) scaleLabel.innerText = `${Math.round(confirmedScale * 100)}%`;
+        if (uiGroup) {
+            uiGroup.classList.add('portal-mobile-setting-locked');
+            uiGroup.setAttribute('title', scaleLockTitle);
+        }
+    }
+
+    if (textSlider) {
+        textSlider.disabled = true;
+        textSlider.value = confirmedTextScale;
+        applyTextScaleToDocument(confirmedTextScale, { silent: true });
+        if (textGroup) {
+            textGroup.classList.add('portal-mobile-setting-locked');
+            textGroup.setAttribute('title', scaleLockTitle);
+        }
+    }
+
+    if (hcCheck) {
+        hcCheck.disabled = true;
+        hcCheck.checked = false;
+        if (hcGroup) {
+            hcGroup.classList.add('portal-mobile-setting-locked');
+            hcGroup.setAttribute('title', hcLockTitle);
+        }
+    }
+
+    document.body.classList.remove('high-contrast-mode');
+    if (previewBackdrop) previewBackdrop.classList.remove('preview-hc-active');
+}
+
 function stageTextScale(val) {
+    if (isPortalMobileVisualSettingsLayout()) return;
     stagedTextScale = applyTextScaleToDocument(val);
 }
 
 function stageUIScale(val) {
+    if (isPortalMobileVisualSettingsLayout()) return;
     hasUnsavedChanges = true;
     stagedScale = parseFloat(val); // Capture the slider data silently in memory
     
@@ -2894,6 +2968,8 @@ function stageUIScale(val) {
 }
 
 function toggleHighContrast() {
+    if (isPortalMobileVisualSettingsLayout()) return;
+
     hasUnsavedChanges = true;
     
     // THE SAFE SEPARATION FIX: 
@@ -3272,6 +3348,7 @@ window.confirmSelection = confirmSelection;
 window.selectClass = selectClass;
 window.isCommanderEnrolledInActiveAgeRound = isCommanderEnrolledInActiveAgeRound;
 window.applyProfileRankResetButtonState = applyProfileRankResetButtonState;
+window.applyPortalMobileVisualSettingsRestrictions = applyPortalMobileVisualSettingsRestrictions;
 window.beginCommanderAgeResetSession = beginCommanderAgeResetSession;
 window.ensureCommanderAgeResetSessionContinuity = ensureCommanderAgeResetSessionContinuity;
 window.canUseCommanderReset = canUseCommanderReset;
