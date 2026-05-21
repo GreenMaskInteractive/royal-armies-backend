@@ -253,14 +253,7 @@ const PORTAL_MOBILE_NAV_VIEW_LABELS = {
     chronicles: 'The Chronicles',
     roadmap: 'Roadmap',
     settings: 'Settings',
-    commander: 'My Commander'
-};
-
-const PORTAL_COMMANDER_HUB_TAB_LABELS = {
-    profile: 'Edit Profile',
-    messages: 'Communication',
-    settings: 'Settings',
-    'view-profile': 'View Profile'
+    commander: 'Options'
 };
 
 function isPortalMobileNavLayout() {
@@ -499,11 +492,7 @@ function portalMobileNavAuthAction(event) {
 
 function syncPortalMobileNavChrome(viewName) {
     const resolved = viewName || activeMainPortalView || 'portal';
-    let label = PORTAL_MOBILE_NAV_VIEW_LABELS[resolved] || PORTAL_MOBILE_NAV_VIEW_LABELS.portal;
-    if (resolved === 'commander') {
-        const tab = window.activeCommanderHubPortalTab || 'profile';
-        label = PORTAL_COMMANDER_HUB_TAB_LABELS[tab] || PORTAL_MOBILE_NAV_VIEW_LABELS.commander;
-    }
+    const label = PORTAL_MOBILE_NAV_VIEW_LABELS[resolved] || PORTAL_MOBILE_NAV_VIEW_LABELS.portal;
     const labelEl = document.getElementById('portal-mobile-nav-current-label');
     if (labelEl) labelEl.textContent = label;
 
