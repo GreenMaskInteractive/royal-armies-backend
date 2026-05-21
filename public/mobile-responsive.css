@@ -1504,21 +1504,39 @@ body {
     }
 
     .msg-recipient-directory-slot .msg-directory-drawer-body {
-        min-height: 120px !important;
-        max-height: min(40dvh, 240px) !important;
+        position: relative !important;
+        flex: 1 1 auto !important;
+        min-height: 140px !important;
+        height: min(36dvh, 220px) !important;
+        max-height: min(36dvh, 220px) !important;
+        overflow: hidden !important;
     }
 
-    .msg-recipient-directory-slot .drawer-category-scroll-bin,
-    .msg-recipient-directory-slot #drawer-main-category-view,
-    .msg-recipient-directory-slot #drawer-drilldown-category-view {
-        position: relative !important;
-        top: auto !important;
-        left: auto !important;
-        right: auto !important;
-        bottom: auto !important;
-        height: auto !important;
-        max-height: min(38dvh, 220px) !important;
-        min-height: 100px !important;
+    /* Stack category + drilldown panes in the same slot (swap views, no vertical push) */
+    .msg-recipient-directory-slot .msg-directory-drawer-body > .drawer-category-scroll-bin,
+    .msg-recipient-directory-slot .msg-directory-drawer-body > #drawer-main-category-view,
+    .msg-recipient-directory-slot .msg-directory-drawer-body > #drawer-drilldown-category-view {
+        position: absolute !important;
+        top: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        bottom: 0 !important;
+        width: 100% !important;
+        height: 100% !important;
+        max-height: 100% !important;
+        min-height: 0 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        box-sizing: border-box !important;
+        overflow-y: auto !important;
+        overflow-x: hidden !important;
+        -webkit-overflow-scrolling: touch !important;
+    }
+
+    .msg-recipient-directory-slot .msg-directory-drawer-body > .msg-drawer-pane-hidden {
+        display: none !important;
+        visibility: hidden !important;
+        pointer-events: none !important;
     }
 
     .profile-identity-title-row {
