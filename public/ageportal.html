@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+    <!-- ==========================================
+         PORTAL MODULE: DOCUMENT HEAD & ASSET LINKS
+         ========================================== -->
+
+    <!-- --- Section: Meta & Stylesheet Imports --- -->
+
+    <!-- Block 1: Character Set & Viewport -->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- Block 2: Page Title & Stylesheet Bridge -->
+    <title>Royal Armies - Age Portal Staging Deck</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="style2.css">
+</head>
+<body id="main-dashboard-canvas">
+
+    <!-- ==========================================
+         PORTAL MODULE: HEADER & BRAND LAYER
+         ========================================== -->
+
+    <!-- --- Section: Centered Logo Header --- -->
+
+    <!-- Block 3: Centered Main Brand Title Header -->
+    <header class="over-bar-utility-deck">
+        <div class="header-logo-housing-block">
+            <img src="images/royalarmiestitle.png" alt="Royal Armies Official Title Logo" class="portal-brand-logo-asset">
+        </div>
+    </header>
+
+    <!-- ==========================================
+         PORTAL MODULE: STAGING DECK MASTER WRAPPER
+         ========================================== -->
+
+    <main class="staging-deck-master-wrapper">
+
+        <!-- --- Section: Sticky Navigation Chassis --- -->
+
+        <!-- Block 4: Three-Column Sticky Navigation Bar -->
+        <nav class="main-portal-nav-bar" id="portal-navigation-chassis">
+
+            <div class="nav-embedded-account-label">
+                <div class="nav-avatar-hub-wrapper">
+                    <img id="nav-embedded-avatar-crest" src="" alt="Crest" class="nav-bar-embedded-avatar-thumbnail">
+
+                    <div class="avatar-hover-dropdown-menu">
+                        <button type="button" class="dropdown-action-item dropdown-action-item-view-profile" onclick="openPublicCommanderProfileCard(event)">View Profile</button>
+                        <button type="button" class="dropdown-action-item" onclick="openCommanderHubModal('profile', event)">Edit Profile</button>
+                        <button type="button" class="dropdown-action-item" onclick="openCommanderHubModal('messages', event)">Messages</button>
+                        <button type="button" class="dropdown-action-item" onclick="openCommanderHubModal('settings', event)">Settings</button>
+                    </div>
+                </div>
+                <strong id="logged-user-tag">Loading...</strong>
+            </div>
+
+            <div class="nav-tabs-centered-flex-dock">
+                <div class="nav-tab active" onclick="switchMainPortalView('portal', event)">Age Portal</div>
+                <div class="nav-tab" onclick="switchMainPortalView('leaderboards', event)">Leaderboards</div>
+                <div class="nav-tab" onclick="switchMainPortalView('chat', event)">Community Chat</div>
+                <div class="nav-tab" onclick="switchMainPortalView('discoveries', event)">Discoveries</div>
+                <div class="nav-tab" onclick="switchMainPortalView('royalty', event)">Royalty</div>
+                <div class="nav-tab" onclick="switchMainPortalView('chronicles', event)">The Chronicles</div>
+            </div>
+
+            <div class="nav-right-logout-action-dock">
+                <button type="button" class="header-logout-btn" onclick="triggerMainDashboardLogout()" aria-label="Log out of Age Portal">
+                    <img src="images/logouticon.png" alt="" class="header-logout-icon" aria-hidden="true">
+                    <span class="header-logout-label">Log Out</span>
+                </button>
+            </div>
+        </nav>
+
+        <!-- --- Section: Age Metrics Status Tray --- -->
+
+        <!-- Block 5: Dense Age Metrics Strip Tray -->
+        <div class="portal-age-metrics-dashboard-bar" id="master-age-metrics-banner-bar">
+
+            <div class="metric-capsule-cell">
+                <span class="metric-glyph-icon">⌛</span>
+                <div class="metric-text-stack">
+                    <span class="metric-label-title">Age Cycle:</span>
+                    <span class="metric-live-data-value" id="metrics-age-cycle-display">Day 1 / 15</span>
+                </div>
+            </div>
+
+            <div class="metric-capsule-cell metric-capsule-divider">
+                <span class="metric-glyph-icon">🎮</span>
+                <div class="metric-text-stack">
+                    <span class="metric-label-title">Active Game Mode:</span>
+                    <span class="metric-live-data-value" id="metrics-game-mode-display">Loading Mode...</span>
+                </div>
+            </div>
+
+            <div class="metric-capsule-cell metric-capsule-divider centered-priority-node">
+                <span class="metric-glyph-icon">🌌</span>
+                <div class="metric-text-stack">
+                    <span class="metric-label-title">Great Transition Countdown:</span>
+                    <span class="metric-live-data-value" id="metrics-transition-countdown-display">00d : 00h : 00m : 00s</span>
+                </div>
+            </div>
+
+            <div class="metric-capsule-cell metric-capsule-divider">
+                <span class="metric-glyph-icon">👑</span>
+                <div class="metric-text-stack">
+                    <span class="metric-label-title">Leading Nation:</span>
+                    <span class="metric-live-data-value" id="metrics-leading-nation-display"></span>
+                </div>
+            </div>
+
+            <div class="metric-capsule-cell metric-capsule-divider metric-roster-hover-cell" id="metric-registered-players-cell">
+                <span class="metric-glyph-icon">👥</span>
+                <div class="metric-text-stack">
+                    <button type="button" class="metric-label-title metric-roster-hover-trigger" id="metrics-registered-label-trigger" aria-expanded="false" aria-controls="metrics-registered-roster-popover">Registered Players:</button>
+                    <span class="metric-live-data-value" id="metrics-registered-players-display">0</span>
+                </div>
+                <div id="metrics-registered-roster-popover" class="metric-roster-popover" role="tooltip" hidden>
+                    <p class="metric-roster-popover-title">Last 25 Registrations</p>
+                    <ul class="metric-roster-popover-list" id="metrics-registered-roster-list"></ul>
+                </div>
+            </div>
+
+            <div class="metric-capsule-cell metric-capsule-divider metric-roster-hover-cell" id="metric-active-players-cell">
+                <span class="metric-glyph-icon">⚔️</span>
+                <div class="metric-text-stack">
+                    <button type="button" class="metric-label-title metric-roster-hover-trigger" id="metrics-active-label-trigger" aria-expanded="false" aria-controls="metrics-active-roster-popover">Active Players:</button>
+                    <span class="metric-live-data-value" id="metrics-active-players-display">0</span>
+                </div>
+                <div id="metrics-active-roster-popover" class="metric-roster-popover" role="tooltip" hidden>
+                    <p class="metric-roster-popover-title">Online on Age Portal</p>
+                    <ul class="metric-roster-popover-list" id="metrics-active-roster-list"></ul>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- --- Section: Dynamic Portal Viewport (nav tabs swap content here) --- -->
+
+        <div id="main-portal-dynamic-viewport" class="dynamic-portal-view-container">
+
+        <!-- Block 6: Default Age Portal Channel Layout -->
+        <div class="age-portal-view-canvas" id="panel-age-portal-mode">
+
+            <div class="portal-deployment-control-deck custom-centered-row-deck" id="deployment-master-deck-container">
+
+                <h3 class="deployment-deck-title" id="dynamic-age-status-header">⚔️ LOADING CAMPAIGN ARCHON METRICS...</h3>
+
+                <div id="dynamic-age-sub-timer-display" class="timer-readout-default"></div>
+
+                <div class="deployment-action-button-row">
+                    <div class="action-btn-aura-housing aura-glow-red">
+                        <button class="deployment-image-trigger-btn" onclick="launchGameRoundSector(false, event)">
+                            <img src="images/joinagebtn.png" alt="Join Campaign Round Shard Arena">
+                        </button>
+                    </div>
+                    <div class="action-btn-aura-housing aura-glow-blue">
+                        <button class="deployment-image-trigger-btn" onclick="launchGameRoundSector(true, event)">
+                            <img src="images/joinagetutorialbtn.png" alt="Deploy Shard Tutorial Arena">
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="portal-twin-split-deck-row">
+
+                <article class="dashboard-news-card-box">
+                    <h2 class="card-title-header">👑 Introduction Into Royal Armies</h2>
+                    <div class="card-scrollable-body-text">
+                        <p class="portal-intro-lead">
+                            Welcome to <strong>Royal Armies</strong>, a Massively Multiplayer High-Fidelity Tactical (MMOHFT) strategy ecosystem and the first browser game of its kind. Inspired by both the depth of modern MMO titles and the fast, competitive nature of classic persistent browser-based games, Royal Armies is engineered to give old-school veterans a familiar home while providing a highly responsive, visually stimulating world that captures the new generation of strategy gamers.
+                        </p>
+                        <p class="portal-intro-body">
+                            This is not just an exercise in character exploration or simple text entry. Royal Armies merges tactical agency with fluid menus and graphical matrices. Without the performance lag of a heavy standalone download, you will actively navigate, explore, and uncover ancient historical secrets right through your persistent web browser.
+                        </p>
+                        <h3 class="portal-intro-subhead">🛡️ Choose Your Playstyle. Defend Your Nation.</h3>
+                        <p class="portal-intro-body">
+                            When you enlist for a standard campaign round—known across the community as an <strong>Age</strong>—your first critical directive is choosing your operational path by selecting one of two primary factions:
+                        </p>
+                        <ul class="portal-intro-list">
+                            <li><strong>The Physical Path:</strong> A faction forged in raw force and military might, crushing fortifications with heavy artillery, physical superiority, and unbreakable steel lines.</li>
+                            <li><strong>The Arcane Path:</strong> A faction that channels world-shattering magic to bend reality, summon powerful elements, and alter battlefield mathematics.</li>
+                        </ul>
+                        <p class="portal-intro-body">
+                            Once your faction is locked, you are randomly assigned to one of fifteen unique nations, housing a synchronized blend of both paths. You will immediately deploy into your regional Capital. From there, you will recruit standard tactical units alongside a legendary specialized battalion 100% unique to your country's individual lore.
+                        </p>
+                        <p class="portal-intro-body">
+                            Your objective is absolute coordination. To survive, you must join fellow commanders, march in real-time grid matrices, rise through the ranks, and capture key defensive strongholds. Your ultimate target? Wipe rival nations completely off the dynamic world map.
+                        </p>
+                        <h3 class="portal-intro-subhead">🏆 Choose Your Path to Victory</h3>
+                        <p class="portal-intro-body">
+                            Total world domination is not your only path to absolute renown. Royal Armies features three distinct, highly competitive game modes:
+                        </p>
+                        <div class="portal-victory-box mode-domination">
+                            <strong>👑 World Domination:</strong> This is a brutal test of speed and attrition. Every Age lasts up to 15 days maximum, and your goal is to capture and hold the highest city count across the continent to claim ultimate supremacy. Form alliances, execute Non-Aggression Pacts, and strike quickly to build an insurmountable lead. As the fields narrow to 6 surviving nations, a 5-day collapse countdown activates. If the numbers drop to 3 surviving nations before the countdown can reach 2 days, it will be updated to a final 48-hour deadline. Even if you do not conquer the map, surviving nations walk away with historical achievements for wealth, aggression, or resilience.
+                        </div>
+                        <div class="portal-victory-box mode-zones">
+                            <strong>⚔️ Zone Wars:</strong> Territorial dominance is everything. This mode is all about rushing to specific areas of the map, capturing the cities, and claiming them for as long as possible. On Day 1, you will find 5 active conflict zones scattered across Amnek. As time ticks away, the number of active zones systematically collapses—dropping to 4 zones on Day 4, 3 zones on Day 8, and a final bottleneck of 2 zones on Day 12. However, this collapse is dynamically accelerated if countries are eliminated from the map:
+                            <span class="portal-zone-matrix-row">15 Nations Remaining = 5 Active Zones</span>
+                            <span class="portal-zone-matrix-row">12 Nations Remaining = 4 Active Zones</span>
+                            <span class="portal-zone-matrix-row">9 Nations Remaining = 3 Active Zones</span>
+                            <span class="portal-zone-matrix-row">6 Nations Remaining = 2 Active Zones</span>
+                            The more cities your country owns, the higher your global base statistics rise, making subsequent captures much easier. Every 30 minutes, an automated point tick processes, awarding victory points to any nation holding active claims in the designated zones. The country with the highest point compilation at the end of the Age wins.
+                        </div>
+                        <div class="portal-victory-box mode-crown">
+                            <strong>🛡️ Crown & Coalition:</strong> A world-wide 24-hour countdown immediately ticks down on bootup. When it strikes zero, a random nation is granted the sovereign crown. Their mission is to survive as the permanent target of the entire map. Your mission is to assemble a tactical coalition to take it from them. You can claim the crown by successfully dropping the specific army that houses the crowned leader. The other path to victory is by engaging and defeating the crowned leader directly in PvP. Do not underestimate the monarch; the crowned nation receives massive defensive stat multipliers. Furthermore, if a leader goes offline, they can be targeted multiple times until a victory is acquired. The longer you hold the crown, the higher your fame rises, and the nation with the highest fame at the end of the Age wins.
+                        </div>
+                        <h3 class="portal-intro-subhead">📜 A Living, Breathing Chronicle</h3>
+                        <p class="portal-intro-body">
+                            Royal Armies is structured around an ever-expanding narrative. This is a game with a deep, intentional history that dictates its growth. As time passes, the overarching lore created for this universe will continuously contribute to its structural evolution. This expanding story will natively guide the journey, laying down the foundation to introduce brand-new mechanics, interactive updates, and immersive cinematic lore elements down the road.
+                        </p>
+                    </div>
+                </article>
+
+                <div class="portal-sidebar-flex-column">
+                    <article class="dashboard-news-card-box">
+                        <h2 class="card-title-header">📜 Dispatch Bulletins & Updates</h2>
+                        <div class="card-scrollable-body-text" id="dashboard-patch-notes-dock">
+                            <div class="news-bulletin-item">
+                                <strong>Patch Update 1.04</strong><br>
+                                Wartime Messaging Platform and Multi-select recipient dropdown directory drawer modules successfully integrated. Standard profile compact node rosters synchronized.
+                            </div>
+                            <div class="news-bulletin-item">
+                                <strong>Server Architecture Ready</strong><br>
+                                Automated device geolocating continent trackers live. Fixed 24px invisible label ceiling spacer locks validated across modal grids.
+                            </div>
+                        </div>
+                    </article>
+                </div>
+
+            </div>
+
+            <!-- --- Section: Floating Media Player HUD --- -->
+
+            <!-- Block 7: Floating High-Command Media Controller -->
+            <div id="portal-floating-media-player-deck">
+
+                <div class="media-track-identity-row">
+                    <div class="media-disc-vinyl-icon-housing">
+                        <span class="vinyl-spinning-glyph" id="media-vinyl-spinning-node">💿</span>
+                    </div>
+                    <div class="media-meta-text-cell">
+                        <div class="media-track-title-ticker" id="media-active-track-name">🎵 ARCHIMEDES' LULLABY</div>
+                        <div class="media-artist-label">Royal Armies Orchestral Core</div>
+                    </div>
+                </div>
+
+                <div class="media-timeline-interface-wrapper">
+                    <span class="media-time-stamp-clock" id="media-current-time-clock">00:00</span>
+                    <input type="range" min="0" max="100" value="0" id="media-timeline-progress-scrubber" class="media-scrub-input" oninput="manuallyScrubActiveTrackTimeline(this)">
+                    <span class="media-time-stamp-clock" id="media-total-duration-clock">00:00</span>
+                </div>
+
+                <div class="media-control-buttons-row">
+                    <button class="media-deck-btn mini-btn-utility" id="media-shuffle-toggle" onclick="togglePlaylistShuffleState()" title="Toggle Shuffle Mode">
+                        <span class="media-btn-icon-symbol smaller-size">🔀</span>
+                    </button>
+                    <button class="media-deck-btn" onclick="executeTrackNavigationSkip('prev')" title="Previous Track">
+                        <span class="media-btn-icon-symbol">⏮</span>
+                    </button>
+                    <button class="media-deck-btn master-play-trigger" id="media-toggle-play-btn" onclick="togglePortalBackgroundPlayback()" title="Pause / Play Track">
+                        <span class="media-btn-icon-symbol" id="media-play-symbol-node">⏸</span>
+                    </button>
+                    <button class="media-deck-btn" onclick="executeTrackNavigationSkip('next')" title="Next Track">
+                        <span class="media-btn-icon-symbol">⏭</span>
+                    </button>
+                    <button class="media-deck-btn mini-btn-utility" id="media-repeat-toggle" onclick="togglePlaylistRepeatState()" title="Toggle Loop Mode">
+                        <span class="media-btn-icon-symbol smaller-size">🔁</span>
+                    </button>
+                </div>
+
+                <div class="media-volume-mixer-sub-row">
+                    <button class="media-mute-toggle-inline" id="media-toggle-mute-btn" onclick="togglePortalBackgroundMuteState()" title="Mute/Unmute">
+                        <span class="media-btn-icon-symbol volume-icon-size" id="media-mute-symbol-node">🔊</span>
+                    </button>
+                    <input type="range" min="0" max="1" step="0.05" value="0.5" id="media-volume-slider-input" class="media-vol-range-slider" oninput="manuallyAdjustPlayerDeckVolume(this.value)">
+                </div>
+
+            </div>
+
+        </div>
+
+        </div>
+
+        <!-- --- Section: Audio Performance Channels --- -->
+
+        <!-- Block 8: UI SFX & Ambient Audio Channels -->
+        <audio id="hover-sound" src="audio/uihover.wav" preload="auto"></audio>
+        <audio id="select-sound" src="audio/uiselect.wav" preload="auto"></audio>
+        <audio id="join-age-hover-sound" src="audio/joinagesfxhover.wav" preload="auto" loop volume="1"></audio>
+        <audio id="join-age-select-sound" src="audio/joinagesfxselect.wav" preload="auto" volume="1"></audio>
+
+    </main>
+
+    <!-- ==========================================
+         PORTAL MODULE: COMMANDER HUB MODAL
+         ========================================== -->
+
+    <div id="commander-hub-modal" class="commander-hub-overlay" aria-hidden="true">
+        <div class="commander-hub-dialog" role="dialog" aria-modal="true" aria-label="Commander Hub">
+
+            <button type="button" class="commander-hub-close-btn" onclick="closeCommanderHubModal()" aria-label="Close Commander Hub">
+                <img src="images/closebtn.png" alt="" class="commander-hub-close-icon">
+            </button>
+
+            <nav class="commander-hub-top-nav" aria-label="Commander Hub Sections">
+                <div class="commander-hub-top-nav-bg" aria-hidden="true"></div>
+                <button type="button" class="commander-hub-top-tab active" data-hub-tab="profile" onclick="loadCommanderHubSection('profile', event)">Profile</button>
+                <button type="button" class="commander-hub-top-tab" data-hub-tab="messages" onclick="loadCommanderHubSection('messages', event)">Messages</button>
+                <button type="button" class="commander-hub-top-tab" data-hub-tab="settings" onclick="loadCommanderHubSection('settings', event)">Settings</button>
+            </nav>
+
+            <div id="portal-save-confirmation-toast" class="portal-save-confirmation-toast" aria-live="polite" hidden></div>
+
+            <div class="commander-hub-body-frame">
+                <aside class="commander-hub-subnav-column" id="commander-hub-subnav-column">
+                    <h4 class="commander-hub-subnav-label" id="commander-hub-subnav-label">CHANNELS</h4>
+                    <div class="commander-hub-subnav-list" id="commander-hub-subnav"></div>
+                </aside>
+
+                <div class="commander-hub-content-pane" id="commander-hub-content-pane">
+                    <h4 class="commander-hub-section-title" id="commander-hub-section-title"></h4>
+                    <div id="commander-hub-profile-header" class="commander-hub-profile-header-host"></div>
+                    <div id="commander-hub-body" class="commander-hub-body"></div>
+                    <div id="commander-hub-profile-footer-host" class="commander-hub-profile-footer-host"></div>
+                    <div id="commander-hub-settings-action-deck" class="commander-hub-settings-action-deck" hidden>
+                        <button type="button" class="confirm-btn" onclick="saveSettings()">Confirm Changes</button>
+                        <button type="button" class="revert-btn" onclick="revertSettings()">Revert to Defaults</button>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- --- Section: Public Commander Profile Card (avatar menu → View Profile) --- -->
+
+    <div id="public-commander-profile-overlay" class="public-profile-overlay" aria-hidden="true" onclick="closePublicCommanderProfileCard(event)">
+        <div class="public-profile-card-dialog" role="dialog" aria-modal="true" aria-labelledby="public-profile-card-title" onclick="event.stopPropagation()">
+            <button type="button" class="public-profile-close-btn" onclick="closePublicCommanderProfileCard(event)" aria-label="Close profile card">
+                <img src="images/closebtn.png" alt="" class="public-profile-close-icon">
+            </button>
+            <div class="public-profile-card-frame">
+                <div class="public-profile-card-banner" aria-hidden="true"></div>
+                <div id="public-profile-card-mount" class="public-profile-card-mount"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- --- Section: Commander Support Overlays (profile / messages interactions) --- -->
+
+    <div id="commander-penalty-overlay" class="suicide-overlay-hidden" style="display: none !important;">
+        <div class="suicide-popup-bezel">
+            <div class="suicide-popup-header" id="penalty-popup-header-title">⚠️ SYSTEM DISCIPLINE LOG</div>
+            <div class="penalty-strike-matrix-row">
+                <div class="penalty-cage-slot" id="strike-cage-0"></div>
+                <div class="penalty-cage-slot" id="strike-cage-1"></div>
+                <div class="penalty-cage-slot" id="strike-cage-2"></div>
+            </div>
+            <div class="suicide-popup-body-text" id="penalty-popup-text-field">
+                This is a daily "Community Safety & Fairness" system reminder to keep players informed of their current discipline status.
+            </div>
+            <div class="suicide-popup-action-row">
+                <button class="suicide-safe-retreat-btn" onclick="closePenaltyOverlayWindow()">Acknowledge & Deploy</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="commander-security-overlay" class="suicide-overlay-hidden" style="display: none !important;">
+        <div class="suicide-popup-bezel">
+            <div class="suicide-popup-header" id="security-popup-header-title">🛡️ CRYPT KEY MODIFICATION</div>
+            <div class="suicide-popup-body-text" id="security-popup-text-field"></div>
+            <div class="suicide-popup-action-row" id="security-popup-btn-dock"></div>
+        </div>
+    </div>
+
+    <div id="commander-suicide-overlay" class="suicide-overlay-hidden" style="display: none !important;">
+        <div class="suicide-popup-bezel">
+            <div class="suicide-popup-header">⚠️ SYSTEM REMINDER NOTICE</div>
+            <div class="suicide-popup-body-text" id="suicide-popup-text-field"></div>
+            <div class="suicide-popup-action-row" id="suicide-popup-btn-dock"></div>
+        </div>
+    </div>
+
+    <div id="chat-mention-alert-stack" class="chat-mention-alert-stack" aria-live="polite" aria-label="Community chat shoutout alerts"></div>
+
+    <div id="main-logout-confirmation-modal" class="main-portal-modal-hidden" style="display: none !important;" role="dialog" aria-modal="true" aria-labelledby="logout-modal-title">
+        <div class="portal-overlay-modal-bezel logout-confirmation-bezel">
+            <h3 id="logout-modal-title" class="modal-alert-header">End Commander Session?</h3>
+            <p class="modal-alert-body">You will leave the Age Portal and return to the Royal Armies landing page. Your portal presence will clear immediately.</p>
+            <div class="modal-action-btn-row">
+                <button type="button" class="modal-action-btn confirm" onclick="executeLogoutRedirect()">Confirm Log Out</button>
+                <button type="button" class="modal-action-btn cancel" onclick="closeMainLogoutConfirmationWindow()">Stay Deployed</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==========================================
+         PORTAL MODULE: RUNTIME SCRIPT BRIDGE
+         ========================================== -->
+
+    <!-- --- Section: Logic Engine & Background Theme --- -->
+
+    <!-- Block 9: Background Theme Audio Channel (before script so metadata hooks bind reliably) -->
+    <audio id="portal-background-theme-audio" loop preload="auto" playsinline>
+        <source src="audio/archimedeslullaby.wav" type="audio/wav">
+    </audio>
+
+    <!-- Block 10: Commander Hub + Shared RAGE Logic -->
+    <script src="rank-data.js"></script>
+    <script src="script.js"></script>
+    <script src="commander-hub.js"></script>
+    <script src="script2.js"></script>
+
+</body>
+</html>

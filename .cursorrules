@@ -1,0 +1,27 @@
+# ==========================================================================
+# RAGE FRAMEWORK & NEXUS ENGINE GENERAL CODES DISCIPLINE RULES
+# ==========================================================================
+
+# --- SECTION 1: ARCHITECTURAL PRINCIPLES ---
+- Maintain a strict division of operations across the architecture layer hooks. Keep client-side state registers distinct from backend server endpoints.
+- Ensure total framework isolation. All code blocks must remain backwards-compatible with the core RAGE game engine mechanics.
+- Do not add external frontend frameworks (such as React, Vue, or Tailwind) unless explicitly requested. Rely purely on vanilla JavaScript, DOM injection methods, and global stylesheet layers.
+
+# --- SECTION 2: JAVASCRIPT & STATE CONTROLLER PARAMETERS ---
+- Use descriptive syntax variables matching your established database structures (e.g., player.description, currentCampaignAgeNumber, activeChatChannelTrack).
+- Maintain robust safety checks. Always use explicit null and undefined checking parameters to prevent background thread calculations or event timers from crashing the browser runtime.
+- For data manipulation tasks, run calculations or mock simulations using pure, performance-optimized loop tracks.
+- Always include an action gating strategy or confirmation pipeline matching the multi-stage dialogue structures when writing logic for critical actions or destructive operations.
+- Ensure browser state modifications persist cleanly through device cache storage handshakes using 'localStorage' or 'sessionStorage' structures.
+
+# --- SECTION 3: CSS STYLE ENFORCEMENT & ALIGNMENT MATRIX ---
+- Adhere strictly to the established onyx-matte, gold runic, and medieval chiseled-slate visual theme framework variables.
+- When expanding existing styles or writing structural viewport realignments, use hard-locked fixed layout constraints alongside explicit dimensional values (e.g., width: 320px, height: 360px).
+- Use structural position locks and absolute breakout positioning rules to prevent components from shifting or squishing under long string variations.
+- Ensure strict styling overrides. Apply cascading specificity modifiers, element body hooks, and defensive '!important' declarations to enforce layout density and keep boundaries safe across small and large displays.
+- Keep custom webkit formatting rules cleanly integrated into any newly compiled scroll track bins or metallic audio mixer range sliders.
+
+# --- SECTION 4: NODE BACKEND ENGINE & SECURITY KEYS PROTOCOLS ---
+- Keep Express.js REST endpoints cleanly isolated inside 'server.js' using sequential initialization passes.
+- Maintain single-use token lifecycle patterns. Burn or nullify verification handles immediately after password resets or user authentication transitions are processed.
+- Ensure cross-platform environment adaptability. Use dynamic production conditional filters (e.g., process.env.RENDER) when configuring path parameters or system tracking logs.

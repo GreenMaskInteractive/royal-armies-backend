@@ -1,0 +1,406 @@
+/* ==========================================================================
+   COMMANDER HUB MODAL — Age Portal Profile / Messages / Settings
+   ========================================================================== */
+
+function getCommanderHubUIMount() {
+    return {
+        container: document.getElementById('commander-hub-subnav'),
+        body: document.getElementById('commander-hub-body'),
+        detailsHeader: document.getElementById('commander-hub-section-title'),
+        leftHeader: document.getElementById('commander-hub-subnav-label'),
+        modalFrame: document.getElementById('commander-hub-modal'),
+        profileHeaderHost: document.getElementById('commander-hub-profile-header'),
+        profileFooterHost: document.getElementById('commander-hub-profile-footer-host'),
+        profileActiveClass: 'commander-hub-profile-active',
+        subnavItemClass: 'commander-hub-subnav-item',
+        hideSubnavOnProfile: true
+    };
+}
+
+function syncCommanderHubPlayerFromStorage() {
+    if (typeof syncPlayerFromActiveCommanderStorage === 'function') {
+        syncPlayerFromActiveCommanderStorage();
+        return;
+    }
+    if (typeof player === 'undefined') return;
+    const savedUser = localStorage.getItem('activeCommanderUser');
+    const savedAvatar = localStorage.getItem('savedProfileAvatarUrl');
+    if (savedUser) player.name = savedUser;
+    if (savedAvatar) player.avatarUrl = savedAvatar;
+}
+
+function openCommanderHubModal(initialTab, clickEvent) {
+    const modal = document.getElementById('commander-hub-modal');
+    if (!modal) return;
+
+    syncCommanderHubPlayerFromStorage();
+    if (typeof autoDetectPlayerLocale === 'function') autoDetectPlayerLocale();
+
+    modal.classList.add('is-visible');
+    modal.style.display = 'flex';
+    requestAnimationFrame(() => {
+        modal.style.opacity = '1';
+    });
+
+    const tab = initialTab || 'profile';
+    loadCommanderHubSection(tab, clickEvent);
+}
+
+function closeCommanderHubModal() {
+    if (typeof hasUnsavedChanges !== 'undefined' && hasUnsavedChanges && typeof revertSettings === 'function') {
+        revertSettings();
+    }
+
+    if (typeof hideSaveChangesConfirmation === 'function') {
+        hideSaveChangesConfirmation();
+    }
+
+    const modal = document.getElementById('commander-hub-modal');
+    if (!modal) return;
+
+    modal.style.opacity = '0';
+    modal.classList.remove(
+        'is-visible',
+        'commander-hub-profile-active',
+        'commander-hub-settings-active',
+        'commander-hub-messages-active'
+    );
+    syncCommanderHubSettingsActionDeck(null);
+    window.setTimeout(() => {
+        modal.style.display = 'none';
+    }, 280);
+
+    if (typeof currentNarration !== 'undefined' && currentNarration) {
+        if (!currentNarration.src.includes('background_music') && !currentNarration.isAmbientTrack) {
+            currentNarration.pause();
+            currentNarration.currentTime = 0;
+            currentNarration = null;
+        }
+    }
+}
+
+function setCommanderHubTopNavActive(tabName, clickEvent) {
+    document.querySelectorAll('.commander-hub-top-tab').forEach((tab) => {
+        tab.classList.remove('active');
+    });
+
+    const clickedTab = clickEvent?.target?.closest?.('.commander-hub-top-tab');
+    if (clickedTab) {
+        clickedTab.classList.add('active');
+        return;
+    }
+
+    const fallbackTab = document.querySelector(`.commander-hub-top-tab[data-hub-tab="${tabName}"]`);
+    if (fallbackTab) fallbackTab.classList.add('active');
+}
+
+function syncCommanderHubSettingsActionDeck(tabName) {
+    const deck = document.getElementById('commander-hub-settings-action-deck');
+    if (!deck) return;
+
+    const showSettingsDeck = tabName === 'settings';
+    deck.hidden = !showSettingsDeck;
+}
+
+function syncCommanderHubModalSectionState(tabName) {
+    const modal = document.getElementById('commander-hub-modal');
+    if (!modal) return;
+
+    modal.classList.remove(
+        'commander-hub-profile-active',
+        'commander-hub-settings-active',
+        'commander-hub-messages-active'
+    );
+
+    if (tabName === 'profile') modal.classList.add('commander-hub-profile-active');
+    else if (tabName === 'settings') modal.classList.add('commander-hub-settings-active');
+    else if (tabName === 'messages') modal.classList.add('commander-hub-messages-active');
+
+    syncCommanderHubSettingsActionDeck(tabName);
+}
+
+function loadCommanderHubSection(tabName, clickEvent) {
+    if (typeof loadLore !== 'function') {
+        console.warn('loadLore is unavailable — include script.js on ageportal.html');
+        return;
+    }
+
+    setCommanderHubTopNavActive(tabName, clickEvent);
+    syncCommanderHubModalSectionState(tabName);
+    loadLore(tabName, getCommanderHubUIMount());
+}
+
+function escapePublicProfileHtml(str) {
+    return String(str ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+}
+
+function isViewingCommanderInActiveAge() {
+    if (typeof isCommanderEnrolledInActiveAgeRound === 'function') {
+        return isCommanderEnrolledInActiveAgeRound();
+    }
+    return localStorage.getItem('savedCommanderInActiveAge') === 'true';
+}
+
+function getCommanderRankTitle(rankNum, pathCode) {
+    if (!isViewingCommanderInActiveAge()) return 'N/A';
+
+    const rank = parseInt(rankNum, 10);
+    if (!Number.isFinite(rank) || rank < 1) return 'N/A';
+
+    const magicPath = pathCode === 'MAG' || pathCode === 'MAGIC';
+    const rankTable = magicPath
+        ? (typeof magicRanks !== 'undefined' ? magicRanks : null)
+        : (typeof groundRanks !== 'undefined' ? groundRanks : null);
+
+    if (rankTable && rankTable[rank] && rankTable[rank].title) {
+        return rankTable[rank].title;
+    }
+
+    return 'N/A';
+}
+
+function getCommanderClassTitle(pathCode) {
+    if (!isViewingCommanderInActiveAge()) return 'N/A';
+
+    const labels = {
+        PHYS: 'Battlemaster',
+        MAG: 'Archmage',
+        MAGIC: 'Archmage'
+    };
+    return labels[pathCode] || 'N/A';
+}
+
+const PUBLIC_PROFILE_MIN_AGE_HOURS = 24;
+const PUBLIC_PROFILE_MAX_AGE_ENTRIES = 5;
+
+function loadCommanderAgeHistoryRecords(sourcePlayer) {
+    let records = [];
+    if (sourcePlayer && Array.isArray(sourcePlayer.ageHistory)) {
+        records = sourcePlayer.ageHistory;
+    }
+    if (!records.length) {
+        try {
+            const cached = localStorage.getItem('savedCommanderAgeHistory');
+            if (cached) records = JSON.parse(cached);
+        } catch (err) {
+            records = [];
+        }
+    }
+    if (!Array.isArray(records)) return [];
+
+    return records
+        .filter((entry) => {
+            const hours = Number(entry.hoursServed ?? entry.hours ?? 0);
+            return Number.isFinite(hours) && hours >= PUBLIC_PROFILE_MIN_AGE_HOURS;
+        })
+        .sort((a, b) => {
+            const aTime = Date.parse(a.endedAt || a.completedAt || a.startedAt || 0) || 0;
+            const bTime = Date.parse(b.endedAt || b.completedAt || b.startedAt || 0) || 0;
+            return bTime - aTime;
+        })
+        .slice(0, PUBLIC_PROFILE_MAX_AGE_ENTRIES);
+}
+
+function loadCommanderAwardRecords(sourcePlayer) {
+    let awards = [];
+    if (sourcePlayer && Array.isArray(sourcePlayer.awards)) {
+        awards = sourcePlayer.awards;
+    }
+    if (!awards.length) {
+        try {
+            const cached = localStorage.getItem('savedCommanderAwards');
+            if (cached) awards = JSON.parse(cached);
+        } catch (err) {
+            awards = [];
+        }
+    }
+    return Array.isArray(awards) ? awards : [];
+}
+
+function getPublicProfileSnapshot(subjectPlayer) {
+    const source = subjectPlayer || (typeof player !== 'undefined' ? player : null);
+    if (!source) return null;
+
+    const viewingSelf = !subjectPlayer;
+    const storedBio = viewingSelf ? localStorage.getItem('savedCommanderBio') : null;
+    const storedPrivacy = viewingSelf ? localStorage.getItem('savedCommanderPrivacy') : null;
+    const description = storedBio !== null ? storedBio : (source.description || '');
+    const privacy = storedPrivacy === 'Public' || storedPrivacy === 'Private'
+        ? storedPrivacy
+        : (source.privacy || 'Public');
+
+    return {
+        name: source.name || 'Unknown Commander',
+        avatarUrl: source.avatarUrl || 'images/avatars/commanderprofile01.png',
+        country: source.country || '—',
+        timezone: source.timezone || '—',
+        membershipTitle: source.membershipTitle || 'Bronze',
+        description,
+        privacy,
+        rank: source.rank ?? 1,
+        path: source.path || '',
+        ageHistory: loadCommanderAgeHistoryRecords(source),
+        awards: loadCommanderAwardRecords(source)
+    };
+}
+
+function buildPublicProfileAgeHistoryHtml(ageHistory) {
+    if (!ageHistory.length) {
+        return '<p class="public-profile-empty-state">Nothing to Report</p>';
+    }
+
+    const rows = ageHistory.map((entry) => {
+        const ageLabel = entry.ageName || entry.name || (entry.ageNumber ? `Age ${entry.ageNumber}` : 'Unknown Age');
+        const nation = entry.nation || entry.country || '';
+        const hours = Number(entry.hoursServed ?? entry.hours ?? 0);
+        const hoursLabel = Number.isFinite(hours) ? `${Math.floor(hours)}h served` : '';
+        const metaParts = [nation, hoursLabel].filter(Boolean);
+
+        return `
+            <li class="public-profile-age-entry">
+                <span class="public-profile-age-name">${escapePublicProfileHtml(ageLabel)}</span>
+                ${metaParts.length ? `<span class="public-profile-age-meta">${escapePublicProfileHtml(metaParts.join(' · '))}</span>` : ''}
+            </li>
+        `;
+    }).join('');
+
+    return `<ul class="public-profile-age-history-list">${rows}</ul>`;
+}
+
+function buildPublicProfileAwardsHtml(awards) {
+    if (!awards.length) {
+        return '<p class="public-profile-empty-state public-profile-awards-empty">No achievements recorded yet.</p>';
+    }
+
+    const chips = awards.map((award, index) => {
+        const label = award.label || award.name || `Award ${index + 1}`;
+        const achievement = award.achievement || award.description || 'Achievement details forthcoming.';
+        const iconUrl = award.iconUrl || award.icon || '';
+        const iconMarkup = iconUrl
+            ? `<img class="public-profile-award-icon-img" src="${escapePublicProfileHtml(iconUrl)}" alt="">`
+            : `<span class="public-profile-award-icon-fallback" aria-hidden="true">🏅</span>`;
+
+        return `
+            <div class="public-profile-award-chip" tabindex="0" role="img" aria-label="${escapePublicProfileHtml(label)}: ${escapePublicProfileHtml(achievement)}">
+                <span class="public-profile-award-icon-shell">${iconMarkup}</span>
+                <span class="public-profile-award-tooltip" role="tooltip">${escapePublicProfileHtml(achievement)}</span>
+            </div>
+        `;
+    }).join('');
+
+    return `<div class="public-profile-awards-grid" role="list">${chips}</div>`;
+}
+
+function renderPublicProfileCardContent(snapshot) {
+    const isPublic = snapshot.privacy === 'Public';
+    const membershipClass = `public-profile-membership tier-${String(snapshot.membershipTitle).toLowerCase()}`;
+    const rankTitle = getCommanderRankTitle(snapshot.rank, snapshot.path);
+    const classTitle = getCommanderClassTitle(snapshot.path);
+
+    const bioColumnContent = isPublic && snapshot.description
+        ? `<p class="public-profile-bio-text">${escapePublicProfileHtml(snapshot.description)}</p>`
+        : (!isPublic
+            ? '<p class="public-profile-private-msg">This Commander keeps their chronicle private.</p>'
+            : '<p class="public-profile-empty-state public-profile-bio-empty">No chronicle written yet.</p>');
+
+    const splitBodySection = `
+        <div class="public-profile-split-body">
+            <div class="public-profile-split-column public-profile-split-left">
+                <section class="public-profile-section public-profile-bio-section">
+                    <h4 class="public-profile-section-label">Commander Chronicle</h4>
+                    <div class="public-profile-bio-panel">${bioColumnContent}</div>
+                </section>
+            </div>
+            <div class="public-profile-split-column public-profile-split-right">
+                <section class="public-profile-section public-profile-awards-section">
+                    <h4 class="public-profile-section-label">Achievements</h4>
+                    ${buildPublicProfileAwardsHtml(snapshot.awards)}
+                </section>
+                <section class="public-profile-section public-profile-age-section">
+                    <h4 class="public-profile-section-label">Last 5 Ages (24+ Hours Served)</h4>
+                    ${buildPublicProfileAgeHistoryHtml(snapshot.ageHistory)}
+                </section>
+            </div>
+        </div>
+    `;
+
+    return `
+        <header class="public-profile-identity-header">
+            <div class="public-profile-avatar-ring">
+                <img class="public-profile-avatar-img" src="${escapePublicProfileHtml(snapshot.avatarUrl)}" alt="${escapePublicProfileHtml(snapshot.name)} emblem">
+            </div>
+            <div class="public-profile-identity-copy">
+                <p class="public-profile-eyebrow">Royal Front Commander Dossier</p>
+                <h2 id="public-profile-card-title" class="public-profile-commander-name">${escapePublicProfileHtml(snapshot.name)}</h2>
+                <div class="public-profile-badge-row">
+                    <span class="${membershipClass}">${escapePublicProfileHtml(snapshot.membershipTitle)} Member</span>
+                    <span class="public-profile-visibility-pill ${isPublic ? 'is-public' : 'is-private'}">${isPublic ? 'test' : 'Private Dossier'}</span>
+                </div>
+                <div class="public-profile-meta-row">
+                    <span><strong>Nation:</strong> ${escapePublicProfileHtml(snapshot.country)}</span>
+                    <span><strong>Time Zone:</strong> ${escapePublicProfileHtml(snapshot.timezone)}</span>
+                </div>
+                <div class="public-profile-meta-row">
+                    <span><strong>Rank:</strong> ${escapePublicProfileHtml(rankTitle)}</span>
+                    <span><strong>Class:</strong> ${escapePublicProfileHtml(classTitle)}</span>
+                </div>
+            </div>
+        </header>
+        ${splitBodySection}
+        <footer class="public-profile-card-actions">
+            <button type="button" class="public-profile-edit-link-btn" onclick="closePublicCommanderProfileCard(event); openCommanderHubModal('profile', event);">Edit My Profile</button>
+            <button type="button" class="public-profile-dismiss-btn" onclick="closePublicCommanderProfileCard(event)">Close</button>
+        </footer>
+    `;
+}
+
+function openPublicCommanderProfileCard(clickEvent, subjectPlayer) {
+    if (clickEvent) clickEvent.stopPropagation();
+    syncCommanderHubPlayerFromStorage();
+
+    const snapshot = getPublicProfileSnapshot(subjectPlayer);
+    if (!snapshot) return;
+
+    const overlay = document.getElementById('public-commander-profile-overlay');
+    const mount = document.getElementById('public-profile-card-mount');
+    if (!overlay || !mount) return;
+
+    mount.innerHTML = renderPublicProfileCardContent(snapshot);
+    overlay.classList.add('is-visible');
+    overlay.setAttribute('aria-hidden', 'false');
+    overlay.style.display = 'flex';
+    requestAnimationFrame(() => {
+        overlay.style.opacity = '1';
+    });
+
+    document.addEventListener('keydown', handlePublicProfileCardEscapeKey);
+}
+
+function closePublicCommanderProfileCard(clickEvent) {
+    if (clickEvent) clickEvent.stopPropagation();
+
+    const overlay = document.getElementById('public-commander-profile-overlay');
+    if (!overlay) return;
+
+    overlay.style.opacity = '0';
+    overlay.classList.remove('is-visible');
+    overlay.setAttribute('aria-hidden', 'true');
+    document.removeEventListener('keydown', handlePublicProfileCardEscapeKey);
+    window.setTimeout(() => {
+        overlay.style.display = 'none';
+    }, 220);
+}
+
+function handlePublicProfileCardEscapeKey(e) {
+    if (e.key === 'Escape') closePublicCommanderProfileCard();
+}
+
+window.openCommanderHubModal = openCommanderHubModal;
+window.closeCommanderHubModal = closeCommanderHubModal;
+window.loadCommanderHubSection = loadCommanderHubSection;
+window.openPublicCommanderProfileCard = openPublicCommanderProfileCard;
+window.closePublicCommanderProfileCard = closePublicCommanderProfileCard;

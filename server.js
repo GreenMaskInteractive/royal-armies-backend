@@ -4,27 +4,74 @@
  * The Heart of the RAGE Engine & AVI Interface
  */
 
-/* ============================================================ 
-   NEXUS SECTION 0: CORE MODULES & ENVIRONMENT 
-   ============================================================ */
-const path = require('path'); // <--- MOVED TO THE TOP
+/* ==========================================
+   NEXUS MODULE: CORE & ENVIRONMENT
+   ========================================== */
+
+/* --- Section: Dependencies & Database Bootstrap --- */
+
+/* Block 1: Core Module Imports */
+const path = require('path');
 const low = require('lowdb');
 const FileSync = require('lowdb/adapters/FileSync');
 
-// 2. Define the Smart Path
+/* Block 2: Environment Path Resolution */
 const isProduction = process.env.RENDER === 'true';
 const dbPath = isProduction ? '/data/db.json' : path.join(__dirname, 'db.json');
 
-// 3. Initialize the database
+/* Block 3: Ledger Database Initialization */
 const adapter = new FileSync(dbPath);
 const db = low(adapter);
-
-// 4. Set the default structure
 db.defaults({ commanders: [] }).write();
 
-/* ============================================================ 
-   NEXUS SECTION 1: SERVER CONFIGURATION 
-   ============================================================ */
+/* --- Section: Age Portal live presence (in-memory; no mock accounts) --- */
+const PORTAL_PRESENCE_TTL_MS = 5 * 60 * 1000;
+const portalPresenceByUser = new Map();
+
+function prunePortalPresence() {
+    const now = Date.now();
+    for (const [username, lastSeen] of portalPresenceByUser.entries()) {
+        if (now - lastSeen > PORTAL_PRESENCE_TTL_MS) {
+            portalPresenceByUser.delete(username);
+        }
+    }
+}
+
+function getActivePortalUsernames() {
+    prunePortalPresence();
+    return [...portalPresenceByUser.keys()].sort((a, b) => a.localeCompare(b));
+}
+
+function normalizeLedgerUsername(value) {
+    return String(value || '').trim();
+}
+
+function normalizeLedgerEmail(value) {
+    return String(value || '').trim().toLowerCase();
+}
+
+function findCommanderByUsernameOrEmail(identifier) {
+    const needle = String(identifier || '').trim();
+    if (!needle) return null;
+
+    const commanders = db.get('commanders').value() || [];
+    const lowerNeedle = needle.toLowerCase();
+
+    return commanders.find((entry) => {
+        if (!entry) return false;
+        const username = String(entry.username || '').trim().toLowerCase();
+        const email = normalizeLedgerEmail(entry.email);
+        return username === lowerNeedle || email === lowerNeedle;
+    }) || null;
+}
+
+/* ==========================================
+   NEXUS MODULE: SERVER CONFIGURATION
+   ========================================== */
+
+/* --- Section: Application Assembly --- */
+
+/* Block 4: Framework & Service Imports */
 const express = require('express');
 const fs = require('fs');
 const compression = require('compression');
@@ -32,21 +79,26 @@ const { Resend } = require('resend');
 const crypto = require('crypto');
 const bcrypt = require('bcrypt');
 
+/* Block 5: Runtime Constants & Express Instance */
 const app = express();
 const PORT = process.env.PORT || 3000;
 const resend = new Resend('re_eMzwshB5_EmorLivvuzwbHk6jpAzWtpWE');
 
-/* ============================================================
-   NEXUS SECTION 2: SECURITY & MIDDLEWARE
-   ============================================================ */
+/* ==========================================
+   NEXUS MODULE: SECURITY & MIDDLEWARE
+   ========================================== */
 
-/* --- Block 2: Middleware --- */
+/* --- Section: Middleware Token Handlers --- */
+
+/* Block 6: Compression & Body Parsers */
 app.use(compression());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(express.static(path.join(__dirname, 'public'))); // Serves ARCH, AVI, and GIMP files
+app.use(express.static(path.join(__dirname, 'public')));
 
-/* --- Block 3: The Royal Post Office (Verification Link) --- */
+/* --- Section: Email Dispatch Engine --- */
+
+/* Block 7: Welcome Verification Scroll Generator */
 const sendWelcomeEmail = async (playerEmail, playerName, token) => {
     try {
         const verificationLink = `https://royalarmies.com/verify?token=${token}`;
@@ -55,7 +107,6 @@ const sendWelcomeEmail = async (playerEmail, playerName, token) => {
             from: 'Royal Armies <noreply@royalarmies.com>',
             to: [playerEmail],
             subject: '📜 Email Verification: Royal Armies',
-            /* LOGO REMOVED FOR MAXIMUM STABILITY */
             html: `
                 <div style="font-family: 'Georgia', serif; background-color: #000; color: #f1e0ac; padding: 40px; border: 2px solid #d4af37; text-align: center;">
                     <h1 style="color: #d4af37; text-align: center;">WELCOME, COMMANDER ${playerName.toUpperCase()}</h1>
@@ -81,28 +132,50 @@ const sendWelcomeEmail = async (playerEmail, playerName, token) => {
 
         if (error) {
             console.error("❌ Resend Error:", error);
-            throw error; 
+            throw error;
         }
         console.log("📜 Verification Scroll Sent! ID:", data.id);
         return data;
     } catch (err) {
         console.error("❌ Fatal Post Office Failure:", err);
-        throw err; 
+        throw err;
     }
 };
 
-/* --- Block 4: Routing & Handshakes --- */
+/* --- Section: API Route Handlers --- */
 
-// 1. The Registration Endpoint
+/* Block 8: Commander Registration Endpoint */
 app.post('/register', async (req, res) => {
-    const { username, email, password } = req.body;
-    const existingCommander = db.get('commanders').find({ email }).value();
+    const username = normalizeLedgerUsername(req.body?.username);
+    const email = normalizeLedgerEmail(req.body?.email);
+    const password = String(req.body?.password || '');
 
-    if (existingCommander) {
+    if (!username || !email || !password) {
+        return res.status(400).json({
+            status: 'error',
+            message: 'Username, email, and password are required.'
+        });
+    }
+
+    const commanders = db.get('commanders').value() || [];
+    const emailTaken = commanders.some((entry) => normalizeLedgerEmail(entry?.email) === email);
+    const usernameTaken = commanders.some(
+        (entry) => String(entry?.username || '').trim().toLowerCase() === username.toLowerCase()
+    );
+
+    if (emailTaken) {
         console.log(`[NEXUS] Registration Denied: ${email} already exists.`);
-        return res.status(400).json({ 
-            status: "error", 
-            message: "This E-Mail is already registered. Contact accountsdept@royalarmies.com!" 
+        return res.status(400).json({
+            status: 'error',
+            message: 'This E-Mail is already registered. Contact accountsdept@royalarmies.com!'
+        });
+    }
+
+    if (usernameTaken) {
+        console.log(`[NEXUS] Registration Denied: ${username} already exists.`);
+        return res.status(400).json({
+            status: 'error',
+            message: 'This username is already taken. Choose a different commander name.'
         });
     }
 
@@ -110,23 +183,83 @@ app.post('/register', async (req, res) => {
         const saltRounds = 10;
         const hashedPassword = await bcrypt.hash(password, saltRounds);
         const token = crypto.randomBytes(16).toString('hex');
-        console.log(`[NEXUS] Handshake Received: Creating Token for ${username}`);
+        const joinedAt = new Date().toISOString();
+        console.log(`[NEXUS] Handshake Received: Creating ledger entry for ${username}`);
 
-        await sendWelcomeEmail(email, username, token);
-
-        db.get('commanders').push({ 
-            username, email, password: hashedPassword, token, verified: false, joinedAt: new Date().toISOString() 
+        db.get('commanders').push({
+            username,
+            email,
+            password: hashedPassword,
+            token,
+            verified: false,
+            joinedAt
         }).write();
 
         console.log(`[NEXUS] Success: ${username} added to the Ledger.`);
-        res.status(200).json({ status: "logged" });
+
+        let emailSent = false;
+        try {
+            await sendWelcomeEmail(email, username, token);
+            emailSent = true;
+        } catch (emailError) {
+            console.error(`[NEXUS] Ledger saved for ${username}, but verification email failed:`, emailError);
+        }
+
+        res.status(200).json({
+            status: 'logged',
+            emailSent,
+            username,
+            message: emailSent
+                ? 'Registration saved. Check your email for the confirmation scroll.'
+                : 'Registration saved, but the verification email could not be sent. You may still log in; contact accountsdept@royalarmies.com if you need the verify link resent.'
+        });
     } catch (error) {
-        console.error("❌ NEXUS Critical Error:", error);
-        res.status(500).json({ status: "error", message: "Post Office failure." });
+        console.error('❌ NEXUS Critical Error:', error);
+        res.status(500).json({ status: 'error', message: 'Could not save registration. Please try again.' });
     }
 });
 
-// 2. Password Reset Request (Dispatches the Scroll)
+/* Block 8b: Commander Login (ledger-backed) */
+app.post('/api/login', async (req, res) => {
+    const identifier = String(req.body?.username || '').trim();
+    const password = String(req.body?.password || '');
+
+    if (!identifier || !password) {
+        return res.status(400).json({
+            status: 'error',
+            message: 'Username and password are required.'
+        });
+    }
+
+    const commander = findCommanderByUsernameOrEmail(identifier);
+    if (!commander || !commander.password) {
+        return res.status(401).json({
+            status: 'error',
+            message: 'No registered commander found with those credentials.'
+        });
+    }
+
+    try {
+        const passwordMatches = await bcrypt.compare(password, commander.password);
+        if (!passwordMatches) {
+            return res.status(401).json({
+                status: 'error',
+                message: 'Invalid password for that commander account.'
+            });
+        }
+
+        res.status(200).json({
+            status: 'success',
+            username: commander.username,
+            verified: !!commander.verified
+        });
+    } catch (error) {
+        console.error('[NEXUS] Login compare failed:', error);
+        res.status(500).json({ status: 'error', message: 'Login could not be completed.' });
+    }
+});
+
+/* Block 9: Password Reset Request Dispatch */
 app.post('/request-reset', async (req, res) => {
     const { email } = req.body;
     console.log(`[NEXUS] Recovery Handshake: Request for ${email}`);
@@ -134,7 +267,7 @@ app.post('/request-reset', async (req, res) => {
 
     if (!commander) {
         console.log("⚠️ Recovery Denied: Email not in Ledger.");
-        return res.status(200).json({ status: "success" }); 
+        return res.status(200).json({ status: "success" });
     }
 
     const resetToken = crypto.randomBytes(16).toString('hex');
@@ -163,16 +296,15 @@ app.post('/request-reset', async (req, res) => {
     }
 });
 
-// 3. NEW: The Reset Page Deliverer (Fixes the "Cannot GET" error)
+/* Block 10: Reset Password Page Deliverer */
 app.get('/reset-password', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'reset-password.html'));
 });
 
-// 4. Final Reset (Saves the New Password & BURNS the Token)
+/* Block 11: Final Password Reset & Token Destruction */
 app.post('/reset-password', async (req, res) => {
     const { token, newPassword } = req.body;
-    
-    // Find commander where resetToken matches the provided token
+
     const commander = db.get('commanders').find({ resetToken: token }).value();
 
     if (!commander) {
@@ -182,13 +314,12 @@ app.post('/reset-password', async (req, res) => {
 
     try {
         const hashedPassword = await bcrypt.hash(newPassword, 10);
-        
-        // Update password AND set resetToken to null to disable the link
+
         db.get('commanders')
           .find({ email: commander.email })
-          .assign({ 
-              password: hashedPassword, 
-              resetToken: null  // This makes the link single-use
+          .assign({
+              password: hashedPassword,
+              resetToken: null
           })
           .write();
 
@@ -199,7 +330,7 @@ app.post('/reset-password', async (req, res) => {
     }
 });
 
-// 5. The Verification Landing Pad
+/* Block 12: Email Verification Landing Pad */
 app.get('/verify', (req, res) => {
     const token = req.query.token;
     const commander = db.get('commanders').find({ token }).value();
@@ -216,12 +347,60 @@ app.get('/verify', (req, res) => {
     }
 });
 
-// 6. The Final Portal
+/* Block 13: Age Portal live metrics & presence */
+app.get('/api/portal/metrics', (req, res) => {
+    const commanders = db.get('commanders').value() || [];
+    const recentRegistrations = [...commanders]
+        .filter((entry) => entry && entry.username)
+        .sort((a, b) => {
+            const aTime = Date.parse(a.joinedAt || 0) || 0;
+            const bTime = Date.parse(b.joinedAt || 0) || 0;
+            return bTime - aTime;
+        })
+        .slice(0, 25)
+        .map((entry) => ({
+            username: entry.username,
+            joinedAt: entry.joinedAt || null
+        }));
+
+    const activePlayers = getActivePortalUsernames();
+
+    res.json({
+        registeredCount: commanders.length,
+        recentRegistrations,
+        activeCount: activePlayers.length,
+        activePlayers
+    });
+});
+
+app.post('/api/portal/presence', (req, res) => {
+    const username = String(req.body?.username || '').trim();
+    if (!username) {
+        return res.status(400).json({ status: 'error', message: 'Username required.' });
+    }
+    portalPresenceByUser.set(username, Date.now());
+    prunePortalPresence();
+    res.json({ status: 'ok', activeCount: getActivePortalUsernames().length });
+});
+
+app.post('/api/portal/presence/leave', (req, res) => {
+    const username = String(req.body?.username || '').trim();
+    if (username) portalPresenceByUser.delete(username);
+    res.json({ status: 'ok', activeCount: getActivePortalUsernames().length });
+});
+
+/* Block 14: Main Portal Route */
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-/* --- Block 5: Ignition --- */
+/* ==========================================
+   NEXUS MODULE: IGNITION
+   ========================================== */
+
+/* --- Section: Server Boot --- */
+
+/* Block 15: Nexus Engine Ignition */
 app.listen(PORT, () => {
     console.log(`========================================`);
     console.log(` NEXUS ENGINE ONLINE: Port ${PORT}`);

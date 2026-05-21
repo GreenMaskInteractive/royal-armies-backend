@@ -1,0 +1,3311 @@
+/* ==========================================================================
+   SECTION 1: STRUCTURAL BASE LAYOUTS & SCROLLBAR HIDDEN FILTERS
+   ========================================================================== */
+
+/* Block 1: FULLSCREEN SCROLLABLE FRAME WITH HIDDEN TRACKERS */
+#main-dashboard-canvas {
+    margin: 0 !important;
+    padding: 0 !important;
+    background-image: url('images/mainpagebg.png') !important;
+    background-size: cover !important;
+    background-position: center !important;
+    background-repeat: no-repeat !important;
+    background-attachment: fixed !important;
+    background-color: #050403 !important;
+    min-height: 100vh !important;
+    width: 100vw !important;
+    display: flex !important;
+    flex-direction: column !important;
+    box-sizing: border-box !important;
+
+    /* 🔥 THE SCROLL BAR EXCLUSION MATRIX: */
+    /* Allows full natural page vertical scrolling loops while keeping the scrollbar 100% hidden! */
+    overflow-y: scroll !important; 
+    overflow-x: hidden !important;
+    scrollbar-width: none !important; /* Forces hiding on Mozilla Firefox Engine layers */
+    -ms-overflow-style: none !important; /* Forces hiding on older IE/Edge Engine layers */
+}
+
+/* Forces hiding on Chrome, Safari, and newer Opera Webkit layers */
+#main-dashboard-canvas::-webkit-scrollbar {
+    display: none !important;
+    width: 0 !important;
+    height: 0 !important;
+}
+
+/* Block 2: CENTERED MAIN TITLE BLOCK (PADDING ADJUSTED) */
+.over-bar-utility-deck {
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    width: 100% !important;
+    padding: 15px 40px 10px 40px !important; /* Balanced tracking margin heights */
+    box-sizing: border-box !important;
+    background: linear-gradient(180deg, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0) 100%) !important;
+    z-index: 100 !important;
+    flex-shrink: 0 !important;
+}
+
+.header-logo-housing-block {
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+}
+
+.portal-brand-logo-asset {
+    display: block !important;
+    width: 100% !important; 
+    max-width: 680px !important; 
+    height: auto !important;
+    object-fit: contain !important;
+}
+
+/* Block 3: RELAXED MAIN MASTER WRAPPER */
+.staging-deck-master-wrapper {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: stretch !important;      /* 🌟 THE REAL FIX: Changes center to stretch to unlock full row width widths */
+    width: 100% !important;
+    max-width: 100% !important;
+    min-height: calc(100vh - 80px) !important;
+    margin: 0 !important;
+    padding: 0 40px 40px 40px !important; 
+    box-sizing: border-box !important;
+    flex-grow: 1 !important;
+    gap: 20px !important;                 
+    margin-top: -30px !important;
+}
+
+
+/* ==========================================================================
+   SECTION 2: STICKY THREE-COLUMN NAVIGATION SYSTEM CONFIGURATIONS
+   ========================================================================== */
+
+/* Block 4: STICKY COCHLEAR GRID NAVIGATION BAR DECK */
+.main-portal-nav-bar {
+ width: 100% !important;
+ height: 100px !important;
+ position: sticky !important;
+ top: 0 !important;
+ z-index: 99999 !important;
+
+ /* No fill on the nav shell — only the bar image layer paints the chrome */
+ background: none !important;
+ background-color: transparent !important;
+ box-shadow: none !important;
+ border: none !important;
+ border-radius: 0 !important;
+
+ display: flex !important;
+ flex-direction: row !important;
+ justify-content: space-between !important;
+ align-items: center !important;
+
+ padding: 0 20px !important;
+ box-sizing: border-box !important;
+ flex-shrink: 0 !important;
+ isolation: isolate !important;
+}
+
+/* Bar artwork only — centered strip, no solid rectangle behind it */
+.main-portal-nav-bar::before {
+ content: '' !important;
+ position: absolute !important;
+ left: 0 !important;
+ right: 0 !important;
+ top: 50% !important;
+ transform: translateY(-50%) !important;
+ height: 71px !important;
+ background-image: url('images/topnavigationbar.png') !important;
+ background-size: 100% 100% !important;
+ background-repeat: no-repeat !important;
+ background-position: center center !important;
+ pointer-events: none !important;
+ z-index: 0 !important;
+}
+
+.main-portal-nav-bar > * {
+ position: relative !important;
+ z-index: 1 !important;
+}
+
+/* 👥 COLUMN 1 STRUCTURES: PROFILE INFO SHIELD LOCKS */
+.nav-embedded-account-label {
+    font-family: 'Cinzel', serif !important;
+    font-size: 0.85rem !important;
+    font-weight: bold !important;
+    letter-spacing: 1px !important;
+    color: rgba(241, 224, 172, 0.4) !important;
+    text-shadow: 1px 1px 2px #000 !important;
+    padding-right: 24px !important;
+    border-right: 1px solid rgba(184, 144, 48, 0.25) !important;
+    display: flex !important;
+    align-items: center !important;
+    height: 40px !important;
+    padding-left: 15px !important; /* 15px spacer padding handle */
+    margin: 0 !important; 
+    width: 250px !important; /* Balanced fixed column layout scale matching your logout side */
+    box-sizing: border-box !important;
+}
+
+.nav-embedded-account-label strong {
+    color: #ffd700 !important;
+    padding-left: 6px !important;
+    text-shadow: 0 0 4px rgba(255, 215, 0, 0.3) !important;
+}
+
+/* 🎯 COLUMN 2 STRUCTURES: THE PERFECT DEAD CENTER TAB FLEX SECTOR WRAPPER */
+.nav-tabs-centered-flex-dock {
+    display: flex !important;
+    flex-direction: row !important;
+    justify-content: center !important;
+    align-items: center !important;
+    gap: 15px !important;
+    flex: 1 !important;
+}
+
+/* Block 5: CHROMATIC HEADER TEXT TABS SCALE ENGINE */
+.nav-tab {
+    font-family: 'Cinzel', serif !important;
+    font-size: 1.1rem !important;
+    font-weight: bold !important;
+    letter-spacing: 1.5px !important;
+    color: rgba(241, 224, 172, 0.6) !important;
+    padding: 12px 24px !important;
+    cursor: pointer !important;
+    pointer-events: auto !important;
+    position: relative !important;
+    z-index: 2 !important;
+    transition: all 0.25s ease !important;
+    text-shadow: 2px 2px 4px #000 !important;
+    border-bottom: 3px solid transparent !important;
+    white-space: nowrap !important;
+}
+.nav-tab:hover,
+.nav-tab.active {
+    color: #ffd700 !important;
+    text-shadow: 0 0 10px rgba(255, 215, 0, 0.7) !important;
+    border-bottom: 3px solid #b89030 !important;
+}
+
+/* 🔒 COLUMN 3 STRUCTURES: THE RIGHT ALIGNED DISCONNECT COMMAND LEVER CONTAINER */
+.nav-right-logout-action-dock {
+    width: 250px !important; /* Balanced structural width matching your account label to force dead centering */
+    display: flex !important;
+    justify-content: flex-end !important;
+    align-items: center !important;
+    box-sizing: border-box !important;
+    padding-right: 15px !important; /* Synchronized padding offset from the right boundary */
+}
+
+.header-logout-btn {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 8px !important;
+    background: linear-gradient(180deg, rgba(48, 10, 10, 0.95) 0%, rgba(22, 6, 6, 0.98) 100%) !important;
+    border: 1px solid rgba(204, 0, 0, 0.55) !important;
+    color: #ffd6d6 !important;
+    font-family: 'Cinzel', serif !important;
+    font-size: 0.78rem !important;
+    font-weight: bold !important;
+    letter-spacing: 1.2px !important;
+    padding: 7px 16px 7px 12px !important;
+    cursor: pointer !important;
+    border-radius: 4px !important;
+    transition: all 0.2s ease !important;
+    flex-shrink: 0 !important;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 120, 120, 0.12) !important;
+    text-transform: uppercase !important;
+}
+.header-logout-icon {
+    width: 22px !important;
+    height: 22px !important;
+    object-fit: contain !important;
+    filter: drop-shadow(0 0 4px rgba(255, 80, 80, 0.45)) !important;
+    flex-shrink: 0 !important;
+}
+.header-logout-label {
+    line-height: 1 !important;
+    white-space: nowrap !important;
+}
+.header-logout-btn:hover {
+    background: linear-gradient(180deg, rgba(120, 18, 18, 0.98) 0%, rgba(70, 8, 8, 0.98) 100%) !important;
+    border-color: #ff5555 !important;
+    box-shadow: 0 0 14px rgba(204, 0, 0, 0.55), inset 0 1px 0 rgba(255, 180, 180, 0.2) !important;
+    color: #ffffff !important;
+    transform: translateY(-1px) !important;
+}
+.header-logout-btn:active {
+    transform: translateY(0) !important;
+    box-shadow: 0 0 6px rgba(204, 0, 0, 0.35) !important;
+}
+
+
+/* ==========================================================================
+   SECTION 3: UTILITY BAR METRICS & STATISTICS CORES (EXPANDED SCREEN SIZE)
+   ========================================================================== */
+
+/* Block 6: DENSE AGE METRICS STRIP TRAY OVERSIZE HARDWARE */
+.portal-age-metrics-dashboard-bar {
+    width: 100% !important;
+    
+    /* 🌟 THE ALPHA DESTRUCTION ENGINE: BYPASSES SEMI-TRANSPARENT GRAPHICS PIPELINES */
+    /* 1. We remove ALL 'background' and 'background-image' properties so the image cannot fight color layers */
+    background: #15181f !important;            /* 🔥 Holds a 100% solid, flat opaque foundation canvas to block scenery */
+    
+    /* 2. We inject your image file path directly as an absolute border mask instead */
+    border: 12px solid transparent !important; /* Opens tracking clearance room for your asset file outlines */
+    border-image-source: url('images/navbar.png') !important; /* ⚙️ Change navbar.png to your exact file name if different */
+    border-image-slice: 24 fill !important;     /* 🌟 THE EMBEDDED FILL ENGINE: Forces the file graphics to stamp down with 100% solid density */
+    border-image-repeat: stretch !important;
+    
+    opacity: 1.0 !important;                   /* Hard-locks the absolute layout presentation density to 100% solid */
+    box-shadow: 0 8px 25px rgba(0,0,0,0.95) !important;
+    box-sizing: border-box !important;
+    margin-bottom: 20px !important;
+    
+    /* HORIZONTAL METRICS DISPATCH FLEX ARRANGEMENTS GRID */
+    display: flex !important;
+    flex-direction: row !important;
+    justify-content: space-between !important; 
+    align-items: center !important;
+    gap: 16px !important;
+    flex-wrap: wrap !important;
+}
+
+/* HARDWARE CAPSULE GRID DESIGN PARAMETERS */
+.metric-capsule-cell {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    gap: 10px !important;
+    flex: 1 1 auto !important;
+    min-width: max-content !important;
+    position: relative !important;
+}
+
+.metric-capsule-cell.metric-capsule-divider {
+    border-left: 1px dashed rgba(184, 144, 48, 0.22) !important;
+    padding-left: 14px !important;
+}
+
+/* 🌟 CENTERED PRIORITY CONTROLLER: Forces the 3-month countdown layout element dead center */
+.metric-capsule-cell.centered-priority-node {
+    order: 0 !important;
+    border-right: 1px dashed rgba(184, 144, 48, 0.22) !important;
+    padding-right: 20px !important;
+}
+
+.metric-roster-hover-cell {
+    z-index: 2 !important;
+}
+
+.metric-roster-hover-trigger {
+    background: transparent !important;
+    border: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    font: inherit !important;
+    color: inherit !important;
+    text-transform: inherit !important;
+    letter-spacing: inherit !important;
+    cursor: help !important;
+    text-align: left !important;
+    text-decoration: underline dotted rgba(184, 144, 48, 0.35) !important;
+    text-underline-offset: 3px !important;
+}
+
+.metric-roster-hover-trigger:hover,
+.metric-roster-hover-cell.is-roster-open .metric-roster-hover-trigger {
+    color: #f1e0ac !important;
+    text-decoration-color: rgba(255, 215, 0, 0.55) !important;
+}
+
+.metric-roster-popover {
+    position: absolute !important;
+    top: calc(100% + 8px) !important;
+    left: 0 !important;
+    min-width: 240px !important;
+    max-width: 320px !important;
+    max-height: 280px !important;
+    overflow-y: auto !important;
+    padding: 10px 12px !important;
+    background: rgba(10, 8, 6, 0.97) !important;
+    border: 1px solid rgba(184, 144, 48, 0.45) !important;
+    border-radius: 4px !important;
+    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.85) !important;
+    z-index: 120 !important;
+    pointer-events: none !important;
+}
+
+.metric-roster-hover-cell.is-roster-open {
+    z-index: 130 !important;
+}
+
+.metric-roster-popover-title {
+    margin: 0 0 8px 0 !important;
+    font-family: 'Cinzel', serif !important;
+    font-size: 0.72rem !important;
+    color: #c5a059 !important;
+    letter-spacing: 0.8px !important;
+    text-transform: uppercase !important;
+}
+
+.metric-roster-popover-list {
+    list-style: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+.metric-roster-popover-item {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 2px !important;
+    padding: 6px 0 !important;
+    border-bottom: 1px solid rgba(184, 144, 48, 0.12) !important;
+}
+
+.metric-roster-popover-item:last-child {
+    border-bottom: none !important;
+}
+
+.metric-roster-name {
+    font-family: 'Consolas', 'Courier New', monospace !important;
+    font-size: 0.8rem !important;
+    color: #ffd700 !important;
+}
+
+.metric-roster-meta {
+    font-family: 'Segoe UI', sans-serif !important;
+    font-size: 0.68rem !important;
+    color: rgba(241, 224, 172, 0.55) !important;
+}
+
+.metric-roster-popover-empty {
+    font-family: 'Segoe UI', sans-serif !important;
+    font-size: 0.75rem !important;
+    color: rgba(241, 224, 172, 0.6) !important;
+    font-style: italic !important;
+    padding: 4px 0 !important;
+}
+
+.metric-glyph-icon {
+    font-size: 1.1rem !important;
+    color: #b89030 !important;
+    text-shadow: 0 0 8px rgba(184,144,48,0.4) !important;
+}
+
+.metric-text-stack {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: flex-start !important;
+}
+
+.metric-label-title {
+    font-family: 'Segoe UI', sans-serif !important;
+    font-size: 0.68rem !important;
+    color: rgba(241, 224, 172, 0.45) !important;
+    text-transform: uppercase !important;
+    letter-spacing: 1px !important;
+}
+
+.metric-live-data-value {
+    font-family: 'Consolas', 'Courier New', monospace !important;
+    font-size: 0.88rem !important;
+    font-weight: bold !important;
+    color: #ffd700 !important;
+    text-shadow: 0 0 4px rgba(255,215,0,0.3) !important;
+    margin-top: 1px !important;
+}
+
+/* TEXT COLOR OVERRIDES FOR SPECIAL CODES STATS INDICATORS */
+#metrics-transition-countdown-display {
+    color: #f1e0ac !important; /* Softer balance indicator splits countdown from general integer counts */
+}
+
+
+/* ==========================================================================
+   SECTION 4: CORE MAIN TILES GRID COMPARTMENTS (WIDESCREEN RESPONSIVE SCALING)
+   ========================================================================== */
+
+/* Block 7: WINDOW VIEWER CANVAS PANEL FULL HEIGHT */
+.dynamic-portal-view-container {
+    width: 100% !important;
+    flex: 1 !important; /* Dynamically consumes all remaining open vertical room on screen */
+    display: flex !important;
+    flex-direction: column !important;
+    box-sizing: border-box !important;
+    min-height: 0 !important; /* Critical layout parameter preventing card overflows */
+}
+
+.age-portal-view-canvas {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 20px !important;
+    width: 100% !important;
+    height: 100% !important;
+    flex: 1 !important;
+}
+
+/* Block 8: RE-BALANCED CARD SLOTS ROW */
+.portal-twin-split-deck-row {
+    display: flex !important;
+    flex-direction: row !important;
+    justify-content: space-between !important; /* 🌟 Pushes the sidebar to the right edge */
+    align-items: stretch !important;            /* Forces cards to match height scales uniformly */
+    gap: 24px !important;
+    width: 100% !important;                     /* 🌟 Forces the grid row to utilize full layout widths */
+    flex: 1 !important;
+    min-height: 0 !important;
+}
+
+/* Block 9: GEOMETRIC MATTE-ONYX INFORMATION DECK TILES */
+.dashboard-news-card-box {
+    flex: none !important;              /* Disables auto-flex scaling to allow manual width handling */
+    width: 1220px !important;           /* 🌟 INCREASE OR DECREASE THIS PIXEL VALUE MANUALLY TO FIT YOUR VIEWPORT */
+    background: linear-gradient(135deg, rgba(22, 18, 13, 0.8) 0%, rgba(13, 10, 8, 0.9) 100%) !important;
+    border: 1px solid rgba(184, 144, 48, 0.3) !important;
+    border-radius: 4px !important;
+    padding: 24px !important;
+    box-shadow: 0 15px 30px rgba(0,0,0,0.7) !important;
+    box-sizing: border-box !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 16px !important;
+    height: 100% !important;
+}
+
+.card-title-header {
+    font-family: 'Cinzel', serif !important;
+    font-size: 1.2rem !important; /* Expanded title headers */
+    color: #ffd700 !important;
+    letter-spacing: 0.5px !important;
+    margin: 0 !important;
+    text-align: left !important;
+    border-bottom: 2px solid rgba(184, 144, 48, 0.2) !important;
+    padding-bottom: 8px !important;
+    flex-shrink: 0 !important;
+}
+
+/* Block 10: SIDEBAR COMPONENT HEIGHT RESTRICTIONS */
+/* FIXED RE-BALANCED SIDEBAR CONTAINER WRAPPER CHASSIS LINK */
+.portal-sidebar-flex-column {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 24px !important;
+    align-items: stretch !important;
+    justify-content: flex-start !important; /* Locks sidebar updates panel to the roof edge */
+    width: 320px !important;
+    height: 380px !important; /* Locks original fixed dimensions to protect left text sizing layout metrics */
+    flex-shrink: 0 !important;
+    position: relative !important; 
+    right: 905px !important; /* Adjust this value to shift your sidebar left/right */
+}
+
+/* Block 11: THE AUTOMATIC DEPLOYMENT HORIZONTAL CENTERING DECK */
+.portal-deployment-control-deck {
+    width: 100% !important;
+    background: transparent !important;       
+    border: none !important;                   
+    border-radius: 0 !important;
+    padding: 24px 20px !important;             /* Unlocks canvas room so dropshadow blooms don't choke hardware threads */
+    box-shadow: none !important;               
+    box-sizing: border-box !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    margin-top: 10px !important; 
+    margin-bottom: 24px !important;            /* Lower card layout downward push barrier handle */
+    height: max-content !important;
+    flex-shrink: 0 !important;
+    overflow: visible !important;
+}
+
+.deployment-deck-title {
+    font-family: 'RoyalDetails', serif !important;
+    font-size: 1rem !important;
+    color: #ffd700 !important;
+    letter-spacing: 2px !important;
+    margin: 0 0 16px 0 !important;             /* Splits header title away from buttons */
+    text-transform: uppercase !important;
+    text-align: center !important;
+    text-shadow: 2px 2px 4px #000, 0 0 10px rgba(255, 215, 0, 0.4) !important; 
+}
+
+/* Block 12: EXPANDED GIANT HORIZONTAL ACTION BUTTON FIELDS */
+.deployment-action-button-row {
+    display: flex !important;
+    flex-direction: row !important;            /* Forces buttons side-by-side horizontally */
+    justify-content: center !important;        /* Dead-centers row automatically across any device viewport */
+    align-items: center !important;
+    gap: 40px !important;                       /* Spacing track pushes buttons 40px apart from each other */
+    width: 100% !important;
+    box-sizing: border-box !important;
+}
+
+/* Block 13: SILHOUETTE SHAPE SHIELD DECK CONTROLLERS */
+.action-btn-aura-housing {
+    position: relative !important;
+    border: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    background: transparent !important;       
+    box-shadow: none !important;
+    width: 260px !important;                   /* Structural footprint scale limits */
+    display: flex !important;
+    justify-content: center !important;
+    overflow: visible !important;
+}
+
+.deployment-image-trigger-btn {
+    background: transparent !important;        
+    border: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    cursor: pointer !important;
+    display: block !important;
+    position: relative !important;
+    width: 100% !important;
+}
+
+/* BUTTONS IMAGE LAYER PROPERTIES SETUP */
+.deployment-image-trigger-btn img {
+    display: block !important;
+    height: auto !important;
+    width: 100% !important;
+    max-width: 260px !important;
+    margin: 0 auto !important;
+    
+    /* 🌟 THE TRANSPARENCY FIX FOR BUTTONS: */
+    /* Removing mix-blend-mode and applying full opacity handles non-transparent rendering profiles natively */
+    background: transparent !important;       
+    mix-blend-mode: normal !important;        /* Changed from screen to normal to completely eliminate button transparency */
+    opacity: 1.0 !important;                  /* Forces full solid pixel color layout presentation down onto the fields */
+}
+
+/* Block 14: ADVANCED TACTICAL TERMINAL ENGINE */
+/* 🌟 RECONCILED HARDWARE DESIGN: OPAQUE SOLID CHISELED SLATE / OBSIDIAN STONE CHASSIS */
+#dynamic-age-sub-timer-display {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    position: relative !important;
+    
+    /* 🌟 THE SOLID STONE TRANSPARENCY FIX: */
+    /* Uses solid solid hex colors without channel alpha parameters to strip image transparency blocks */
+    background: #15181f !important;            
+    background-image: linear-gradient(135deg, #242936 0%, #15181f 50%, #0a0c10 100%) !important;
+    background-size: 100% 100% !important;   
+    
+    /* PROPORTIONAL FIXED BOUNDS */
+    width: 485px !important;                 
+    height: 250px !important;                
+    margin: 16px 0 24px 0 !important;
+    padding: 0 !important;
+    box-sizing: border-box !important;
+    align-self: center !important;           
+    
+    /* HEAVY ROCK WALL EDGE FRAMES RIMS */
+    border: 3px solid #38404d !important;    
+    border-top-color: #4f5a6b !important;   /* High ceiling lighting simulation highlight rim line */
+    border-left-color: #444d5c !important;
+    border-bottom-color: #1a1e24 !important; /* Low floor shadow crease */
+    border-right-color: #22262f !important;
+    border-radius: 6px !important;
+    
+    /* VOLUMETRIC STONE CARVING INSET DEPTH SHADOWS DECK */
+    box-shadow: inset 0 0 25px rgba(0, 0, 0, 0.95),
+                inset 5px 5px 10px rgba(0, 0, 0, 0.8),
+                0 15px 35px rgba(0, 0, 0, 0.9) !important;
+                
+    /* INCORPORATE TERMINAL READOUT TYPOGRAPHY GEOMETRY SPECS */
+    font-family: 'Share Tech Mono', 'Orbitron', 'Consolas', monospace !important;
+    font-size: 2.50rem !important;           
+    font-weight: 900 !important;
+    
+    /* RUNIC CARVED TEXT STYLING MATRICES */
+    color: #e2ba3b !important;               /* Matte runic gold emulates fluid amber trapped inside stone fissures */
+    letter-spacing: 5px !important;          
+    
+    /* RUNIC GLOW EMISSIONS LIT LAYER SHADOWS FILTERS */
+    text-shadow: 0 0 15px rgba(226, 186, 59, 0.65),
+                 0 0 30px rgba(184, 144, 48, 0.3),
+                 -2px -2px 1px #000,          /* Replicates a physical chiseled depth indent drop-cut line */
+                 2px 2px 2px rgba(0, 0, 0, 0.95) !important; 
+    
+    transition: opacity 0.3s ease-in-out, transform 0.5s cubic-bezier(0.25, 1, 0.5, 1) !important;
+}
+
+/* MAGMATIC TRANSLATION OVERRIDE CHANNELS */
+#dynamic-age-sub-timer-display[style*="color: rgb(255, 85, 85)"],
+#dynamic-age-sub-timer-display[style*="color: #ff5555"] {
+    color: #ff3333 !important;
+    background: #180707 !important;
+    background-image: linear-gradient(135deg, #2d1111 0%, #180707 50%, #0a0202 100%) !important;
+    border-color: #551818 !important;
+    border-top-color: #752525 !important;
+    text-shadow: 0 0 15px rgba(255, 51, 51, 0.95),
+                 0 0 35px rgba(255, 0, 0, 0.6),
+                 -2px -2px 1px #000,
+                 2px 2px 2px #000 !important;
+    filter: drop-shadow(0 0 15px rgba(255, 0, 0, 0.4)) !important;
+}
+
+/* ==========================================================================
+   SECTION 6: SILHOUETTE GLOW TIMELINES & FILTER EFFECTS
+   ========================================================================== */
+
+/* 🔴 CHRONICLE DEPLOYMENT: AMBIENT STATE LOOP CONTROLLERS */
+.aura-glow-red {
+    animation: permanentCrimsonIdlePulse 4s infinite ease-in-out !important;
+    /* 🌟 THE WIND-UP GAP: Controls the smooth 5-second mechanical expansion rate */
+    transition: transform 5.0s cubic-bezier(0.1, 0.8, 0.2, 1), filter 5.0s ease-in-out !important; 
+}
+
+/* 🔵 INTRODUCTORY TUTORIAL: AMBIENT STATE LOOP CONTROLLERS */
+.aura-glow-blue {
+    animation: permanentAzureIdlePulse 4s infinite ease-in-out !important;
+    transition: transform 5.0s cubic-bezier(0.1, 0.8, 0.2, 1), filter 5.0s ease-in-out !important;
+}
+
+/* ==========================================================================
+   SECTION 6: SILHOUETTE GLOW TIMELINES & FILTER EFFECTS
+   ========================================================================== */
+
+/* 🔴 CHRONICLE DEPLOYMENT: AMBIENT STATE LOOP CONTROLLERS */
+.aura-glow-red {
+    animation: permanentCrimsonIdlePulse 4s infinite ease-in-out !important;
+    /* 🌟 THE WIND-UP GAP: Natively handles the slow 5-second expansion footprint */
+    transition: transform 5.0s cubic-bezier(0.1, 0.8, 0.2, 1), filter 5.0s ease-in-out !important; 
+    position: relative !important;
+}
+
+/* 🔵 INTRODUCTORY TUTORIAL: AMBIENT STATE LOOP CONTROLLERS */
+.aura-glow-blue {
+    animation: permanentAzureIdlePulse 4s infinite ease-in-out !important;
+    transition: transform 5.0s cubic-bezier(0.1, 0.8, 0.2, 1), filter 5.0s ease-in-out !important;
+    position: relative !important;
+}
+
+/* 🌟 STATE 1: PHYSICAL SCALE GROWTH STEP (CSS HANDLES SCALING ONLY - NO KEYFRAME INTERFERENCE) */
+.aura-glow-red.is-building-up,
+.aura-glow-blue.is-building-up {
+    transform: scale(1.15) !important; 
+}
+
+/* 🌟 STATE 2: AMPLIFIED EMISSIONS DECK UPON INTENSE BUILD-UP */
+.aura-glow-red.shake-level-3 {
+    filter: drop-shadow(0 0 25px rgba(255, 0, 0, 1.0))
+            drop-shadow(0 0 55px rgba(255, 30, 30, 0.95)) !important;
+}
+.aura-glow-blue.shake-level-3 {
+    filter: drop-shadow(0 0 25px rgba(0, 153, 255, 1.0))
+            drop-shadow(0 0 55px rgba(51, 153, 255, 0.95)) !important;
+}
+
+/* Join Age click confirm: stillness, brief growth, then gentle settle */
+.action-btn-aura-housing.deploy-confirm-pulse {
+    animation: none !important;
+}
+
+.action-btn-aura-housing.deploy-confirm-pulse.phase-grow {
+    transition: transform 0.42s cubic-bezier(0.22, 1, 0.36, 1),
+                left 0.2s ease,
+                top 0.2s ease,
+                filter 0.35s ease !important;
+    left: 0 !important;
+    top: 0 !important;
+    transform: scale(1.2) rotate(0deg) !important;
+}
+
+.action-btn-aura-housing.deploy-confirm-pulse.phase-settle {
+    transition: transform 0.72s cubic-bezier(0.45, 0, 0.55, 1),
+                filter 0.45s ease !important;
+    transform: scale(1) rotate(0deg) !important;
+}
+
+/* AMBIENT BACKGROUND IDLE CORES MAINTAINED NATIVELY */
+@keyframes permanentCrimsonIdlePulse {
+    0% { filter: drop-shadow(0 0 5px rgba(255, 0, 0, 0.4)) drop-shadow(0 0 12px rgba(180, 0, 0, 0.2)) !important; }
+    50% { filter: drop-shadow(0 0 22px rgba(255, 20, 20, 0.9)) drop-shadow(0 0 48px rgba(255, 0, 0, 0.7)) drop-shadow(0 0 68px rgba(180, 0, 0, 0.35)) !important; }
+    100% { filter: drop-shadow(0 0 5px rgba(255, 0, 0, 0.4)) drop-shadow(0 0 12px rgba(180, 0, 0, 0.2)) !important; }
+}
+@keyframes permanentAzureIdlePulse {
+    0% { filter: drop-shadow(0 0 5px rgba(0, 153, 255, 0.4)) drop-shadow(0 0 12px rgba(0, 80, 180, 0.2)) !important; }
+    50% { filter: drop-shadow(0 0 22px rgba(40, 140, 255, 0.9)) drop-shadow(0 0 48px rgba(0, 130, 255, 0.7)) drop-shadow(0 0 68px rgba(0, 80, 180, 0.35)) !important; }
+    100% { filter: drop-shadow(0 0 5px rgba(0, 153, 255, 0.4)) drop-shadow(0 0 12px rgba(0, 80, 180, 0.2)) !important; }
+}
+
+/* ==========================================================================
+   SECTION 7: COMMUNITY UTILITIES FOOTER DECK
+   ========================================================================== */
+
+/* Block 15: SOCIAL SHORTCUT LINK TRAY BAR */
+.portal-staging-footer-bar {
+    width: 100% !important;
+    border-top: 1px solid rgba(184, 144, 48, 0.15) !important;
+    padding-top: 15px !important;
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    box-sizing: border-box !important;
+    margin-top: auto !important;
+}
+
+.footer-social-dock { 
+    display: flex !important; 
+    gap: 20px !important; 
+}
+.footer-icon-link {
+    font-family: 'Segoe UI', sans-serif !important;
+    font-size: 0.72rem !important;
+    color: rgba(241, 224, 172, 0.4) !important;
+    text-decoration: none !important;
+    transition: color 0.2s ease !important;
+}
+.footer-icon-link:hover { 
+    color: #ffd700 !important; 
+}
+.footer-version-tag { 
+    font-family: 'Segoe UI', sans-serif !important; 
+    font-size: 0.68rem !important; 
+    color: rgba(241, 224, 172, 0.2) !important; 
+}
+
+
+/* ==========================================================================
+   SECTION 8: DISSOLVE INTERFACE CONFIRMATION MODALS
+   ========================================================================== */
+
+/* Block 16: FIXED BLUR OVERLAY SHUTTER MASKS */
+.main-portal-modal-hidden { 
+    display: none !important; 
+}
+
+#main-logout-confirmation-modal {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    background: rgba(0, 0, 0, 0.8) !important;
+    backdrop-filter: blur(4px) !important;
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    z-index: 999999 !important;
+}
+
+#main-logout-confirmation-modal .logout-confirmation-bezel {
+    border-color: rgba(204, 0, 0, 0.45) !important;
+    box-shadow: 0 18px 48px rgba(0, 0, 0, 0.95), 0 0 24px rgba(204, 0, 0, 0.15) !important;
+}
+
+/* Block 17: HIGH-CONTRAST SECURE BEZELS */
+.portal-overlay-modal-bezel {
+    background: #0f0d0a !important;
+    border: 2px solid #b89030 !important;
+    border-radius: 4px !important;
+    padding: 24px !important;
+    width: 380px !important;
+    max-width: 90% !important;
+    box-shadow: 0 15px 40px rgba(0,0,0,0.95) !important;
+    text-align: center !important;
+    box-sizing: border-box !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 14px !important;
+}
+
+.modal-alert-header { 
+    font-family: 'Cinzel', serif !important; 
+    font-size: 0.9rem !important; 
+    color: #cc0000 !important; 
+    margin: 0 !important; 
+    letter-spacing: 0.5px; 
+}
+.modal-alert-body { 
+    font-family: 'Segoe UI', sans-serif !important; 
+    font-size: 0.78rem !important; 
+    color: #f1e0ac !important; 
+    line-height: 1.4 !important; 
+    margin: 0 !important; 
+}
+.modal-action-btn-row { 
+    display: flex !important; 
+    gap: 12px !important; 
+    justify-content: center !important; 
+    margin-top: 5px !important; 
+}
+
+/* Block 18: OVERLAY ACTIONS TRIPPERS */
+.modal-action-btn {
+    font-family: 'Cinzel', serif !important;
+    font-weight: bold !important;
+    font-size: 0.7rem !important;
+    letter-spacing: 0.5px !important;
+    padding: 6px 16px !important;
+    cursor: pointer !important;
+    border-radius: 2px !important;
+    background: transparent !important;
+    transition: all 0.15s ease !important;
+}
+.modal-action-btn.confirm { 
+    border: 1px solid #cc0000 !important; 
+    color: #ff9999 !important; 
+}
+.modal-action-btn.confirm:hover { 
+    background: #cc0000 !important; 
+    color: #ffffff !important; 
+    box-shadow: 0 0 8px #cc0000 !important; 
+}
+.modal-action-btn.cancel { 
+    border: 1px solid rgba(184,144,48,0.4) !important; 
+    color: #f1e0ac !important; 
+}
+.modal-action-btn.cancel:hover { 
+    border-color: #ffd700 !important; 
+    color: #ffffff !important; 
+}
+
+/* ============================================================
+   SECTION 9: ALIGNMENT | Block 19: High-Density Staging Leaderboard Grids
+   ============================================================ */
+
+.leaderboard-workspace-container {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 14px !important;
+    width: 100% !important;
+    background: linear-gradient(135deg, rgba(22, 18, 13, 0.75) 0%, rgba(13, 10, 8, 0.85) 100%) !important;
+    border: 1px solid rgba(184, 144, 48, 0.25) !important;
+    border-radius: 4px !important;
+    padding: 20px !important;
+    box-shadow: 0 12px 24px rgba(0,0,0,0.6) !important;
+    box-sizing: border-box !important;
+}
+
+/* TOP GRID TOOLBAR CHANNELS */
+.leaderboard-sub-toolbar-strip {
+    display: flex !important;
+    flex-direction: row !important;
+    gap: 12px !important;
+    justify-content: flex-start !important;
+    border-bottom: 1px solid rgba(184, 144, 48, 0.15) !important;
+    padding-bottom: 10px !important;
+    width: 100% !important;
+}
+
+.leaderboard-sub-toolbar-strip .settings-btn.mini-btn {
+    background: rgba(0,0,0,0.5) !important;
+    border: 1px solid rgba(184, 144, 48, 0.3) !important;
+    color: rgba(241, 224, 172, 0.6) !important;
+    font-family: 'Cinzel', serif !important;
+    font-size: 0.72rem !important;
+    padding: 6px 16px !important;
+    cursor: pointer !important;
+    border-radius: 2px !important;
+    transition: all 0.2s ease !important;
+}
+.leaderboard-sub-toolbar-strip .settings-btn.mini-btn:hover,
+.leaderboard-sub-toolbar-strip .settings-btn.mini-btn.active-sub-glow {
+    color: #ffd700 !important;
+    border-color: #ffd700 !important;
+    background: #1e1810 !important;
+    box-shadow: 0 0 8px rgba(255, 215, 0, 0.25) !important;
+}
+
+/* PRODUCTION DATA SHEET GRID MATRIX HOUSINGS */
+.leaderboard-scrollable-table-bin {
+    width: 100% !important;
+    max-height: 340px !important;
+    overflow-y: auto !important;
+    padding-right: 2px !important;
+    box-sizing: border-box !important;
+}
+
+.leaderboard-production-table-grid {
+    width: 100% !important;
+    border-collapse: collapse !important;
+    font-family: 'Segoe UI', sans-serif !important;
+    font-size: 0.8rem !important;
+}
+
+.leaderboard-production-table-grid th {
+    background: #0d0a07 !important;
+    font-family: 'Cinzel', serif !important;
+    font-size: 0.72rem !important;
+    color: #b89030 !important;
+    letter-spacing: 1px !important;
+    padding: 10px 12px !important;
+    border-bottom: 2px solid rgba(184, 144, 48, 0.3) !important;
+    text-transform: uppercase !important;
+}
+
+.leaderboard-production-table-grid td {
+    padding: 10px 12px !important;
+    border-bottom: 1px solid rgba(184, 144, 48, 0.1) !important;
+    color: rgba(241, 224, 172, 0.85) !important;
+    transition: background 0.1s ease !important;
+}
+
+.leaderboard-production-table-grid tr:hover td {
+    background: rgba(184, 144, 48, 0.05) !important;
+}
+
+/* SPECIAL BADGE ROW OVERLAYS EFFECTS */
+.rank-badge-cell {
+    font-family: 'Cinzel', serif !important;
+    font-weight: bold !important;
+    text-align: center !important;
+}
+.rank-num-1 { color: #ffd700 !important; font-size: 0.85rem !important; text-shadow: 0 0 4px rgba(255,215,0,0.4) !important; }
+.rank-num-2 { color: #c0c0c0 !important; }
+.rank-num-3 { color: #cd7f32 !important; }
+
+.commander-name-label { color: #ffffff !important; }
+.score-numerical-cell { font-family: 'Cinzel', serif !important; font-weight: bold !important; text-align: right !important; color: #f1e0ac !important; }
+.status-honorary-title-cell { text-align: right !important; font-size: 0.72rem !important; color: rgba(241, 224, 172, 0.5) !important; font-style: italic !important; }
+
+/* In-game client account profile highlight line rows */
+.current-player-row-highlight td {
+    background: rgba(255, 215, 0, 0.08) !important;
+    border-top: 1px solid rgba(255, 215, 0, 0.2) !important;
+    border-bottom: 1px solid rgba(255, 215, 0, 0.2) !important;
+}
+.current-player-row-highlight .commander-name-label {
+    color: #ffd700 !important;
+}
+
+/* ============================================================
+   SECTION 10: ALIGNMENT | Block 20: Fullscreen Tavern Chat Skins
+   ============================================================ */
+
+.chat-workspace-chassis {
+    display: flex !important;
+    flex-direction: row !important;
+    width: 100% !important;
+    
+    /* 🔥 MAXIMUM CONTAINER LOCKOUT FORCE: */
+    /* Hard-locks the maximum height to matching viewport dimensions, completely blocking */
+    /* the master box frame from growing even 1px larger when text messages stack up! */
+    height: calc(100vh - 280px) !important;
+    max-height: calc(100vh - 280px) !important;
+    min-height: calc(100vh - 280px) !important;
+    
+    background: linear-gradient(135deg, rgba(22, 18, 13, 0.8) 0%, rgba(13, 10, 8, 0.9) 100%) !important;
+    border: 1px solid rgba(184, 144, 48, 0.3) !important;
+    border-radius: 4px !important;
+    box-shadow: 0 15px 30px rgba(0,0,0,0.7) !important;
+    box-sizing: border-box !important;
+    gap: 16px !important;
+    padding: 16px !important;
+}
+
+/* SIDEBAR RECONCILED CHANNELS DECK CONTROLLERS */
+.chat-sidebar-channels-deck {
+    width: 240px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 10px !important;
+    border-right: 1px solid rgba(184, 144, 48, 0.2) !important;
+    padding-right: 16px !important;
+    box-sizing: border-box !important;
+    flex-shrink: 0 !important;
+    height: 100% !important;
+}
+
+.chat-channel-btn {
+    width: 100% !important;
+    background: rgba(0, 0, 0, 0.5) !important;
+    border: 1px solid rgba(184, 144, 48, 0.2) !important;
+    color: rgba(241, 224, 172, 0.6) !important;
+    font-family: 'Cinzel', serif !important;
+    font-size: 0.85rem !important;
+    font-weight: bold !important;
+    padding: 12px 14px !important;
+    cursor: pointer !important;
+    border-radius: 3px !important;
+    text-align: left !important;
+    transition: all 0.2s ease !important;
+}
+.chat-channel-btn:hover,
+.chat-channel-btn.active-channel-glow {
+    color: #ffd700 !important;
+    border-color: #ffd700 !important;
+    background: #1c150e !important;
+    box-shadow: inset 0 1px 3px rgba(255,215,0,0.1) !important;
+}
+
+/* RIGHT PANEL MESH: THE MAIN CHAT INTERFACE HUB GRID */
+.chat-main-feed-compartment {
+    flex: 1 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    
+    /* Pins extremes: Keeps the stream at the ceiling and locks the input bar rigidly to the floor */
+    justify-content: space-between !important; 
+    align-items: stretch !important;
+    min-height: 0 !important;
+    height: 100% !important;
+    box-sizing: border-box !important;
+}
+
+/* THE MESSAGES SCROLL AREA SCROLL ZONE CONTAINER */
+.chat-scrolling-messages-bin {
+    width: 100% !important;
+    
+    /* INTERNAL HEIGHT VACUUM: Allocates 100% space dynamically while saving exactly room for the input */
+    flex: 1 !important;
+    height: 100% !important;
+    min-height: 0 !important;
+    
+    /* 🔥 INTERNAL HEIGHT CONSTRAINT LOCKOUT: */
+    /* Strictly forbids the scrolling space from expanding or following long text message strings down! */
+    max-height: calc(100% - 62px) !important;
+    
+    background: rgba(0, 0, 0, 0.4) !important;
+    border: 1px solid rgba(184, 144, 48, 0.15) !important;
+    border-radius: 3px !important;
+    padding: 16px !important;
+    
+    /* 🔥 NATIVE SCROLL ENFORCEMENT: */
+    /* Safely turns on dynamic overflow mechanics internally inside this frozen boundary layer! */
+    overflow-y: auto !important; 
+    overflow-x: hidden !important;
+    
+    box-sizing: border-box !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 10px !important;
+    padding-bottom: 12px !important;
+}
+
+.chat-message-strip-row {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: flex-start !important;
+    justify-content: flex-start !important;
+    gap: 12px !important;
+    text-align: left !important;
+    font-family: 'Segoe UI', sans-serif !important;
+    font-size: 0.92rem !important;
+    color: rgba(241, 224, 172, 0.85) !important;
+    padding: 6px 10px !important;
+    border-radius: 3px !important;
+    flex-shrink: 0 !important;
+}
+.chat-message-strip-row:hover {
+    background: rgba(184, 144, 48, 0.05) !important;
+}
+
+.chat-message-meta-left {
+    display: flex !important;
+    gap: 8px !important;
+    flex-shrink: 0 !important;
+}
+.chat-message-timestamp { color: rgba(241, 224, 172, 0.3) !important; font-size: 0.78rem !important; }
+.chat-message-sender-name { color: #b89030 !important; font-family: 'Cinzel', serif !important; font-size: 0.85rem !important; }
+
+.local-sender-highlight-strip {
+    background: rgba(255, 215, 0, 0.04) !important;
+}
+.local-sender-highlight-strip .chat-message-sender-name {
+    color: #ffd700 !important;
+}
+
+/* 🔒 TRANSMIT INPUT ROW: UN-COLLAPSIBLE FIXED BASELINE FLOOR BAR */
+.chat-input-toolbar-row {
+    width: 100% !important;
+    height: 48px !important; 
+    display: flex !important;
+    flex-direction: row !important;
+    gap: 12px !important;
+    align-items: center !important;
+    box-sizing: border-box !important;
+    
+    /* HARD LOCKOUT: Disables shrinking, rendering as a permanent structural boundary wall */
+    flex-shrink: 0 !important; 
+    
+    /* Generates an absolute 14px spacer gap above the keyboard lane track */
+    margin-top: 14px !important; 
+    background-color: transparent !important;
+}
+
+#chat-portal-message-input-field {
+    flex: 1 !important;
+    background: rgba(0,0,0,0.6) !important;
+    border: 1px solid rgba(184, 144, 48, 0.25) !important;
+    padding: 12px 16px !important;
+    color: #ffffff !important;
+    font-family: 'Segoe UI', sans-serif !important;
+    font-size: 0.95rem !important;
+    outline: none !important;
+    border-radius: 3px !important;
+}
+
+/* ============================================================
+   SECTION 11: ALIGNMENT | Block 21: Nav Bar Embedded Avatar Thumbnail
+   ============================================================ */
+
+.nav-bar-embedded-avatar-thumbnail {
+    width: 28px !important;       /* Compact micro-frame sizing profile dimensions */
+    height: 28px !important;
+    border-radius: 50% !important; /* Blends the square asset shape into a sharp circular crest shield */
+    border: 1px solid #b89030 !important; /* Thin runic golden boundary bezel accent */
+    background-color: #0b0907 !important;
+    box-shadow: 0 0 6px rgba(255, 215, 0, 0.25) !important;
+    margin-right: 10px !important; /* Generates a clean horizontal tracking gap before text string begins */
+    object-fit: cover !important;
+    display: inline-block !important;
+}
+
+/* ============================================================
+   SECTION 12: ALIGNMENT | Block 22: Absolute Input Field Breakout
+   ============================================================ */
+
+/* Forces the main container to assume a relative position mapping channel */
+.chat-main-feed-compartment {
+    position: relative !important;
+    display: flex !important;
+    flex-direction: column !important;
+    height: 100% !important;
+    min-height: 0 !important;
+}
+
+/* Hard-locks your message stream to exactly 78% height, reserving the bottom space exclusively for your input tray */
+.chat-scrolling-messages-bin {
+    height: 78% !important;
+    max-height: 78% !important;
+    flex: none !important; /* Disables flex shrinking, blocking the container from collapsing around short text lines */
+    overflow-y: auto !important;
+    box-sizing: border-box !important;
+    margin-bottom: auto !important;
+}
+
+/* 🔥 THE FORCE BREAKOUT LAYER ENGINE: */
+/* Unlinks the text field from your message list and forces it into its own space at the absolute baseline floor rim! */
+.chat-input-toolbar-row {
+    position: absolute !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    width: 100% !important;
+    height: 48px !important;
+    background-color: #0d0a07 !important; /* Thick matte onyx backing panel blocks out overlapping text elements */
+    z-index: 10 !important;
+    display: flex !important;
+    align-items: center !important;
+    box-sizing: border-box !important;
+    padding-top: 6px !important;
+}
+
+/* ============================================================
+   SECTION 13: ALIGNMENT | Block 23: Special Roster Roles & Handle Highlights
+   ============================================================ */
+
+/* 🛡️ SYSTEM BOT ROSTER DESIGN SPECIFIER:
+   Gives the Royal Guard bot a distinct crimson crimson look to show it is an automated moderator */
+.roster-commander-node-row.status-bot-admin {
+    background: rgba(204, 0, 0, 0.12) !important;
+    border: 1px solid rgba(204, 0, 0, 0.4) !important;
+    color: #ff9999 !important;
+    font-family: 'Cinzel', serif !important;
+    font-weight: bold !important;
+    letter-spacing: 0.5px !important;
+    box-shadow: 0 0 8px rgba(204, 0, 0, 0.15) !important;
+}
+
+.roster-commander-node-row.status-bot-admin .status-dot {
+    font-size: 0.85rem !important;
+    text-shadow: 0 0 4px #ff3333 !important;
+}
+
+/* System bot text message background tinting highlights values */
+.system-bot-message-highlight {
+    background: rgba(204, 0, 0, 0.03) !important;
+    border-left: 2px solid rgba(204, 0, 0, 0.3) !important;
+}
+.system-bot-message-highlight .chat-message-sender-name {
+    color: #ff4d4d !important;
+}
+
+/* 🔥 SHOUTOUT METRIC TAG BADGES HOVER INDICES FILTERS */
+.chat-shoutout-mention-badge {
+    background: rgba(255, 215, 0, 0.12) !important;
+    border: 1px solid rgba(255, 215, 0, 0.3) !important;
+    color: #ffd700 !important;
+    font-weight: bold !important;
+    padding: 1px 5px !important;
+    border-radius: 3px !important;
+    font-family: 'Cinzel', serif !important;
+    font-size: 0.82rem !important;
+    letter-spacing: 0.5px !important;
+    text-shadow: 0 0 4px rgba(255,215,0,0.2) !important;
+    display: inline-block !important;
+}
+
+/* ============================================================
+   SECTION 13: ALIGNMENT | Block 24: Behavioral Review Board Controls
+   ============================================================ */
+
+/* 🛑 STAFF TRIAGE TICKERS CARD TILES Layouts */
+.behavioral-review-triage-card {
+    width: 100% !important;
+    background: rgba(204, 0, 0, 0.04) !important;
+    border: 1px dashed rgba(204, 0, 0, 0.3) !important;
+    border-radius: 4px !important;
+    padding: 14px 18px !important;
+    box-sizing: border-box !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 10px !important;
+    text-align: left !important;
+}
+
+.review-card-meta-row {
+    display: flex !important;
+    justify-content: space-between !important;
+    font-family: 'Cinzel', serif !important;
+    font-size: 0.82rem !important;
+    color: rgba(241, 224, 172, 0.6) !important;
+}
+.review-timestamp-tag { color: rgba(255,255,255,0.3) !important; font-size: 0.72rem !important; }
+
+.review-card-raw-text {
+    font-family: 'Segoe UI', sans-serif !important;
+    font-size: 0.9rem !important;
+    color: #ffffff !important;
+    font-style: italic !important;
+    background: rgba(0,0,0,0.3) !important;
+    padding: 8px 12px !important;
+    border-radius: 2px !important;
+}
+
+.review-card-action-bar-row {
+    display: flex !important;
+    gap: 12px !important;
+    justify-content: flex-start !important;
+}
+
+.review-action-btn {
+    font-family: 'Cinzel', serif !important;
+    font-weight: bold !important;
+    font-size: 0.68rem !important;
+    padding: 4px 12px !important;
+    cursor: pointer !important;
+    border-radius: 2px !important;
+    background: transparent !important;
+    transition: all 0.15s ease !important;
+}
+.review-action-btn.triage-remove { border: 1px solid rgba(241,224,172,0.4) !important; color: #f1e0ac !important; }
+.review-action-btn.triage-remove:hover { background: rgba(241,224,172,0.1) !important; border-color: #ffd700 !important; }
+
+.review-action-btn.triage-mute { border: 1px solid #ffaa00 !important; color: #ffaa00 !important; }
+.review-action-btn.triage-mute:hover { background: #ffaa00 !important; color: #000000 !important; box-shadow: 0 0 8px #ffaa00 !important; }
+
+.review-action-btn.triage-ban { border: 1px solid #cc0000 !important; color: #ff9999 !important; }
+.review-action-btn.triage-ban:hover { background: #cc0000 !important; color: #ffffff !important; box-shadow: 0 0 8px #cc0000 !important; }
+
+/* 🚨 DISCIPLINARY INCIDENT LOG NOTICES */
+.disciplinary-incident-system-row {
+    background: rgba(204, 0, 0, 0.08) !important;
+    border-left: 3px solid #cc0000 !important;
+    color: #ff9999 !important;
+    font-family: 'Segoe UI', sans-serif !important;
+    font-size: 0.88rem !important;
+}
+
+/* INPUT COMPARTMENT TIMEOUT BANNER LABELS */
+.chat-restriction-alert-banner {
+    width: 100% !important;
+    font-family: 'Cinzel', serif !important;
+    font-size: 0.82rem !important;
+    font-weight: bold !important;
+    padding: 12px 16px !important;
+    border-radius: 3px !important;
+    text-align: center !important;
+    box-sizing: border-box !important;
+    letter-spacing: 0.5px !important;
+}
+.chat-restriction-alert-banner.system-muted { background: rgba(255, 170, 0, 0.1) !important; border: 1px solid #ffaa00 !important; color: #ffbb33 !important; }
+.chat-restriction-alert-banner.system-banned { background: rgba(204, 0, 0, 0.15) !important; border: 1px solid #cc0000 !important; color: #ff9999 !important; }
+
+/* Dynamic Notification Alert Dot Badges */
+.review-board-tab-alert { display: flex !important; justify-content: space-between !important; align-items: center !important; }
+.review-counter-badge {
+    background: #cc0000 !important;
+    color: #ffffff !important;
+    font-family: 'Segoe UI', sans-serif !important;
+    font-weight: bold !important;
+    font-size: 0.68rem !important;
+    padding: 1px 6px !important;
+    border-radius: 10px !important;
+    box-shadow: 0 0 6px #ff3333 !important;
+}
+
+/* ============================================================
+   SECTION 14: ALIGNMENT | Block 25: Chat Sidebar Apex Separator Line
+   ============================================================ */
+
+/* Generates an elegant golden separation track directly beneath your behavioral board tab */
+.chat-sidebar-apex-separator-line {
+    width: 100% !important;
+    height: 1px !important;
+    border-bottom: 1px dashed rgba(184, 144, 48, 0.25) !important;
+    margin: 6px 0 10px 0 !important;
+    box-sizing: border-box !important;
+    flex-shrink: 0 !important;
+}
+
+.chronicles-workspace-container {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 20px !important;
+    width: 100% !important;
+    height: 100% !important;
+    flex: 1 !important;
+    min-height: 0 !important;
+    box-sizing: border-box !important;
+}
+
+/* UPPER XP CALIBRATION MASKS CARD CONTAINER */
+.chronicles-master-card-box {
+    width: 100% !important;
+    background: linear-gradient(135deg, rgba(22, 18, 13, 0.85) 0%, rgba(13, 10, 8, 0.95) 100%) !important;
+    border: 1px solid rgba(184, 144, 48, 0.3) !important;
+    border-radius: 4px !important;
+    padding: 24px 30px !important;
+    box-shadow: 0 12px 24px rgba(0,0,0,0.6) !important;
+    box-sizing: border-box !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 14px !important;
+    flex-shrink: 0 !important;
+}
+
+.chronicles-level-header-row {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    width: 100% !important;
+}
+.chronicles-main-rank-readout { 
+    font-family: 'Cinzel', serif !important; 
+    font-size: 1.05rem !important; 
+    font-weight: bold !important; 
+    color: #ffd700 !important; 
+    letter-spacing: 0.5px !important; 
+}
+.chronicles-xp-fraction-tag { 
+    font-family: 'Segoe UI', sans-serif !important; 
+    font-size: 0.8rem !important; 
+    color: rgba(241, 224, 172, 0.5) !important; 
+    font-weight: bold !important; 
+}
+
+/* THE FLUID METALLIC XP METRIC STRIP TRAY TRACKS */
+.chronicles-progress-bar-track-bezel {
+    width: 100% !important;
+    height: 14px !important;
+    background: #0d0a07 !important;
+    border: 1px solid rgba(184, 144, 48, 0.2) !important;
+    border-radius: 7px !important;
+    padding: 2px !important;
+    box-sizing: border-box !important;
+    overflow: hidden !important;
+}
+
+.chronicles-progress-bar-fill-glow {
+    height: 100% !important;
+    border-radius: 5px !important;
+    background: linear-gradient(90deg, #b89030 0%, #ffd700 50%, #ffffff 100%) !important;
+    box-shadow: 0 0 10px rgba(255, 215, 0, 0.6) !important;
+    transition: width 0.4s ease !important;
+}
+
+/* LOWER INTERFACE CARD MILESTONES DECK PANELS */
+.chronicles-milestones-scroll-bin {
+    flex: 1 !important;
+    width: 100% !important;
+    overflow-y: auto !important; /* Activates seamless scroll layer handling internally inside the grid */
+    padding-right: 4px !important;
+    box-sizing: border-box !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 14px !important;
+}
+
+.chronicles-grid-heading-label {
+    font-family: 'Cinzel', serif !important;
+    font-size: 0.9rem !important;
+    color: #b89030 !important;
+    letter-spacing: 1px !important;
+    margin: 0 !important;
+    text-align: left !important;
+}
+
+.chronicles-milestones-grid-layout {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 10px !important;
+    width: 100% !important;
+}
+
+/* INDOOR INDIVIDUAL MILESTONE CARD BADGE CAPSULES */
+.milestone-landmark-capsule-card {
+    width: 100% !important;
+    background: rgba(0, 0, 0, 0.4) !important;
+    border-radius: 4px !important;
+    padding: 14px 20px !important;
+    box-sizing: border-box !important;
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 20px !important;
+}
+
+.landmark-node-unlocked { 
+    border: 1px solid rgba(184, 144, 48, 0.2) !important; 
+}
+.landmark-node-locked { 
+    border: 1px dashed rgba(184, 144, 48, 0.08) !important; 
+    opacity: 0.55 !important; 
+    background: rgba(0,0,0,0.6) !important; 
+}
+
+.milestone-badge-hexagon-icon {
+    font-size: 1.3rem !important;
+    width: 40px !important;
+    height: 40px !important;
+    background: #0d0a07 !important;
+    border: 1px solid rgba(184, 144, 48, 0.2) !important;
+    border-radius: 4px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    flex-shrink: 0 !important;
+}
+
+.milestone-meta-contents {
+    flex: 1 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    text-align: left !important;
+    gap: 2px !important;
+}
+
+.milestone-tier-level-label { 
+    font-family: 'Segoe UI', sans-serif !important; 
+    font-size: 0.65rem !important; 
+    color: rgba(241, 224, 172, 0.4) !important; 
+    text-transform: uppercase !important; 
+    letter-spacing: 0.5px; 
+}
+.milestone-title-string { 
+    font-family: 'Cinzel', serif !important; 
+    font-size: 0.9rem !important; 
+    font-weight: bold !important; 
+    color: #ffffff !important; 
+}
+.milestone-reward-description-text { 
+    font-family: 'Segoe UI', sans-serif !important; 
+    font-size: 0.82rem !important; 
+    color: rgba(241, 224, 172, 0.7) !important; 
+    margin: 0 !important; 
+}
+
+.milestone-status-action-deck { 
+    font-family: 'Cinzel', serif !important; 
+    font-size: 0.75rem !important; 
+    font-weight: bold !important; 
+    letter-spacing: 0.5px !important; 
+    flex-shrink: 0 !important; 
+}
+.status-unlocked-text-tag { 
+    color: #ffd700 !important; 
+    text-shadow: 0 0 4px rgba(255,215,0,0.2) !important; 
+}
+.status-locked-text-tag { 
+    color: rgba(241, 224, 172, 0.25) !important; 
+}
+
+/* ============================================================
+   SECTION 16: ALIGNMENT | Block 26: Metallic Range Mixer Slider Interface Customizations
+   ============================================================ */
+
+.audio-mixer-workspace-container {
+    display: flex !important;
+    flex-direction: column !important;
+    width: 100% !important;
+    height: 100% !important;
+    flex: 1 !important;
+    background: linear-gradient(135deg, rgba(22, 18, 13, 0.75) 0%, rgba(13, 10, 8, 0.85) 100%) !important;
+    border: 1px solid rgba(184, 144, 48, 0.25) !important;
+    border-radius: 4px !important;
+    padding: 24px 30px !important;
+    box-shadow: 0 12px 24px rgba(0,0,0,0.6) !important;
+    box-sizing: border-box !important;
+    min-height: 0 !important;
+}
+
+.audio-mixer-controls-deck-grid {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 12px !important;
+    width: 100% !important;
+}
+
+.audio-mixer-group-row {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    width: 100% !important;
+    background: rgba(0, 0, 0, 0.4) !important;
+    border: 1px solid rgba(184, 144, 48, 0.15) !important;
+    border-radius: 4px !important;
+    padding: 14px 20px !important;
+    box-sizing: border-box !important;
+}
+
+.mixer-label-meta-cell {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    text-align: left !important;
+    gap: 2px !important;
+}
+
+.mixer-channel-title-string {
+    font-family: 'Cinzel', serif !important;
+    font-size: 0.95rem !important;
+    font-weight: bold !important;
+    color: #ffffff !important;
+    letter-spacing: 0.5px !important;
+}
+
+.mixer-channel-sub-tag {
+    font-family: 'Segoe UI', sans-serif !important;
+    font-size: 0.75rem !important;
+    color: rgba(241, 224, 172, 0.4) !important;
+}
+
+/* HIGH-PRIORITY NATIVE HARDWARE SLIDER TRACK RIPPINGS WRAPPERS */
+.mixer-slider-track-input {
+    -webkit-appearance: none !important;
+    appearance: none !important;
+    width: 280px !important;
+    height: 6px !important;
+    background: #0d0a07 !important;
+    border: 1px solid rgba(184, 144, 48, 0.3) !important;
+    border-radius: 3px !important;
+    outline: none !important;
+    cursor: pointer !important;
+}
+
+/* CUSTOM SLIDER THUMB KNOB FORMATTING (FOR WEBKIT CHROME/SAFARI LAYERS) */
+.mixer-slider-track-input::-webkit-slider-thumb {
+    -webkit-appearance: none !important;
+    appearance: none !important;
+    width: 14px !important;
+    height: 18px !important;
+    background: linear-gradient(135deg, #ffd700 0%, #b89030 100%) !important;
+    border: 1px solid #110e0a !important;
+    border-radius: 2px !important;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.85) !important;
+    transition: transform 0.15s ease, background-color 0.15s ease !important;
+}
+.mixer-slider-track-input::-webkit-slider-thumb:hover {
+    transform: scale(1.15) !important;
+    background: #ffffff !important;
+}
+
+/* CUSTOM SLIDER THUMB KNOB FORMATTING (FOR MOZILLA FIREFOX ENGINE LAYERS) */
+.mixer-slider-track-input::-moz-range-thumb {
+    width: 14px !important;
+    height: 18px !important;
+    background: linear-gradient(135deg, #ffd700 0%, #b89030 100%) !important;
+    border: 1px solid #110e0a !important;
+    border-radius: 2px !important;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.85) !important;
+}
+
+/* ============================================================
+   SECTION 17: INTERFACE GRAPHICS ENGINE | Block 27: Presentation Component Styling
+   ============================================================ */
+
+/* ROYAL DESIGN STYLE ARCHITECTURE - FAMILY: LOCAL ROYALDETAILS DISPLAY ENGINE */
+.card-scrollable-body-text p.portal-intro-lead {
+    font-family: 'RoyalDetails', serif;
+    font-size: 1.05rem;
+    line-height: 1.8;
+    color: #ffffff;
+    margin-bottom: 18px;
+    letter-spacing: 0.5px;
+}
+
+.card-scrollable-body-text p.portal-intro-body {
+    font-family: 'RoyalDetails', serif;
+    font-size: 0.95rem;
+    line-height: 1.7;
+    color: #b0b8c4;
+    margin-bottom: 16px;
+    letter-spacing: 0.2px;
+}
+
+.card-scrollable-body-text h3.portal-intro-subhead {
+    font-family: 'RoyalDetails', serif;
+    font-size: 1.15rem;
+    color: #c5a059;
+    margin-top: 28px;
+    margin-bottom: 14px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    text-shadow: 0 0 10px rgba(197, 160, 89, 0.35);
+}
+
+/* PLAYSTYLE SELECTION LIST OVERRIDES */
+.card-scrollable-body-text ul.portal-intro-list {
+    list-style: none;
+    padding-left: 0;
+    margin-bottom: 22px;
+}
+
+.card-scrollable-body-text ul.portal-intro-list li {
+    font-family: 'RoyalDetails', serif;
+    font-size: 0.95rem;
+    line-height: 1.7;
+    color: #e0e5eb;
+    border-left: 3px solid #c5a059;
+    padding-left: 14px;
+    margin-bottom: 12px;
+    background: rgba(255, 255, 255, 0.01);
+}
+
+/* GAME MODE DISPLAY BOXES */
+.card-scrollable-body-text .portal-victory-box {
+    font-family: 'RoyalDetails', serif;
+    background: rgba(0, 0, 0, 0.35);
+    border: 1px solid rgba(197, 160, 89, 0.15);
+    border-radius: 4px;
+    padding: 16px;
+    margin-bottom: 16px;
+    font-size: 0.9rem;
+    line-height: 1.7;
+    color: #b0b8c4;
+    box-shadow: inset 0 0 15px rgba(0, 0, 0, 0.6);
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.card-scrollable-body-text .portal-victory-box:hover {
+    border-color: rgba(197, 160, 89, 0.4);
+    box-shadow: inset 0 0 20px rgba(197, 160, 89, 0.1), 0 0 10px rgba(0, 0, 0, 0.5);
+}
+
+.card-scrollable-body-text .portal-victory-box strong {
+    color: #c5a059;
+    letter-spacing: 0.5px;
+}
+
+/* ZONE WARS MATRIX INLINE TABS */
+.card-scrollable-body-text .portal-zone-matrix-row {
+    font-family: 'RoyalDetails', serif;
+    display: block;
+    font-weight: bold;
+    color: #ffffff;
+    margin-top: 6px;
+    padding-left: 12px;
+    border-left: 1px dashed rgba(197, 160, 89, 0.4);
+    letter-spacing: 0.5px;
+}
+
+/* ==========================================================================
+   SECTION 17: PORTAL VISUAL ENGINEERING | Block 28: Avatar Drop Submenu
+   ========================================================================== */
+
+/* ANCHORS DROPDOWN TRACK CORES POSITIONS RELATIVE TO IMAGE BOUNDARIES */
+.nav-avatar-hub-wrapper {
+    position: relative !important;
+    display: inline-block !important;
+    padding-bottom: 10px !important; /* Safety buffer prevents tracking drop drops on cursor movement gaps */
+    top: 4px !important; 
+}
+
+/* THE EXTENSIBLE HIDDEN ACCORDION FRAME CONSOLE CHASSIS */
+.avatar-hover-dropdown-menu {
+    position: absolute !important;
+    top: 100% !important;
+    left: 0 !important;
+    background: radial-gradient(circle at top, rgba(20, 24, 33, 0.98) 0%, rgba(10, 12, 16, 1) 100%) !important;
+    border: 1px solid rgba(184, 144, 48, 0.35) !important;
+    border-radius: 4px !important;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.95), inset 0 0 15px rgba(0, 0, 0, 0.6) !important;
+    min-width: 140px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 2px !important;
+    padding: 6px !important;
+    margin-top: -4px !important;
+    z-index: 99999999 !important;
+    box-sizing: border-box !important;
+    
+    /* ANIMATION HARDWARE ACCELERATED TRANSITIONS: Starts hidden and collapsed upward */
+    opacity: 0 !important;
+    visibility: hidden !important;
+    transform: translateY(-8px) scale(0.95) !important;
+    transition: opacity 0.2s cubic-bezier(0.4, 0, 0.2, 1), 
+                transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), 
+                visibility 0.2s !important;
+    pointer-events: none !important;
+}
+
+/* TRIGGER HOVER SYSTEM EVENT PASSTHROUGH STATIONS */
+.nav-avatar-hub-wrapper:hover .avatar-hover-dropdown-menu {
+    opacity: 1 !important;
+    visibility: visible !important;
+    transform: translateY(0) scale(1) !important;
+    pointer-events: auto !important;
+}
+
+/* DROPDOWN TRANSACTION CHANNELS ITEM HOOK ACTIONS */
+.avatar-hover-dropdown-menu .dropdown-action-item {
+    background: transparent !important;
+    border: 1px solid transparent !important;
+    color: #b0b8c4 !important;
+    font-family: 'Cinzel', serif !important;
+    font-size: 0.8rem !important;
+    font-weight: bold !important;
+    text-align: left !important;
+    padding: 8px 12px !important;
+    width: 100% !important;
+    cursor: pointer !important;
+    box-sizing: border-box !important;
+    border-radius: 2px !important;
+    transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease !important;
+}
+
+/* TARGET HOVER EFFECTS: Lights elements up to look exactly like royal update-item links */
+.avatar-hover-dropdown-menu .dropdown-action-item:hover {
+    background: rgba(184, 144, 48, 0.08) !important;
+    border-color: rgba(184, 144, 48, 0.25) !important;
+    color: #ffd700 !important;
+    text-shadow: 0 0 6px rgba(255, 215, 0, 0.4) !important;
+}
+
+.avatar-hover-dropdown-menu .dropdown-action-item-view-profile {
+    color: #ffd700 !important;
+    border-bottom: 1px solid rgba(184, 144, 48, 0.22) !important;
+    margin-bottom: 2px !important;
+    padding-bottom: 9px !important;
+}
+
+/* ==========================================================================
+   SECTION 17A2: COMMUNITY CHAT @ SHOUTOUT ALERTS (LOWER RIGHT)
+   ========================================================================== */
+
+.chat-mention-alert-stack {
+    position: fixed !important;
+    right: 22px !important;
+    bottom: 22px !important;
+    z-index: 248000 !important;
+    display: flex !important;
+    flex-direction: column-reverse !important;
+    align-items: flex-end !important;
+    gap: 10px !important;
+    max-width: min(360px, calc(100vw - 44px)) !important;
+    pointer-events: none !important;
+}
+
+.chat-mention-alert-card {
+    pointer-events: auto !important;
+    width: min(340px, calc(100vw - 44px)) !important;
+    box-sizing: border-box !important;
+    padding: 12px 14px 11px 14px !important;
+    border-radius: 4px !important;
+    border: 1px solid rgba(184, 144, 48, 0.55) !important;
+    border-right: 4px solid #b89030 !important;
+    background: linear-gradient(145deg, rgba(28, 24, 18, 0.98) 0%, rgba(10, 8, 6, 0.99) 100%) !important;
+    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.88), inset 0 0 14px rgba(184, 144, 48, 0.08) !important;
+    cursor: pointer !important;
+    text-align: left !important;
+    transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease !important;
+    animation: chatMentionAlertSlideIn 0.28s ease !important;
+}
+
+@keyframes chatMentionAlertSlideIn {
+    from {
+        opacity: 0;
+        transform: translateX(18px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+.chat-mention-alert-card:hover,
+.chat-mention-alert-card:focus-visible {
+    transform: translateY(-2px) !important;
+    border-color: #ffd700 !important;
+    box-shadow: 0 14px 32px rgba(0, 0, 0, 0.92), 0 0 16px rgba(255, 215, 0, 0.18) !important;
+    outline: none !important;
+}
+
+.chat-mention-alert-card-header {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 8px !important;
+    margin-bottom: 6px !important;
+}
+
+.chat-mention-alert-eyebrow {
+    font-family: 'RoyalDetails', serif !important;
+    font-size: 0.68rem !important;
+    letter-spacing: 1px !important;
+    color: #c5a059 !important;
+    text-transform: uppercase !important;
+}
+
+.chat-mention-alert-dismiss-btn {
+    background: transparent !important;
+    border: none !important;
+    color: rgba(241, 224, 172, 0.55) !important;
+    font-size: 1.15rem !important;
+    line-height: 1 !important;
+    padding: 0 2px !important;
+    cursor: pointer !important;
+    flex-shrink: 0 !important;
+}
+
+.chat-mention-alert-dismiss-btn:hover {
+    color: #ffd700 !important;
+}
+
+.chat-mention-alert-sender {
+    display: block !important;
+    font-family: 'Cinzel', serif !important;
+    font-size: 0.88rem !important;
+    color: #ffd700 !important;
+    margin-bottom: 6px !important;
+    text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.85) !important;
+}
+
+.chat-mention-alert-preview {
+    display: block !important;
+    font-family: 'Segoe UI', sans-serif !important;
+    font-size: 0.78rem !important;
+    line-height: 1.45 !important;
+    color: rgba(241, 224, 172, 0.88) !important;
+    margin-bottom: 8px !important;
+    font-style: italic !important;
+    word-break: break-word !important;
+}
+
+.chat-mention-alert-cta {
+    display: block !important;
+    font-family: 'Segoe UI', sans-serif !important;
+    font-size: 0.7rem !important;
+    color: rgba(184, 144, 48, 0.95) !important;
+    letter-spacing: 0.3px !important;
+}
+
+/* ==========================================================================
+   SECTION 17A: LOWER-LEFT SAVE CONFIRMATION TOAST
+   ========================================================================== */
+
+.commander-hub-dialog > .portal-save-confirmation-toast,
+#lore-modal .lore-content-area > .portal-save-confirmation-toast,
+.portal-save-confirmation-toast {
+    position: absolute !important;
+    left: 18px !important;
+    bottom: 14px !important;
+    z-index: 30 !important;
+    max-width: min(360px, calc(100vw - 44px)) !important;
+    padding: 12px 18px !important;
+    box-sizing: border-box !important;
+    font-family: 'Cinzel', serif !important;
+    font-size: 0.82rem !important;
+    font-weight: bold !important;
+    letter-spacing: 0.4px !important;
+    color: #ffd700 !important;
+    text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.9) !important;
+    background: linear-gradient(145deg, rgba(32, 28, 20, 0.98) 0%, rgba(12, 10, 8, 0.99) 100%) !important;
+    border: 1px solid rgba(184, 144, 48, 0.55) !important;
+    border-left: 4px solid #b89030 !important;
+    border-radius: 4px !important;
+    box-shadow: 0 10px 28px rgba(0, 0, 0, 0.85), inset 0 0 12px rgba(184, 144, 48, 0.08) !important;
+    opacity: 0 !important;
+    transform: translateY(12px) !important;
+    transition: opacity 0.28s ease, transform 0.28s ease !important;
+    pointer-events: none !important;
+}
+
+.portal-save-confirmation-toast.is-visible {
+    opacity: 1 !important;
+    transform: translateY(0) !important;
+}
+
+.portal-save-confirmation-toast[hidden] {
+    display: none !important;
+}
+
+/* ==========================================================================
+   SECTION 17B: PUBLIC COMMANDER PROFILE CARD (VIEW PROFILE)
+   ========================================================================== */
+
+.public-profile-overlay {
+    position: fixed !important;
+    inset: 0 !important;
+    z-index: 260000 !important;
+    display: none;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 28px 20px !important;
+    box-sizing: border-box !important;
+    background: rgba(0, 0, 0, 0.84) !important;
+    opacity: 0;
+    transition: opacity 0.22s ease !important;
+}
+
+.public-profile-overlay.is-visible {
+    display: flex !important;
+}
+
+.public-profile-card-dialog {
+    position: relative !important;
+    width: min(720px, 96vw) !important;
+    max-height: min(88vh, 760px) !important;
+    box-sizing: border-box !important;
+}
+
+.public-profile-close-btn {
+    position: absolute !important;
+    top: -8px !important;
+    right: -8px !important;
+    z-index: 4 !important;
+    background: transparent !important;
+    border: none !important;
+    padding: 0 !important;
+    cursor: pointer !important;
+}
+
+.public-profile-close-icon {
+    width: 34px !important;
+    height: 34px !important;
+    display: block !important;
+}
+
+.public-profile-card-frame {
+    background-image: url('images/borderedcontainer_thin.png') !important;
+    background-size: 100% 100% !important;
+    background-repeat: no-repeat !important;
+    background-position: center center !important;
+    padding: 22px 26px 20px 26px !important;
+    box-sizing: border-box !important;
+    overflow: hidden !important;
+}
+
+.public-profile-card-banner {
+    height: 4px !important;
+    margin: -6px 0 14px 0 !important;
+    border-radius: 2px !important;
+    background: linear-gradient(90deg, transparent 0%, #b89030 20%, #ffd700 50%, #b89030 80%, transparent 100%) !important;
+}
+
+.public-profile-card-mount {
+    max-height: calc(88vh - 80px) !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    padding-right: 4px !important;
+    scrollbar-width: thin !important;
+    scrollbar-color: #9a7a32 rgba(14, 11, 8, 0.85) !important;
+}
+
+.public-profile-identity-header {
+    display: flex !important;
+    flex-direction: row !important;
+    gap: 18px !important;
+    align-items: flex-start !important;
+    margin-bottom: 18px !important;
+    text-align: left !important;
+}
+
+.public-profile-avatar-ring {
+    flex-shrink: 0 !important;
+    width: 108px !important;
+    height: 108px !important;
+    padding: 4px !important;
+    border-radius: 50% !important;
+    border: 2px solid #b89030 !important;
+    background: radial-gradient(circle at 30% 20%, rgba(72, 58, 32, 0.95) 0%, rgba(12, 10, 8, 1) 100%) !important;
+    box-shadow: 0 0 18px rgba(184, 144, 48, 0.25) !important;
+}
+
+.public-profile-avatar-img {
+    width: 100% !important;
+    height: 100% !important;
+    border-radius: 50% !important;
+    object-fit: cover !important;
+    display: block !important;
+}
+
+.public-profile-identity-copy {
+    flex: 1 !important;
+    min-width: 0 !important;
+}
+
+.public-profile-eyebrow {
+    margin: 0 0 4px 0 !important;
+    font-family: 'RoyalDetails', serif !important;
+    font-size: 0.68rem !important;
+    letter-spacing: 1.5px !important;
+    color: rgba(184, 144, 48, 0.85) !important;
+    text-transform: uppercase !important;
+}
+
+.public-profile-commander-name {
+    margin: 0 0 8px 0 !important;
+    font-family: 'RoyalDetails', serif !important;
+    font-size: 1.55rem !important;
+    color: #ffd700 !important;
+    text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.9) !important;
+    line-height: 1.15 !important;
+    word-break: break-word !important;
+}
+
+.public-profile-badge-row {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 8px !important;
+    align-items: center !important;
+    margin-bottom: 10px !important;
+}
+
+.public-profile-membership {
+    font-family: 'Cinzel', serif !important;
+    font-size: 0.68rem !important;
+    font-weight: bold !important;
+    letter-spacing: 0.5px !important;
+    padding: 3px 10px !important;
+    border-radius: 10px !important;
+    border: 1px solid rgba(184, 144, 48, 0.45) !important;
+    color: #f1e0ac !important;
+    background: rgba(20, 16, 11, 0.9) !important;
+}
+
+.public-profile-membership.tier-bronze { color: #cd7f32 !important; border-color: #cd7f32 !important; }
+.public-profile-membership.tier-silver { color: #c0c0c0 !important; border-color: #c0c0c0 !important; }
+.public-profile-membership.tier-gold { color: #ffd700 !important; border-color: #ffd700 !important; }
+
+.public-profile-visibility-pill {
+    font-family: 'Segoe UI', sans-serif !important;
+    font-size: 0.65rem !important;
+    padding: 3px 8px !important;
+    border-radius: 8px !important;
+    letter-spacing: 0.4px !important;
+}
+
+.public-profile-visibility-pill.is-public {
+    color: #e8e8e8 !important;
+    border: 1px solid rgba(120, 120, 120, 0.65) !important;
+    background: #6e6e6e !important;
+}
+
+.public-profile-visibility-pill.is-private {
+    color: #d4a8a8 !important;
+    border: 1px solid rgba(160, 80, 80, 0.4) !important;
+    background: rgba(48, 18, 18, 0.45) !important;
+}
+
+.public-profile-meta-row {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 14px 22px !important;
+    font-family: 'Segoe UI', sans-serif !important;
+    font-size: 0.78rem !important;
+    color: rgba(241, 224, 172, 0.72) !important;
+    margin-bottom: 4px !important;
+}
+
+.public-profile-meta-row strong {
+    color: #b89030 !important;
+    font-weight: 600 !important;
+}
+
+.public-profile-split-body {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: stretch !important;
+    gap: 18px !important;
+    margin-bottom: 14px !important;
+    padding-top: 14px !important;
+    border-top: 1px solid rgba(184, 144, 48, 0.18) !important;
+    text-align: left !important;
+}
+
+.public-profile-split-column {
+    min-width: 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
+}
+
+.public-profile-split-left {
+    flex: 1 1 52% !important;
+}
+
+.public-profile-split-right {
+    flex: 1 1 48% !important;
+    gap: 14px !important;
+}
+
+.public-profile-split-body .public-profile-section {
+    margin-bottom: 0 !important;
+    padding-top: 0 !important;
+    border-top: none !important;
+    flex: 1 1 auto !important;
+    display: flex !important;
+    flex-direction: column !important;
+    min-height: 0 !important;
+}
+
+.public-profile-bio-panel {
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+    padding: 0 !important;
+    border: none !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    box-sizing: border-box !important;
+}
+
+.public-profile-bio-panel .public-profile-bio-text,
+.public-profile-bio-panel .public-profile-private-msg,
+.public-profile-bio-panel .public-profile-bio-empty {
+    margin: 0 !important;
+    padding: 0 !important;
+    text-align: justify !important;
+    text-justify: inter-word !important;
+}
+
+.public-profile-bio-panel .public-profile-empty-state {
+    text-align: center !important;
+    padding: 24px 8px !important;
+}
+
+.public-profile-split-right .public-profile-awards-grid {
+    min-height: 52px !important;
+}
+
+.public-profile-split-right .public-profile-age-history-list {
+    max-height: 200px !important;
+    overflow-y: auto !important;
+    padding-right: 2px !important;
+}
+
+.public-profile-split-right .public-profile-empty-state {
+    text-align: left !important;
+    padding: 8px 4px !important;
+}
+
+@media (max-width: 640px) {
+    .public-profile-split-body {
+        flex-direction: column !important;
+    }
+
+    .public-profile-split-left,
+    .public-profile-split-right {
+        flex: 1 1 auto !important;
+        width: 100% !important;
+    }
+
+}
+
+.public-profile-section {
+    margin-bottom: 16px !important;
+    padding-top: 12px !important;
+    border-top: 1px solid rgba(184, 144, 48, 0.18) !important;
+    text-align: left !important;
+}
+
+.public-profile-section-label {
+    margin: 0 0 8px 0 !important;
+    font-family: 'Cinzel', serif !important;
+    font-size: 0.78rem !important;
+    color: #c5a059 !important;
+    letter-spacing: 1px !important;
+}
+
+.public-profile-bio-text {
+    margin: 0 !important;
+    font-family: 'Segoe UI', sans-serif !important;
+    font-size: 0.84rem !important;
+    line-height: 1.55 !important;
+    color: #f1e0ac !important;
+    text-align: justify !important;
+    text-justify: inter-word !important;
+}
+
+.public-profile-empty-state {
+    margin: 0 !important;
+    font-family: 'Segoe UI', sans-serif !important;
+    font-size: 0.82rem !important;
+    color: rgba(241, 224, 172, 0.55) !important;
+    font-style: italic !important;
+    text-align: center !important;
+    padding: 10px 6px !important;
+}
+
+.public-profile-age-history-list {
+    list-style: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 8px !important;
+}
+
+.public-profile-age-entry {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 3px !important;
+    padding: 8px 10px !important;
+    border: 1px solid rgba(184, 144, 48, 0.2) !important;
+    border-radius: 3px !important;
+    background: rgba(12, 10, 8, 0.55) !important;
+}
+
+.public-profile-age-name {
+    font-family: 'Cinzel', serif !important;
+    font-size: 0.8rem !important;
+    color: #ffd700 !important;
+    letter-spacing: 0.4px !important;
+}
+
+.public-profile-age-meta {
+    font-family: 'Segoe UI', sans-serif !important;
+    font-size: 0.72rem !important;
+    color: rgba(241, 224, 172, 0.62) !important;
+}
+
+.public-profile-awards-grid {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 10px !important;
+    align-items: flex-start !important;
+    min-height: 44px !important;
+}
+
+.public-profile-award-chip {
+    position: relative !important;
+    width: 44px !important;
+    height: 44px !important;
+    flex-shrink: 0 !important;
+    cursor: help !important;
+    outline: none !important;
+}
+
+.public-profile-award-icon-shell {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 44px !important;
+    height: 44px !important;
+    border-radius: 50% !important;
+    border: 2px solid rgba(184, 144, 48, 0.55) !important;
+    background: radial-gradient(circle at 30% 25%, rgba(72, 58, 32, 0.95) 0%, rgba(14, 11, 8, 1) 100%) !important;
+    box-shadow: 0 0 10px rgba(184, 144, 48, 0.2) !important;
+    transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease !important;
+}
+
+.public-profile-award-icon-img {
+    width: 30px !important;
+    height: 30px !important;
+    object-fit: contain !important;
+    display: block !important;
+    pointer-events: none !important;
+}
+
+.public-profile-award-icon-fallback {
+    font-size: 1.35rem !important;
+    line-height: 1 !important;
+    pointer-events: none !important;
+}
+
+.public-profile-award-chip:hover .public-profile-award-icon-shell,
+.public-profile-award-chip:focus-visible .public-profile-award-icon-shell {
+    transform: scale(1.08) !important;
+    border-color: #ffd700 !important;
+    box-shadow: 0 0 14px rgba(255, 215, 0, 0.35) !important;
+}
+
+.public-profile-split-right .public-profile-award-tooltip {
+    left: auto !important;
+    right: 0 !important;
+    transform: translateY(4px) !important;
+}
+
+.public-profile-split-right .public-profile-award-chip:hover .public-profile-award-tooltip,
+.public-profile-split-right .public-profile-award-chip:focus-visible .public-profile-award-tooltip {
+    transform: translateY(0) !important;
+}
+
+.public-profile-award-tooltip {
+    position: absolute !important;
+    left: 50% !important;
+    bottom: calc(100% + 8px) !important;
+    transform: translateX(-50%) translateY(4px) !important;
+    min-width: 180px !important;
+    max-width: 240px !important;
+    padding: 8px 10px !important;
+    border-radius: 4px !important;
+    border: 1px solid rgba(184, 144, 48, 0.45) !important;
+    background: rgba(10, 8, 6, 0.98) !important;
+    color: #f1e0ac !important;
+    font-family: 'Segoe UI', sans-serif !important;
+    font-size: 0.72rem !important;
+    line-height: 1.4 !important;
+    text-align: center !important;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.85) !important;
+    opacity: 0 !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+    z-index: 6 !important;
+    transition: opacity 0.18s ease, transform 0.18s ease, visibility 0.18s ease !important;
+}
+
+.public-profile-award-chip:hover .public-profile-award-tooltip,
+.public-profile-award-chip:focus-visible .public-profile-award-tooltip {
+    opacity: 1 !important;
+    visibility: visible !important;
+    transform: translateX(-50%) translateY(0) !important;
+}
+
+.public-profile-awards-empty {
+    width: 100% !important;
+}
+
+.public-profile-alliance-grid {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 8px !important;
+}
+
+.public-profile-alliance-chip {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+    padding: 5px 12px !important;
+    border-radius: 12px !important;
+    border: 1px solid rgba(184, 144, 48, 0.35) !important;
+    background: linear-gradient(145deg, rgba(32, 26, 18, 0.95) 0%, rgba(12, 10, 8, 0.98) 100%) !important;
+}
+
+.public-profile-alliance-name {
+    font-family: 'Segoe UI', sans-serif !important;
+    font-size: 0.75rem !important;
+    color: #f1e0ac !important;
+}
+
+.public-profile-empty-roster,
+.public-profile-private-msg {
+    margin: 0 !important;
+    font-family: 'Segoe UI', sans-serif !important;
+    font-size: 0.8rem !important;
+    color: rgba(241, 224, 172, 0.55) !important;
+    font-style: italic !important;
+}
+
+.public-profile-private-notice {
+    border-top: none !important;
+    padding-top: 0 !important;
+}
+
+.public-profile-card-actions {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 12px !important;
+    justify-content: center !important;
+    margin-top: 8px !important;
+    padding-top: 14px !important;
+    border-top: 1px double rgba(212, 175, 55, 0.28) !important;
+}
+
+.public-profile-edit-link-btn,
+.public-profile-dismiss-btn {
+    font-family: 'Cinzel', serif !important;
+    font-size: 0.78rem !important;
+    font-weight: bold !important;
+    padding: 9px 18px !important;
+    cursor: pointer !important;
+    border-radius: 2px !important;
+    background-size: 100% 100% !important;
+    background-repeat: no-repeat !important;
+    background-color: transparent !important;
+    transition: filter 0.2s ease, transform 0.1s ease !important;
+}
+
+.public-profile-edit-link-btn {
+    background-image: url('images/borderedcontainer_thin.png') !important;
+    border: 1px solid rgba(184, 144, 48, 0.45) !important;
+    color: #ffd700 !important;
+}
+
+.public-profile-dismiss-btn {
+    border: 1px solid rgba(184, 144, 48, 0.25) !important;
+    color: #f1e0ac !important;
+    background: rgba(12, 10, 8, 0.85) !important;
+}
+
+.public-profile-edit-link-btn:hover,
+.public-profile-dismiss-btn:hover {
+    filter: brightness(1.2) !important;
+}
+
+.public-profile-edit-link-btn:active,
+.public-profile-dismiss-btn:active {
+    transform: scale(0.98) !important;
+}
+
+/* ==========================================================================
+   SECTION 18: CRITICAL INTERMISSION ALERT TIMELINES
+   ========================================================================== */
+
+@keyframes criticalIntermissionPulsate {
+    0% {
+        background: rgba(15, 13, 10, 0.95) !important;
+        box-shadow: 0 15px 40px rgba(0,0,0,0.95) !important;
+    }
+    50% {
+        /* High Wave Crest: Volumetric crimson ambient blood backing expands outwards dynamically */
+        background: rgba(45, 10, 10, 0.98) !important;
+        box-shadow: 0 0 25px rgba(204, 0, 0, 0.4), 0 15px 40px rgba(0,0,0,0.95) !important;
+    }
+    100% {
+        background: rgba(15, 13, 10, 0.95) !important;
+        box-shadow: 0 15px 40px rgba(0,0,0,0.95) !important;
+    }
+}
+
+/* ==========================================================================
+   SECTION 19: GIANT COMBAT LAUNCHERS PANELS | Block 29: Timer Box Stylization
+   ========================================================================== */
+
+/* 🌟 RAW ASSET CORE: STALWART HUD CONTAINER LOADING YOUR PNG EXCLUSIVELY */
+#dynamic-age-sub-timer-display {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    position: relative !important;
+    
+    /* 🌟 THE ABSOLUTE NO-BORDER ASSET CORE ROUTING MASK: */
+    /* 1. Completely wipes away all secondary CSS border slices and outline tracks */
+    /* 2. Renders your raw countdowntimermodal.png natively with zero external margins */
+    background-image: url('images/countdowntimermodal.png') !important;
+    background-size: contain !important;       /* 🌟 Safely spans your artwork to its native proportions with zero clipping */
+    background-repeat: no-repeat !important;
+    background-position: center !important;
+    background-color: transparent !important;  /* 🌟 Keeps the surrounding outer box canvas 100% transparent */
+    
+    /* 🌟 THE CRITICAL REMOVAL EXTENSIONS: Strips out the border-image variables entirely */
+    border: none !important;                   /* 🔥 BLOCKS ALL OUTSIDE BORDER MARGINS IMMEDIATELY */
+    border-image: none !important;             /* 🔥 COMPLETELY STOPS INTERIOR GRAPHIC SLICING TRAPS */
+    border-image-source: none !important;
+    opacity: 1.0 !important;                  
+    
+    /* ⚙️ VIEWPORT PARAMETERS: Countdown modal frame */
+    width: 688px !important;
+    height: 258px !important;
+    margin: 16px 0 24px 0 !important;
+    padding: 0 50px !important;
+    box-shadow: none !important;               /* Blocks box shadow rectangles from tracing corners */
+    box-sizing: border-box !important;
+    align-self: center !important;           
+    
+    /* PURE CONTURED DROP SHADOWING FILTERS */
+    filter: drop-shadow(0 15px 25px rgba(0, 0, 0, 0.95)) !important; /* Casts shadow directly beneath your custom image outlines */
+                
+    /* MEDIEVAL CARVED STONE NUMERAL READOUT */
+    font-family: 'Cinzel', 'RoyalDetails', Georgia, serif !important;
+    font-size: 1.71rem !important; /* 2.65rem − 0.94rem (~15px smaller numerals) */
+    font-weight: 700 !important;
+    font-variant: normal !important;
+    letter-spacing: 8px !important;
+    text-transform: none !important;
+    line-height: 1 !important;
+
+    color: #b5a48a !important;
+    -webkit-text-stroke: 1px rgba(42, 36, 30, 0.9) !important;
+    paint-order: stroke fill !important;
+
+    text-shadow:
+        0 0 1px rgba(28, 24, 20, 1),
+        1px 2px 0 rgba(18, 15, 12, 0.95),
+        2px 4px 6px rgba(0, 0, 0, 0.88),
+        -1px -1px 0 rgba(210, 198, 175, 0.22),
+        0 -1px 0 rgba(165, 152, 128, 0.12) !important;
+
+    transition: opacity 0.3s ease-in-out, transform 0.5s cubic-bezier(0.25, 1, 0.5, 1), color 0.4s ease !important;
+}
+
+/* Warm sandstone-gold when the age is actively running */
+#dynamic-age-sub-timer-display.timer-readout-active {
+    color: #d4c4a0 !important;
+    -webkit-text-stroke: 1px rgba(55, 45, 32, 0.92) !important;
+    text-shadow:
+        0 0 1px rgba(35, 28, 20, 1),
+        1px 2px 0 rgba(22, 18, 12, 0.95),
+        2px 4px 6px rgba(0, 0, 0, 0.88),
+        -1px -1px 0 rgba(235, 220, 185, 0.28),
+        0 -1px 0 rgba(190, 175, 140, 0.15) !important;
+}
+
+/* Ember-carved stone during critical intermission */
+#dynamic-age-sub-timer-display.timer-readout-alert,
+#dynamic-age-sub-timer-display[style*="color: rgb(255, 85, 85)"],
+#dynamic-age-sub-timer-display[style*="color: #ff5555"] {
+    color: #9a6f5c !important;
+    -webkit-text-stroke: 1px rgba(55, 22, 18, 0.92) !important;
+    background-color: transparent !important;
+    text-shadow:
+        0 0 1px rgba(40, 14, 12, 1),
+        1px 2px 0 rgba(28, 10, 8, 0.95),
+        2px 4px 6px rgba(0, 0, 0, 0.9),
+        -1px -1px 0 rgba(200, 130, 110, 0.2),
+        0 -1px 0 rgba(140, 70, 60, 0.1) !important;
+    filter: drop-shadow(0 0 10px rgba(90, 25, 20, 0.45)) drop-shadow(0 15px 25px rgba(0, 0, 0, 0.95)) !important;
+}
+
+/* ==========================================================================
+   SECTION 14: FLOATING STAGE AUDIO PLAYER PLACEMENT MAPS
+   ========================================================================== */
+
+/* FORCES THE MASTER AUDIO CONSOLE CHASSIS CARDS BOX OPEN SIZES */
+#portal-floating-media-player-deck {
+    position: fixed !important;
+    bottom: 24px !important;
+    right: 24px !important;
+    z-index: 999999999 !important; /* Floats safely far above background tiles grids */
+    
+    width: 290px !important;
+    height: 155px !important; 
+    min-height: 155px !important;
+    max-height: 155px !important;
+    
+    background: #15181f !important;
+    background-image: linear-gradient(135deg, #242936 0%, #15181f 50%, #0a0c10 100%) !important;
+    border: 2px solid #38404d !important;
+    border-top-color: #4f5a6b !important;
+    border-left-color: #444d5c !important;
+    border-bottom-color: #1a1e24 !important;
+    border-right-color: #22262f !important;
+    border-radius: 6px !important;
+    padding: 12px 14px !important;
+    box-shadow: inset 0 0 15px rgba(0, 0, 0, 0.95), 0 15px 35px rgba(0, 0, 0, 0.95) !important;
+    
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: space-between !important; /* Spreads interface rows evenly down your 155px box height */
+    align-items: stretch !important;
+    box-sizing: border-box !important;
+}
+
+/* HIGH-PRIORITY CONTENT CONFINEMENT MASK DEFINITIONS */
+#portal-floating-media-player-deck .media-track-identity-row,
+#portal-floating-media-player-deck .media-timeline-interface-wrapper,
+#portal-floating-media-player-deck .media-control-buttons-row,
+#portal-floating-media-player-deck .media-volume-mixer-sub-row {
+    position: relative !important;
+    display: flex !important;
+    width: 100% !important;
+    max-width: 262px !important;
+    margin: 0 !important;
+    left: auto !important;
+    right: auto !important;
+    bottom: auto !important;
+    top: auto !important;
+    box-sizing: border-box !important;
+}
+
+/* 1. BRAND TRACK IDENTIFICATION HEADER ROW */
+#portal-floating-media-player-deck .media-track-identity-row {
+    flex-direction: row !important;
+    align-items: center !important;
+    gap: 12px !important;
+    height: 36px !important;
+}
+
+#portal-floating-media-player-deck .media-disc-vinyl-icon-housing {
+    width: 32px !important;
+    height: 32px !important;
+    background: #090b0e !important;
+    border: 1px solid rgba(184, 144, 48, 0.3) !important;
+    border-radius: 50% !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    flex-shrink: 0 !important;
+}
+
+#portal-floating-media-player-deck .vinyl-spinning-glyph {
+    font-size: 1rem !important;
+    display: inline-block !important;
+    line-height: 1 !important;
+}
+
+#portal-floating-media-player-deck .vinyl-active-spinning-loop {
+    animation: continuousVinylRotation 3.5s infinite linear !important;
+}
+
+@keyframes continuousVinylRotation {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+#portal-floating-media-player-deck .media-meta-text-cell {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    overflow: hidden !important;
+    flex: 1 !important;
+}
+
+#portal-floating-media-player-deck .media-track-title-ticker {
+    font-family: 'Share Tech Mono', 'Orbitron', monospace !important;
+    font-size: 0.8rem !important;
+    font-weight: bold !important;
+    color: #e2ba3b !important;
+    letter-spacing: 1px !important;
+    text-shadow: 0 0 6px rgba(226, 186, 59, 0.4) !important;
+    white-space: nowrap !important;
+    width: 100% !important;
+}
+
+#portal-floating-media-player-deck .media-artist-label {
+    font-family: 'Segoe UI', sans-serif !important;
+    font-size: 0.62rem !important;
+    color: rgba(241, 224, 172, 0.4) !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.5px !important;
+    margin-top: 1px !important;
+}
+
+/* 2. PROGRESSION SLIDER INTERFACE CORRIDORS */
+#portal-floating-media-player-deck .media-timeline-interface-wrapper {
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 8px !important;
+    height: 16px !important;
+}
+
+#portal-floating-media-player-deck .media-time-stamp-clock {
+    font-family: 'Consolas', monospace !important;
+    font-size: 0.65rem !important;
+    color: rgba(241, 224, 172, 0.5) !important;
+    min-width: 32px !important;
+}
+
+#portal-floating-media-player-deck .media-scrub-input {
+    -webkit-appearance: none !important;
+    appearance: none !important;
+    flex: 1 !important;
+    width: 100% !important;
+    max-width: 180px !important;
+    height: 4px !important;
+    background: #090b0e !important;
+    border: 1px solid rgba(184, 144, 48, 0.15) !important;
+    border-radius: 2px !important;
+    outline: none !important;
+    cursor: pointer !important;
+}
+
+#portal-floating-media-player-deck .media-scrub-input::-webkit-slider-thumb {
+    -webkit-appearance: none !important;
+    appearance: none !important;
+    width: 10px !important;
+    height: 10px !important;
+    border-radius: 50% !important;
+    background: #e2ba3b !important;
+    border: 1px solid #000 !important;
+    box-shadow: 0 0 4px #000 !important;
+}
+
+/* 3. CONTROL ACTIONS TIMELINE INTERFACE ROW TRAYS */
+#portal-floating-media-player-deck .media-control-buttons-row {
+    flex-direction: row !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    height: 32px !important;
+}
+
+#portal-floating-media-player-deck .media-deck-btn {
+    background: rgba(13, 15, 20, 0.9) !important;
+    border: 1px solid rgba(184, 144, 48, 0.35) !important;
+    border-radius: 3px !important;
+    width: 42px !important;
+    height: 28px !important;
+    cursor: pointer !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    box-shadow: inset 0 0 4px #000 !important;
+    transition: background 0.15s ease, border-color 0.15s ease !important;
+}
+
+#portal-floating-media-player-deck .media-deck-btn.master-play-trigger {
+    width: 52px !important;
+    border-color: rgba(184, 144, 48, 0.6) !important;
+    background: rgba(22, 26, 36, 0.95) !important;
+}
+
+#portal-floating-media-player-deck .media-deck-btn.mini-btn-utility {
+    width: 32px !important;
+    height: 24px !important;
+    border-color: rgba(184, 144, 48, 0.15) !important;
+    opacity: 0.5 !important;
+}
+
+#portal-floating-media-player-deck .media-deck-btn.mini-btn-utility.utility-active-glow {
+    opacity: 1 !important;
+    border-color: #ffd700 !important;
+    background: rgba(184, 144, 48, 0.1) !important;
+}
+
+#portal-floating-media-player-deck .media-deck-btn:hover {
+    background: rgba(184, 144, 48, 0.12) !important;
+    border-color: #ffd700 !important;
+}
+
+#portal-floating-media-player-deck .media-btn-icon-symbol {
+    color: #b0b8c4 !important;
+    font-size: 0.8rem !important;
+}
+#portal-floating-media-player-deck .media-btn-icon-symbol.smaller-size { font-size: 0.7rem !important; }
+#portal-floating-media-player-deck .media-btn-icon-symbol.volume-icon-size { font-size: 0.8rem !important; }
+
+#portal-floating-media-player-deck .media-deck-btn:hover .media-btn-icon-symbol,
+#portal-floating-media-player-deck .media-deck-btn.utility-active-glow .media-btn-icon-symbol {
+    color: #ffd700 !important;
+    text-shadow: 0 0 6px rgba(255,215,0,0.6) !important;
+}
+
+/* 4. VOLUME MIXER SUB-ROW STRIP TRAYS */
+#portal-floating-media-player-deck .media-volume-mixer-sub-row {
+    flex-direction: row !important;
+    align-items: center !important;
+    gap: 10px !important;
+    height: 24px !important;
+    border-top: 1px dashed rgba(184, 144, 48, 0.15) !important;
+    padding-top: 8px !important;
+}
+
+#portal-floating-media-player-deck .media-mute-toggle-inline {
+    background: transparent !important;
+    border: none !important;
+    padding: 0 !important;
+    cursor: pointer !important;
+    display: flex !important;
+    align-items: center !important;
+}
+
+#portal-floating-media-player-deck .media-vol-range-slider {
+    -webkit-appearance: none !important;
+    appearance: none !important;
+    flex: 1 !important;
+    height: 4px !important;
+    background: #090b0e !important;
+    border-radius: 2px !important;
+    outline: none !important;
+    cursor: pointer !important;
+}
+
+#portal-floating-media-player-deck .media-vol-range-slider::-webkit-slider-thumb {
+    -webkit-appearance: none !important;
+    appearance: none !important;
+    width: 10px !important;
+    height: 10px !important;
+    border-radius: 50% !important;
+    background: #b0b8c4 !important;
+    border: 1px solid #111 !important;
+    transition: background-color 0.15s ease !important;
+}
+#portal-floating-media-player-deck .media-vol-range-slider::-webkit-slider-thumb:hover {
+    background: #ffd700 !important;
+}
+
+/* ==========================================================================
+   SECTION 15: COMMANDER HUB CENTERED MODAL (PROFILE / MESSAGES / SETTINGS)
+   ========================================================================== */
+
+.commander-hub-overlay {
+    position: fixed !important;
+    inset: 0 !important;
+    z-index: 250000 !important;
+    display: none;
+    align-items: center !important;
+    justify-content: center !important;
+    background: rgba(0, 0, 0, 0.82) !important;
+    opacity: 0;
+    transition: opacity 0.28s ease !important;
+    padding: 24px !important;
+    box-sizing: border-box !important;
+}
+
+.commander-hub-overlay.is-visible {
+    display: flex !important;
+}
+
+.commander-hub-dialog {
+    position: relative !important;
+    width: min(1180px, 96vw) !important;
+    height: min(760px, 90vh) !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 14px !important;
+    box-sizing: border-box !important;
+    overflow: visible !important;
+}
+
+#lore-modal .lore-content-area {
+    position: relative !important;
+}
+
+.commander-hub-close-btn {
+    position: absolute !important;
+    top: -6px !important;
+    right: -6px !important;
+    z-index: 12 !important;
+    background: transparent !important;
+    border: none !important;
+    padding: 0 !important;
+    cursor: pointer !important;
+}
+
+.commander-hub-close-icon {
+    width: 34px !important;
+    height: 34px !important;
+    display: block !important;
+}
+
+.commander-hub-top-nav {
+    position: relative !important;
+    height: 71px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 28px !important;
+    padding: 0 48px !important;
+    box-sizing: border-box !important;
+    flex-shrink: 0 !important;
+}
+
+.commander-hub-top-nav-bg {
+    position: absolute !important;
+    inset: 0 !important;
+    background-image: url('images/topnavigationbar.png') !important;
+    background-size: 100% 100% !important;
+    background-repeat: no-repeat !important;
+    background-position: center center !important;
+    pointer-events: none !important;
+    z-index: 0 !important;
+}
+
+.commander-hub-top-tab {
+    position: relative !important;
+    z-index: 1 !important;
+    background: transparent !important;
+    border: none !important;
+    border-bottom: 3px solid transparent !important;
+    color: rgba(241, 224, 172, 0.65) !important;
+    font-family: 'Cinzel', serif !important;
+    font-size: 1.05rem !important;
+    font-weight: bold !important;
+    letter-spacing: 1.5px !important;
+    padding: 10px 18px !important;
+    cursor: pointer !important;
+    text-shadow: 2px 2px 4px #000 !important;
+    transition: color 0.2s ease, border-color 0.2s ease !important;
+}
+
+.commander-hub-top-tab:hover,
+.commander-hub-top-tab.active {
+    color: #ffd700 !important;
+    border-bottom-color: #b89030 !important;
+    text-shadow: 0 0 10px rgba(255, 215, 0, 0.65) !important;
+}
+
+.commander-hub-body-frame {
+    flex: 1 !important;
+    min-height: 0 !important;
+    display: flex !important;
+    flex-direction: row !important;
+    gap: 16px !important;
+    background-image: url('images/borderedcontainer_thin.png') !important;
+    background-size: 100% 100% !important;
+    background-repeat: no-repeat !important;
+    background-position: center center !important;
+    padding: 28px 32px 24px 32px !important;
+    box-sizing: border-box !important;
+}
+
+.commander-hub-subnav-column {
+    width: 210px !important;
+    flex-shrink: 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 10px !important;
+    min-height: 0 !important;
+}
+
+.commander-hub-subnav-label {
+    font-family: 'Cinzel', serif !important;
+    font-size: 0.85rem !important;
+    color: #c5a059 !important;
+    letter-spacing: 2px !important;
+    margin: 0 !important;
+    text-align: center !important;
+}
+
+.commander-hub-subnav-list {
+    flex: 1 !important;
+    min-height: 0 !important;
+    overflow-y: auto !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 6px !important;
+    padding-right: 4px !important;
+}
+
+.commander-hub-subnav-item {
+    font-family: 'Cinzel', serif !important;
+    font-size: 0.78rem !important;
+    font-weight: bold !important;
+    letter-spacing: 0.5px !important;
+    color: rgba(241, 224, 172, 0.75) !important;
+    padding: 11px 14px !important;
+    cursor: pointer !important;
+    text-align: center !important;
+    border: 1px solid rgba(184, 144, 48, 0.22) !important;
+    border-left: 3px solid rgba(184, 144, 48, 0.4) !important;
+    border-radius: 2px !important;
+    background: linear-gradient(145deg, rgba(26, 22, 16, 0.94) 0%, rgba(11, 9, 7, 0.98) 100%) !important;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04), 0 2px 8px rgba(0, 0, 0, 0.45) !important;
+    transition: background 0.22s ease, border-color 0.22s ease, color 0.22s ease, box-shadow 0.22s ease, transform 0.22s ease !important;
+}
+
+.commander-hub-subnav-item:hover {
+    background: linear-gradient(145deg, rgba(38, 32, 22, 0.96) 0%, rgba(16, 13, 9, 0.99) 100%) !important;
+    border-color: rgba(184, 144, 48, 0.55) !important;
+    border-left-color: #b89030 !important;
+    color: #ffd700 !important;
+    transform: translateX(2px) !important;
+    box-shadow: inset 0 0 10px rgba(184, 144, 48, 0.1), 0 3px 10px rgba(0, 0, 0, 0.5) !important;
+}
+
+.commander-hub-subnav-item.active {
+    color: #ffd700 !important;
+    border-color: #b89030 !important;
+    border-left-color: #ffd700 !important;
+    background: linear-gradient(145deg, rgba(48, 40, 26, 0.98) 0%, rgba(20, 16, 11, 1) 100%) !important;
+    box-shadow: inset 0 0 16px rgba(184, 144, 48, 0.16), 0 0 12px rgba(184, 144, 48, 0.14) !important;
+}
+
+.commander-hub-content-pane {
+    flex: 1 !important;
+    min-width: 0 !important;
+    min-height: 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 10px !important;
+}
+
+.commander-hub-section-title {
+    font-family: 'Cinzel', serif !important;
+    font-size: 0.95rem !important;
+    color: #ffd700 !important;
+    letter-spacing: 1.5px !important;
+    margin: 0 !important;
+    min-height: 1.2rem !important;
+}
+
+.commander-hub-section-title:empty {
+    display: none !important;
+}
+
+.commander-hub-profile-header-host {
+    flex-shrink: 0 !important;
+}
+
+.commander-hub-body {
+    flex: 1 !important;
+    min-height: 0 !important;
+    overflow-y: auto !important;
+    color: #f1e0ac !important;
+}
+
+.commander-hub-settings-action-deck {
+    flex-shrink: 0 !important;
+    width: 100% !important;
+    margin-top: auto !important;
+    padding-top: 4px !important;
+}
+
+.commander-hub-settings-action-deck[hidden] {
+    display: none !important;
+}
+
+.commander-hub-settings-action-deck:not([hidden]) {
+    display: flex !important;
+    gap: 40px !important;
+    justify-content: center !important;
+    align-items: center !important;
+    min-height: 70px !important;
+    border-top: 1px double rgba(212, 175, 55, 0.3) !important;
+    background: linear-gradient(180deg, transparent 0%, rgba(8, 6, 4, 0.55) 100%) !important;
+}
+
+.commander-hub-profile-footer-host {
+    flex-shrink: 0 !important;
+}
+
+/* Settings: fill modal height; scroll only when content overflows */
+#commander-hub-modal.commander-hub-settings-active .commander-hub-content-pane {
+    min-height: 0 !important;
+}
+
+#commander-hub-modal.commander-hub-settings-active .commander-hub-body {
+    display: flex !important;
+    flex-direction: column !important;
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+    overflow: hidden !important;
+}
+
+#commander-hub-modal.commander-hub-settings-active .commander-hub-body > .settings-scroll-wrapper {
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+    height: auto !important;
+    max-height: none !important;
+    overflow-y: auto !important;
+}
+
+#commander-hub-modal.commander-hub-settings-active .commander-hub-body .settings-controls {
+    display: none !important;
+}
+
+#commander-hub-modal.commander-hub-messages-active .commander-hub-body {
+    display: flex !important;
+    flex-direction: column !important;
+    overflow: hidden !important;
+}
+
+#commander-hub-modal.commander-hub-messages-active .message-workspace-canvas {
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+    height: auto !important;
+}
+
+#commander-hub-modal.commander-hub-messages-active .message-compose-canvas {
+    height: 100% !important;
+    max-height: 100% !important;
+}
+
+#commander-hub-modal .msg-compose-context-body {
+    max-height: 110px !important;
+}
+
+.commander-hub-profile-footer-host .settings-controls,
+.commander-hub-profile-footer-host .profile-fullscreen-controls {
+    margin-top: 8px !important;
+}
+
+/* Profile layout inside commander hub */
+#commander-hub-modal.commander-hub-profile-active .commander-hub-subnav-column {
+    display: none !important;
+}
+
+#commander-hub-modal.commander-hub-profile-active .commander-hub-body-frame {
+    padding-top: 20px !important;
+}
+
+#commander-hub-modal.commander-hub-profile-active .commander-hub-section-title {
+    display: none !important;
+}
+
+#commander-hub-modal.commander-hub-profile-active .profile-fullscreen-header-card {
+    width: 100% !important;
+    margin-bottom: 12px !important;
+}
+
+#commander-hub-modal.commander-hub-profile-active .profile-fullscreen-split-row,
+#commander-hub-modal.commander-hub-profile-active .profile-fullscreen-footer-deck {
+    width: 100% !important;
+}
+
+#commander-hub-modal.commander-hub-profile-active .settings-scroll-wrapper.profile-fullscreen-canvas {
+    max-height: none !important;
+    overflow: visible !important;
+}
+
+#commander-hub-modal .message-workspace-canvas {
+    height: 100% !important;
+    min-height: 420px !important;
+}
+
+#commander-hub-modal #msg-directory-floating-drawer {
+    z-index: 300001 !important;
+}
+
+#commander-hub-modal .msg-directory-drawer-body > .drawer-category-scroll-bin,
+#commander-hub-modal .msg-directory-drawer-body > #drawer-main-category-view,
+#commander-hub-modal .msg-directory-drawer-body > #drawer-drilldown-category-view {
+    justify-content: flex-start !important;
+    align-content: flex-start !important;
+}
+
+/* Profile: bio field uses bordered frame art directly (no white inner panel) */
+#commander-hub-modal .bio-bezel-frame-wrapper {
+    background: none !important;
+    padding: 0 !important;
+    box-shadow: none !important;
+    height: auto !important;
+    min-height: 0 !important;
+}
+
+#commander-hub-modal #profile-bio-input {
+    display: block !important;
+    width: 100% !important;
+    min-height: 112px !important;
+    box-sizing: border-box !important;
+    resize: vertical !important;
+    background-color: transparent !important;
+    background-image: url('images/borderedcontainer_thin.png') !important;
+    background-size: 100% 100% !important;
+    background-repeat: no-repeat !important;
+    background-position: center center !important;
+    border: none !important;
+    outline: none !important;
+    box-shadow: none !important;
+    -webkit-appearance: none !important;
+    appearance: none !important;
+    color-scheme: dark !important;
+    font-family: 'Segoe UI', sans-serif !important;
+    font-size: 0.82rem !important;
+    line-height: 1.5 !important;
+    color: #f1e0ac !important;
+    padding: 16px 20px !important;
+    margin: 0 !important;
+}
+
+#commander-hub-modal #profile-bio-input::placeholder {
+    color: rgba(241, 224, 172, 0.45) !important;
+}
+
+/* Profile: justified copy alignment */
+#commander-hub-modal .profile-fullscreen-header-card,
+#commander-hub-modal .profile-header-identity-group,
+#commander-hub-modal .profile-identity-sub-row,
+#commander-hub-modal .profile-fullscreen-canvas,
+#commander-hub-modal .profile-section-box,
+#commander-hub-modal .profile-section-box label,
+#commander-hub-modal .profile-field-row,
+#commander-hub-modal .toggle-label-text,
+#commander-hub-modal .empty-roster-txt,
+#commander-hub-modal .alliance-capsule-badge,
+#commander-hub-modal .capsule-username-text {
+    text-align: justify !important;
+    text-justify: inter-word !important;
+}
+
+#commander-hub-modal .profile-identity-title-row,
+#commander-hub-modal .profile-main-name,
+#commander-hub-modal .membership-badge,
+#commander-hub-modal .settings-label {
+    text-align: left !important;
+}
+
+#commander-hub-modal .profile-fullscreen-header-card {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    height: auto !important;
+    min-height: 90px !important;
+}
+
+/* Profile: themed scrollbar */
+#commander-hub-modal.commander-hub-profile-active .commander-hub-body,
+#commander-hub-modal.commander-hub-profile-active .settings-scroll-wrapper.profile-fullscreen-canvas,
+#commander-hub-modal.commander-hub-profile-active .compact-grid-scroll-track {
+    scrollbar-width: thin !important;
+    scrollbar-color: #9a7a32 rgba(14, 11, 8, 0.85) !important;
+}
+
+#commander-hub-modal.commander-hub-profile-active .commander-hub-body::-webkit-scrollbar,
+#commander-hub-modal.commander-hub-profile-active .settings-scroll-wrapper.profile-fullscreen-canvas::-webkit-scrollbar,
+#commander-hub-modal.commander-hub-profile-active .compact-grid-scroll-track::-webkit-scrollbar {
+    width: 9px !important;
+    height: 9px !important;
+    display: block !important;
+}
+
+#commander-hub-modal.commander-hub-profile-active .commander-hub-body::-webkit-scrollbar-track,
+#commander-hub-modal.commander-hub-profile-active .settings-scroll-wrapper.profile-fullscreen-canvas::-webkit-scrollbar-track,
+#commander-hub-modal.commander-hub-profile-active .compact-grid-scroll-track::-webkit-scrollbar-track {
+    background: rgba(10, 8, 6, 0.88) !important;
+    border-radius: 4px !important;
+    border: 1px solid rgba(184, 144, 48, 0.12) !important;
+}
+
+#commander-hub-modal.commander-hub-profile-active .commander-hub-body::-webkit-scrollbar-thumb,
+#commander-hub-modal.commander-hub-profile-active .settings-scroll-wrapper.profile-fullscreen-canvas::-webkit-scrollbar-thumb,
+#commander-hub-modal.commander-hub-profile-active .compact-grid-scroll-track::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, #c5a059 0%, #7a5f24 100%) !important;
+    border-radius: 4px !important;
+    border: 1px solid rgba(255, 215, 0, 0.22) !important;
+}
+
+#commander-hub-modal.commander-hub-profile-active .commander-hub-body::-webkit-scrollbar-thumb:hover,
+#commander-hub-modal.commander-hub-profile-active .settings-scroll-wrapper.profile-fullscreen-canvas::-webkit-scrollbar-thumb:hover,
+#commander-hub-modal.commander-hub-profile-active .compact-grid-scroll-track::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(180deg, #ffd700 0%, #9a7a32 100%) !important;
+}
+
+/* Rank reset controls locked until enrolled in an active Age round */
+#commander-hub-modal .rank-reset-action-btn.rank-reset-disabled,
+#commander-hub-modal .rank-reset-action-btn:disabled {
+    opacity: 0.38 !important;
+    filter: grayscale(0.85) !important;
+    cursor: not-allowed !important;
+    pointer-events: none !important;
+    color: rgba(241, 224, 172, 0.45) !important;
+    border-color: rgba(184, 144, 48, 0.22) !important;
+    background: linear-gradient(135deg, rgba(24, 20, 15, 0.75) 0%, rgba(12, 10, 8, 0.85) 100%) !important;
+    box-shadow: none !important;
+    transform: none !important;
+}
+
+/* Messages / Settings channel list scrollbar */
+#commander-hub-modal .commander-hub-subnav-list {
+    scrollbar-width: thin !important;
+    scrollbar-color: #9a7a32 rgba(14, 11, 8, 0.85) !important;
+}
+
+#commander-hub-modal .commander-hub-subnav-list::-webkit-scrollbar {
+    width: 7px !important;
+}
+
+#commander-hub-modal .commander-hub-subnav-list::-webkit-scrollbar-track {
+    background: rgba(10, 8, 6, 0.75) !important;
+}
+
+#commander-hub-modal .commander-hub-subnav-list::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, #b89030 0%, #6e5420 100%) !important;
+    border-radius: 3px !important;
+}

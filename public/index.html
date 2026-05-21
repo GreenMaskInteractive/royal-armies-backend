@@ -2,359 +2,438 @@
 <html lang="en">
 <head>
 
-    <!-- ============================================================
-         ARCH SECTION 0: THE HEAD (Meta & Links)
-         ============================================================ -->
-    
+    <!-- ==========================================
+         LANDING MODULE: DOCUMENT HEAD & ASSET LINKS
+         ========================================== -->
+
+    <!-- --- Section: Meta & Stylesheet Imports --- -->
+
+    <!-- Block 1: Character Set & Viewport -->
     <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+    <!-- Block 2: Page Title & Favicon -->
     <title>Royal Armies | An MMORTS Medieval Strategy Game</title>
-<link rel="icon" type="image/png" href="images/royalarmiesloretool.png">
-    <!-- THE MASTER LINK: If this is missing, the site turns white -->
+    <link rel="icon" type="image/png" href="images/royalarmiesloretool.png">
+
+    <!-- Block 3: Stylesheet Bridge -->
     <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="style2.css">
 </head>
 <body>
 
-    <!-- ============================================================
-         ARCH SECTION 1: THE LANDING (Slideshow & Login)
-         ============================================================ -->
+    <!-- ==========================================
+         LANDING MODULE: AUTHENTICATION PORTAL
+         ========================================== -->
 
-<div id="page-landing" class="full-page-overlay">
+    <!-- --- Section: Slideshow & Navigator --- -->
 
-    <!-- Block 1: Cinematic Ambiance -->
-    <div class="slideshow-container">
-        <div class="slide slide1"></div><div class="slide slide2"></div>
-        <div class="slide slide3"></div><div class="slide slide4"></div>
-        <div class="slide slide5"></div><div class="slide slide6"></div>
-        <div class="slide slide7"></div><div class="slide slide8"></div>
-        <div class="slide slide9"></div>
-    </div>
+    <div id="page-landing" class="full-page-overlay">
 
-    <!-- Block 2: The Navigator Bar -->
-    <div class="navigator-bar">
-        <!-- HUB 1: DEV CHRONICLES -->
-        <div class="updates-hub">
-            <img src="images/devupdatesicon.png" id="updates-icon" class="nav-icon" alt="Updates" onclick="toggleUpdates(event)">
-            <div id="updates-panel" class="updates-panel">
-                <div class="updates-header">Updates</div>
-                <div class="updates-scroll">
-                    <div class="update-item" onclick="openChronicleDetail('genesis', event)"><h4 class="update-title">The Genesis Forge</h4></div>
-                    <div class="update-item" onclick="openChronicleDetail('audio', event)"><h4 class="update-title">Symphony of War</h4></div>
-                    <div class="update-item" onclick="openChronicleDetail('narrative', event)"><h4 class="update-title">The Traveler's Guidance</h4></div>
-                    <div class="update-item" onclick="openChronicleDetail('interface', event)"><h4 class="update-title">Navigator & Roadmap</h4></div>
-                    <div class="update-item" onclick="openChronicleDetail('security', event)"><h4 class="update-title">Nexus Gatekeeping</h4></div>
-                    <div class="update-item" onclick="openChronicleDetail('assets', event)"><h4 class="update-title">GIMP Asset Integration</h4></div>
-                    <div class="update-item" onclick="openChronicleDetail('optimization', event)"><h4 class="update-title">Engine Optimization</h4></div>
-                    <div class="update-item" onclick="openChronicleDetail('networking', event)"><h4 class="update-title">Nexus Socket Sync</h4></div>
-                    <div class="update-item" onclick="openChronicleDetail('networking_nexus', event)"><h4 class="update-title">Nexus Handshake</h4></div>
+        <!-- Block 4: Cinematic Slideshow Ambiance -->
+        <div class="slideshow-container">
+            <div class="slide slide1"></div><div class="slide slide2"></div>
+            <div class="slide slide3"></div><div class="slide slide4"></div>
+            <div class="slide slide5"></div><div class="slide slide6"></div>
+            <div class="slide slide7"></div><div class="slide slide8"></div>
+            <div class="slide slide9"></div>
+        </div>
+
+        <!-- Block 5: Navigator Bar & Chronicle Hubs -->
+        <div class="navigator-bar">
+            <div class="updates-hub">
+                <img src="images/devupdatesicon.png" id="updates-icon" class="nav-icon" alt="Updates" onclick="toggleUpdates(event)">
+                <div id="updates-panel" class="updates-panel">
+                    <div class="updates-header">Updates</div>
+                    <div class="updates-scroll">
+                        <div class="update-item" onclick="openChronicleDetail('genesis', event)"><h4 class="update-title">The Genesis Forge</h4></div>
+                        <div class="update-item" onclick="openChronicleDetail('audio', event)"><h4 class="update-title">Symphony of War</h4></div>
+                        <div class="update-item" onclick="openChronicleDetail('narrative', event)"><h4 class="update-title">The Traveler's Guidance</h4></div>
+                        <div class="update-item" onclick="openChronicleDetail('interface', event)"><h4 class="update-title">Navigator & Roadmap</h4></div>
+                        <div class="update-item" onclick="openChronicleDetail('security', event)"><h4 class="update-title">Nexus Gatekeeping</h4></div>
+                        <div class="update-item" onclick="openChronicleDetail('assets', event)"><h4 class="update-title">GIMP Asset Integration</h4></div>
+                        <div class="update-item" onclick="openChronicleDetail('optimization', event)"><h4 class="update-title">Engine Optimization</h4></div>
+                        <div class="update-item" onclick="openChronicleDetail('networking', event)"><h4 class="update-title">Nexus Socket Sync</h4></div>
+                        <div class="update-item" onclick="openChronicleDetail('networking_nexus', event)"><h4 class="update-title">Nexus Handshake</h4></div>
+                    </div>
                 </div>
+            </div>
+
+            <div class="updates-hub">
+                <img src="images/roadmapicon.png" id="roadmap-trigger" class="nav-icon" onclick="toggleRoadmap(true, event)" alt="Roadmap">
+                <div id="roadmap-modal" class="updates-panel">
+                    <div class="updates-header">Project Roadmap</div>
+                    <div class="updates-scroll">
+                        <div class="update-item" onclick="openChronicleDetail('roadmap_foundation', event)"><span class="update-date">Phase 1</span><h4 class="update-title">The Foundation</h4></div>
+                        <div class="update-item" onclick="openChronicleDetail('roadmap_combat', event)"><span class="update-date">Phase 2</span><h4 class="update-title">Aether Combat Sync</h4></div>
+                        <div class="update-item" onclick="openChronicleDetail('roadmap_classes', event)"><span class="update-date">Phase 3</span><h4 class="update-title">Class Specialization</h4></div>
+                        <div class="update-item" onclick="openChronicleDetail('roadmap_world', event)"><span class="update-date">Phase 4</span><h4 class="update-title">The Outer Realms</h4></div>
+                        <div class="update-item" onclick="openChronicleDetail('roadmap_economy', event)"><span class="update-date">Phase 5</span><h4 class="update-title">Royal Trade & Economy</h4></div>
+                        <div class="update-item" onclick="openChronicleDetail('roadmap_launch', event)"><span class="update-date">Phase 6</span><h4 class="update-title">Royal Ascension</h4></div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="nav-discord" class="nav-icon" onclick="openDiscord()">
+                <img src="images/discordicon.png" alt="Discord">
+            </div>
+            <img src="images/loreicon.png" class="nav-icon" id="nav-lore" onclick="if (typeof openLoreModal === 'function') openLoreModal()" alt="Lore">
+            <img src="images/supporticon.png" class="nav-icon disabled" alt="Support">
+        </div>
+
+        <!-- --- Section: Login Portal & Auth Controls --- -->
+
+        <!-- Block 6: Portal Master Anchor -->
+        <div class="portal-master-anchor">
+
+            <!-- Block 7: Stone Portal Login Form -->
+            <div class="login-form-container">
+                <div id="login-content-wrapper">
+                    <input type="text" id="login-username" class="login-input" placeholder="USERNAME">
+                    <input type="password" id="login-password" class="login-input" placeholder="PASSWORD">
+
+                    <div class="forgot-link-container">
+                        <span class="forgot-link" onclick="handleForgot(event)">Forgot your password?</span>
+                    </div>
+
+                    <div id="auth-loading" style="display: none;">Logging In...</div>
+                </div>
+
+                <div id="post-login-message">
+                    <p>Thank you so much for registering for the pre-release of the Royal Armies. We are working extremely hard to create an immersive and exciting experience for all of our awaiting fanbase! Join our discord to stay up-to-date on its progression.</p>
+                    <div class="message-actions">
+                        <button id="btn-logout-reset" class="img-btn" onclick="handleLogout()">Return</button>
+                        <button id="admin-bypass-btn" class="img-btn" style="display: none;" onclick="enterMainGame()">Bypass to Hall</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Block 8: Independent Auth Button Hub -->
+            <div id="auth-buttons">
+                <button id="btn-login-main" class="img-btn" onclick="handleLogin()">Login</button>
+                <button id="btn-register-main" class="img-btn" onclick="handleRegister()">Create Account</button>
             </div>
         </div>
 
-        <!-- HUB 2: PROJECT ROADMAP -->
-        <div class="updates-hub">
-            <img src="images/roadmapicon.png" id="roadmap-trigger" class="nav-icon" onclick="toggleRoadmap(true, event)" alt="Roadmap">
-            <div id="roadmap-modal" class="updates-panel">
-                <div class="updates-header">Project Roadmap</div>
-                <div class="updates-scroll">
-                    <div class="update-item" onclick="openChronicleDetail('roadmap_foundation', event)"><span class="update-date">Phase 1</span><h4 class="update-title">The Foundation</h4></div>
-                    <div class="update-item" onclick="openChronicleDetail('roadmap_combat', event)"><span class="update-date">Phase 2</span><h4 class="update-title">Aether Combat Sync</h4></div>
-                    <div class="update-item" onclick="openChronicleDetail('roadmap_classes', event)"><span class="update-date">Phase 3</span><h4 class="update-title">Class Specialization</h4></div>
-                    <div class="update-item" onclick="openChronicleDetail('roadmap_world', event)"><span class="update-date">Phase 4</span><h4 class="update-title">The Outer Realms</h4></div>
-                    <div class="update-item" onclick="openChronicleDetail('roadmap_economy', event)"><span class="update-date">Phase 5</span><h4 class="update-title">Royal Trade & Economy</h4></div>
-                    <div class="update-item" onclick="openChronicleDetail('roadmap_launch', event)"><span class="update-date">Phase 6</span><h4 class="update-title">Royal Ascension</h4></div>
+        <!-- Block 9: Landing Chronicle Detail Overlay -->
+        <div id="chronicle-detail-modal" class="detail-overlay" style="display: none; opacity: 0;">
+            <div class="detail-card">
+                <h2 id="chronicle-detail-title">ARCHIVE TITLE</h2>
+                <div class="detail-scroll">
+                    <p id="chronicle-detail-text">Archive details loading...</p>
                 </div>
+                <button class="img-btn" onclick="closeChronicleDetail()" style="margin-top: 20px; width: 150px;">Return</button>
             </div>
         </div>
 
-<div id="nav-discord" class="nav-icon" onclick="openDiscord()">
-    <img src="images/discordicon.png" alt="Discord">
-</div>
-<img src="images/loreicon.png" class="nav-icon" id="nav-lore" onclick="openLoreModal()" alt="Lore">
-        <img src="images/supporticon.png" class="nav-icon disabled" alt="Support">
-    </div>
+        <!-- Block 10: Version & Copyright Stamps -->
+        <div class="version-stamp">ALPHA 0.1.10</div>
+        <div class="copyright-stamp">© 2026 GREEN MASK INTERACTIVE</div>
 
-    <!-- Block 3: The Master Anchor -->
-    <div class="portal-master-anchor">
+    </div> <!-- END PAGE LANDING -->
 
-        <!-- Block 4: The Stone Portal -->
-        <div class="login-form-container">
-            <div id="login-content-wrapper">
-                <input type="text" id="login-username" class="login-input" placeholder="USERNAME">
-                <input type="password" id="login-password" class="login-input" placeholder="PASSWORD">
+    <!-- ==========================================
+         LANDING MODULE: FUTURE GAME STAGE PLACEHOLDERS
+         ========================================== -->
 
-<div class="forgot-link-container">
-    <span class="forgot-link" onclick="handleForgot(event)">Forgot your password?</span>
-</div>
+    <!-- --- Section: Reserved Stage Containers --- -->
+    <!-- Hall of Statues (Class Selection) — wired in future alpha builds -->
+    <!-- World Stage (Main Game Container) — wired in future alpha builds -->
+    <!-- Commander HUD (Vitals & Bars) — wired in future alpha builds -->
+    <!-- War Map (Quest System) — wired in future alpha builds -->
 
-                <div id="auth-loading" style="display: none;">Logging In...</div>
-            </div>
+    <!-- ==========================================
+         LANDING MODULE: GLOBAL OVERLAYS & MODALS
+         ========================================== -->
 
-            <div id="post-login-message">
-                <p>Thank you so much for registering for the pre-release of the Royal Armies. We are working extremely hard to create an immersive and exciting experience for all of our awaiting fanbase! Join our discord to stay up-to-date on its progression.</p>
-                <div class="message-actions">
-                    <button id="btn-logout-reset" class="img-btn" onclick="handleLogout()">Return</button>
-                    <button id="admin-bypass-btn" class="img-btn" style="display: none;" onclick="enterMainGame()">Bypass to Hall</button>
-                </div>
-            </div>
+    <!-- --- Section: Narrative & Chronicle Modals --- -->
+
+    <!-- Block 11: Narrative System -->
+    <div id="narrative-box" class="narrative-container">
+        <div class="narrative-portrait">
+            <img src="images/retiredoldman.png" alt="Mysterious Traveler">
         </div>
-
-        <!-- Block 5: Independent Button Hub -->
-        <div id="auth-buttons">
-            <button id="btn-login-main" class="img-btn" onclick="handleLogin()">Login</button>
-            <button id="btn-register-main" class="img-btn" onclick="handleRegister()">Create Account</button>
-        </div>
-    </div> 
-
-    <!-- Block 6: Shared Detail Popup -->
-    <div id="chronicle-detail-modal" class="detail-overlay" style="display: none; opacity: 0;">
-        <div class="detail-card">
-            <h2 id="chronicle-detail-title">ARCHIVE TITLE</h2>
-            <div class="detail-scroll">
-                <p id="chronicle-detail-text">Archive details loading...</p>
-            </div>
-            <button class="img-btn" onclick="closeChronicleDetail()" style="margin-top: 20px; width: 150px;">Return</button>
+        <div class="narrative-text-area">
+            <p id="narrative-text">Welcome, traveler, to the Royal Armies.</p>
+            <div class="narrative-continue">Click to continue...</div>
         </div>
     </div>
-    
-    <div class="version-stamp">ALPHA 0.1.10</div>
-    <div class="copyright-stamp">© 2026 GREEN MASK INTERACTIVE</div>
 
-</div> <!-- END PAGE LANDING -->
-
-</body>
-</html>
-
-<!-- ============================================================
-     ARCH SECTION 2: THE HALL OF STATUES (Class Selection)
-     ============================================================ -->
-
-
-<!-- ============================================================
-     ARCH SECTION 3: THE WORLD STAGE (Main Game Container)
-     ============================================================ -->
-
-
-<!-- ============================================================
-     ARCH SECTION 4: THE COMMANDER’S HUD (Vitals & Bars)
-     ============================================================ -->
-
-
-<!-- ============================================================
-         ARCH SECTION 5: THE WAR MAP (Quest System)
-         ============================================================ -->
-
-
-<!-- ============================================================
-     ARCH SECTION 7: GLOBAL OVERLAYS (Modals & Narratives)
-     ============================================================ -->
-
-<!-- 1. THE NARRATIVE SYSTEM -->
-<div id="narrative-box" class="narrative-container">
-    <div class="narrative-portrait">
-        <img src="images/retiredoldman.png" alt="Mysterious Traveler">
-    </div>
-    <div class="narrative-text-area">
-        <p id="narrative-text">Welcome, traveler, to the Royal Armies.</p>
-        <div class="narrative-continue">Click to continue...</div>
-    </div>
-</div>
-
-<!-- 2. THE CHRONICLE DETAIL POP-UP (For Update Panel Details) -->
-<div id="chronicle-detail-modal" class="modal-overlay" style="display: none; opacity: 0; transition: opacity 0.3s ease;">
-    <div class="roadmap-container" style="background: rgba(10,10,10,0.98); border: 2px solid #d4af37; height: auto; min-height: 300px; width: 50vw; max-width: 600px; padding: 40px; justify-content: center;">
-        <span class="close-modal" onclick="closeChronicleDetail()">&times;</span>
-        <h2 id="chronicle-detail-title" style="color: #d4af37; font-family: 'Georgia', serif; margin-bottom: 20px; text-transform: uppercase; text-align: center; letter-spacing: 2px;">Chronicle Title</h2>
-        <p id="chronicle-detail-text" style="color: #f1e0ac; font-family: 'Georgia', serif; line-height: 1.6; text-align: center; font-style: italic;"></p>
-    </div>
-</div>
-
-<!-- 3. THE UNIFIED AUTH MODAL (Registration) --> 
-<div id="register-modal" class="modal-overlay" style="display: none; opacity: 0;">
-    <div class="modal-content">
-        <span class="close-modal" onclick="closeRegister()">&times;</span>
-        <h2 class="modal-title">Create New Account</h2>
-        <div class="register-form">
-            <div class="reg-group"><label>Preferred Username*</label><input type="text" id="reg-username" class="reg-input"></div>
-            <div class="reg-group"><label>Email Address*</label><input type="email" id="reg-email" class="reg-input"></div>
-            <div class="reg-group"><label>Password*</label><input type="password" id="reg-password" class="reg-input"></div>
-            <!-- Added the Confirmation Field -->
-            <div class="reg-group"><label>Confirm Password*</label><input type="password" id="reg-confirm" class="reg-input"></div>
-            
-<div class="modal-actions">
-    <button class="img-btn" onclick="submitRegistration()">Confirm</button>
-    <button class="img-btn" onclick="closeRegister()">Cancel</button>
-</div>
+    <!-- Block 12: Chronicle Detail Pop-Up (Update Panel Details) -->
+    <div id="chronicle-detail-modal" class="modal-overlay" style="display: none; opacity: 0; transition: opacity 0.3s ease;">
+        <div class="roadmap-container" style="background: rgba(10,10,10,0.98); border: 2px solid #d4af37; height: auto; min-height: 300px; width: 50vw; max-width: 600px; padding: 40px; justify-content: center;">
+            <span class="close-modal" onclick="closeChronicleDetail()">&times;</span>
+            <h2 id="chronicle-detail-title" style="color: #d4af37; font-family: 'Georgia', serif; margin-bottom: 20px; text-transform: uppercase; text-align: center; letter-spacing: 2px;">Chronicle Title</h2>
+            <p id="chronicle-detail-text" style="color: #f1e0ac; font-family: 'Georgia', serif; line-height: 1.6; text-align: center; font-style: italic;"></p>
         </div>
     </div>
-</div>
 
-<!-- 4. THE ROADMAP POP-UP (Widescreen Full-Detail Version) -->
-<div id="roadmap-modal" class="modal-overlay" style="display: none; opacity: 0; transition: opacity 0.3s ease;">
-    <div class="roadmap-container">
-        <span class="close-modal" onclick="toggleRoadmap(false)">&times;</span>
-        <h1 class="roadmap-main-title">Project Roadmap</h1>
-        
-        <div class="roadmap-grid">
-            <!-- Pre-Alpha -->
-            <div class="roadmap-phase" onclick="expandCard(this)">
-                <div class="phase-tag">Completed</div>
-                <h3>Pre-Alpha</h3>
-                <div class="deep-dive">
-                    <hr>
-                    <p>Initial conceptualization, asset gathering, world-building documents, and initial art direction finalized.</p>
-                </div>
-            </div>
+    <!-- Block 13: Unified Auth Registration Modal -->
+    <div id="register-modal" class="modal-overlay" style="display: none; opacity: 0;">
+        <div class="modal-content">
+            <span class="close-modal" onclick="closeRegister()">&times;</span>
+            <h2 class="modal-title">Create New Account</h2>
+            <div class="register-form">
+                <div class="reg-group"><label>Preferred Username*</label><input type="text" id="reg-username" class="reg-input"></div>
+                <div class="reg-group"><label>Email Address*</label><input type="email" id="reg-email" class="reg-input"></div>
+                <div class="reg-group"><label>Password*</label><input type="password" id="reg-password" class="reg-input"></div>
+                <div class="reg-group"><label>Confirm Password*</label><input type="password" id="reg-confirm" class="reg-input"></div>
 
-            <!-- Alpha 1.0 -->
-            <div class="roadmap-phase active" onclick="expandCard(this)">
-                <div class="phase-tag">In Progress</div>
-                <h3>Alpha 1.0</h3>
-                <div class="deep-dive">
-                    <hr>
-                    <ul>
-                        <li>Foundational Aether-code logic for stable expansion</li>
-                        <li>Scalable infrastructure and core logic stabilization</li>
-                        <li>Database security handshaking and error handling</li>
-                    </ul>
-                </div>
-            </div>
-
-            <!-- Alpha 2.0 -->
-            <div class="roadmap-phase" onclick="expandCard(this)">
-                <div class="phase-tag">Upcoming</div>
-                <h3>Alpha 2.0</h3>
-                <div class="deep-dive">
-                    <hr>
-                    <ul>
-                        <li>Creation of base functionality for initial game testers</li>
-                        <li>Intricate layout designs for primary webpages</li>
-                        <li>Integration of ambient orchestral background music engine</li>
-                    </ul>
-                </div>
-            </div>
-
-            <!-- Alpha 3.0 -->
-            <div class="roadmap-phase" onclick="expandCard(this)">
-                <div class="phase-tag">Upcoming</div>
-                <h3>Alpha 3.0</h3>
-                <div class="deep-dive">
-                    <hr>
-                    <ul>
-                        <li>Polishing of Unit Data and Rank Data standards</li>
-                        <li>Trait-related bonus balancing to ensure game fairness</li>
-                        <li>Comprehensive map and lore synchronization</li>
-                    </ul>
-                </div>
-            </div>
-
-            <!-- Alpha 4.0 -->
-            <div class="roadmap-phase" onclick="expandCard(this)">
-                <div class="phase-tag">Upcoming</div>
-                <h3>Alpha 4.0</h3>
-                <div class="deep-dive">
-                    <hr>
-                    <p>Addressing final technical requirements, unmentioned features, and system stress testing prior to Beta transition.</p>
-                </div>
-            </div>
-
-            <!-- Alpha 5.0 -->
-            <div class="roadmap-phase" onclick="expandCard(this)">
-                <div class="phase-tag">Upcoming</div>
-                <h3>Alpha 5.0</h3>
-                <div class="deep-dive">
-                    <hr>
-                    <p>Final polishing cycle, bug squashing, and Beta readiness protocols.</p>
+                <div class="modal-actions">
+                    <button class="img-btn" onclick="submitRegistration()">Confirm</button>
+                    <button class="img-btn" onclick="closeRegister()">Cancel</button>
                 </div>
             </div>
         </div>
     </div>
-</div>
 
-<!-- 5. THE AUDIO ENGINE (Dual Tracks) -->
-<audio id="main-theme" loop preload="auto">
-    <source src="audio/Birth of Argaute.wav" type="audio/wav">
-</audio>
+    <!-- Block 14: Widescreen Roadmap Pop-Up -->
+    <div id="roadmap-modal" class="modal-overlay" style="display: none; opacity: 0; transition: opacity 0.3s ease;">
+        <div class="roadmap-container">
+            <span class="close-modal" onclick="toggleRoadmap(false)">&times;</span>
+            <h1 class="roadmap-main-title">Project Roadmap</h1>
 
-<audio id="login-theme" loop preload="auto">
-    <source src="audio/Archimedes Lullaby.wav" type="audio/wav">
-</audio>
+            <div class="roadmap-grid">
+                <div class="roadmap-phase" onclick="expandCard(this)">
+                    <div class="phase-tag">Completed</div>
+                    <h3>Pre-Alpha</h3>
+                    <div class="deep-dive">
+                        <hr>
+                        <p>Initial conceptualization, asset gathering, world-building documents, and initial art direction finalized.</p>
+                    </div>
+                </div>
 
-<div id="audio-control" class="audio-toggle-container" onclick="toggleMute()">
-    <div id="audio-icon" class="icon-muted"></div>
-</div>
+                <div class="roadmap-phase active" onclick="expandCard(this)">
+                    <div class="phase-tag">In Progress</div>
+                    <h3>Alpha 1.0</h3>
+                    <div class="deep-dive">
+                        <hr>
+                        <ul>
+                            <li>Foundational Aether-code logic for stable expansion</li>
+                            <li>Scalable infrastructure and core logic stabilization</li>
+                            <li>Database security handshaking and error handling</li>
+                        </ul>
+                    </div>
+                </div>
 
-<!-- Block 6: Forgot Password Modal -->
-<div id="forgot-modal" class="modal-overlay" style="display: none; opacity: 0;">
-    <div class="modal-content">
-        <span class="close-modal" onclick="closeForgot()">&times;</span>
-        <h2 class="modal-title">Account Recovery</h2>
-        <div class="register-form">
-            <p style="color: #f1e0ac; font-size: 0.8rem; margin-bottom: 20px;">
-                Enter your email address to receive a one-time password reset link.
-            </p>
-            <div class="reg-group">
-                <label>Email Address*</label>
-                <input type="email" id="forgot-email" class="reg-input" placeholder="commander@example.com">
-            </div>
-            <div class="modal-actions">
-                <button class="img-btn" onclick="submitForgot(event)">Send</button>
-                <button class="img-btn" onclick="closeForgot()">Cancel</button>
+                <div class="roadmap-phase" onclick="expandCard(this)">
+                    <div class="phase-tag">Upcoming</div>
+                    <h3>Alpha 2.0</h3>
+                    <div class="deep-dive">
+                        <hr>
+                        <ul>
+                            <li>Creation of base functionality for initial game testers</li>
+                            <li>Intricate layout designs for primary webpages</li>
+                            <li>Integration of ambient orchestral background music engine</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="roadmap-phase" onclick="expandCard(this)">
+                    <div class="phase-tag">Upcoming</div>
+                    <h3>Alpha 3.0</h3>
+                    <div class="deep-dive">
+                        <hr>
+                        <ul>
+                            <li>Polishing of Unit Data and Rank Data standards</li>
+                            <li>Trait-related bonus balancing to ensure game fairness</li>
+                            <li>Comprehensive map and lore synchronization</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="roadmap-phase" onclick="expandCard(this)">
+                    <div class="phase-tag">Upcoming</div>
+                    <h3>Alpha 4.0</h3>
+                    <div class="deep-dive">
+                        <hr>
+                        <p>Addressing final technical requirements, unmentioned features, and system stress testing prior to Beta transition.</p>
+                    </div>
+                </div>
+
+                <div class="roadmap-phase" onclick="expandCard(this)">
+                    <div class="phase-tag">Upcoming</div>
+                    <h3>Alpha 5.0</h3>
+                    <div class="deep-dive">
+                        <hr>
+                        <p>Final polishing cycle, bug squashing, and Beta readiness protocols.</p>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
-</div>
 
-    <!-- ============================================================
-         ARCH SECTION 8: THE BRIDGE (System Scripts)
-         ============================================================ -->
-    
-<!-- 1. DATA REPOSITORIES (The Knowledge Base) -->
-<script src="rank-data.js"></script>
-<script src="unit-data.js"></script>
+    <!-- --- Section: Audio Engine --- -->
 
-<!-- 2. SUB-SYSTEM ENGINES (Battlefield Logic) -->
-<script src="battle-engine.js"></script>
+    <!-- Block 15: Dual-Track Audio Engine -->
+    <audio id="main-theme" loop preload="auto">
+        <source src="audio/Birth of Argaute.wav" type="audio/wav">
+    </audio>
 
-<!-- 3. THE RAGE ENGINE (Primary Logic Controller) -->
-<script src="script.js"></script>
+    <audio id="login-theme" loop preload="auto">
+        <source src="audio/archimedeslullaby.wav" type="audio/wav">
+    </audio>
 
-<!-- 4. NEXUS PULSE (Live Connection) -->
-<!-- This is where future socket.io or live-update scripts will go -->
+    <!-- Block 16: Audio Mute Toggle Control -->
+    <div id="audio-control" class="audio-toggle-container" onclick="toggleMute()">
+        <div id="audio-icon" class="icon-muted"></div>
+    </div>
 
-    <!-- ============================================================
-         SECTION 9: THE RENDERING SHIELD
-         ============================================================
-
-<div id="lore-modal" class="modal-overlay">
-    <div class="radial-container">
-        <span class="close-modal" onclick="closeLoreModal()">&times;</span>
-
-        <!-- Floating Slots Positioning handled in Section 10 -->
-        <img src="images/lostmanuscripts.png" class="radial-slot" id="slot-manuscripts" onclick="loadLore('manuscripts')">
-        <img src="images/letters.png" class="radial-slot" id="slot-letters" onclick="loadLore('letters')">
-        <img src="images/historicalarchives.png" class="radial-slot" id="slot-archives" onclick="loadLore('archives')">
-
-        <div class="lore-content-area">
-            <div class="lore-pane-left">
-                <h4 class="pane-label">Titles</h4>
-                <div class="lore-titles-list" id="lore-titles-container"></div>
+    <!-- Block 17: Forgot Password Modal -->
+    <div id="forgot-modal" class="modal-overlay" style="display: none; opacity: 0;">
+        <div class="modal-content">
+            <span class="close-modal" onclick="closeForgot()">&times;</span>
+            <h2 class="modal-title">Account Recovery</h2>
+            <div class="register-form">
+                <p style="color: #f1e0ac; font-size: 0.8rem; margin-bottom: 20px;">
+                    Enter your email address to receive a one-time password reset link.
+                </p>
+                <div class="reg-group">
+                    <label>Email Address*</label>
+                    <input type="email" id="forgot-email" class="reg-input" placeholder="commander@example.com">
+                </div>
+                <div class="modal-actions">
+                    <button class="img-btn" onclick="submitForgot(event)">Send</button>
+                    <button class="img-btn" onclick="closeForgot()">Cancel</button>
+                </div>
             </div>
+        </div>
+    </div>
 
-            <!-- The Vertical Divider Asset -->
+    <!-- ==========================================
+         LANDING MODULE: LORE NEXUS RENDERING SHIELD
+         ========================================== -->
+
+    <!-- --- Section: Radial Lore Modal --- -->
+
+    <!-- Block 18: Lore Modal Radial Container -->
+    <div id="lore-modal" class="modal-overlay">
+        <div class="radial-container">
+
+            <img src="images/closebtn.png" class="close-modal" onclick="closeLoreModal()" alt="Close">
             <div class="lore-divider-container">
                 <img src="images/divider.png" class="divider-img" alt="Divider">
             </div>
 
-            <div class="lore-pane-right">
-                <h4 class="pane-label">Details</h4>
-                <div class="lore-details-view" id="lore-details-body">
-                    Select a manuscript to begin...
+            <div class="lore-content-area">
+
+                <div class="lore-pane-left">
+                    <h4 class="pane-label">NATIONS</h4>
+                    <div class="scroll-arrow up" onclick="scrollNations('up')">▲</div>
+                    <div class="lore-titles-list" id="lore-titles-container">
+                        <!-- Buttons are injected here by JS -->
+                    </div>
+                    <div class="scroll-arrow down" onclick="scrollNations('down')">▼</div>
                 </div>
+
+                <div class="lore-pane-right">
+                    <h4 class="pane-label">DETAILS</h4>
+                    <div class="lore-details-view" id="lore-details-body">
+                        Make A Selection
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="radial-slots-wrapper">
+                <div id="slot-label-display">NEXUS HUB</div>
+
+                <img src="images/lostmanuscripts.png" class="radial-slot" id="slot-manuscripts" onmouseover="updateSlotLabel('Manuscripts')" onmouseout="updateSlotLabel('NEXUS HUB')" onclick="loadLore('manuscripts')">
+                <div class="slot-aura" id="aura-manuscripts"></div>
+
+                <img src="images/letters.png" class="radial-slot" id="slot-letters" onmouseover="updateSlotLabel('Letters')" onmouseout="updateSlotLabel('NEXUS HUB')" onclick="loadLore('letters')">
+                <div class="slot-aura" id="aura-letters"></div>
+
+                <img src="images/historicalarchives.png" class="radial-slot" id="slot-archives" onmouseover="updateSlotLabel('Archives')" onmouseout="updateSlotLabel('NEXUS HUB')" onclick="loadLore('archives')">
+                <div class="slot-aura" id="aura-archives"></div>
+
+                <img src="images/messageicon.png" class="nav-icon" id="slot-messages"
+                     onmouseover="updateSlotLabel('Messages')"
+                     onmouseout="updateSlotLabel('NEXUS HUB')"
+                     onclick="loadLore('messages')"
+                     title="Wartime Dispatches Portal">
+                <div class="slot-aura" id="aura-messages"></div>
+
+                <img src="images/profileicon.png" class="radial-slot" id="slot-profile" onmouseover="updateSlotLabel('Profile')" onmouseout="updateSlotLabel('NEXUS HUB')" onclick="loadLore('profile')">
+                <div class="slot-aura" id="aura-profile"></div>
+
+                <img src="images/settingsicon.png" class="radial-slot" id="slot-settings" onmouseover="updateSlotLabel('Settings')" onmouseout="updateSlotLabel('NEXUS HUB')" onclick="loadLore('settings')">
+                <div class="slot-aura" id="aura-settings"></div>
+
+                <img src="images/logouticon.png" class="radial-slot" id="slot-logout" onmouseover="updateSlotLabel('Logout')" onmouseout="updateSlotLabel('NEXUS HUB')" onclick="handleLogout()">
+                <div class="slot-aura" id="aura-logout"></div>
             </div>
         </div>
     </div>
-</div>
+
+    <!-- ==========================================
+         LANDING MODULE: SYSTEM CORE OVERLAYS
+         ========================================== -->
+
+    <!-- --- Section: UI Sound Channels --- -->
+
+    <!-- Block 19: Interface SFX Channels -->
+    <audio id="hover-sound" src="audio/uihover.wav" preload="auto"></audio>
+    <audio id="select-sound" src="audio/uiselect.wav" preload="auto"></audio>
+
+    <!-- --- Section: Commander Discipline & Security Overlays --- -->
+
+    <!-- Block 20: Automated Discipline Reminder Window -->
+    <div id="commander-penalty-overlay" class="suicide-overlay-hidden" style="display: none !important;">
+        <div class="suicide-popup-bezel">
+            <div class="suicide-popup-header" id="penalty-popup-header-title">⚠️ SYSTEM DISCIPLINE LOG</div>
+
+            <div class="penalty-strike-matrix-row">
+                <div class="penalty-cage-slot" id="strike-cage-0"></div>
+                <div class="penalty-cage-slot" id="strike-cage-1"></div>
+                <div class="penalty-cage-slot" id="strike-cage-2"></div>
+            </div>
+
+            <div class="suicide-popup-body-text" id="penalty-popup-text-field">
+                This is a daily "Community Safety & Fairness" system reminder to keep players informed of their current discipline status. Accumulating 3 strikes will trigger a critical violation warning, and further infractions may lead to severe account restrictions. Please review the details of your active penalties and adjust your conduct accordingly to maintain good standing within Royal Armies.
+            </div>
+
+            <div class="suicide-popup-action-row">
+                <button class="suicide-safe-retreat-btn" onclick="closePenaltyOverlayWindow()">Acknowledge & Deploy</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Block 21: Global Credentials Modification Gateway -->
+    <div id="commander-security-overlay" class="suicide-overlay-hidden" style="display: none !important;">
+        <div class="suicide-popup-bezel">
+            <div class="suicide-popup-header" id="security-popup-header-title">🛡️ CRYPT KEY MODIFICATION</div>
+            <div class="suicide-popup-body-text" id="security-popup-text-field"></div>
+            <div class="suicide-popup-action-row" id="security-popup-btn-dock"></div>
+        </div>
+    </div>
+
+    <!-- Block 22: Account Reset Protocol Engine Overlay -->
+    <div id="commander-suicide-overlay" class="suicide-overlay-hidden" style="display: none !important;">
+        <div class="suicide-popup-bezel">
+            <div class="suicide-popup-header">⚠️ SYSTEM REMINDER NOTICE</div>
+            <div class="suicide-popup-body-text" id="suicide-popup-text-field"></div>
+            <div class="suicide-popup-action-row" id="suicide-popup-btn-dock"></div>
+        </div>
+    </div>
+
+    <!-- ==========================================
+         LANDING MODULE: SCRIPT BRIDGE & DATA REPOSITORIES
+         ========================================== -->
+
+    <!-- --- Section: External Engine Scripts --- -->
+
+    <!-- Block 23: Data Repository Scripts -->
+    <script src="rank-data.js"></script>
+    <script src="unit-data.js"></script>
+
+    <!-- Block 24: Battlefield Logic Engine -->
+    <script src="battle-engine.js"></script>
+
+    <!-- Block 25: RAGE Primary Logic Controller -->
+    <script src="public/js/some_other_helper.js"></script>
+    <script src="script.js"></script>
+    <script src="script2.js"></script>
 
 </body>
 </html>

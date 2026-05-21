@@ -1,11 +1,13 @@
-* style.css - Royal Armies
+/* style.css - Royal Armies
 * The AVI (AETHER Visual Interface) Framework
 * A sub-system of the RAGE Game Engine
 */
 
-/* ============================================================
-   AVI SECTION A: THE AETHER CORE (Global Variables)
-   ============================================================ */
+/* ==========================================
+   AVI MODULE: AETHER CORE & GLOBAL VARIABLES
+   ========================================== */
+
+/* --- Section: CSS Custom Properties & Accessibility --- */
 
 :root {
     --bg: #1a1a1a;
@@ -15,11 +17,113 @@
     --danger: #8b0000;
     --success: #228b22;
     --border: #444;
+    --font-dyslexia: 'OpenDyslexic', 'Comic Sans MS', 'Verdana', 'Trebuchet MS', Arial, sans-serif;
+    --text-scale: 1;
+    --portal-root-font-size: 16px;
 }
 
-/* ============================================================
-   SECTION 0: GLOBAL RESET & ROOT
-   ============================================================ */
+/* Proportional text scaling: rem-based sizes keep hierarchy (titles vs body) */
+html {
+    font-size: calc(var(--portal-root-font-size) * var(--text-scale, 1));
+}
+
+/* --- High Contrast Shield --- */
+.high-contrast-mode {
+    --bg: #000000 !important;
+    --text: #ffffff !important;
+    --accent: #ffff00 !important; 
+    --border: #ffffff !important;
+}
+
+/* THE SLIDESHOW INTERCEPT GATE */
+/* Target your background slideshow container specifically while high contrast is active */
+.high-contrast-mode .slideshow-container, 
+.high-contrast-mode #slideshow-wrapper,
+.high-contrast-mode body {
+    /* 1. FORCE CANCELLATION: Kills all ongoing background image file tracks instantly */
+    background-image: none !important; 
+    background: #000000 !important;
+    background-color: #000000 !important;
+
+    /* 2. THE FREEZE ENGINE: Halts your CSS keyframe cycles dead in their tracks */
+    animation: none !important;
+    -webkit-animation: none !important;
+}
+
+/* Kill any nested individual fading slide image layers inside your container */
+.high-contrast-mode .slide,
+.high-contrast-mode .mySlides,
+.high-contrast-mode .slideshow-image {
+    display: none !important;
+    background-image: none !important;
+    animation: none !important;
+}
+
+@font-face {
+    font-family: 'RoyalDetails';
+    src: url('fonts/Metamorphous-Regular.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+}
+
+/* OpenDyslexic — widely used dyslexia-friendly typeface */
+@font-face {
+    font-family: 'OpenDyslexic';
+    src: url('https://cdn.jsdelivr.net/gh/antijingoist/opendyslexic@master/compiled/OpenDyslexic-Regular.woff2') format('woff2');
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'OpenDyslexic';
+    src: url('https://cdn.jsdelivr.net/gh/antijingoist/opendyslexic@master/compiled/OpenDyslexic-Bold.woff2') format('woff2');
+    font-weight: 700;
+    font-style: normal;
+    font-display: swap;
+}
+
+/* Site-wide dyslexia accessibility mode */
+html.dyslexia-font-enabled {
+    letter-spacing: 0.04em;
+    word-spacing: 0.12em;
+}
+
+html.dyslexia-font-enabled,
+html.dyslexia-font-enabled body,
+html.dyslexia-font-enabled *:not(.media-btn-icon-symbol):not(.media-vinyl-spinning-node):not(.vinyl-spinning-glyph):not(.metric-glyph-icon) {
+    font-family: var(--font-dyslexia) !important;
+    font-weight: 400 !important;
+    font-style: normal !important;
+    letter-spacing: 0.04em !important;
+    word-spacing: 0.1em !important;
+    line-height: 1.55 !important;
+    text-transform: none !important;
+}
+
+html.dyslexia-font-enabled strong,
+html.dyslexia-font-enabled b,
+html.dyslexia-font-enabled .settings-label,
+html.dyslexia-font-enabled h1,
+html.dyslexia-font-enabled h2,
+html.dyslexia-font-enabled h3,
+html.dyslexia-font-enabled h4,
+html.dyslexia-font-enabled button {
+    font-weight: 700 !important;
+}
+
+html.dyslexia-font-enabled input,
+html.dyslexia-font-enabled textarea,
+html.dyslexia-font-enabled select,
+html.dyslexia-font-enabled button {
+    font-family: var(--font-dyslexia) !important;
+}
+
+/* ==========================================
+   AVI MODULE: GLOBAL RESET & ROOT
+   ========================================== */
+
+/* --- Section: Document Baseline --- */
 body {
     background: var(--bg);
     color: var(--text);
@@ -41,9 +145,11 @@ body {
     text-align: center;
 }
 
-/* ============================================================
-   SECTION 1: NARRATIVE
-   ============================================================ */
+/* ==========================================
+   AVI MODULE: NARRATIVE & CINEMATIC UI
+   ========================================== */
+
+/* --- Section: Narrative System & Audio Toggle --- */
 
 /* --- 1. THE NARRATIVE SYSTEM (The Old Man) --- */
 .narrative-container {
@@ -180,9 +286,11 @@ body {
     pointer-events: auto;
 }
 
-/* ============================================================
-   SECTION 2: CORE GAME & OVERLAY CONTAINERS
-   ============================================================ */
+/* ==========================================
+   AVI MODULE: CORE GAME & OVERLAY CONTAINERS
+   ========================================== */
+
+/* --- Section: Landing Page & Modal Shells --- */
 
 /* --- Block 1: The World Stage & Overlay --- */
 #game-container {
@@ -459,7 +567,7 @@ body {
     cursor: pointer;
 }
 
-/* --- Block 5: The Master Anchor & Stone Portal (Stability Lockdown) --- */
+/* --- Block 6: The Master Anchor & Stone Portal (Stability Lockdown) --- */
 .portal-master-anchor {
     position: fixed !important;
     top: 50% !important;
@@ -549,7 +657,7 @@ body {
     display: block !important;
 }
 
-/* --- Block 6: Cinematic Slideshow Engine --- */
+/* --- Block 7: Cinematic Slideshow Engine --- */
 .slideshow-container {
     position: absolute;
     inset: 0;
@@ -580,7 +688,7 @@ body {
 
 @keyframes fadeEffect { 0% { opacity: 0; } 2% { opacity: 1; } 11% { opacity: 1; } 14% { opacity: 0; } 100% { opacity: 0; } }
 
-/* --- Block 7: Motion Library --- */
+/* --- Block 8: Motion Library --- */
 @keyframes panZoomIn_UL { 0% { transform: scale(1) translate(0, 0); } 35% { transform: scale(1.15) translate(-3%, -3%); } 100% { transform: scale(1) translate(0, 0); } }
 @keyframes panZoomOut_DR { 0% { transform: scale(1.15) translate(0, 0); } 35% { transform: scale(1) translate(3%, 3%); } 100% { transform: scale(1.15) translate(0, 0); } }
 @keyframes panZoomIn_R { 0% { transform: scale(1) translate(-3%, 0); } 35% { transform: scale(1.15) translate(3%, 0); } 100% { transform: scale(1) translate(-3%, 0); } }
@@ -591,7 +699,7 @@ body {
 @keyframes panZoomOut_D { 0% { transform: scale(1.15) translate(0, -3%); } 35% { transform: scale(1) translate(0, 3%); } 100% { transform: scale(1.15) translate(0, -3%); } }
 @keyframes panZoomIn_C { 0% { transform: scale(1); } 35% { transform: scale(1.2); } 100% { transform: scale(1); } }
 
-/* --- Block 8: Identity Stamps --- */
+/* --- Block 9: Identity Stamps --- */
 .version-stamp {
     position: fixed;
     top: 25px;
@@ -620,9 +728,11 @@ body {
     opacity: 0.5;
 }
 
-/* ============================================================
-   SECTION 3: INTERACTIVE ARSENAL (Buttons & Inputs)
-   ============================================================ */
+/* ==========================================
+   AVI MODULE: INTERACTIVE ARSENAL
+   ========================================== */
+
+/* --- Section: Buttons, Inputs & Portal Anchor --- */
 
 /* --- 1. THE AURORA COMMANDER INPUTS --- */
 .login-input {
@@ -652,7 +762,7 @@ body {
     box-shadow: 0 0 15px rgba(0, 255, 255, 0.4);
 }
 
-/* --- Block 2: Independent Button Hub (Ghost Fix) --- */
+/* --- Block 10: Independent Button Hub (Ghost Fix) --- */
 #auth-buttons {
     position: relative !important;
     display: flex;
@@ -716,9 +826,11 @@ body {
     white-space: nowrap;
 }
 
-/* ============================================================
-   SECTION 4: THE COMMAND HUD (Player Vitals)
-   ============================================================ */
+/* ==========================================
+   AVI MODULE: COMMAND HUD
+   ========================================== */
+
+/* --- Section: Player Vitals & Bars --- */
 
 /* THE MASTER OVERLAY (Translucent Obsidian Shield) */
 #roadmap-modal.modal-overlay,
@@ -773,23 +885,31 @@ body {
 
 /* --- THE LOCKED WINDOW CLOSING "X" --- */
 .close-modal {
-    position: sticky !important;
-    align-self: flex-end;
-    top: 0 !important;
-    margin-right: -40px; /* Restored negative PC offset */
-    margin-top: 10px;
-    font-size: 55px !important;
-    color: #d4af37 !important;
+    /* 1. DISCONNECT FROM FLEXBOX */
+    position: absolute !important;
+    
+    /* 2. REMOVE MARGINS */
+    margin: 0 !important;
+
+    /* 3. YOUR LOCKED COORDINATES */
+    right: 140px !important; 
+    top: 115px !important;
+
+    /* 4. IMAGE DIMENSIONS */
+    /* Adjust these if the closebtn.png appears too big or small */
+    width: 40px !important; 
+    height: 40px !important;
+    object-fit: contain;
+
+    /* 5. INTERACTION */
     cursor: pointer;
-    z-index: 500020 !important;
-    line-height: 1;
-    text-shadow: 0 0 15px rgba(0, 0, 0, 1), 0 0 5px #d4af37;
-    transition: color 0.2s, transform 0.2s;
-    user-select: none;
+    z-index: 1000000000 !important;
+    transition: transform 0.2s, filter 0.2s;
 }
 
 .close-modal:hover {
-    color: #ffffff !important;
+    /* Instead of color: white, we use brightness for images */
+    filter: brightness(1.5) drop-shadow(0 0 10px rgba(212, 175, 55, 0.5));
     transform: scale(1.1);
 }
 
@@ -871,9 +991,11 @@ body {
     border: 1px solid rgba(212, 175, 55, 0.2);
 }
 
-/* ============================================================
-   SECTION 5: THE QUESTING WORLD (Cards & Animations)
-   ============================================================ */
+/* ==========================================
+   AVI MODULE: QUESTING WORLD
+   ========================================== */
+
+/* --- Section: Quest Cards & Animations --- */
 
 .quest-grid {
     display: flex;
@@ -970,9 +1092,11 @@ body {
     border-radius: 2px;
 }
 
-/* ============================================================
-   SECTION 6: NAVIGATION ENHANCEMENTS
-   ============================================================ */
+/* ==========================================
+   AVI MODULE: NAVIGATION ENHANCEMENTS
+   ========================================== */
+
+/* --- Section: Navigator & Hub Docking --- */
 .top-nav {
     background-image: url('images/stonewallbg.png') !important;
     background-blend-mode: overlay;
@@ -1081,9 +1205,11 @@ body {
     50% { transform: translate(-50%, -50%) scale(1.2); opacity: 0.8; box-shadow: 0 0 50px var(--accent); }
 }
 
-/* ============================================================
-   SECTION 7: BATTLE TERMINAL (Tables & Logs)
-   ============================================================ */
+/* ==========================================
+   AVI MODULE: BATTLE TERMINAL
+   ========================================== */
+
+/* --- Section: Tables & Combat Logs --- */
 .battle-stats-table {
     width: 100%;
     border-collapse: collapse;
@@ -1146,9 +1272,11 @@ body {
 }
 
 
-/* ============================================================
-   SECTION 8: WORLD INTERACTIONS (Special FX)
-   ============================================================ */
+/* ==========================================
+   AVI MODULE: WORLD INTERACTIONS
+   ========================================== */
+
+/* --- Section: Special FX & Motion --- */
 .zoom-text {
     position: fixed;
     top: 50%; 
@@ -1222,11 +1350,13 @@ body {
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M11 5L6 9H2v6h4l5 4V5z'%3E%3C/path%3E%3Cpath d='M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07'%3E%3C/path%3E%3C/svg%3E");
 }
 
-/* ============================================================
-   SECTION 9: THE RENDERING SHIELD (Optimization)
-   ============================================================ */
+/* ==========================================
+   AVI MODULE: RENDERING SHIELD
+   ========================================== */
 
-/* --- Block 1: Cinematic Rendering Shields --- */
+/* --- Section: Optimization & Lore Radial --- */
+
+/* --- Block 11: Cinematic Rendering Shields --- */
 .class-card img, .slide, .quest-image {
     image-rendering: -webkit-optimize-contrast;
     transform: translateZ(0);
@@ -1234,7 +1364,7 @@ body {
     will-change: transform;
 }
 
-/* --- Block 2: Statue Gallery Layout --- */
+/* --- Block 12: Statue Gallery Layout --- */
 .class-options-container {
     transform-style: preserve-3d;
     backface-visibility: hidden;
@@ -1267,7 +1397,7 @@ body {
     filter: brightness(0.7) contrast(0.9);
 }
 
-/* --- Block 3: Side Info Panel Content --- */
+/* --- Block 13: Side Info Panel Content --- */
 .info-content {
     display: flex;
     flex-direction: column;
@@ -1302,7 +1432,7 @@ body {
     transition: all 0.3s ease;
 }
 
-/* --- Block 5: Unified Panel Styling --- */
+/* --- Block 14: Unified Panel Styling --- */
 .updates-panel, .full-page-panel {
     position: fixed !important;
     top: 115px !important;
@@ -1318,20 +1448,20 @@ body {
     overflow: hidden;
 }
 
-/* --- Block 6: Detail Modal Styling --- */
+/* --- Block 15: Detail Modal Styling --- */
 .detail-overlay, .modal-overlay {
     position: fixed !important;
     inset: 0 !important;
     width: 100vw !important;
     height: 100vh !important;
     
-    /* 1. THE DIMMER: Darkens the screen behind the pop-up */
-    background: rgba(0, 0, 0, 0.92) !important; 
+    /* THE FIX: Removes the solid grey backing tint entirely */
+    background: transparent !important; 
+    background-color: transparent !important; 
     
-    /* 2. THE LAYER FIX: Higher than the login portal (200k) and panels (300k) */
-    z-index: 3000000 !important; 
-    
-    display: none; 
+    /* Keep your existing structural rules intact */
+    z-index: 3000000 !important;
+    display: none;
     justify-content: center;
     align-items: center;
 }
@@ -1353,50 +1483,163 @@ body {
     color: #f1e0ac !important;
 }
 
-.radial-container {
-    background-image: url('images/radialmenuui.png');
-    background-size: 100% 100%;
-    width: 1000px;
-    height: 700px;
-    position: relative;
+/* [LABEL] SECTION 9: THE RENDERING SHIELD | Block 16: Radial Modal */
+.radial-container { 
+    width: 1700px !important; 
+    height: 785px !important; 
+    position: fixed; 
+    top: 50%;
+    left: 50%;
+    
+    /* THE FIX: Combine translate and scale into one line */
+    transform: translate(-50%, -50%) scale(var(--ui-scale, 1)); 
+
+    background-image: url('images/radialmenuui.png'); 
+    background-size: 100% 100% !important; 
+    background-repeat: no-repeat; 
+    background-position: center; 
+    background-color: transparent !important; 
+
     display: flex;
     align-items: center;
-    justify-content: flex-end; /* Pushes rectangle area to the right */
-    padding-right: 50px;
+    justify-content: flex-end; 
+    padding-right: 57px; 
+    z-index: 3000001; 
+    box-sizing: border-box; 
 }
 
-/* [LABEL] SECTION 9: THE RENDERING SHIELD | Block 10: Nexus Content Engine */
+/* [LABEL] SECTION 9: THE RENDERING SHIELD | Block 17: Nexus Content Engine */ 
 .lore-content-area {
-    width: 600px;
-    height: 450px;
-    display: flex;
-    flex-direction: row;
-    position: relative;
+    /* 1. POSITIONING: Using ONLY absolute to lock it to the stone UI */
+    position: absolute !important;
+    left: 635px !important;  /* Lowered from 650px to pull it back LEFT */
+    top: 110px !important;   /* Aligned with the center of the stone wheel */
+    
+    /* 2. DIMENSIONS */
+    width: 1000px !important; /* Total width for both panes + divider */
+    height: 550px !important; 
+    
+    /* 3. LAYOUT */
+    display: flex !important;
+    flex-direction: row !important;
+    justify-content: flex-start !important;
+    z-index: 5000001;
+    /* REMOVED: position: relative and margin-top to prevent jumping */
 }
 
-.lore-pane-left { width: 35%; height: 100%; overflow-y: auto; }
-.lore-pane-right { width: 60%; height: 100%; overflow-y: auto; padding-left: 20px; }
-
-.lore-divider-container {
-    width: 30px;
-    height: 100%;
+/* 1. STICKY PANE CONTAINERS */
+.lore-pane-left, .lore-pane-right { 
+    height: 100%; 
     display: flex;
-    justify-content: center;
+    flex-direction: column;
+    overflow: hidden !important; /* Locks headers at the top */
 }
 
-.divider-img { height: 100%; width: auto; object-fit: contain; }
+.lore-pane-left { 
+    width: 25% !important; 
+    align-items: center; 
+}
+
+.lore-pane-right { 
+    width: 60% !important; 
+    padding: 0 10px 0 70px !important; 
+    align-items: center;
+    overflow: visible !important; /* ALLOWS THE BUTTON TO BE SEEN */
+    position: relative !important;
+}
+
+#lore-titles-container {
+    overflow-y: hidden !important; /* Disables manual mouse/touch scroll */
+    scroll-behavior: smooth; /* Cinematic movement between nations */
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+/* THE ARROWS */
+.scroll-arrow {
+    font-size: 1.5rem;
+    color: #d4af37;
+    cursor: pointer;
+    padding: 10px;
+    user-select: none;
+    text-shadow: 0 0 10px rgba(212, 175, 55, 0.5);
+    transition: transform 0.2s, color 0.2s;
+    z-index: 100;
+}
+
+.scroll-arrow:hover {
+    color: #fff;
+    transform: scale(1.2);
+}
+
+#lore-titles-container::-webkit-scrollbar,
+#lore-details-body::-webkit-scrollbar { 
+    display: none; 
+}
+
+#lore-titles-container .update-item {
+    background-image: url('images/register_btn.png') !important;
+    background-size: 100% 100% !important;
+    background-repeat: no-repeat !important;
+    background-color: transparent !important;
+    border: none !important;
+    width: 200px !important; 
+    height: 25px !important; /* Restored to original legible height */
+    margin-bottom: 12px !important;
+    flex-shrink: 0;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    color: #f1e0ac !important; /* Pale Gold text */
+    font-family: 'Cinzel', serif;
+    font-weight: bold;
+    font-size: 0.8rem;
+    cursor: pointer;
+    text-align: center;
+}
+
+/* 1. THE MAIN DETAILS FRAME WRAPPER */
+#lore-details-body {
+    position: relative !important;
+    width: 100% !important;
+    height: 480px !important; /* HARD-LOCKED HEIGHT: Pulls the whole layout up into the window frame */
+    
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: space-between !important; 
+    align-items: center !important;
+    
+    box-sizing: border-box !important;
+    padding: 0 !important;
+    overflow: hidden !important; 
+}
 
 .pane-label {
-    font-family: 'Cinzel', serif;
-    color: var(--accent);
-    font-size: 0.7rem;
-    border-bottom: 1px solid rgba(212, 175, 55, 0.3);
-    margin-bottom: 10px;
+    flex-shrink: 0; /* Prevents header from squishing */
+    font-family: 'Almendra SC', serif; 
+    color: #d4af37 !important; /* Bright Aether Gold */
+    font-size: 1.2rem !important; 
+    text-transform: uppercase;
+    letter-spacing: 5px;
+    border-bottom: 2px solid rgba(212, 175, 55, 0.6);
+    margin-bottom: 20px;
+    padding-bottom: 8px;
+    width: 100%; 
+    text-align: center;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 1) !important;
+    z-index: 100;
+    transition: opacity 0.3s ease; /* For smooth Category Spy swaps */
+    position: relative !important;
+    overflow: visible !important;
 }
 
-/* ============================================================
-   SECTION 10: PRECISE ALIGNMENT CONTROLS
-   ============================================================ */
+/* ==========================================
+   AVI MODULE: PRECISE ALIGNMENT CONTROLS
+   ========================================== */
+
+/* --- Section: Radial & Panel Alignment --- */
 
 #card-battlemaster { 
     transform-origin: right center; /* Restored side-origin for cinematic overlap */
@@ -1427,7 +1670,7 @@ body {
     margin-bottom: 10px; 
 } 
 
-/* --- Block 2: Recovery Link Shield Breaker --- */ 
+/* --- Block 18: Recovery Link Shield Breaker --- */ 
 .forgot-link-container { 
     pointer-events: auto !important; 
     position: relative !important; 
@@ -1448,17 +1691,2052 @@ body {
     opacity: 1;
 }
 
-.radial-slot {
-    position: absolute;
-    width: 70px;
-    height: 70px;
-    cursor: pointer;
-    transition: transform 0.2s, filter 0.2s;
+/* THE BASE ICON (Applies to all) */
+.radial-slots-wrapper { 
+    position: absolute !important; 
+    top: 0 !important; 
+    left: 0 !important; 
+    width: 100% !important; 
+    height: 100% !important; 
+    pointer-events: none; 
+    z-index: 5000004; 
+} 
+
+.radial-slot { 
+    position: absolute !important; 
+    cursor: pointer; 
+    z-index: 5000005 !important; 
+    pointer-events: auto !important; 
+} 
+
+.radial-slot:hover { 
+    filter: brightness(1.2); 
 }
 
-.radial-slot:hover { transform: scale(1.1); filter: brightness(1.2); }
+/* THE SLOT GLOW (The Aura) */
+.slot-aura { 
+    position: absolute !important; 
+    width: 160px; 
+    height: 120px; 
+    background: radial-gradient(circle, rgba(212, 175, 55, 0.6) 0%, transparent 70%); 
+    border-radius: 50%; 
+    filter: blur(15px); 
+    opacity: 0; 
+    transition: opacity 0.3s ease; 
+    pointer-events: none; 
+    z-index: 5000003; 
+} 
 
-/* Nudges: Adjust these to fit your UI's empty circles */
-#slot-manuscripts { top: 20%; left: 12%; }
-#slot-letters { top: 48%; left: 8%; }
-#slot-archives { top: 78%; left: 12%; }
+/* TRIGGER: Hovering the icon lights up the slot behind it */
+#slot-manuscripts:hover + #aura-manuscripts,
+#slot-letters:hover + #aura-letters,
+#slot-archives:hover + #aura-archives,
+#slot-profile:hover + #aura-profile,
+#slot-messages:hover + #aura-messages, /* 🔥 NEW HOVER TRIGGER TARGET LINK */
+#aura-profile:hover {
+    opacity: 1 !important;
+}
+
+#slot-settings:hover + #aura-settings,
+#slot-logout:hover + #aura-logout {
+    opacity: 1;
+}
+
+/* --- MANUSCRIPTS --- */
+#slot-manuscripts {
+    top: 180px !important;
+    left: 145px !important;
+    width: 150px !important;
+    height: auto !important;
+}
+#aura-manuscripts {
+    top: 155px;
+    left: 145px;
+}
+
+/* --- LETTERS --- */
+#slot-letters {
+    top: 290px !important;
+    left: 65px !important;
+    width: 100px !important;
+    height: auto !important;
+}
+#aura-letters {
+    top: 260px;
+    left: 40px;
+}
+
+/* --- ARCHIVES --- */
+#slot-archives {
+    top: 410px !important;
+    left: 55px !important;
+    width: 145px !important;
+    height: auto !important;
+}
+#aura-archives {
+    top: 385px;
+    left: 45px;
+}
+
+/* --- PROFILE --- */
+#slot-profile {
+    /* Perfectly splits the distance vector path between Archives and Settings */
+    top: 175px !important;
+    left: 300px !important;
+    width: 110px !important;
+    height: auto !important;
+}
+#aura-profile {
+    top: 165px;
+    left: 275px;
+}
+
+/* 1. THE MESSAGES BUTTON LAYER (SHIELD LEVEL 2 - TOP LAYER) */
+img.nav-icon#slot-messages {
+    position: absolute !important;
+    top: 300px !important;  
+    left: 420px !important; 
+    width: 75px !important; 
+    height: auto !important; 
+    margin: 0 !important;
+    
+    /* THE DEPTH SWITCH FORCE: Forces the icon art to sit cleanly on top of its halo */
+    z-index: 2 !important; 
+}
+
+/* 2. THE BACKGROUND GLOW HALO LAYER (SHIELD LEVEL 1 - DEEP BOTTOM LAYER) */
+/* Combined your twin definitions into one single rule block to remove structural confusion loops */
+div.slot-aura#aura-messages,
+#aura-messages {
+    position: absolute !important;
+    top: 265px !important; /* Mapped to match your custom tracking alignment offsets */
+    left: 370px !important; 
+    margin: 0 !important;
+    
+    /* THE BACKGROUND ANCHOR FORCE: Pulls the glow effect down below your icon image mesh layout */
+    z-index: 1 !important; 
+    
+    /* Safety filter ensures player cursor clicks pass straight through the aura to hit the button link */
+    pointer-events: none !important; 
+}
+
+/* --- SETTINGS --- */
+#slot-settings {
+    top: 515px !important;
+    left: 310px !important;
+    width: 100px !important;
+    height: auto !important;
+}
+#aura-settings {
+    top: 480px;
+    left: 280px;
+}
+
+/* --- LOGOUT --- */
+#slot-logout {
+    top: 420px !important;
+    left: 430px !important;
+    width: 60px !important;
+    height: auto !important;
+}
+#aura-logout {
+    top: 390px;
+    left: 370px;
+}
+
+.narration-btn {
+    position: absolute !important;
+    
+    /* 1. POSITIONING: Adjusted to sit nicely in the left gutter of the details pane */
+    left: 20px !important; 
+    top: 50% !important;
+    transform: translateY(-50%) !important;
+
+    /* 2. STYLE: Cleaned up (No red border!) */
+    cursor: pointer !important;
+    color: #d4af37 !important; 
+    font-size: 1.4rem !important; 
+    z-index: 5000006 !important; /* Above the panes, below the close btn */
+    
+    display: inline-block !important;
+    opacity: 1 !important;
+    transition: color 0.3s, transform 0.2s;
+}
+
+.narration-btn:hover {
+    color: #ffffff;
+    transform: translateY(-50%) scale(1.2);
+    text-shadow: 0 0 10px #d4af37;
+}
+
+
+#slot-label-display { 
+    position: absolute !important; 
+    top: 49.5% !important; 
+    left: 290px !important; 
+    transform: translate(-50%, -50%) !important; 
+    
+    font-family: 'Cinzel', serif !important; 
+    color: #ffd700 !important; 
+    font-size: 1rem !important; 
+    font-weight: bold !important; 
+    text-transform: uppercase !important; 
+    letter-spacing: 2px !important; 
+    text-shadow: 2px 2px 4px #000, 0 0 10px rgba(255, 215, 0, 0.5) !important; 
+    
+    width: 250px !important; 
+    text-align: center !important; 
+    z-index: 9999999 !important; 
+    pointer-events: none !important; 
+    display: block !important; 
+    opacity: 1 !important; 
+}
+
+.lore-divider-container { 
+    position: absolute !important; 
+    z-index: 5000000 !important; 
+    pointer-events: none; 
+    display: flex !important; 
+    /* YOUR EDITS LOCKED */ 
+    width: 700px; 
+    height: 575px; 
+    left: 570px; 
+    top: 101px; 
+} 
+
+.divider-img { 
+    width: 100% !important; 
+    height: 100% !important; 
+    object-fit: fill !important; 
+}
+
+.modal-actions .img-btn {
+    background-image: url('images/register_btn.png') !important;
+    background-size: 100% 100%;
+    width: 160px;
+    height: 50px;
+    color: #ffd700; /* Bright gold for button text */
+    font-family: 'Cinzel', serif;
+    font-size: 0.85rem;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    cursor: pointer;
+}
+
+/* --- Block 20: The Master Anchor & Stone Portal (Stability Lockdown) --- */
+.portal-master-anchor {
+    position: fixed !important;
+    top: 50% !important;
+    left: 50% !important;
+    transform: translate(-50%, -50%) !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    gap: 40px;
+    width: 800px; /* Restored PC fixed width */
+    height: 600px;
+    z-index: 200000;
+    margin: 0 !important;
+    pointer-events: none;
+}
+
+/* [LABEL] SECTION 10: ALIGNMENT | Block 21: Isolated Visual Preview Window Sandbox */
+.preview-sandbox-window { 
+    width: 100% !important; 
+    display: flex !important; 
+    flex-direction: column !important; 
+    align-items: center !important; 
+    margin-bottom: 25px !important; 
+    margin-top: 10px !important; 
+} 
+
+.preview-sandbox-label { 
+    font-family: 'Cinzel', serif; 
+    font-size: 0.8rem; 
+    color: var(--accent) !important; 
+    letter-spacing: 1px; 
+    margin-bottom: 8px; 
+    text-shadow: 1px 1px 2px #000; 
+} 
+
+/* LAYER 1: THE TOP WINDOW BEZEL FRAME */
+.preview-landing-backdrop { 
+    position: relative !important; 
+    width: 320px !important; 
+    height: 160px !important; 
+    
+    /* Displays ONLY your thin golden border graphic layout on top */
+    background-image: url('images/borderedcontainer_thin.png') !important; 
+    background-size: 100% 100% !important; 
+    background-repeat: no-repeat !important; 
+    background-position: center !important; 
+    background-color: transparent !important;
+    
+    overflow: hidden !important; 
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.7); 
+    box-sizing: border-box; 
+} 
+
+/* LAYER 2: THE LANDSCAPE SCENERY BACKGROUND */
+.preview-landscape-layer {
+    position: absolute !important;
+    inset: 0 !important;
+    
+    /* Loads your default landscape scene graphic underneath the border frame */
+    background-image: linear-gradient(rgba(0, 0, 0, 0.2), rgba(0, 0, 0, 0.2)), url('images/mainbg1.png') !important;
+    background-size: cover !important;
+    background-position: center !important;
+    background-repeat: no-repeat !important;
+    background-color: #1a1a1a !important;
+    
+    z-index: 1 !important; /* Locks it safely behind the stone wheel and frame */
+    transition: background-color 0.2s ease, background-image 0.2s ease !important;
+}
+
+/* THE HIGH-CONTRAST MASK EFFECT SYSTEM */
+/* When active, this class bypasses the landscape image asset and drops pure solid black */
+.preview-hc-active {
+    background-image: none !important;
+    background-color: #000000 !important;
+}
+
+/* LAYER 3: THE MINIATURE WHEEL CLONE */
+.preview-mini-modal { 
+    position: absolute !important; 
+    top: 50% !important; 
+    left: 50% !important; 
+    width: 220px !important; 
+    height: 100px !important; 
+    background-image: url('images/radialmenuui.png') !important; 
+    background-size: 100% 100% !important; 
+    background-repeat: no-repeat !important; 
+    background-position: center !important; 
+    
+    transform: translate(-50%, -50%) scale(1); 
+    will-change: transform; 
+    z-index: 10 !important; /* Forces the wheel to float on top of the black mask */
+}
+
+.settings-group {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 8px 0 !important;
+    padding: 6px 0px !important;
+    display: flex !important;
+    flex-direction: row !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    background: transparent !important;
+    border-bottom: 1px double rgba(212, 175, 55, 0.12) !important;
+    box-sizing: border-box !important;
+}
+
+/* THE ANCIENT TACTICAL TOGGLE BUTTONS */
+.settings-btn {
+    background: linear-gradient(135deg, #1e1a12 0%, #110e0a 100%) !important;
+    border: 2px solid #b89030 !important;
+    border-radius: 3px !important;
+    color: #ffd700 !important;
+    padding: 8px 18px !important;
+    cursor: pointer !important;
+    font-family: 'Cinzel', serif !important;
+    font-size: 0.85rem !important;
+    font-weight: bold !important;
+    letter-spacing: 1px !important;
+    text-shadow: 1px 1px 3px rgba(0,0,0,0.8) !important;
+    box-shadow: 0 3px 6px rgba(0,0,0,0.5), inset 0 1px 3px rgba(255,215,0,0.15) !important;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+.settings-btn:hover {
+    color: #ffffff !important;
+    border-color: #ffd700 !important;
+    background: linear-gradient(135deg, #2b2417 0%, #17130e 100%) !important;
+    box-shadow: 0 0 12px rgba(212, 175, 55, 0.6), inset 0 1px 4px rgba(255,255,255,0.2) !important;
+    transform: translateY(-1px) !important;
+}
+
+.settings-btn:active {
+    transform: translateY(1px) !important;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.7) !important;
+}
+
+/* FORCE THE ENTIRE RIGHT WRAPPER CONTAINER TO STRETCH WALL-TO-WALL */
+.settings-group .settings-right-wrapper {
+    flex: 1 !important;
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: flex-end !important;
+    margin-left: 20px !important;
+    padding-right: 2px !important;
+    box-sizing: border-box !important;
+}
+
+/* FORCE THE SLIDER TRACK TO STRETCH TO 100% OF EXTENDED TERRITORY */
+.settings-group .settings-right-wrapper input[type="range"] {
+    flex: 1 !important;
+    width: 100% !important;
+    margin: 0 15px 0 0 !important;
+}
+
+/* PROTECT PERCENTAGE DISPLAY RUNES FROM INLINE SQUISHING */
+.settings-value-label {
+    font-family: 'Cinzel', serif !important;
+    color: var(--accent) !important;
+    font-size: 0.95rem !important;
+    min-width: 55px !important;
+    text-align: right !important;
+    display: inline-block !important;
+    flex-shrink: 0 !important;
+}
+
+.settings-hint-line {
+    margin: -4px 0 12px 0 !important;
+    padding: 0 4px !important;
+    font-family: 'Segoe UI', sans-serif !important;
+    font-size: 0.72rem !important;
+    line-height: 1.35 !important;
+    color: rgba(241, 224, 172, 0.5) !important;
+    text-align: left !important;
+}
+
+.settings-scroll-wrapper {
+    width: 100% !important;
+    height: 400px !important;
+    max-height: 400px !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    padding: 0 10px !important;
+    box-sizing: border-box !important;
+}
+
+.settings-scroll-wrapper::-webkit-scrollbar {
+    display: none !important;
+}
+
+/* 4. THE STATIONARY CONFIRM/REVERT BUTTON FLOOR */
+.settings-controls {
+    position: relative !important;
+    width: 100% !important;
+    height: 70px !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    display: flex !important;
+    gap: 40px !important;
+    justify-content: center !important;
+    align-items: center !important;
+    background: transparent !important;
+    border-top: 1px double rgba(212, 175, 55, 0.3) !important;
+    z-index: 10 !important;
+}
+
+/* SKINNING CONFIRM AND REVERT WITH YOUR METALLIC REGISTER BUTTON ASSET */
+.confirm-btn, .revert-btn {
+    background-image: url('images/borderedcontainer_thin.png') !important;
+    background-size: 100% 100% !important;
+    background-repeat: no-repeat !important;
+    background-color: transparent !important;
+    width: 150px !important;
+    height: 40px !important;
+    border: none !important;
+    cursor: pointer !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    font-family: 'Cinzel', serif !important;
+    font-size: 0.85rem !important;
+    font-weight: bold !important;
+    letter-spacing: 1px !important;
+    text-shadow: 1px 1px 3px rgba(0,0,0,0.8) !important;
+    transition: filter 0.2s ease, transform 0.1s ease !important;
+}
+
+.confirm-btn { color: #228b22 !important; }
+.revert-btn { color: #cc0000 !important; }
+
+.confirm-btn:hover, .revert-btn:hover {
+    filter: brightness(1.3) drop-shadow(0 0 8px rgba(212, 175, 55, 0.4)) !important;
+}
+
+.confirm-btn:active, .revert-btn:active {
+    transform: scale(0.97) !important;
+}
+
+.lore-details-view input[type="range"] {
+    /* THE NUMBER: Increase this pixel count to stretch the slider track as wide as you want! */
+    width: 400px !important; 
+    min-width: 400px !important;
+    margin-right: -20px !important;
+    margin-left: 0px !important; 
+    
+    /* Hardware rendering flags to guarantee fluid mouse dragging */
+    -webkit-appearance: none !important;
+    appearance: none !important;
+    height: 6px !important;
+    background: #333 !important;
+    border-radius: 4px !important;
+}
+
+/* Ensure the sliding knob remains easily grabby on screen */
+.lore-details-view input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none !important;
+    appearance: none !important;
+    width: 16px !important;
+    height: 16px !important;
+    border-radius: 50% !important;
+    background: var(--accent) !important;
+    cursor: pointer !important;
+    box-shadow: 0 0 8px var(--accent) !important;
+}
+
+/* [LABEL] SECTION 10: ALIGNMENT | Block 22: Immersive Security Alert Overlay */
+#aether-safety-overlay {
+    position: fixed !important;
+    inset: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    background: rgba(0, 0, 0, 0.75) !important;
+    backdrop-filter: blur(4px) !important; /* Cinematic background blur */
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999999 !important; /* Pushes it above all stone interface frames */
+}
+
+/* THE NEW CONTAINER SYSTEM: Hard-locked to frame the graphic asset perfectly */
+.safety-alert-box { 
+    width: 380px !important; 
+    height: 240px !important; 
+    padding: 25px 20px !important; 
+    text-align: center !important; 
+    box-sizing: border-box !important; 
+    position: relative !important; 
+    
+    /* DIRECT RELATIVE FILE PATH TO EXTREME INNER CHAMBER ASSET DIRECTORY */
+    background-image: url('../images/borderedcontainer_thin.png') !important; 
+    
+    background-size: 100% 100% !important; 
+    background-repeat: no-repeat !important; 
+    background-color: #110e0a !important; 
+    box-shadow: 0 10px 35px rgba(0,0,0,0.9); 
+    display: flex !important; 
+    flex-direction: column !important; 
+    align-items: center !important; 
+    justify-content: space-between !important; 
+}
+
+.safety-alert-title {
+    font-family: 'Cinzel', serif;
+    color: #cc0000 !important; /* Warning red runic glow text */
+    font-size: 1.15rem !important;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin: 0 0 5px 0 !important;
+    text-shadow: 0 0 10px rgba(204,0,0,0.4);
+}
+
+.safety-alert-message {
+    font-family: 'Segoe UI', Arial, sans-serif;
+    color: #f1e0ac !important;
+    font-size: 0.85rem !important;
+    line-height: 1.4;
+    margin: 0 0 15px 0 !important;
+    padding: 0 5px;
+}
+
+.safety-alert-actions {
+    display: flex !important;
+    gap: 15px !important;
+    justify-content: center !important;
+    width: 100% !important;
+}
+
+/* SKINNING DIALOG ACTIONS WITH YOUR THEMED ACTION LEVER GRAPHICS */
+.safety-alert-btn {
+    /* STEP UP PATH LINK: Backtracks out of the /css/ directory to find the assets folder */
+    background-image: url('../images/register_btn.png') !important;
+    
+    background-size: 100% 100% !important;
+    background-repeat: no-repeat !important;
+    background-color: transparent !important;
+    width: 130px !important; /* Trimmed width to sit perfectly inside the thin frame */
+    height: 42px !important;
+    border: none !important;
+    cursor: pointer !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    font-family: 'Cinzel', serif !important;
+    font-size: 0.7rem !important;
+    font-weight: bold !important;
+    letter-spacing: 1px !important;
+    transition: filter 0.2s ease, transform 0.1s ease !important;
+}
+
+.safety-alert-btn.discard { color: #cc0000 !important; } /* Destructive Red text */
+.safety-alert-btn.stay { color: #ffd700 !important; }    /* Safe Gold text */
+
+.safety-alert-btn:hover {
+    filter: brightness(1.3) drop-shadow(0 0 6px rgba(212, 175, 55, 0.3)) !important;
+}
+.safety-alert-btn:active {
+    transform: scale(0.96) !important;
+}
+
+/* [LABEL] SECTION 10: ALIGNMENT | Block 23: Tactical Switch Toggle Bars */
+
+/* The outer bounding container for the toggle element assembly */
+.switch-toggle-bar {
+    position: relative !important;
+    display: inline-block !important;
+    width: 60px !important;
+    height: 28px !important;
+    cursor: pointer !important;
+}
+
+/* Hide the native checkbox element completely while maintaining full access maps */
+.switch-toggle-bar input {
+    opacity: 0 !important;
+    width: 0 !important;
+    height: 0 !important;
+    margin: 0 !important;
+}
+
+/* THE SLIDER TRACK SLUSH FRAME */
+.toggle-slider-track {
+    position: absolute !important;
+    inset: 0 !important;
+    background-color: #1a1a1a !important;
+    border: 2px solid #b89030 !important; /* Aged bronze-gold rim trim metal */
+    border-radius: 20px !important;
+    box-shadow: inset 0 0 6px rgba(0,0,0,0.8);
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+/* THE MECHANICAL LEVER KNOB SHIELD */ 
+.toggle-slider-track::before { 
+    content: "" !important; 
+    position: absolute !important; 
+    height: 18px !important; 
+    width: 18px !important; 
+    
+    /* THE RESET ARCHITECTURE: Pin the knob to the LEFT edge for the default "Off" position */
+    left: 3px !important; 
+    bottom: 3px !important; 
+    
+    background: linear-gradient(135deg, #ffd700 0%, #b89030 100%) !important; /* Gold runic core */ 
+    border-radius: 50% !important; 
+    box-shadow: 0 2px 4px rgba(0,0,0,0.6); 
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important; 
+} 
+
+/* CONSOLE STATE TRANSITIONS (When checked/activated) */ 
+.switch-toggle-bar input:checked + .toggle-slider-track { 
+    background-color: rgba(34, 139, 34, 0.25) !important; /* Strategic Emerald Green background fill */ 
+    border-color: #228b22 !important; 
+}
+
+/* THE RIGHT-SLIDE CORRECTION ACTUATOR */
+/* When the input is checked (Active/On), this pushes the lever knob to the RIGHT wall */
+.switch-toggle-bar input:checked + .toggle-slider-track::before {
+    transform: translateX(32px) !important; 
+    background: linear-gradient(135deg, #ffffff 0%, #228b22 100%) !important;
+    box-shadow: 0 0 8px rgba(34, 139, 34, 0.8);
+}
+
+.switch-toggle-bar input:checked + .toggle-slider-track::before {
+    transform: translateX(32px) !important; /* Slides the lever knob beautifully to the right wall */
+    background: linear-gradient(135deg, #ffffff 0%, #228b22 100%) !important;
+    box-shadow: 0 0 8px rgba(34, 139, 34, 0.8);
+}
+
+/* [LABEL] SECTION 10: ALIGNMENT | Block 24: The Royal Baseline Font Styles */
+
+/* THE GLOBAL INTERFACE DECREE: Bind your font to all text areas on the screen */
+.settings-label, 
+.toggle-label-text,
+.pane-label,          /* Skin your right and left sidebar panel headers */
+.update-item,         /* Skin your interactive category lists and navigation elements */
+#lore-titles-container div {
+    font-family: 'RoyalDetails', serif !important; 
+    color: #f1e0ac !important; 
+    letter-spacing: 1px !important; 
+    text-shadow: 1px 1px 2px #000 !important; 
+} 
+
+/* Keep your separate font-size adjustments intact so layout scales stay correct */
+.settings-label { 
+    font-size: 0.95rem !important; 
+    margin: 0 !important; 
+    padding-left: 2px !important; 
+    text-align: left !important; 
+} 
+
+.toggle-label-text { 
+    color: var(--accent) !important; 
+    font-size: 0.85rem !important; 
+    margin-right: 15px !important; 
+    min-width: 45px !important; 
+    text-align: right !important; 
+    display: inline-block !important; 
+} 
+
+/* Legacy hook — dyslexia now applies globally via html.dyslexia-font-enabled */
+#lore-details-body.dyslexia-font,
+#commander-hub-body.dyslexia-font {
+    font-family: inherit !important;
+}
+
+/* 1. GHOST LEFT SIDEBAR DESTRUCTION */
+/* Forcefully collapses left title frames down to exactly zero horizontal footprint space */
+.fullscreen-profile-active-state .lore-pane-left,
+.fullscreen-profile-active-state #lore-titles-container,
+.fullscreen-profile-active-state .lore-pane-divider,
+.fullscreen-profile-active-state .lore-divider-container,
+.fullscreen-profile-active-state .divider-img {
+    display: none !important;
+    width: 50px !important;
+    max-width: 0 !important;
+    height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+/* 2. RIGHT VIEWPORT EXPANSION PASS */
+/* Unlocks the right side panel display structure into a fluid block field layout */
+.fullscreen-profile-active-state .lore-pane-right {
+    display: block !important; /* Drops flex rows to prevent height squashing traps */
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+    padding: 0 !important;
+    margin: 0 !important;
+}
+
+/* 3. LOWER CONTENT VERTICAL SCROLL VIEWPORT TRACK */
+/* Enforces scrolling heights safely while stretching fields horizontally */
+.fullscreen-profile-active-state #lore-details-body {
+    display: block !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 100% !important;
+    height: 310px !important; /* Fixed viewport size clears room for standalone banner above */
+    max-height: 310px !important;
+    box-sizing: border-box !important;
+    overflow-y: auto !important; /* ACTIVE TRACKER: Keeps touch and mouse wheel vertical scrolls active */
+    overflow-x: hidden !important;
+    border: none !important;
+    margin: 0 !important;
+    
+    /* ⚙️ ADJUST CONTENT SPACE MOVEMENT HERE: */
+    /* Clockwise order: Top (20px), Right (40px), Bottom (20px), Left (5px). */
+    /* Lowering the 4th value (5px) pulls the text columns closer to the left edge rim line. */
+    padding: 20px 40px 20px 5px !important; 
+}
+
+/* 3. THE EXTRACTED STATIC TOP BANNER CARD STYLE */
+#profile-extracted-header-banner.profile-fullscreen-header-card {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    gap: 30px !important;
+    background: rgba(0, 0, 0, 0.4) !important;
+    padding: 15px 25px !important;
+    border-radius: 6px !important;
+    border: 1px solid rgba(184, 144, 48, 0.2) !important;
+    width: 860px !important; /* Hard-locked limit prevents right border overflow leaks */
+    max-width: 860px !important;
+    min-width: 860px !important;
+    min-height: 90px !important;
+    height: 90px !important;
+    box-sizing: border-box !important;
+    margin-bottom: 15px !important; /* Pushes form elements down cleanly */
+}
+
+.profile-header-identity-group {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 8px !important;
+    align-items: flex-start !important;
+    text-align: left !important;
+}
+
+.profile-identity-title-row {
+    display: flex !important;
+    align-items: center !important;
+    gap: 15px !important;
+}
+
+.profile-main-name {
+    font-family: 'RoyalDetails', serif !important;
+    font-size: 1.4rem !important;
+    color: #f1e0ac !important;
+    text-shadow: 2px 2px 4px #000 !important;
+}
+
+.profile-identity-sub-row {
+    display: flex !important;
+    gap: 30px !important;
+    font-family: 'Segoe UI', sans-serif !important;
+    font-size: 0.8rem !important;
+    color: rgba(241, 224, 172, 0.6) !important;
+}
+
+/* 4. LOWER CHASSIS PACK CHANNELS EXTRACTION */
+/* Forces biography textareas, split rows, and button third blocks edge-to-edge */
+.fullscreen-profile-active-state .profile-fullscreen-canvas {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 25px !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 100% !important;
+    box-sizing: border-box !important;
+    align-items: stretch !important;
+    
+    /* THE REALIGNMENT PADDING CUSHION: */
+    /* Forces the left side of the text contents inward toward the right by 25px */
+    padding-left: 50px !important;
+    padding-right: 15px !important; /* Clean uniform clearance from right stone line */
+    
+    /* Reset margins back to standard centered auto anchors */
+    margin-left: 0 !important;
+    margin-right: auto !important;
+}
+
+/* 6. MIDDLE CONTENT FLEX ROWS */
+.profile-fullscreen-split-row {
+    display: flex !important;
+    flex-direction: row !important;
+    gap: 20px !important;
+    width: 100% !important;
+}
+
+.profile-split-panel-half {
+    flex: 1 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 15px !important;
+}
+
+/* 7. FOOTER GRID FLEX DECK */
+.profile-fullscreen-footer-deck {
+    display: flex !important;
+    flex-direction: row !important;
+    gap: 20px !important;
+    width: 100% !important;
+}
+
+.footer-box-third {
+    flex: 1 !important;
+}
+
+.profile-btn-row-stacked {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 10px !important;
+    width: 100% !important;
+    margin-top: 5px !important;
+}
+
+.profile-btn-row-stacked button {
+    width: 100% !important;
+    text-align: center !important;
+    box-sizing: border-box !important;
+}
+
+.profile-fullscreen-controls {
+    margin-top: 0 !important;
+    width: 100% !important;
+    display: flex !important;
+    justify-content: flex-end !important;
+    gap: 15px !important;
+    position: relative !important;
+    bottom: auto !important;
+    transform: translate(-40px, -5px) !important;
+    padding: 12px 0 !important;
+    background: transparent !important;
+    border-top: none !important;
+    z-index: 20 !important;
+}
+
+/* 5. TEXTURED BIOGRAPHY BEZEL SKIN */
+.bio-bezel-frame-wrapper {
+    position: relative !important;
+    width: 100% !important;
+    height: 110px !important;
+    background-image: url('images/borderedcontainer_thin.png') !important;
+    background-size: 100% 100% !important;
+    background-repeat: no-repeat !important;
+    background-position: center !important;
+    background-color: transparent !important;
+    padding: 12px 16px !important;
+    box-sizing: border-box !important;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.6);
+}
+
+#lore-details-body #profile-bio-input {
+    width: 100% !important;
+    height: 100% !important;
+    background: transparent !important;
+    background-color: transparent !important;
+    border: none !important;
+    outline: none !important;
+    box-shadow: none !important;
+    font-family: 'Segoe UI', sans-serif !important;
+    color: #f1e0ac !important;
+    font-size: 0.8rem !important;
+    line-height: 1.4 !important;
+    resize: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+}
+
+/* 6. MIDDLE CORE MULTI-COLUMN ARCHITECTURE */
+.fullscreen-profile-active-state .profile-fullscreen-split-row {
+    display: flex !important;
+    flex-direction: row !important;
+    gap: 20px !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+}
+
+.fullscreen-profile-active-state .profile-split-panel-half {
+    flex: 1 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 15px !important;
+}
+
+/* 7. FOOTER THREE-COLUMN FLEX DECK */
+.fullscreen-profile-active-state .profile-fullscreen-footer-deck {
+    display: flex !important;
+    flex-direction: row !important;
+    gap: 20px !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+}
+
+.fullscreen-profile-active-state .footer-box-third {
+    flex: 1 !important;
+}
+
+.fullscreen-profile-active-state .profile-btn-row-stacked {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 8px !important;
+    width: 100% !important;
+    margin-top: 5px !important;
+}
+
+/* 8. MICRO-SCALE SELECTION MATRIX CONFIGS */
+#lore-details-body .selected-avatar-border {
+    border: 2px solid #ffd700 !important;
+    box-shadow: 0 0 8px rgba(255, 215, 0, 0.9) !important;
+    transform: scale(0.92) !important;
+}
+
+.avatar-thumbnail-grid {
+    display: grid !important;
+    grid-template-columns: repeat(8, 1fr) !important;
+    gap: 4px !important;
+    margin-bottom: 8px !important;
+}
+
+.avatar-thumb-lever {
+    width: 32px !important;
+    height: 32px !important;
+    border: 1px solid rgba(184, 144, 48, 0.3) !important;
+    background-color: #110e0a !important;
+    cursor: pointer !important;
+    border-radius: 3px !important;
+    box-sizing: border-box !important;
+}
+
+.profile-fullscreen-header-card #profile-avatar-display {
+    width: 60px !important;
+    height: 60px !important;
+    border: 2px solid #b89030 !important;
+    border-radius: 4px !important;
+    background-color: #110e0a !important;
+    box-shadow: 0 3px 8px rgba(0,0,0,0.8);
+    margin-bottom: 5px !important;
+    display: block !important;
+}
+
+/* 9. SCROLLBAR REMOVAL FILTER */
+.fullscreen-profile-active-state #lore-details-body::-webkit-scrollbar {
+    display: none !important;
+    width: 0 !important;
+}
+
+
+
+/* THE CLICKABLE AVATAR FEEDBACK GLOW ENGINE */
+.clickable-avatar-badge {
+    cursor: pointer !important;
+    transition: transform 0.1s ease, border-color 0.2s ease, box-shadow 0.2s ease !important;
+}
+
+.clickable-avatar-badge:hover {
+    transform: scale(1.04) !important;
+    border-color: #ffd700 !important;
+    box-shadow: 0 0 10px rgba(255, 215, 0, 0.4) !important;
+}
+
+/* 1. UNLOCK THE PARENT VIEWPORT FLEX CONSTRAINTS */
+/* Changes the display engine profile to prevent internal component squishing */
+.fullscreen-profile-active-state .lore-pane-right {
+    display: block !important; /* Drops flex rows to prevent height squashing layout traps */
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+    padding: 0 !important;
+    margin: 0 !important;
+}
+
+/* 1.b. REPOSITION THE FULLSCREEN CONTENT AREA */
+/* Prevents the right panel from staying anchored to the old stone wheel offset */
+.fullscreen-profile-active-state .lore-content-area {
+    left: 50% !important;
+    transform: translate(calc(-50% + 230px), 50px) !important; /* Shift content 230px right + 50px down */
+    width: min(980px, calc(100% - 80px)) !important;
+    max-width: 100% !important;
+}
+
+/* 2. STRETCH AND ISOLATE THE STANDALONE HEADER BAR */
+/* Hard-locks the width to span edge-to-edge while allowing its height to render cleanly */
+#profile-extracted-header-banner.profile-fullscreen-header-card {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    gap: 30px !important;
+    background: rgba(0, 0, 0, 0.4) !important;
+    padding: 15px 25px !important;
+    border-radius: 6px !important;
+    border: 1px solid rgba(184, 144, 48, 0.2) !important;
+    
+    /* THE STRETCH CORRECTION: Spans full width independently of lower forms layout rules */
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 100% !important;
+    height: 110px !important; /* Locks full header canvas heights */
+    min-height: 110px !important;
+    box-sizing: border-box !important;
+    margin-bottom: 20px !important; /* Pushes the scroll area down to make room */
+}
+
+/* 3. STRETCH THE LOWER DETAILS SUB CONTAINER VIEWPORT */
+/* Unlocks horizontal dimensions completely while enforcing scrolling heights safely */
+.fullscreen-profile-active-state #lore-details-body {
+    display: block !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 100% !important;
+    height: 310px !important; /* Fixed viewport container for lower material scrolling */
+    max-height: 310px !important;
+    box-sizing: border-box !important;
+    overflow-y: hidden !important; /* Outer container should not scroll in fullscreen profile mode */
+    overflow-x: hidden !important;
+    border: none !important;
+    margin: 0 !important;
+    padding: 0px 40px 20px 5px !important; /* Leaves space on right away from the edge line */
+}
+
+.fullscreen-profile-active-state .settings-scroll-wrapper.profile-fullscreen-canvas {
+    height: 100% !important;
+    max-height: 100% !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+}
+
+/* 4. EXPAND LOWER CHASSIS PACK FORM GRID SLOTS */
+/* Forces your textareas, war lists, and button boxes to maximize structural layouts */
+.fullscreen-profile-active-state .profile-fullscreen-canvas {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 25px !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 100% !important;
+    box-sizing: border-box !important;
+    align-items: stretch !important; /* Pulls form component cards edge-to-edge horizontally */
+}
+
+
+
+/* FULL SCREEN DISCIPLINE MODAL BACKGROUND BLUR MASK */
+
+
+/* THE HIDDEN STATUS KEY FALLBACK */
+/* Forces the overlay to stay 100% invisible on boot until javascript triggers block mode */
+
+
+/* THE BALANCING GATE: Explicitly forces the window to stay 100% hidden on boot up */
+.suicide-overlay-hidden {
+    display: none !important;
+}
+
+/* ============================================================
+   📥 NEW MESSAGING DROPDOWN VISIBILITY CONTROLLERS
+   ============================================================ */
+.msg-floating-drawer-hidden {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+}
+
+.msg-drawer-pane-hidden {
+    display: none !important;
+    visibility: hidden !important;
+}
+
+/* THE UNIVERSAL SCREEN-SPACE CONTAINER HOOK */
+/* By applying ancestral body hooks, we override inner flexbox panel clipping limits */
+body #commander-suicide-overlay,
+#commander-suicide-overlay {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    bottom: 0 !important;
+    right: 0 !important;
+    
+    /* Hard-locks the black mask layer to stretch 100% across the outer screen edges */
+    width: 100vw !important;
+    height: 100vh !important;
+    
+    /* Heavy onyx background screening tint and drop blur layout variables */
+    background-color: rgba(3, 2, 1, 0.88) !important;
+    backdrop-filter: blur(5px) !important;
+    
+    /* THE DEAD-CENTER INTERCEPT ACTUATOR: */
+    /* Snaps your custom golden bezel box directly into the mathematical center of your screen */
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    
+    /* MAXIMUM LAYER FORCE: Forces rendering pass in front of all text boxes, headers, and wheels */
+    z-index: 2147483647 !important; /* Maximum safe 32-bit browser rendering value */
+    
+    box-sizing: border-box !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+/* THE SHARED BEZEL SKIN ENGINE */
+/* Added the security element block directly here inside the target sequence pass */
+#commander-suicide-overlay .suicide-popup-bezel,
+#commander-penalty-overlay .suicide-popup-bezel,
+#commander-security-overlay .suicide-popup-bezel {
+    position: relative !important;
+    max-width: 520px !important; 
+    width: 100% !important;
+    height: auto !important; 
+    min-height: 260px !important;
+    
+    /* Absolute base root reference points images without directory hopping loops */
+    background-image: url('images/borderedcontainer_thin.png') !important; 
+    
+    background-size: 100% 100% !important;
+    background-repeat: no-repeat !important;
+    background-position: center !important;
+    background-color: #0d0a07 !important; 
+    padding: 30px 40px 25px 40px !important; 
+    box-sizing: border-box !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: space-between !important;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.95);
+    margin: auto !important; 
+}
+
+/* THE UNIVERSAL SCREEN VIEWPORT MASK OVERRIDES EXTENSION */
+body #commander-security-overlay,
+#commander-security-overlay {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    background-color: rgba(6, 6, 6, 0.85) !important; /* Midnight onyx masking curtain layer */
+    backdrop-filter: blur(4px) !important;
+    z-index: 2147483645 !important; /* Layers directly behind the critical penalty overlay logs */
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    box-sizing: border-box !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+.suicide-popup-header {
+    font-family: 'RoyalDetails', serif !important;
+    font-size: 0.85rem !important;
+    color: #cc0000 !important;
+    letter-spacing: 1px !important;
+    text-align: center !important;
+}
+
+/* THE SCALED READOUT CONTAINER */
+#commander-suicide-overlay .suicide-popup-body-text {
+    font-family: 'Segoe UI', sans-serif !important;
+    font-size: 0.85rem !important;
+    color: #f1e0ac !important;
+    line-height: 1.5 !important;
+    text-align: center !important;
+    margin-top: 15px !important;
+    margin-bottom: 20px !important;
+    
+    /* THE CONTENT CLIPPING SAFEGUARD PASS: */
+    /* Prevents mega-paragraphs from bursting over the golden bezel lines on smaller displays */
+    max-height: 280px !important;
+    overflow-y: auto !important; /* Generates an invisible scrollbar loop track path if sentences run excessively long */
+    padding-right: 5px !important;
+}
+
+.suicide-popup-action-row {
+    display: flex !important;
+    justify-content: center !important;
+    gap: 20px !important;
+    width: 100% !important;
+}
+
+/* BUTTON CONTROLS RESIZING LIMITS */
+.suicide-popup-action-row button {
+    min-width: 105px !important;
+    max-width: 160px !important;
+    text-align: center !important;
+    box-sizing: border-box !important;
+}
+
+.suicide-danger-confirm-btn {
+    background: linear-gradient(135deg, #4a1111 0%, #220505 100%) !important;
+    border: 1px solid #cc0000 !important;
+    color: #ff9999 !important;
+    font-family: 'RoyalDetails', serif !important;
+    font-size: 0.65rem !important;
+    padding: 8px 16px !important;
+    cursor: pointer !important;
+    border-radius: 3px !important;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.5) !important;
+    transition: background 0.2s ease !important;
+}
+
+.suicide-danger-confirm-btn:hover {
+    background: linear-gradient(135deg, #771111 0%, #3a0505 100%) !important;
+    border-color: #ff3333 !important;
+}
+
+.suicide-safe-retreat-btn {
+    background: linear-gradient(135deg, #1c1813 0%, #0a0806 100%) !important;
+    border: 1px solid rgba(184, 144, 48, 0.4) !important;
+    color: #f1e0ac !important;
+    font-family: 'RoyalDetails', serif !important;
+    font-size: 0.65rem !important;
+    padding: 8px 16px !important;
+    cursor: pointer !important;
+    border-radius: 3px !important;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.5) !important;
+    transition: background 0.2s ease !important;
+}
+
+.suicide-safe-retreat-btn:hover {
+    background: #2b241a !important;
+    border-color: #ffd700 !important;
+}
+
+/* THE UNIVERSAL SCREEN VIEWPORT MASK OVERRIDE */
+body #commander-penalty-overlay,
+#commander-penalty-overlay {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    background-color: rgba(12, 4, 4, 0.9) !important; /* Crimson-tinted heavy isolation screening */
+    backdrop-filter: blur(5px) !important;
+    z-index: 2147483646 !important; /* Layers directly below the critical suicide mask */
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    box-sizing: border-box !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+/* THREE ICON SHAPED BORDER BOXES GRID */
+.penalty-strike-matrix-row {
+    display: flex !important;
+    justify-content: center !important;
+    gap: 20px !important;
+    width: 100% !important;
+    margin: 20px 0 !important;
+    box-sizing: border-box !important;
+}
+
+.penalty-cage-slot {
+    width: 60px !important; /* Matches your profile avatar display scale exactly */
+    height: 60px !important;
+    border: 2px dashed rgba(184, 144, 48, 0.3) !important; /* Empty visual state dash configuration */
+    border-radius: 4px !important;
+    background-color: rgba(0, 0, 0, 0.4) !important;
+    box-shadow: inset 0 2px 6px rgba(0,0,0,0.8);
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    box-sizing: border-box !important;
+    position: relative !important;
+    transition: all 0.20s ease !important;
+}
+
+/* FILLED STRIKE ACTIVE FOCUS STATE */
+.cage-slot-marked {
+    border: 2px solid #cc0000 !important; /* Hot crimson iron execution border rim */
+    box-shadow: 0 0 10px rgba(204, 0, 0, 0.5) !important;
+    background-color: #110808 !important;
+}
+
+.penalty-strike-image-lever {
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: cover !important;
+    cursor: help !important; /* Swaps standard cursor pointer layout parameters to assistance help query mode */
+    border-radius: 2px !important;
+}
+
+
+
+/* THE POPUP DISCIPLINE TEXT RADIAL SHRUNK MATRIX */
+/* Targets both your Suicide warnings and your System Penalty notification descriptions */
+#commander-suicide-overlay .suicide-popup-body-text,
+#commander-penalty-overlay .suicide-popup-body-text {
+    font-family: 'Segoe UI', sans-serif !important;
+    font-size: 0.82rem !important;
+    line-height: 1.5 !important;
+    text-align: center !important;
+    
+    /* THE PARAGRAPH COMPRESSION FIX: */
+    /* Hard-locks text boundaries so sentences never wrap past a comfortable reading scale */
+    width: 100% !important;
+    max-width: 360px !important; /* Shrunk down significantly to keep line-lengths short and legible */
+    
+    /* Centers the compressed block text right in the middle of your golden bezel asset */
+    margin: 15px auto !important; 
+    padding: 0 10px !important;
+    box-sizing: border-box !important;
+}
+
+/* Ensure any bold crimson alert alerts inherit the compressed width boundary framework */
+.suicide-popup-body-text span {
+    display: inline-block !important;
+    max-width: 100% !important;
+}
+
+
+
+/* THE EMBEDDED SCROLL ZONE TITLE SEPARATORS */
+.scrollable-list-zone-title {
+    font-family: 'RoyalDetails', serif !important;
+    font-size: 0.72rem !important;
+    font-weight: bold !important;
+    color: #b89030 !important; /* Aged medieval gold accent color lines */
+    letter-spacing: 1.5px !important;
+    text-shadow: 1px 1px 2px #000 !important;
+    
+    /* Spacing metrics separate the categories neatly inside your sidebar scroll track */
+    padding: 12px 10px 6px 10px !important;
+    margin-top: 5px !important;
+    border-bottom: 1px solid rgba(184, 144, 48, 0.15) !important; /* Elegant subtle dividing line */
+    background: transparent !important;
+    pointer-events: none !important; /* Completely blocks player cursor clicks or highlights on headings */
+}
+
+/* Add a slight top margin adjustment to titles that follow your active lists */
+.scrollable-list-zone-title:not(:first-child) {
+    margin-top: 15px !important;
+}
+
+
+
+/* STRETCH THE RIGHT SIDE SOCIAL SUB-BLOCK HOUSINGS */
+.profile-double-row-expanded {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 15px !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+}
+
+.social-list-box-expanded {
+    display: flex !important;
+    flex-direction: column !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+}
+
+/* THE HORIZONTAL FLOW GRIDS CONTAINER */
+.compact-grid-scroll-track {
+    width: 100% !important;
+    height: 100px !important; /* Cap the height so massive lists never bloat the canvas */
+    max-height: 100px !important;
+    background: rgba(0, 0, 0, 0.4) !important;
+    border: 1px solid rgba(184, 144, 48, 0.15) !important;
+    border-radius: 4px !important;
+    padding: 10px !important;
+    box-sizing: border-box !important;
+    
+    /* SCROLL MANAGEMENT: Toggles vertical scroll track parameters on overflowing elements */
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    
+    /* FLOW PHYSICS: Flex wrap shifts capsules horizontally before breaking down rows */
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: wrap !important;
+    align-content: flex-start !important;
+    gap: 8px !important;
+}
+
+/* THE COMPACT PLAYER CAPSULE BADGES */
+.alliance-capsule-badge {
+    display: inline-flex !important;
+    align-items: center !important;
+    background: linear-gradient(135deg, #161a1d 0%, #0d0f11 100%) !important;
+    border: 1px solid rgba(184, 144, 48, 0.3) !important;
+    border-radius: 14px !important; /* Gives cards a sleek pill-shaped medieval frame */
+    padding: 4px 10px !important;
+    height: 26px !important;
+    box-sizing: border-box !important;
+    transition: transform 0.15s ease, border-color 0.15s ease !important;
+    cursor: default !important;
+}
+
+.alliance-capsule-badge:hover {
+    transform: scale(1.03) !important;
+    border-color: #ffd700 !important; /* Highlights gold on cursor focus */
+}
+
+/* COMPACT TEXT RENDERING FOR SCALED PLAYER BADGES */
+.capsule-icon-shield {
+    font-size: 0.75rem !important;
+    margin-right: 6px !important;
+    flex-shrink: 0 !important;
+}
+
+.capsule-username-text {
+    font-family: 'Segoe UI', sans-serif !important;
+    font-size: 0.75rem !important;
+    color: #e0e0e0 !important;
+    font-weight: 600 !important;
+    white-space: nowrap !important;
+}
+
+/* EXILED FACTION SPECIFIC OVERRIDES */
+.compact-grid-scroll-track .capsule-exiled-border {
+    border-color: rgba(204, 0, 0, 0.3) !important;
+}
+.compact-grid-scroll-track .capsule-exiled-border:hover {
+    border-color: #ff3333 !important;
+    box-shadow: 0 0 6px rgba(204, 0, 0, 0.4) !important;
+}
+
+.empty-roster-txt {
+    font-family: 'Segoe UI', sans-serif !important;
+    font-size: 0.75rem !important;
+    color: rgba(241, 224, 172, 0.4) !important;
+    font-style: italic !important;
+    padding: 5px !important;
+}
+
+/* SKIN CLEAN VERTICAL SCROLLBAR ARRAYS FOR HIGH-DENSITY GRID TRACKS */
+.compact-grid-scroll-track::-webkit-scrollbar {
+    width: 4px !important;
+    display: block !important;
+}
+.compact-grid-scroll-track::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.2) !important;
+}
+.compact-grid-scroll-track::-webkit-scrollbar-thumb {
+    background: #b89030 !important;
+    border-radius: 2px !important;
+}
+
+
+
+/* 1. STANDARDIZE THE RANK RESET LABEL HEADER TEXT */
+/* Forcefully strips any lingering red or custom alert text styling colors from the title */
+.fullscreen-profile-active-state .profile-fullscreen-canvas .critical-danger-zone label,
+.fullscreen-profile-active-state .profile-fullscreen-canvas .warning-title {
+    color: #f1e0ac !important; /* Reverts text color back to your standard pale gold */
+    font-family: 'RoyalDetails', serif !important;
+    text-shadow: 1px 1px 2px #000 !important;
+    font-size: 0.95rem !important;
+}
+
+/* 2. STANDARDIZE THE SACRIFICE AND RESET BUTTON HOUSINGS */
+/* Forces all buttons inside the reset tray to look identical to the Login Information styles */
+.fullscreen-profile-active-state .profile-btn-row-stacked button.danger-action-btn,
+.fullscreen-profile-active-state .profile-btn-row-stacked button {
+    background: linear-gradient(135deg, #1e1a12 0%, #110e0a 100%) !important; /* Standard dark metallic gradient */
+    border: 2px solid #b89030 !important; /* Aged bronze-gold rim metal */
+    border-radius: 3px !important;
+    color: #ffd700 !important; /* Bright gold for button text */
+    padding: 8px 18px !important;
+    cursor: pointer !important;
+    font-family: 'Cinzel', serif !important;
+    font-size: 0.85rem !important;
+    font-weight: bold !important;
+    letter-spacing: 1px !important;
+    text-shadow: 1px 1px 3px rgba(0,0,0,0.8) !important;
+    box-shadow: 0 3px 6px rgba(0,0,0,0.5), inset 0 1px 3px rgba(255,215,0,0.15) !important;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    margin-bottom: 5px !important;
+}
+
+/* 3. STANDARDIZE THE RESET BUTTON HOVER INTERACTIVE EFFECTS */
+/* Ensures the bright gold glow pulses match perfectly across your entire footer deck */
+.fullscreen-profile-active-state .profile-btn-row-stacked button.danger-action-btn:hover,
+.fullscreen-profile-active-state .profile-btn-row-stacked button:hover {
+    color: #ffffff !important;
+    border-color: #ffd700 !important;
+    background: linear-gradient(135deg, #2b2417 0%, #17130e 100%) !important;
+    box-shadow: 0 0 12px rgba(212, 175, 55, 0.6), inset 0 1px 4px rgba(255,255,255,0.2) !important;
+    transform: translateY(-1px) !important;
+}
+
+.fullscreen-profile-active-state .profile-btn-row-stacked button.danger-action-btn:active,
+.fullscreen-profile-active-state .profile-btn-row-stacked button:active {
+    transform: translateY(1px) !important;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.7) !important;
+}
+
+
+
+/* CONTAINER VIEWPORT WORKSPACE CHASSIS */
+.message-workspace-canvas { 
+    display: flex !important; 
+    flex-direction: column !important; 
+    width: 100% !important; 
+    height: 310px !important; 
+    box-sizing: border-box !important; 
+    gap: 12px !important; 
+}
+
+.message-input-row-block { 
+    display: flex !important; 
+    flex-direction: row !important; 
+    align-items: center !important; 
+    width: 100% !important; 
+    background: rgba(0, 0, 0, 0.4) !important; 
+    border: 1px solid rgba(184, 144, 48, 0.2) !important; 
+    border-radius: 4px !important; 
+    padding: 6px 12px !important; 
+    box-sizing: border-box !important; 
+    position: relative !important; 
+}
+
+.message-input-row-block.flex-grow-area { 
+    flex-direction: column !important; 
+    align-items: flex-start !important; 
+    flex: 1 !important; 
+}
+
+.msg-field-label { 
+    font-family: 'RoyalDetails', serif !important; 
+    font-size: 0.7rem !important; 
+    color: #b89030 !important; 
+    width: 90px !important; 
+    letter-spacing: 1px !important; 
+    flex-shrink: 0 !important; 
+}
+
+.message-input-row-block input[type="text"] { 
+    flex: 1 !important; 
+    background: transparent !important; 
+    border: none !important; 
+    color: #f1e0ac !important; 
+    font-family: 'Segoe UI', sans-serif !important; 
+    font-size: 0.8rem !important; 
+    outline: none !important; 
+}
+
+.message-input-row-block textarea { 
+    width: 100% !important; 
+    flex: 1 !important; 
+    background: transparent !important; 
+    border: none !important; 
+    color: #ffffff !important; 
+    font-family: 'Segoe UI', sans-serif !important; 
+    font-size: 0.8rem !important; 
+    resize: none !important; 
+    outline: none !important; 
+    margin-top: 5px !important; 
+}
+
+/* THE HORIZONTAL MULTI-RECIPIENT PILL FLOATS TRACKS */
+.send-to-pill-container { 
+    flex: 1 !important; 
+    display: flex !important; 
+    flex-direction: row !important; 
+    flex-wrap: wrap !important; 
+    gap: 6px !important; 
+    align-items: center !important; 
+}
+
+.pill-placeholder-txt { 
+    font-size: 0.75rem !important; 
+    color: rgba(241, 224, 172, 0.3) !important; 
+    font-style: italic !important; 
+}
+
+.recipient-pill-capsule { 
+    display: inline-flex !important; 
+    align-items: center !important; 
+    background: linear-gradient(135deg, #2b241a 0%, #110e0a 100%) !important; 
+    border: 1px solid #b89030 !important; 
+    border-radius: 12px !important; 
+    padding: 2px 8px !important; 
+    height: 20px !important; 
+    font-size: 0.7rem !important; 
+    color: #f1e0ac !important; 
+    box-sizing: border-box !important; 
+}
+
+.recipient-pill-capsule strong { 
+    margin-left: 6px !important; 
+    color: #cc0000 !important; 
+    cursor: pointer !important; 
+    font-size: 0.85rem !important; 
+}
+
+.msg-recipient-add-btn { 
+    background: transparent !important; 
+    border: none !important; 
+    color: #ffd700 !important; 
+    font-size: 0.95rem !important; 
+    cursor: pointer !important; 
+    transition: transform 0.1s ease !important; 
+    padding: 0 5px !important; 
+}
+
+.msg-recipient-add-btn:hover { 
+    transform: scale(1.15) !important; 
+}
+
+.msg-compose-context-banner {
+    width: 100% !important;
+    flex-shrink: 0 !important;
+    box-sizing: border-box !important;
+    padding: 10px 12px !important;
+    border: 1px solid rgba(184, 144, 48, 0.35) !important;
+    border-radius: 4px !important;
+    background: linear-gradient(180deg, rgba(32, 26, 18, 0.95) 0%, rgba(12, 10, 8, 0.98) 100%) !important;
+    text-align: left !important;
+}
+
+.msg-compose-context-hidden {
+    display: none !important;
+}
+
+.msg-compose-context-label {
+    font-family: 'Cinzel', serif !important;
+    font-size: 0.72rem !important;
+    color: #ffd700 !important;
+    letter-spacing: 1px !important;
+    margin-bottom: 6px !important;
+}
+
+.msg-compose-context-meta {
+    font-family: 'Segoe UI', sans-serif !important;
+    font-size: 0.72rem !important;
+    color: #b89030 !important;
+    margin-bottom: 8px !important;
+    line-height: 1.35 !important;
+}
+
+.msg-compose-context-body {
+    font-family: 'Segoe UI', sans-serif !important;
+    font-size: 0.78rem !important;
+    color: #f1e0ac !important;
+    line-height: 1.45 !important;
+    max-height: 88px !important;
+    overflow-y: auto !important;
+    padding-right: 4px !important;
+    font-style: italic !important;
+}
+
+.msg-compose-field-locked {
+    opacity: 0.92 !important;
+}
+
+.msg-compose-field-locked .send-to-pill-container {
+    pointer-events: none !important;
+}
+
+#msg-subject-input-element.msg-compose-field-locked,
+#msg-subject-input-element:read-only {
+    color: rgba(241, 224, 172, 0.85) !important;
+    cursor: default !important;
+}
+
+.message-compose-canvas {
+    min-height: 0 !important;
+}
+
+
+
+/* CONTAINER VIEWPORT WORKSPACE CHASSIS */
+.message-workspace-canvas { 
+    display: flex !important; 
+    flex-direction: column !important; 
+    width: 100% !important; 
+    height: 310px !important; 
+    box-sizing: border-box !important; 
+    gap: 12px !important; 
+}
+
+.message-input-row-block { 
+    display: flex !important; 
+    flex-direction: row !important; 
+    align-items: center !important; 
+    width: 100% !important; 
+    background: rgba(0, 0, 0, 0.4) !important; 
+    border: 1px solid rgba(184, 144, 48, 0.2) !important; 
+    border-radius: 4px !important; 
+    padding: 6px 12px !important; 
+    box-sizing: border-box !important; 
+    position: relative !important; 
+}
+
+.message-input-row-block.flex-grow-area { 
+    flex-direction: column !important; 
+    align-items: flex-start !important; 
+    flex: 1 !important; 
+}
+
+.msg-field-label { 
+    font-family: 'RoyalDetails', serif !important; 
+    font-size: 0.7rem !important; 
+    color: #b89030 !important; 
+    width: 90px !important; 
+    letter-spacing: 1px !important; 
+    flex-shrink: 0 !important; 
+}
+
+.message-input-row-block input[type="text"] { 
+    flex: 1 !important; 
+    background: transparent !important; 
+    border: none !important; 
+    color: #f1e0ac !important; 
+    font-family: 'Segoe UI', sans-serif !important; 
+    font-size: 0.8rem !important; 
+    outline: none !important; 
+}
+
+.message-input-row-block textarea { 
+    width: 100% !important; 
+    flex: 1 !important; 
+    background: transparent !important; 
+    border: none !important; 
+    color: #ffffff !important; 
+    font-family: 'Segoe UI', sans-serif !important; 
+    font-size: 0.8rem !important; 
+    resize: none !important; 
+    outline: none !important; 
+    margin-top: 5px !important; 
+}
+
+/* THE HORIZONTAL MULTI-RECIPIENT PILL FLOATS TRACKS */
+.send-to-pill-container { 
+    flex: 1 !important; 
+    display: flex !important; 
+    flex-direction: row !important; 
+    flex-wrap: wrap !important; 
+    gap: 6px !important; 
+    align-items: center !important; 
+}
+
+.pill-placeholder-txt { 
+    font-size: 0.75rem !important; 
+    color: rgba(241, 224, 172, 0.3) !important; 
+    font-style: italic !important; 
+}
+
+.recipient-pill-capsule { 
+    display: inline-flex !important; 
+    align-items: center !important; 
+    background: linear-gradient(135deg, #2b241a 0%, #110e0a 100%) !important; 
+    border: 1px solid #b89030 !important; 
+    border-radius: 12px !important; 
+    padding: 2px 8px !important; 
+    height: 20px !important; 
+    font-size: 0.7rem !important; 
+    color: #f1e0ac !important; 
+    box-sizing: border-box !important; 
+}
+
+.recipient-pill-capsule strong { 
+    margin-left: 6px !important; 
+    color: #cc0000 !important; 
+    cursor: pointer !important; 
+    font-size: 0.85rem !important; 
+}
+
+.msg-recipient-add-btn { 
+    background: transparent !important; 
+    border: none !important; 
+    color: #ffd700 !important; 
+    font-size: 0.95rem !important; 
+    cursor: pointer !important; 
+    transition: transform 0.1s ease !important; 
+    padding: 0 5px !important; 
+}
+
+.msg-recipient-add-btn:hover { 
+    transform: scale(1.15) !important; 
+}
+
+/* ==========================================================================
+   📥 FIXED ROOT DESIGN: EXPANDED WINDOW AREA + CEIL ALIGNMENT METHOD LOCKS
+   ========================================================================== */
+#lore-modal #msg-directory-floating-drawer,
+#msg-directory-floating-drawer { 
+    position: absolute !important; 
+    top: 38px !important; 
+    right: 12px !important; 
+    width: 320px !important;    /* Widened to comfortable widescreen reading layout coordinates */
+    height: 360px !important;   /* DOUBLED HEIGHT: Expands panel to view multiple options simultaneously */
+    max-height: 360px !important; 
+    background-color: #0b0907 !important; 
+    border: 2px solid #b89030 !important; 
+    border-radius: 4px !important; 
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.95) !important; 
+    z-index: 100000 !important; 
+    padding: 12px !important;
+    box-sizing: border-box !important; 
+    
+    /* THE REALIGNMENT ENGINE CORRECTION: Force layout elements to start directly at the top */
+    display: flex !important; 
+    flex-direction: column !important; 
+    justify-content: flex-start !important;
+    align-items: stretch !important;
+}
+
+.msg-floating-drawer-hidden { display: none !important; }
+.msg-drawer-pane-hidden { display: none !important; }
+
+#lore-modal .drawer-header-title,
+.drawer-header-title { 
+    font-family: 'RoyalDetails', serif !important; 
+    font-size: 0.7rem !important; 
+    color: #cc0000 !important; 
+    text-align: center !important; 
+    border-bottom: 1px solid rgba(184, 144, 48, 0.2) !important; 
+    padding-bottom: 4px !important; 
+    margin: 0 0 8px 0 !important; 
+    letter-spacing: 1px !important; 
+    flex-shrink: 0 !important;   /* Prevents title header from squishing on panel switches */
+}
+
+/* Shared list body: both panes occupy the same top-aligned slot */
+#lore-modal .msg-directory-drawer-body,
+.msg-directory-drawer-body {
+    position: relative !important;
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+    width: 100% !important;
+    overflow: hidden !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+#lore-modal .msg-directory-drawer-body > .drawer-category-scroll-bin,
+.msg-directory-drawer-body > .drawer-category-scroll-bin,
+#lore-modal .msg-directory-drawer-body > #drawer-main-category-view,
+.msg-directory-drawer-body > #drawer-main-category-view,
+#lore-modal .msg-directory-drawer-body > #drawer-drilldown-category-view,
+.msg-directory-drawer-body > #drawer-drilldown-category-view {
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: flex-start !important;
+    align-content: flex-start !important;
+    align-items: stretch !important;
+    flex: none !important;
+    width: 100% !important;
+    height: 100% !important;
+    max-height: none !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    box-sizing: border-box !important;
+}
+
+#lore-modal .drawer-node-row,
+.drawer-node-row { 
+    font-family: 'Segoe UI', sans-serif !important; 
+    font-size: 0.78rem !important; /* Enlarged for layout legibility */
+    color: #f1e0ac !important; 
+    padding: 6px 8px !important; 
+    margin: 0 0 4px 0 !important;
+    cursor: pointer !important; 
+    display: flex !important; 
+    justify-content: space-between !important; 
+    align-items: center !important;
+    border-radius: 2px !important; 
+    flex-shrink: 0 !important;   /* Force rows to lock into spatial grids tightly */
+}
+
+.drawer-node-row:hover { 
+    background-color: #2b241a !important; 
+    color: #ffffff !important; 
+}
+
+.drawer-node-row span { 
+    opacity: 0.4 !important; 
+    font-size: 0.65rem !important; 
+}
+
+#lore-modal .drawer-back-node-row,
+.drawer-back-node-row { 
+    font-family: 'RoyalDetails', serif !important; 
+    font-size: 0.7rem !important; 
+    color: #ffd700 !important; 
+    cursor: pointer !important; 
+    padding: 6px !important; 
+    background: #110e0a !important; 
+    border-radius: 2px !important; 
+    margin: 0 0 8px 0 !important; 
+    text-align: left !important; 
+    flex-shrink: 0 !important;
+}
+
+/* HIGH-DENSITY INBOX & BULLETIN DOSSIER SCROLL STRIPS */
+.msg-mailbox-dossier-track { 
+    width: 100% !important; 
+    height: 230px !important; 
+    overflow-y: auto !important; 
+    overflow-x: hidden !important; 
+    display: flex !important; 
+    flex-direction: column !important; 
+    gap: 6px !important; 
+    box-sizing: border-box !important; 
+    padding-right: 2px !important; 
+}
+
+.msg-dossier-summary-row { 
+    display: flex !important; 
+    flex-direction: row !important; 
+    justify-content: space-between !important; 
+    align-items: center !important; 
+    background: rgba(184, 144, 48, 0.03) !important; 
+    border: 1px solid rgba(184, 144, 48, 0.1) !important; 
+    padding: 8px 12px !important; 
+    border-radius: 3px !important; 
+    cursor: pointer !important; 
+    transition: background 0.15s ease !important; 
+}
+
+.msg-dossier-summary-row:hover { 
+    background: rgba(184, 144, 48, 0.08) !important; 
+    border-color: #b89030 !important; 
+}
+
+.msg-summary-left-block { display: flex !important; align-items: center !important; gap: 12px !important; text-align: left !important; }
+.msg-badge-indicator { font-size: 0.85rem !important; }
+.msg-sender-name-label { font-family: 'RoyalDetails', serif !important; font-size: 0.75rem !important; color: #b89030 !important; width: 110px !important; white-space: nowrap !important; overflow: hidden !important; text-overflow: ellipsis !important; }
+.msg-topic-header-preview { font-family: 'Segoe UI', sans-serif !important; font-size: 0.78rem !important; color: #f1e0ac !important; }
+
+/* THE ACTIVE UNREAD CHRONICLE DESCRIPTIONS GLOW PULSE */
+.msg-dossier-unread .msg-topic-header-preview { 
+    font-weight: bold !important; 
+    color: #ffffff !important; 
+    text-shadow: 0 0 5px rgba(241, 224, 172, 0.6) !important; 
+}
+
+
+
+/* Forces the master floating window drawer box to pin everything tightly starting at the top */
+#lore-modal #msg-directory-floating-drawer,
+#msg-directory-floating-drawer {
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: flex-start !important; /* Force content flow to start at the peak */
+    align-items: stretch !important;
+    height: 360px !important;               /* Force height to expand to 360px grid view */
+    max-height: 360px !important;
+}
+
+/* Legacy fallback if drawer body wrapper is absent (older injected markup) */
+#lore-modal .drawer-category-scroll-bin:not(.msg-directory-drawer-body *),
+.drawer-category-scroll-bin:not(.msg-directory-drawer-body *) {
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: flex-start !important;
+    align-content: flex-start !important;
+    align-items: stretch !important;
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+    overflow-y: auto !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+/* Ensure individual rows pack cleanly next to each other from the ceiling down */
+#lore-modal .drawer-node-row,
+.drawer-node-row {
+    margin-top: 0 !important;
+    margin-bottom: 4px !important;
+    flex-shrink: 0 !important; /* Prevents text elements from resizing when lists pop up */
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+}
+
+/* Keep the title text at the top peak baseline position */
+#lore-modal .drawer-header-title,
+.drawer-header-title {
+    margin-top: 0 !important;
+    margin-bottom: 8px !important;
+    flex-shrink: 0 !important;
+}
+
+/* Pin the return button link tightly underneath the title */
+#lore-modal .drawer-back-node-row,
+.drawer-back-node-row {
+    margin-top: 0 !important;
+    margin-bottom: 8px !important;
+    flex-shrink: 0 !important;
+}
+
+
+
+/* 🛡️ TARGET LOCKED SPECIFICITY:
+   Adding the ':not' qualifier ensures these fixed height spacers stay active for 
+   Nations, Settings, and Channels, but instantly turn OFF when the Profile loads! */
+#lore-modal:not(.fullscreen-profile-active-state) .lore-pane-left .pane-label,
+#lore-modal:not(.fullscreen-profile-active-state) .lore-pane-right .pane-label {
+    min-height: 30px !important;    /* Matches your original baseline text height footprint cleanly */
+    height: 24px !important;
+    max-height: 24px !important;
+    margin-bottom: 10px !important;  /* Maintains consistent spacing to the scroll box track underneath */
+    display: block !important;
+    box-sizing: border-box !important;
+}
