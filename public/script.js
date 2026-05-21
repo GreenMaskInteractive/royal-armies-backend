@@ -397,16 +397,39 @@ const globalFactionServerDirectory = {
     other: []
 };
 
-/** Owner mailbox: full registered-commander roster (categories from GET /api/portal/mailbox-recipient-roster). */
-const MAILBOX_RECIPIENT_ROSTER_ADMIN_USERNAMES = new Set(['caleb_admin']);
+/** Portal owner — Sovereign badge in chat & War Council; full mailbox recipient roster. */
+const PORTAL_OWNER_USERNAMES = new Set(['caleb_admin']);
+/** Human moderators — add lowercase usernames here (automated "Moderator" bot is separate). */
+const PORTAL_MODERATOR_USERNAMES = new Set([]);
+
+/** @deprecated Alias — use PORTAL_OWNER_USERNAMES */
+const MAILBOX_RECIPIENT_ROSTER_ADMIN_USERNAMES = PORTAL_OWNER_USERNAMES;
+
 let mailboxAdminRecipientCategories = null;
 let mailboxAdminRecipientRosterLoadPromise = null;
+
+function normalizePortalStaffUsername(username) {
+    return String(username || '').trim().toLowerCase();
+}
+
+/** @returns {'owner'|'moderator'|null} */
+function getPortalStaffRole(username) {
+    const key = normalizePortalStaffUsername(username);
+    if (!key || key === 'moderator') return null;
+    if (PORTAL_OWNER_USERNAMES.has(key)) return 'owner';
+    if (PORTAL_MODERATOR_USERNAMES.has(key)) return 'moderator';
+    return null;
+}
+
+window.getPortalStaffRole = getPortalStaffRole;
+window.PORTAL_OWNER_USERNAMES = PORTAL_OWNER_USERNAMES;
+window.PORTAL_MODERATOR_USERNAMES = PORTAL_MODERATOR_USERNAMES;
 
 function isMailboxRecipientRosterAdmin() {
     const user = String(
         typeof getActiveCommanderUsername === 'function' ? getActiveCommanderUsername() : ''
     ).trim().toLowerCase();
-    return MAILBOX_RECIPIENT_ROSTER_ADMIN_USERNAMES.has(user);
+    return PORTAL_OWNER_USERNAMES.has(user);
 }
 
 async function loadMailboxAdminRecipientRoster(forceReload) {

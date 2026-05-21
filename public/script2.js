@@ -675,6 +675,167 @@ function refreshCommunityChatOnlineRosterIfVisible() {
     if (bin) renderCommunityChatOnlineRoster(bin);
 }
 
+const CHAT_ROSTER_PORTAL_QUIPS = [
+    'Loitering at the war table',
+    'Trading rumors in the great hall',
+    'Sharpening quills for dispatches',
+    'Studying the Age map',
+    'Awaiting the next muster horn',
+    'Flipping through the chronicles',
+    'Polling the recruitment board',
+    'Warming boots by the hearth'
+];
+
+const CHAT_ROSTER_AGE_QUIPS = [
+    'Deployed in the active Age',
+    'Commanding armies on the field',
+    'Sieging a rival bastion',
+    'Marshaling reinforcements',
+    'Scouting enemy lines',
+    'Entrenched at the front',
+    'Rallying the war council',
+    'Holding the line at dawn'
+];
+
+function hashCommunityChatRosterSeed(name) {
+    const normalized = normalizeCommunityChatUsername(name);
+    let hash = 0;
+    for (let i = 0; i < normalized.length; i += 1) {
+        hash = ((hash << 5) - hash) + normalized.charCodeAt(i);
+        hash |= 0;
+    }
+    return Math.abs(hash);
+}
+
+function getChatRosterAvatarUrl(name) {
+    const seed = hashCommunityChatRosterSeed(name);
+    const avatarIndex = String((seed % 8) + 1).padStart(2, '0');
+    const avatarFamily = (seed % 3) === 0 ? 'archmageprofile' : 'commanderprofile';
+    return `images/avatars/${avatarFamily}${avatarIndex}.png`;
+}
+
+function getChatRosterDisplayRank(name, isSelf) {
+    const staffRole = typeof getPortalStaffRole === 'function' ? getPortalStaffRole(name) : null;
+    if (staffRole === 'owner') return 'Sovereign of Royal Armies';
+    if (staffRole === 'moderator') return 'Royal Moderator';
+    if (isSelf && typeof player !== 'undefined' && Number.isFinite(player.rank)) {
+        const rankIndex = Math.max(0, Math.min(player.rank - 1, 21));
+        if (typeof groundTitles !== 'undefined' && groundTitles[rankIndex]) {
+            return groundTitles[rankIndex];
+        }
+    }
+    if (typeof groundTitles !== 'undefined' && groundTitles.length) {
+        return groundTitles[hashCommunityChatRosterSeed(name) % groundTitles.length];
+    }
+    return 'Vintenary';
+}
+
+function getChatRosterPresenceQuip(name, inAge, isSelf) {
+    const staffRole = typeof getPortalStaffRole === 'function' ? getPortalStaffRole(name) : null;
+    if (staffRole === 'owner') {
+        return inAge ? 'The Sovereign is deployed in the Age' : 'The Sovereign holds court at the portal';
+    }
+    if (staffRole === 'moderator') {
+        return inAge ? 'A moderator watches the field' : 'A moderator patrols the great hall';
+    }
+    if (isSelf) {
+        return inAge ? 'You are in the thick of the Age' : 'Holding court at your portal session';
+    }
+    const pool = inAge ? CHAT_ROSTER_AGE_QUIPS : CHAT_ROSTER_PORTAL_QUIPS;
+    return pool[hashCommunityChatRosterSeed(name) % pool.length];
+}
+
+function getChatRosterStaffBadgeMarkup(name) {
+    const staffRole = typeof getPortalStaffRole === 'function' ? getPortalStaffRole(name) : null;
+    if (staffRole === 'owner') {
+        return '<span class="chat-roster-staff-badge chat-roster-staff-badge--owner" title="Site owner"><span class="chat-roster-staff-badge-icon" aria-hidden="true">👑</span>Sovereign</span>';
+    }
+    if (staffRole === 'moderator') {
+        return '<span class="chat-roster-staff-badge chat-roster-staff-badge--moderator" title="Moderator"><span class="chat-roster-staff-badge-icon" aria-hidden="true">🛡</span>Moderator</span>';
+    }
+    return '';
+}
+
+function formatCommunityChatSenderMarkup(sender) {
+    const safeName = escapeMetricRosterHtml(sender);
+    if (sender === 'Moderator') {
+        return `<span class="chat-message-sender-name chat-message-sender-name--bot"><strong>${safeName}:</strong></span>`;
+    }
+    const staffRole = typeof getPortalStaffRole === 'function' ? getPortalStaffRole(sender) : null;
+    if (staffRole === 'owner') {
+        return `<span class="chat-message-sender-name chat-message-sender-name--owner"><span class="chat-sender-staff-badge chat-sender-staff-badge--owner" title="Site owner" aria-hidden="true">👑</span><strong>${safeName}:</strong></span>`;
+    }
+    if (staffRole === 'moderator') {
+        return `<span class="chat-message-sender-name chat-message-sender-name--moderator"><span class="chat-sender-staff-badge chat-sender-staff-badge--moderator" title="Moderator" aria-hidden="true">🛡</span><strong>${safeName}:</strong></span>`;
+    }
+    return `<span class="chat-message-sender-name"><strong>${safeName}:</strong></span>`;
+}
+
+function getChatRosterStatusMeta(inAge, isSelf) {
+    if (isSelf && inAge) {
+        return { pillClass: 'chat-roster-status-pill--self-age', icon: '⚔', label: 'You · In Age' };
+    }
+    if (isSelf) {
+        return { pillClass: 'chat-roster-status-pill--self', icon: '◆', label: 'You' };
+    }
+    if (inAge) {
+        return { pillClass: 'chat-roster-status-pill--in-age', icon: '⚔', label: 'In Age' };
+    }
+    return { pillClass: 'chat-roster-status-pill--portal', icon: '◈', label: 'Portal' };
+}
+
+function sortCommunityChatRosterPlayers(players, selfLower, playingSet) {
+    const rosterScore = (name) => {
+        const key = normalizeCommunityChatUsername(name);
+        const staffRole = typeof getPortalStaffRole === 'function' ? getPortalStaffRole(name) : null;
+        if (staffRole === 'owner') return 0;
+        if (staffRole === 'moderator') return 1;
+        if (key === selfLower) return 2;
+        if (playingSet.has(key)) return 3;
+        return 4;
+    };
+
+    return players.slice().sort((a, b) => {
+        const scoreDiff = rosterScore(a) - rosterScore(b);
+        if (scoreDiff !== 0) return scoreDiff;
+        return a.localeCompare(b, undefined, { sensitivity: 'base' });
+    });
+}
+
+function buildCommunityChatRosterCardMarkup(name, selfLower, playingSet) {
+    const isSelf = normalizeCommunityChatUsername(name) === selfLower;
+    const inAge = playingSet.has(normalizeCommunityChatUsername(name));
+    const staffRole = typeof getPortalStaffRole === 'function' ? getPortalStaffRole(name) : null;
+    const status = getChatRosterStatusMeta(inAge, isSelf);
+    const staffBadge = getChatRosterStaffBadgeMarkup(name);
+    const cardModifiers = [
+        staffRole === 'owner' ? 'chat-roster-commander-card--owner' : '',
+        staffRole === 'moderator' ? 'chat-roster-commander-card--moderator' : '',
+        isSelf ? 'chat-roster-commander-card--self' : '',
+        inAge ? 'chat-roster-commander-card--in-age' : 'chat-roster-commander-card--portal'
+    ].filter(Boolean).join(' ');
+
+    return `
+        <article class="chat-roster-commander-card ${cardModifiers}" data-roster-commander="${escapeMetricRosterHtml(normalizeCommunityChatUsername(name))}"${staffRole ? ` data-staff-role="${staffRole}"` : ''}>
+            <div class="chat-roster-avatar-wrap">
+                <img class="chat-roster-avatar" src="${escapeMetricRosterHtml(getChatRosterAvatarUrl(name))}" alt="" width="40" height="40" loading="lazy" decoding="async">
+                <span class="chat-roster-presence-ring" aria-hidden="true"></span>
+                ${staffRole === 'owner' ? '<span class="chat-roster-avatar-crown" aria-hidden="true">👑</span>' : ''}
+                ${staffRole === 'moderator' ? '<span class="chat-roster-avatar-mod-shield" aria-hidden="true">🛡</span>' : ''}
+            </div>
+            <div class="chat-roster-commander-body">
+                <div class="chat-roster-commander-topline">
+                    <span class="chat-roster-name">${escapeMetricRosterHtml(name)}</span>
+                    <span class="chat-roster-status-pill ${status.pillClass}"><span class="chat-roster-status-pill-icon" aria-hidden="true">${status.icon}</span>${escapeMetricRosterHtml(status.label)}</span>
+                </div>
+                ${staffBadge ? `<div class="chat-roster-staff-badge-row">${staffBadge}</div>` : ''}
+                <span class="chat-roster-rank-title">${escapeMetricRosterHtml(getChatRosterDisplayRank(name, isSelf))}</span>
+                <p class="chat-roster-quip">${escapeMetricRosterHtml(getChatRosterPresenceQuip(name, inAge, isSelf))}</p>
+            </div>
+        </article>
+    `;
+}
+
 function renderCommunityChatOnlineRoster(targetBin) {
     const bin = targetBin || document.getElementById('chat-online-roster-dock');
     if (!bin) return;
@@ -699,22 +860,29 @@ function renderCommunityChatOnlineRoster(targetBin) {
         seen.add(selfLower);
     }
 
-    players.sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
+    const sortedPlayers = sortCommunityChatRosterPlayers(players, selfLower, playingSet);
+    const inAgeCount = sortedPlayers.filter((name) => playingSet.has(normalizeCommunityChatUsername(name))).length;
 
     const countEl = document.getElementById('chat-online-roster-count');
-    if (countEl) countEl.textContent = String(players.length);
+    if (countEl) countEl.textContent = String(sortedPlayers.length);
 
-    if (!players.length) {
-        bin.innerHTML = '<div class="chat-roster-empty-note">No commanders browsing the portal right now.</div>';
+    const inAgeCountEl = document.getElementById('chat-online-in-age-count');
+    if (inAgeCountEl) inAgeCountEl.textContent = String(inAgeCount);
+
+    if (!sortedPlayers.length) {
+        bin.innerHTML = `
+            <div class="chat-roster-empty-state">
+                <span class="chat-roster-empty-icon" aria-hidden="true">🏰</span>
+                <p class="chat-roster-empty-title">The hall is quiet</p>
+                <p class="chat-roster-empty-copy">No commanders are browsing the portal right now. Light the braziers and rally your allies—or march into the Age alone.</p>
+            </div>
+        `;
         return;
     }
 
-    bin.innerHTML = players.map((name) => {
-        const isSelf = normalizeCommunityChatUsername(name) === selfLower;
-        const inAge = playingSet.has(normalizeCommunityChatUsername(name));
-        const ageBadge = inAge ? '<span class="chat-roster-in-age-badge">In Age</span>' : '';
-        return `<div class="roster-commander-node-row status-online"><span class="status-dot" aria-hidden="true">●</span><span class="chat-roster-name">${escapeMetricRosterHtml(name)}${isSelf ? ' <em class="chat-roster-you-tag">(You)</em>' : ''}</span>${ageBadge}</div>`;
-    }).join('');
+    bin.innerHTML = sortedPlayers
+        .map((name) => buildCommunityChatRosterCardMarkup(name, selfLower, playingSet))
+        .join('');
 }
 
 async function notifyPortalAgeSessionJoin() {
@@ -1172,13 +1340,22 @@ function renderCommunityChatPortalCanvas(viewport) {
                 <div class="chat-input-toolbar-row" id="chat-portal-input-interaction-tray"></div>
             </div>
             <aside class="chat-sidebar-player-roster-deck" aria-label="Commanders browsing the portal">
-                <div class="player-roster-header-title">
-                    <span>👥 Online Now</span>
-                    <span class="chat-online-roster-count" id="chat-online-roster-count">0</span>
+                <div class="chat-roster-header-deck">
+                    <div class="player-roster-header-title">
+                        <span class="chat-roster-header-icon" aria-hidden="true">⚜</span>
+                        <span class="chat-roster-header-label">Active Players</span>
+                        <span class="chat-online-roster-count" id="chat-online-roster-count">0</span>
+                    </div>
+                    <p class="chat-roster-subtitle"><span id="chat-online-in-age-count">0</span> in the Age · roster refreshes live</p>
+                    <div class="chat-roster-status-legend" aria-label="Roster badges">
+                        <span class="chat-roster-legend-item chat-roster-legend-item--owner"><span aria-hidden="true">👑</span> Sovereign</span>
+                        <span class="chat-roster-legend-item chat-roster-legend-item--moderator"><span aria-hidden="true">🛡</span> Mod</span>
+                        <span class="chat-roster-legend-item chat-roster-legend-item--portal"><span aria-hidden="true">◈</span> Portal</span>
+                        <span class="chat-roster-legend-item chat-roster-legend-item--in-age"><span aria-hidden="true">⚔</span> In Age</span>
+                    </div>
                 </div>
-                <p class="chat-roster-subtitle">Commanders on the website (updates every few seconds)</p>
                 <div class="player-roster-scrollable-track-bin" id="chat-online-roster-dock">
-                    <div class="chat-roster-loading-note">Loading online roster…</div>
+                    <div class="chat-roster-loading-note">Loading Player List</div>
                 </div>
             </aside>
         </div>
@@ -1278,13 +1455,16 @@ function executeCompileActiveChannelMessageStrips() {
  const messageRow = document.createElement('div');
  messageRow.className = 'chat-message-strip-row';
  if (log.sender === loggedUser) messageRow.classList.add('local-sender-highlight-strip');
- if (log.sender === "Moderator") messageRow.classList.add('system-bot-message-highlight');
+ if (log.sender === 'Moderator') messageRow.classList.add('system-bot-message-highlight');
+ const staffRole = typeof getPortalStaffRole === 'function' ? getPortalStaffRole(log.sender) : null;
+ if (staffRole === 'owner') messageRow.classList.add('chat-message-strip-row--owner');
+ if (staffRole === 'moderator') messageRow.classList.add('chat-message-strip-row--moderator');
 
  let formattedTextContent = log.text.replace(/(@[a-zA-Z0-9_\-]+)/g, '<span class="chat-shoutout-mention-badge">$1</span>');
  messageRow.innerHTML = `
  <div class="chat-message-meta-left">
  <span class="chat-message-timestamp">[${log.time}]</span>
- <span class="chat-message-sender-name"><strong>${log.sender}:</strong></span>
+ ${formatCommunityChatSenderMarkup(log.sender)}
  </div>
  <span class="chat-message-body-text-content">${formattedTextContent}</span>
  `;
@@ -1608,7 +1788,7 @@ const globalRoyaltyTierPackagesDatabase = [
     {
         tier: 'Standard Commander',
         cost: 'Free',
-        glowClass: 'standard-package-border',
+        planVariant: 'standard',
         badge: 'FREE',
         badgeTitleGranted: FREE_MEMBERSHIP_BADGE_TITLE,
         features: [
@@ -1625,7 +1805,7 @@ const globalRoyaltyTierPackagesDatabase = [
     {
         tier: 'Royalty',
         cost: CHRONICLE_PREMIUM_MONTHLY_PRICE_LABEL,
-        glowClass: 'vanguard-package-glow',
+        planVariant: 'royalty',
         badge: 'ROYALTY',
         badgeTitleGranted: ROYALTY_PAID_BADGE_TITLE,
         features: [
@@ -1653,35 +1833,42 @@ function renderRoyaltyTierPortalCanvas(viewport) {
                 <p class="royalty-master-subtitle">Subscribe monthly to earn the <strong>Royalty</strong> badge title and unlock <strong>Premium Tier Rewards</strong> on The Chronicles (${CHRONICLE_PREMIUM_MONTHLY_PRICE_LABEL}). Free commanders keep the Bronze badge and the Basic reward track.</p>
             </header>
             ${isRoyalty ? `<div class="royalty-active-member-banner">You are a <strong>Royalty</strong> member — Premium Tier Rewards are unlocked on The Chronicles.</div>` : ''}
-            <div class="royalty-tier-cards-flex-row">
+            <div class="royalty-plans-deck">
+                <div class="royalty-tier-cards-flex-row">
                 ${globalRoyaltyTierPackagesDatabase.map((pack) => {
                     const isActivePlan = (!pack.isPaidPlan && !isRoyalty) || (pack.isPaidPlan && isRoyalty);
                     const canSubscribe = pack.isPaidPlan && pack.enabled && !isActivePlan;
                     const actionHandler = canSubscribe ? 'onclick="beginRoyaltyMembershipCheckout()"' : '';
                     const buttonLabel = isActivePlan ? 'Active' : pack.actionText;
                     const buttonClass = canSubscribe ? 'pulse-buy-btn' : 'disabled-active-btn';
+                    const badgeClass = pack.isPaidPlan
+                        ? 'royalty-plan-pill royalty-plan-pill--paid'
+                        : 'royalty-plan-pill royalty-plan-pill--free';
                     return `
-                    <div class="royalty-package-display-card ${pack.glowClass} ${pack.isPaidPlan ? 'royalty-paid-plan-card' : ''} ${isActivePlan ? 'royalty-plan-current' : ''}">
-                        <div class="package-header-row-block">
-                            <span class="package-tier-name-title">${pack.tier}</span>
-                            <span class="package-tier-badge-label">${pack.badge}</span>
+                    <article class="royalty-package-display-card royalty-package--${pack.planVariant} ${isActivePlan ? 'royalty-plan-current' : ''}">
+                        <div class="royalty-package-card-header">
+                            <div class="royalty-package-title-block">
+                                <h3 class="royalty-package-tier-name">${pack.tier}</h3>
+                                <p class="royalty-badge-title-grant">Badge title: <strong>${pack.badgeTitleGranted}</strong></p>
+                            </div>
+                            <span class="${badgeClass}">${pack.badge}</span>
                         </div>
-                        <div class="package-cost-numerical-display">${pack.cost}</div>
-                        <p class="royalty-badge-title-grant">Badge title: <strong>${pack.badgeTitleGranted}</strong></p>
-                        <ul class="package-features-bullet-list">
+                        <div class="royalty-package-cost">${pack.cost}</div>
+                        <ul class="royalty-package-features-list">
                             ${pack.features.map((feat) => `
-                                <li><span class="medieval-bullet-bullet">✦</span> ${feat}</li>
+                                <li class="royalty-package-feature-item"><span class="royalty-package-feature-bullet" aria-hidden="true">✦</span><span>${feat}</span></li>
                             `).join('')}
                         </ul>
-                        <div class="package-action-footer-deck">
-                            <button type="button" class="settings-btn master-action-btn ${buttonClass} ${isActivePlan ? 'royalty-plan-current' : ''}"
+                        <div class="royalty-package-action-footer">
+                            <button type="button" class="settings-btn master-action-btn royalty-package-action-btn ${buttonClass}"
                                     ${canSubscribe ? actionHandler : 'disabled'}>
                                 ${buttonLabel}
                             </button>
                         </div>
-                    </div>
+                    </article>
                 `;
                 }).join('')}
+                </div>
             </div>
         </div>
     `;
