@@ -44,12 +44,23 @@ db.defaults({
 
 function getPortalMaintenanceAlert() {
     const stored = db.get('portal.maintenanceAlert').value() || {};
-    return {
+    const result = {
         active: stored.active === true,
         title: String(stored.title || 'Scheduled maintenance').trim().slice(0, 120),
         message: String(stored.message || '').trim().slice(0, 600),
         windowLabel: String(stored.windowLabel || '').trim().slice(0, 160)
     };
+
+    if (!isProduction && !result.message) {
+        return {
+            active: true,
+            title: 'Site under active development',
+            message: 'Royal Armies is still being built. You may hit brief outages, broken pages, or restarts while we finish the main website and game portal. Thanks for your patience during early access.',
+            windowLabel: 'Expect occasional downtime until the main site launch is complete.'
+        };
+    }
+
+    return result;
 }
 
 function setPortalMaintenanceAlert(patch = {}) {

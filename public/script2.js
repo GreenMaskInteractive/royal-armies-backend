@@ -42,9 +42,6 @@ window.onload = () => {
     // Launch active chronometer ticker sand-clock calculations loop
     initializeServerAgeClockTickerCountdown();
     initializePortalLivePlayerMetrics();
-    if (typeof initializeDeveloperMaintenanceAlert === 'function') {
-        initializeDeveloperMaintenanceAlert();
-    }
 
     applyPortalNavPreviewRestrictions();
     hydrateDevelopersLogDock();

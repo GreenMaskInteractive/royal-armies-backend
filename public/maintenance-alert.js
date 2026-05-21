@@ -22,8 +22,42 @@ function isMainPortalPage() {
     return path.endsWith('/main.html') || path.endsWith('/main');
 }
 
+function isLocalPortalDevelopmentHost() {
+    const host = (window.location.hostname || '').toLowerCase();
+    return host === 'localhost'
+        || host === '127.0.0.1'
+        || host === '[::1]'
+        || host.endsWith('.local');
+}
+
+function isMaintenanceAlertPayloadActive(payload) {
+    const data = payload || {};
+    return data.active === true && String(data.message || '').trim().length > 0;
+}
+
+function normalizeMaintenanceAlertPayload(raw) {
+    if (!raw || typeof raw !== 'object') {
+        return {};
+    }
+    const { status, ...rest } = raw;
+    return rest;
+}
+
+function resolveMaintenanceAlertPayload(payload) {
+    const data = normalizeMaintenanceAlertPayload(payload);
+
+    if (isLocalPortalDevelopmentHost() && isMainPortalPage() && !isMaintenanceAlertPayloadActive(data)) {
+        return { ...PORTAL_DEVELOPMENT_MAINTENANCE_FALLBACK };
+    }
+
+    return data;
+}
+
 let maintenanceAlertPollTimer = null;
 let maintenanceAlertLastPayload = null;
+let maintenanceAlertInitialized = false;
+let maintenanceAlertRefreshGeneration = 0;
+let maintenanceAlertResizeBound = false;
 
 function getMaintenanceAlertElements() {
     return {
@@ -45,7 +79,7 @@ function applyDeveloperMaintenanceAlert(payload) {
     if (!bar) return;
 
     const data = payload || {};
-    const isActive = data.active === true && String(data.message || '').trim().length > 0;
+    const isActive = isMaintenanceAlertPayloadActive(data);
     maintenanceAlertLastPayload = data;
 
     if (!isActive) {
@@ -77,20 +111,48 @@ function applyDeveloperMaintenanceAlert(payload) {
     requestAnimationFrame(() => syncMaintenanceAlertPageOffset(bar));
 }
 
+function primeDevelopmentMaintenanceAlertOnMainPortal() {
+    if (isLocalPortalDevelopmentHost() && isMainPortalPage()) {
+        applyDeveloperMaintenanceAlert(PORTAL_DEVELOPMENT_MAINTENANCE_FALLBACK);
+    }
+}
+
 async function fetchDeveloperMaintenanceAlert() {
     const response = await fetch('/api/portal/maintenance-alert', { cache: 'no-store' });
     if (!response.ok) {
         throw new Error(`Maintenance alert fetch failed (${response.status})`);
     }
-    return response.json();
+
+    const contentType = String(response.headers.get('content-type') || '').toLowerCase();
+    if (!contentType.includes('application/json')) {
+        throw new Error('Maintenance alert response was not JSON (use node server.js, not a static-only host)');
+    }
+
+    const payload = await response.json();
+    if (typeof payload.active !== 'boolean') {
+        throw new Error('Maintenance alert payload missing active flag');
+    }
+
+    return normalizeMaintenanceAlertPayload(payload);
 }
 
 async function refreshDeveloperMaintenanceAlert() {
+    const generation = ++maintenanceAlertRefreshGeneration;
+
     try {
         const payload = await fetchDeveloperMaintenanceAlert();
-        applyDeveloperMaintenanceAlert(payload);
-        return payload;
+        if (generation !== maintenanceAlertRefreshGeneration) {
+            return maintenanceAlertLastPayload;
+        }
+
+        const resolved = resolveMaintenanceAlertPayload(payload);
+        applyDeveloperMaintenanceAlert(resolved);
+        return resolved;
     } catch (err) {
+        if (generation !== maintenanceAlertRefreshGeneration) {
+            return maintenanceAlertLastPayload;
+        }
+
         console.warn('Developer maintenance alert unavailable:', err.message);
         if (isMainPortalPage()) {
             applyDeveloperMaintenanceAlert(PORTAL_DEVELOPMENT_MAINTENANCE_FALLBACK);
@@ -116,11 +178,18 @@ async function postDeveloperMaintenanceAlert(patch, devKey) {
         throw new Error(payload.message || `Maintenance alert update failed (${response.status})`);
     }
 
-    applyDeveloperMaintenanceAlert(payload);
-    return payload;
+    maintenanceAlertRefreshGeneration += 1;
+    applyDeveloperMaintenanceAlert(normalizeMaintenanceAlertPayload(payload));
+    return maintenanceAlertLastPayload;
 }
 
 function initializeDeveloperMaintenanceAlert() {
+    if (maintenanceAlertInitialized) {
+        return;
+    }
+    maintenanceAlertInitialized = true;
+
+    primeDevelopmentMaintenanceAlertOnMainPortal();
     refreshDeveloperMaintenanceAlert();
 
     if (maintenanceAlertPollTimer) {
@@ -128,12 +197,15 @@ function initializeDeveloperMaintenanceAlert() {
     }
     maintenanceAlertPollTimer = setInterval(refreshDeveloperMaintenanceAlert, MAINTENANCE_ALERT_POLL_MS);
 
-    window.addEventListener('resize', () => {
-        const { bar } = getMaintenanceAlertElements();
-        if (bar && !bar.hidden) {
-            syncMaintenanceAlertPageOffset(bar);
-        }
-    });
+    if (!maintenanceAlertResizeBound) {
+        maintenanceAlertResizeBound = true;
+        window.addEventListener('resize', () => {
+            const { bar } = getMaintenanceAlertElements();
+            if (bar && !bar.hidden) {
+                syncMaintenanceAlertPageOffset(bar);
+            }
+        });
+    }
 }
 
 const DeveloperMaintenanceAlert = {
