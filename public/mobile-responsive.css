@@ -19,58 +19,67 @@ html.royal-armies-touch-device #cursor-click-fx-layer {
     display: none !important;
 }
 
-/* --- Global overflow & safe areas --- */
-#main-dashboard-canvas,
+/* Prevent horizontal scroll without altering desktop backgrounds */
 body {
-    overflow-x: hidden !important;
-    max-width: 100% !important;
+    overflow-x: hidden;
+    max-width: 100%;
 }
 
-#main-dashboard-canvas {
-    width: 100% !important;
-    max-width: 100% !important;
-    background-attachment: scroll !important;
+/* Portal + layout tweaks — tablet/phone only (do not leak to desktop) */
+@media (max-width: 1024px) {
+    #main-dashboard-canvas {
+        width: 100% !important;
+        max-width: 100% !important;
+        background-image: url('images/mainpagebg_mobile.png') !important;
+        background-attachment: scroll !important;
+    }
+
+    .staging-deck-master-wrapper {
+        padding-left: max(12px, env(safe-area-inset-left)) !important;
+        padding-right: max(12px, env(safe-area-inset-right)) !important;
+        padding-bottom: max(20px, env(safe-area-inset-bottom)) !important;
+    }
+
+    .over-bar-utility-deck {
+        padding-left: max(12px, env(safe-area-inset-left)) !important;
+        padding-right: max(12px, env(safe-area-inset-right)) !important;
+    }
+
+    .developer-maintenance-alert-bar {
+        padding-left: max(12px, env(safe-area-inset-left)) !important;
+        padding-right: max(12px, env(safe-area-inset-right)) !important;
+    }
+
+    input,
+    textarea,
+    select,
+    .login-input {
+        font-size: max(16px, 1rem) !important;
+    }
 }
 
-.staging-deck-master-wrapper {
-    padding-left: max(12px, env(safe-area-inset-left)) !important;
-    padding-right: max(12px, env(safe-area-inset-right)) !important;
-    padding-bottom: max(20px, env(safe-area-inset-bottom)) !important;
-}
+/* Touch targets — phone/tablet only (landing login uses dedicated sizing below) */
+@media (max-width: 768px) {
+    button:not(#page-landing button),
+    .header-logout-btn,
+    .commander-hub-top-tab,
+    .commander-hub-subnav-item,
+    .chronicle-rewards-track-tab,
+    .chat-channel-btn,
+    .chat-message-action-btn,
+    .img-btn:not(#page-landing .img-btn),
+    .settings-btn,
+    .master-action-btn,
+    .lore-audio-play-btn,
+    .dropdown-action-item {
+        min-height: 44px;
+        touch-action: manipulation;
+    }
 
-.over-bar-utility-deck {
-    padding-left: max(12px, env(safe-area-inset-left)) !important;
-    padding-right: max(12px, env(safe-area-inset-right)) !important;
-}
-
-.developer-maintenance-alert-bar {
-    padding-left: max(12px, env(safe-area-inset-left)) !important;
-    padding-right: max(12px, env(safe-area-inset-right)) !important;
-}
-
-/* Touch targets & iOS input zoom guard */
-button,
-.nav-tab,
-.header-logout-btn,
-.commander-hub-top-tab,
-.commander-hub-subnav-item,
-.chronicle-rewards-track-tab,
-.chat-channel-btn,
-.chat-message-action-btn,
-.img-btn,
-.settings-btn,
-.master-action-btn,
-.lore-audio-play-btn,
-.dropdown-action-item {
-    min-height: 44px;
-    touch-action: manipulation;
-}
-
-input,
-textarea,
-select,
-.login-input {
-    font-size: max(16px, 1rem) !important;
+    .nav-tab {
+        min-height: 44px;
+        touch-action: manipulation;
+    }
 }
 
 /* Coarse pointer: always show chat reply/edit */
@@ -539,10 +548,10 @@ select,
    ============================================================================= */
 @media (max-width: 900px) {
     .portal-master-anchor {
-        width: min(92vw, 480px) !important;
+        width: min(92vw, 420px) !important;
         height: auto !important;
         min-height: 0 !important;
-        gap: 20px !important;
+        gap: 14px !important;
         padding: 12px 0 !important;
     }
 
@@ -550,26 +559,52 @@ select,
         width: 100% !important;
         max-width: 100% !important;
         height: auto !important;
-        min-height: 280px !important;
-        aspect-ratio: 8 / 5 !important;
-        max-height: min(420px, 58dvh) !important;
+        min-height: 0 !important;
+        aspect-ratio: auto !important;
+        max-height: none !important;
+        padding: 14% 10% 12% !important;
+        box-sizing: border-box !important;
+        background-size: 100% 100% !important;
     }
 
     #login-content-wrapper {
-        margin-top: 12px !important;
-        padding: 0 8% !important;
+        margin-top: 0 !important;
+        padding: 0 !important;
+        box-sizing: border-box !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        gap: 6px !important;
+    }
+
+    #page-landing .login-input {
+        width: 100% !important;
+        max-width: 100% !important;
+        height: 38px !important;
+        min-height: 0 !important;
+        margin: 4px 0 !important;
+        padding: 8px 12px !important;
+        font-size: 0.95rem !important;
         box-sizing: border-box !important;
     }
 
+    #page-landing .forgot-link-container {
+        margin: 2px 0 4px !important;
+    }
+
+    #page-landing .forgot-link {
+        font-size: 0.78rem !important;
+    }
+
     #post-login-message {
-        margin-top: 24px !important;
-        padding: 0 10% !important;
+        margin-top: 16px !important;
+        padding: 0 4% !important;
         box-sizing: border-box !important;
     }
 
     #post-login-message p {
         max-width: 100% !important;
-        font-size: 0.9rem !important;
+        font-size: 0.85rem !important;
+        line-height: 1.45 !important;
     }
 
     #post-login-message div {
@@ -578,16 +613,23 @@ select,
     }
 
     #auth-buttons {
-        margin-top: -40px !important;
-        gap: 16px !important;
+        margin-top: 0 !important;
+        gap: 12px !important;
         flex-wrap: wrap !important;
+        width: 100% !important;
+        justify-content: center !important;
     }
 
-    .img-btn,
-    #btn-login-main,
-    #btn-register-main {
-        width: min(160px, 42vw) !important;
-        height: 48px !important;
+    #page-landing .img-btn,
+    #page-landing #btn-login-main,
+    #page-landing #btn-register-main,
+    #page-landing #btn-logout-reset,
+    #page-landing #admin-bypass-btn {
+        width: min(140px, 40vw) !important;
+        height: 40px !important;
+        min-height: 0 !important;
+        font-size: 12px !important;
+        background-size: contain !important;
     }
 
     .navigator-bar {
@@ -626,21 +668,122 @@ select,
 
 @media (max-width: 480px) {
     .portal-master-anchor {
-        width: 94vw !important;
+        width: min(94vw, 360px) !important;
         top: 50% !important;
+        gap: 10px !important;
     }
 
     .login-form-container {
-        min-height: 240px !important;
+        padding: 16% 11% 13% !important;
     }
 
-    .login-input {
-        width: 88% !important;
-        max-width: 100% !important;
-        box-sizing: border-box !important;
+    #page-landing .login-input {
+        height: 36px !important;
+        font-size: 16px !important;
+        margin: 3px 0 !important;
+    }
+
+    #page-landing .img-btn,
+    #page-landing #btn-login-main,
+    #page-landing #btn-register-main,
+    #page-landing #btn-logout-reset,
+    #page-landing #admin-bypass-btn {
+        width: min(128px, 44vw) !important;
+        height: 38px !important;
+        font-size: 11px !important;
     }
 
     #auth-buttons {
-        margin-top: -24px !important;
+        gap: 10px !important;
+    }
+}
+
+/* =============================================================================
+   DESKTOP RESTORE (≥ 1025px) — undo mobile globals on PC
+   ============================================================================= */
+@media (min-width: 1025px) {
+    #main-dashboard-canvas {
+        width: 100vw !important;
+        max-width: none !important;
+        background-size: cover !important;
+        background-position: center center !important;
+        background-repeat: no-repeat !important;
+        background-attachment: fixed !important;
+    }
+
+    .staging-deck-master-wrapper {
+        padding: 0 40px 40px 40px !important;
+        margin-top: -52px !important;
+    }
+
+    .over-bar-utility-deck {
+        padding: 12px 40px 0 40px !important;
+        margin-bottom: -22px !important;
+    }
+
+    .main-portal-nav-bar {
+        height: 100px !important;
+        flex-wrap: nowrap !important;
+        align-items: center !important;
+        padding: 0 20px !important;
+    }
+
+    .main-portal-nav-bar::before {
+        top: 50% !important;
+        left: 0 !important;
+        right: 0 !important;
+        transform: translateY(-50%) !important;
+        height: 71px !important;
+        background-size: 100% 100% !important;
+        background-position: center center !important;
+    }
+
+    .nav-tabs-centered-flex-dock {
+        flex: 1 !important;
+        justify-content: center !important;
+        overflow: visible !important;
+        mask-image: none !important;
+        width: auto !important;
+        flex-wrap: nowrap !important;
+    }
+
+    .nav-tab {
+        min-height: 0 !important;
+        padding: 12px 24px !important;
+        font-size: 1.1rem !important;
+        letter-spacing: 1.5px !important;
+        touch-action: auto !important;
+    }
+
+    .nav-embedded-account-label {
+        width: 300px !important;
+        height: 40px !important;
+        max-height: 40px !important;
+        order: unset !important;
+        flex: 0 0 300px !important;
+    }
+
+    .nav-right-logout-action-dock {
+        width: 250px !important;
+        order: unset !important;
+    }
+
+    .header-logout-btn {
+        min-height: 0 !important;
+        transform: translateY(-3px) !important;
+    }
+
+    .header-logout-label {
+        display: inline !important;
+    }
+
+    #page-landing .slideshow-container,
+    #page-landing .slide {
+        background-size: cover !important;
+        background-position: center center !important;
+    }
+
+    #page-landing .slide {
+        inset: -20% !important;
     }
 }

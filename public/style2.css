@@ -2234,6 +2234,21 @@
     color: #ffd978 !important;
 }
 
+.chat-retention-policy-notice {
+    margin: 0 !important;
+    padding: 0 2px !important;
+    font-family: 'Segoe UI', sans-serif !important;
+    font-size: 0.72rem !important;
+    line-height: 1.45 !important;
+    color: rgba(201, 181, 130, 0.72) !important;
+    text-align: center !important;
+}
+
+.chat-retention-policy-notice strong {
+    color: rgba(232, 201, 106, 0.9) !important;
+    font-weight: 600 !important;
+}
+
 #chat-portal-message-input-field {
     flex: 1 !important;
     background: rgba(0,0,0,0.6) !important;

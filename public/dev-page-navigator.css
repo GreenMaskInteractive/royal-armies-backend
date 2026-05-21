@@ -1,0 +1,87 @@
+/* Dev-only page bypass — ports 3000 & 5500 only */
+
+.dev-page-navigator {
+    position: fixed !important;
+    bottom: max(12px, env(safe-area-inset-bottom)) !important;
+    left: max(12px, env(safe-area-inset-left)) !important;
+    z-index: 2147483640 !important;
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    gap: 8px !important;
+    padding: 8px 12px !important;
+    border-radius: 6px !important;
+    border: 1px solid rgba(201, 162, 39, 0.55) !important;
+    background: rgba(8, 6, 4, 0.94) !important;
+    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.65), 0 0 12px rgba(255, 215, 0, 0.12) !important;
+    font-family: 'Segoe UI', Tahoma, sans-serif !important;
+    pointer-events: auto !important;
+}
+
+.dev-page-navigator-label {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 4px !important;
+    margin: 0 !important;
+    min-width: 0 !important;
+}
+
+.dev-page-navigator-eyebrow {
+    font-size: 0.62rem !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.08em !important;
+    text-transform: uppercase !important;
+    color: rgba(255, 217, 120, 0.85) !important;
+    white-space: nowrap !important;
+}
+
+.dev-page-navigator-select {
+    min-width: 200px !important;
+    max-width: min(280px, calc(100vw - 48px)) !important;
+    padding: 8px 10px !important;
+    border-radius: 4px !important;
+    border: 1px solid rgba(184, 144, 48, 0.45) !important;
+    background: rgba(0, 0, 0, 0.55) !important;
+    color: #f1e0ac !important;
+    font-family: 'Segoe UI', Tahoma, sans-serif !important;
+    font-size: 0.82rem !important;
+    cursor: pointer !important;
+}
+
+.dev-page-navigator-select:focus {
+    outline: 2px solid #ffd700 !important;
+    outline-offset: 2px !important;
+}
+
+.dev-page-navigator-go {
+    flex-shrink: 0 !important;
+    padding: 8px 12px !important;
+    border-radius: 4px !important;
+    border: 1px solid rgba(184, 144, 48, 0.45) !important;
+    background: linear-gradient(180deg, rgba(43, 36, 26, 0.95) 0%, rgba(12, 10, 8, 0.98) 100%) !important;
+    color: #ffd978 !important;
+    font-family: 'Cinzel', serif !important;
+    font-size: 0.72rem !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.06em !important;
+    text-transform: uppercase !important;
+    cursor: pointer !important;
+}
+
+.dev-page-navigator-go:hover {
+    border-color: rgba(255, 215, 0, 0.55) !important;
+    color: #fff3c4 !important;
+}
+
+@media (max-width: 480px) {
+    .dev-page-navigator {
+        left: 8px !important;
+        right: 8px !important;
+        flex-wrap: wrap !important;
+    }
+
+    .dev-page-navigator-select {
+        width: 100% !important;
+        max-width: 100% !important;
+    }
+}

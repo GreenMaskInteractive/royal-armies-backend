@@ -34,6 +34,18 @@ db.defaults({
             windowLabel: isProduction
                 ? ''
                 : 'Expect occasional downtime until the main site launch is complete.'
+        },
+        communityChat: {
+            lastPurgeAt: null,
+            nextMessageId: 1,
+            channels: {
+                general: [],
+                bugs: [],
+                gameplay: [],
+                help: [],
+                offtopic: []
+            },
+            archive: []
         }
     },
     mailbox: {
@@ -102,6 +114,239 @@ function isHiddenRegistrationUsername(username) {
 /** Accounts that may load the full ledger recipient roster in Messages (compose ➕ list). */
 function isMailboxRecipientRosterAdmin(username) {
     return String(username || '').trim().toLowerCase() === 'caleb_admin';
+}
+
+/* --- Section: Community chat (ledger-backed, 100 active per channel, 15-day purge) --- */
+const COMMUNITY_CHAT_CHANNEL_IDS = ['general', 'bugs', 'gameplay', 'help', 'offtopic'];
+const COMMUNITY_CHAT_MAX_ACTIVE_PER_CHANNEL = 100;
+const COMMUNITY_CHAT_PURGE_EVERY_MS = 15 * 24 * 60 * 60 * 1000;
+const COMMUNITY_CHAT_TEXT_MAX = 1200;
+const COMMUNITY_CHAT_ARCHIVE_MAX = 50000;
+const ROYAL_GUARD_BOT_SENDER = 'Royal Guard Bot';
+
+function isCommunityChatChannelId(channelId) {
+    return COMMUNITY_CHAT_CHANNEL_IDS.includes(String(channelId || '').trim());
+}
+
+function normalizeCommunityChatReplyTo(replyTo) {
+    if (!replyTo || typeof replyTo !== 'object') return null;
+    const sender = String(replyTo.sender || '').trim().slice(0, 80);
+    if (!sender) return null;
+    return {
+        id: Number.isFinite(Number(replyTo.id)) ? Number(replyTo.id) : null,
+        sender,
+        snippet: String(replyTo.snippet || '').trim().slice(0, 220)
+    };
+}
+
+function sanitizeCommunityChatMessageEntry(raw = {}) {
+    const sentAt = raw.sentAt || raw.createdAt || new Date().toISOString();
+    const time = String(raw.time || '').trim().slice(0, 12)
+        || new Date(sentAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
+
+    return {
+        id: Number(raw.id),
+        channel: isCommunityChatChannelId(raw.channel) ? raw.channel : 'general',
+        sender: String(raw.sender || '').trim().slice(0, 80),
+        text: String(raw.text || '').trim().slice(0, COMMUNITY_CHAT_TEXT_MAX),
+        time,
+        sentAt,
+        visible: raw.visible !== false,
+        originalText: String(raw.originalText || raw.text || '').trim().slice(0, COMMUNITY_CHAT_TEXT_MAX),
+        recipientAlertOnly: raw.recipientAlertOnly === true,
+        replyTo: normalizeCommunityChatReplyTo(raw.replyTo),
+        isEdited: raw.isEdited === true,
+        editedAt: raw.editedAt ? String(raw.editedAt).slice(0, 32) : null
+    };
+}
+
+function normalizeCommunityChatStore(stored) {
+    const channels = {};
+    COMMUNITY_CHAT_CHANNEL_IDS.forEach((channelId) => {
+        const rows = Array.isArray(stored?.channels?.[channelId]) ? stored.channels[channelId] : [];
+        channels[channelId] = rows
+            .map(sanitizeCommunityChatMessageEntry)
+            .filter((row) => Number.isFinite(row.id) && row.sender && row.text);
+    });
+
+    const archive = Array.isArray(stored?.archive) ? stored.archive : [];
+
+    return {
+        lastPurgeAt: stored?.lastPurgeAt ? String(stored.lastPurgeAt) : null,
+        nextMessageId: Math.max(1, parseInt(stored?.nextMessageId, 10) || 1),
+        channels,
+        archive: archive.slice(-COMMUNITY_CHAT_ARCHIVE_MAX)
+    };
+}
+
+function readCommunityChatStore() {
+    const stored = db.get('portal.communityChat').value();
+    const normalized = normalizeCommunityChatStore(stored || {});
+    if (!stored) {
+        db.set('portal.communityChat', normalized).write();
+    }
+    return normalized;
+}
+
+function writeCommunityChatStore(store) {
+    const next = normalizeCommunityChatStore(store);
+    db.set('portal.communityChat', next).write();
+    return next;
+}
+
+function archiveCommunityChatMessage(message, reason) {
+    return {
+        ...sanitizeCommunityChatMessageEntry(message),
+        archivedAt: new Date().toISOString(),
+        archiveReason: reason === 'scheduled_purge' ? 'scheduled_purge' : 'cap_trim'
+    };
+}
+
+function trimCommunityChatChannelToCap(store, channelId) {
+    const list = store.channels[channelId];
+    while (list.length > COMMUNITY_CHAT_MAX_ACTIVE_PER_CHANNEL) {
+        const removed = list.shift();
+        store.archive.push(archiveCommunityChatMessage(removed, 'cap_trim'));
+    }
+    if (store.archive.length > COMMUNITY_CHAT_ARCHIVE_MAX) {
+        store.archive = store.archive.slice(-COMMUNITY_CHAT_ARCHIVE_MAX);
+    }
+}
+
+function maybeRunScheduledCommunityChatPurge(store) {
+    const now = Date.now();
+    if (!store.lastPurgeAt) {
+        store.lastPurgeAt = new Date(now).toISOString();
+        return store;
+    }
+
+    const lastMs = Date.parse(store.lastPurgeAt);
+    if (!Number.isFinite(lastMs) || now - lastMs < COMMUNITY_CHAT_PURGE_EVERY_MS) {
+        return store;
+    }
+
+    COMMUNITY_CHAT_CHANNEL_IDS.forEach((channelId) => {
+        const list = store.channels[channelId];
+        while (list.length) {
+            const removed = list.shift();
+            store.archive.push(archiveCommunityChatMessage(removed, 'scheduled_purge'));
+        }
+    });
+
+    if (store.archive.length > COMMUNITY_CHAT_ARCHIVE_MAX) {
+        store.archive = store.archive.slice(-COMMUNITY_CHAT_ARCHIVE_MAX);
+    }
+
+    store.lastPurgeAt = new Date(now).toISOString();
+    return store;
+}
+
+function getCommunityChatRetentionMeta(store) {
+    const lastMs = store.lastPurgeAt ? Date.parse(store.lastPurgeAt) : Date.now();
+    const nextPurgeMs = (Number.isFinite(lastMs) ? lastMs : Date.now()) + COMMUNITY_CHAT_PURGE_EVERY_MS;
+    return {
+        maxActivePerChannel: COMMUNITY_CHAT_MAX_ACTIVE_PER_CHANNEL,
+        purgeIntervalDays: 15,
+        lastPurgeAt: store.lastPurgeAt,
+        nextPurgeAt: new Date(nextPurgeMs).toISOString()
+    };
+}
+
+function flattenCommunityChatActiveMessages(store) {
+    const rows = [];
+    COMMUNITY_CHAT_CHANNEL_IDS.forEach((channelId) => {
+        store.channels[channelId].forEach((entry) => rows.push(entry));
+    });
+    rows.sort((a, b) => Date.parse(a.sentAt) - Date.parse(b.sentAt));
+    return rows;
+}
+
+function appendCommunityChatMessageToStore(store, payload) {
+    const channel = isCommunityChatChannelId(payload.channel) ? payload.channel : 'general';
+    const sender = String(payload.sender || '').trim().slice(0, 80);
+    const text = String(payload.text || '').trim().slice(0, COMMUNITY_CHAT_TEXT_MAX);
+
+    if (!sender || !text) {
+        return { error: 'Sender and message text are required.' };
+    }
+
+    const poster = String(payload.posterUsername || payload.username || '').trim().toLowerCase();
+    const senderKey = sender.toLowerCase();
+    const isBot = senderKey === ROYAL_GUARD_BOT_SENDER.toLowerCase();
+
+    if (isBot && payload.systemBot !== true) {
+        return { error: 'System bot messages require authorization.' };
+    }
+
+    if (!isBot && poster && poster !== senderKey) {
+        return { error: 'Sender must match the posting commander.' };
+    }
+
+    const replyTo = normalizeCommunityChatReplyTo(payload.replyTo);
+    if (replyTo && !isBot) {
+        const replySenderKey = String(replyTo.sender || '').trim().toLowerCase();
+        if (replySenderKey && replySenderKey === senderKey) {
+            return { error: 'You cannot reply to your own message.' };
+        }
+    }
+
+    const entry = sanitizeCommunityChatMessageEntry({
+        id: store.nextMessageId++,
+        channel,
+        sender,
+        text,
+        time: payload.time,
+        sentAt: new Date().toISOString(),
+        visible: payload.visible !== false,
+        originalText: payload.originalText || text,
+        recipientAlertOnly: false,
+        replyTo,
+        isEdited: false,
+        editedAt: null
+    });
+
+    store.channels[channel].push(entry);
+    trimCommunityChatChannelToCap(store, channel);
+    return { entry, channelMessages: store.channels[channel] };
+}
+
+function updateCommunityChatMessageInStore(store, messageId, posterUsername, patch) {
+    const id = Number(messageId);
+    if (!Number.isFinite(id)) {
+        return { error: 'Invalid message id.' };
+    }
+
+    const poster = String(posterUsername || '').trim().toLowerCase();
+    const text = String(patch.text || '').trim().slice(0, COMMUNITY_CHAT_TEXT_MAX);
+    if (!text) {
+        return { error: 'Message text cannot be empty.' };
+    }
+
+    for (const channelId of COMMUNITY_CHAT_CHANNEL_IDS) {
+        const list = store.channels[channelId];
+        const index = list.findIndex((row) => row.id === id);
+        if (index === -1) continue;
+
+        const row = list[index];
+        if (String(row.sender || '').trim().toLowerCase() !== poster) {
+            return { error: 'You can only edit your own messages.' };
+        }
+
+        const editedAt = new Date().toISOString();
+        row.text = text;
+        row.originalText = text;
+        row.isEdited = true;
+        row.editedAt = new Date(editedAt).toLocaleTimeString('en-US', {
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: false
+        });
+        row.sentAt = editedAt;
+
+        return { entry: row, channelMessages: list };
+    }
+
+    return { error: 'Message not found.' };
 }
 
 /* --- Section: Commander mailbox (ledger-backed player mail) --- */
@@ -481,6 +726,24 @@ const resend = new Resend('re_eMzwshB5_EmorLivvuzwbHk6jpAzWtpWE');
 app.use(compression());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+/* Local dev: allow Live Server / static preview origins to call the API on port 3000 */
+if (!isProduction) {
+    app.use((req, res, next) => {
+        const origin = req.headers.origin;
+        if (origin && /^https?:\/\/(localhost|127\.0\.0\.1|\[::1\])(:\d+)?$/i.test(origin)) {
+            res.setHeader('Access-Control-Allow-Origin', origin);
+            res.setHeader('Access-Control-Allow-Credentials', 'true');
+            res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
+            res.setHeader('Access-Control-Allow-Headers', 'Content-Type, X-Dev-Key, Authorization');
+            res.setHeader('Vary', 'Origin');
+        }
+        if (req.method === 'OPTIONS') {
+            return res.sendStatus(204);
+        }
+        next();
+    });
+}
 
 /* Legacy portal filename → main hub (bookmarks, old deploys, cached login script) */
 app.get(['/ageportal.html', '/ageportal'], (req, res) => {
@@ -1323,6 +1586,114 @@ app.delete('/api/portal/mailbox/drafts/:draftId', (req, res) => {
 
     writeMailboxDraftStore(nextDrafts);
     res.json({ status: 'ok', removedId: draftId });
+});
+
+app.get('/api/portal/community-chat', (req, res) => {
+    let store = readCommunityChatStore();
+    store = maybeRunScheduledCommunityChatPurge(store);
+    writeCommunityChatStore(store);
+
+    const channel = String(req.query?.channel || '').trim();
+    const messages = flattenCommunityChatActiveMessages(store);
+    const messagesByChannel = {};
+    COMMUNITY_CHAT_CHANNEL_IDS.forEach((channelId) => {
+        messagesByChannel[channelId] = store.channels[channelId];
+    });
+
+    res.json({
+        status: 'ok',
+        messages,
+        messagesByChannel,
+        channelMessages: channel && isCommunityChatChannelId(channel) ? store.channels[channel] : null,
+        retention: getCommunityChatRetentionMeta(store)
+    });
+});
+
+app.post('/api/portal/community-chat/messages', (req, res) => {
+    const posterUsername = resolveLedgerCommanderUsername(req.body?.username || req.body?.posterUsername || '');
+    if (!posterUsername) {
+        return res.status(400).json({ status: 'error', message: 'Username required.' });
+    }
+
+    let store = readCommunityChatStore();
+    store = maybeRunScheduledCommunityChatPurge(store);
+
+    const result = appendCommunityChatMessageToStore(store, {
+        ...req.body,
+        posterUsername
+    });
+
+    if (result.error) {
+        return res.status(400).json({ status: 'error', message: result.error });
+    }
+
+    store = writeCommunityChatStore(store);
+
+    res.json({
+        status: 'ok',
+        message: result.entry,
+        channelMessages: result.channelMessages,
+        messages: flattenCommunityChatActiveMessages(store),
+        retention: getCommunityChatRetentionMeta(store)
+    });
+});
+
+app.patch('/api/portal/community-chat/messages/:messageId', (req, res) => {
+    const posterUsername = resolveLedgerCommanderUsername(req.body?.username || '');
+    if (!posterUsername) {
+        return res.status(400).json({ status: 'error', message: 'Username required.' });
+    }
+
+    let store = readCommunityChatStore();
+    store = maybeRunScheduledCommunityChatPurge(store);
+
+    const result = updateCommunityChatMessageInStore(store, req.params.messageId, posterUsername, req.body || {});
+
+    if (result.error) {
+        return res.status(result.error === 'Message not found.' ? 404 : 403).json({
+            status: 'error',
+            message: result.error
+        });
+    }
+
+    store = writeCommunityChatStore(store);
+
+    res.json({
+        status: 'ok',
+        message: result.entry,
+        channelMessages: result.channelMessages,
+        messages: flattenCommunityChatActiveMessages(store),
+        retention: getCommunityChatRetentionMeta(store)
+    });
+});
+
+app.get('/api/portal/community-chat/archive', (req, res) => {
+    const requester = resolveLedgerCommanderUsername(req.query?.username || '');
+    if (!isMailboxRecipientRosterAdmin(requester)) {
+        return res.status(403).json({ status: 'error', message: 'Owner access required for chat archives.' });
+    }
+
+    let store = readCommunityChatStore();
+    store = maybeRunScheduledCommunityChatPurge(store);
+    writeCommunityChatStore(store);
+
+    const channel = String(req.query?.channel || '').trim();
+    const limit = Math.min(5000, Math.max(1, parseInt(req.query?.limit, 10) || 500));
+    let archive = store.archive.slice();
+
+    if (channel && isCommunityChatChannelId(channel)) {
+        archive = archive.filter((row) => row.channel === channel);
+    }
+
+    archive = archive.slice(-limit);
+
+    res.json({
+        status: 'ok',
+        archive,
+        count: archive.length,
+        totalArchived: store.archive.length,
+        retention: getCommunityChatRetentionMeta(store)
+    });
 });
 
 app.post('/api/portal/presence', (req, res) => {

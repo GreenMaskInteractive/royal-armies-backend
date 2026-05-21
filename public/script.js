@@ -745,9 +745,7 @@ function getMailboxApiUsername() {
     return trimmed;
 }
 
-function isMailboxApiAvailable() {
-    return typeof isLandingServedByNexusBackend === 'function' && isLandingServedByNexusBackend();
-}
+/* isMailboxApiAvailable — provided by dev-environment.js */
 
 async function fetchCommanderMailboxFromServer() {
     const username = getMailboxApiUsername();
@@ -1120,13 +1118,7 @@ function restoreLoginAuthButtons() {
     }
 }
 
-function isLandingServedByNexusBackend() {
-    const host = window.location.hostname.toLowerCase();
-    const port = window.location.port;
-    if (host === 'royalarmies.com' || host === 'www.royalarmies.com') return true;
-    if (port === '3000' || port === '') return host === 'localhost' || host === '127.0.0.1';
-    return false;
-}
+/* isLandingServedByNexusBackend — provided by dev-environment.js */
 
 function redirectToAgePortal() {
     sessionStorage.setItem('royalArmiesAuthAudioPlay', 'granted');
@@ -1152,16 +1144,41 @@ async function handleLogin() {
         return;
     }
 
-    if (!isAdmin && !isLandingServedByNexusBackend()) {
+    const canUseLedgerApi = typeof isLandingServedByNexusBackend === 'function' && isLandingServedByNexusBackend();
+    const isLocalPreview = typeof isLocalDevelopmentHost === 'function' && isLocalDevelopmentHost();
+
+    if (!isAdmin && !canUseLedgerApi && !isLocalPreview) {
         await showPortalAlert(
             'Login needs the Royal Armies server.\n\n' +
             '1. In a terminal, run: node server.js\n' +
-            '2. Open: http://localhost:3000\n\n' +
-            'Preview-only URLs (for example Live Server on port 5500) cannot verify accounts.',
+            '2. Open: http://localhost:3000',
             'Server required'
         );
         restoreLoginAuthButtons();
         return;
+    }
+
+    if (!isAdmin && isLocalPreview && !canUseLedgerApi) {
+        try {
+            const health = await fetch(
+                typeof resolveRoyalArmiesApiUrl === 'function'
+                    ? resolveRoyalArmiesApiUrl('/api/portal/metrics')
+                    : 'http://localhost:3000/api/portal/metrics',
+                { cache: 'no-store' }
+            );
+            if (!health.ok) {
+                throw new Error('Server not reachable');
+            }
+        } catch (_err) {
+            await showPortalAlert(
+                'Live Server can open all portal pages, but login and messages need the API.\n\n' +
+                '1. Run: node server.js\n' +
+                '2. Keep Live Server open, then refresh this page.',
+                'Start node server.js'
+            );
+            restoreLoginAuthButtons();
+            return;
+        }
     }
 
     if (isAdmin) {
@@ -3615,7 +3632,10 @@ async function executeOutgoingMessageDispatch() {
     }
 
     if (!isMailboxApiAvailable()) {
-        await showPortalAlert('Messages require the Royal Armies server. Start it with node server.js and open http://localhost:3000', 'Server required');
+        await showPortalAlert(
+            'Messages require the Royal Armies API. Run node server.js (port 3000), then use Live Server or http://localhost:3000.',
+            'Server required'
+        );
         return;
     }
 
@@ -3658,7 +3678,10 @@ async function commitMessageToDraftCache() {
     }
 
     if (!isMailboxApiAvailable()) {
-        await showPortalAlert('Drafts require the Royal Armies server (node server.js on port 3000).', 'Server required');
+        await showPortalAlert(
+            'Drafts require the Royal Armies API. Run node server.js (port 3000), then use Live Server or http://localhost:3000.',
+            'Server required'
+        );
         return;
     }
 

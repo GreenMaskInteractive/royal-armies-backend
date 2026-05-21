@@ -128,23 +128,10 @@ let activeMainPortalView = 'portal';
 
 const PORTAL_PREVIEW_ONLY_VIEWS = ['royalty', 'chronicles'];
 
-/** True on Live Server :5500 and other local dev hosts; false on royalarmies.com production. */
-function isPortalPreviewNavEnabled() {
-    const host = window.location.hostname.toLowerCase();
-    const port = window.location.port;
-
-    if (port === '5500') return true;
-
-    const isLocalHost = host === 'localhost' || host === '127.0.0.1';
-    if (isLocalHost && (port === '' || port === '3000' || port === '5500' || port === '5173')) {
-        return true;
-    }
-
-    return false;
-}
-
 function applyPortalNavPreviewRestrictions() {
-    const previewEnabled = isPortalPreviewNavEnabled();
+    const previewEnabled = typeof isPortalPreviewNavEnabled === 'function'
+        ? isPortalPreviewNavEnabled()
+        : false;
 
     document.querySelectorAll('.nav-tab[data-portal-view]').forEach((tab) => {
         const viewName = tab.getAttribute('data-portal-view');
@@ -175,7 +162,7 @@ function applyPortalNavPreviewRestrictions() {
 
 /* Block 3: EXTENSIBLE SYSTEM PANEL VIEW CONVERTER SWITCH (ROUTING RECONCILED) */
 function switchMainPortalView(viewName, clickEvent, chatChannelKey) {
-    if (PORTAL_PREVIEW_ONLY_VIEWS.includes(viewName) && !isPortalPreviewNavEnabled()) {
+    if (PORTAL_PREVIEW_ONLY_VIEWS.includes(viewName) && typeof isPortalPreviewNavEnabled === 'function' && !isPortalPreviewNavEnabled()) {
         return;
     }
 
@@ -195,6 +182,7 @@ function switchMainPortalView(viewName, clickEvent, chatChannelKey) {
 
     if (viewName !== 'chat') {
         stopCommunityChatPresenceLoop();
+        stopCommunityChatSyncLoop();
     }
 
     activeMainPortalView = viewName;
@@ -223,6 +211,7 @@ function switchMainPortalView(viewName, clickEvent, chatChannelKey) {
         case 'chat':
             renderCommunityChatPortalCanvas(viewport);
             startCommunityChatPresenceLoop();
+            startCommunityChatSyncLoop();
             break;
 
         case 'leaderboards':
@@ -547,6 +536,7 @@ function clearPortalPresenceSession() {
     if (!username) return Promise.resolve();
 
     stopCommunityChatPresenceLoop();
+    stopCommunityChatSyncLoop();
 
     return fetch('/api/portal/presence/leave', {
         method: 'POST',
@@ -1319,6 +1309,12 @@ let playerTeasingTranscriptHistory = {};  // Structure format: { "testaccount": 
 let communityChatLogsDirectory = [];
 /** @type {{ mode: 'reply'|'edit', messageId: number, sender?: string, snippet?: string }|null} */
 let communityChatComposeState = null;
+let communityChatRetentionMeta = null;
+let communityChatSyncPollTimer = null;
+let communityChatHistoryLoadPromise = null;
+const COMMUNITY_CHAT_SERVER_CHANNEL_IDS = ['general', 'bugs', 'gameplay', 'help', 'offtopic'];
+const COMMUNITY_CHAT_SYNC_POLL_MS = 20000;
+const COMMUNITY_CHAT_MAX_ACTIVE_PER_CHANNEL = 100;
 
 const restrictedProfanityLexiconPattern = /\b(fuck|fucking|bitch|ass|shit|asshole|cunt|retard|retarded)\b/gi;
 const adversarialSentimentTriggers = [
@@ -1372,6 +1368,202 @@ function getChatChannelDisplayLabel(channelKey) {
     return getCommunityChatChannelMeta(channelKey).label;
 }
 
+function isCommunityChatApiAvailable() {
+    return typeof isMailboxApiAvailable === 'function' && isMailboxApiAvailable();
+}
+
+function isCommunityChatServerBackedChannel(channelKey) {
+    return COMMUNITY_CHAT_SERVER_CHANNEL_IDS.includes(String(channelKey || '').trim());
+}
+
+function normalizeCommunityChatLogFromServer(raw) {
+    if (!raw || typeof raw !== 'object') return null;
+    const sentAt = raw.sentAt || null;
+    const time = String(raw.time || '').trim()
+        || (sentAt
+            ? new Date(sentAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false })
+            : '');
+
+    return {
+        id: Number(raw.id),
+        channel: raw.channel || 'general',
+        sender: raw.sender,
+        text: raw.text,
+        time,
+        sentAt,
+        visible: raw.visible !== false,
+        originalText: raw.originalText || raw.text,
+        recipientAlertOnly: false,
+        replyTo: raw.replyTo || null,
+        editedAt: raw.editedAt || null,
+        isEdited: !!raw.isEdited
+    };
+}
+
+function getClientOnlyCommunityChatMessages() {
+    return communityChatLogsDirectory.filter((entry) => (
+        entry.recipientAlertOnly
+        || entry.channel === 'review'
+        || !isCommunityChatServerBackedChannel(entry.channel)
+    ));
+}
+
+function mergeServerCommunityChatMessages(serverMessages) {
+    const clientOnly = getClientOnlyCommunityChatMessages();
+    const normalized = (Array.isArray(serverMessages) ? serverMessages : [])
+        .map(normalizeCommunityChatLogFromServer)
+        .filter(Boolean);
+
+    communityChatLogsDirectory = [...normalized, ...clientOnly];
+    communityChatLogsDirectory.sort((a, b) => {
+        const aMs = Date.parse(a.sentAt || '') || Number(a.id) || 0;
+        const bMs = Date.parse(b.sentAt || '') || Number(b.id) || 0;
+        return aMs - bMs;
+    });
+}
+
+function formatCommunityChatRetentionNoticeInnerHtml() {
+    const max = communityChatRetentionMeta?.maxActivePerChannel || COMMUNITY_CHAT_MAX_ACTIVE_PER_CHANNEL;
+    const days = communityChatRetentionMeta?.purgeIntervalDays || 15;
+    let nextPurgeLabel = 'on the next scheduled cycle';
+
+    if (communityChatRetentionMeta?.nextPurgeAt) {
+        try {
+            nextPurgeLabel = new Date(communityChatRetentionMeta.nextPurgeAt).toLocaleString(undefined, {
+                month: 'short',
+                day: 'numeric',
+                year: 'numeric',
+                hour: 'numeric',
+                minute: '2-digit'
+            });
+        } catch (_err) {
+            nextPurgeLabel = 'on the next scheduled cycle';
+        }
+    }
+
+    return `Community chat keeps the latest <strong>${max}</strong> messages per channel. Older posts are archived for owner review.
+            All channel history is cleared automatically every <strong>${days} days</strong>
+            (next clear: <strong>${escapeCommunityChatDisplayHtml(nextPurgeLabel)}</strong>).`;
+}
+
+function updateCommunityChatRetentionNoticeElement() {
+    const notice = document.getElementById('chat-retention-policy-notice');
+    if (!notice) return;
+    notice.innerHTML = formatCommunityChatRetentionNoticeInnerHtml();
+}
+
+async function fetchCommunityChatFromServer() {
+    if (!isCommunityChatApiAvailable()) return false;
+
+    try {
+        const response = await fetch('/api/portal/community-chat');
+        if (!response.ok) return false;
+
+        const payload = await response.json();
+        if (payload.status !== 'ok' || !Array.isArray(payload.messages)) return false;
+
+        mergeServerCommunityChatMessages(payload.messages);
+        communityChatRetentionMeta = payload.retention || communityChatRetentionMeta;
+        updateCommunityChatRetentionNoticeElement();
+
+        if (activeMainPortalView === 'chat') {
+            executeCompileActiveChannelMessageStrips();
+        }
+        return true;
+    } catch (err) {
+        console.warn('Community chat sync failed:', err);
+        return false;
+    }
+}
+
+function loadCommunityChatHistory() {
+    if (!isCommunityChatApiAvailable()) return Promise.resolve(false);
+    if (!communityChatHistoryLoadPromise) {
+        communityChatHistoryLoadPromise = fetchCommunityChatFromServer().finally(() => {
+            communityChatHistoryLoadPromise = null;
+        });
+    }
+    return communityChatHistoryLoadPromise;
+}
+
+function startCommunityChatSyncLoop() {
+    if (communityChatSyncPollTimer) clearInterval(communityChatSyncPollTimer);
+    if (!isCommunityChatApiAvailable()) return;
+
+    loadCommunityChatHistory();
+    communityChatSyncPollTimer = setInterval(() => {
+        if (activeMainPortalView !== 'chat') return;
+        fetchCommunityChatFromServer();
+    }, COMMUNITY_CHAT_SYNC_POLL_MS);
+}
+
+function stopCommunityChatSyncLoop() {
+    if (communityChatSyncPollTimer) {
+        clearInterval(communityChatSyncPollTimer);
+        communityChatSyncPollTimer = null;
+    }
+}
+
+async function postCommunityChatMessageToServer(messagePayload) {
+    if (!isCommunityChatApiAvailable()) return null;
+
+    const username = getLoggedCommunityChatUsername();
+    try {
+        const response = await fetch('/api/portal/community-chat/messages', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                username,
+                ...messagePayload
+            })
+        });
+
+        const payload = await response.json().catch(() => ({}));
+        if (!response.ok || payload.status !== 'ok' || !payload.message) {
+            const message = payload.message || 'Unable to send chat message.';
+            console.warn('Community chat post failed:', message);
+            if (message.includes('reply to your own')) {
+                cancelCommunityChatComposeMode(true);
+            }
+            return null;
+        }
+
+        mergeServerCommunityChatMessages(payload.messages || [payload.message]);
+        communityChatRetentionMeta = payload.retention || communityChatRetentionMeta;
+        updateCommunityChatRetentionNoticeElement();
+        return normalizeCommunityChatLogFromServer(payload.message);
+    } catch (err) {
+        console.warn('Community chat post error:', err);
+        return null;
+    }
+}
+
+async function patchCommunityChatMessageOnServer(messageId, text) {
+    if (!isCommunityChatApiAvailable()) return null;
+
+    const username = getLoggedCommunityChatUsername();
+    try {
+        const response = await fetch(`/api/portal/community-chat/messages/${encodeURIComponent(messageId)}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username, text })
+        });
+
+        const payload = await response.json().catch(() => ({}));
+        if (!response.ok || payload.status !== 'ok' || !payload.message) {
+            console.warn('Community chat edit failed:', payload.message || response.status);
+            return null;
+        }
+
+        mergeServerCommunityChatMessages(payload.messages || [payload.message]);
+        communityChatRetentionMeta = payload.retention || communityChatRetentionMeta;
+        return normalizeCommunityChatLogFromServer(payload.message);
+    } catch (err) {
+        console.warn('Community chat edit error:', err);
+        return null;
+    }
+}
+
 function appendCommunityChatMessage(logEntry) {
     const currentClockTime = new Date();
     const cleanTimeStr = `${currentClockTime.getHours().toString().padStart(2, '0')}:${currentClockTime.getMinutes().toString().padStart(2, '0')}`;
@@ -1390,7 +1582,17 @@ function appendCommunityChatMessage(logEntry) {
         isEdited: !!logEntry.isEdited
     };
 
-    communityChatLogsDirectory.push(entry);
+    const skipLocalStore = logEntry.skipLocalStore === true
+        || (
+            isCommunityChatApiAvailable()
+            && isCommunityChatServerBackedChannel(entry.channel)
+            && !entry.recipientAlertOnly
+        );
+
+    if (!skipLocalStore) {
+        communityChatLogsDirectory.push(entry);
+    }
+
     processChatMessageForMentionAlert(entry);
     return entry;
 }
@@ -1568,6 +1770,7 @@ function renderCommunityChatPortalCanvas(viewport) {
     executeCompileActiveChannelMessageStrips();
     refreshCommunityChatOnlineRosterIfVisible();
     sendPortalPresenceHeartbeat();
+    loadCommunityChatHistory();
 }
 
 function toggleActiveChatChannelStream(targetChannel) {
@@ -1619,9 +1822,10 @@ function buildCommunityChatReplyQuoteMarkup(replyTo) {
 function buildCommunityChatMessageHoverActionsMarkup(log, loggedUser) {
     if (!isCommunityChatMessageActionable(log)) return '';
     const canEdit = log.sender === loggedUser;
+    const canReply = normalizeCommunityChatUsername(log.sender) !== normalizeCommunityChatUsername(loggedUser);
     return `
         <div class="chat-message-hover-actions" aria-label="Message actions">
-            <button type="button" class="chat-message-action-btn" onclick="beginReplyToCommunityChatMessage(${log.id}, event)">Reply</button>
+            ${canReply ? `<button type="button" class="chat-message-action-btn" onclick="beginReplyToCommunityChatMessage(${log.id}, event)">Reply</button>` : ''}
             ${canEdit ? `<button type="button" class="chat-message-action-btn" onclick="beginEditCommunityChatMessage(${log.id}, event)">Edit</button>` : ''}
         </div>
     `;
@@ -1638,6 +1842,11 @@ function beginReplyToCommunityChatMessage(messageId, clickEvent) {
     if (clickEvent) clickEvent.stopPropagation();
     const target = findCommunityChatMessageById(messageId);
     if (!target || !isCommunityChatMessageActionable(target)) return;
+
+    const loggedUser = getLoggedCommunityChatUsername();
+    if (normalizeCommunityChatUsername(target.sender) === normalizeCommunityChatUsername(loggedUser)) {
+        return;
+    }
 
     communityChatComposeState = {
         mode: 'reply',
@@ -1742,8 +1951,10 @@ function renderCommunityChatInputTray() {
                 <input type="text" id="chat-portal-message-input-field" placeholder="Message ${escapeCommunityChatDisplayHtml(channelLabel)}… Use @username to shout out" onkeydown="handleChatInputFieldSubmit(event)">
                 <button type="button" class="settings-btn mini-btn" onclick="executeSubmitNewPortalChatMessage()">${sendLabel}</button>
             </div>
+            <p class="chat-retention-policy-notice" id="chat-retention-policy-notice" role="note"></p>
         </div>
     `;
+    updateCommunityChatRetentionNoticeElement();
 
     if (communityChatComposeState?.mode === 'edit') {
         const field = document.getElementById('chat-portal-message-input-field');
@@ -1858,7 +2069,7 @@ function handleChatInputFieldSubmit(e) {
  if (e.key === 'Enter') executeSubmitNewPortalChatMessage();
 }
 
-function executeSubmitNewPortalChatMessage() {
+async function executeSubmitNewPortalChatMessage() {
  const field = document.getElementById('chat-portal-message-input-field');
  if (!field) return;
  let textContent = field.value.trim();
@@ -1867,6 +2078,17 @@ function executeSubmitNewPortalChatMessage() {
  const loggedUser = localStorage.getItem("activeCommanderUser") || "testaccount";
 
  if (communityChatComposeState?.mode === 'edit') {
+     if (isCommunityChatApiAvailable()) {
+         const patched = await patchCommunityChatMessageOnServer(communityChatComposeState.messageId, textContent);
+         if (patched) {
+             cancelCommunityChatComposeMode(false);
+             field.value = '';
+             executeCompileActiveChannelMessageStrips();
+             if (typeof playToggleLeverSFX === 'function') playToggleLeverSFX();
+         }
+         return;
+     }
+
      const updated = updateCommunityChatMessageText(communityChatComposeState.messageId, textContent);
      if (updated) {
          cancelCommunityChatComposeMode(false);
@@ -1880,6 +2102,12 @@ function executeSubmitNewPortalChatMessage() {
  const replyTarget = communityChatComposeState?.mode === 'reply'
      ? findCommunityChatMessageById(communityChatComposeState.messageId)
      : null;
+
+ if (replyTarget && normalizeCommunityChatUsername(replyTarget.sender) === normalizeCommunityChatUsername(loggedUser)) {
+     cancelCommunityChatComposeMode(true);
+     return;
+ }
+
  const replyPayload = replyTarget
      ? {
          id: replyTarget.id,
@@ -1946,30 +2174,46 @@ function executeSubmitNewPortalChatMessage() {
  }
  }
 
- appendCommunityChatMessage({
- channel: activeChatChannelTrack,
- sender: loggedUser,
- text: textContent,
- time: cleanTimeStr,
- visible: true,
- originalText: originalRawText,
- replyTo: replyPayload
- });
+ const outboundPayload = {
+     channel: activeChatChannelTrack,
+     sender: loggedUser,
+     text: textContent,
+     time: cleanTimeStr,
+     visible: true,
+     originalText: originalRawText,
+     replyTo: replyPayload
+ };
+
+ if (isCommunityChatApiAvailable() && isCommunityChatServerBackedChannel(activeChatChannelTrack)) {
+     const saved = await postCommunityChatMessageToServer(outboundPayload);
+     if (!saved) return;
+
+     processChatMessageForMentionAlert(saved);
+ } else {
+     appendCommunityChatMessage(outboundPayload);
+ }
 
  cancelCommunityChatComposeMode(false);
  field.value = "";
  executeCompileActiveChannelMessageStrips();
 
  if (isViolationFound) {
- setTimeout(() => {
- appendCommunityChatMessage({
+ setTimeout(async () => {
+ const botPayload = {
  channel: activeChatChannelTrack,
-    sender: getRoyalGuardBotDisplayName(),
+ sender: getRoyalGuardBotDisplayName(),
  text: `@${loggedUser} Severe behavioral policy violation detected. Clean up your language signature or face total chat exclusion channels.`,
  time: cleanTimeStr,
  visible: true,
  originalText: ""
- });
+ };
+
+ if (isCommunityChatApiAvailable() && isCommunityChatServerBackedChannel(activeChatChannelTrack)) {
+     await postCommunityChatMessageToServer({ ...botPayload, systemBot: true });
+ } else {
+     appendCommunityChatMessage(botPayload);
+ }
+
  if (typeof playSelectSFX === 'function') playSelectSFX();
  executeCompileActiveChannelMessageStrips();
  }, 150);
