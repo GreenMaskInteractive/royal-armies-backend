@@ -616,7 +616,7 @@ function isLandingServedByNexusBackend() {
 
 function redirectToAgePortal() {
     sessionStorage.setItem('royalArmiesAuthAudioPlay', 'granted');
-    window.location.assign('main.html');
+    window.location.assign('/main.html');
 }
 
 async function handleLogin() {

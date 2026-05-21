@@ -189,6 +189,12 @@ const resend = new Resend('re_eMzwshB5_EmorLivvuzwbHk6jpAzWtpWE');
 app.use(compression());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+/* Legacy portal filename → main hub (bookmarks, old deploys, cached login script) */
+app.get(['/ageportal.html', '/ageportal'], (req, res) => {
+    res.redirect(301, '/main.html');
+});
+
 app.use(express.static(path.join(__dirname, 'public')));
 
 /* --- Section: Email Dispatch Engine --- */
