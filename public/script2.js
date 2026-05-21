@@ -2069,7 +2069,31 @@ const ROYALTY_PAID_BADGE_TITLE = 'Royalty';
 const FREE_MEMBERSHIP_BADGE_TITLE = 'Bronze';
 const CHRONICLE_PREMIUM_MONTHLY_PRICE_LABEL = '$10 / month';
 
+function isActiveCommanderPortalOwner() {
+    return typeof isPortalSiteOwner === 'function' && isPortalSiteOwner();
+}
+
+function isCommanderExcludedFromChronicleTiers() {
+    return isActiveCommanderPortalOwner();
+}
+
+function resolveCommanderMembershipTitleForUsername(username, fallbackTitle) {
+    if (typeof isPortalSiteOwner === 'function' && isPortalSiteOwner(username)) {
+        return ROYALTY_PAID_BADGE_TITLE;
+    }
+    const activeUser = typeof getActiveCommanderUsername === 'function' ? getActiveCommanderUsername() : '';
+    const subjectKey = String(username || '').trim().toLowerCase();
+    const activeKey = String(activeUser || '').trim().toLowerCase();
+    if (subjectKey && activeKey && subjectKey === activeKey) {
+        return getCommanderMembershipTitle();
+    }
+    return fallbackTitle || FREE_MEMBERSHIP_BADGE_TITLE;
+}
+
 function getCommanderMembershipTitle() {
+    if (isActiveCommanderPortalOwner()) {
+        return ROYALTY_PAID_BADGE_TITLE;
+    }
     const stored = localStorage.getItem(COMMANDER_MEMBERSHIP_STORAGE_KEY);
     if (stored === ROYALTY_PAID_BADGE_TITLE) return ROYALTY_PAID_BADGE_TITLE;
     if (localStorage.getItem('savedChroniclePremiumMember') === 'true') return ROYALTY_PAID_BADGE_TITLE;
@@ -2077,10 +2101,31 @@ function getCommanderMembershipTitle() {
 }
 
 function isCommanderRoyaltyMember() {
+    if (isActiveCommanderPortalOwner()) return false;
     return getCommanderMembershipTitle() === ROYALTY_PAID_BADGE_TITLE;
 }
 
+function buildCommanderOwnerTagMarkup() {
+    return '<span class="commander-owner-tag" title="Site owner"><span class="commander-owner-tag-icon" aria-hidden="true">👑</span>Owner</span>';
+}
+
+function buildCommanderMembershipBadgeRowMarkup(username, badgeClassName = 'membership-badge') {
+    const title = username
+        ? resolveCommanderMembershipTitleForUsername(username)
+        : getCommanderMembershipTitle();
+    const tierClass = title.toLowerCase();
+    const showOwnerTag = username
+        ? (typeof isPortalSiteOwner === 'function' && isPortalSiteOwner(username))
+        : isActiveCommanderPortalOwner();
+    const ownerTag = showOwnerTag ? buildCommanderOwnerTagMarkup() : '';
+    return `<span class="${badgeClassName} tier-${tierClass}">${title} Member</span>${ownerTag}`;
+}
+
 function applyCommanderMembershipTitle(title) {
+    if (isActiveCommanderPortalOwner()) {
+        refreshCommanderMembershipBadgeDisplays();
+        return;
+    }
     const isRoyalty = title === ROYALTY_PAID_BADGE_TITLE;
     const nextTitle = isRoyalty ? ROYALTY_PAID_BADGE_TITLE : FREE_MEMBERSHIP_BADGE_TITLE;
     localStorage.setItem(COMMANDER_MEMBERSHIP_STORAGE_KEY, nextTitle);
@@ -2105,16 +2150,36 @@ function hydrateCommanderMembershipFromStorage() {
 }
 
 function refreshCommanderMembershipBadgeDisplays() {
+    const badgeRowMarkup = buildCommanderMembershipBadgeRowMarkup();
+    document.querySelectorAll('.commander-membership-badge-row').forEach((row) => {
+        row.innerHTML = badgeRowMarkup;
+    });
+
     const title = getCommanderMembershipTitle();
     const tierClass = title.toLowerCase();
+    const showOwnerTag = isActiveCommanderPortalOwner();
     document.querySelectorAll('.membership-badge').forEach((badge) => {
+        if (badge.closest('.commander-membership-badge-row')) return;
         badge.textContent = `${title} Member`;
         badge.className = `membership-badge tier-${tierClass}`;
     });
     document.querySelectorAll('.public-profile-membership').forEach((badge) => {
+        const row = badge.closest('.public-profile-badge-row');
+        if (row) return;
         badge.textContent = `${title} Member`;
         badge.className = `public-profile-membership tier-${tierClass}`;
     });
+    document.querySelectorAll('.public-profile-badge-row').forEach((row) => {
+        const card = row.closest('.public-profile-card, .public-profile-overlay');
+        const subjectName = card?.querySelector('.public-profile-commander-name')?.textContent?.trim() || '';
+        row.innerHTML = buildCommanderMembershipBadgeRowMarkup(subjectName, 'public-profile-membership');
+    });
+
+    const navBadgeRow = document.getElementById('nav-commander-membership-badge-row');
+    if (navBadgeRow) {
+        navBadgeRow.innerHTML = badgeRowMarkup;
+        navBadgeRow.hidden = false;
+    }
 }
 
 async function beginRoyaltyMembershipCheckout() {
@@ -2202,6 +2267,20 @@ const globalRoyaltyTierPackagesDatabase = [
 
 /* Block 16: ROYALTY MATRIX PORTAL ROUTER INTERCEPT ENGINE */
 function renderRoyaltyTierPortalCanvas(viewport) {
+    if (isActiveCommanderPortalOwner()) {
+        viewport.innerHTML = `
+        <div class="royalty-workspace-container">
+            <header class="royalty-workspace-header-deck">
+                <h2 class="royalty-master-title">👑 Royalty Membership</h2>
+                <p class="royalty-master-subtitle">As <strong>site owner</strong>, your profile shows the <strong>Royalty</strong> member title with an <strong>Owner</strong> tag. Paid membership plans are not required for you, and Chronicle free or premium tier tracks do not apply.</p>
+            </header>
+            <div class="royalty-owner-exempt-banner">
+                <strong>Owner account</strong> — you are not enrolled in the Standard Commander or paid Royalty subscription flows. Commander tier rewards on The Chronicles are disabled for owner accounts.
+            </div>
+        </div>`;
+        return;
+    }
+
     const isRoyalty = isCommanderRoyaltyMember();
 
     viewport.innerHTML = `
@@ -2910,6 +2989,9 @@ function getCommanderChronicleProgressSnapshot() {
  * @returns {{ snapshot: object, xpGained: number, rarity: string }}
  */
 function recordChronicleXp(activityKey, options = {}) {
+    if (isCommanderExcludedFromChronicleTiers()) {
+        return { snapshot: getCommanderChronicleProgressSnapshot(), xpGained: 0, rarity: 'common' };
+    }
     if (!CHRONICLE_XP_BY_ACTIVITY_AND_RARITY[activityKey]) {
         return { snapshot: getCommanderChronicleProgressSnapshot(), xpGained: 0, rarity: 'common' };
     }
@@ -2965,12 +3047,14 @@ function isChronicleTierLevelReached(level, trackKey) {
 }
 
 function isChronicleRewardUnlocked(entry, trackKey) {
+    if (isCommanderExcludedFromChronicleTiers()) return false;
     const levelMet = isChronicleTierLevelReached(entry.rank, trackKey);
     if (trackKey === 'premium' && !isCommanderRoyaltyMember()) return false;
     return levelMet && entry.state === 'unlocked';
 }
 
 function isChronicleRewardEligible(entry, trackKey) {
+    if (isCommanderExcludedFromChronicleTiers()) return false;
     if (!isChronicleTierLevelReached(entry.rank, trackKey)) return false;
     if (trackKey === 'premium' && !isCommanderRoyaltyMember()) return false;
     return entry.state !== 'unlocked';
@@ -2991,24 +3075,30 @@ function buildChronicleXpEarnedExplanationMarkup() {
 }
 
 function buildChronicleMilestoneCardMarkup(entry, trackKey) {
+    const ownerExempt = isCommanderExcludedFromChronicleTiers();
     const unlocked = isChronicleRewardUnlocked(entry, trackKey);
     const eligible = isChronicleRewardEligible(entry, trackKey);
-    const premiumLocked = trackKey === 'premium' && !isCommanderRoyaltyMember();
-    const statusLabel = unlocked
+    const premiumLocked = !ownerExempt && trackKey === 'premium' && !isCommanderRoyaltyMember();
+    const statusLabel = ownerExempt
+        ? 'Owner'
+        : (unlocked
         ? 'Claimed'
-        : (eligible ? 'Eligible' : (premiumLocked ? 'Royalty' : 'Locked'));
-    const statusClass = unlocked
+        : (eligible ? 'Eligible' : (premiumLocked ? 'Royalty' : 'Locked')));
+    const statusClass = ownerExempt
+        ? 'status-owner-exempt-tag'
+        : (unlocked
         ? 'status-unlocked-text-tag'
-        : (eligible ? 'status-eligible-text-tag' : (premiumLocked ? 'status-premium-required-tag' : 'status-locked-text-tag'));
+        : (eligible ? 'status-eligible-text-tag' : (premiumLocked ? 'status-premium-required-tag' : 'status-locked-text-tag')));
     const levelTitle = getChronicleTierLevelTitle(entry.rank);
 
     return `
-        <div class="milestone-landmark-capsule-card milestone-landmark-has-reward ${unlocked ? 'landmark-node-unlocked' : 'landmark-node-locked'} ${premiumLocked ? 'landmark-node-premium-gated' : ''}">
+        <div class="milestone-landmark-capsule-card milestone-landmark-has-reward ${unlocked ? 'landmark-node-unlocked' : 'landmark-node-locked'} ${premiumLocked ? 'landmark-node-premium-gated' : ''} ${ownerExempt ? 'landmark-node-owner-exempt' : ''}">
             <span class="milestone-badge-hexagon-icon" aria-hidden="true">${trackKey === 'premium' ? '👑' : '✦'}</span>
             <div class="milestone-meta-contents">
                 <span class="milestone-tier-level-label">Level ${entry.rank} · ${levelTitle}${trackKey === 'premium' ? ' · Premium' : ''}</span>
                 <span class="milestone-title-string">${entry.title}</span>
                 <p class="milestone-reward-description-text">${entry.reward}</p>
+                ${ownerExempt ? '<p class="milestone-premium-hint">Chronicle tier tracks do not apply to site owner accounts.</p>' : ''}
                 ${premiumLocked ? `<p class="milestone-premium-hint">Requires <strong>Royalty</strong> membership (${CHRONICLE_PREMIUM_MONTHLY_PRICE_LABEL}) — unlock on the Royalty page.</p>` : ''}
             </div>
             <span class="milestone-status-action-deck ${statusClass}">${statusLabel}</span>
@@ -3017,17 +3107,22 @@ function buildChronicleMilestoneCardMarkup(entry, trackKey) {
 }
 
 function buildChronicleLevelPassthroughMarkup(level, trackKey) {
+    const ownerExempt = isCommanderExcludedFromChronicleTiers();
     const isBasicStart = trackKey === 'basic' && isChronicleBasicTierStartingLevel(level);
     const levelMet = isChronicleTierLevelReached(level, trackKey);
-    const premiumLocked = trackKey === 'premium' && !isCommanderRoyaltyMember();
-    const statusLabel = isBasicStart
+    const premiumLocked = !ownerExempt && trackKey === 'premium' && !isCommanderRoyaltyMember();
+    const statusLabel = ownerExempt
+        ? 'Owner'
+        : (isBasicStart
         ? 'Starting tier'
-        : (levelMet ? 'Reached' : (premiumLocked ? 'Royalty' : 'Locked'));
-    const statusClass = isBasicStart
+        : (levelMet ? 'Reached' : (premiumLocked ? 'Royalty' : 'Locked')));
+    const statusClass = ownerExempt
+        ? 'status-owner-exempt-tag'
+        : (isBasicStart
         ? 'status-locked-text-tag'
         : (levelMet
             ? 'status-reached-text-tag'
-            : (premiumLocked ? 'status-premium-required-tag' : 'status-locked-text-tag'));
+            : (premiumLocked ? 'status-premium-required-tag' : 'status-locked-text-tag')));
     const levelTitle = getChronicleTierLevelTitle(level);
     const titleString = isBasicStart ? 'Free tier — level 1' : 'Chronicle milestone';
     const description = isBasicStart
@@ -3035,7 +3130,7 @@ function buildChronicleLevelPassthroughMarkup(level, trackKey) {
         : 'No tier reward at this level — keep earning Chronicle XP in the world to advance.';
 
     return `
-        <div class="milestone-landmark-capsule-card milestone-landmark-no-reward ${levelMet ? 'landmark-node-unlocked' : 'landmark-node-locked'} ${premiumLocked ? 'landmark-node-premium-gated' : ''} ${isBasicStart ? 'milestone-basic-tier-start' : ''}">
+        <div class="milestone-landmark-capsule-card milestone-landmark-no-reward ${levelMet ? 'landmark-node-unlocked' : 'landmark-node-locked'} ${premiumLocked ? 'landmark-node-premium-gated' : ''} ${isBasicStart ? 'milestone-basic-tier-start' : ''} ${ownerExempt ? 'landmark-node-owner-exempt' : ''}">
             <span class="milestone-badge-hexagon-icon milestone-badge-level-only" aria-hidden="true">◇</span>
             <div class="milestone-meta-contents">
                 <span class="milestone-tier-level-label">Level ${level} · ${levelTitle}${trackKey === 'premium' ? ' · Premium' : ''}</span>
@@ -3105,6 +3200,20 @@ function refreshChronicleProgressHeader(snapshot) {
 }
 
 function renderChroniclesProgressMatrixCanvas(viewport) {
+    if (isCommanderExcludedFromChronicleTiers()) {
+        viewport.innerHTML = `
+        <div class="chronicles-workspace-container">
+            <header class="royalty-workspace-header-deck">
+                <h2 class="royalty-master-title">📜 Chronicle Tier Rewards</h2>
+                <p class="royalty-master-subtitle">Chronicle <strong>Basic</strong> and <strong>Premium</strong> tier tracks are for commanders on the free and Royalty membership plans. As <strong>site owner</strong>, you are not enrolled in either track — your profile still shows <strong>Royalty Member</strong> with an <strong>Owner</strong> tag.</p>
+            </header>
+            <div class="chronicle-owner-exempt-banner">
+                <strong>Owner account</strong> — free and premium Chronicle tier rewards are disabled. Other commanders earn XP through Ages to unlock milestone rewards on those tracks.
+            </div>
+        </div>`;
+        return;
+    }
+
     const snapshot = getCommanderChronicleProgressSnapshot();
     const isRoyalty = isCommanderRoyaltyMember();
     const xpProgressLabel = snapshot.isMaxLevel
@@ -3171,6 +3280,10 @@ window.openUnlockPremiumTierPortal = openUnlockPremiumTierPortal;
 window.openRoyaltyMembershipFromChronicles = openUnlockPremiumTierPortal;
 window.hydrateCommanderMembershipFromStorage = hydrateCommanderMembershipFromStorage;
 window.applyCommanderMembershipTitle = applyCommanderMembershipTitle;
+window.buildCommanderMembershipBadgeRowMarkup = buildCommanderMembershipBadgeRowMarkup;
+window.isActiveCommanderPortalOwner = isActiveCommanderPortalOwner;
+window.isCommanderExcludedFromChronicleTiers = isCommanderExcludedFromChronicleTiers;
+window.resolveCommanderMembershipTitleForUsername = resolveCommanderMembershipTitleForUsername;
 window.beginRoyaltyMembershipCheckout = beginRoyaltyMembershipCheckout;
 window.beginRoyaltyMembershipDowngrade = beginRoyaltyMembershipDowngrade;
 window.getCommanderChronicleProgressSnapshot = getCommanderChronicleProgressSnapshot;

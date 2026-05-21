@@ -249,7 +249,11 @@ function getPublicProfileSnapshot(subjectPlayer) {
         avatarUrl: source.avatarUrl || 'images/avatars/commanderprofile01.png',
         country: source.country || '—',
         timezone: source.timezone || '—',
-        membershipTitle: source.membershipTitle || 'Bronze',
+        membershipTitle: (typeof resolveCommanderMembershipTitleForUsername === 'function'
+            ? resolveCommanderMembershipTitleForUsername(source.name, source.membershipTitle || 'Bronze')
+            : (typeof isPortalSiteOwner === 'function' && isPortalSiteOwner(source.name)
+                ? 'Royalty'
+                : (source.membershipTitle || 'Bronze'))),
         description,
         privacy,
         rank: source.rank ?? 1,
@@ -311,7 +315,13 @@ function renderPublicProfileCardContent(snapshot) {
     const viewingSelf = !!snapshot.viewingSelf;
     const hideSensitiveDetails = !isPublic && !viewingSelf;
 
-    const membershipClass = `public-profile-membership tier-${String(snapshot.membershipTitle).toLowerCase()}`;
+    const membershipBadgeRowMarkup = typeof buildCommanderMembershipBadgeRowMarkup === 'function'
+        ? buildCommanderMembershipBadgeRowMarkup(snapshot.name, 'public-profile-membership')
+        : `<span class="public-profile-membership tier-${String(snapshot.membershipTitle).toLowerCase()}">${escapePublicProfileHtml(snapshot.membershipTitle)} Member</span>${
+            typeof isPortalSiteOwner === 'function' && isPortalSiteOwner(snapshot.name)
+                ? '<span class="commander-owner-tag" title="Site owner"><span class="commander-owner-tag-icon" aria-hidden="true">👑</span>Owner</span>'
+                : ''
+        }`;
     const rankTitle = getCommanderRankTitle(snapshot.rank, snapshot.path);
     const classTitle = getCommanderClassTitle(snapshot.path);
 
@@ -363,8 +373,8 @@ function renderPublicProfileCardContent(snapshot) {
             <div class="public-profile-identity-copy">
                 <p class="public-profile-eyebrow">Player profile</p>
                 <h2 id="public-profile-card-title" class="public-profile-commander-name">${escapePublicProfileHtml(snapshot.name)}</h2>
-                <div class="public-profile-badge-row">
-                    <span class="${membershipClass}">${escapePublicProfileHtml(snapshot.membershipTitle)} Member</span>
+                <div class="public-profile-badge-row commander-membership-badge-row">
+                    ${membershipBadgeRowMarkup}
                 </div>
                 ${locationMetaRow}
                 <div class="public-profile-meta-row">

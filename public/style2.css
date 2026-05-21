@@ -154,10 +154,82 @@
     box-sizing: border-box !important;
 }
 
+.nav-account-identity-stack {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    justify-content: center !important;
+    gap: 4px !important;
+    min-width: 0 !important;
+    padding-left: 6px !important;
+}
+
 .nav-embedded-account-label strong {
     color: #ffd700 !important;
-    padding-left: 6px !important;
+    padding-left: 0 !important;
     text-shadow: 0 0 4px rgba(255, 215, 0, 0.3) !important;
+}
+
+.nav-commander-membership-badge-row {
+    padding-left: 0 !important;
+}
+
+.commander-membership-badge-row {
+    display: inline-flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    flex-wrap: wrap !important;
+    gap: 8px !important;
+}
+
+.profile-identity-badge-row {
+    flex-shrink: 0 !important;
+}
+
+.commander-owner-tag {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 4px !important;
+    padding: 3px 8px !important;
+    border-radius: 999px !important;
+    font-family: 'Cinzel', serif !important;
+    font-size: 0.62rem !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.04em !important;
+    text-transform: uppercase !important;
+    color: #1a1408 !important;
+    border: 1px solid #f1e0ac !important;
+    background: linear-gradient(90deg, #c9a227 0%, #ffe9a8 100%) !important;
+    box-shadow: 0 0 8px rgba(255, 215, 0, 0.25) !important;
+    white-space: nowrap !important;
+}
+
+.commander-owner-tag-icon {
+    font-size: 0.7rem !important;
+    line-height: 1 !important;
+}
+
+.royalty-owner-exempt-banner,
+.chronicle-owner-exempt-banner {
+    margin-top: 16px !important;
+    padding: 14px 16px !important;
+    border-radius: 4px !important;
+    border: 1px solid rgba(201, 162, 39, 0.45) !important;
+    background: rgba(0, 0, 0, 0.42) !important;
+    font-family: 'Segoe UI', sans-serif !important;
+    font-size: 0.9rem !important;
+    line-height: 1.5 !important;
+    color: #f1e0ac !important;
+}
+
+.royalty-owner-exempt-banner strong,
+.chronicle-owner-exempt-banner strong {
+    color: #ffd978 !important;
+}
+
+.status-owner-exempt-tag {
+    color: #ffe9a8 !important;
+    border-color: rgba(201, 162, 39, 0.55) !important;
 }
 
 /* 🎯 COLUMN 2 STRUCTURES: THE PERFECT DEAD CENTER TAB FLEX SECTOR WRAPPER */
@@ -3769,7 +3841,7 @@
 .public-profile-membership.tier-bronze,
 .membership-badge.tier-bronze { color: #cd7f32 !important; border-color: #cd7f32 !important; }
 .public-profile-membership.tier-royalty,
-.membership-badge.tier-royalty { color: #e8c547 !important; border-color: #c9a227 !important; }
+.membership-badge.tier-royalty { color: #e8c547 !important; border-color: #c9a227 !important; background: rgba(201, 162, 39, 0.08) !important; }
 .public-profile-membership.tier-silver,
 .membership-badge.tier-silver { color: #c0c0c0 !important; border-color: #c0c0c0 !important; }
 .public-profile-membership.tier-gold,

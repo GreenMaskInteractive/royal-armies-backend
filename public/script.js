@@ -612,12 +612,18 @@ window.PORTAL_MODERATOR_USERNAMES = PORTAL_MODERATOR_USERNAMES;
 window.ROYAL_GUARD_BOT_DISPLAY_NAME = ROYAL_GUARD_BOT_DISPLAY_NAME;
 window.isRoyalGuardBotAccount = isRoyalGuardBotAccount;
 
-function isMailboxRecipientRosterAdmin() {
-    const user = String(
-        typeof getActiveCommanderUsername === 'function' ? getActiveCommanderUsername() : ''
-    ).trim().toLowerCase();
-    return PORTAL_OWNER_USERNAMES.has(user);
+function isPortalSiteOwner(username) {
+    const key = normalizePortalStaffUsername(
+        username !== undefined ? username : getActiveCommanderUsername()
+    );
+    return !!key && PORTAL_OWNER_USERNAMES.has(key);
 }
+
+function isMailboxRecipientRosterAdmin() {
+    return isPortalSiteOwner();
+}
+
+window.isPortalSiteOwner = isPortalSiteOwner;
 
 async function loadMailboxAdminRecipientRoster(forceReload) {
     if (!isMailboxRecipientRosterAdmin()) {
@@ -2294,7 +2300,11 @@ function loadLore(type, customMount) {
                     <div class="profile-header-identity-group">
                         <div class="profile-identity-title-row">
                             <span class="profile-main-name">${player.name}</span>
-                            <span class="membership-badge tier-${player.membershipTitle.toLowerCase()}">${player.membershipTitle} Member</span>
+                            <div class="commander-membership-badge-row profile-identity-badge-row">${
+                                typeof buildCommanderMembershipBadgeRowMarkup === 'function'
+                                    ? buildCommanderMembershipBadgeRowMarkup(player.name)
+                                    : `<span class="membership-badge tier-${player.membershipTitle.toLowerCase()}">${player.membershipTitle} Member</span>`
+                            }</div>
                         </div>
                         <div class="profile-identity-sub-row">
                             <span>Region: <strong>${player.country}</strong></span>
