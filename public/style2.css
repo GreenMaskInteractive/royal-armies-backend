@@ -5153,6 +5153,16 @@ body:not(.portal-guest-mode) #portal-deployment-guest-cta {
     box-sizing: border-box !important;
 }
 
+.profile-avatar-armory-slot {
+    width: 100% !important;
+    box-sizing: border-box !important;
+}
+
+.profile-avatar-preset-bin {
+    width: 100% !important;
+    box-sizing: border-box !important;
+}
+
 .portal-commander-hub-intro {
     text-align: left !important;
 }

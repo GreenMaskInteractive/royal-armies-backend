@@ -2663,20 +2663,6 @@ function loadLore(type, customMount) {
                         <div id="avatar-active-display-group">
                             <img id="profile-avatar-display" src="${player.avatarUrl}" alt="Avatar" class="clickable-avatar-badge" onclick="openAvatarArmorySelector(event)">
                         </div>
-                        <div id="avatar-preset-selection-bin" style="display: none;">
-                            <div class="avatar-selection-header">Choose avatar</div>
-                            <div class="avatar-thumbnail-grid">
-                                <img src="images/avatars/commanderprofile01.png" class="avatar-thumb-lever ${player.avatarUrl === 'images/avatars/commanderprofile01.png' ? 'selected-avatar-border' : ''}" onclick="selectPresetAvatar('images/avatars/commanderprofile01.png')">
-                                <img src="images/avatars/commanderprofile02.png" class="avatar-thumb-lever ${player.avatarUrl === 'images/avatars/commanderprofile02.png' ? 'selected-avatar-border' : ''}" onclick="selectPresetAvatar('images/avatars/commanderprofile02.png')">
-                                <img src="images/avatars/commanderprofile03.png" class="avatar-thumb-lever ${player.avatarUrl === 'images/avatars/commanderprofile03.png' ? 'selected-avatar-border' : ''}" onclick="selectPresetAvatar('images/avatars/commanderprofile03.png')">
-                                <img src="images/avatars/commanderprofile04.png" class="avatar-thumb-lever ${player.avatarUrl === 'images/avatars/commanderprofile04.png' ? 'selected-avatar-border' : ''}" onclick="selectPresetAvatar('images/avatars/commanderprofile04.png')">
-                                <img src="images/avatars/commanderprofile05.png" class="avatar-thumb-lever ${player.avatarUrl === 'images/avatars/commanderprofile05.png' ? 'selected-avatar-border' : ''}" onclick="selectPresetAvatar('images/avatars/commanderprofile05.png')">
-                                <img src="images/avatars/commanderprofile06.png" class="avatar-thumb-lever ${player.avatarUrl === 'images/avatars/commanderprofile06.png' ? 'selected-avatar-border' : ''}" onclick="selectPresetAvatar('images/avatars/commanderprofile06.png')">
-                                <img src="images/avatars/commanderprofile07.png" class="avatar-thumb-lever ${player.avatarUrl === 'images/avatars/commanderprofile07.png' ? 'selected-avatar-border' : ''}" onclick="selectPresetAvatar('images/avatars/commanderprofile07.png')">
-                                <img src="images/avatars/commanderprofile08.png" class="avatar-thumb-lever ${player.avatarUrl === 'images/avatars/commanderprofile08.png' ? 'selected-avatar-border' : ''}" onclick="selectPresetAvatar('images/avatars/commanderprofile08.png')">
-                            </div>
-                            <button class="settings-btn mini-btn close-armory-btn" onclick="closeAvatarArmorySelector(event)">Return</button>
-                        </div>
                     </div>
                     <div class="profile-header-identity-group">
                         <div class="profile-identity-title-row">
@@ -2704,6 +2690,22 @@ function loadLore(type, customMount) {
                 <div class="settings-scroll-wrapper profile-fullscreen-canvas">
                     <div class="profile-fullscreen-split-row">
                         <div class="profile-split-panel-half">
+                            <div class="profile-avatar-armory-slot" id="profile-avatar-armory-slot" aria-label="Avatar library">
+                                <div id="avatar-preset-selection-bin" class="profile-avatar-preset-bin" hidden>
+                                    <div class="avatar-selection-header">Choose avatar</div>
+                                    <div class="avatar-thumbnail-grid">
+                                        <img src="images/avatars/commanderprofile01.png" class="avatar-thumb-lever ${player.avatarUrl === 'images/avatars/commanderprofile01.png' ? 'selected-avatar-border' : ''}" onclick="selectPresetAvatar('images/avatars/commanderprofile01.png')">
+                                        <img src="images/avatars/commanderprofile02.png" class="avatar-thumb-lever ${player.avatarUrl === 'images/avatars/commanderprofile02.png' ? 'selected-avatar-border' : ''}" onclick="selectPresetAvatar('images/avatars/commanderprofile02.png')">
+                                        <img src="images/avatars/commanderprofile03.png" class="avatar-thumb-lever ${player.avatarUrl === 'images/avatars/commanderprofile03.png' ? 'selected-avatar-border' : ''}" onclick="selectPresetAvatar('images/avatars/commanderprofile03.png')">
+                                        <img src="images/avatars/commanderprofile04.png" class="avatar-thumb-lever ${player.avatarUrl === 'images/avatars/commanderprofile04.png' ? 'selected-avatar-border' : ''}" onclick="selectPresetAvatar('images/avatars/commanderprofile04.png')">
+                                        <img src="images/avatars/commanderprofile05.png" class="avatar-thumb-lever ${player.avatarUrl === 'images/avatars/commanderprofile05.png' ? 'selected-avatar-border' : ''}" onclick="selectPresetAvatar('images/avatars/commanderprofile05.png')">
+                                        <img src="images/avatars/commanderprofile06.png" class="avatar-thumb-lever ${player.avatarUrl === 'images/avatars/commanderprofile06.png' ? 'selected-avatar-border' : ''}" onclick="selectPresetAvatar('images/avatars/commanderprofile06.png')">
+                                        <img src="images/avatars/commanderprofile07.png" class="avatar-thumb-lever ${player.avatarUrl === 'images/avatars/commanderprofile07.png' ? 'selected-avatar-border' : ''}" onclick="selectPresetAvatar('images/avatars/commanderprofile07.png')">
+                                        <img src="images/avatars/commanderprofile08.png" class="avatar-thumb-lever ${player.avatarUrl === 'images/avatars/commanderprofile08.png' ? 'selected-avatar-border' : ''}" onclick="selectPresetAvatar('images/avatars/commanderprofile08.png')">
+                                    </div>
+                                    <button type="button" class="settings-btn mini-btn close-armory-btn" onclick="closeAvatarArmorySelector(event)">Return</button>
+                                </div>
+                            </div>
                             <div class="profile-section-box">
                                 <label class="settings-label">Player Bio</label>
                                 <div class="bio-bezel-frame-wrapper">
@@ -3637,26 +3639,34 @@ function closeSuicideOverlayWindow() {
 }
 
 /* --- Block 31: Unified Avatar Customization Controllers --- */
+function setAvatarArmorySelectorVisible(isVisible) {
+    const selectorBin = document.getElementById('avatar-preset-selection-bin');
+    if (!selectorBin) return;
+    selectorBin.hidden = !isVisible;
+    selectorBin.style.display = isVisible ? 'block' : 'none';
+}
+
 function openAvatarArmorySelector(e) {
     if (e) e.stopPropagation();
     if (typeof playToggleLeverSFX === 'function') playToggleLeverSFX();
-    
-    const activeView = document.getElementById('avatar-active-display-group');
+    setAvatarArmorySelectorVisible(true);
+
     const selectorBin = document.getElementById('avatar-preset-selection-bin');
-    
-    if (activeView) activeView.style.display = 'none';
-    if (selectorBin) selectorBin.style.display = 'block';
+    if (
+        selectorBin
+        && typeof isPortalMobileNavLayout === 'function'
+        && isPortalMobileNavLayout()
+    ) {
+        window.requestAnimationFrame(() => {
+            selectorBin.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+        });
+    }
 }
 
 function closeAvatarArmorySelector(e) {
     if (e) e.stopPropagation();
     if (typeof playToggleLeverSFX === 'function') playToggleLeverSFX();
-    
-    const activeView = document.getElementById('avatar-active-display-group');
-    const selectorBin = document.getElementById('avatar-preset-selection-bin');
-    
-    if (activeView) activeView.style.display = 'block';
-    if (selectorBin) selectorBin.style.display = 'none';
+    setAvatarArmorySelectorVisible(false);
 }
 
 function selectPresetAvatar(chosenUrl) {
