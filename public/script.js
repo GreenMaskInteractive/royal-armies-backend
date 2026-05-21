@@ -144,6 +144,26 @@ function refreshMainPortalAuthChrome() {
     if (typeof refreshLoggedUserTagDisplay === 'function') {
         refreshLoggedUserTagDisplay();
     }
+
+    if (typeof applyPortalNavAccessRestrictions === 'function') {
+        applyPortalNavAccessRestrictions();
+    } else if (typeof applyPortalGuestDeploymentChrome === 'function') {
+        applyPortalGuestDeploymentChrome();
+    }
+
+    if (typeof syncPortalMobileNavIdentity === 'function') {
+        syncPortalMobileNavIdentity();
+    }
+}
+
+function openMainPortalGuestRegister(event) {
+    if (event) {
+        event.preventDefault();
+        event.stopPropagation();
+    }
+    if (typeof handleRegister === 'function') {
+        handleRegister();
+    }
 }
 
 function handleHeaderAuthAction() {
@@ -959,6 +979,10 @@ function syncNavMailboxIndicators() {
             unreadCount > 0 ? `Messages, ${unreadCount} unread` : 'Messages'
         );
     }
+
+    if (typeof syncPortalMobileNavMailboxIndicators === 'function') {
+        syncPortalMobileNavMailboxIndicators(unreadCount);
+    }
 }
 
 function persistMailboxAndSyncNav() {
@@ -1321,6 +1345,9 @@ function finishMainPortalLoginSession(isAdmin) {
     restoreLoginAuthButtons();
     closeMainPortalLoginModal();
     refreshMainPortalAuthChrome();
+    if (typeof recacheAgePortalViewportSnapshot === 'function') {
+        recacheAgePortalViewportSnapshot();
+    }
     syncPlayerFromActiveCommanderStorage();
     if (typeof hydrateCommanderMembershipFromStorage === 'function') {
         hydrateCommanderMembershipFromStorage();
@@ -3048,6 +3075,7 @@ window.syncPlayerFromActiveCommanderStorage = syncPlayerFromActiveCommanderStora
 window.refreshProfileCommanderNameDisplay = refreshProfileCommanderNameDisplay;
 window.refreshLoggedUserTagDisplay = refreshLoggedUserTagDisplay;
 window.refreshMainPortalAuthChrome = refreshMainPortalAuthChrome;
+window.openMainPortalGuestRegister = openMainPortalGuestRegister;
 window.handleHeaderAuthAction = handleHeaderAuthAction;
 window.openMainPortalLoginModal = openMainPortalLoginModal;
 window.closeMainPortalLoginModal = closeMainPortalLoginModal;
@@ -3059,6 +3087,9 @@ function bootstrapMainPortalAuthOnLoad() {
     syncPlayerFromActiveCommanderStorage();
     if (isMainPortalHub()) {
         refreshMainPortalAuthChrome();
+        if (typeof syncPortalMobileNavIdentity === 'function') {
+            syncPortalMobileNavIdentity();
+        }
     }
 }
 

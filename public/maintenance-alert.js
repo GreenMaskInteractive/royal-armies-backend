@@ -68,8 +68,20 @@ function getMaintenanceAlertElements() {
     };
 }
 
+function isMainPortalMobileMaintenanceLayout() {
+    return window.matchMedia('(max-width: 1024px)').matches;
+}
+
 function syncMaintenanceAlertPageOffset(barEl) {
     const height = barEl && !barEl.hidden ? Math.ceil(barEl.getBoundingClientRect().height) : 0;
+    const onMainPortal = document.body && document.body.id === 'main-dashboard-canvas';
+
+    if (onMainPortal && isMainPortalMobileMaintenanceLayout()) {
+        document.documentElement.style.setProperty('--developer-maintenance-alert-offset', '0px');
+        document.body.classList.toggle('developer-maintenance-alert-active', height > 0);
+        return;
+    }
+
     document.documentElement.style.setProperty('--developer-maintenance-alert-offset', `${height}px`);
     document.body.classList.toggle('developer-maintenance-alert-active', height > 0);
 }

@@ -33,6 +33,11 @@ window.onload = () => {
     if (typeof refreshMainPortalAuthChrome === 'function') {
         refreshMainPortalAuthChrome();
     }
+
+    syncPortalMobileNavIdentity();
+    syncPortalMobileNavChrome(activeMainPortalView);
+    applyPortalMobileNavPreviewRestrictions();
+    bindPortalMobileNavDismissHandlers();
     const avatarCrestElement = document.getElementById("nav-embedded-avatar-crest");
     if (avatarCrestElement) {
         avatarCrestElement.src = savedCommanderAvatar;
@@ -50,7 +55,8 @@ window.onload = () => {
     initializeServerAgeClockTickerCountdown();
     initializePortalLivePlayerMetrics();
 
-    applyPortalNavPreviewRestrictions();
+    applyPortalNavAccessRestrictions();
+    applyPortalGuestDeploymentChrome();
     hydrateDevelopersLogDock();
 
     if (typeof loadCommanderMailboxDossiersFromStorage === 'function') {
@@ -64,10 +70,7 @@ window.onload = () => {
         syncNavMailboxIndicators();
     }
 
-    const viewport = document.getElementById('main-portal-dynamic-viewport');
-    if (viewport) {
-        window.cachedAgePortalViewportHTML = viewport.innerHTML;
-    }
+    window.cachedAgePortalViewportHTML = snapshotAgePortalViewportForCache();
 };
 
 /* Block 2: Persistent Era Time Countdown Ticker */
@@ -134,42 +137,389 @@ function initializeServerAgeClockTickerCountdown() {
 let activeMainPortalView = 'portal';
 
 const PORTAL_PREVIEW_ONLY_VIEWS = ['royalty', 'chronicles'];
+const PORTAL_GUEST_LOCKED_VIEWS = ['chat', 'lore', 'royalty', 'chronicles'];
 
-function applyPortalNavPreviewRestrictions() {
-    const previewEnabled = typeof isPortalPreviewNavEnabled === 'function'
-        ? isPortalPreviewNavEnabled()
-        : false;
+function isPortalNavViewAccessible(viewName) {
+    if (!viewName) return true;
 
-    document.querySelectorAll('.nav-tab[data-portal-view]').forEach((tab) => {
-        const viewName = tab.getAttribute('data-portal-view');
-        if (!PORTAL_PREVIEW_ONLY_VIEWS.includes(viewName)) return;
+    const authed = typeof isPortalUserAuthenticated === 'function' && isPortalUserAuthenticated();
+    if (!authed && PORTAL_GUEST_LOCKED_VIEWS.includes(viewName)) {
+        return false;
+    }
 
-        if (previewEnabled) {
-            tab.classList.remove('nav-tab-preview-locked');
-            tab.removeAttribute('aria-disabled');
-            tab.title = '';
-        } else {
-            tab.classList.add('nav-tab-preview-locked');
-            tab.setAttribute('aria-disabled', 'true');
-            tab.title = 'Coming soon';
-            tab.classList.remove('active');
-        }
+    if (PORTAL_PREVIEW_ONLY_VIEWS.includes(viewName)) {
+        const previewEnabled = typeof isPortalPreviewNavEnabled === 'function'
+            ? isPortalPreviewNavEnabled()
+            : false;
+        if (!previewEnabled) return false;
+    }
+
+    return true;
+}
+
+function getPortalNavLockTitle(viewName) {
+    const authed = typeof isPortalUserAuthenticated === 'function' && isPortalUserAuthenticated();
+    if (!authed && PORTAL_GUEST_LOCKED_VIEWS.includes(viewName)) {
+        return 'Create an account and log in to access';
+    }
+    if (PORTAL_PREVIEW_ONLY_VIEWS.includes(viewName)) {
+        return 'Coming soon';
+    }
+    return '';
+}
+
+function setPortalNavControlAccessState(controlEl, viewName) {
+    if (!controlEl || !viewName) return;
+
+    const authed = typeof isPortalUserAuthenticated === 'function' && isPortalUserAuthenticated();
+    const guestHidden = !authed && PORTAL_GUEST_LOCKED_VIEWS.includes(viewName);
+
+    controlEl.classList.toggle('portal-nav-guest-hidden', guestHidden);
+    controlEl.hidden = guestHidden;
+
+    if (guestHidden) {
+        controlEl.classList.remove('nav-tab-preview-locked', 'active', 'is-active');
+        controlEl.removeAttribute('aria-disabled');
+        controlEl.title = '';
+        return;
+    }
+
+    const accessible = isPortalNavViewAccessible(viewName);
+    if (accessible) {
+        controlEl.classList.remove('nav-tab-preview-locked');
+        controlEl.removeAttribute('aria-disabled');
+        controlEl.title = '';
+        return;
+    }
+
+    controlEl.classList.add('nav-tab-preview-locked');
+    controlEl.setAttribute('aria-disabled', 'true');
+    controlEl.title = getPortalNavLockTitle(viewName);
+    controlEl.classList.remove('active', 'is-active');
+}
+
+function applyPortalGuestDeploymentChrome() {
+    if (!document.getElementById('deployment-master-deck-container')) return;
+
+    const authed = typeof isPortalUserAuthenticated === 'function' && isPortalUserAuthenticated();
+    document.body.classList.toggle('portal-guest-mode', !authed);
+
+    const memberBlock = document.getElementById('portal-deployment-member-block');
+    const guestCta = document.getElementById('portal-deployment-guest-cta');
+
+    if (memberBlock) memberBlock.hidden = !authed;
+    if (guestCta) guestCta.hidden = authed;
+}
+
+function recacheAgePortalViewportSnapshot() {
+    if (activeMainPortalView !== 'portal') return;
+    window.cachedAgePortalViewportHTML = snapshotAgePortalViewportForCache();
+}
+
+function renderPortalDeploymentDeckMarkup() {
+    return `
+            <div class="portal-deployment-control-deck custom-centered-row-deck" id="deployment-master-deck-container">
+                <div id="portal-deployment-member-block" class="portal-deployment-member-block">
+                    <h3 class="deployment-deck-title" id="dynamic-age-status-header">The Age has Yet to Arrive!</h3>
+                    <div id="dynamic-age-sub-timer-display" class="timer-readout-default">-- : -- : -- : --</div>
+                    <div class="deployment-action-button-row portal-deployment-member-actions" id="portal-deployment-member-actions">
+                        <div class="action-btn-aura-housing aura-glow-red">
+                            <button class="deployment-image-trigger-btn" onclick="launchGameRoundSector(false, event)">
+                                <img src="images/joinagebtn.png" alt="Join active age">
+                            </button>
+                        </div>
+                        <div class="action-btn-aura-housing aura-glow-blue">
+                            <button class="deployment-image-trigger-btn" onclick="launchGameRoundSector(true, event)">
+                                <img src="images/joinagetutorialbtn.png" alt="Join tutorial age">
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div id="portal-deployment-guest-cta" class="portal-deployment-guest-cta" hidden>
+                    <div class="portal-join-now-aura-housing">
+                        <button type="button" class="portal-join-now-trigger-btn" onclick="openMainPortalGuestRegister(event)" aria-label="Join now — create your account">
+                            <img src="images/joinnowbtn.png" alt="Join now" class="portal-join-now-artwork">
+                        </button>
+                    </div>
+                </div>
+            </div>`;
+}
+
+const PORTAL_MOBILE_NAV_VIEW_LABELS = {
+    portal: 'Age Portal',
+    leaderboards: 'Leaderboards',
+    chat: 'Community Chat',
+    lore: 'Lore',
+    royalty: 'Royalty',
+    chronicles: 'The Chronicles',
+    roadmap: 'Roadmap',
+    settings: 'Settings'
+};
+
+function isPortalMobileNavLayout() {
+    return window.matchMedia('(max-width: 1024px)').matches;
+}
+
+function snapshotAgePortalViewportForCache() {
+    const viewport = document.getElementById('main-portal-dynamic-viewport');
+    if (!viewport) return '';
+
+    const clone = viewport.cloneNode(true);
+    clone.querySelectorAll('#portal-media-player-home, .portal-media-player-home').forEach((el) => el.remove());
+    return clone.innerHTML;
+}
+
+function mountPortalMediaPlayerForViewport() {
+    const home = document.getElementById('portal-media-player-home');
+    const mobileMount = document.getElementById('portal-mobile-nav-media-mount');
+    const dockInNav = isPortalMobileNavLayout() && mobileMount;
+
+    document.querySelectorAll('#portal-floating-media-player-deck').forEach((node, index) => {
+        if (index > 0) node.remove();
     });
 
-    if (!previewEnabled && PORTAL_PREVIEW_ONLY_VIEWS.includes(activeMainPortalView)) {
+    const deck = document.getElementById('portal-floating-media-player-deck');
+    if (!deck || !home) return;
+
+    const targetParent = dockInNav ? mobileMount : home;
+
+    if (deck.parentElement !== targetParent) {
+        targetParent.appendChild(deck);
+    }
+
+    deck.classList.toggle('is-mobile-nav-docked', dockInNav);
+    home.hidden = dockInNav;
+    home.style.display = dockInNav ? 'none' : '';
+}
+
+function closePortalMobileNavMenus() {
+    const shell = document.getElementById('portal-mobile-nav-shell');
+    const menu = document.getElementById('portal-mobile-nav-menu');
+    const navToggle = document.getElementById('portal-mobile-nav-toggle');
+    const commanderSub = document.getElementById('portal-mobile-commander-submenu');
+    const commanderToggle = document.getElementById('portal-mobile-commander-toggle');
+
+    if (menu) {
+        menu.hidden = true;
+        menu.style.top = '';
+        menu.classList.remove('is-commander-submenu-open');
+    }
+    if (shell) shell.classList.remove('is-nav-open');
+    if (navToggle) navToggle.setAttribute('aria-expanded', 'false');
+
+    if (commanderSub) commanderSub.hidden = true;
+    if (commanderToggle) commanderToggle.setAttribute('aria-expanded', 'false');
+}
+
+function positionPortalMobileNavMenu() {
+    const menu = document.getElementById('portal-mobile-nav-menu');
+    const clip = document.querySelector('.portal-mobile-nav-bar-clip');
+    if (!menu || menu.hidden || !isPortalMobileNavLayout()) return;
+
+    const anchor = clip || document.getElementById('portal-mobile-nav-toggle');
+    if (!anchor) return;
+
+    const rect = anchor.getBoundingClientRect();
+    const topPx = Math.max(0, Math.ceil(rect.bottom));
+    menu.style.top = `${topPx}px`;
+}
+
+function togglePortalMobileNavMenu(event) {
+    if (event) event.stopPropagation();
+    const shell = document.getElementById('portal-mobile-nav-shell');
+    const menu = document.getElementById('portal-mobile-nav-menu');
+    const navToggle = document.getElementById('portal-mobile-nav-toggle');
+    if (!shell || !menu || !navToggle) return;
+
+    const willOpen = menu.hidden;
+    if (willOpen) {
+        syncPortalMobileNavIdentity();
+        menu.hidden = false;
+        shell.classList.add('is-nav-open');
+        navToggle.setAttribute('aria-expanded', 'true');
+        requestAnimationFrame(() => {
+            positionPortalMobileNavMenu();
+            requestAnimationFrame(positionPortalMobileNavMenu);
+        });
+    } else {
+        closePortalMobileNavMenus();
+    }
+}
+
+function togglePortalMobileCommanderSubmenu(event) {
+    if (event) event.stopPropagation();
+    const submenu = document.getElementById('portal-mobile-commander-submenu');
+    const toggle = document.getElementById('portal-mobile-commander-toggle');
+    if (!submenu || !toggle) return;
+
+    const menu = document.getElementById('portal-mobile-nav-menu');
+    const willOpen = submenu.hidden;
+    submenu.hidden = !willOpen;
+    toggle.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
+    if (menu) {
+        menu.classList.toggle('is-commander-submenu-open', willOpen);
+    }
+}
+
+function portalMobileNavSelectView(viewName, event) {
+    if (event) event.stopPropagation();
+    const pageBtn = event?.target?.closest?.('.portal-mobile-nav-page-item');
+    if (pageBtn?.hidden || pageBtn?.classList.contains('portal-nav-guest-hidden') || pageBtn?.classList.contains('nav-tab-preview-locked')) return;
+
+    closePortalMobileNavMenus();
+    switchMainPortalView(viewName, event);
+    syncPortalMobileNavChrome(viewName);
+}
+
+function portalMobileNavCommanderAction(action, event) {
+    if (event) event.stopPropagation();
+    closePortalMobileNavMenus();
+
+    switch (action) {
+        case 'view-profile':
+            if (typeof openPublicCommanderProfileCard === 'function') {
+                openPublicCommanderProfileCard(event);
+            }
+            break;
+        case 'edit-profile':
+            if (typeof openCommanderHubModal === 'function') {
+                openCommanderHubModal('profile', event);
+            }
+            break;
+        case 'messages':
+            if (typeof openCommanderHubMessagesInbox === 'function') {
+                openCommanderHubMessagesInbox(event);
+            }
+            break;
+        case 'settings':
+            if (typeof openCommanderHubModal === 'function') {
+                openCommanderHubModal('settings', event);
+            }
+            break;
+        default:
+            break;
+    }
+}
+
+function portalMobileNavAuthAction(event) {
+    if (event) event.stopPropagation();
+    closePortalMobileNavMenus();
+    if (typeof handleHeaderAuthAction === 'function') {
+        handleHeaderAuthAction();
+    }
+}
+
+function syncPortalMobileNavChrome(viewName) {
+    const resolved = viewName || activeMainPortalView || 'portal';
+    const label = PORTAL_MOBILE_NAV_VIEW_LABELS[resolved] || PORTAL_MOBILE_NAV_VIEW_LABELS.portal;
+    const labelEl = document.getElementById('portal-mobile-nav-current-label');
+    if (labelEl) labelEl.textContent = label;
+
+    document.querySelectorAll('.portal-mobile-nav-page-item').forEach((btn) => {
+        const view = btn.getAttribute('data-portal-view');
+        btn.classList.toggle('is-active', view === resolved);
+    });
+}
+
+function syncPortalMobileNavIdentity() {
+    const avatarDesktop = document.getElementById('nav-embedded-avatar-crest');
+    const avatarMobile = document.getElementById('portal-mobile-nav-avatar');
+    const nameDesktop = document.getElementById('logged-user-tag');
+    const nameMobile = document.getElementById('portal-mobile-nav-username');
+    const authLabelDesktop = document.getElementById('header-auth-action-label');
+    const authIconDesktop = document.getElementById('header-auth-action-icon');
+    const authLabelMobile = document.getElementById('portal-mobile-nav-auth-label');
+    const authIconMobile = document.getElementById('portal-mobile-nav-auth-icon');
+
+    const fallbackAvatar = 'images/avatars/commanderprofile01.png';
+    const avatarSrc = (avatarDesktop && avatarDesktop.src) ? avatarDesktop.src : fallbackAvatar;
+
+    if (avatarMobile) avatarMobile.src = avatarSrc;
+    if (nameMobile && nameDesktop) {
+        nameMobile.textContent = nameDesktop.textContent || 'Guest Commander';
+    }
+    if (authLabelMobile && authLabelDesktop) {
+        authLabelMobile.textContent = authLabelDesktop.textContent || 'Log In';
+    }
+    if (authIconMobile && authIconDesktop) {
+        authIconMobile.src = authIconDesktop.src || 'images/profileicon.png';
+    }
+
+    const membershipDesktop = document.getElementById('nav-commander-membership-badge-row');
+    const membershipMobile = document.getElementById('portal-mobile-nav-membership-slot');
+    if (membershipDesktop && membershipMobile) {
+        const hasContent = membershipDesktop.innerHTML.trim().length > 0 && !membershipDesktop.hidden;
+        membershipMobile.innerHTML = hasContent ? membershipDesktop.innerHTML : '';
+        membershipMobile.hidden = !hasContent;
+    }
+}
+
+function syncPortalMobileNavMailboxIndicators(unreadCount) {
+    const count = Number.isFinite(unreadCount) ? unreadCount : 0;
+    const mobileCount = document.getElementById('portal-mobile-messages-unread');
+    const mobileBtn = document.getElementById('portal-mobile-messages-btn');
+
+    if (mobileCount) {
+        if (count > 0) {
+            mobileCount.textContent = String(count);
+            mobileCount.hidden = false;
+        } else {
+            mobileCount.textContent = '';
+            mobileCount.hidden = true;
+        }
+    }
+    if (mobileBtn) {
+        mobileBtn.classList.toggle('has-unread-messages', count > 0);
+    }
+}
+
+function applyPortalMobileNavPreviewRestrictions() {
+    document.querySelectorAll('.portal-mobile-nav-page-item[data-portal-view]').forEach((btn) => {
+        setPortalNavControlAccessState(btn, btn.getAttribute('data-portal-view'));
+    });
+}
+
+function bindPortalMobileNavDismissHandlers() {
+    if (document.documentElement.dataset.portalMobileNavBound === 'true') return;
+    document.documentElement.dataset.portalMobileNavBound = 'true';
+
+    document.addEventListener('click', (event) => {
+        const shell = document.getElementById('portal-mobile-nav-shell');
+        const menu = document.getElementById('portal-mobile-nav-menu');
+        if (!shell || !menu || menu.hidden) return;
+        if (shell.contains(event.target)) return;
+        closePortalMobileNavMenus();
+    });
+
+    document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape') closePortalMobileNavMenus();
+    });
+}
+
+function applyPortalNavPreviewRestrictions() {
+    applyPortalNavAccessRestrictions();
+}
+
+function applyPortalNavAccessRestrictions() {
+    document.querySelectorAll('.nav-tab[data-portal-view]').forEach((tab) => {
+        setPortalNavControlAccessState(tab, tab.getAttribute('data-portal-view'));
+    });
+
+    if (!isPortalNavViewAccessible(activeMainPortalView)) {
         switchMainPortalView('portal', null);
         document.querySelectorAll('.nav-tab').forEach((tab) => tab.classList.remove('active'));
-        const agePortalTab = Array.from(document.querySelectorAll('.nav-tab')).find(
-            (tab) => !PORTAL_PREVIEW_ONLY_VIEWS.includes(tab.getAttribute('data-portal-view'))
-                && tab.textContent.trim() === 'Age Portal'
-        );
+        const agePortalTab = document.querySelector('.nav-tab[data-portal-view="portal"]');
         if (agePortalTab) agePortalTab.classList.add('active');
+        syncPortalMobileNavChrome('portal');
     }
+
+    applyPortalGuestDeploymentChrome();
+    applyPortalMobileNavPreviewRestrictions();
 }
 
 /* Block 3: EXTENSIBLE SYSTEM PANEL VIEW CONVERTER SWITCH (ROUTING RECONCILED) */
 function switchMainPortalView(viewName, clickEvent, chatChannelKey) {
-    if (PORTAL_PREVIEW_ONLY_VIEWS.includes(viewName) && typeof isPortalPreviewNavEnabled === 'function' && !isPortalPreviewNavEnabled()) {
+    if (!isPortalNavViewAccessible(viewName)) {
         return;
     }
 
@@ -213,6 +563,8 @@ function switchMainPortalView(viewName, clickEvent, chatChannelKey) {
             } else {
                 restoreAgePortalHomeViewLayout(viewport);
             }
+            applyPortalGuestDeploymentChrome();
+            mountPortalMediaPlayerForViewport();
             break;
 
         case 'chat':
@@ -256,6 +608,8 @@ function switchMainPortalView(viewName, clickEvent, chatChannelKey) {
                 </div>
             `;
     }
+
+    syncPortalMobileNavChrome(viewName);
 }
 
 /** Release IDs from CHRONICLE_DATA (script.js), newest first — shown in Developer's Log sidebar. */
@@ -423,26 +777,12 @@ function restoreAgePortalHomeViewLayout(viewport) {
                     ${renderDevelopersLogSidebarShell()}
                 </div>
             </div>
-            <div class="portal-deployment-control-deck">
-                <h3 class="deployment-deck-title" id="dynamic-age-status-header">The Age has Yet to Arrive!</h3>
-                <div id="dynamic-age-sub-timer-display" class="timer-readout-default">-- : -- : -- : --</div>
-                <div class="deployment-action-button-row">
-                    <div class="action-btn-aura-housing aura-glow-red">
-                        <button class="deployment-image-trigger-btn" onclick="launchGameRoundSector(false, event)">
-                            <img src="images/joinagebtn.png" alt="Join active age">
-                        </button>
-                    </div>
-                    <div class="action-btn-aura-housing aura-glow-blue">
-                        <button class="deployment-image-trigger-btn" onclick="launchGameRoundSector(true, event)">
-                            <img src="images/joinagetutorialbtn.png" alt="Join tutorial age">
-                        </button>
-                    </div>
-                </div>
-            </div>
+            ${renderPortalDeploymentDeckMarkup()}
         </div>
     `;
     hydrateDevelopersLogDock();
     initializeTacticalButtonEarthquakeEngine();
+    applyPortalGuestDeploymentChrome();
 }
 
 /* Block 4: MAP INTERFACE DEPLOYMENT SECTOR ROUTER */
@@ -453,6 +793,13 @@ const JOIN_AGE_DEPLOY_PULSE_SETTLE_MS = 720;
 let joinAgePortalTransitionActive = false;
 
 function launchGameRoundSector(isTutorialModeActive, clickEvent) {
+    if (typeof isPortalUserAuthenticated === 'function' && !isPortalUserAuthenticated()) {
+        if (typeof openMainPortalGuestRegister === 'function') {
+            openMainPortalGuestRegister(clickEvent);
+        }
+        return;
+    }
+
     if (joinAgePortalTransitionActive) return;
     joinAgePortalTransitionActive = true;
 
@@ -476,7 +823,7 @@ function launchGameRoundSector(isTutorialModeActive, clickEvent) {
         }, JOIN_AGE_POST_SELECT_DELAY_MS);
     };
 
-    if (clickedHousing) {
+    if (clickedHousing && !isPortalMobileNavLayout()) {
         runJoinAgeDeployConfirmPulse(clickedHousing, () => {
             deployPulseFinished = true;
             attemptGamePageHandoff();
@@ -3013,11 +3360,68 @@ function buildPortalLoreReaderPanelMarkup(nation) {
             </button>
         </header>
         <div class="lore-reader-divider" aria-hidden="true"></div>
-        <div class="lore-reader-prose-scroll">
+        <div class="lore-reader-prose-scroll portal-gold-scrollbar">
             <p class="lore-reader-prose">${escapePortalLoreHtml(nation.detail)}</p>
         </div>
         </div>
     `;
+}
+
+function updatePortalLoreNationMobileTrigger(nation) {
+    const sigilSlot = document.getElementById('lore-nation-mobile-trigger-sigil');
+    const nameEl = document.getElementById('lore-nation-mobile-trigger-name');
+    if (!nation || !sigilSlot || !nameEl) return;
+
+    sigilSlot.innerHTML = buildPortalLoreNationCrestMarkup(nation.name, 'lore-nation-mobile-trigger-crest');
+    nameEl.textContent = nation.name;
+
+    document.querySelectorAll('.lore-nation-mobile-option').forEach((option) => {
+        option.classList.toggle('is-active', option.getAttribute('data-nation-id') === buildPortalLoreNationId(nation.name));
+    });
+}
+
+function closePortalLoreNationMobilePicker() {
+    const picker = document.getElementById('lore-nation-mobile-picker');
+    const options = document.getElementById('lore-nation-mobile-options');
+    const trigger = document.getElementById('lore-nation-mobile-trigger');
+    if (options) options.hidden = true;
+    if (trigger) trigger.setAttribute('aria-expanded', 'false');
+    if (picker) picker.classList.remove('is-picker-open');
+}
+
+function togglePortalLoreNationMobilePicker(event) {
+    if (event) event.stopPropagation();
+    const options = document.getElementById('lore-nation-mobile-options');
+    const trigger = document.getElementById('lore-nation-mobile-trigger');
+    const picker = document.getElementById('lore-nation-mobile-picker');
+    if (!options || !trigger) return;
+
+    const willOpen = options.hidden;
+    if (willOpen) {
+        options.hidden = false;
+        trigger.setAttribute('aria-expanded', 'true');
+        if (picker) picker.classList.add('is-picker-open');
+    } else {
+        closePortalLoreNationMobilePicker();
+    }
+}
+
+function selectPortalLoreNationFromMobilePicker(nationId, event) {
+    if (event) event.stopPropagation();
+    closePortalLoreNationMobilePicker();
+    if (!nationId) return;
+    selectPortalLoreNation(nationId);
+}
+
+function bindPortalLoreNationMobilePickerDismiss() {
+    if (window.portalLoreNationPickerDismissBound) return;
+    window.portalLoreNationPickerDismissBound = true;
+    document.addEventListener('click', (event) => {
+        const picker = document.getElementById('lore-nation-mobile-picker');
+        if (!picker || picker.classList.contains('is-picker-open') === false) return;
+        if (picker.contains(event.target)) return;
+        closePortalLoreNationMobilePicker();
+    });
 }
 
 function selectPortalLoreNation(nationId) {
@@ -3035,6 +3439,7 @@ function selectPortalLoreNation(nationId) {
     document.querySelectorAll('.lore-nation-chip').forEach((chip) => {
         chip.classList.toggle('is-active', chip.getAttribute('data-nation-id') === nationId);
     });
+    updatePortalLoreNationMobileTrigger(nation);
 
     const readerPanel = document.getElementById('lore-reader-panel');
     if (readerPanel) {
@@ -3043,6 +3448,8 @@ function selectPortalLoreNation(nationId) {
 }
 
 window.selectPortalLoreNation = selectPortalLoreNation;
+window.selectPortalLoreNationFromMobilePicker = selectPortalLoreNationFromMobilePicker;
+window.togglePortalLoreNationMobilePicker = togglePortalLoreNationMobilePicker;
 window.togglePortalLoreNarration = togglePortalLoreNarration;
 window.stopPortalLoreNarration = stopPortalLoreNarration;
 
@@ -3916,6 +4323,22 @@ function renderMasterLorePortalCanvas(viewport) {
         `;
     }).join('');
 
+    const nationMobileOptions = archives.map((nation) => {
+        const nationId = buildPortalLoreNationId(nation.name);
+        const crestMarkup = buildPortalLoreNationCrestMarkup(nation.name, 'lore-nation-mobile-option-crest');
+        return `
+            <button
+                type="button"
+                class="lore-nation-mobile-option"
+                data-nation-id="${nationId}"
+                onclick="selectPortalLoreNationFromMobilePicker('${nationId}', event)"
+            >
+                <span class="lore-nation-mobile-option-sigil" aria-hidden="true">${crestMarkup}</span>
+                <span class="lore-nation-mobile-option-name">${escapePortalLoreHtml(nation.name)}</span>
+            </button>
+        `;
+    }).join('');
+
     viewport.innerHTML = `
         <div class="lore-workspace-chassis">
             <header class="lore-codex-hero">
@@ -3927,7 +4350,25 @@ function renderMasterLorePortalCanvas(viewport) {
                 </p>
             </header>
             <div class="lore-codex-body">
-                <aside class="lore-nation-index-deck" aria-label="Nation codex index">
+                <div class="lore-nation-picker-mobile" id="lore-nation-mobile-picker">
+                    <p class="lore-nation-picker-label">Nation codex</p>
+                    <button
+                        type="button"
+                        class="lore-nation-mobile-trigger"
+                        id="lore-nation-mobile-trigger"
+                        aria-expanded="false"
+                        aria-controls="lore-nation-mobile-options"
+                        onclick="togglePortalLoreNationMobilePicker(event)"
+                    >
+                        <span class="lore-nation-mobile-trigger-sigil" id="lore-nation-mobile-trigger-sigil" aria-hidden="true"></span>
+                        <span class="lore-nation-mobile-trigger-name" id="lore-nation-mobile-trigger-name">Select nation</span>
+                        <span class="lore-nation-mobile-trigger-chevron" aria-hidden="true">▾</span>
+                    </button>
+                    <div class="lore-nation-mobile-options portal-gold-scrollbar" id="lore-nation-mobile-options" hidden>
+                        ${nationMobileOptions}
+                    </div>
+                </div>
+                <aside class="lore-nation-index-deck portal-desktop-lore-index" aria-label="Nation codex index">
                     <p class="lore-index-label">Nation codex</p>
                     <div class="lore-nation-index-scroll">
                         ${nationChips || '<p class="lore-index-empty">Nation archives are loading…</p>'}
@@ -3941,6 +4382,8 @@ function renderMasterLorePortalCanvas(viewport) {
             </div>
         </div>
     `;
+
+    bindPortalLoreNationMobilePickerDismiss();
 
     if (archives.length > 0) {
         selectPortalLoreNation(buildPortalLoreNationId(archives[0].name));
@@ -4180,6 +4623,27 @@ function triggerAudioPreviewSample(channelType) {
 }
 
 /* Block 21: LIVE VOLUME STREAM ENGINE CONSOLE CALIBRATIONS - RECONCILED BOOT ROUTINE */
+
+window.addEventListener('resize', () => {
+    const deck = document.getElementById('portal-floating-media-player-deck');
+    const toggleBtn = document.getElementById('media-player-expand-toggle');
+    if (deck && window.matchMedia('(min-width: 1025px)').matches) {
+        ensurePortalMediaPlayerCollapsedByDefault();
+    }
+    mountPortalMediaPlayerForViewport();
+    if (window.matchMedia('(min-width: 1025px)').matches) {
+        closePortalMobileNavMenus();
+    } else {
+        positionPortalMobileNavMenu();
+    }
+});
+
+window.addEventListener('scroll', () => {
+    const menu = document.getElementById('portal-mobile-nav-menu');
+    if (menu && !menu.hidden && isPortalMobileNavLayout()) {
+        positionPortalMobileNavMenu();
+    }
+}, { passive: true });
 
 window.addEventListener("DOMContentLoaded", () => {
     const bgMusic = getPortalBackgroundAudioElement();
@@ -4625,6 +5089,7 @@ function stopJoinAgeBuildSoundscape() {
 
 function bindJoinAgeDeploymentButtonHover(buttonChassis) {
     if (!buttonChassis || buttonChassis.dataset.earthquakeBound === 'true') return;
+    if (isPortalMobileNavLayout()) return;
     buttonChassis.dataset.earthquakeBound = 'true';
 
     let elapsedHoverSeconds = 0;
@@ -4696,7 +5161,13 @@ function initializeTacticalButtonEarthquakeEngine() {
     const deploymentHousings = document.querySelectorAll(
         '.action-btn-aura-housing.aura-glow-red, .action-btn-aura-housing.aura-glow-blue'
     );
-    deploymentHousings.forEach(bindJoinAgeDeploymentButtonHover);
+    deploymentHousings.forEach((housing) => {
+        if (isPortalMobileNavLayout()) {
+            clearJoinAgeButtonShakeState(housing);
+            return;
+        }
+        bindJoinAgeDeploymentButtonHover(housing);
+    });
 }
 
 const originalWindowInitHandshake = window.onload;
@@ -4711,14 +5182,85 @@ window.onload = () => {
 
 // JUKEBOX REPERTOIRE LIST LEDGER MAP: Expand this ledger array with your custom wav/mp3 files
 const royalArmiesPlaylistRepository = [
-    { title: "🎵 ARCHIMEDES' LULLABY", file: "audio/archimedeslullaby.wav" },
-    { title: "🎵 THE CHRONICLES OF AMNEK", file: "audio/archimedeslullaby.wav" }, // Re-using track asset for demonstration maps
-    { title: "🎵 THE ARCHON DESCENT", file: "audio/archimedeslullaby.wav" }
+    { title: "🎵 ARCHIMEDES' LULLABY", file: "audio/archimedeslullaby.wav" }
 ];
 
 let currentTrackIndexMarker = 0;
-let isShuffleModeActive = false;
-let isRepeatModeActive = false;
+const PORTAL_JUKEBOX_SHUFFLE_ENABLED = true;
+
+function pickNextShuffleTrackIndex() {
+    const len = royalArmiesPlaylistRepository.length;
+    if (len <= 1) return 0;
+    let next = currentTrackIndexMarker;
+    while (next === currentTrackIndexMarker) {
+        next = Math.floor(Math.random() * len);
+    }
+    return next;
+}
+
+function syncPortalPlaylistTrackListUI() {
+    document.querySelectorAll('.media-playlist-track-item').forEach((item) => {
+        const btn = item.querySelector('.media-playlist-track-btn');
+        const index = btn ? Number.parseInt(btn.getAttribute('data-track-index'), 10) : -1;
+        const isActive = index === currentTrackIndexMarker;
+        item.classList.toggle('is-active', isActive);
+        if (btn) {
+            btn.classList.toggle('is-active', isActive);
+            btn.setAttribute('aria-current', isActive ? 'true' : 'false');
+        }
+    });
+}
+
+function renderPortalMediaPlaylist() {
+    const list = document.getElementById('media-playlist-track-list');
+    if (!list) return;
+
+    list.innerHTML = royalArmiesPlaylistRepository.map((track, index) => `
+        <li class="media-playlist-track-item${index === currentTrackIndexMarker ? ' is-active' : ''}">
+            <button type="button"
+                class="media-playlist-track-btn${index === currentTrackIndexMarker ? ' is-active' : ''}"
+                data-track-index="${index}"
+                onclick="selectPortalPlaylistTrack(${index})"
+                aria-current="${index === currentTrackIndexMarker ? 'true' : 'false'}">
+                ${track.title}
+            </button>
+        </li>
+    `).join('');
+}
+
+function loadPortalPlaylistTrack(trackIndex, options = {}) {
+    const bgAudio = getPortalBackgroundAudioElement();
+    const trackLabel = document.getElementById('media-active-track-name');
+    const track = royalArmiesPlaylistRepository[trackIndex];
+
+    if (!bgAudio || !trackLabel || !track) return;
+
+    currentTrackIndexMarker = trackIndex;
+    trackLabel.innerText = track.title;
+
+    const sourceNode = bgAudio.querySelector('source');
+    if (sourceNode) {
+        sourceNode.src = track.file;
+    } else {
+        bgAudio.src = track.file;
+    }
+
+    bgAudio.removeAttribute('loop');
+    bgAudio.load();
+    bgAudio.addEventListener('loadedmetadata', () => syncMediaPlayerTimelineUI(bgAudio), { once: true });
+    syncPortalPlaylistTrackListUI();
+
+    if (options.autoplay) {
+        startPortalBackgroundMusic({ silentFail: true });
+    }
+}
+
+function advancePortalPlaylistTrack() {
+    const nextIndex = PORTAL_JUKEBOX_SHUFFLE_ENABLED
+        ? pickNextShuffleTrackIndex()
+        : (currentTrackIndexMarker + 1) % royalArmiesPlaylistRepository.length;
+    loadPortalPlaylistTrack(nextIndex, { autoplay: true });
+}
 
 function syncMediaPlayerTimelineUI(bgAudio) {
     const progressScrubber = document.getElementById('media-timeline-progress-scrubber');
@@ -4752,13 +5294,11 @@ function initializeAdvancedMediaJukeboxEngine() {
     bgAudio.addEventListener('timeupdate', refreshTimeline);
 
     bgAudio.addEventListener('ended', () => {
-        if (isRepeatModeActive) {
-            bgAudio.currentTime = 0;
-            bgAudio.play().catch(() => {});
-        } else {
-            executeTrackNavigationSkip('next');
-        }
+        advancePortalPlaylistTrack();
     });
+
+    renderPortalMediaPlaylist();
+    syncPortalPlaylistTrackListUI();
 
     if (bgAudio.readyState < 1) {
         bgAudio.load();
@@ -4831,44 +5371,20 @@ window.manuallyScrubActiveTrackTimeline = function(sliderElement) {
     syncMediaPlayerTimelineUI(bgAudio);
 };
 
+window.selectPortalPlaylistTrack = function(trackIndex) {
+    const index = Number.parseInt(trackIndex, 10);
+    if (!Number.isFinite(index) || index < 0 || index >= royalArmiesPlaylistRepository.length) return;
+    loadPortalPlaylistTrack(index, { autoplay: true });
+};
+
 window.executeTrackNavigationSkip = function(directionType) {
-    const bgAudio = document.getElementById('portal-background-theme-audio');
-    const trackLabel = document.getElementById('media-active-track-name');
-    
-    if (!bgAudio || !trackLabel) return;
-
-    if (isShuffleModeActive && directionType === 'next') {
-        currentTrackIndexMarker = Math.floor(Math.random() * royalArmiesPlaylistRepository.length);
-    } else {
-        if (directionType === 'next') {
-            currentTrackIndexMarker = (currentTrackIndexMarker + 1) % royalArmiesPlaylistRepository.length;
-        } else {
-            currentTrackIndexMarker = (currentTrackIndexMarker - 1 + royalArmiesPlaylistRepository.length) % royalArmiesPlaylistRepository.length;
-        }
+    if (directionType === 'prev') {
+        const prevIndex = (currentTrackIndexMarker - 1 + royalArmiesPlaylistRepository.length)
+            % royalArmiesPlaylistRepository.length;
+        loadPortalPlaylistTrack(prevIndex, { autoplay: true });
+        return;
     }
-
-    const targetedTrackSourceAsset = royalArmiesPlaylistRepository[currentTrackIndexMarker];
-    trackLabel.innerText = targetedTrackSourceAsset.title;
-
-    // Swap physical soundtrack audio file mapping channels inside the source injector element
-    const sourceNode = bgAudio.querySelector('source');
-    if (sourceNode) sourceNode.src = targetedTrackSourceAsset.file;
-    
-    bgAudio.load();
-    bgAudio.addEventListener('loadedmetadata', () => syncMediaPlayerTimelineUI(bgAudio), { once: true });
-    startPortalBackgroundMusic({ silentFail: true });
-};
-
-window.togglePlaylistShuffleState = function() {
-    isShuffleModeActive = !isShuffleModeActive;
-    const btn = document.getElementById('media-shuffle-toggle');
-    if (btn) btn.classList.toggle('utility-active-glow', isShuffleModeActive);
-};
-
-window.togglePlaylistRepeatState = function() {
-    isRepeatModeActive = !isRepeatModeActive;
-    const btn = document.getElementById('media-repeat-toggle');
-    if (btn) btn.classList.toggle('utility-active-glow', isRepeatModeActive);
+    advancePortalPlaylistTrack();
 };
 
 function formatMediaClockSecondsToString(seconds) {
@@ -4883,17 +5399,72 @@ window.onload = () => {
     if (typeof existingWindowMediaLoadHook === 'function') existingWindowMediaLoadHook();
     initializeAdvancedMediaJukeboxEngine();
     initializeTacticalButtonEarthquakeEngine();
+    mountPortalMediaPlayerForViewport();
+    ensurePortalMediaPlayerCollapsedByDefault();
+    window.cachedAgePortalViewportHTML = snapshotAgePortalViewportForCache();
     if (getPortalBackgroundAudioElement()?.paused) {
         startPortalBackgroundMusic({ silentFail: true });
     }
 };
 
+function syncPortalMediaPlayerExpandUI() {
+    const deck = document.getElementById('portal-floating-media-player-deck');
+    const toggleBtn = document.getElementById('media-player-expand-toggle');
+    if (!deck || !toggleBtn) return;
+
+    const isExpanded = deck.classList.contains('is-media-expanded');
+    toggleBtn.setAttribute('aria-expanded', isExpanded ? 'true' : 'false');
+    toggleBtn.setAttribute('aria-label', isExpanded ? 'Collapse media player' : 'Expand media player');
+    toggleBtn.title = isExpanded ? 'Collapse player' : 'Expand player';
+}
+
+function togglePortalMediaPlayerExpanded() {
+    const deck = document.getElementById('portal-floating-media-player-deck');
+    if (!deck) return;
+
+    deck.classList.toggle('is-media-expanded');
+    syncPortalMediaPlayerExpandUI();
+}
+
+function ensurePortalMediaPlayerCollapsedByDefault() {
+    const deck = document.getElementById('portal-floating-media-player-deck');
+    if (!deck) return;
+    deck.classList.remove('is-media-expanded');
+    syncPortalMediaPlayerExpandUI();
+}
+
+window.togglePortalMediaPlayerExpanded = togglePortalMediaPlayerExpanded;
+window.renderPortalMediaPlaylist = renderPortalMediaPlaylist;
+window.mountPortalMediaPlayerForViewport = mountPortalMediaPlayerForViewport;
 window.startPortalBackgroundMusic = startPortalBackgroundMusic;
 window.applyPortalBackgroundMusicVolume = applyPortalBackgroundMusicVolume;
 window.hydratePortalVolumeStateFromStorage = hydratePortalVolumeStateFromStorage;
 window.switchMainPortalView = switchMainPortalView;
+window.togglePortalMobileNavMenu = togglePortalMobileNavMenu;
+window.togglePortalMobileCommanderSubmenu = togglePortalMobileCommanderSubmenu;
+window.portalMobileNavSelectView = portalMobileNavSelectView;
+window.portalMobileNavCommanderAction = portalMobileNavCommanderAction;
+window.portalMobileNavAuthAction = portalMobileNavAuthAction;
+window.syncPortalMobileNavIdentity = syncPortalMobileNavIdentity;
+window.syncPortalMobileNavChrome = syncPortalMobileNavChrome;
+window.syncPortalMobileNavMailboxIndicators = syncPortalMobileNavMailboxIndicators;
+window.positionPortalMobileNavMenu = positionPortalMobileNavMenu;
 window.triggerMainDashboardLogout = triggerMainDashboardLogout;
+window.applyPortalNavAccessRestrictions = applyPortalNavAccessRestrictions;
+window.applyPortalGuestDeploymentChrome = applyPortalGuestDeploymentChrome;
+window.recacheAgePortalViewportSnapshot = recacheAgePortalViewportSnapshot;
+window.isPortalNavViewAccessible = isPortalNavViewAccessible;
 window.closeMainLogoutConfirmationWindow = closeMainLogoutConfirmationWindow;
 window.executeLogoutRedirect = executeLogoutRedirect;
 window.notifyPortalAgeSessionLeave = notifyPortalAgeSessionLeave;
 window.notifyPortalAgeSessionJoin = notifyPortalAgeSessionJoin;
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => {
+        mountPortalMediaPlayerForViewport();
+        ensurePortalMediaPlayerCollapsedByDefault();
+    });
+} else {
+    mountPortalMediaPlayerForViewport();
+    ensurePortalMediaPlayerCollapsedByDefault();
+}

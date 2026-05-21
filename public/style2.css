@@ -337,6 +337,22 @@
     border-bottom: 3px solid #b89030 !important;
 }
 
+.nav-tab.portal-nav-guest-hidden,
+.portal-mobile-nav-page-item.portal-nav-guest-hidden {
+    display: none !important;
+}
+
+body.portal-guest-mode .nav-tab[data-portal-view="chat"],
+body.portal-guest-mode .nav-tab[data-portal-view="lore"],
+body.portal-guest-mode .nav-tab[data-portal-view="royalty"],
+body.portal-guest-mode .nav-tab[data-portal-view="chronicles"],
+body.portal-guest-mode .portal-mobile-nav-page-item[data-portal-view="chat"],
+body.portal-guest-mode .portal-mobile-nav-page-item[data-portal-view="lore"],
+body.portal-guest-mode .portal-mobile-nav-page-item[data-portal-view="royalty"],
+body.portal-guest-mode .portal-mobile-nav-page-item[data-portal-view="chronicles"] {
+    display: none !important;
+}
+
 .nav-tab.nav-tab-preview-locked,
 .nav-tab.nav-tab-preview-locked:hover,
 .nav-tab.nav-tab-preview-locked.active {
@@ -588,6 +604,14 @@
     letter-spacing: 1px !important;
 }
 
+.metric-label-short {
+    display: none !important;
+}
+
+.metric-label-full {
+    display: inline !important;
+}
+
 .metric-live-data-value {
     font-family: 'Consolas', 'Courier New', monospace !important;
     font-size: 0.88rem !important;
@@ -722,6 +746,78 @@
     padding-left: 1em !important;
     text-indent: -1em !important;
     margin-top: 0.35em !important;
+}
+
+/* Block 10b: Guest JOIN NOW deployment CTA (shape-following green glow) */
+.portal-deployment-guest-cta {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 100% !important;
+    margin: 8px 0 12px 0 !important;
+}
+
+.portal-join-now-aura-housing {
+    position: relative !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    background: transparent !important;
+    border: none !important;
+    padding: 0 !important;
+    overflow: visible !important;
+}
+
+.portal-join-now-trigger-btn {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    border: none !important;
+    background: transparent !important;
+    cursor: pointer !important;
+    line-height: 0 !important;
+    overflow: visible !important;
+}
+
+.portal-join-now-artwork {
+    display: block !important;
+    width: min(92vw, 420px) !important;
+    height: auto !important;
+    max-width: 100% !important;
+    pointer-events: none !important;
+    animation: portalJoinNowGreenGlow 2.6s ease-in-out infinite !important;
+}
+
+@keyframes portalJoinNowGreenGlow {
+    0%, 100% {
+        filter:
+            drop-shadow(0 0 6px rgba(72, 220, 120, 0.55))
+            drop-shadow(0 0 14px rgba(48, 180, 90, 0.4))
+            drop-shadow(0 0 22px rgba(32, 140, 70, 0.25));
+    }
+    50% {
+        filter:
+            drop-shadow(0 0 10px rgba(100, 255, 160, 0.9))
+            drop-shadow(0 0 22px rgba(60, 210, 110, 0.65))
+            drop-shadow(0 0 36px rgba(40, 170, 85, 0.45))
+            drop-shadow(0 0 48px rgba(24, 130, 60, 0.3));
+    }
+}
+
+.portal-join-now-trigger-btn:hover .portal-join-now-artwork,
+.portal-join-now-trigger-btn:focus-visible .portal-join-now-artwork {
+    animation-duration: 1.8s !important;
+}
+
+body.portal-guest-mode #portal-deployment-member-block {
+    display: none !important;
+}
+
+body:not(.portal-guest-mode) #portal-deployment-guest-cta {
+    display: none !important;
 }
 
 /* Block 11: THE AUTOMATIC DEPLOYMENT HORIZONTAL CENTERING DECK */
@@ -4611,9 +4707,9 @@
     z-index: 999999999 !important; /* Floats safely far above background tiles grids */
     
     width: 290px !important;
-    height: 155px !important; 
+    height: auto !important;
     min-height: 155px !important;
-    max-height: 155px !important;
+    max-height: none !important;
     
     background: #15181f !important;
     background-image: linear-gradient(135deg, #242936 0%, #15181f 50%, #0a0c10 100%) !important;
@@ -4656,6 +4752,65 @@
     align-items: center !important;
     gap: 12px !important;
     height: 36px !important;
+}
+
+/* Expand control — collapses full player chrome (all viewports) */
+.media-player-expand-toggle {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    flex: 0 0 auto !important;
+    width: 24px !important;
+    height: 24px !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: 1px solid rgba(184, 144, 48, 0.35) !important;
+    border-radius: 3px !important;
+    background: rgba(13, 15, 20, 0.9) !important;
+    color: #c5a059 !important;
+    cursor: pointer !important;
+    box-sizing: border-box !important;
+}
+
+.media-player-expand-icon {
+    font-size: 0.75rem !important;
+    line-height: 1 !important;
+    transition: transform 0.2s ease !important;
+}
+
+#portal-floating-media-player-deck.is-media-expanded .media-player-expand-icon {
+    transform: rotate(180deg) !important;
+}
+
+#portal-floating-media-player-deck:not(.is-media-expanded) .media-player-expanded-only {
+    display: none !important;
+}
+
+#portal-floating-media-player-deck:not(.is-media-expanded) {
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    padding: 10px 12px 8px !important;
+    gap: 6px !important;
+    justify-content: flex-start !important;
+}
+
+#portal-floating-media-player-deck:not(.is-media-expanded) .media-track-identity-row {
+    height: auto !important;
+    min-height: 0 !important;
+}
+
+#portal-floating-media-player-deck.is-media-expanded {
+    height: auto !important;
+    min-height: 155px !important;
+    max-height: none !important;
+    padding: 12px 14px !important;
+    gap: 8px !important;
+}
+
+/* Mobile portal nav — hidden on desktop (see mobile-responsive.css) */
+.portal-mobile-nav-shell {
+    display: none;
 }
 
 #portal-floating-media-player-deck .media-disc-vinyl-icon-housing {
@@ -4757,9 +4912,76 @@
 /* 3. CONTROL ACTIONS TIMELINE INTERFACE ROW TRAYS */
 #portal-floating-media-player-deck .media-control-buttons-row {
     flex-direction: row !important;
-    justify-content: space-between !important;
+    justify-content: center !important;
     align-items: center !important;
     height: 32px !important;
+}
+
+#portal-floating-media-player-deck .media-playlist-block {
+    display: flex !important;
+    flex-direction: column !important;
+    width: 100% !important;
+    gap: 4px !important;
+    margin-top: 2px !important;
+}
+
+#portal-floating-media-player-deck .media-playlist-track-list {
+    list-style: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+    max-height: 108px !important;
+    overflow-y: auto !important;
+    border: 1px solid rgba(184, 144, 48, 0.2) !important;
+    border-radius: 3px !important;
+    background: rgba(8, 10, 14, 0.92) !important;
+    box-sizing: border-box !important;
+}
+
+#portal-floating-media-player-deck .media-playlist-track-item {
+    margin: 0 !important;
+    padding: 2px !important;
+    border-bottom: 1px solid rgba(184, 144, 48, 0.08) !important;
+    border-radius: 3px !important;
+    box-sizing: border-box !important;
+}
+
+#portal-floating-media-player-deck .media-playlist-track-item:last-child {
+    border-bottom: none !important;
+}
+
+#portal-floating-media-player-deck .media-playlist-track-item.is-active {
+    padding: 1px !important;
+    border: 1px solid rgba(255, 215, 0, 0.55) !important;
+    background: rgba(184, 144, 48, 0.12) !important;
+    box-shadow: inset 0 0 10px rgba(255, 215, 0, 0.12), 0 0 8px rgba(184, 144, 48, 0.2) !important;
+}
+
+#portal-floating-media-player-deck .media-playlist-track-btn {
+    display: block !important;
+    width: 100% !important;
+    padding: 7px 10px !important;
+    border: 1px solid transparent !important;
+    border-radius: 2px !important;
+    background: transparent !important;
+    color: #b0b8c4 !important;
+    font-family: 'Share Tech Mono', 'Consolas', monospace !important;
+    font-size: 0.62rem !important;
+    text-align: left !important;
+    cursor: pointer !important;
+    box-sizing: border-box !important;
+}
+
+#portal-floating-media-player-deck .media-playlist-track-btn:hover {
+    background: rgba(184, 144, 48, 0.1) !important;
+    color: #f1e0ac !important;
+}
+
+#portal-floating-media-player-deck .media-playlist-track-btn.is-active {
+    background: rgba(184, 144, 48, 0.2) !important;
+    border-color: rgba(255, 215, 0, 0.35) !important;
+    color: #ffd700 !important;
+    text-shadow: 0 0 6px rgba(255, 215, 0, 0.35) !important;
 }
 
 #portal-floating-media-player-deck .media-deck-btn {
@@ -5320,6 +5542,34 @@
     min-height: 90px !important;
 }
 
+/* Portal gold scrollbar — match commander hub / profile aesthetic */
+.portal-gold-scrollbar {
+    scrollbar-width: thin !important;
+    scrollbar-color: #9a7a32 rgba(10, 8, 6, 0.88) !important;
+}
+
+.portal-gold-scrollbar::-webkit-scrollbar {
+    width: 9px !important;
+    height: 9px !important;
+    display: block !important;
+}
+
+.portal-gold-scrollbar::-webkit-scrollbar-track {
+    background: rgba(10, 8, 6, 0.88) !important;
+    border-radius: 4px !important;
+    border: 1px solid rgba(184, 144, 48, 0.12) !important;
+}
+
+.portal-gold-scrollbar::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, #c5a059 0%, #7a5f24 100%) !important;
+    border-radius: 4px !important;
+    border: 1px solid rgba(255, 215, 0, 0.22) !important;
+}
+
+.portal-gold-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(180deg, #ffd700 0%, #9a7a32 100%) !important;
+}
+
 /* Profile: themed scrollbar */
 #commander-hub-modal.commander-hub-profile-active .commander-hub-body,
 #commander-hub-modal.commander-hub-profile-active .settings-scroll-wrapper.profile-fullscreen-canvas,
@@ -5470,18 +5720,54 @@
     display: none !important;
 }
 
-body#main-dashboard-canvas.developer-maintenance-alert-active {
-    padding-top: var(--developer-maintenance-alert-offset, 0px) !important;
-    box-sizing: border-box !important;
+/* Age Portal desktop (≥1025px): fixed banner at very top; mobile in-flow — mobile-responsive.css */
+@media (min-width: 1025px) {
+    body#main-dashboard-canvas .developer-maintenance-alert-bar.portal-maintenance-alert-below-nav {
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        width: 100% !important;
+        z-index: 100000000 !important;
+        flex-shrink: 0 !important;
+        margin: 0 !important;
+    }
+
+    body#main-dashboard-canvas.developer-maintenance-alert-active {
+        padding-top: var(--developer-maintenance-alert-offset, 0px) !important;
+        box-sizing: border-box !important;
+    }
+
+    body#main-dashboard-canvas.developer-maintenance-alert-active .main-portal-nav-bar {
+        top: 0 !important;
+    }
+
+    /* Avatar commander menu must extend below nav without clipping */
+    .portal-mobile-nav-bar-clip {
+        overflow: visible !important;
+    }
+
+    .main-portal-nav-bar {
+        overflow: visible !important;
+    }
+
+    .nav-embedded-account-label {
+        overflow: visible !important;
+        z-index: 100000 !important;
+    }
+
+    .nav-avatar-hub-wrapper {
+        z-index: 100001 !important;
+    }
+
+    .avatar-hover-dropdown-menu {
+        z-index: 100002 !important;
+    }
 }
 
 body.developer-maintenance-alert-active #page-landing {
     padding-top: var(--developer-maintenance-alert-offset, 0px) !important;
     box-sizing: border-box !important;
-}
-
-body#main-dashboard-canvas.developer-maintenance-alert-active .main-portal-nav-bar {
-    top: var(--developer-maintenance-alert-offset, 0px) !important;
 }
 
 /* ============================================================
@@ -5921,6 +6207,11 @@ body#main-dashboard-canvas.developer-maintenance-alert-active .main-portal-nav-b
     overflow: hidden !important;
 }
 
+/* Mobile nation picker — shown only in mobile-responsive.css (≤1024px) */
+.lore-nation-picker-mobile {
+    display: none !important;
+}
+
 .lore-nation-index-deck {
     display: flex !important;
     flex-direction: column !important;
@@ -6236,21 +6527,4 @@ body#main-dashboard-canvas.developer-maintenance-alert-active .main-portal-nav-b
     color: var(--lore-nation-accent, #e8c96a) !important;
 }
 
-@media (max-width: 900px) {
-    .lore-codex-body {
-        grid-template-columns: 1fr !important;
-        grid-template-rows: minmax(180px, 34vh) minmax(0, 1fr) !important;
-    }
-
-    .lore-reader-header {
-        grid-template-columns: 56px minmax(0, 1fr) !important;
-        grid-template-rows: auto auto !important;
-    }
-
-    .lore-audio-play-btn {
-        grid-column: 1 / -1 !important;
-        flex-direction: row !important;
-        width: 100% !important;
-        margin-top: 4px !important;
-    }
-}
+/* Lore codex mobile/tablet layout: mobile-responsive.css (max-width: 1024px) */

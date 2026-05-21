@@ -25,6 +25,18 @@
 /* Proportional text scaling: rem-based sizes keep hierarchy (titles vs body) */
 html {
     font-size: calc(var(--portal-root-font-size) * var(--text-scale, 1));
+    text-align: justify;
+}
+
+/* Universal default alignment; UI chrome and form fields keep their own rules below */
+body {
+    text-align: justify;
+}
+
+input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]),
+textarea,
+select {
+    text-align: left;
 }
 
 /* --- High Contrast Shield --- */
