@@ -51,7 +51,8 @@ function openCommanderHubModal(initialTab, clickEvent) {
 
 function openCommanderHubMessagesInbox(clickEvent) {
     if (clickEvent) clickEvent.stopPropagation();
-    window.pendingMessagesHubChannel = 'inbox';
+    window.pendingMessagesHubChannel = 'messages';
+    window.pendingMessagesFolder = 'inbox';
     openCommanderHubModal('messages', clickEvent);
 }
 

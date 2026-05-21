@@ -3444,6 +3444,70 @@
     height: auto !important;
 }
 
+#commander-hub-modal .message-mailbox-canvas {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 0 !important;
+    min-height: 0 !important;
+}
+
+#commander-hub-modal .msg-folder-tab-bar {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: stretch !important;
+    gap: 0 !important;
+    flex-shrink: 0 !important;
+    border-bottom: 1px solid rgba(184, 144, 48, 0.35) !important;
+    margin-bottom: 8px !important;
+    padding: 0 4px !important;
+}
+
+#commander-hub-modal .msg-folder-tab {
+    flex: 1 1 0 !important;
+    min-width: 0 !important;
+    padding: 8px 12px !important;
+    margin: 0 !important;
+    border: none !important;
+    border-bottom: 2px solid transparent !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    color: rgba(241, 224, 172, 0.65) !important;
+    font-family: 'Segoe UI', sans-serif !important;
+    font-size: 0.72rem !important;
+    font-weight: 600 !important;
+    letter-spacing: 0.04em !important;
+    text-transform: uppercase !important;
+    cursor: pointer !important;
+    transition: color 0.15s ease, border-color 0.15s ease, background 0.15s ease !important;
+}
+
+#commander-hub-modal .msg-folder-tab:hover {
+    color: #f1e0ac !important;
+    background: rgba(43, 36, 26, 0.45) !important;
+}
+
+#commander-hub-modal .msg-folder-tab.active {
+    color: #f1e0ac !important;
+    border-bottom-color: #c9a227 !important;
+    background: rgba(43, 36, 26, 0.65) !important;
+}
+
+#commander-hub-modal .msg-folder-panel {
+    display: flex !important;
+    flex-direction: column !important;
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+}
+
+#commander-hub-modal .msg-folder-panel-hidden {
+    display: none !important;
+}
+
+#commander-hub-modal .msg-folder-panel-active .msg-portal-scroll-bin {
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+}
+
 #commander-hub-modal.commander-hub-messages-active .message-compose-canvas {
     height: 100% !important;
     max-height: 100% !important;

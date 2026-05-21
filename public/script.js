@@ -378,7 +378,7 @@ function closeSecurityOverlayWindow() {
 
 // Live Storage arrays for testing runtime mutations without servers
 var activeWartimeRecipients = []; 
-var isMassDeletionActive = { inbox: false, system: false };
+var isMassDeletionActive = { inbox: false, system: false, sent: false };
 var messageComposeMode = null;
 var messageComposeSource = null;
 var messageComposeApplyingFromDossier = false;
@@ -484,6 +484,8 @@ function renderRecipientDrawerRootCategories() {
 var playerInboundInboxDossier = [];
 var playerSystemInboxDossier = [];
 var playerDraftsInboxDossier = [];
+var playerSentInboxDossier = [];
+var activeMessagesFolder = 'inbox';
 
 function getCommanderMailboxStorageKey() {
     const user = typeof getActiveCommanderUsername === 'function' ? getActiveCommanderUsername() : '';
@@ -498,6 +500,7 @@ function loadCommanderMailboxDossiersFromStorage() {
         if (Array.isArray(data.inbox)) playerInboundInboxDossier = data.inbox;
         if (Array.isArray(data.system)) playerSystemInboxDossier = data.system;
         if (Array.isArray(data.drafts)) playerDraftsInboxDossier = data.drafts;
+        if (Array.isArray(data.sent)) playerSentInboxDossier = data.sent;
     } catch (err) {
         console.warn('Mailbox restore skipped:', err.message);
     }
@@ -508,7 +511,8 @@ function saveCommanderMailboxDossiersToStorage() {
         localStorage.setItem(getCommanderMailboxStorageKey(), JSON.stringify({
             inbox: playerInboundInboxDossier,
             system: playerSystemInboxDossier,
-            drafts: playerDraftsInboxDossier
+            drafts: playerDraftsInboxDossier,
+            sent: playerSentInboxDossier
         }));
     } catch (err) {
         console.warn('Mailbox save skipped:', err.message);
@@ -541,6 +545,7 @@ async function fetchCommanderMailboxFromServer() {
         playerInboundInboxDossier = Array.isArray(payload.inbox) ? payload.inbox : [];
         playerSystemInboxDossier = Array.isArray(payload.system) ? payload.system : [];
         playerDraftsInboxDossier = Array.isArray(payload.drafts) ? payload.drafts : [];
+        playerSentInboxDossier = Array.isArray(payload.sent) ? payload.sent : [];
         persistMailboxAndSyncNav();
         return true;
     } catch (err) {
@@ -1484,14 +1489,31 @@ const nationLore = {
         {
             name: "Messages",
             detail: `
-                <div class="message-workspace-canvas">
-                    <div class="msg-portal-toolbar">
-                        <!-- FIXED TARGET EXTENSION ID MATCHED DIRECTLY TO RENDERER -->
-                        <button class="settings-btn mini-btn" id="msg-multi-delete-toggle" onclick="toggleMassDeletionMode('inbox')">Delete Multiple</button>
-                        <button class="settings-btn mini-btn msg-drawer-pane-hidden" id="msg-select-all-btn" onclick="executeSelectAllMessageCheckboxes('inbox')">Select All</button>
-                        <button class="settings-btn mini-btn msg-drawer-pane-hidden" id="msg-confirm-delete-btn" style="border-color: #cc0000 !important; color: #ff9999 !important;" onclick="executeMassDossierPurge('inbox')">Delete selected</button>
+                <div class="message-workspace-canvas message-mailbox-canvas">
+                    <nav class="msg-folder-tab-bar" aria-label="Message folders">
+                        <button type="button" class="msg-folder-tab active" data-msg-folder="inbox" onclick="activateMessagesFolder('inbox', event)">Inbox</button>
+                        <button type="button" class="msg-folder-tab" data-msg-folder="drafts" onclick="activateMessagesFolder('drafts', event)">Drafts</button>
+                        <button type="button" class="msg-folder-tab" data-msg-folder="sent" onclick="activateMessagesFolder('sent', event)">Sent</button>
+                    </nav>
+                    <div class="msg-folder-panel msg-folder-panel-active" id="msg-folder-panel-inbox" data-msg-folder-panel="inbox">
+                        <div class="msg-portal-toolbar">
+                            <button class="settings-btn mini-btn" id="msg-multi-delete-toggle" onclick="toggleMassDeletionMode('inbox')">Delete Multiple</button>
+                            <button class="settings-btn mini-btn msg-drawer-pane-hidden" id="msg-select-all-btn" onclick="executeSelectAllMessageCheckboxes('inbox')">Select All</button>
+                            <button class="settings-btn mini-btn msg-drawer-pane-hidden" id="msg-confirm-delete-btn" style="border-color: #cc0000 !important; color: #ff9999 !important;" onclick="executeMassDossierPurge('inbox')">Delete selected</button>
+                        </div>
+                        <div class="msg-portal-scroll-bin" id="msg-inbox-render-dock"></div>
                     </div>
-                    <div class="msg-portal-scroll-bin" id="msg-inbox-render-dock"></div>
+                    <div class="msg-folder-panel msg-folder-panel-hidden" id="msg-folder-panel-drafts" data-msg-folder-panel="drafts">
+                        <div class="msg-portal-scroll-bin" id="msg-drafts-render-dock"></div>
+                    </div>
+                    <div class="msg-folder-panel msg-folder-panel-hidden" id="msg-folder-panel-sent" data-msg-folder-panel="sent">
+                        <div class="msg-portal-toolbar">
+                            <button class="settings-btn mini-btn" id="sent-multi-delete-toggle" onclick="toggleMassDeletionMode('sent')">Delete Multiple</button>
+                            <button class="settings-btn mini-btn msg-drawer-pane-hidden" id="sent-select-all-btn" onclick="executeSelectAllMessageCheckboxes('sent')">Select All</button>
+                            <button class="settings-btn mini-btn msg-drawer-pane-hidden" id="sent-confirm-delete-btn" style="border-color: #cc0000 !important; color: #ff9999 !important;" onclick="executeMassDossierPurge('sent')">Delete selected</button>
+                        </div>
+                        <div class="msg-portal-scroll-bin" id="msg-sent-render-dock"></div>
+                    </div>
                 </div>
             `
         },
@@ -1509,14 +1531,6 @@ const nationLore = {
                 </div>
             `
         },
-        {
-            name: "Drafts",
-            detail: `
-                <div class="message-workspace-canvas">
-                    <div class="msg-portal-scroll-bin" id="msg-drafts-render-dock"></div>
-                </div>
-            `
-        }
     ],
 
        /* --- Block 17: System Settings Framework --- */
@@ -1842,12 +1856,50 @@ function reloadProfilePanelView() {
 function reloadMessagesPanelView() {
     if (document.getElementById('commander-hub-modal')?.classList.contains('is-visible')) {
         if (typeof loadCommanderHubSection === 'function') {
-            window.pendingMessagesHubChannel = 'inbox';
+            window.pendingMessagesHubChannel = 'messages';
+            window.pendingMessagesFolder = activeMessagesFolder || 'inbox';
             loadCommanderHubSection('messages');
         }
         return;
     }
     if (typeof loadLore === 'function') loadLore('messages');
+}
+
+function normalizeMessagesHubChannelKey(trackKey) {
+    if (trackKey === 'inbox' || trackKey === 'drafts' || trackKey === 'sent') {
+        return { channel: 'messages', folder: trackKey };
+    }
+    if (trackKey === 'messages') {
+        return { channel: 'messages', folder: activeMessagesFolder || 'inbox' };
+    }
+    return { channel: trackKey, folder: null };
+}
+
+function activateMessagesFolder(folderKey, clickEvent) {
+    if (clickEvent) clickEvent.stopPropagation();
+    if (typeof playToggleLeverSFX === 'function') playToggleLeverSFX();
+
+    const allowed = ['inbox', 'drafts', 'sent'];
+    activeMessagesFolder = allowed.includes(folderKey) ? folderKey : 'inbox';
+
+    document.querySelectorAll('.msg-folder-tab').forEach((tab) => {
+        tab.classList.toggle('active', tab.dataset.msgFolder === activeMessagesFolder);
+    });
+
+    document.querySelectorAll('.msg-folder-panel').forEach((panel) => {
+        const isActive = panel.dataset.msgFolderPanel === activeMessagesFolder;
+        panel.classList.toggle('msg-folder-panel-active', isActive);
+        panel.classList.toggle('msg-folder-panel-hidden', !isActive);
+    });
+
+    if (isMassDeletionActive.inbox && activeMessagesFolder !== 'inbox') {
+        isMassDeletionActive.inbox = false;
+    }
+    if (isMassDeletionActive.sent && activeMessagesFolder !== 'sent') {
+        isMassDeletionActive.sent = false;
+    }
+
+    fetchCommanderMailboxFromServer().finally(() => renderDossierPortalListHTML(activeMessagesFolder));
 }
 
 function activateMessagesHubChannel(trackKey, mount, activeBtn) {
@@ -1857,10 +1909,14 @@ function activateMessagesHubChannel(trackKey, mount, activeBtn) {
     const detailsHeader = mount.detailsHeader;
     const subnavItemClass = mount.subnavItemClass;
 
-    const tabNamesMapping = ['Send Message', 'Inbox', 'System Messages', 'Drafts'];
-    const trackIdentifiers = ['send', 'inbox', 'system', 'drafts'];
-    const channelIndex = trackIdentifiers.indexOf(trackKey);
-    const tabLabel = tabNamesMapping[channelIndex >= 0 ? channelIndex : 1] || 'Inbox';
+    const normalized = normalizeMessagesHubChannelKey(trackKey);
+    const resolvedTrackKey = normalized.channel;
+    if (normalized.folder) activeMessagesFolder = normalized.folder;
+
+    const tabNamesMapping = ['Send Message', 'Messages', 'System Messages'];
+    const trackIdentifiers = ['send', 'messages', 'system'];
+    const channelIndex = trackIdentifiers.indexOf(resolvedTrackKey);
+    const tabLabel = tabNamesMapping[channelIndex >= 0 ? channelIndex : 1] || 'Messages';
 
     if (typeof playToggleLeverSFX === 'function') playToggleLeverSFX();
     markHubChannelTabActive(activeBtn, container);
@@ -1870,9 +1926,14 @@ function activateMessagesHubChannel(trackKey, mount, activeBtn) {
     if (leftHeader) leftHeader.innerText = 'CHANNELS';
     if (detailsHeader) detailsHeader.innerHTML = tabLabel.toUpperCase();
 
-    if (trackKey !== 'send') {
+    if (resolvedTrackKey === 'messages') {
         clearMessageComposeContext();
-        fetchCommanderMailboxFromServer().finally(() => renderDossierPortalListHTML(trackKey));
+        fetchCommanderMailboxFromServer().finally(() => {
+            activateMessagesFolder(activeMessagesFolder || 'inbox');
+        });
+    } else if (resolvedTrackKey === 'system') {
+        clearMessageComposeContext();
+        fetchCommanderMailboxFromServer().finally(() => renderDossierPortalListHTML('system'));
     } else {
         const drawer = document.getElementById('msg-directory-floating-drawer');
         if (drawer) drawer.className = 'msg-floating-drawer-hidden';
@@ -1891,9 +1952,27 @@ function mountMessagesHubView(mount, preferredChannel) {
 
     if (!body || !container) return;
 
-    const tabNamesMapping = ['Send Message', 'Inbox', 'System Messages', 'Drafts'];
-    const trackIdentifiers = ['send', 'inbox', 'system', 'drafts'];
-    const startChannel = trackIdentifiers.includes(preferredChannel) ? preferredChannel : 'inbox';
+    const tabNamesMapping = ['Send Message', 'Messages', 'System Messages'];
+    const trackIdentifiers = ['send', 'messages', 'system'];
+
+    let startFolder = 'inbox';
+    let startChannel = 'messages';
+    if (preferredChannel === 'inbox' || preferredChannel === 'drafts' || preferredChannel === 'sent') {
+        startFolder = preferredChannel;
+        startChannel = 'messages';
+    } else if (trackIdentifiers.includes(preferredChannel)) {
+        startChannel = preferredChannel;
+    } else if (preferredChannel === 'system') {
+        startChannel = 'system';
+    }
+
+    if (window.pendingMessagesFolder) {
+        startFolder = window.pendingMessagesFolder;
+        startChannel = 'messages';
+        window.pendingMessagesFolder = null;
+    }
+
+    activeMessagesFolder = startFolder;
     const startIndex = trackIdentifiers.indexOf(startChannel);
 
     if (leftHeader) leftHeader.innerText = 'CHANNELS';
@@ -1929,9 +2008,11 @@ function mountMessagesHubView(mount, preferredChannel) {
         const drawer = document.getElementById('msg-directory-floating-drawer');
         if (drawer) drawer.className = 'msg-floating-drawer-hidden';
         fetchCommanderMailboxFromServer().then(() => {
-            renderDossierPortalListHTML('inbox');
-            renderDossierPortalListHTML('system');
-            renderDossierPortalListHTML('drafts');
+            if (startChannel === 'messages') {
+                activateMessagesFolder(startFolder);
+            } else {
+                renderDossierPortalListHTML('system');
+            }
             syncNavMailboxIndicators();
         });
         loadMailboxAdminRecipientRoster().then(() => {
@@ -2010,7 +2091,7 @@ function loadLore(type, customMount) {
     // 📬 INTERCEPT INTEGRATION 1: STANDALONE TACTICAL MESSAGES SUB-TAB CONNECTIONS
     // ==========================================================================
     if (type === 'messages') {
-        mountMessagesHubView(mount, window.pendingMessagesHubChannel || 'inbox');
+        mountMessagesHubView(mount, window.pendingMessagesHubChannel || 'messages');
         window.pendingMessagesHubChannel = null;
         return;
     }
@@ -3489,8 +3570,12 @@ async function executeOutgoingMessageDispatch() {
         }
 
         alert(`Message sent to: ${(payload.recipients || activeWartimeRecipients).join(', ')}`);
+        await fetchCommanderMailboxFromServer();
         clearMessageComposeContext();
         resetMessageComposeFields();
+        window.pendingMessagesHubChannel = 'messages';
+        window.pendingMessagesFolder = 'sent';
+        reloadMessagesPanelView();
     } catch (err) {
         alert('Could not reach the message server. Is node server.js running?');
     }
@@ -3518,21 +3603,29 @@ async function commitMessageToDraftCache() {
 
     await fetchCommanderMailboxFromServer();
     alert("Draft saved.");
+    window.pendingMessagesHubChannel = 'messages';
+    window.pendingMessagesFolder = 'drafts';
     reloadMessagesPanelView();
 }
 
 function renderDossierPortalListHTML(targetTrack) {
-    const bin = document.getElementById(`msg-${targetTrack}-render-dock`);
-    if (!bin) return;
-    bin.innerHTML = "";
-    
     let dataSet = [];
     if (targetTrack === 'inbox') dataSet = playerInboundInboxDossier;
     else if (targetTrack === 'system') dataSet = playerSystemInboxDossier;
     else if (targetTrack === 'drafts') dataSet = playerDraftsInboxDossier;
+    else if (targetTrack === 'sent') dataSet = playerSentInboxDossier;
+
+    const prefix = targetTrack === 'system' ? 'sys' : (targetTrack === 'sent' ? 'sent' : 'msg');
+    const dockId = targetTrack === 'drafts'
+        ? 'msg-drafts-render-dock'
+        : (targetTrack === 'sent'
+            ? 'msg-sent-render-dock'
+            : (targetTrack === 'system' ? 'msg-system-render-dock' : 'msg-inbox-render-dock'));
+    const listBin = document.getElementById(dockId);
+    if (!listBin) return;
+    listBin.innerHTML = '';
     
     // TARGET HARDWIRED CONSOLE TOOLBARS
-    const prefix = targetTrack === 'inbox' ? 'msg' : 'sys';
     const toggleBtn = document.getElementById(`${prefix}-multi-delete-toggle`);
     const selectAllBtn = document.getElementById(`${prefix}-select-all-btn`);
     const confirmPurgeBtn = document.getElementById(`${prefix}-confirm-delete-btn`);
@@ -3551,7 +3644,7 @@ function renderDossierPortalListHTML(targetTrack) {
     }
 
     if (dataSet.length === 0) {
-        bin.innerHTML = `<div class="empty-roster-txt" style="padding:20px !important;">No messages in this folder yet.</div>`;
+        listBin.innerHTML = `<div class="empty-roster-txt" style="padding:20px !important;">No messages in this folder yet.</div>`;
         return;
     }
     
@@ -3560,7 +3653,17 @@ function renderDossierPortalListHTML(targetTrack) {
         row.className = `msg-dossier-summary-row ${msg.read ? 'msg-dossier-read' : 'msg-dossier-unread'}`;
         row.onclick = () => openFocusedDossierReadingOverlay(msg, targetTrack);
         
-        let metaSender = msg.from ? msg.from : `To: ${msg.recipients.join(', ')}`;
+        let metaSender = 'System';
+        if (targetTrack === 'sent') {
+            const sentTo = Array.isArray(msg.recipients) && msg.recipients.length
+                ? msg.recipients.join(', ')
+                : (msg.to || '');
+            metaSender = sentTo ? `To: ${sentTo}` : 'To: (unknown)';
+        } else if (msg.from) {
+            metaSender = msg.from;
+        } else if (Array.isArray(msg.recipients) && msg.recipients.length) {
+            metaSender = `To: ${msg.recipients.join(', ')}`;
+        }
         let checkboxMarkup = isMassDeletionActive[targetTrack]
             ? `<input type="checkbox" class="msg-purge-checkbox-lever" data-id="${msg.id}" onclick="event.stopPropagation()">`
             : "";
@@ -3576,7 +3679,7 @@ function renderDossierPortalListHTML(targetTrack) {
                 ${checkboxMarkup}
             </div>
         `;
-        bin.appendChild(row);
+        listBin.appendChild(row);
     });
 
     if (targetTrack === 'inbox') syncNavMailboxIndicators();
@@ -3592,6 +3695,9 @@ function openFocusedDossierReadingOverlay(msg, track) {
     if (track === 'inbox' || track === 'system') {
         patchMailboxMessageReadOnServer(msg.id);
     }
+    if (track === 'sent') {
+        msg.read = true;
+    }
 
     // Reuse your absolute body center overlay layer blueprints for reading popups
     const overlay = document.getElementById('commander-suicide-overlay');
@@ -3601,9 +3707,16 @@ function openFocusedDossierReadingOverlay(msg, track) {
     if (!overlay || !textField || !btnDock) return;
 
     // Inject letter text layout formats inside your golden bezel
+    const sentToLine = track === 'sent'
+        ? (Array.isArray(msg.recipients) && msg.recipients.length ? msg.recipients.join(', ') : (msg.to || ''))
+        : '';
+    const headerFromLine = track === 'sent'
+        ? `<strong>TO:</strong> ${sentToLine || 'Unknown'}<br>`
+        : `<strong>FROM:</strong> ${msg.from || 'Unsent Draft Record'}<br>`;
+
     textField.innerHTML = `
         <div style="text-align:left !important; font-family:'Segoe UI',sans-serif; color:#f1e0ac; font-size:0.8rem; border-bottom:1px solid rgba(184,144,48,0.2); padding-bottom:8px; margin-bottom:12px;">
-            <strong>FROM:</strong> ${msg.from || 'Unsent Draft Record'}<br>
+            ${headerFromLine}
             <strong>TOPIC:</strong> ${msg.topic}
         </div>
         <div style="text-align:center !important; font-family:'Segoe UI',sans-serif; color:#ffffff; font-size:0.85rem; line-height:1.5; min-height:80px; max-height:180px; overflow-y:auto; padding:5px;">
@@ -3639,6 +3752,9 @@ function openFocusedDossierReadingOverlay(msg, track) {
         } else if (track === 'system') {
             await deleteMailboxMessageOnServer(msg.id, 'system');
             playerSystemInboxDossier = playerSystemInboxDossier.filter((m) => m.id !== msg.id);
+        } else if (track === 'sent') {
+            await deleteMailboxMessageOnServer(msg.id, 'sent');
+            playerSentInboxDossier = playerSentInboxDossier.filter((m) => m.id !== msg.id);
         } else if (track === 'drafts') {
             await deleteMailboxDraftOnServer(msg.id);
             playerDraftsInboxDossier = playerDraftsInboxDossier.filter((m) => m.id !== msg.id);
@@ -3670,7 +3786,7 @@ function toggleMassDeletionMode(track) {
     renderDossierPortalListHTML(track);
 
     // Toggle toolbars visibility configurations inside your document grid
-    const prefix = track === 'inbox' ? 'msg' : 'sys';
+    const prefix = track === 'system' ? 'sys' : (track === 'sent' ? 'sent' : 'msg');
     const selectAllBtn = document.getElementById(`${prefix}-select-all-btn`);
     const confirmPurgeBtn = document.getElementById(`${prefix}-confirm-delete-btn`);
     const toggleBtn = document.getElementById(`${prefix}-multi-delete-toggle`);
@@ -3687,24 +3803,31 @@ function toggleMassDeletionMode(track) {
 }
 
 function executeSelectAllMessageCheckboxes(track) {
-    const checkboxes = document.querySelectorAll(`#msg-${track}-render-dock .msg-purge-checkbox-lever`);
-    checkboxes.forEach(box => box.checked = true);
+    const dockId = track === 'sent'
+        ? 'msg-sent-render-dock'
+        : (track === 'system' ? 'msg-system-render-dock' : 'msg-inbox-render-dock');
+    const checkboxes = document.querySelectorAll(`#${dockId} .msg-purge-checkbox-lever`);
+    checkboxes.forEach((box) => { box.checked = true; });
 }
 
 async function executeMassDossierPurge(track) {
     if (typeof playToggleLeverSFX === 'function') playToggleLeverSFX();
     
-    const checkboxes = document.querySelectorAll(`#msg-${track}-render-dock .msg-purge-checkbox-lever:checked`);
+    const dockId = track === 'sent'
+        ? 'msg-sent-render-dock'
+        : (track === 'system' ? 'msg-system-render-dock' : 'msg-inbox-render-dock');
+    const checkboxes = document.querySelectorAll(`#${dockId} .msg-purge-checkbox-lever:checked`);
     if (checkboxes.length === 0) return;
 
     const idsToPurge = Array.from(checkboxes).map((box) => Number(box.getAttribute('data-id'))).filter((id) => Number.isFinite(id));
 
-    if (track === 'inbox' || track === 'system') {
+    if (track === 'inbox' || track === 'system' || track === 'sent') {
         await purgeMailboxMessagesOnServer(track, idsToPurge);
     }
 
     if (track === 'inbox') playerInboundInboxDossier = playerInboundInboxDossier.filter((m) => !idsToPurge.includes(m.id));
     else if (track === 'system') playerSystemInboxDossier = playerSystemInboxDossier.filter((m) => !idsToPurge.includes(m.id));
+    else if (track === 'sent') playerSentInboxDossier = playerSentInboxDossier.filter((m) => !idsToPurge.includes(m.id));
 
     isMassDeletionActive[track] = false;
     toggleMassDeletionMode(track);
@@ -3717,4 +3840,5 @@ async function executeMassDossierPurge(track) {
 window.syncNavMailboxIndicators = syncNavMailboxIndicators;
 window.receiveCommanderInboxMessage = receiveCommanderInboxMessage;
 window.fetchCommanderMailboxFromServer = fetchCommanderMailboxFromServer;
+window.activateMessagesFolder = activateMessagesFolder;
 window.loadCommanderMailboxDossiersFromStorage = loadCommanderMailboxDossiersFromStorage;

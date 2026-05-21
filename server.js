@@ -145,6 +145,82 @@ function serializeMailboxMessageForClient(row) {
     };
 }
 
+function serializeMailboxSentForClient(row) {
+    if (!row) return null;
+    const recipients = Array.isArray(row.recipients) && row.recipients.length
+        ? row.recipients
+        : String(row.to || '')
+            .split(',')
+            .map((entry) => entry.trim())
+            .filter(Boolean);
+    return {
+        id: row.id,
+        from: row.from || '',
+        recipients,
+        to: recipients.join(', '),
+        topic: row.topic || 'No subject',
+        body: row.body || '',
+        read: true,
+        date: formatMailboxDisplayDate(row.sentAt),
+        sentAt: row.sentAt || null
+    };
+}
+
+function outboundSentGroupKey(row) {
+    return `${row.sentAt || ''}|${row.topic || ''}|${row.body || ''}`;
+}
+
+/** Creates sent-folder rows for outbound mail that predates sent-channel storage (e.g. live sends). */
+function ensureSentCopiesForOutboundMail(owner) {
+    const ownerLower = owner.toLowerCase();
+    const messages = getMailboxMessageStore();
+    const groups = new Map();
+
+    messages.forEach((row) => {
+        if (!row || row.channel !== 'inbox') return;
+        if (String(row.from || '').trim().toLowerCase() !== ownerLower) return;
+        const key = outboundSentGroupKey(row);
+        if (!groups.has(key)) {
+            groups.set(key, {
+                from: row.from,
+                topic: row.topic,
+                body: row.body,
+                sentAt: row.sentAt,
+                recipients: []
+            });
+        }
+        const bucket = groups.get(key);
+        if (row.to && !bucket.recipients.includes(row.to)) {
+            bucket.recipients.push(row.to);
+        }
+    });
+
+    let changed = false;
+    groups.forEach((group, key) => {
+        const alreadyStored = messages.some(
+            (row) => row.channel === 'sent'
+                && String(row.from || '').trim().toLowerCase() === ownerLower
+                && outboundSentGroupKey(row) === key
+        );
+        if (alreadyStored) return;
+
+        messages.push({
+            id: createMailboxRecordId(),
+            channel: 'sent',
+            from: group.from,
+            recipients: group.recipients,
+            to: group.recipients.join(', '),
+            topic: group.topic,
+            body: group.body,
+            read: true,
+            sentAt: group.sentAt || new Date().toISOString()
+        });
+        changed = true;
+    });
+
+    if (changed) writeMailboxMessageStore(messages);
+}
+
 function serializeMailboxDraftForClient(row) {
     if (!row) return null;
     return {
@@ -178,7 +254,16 @@ function getMailboxPayloadForUser(username) {
         .sort((a, b) => Date.parse(b.updatedAt || 0) - Date.parse(a.updatedAt || 0))
         .map(serializeMailboxDraftForClient);
 
-    return { status: 'ok', username: owner, inbox, system, drafts };
+    ensureSentCopiesForOutboundMail(owner);
+
+    const sent = getMailboxMessageStore()
+        .filter(
+            (row) => row && row.channel === 'sent' && String(row.from || '').toLowerCase() === ownerLower
+        )
+        .sort((a, b) => Date.parse(b.sentAt || 0) - Date.parse(a.sentAt || 0))
+        .map(serializeMailboxSentForClient);
+
+    return { status: 'ok', username: owner, inbox, system, drafts, sent };
 }
 
 function pruneAgeSessionOnlineState() {
@@ -685,13 +770,27 @@ app.post('/api/portal/mailbox/send', (req, res) => {
         created.push(serializeMailboxMessageForClient(row));
     });
 
+    const sentRow = {
+        id: createMailboxRecordId(idSeed),
+        channel: 'sent',
+        from: sender,
+        recipients: recipients.slice(),
+        to: recipients.join(', '),
+        topic,
+        body,
+        read: true,
+        sentAt
+    };
+    messages.push(sentRow);
+
     writeMailboxMessageStore(messages);
 
     res.status(200).json({
         status: 'ok',
         delivered: created.length,
         recipients,
-        messages: created
+        messages: created,
+        sent: serializeMailboxSentForClient(sentRow)
     });
 });
 
@@ -770,6 +869,12 @@ app.delete('/api/portal/mailbox/:messageId', (req, res) => {
     const messages = getMailboxMessageStore();
     const nextMessages = messages.filter((row) => {
         if (row.id !== messageId) return true;
+        if (channel === 'sent') {
+            return !(
+                row.channel === 'sent'
+                && String(row.from || '').toLowerCase() === ownerLower
+            );
+        }
         if (String(row.to || '').toLowerCase() !== ownerLower) return true;
         if (channel === 'system') return row.channel === 'system';
         return row.channel === 'inbox';
@@ -801,6 +906,11 @@ app.post('/api/portal/mailbox/purge', (req, res) => {
     let removed = 0;
     const nextMessages = messages.filter((row) => {
         if (!ids.has(row.id)) return true;
+        if (channel === 'sent') {
+            if (row.channel !== 'sent' || String(row.from || '').toLowerCase() !== ownerLower) return true;
+            removed += 1;
+            return false;
+        }
         if (String(row.to || '').toLowerCase() !== ownerLower) return true;
         if (channel === 'system' && row.channel !== 'system') return true;
         if (channel !== 'system' && row.channel !== 'inbox') return true;
