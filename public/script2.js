@@ -4891,6 +4891,7 @@ window.onload = () => {
 window.startPortalBackgroundMusic = startPortalBackgroundMusic;
 window.applyPortalBackgroundMusicVolume = applyPortalBackgroundMusicVolume;
 window.hydratePortalVolumeStateFromStorage = hydratePortalVolumeStateFromStorage;
+window.switchMainPortalView = switchMainPortalView;
 window.triggerMainDashboardLogout = triggerMainDashboardLogout;
 window.closeMainLogoutConfirmationWindow = closeMainLogoutConfirmationWindow;
 window.executeLogoutRedirect = executeLogoutRedirect;

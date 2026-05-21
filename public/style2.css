@@ -1001,11 +1001,23 @@
    ========================================================================== */
 
 /* Block 16: FIXED BLUR OVERLAY SHUTTER MASKS */
-.main-portal-modal-hidden { 
-    display: none !important; 
+.main-portal-modal-hidden {
+    display: none !important;
+    pointer-events: none !important;
+    visibility: hidden !important;
 }
 
-#main-logout-confirmation-modal {
+/* Hidden modals must beat ID-level display:flex rules below */
+#main-portal-login-modal.main-portal-modal-hidden,
+#main-logout-confirmation-modal.main-portal-modal-hidden,
+#register-modal.main-portal-auth-overlay.main-portal-modal-hidden,
+#forgot-modal.main-portal-auth-overlay.main-portal-modal-hidden {
+    display: none !important;
+    pointer-events: none !important;
+    visibility: hidden !important;
+}
+
+#main-logout-confirmation-modal:not(.main-portal-modal-hidden) {
     position: fixed !important;
     top: 0 !important;
     left: 0 !important;
@@ -1017,6 +1029,8 @@
     justify-content: center !important;
     align-items: center !important;
     z-index: 999999 !important;
+    pointer-events: auto !important;
+    visibility: visible !important;
 }
 
 /* Block 17: Auth-style modals — borderedcontainer_thin frame */
@@ -1100,9 +1114,9 @@
 }
 
 /* Block 17b: Main portal login / register / forgot (borderedcontainer_thin + closebtn) */
-#main-portal-login-modal,
-#register-modal.main-portal-auth-overlay,
-#forgot-modal.main-portal-auth-overlay {
+#main-portal-login-modal:not(.main-portal-modal-hidden),
+#register-modal.main-portal-auth-overlay:not(.main-portal-modal-hidden),
+#forgot-modal.main-portal-auth-overlay:not(.main-portal-modal-hidden) {
     position: fixed !important;
     top: 0 !important;
     left: 0 !important;
@@ -1114,6 +1128,8 @@
     justify-content: center !important;
     align-items: center !important;
     z-index: 999998 !important;
+    pointer-events: auto !important;
+    visibility: visible !important;
     padding: max(12px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right)) max(12px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left)) !important;
     box-sizing: border-box !important;
 }
