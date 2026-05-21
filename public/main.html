@@ -10,13 +10,14 @@
 
     <!-- Block 1: Character Set & Viewport -->
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 
     <!-- Block 2: Page Title & Stylesheet Bridge -->
     <title>Royal Armies - Age Portal Staging Deck</title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="style2.css">
     <link rel="stylesheet" href="custom-cursor.css">
+    <link rel="stylesheet" href="mobile-responsive.css">
 </head>
 <body id="main-dashboard-canvas">
 
@@ -71,9 +72,12 @@
                         <button type="button" class="dropdown-action-item" onclick="openCommanderHubModal('settings', event)">Settings</button>
                     </div>
                 </div>
-                <div class="nav-account-identity-stack">
-                    <strong id="logged-user-tag">Loading...</strong>
-                    <div id="nav-commander-membership-badge-row" class="commander-membership-badge-row nav-commander-membership-badge-row" hidden></div>
+                <div class="nav-account-identity-cluster">
+                    <div class="nav-account-identity-stack">
+                        <strong id="logged-user-tag">Loading...</strong>
+                        <div id="nav-commander-membership-badge-row" class="commander-membership-badge-row nav-commander-membership-badge-row" hidden></div>
+                    </div>
+                    <div id="nav-commander-owner-tag-slot" class="nav-commander-owner-tag-slot" hidden></div>
                 </div>
             </div>
 

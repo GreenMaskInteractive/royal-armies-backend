@@ -263,7 +263,50 @@ function switchMainPortalView(viewName, clickEvent, chatChannelKey) {
 }
 
 /** Release IDs from CHRONICLE_DATA (script.js), newest first — shown in Developer's Log sidebar. */
-const DEVELOPER_LOG_RELEASE_IDS = ['alpha_0111'];
+const DEVELOPER_LOG_RELEASE_IDS = ['alpha_0112', 'alpha_0111'];
+
+let developersLogScheduleTimer = null;
+
+function isDeveloperLogReleasePublished(entryId) {
+    if (typeof CHRONICLE_DATA === 'undefined') return false;
+    const entry = CHRONICLE_DATA[entryId];
+    if (!entry) return false;
+    const publishAt = entry.publishAt;
+    if (!publishAt) return true;
+    const publishMs = new Date(publishAt).getTime();
+    return Number.isFinite(publishMs) && Date.now() >= publishMs;
+}
+
+function getPublishedDeveloperLogReleaseIds() {
+    return DEVELOPER_LOG_RELEASE_IDS.filter((id) => isDeveloperLogReleasePublished(id));
+}
+
+function scheduleDevelopersLogDockRefresh() {
+    if (developersLogScheduleTimer) {
+        clearTimeout(developersLogScheduleTimer);
+        developersLogScheduleTimer = null;
+    }
+    if (typeof CHRONICLE_DATA === 'undefined') return;
+
+    let nextPublishMs = null;
+    DEVELOPER_LOG_RELEASE_IDS.forEach((id) => {
+        const entry = CHRONICLE_DATA[id];
+        if (!entry?.publishAt) return;
+        const publishMs = new Date(entry.publishAt).getTime();
+        if (!Number.isFinite(publishMs) || Date.now() >= publishMs) return;
+        if (nextPublishMs === null || publishMs < nextPublishMs) {
+            nextPublishMs = publishMs;
+        }
+    });
+
+    if (nextPublishMs === null) return;
+
+    const delayMs = Math.max(1000, Math.min(nextPublishMs - Date.now() + 250, 2147483647));
+    developersLogScheduleTimer = setTimeout(() => {
+        hydrateDevelopersLogDock();
+        scheduleDevelopersLogDockRefresh();
+    }, delayMs);
+}
 
 function formatDeveloperLogParagraph(paragraph) {
     const whatsNewMatch = paragraph.match(/^What's new:\s*(.+)$/i);
@@ -293,7 +336,9 @@ function renderDevelopersLogMarkup() {
         return '<div class="news-bulletin-item">Development updates could not be loaded.</div>';
     }
 
-    const entries = DEVELOPER_LOG_RELEASE_IDS.map((id) => CHRONICLE_DATA[id]).filter(Boolean);
+    const entries = getPublishedDeveloperLogReleaseIds()
+        .map((id) => CHRONICLE_DATA[id])
+        .filter(Boolean);
     if (!entries.length) {
         return '<div class="news-bulletin-item">No development updates posted yet.</div>';
     }
@@ -322,6 +367,7 @@ function renderDevelopersLogSidebarShell() {
 function hydrateDevelopersLogDock() {
     const dock = document.getElementById('dashboard-patch-notes-dock');
     if (dock) dock.innerHTML = renderDevelopersLogMarkup();
+    scheduleDevelopersLogDockRefresh();
 }
 
 function restoreAgePortalHomeViewLayout(viewport) {
@@ -2109,15 +2155,19 @@ function buildCommanderOwnerTagMarkup() {
     return '<span class="commander-owner-tag" title="Site owner"><span class="commander-owner-tag-icon" aria-hidden="true">👑</span>Owner</span>';
 }
 
-function buildCommanderMembershipBadgeRowMarkup(username, badgeClassName = 'membership-badge') {
+function shouldShowCommanderOwnerTag(username) {
+    return username
+        ? (typeof isPortalSiteOwner === 'function' && isPortalSiteOwner(username))
+        : isActiveCommanderPortalOwner();
+}
+
+function buildCommanderMembershipBadgeRowMarkup(username, badgeClassName = 'membership-badge', options = {}) {
+    const includeOwnerTag = options.includeOwnerTag !== false;
     const title = username
         ? resolveCommanderMembershipTitleForUsername(username)
         : getCommanderMembershipTitle();
     const tierClass = title.toLowerCase();
-    const showOwnerTag = username
-        ? (typeof isPortalSiteOwner === 'function' && isPortalSiteOwner(username))
-        : isActiveCommanderPortalOwner();
-    const ownerTag = showOwnerTag ? buildCommanderOwnerTagMarkup() : '';
+    const ownerTag = includeOwnerTag && shouldShowCommanderOwnerTag(username) ? buildCommanderOwnerTagMarkup() : '';
     return `<span class="${badgeClassName} tier-${tierClass}">${title} Member</span>${ownerTag}`;
 }
 
@@ -2150,16 +2200,36 @@ function hydrateCommanderMembershipFromStorage() {
 }
 
 function refreshCommanderMembershipBadgeDisplays() {
-    const badgeRowMarkup = buildCommanderMembershipBadgeRowMarkup();
-    document.querySelectorAll('.commander-membership-badge-row').forEach((row) => {
-        row.innerHTML = badgeRowMarkup;
-    });
-
     const title = getCommanderMembershipTitle();
     const tierClass = title.toLowerCase();
-    const showOwnerTag = isActiveCommanderPortalOwner();
+    const playerName = typeof player !== 'undefined' ? player.name : undefined;
+
+    document.querySelectorAll('.profile-identity-badge-row, .commander-membership-badge-row').forEach((row) => {
+        if (row.id === 'nav-commander-membership-badge-row') return;
+        if (row.classList.contains('public-profile-badge-row')) return;
+        row.innerHTML = buildCommanderMembershipBadgeRowMarkup(playerName, 'membership-badge');
+    });
+
+    document.querySelectorAll('.public-profile-badge-row').forEach((row) => {
+        const card = row.closest('.public-profile-card, .public-profile-overlay');
+        const subjectName = card?.querySelector('.public-profile-commander-name')?.textContent?.trim() || '';
+        row.innerHTML = buildCommanderMembershipBadgeRowMarkup(subjectName, 'public-profile-membership');
+    });
+
+    const navBadgeRow = document.getElementById('nav-commander-membership-badge-row');
+    const navOwnerSlot = document.getElementById('nav-commander-owner-tag-slot');
+    if (navBadgeRow) {
+        navBadgeRow.innerHTML = buildCommanderMembershipBadgeRowMarkup(undefined, 'membership-badge', { includeOwnerTag: false });
+        navBadgeRow.hidden = false;
+    }
+    if (navOwnerSlot) {
+        const showOwner = shouldShowCommanderOwnerTag();
+        navOwnerSlot.innerHTML = showOwner ? buildCommanderOwnerTagMarkup() : '';
+        navOwnerSlot.hidden = !showOwner;
+    }
+
     document.querySelectorAll('.membership-badge').forEach((badge) => {
-        if (badge.closest('.commander-membership-badge-row')) return;
+        if (badge.closest('.commander-membership-badge-row, .nav-commander-owner-tag-slot')) return;
         badge.textContent = `${title} Member`;
         badge.className = `membership-badge tier-${tierClass}`;
     });
@@ -2169,17 +2239,6 @@ function refreshCommanderMembershipBadgeDisplays() {
         badge.textContent = `${title} Member`;
         badge.className = `public-profile-membership tier-${tierClass}`;
     });
-    document.querySelectorAll('.public-profile-badge-row').forEach((row) => {
-        const card = row.closest('.public-profile-card, .public-profile-overlay');
-        const subjectName = card?.querySelector('.public-profile-commander-name')?.textContent?.trim() || '';
-        row.innerHTML = buildCommanderMembershipBadgeRowMarkup(subjectName, 'public-profile-membership');
-    });
-
-    const navBadgeRow = document.getElementById('nav-commander-membership-badge-row');
-    if (navBadgeRow) {
-        navBadgeRow.innerHTML = badgeRowMarkup;
-        navBadgeRow.hidden = false;
-    }
 }
 
 async function beginRoyaltyMembershipCheckout() {

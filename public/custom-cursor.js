@@ -5,6 +5,11 @@
 (function initRoyalArmiesCustomCursor() {
     'use strict';
 
+    if (window.matchMedia('(hover: none), (pointer: coarse)').matches) {
+        document.documentElement.classList.add('royal-armies-touch-device');
+        return;
+    }
+
     const CURSOR_IMAGE_SRC = 'images/cursor.png';
     const CURSOR_DISPLAY_PX = 56;
     const FINGERTIP_HOTSPOT_X = 3;
