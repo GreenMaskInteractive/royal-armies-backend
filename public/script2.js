@@ -24,14 +24,10 @@ window.onload = () => {
     const savedCommanderAvatar = localStorage.getItem("savedProfileAvatarUrl") || "images/avatars/commanderprofile01.png";
     
     // B. TARGET DOM INJECTIONS: Populate text and image fields simultaneously on screen load
-    const userTagElement = document.getElementById("logged-user-tag");
-    if (userTagElement) {
-        const displayName = (typeof player !== 'undefined' && player.name) ? player.name : savedCommanderUser;
-        userTagElement.innerText = displayName || 'Guest Commander';
-    }
-
     if (typeof refreshMainPortalAuthChrome === 'function') {
         refreshMainPortalAuthChrome();
+    } else if (typeof refreshLoggedUserTagDisplay === 'function') {
+        refreshLoggedUserTagDisplay();
     }
 
     syncPortalMobileNavIdentity();
@@ -199,16 +195,18 @@ function setPortalNavControlAccessState(controlEl, viewName) {
 }
 
 function applyPortalGuestDeploymentChrome() {
-    if (!document.getElementById('deployment-master-deck-container')) return;
-
     const authed = typeof isPortalUserAuthenticated === 'function' && isPortalUserAuthenticated();
     document.body.classList.toggle('portal-guest-mode', !authed);
 
     const memberBlock = document.getElementById('portal-deployment-member-block');
     const guestCta = document.getElementById('portal-deployment-guest-cta');
+    const accountLabel = document.querySelector('.nav-embedded-account-label');
+    const mobileCommanderBlock = document.getElementById('portal-mobile-commander-block');
 
     if (memberBlock) memberBlock.hidden = !authed;
     if (guestCta) guestCta.hidden = authed;
+    if (accountLabel) accountLabel.hidden = !authed;
+    if (mobileCommanderBlock) mobileCommanderBlock.hidden = !authed;
 }
 
 function recacheAgePortalViewportSnapshot() {
@@ -302,6 +300,7 @@ function closePortalMobileNavMenus() {
     if (menu) {
         menu.hidden = true;
         menu.style.top = '';
+        menu.style.pointerEvents = 'none';
         menu.classList.remove('is-commander-submenu-open');
     }
     if (shell) shell.classList.remove('is-nav-open');
@@ -325,7 +324,11 @@ function positionPortalMobileNavMenu() {
 }
 
 function togglePortalMobileNavMenu(event) {
-    if (event) event.stopPropagation();
+    if (event) {
+        if (event.cancelable) event.preventDefault();
+        event.stopPropagation();
+    }
+
     const shell = document.getElementById('portal-mobile-nav-shell');
     const menu = document.getElementById('portal-mobile-nav-menu');
     const navToggle = document.getElementById('portal-mobile-nav-toggle');
@@ -333,8 +336,10 @@ function togglePortalMobileNavMenu(event) {
 
     const willOpen = menu.hidden;
     if (willOpen) {
+        portalMobileNavDismissLockUntil = Date.now() + 400;
         syncPortalMobileNavIdentity();
         menu.hidden = false;
+        menu.style.pointerEvents = 'auto';
         shell.classList.add('is-nav-open');
         navToggle.setAttribute('aria-expanded', 'true');
         requestAnimationFrame(() => {
@@ -436,7 +441,7 @@ function syncPortalMobileNavIdentity() {
 
     if (avatarMobile) avatarMobile.src = avatarSrc;
     if (nameMobile && nameDesktop) {
-        nameMobile.textContent = nameDesktop.textContent || 'Guest Commander';
+        nameMobile.textContent = nameDesktop.textContent || '';
     }
     if (authLabelMobile && authLabelDesktop) {
         authLabelMobile.textContent = authLabelDesktop.textContent || 'Log In';
@@ -479,15 +484,49 @@ function applyPortalMobileNavPreviewRestrictions() {
     });
 }
 
+let portalMobileNavDismissLockUntil = 0;
+let portalMobileNavToggleLockUntil = 0;
+
+function bindPortalMobileNavToggleControls() {
+    const navToggle = document.getElementById('portal-mobile-nav-toggle');
+    if (!navToggle || navToggle.dataset.portalNavToggleBound === 'true') return;
+    navToggle.dataset.portalNavToggleBound = 'true';
+    navToggle.removeAttribute('onclick');
+
+    const handleToggle = (event) => {
+        const now = Date.now();
+        if (now < portalMobileNavToggleLockUntil) return;
+        portalMobileNavToggleLockUntil = now + 400;
+
+        if (event.cancelable) event.preventDefault();
+        event.stopPropagation();
+        togglePortalMobileNavMenu(event);
+    };
+
+    navToggle.addEventListener('click', handleToggle);
+    navToggle.addEventListener('pointerup', (event) => {
+        if (event.pointerType === 'mouse') return;
+        handleToggle(event);
+    });
+    navToggle.addEventListener('touchend', handleToggle, { passive: false });
+}
+
 function bindPortalMobileNavDismissHandlers() {
     if (document.documentElement.dataset.portalMobileNavBound === 'true') return;
     document.documentElement.dataset.portalMobileNavBound = 'true';
 
+    bindPortalMobileNavToggleControls();
+
     document.addEventListener('click', (event) => {
+        if (Date.now() < portalMobileNavDismissLockUntil) return;
+
         const shell = document.getElementById('portal-mobile-nav-shell');
         const menu = document.getElementById('portal-mobile-nav-menu');
+        const navToggle = document.getElementById('portal-mobile-nav-toggle');
         if (!shell || !menu || menu.hidden) return;
-        if (shell.contains(event.target)) return;
+        if (shell.contains(event.target) || navToggle === event.target || navToggle?.contains(event.target)) {
+            return;
+        }
         closePortalMobileNavMenus();
     });
 

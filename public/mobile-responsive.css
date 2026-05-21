@@ -66,6 +66,14 @@ body {
 
 /* Touch targets — phone/tablet only (landing login uses dedicated sizing below) */
 @media (max-width: 768px) {
+    .portal-mobile-nav-toggle,
+    .portal-mobile-nav-page-item,
+    .portal-mobile-nav-auth-btn,
+    .portal-mobile-commander-trigger {
+        touch-action: manipulation !important;
+        -webkit-tap-highlight-color: rgba(255, 215, 0, 0.18) !important;
+    }
+
     button:not(#page-landing button):not(.metric-roster-hover-trigger),
     .header-logout-btn,
     .commander-hub-top-tab,
@@ -139,6 +147,8 @@ body {
     /* Slim age metrics strip — stacked above nav; 3 rows: countdown | cycle+mode+nation | rosters */
     .portal-age-metrics-dashboard-bar {
         order: 1 !important;
+        position: relative !important;
+        z-index: 1 !important;
         display: grid !important;
         grid-template-columns: repeat(6, minmax(0, 1fr)) !important;
         gap: 4px 6px !important;
@@ -204,6 +214,9 @@ body {
 
     .portal-mobile-nav-bar-clip {
         order: 2 !important;
+        position: relative !important;
+        z-index: 50 !important;
+        isolation: isolate !important;
     }
 
     body#main-dashboard-canvas .developer-maintenance-alert-bar.portal-maintenance-alert-below-nav {
@@ -507,6 +520,12 @@ body {
         background-size: 100% 100% !important;
         background-position: center center !important;
         background-repeat: no-repeat !important;
+        pointer-events: none !important;
+        z-index: 0 !important;
+    }
+
+    .portal-mobile-nav-shell {
+        pointer-events: auto !important;
     }
 
     .portal-mobile-nav-toggle {
@@ -516,8 +535,8 @@ body {
         gap: 8px !important;
         width: 100% !important;
         max-width: 100% !important;
-        min-height: 44px !important;
-        padding: 8px max(14px, env(safe-area-inset-right)) 8px max(14px, env(safe-area-inset-left)) !important;
+        min-height: 48px !important;
+        padding: 10px max(14px, env(safe-area-inset-right)) 10px max(14px, env(safe-area-inset-left)) !important;
         border: none !important;
         border-radius: 0 !important;
         background: rgba(10, 12, 16, 0.55) !important;
@@ -528,6 +547,11 @@ body {
         letter-spacing: 0.08em !important;
         text-transform: uppercase !important;
         cursor: pointer !important;
+        position: relative !important;
+        z-index: 5 !important;
+        pointer-events: auto !important;
+        touch-action: manipulation !important;
+        -webkit-tap-highlight-color: rgba(255, 215, 0, 0.22) !important;
         box-shadow: inset 0 0 12px rgba(0, 0, 0, 0.75), 0 4px 14px rgba(0, 0, 0, 0.55) !important;
     }
 
@@ -605,6 +629,8 @@ body {
 
     .portal-mobile-nav-menu[hidden] {
         display: none !important;
+        visibility: hidden !important;
+        pointer-events: none !important;
     }
 
     .portal-mobile-nav-menu-sticky-head {

@@ -258,10 +258,19 @@ function refreshProfileCommanderNameDisplay() {
 
 function refreshLoggedUserTagDisplay() {
     const tag = document.getElementById('logged-user-tag');
-    if (tag) {
-        const name = getActiveCommanderUsername();
-        tag.innerText = name || (isMainPortalHub() ? 'Guest Commander' : 'Loading...');
+    const mobileName = document.getElementById('portal-mobile-nav-username');
+    const authed = isPortalUserAuthenticated();
+
+    if (!authed && isMainPortalHub()) {
+        if (tag) tag.textContent = '';
+        if (mobileName) mobileName.textContent = '';
+        return;
     }
+
+    const name = getActiveCommanderUsername();
+    const displayLabel = name || (isMainPortalHub() ? '' : 'Loading...');
+    if (tag) tag.textContent = displayLabel;
+    if (mobileName) mobileName.textContent = displayLabel;
 }
 
 var player = { 

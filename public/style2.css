@@ -193,6 +193,11 @@
     max-width: 100% !important;
 }
 
+body.portal-guest-mode .nav-embedded-account-label,
+body.portal-guest-mode #portal-mobile-commander-block {
+    display: none !important;
+}
+
 .nav-commander-membership-badge-row {
     padding-left: 0 !important;
     flex-wrap: nowrap !important;
