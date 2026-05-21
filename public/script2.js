@@ -675,6 +675,20 @@ function refreshCommunityChatOnlineRosterIfVisible() {
     if (bin) renderCommunityChatOnlineRoster(bin);
 }
 
+function isRoyalGuardBotUsername(username) {
+    if (typeof isRoyalGuardBotAccount === 'function') {
+        return isRoyalGuardBotAccount(username);
+    }
+    const key = normalizeCommunityChatUsername(username);
+    return key === 'royal guard bot' || key === 'moderator' || key === 'royal guard';
+}
+
+function getRoyalGuardBotDisplayName() {
+    return typeof ROYAL_GUARD_BOT_DISPLAY_NAME !== 'undefined'
+        ? ROYAL_GUARD_BOT_DISPLAY_NAME
+        : 'Royal Guard Bot';
+}
+
 const CHAT_ROSTER_PORTAL_QUIPS = [
     'Browsing the portal',
     'Checking chat',
@@ -748,10 +762,11 @@ function getChatRosterStaffBadgeMarkup(name) {
 }
 
 function formatCommunityChatSenderMarkup(sender) {
-    const safeName = escapeMetricRosterHtml(sender);
-    if (sender === 'Moderator') {
-        return `<span class="chat-message-sender-name chat-message-sender-name--bot"><strong>${safeName}:</strong></span>`;
+    if (isRoyalGuardBotUsername(sender)) {
+        const safeName = escapeMetricRosterHtml(getRoyalGuardBotDisplayName());
+        return `<span class="chat-message-sender-name chat-message-sender-name--royal-guard-bot"><span class="chat-sender-staff-badge chat-sender-staff-badge--royal-guard-bot" title="Automated chat monitor" aria-hidden="true">🛡</span><strong>${safeName}:</strong></span>`;
     }
+    const safeName = escapeMetricRosterHtml(sender);
     const staffRole = typeof getPortalStaffRole === 'function' ? getPortalStaffRole(sender) : null;
     if (staffRole === 'owner') {
         return `<span class="chat-message-sender-name chat-message-sender-name--owner"><span class="chat-sender-staff-badge chat-sender-staff-badge--owner" title="Site owner" aria-hidden="true">👑</span><strong>${safeName}:</strong></span>`;
@@ -775,6 +790,68 @@ function getChatRosterStatusMeta(inAge, isSelf) {
     return { pillClass: 'chat-roster-status-pill--portal', icon: '◈', label: 'Portal' };
 }
 
+const chatRosterExpandedCommanders = new Set();
+window.chatRosterExpandedCommanders = chatRosterExpandedCommanders;
+
+function getChatRosterExpandKey(name, staffRole) {
+    if (staffRole === 'royal-guard-bot') return 'royal-guard-bot';
+    return normalizeCommunityChatUsername(name);
+}
+
+function isChatRosterCardExpandable(staffRole) {
+    return staffRole === 'owner' || staffRole === 'moderator' || staffRole === 'royal-guard-bot';
+}
+
+function buildChatRosterExpandHintMarkup() {
+    return '<span class="chat-roster-expand-hint" aria-hidden="true">▸</span>';
+}
+
+function buildChatRosterExpandPanelMarkup(name, isSelf, inAge, staffRole) {
+    if (staffRole === 'royal-guard-bot') {
+        return `
+            <div class="chat-roster-staff-badge-row">
+                <span class="chat-roster-staff-badge chat-roster-staff-badge--royal-guard-bot" title="Automated chat monitor"><span class="chat-roster-staff-badge-icon" aria-hidden="true">🤖</span>Royal Guard</span>
+            </div>
+            <span class="chat-roster-rank-title">Chat Monitor</span>
+            <p class="chat-roster-quip">Watching channels for policy violations</p>
+        `;
+    }
+
+    const staffBadge = getChatRosterStaffBadgeMarkup(name);
+    return `
+        ${staffBadge ? `<div class="chat-roster-staff-badge-row">${staffBadge}</div>` : ''}
+        <span class="chat-roster-rank-title">${escapeMetricRosterHtml(getChatRosterDisplayRank(name, isSelf))}</span>
+        <p class="chat-roster-quip">${escapeMetricRosterHtml(getChatRosterPresenceQuip(name, inAge, isSelf))}</p>
+    `;
+}
+
+function toggleChatRosterCardExpand(event) {
+    const card = event.currentTarget;
+    if (!card || !card.classList.contains('chat-roster-commander-card--expandable')) return;
+    event.preventDefault();
+    event.stopPropagation();
+
+    const expandKey = card.dataset.rosterExpandKey;
+    const isExpanded = card.classList.toggle('is-expanded');
+    card.setAttribute('aria-expanded', isExpanded ? 'true' : 'false');
+
+    const panel = card.querySelector('.chat-roster-commander-expand-panel');
+    if (panel) panel.hidden = !isExpanded;
+
+    if (expandKey) {
+        if (isExpanded) chatRosterExpandedCommanders.add(expandKey);
+        else chatRosterExpandedCommanders.delete(expandKey);
+    }
+}
+
+function handleChatRosterCardExpandKeydown(event) {
+    if (event.key !== 'Enter' && event.key !== ' ') return;
+    toggleChatRosterCardExpand(event);
+}
+
+window.toggleChatRosterCardExpand = toggleChatRosterCardExpand;
+window.handleChatRosterCardExpandKeydown = handleChatRosterCardExpandKeydown;
+
 function sortCommunityChatRosterPlayers(players, selfLower, playingSet) {
     const rosterScore = (name) => {
         const key = normalizeCommunityChatUsername(name);
@@ -793,21 +870,70 @@ function sortCommunityChatRosterPlayers(players, selfLower, playingSet) {
     });
 }
 
+function buildRoyalGuardBotRosterCardMarkup() {
+    const botName = getRoyalGuardBotDisplayName();
+    const staffRole = 'royal-guard-bot';
+    const expandKey = getChatRosterExpandKey(botName, staffRole);
+    const isExpanded = chatRosterExpandedCommanders.has(expandKey);
+
+    return `
+        <article class="chat-roster-commander-card chat-roster-commander-card--royal-guard-bot chat-roster-commander-card--expandable ${isExpanded ? 'is-expanded' : ''}"
+            data-staff-role="${staffRole}"
+            data-roster-commander="royal-guard-bot"
+            data-roster-expand-key="${expandKey}"
+            role="button"
+            tabindex="0"
+            aria-expanded="${isExpanded ? 'true' : 'false'}"
+            aria-label="${escapeMetricRosterHtml(botName)} — click for details"
+            onclick="toggleChatRosterCardExpand(event)"
+            onkeydown="handleChatRosterCardExpandKeydown(event)">
+            <div class="chat-roster-avatar-wrap">
+                <div class="chat-roster-avatar chat-roster-avatar--royal-guard-bot" aria-hidden="true">🛡</div>
+                <span class="chat-roster-presence-ring" aria-hidden="true"></span>
+                <span class="chat-roster-avatar-bot-mark" aria-hidden="true">🤖</span>
+            </div>
+            <div class="chat-roster-commander-body">
+                <div class="chat-roster-commander-topline">
+                    <span class="chat-roster-name">${escapeMetricRosterHtml(botName)}</span>
+                    <span class="chat-roster-status-pill chat-roster-status-pill--bot"><span class="chat-roster-status-pill-icon" aria-hidden="true">●</span>Online</span>
+                    ${buildChatRosterExpandHintMarkup()}
+                </div>
+                <div class="chat-roster-commander-expand-panel" ${isExpanded ? '' : 'hidden'}>
+                    ${buildChatRosterExpandPanelMarkup(botName, false, false, staffRole)}
+                </div>
+            </div>
+        </article>
+    `;
+}
+
 function buildCommunityChatRosterCardMarkup(name, selfLower, playingSet) {
+    if (isRoyalGuardBotUsername(name)) return '';
     const isSelf = normalizeCommunityChatUsername(name) === selfLower;
     const inAge = playingSet.has(normalizeCommunityChatUsername(name));
     const staffRole = typeof getPortalStaffRole === 'function' ? getPortalStaffRole(name) : null;
     const status = getChatRosterStatusMeta(inAge, isSelf);
-    const staffBadge = getChatRosterStaffBadgeMarkup(name);
+    const isExpandable = isChatRosterCardExpandable(staffRole);
+    const expandKey = isExpandable ? getChatRosterExpandKey(name, staffRole) : '';
+    const isExpanded = isExpandable && chatRosterExpandedCommanders.has(expandKey);
     const cardModifiers = [
         staffRole === 'owner' ? 'chat-roster-commander-card--owner' : '',
         staffRole === 'moderator' ? 'chat-roster-commander-card--moderator' : '',
         isSelf ? 'chat-roster-commander-card--self' : '',
-        inAge ? 'chat-roster-commander-card--in-age' : 'chat-roster-commander-card--portal'
+        inAge ? 'chat-roster-commander-card--in-age' : 'chat-roster-commander-card--portal',
+        isExpandable ? 'chat-roster-commander-card--expandable' : 'chat-roster-commander-card--slim',
+        isExpanded ? 'is-expanded' : ''
     ].filter(Boolean).join(' ');
 
+    const expandPanelMarkup = isExpandable
+        ? `<div class="chat-roster-commander-expand-panel" ${isExpanded ? '' : 'hidden'}>${buildChatRosterExpandPanelMarkup(name, isSelf, inAge, staffRole)}</div>`
+        : '';
+
+    const expandInteractionAttrs = isExpandable
+        ? `role="button" tabindex="0" aria-expanded="${isExpanded ? 'true' : 'false'}" aria-label="${escapeMetricRosterHtml(name)} — click for details" data-roster-expand-key="${expandKey}" onclick="toggleChatRosterCardExpand(event)" onkeydown="handleChatRosterCardExpandKeydown(event)"`
+        : '';
+
     return `
-        <article class="chat-roster-commander-card ${cardModifiers}" data-roster-commander="${escapeMetricRosterHtml(normalizeCommunityChatUsername(name))}"${staffRole ? ` data-staff-role="${staffRole}"` : ''}>
+        <article class="chat-roster-commander-card ${cardModifiers}" data-roster-commander="${escapeMetricRosterHtml(normalizeCommunityChatUsername(name))}"${staffRole ? ` data-staff-role="${staffRole}"` : ''} ${expandInteractionAttrs}>
             <div class="chat-roster-avatar-wrap">
                 <img class="chat-roster-avatar" src="${escapeMetricRosterHtml(getChatRosterAvatarUrl(name))}" alt="" width="40" height="40" loading="lazy" decoding="async">
                 <span class="chat-roster-presence-ring" aria-hidden="true"></span>
@@ -818,10 +944,9 @@ function buildCommunityChatRosterCardMarkup(name, selfLower, playingSet) {
                 <div class="chat-roster-commander-topline">
                     <span class="chat-roster-name">${escapeMetricRosterHtml(name)}</span>
                     <span class="chat-roster-status-pill ${status.pillClass}"><span class="chat-roster-status-pill-icon" aria-hidden="true">${status.icon}</span>${escapeMetricRosterHtml(status.label)}</span>
+                    ${isExpandable ? buildChatRosterExpandHintMarkup() : ''}
                 </div>
-                ${staffBadge ? `<div class="chat-roster-staff-badge-row">${staffBadge}</div>` : ''}
-                ${staffRole ? `<span class="chat-roster-rank-title">${escapeMetricRosterHtml(getChatRosterDisplayRank(name, isSelf))}</span>` : ''}
-                ${staffRole ? `<p class="chat-roster-quip">${escapeMetricRosterHtml(getChatRosterPresenceQuip(name, inAge, isSelf))}</p>` : ''}
+                ${expandPanelMarkup}
             </div>
         </article>
     `;
@@ -841,7 +966,7 @@ function renderCommunityChatOnlineRoster(targetBin) {
     const players = [];
     (portalLiveMetricsCache.portalBrowsingPlayers || []).forEach((name) => {
         const key = normalizeCommunityChatUsername(name);
-        if (!key || key === 'testaccount' || seen.has(key)) return;
+        if (!key || key === 'testaccount' || isRoyalGuardBotUsername(name) || seen.has(key)) return;
         seen.add(key);
         players.push(String(name).trim());
     });
@@ -860,20 +985,23 @@ function renderCommunityChatOnlineRoster(targetBin) {
     const inAgeCountEl = document.getElementById('chat-online-in-age-count');
     if (inAgeCountEl) inAgeCountEl.textContent = String(inAgeCount);
 
+    const botCard = buildRoyalGuardBotRosterCardMarkup();
+    const humanCards = sortedPlayers
+        .map((name) => buildCommunityChatRosterCardMarkup(name, selfLower, playingSet))
+        .filter(Boolean)
+        .join('');
+
     if (!sortedPlayers.length) {
-        bin.innerHTML = `
-            <div class="chat-roster-empty-state">
+        bin.innerHTML = `${botCard}
+            <div class="chat-roster-empty-state chat-roster-empty-state--humans-only">
                 <span class="chat-roster-empty-icon" aria-hidden="true">👥</span>
-                <p class="chat-roster-empty-title">No one else online</p>
-                <p class="chat-roster-empty-copy">You're the only player browsing the portal right now.</p>
-            </div>
-        `;
+                <p class="chat-roster-empty-title">No other players online</p>
+                <p class="chat-roster-empty-copy">Royal Guard is on duty. You're the only player in the portal list right now.</p>
+            </div>`;
         return;
     }
 
-    bin.innerHTML = sortedPlayers
-        .map((name) => buildCommunityChatRosterCardMarkup(name, selfLower, playingSet))
-        .join('');
+    bin.innerHTML = botCard + humanCards;
 }
 
 async function notifyPortalAgeSessionJoin() {
@@ -1337,8 +1465,9 @@ function renderCommunityChatPortalCanvas(viewport) {
                         <span class="chat-roster-header-label">Active Players</span>
                         <span class="chat-online-roster-count" id="chat-online-roster-count">0</span>
                     </div>
-                    <p class="chat-roster-subtitle"><span id="chat-online-in-age-count">0</span> in the Age · updates every few seconds</p>
+                    <p class="chat-roster-subtitle"><span id="chat-online-in-age-count">0</span> in the Age · click Royal Guard, Owner, or Mod for details</p>
                     <div class="chat-roster-status-legend" aria-label="Roster badges">
+                        <span class="chat-roster-legend-item chat-roster-legend-item--royal-guard-bot"><span aria-hidden="true">🤖</span> Royal Guard</span>
                         <span class="chat-roster-legend-item chat-roster-legend-item--owner"><span aria-hidden="true">👑</span> Owner</span>
                         <span class="chat-roster-legend-item chat-roster-legend-item--moderator"><span aria-hidden="true">🛡</span> Mod</span>
                         <span class="chat-roster-legend-item chat-roster-legend-item--portal"><span aria-hidden="true">◈</span> Portal</span>
@@ -1446,7 +1575,7 @@ function executeCompileActiveChannelMessageStrips() {
  const messageRow = document.createElement('div');
  messageRow.className = 'chat-message-strip-row';
  if (log.sender === loggedUser) messageRow.classList.add('local-sender-highlight-strip');
- if (log.sender === 'Moderator') messageRow.classList.add('system-bot-message-highlight');
+ if (isRoyalGuardBotUsername(log.sender)) messageRow.classList.add('system-bot-message-highlight');
  const staffRole = typeof getPortalStaffRole === 'function' ? getPortalStaffRole(log.sender) : null;
  if (staffRole === 'owner') messageRow.classList.add('chat-message-strip-row--owner');
  if (staffRole === 'moderator') messageRow.classList.add('chat-message-strip-row--moderator');
@@ -1557,7 +1686,7 @@ function executeSubmitNewPortalChatMessage() {
  setTimeout(() => {
  appendCommunityChatMessage({
  channel: activeChatChannelTrack,
-    sender: "Moderator",
+    sender: getRoyalGuardBotDisplayName(),
  text: `@${loggedUser} Severe behavioral policy violation detected. Clean up your language signature or face total chat exclusion channels.`,
  time: cleanTimeStr,
  visible: true,

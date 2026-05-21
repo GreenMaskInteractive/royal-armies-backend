@@ -1324,6 +1324,12 @@
     background: rgba(204, 0, 0, 0.12) !important;
 }
 
+.chat-roster-legend-item--royal-guard-bot {
+    color: #ff8a8a !important;
+    border-color: rgba(204, 0, 0, 0.4) !important;
+    background: rgba(204, 0, 0, 0.14) !important;
+}
+
 .player-roster-scrollable-track-bin {
     flex: 1 1 auto !important;
     min-height: 0 !important;
@@ -1369,6 +1375,16 @@
     border-color: rgba(204, 0, 0, 0.4) !important;
     background: linear-gradient(135deg, rgba(40, 12, 12, 0.55) 0%, rgba(8, 6, 4, 0.92) 100%) !important;
     box-shadow: 0 0 12px rgba(204, 0, 0, 0.1) !important;
+}
+
+.chat-roster-commander-card--royal-guard-bot {
+    border-color: rgba(204, 0, 0, 0.5) !important;
+    background: linear-gradient(135deg, rgba(48, 10, 10, 0.8) 0%, rgba(10, 6, 6, 0.95) 100%) !important;
+    box-shadow: 0 0 16px rgba(204, 0, 0, 0.14) !important;
+}
+
+.chat-roster-commander-card--royal-guard-bot .chat-roster-name {
+    color: #ff9999 !important;
 }
 
 .chat-roster-commander-card--in-age {
@@ -1464,6 +1480,56 @@
     background: linear-gradient(90deg, rgba(140, 20, 20, 0.85) 0%, rgba(204, 0, 0, 0.55) 100%) !important;
 }
 
+.chat-roster-staff-badge--royal-guard-bot {
+    color: #ffe8e8 !important;
+    border: 1px solid rgba(255, 100, 100, 0.5) !important;
+    background: linear-gradient(90deg, rgba(120, 16, 16, 0.9) 0%, rgba(180, 24, 24, 0.65) 100%) !important;
+}
+
+.chat-roster-avatar--royal-guard-bot {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    font-size: 1.15rem !important;
+    line-height: 1 !important;
+    border: 2px solid rgba(204, 0, 0, 0.55) !important;
+    background: linear-gradient(145deg, rgba(60, 12, 12, 0.95) 0%, rgba(20, 8, 8, 1) 100%) !important;
+    box-sizing: border-box !important;
+}
+
+.chat-roster-avatar-bot-mark {
+    position: absolute !important;
+    top: -4px !important;
+    right: -4px !important;
+    font-size: 0.62rem !important;
+    line-height: 1 !important;
+    pointer-events: none !important;
+}
+
+.chat-roster-commander-card--royal-guard-bot .chat-roster-presence-ring {
+    background: #ff4d4d !important;
+    box-shadow: 0 0 8px rgba(255, 77, 77, 0.65) !important;
+    animation: chat-roster-presence-pulse 2s ease-in-out infinite !important;
+}
+
+.chat-roster-status-pill--bot {
+    color: #ffe0e0 !important;
+    border: 1px solid rgba(255, 120, 120, 0.45) !important;
+    background: rgba(204, 0, 0, 0.22) !important;
+}
+
+.chat-roster-commander-card--royal-guard-bot .chat-roster-rank-title {
+    color: #ff7a7a !important;
+}
+
+.chat-roster-commander-card--royal-guard-bot .chat-roster-quip {
+    color: rgba(255, 153, 153, 0.75) !important;
+}
+
+.chat-roster-empty-state--humans-only {
+    margin-top: 4px !important;
+}
+
 .chat-roster-commander-card--owner .chat-roster-rank-title {
     color: #ffd700 !important;
 }
@@ -1481,8 +1547,53 @@
     justify-content: center !important;
 }
 
+.chat-roster-commander-card--slim .chat-roster-commander-body,
 .chat-roster-commander-card:not([data-staff-role]) .chat-roster-commander-body {
     gap: 0 !important;
+}
+
+.chat-roster-commander-card--expandable {
+    cursor: pointer !important;
+}
+
+.chat-roster-commander-card--expandable:hover {
+    border-color: rgba(201, 162, 39, 0.42) !important;
+}
+
+.chat-roster-commander-card--expandable:focus-visible {
+    outline: 2px solid rgba(201, 162, 39, 0.55) !important;
+    outline-offset: 2px !important;
+}
+
+.chat-roster-expand-hint {
+    flex-shrink: 0 !important;
+    font-size: 0.7rem !important;
+    line-height: 1 !important;
+    color: rgba(241, 224, 172, 0.4) !important;
+    transition: transform 0.2s ease, color 0.2s ease !important;
+    margin-left: 2px !important;
+}
+
+.chat-roster-commander-card--expandable.is-expanded .chat-roster-expand-hint {
+    transform: rotate(90deg) !important;
+    color: rgba(241, 224, 172, 0.7) !important;
+}
+
+.chat-roster-commander-expand-panel {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 4px !important;
+    margin-top: 6px !important;
+    padding-top: 8px !important;
+    border-top: 1px solid rgba(184, 144, 48, 0.12) !important;
+}
+
+.chat-roster-commander-expand-panel[hidden] {
+    display: none !important;
+}
+
+.chat-roster-commander-card--royal-guard-bot.chat-roster-commander-card--expandable:hover {
+    border-color: rgba(204, 0, 0, 0.55) !important;
 }
 
 .chat-roster-commander-topline {
@@ -1940,8 +2051,17 @@
     background: rgba(204, 0, 0, 0.03) !important;
     border-left: 2px solid rgba(204, 0, 0, 0.3) !important;
 }
-.system-bot-message-highlight .chat-message-sender-name {
+.system-bot-message-highlight .chat-message-sender-name,
+.chat-message-sender-name--royal-guard-bot {
     color: #ff4d4d !important;
+}
+
+.chat-message-sender-name--royal-guard-bot strong {
+    color: #ff9999 !important;
+}
+
+.chat-sender-staff-badge--royal-guard-bot {
+    margin-right: 4px !important;
 }
 
 .chat-sender-staff-badge {

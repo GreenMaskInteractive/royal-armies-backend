@@ -399,8 +399,16 @@ const globalFactionServerDirectory = {
 
 /** Portal owner — Owner badge in chat & Active Players list; full mailbox recipient roster. */
 const PORTAL_OWNER_USERNAMES = new Set(['caleb_admin']);
-/** Human moderators — add lowercase usernames here (automated "Moderator" bot is separate). */
+/** Human moderators — add lowercase usernames here (Royal Guard Bot is separate). */
 const PORTAL_MODERATOR_USERNAMES = new Set([]);
+
+/** Automated chat monitor — display name and legacy log aliases. */
+const ROYAL_GUARD_BOT_DISPLAY_NAME = 'Royal Guard Bot';
+const ROYAL_GUARD_BOT_USERNAME_ALIASES = new Set(['royal guard bot', 'moderator', 'royal guard']);
+
+function isRoyalGuardBotAccount(username) {
+    return ROYAL_GUARD_BOT_USERNAME_ALIASES.has(normalizePortalStaffUsername(username));
+}
 
 /** @deprecated Alias — use PORTAL_OWNER_USERNAMES */
 const MAILBOX_RECIPIENT_ROSTER_ADMIN_USERNAMES = PORTAL_OWNER_USERNAMES;
@@ -415,7 +423,7 @@ function normalizePortalStaffUsername(username) {
 /** @returns {'owner'|'moderator'|null} */
 function getPortalStaffRole(username) {
     const key = normalizePortalStaffUsername(username);
-    if (!key || key === 'moderator') return null;
+    if (!key || isRoyalGuardBotAccount(key)) return null;
     if (PORTAL_OWNER_USERNAMES.has(key)) return 'owner';
     if (PORTAL_MODERATOR_USERNAMES.has(key)) return 'moderator';
     return null;
@@ -424,6 +432,8 @@ function getPortalStaffRole(username) {
 window.getPortalStaffRole = getPortalStaffRole;
 window.PORTAL_OWNER_USERNAMES = PORTAL_OWNER_USERNAMES;
 window.PORTAL_MODERATOR_USERNAMES = PORTAL_MODERATOR_USERNAMES;
+window.ROYAL_GUARD_BOT_DISPLAY_NAME = ROYAL_GUARD_BOT_DISPLAY_NAME;
+window.isRoyalGuardBotAccount = isRoyalGuardBotAccount;
 
 function isMailboxRecipientRosterAdmin() {
     const user = String(
