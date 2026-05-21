@@ -397,7 +397,7 @@ const globalFactionServerDirectory = {
     other: []
 };
 
-/** Portal owner — Sovereign badge in chat & War Council; full mailbox recipient roster. */
+/** Portal owner — Owner badge in chat & Active Players list; full mailbox recipient roster. */
 const PORTAL_OWNER_USERNAMES = new Set(['caleb_admin']);
 /** Human moderators — add lowercase usernames here (automated "Moderator" bot is separate). */
 const PORTAL_MODERATOR_USERNAMES = new Set([]);

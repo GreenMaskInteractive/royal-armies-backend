@@ -676,25 +676,16 @@ function refreshCommunityChatOnlineRosterIfVisible() {
 }
 
 const CHAT_ROSTER_PORTAL_QUIPS = [
-    'Loitering at the war table',
-    'Trading rumors in the great hall',
-    'Sharpening quills for dispatches',
-    'Studying the Age map',
-    'Awaiting the next muster horn',
-    'Flipping through the chronicles',
-    'Polling the recruitment board',
-    'Warming boots by the hearth'
+    'Browsing the portal',
+    'Checking chat',
+    'Reviewing the Age map',
+    'Waiting in the lobby'
 ];
 
 const CHAT_ROSTER_AGE_QUIPS = [
-    'Deployed in the active Age',
-    'Commanding armies on the field',
-    'Sieging a rival bastion',
-    'Marshaling reinforcements',
-    'Scouting enemy lines',
-    'Entrenched at the front',
-    'Rallying the war council',
-    'Holding the line at dawn'
+    'Playing in the active Age',
+    'In a live Age session',
+    'Deployed in the Age'
 ];
 
 function hashCommunityChatRosterSeed(name) {
@@ -716,8 +707,8 @@ function getChatRosterAvatarUrl(name) {
 
 function getChatRosterDisplayRank(name, isSelf) {
     const staffRole = typeof getPortalStaffRole === 'function' ? getPortalStaffRole(name) : null;
-    if (staffRole === 'owner') return 'Sovereign of Royal Armies';
-    if (staffRole === 'moderator') return 'Royal Moderator';
+    if (staffRole === 'owner') return 'Site Owner';
+    if (staffRole === 'moderator') return 'Moderator';
     if (isSelf && typeof player !== 'undefined' && Number.isFinite(player.rank)) {
         const rankIndex = Math.max(0, Math.min(player.rank - 1, 21));
         if (typeof groundTitles !== 'undefined' && groundTitles[rankIndex]) {
@@ -733,13 +724,13 @@ function getChatRosterDisplayRank(name, isSelf) {
 function getChatRosterPresenceQuip(name, inAge, isSelf) {
     const staffRole = typeof getPortalStaffRole === 'function' ? getPortalStaffRole(name) : null;
     if (staffRole === 'owner') {
-        return inAge ? 'The Sovereign is deployed in the Age' : 'The Sovereign holds court at the portal';
+        return inAge ? 'Owner — in the Age' : 'Owner — on the portal';
     }
     if (staffRole === 'moderator') {
-        return inAge ? 'A moderator watches the field' : 'A moderator patrols the great hall';
+        return inAge ? 'Moderator — in the Age' : 'Moderator — on the portal';
     }
     if (isSelf) {
-        return inAge ? 'You are in the thick of the Age' : 'Holding court at your portal session';
+        return inAge ? 'You are in the Age' : 'You are on the portal';
     }
     const pool = inAge ? CHAT_ROSTER_AGE_QUIPS : CHAT_ROSTER_PORTAL_QUIPS;
     return pool[hashCommunityChatRosterSeed(name) % pool.length];
@@ -748,7 +739,7 @@ function getChatRosterPresenceQuip(name, inAge, isSelf) {
 function getChatRosterStaffBadgeMarkup(name) {
     const staffRole = typeof getPortalStaffRole === 'function' ? getPortalStaffRole(name) : null;
     if (staffRole === 'owner') {
-        return '<span class="chat-roster-staff-badge chat-roster-staff-badge--owner" title="Site owner"><span class="chat-roster-staff-badge-icon" aria-hidden="true">👑</span>Sovereign</span>';
+        return '<span class="chat-roster-staff-badge chat-roster-staff-badge--owner" title="Site owner"><span class="chat-roster-staff-badge-icon" aria-hidden="true">👑</span>Owner</span>';
     }
     if (staffRole === 'moderator') {
         return '<span class="chat-roster-staff-badge chat-roster-staff-badge--moderator" title="Moderator"><span class="chat-roster-staff-badge-icon" aria-hidden="true">🛡</span>Moderator</span>';
@@ -829,8 +820,8 @@ function buildCommunityChatRosterCardMarkup(name, selfLower, playingSet) {
                     <span class="chat-roster-status-pill ${status.pillClass}"><span class="chat-roster-status-pill-icon" aria-hidden="true">${status.icon}</span>${escapeMetricRosterHtml(status.label)}</span>
                 </div>
                 ${staffBadge ? `<div class="chat-roster-staff-badge-row">${staffBadge}</div>` : ''}
-                <span class="chat-roster-rank-title">${escapeMetricRosterHtml(getChatRosterDisplayRank(name, isSelf))}</span>
-                <p class="chat-roster-quip">${escapeMetricRosterHtml(getChatRosterPresenceQuip(name, inAge, isSelf))}</p>
+                ${staffRole ? `<span class="chat-roster-rank-title">${escapeMetricRosterHtml(getChatRosterDisplayRank(name, isSelf))}</span>` : ''}
+                ${staffRole ? `<p class="chat-roster-quip">${escapeMetricRosterHtml(getChatRosterPresenceQuip(name, inAge, isSelf))}</p>` : ''}
             </div>
         </article>
     `;
@@ -872,9 +863,9 @@ function renderCommunityChatOnlineRoster(targetBin) {
     if (!sortedPlayers.length) {
         bin.innerHTML = `
             <div class="chat-roster-empty-state">
-                <span class="chat-roster-empty-icon" aria-hidden="true">🏰</span>
-                <p class="chat-roster-empty-title">The hall is quiet</p>
-                <p class="chat-roster-empty-copy">No commanders are browsing the portal right now. Light the braziers and rally your allies—or march into the Age alone.</p>
+                <span class="chat-roster-empty-icon" aria-hidden="true">👥</span>
+                <p class="chat-roster-empty-title">No one else online</p>
+                <p class="chat-roster-empty-copy">You're the only player browsing the portal right now.</p>
             </div>
         `;
         return;
@@ -1339,16 +1330,16 @@ function renderCommunityChatPortalCanvas(viewport) {
                 <div class="chat-scrolling-messages-bin" id="chat-stream-render-viewport"></div>
                 <div class="chat-input-toolbar-row" id="chat-portal-input-interaction-tray"></div>
             </div>
-            <aside class="chat-sidebar-player-roster-deck" aria-label="Commanders browsing the portal">
+            <aside class="chat-sidebar-player-roster-deck" aria-label="Active players">
                 <div class="chat-roster-header-deck">
                     <div class="player-roster-header-title">
-                        <span class="chat-roster-header-icon" aria-hidden="true">⚜</span>
+                        <span class="chat-roster-header-icon" aria-hidden="true">👥</span>
                         <span class="chat-roster-header-label">Active Players</span>
                         <span class="chat-online-roster-count" id="chat-online-roster-count">0</span>
                     </div>
-                    <p class="chat-roster-subtitle"><span id="chat-online-in-age-count">0</span> in the Age · roster refreshes live</p>
+                    <p class="chat-roster-subtitle"><span id="chat-online-in-age-count">0</span> in the Age · updates every few seconds</p>
                     <div class="chat-roster-status-legend" aria-label="Roster badges">
-                        <span class="chat-roster-legend-item chat-roster-legend-item--owner"><span aria-hidden="true">👑</span> Sovereign</span>
+                        <span class="chat-roster-legend-item chat-roster-legend-item--owner"><span aria-hidden="true">👑</span> Owner</span>
                         <span class="chat-roster-legend-item chat-roster-legend-item--moderator"><span aria-hidden="true">🛡</span> Mod</span>
                         <span class="chat-roster-legend-item chat-roster-legend-item--portal"><span aria-hidden="true">◈</span> Portal</span>
                         <span class="chat-roster-legend-item chat-roster-legend-item--in-age"><span aria-hidden="true">⚔</span> In Age</span>

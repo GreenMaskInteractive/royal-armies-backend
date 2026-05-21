@@ -1337,9 +1337,9 @@
 .chat-roster-commander-card {
     display: flex !important;
     flex-direction: row !important;
-    align-items: flex-start !important;
+    align-items: center !important;
     gap: 10px !important;
-    padding: 10px 10px 10px 8px !important;
+    padding: 8px 10px 8px 8px !important;
     border-radius: 6px !important;
     background: linear-gradient(135deg, rgba(18, 14, 10, 0.92) 0%, rgba(0, 0, 0, 0.55) 100%) !important;
     border: 1px solid rgba(184, 144, 48, 0.18) !important;
@@ -1478,6 +1478,11 @@
     display: flex !important;
     flex-direction: column !important;
     gap: 2px !important;
+    justify-content: center !important;
+}
+
+.chat-roster-commander-card:not([data-staff-role]) .chat-roster-commander-body {
+    gap: 0 !important;
 }
 
 .chat-roster-commander-topline {
