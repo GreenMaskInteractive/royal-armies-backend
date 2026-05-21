@@ -121,7 +121,7 @@ function syncCommanderHubModalSectionState(tabName) {
 
 function loadCommanderHubSection(tabName, clickEvent) {
     if (typeof loadLore !== 'function') {
-        console.warn('loadLore is unavailable — include script.js on ageportal.html');
+        console.warn('loadLore is unavailable — include script.js on main.html');
         return;
     }
 
@@ -304,14 +304,14 @@ function renderPublicProfileCardContent(snapshot) {
     const bioColumnContent = isPublic && snapshot.description
         ? `<p class="public-profile-bio-text">${escapePublicProfileHtml(snapshot.description)}</p>`
         : (!isPublic
-            ? '<p class="public-profile-private-msg">This Commander keeps their chronicle private.</p>'
-            : '<p class="public-profile-empty-state public-profile-bio-empty">No chronicle written yet.</p>');
+            ? '<p class="public-profile-private-msg">This player keeps their bio private.</p>'
+            : '<p class="public-profile-empty-state public-profile-bio-empty">No bio written yet.</p>');
 
     const splitBodySection = `
         <div class="public-profile-split-body">
             <div class="public-profile-split-column public-profile-split-left">
                 <section class="public-profile-section public-profile-bio-section">
-                    <h4 class="public-profile-section-label">Commander Chronicle</h4>
+                    <h4 class="public-profile-section-label">Bio</h4>
                     <div class="public-profile-bio-panel">${bioColumnContent}</div>
                 </section>
             </div>
@@ -334,11 +334,11 @@ function renderPublicProfileCardContent(snapshot) {
                 <img class="public-profile-avatar-img" src="${escapePublicProfileHtml(snapshot.avatarUrl)}" alt="${escapePublicProfileHtml(snapshot.name)} emblem">
             </div>
             <div class="public-profile-identity-copy">
-                <p class="public-profile-eyebrow">Royal Front Commander Dossier</p>
+                <p class="public-profile-eyebrow">Player profile</p>
                 <h2 id="public-profile-card-title" class="public-profile-commander-name">${escapePublicProfileHtml(snapshot.name)}</h2>
                 <div class="public-profile-badge-row">
                     <span class="${membershipClass}">${escapePublicProfileHtml(snapshot.membershipTitle)} Member</span>
-                    <span class="public-profile-visibility-pill ${isPublic ? 'is-public' : 'is-private'}">${isPublic ? 'test' : 'Private Dossier'}</span>
+                    <span class="public-profile-visibility-pill ${isPublic ? 'is-public' : 'is-private'}">${isPublic ? 'Public' : 'Private'}</span>
                 </div>
                 <div class="public-profile-meta-row">
                     <span><strong>Nation:</strong> ${escapePublicProfileHtml(snapshot.country)}</span>

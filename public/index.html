@@ -22,6 +22,17 @@
 </head>
 <body>
 
+    <div id="developer-maintenance-alert-bar" class="developer-maintenance-alert-bar" role="alert" aria-live="polite" hidden>
+        <div class="developer-maintenance-alert-inner">
+            <span class="developer-maintenance-alert-icon" aria-hidden="true">⚠️</span>
+            <div class="developer-maintenance-alert-copy">
+                <strong id="developer-maintenance-alert-title" class="developer-maintenance-alert-title"></strong>
+                <p id="developer-maintenance-alert-message" class="developer-maintenance-alert-message"></p>
+                <p id="developer-maintenance-alert-window" class="developer-maintenance-alert-window" hidden></p>
+            </div>
+        </div>
+    </div>
+
     <!-- ==========================================
          LANDING MODULE: AUTHENTICATION PORTAL
          ========================================== -->
@@ -46,15 +57,16 @@
                 <div id="updates-panel" class="updates-panel">
                     <div class="updates-header">Updates</div>
                     <div class="updates-scroll">
-                        <div class="update-item" onclick="openChronicleDetail('genesis', event)"><h4 class="update-title">The Genesis Forge</h4></div>
-                        <div class="update-item" onclick="openChronicleDetail('audio', event)"><h4 class="update-title">Symphony of War</h4></div>
-                        <div class="update-item" onclick="openChronicleDetail('narrative', event)"><h4 class="update-title">The Traveler's Guidance</h4></div>
-                        <div class="update-item" onclick="openChronicleDetail('interface', event)"><h4 class="update-title">Navigator & Roadmap</h4></div>
-                        <div class="update-item" onclick="openChronicleDetail('security', event)"><h4 class="update-title">Nexus Gatekeeping</h4></div>
-                        <div class="update-item" onclick="openChronicleDetail('assets', event)"><h4 class="update-title">GIMP Asset Integration</h4></div>
-                        <div class="update-item" onclick="openChronicleDetail('optimization', event)"><h4 class="update-title">Engine Optimization</h4></div>
-                        <div class="update-item" onclick="openChronicleDetail('networking', event)"><h4 class="update-title">Nexus Socket Sync</h4></div>
-                        <div class="update-item" onclick="openChronicleDetail('networking_nexus', event)"><h4 class="update-title">Nexus Handshake</h4></div>
+                        <div class="update-item" onclick="openChronicleDetail('alpha_0111', event)"><span class="update-date">May 2026</span><h4 class="update-title">Alpha 0.1.11 — Age Portal</h4></div>
+                        <div class="update-item" onclick="openChronicleDetail('genesis', event)"><h4 class="update-title">Core framework</h4></div>
+                        <div class="update-item" onclick="openChronicleDetail('audio', event)"><h4 class="update-title">Audio system</h4></div>
+                        <div class="update-item" onclick="openChronicleDetail('narrative', event)"><h4 class="update-title">Story intro</h4></div>
+                        <div class="update-item" onclick="openChronicleDetail('interface', event)"><h4 class="update-title">Navigation and roadmap</h4></div>
+                        <div class="update-item" onclick="openChronicleDetail('security', event)"><h4 class="update-title">Login and accounts</h4></div>
+                        <div class="update-item" onclick="openChronicleDetail('assets', event)"><h4 class="update-title">Art pipeline</h4></div>
+                        <div class="update-item" onclick="openChronicleDetail('optimization', event)"><h4 class="update-title">Performance</h4></div>
+                        <div class="update-item" onclick="openChronicleDetail('networking', event)"><h4 class="update-title">Live sync</h4></div>
+                        <div class="update-item" onclick="openChronicleDetail('networking_nexus', event)"><h4 class="update-title">Registration server</h4></div>
                     </div>
                 </div>
             </div>
@@ -64,12 +76,12 @@
                 <div id="roadmap-modal" class="updates-panel">
                     <div class="updates-header">Project Roadmap</div>
                     <div class="updates-scroll">
-                        <div class="update-item" onclick="openChronicleDetail('roadmap_foundation', event)"><span class="update-date">Phase 1</span><h4 class="update-title">The Foundation</h4></div>
-                        <div class="update-item" onclick="openChronicleDetail('roadmap_combat', event)"><span class="update-date">Phase 2</span><h4 class="update-title">Aether Combat Sync</h4></div>
-                        <div class="update-item" onclick="openChronicleDetail('roadmap_classes', event)"><span class="update-date">Phase 3</span><h4 class="update-title">Class Specialization</h4></div>
-                        <div class="update-item" onclick="openChronicleDetail('roadmap_world', event)"><span class="update-date">Phase 4</span><h4 class="update-title">The Outer Realms</h4></div>
-                        <div class="update-item" onclick="openChronicleDetail('roadmap_economy', event)"><span class="update-date">Phase 5</span><h4 class="update-title">Royal Trade & Economy</h4></div>
-                        <div class="update-item" onclick="openChronicleDetail('roadmap_launch', event)"><span class="update-date">Phase 6</span><h4 class="update-title">Royal Ascension</h4></div>
+                        <div class="update-item" onclick="openChronicleDetail('roadmap_foundation', event)"><span class="update-date">Phase 1</span><h4 class="update-title">Foundation</h4></div>
+                        <div class="update-item" onclick="openChronicleDetail('roadmap_combat', event)"><span class="update-date">Phase 2</span><h4 class="update-title">Combat sync</h4></div>
+                        <div class="update-item" onclick="openChronicleDetail('roadmap_classes', event)"><span class="update-date">Phase 3</span><h4 class="update-title">Classes</h4></div>
+                        <div class="update-item" onclick="openChronicleDetail('roadmap_world', event)"><span class="update-date">Phase 4</span><h4 class="update-title">World map</h4></div>
+                        <div class="update-item" onclick="openChronicleDetail('roadmap_economy', event)"><span class="update-date">Phase 5</span><h4 class="update-title">Economy</h4></div>
+                        <div class="update-item" onclick="openChronicleDetail('roadmap_launch', event)"><span class="update-date">Phase 6</span><h4 class="update-title">Launch</h4></div>
                     </div>
                 </div>
             </div>
@@ -118,16 +130,16 @@
         <!-- Block 9: Landing Chronicle Detail Overlay -->
         <div id="chronicle-detail-modal" class="detail-overlay" style="display: none; opacity: 0;">
             <div class="detail-card">
-                <h2 id="chronicle-detail-title">ARCHIVE TITLE</h2>
+                <h2 id="chronicle-detail-title">Update title</h2>
                 <div class="detail-scroll">
-                    <p id="chronicle-detail-text">Archive details loading...</p>
+                    <p id="chronicle-detail-text">Loading details...</p>
                 </div>
                 <button class="img-btn" onclick="closeChronicleDetail()" style="margin-top: 20px; width: 150px;">Return</button>
             </div>
         </div>
 
         <!-- Block 10: Version & Copyright Stamps -->
-        <div class="version-stamp">ALPHA 0.1.10</div>
+        <div class="version-stamp">ALPHA 0.1.11</div>
         <div class="copyright-stamp">© 2026 GREEN MASK INTERACTIVE</div>
 
     </div> <!-- END PAGE LANDING -->
@@ -163,14 +175,14 @@
     <div id="chronicle-detail-modal" class="modal-overlay" style="display: none; opacity: 0; transition: opacity 0.3s ease;">
         <div class="roadmap-container" style="background: rgba(10,10,10,0.98); border: 2px solid #d4af37; height: auto; min-height: 300px; width: 50vw; max-width: 600px; padding: 40px; justify-content: center;">
             <span class="close-modal" onclick="closeChronicleDetail()">&times;</span>
-            <h2 id="chronicle-detail-title" style="color: #d4af37; font-family: 'Georgia', serif; margin-bottom: 20px; text-transform: uppercase; text-align: center; letter-spacing: 2px;">Chronicle Title</h2>
+            <h2 id="chronicle-detail-title" style="color: #d4af37; font-family: 'Georgia', serif; margin-bottom: 20px; text-transform: uppercase; text-align: center; letter-spacing: 2px;">Update title</h2>
             <p id="chronicle-detail-text" style="color: #f1e0ac; font-family: 'Georgia', serif; line-height: 1.6; text-align: center; font-style: italic;"></p>
         </div>
     </div>
 
     <!-- Block 13: Unified Auth Registration Modal -->
     <div id="register-modal" class="modal-overlay" style="display: none; opacity: 0;">
-        <div class="modal-content">
+        <div class="modal-content bordered-modal-panel">
             <span class="close-modal" onclick="closeRegister()">&times;</span>
             <h2 class="modal-title">Create New Account</h2>
             <div class="register-form">
@@ -281,7 +293,7 @@
 
     <!-- Block 17: Forgot Password Modal -->
     <div id="forgot-modal" class="modal-overlay" style="display: none; opacity: 0;">
-        <div class="modal-content">
+        <div class="modal-content bordered-modal-panel">
             <span class="close-modal" onclick="closeForgot()">&times;</span>
             <h2 class="modal-title">Account Recovery</h2>
             <div class="register-form">
@@ -336,31 +348,31 @@
             </div>
 
             <div class="radial-slots-wrapper">
-                <div id="slot-label-display">NEXUS HUB</div>
+                <div id="slot-label-display">Main menu</div>
 
-                <img src="images/lostmanuscripts.png" class="radial-slot" id="slot-manuscripts" onmouseover="updateSlotLabel('Manuscripts')" onmouseout="updateSlotLabel('NEXUS HUB')" onclick="loadLore('manuscripts')">
+                <img src="images/lostmanuscripts.png" class="radial-slot" id="slot-manuscripts" onmouseover="updateSlotLabel('Manuscripts')" onmouseout="updateSlotLabel('Main menu')" onclick="loadLore('manuscripts')">
                 <div class="slot-aura" id="aura-manuscripts"></div>
 
-                <img src="images/letters.png" class="radial-slot" id="slot-letters" onmouseover="updateSlotLabel('Letters')" onmouseout="updateSlotLabel('NEXUS HUB')" onclick="loadLore('letters')">
+                <img src="images/letters.png" class="radial-slot" id="slot-letters" onmouseover="updateSlotLabel('Letters')" onmouseout="updateSlotLabel('Main menu')" onclick="loadLore('letters')">
                 <div class="slot-aura" id="aura-letters"></div>
 
-                <img src="images/historicalarchives.png" class="radial-slot" id="slot-archives" onmouseover="updateSlotLabel('Archives')" onmouseout="updateSlotLabel('NEXUS HUB')" onclick="loadLore('archives')">
+                <img src="images/historicalarchives.png" class="radial-slot" id="slot-archives" onmouseover="updateSlotLabel('Archives')" onmouseout="updateSlotLabel('Main menu')" onclick="loadLore('archives')">
                 <div class="slot-aura" id="aura-archives"></div>
 
                 <img src="images/messageicon.png" class="nav-icon" id="slot-messages"
                      onmouseover="updateSlotLabel('Messages')"
-                     onmouseout="updateSlotLabel('NEXUS HUB')"
+                     onmouseout="updateSlotLabel('Main menu')"
                      onclick="loadLore('messages')"
-                     title="Wartime Dispatches Portal">
+                     title="Messages">
                 <div class="slot-aura" id="aura-messages"></div>
 
-                <img src="images/profileicon.png" class="radial-slot" id="slot-profile" onmouseover="updateSlotLabel('Profile')" onmouseout="updateSlotLabel('NEXUS HUB')" onclick="loadLore('profile')">
+                <img src="images/profileicon.png" class="radial-slot" id="slot-profile" onmouseover="updateSlotLabel('Profile')" onmouseout="updateSlotLabel('Main menu')" onclick="loadLore('profile')">
                 <div class="slot-aura" id="aura-profile"></div>
 
-                <img src="images/settingsicon.png" class="radial-slot" id="slot-settings" onmouseover="updateSlotLabel('Settings')" onmouseout="updateSlotLabel('NEXUS HUB')" onclick="loadLore('settings')">
+                <img src="images/settingsicon.png" class="radial-slot" id="slot-settings" onmouseover="updateSlotLabel('Settings')" onmouseout="updateSlotLabel('Main menu')" onclick="loadLore('settings')">
                 <div class="slot-aura" id="aura-settings"></div>
 
-                <img src="images/logouticon.png" class="radial-slot" id="slot-logout" onmouseover="updateSlotLabel('Logout')" onmouseout="updateSlotLabel('NEXUS HUB')" onclick="handleLogout()">
+                <img src="images/logouticon.png" class="radial-slot" id="slot-logout" onmouseover="updateSlotLabel('Logout')" onmouseout="updateSlotLabel('Main menu')" onclick="handleLogout()">
                 <div class="slot-aura" id="aura-logout"></div>
             </div>
         </div>
@@ -394,7 +406,7 @@
             </div>
 
             <div class="suicide-popup-action-row">
-                <button class="suicide-safe-retreat-btn" onclick="closePenaltyOverlayWindow()">Acknowledge & Deploy</button>
+                <button class="suicide-safe-retreat-btn" onclick="closePenaltyOverlayWindow()">OK</button>
             </div>
         </div>
     </div>
@@ -433,6 +445,7 @@
     <!-- Block 25: RAGE Primary Logic Controller -->
     <script src="public/js/some_other_helper.js"></script>
     <script src="script.js"></script>
+    <script src="maintenance-alert.js"></script>
     <script src="script2.js"></script>
 
 </body>

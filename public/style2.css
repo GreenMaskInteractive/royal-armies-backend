@@ -39,7 +39,8 @@
     justify-content: center !important;
     align-items: center !important;
     width: 100% !important;
-    padding: 15px 40px 10px 40px !important; /* Balanced tracking margin heights */
+    padding: 12px 40px 0 40px !important;
+    margin-bottom: -22px !important;
     box-sizing: border-box !important;
     background: linear-gradient(180deg, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0) 100%) !important;
     z-index: 100 !important;
@@ -50,6 +51,8 @@
     display: flex !important;
     justify-content: center !important;
     align-items: center !important;
+    margin: 0 !important;
+    padding: 0 !important;
 }
 
 .portal-brand-logo-asset {
@@ -58,6 +61,9 @@
     max-width: 680px !important; 
     height: auto !important;
     object-fit: contain !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    vertical-align: top !important;
 }
 
 /* Block 3: RELAXED MAIN MASTER WRAPPER */
@@ -72,8 +78,8 @@
     padding: 0 40px 40px 40px !important; 
     box-sizing: border-box !important;
     flex-grow: 1 !important;
-    gap: 20px !important;                 
-    margin-top: -30px !important;
+    gap: 20px !important;
+    margin-top: -52px !important;
 }
 
 
@@ -164,6 +170,33 @@
     flex: 1 !important;
 }
 
+.portal-chat-nav-dock {
+    flex-wrap: wrap !important;
+    gap: 8px 10px !important;
+    row-gap: 6px !important;
+    max-width: 100% !important;
+}
+
+.portal-chat-nav-dock .nav-tab {
+    font-size: 0.78rem !important;
+    letter-spacing: 0.8px !important;
+    padding: 8px 12px !important;
+}
+
+.portal-brand-logo-static {
+    cursor: default !important;
+    pointer-events: none !important;
+    user-select: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    line-height: 0 !important;
+}
+
+.portal-brand-logo-static .portal-brand-logo-asset {
+    margin-bottom: -8px !important;
+    pointer-events: none !important;
+}
+
 /* Block 5: CHROMATIC HEADER TEXT TABS SCALE ENGINE */
 .nav-tab {
     font-family: 'Cinzel', serif !important;
@@ -188,6 +221,17 @@
     border-bottom: 3px solid #b89030 !important;
 }
 
+.nav-tab.nav-tab-preview-locked,
+.nav-tab.nav-tab-preview-locked:hover,
+.nav-tab.nav-tab-preview-locked.active {
+    color: rgba(241, 224, 172, 0.32) !important;
+    text-shadow: none !important;
+    border-bottom-color: transparent !important;
+    cursor: not-allowed !important;
+    opacity: 0.72 !important;
+    pointer-events: auto !important;
+}
+
 /* 🔒 COLUMN 3 STRUCTURES: THE RIGHT ALIGNED DISCONNECT COMMAND LEVER CONTAINER */
 .nav-right-logout-action-dock {
     width: 250px !important; /* Balanced structural width matching your account label to force dead centering */
@@ -202,43 +246,61 @@
     display: inline-flex !important;
     align-items: center !important;
     justify-content: center !important;
-    gap: 8px !important;
-    background: linear-gradient(180deg, rgba(48, 10, 10, 0.95) 0%, rgba(22, 6, 6, 0.98) 100%) !important;
-    border: 1px solid rgba(204, 0, 0, 0.55) !important;
-    color: #ffd6d6 !important;
+    gap: 7px !important;
+    min-height: 32px !important;
+    transform: translateY(-3px) !important;
+    padding: 5px 16px 5px 12px !important;
+    background:
+        linear-gradient(135deg, rgba(30, 26, 18, 0.92) 0%, rgba(17, 14, 10, 0.96) 100%),
+        url('images/borderedcontainer_thin.png') center / 100% 100% no-repeat !important;
+    border: 2px solid #b89030 !important;
+    border-radius: 3px !important;
+    color: #f1e0ac !important;
     font-family: 'Cinzel', serif !important;
     font-size: 0.78rem !important;
     font-weight: bold !important;
-    letter-spacing: 1.2px !important;
-    padding: 7px 16px 7px 12px !important;
-    cursor: pointer !important;
-    border-radius: 4px !important;
-    transition: all 0.2s ease !important;
-    flex-shrink: 0 !important;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 120, 120, 0.12) !important;
+    letter-spacing: 1px !important;
     text-transform: uppercase !important;
+    text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.85) !important;
+    cursor: pointer !important;
+    flex-shrink: 0 !important;
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.55), inset 0 1px 3px rgba(255, 215, 0, 0.12) !important;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
 }
 .header-logout-icon {
-    width: 22px !important;
-    height: 22px !important;
+    width: 18px !important;
+    height: 18px !important;
     object-fit: contain !important;
-    filter: drop-shadow(0 0 4px rgba(255, 80, 80, 0.45)) !important;
     flex-shrink: 0 !important;
+    opacity: 0.92 !important;
+    filter: sepia(0.35) saturate(1.4) hue-rotate(5deg) brightness(1.15)
+        drop-shadow(0 0 4px rgba(255, 215, 0, 0.35)) !important;
 }
 .header-logout-label {
     line-height: 1 !important;
     white-space: nowrap !important;
+    color: inherit !important;
 }
 .header-logout-btn:hover {
-    background: linear-gradient(180deg, rgba(120, 18, 18, 0.98) 0%, rgba(70, 8, 8, 0.98) 100%) !important;
-    border-color: #ff5555 !important;
-    box-shadow: 0 0 14px rgba(204, 0, 0, 0.55), inset 0 1px 0 rgba(255, 180, 180, 0.2) !important;
     color: #ffffff !important;
-    transform: translateY(-1px) !important;
+    border-color: #ffd700 !important;
+    background:
+        linear-gradient(135deg, rgba(43, 36, 23, 0.95) 0%, rgba(23, 19, 14, 0.98) 100%),
+        url('images/borderedcontainer_thin.png') center / 100% 100% no-repeat !important;
+    box-shadow: 0 0 14px rgba(212, 175, 55, 0.45), inset 0 1px 4px rgba(255, 255, 255, 0.12) !important;
+    transform: translateY(-4px) !important;
+}
+.header-logout-btn:hover .header-logout-icon {
+    filter: sepia(0.2) saturate(1.6) hue-rotate(5deg) brightness(1.25)
+        drop-shadow(0 0 6px rgba(255, 215, 0, 0.55)) !important;
 }
 .header-logout-btn:active {
-    transform: translateY(0) !important;
-    box-shadow: 0 0 6px rgba(204, 0, 0, 0.35) !important;
+    transform: translateY(-2px) !important;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.65) !important;
+}
+.header-logout-btn:focus-visible {
+    outline: 2px solid #ffd700 !important;
+    outline-offset: 2px !important;
 }
 
 
@@ -448,12 +510,22 @@
     flex: 1 !important;
 }
 
+/* Age Portal home: let intro + Developer's Log grow the page instead of clipping */
+#panel-age-portal-mode.age-portal-view-canvas {
+    height: auto !important;
+    flex: none !important;
+}
+
+#panel-age-portal-mode .portal-twin-split-deck-row {
+    flex: none !important;
+}
+
 /* Block 8: RE-BALANCED CARD SLOTS ROW */
 .portal-twin-split-deck-row {
     display: flex !important;
     flex-direction: row !important;
     justify-content: space-between !important; /* 🌟 Pushes the sidebar to the right edge */
-    align-items: stretch !important;            /* Forces cards to match height scales uniformly */
+    align-items: flex-start !important;         /* Each column grows to fit its own content */
     gap: 24px !important;
     width: 100% !important;                     /* 🌟 Forces the grid row to utilize full layout widths */
     flex: 1 !important;
@@ -497,10 +569,43 @@
     align-items: stretch !important;
     justify-content: flex-start !important; /* Locks sidebar updates panel to the roof edge */
     width: 320px !important;
-    height: 380px !important; /* Locks original fixed dimensions to protect left text sizing layout metrics */
+    height: auto !important;
     flex-shrink: 0 !important;
     position: relative !important; 
     right: 905px !important; /* Adjust this value to shift your sidebar left/right */
+}
+
+.portal-sidebar-flex-column .dashboard-news-card-box {
+    height: auto !important;
+    flex: none !important;
+}
+
+.portal-sidebar-flex-column .card-scrollable-body-text {
+    overflow: visible !important;
+    flex: none !important;
+    height: auto !important;
+}
+
+.portal-sidebar-flex-column .news-bulletin-item {
+    margin-bottom: 1em !important;
+}
+
+.portal-sidebar-flex-column .news-bulletin-item:last-child {
+    margin-bottom: 0 !important;
+}
+
+.portal-sidebar-flex-column .news-bulletin-section-label {
+    display: block !important;
+    font-weight: 600 !important;
+    color: #c5a059 !important;
+    margin-bottom: 0.35em !important;
+}
+
+.portal-sidebar-flex-column .news-bulletin-bullet {
+    display: block !important;
+    padding-left: 1em !important;
+    text-indent: -1em !important;
+    margin-top: 0.35em !important;
 }
 
 /* Block 11: THE AUTOMATIC DEPLOYMENT HORIZONTAL CENTERING DECK */
@@ -798,25 +903,84 @@
     z-index: 999999 !important;
 }
 
-#main-logout-confirmation-modal .logout-confirmation-bezel {
-    border-color: rgba(204, 0, 0, 0.45) !important;
-    box-shadow: 0 18px 48px rgba(0, 0, 0, 0.95), 0 0 24px rgba(204, 0, 0, 0.15) !important;
+/* Block 17: Auth-style modals — borderedcontainer_thin frame */
+.portal-overlay-modal-bezel,
+.bordered-modal-panel {
+    background-color: rgba(12, 10, 8, 0.94) !important;
+    background-image: url('images/borderedcontainer_thin.png') !important;
+    background-size: 100% 100% !important;
+    background-repeat: no-repeat !important;
+    background-position: center center !important;
+    border: none !important;
+    border-radius: 0 !important;
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.88) !important;
 }
 
-/* Block 17: HIGH-CONTRAST SECURE BEZELS */
 .portal-overlay-modal-bezel {
-    background: #0f0d0a !important;
-    border: 2px solid #b89030 !important;
-    border-radius: 4px !important;
-    padding: 24px !important;
+    padding: 28px 32px 26px 32px !important;
     width: 380px !important;
     max-width: 90% !important;
-    box-shadow: 0 15px 40px rgba(0,0,0,0.95) !important;
     text-align: center !important;
     box-sizing: border-box !important;
     display: flex !important;
     flex-direction: column !important;
     gap: 14px !important;
+}
+
+/* Logout dialog: frame fits content height */
+#main-logout-confirmation-modal .logout-confirmation-bezel {
+    background-color: rgba(14, 11, 8, 0.96) !important;
+    background-image: url('images/borderedcontainer_thin.png') !important;
+    background-size: 100% 100% !important;
+    background-repeat: no-repeat !important;
+    background-position: center center !important;
+    border: none !important;
+    border-image: none !important;
+    border-radius: 0 !important;
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.88) !important;
+    width: min(408px, 92vw) !important;
+    min-width: 0 !important;
+    max-width: min(408px, 92vw) !important;
+    height: auto !important;
+    min-height: 0 !important;
+    padding: 20px 30px 18px 30px !important;
+    text-align: center !important;
+    box-sizing: border-box !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 12px !important;
+    flex-shrink: 0 !important;
+}
+
+#main-logout-confirmation-modal .modal-alert-header {
+    font-size: 1.12rem !important;
+    letter-spacing: 0.06em !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    line-height: 1.25 !important;
+}
+
+#main-logout-confirmation-modal .modal-alert-body {
+    max-width: 328px !important;
+    font-size: 0.92rem !important;
+    line-height: 1.45 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+#main-logout-confirmation-modal .modal-action-btn-row {
+    margin: 0 !important;
+    padding-top: 4px !important;
+    gap: 12px !important;
+    flex-wrap: wrap !important;
+}
+
+#main-logout-confirmation-modal .modal-action-btn {
+    font-size: 0.82rem !important;
+    padding: 8px 18px !important;
+    letter-spacing: 0.6px !important;
 }
 
 .modal-alert-header { 
@@ -983,6 +1147,70 @@
    SECTION 10: ALIGNMENT | Block 20: Fullscreen Tavern Chat Skins
    ============================================================ */
 
+.chat-channel-context-banner {
+    display: flex !important;
+    align-items: center !important;
+    gap: 14px !important;
+    padding: 12px 16px !important;
+    margin-bottom: 10px !important;
+    border: 1px solid rgba(184, 144, 48, 0.28) !important;
+    border-radius: 4px !important;
+    background: rgba(8, 6, 4, 0.72) !important;
+    flex-shrink: 0 !important;
+}
+
+.chat-channel-context-icon {
+    font-size: 1.6rem !important;
+    line-height: 1 !important;
+    flex-shrink: 0 !important;
+}
+
+.chat-channel-context-title {
+    margin: 0 0 4px 0 !important;
+    font-family: 'Cinzel', serif !important;
+    font-size: 1rem !important;
+    color: #ffd700 !important;
+    letter-spacing: 0.6px !important;
+}
+
+.chat-channel-context-blurb {
+    margin: 0 !important;
+    font-family: 'Segoe UI', sans-serif !important;
+    font-size: 0.78rem !important;
+    color: rgba(241, 224, 172, 0.62) !important;
+    line-height: 1.35 !important;
+}
+
+.chat-workspace-nav-driven {
+    flex-direction: column !important;
+}
+
+.chat-body-split-row {
+    display: flex !important;
+    flex-direction: row !important;
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+    gap: 16px !important;
+    width: 100% !important;
+}
+
+.chat-main-feed-fullwidth {
+    flex: 1 1 auto !important;
+    min-width: 0 !important;
+    min-height: 0 !important;
+}
+
+.chat-channel-empty-state {
+    padding: 48px 24px !important;
+    text-align: center !important;
+    font-style: italic !important;
+}
+
+.chat-sidebar-player-roster-compact {
+    flex: 0 0 180px !important;
+    max-width: 180px !important;
+}
+
 .chat-workspace-chassis {
     display: flex !important;
     flex-direction: row !important;
@@ -1006,15 +1234,31 @@
 
 /* SIDEBAR RECONCILED CHANNELS DECK CONTROLLERS */
 .chat-sidebar-channels-deck {
-    width: 240px !important;
+    width: 220px !important;
     display: flex !important;
     flex-direction: column !important;
-    gap: 10px !important;
+    gap: 8px !important;
     border-right: 1px solid rgba(184, 144, 48, 0.2) !important;
-    padding-right: 16px !important;
+    padding-right: 14px !important;
     box-sizing: border-box !important;
     flex-shrink: 0 !important;
     height: 100% !important;
+    overflow-y: auto !important;
+}
+
+.chat-sidebar-channels-label {
+    margin: 0 0 4px 0 !important;
+    font-family: 'Cinzel', serif !important;
+    font-size: 0.7rem !important;
+    color: #c5a059 !important;
+    letter-spacing: 1px !important;
+    text-transform: uppercase !important;
+}
+
+.chat-channel-context-banner-inline {
+    margin-bottom: 10px !important;
+    flex-shrink: 0 !important;
+    padding: 10px 12px !important;
 }
 
 .chat-channel-btn {
@@ -1023,9 +1267,10 @@
     border: 1px solid rgba(184, 144, 48, 0.2) !important;
     color: rgba(241, 224, 172, 0.6) !important;
     font-family: 'Cinzel', serif !important;
-    font-size: 0.85rem !important;
+    font-size: 0.72rem !important;
     font-weight: bold !important;
-    padding: 12px 14px !important;
+    padding: 10px 12px !important;
+    line-height: 1.25 !important;
     cursor: pointer !important;
     border-radius: 3px !important;
     text-align: left !important;
@@ -3308,4 +3553,92 @@
 #commander-hub-modal .commander-hub-subnav-list::-webkit-scrollbar-thumb {
     background: linear-gradient(180deg, #b89030 0%, #6e5420 100%) !important;
     border-radius: 3px !important;
+}
+
+/* ==========================================================================
+   SECTION 18: DEVELOPER MAINTENANCE ALERT (FIXED TOP BANNER)
+   ========================================================================== */
+
+.developer-maintenance-alert-bar {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    z-index: 20000 !important;
+    display: block !important;
+    box-sizing: border-box !important;
+    padding: 10px 16px !important;
+    background: linear-gradient(90deg, rgba(92, 28, 8, 0.97) 0%, rgba(48, 18, 6, 0.98) 50%, rgba(92, 28, 8, 0.97) 100%) !important;
+    border-bottom: 2px solid #e8a030 !important;
+    box-shadow: 0 4px 18px rgba(0, 0, 0, 0.55), inset 0 1px 0 rgba(255, 200, 120, 0.15) !important;
+    animation: developerMaintenanceAlertPulse 3s ease-in-out infinite !important;
+}
+
+.developer-maintenance-alert-bar[hidden] {
+    display: none !important;
+    animation: none !important;
+}
+
+@keyframes developerMaintenanceAlertPulse {
+    0%, 100% { border-bottom-color: #e8a030; }
+    50% { border-bottom-color: #ffcc66; }
+}
+
+.developer-maintenance-alert-inner {
+    display: flex !important;
+    align-items: flex-start !important;
+    gap: 12px !important;
+    max-width: 1200px !important;
+    margin: 0 auto !important;
+}
+
+.developer-maintenance-alert-icon {
+    flex-shrink: 0 !important;
+    font-size: 1.25rem !important;
+    line-height: 1.4 !important;
+}
+
+.developer-maintenance-alert-copy {
+    flex: 1 !important;
+    min-width: 0 !important;
+    font-family: 'Segoe UI', Tahoma, sans-serif !important;
+    color: #f8ead0 !important;
+}
+
+.developer-maintenance-alert-title {
+    display: block !important;
+    font-family: 'Cinzel', Georgia, serif !important;
+    font-size: 0.95rem !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.04em !important;
+    color: #ffd978 !important;
+    margin: 0 0 4px 0 !important;
+}
+
+.developer-maintenance-alert-message {
+    margin: 0 !important;
+    font-size: 0.88rem !important;
+    line-height: 1.45 !important;
+    color: #f1e0ac !important;
+}
+
+.developer-maintenance-alert-window {
+    margin: 6px 0 0 0 !important;
+    font-size: 0.8rem !important;
+    font-weight: 600 !important;
+    color: #ffcc88 !important;
+    letter-spacing: 0.02em !important;
+}
+
+.developer-maintenance-alert-window[hidden] {
+    display: none !important;
+}
+
+body.developer-maintenance-alert-active #main-dashboard-canvas {
+    padding-top: var(--developer-maintenance-alert-offset, 0px) !important;
+}
+
+body.developer-maintenance-alert-active #page-landing {
+    padding-top: var(--developer-maintenance-alert-offset, 0px) !important;
+    box-sizing: border-box !important;
 }

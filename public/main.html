@@ -19,6 +19,18 @@
 </head>
 <body id="main-dashboard-canvas">
 
+    <!-- Developer maintenance notice (fixed while active — controlled via /api/portal/maintenance-alert) -->
+    <div id="developer-maintenance-alert-bar" class="developer-maintenance-alert-bar" role="alert" aria-live="polite" hidden>
+        <div class="developer-maintenance-alert-inner">
+            <span class="developer-maintenance-alert-icon" aria-hidden="true">⚠️</span>
+            <div class="developer-maintenance-alert-copy">
+                <strong id="developer-maintenance-alert-title" class="developer-maintenance-alert-title"></strong>
+                <p id="developer-maintenance-alert-message" class="developer-maintenance-alert-message"></p>
+                <p id="developer-maintenance-alert-window" class="developer-maintenance-alert-window" hidden></p>
+            </div>
+        </div>
+    </div>
+
     <!-- ==========================================
          PORTAL MODULE: HEADER & BRAND LAYER
          ========================================== -->
@@ -27,7 +39,7 @@
 
     <!-- Block 3: Centered Main Brand Title Header -->
     <header class="over-bar-utility-deck">
-        <div class="header-logo-housing-block">
+        <div class="header-logo-housing-block portal-brand-logo-static" aria-hidden="false">
             <img src="images/royalarmiestitle.png" alt="Royal Armies Official Title Logo" class="portal-brand-logo-asset">
         </div>
     </header>
@@ -61,9 +73,9 @@
                 <div class="nav-tab active" onclick="switchMainPortalView('portal', event)">Age Portal</div>
                 <div class="nav-tab" onclick="switchMainPortalView('leaderboards', event)">Leaderboards</div>
                 <div class="nav-tab" onclick="switchMainPortalView('chat', event)">Community Chat</div>
-                <div class="nav-tab" onclick="switchMainPortalView('discoveries', event)">Discoveries</div>
-                <div class="nav-tab" onclick="switchMainPortalView('royalty', event)">Royalty</div>
-                <div class="nav-tab" onclick="switchMainPortalView('chronicles', event)">The Chronicles</div>
+                <div class="nav-tab" data-portal-view="discoveries" onclick="switchMainPortalView('discoveries', event)">Discoveries</div>
+                <div class="nav-tab" data-portal-view="royalty" onclick="switchMainPortalView('royalty', event)">Royalty</div>
+                <div class="nav-tab" data-portal-view="chronicles" onclick="switchMainPortalView('chronicles', event)">The Chronicles</div>
             </div>
 
             <div class="nav-right-logout-action-dock">
@@ -146,19 +158,19 @@
 
             <div class="portal-deployment-control-deck custom-centered-row-deck" id="deployment-master-deck-container">
 
-                <h3 class="deployment-deck-title" id="dynamic-age-status-header">⚔️ LOADING CAMPAIGN ARCHON METRICS...</h3>
+                <h3 class="deployment-deck-title" id="dynamic-age-status-header">Loading age status...</h3>
 
                 <div id="dynamic-age-sub-timer-display" class="timer-readout-default"></div>
 
                 <div class="deployment-action-button-row">
                     <div class="action-btn-aura-housing aura-glow-red">
                         <button class="deployment-image-trigger-btn" onclick="launchGameRoundSector(false, event)">
-                            <img src="images/joinagebtn.png" alt="Join Campaign Round Shard Arena">
+                            <img src="images/joinagebtn.png" alt="Join active age">
                         </button>
                     </div>
                     <div class="action-btn-aura-housing aura-glow-blue">
                         <button class="deployment-image-trigger-btn" onclick="launchGameRoundSector(true, event)">
-                            <img src="images/joinagetutorialbtn.png" alt="Deploy Shard Tutorial Arena">
+                            <img src="images/joinagetutorialbtn.png" alt="Join tutorial age">
                         </button>
                     </div>
                 </div>
@@ -216,17 +228,8 @@
 
                 <div class="portal-sidebar-flex-column">
                     <article class="dashboard-news-card-box">
-                        <h2 class="card-title-header">📜 Dispatch Bulletins & Updates</h2>
-                        <div class="card-scrollable-body-text" id="dashboard-patch-notes-dock">
-                            <div class="news-bulletin-item">
-                                <strong>Patch Update 1.04</strong><br>
-                                Wartime Messaging Platform and Multi-select recipient dropdown directory drawer modules successfully integrated. Standard profile compact node rosters synchronized.
-                            </div>
-                            <div class="news-bulletin-item">
-                                <strong>Server Architecture Ready</strong><br>
-                                Automated device geolocating continent trackers live. Fixed 24px invisible label ceiling spacer locks validated across modal grids.
-                            </div>
-                        </div>
+                        <h2 class="card-title-header">Developer's Log</h2>
+                        <div class="card-scrollable-body-text" id="dashboard-patch-notes-dock"></div>
                     </article>
                 </div>
 
@@ -299,13 +302,13 @@
          ========================================== -->
 
     <div id="commander-hub-modal" class="commander-hub-overlay" aria-hidden="true">
-        <div class="commander-hub-dialog" role="dialog" aria-modal="true" aria-label="Commander Hub">
+        <div class="commander-hub-dialog" role="dialog" aria-modal="true" aria-label="Account hub">
 
-            <button type="button" class="commander-hub-close-btn" onclick="closeCommanderHubModal()" aria-label="Close Commander Hub">
+            <button type="button" class="commander-hub-close-btn" onclick="closeCommanderHubModal()" aria-label="Close account hub">
                 <img src="images/closebtn.png" alt="" class="commander-hub-close-icon">
             </button>
 
-            <nav class="commander-hub-top-nav" aria-label="Commander Hub Sections">
+            <nav class="commander-hub-top-nav" aria-label="Account hub sections">
                 <div class="commander-hub-top-nav-bg" aria-hidden="true"></div>
                 <button type="button" class="commander-hub-top-tab active" data-hub-tab="profile" onclick="loadCommanderHubSection('profile', event)">Profile</button>
                 <button type="button" class="commander-hub-top-tab" data-hub-tab="messages" onclick="loadCommanderHubSection('messages', event)">Messages</button>
@@ -363,14 +366,14 @@
                 This is a daily "Community Safety & Fairness" system reminder to keep players informed of their current discipline status.
             </div>
             <div class="suicide-popup-action-row">
-                <button class="suicide-safe-retreat-btn" onclick="closePenaltyOverlayWindow()">Acknowledge & Deploy</button>
+                <button class="suicide-safe-retreat-btn" onclick="closePenaltyOverlayWindow()">OK</button>
             </div>
         </div>
     </div>
 
     <div id="commander-security-overlay" class="suicide-overlay-hidden" style="display: none !important;">
         <div class="suicide-popup-bezel">
-            <div class="suicide-popup-header" id="security-popup-header-title">🛡️ CRYPT KEY MODIFICATION</div>
+            <div class="suicide-popup-header" id="security-popup-header-title">🛡️ Account security</div>
             <div class="suicide-popup-body-text" id="security-popup-text-field"></div>
             <div class="suicide-popup-action-row" id="security-popup-btn-dock"></div>
         </div>
@@ -387,12 +390,12 @@
     <div id="chat-mention-alert-stack" class="chat-mention-alert-stack" aria-live="polite" aria-label="Community chat shoutout alerts"></div>
 
     <div id="main-logout-confirmation-modal" class="main-portal-modal-hidden" style="display: none !important;" role="dialog" aria-modal="true" aria-labelledby="logout-modal-title">
-        <div class="portal-overlay-modal-bezel logout-confirmation-bezel">
-            <h3 id="logout-modal-title" class="modal-alert-header">End Commander Session?</h3>
-            <p class="modal-alert-body">You will leave the Age Portal and return to the Royal Armies landing page. Your portal presence will clear immediately.</p>
+        <div class="portal-overlay-modal-bezel logout-confirmation-bezel bordered-modal-panel">
+            <h3 id="logout-modal-title" class="modal-alert-header">Log out?</h3>
+            <p class="modal-alert-body">You will leave the Age Portal and return to the Royal Armies landing page. Your online status will clear immediately.</p>
             <div class="modal-action-btn-row">
-                <button type="button" class="modal-action-btn confirm" onclick="executeLogoutRedirect()">Confirm Log Out</button>
-                <button type="button" class="modal-action-btn cancel" onclick="closeMainLogoutConfirmationWindow()">Stay Deployed</button>
+                <button type="button" class="modal-action-btn confirm" onclick="executeLogoutRedirect()">Log out</button>
+                <button type="button" class="modal-action-btn cancel" onclick="closeMainLogoutConfirmationWindow()">Stay signed in</button>
             </div>
         </div>
     </div>
@@ -412,6 +415,7 @@
     <script src="rank-data.js"></script>
     <script src="script.js"></script>
     <script src="commander-hub.js"></script>
+    <script src="maintenance-alert.js"></script>
     <script src="script2.js"></script>
 
 </body>

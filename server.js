@@ -22,7 +22,52 @@ const dbPath = isProduction ? '/data/db.json' : path.join(__dirname, 'db.json');
 /* Block 3: Ledger Database Initialization */
 const adapter = new FileSync(dbPath);
 const db = low(adapter);
-db.defaults({ commanders: [] }).write();
+db.defaults({
+    commanders: [],
+    portal: {
+        maintenanceAlert: {
+            active: false,
+            title: 'Scheduled maintenance',
+            message: '',
+            windowLabel: ''
+        }
+    }
+}).write();
+
+function getPortalMaintenanceAlert() {
+    const stored = db.get('portal.maintenanceAlert').value() || {};
+    return {
+        active: stored.active === true,
+        title: String(stored.title || 'Scheduled maintenance').trim().slice(0, 120),
+        message: String(stored.message || '').trim().slice(0, 600),
+        windowLabel: String(stored.windowLabel || '').trim().slice(0, 160)
+    };
+}
+
+function setPortalMaintenanceAlert(patch = {}) {
+    const current = getPortalMaintenanceAlert();
+    const next = {
+        active: patch.active !== undefined ? patch.active === true : current.active,
+        title: patch.title !== undefined
+            ? String(patch.title || 'Scheduled maintenance').trim().slice(0, 120)
+            : current.title,
+        message: patch.message !== undefined
+            ? String(patch.message || '').trim().slice(0, 600)
+            : current.message,
+        windowLabel: patch.windowLabel !== undefined
+            ? String(patch.windowLabel || '').trim().slice(0, 160)
+            : current.windowLabel
+    };
+
+    if (next.active && !next.message) {
+        next.message = 'The site will be briefly unavailable while we apply fixes and updates.';
+    }
+
+    db.set('portal.maintenanceAlert', next).write();
+    return next;
+}
+
+const MAINTENANCE_ALERT_DEV_KEY = process.env.MAINTENANCE_ALERT_DEV_KEY || 'local-dev-maintenance';
 
 /* --- Section: Age Portal live presence (in-memory; no mock accounts) --- */
 const AGE_SESSION_ONLINE_TTL_MS = 5 * 60 * 1000;
@@ -398,6 +443,23 @@ app.get('/verify', (req, res) => {
 });
 
 /* Block 13: Age Portal live metrics & presence */
+app.get('/api/portal/maintenance-alert', (req, res) => {
+    res.json(getPortalMaintenanceAlert());
+});
+
+app.post('/api/portal/maintenance-alert', (req, res) => {
+    const devKey = String(req.headers['x-dev-key'] || req.body?.devKey || '').trim();
+    if (!devKey || devKey !== MAINTENANCE_ALERT_DEV_KEY) {
+        return res.status(403).json({
+            status: 'error',
+            message: 'Invalid or missing developer key (X-Dev-Key header).'
+        });
+    }
+
+    const payload = setPortalMaintenanceAlert(req.body || {});
+    res.json({ status: 'ok', ...payload });
+});
+
 app.get('/api/portal/metrics', (req, res) => {
     const commanders = db.get('commanders').value() || [];
     const visibleCommanders = commanders.filter(
@@ -488,6 +550,6 @@ app.get('/', (req, res) => {
 app.listen(PORT, () => {
     console.log(`========================================`);
     console.log(` NEXUS ENGINE ONLINE: Port ${PORT}`);
-    console.log(` GREEN MASK INTERACTIVE: ALPHA 0.1.10`);
+    console.log(` GREEN MASK INTERACTIVE: ALPHA 0.1.11`);
     console.log(`========================================`);
 });

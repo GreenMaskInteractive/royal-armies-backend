@@ -39,6 +39,12 @@ window.onload = () => {
     // Launch active chronometer ticker sand-clock calculations loop
     initializeServerAgeClockTickerCountdown();
     initializePortalLivePlayerMetrics();
+    if (typeof initializeDeveloperMaintenanceAlert === 'function') {
+        initializeDeveloperMaintenanceAlert();
+    }
+
+    applyPortalNavPreviewRestrictions();
+    hydrateDevelopersLogDock();
 
     const viewport = document.getElementById('main-portal-dynamic-viewport');
     if (viewport) {
@@ -81,12 +87,67 @@ function initializeServerAgeClockTickerCountdown() {
 
 let activeMainPortalView = 'portal';
 
+const PORTAL_PREVIEW_ONLY_VIEWS = ['discoveries', 'royalty', 'chronicles'];
+
+/** True on Live Server :5500 and other local dev hosts; false on royalarmies.com production. */
+function isPortalPreviewNavEnabled() {
+    const host = window.location.hostname.toLowerCase();
+    const port = window.location.port;
+
+    if (port === '5500') return true;
+
+    const isLocalHost = host === 'localhost' || host === '127.0.0.1';
+    if (isLocalHost && (port === '' || port === '3000' || port === '5500' || port === '5173')) {
+        return true;
+    }
+
+    return false;
+}
+
+function applyPortalNavPreviewRestrictions() {
+    const previewEnabled = isPortalPreviewNavEnabled();
+
+    document.querySelectorAll('.nav-tab[data-portal-view]').forEach((tab) => {
+        const viewName = tab.getAttribute('data-portal-view');
+        if (!PORTAL_PREVIEW_ONLY_VIEWS.includes(viewName)) return;
+
+        if (previewEnabled) {
+            tab.classList.remove('nav-tab-preview-locked');
+            tab.removeAttribute('aria-disabled');
+            tab.title = '';
+        } else {
+            tab.classList.add('nav-tab-preview-locked');
+            tab.setAttribute('aria-disabled', 'true');
+            tab.title = 'Coming soon';
+            tab.classList.remove('active');
+        }
+    });
+
+    if (!previewEnabled && PORTAL_PREVIEW_ONLY_VIEWS.includes(activeMainPortalView)) {
+        switchMainPortalView('portal', null);
+        document.querySelectorAll('.nav-tab').forEach((tab) => tab.classList.remove('active'));
+        const agePortalTab = Array.from(document.querySelectorAll('.nav-tab')).find(
+            (tab) => !PORTAL_PREVIEW_ONLY_VIEWS.includes(tab.getAttribute('data-portal-view'))
+                && tab.textContent.trim() === 'Age Portal'
+        );
+        if (agePortalTab) agePortalTab.classList.add('active');
+    }
+}
+
 /* Block 3: EXTENSIBLE SYSTEM PANEL VIEW CONVERTER SWITCH (ROUTING RECONCILED) */
-function switchMainPortalView(viewName, clickEvent) {
+function switchMainPortalView(viewName, clickEvent, chatChannelKey) {
+    if (PORTAL_PREVIEW_ONLY_VIEWS.includes(viewName) && !isPortalPreviewNavEnabled()) {
+        return;
+    }
+
     const viewport = document.getElementById('main-portal-dynamic-viewport');
     if (!viewport) {
-        console.warn('Portal viewport missing — add #main-portal-dynamic-viewport to ageportal.html');
+        console.warn('Portal viewport missing — add #main-portal-dynamic-viewport to main.html');
         return;
+    }
+
+    if (viewName === 'chat' && chatChannelKey) {
+        activeChatChannelTrack = chatChannelKey;
     }
 
     activeMainPortalView = viewName;
@@ -96,12 +157,15 @@ function switchMainPortalView(viewName, clickEvent) {
     const activeTab = clickEvent?.target?.closest?.('.nav-tab');
     if (activeTab) {
         activeTab.classList.add('active');
+    } else if (viewName === 'chat') {
+        activateCommunityChatNavTab();
     }
 
     switch(viewName) {
         case 'portal':
             if (window.cachedAgePortalViewportHTML) {
                 viewport.innerHTML = window.cachedAgePortalViewportHTML;
+                hydrateDevelopersLogDock();
                 initializeTacticalButtonEarthquakeEngine();
             } else {
                 restoreAgePortalHomeViewLayout(viewport);
@@ -136,13 +200,75 @@ function switchMainPortalView(viewName, clickEvent) {
             // Safe placeholder deck layout blocking empty structural holes on click
             viewport.innerHTML = `
                 <div class="dashboard-news-card-box" style="text-align: center !important; align-items: center !important; justify-content: center !important; min-height: 380px !important;">
-                    <h3 style="font-family: 'Cinzel', serif; color: #ffd700; margin-bottom: 8px;">⚔️ SECURED RECONCILED SECTOR: ${viewName.toUpperCase()}</h3>
+                    <h3 style="font-family: 'Cinzel', serif; color: #ffd700; margin-bottom: 8px;">${viewName.charAt(0).toUpperCase() + viewName.slice(1)}</h3>
                     <p style="font-family: 'Segoe UI', sans-serif; font-size: 0.8rem; color: rgba(241,224,172,0.5); max-width: 440px; line-height: 1.4; margin: 0;">
-                        The standalone frontend module arrays for this chamber are loading. Data pipelines will sync natively upon next campaign core deployment.
+                        This section is not ready yet. Content will appear in a future update.
                     </p>
                 </div>
             `;
     }
+}
+
+/** Release IDs from CHRONICLE_DATA (script.js), newest first — shown in Developer's Log sidebar. */
+const DEVELOPER_LOG_RELEASE_IDS = ['alpha_0111'];
+
+function formatDeveloperLogParagraph(paragraph) {
+    const whatsNewMatch = paragraph.match(/^What's new:\s*(.+)$/i);
+    if (!whatsNewMatch) return paragraph;
+
+    const bullets = whatsNewMatch[1]
+        .split(/;\s*/)
+        .map((item) => item.trim())
+        .filter(Boolean)
+        .map((item) => `<span class="news-bulletin-bullet">• ${item}</span>`)
+        .join('<br>');
+
+    return `<span class="news-bulletin-section-label">What's new</span><br>${bullets}`;
+}
+
+function formatDeveloperLogDetails(details) {
+    return details
+        .split(/\n\n+/)
+        .map((paragraph) => paragraph.trim())
+        .filter(Boolean)
+        .map(formatDeveloperLogParagraph)
+        .join('<br><br>');
+}
+
+function renderDevelopersLogMarkup() {
+    if (typeof CHRONICLE_DATA === 'undefined') {
+        return '<div class="news-bulletin-item">Development updates could not be loaded.</div>';
+    }
+
+    const entries = DEVELOPER_LOG_RELEASE_IDS.map((id) => CHRONICLE_DATA[id]).filter(Boolean);
+    if (!entries.length) {
+        return '<div class="news-bulletin-item">No development updates posted yet.</div>';
+    }
+
+    return entries
+        .map((entry) => `
+            <div class="news-bulletin-item">
+                <strong>${entry.title}</strong><br>
+                ${formatDeveloperLogDetails(entry.details)}
+            </div>
+        `)
+        .join('');
+}
+
+function renderDevelopersLogSidebarShell() {
+    return `
+        <article class="dashboard-news-card-box">
+            <h2 class="card-title-header">Developer's Log</h2>
+            <div class="card-scrollable-body-text" id="dashboard-patch-notes-dock">
+                ${renderDevelopersLogMarkup()}
+            </div>
+        </article>
+    `;
+}
+
+function hydrateDevelopersLogDock() {
+    const dock = document.getElementById('dashboard-patch-notes-dock');
+    if (dock) dock.innerHTML = renderDevelopersLogMarkup();
 }
 
 function restoreAgePortalHomeViewLayout(viewport) {
@@ -150,7 +276,7 @@ function restoreAgePortalHomeViewLayout(viewport) {
         <div class="age-portal-view-canvas" id="panel-age-portal-mode">
             <div class="portal-twin-split-deck-row">
                 <article class="dashboard-news-card-box">
-                    <h2 class="card-title-header">👑 Chronicles of Amnek: The Sovereign Descent</h2>
+                    <h2 class="card-title-header">👑 Introduction Into Royal Armies</h2>
                     <div class="card-scrollable-body-text">
                         <p style="margin-bottom: 16px; color: #ffffff; font-size: 1.05rem;">
                             Welcome to <strong>Royal Armies</strong>, a Massively Multiplayer High-Fidelity Tactical (MMOHFT) strategy ecosystem and the first browser game of its kind. Inspired by both the depth of modern MMO titles and the fast, competitive nature of classic persistent browser-based games, Royal Armies is engineered to give old-school veterans a familiar home while providing a highly responsive, visually stimulating world that captures the new generation of strategy gamers.
@@ -198,37 +324,29 @@ function restoreAgePortalHomeViewLayout(viewport) {
                         </p>
                     </div>
                 </article>
-                <article class="dashboard-news-card-box">
-                    <h2 class="card-title-header">📜 Dispatch Bulletins & Updates</h2>
-                    <div class="card-scrollable-body-text" id="dashboard-patch-notes-dock">
-                        <div class="news-bulletin-item">
-                            <strong>Patch Update 1.04</strong><br>
-                            Wartime Messaging Platform and Multi-select recipient dropdown directory drawer modules successfully integrated. Standard profile compact node rosters synchronized.
-                        </div>
-                        <div class="news-bulletin-item">
-                            <strong>Server Architecture Ready</strong><br>
-                            Automated device geolocating continent trackers live. Fixed 24px invisible label ceiling spacer locks validated across modal grids.
-                        </div>
-                    </div>
-                </article>
+                <div class="portal-sidebar-flex-column">
+                    ${renderDevelopersLogSidebarShell()}
+                </div>
             </div>
             <div class="portal-deployment-control-deck">
-                <h3 class="deployment-deck-title">⚔️ LAUNCH ARCHON DEPLOYMENT SECTOR</h3>
+                <h3 class="deployment-deck-title" id="dynamic-age-status-header">Loading age status...</h3>
+                <div id="dynamic-age-sub-timer-display" class="timer-readout-default"></div>
                 <div class="deployment-action-button-row">
                     <div class="action-btn-aura-housing aura-glow-red">
                         <button class="deployment-image-trigger-btn" onclick="launchGameRoundSector(false, event)">
-                            <img src="images/joinagebtn.png" alt="Join Campaign Round Shard Arena">
+                            <img src="images/joinagebtn.png" alt="Join active age">
                         </button>
                     </div>
                     <div class="action-btn-aura-housing aura-glow-blue">
                         <button class="deployment-image-trigger-btn" onclick="launchGameRoundSector(true, event)">
-                            <img src="images/joinagetutorialbtn.png" alt="Deploy Shard Tutorial Arena">
+                            <img src="images/joinagetutorialbtn.png" alt="Join tutorial age">
                         </button>
                     </div>
                 </div>
             </div>
         </div>
     `;
+    hydrateDevelopersLogDock();
     initializeTacticalButtonEarthquakeEngine();
 }
 
@@ -433,12 +551,12 @@ function applyPortalLiveMetricsToBanner(metrics) {
     renderMetricRosterList(
         registeredList,
         recentRegistrations,
-        'No commanders in the server ledger yet. Accounts only appear here after a successful Create Account save on this server.'
+        'No registered players yet. Accounts appear here after Create Account saves on this server.'
     );
     renderMetricRosterList(
         activeList,
         ageOnlinePlayers,
-        'No commanders are online in the active Age right now.'
+        'No players are online in the active Age right now.'
     );
 }
 
@@ -579,20 +697,10 @@ function initializePortalLivePlayerMetrics() {
    SECTION 4: LEADERBOARD CHRONICLE COMPILING LOOPS
    ========================================================================== */
 
-/* Block 8: LEADERBOARD MOCK REGISTRY DATABASE ARCHIVE */
+/* Block 8: LEADERBOARD REGISTRY (empty until live Age standings sync) */
 const globalAgeLeaderboardDossier = {
-    individual: [
-        { rank: 1, commander: "Archon_Regent", country: "United Kingdom", score: "942,500 XP", status: "Sovereign" },
-        { rank: 2, commander: "High_Paladin", country: "United Kingdom", score: "810,200 XP", status: "Warlord" },
-        { rank: 3, commander: "Frost_Seer_Vael", country: "Aesthene", score: "754,900 XP", status: "Archmage" },
-        { rank: 4, commander: "Vaelior_Guard", country: "Vaelior", score: "690,400 XP", status: "Paladin" },
-        { rank: 5, commander: "Sovereign_Shield", country: "United Kingdom", score: "621,000 XP", status: "Sentinel" }
-    ],
-    country: [
-        { rank: 1, name: "United Kingdom", castles: "412 Castles Held", population: "14.2M Standing", victories: "3 Ages Won" },
-        { rank: 2, name: "Aesthene", castles: "289 Castles Held", population: "9.8M Standing", victories: "1 Age Won" },
-        { rank: 3, name: "Vaelior", castles: "245 Castles Held", population: "8.1M Standing", victories: "0 Ages Won" }
-    ]
+    individual: [],
+    country: []
 };
 let activeLeaderboardSubTrack = 'individual';
 
@@ -601,7 +709,7 @@ function renderMasterLeaderboardPortalCanvas(viewport) {
     viewport.innerHTML = `
         <div class="leaderboard-workspace-container">
             <div class="leaderboard-sub-toolbar-strip">
-                <button class="settings-btn mini-btn ${activeLeaderboardSubTrack === 'individual' ? 'active-sub-glow' : ''}" onclick="toggleLeaderboardSubCategory('individual')">👤 Individual Commanders</button>
+                <button class="settings-btn mini-btn ${activeLeaderboardSubTrack === 'individual' ? 'active-sub-glow' : ''}" onclick="toggleLeaderboardSubCategory('individual')">👤 Players</button>
                 <button class="settings-btn mini-btn ${activeLeaderboardSubTrack === 'country' ? 'active-sub-glow' : ''}" onclick="toggleLeaderboardSubCategory('country')">🛡️ National Realms</button>
             </div>
             <div class="leaderboard-scrollable-table-bin" id="leaderboard-data-render-viewport"></div>
@@ -622,10 +730,14 @@ function executeLeaderboardDataRowsCompile() {
     bin.innerHTML = "";
 
     if (activeLeaderboardSubTrack === 'individual') {
+        if (!globalAgeLeaderboardDossier.individual.length) {
+            bin.innerHTML = `<div class="empty-roster-txt" style="padding: 40px !important;">No player standings have been recorded for this Age yet.</div>`;
+            return;
+        }
         bin.innerHTML = `
             <table class="leaderboard-production-table-grid">
                 <thead>
-                    <tr><th>RANK</th><th style="text-align: left;">COMMANDER SIGNATURE</th><th style="text-align: left;">ALLEGIANCE COUNTRY</th><th style="text-align: right;">MILITARY POWER SCORE</th><th style="text-align: right; width: 120px;">PROMOTIONAL STATUS</th></tr>
+                    <tr><th>RANK</th><th style="text-align: left;">PLAYER</th><th style="text-align: left;">NATION</th><th style="text-align: right;">POWER SCORE</th><th style="text-align: right; width: 120px;">STATUS</th></tr>
                 </thead>
                 <tbody>
                     ${globalAgeLeaderboardDossier.individual.map(row => `
@@ -641,6 +753,10 @@ function executeLeaderboardDataRowsCompile() {
             </table>
         `;
     } else if (activeLeaderboardSubTrack === 'country') {
+        if (!globalAgeLeaderboardDossier.country.length) {
+            bin.innerHTML = `<div class="empty-roster-txt" style="padding: 40px !important;">No nation standings have been recorded for this Age yet.</div>`;
+            return;
+        }
         bin.innerHTML = `
             <table class="leaderboard-production-table-grid">
                 <thead>
@@ -668,7 +784,40 @@ function executeLeaderboardDataRowsCompile() {
    ========================================================================== */
 
 /* Block 10: CHAT CHANNEL REPOSITORIES & MODERATION DATA PATHS */
-let activeChatChannelTrack = 'global';
+const COMMUNITY_CHAT_CHANNEL_REGISTRY = [
+    {
+        id: 'general',
+        label: 'General',
+        icon: '💬',
+        blurb: 'Open chat for everyone in the community.'
+    },
+    {
+        id: 'bugs',
+        label: 'Bug Reports',
+        icon: '🐛',
+        blurb: 'Report bugs, broken UI, and issues that block joining an Age.'
+    },
+    {
+        id: 'gameplay',
+        label: 'Gameplay Discussions',
+        icon: '⚔️',
+        blurb: 'Discuss game mechanics, army builds, timers, and strategy.'
+    },
+    {
+        id: 'help',
+        label: 'Help Desk',
+        icon: '📜',
+        blurb: 'Ask how systems work and get onboarding help from veterans.'
+    },
+    {
+        id: 'offtopic',
+        label: 'Off-topic',
+        icon: '🍺',
+        blurb: 'Casual chat not focused on the current Age.'
+    }
+];
+
+let activeChatChannelTrack = 'general';
 const CHAT_MENTION_ALERT_MAX_VISIBLE = 4;
 const CHAT_MENTION_PREVIEW_MAX_CHARS = 110;
 let chatMentionAlertRegistry = {};
@@ -681,12 +830,7 @@ let administrativeBehavioralReviewQueue = [];
 let playerSuspicionScoreRegistry = {};   // Structure format: { "testaccount": 2 }
 let playerTeasingTranscriptHistory = {};  // Structure format: { "testaccount": ["[23:02]: get good"] }
 
-let communityChatLogsDirectory = [
- { channel: 'global', sender: "Royal Guard", text: "Welcome back Commanders. Secure local cache parameters validated successfully. Keep all communications professional.", time: "00:01", visible: true, originalText: "" },
- { channel: 'global', sender: "Archon_Regent", text: "Welcome back Commanders. Ensure your garrison defense grids are locked before age deployment.", time: "23:02", visible: true, originalText: "" },
- { channel: 'global', sender: "High_Paladin", text: "Agreed. The western stone line bastions are under high pressure this shard round.", time: "23:05", visible: true, originalText: "" },
- { channel: 'alliances', sender: "Frost_Seer_Vael", text: "Aesthene magical columns have established secure trade vectors. Dispatched resource trading is open.", time: "22:45", visible: true, originalText: "" }
-];
+let communityChatLogsDirectory = [];
 
 const restrictedProfanityLexiconPattern = /\b(fuck|fucking|bitch|ass|shit|asshole|cunt|retard|retarded)\b/gi;
 const adversarialSentimentTriggers = [
@@ -731,13 +875,13 @@ function buildChatMentionPreviewSnippet(text) {
     return `${compact.slice(0, CHAT_MENTION_PREVIEW_MAX_CHARS)}…`;
 }
 
+function getCommunityChatChannelMeta(channelKey) {
+    return COMMUNITY_CHAT_CHANNEL_REGISTRY.find((entry) => entry.id === channelKey)
+        || COMMUNITY_CHAT_CHANNEL_REGISTRY[0];
+}
+
 function getChatChannelDisplayLabel(channelKey) {
-    const labels = {
-        global: 'Global Tavern',
-        alliances: 'Alliance Council',
-        review: 'Behavioral Review'
-    };
-    return labels[channelKey] || 'Community Chat';
+    return getCommunityChatChannelMeta(channelKey).label;
 }
 
 function appendCommunityChatMessage(logEntry) {
@@ -795,8 +939,8 @@ function ensureChatMentionAlertStack() {
 function showChatMentionAlert(payload) {
     const stack = ensureChatMentionAlertStack();
     const alertId = `chat-mention-alert-${++chatMentionAlertCounter}`;
-    const channel = payload.channel || 'global';
-    const sender = payload.sender || 'Unknown Commander';
+    const channel = payload.channel || 'general';
+    const sender = payload.sender || 'Unknown player';
     const preview = payload.preview || '';
     const channelLabel = getChatChannelDisplayLabel(channel);
 
@@ -813,7 +957,7 @@ function showChatMentionAlert(payload) {
         </div>
         <div class="chat-mention-alert-sender">${escapeChatMentionAlertHtml(sender)} called you out</div>
         <div class="chat-mention-alert-preview">"${escapeChatMentionAlertHtml(preview)}"</div>
-        <div class="chat-mention-alert-cta">Click to open Community Chat →</div>
+        <div class="chat-mention-alert-cta">Click to open ${escapeChatMentionAlertHtml(channelLabel)} →</div>
     `;
 
     card.addEventListener('click', (event) => {
@@ -860,14 +1004,22 @@ function activateCommunityChatNavTab() {
     if (chatTab) chatTab.classList.add('active');
 }
 
+function buildCommunityChatChannelSidebarMarkup() {
+    return COMMUNITY_CHAT_CHANNEL_REGISTRY.map((channel) => {
+        const isActive = activeChatChannelTrack === channel.id;
+        return `<button type="button" class="chat-channel-btn ${isActive ? 'active-channel-glow' : ''}" onclick="toggleActiveChatChannelStream('${channel.id}')">${channel.icon} ${channel.label}</button>`;
+    }).join('');
+}
+
 function openCommunityChatFromMentionAlert(channel, alertId) {
-    if (channel && channel !== 'review') {
+    const registryIds = COMMUNITY_CHAT_CHANNEL_REGISTRY.map((entry) => entry.id);
+    if (channel && registryIds.includes(channel)) {
         activeChatChannelTrack = channel;
     }
 
     dismissChatMentionAlert(null, alertId);
     activateCommunityChatNavTab();
-    switchMainPortalView('chat');
+    switchMainPortalView('chat', null, activeChatChannelTrack);
 
     if (typeof playSelectSFX === 'function') playSelectSFX();
 }
@@ -878,48 +1030,41 @@ window.appendCommunityChatMessage = appendCommunityChatMessage;
 
 /* Block 11: MULTI-COLUMN COMPLIANCE CHAT COMPILER */
 function renderCommunityChatPortalCanvas(viewport) {
- const activeRealUser = localStorage.getItem("activeCommanderUser") || "testaccount";
- viewport.innerHTML = `
- <div class="chat-workspace-chassis">
- 
- <!-- PANE 1: INSTANT MULTI-CHANNEL SELECTION DECK -->
- <div class="chat-sidebar-channels-deck">
- 
- <!-- 🛡️ CRITICAL ADMIN APEX: Behavioral Review placed at the absolute top vertex -->
- <button class="chat-channel-btn review-board-tab-alert ${activeChatChannelTrack === 'review' ? 'active-channel-glow' : ''}" onclick="toggleActiveChatChannelStream('review')">
- 🛡️ Behavioral Review <span class="review-counter-badge" id="review-queue-badge-count">0</span>
- </button>
- 
- <!-- 🧱 STRUCTURAL DIVIDER SEGMENT: Clean boundary dividing line separator -->
- <div class="chat-sidebar-apex-separator-line"></div>
- 
- <!-- STANDARD PLAYER TRANSCRIPT ROOM CHANNELS -->
- <button class="chat-channel-btn ${activeChatChannelTrack === 'global' ? 'active-channel-glow' : ''}" onclick="toggleActiveChatChannelStream('global')">🌐 Global Tavern</button>
- <button class="chat-channel-btn ${activeChatChannelTrack === 'alliances' ? 'active-channel-glow' : ''}" onclick="toggleActiveChatChannelStream('alliances')">🤝 Alliance Council</button>
- </div>
+    const activeRealUser = localStorage.getItem('activeCommanderUser') || 'testaccount';
+    const channelMeta = getCommunityChatChannelMeta(activeChatChannelTrack);
 
- <div class="chat-main-feed-compartment">
- <div class="chat-scrolling-messages-bin" id="chat-stream-render-viewport"></div>
- <div class="chat-input-toolbar-row" id="chat-portal-input-interaction-tray"></div>
- </div>
-
- <aside class="chat-sidebar-player-roster-deck">
- <div class="player-roster-header-title">👥 ACTIVE ENLISTMENTS</div>
- <div class="player-roster-scrollable-track-bin">
- <div class="roster-commander-node-row status-bot-admin"><span class="status-dot">🛡️</span> Royal Guard [BOT]</div>
- <div class="roster-commander-node-row status-online"><span class="status-dot">●</span> ${activeRealUser} (You)</div>
- </div>
- </aside>
- </div>
- `;
- executeCompileActiveChannelMessageStrips();
- updateAdministrativeReviewBadgeMetrics();
+    viewport.innerHTML = `
+        <div class="chat-workspace-chassis">
+            <div class="chat-sidebar-channels-deck" aria-label="Chat channels">
+                <p class="chat-sidebar-channels-label">Channels</p>
+                ${buildCommunityChatChannelSidebarMarkup()}
+            </div>
+            <div class="chat-main-feed-compartment">
+                <header class="chat-channel-context-banner chat-channel-context-banner-inline">
+                    <span class="chat-channel-context-icon" aria-hidden="true">${channelMeta.icon}</span>
+                    <div class="chat-channel-context-copy">
+                        <h3 class="chat-channel-context-title">${channelMeta.label}</h3>
+                        <p class="chat-channel-context-blurb">${channelMeta.blurb}</p>
+                    </div>
+                </header>
+                <div class="chat-scrolling-messages-bin" id="chat-stream-render-viewport"></div>
+                <div class="chat-input-toolbar-row" id="chat-portal-input-interaction-tray"></div>
+            </div>
+            <aside class="chat-sidebar-player-roster-deck">
+                <div class="player-roster-header-title">👥 In Channel</div>
+                <div class="player-roster-scrollable-track-bin">
+                    <div class="roster-commander-node-row status-online"><span class="status-dot">●</span> ${activeRealUser} (You)</div>
+                </div>
+            </aside>
+        </div>
+    `;
+    executeCompileActiveChannelMessageStrips();
 }
 
 function toggleActiveChatChannelStream(targetChannel) {
- if (typeof playToggleLeverSFX === 'function') playToggleLeverSFX();
- activeChatChannelTrack = targetChannel;
- executeCommunityChatTabRenderingSequence();
+    if (typeof playToggleLeverSFX === 'function') playToggleLeverSFX();
+    activeChatChannelTrack = targetChannel;
+    executeCommunityChatTabRenderingSequence();
 }
 
 function updateAdministrativeReviewBadgeMetrics() {
@@ -931,9 +1076,11 @@ function updateAdministrativeReviewBadgeMetrics() {
 }
 
 function executeCommunityChatTabRenderingSequence() {
- const viewport = document.getElementById('main-portal-dynamic-viewport');
- if (viewport) renderCommunityChatPortalCanvas(viewport);
+    const viewport = document.getElementById('main-portal-dynamic-viewport');
+    if (viewport) renderCommunityChatPortalCanvas(viewport);
 }
+
+window.toggleActiveChatChannelStream = toggleActiveChatChannelStream;
 
 /* Block 12: TEXT MENTION PARSER & DUAL FILTERS INTERCEPT ENGINE */
 function executeCompileActiveChannelMessageStrips() {
@@ -946,14 +1093,15 @@ function executeCompileActiveChannelMessageStrips() {
  const currentEpochTimestamp = Date.now();
 
  if (userBanExpirationRegistry[loggedUser] && currentEpochTimestamp < userBanExpirationRegistry[loggedUser]) {
- if (tray) tray.innerHTML = `<div class="chat-restriction-alert-banner system-banned">🔴 Your strategic transmission access has been terminated for 15 Days due to code of conduct failures.</div>`;
+ if (tray) tray.innerHTML = `<div class="chat-restriction-alert-banner system-banned">🔴 You are banned from chat for 15 days because of repeated rule violations.</div>`;
  } else if (userMuteExpirationRegistry[loggedUser] && currentEpochTimestamp < userMuteExpirationRegistry[loggedUser]) {
- if (tray) tray.innerHTML = `<div class="chat-restriction-alert-banner system-muted">⏳ Your transmission arrays are temporarily muted. System suppression dissolves in 30 minutes.</div>`;
+ if (tray) tray.innerHTML = `<div class="chat-restriction-alert-banner system-muted">⏳ You are temporarily muted from chat. The mute lifts in 30 minutes.</div>`;
  } else {
  if (tray) {
+ const channelLabel = getChatChannelDisplayLabel(activeChatChannelTrack);
  tray.innerHTML = `
- <input type="text" id="chat-portal-message-input-field" placeholder="Type a message... Use @username to shoutout individuals" onkeydown="handleChatInputFieldSubmit(event)">
- <button class="settings-btn mini-btn" onclick="executeSubmitNewPortalChatMessage()">TRANSMIT</button>
+ <input type="text" id="chat-portal-message-input-field" placeholder="Message ${channelLabel}… Use @username to shout out" onkeydown="handleChatInputFieldSubmit(event)">
+ <button class="settings-btn mini-btn" onclick="executeSubmitNewPortalChatMessage()">Send</button>
  `;
  }
  }
@@ -984,6 +1132,12 @@ function executeCompileActiveChannelMessageStrips() {
  }
 
  const filteredLogs = communityChatLogsDirectory.filter(log => log.channel === activeChatChannelTrack);
+
+ if (!filteredLogs.length) {
+ bin.innerHTML = `<div class="empty-roster-txt chat-channel-empty-state">No messages in <strong>${getChatChannelDisplayLabel(activeChatChannelTrack)}</strong> yet. Post the first message below.</div>`;
+ return;
+ }
+
  filteredLogs.forEach(log => {
  if (!log.visible && log.recipientAlertOnly && log.sender === loggedUser) {
  const alertRow = document.createElement('div');
@@ -997,7 +1151,7 @@ function executeCompileActiveChannelMessageStrips() {
  const messageRow = document.createElement('div');
  messageRow.className = 'chat-message-strip-row';
  if (log.sender === loggedUser) messageRow.classList.add('local-sender-highlight-strip');
- if (log.sender === "Royal Guard") messageRow.classList.add('system-bot-message-highlight');
+ if (log.sender === "Moderator") messageRow.classList.add('system-bot-message-highlight');
 
  let formattedTextContent = log.text.replace(/(@[a-zA-Z0-9_\-]+)/g, '<span class="chat-shoutout-mention-badge">$1</span>');
  messageRow.innerHTML = `
@@ -1076,7 +1230,7 @@ function executeSubmitNewPortalChatMessage() {
  id: Date.now(),
  channel: activeChatChannelTrack,
  sender: loggedUser,
- text: `⚠️ [PERSISTENT TARGETING DISCOVERED] (3x Offenses Archive) — Chronological Transcripts Log Proof: ${proofDossierBundleLogsString}`,
+ text: `⚠️ [Repeated harassment] (3 offenses) — Chat log: ${proofDossierBundleLogsString}`,
  time: cleanTimeStr
  });
 
@@ -1105,7 +1259,7 @@ function executeSubmitNewPortalChatMessage() {
  setTimeout(() => {
  appendCommunityChatMessage({
  channel: activeChatChannelTrack,
- sender: "Royal Guard",
+    sender: "Moderator",
  text: `@${loggedUser} Severe behavioral policy violation detected. Clean up your language signature or face total chat exclusion channels.`,
  time: cleanTimeStr,
  visible: true,
@@ -1149,7 +1303,7 @@ function executeStaffModerationAction(actionType, targetQueueIndex) {
                 id: Date.now(),
                 channel: targetIncident.channel,
                 sender: offender,
-                text: "Your recent transmission has been deleted by management due to toxic or inappropriate behavior signatures. Deem this a standard warning notice.",
+                text: "Your recent message was removed because it broke community rules. This is a warning.",
                 time: cleanTimeStr,
                 visible: false,          // Keeps it 100% hidden from all common players on screen
                 recipientAlertOnly: true // Force-renders the feedback block strictly onto the offender's canvas matrix
@@ -1254,31 +1408,31 @@ function executeAutomatedTokenCrestLearning(rawFlaggedTextString) {
 /* Block 15: PREMIUM ROYALS MEMBERSHIP CONFIGURATION DATA */
 const globalRoyaltyTierPackagesDatabase = [
     {
-        tier: "Standard Archon",
-        cost: "Free Command Shard",
+        tier: "Standard",
+        cost: "Free",
         glowClass: "standard-package-border",
-        badge: "COMMONER",
+        badge: "FREE",
         features: [
-            "Access to standard Age campaign shards",
-            "Factory default message recipient limits",
-            "Standard resource production algorithms",
-            "Basic tactical profile customizer tools"
+            "Access to standard Ages",
+            "Default message recipient limits",
+            "Standard resource production rates",
+            "Basic profile customization"
         ],
-        actionText: "ACTIVE MEMBERSHIP",
+        actionText: "Current plan",
         enabled: false
     },
     {
-        tier: "Archon Vanguard",
-        cost: "Premium Knightly Order",
+        tier: "Premium",
+        cost: "Paid membership",
         glowClass: "vanguard-package-glow",
-        badge: "ROYALTY TIER",
+        badge: "PREMIUM",
         features: [
-            "Priority deployment queue slots on server load",
-            "Expanded multi-recipient messaging directories",
-            "+15% Resource Generation multiplier passives",
-            "Exclusive gold runic profile frame cosmetics"
+            "Priority queue when servers are busy",
+            "Send messages to more recipients at once",
+            "+15% resource generation bonus",
+            "Exclusive gold profile frame cosmetics"
         ],
-        actionText: "UNSEAL VANGUARD STATUS",
+        actionText: "Upgrade",
         enabled: true
     }
 ];
@@ -1288,8 +1442,8 @@ function renderRoyaltyTierPortalCanvas(viewport) {
     viewport.innerHTML = `
         <div class="royalty-workspace-container">
             <header class="royalty-workspace-header-deck">
-                <h2 class="royalty-master-title">👑 ELEVATE COMMANDER RANK STATUS</h2>
-                <p class="royalty-master-subtitle">Support development servers to unseal premium tier rewards, tactical passive resource boosts, and historic heraldic cosmetics.</p>
+                <h2 class="royalty-master-title">👑 Membership</h2>
+                <p class="royalty-master-subtitle">Support the game to unlock premium perks, resource bonuses, and exclusive cosmetics.</p>
             </header>
             <div class="royalty-tier-cards-flex-row">
                 ${globalRoyaltyTierPackagesDatabase.map(pack => `
@@ -1306,7 +1460,7 @@ function renderRoyaltyTierPortalCanvas(viewport) {
                         </ul>
                         <div class="package-action-footer-deck">
                             <button class="settings-btn master-action-btn ${pack.enabled ? 'pulse-buy-btn' : 'disabled-active-btn'}" 
-                                    ${pack.enabled ? `onclick="alert('Connecting encrypted staging pipeline gateway for: ${pack.tier}')"` : 'disabled'}>
+                                    ${pack.enabled ? `onclick="alert('Premium checkout for ${pack.tier} is not available yet.')"` : 'disabled'}>
                                 ${pack.actionText}
                             </button>
                         </div>
@@ -1333,14 +1487,14 @@ const playerAccountDiscoveriesDatabase = {
 function renderChroniclesProgressMatrixCanvas(viewport) {
     viewport.innerHTML = `
         <div class="dashboard-news-card-box" style="width: 100% !important; max-width: 100% !important;">
-            <h2 class="card-title-header">📜 The Chronicles of Amnek</h2>
+            <h2 class="card-title-header">📜 The Chronicles</h2>
             <div class="card-scrollable-body-text">
                 <p style="margin-bottom: 16px; color: #f1e0ac;">
-                    The living campaign chronicle matrix tracks every Age, alliance shift, and sovereign decree across the continent.
-                    Full interactive timeline modules will sync with the next deployment pipeline.
+                    This page will show the history of each Age, major alliances, and world events across Amnek.
+                    The interactive timeline is coming in a future update.
                 </p>
                 <p style="color: rgba(241,224,172,0.55); font-size: 0.85rem; margin: 0;">
-                    Stand by, Commander — historical ledger feeds are being compiled for this sector.
+                    History feeds for this section are still being built.
                 </p>
             </div>
         </div>
@@ -1351,14 +1505,14 @@ function renderMasterDiscoveriesPortalCanvas(viewport) {
     viewport.innerHTML = `
         <div class="discoveries-workspace-chassis">
             <div class="discoveries-sidebar-filters-deck">
-                <button class="chat-channel-btn active-channel-glow">🚩 Country Chronicles</button>
+                <button class="chat-channel-btn active-channel-glow">🚩 Nations</button>
             </div>
             <div class="discoveries-main-scroll-track">
                 ${playerAccountDiscoveriesDatabase.nations.map(entry => `
                     <div class="discovery-archive-ledger-card ledger-node-unlocked">
                         <div class="discovery-card-header-row">
                             <span class="discovery-card-name-title">👑 ${entry.name}</span>
-                            <span class="discovery-card-badge-tag tag-unlocked">UNSEALED</span>
+                            <span class="discovery-card-badge-tag tag-unlocked">UNLOCKED</span>
                         </div>
                         <p class="discovery-card-body-excerpt-text">"${entry.excerpt}"</p>
                     </div>
@@ -1498,8 +1652,8 @@ function renderStagingAudioMixerConsoleCanvas(viewport) {
     viewport.innerHTML = `
         <div class="audio-mixer-workspace-container">
             <header class="royalty-workspace-header-deck" style="text-align: left !important; border-bottom: 1px solid rgba(184,144,48,0.2); padding-bottom: 10px; margin-bottom: 14px;">
-                <h2 class="royalty-master-title">🔊 HIGH COMMAND AUDIO SOUND DESIGN MIXER</h2>
-                <p class="royalty-master-subtitle">Calibrate individual volume lanes in real-time. Settings persist securely across campaign resets.</p>
+                <h2 class="royalty-master-title">🔊 Audio settings</h2>
+                <p class="royalty-master-subtitle">Adjust volume levels in real time. Settings are saved for your next visit.</p>
             </header>
 
             <div class="audio-mixer-controls-deck-grid">
@@ -1507,7 +1661,7 @@ function renderStagingAudioMixerConsoleCanvas(viewport) {
                 <div class="audio-mixer-group-row">
                     <div class="mixer-label-meta-cell">
                         <span class="mixer-channel-title-string">Master Volume</span>
-                        <span class="mixer-channel-sub-tag">Primary Console Gain Output</span>
+                        <span class="mixer-channel-sub-tag">Overall volume for the portal</span>
                     </div>
                     <input type="range" min="0" max="1" step="0.05" value="${currentPortalMasterVol}" class="mixer-slider-track-input" oninput="handleSliderVolumeInput('master', this)">
                 </div>
@@ -1516,7 +1670,7 @@ function renderStagingAudioMixerConsoleCanvas(viewport) {
                 <div class="audio-mixer-group-row">
                     <div class="mixer-label-meta-cell">
                         <span class="mixer-channel-title-string">Background Music</span>
-                        <span class="mixer-channel-sub-tag">Medieval Cinematic Soundtracks</span>
+                        <span class="mixer-channel-sub-tag">Portal background music</span>
                     </div>
                     <input type="range" min="0" max="1" step="0.05" value="${currentPortalMusicVol}" class="mixer-slider-track-input" oninput="handleSliderVolumeInput('music', this)">
                 </div>
@@ -1525,7 +1679,7 @@ function renderStagingAudioMixerConsoleCanvas(viewport) {
                 <div class="audio-mixer-group-row">
                     <div class="mixer-label-meta-cell">
                         <span class="mixer-channel-title-string">Voice & Narration</span>
-                        <span class="mixer-channel-sub-tag">Regional Historical Narrators Spoken Files</span>
+                        <span class="mixer-channel-sub-tag">Story and nation voice lines</span>
                     </div>
                     <input type="range" min="0" max="1" step="0.05" value="${currentPortalNarrationVol}" class="mixer-slider-track-input" oninput="handleSliderVolumeInput('narration', this)">
                 </div>
@@ -1534,7 +1688,7 @@ function renderStagingAudioMixerConsoleCanvas(viewport) {
                 <div class="audio-mixer-group-row">
                     <div class="mixer-label-meta-cell">
                         <span class="mixer-channel-title-string">Interface Effects</span>
-                        <span class="mixer-channel-sub-tag">Tactical Button Clicks & Runic Chimes</span>
+                        <span class="mixer-channel-sub-tag">Menu clicks and UI sounds</span>
                     </div>
                     <input type="range" min="0" max="1" step="0.05" value="${currentPortalSfxVol}" class="mixer-slider-track-input" oninput="handleSliderVolumeInput('sfx', this)" onchange="triggerAudioPreviewSample('sfx')">
                 </div>

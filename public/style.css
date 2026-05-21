@@ -500,17 +500,24 @@ body {
     overflow-y: auto;
 }
 
-/* --- Block 5: Unified Auth Modal Layout --- */
-.modal-content {
-    background: rgba(10, 10, 10, 0.98);
-    border: 2px solid #d4af37;
-    padding: 40px;
-    width: 450px; 
+/* --- Block 5: Unified Auth Modal Layout (borderedcontainer_thin frame) --- */
+.modal-content,
+.bordered-modal-panel {
+    background-color: rgba(12, 10, 8, 0.94) !important;
+    background-image: url('images/borderedcontainer_thin.png') !important;
+    background-size: 100% 100% !important;
+    background-repeat: no-repeat !important;
+    background-position: center center !important;
+    border: none !important;
+    border-radius: 0 !important;
+    padding: 36px 32px 32px 32px !important;
+    width: 450px;
     max-width: 90%;
     text-align: center;
-    box-shadow: 0 0 30px rgba(212, 175, 55, 0.2);
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.88) !important;
     position: relative;
     min-height: 520px;
+    box-sizing: border-box !important;
 }
 
 /* FIX: Added title color */
@@ -935,6 +942,7 @@ body {
     font-style: italic;
     color: #f1e0ac;
     max-width: 90%;
+    white-space: pre-line;
 }
 
 /* THE VERTICAL STACK (Grid) */

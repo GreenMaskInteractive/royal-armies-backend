@@ -181,7 +181,7 @@ var player = {
     avatarUrl: "images/avatars/commanderprofile01.png", 
     
     membershipTitle: "Bronze", 
-    description: "Honorable Commander of the Royal Front. Seeking tactical alliances.", 
+    description: "Royal Armies player. Looking for allies and a good Age run.", 
     privacy: "Public", 
     
     // Social Node Arrays 
@@ -201,14 +201,14 @@ var player = {
             expires: "2026-06-01", 
             severity: "Minor",
             icon: "images/penalties/mark_mute.png",
-            desc: "Obtained by: Violation of chat safety parameters or spamming. Blocks outgoing text signals."
+            desc: "Reason: Chat rule violations or spam. You cannot send chat messages while active."
         },
         { 
             type: "Grief Mark", 
             expires: "2026-07-15", 
             severity: "Moderate",
             icon: "images/penalties/mark_grief.png",
-            desc: "Obtained by: Intentional friendly fire or resource sabotage against allied deployment sectors."
+            desc: "Reason: Griefing allies, such as friendly fire or sabotaging shared resources."
         }
     ]
 };
@@ -217,17 +217,17 @@ const globalPenaltyCatalog = {
     chat: {
         name: "Communication Restriction",
         icon: "images/penalties/mark_mute.png",
-        desc: "Obtained by: Violation of chat safety parameters or spamming. Blocks outgoing text signals."
+        desc: "Reason: Chat rule violations or spam. You cannot send chat messages while active."
     },
     grief: {
-        name: "Tactical Subversion (Griefing)",
+        name: "Griefing",
         icon: "images/penalties/mark_grief.png",
-        desc: "Obtained by: Intentional friendly fire or resource sabotage against allied deployment sectors."
+        desc: "Reason: Griefing allies, such as friendly fire or sabotaging shared resources."
     },
     exploit: {
-        name: "Aether Bug Exploitation",
+        name: "Exploit abuse",
         icon: "images/penalties/mark_exploit.png",
-        desc: "Obtained by: Abusing database loop vulnerabilities or running unverified external macro scripts."
+        desc: "Reason: Abusing bugs, automation, or other unfair advantages."
     }
 };
 
@@ -316,18 +316,18 @@ function manageSecurityUpdate(mode) {
     btnDock.innerHTML = "";
     
     if (mode === 'email') {
-        headerTitle.innerText = "UPDATE SECURE COMMUNICATION CHANNELS";
+        headerTitle.innerText = "Update email address";
         textField.innerHTML = `
-            <div style="margin-bottom: 12px; color: rgba(241,224,172,0.6); font-size: 0.75rem;">Current Address: <span style="color: #ffd700;">${player.name}@royalfront.net</span></div>
-            <input type="email" id="security-email-input-field" placeholder="Enter new tactical email matrix..." 
+            <div style="margin-bottom: 12px; color: rgba(241,224,172,0.6); font-size: 0.75rem;">Current address: <span style="color: #ffd700;">${player.name}@royalfront.net</span></div>
+            <input type="email" id="security-email-input-field" placeholder="Enter new email address..." 
                    style="width: 100% !important; background: rgba(0,0,0,0.6) !important; border: 1px solid rgba(184,144,48,0.4) !important; padding: 8px !important; color: #f1e0ac !important; font-family: 'Segoe UI', sans-serif !important; font-size: 0.8rem !important; box-sizing: border-box !important; outline: none !important;">
         `;
     } else if (mode === 'password') {
-        headerTitle.innerText = "RE-CALIBRATE AETHER ENCRYPTION CYPHERS";
+        headerTitle.innerText = "Change password";
         textField.innerHTML = `
-            <input type="password" id="security-pass-old-field" placeholder="Verify old encryption password phrase..." 
+            <input type="password" id="security-pass-old-field" placeholder="Current password" 
                    style="width: 100% !important; background: rgba(0,0,0,0.6) !important; border: 1px solid rgba(184,144,48,0.4) !important; padding: 8px !important; color: #f1e0ac !important; font-family: 'Segoe UI', sans-serif !important; font-size: 0.8rem !important; margin-bottom: 10px !important; box-sizing: border-box !important; outline: none !important;">
-            <input type="password" id="security-pass-new-field" placeholder="Forge new secure verification key..." 
+            <input type="password" id="security-pass-new-field" placeholder="New password" 
                    style="width: 100% !important; background: rgba(0,0,0,0.6) !important; border: 1px solid rgba(184,144,48,0.4) !important; padding: 8px !important; color: #f1e0ac !important; font-family: 'Segoe UI', sans-serif !important; font-size: 0.8rem !important; box-sizing: border-box !important; outline: none !important;">
         `;
     }
@@ -335,7 +335,7 @@ function manageSecurityUpdate(mode) {
     // Forge Action Buttons
     const saveBtn = document.createElement('button');
     saveBtn.className = 'suicide-danger-confirm-btn'; // Gold gradient color themes
-    saveBtn.innerText = "SEAL SECURE KEYS";
+    saveBtn.innerText = "Save";
     saveBtn.style.borderColor = "#b89030";
     saveBtn.onclick = () => {
         if (typeof playToggleLeverSFX === 'function') playToggleLeverSFX();
@@ -346,7 +346,7 @@ function manageSecurityUpdate(mode) {
     
     const cancelBtn = document.createElement('button');
     cancelBtn.className = 'suicide-safe-retreat-btn';
-    cancelBtn.innerText = "ABORT UPDATE";
+    cancelBtn.innerText = "Cancel";
     cancelBtn.onclick = () => {
         if (typeof playToggleLeverSFX === 'function') playToggleLeverSFX();
         closeSecurityOverlayWindow();
@@ -412,7 +412,7 @@ var playerInboundInboxDossier = [
 ];
 
 var playerSystemInboxDossier = [
-    { id: 501, from: "DEVELOPMENT TEAM", topic: "Patch Update Matrix 1.04", body: "The Fullscreen profile customization dashboards and administrative discipline overlays are now completely operational. Secure encryption ciphers verified.", read: false, date: "2026-05-17 08:00" },
+    { id: 501, from: "DEVELOPMENT TEAM", topic: "Patch Update 1.04", body: "Fullscreen profile editing and moderation overlays are now live. Account security checks are enabled.", read: false, date: "2026-05-17 08:00" },
     { id: 502, from: "DEVELOPMENT TEAM", topic: "Daily Safety reminder Loop", body: "Maintain immersive fair play interactions within sector grids. 3 strike penalties result in IP automated blockades.", read: true, date: "2026-05-15 12:00" }
 ];
 
@@ -484,6 +484,9 @@ function playLoginMusic() {
 // --- 4. THE BOOT SEQUENCE (Local Only Mode) ---
 window.onload = () => {
     console.log("Aether Engine Synchronized. Local Logic Active.");
+    if (typeof initializeDeveloperMaintenanceAlert === 'function') {
+        initializeDeveloperMaintenanceAlert();
+    }
     const landing = document.getElementById('page-landing');
     if (landing) {
         landing.style.display = 'flex';
@@ -552,21 +555,25 @@ function toggleMute() {
 
 /* --- Block 2: The Chronicle Archives (Full Data Set) --- */
 const CHRONICLE_DATA = {
-    genesis: { title: "The Genesis Forge", details: "Established the core Aether-Rage framework. This includes the obsidian and gold visual theme, the dynamic background slideshow engine, and the initial server handshakes." },
-    audio: { title: "Symphony of War", details: "Integrated the spatial audio engine featuring 'Stone and Water.' Developed the custom sticky audio controls and the smooth cross-fade mute logic." },
-    narrative: { title: "The Traveler's Guidance", details: "Built the Narrative System and the mysterious 'Retired Old Man' portrait interaction. Engineered the typing text effect for immersive lore delivery." },
-    interface: { title: "Navigator & Roadmap", details: "Deployed the Widescreen Roadmap system (95vw) and developed the 'Hub Docking' logic to ensure panels align perfectly with navigator icons." },
-    security: { title: "Nexus Gatekeeping", details: "Established the Secure Login Engine. Developed the Developer Override (Skeleton Key) bypass system for rapid internal testing and legend-tier access." },
-    assets: { title: "GIMP Asset Integration", details: "A massive refinement phase. Merged logos and stone frames into high-performance single-load assets in GIMP to eliminate scaling lag and flickering." },
-    optimization: { title: "Engine Optimization", details: "Refined frame-timings and background transition smooth-scaling. Implemented the 'Absolute-Zero' centering fix for the Commander's Portal." },
-    networking: { title: "Nexus Socket Sync", details: "Developed the real-time synchronization between the client and the Nexus server to handle player state and global event notifications." },
-    roadmap_foundation: { title: "Phase 1: The Foundation", details: "Core architecture build-out. Focusing on Nexus login systems, high-resolution GIMP asset pipelines, and the cinematic landing portal currently active." },
-    roadmap_combat: { title: "Phase 2: Aether Combat Sync", details: "Implementing real-time hit detection and spell-casting animations. Synchronizing state between players within the Hall of Statues environment." },
-    roadmap_classes: { title: "Phase 3: Class Specialization", details: "Finalizing the Battlemaster and Archmage skill trees. Adding unique crest animations and specific ability loadouts for both legendary paths." },
-    roadmap_world: { title: "Phase 4: The Outer Realms", details: "Expanding the walkable map beyond the initial statues. Adding environmental audio triggers and multi-zone narrative checkpoints." },
-    roadmap_economy: { title: "Phase 5: Royal Trade & Economy", details: "Integrating gold-flow systems, vendor interactions, and the personal inventory vault for items acquired in the Outer Realms." },
-    roadmap_launch: { title: "Phase 6: Royal Ascension", details: "The final transition to a live environment. Includes community discord events, global player database deployment, and the grand opening of the gates." },
-    networking_nexus: { title: "Nexus Handshake", details: "Established the server-side communication link for the registration engine. Automated the 'Gatekeeper' email confirmation system for new Commanders." 
+    alpha_0111: {
+        title: "Alpha 0.1.11 — Age Portal",
+        details: "Royal Armies Alpha 0.1.11 is live. This update focuses on the Age Portal—the hub you reach after logging in.\n\nWhat's new: a dedicated portal home with navigation for the current Age, leaderboards, and community chat; a commander hub to edit your profile, read messages, and adjust audio settings; live registration and activity counts when connected to our servers; and a clearer Join the Age flow with sound and visual feedback (the full battle screen is still in development).\n\nAcross the site, menus, alerts, and chat labels have been rewritten in plain English. When we are actively building or testing, a notice may appear at the top of the page—thank you for your patience. On the live website, Discoveries, Royalty, and The Chronicles are visible but locked until their content is ready.\n\nWe are continuing work on the core game experience. Thank you for helping us shape Royal Armies."
+    },
+    genesis: { title: "Core framework", details: "Built the main UI theme, background slideshow, and first server connections." },
+    audio: { title: "Audio system", details: "Added background music, UI sounds, volume controls, and smooth mute behavior." },
+    narrative: { title: "Story intro", details: "Added the guided intro flow and typewriter text for lore moments." },
+    interface: { title: "Navigation and roadmap", details: "Built the wide roadmap panel and hub layout so menus line up with icons." },
+    security: { title: "Login and accounts", details: "Added secure login, registration, email confirmation, and a developer test bypass." },
+    assets: { title: "Art pipeline", details: "Merged UI images in GIMP to reduce load time, flicker, and scaling issues." },
+    optimization: { title: "Performance", details: "Improved frame timing, transitions, and centered layout for the Age Portal." },
+    networking: { title: "Live sync", details: "Connected the client to the server for player state and global events." },
+    roadmap_foundation: { title: "Phase 1: Foundation", details: "Core app structure, login, art pipeline, and the landing portal." },
+    roadmap_combat: { title: "Phase 2: Combat sync", details: "Real-time combat hits, spell animations, and shared battle state." },
+    roadmap_classes: { title: "Phase 3: Classes", details: "Battlemaster and Archmage skill trees, crests, and ability loadouts." },
+    roadmap_world: { title: "Phase 4: World map", details: "Larger explorable map, zone audio, and story checkpoints." },
+    roadmap_economy: { title: "Phase 5: Economy", details: "Gold flow, vendors, and player inventory." },
+    roadmap_launch: { title: "Phase 6: Launch", details: "Live release prep, community events, global accounts, and public opening." },
+    networking_nexus: { title: "Registration server", details: "Server-side registration and automated confirmation emails for new accounts." 
     },
 };
 
@@ -599,6 +606,19 @@ function restoreLoginAuthButtons() {
     }
 }
 
+function isLandingServedByNexusBackend() {
+    const host = window.location.hostname.toLowerCase();
+    const port = window.location.port;
+    if (host === 'royalarmies.com' || host === 'www.royalarmies.com') return true;
+    if (port === '3000' || port === '') return host === 'localhost' || host === '127.0.0.1';
+    return false;
+}
+
+function redirectToAgePortal() {
+    sessionStorage.setItem('royalArmiesAuthAudioPlay', 'granted');
+    window.location.assign('main.html');
+}
+
 async function handleLogin() {
     const userVal = document.getElementById('login-username').value.trim();
     const passVal = document.getElementById('login-password').value;
@@ -613,7 +633,18 @@ async function handleLogin() {
     if (loader) loader.style.display = 'block';
 
     if (!userVal || !passVal) {
-        alert('Please provide credentials to the Gatekeepers.');
+        alert('Please enter your username and password.');
+        restoreLoginAuthButtons();
+        return;
+    }
+
+    if (!isAdmin && !isLandingServedByNexusBackend()) {
+        alert(
+            'Login needs the Royal Armies server.\n\n' +
+            '1. In a terminal, run: node server.js\n' +
+            '2. Open: http://localhost:3000\n\n' +
+            'Preview-only URLs (for example Live Server on port 5500) cannot verify accounts.'
+        );
         restoreLoginAuthButtons();
         return;
     }
@@ -623,7 +654,7 @@ async function handleLogin() {
         if (typeof player !== 'undefined') player.name = userVal;
         refreshProfileCommanderNameDisplay();
         refreshLoggedUserTagDisplay();
-        initiatePostLoginSequence(true);
+        redirectToAgePortal();
         return;
     }
 
@@ -637,7 +668,7 @@ async function handleLogin() {
         const payload = await response.json().catch(() => ({}));
 
         if (!response.ok) {
-            alert(payload.message || 'The Gatekeepers rejected those credentials.');
+            alert(payload.message || 'Login failed. Check your username and password.');
             restoreLoginAuthButtons();
             return;
         }
@@ -668,16 +699,8 @@ function initiatePostLoginSequence(isAdmin) {
     
     setTimeout(() => {
         if (!isAdmin) {
-            console.log("Standard Profile Cleared. Forwarding Domain Auth Token...");
-            
-            sessionStorage.setItem("royalArmiesAuthAudioPlay", "granted");
-            
-            const secureRedirectAnchor = document.createElement('a');
-            secureRedirectAnchor.href = 'ageportal.html';
-            secureRedirectAnchor.style.display = 'none';
-            document.body.appendChild(secureRedirectAnchor);
-            
-            secureRedirectAnchor.click();
+            console.log('Login accepted. Redirecting to Age Portal (main.html)...');
+            redirectToAgePortal();
             return;
         }
 
@@ -732,11 +755,7 @@ function toggleRoadmap(show, event) {
 /* --- Block 7: Redirects & Modals (Registration & Recovery) --- */
 
 function enterMainGame() {
-    if (typeof playLoginMusic === "function") { playLoginMusic(); }
-    const landing = document.getElementById('page-landing');
-    const statues = document.getElementById('class-selection-screen');
-    if(landing) landing.style.display = 'none';
-    if(statues) statues.style.display = 'flex';
+    redirectToAgePortal();
 }
 
 function openDiscord() {
@@ -792,7 +811,7 @@ function submitRegistration() {
     const confirm = document.getElementById('reg-confirm').value;
 
     if (!user || !email || !pass || !confirm) {
-        alert("The Gatekeepers require all fields to be filled, Commander.");
+        alert("Please fill in all registration fields.");
         return;
     }
     if (pass !== confirm) {
@@ -808,7 +827,7 @@ function submitRegistration() {
     .then(async (response) => {
         const payload = await response.json().catch(() => ({}));
         if (response.ok) {
-            alert(payload.message || 'Registration saved. Check your email for the confirmation scroll.');
+            alert(payload.message || 'Registration saved. Check your email to confirm your account.');
             closeRegister();
             return;
         }
@@ -826,7 +845,7 @@ function submitForgot(e) {
     const btn = e ? e.target : event.target;
 
     if (!email || !email.includes('@')) {
-        alert("The Royal Guard requires a valid email address.");
+        alert("Please enter a valid email address.");
         return;
     }
 
@@ -849,7 +868,7 @@ function submitForgot(e) {
     })
     .catch(err => {
         console.error("Nexus Link Error:", err);
-        alert("Transmission Failed: The Nexus Server is unresponsive.");
+        alert("Could not reach the server. Try again in a moment.");
     })
     .finally(() => {
         btn.disabled = false;
@@ -1140,7 +1159,7 @@ const nationLore = {
                     <div id="msg-compose-context-banner" class="msg-compose-context-banner msg-compose-context-hidden" aria-hidden="true"></div>
                     <!-- TARGET COMPASS LINE -->
                     <div class="message-input-row-block msg-send-to-row">
-                        <label class="msg-field-label">SEND TO</label>
+                        <label class="msg-field-label">To</label>
                         <div class="send-to-pill-container" id="msg-recipient-pill-dock">
                             <span class="pill-placeholder-txt">Select Recipients</span>
                         </div>
@@ -1148,7 +1167,7 @@ const nationLore = {
                         
                         <!-- THE DYNAMIC FLOATING TARGET DIRECTORY DRAWER (FIXED INITIAL HIDDEN HANDLE) -->
                         <div id="msg-directory-floating-drawer" class="msg-floating-drawer-hidden" onclick="event.stopPropagation()">
-                            <div class="drawer-header-title">📜 RECIPIENTS LOG</div>
+                            <div class="drawer-header-title">📜 Recipients</div>
                             <div class="msg-directory-drawer-body">
                                 <div class="drawer-category-scroll-bin" id="drawer-main-category-view">
                                     <div class="drawer-node-row" onclick="drillDownDirectory('country')">Country<span>►</span></div>
@@ -1161,7 +1180,7 @@ const nationLore = {
                     </div>
                     <!-- SUBJECT MATRICES HEADER LINE -->
                     <div class="message-input-row-block msg-topic-row">
-                        <label class="msg-field-label">TOPIC</label>
+                        <label class="msg-field-label">Subject</label>
                         <input type="text" id="msg-subject-input-element" placeholder="" maxlength="60">
                     </div>
                     <!-- RAW PLAIN PARCHMENT SCROLL TEXT AREA -->
@@ -1171,7 +1190,7 @@ const nationLore = {
                     </div>
                     <!-- TRANSACTION DISPATCH CONTROLS DECK -->
                     <div class="message-action-deck-row">
-                        <button class="settings-btn" onclick="executeOutgoingMessageDispatch()">Seal & Send Message</button>
+                        <button class="settings-btn" onclick="executeOutgoingMessageDispatch()">Send message</button>
                         <button class="settings-btn" style="border-color: rgba(184,144,48,0.3) !important;" onclick="commitMessageToDraftCache()">Save As Draft</button>
                     </div>
                 </div>
@@ -1185,7 +1204,7 @@ const nationLore = {
                         <!-- FIXED TARGET EXTENSION ID MATCHED DIRECTLY TO RENDERER -->
                         <button class="settings-btn mini-btn" id="msg-multi-delete-toggle" onclick="toggleMassDeletionMode('inbox')">Delete Multiple</button>
                         <button class="settings-btn mini-btn msg-drawer-pane-hidden" id="msg-select-all-btn" onclick="executeSelectAllMessageCheckboxes('inbox')">Select All</button>
-                        <button class="settings-btn mini-btn msg-drawer-pane-hidden" id="msg-confirm-delete-btn" style="border-color: #cc0000 !important; color: #ff9999 !important;" onclick="executeMassDossierPurge('inbox')">Purge Selected</button>
+                        <button class="settings-btn mini-btn msg-drawer-pane-hidden" id="msg-confirm-delete-btn" style="border-color: #cc0000 !important; color: #ff9999 !important;" onclick="executeMassDossierPurge('inbox')">Delete selected</button>
                     </div>
                     <div class="msg-portal-scroll-bin" id="msg-inbox-render-dock"></div>
                 </div>
@@ -1199,7 +1218,7 @@ const nationLore = {
                         <!-- FIXED TARGET EXTENSION ID MATCHED DIRECTLY TO RENDERER -->
                         <button class="settings-btn mini-btn" id="sys-multi-delete-toggle" onclick="toggleMassDeletionMode('system')">Delete Multiple</button>
                         <button class="settings-btn mini-btn msg-drawer-pane-hidden" id="sys-select-all-btn" onclick="executeSelectAllMessageCheckboxes('system')">Select All</button>
-                        <button class="settings-btn mini-btn msg-drawer-pane-hidden" id="sys-confirm-delete-btn" style="border-color: #cc0000 !important; color: #ff9999 !important;" onclick="executeMassDossierPurge('system')">Purge Selected</button>
+                        <button class="settings-btn mini-btn msg-drawer-pane-hidden" id="sys-confirm-delete-btn" style="border-color: #cc0000 !important; color: #ff9999 !important;" onclick="executeMassDossierPurge('system')">Delete selected</button>
                     </div>
                     <div class="msg-portal-scroll-bin" id="msg-system-render-dock"></div>
                 </div>
@@ -1224,7 +1243,7 @@ const nationLore = {
                     <div class="settings-scroll-wrapper">
                         <!-- ISOLATED INTERFACE LIVE PREVIEW MONITOR -->
                         <div class="preview-sandbox-window">
-                            <div class="preview-sandbox-label">Aether Interface Live Preview</div>
+                            <div class="preview-sandbox-label">Interface live preview</div>
                             <!-- THE FRAME CONTAINER: Sized 320x160 with your thin border graphic -->
                             <div class="preview-landing-backdrop">
                                 <!-- THE BACKGROUND GRAPHIC: Holds the mainbg1 landscape image -->
@@ -1337,7 +1356,7 @@ const nationLore = {
                         </div>
 
                         <div class="settings-group">
-                            <label class="settings-label">Tactical Action Safety Lock</label>
+                            <label class="settings-label">Confirm risky actions</label>
                             <div class="settings-right-wrapper">
                                 <span class="toggle-label-text" id="lock-label-text">Double</span>
                                 <label class="switch-toggle-bar">
@@ -1370,7 +1389,7 @@ const nationLore = {
                                     <label class="settings-label">Player Bio</label>
                                     <!-- THE BEZEL CONTAINER INNER BACKGROUND WRAPPER -->
                                     <div class="bio-bezel-frame-wrapper">
-                                        <textarea id="profile-bio-input" maxlength="250" placeholder="Chronicle your achievements, Commander..." oninput="hasUnsavedChanges=true; player.description=this.value;">\${player.description}</textarea>
+                                        <textarea id="profile-bio-input" maxlength="250" placeholder="Write a short bio about yourself..." oninput="hasUnsavedChanges=true; player.description=this.value;">\${player.description}</textarea>
                                     </div>
                                 </div>
                                 
@@ -1414,7 +1433,7 @@ const nationLore = {
                                 <label class="settings-label">Login Information</label>
                                 <div class="profile-btn-row-stacked">
                                     <button class="settings-btn" onclick="manageSecurityUpdate('email')">Update Email Address</button>
-                                    <button class="settings-btn" onclick="manageSecurityUpdate('password')">Change Encryption Password</button>
+                                    <button class="settings-btn" onclick="manageSecurityUpdate('password')">Change password</button>
                                 </div>
                             </div>
                             
@@ -1428,8 +1447,8 @@ const nationLore = {
                             <div class="profile-section-box footer-box-third critical-danger-zone">
                                 <label class="settings-label warning-title">Rank Reset</label>
                                 <div class="profile-btn-row-stacked">
-                                    <button class="danger-action-btn" onclick="triggerCommanderSuicide('rank')">Sacrifice Commander Rank</button>
-                                    <button class="danger-action-btn" onclick="triggerCommanderSuicide('exile')">Suicide Out of Active Country</button>
+                                    <button class="danger-action-btn" onclick="triggerCommanderSuicide('rank')">Reset rank</button>
+                                    <button class="danger-action-btn" onclick="triggerCommanderSuicide('exile')">Leave active country</button>
                                 </div>
                             </div>
                         </div>
@@ -1586,7 +1605,7 @@ function loadLore(type, customMount) {
     if (!container && type !== 'profile') return;
 
     if (container) container.innerHTML = "";
-    body.innerHTML = "Make A Selection";
+    body.innerHTML = "Select an option";
     
     // 🛑 THE RIGHT PANELS HEADER LOCK: Stays blank on boot up until a choice clicks!
     if (detailsHeader) detailsHeader.innerHTML = "";
@@ -1689,21 +1708,21 @@ function loadLore(type, customMount) {
             
             const friendsListHTML = player.friends.length > 0
                 ? player.friends.map(f => `
-                    <div class="alliance-capsule-badge" title="Allied Commander: ${f}">
+                    <div class="alliance-capsule-badge" title="Friend: ${f}">
                         <span class="capsule-icon-shield">🛡️</span>
                         <span class="capsule-username-text">${f}</span>
                     </div>
                 `).join('')
-                : `<div class="empty-roster-txt">No active wartime alliances recorded.</div>`;
+                : `<div class="empty-roster-txt">No friends added yet.</div>`;
                 
             const blockedListHTML = player.blocked.length > 0
                 ? player.blocked.map(b => `
-                    <div class="alliance-capsule-badge capsule-exiled-border" title="Exiled Faction: ${b}">
+                    <div class="alliance-capsule-badge capsule-exiled-border" title="Blocked player: ${b}">
                         <span class="capsule-icon-shield">❌</span>
                         <span class="capsule-username-text blocked-txt">${b}</span>
                     </div>
                 `).join('')
-                : `<div class="empty-roster-txt">No rogue factions blacklisted.</div>`;
+                : `<div class="empty-roster-txt">No blocked players.</div>`;
                 
             const headerHost = mount.profileHeaderHost;
             const paneRight = headerHost || body.parentElement;
@@ -1718,7 +1737,7 @@ function loadLore(type, customMount) {
                             <img id="profile-avatar-display" src="${player.avatarUrl}" alt="Avatar" class="clickable-avatar-badge" onclick="openAvatarArmorySelector(event)">
                         </div>
                         <div id="avatar-preset-selection-bin" style="display: none;">
-                            <div class="avatar-selection-header">Select Identity Emblem</div>
+                            <div class="avatar-selection-header">Choose avatar</div>
                             <div class="avatar-thumbnail-grid">
                                 <img src="images/avatars/commanderprofile01.png" class="avatar-thumb-lever ${player.avatarUrl === 'images/avatars/commanderprofile01.png' ? 'selected-avatar-border' : ''}" onclick="selectPresetAvatar('images/avatars/commanderprofile01.png')">
                                 <img src="images/avatars/commanderprofile02.png" class="avatar-thumb-lever ${player.avatarUrl === 'images/avatars/commanderprofile02.png' ? 'selected-avatar-border' : ''}" onclick="selectPresetAvatar('images/avatars/commanderprofile02.png')">
@@ -1757,7 +1776,7 @@ function loadLore(type, customMount) {
                             <div class="profile-section-box">
                                 <label class="settings-label">Player Bio</label>
                                 <div class="bio-bezel-frame-wrapper">
-                                    <textarea id="profile-bio-input" maxlength="250" placeholder="Chronicle your achievements, Commander..." oninput="hasUnsavedChanges=true; player.description=this.value;" onchange="hasUnsavedChanges=true; player.description=this.value;">${player.description}</textarea>
+                                    <textarea id="profile-bio-input" maxlength="250" placeholder="Write a short bio about yourself..." oninput="hasUnsavedChanges=true; player.description=this.value;" onchange="hasUnsavedChanges=true; player.description=this.value;">${player.description}</textarea>
                                 </div>
                             </div>
                             <div class="profile-section-box">
@@ -1774,11 +1793,11 @@ function loadLore(type, customMount) {
                         <div class="profile-split-panel-half">
                             <div class="profile-double-row-expanded">
                                 <div class="social-list-box-expanded">
-                                    <label class="settings-label">Wartime Alliances (${player.friends.length})</label>
+                                    <label class="settings-label">Friends (${player.friends.length})</label>
                                     <div class="compact-grid-scroll-track" id="friends-list-bin">${friendsListHTML}</div>
                                 </div>
                                 <div class="social-list-box-expanded">
-                                    <label class="settings-label">Exiled Factions (${player.blocked.length})</label>
+                                    <label class="settings-label">Blocked players (${player.blocked.length})</label>
                                     <div class="compact-grid-scroll-track" id="blocked-list-bin">${blockedListHTML}</div>
                                 </div>
                             </div>
@@ -1801,8 +1820,8 @@ function loadLore(type, customMount) {
                         <div class="profile-section-box footer-box-third">
                             <label class="settings-label">Rank Reset</label>
                             <div class="profile-btn-row-stacked">
-                                <button type="button" class="settings-btn rank-reset-action-btn" onclick="triggerCommanderSuicide('rank')">Sacrifice Commander Rank</button>
-                                <button type="button" class="settings-btn rank-reset-action-btn" onclick="triggerCommanderSuicide('exile')">Suicide Out of Active Country</button>
+                                <button type="button" class="settings-btn rank-reset-action-btn" onclick="triggerCommanderSuicide('rank')">Reset rank</button>
+                                <button type="button" class="settings-btn rank-reset-action-btn" onclick="triggerCommanderSuicide('exile')">Leave active country</button>
                             </div>
                         </div>
                     </div>
@@ -2420,13 +2439,13 @@ function showAetherWarningModal(onConfirmCallback) {
     } 
     alertOverlay.innerHTML = ` 
         <div class="safety-alert-box"> 
-            <div class="safety-alert-title">Unsealed Manuscripts</div> 
+            <div class="safety-alert-title">Unsaved changes</div> 
             <div class="safety-alert-message"> 
-                Commander, your interface adjustments have not been sealed within the Aether. Leaving now will permanently discard these configurations. 
+                You have unsaved settings. If you leave now, your changes will be lost.
             </div> 
             <div class="safety-alert-actions"> 
-                <button class="safety-alert-btn discard" onclick="executeWarningBypass()">Discard Changes</button> 
-                <button class="safety-alert-btn stay" onclick="dismissWarningModal()">Return to Console</button> 
+                <button class="safety-alert-btn discard" onclick="executeWarningBypass()">Discard changes</button> 
+                <button class="safety-alert-btn stay" onclick="dismissWarningModal()">Stay here</button> 
             </div> 
         </div> 
     `; 
@@ -2603,7 +2622,7 @@ const suicideDialogSequences = {
             buttons: [{ text: "Suicide", action: "commit" }, { text: "OKAY, FINE", action: "close" }]
         },
         {
-            text: "Record of your existence has been purged completely and your Commander status, dissolved.",
+            text: "Your account has been removed from the active country and your player record was cleared.",
             buttons: [{ text: "Close and Return to Join Age Screen", action: "finalize" }]
         }
     ]
@@ -3047,7 +3066,7 @@ function removeRecipientPill(targetName, e) {
     if (pill) pill.remove();
 
     if (activeWartimeRecipients.length === 0) {
-        document.getElementById('msg-recipient-pill-dock').innerHTML = `<span class="pill-placeholder-txt">Select recipients using the compass array...</span>`;
+        document.getElementById('msg-recipient-pill-dock').innerHTML = `<span class="pill-placeholder-txt">Select recipients...</span>`;
     }
 }
 
@@ -3057,11 +3076,11 @@ function executeOutgoingMessageDispatch() {
     const bodyText = document.getElementById('msg-body-input-element').value.trim();
 
     if (activeWartimeRecipients.length === 0 || !topic || !bodyText) {
-        alert("Diplomatic error: Target pathways, headers, and body matrices must be completely specified.");
+        alert("Choose at least one recipient and fill in both subject and message.");
         return;
     }
 
-    alert(`Dispatch unsealed! Outgoing signal broadcast successfully routed to: ${activeWartimeRecipients.join(', ')}`);
+    alert(`Message sent to: ${activeWartimeRecipients.join(', ')}`);
     
     clearMessageComposeContext();
     resetMessageComposeFields();
@@ -3078,7 +3097,7 @@ function commitMessageToDraftCache() {
         body: bodyText
     });
 
-    alert("Composition secured inside your drafts tracking scroll lists.");
+    alert("Draft saved.");
     reloadMessagesPanelView();
 }
 
@@ -3112,7 +3131,7 @@ function renderDossierPortalListHTML(targetTrack) {
     }
 
     if (dataSet.length === 0) {
-        bin.innerHTML = `<div class="empty-roster-txt" style="padding:20px !important;">This document registry is currently vacant, Commander.</div>`;
+        bin.innerHTML = `<div class="empty-roster-txt" style="padding:20px !important;">No messages in this folder yet.</div>`;
         return;
     }
     
@@ -3172,14 +3191,14 @@ function openFocusedDossierReadingOverlay(msg, track) {
     if (track === 'inbox') {
         const replyBtn = document.createElement('button');
         replyBtn.className = 'suicide-danger-confirm-btn';
-        replyBtn.innerText = 'REPLY DISPATCH';
+        replyBtn.innerText = 'Reply';
         replyBtn.style.borderColor = '#b89030';
         replyBtn.onclick = () => openMessageComposeFromDossier(msg, 'reply');
         btnDock.appendChild(replyBtn);
 
         const forwardBtn = document.createElement('button');
         forwardBtn.className = 'suicide-danger-confirm-btn';
-        forwardBtn.innerText = 'FORWARD DISPATCH';
+        forwardBtn.innerText = 'Forward';
         forwardBtn.style.borderColor = '#6a8fc7';
         forwardBtn.onclick = () => openMessageComposeFromDossier(msg, 'forward');
         btnDock.appendChild(forwardBtn);
@@ -3187,7 +3206,7 @@ function openFocusedDossierReadingOverlay(msg, track) {
 
     const deleteBtn = document.createElement('button');
     deleteBtn.className = 'suicide-danger-confirm-btn';
-    deleteBtn.innerText = "DELETE DISPATCH";
+    deleteBtn.innerText = "Delete";
     deleteBtn.onclick = () => {
         if (track === 'inbox') playerInboundInboxDossier = playerInboundInboxDossier.filter(m => m.id !== msg.id);
         else if (track === 'system') playerSystemInboxDossier = playerSystemInboxDossier.filter(m => m.id !== msg.id);

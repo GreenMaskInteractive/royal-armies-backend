@@ -7,7 +7,7 @@ const files = [
   path.join(__dirname, '..', 'public', 'script2.js'),
   path.join(__dirname, '..', 'public', 'style2.css'),
   path.join(__dirname, '..', 'public', 'index.html'),
-  path.join(__dirname, '..', 'public', 'ageportal.html'),
+  path.join(__dirname, '..', 'public', 'main.html'),
 ];
 
 // Matches Block N, Block 25 Extension, | Block 10:, etc. — preserves label after colon
