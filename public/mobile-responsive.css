@@ -30,8 +30,12 @@ body {
     #main-dashboard-canvas {
         width: 100% !important;
         max-width: 100% !important;
-        background-image: url('images/mainpagebg_mobile.png') !important;
+        background-image: url('images/mainpagebg.png') !important;
+        background-size: cover !important;
+        background-position: center center !important;
+        background-repeat: no-repeat !important;
         background-attachment: scroll !important;
+        background-color: #050403 !important;
     }
 
     .staging-deck-master-wrapper {
