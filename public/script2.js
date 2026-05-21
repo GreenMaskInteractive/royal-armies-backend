@@ -535,37 +535,36 @@ let portalMobileNavToggleLockUntil = 0;
 function bindPortalMobileNavToggleControls() {
     const navToggle = document.getElementById('portal-mobile-nav-toggle');
     const clip = document.querySelector('.portal-mobile-nav-bar-clip');
+    const menu = document.getElementById('portal-mobile-nav-menu');
     if (!navToggle || !clip || clip.dataset.portalNavBarBound === 'true') return;
     clip.dataset.portalNavBarBound = 'true';
     navToggle.removeAttribute('onclick');
 
-    const handleBarToggle = (event) => {
+    const handleToggleOpen = (event) => {
         if (!isPortalMobileNavLayout()) return;
 
         const now = Date.now();
         if (now < portalMobileNavToggleLockUntil) return;
-
-        const menu = document.getElementById('portal-mobile-nav-menu');
-        if (menu?.classList.contains('is-menu-open') && menu.contains(event.target)) {
-            return;
-        }
-
-        if (event.target.closest('.nav-tab')) {
-            if (event.cancelable) event.preventDefault();
-            event.stopPropagation();
-            return;
-        }
-
-        if (!event.target.closest('#portal-mobile-nav-shell')) return;
-
         portalMobileNavToggleLockUntil = now + 400;
-        if (event.cancelable) event.preventDefault();
+
         event.stopPropagation();
         togglePortalMobileNavMenu(event);
     };
 
-    clip.addEventListener('click', handleBarToggle, true);
-    clip.addEventListener('touchend', handleBarToggle, { capture: true, passive: false });
+    navToggle.addEventListener('click', handleToggleOpen);
+
+    if (menu && menu.dataset.stopBubbleBound !== 'true') {
+        menu.dataset.stopBubbleBound = 'true';
+        menu.addEventListener('click', (event) => event.stopPropagation());
+        menu.addEventListener('touchend', (event) => event.stopPropagation(), { passive: true });
+    }
+
+    clip.addEventListener('click', (event) => {
+        if (!isPortalMobileNavLayout()) return;
+        if (!event.target.closest('.nav-tab')) return;
+        event.preventDefault();
+        event.stopPropagation();
+    }, true);
 }
 
 function bindPortalMobileNavDismissHandlers() {
@@ -578,14 +577,13 @@ function bindPortalMobileNavDismissHandlers() {
     document.addEventListener('click', (event) => {
         if (Date.now() < portalMobileNavDismissLockUntil) return;
 
-        const shell = document.getElementById('portal-mobile-nav-shell');
         const menu = document.getElementById('portal-mobile-nav-menu');
         const navToggle = document.getElementById('portal-mobile-nav-toggle');
-        if (!shell || !menu || !isPortalMobileNavMenuOpen()) return;
-        if (shell.contains(event.target) || navToggle === event.target || navToggle?.contains(event.target)) {
-            return;
-        }
+        if (!menu || !isPortalMobileNavMenuOpen()) return;
+
         if (menu.contains(event.target)) return;
+        if (navToggle?.contains(event.target)) return;
+
         closePortalMobileNavMenus();
     });
 
