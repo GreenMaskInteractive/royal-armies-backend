@@ -34,6 +34,7 @@ window.onload = () => {
     syncPortalMobileNavChrome(activeMainPortalView);
     applyPortalMobileNavPreviewRestrictions();
     bindPortalMobileNavDismissHandlers();
+    applyPortalMobileNavLayoutMode();
     const avatarCrestElement = document.getElementById("nav-embedded-avatar-crest");
     if (avatarCrestElement) {
         avatarCrestElement.src = savedCommanderAvatar;
@@ -290,21 +291,67 @@ function mountPortalMediaPlayerForViewport() {
     home.style.display = dockInNav ? 'none' : '';
 }
 
-function closePortalMobileNavMenus() {
+function isPortalMobileNavMenuOpen() {
+    const menu = document.getElementById('portal-mobile-nav-menu');
+    return !!menu && menu.classList.contains('is-menu-open');
+}
+
+function setPortalMobileNavMenuOpen(isOpen) {
     const shell = document.getElementById('portal-mobile-nav-shell');
     const menu = document.getElementById('portal-mobile-nav-menu');
     const navToggle = document.getElementById('portal-mobile-nav-toggle');
+    if (!menu) return;
+
+    if (isOpen) {
+        menu.hidden = false;
+        menu.classList.add('is-menu-open');
+        menu.style.pointerEvents = 'auto';
+        menu.removeAttribute('inert');
+        if (shell) shell.classList.add('is-nav-open');
+        if (navToggle) navToggle.setAttribute('aria-expanded', 'true');
+    } else {
+        menu.hidden = true;
+        menu.classList.remove('is-menu-open', 'is-commander-submenu-open');
+        menu.style.top = '';
+        menu.style.pointerEvents = 'none';
+        menu.setAttribute('inert', '');
+        if (shell) shell.classList.remove('is-nav-open');
+        if (navToggle) navToggle.setAttribute('aria-expanded', 'false');
+    }
+}
+
+function applyPortalMobileNavLayoutMode() {
+    const mobile = isPortalMobileNavLayout();
+    const desktopBlocks = document.querySelectorAll(
+        '.main-portal-nav-bar .portal-desktop-nav-only, .main-portal-nav-bar .nav-tab'
+    );
+
+    desktopBlocks.forEach((el) => {
+        if (mobile) {
+            el.setAttribute('aria-hidden', 'true');
+            el.setAttribute('inert', '');
+            if (el.classList.contains('nav-tab')) {
+                el.style.pointerEvents = 'none';
+            }
+        } else {
+            el.removeAttribute('aria-hidden');
+            el.removeAttribute('inert');
+            if (el.classList.contains('nav-tab')) {
+                el.style.pointerEvents = '';
+            }
+        }
+    });
+
+    if (mobile) {
+        closePortalMobileNavMenus();
+    }
+}
+
+function closePortalMobileNavMenus() {
     const commanderSub = document.getElementById('portal-mobile-commander-submenu');
     const commanderToggle = document.getElementById('portal-mobile-commander-toggle');
 
-    if (menu) {
-        menu.hidden = true;
-        menu.style.top = '';
-        menu.style.pointerEvents = 'none';
-        menu.classList.remove('is-commander-submenu-open');
-    }
-    if (shell) shell.classList.remove('is-nav-open');
-    if (navToggle) navToggle.setAttribute('aria-expanded', 'false');
+    setPortalMobileNavMenuOpen(false);
 
     if (commanderSub) commanderSub.hidden = true;
     if (commanderToggle) commanderToggle.setAttribute('aria-expanded', 'false');
@@ -313,7 +360,7 @@ function closePortalMobileNavMenus() {
 function positionPortalMobileNavMenu() {
     const menu = document.getElementById('portal-mobile-nav-menu');
     const clip = document.querySelector('.portal-mobile-nav-bar-clip');
-    if (!menu || menu.hidden || !isPortalMobileNavLayout()) return;
+    if (!menu || !isPortalMobileNavMenuOpen() || !isPortalMobileNavLayout()) return;
 
     const anchor = clip || document.getElementById('portal-mobile-nav-toggle');
     if (!anchor) return;
@@ -329,19 +376,15 @@ function togglePortalMobileNavMenu(event) {
         event.stopPropagation();
     }
 
-    const shell = document.getElementById('portal-mobile-nav-shell');
     const menu = document.getElementById('portal-mobile-nav-menu');
     const navToggle = document.getElementById('portal-mobile-nav-toggle');
-    if (!shell || !menu || !navToggle) return;
+    if (!menu || !navToggle) return;
 
-    const willOpen = menu.hidden;
+    const willOpen = !isPortalMobileNavMenuOpen();
     if (willOpen) {
         portalMobileNavDismissLockUntil = Date.now() + 400;
         syncPortalMobileNavIdentity();
-        menu.hidden = false;
-        menu.style.pointerEvents = 'auto';
-        shell.classList.add('is-nav-open');
-        navToggle.setAttribute('aria-expanded', 'true');
+        setPortalMobileNavMenuOpen(true);
         requestAnimationFrame(() => {
             positionPortalMobileNavMenu();
             requestAnimationFrame(positionPortalMobileNavMenu);
@@ -368,6 +411,8 @@ function togglePortalMobileCommanderSubmenu(event) {
 
 function portalMobileNavSelectView(viewName, event) {
     if (event) event.stopPropagation();
+    if (!isPortalMobileNavMenuOpen()) return;
+
     const pageBtn = event?.target?.closest?.('.portal-mobile-nav-page-item');
     if (pageBtn?.hidden || pageBtn?.classList.contains('portal-nav-guest-hidden') || pageBtn?.classList.contains('nav-tab-preview-locked')) return;
 
@@ -489,32 +534,45 @@ let portalMobileNavToggleLockUntil = 0;
 
 function bindPortalMobileNavToggleControls() {
     const navToggle = document.getElementById('portal-mobile-nav-toggle');
-    if (!navToggle || navToggle.dataset.portalNavToggleBound === 'true') return;
-    navToggle.dataset.portalNavToggleBound = 'true';
+    const clip = document.querySelector('.portal-mobile-nav-bar-clip');
+    if (!navToggle || !clip || clip.dataset.portalNavBarBound === 'true') return;
+    clip.dataset.portalNavBarBound = 'true';
     navToggle.removeAttribute('onclick');
 
-    const handleToggle = (event) => {
+    const handleBarToggle = (event) => {
+        if (!isPortalMobileNavLayout()) return;
+
         const now = Date.now();
         if (now < portalMobileNavToggleLockUntil) return;
-        portalMobileNavToggleLockUntil = now + 400;
 
+        const menu = document.getElementById('portal-mobile-nav-menu');
+        if (menu?.classList.contains('is-menu-open') && menu.contains(event.target)) {
+            return;
+        }
+
+        if (event.target.closest('.nav-tab')) {
+            if (event.cancelable) event.preventDefault();
+            event.stopPropagation();
+            return;
+        }
+
+        if (!event.target.closest('#portal-mobile-nav-shell')) return;
+
+        portalMobileNavToggleLockUntil = now + 400;
         if (event.cancelable) event.preventDefault();
         event.stopPropagation();
         togglePortalMobileNavMenu(event);
     };
 
-    navToggle.addEventListener('click', handleToggle);
-    navToggle.addEventListener('pointerup', (event) => {
-        if (event.pointerType === 'mouse') return;
-        handleToggle(event);
-    });
-    navToggle.addEventListener('touchend', handleToggle, { passive: false });
+    clip.addEventListener('click', handleBarToggle, true);
+    clip.addEventListener('touchend', handleBarToggle, { capture: true, passive: false });
 }
 
 function bindPortalMobileNavDismissHandlers() {
     if (document.documentElement.dataset.portalMobileNavBound === 'true') return;
     document.documentElement.dataset.portalMobileNavBound = 'true';
 
+    applyPortalMobileNavLayoutMode();
     bindPortalMobileNavToggleControls();
 
     document.addEventListener('click', (event) => {
@@ -523,10 +581,11 @@ function bindPortalMobileNavDismissHandlers() {
         const shell = document.getElementById('portal-mobile-nav-shell');
         const menu = document.getElementById('portal-mobile-nav-menu');
         const navToggle = document.getElementById('portal-mobile-nav-toggle');
-        if (!shell || !menu || menu.hidden) return;
+        if (!shell || !menu || !isPortalMobileNavMenuOpen()) return;
         if (shell.contains(event.target) || navToggle === event.target || navToggle?.contains(event.target)) {
             return;
         }
+        if (menu.contains(event.target)) return;
         closePortalMobileNavMenus();
     });
 
@@ -558,6 +617,10 @@ function applyPortalNavAccessRestrictions() {
 
 /* Block 3: EXTENSIBLE SYSTEM PANEL VIEW CONVERTER SWITCH (ROUTING RECONCILED) */
 function switchMainPortalView(viewName, clickEvent, chatChannelKey) {
+    if (isPortalMobileNavLayout() && clickEvent?.target?.closest?.('.nav-tab')) {
+        return;
+    }
+
     if (!isPortalNavViewAccessible(viewName)) {
         return;
     }
@@ -4670,9 +4733,10 @@ window.addEventListener('resize', () => {
         ensurePortalMediaPlayerCollapsedByDefault();
     }
     mountPortalMediaPlayerForViewport();
+    applyPortalMobileNavLayoutMode();
     if (window.matchMedia('(min-width: 1025px)').matches) {
         closePortalMobileNavMenus();
-    } else {
+    } else if (isPortalMobileNavMenuOpen()) {
         positionPortalMobileNavMenu();
     }
 });
