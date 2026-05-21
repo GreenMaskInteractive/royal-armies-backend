@@ -67,7 +67,35 @@ window.onload = () => {
 };
 
 /* Block 2: Persistent Era Time Countdown Ticker */
+const PORTAL_COUNTDOWN_TIMERS_PAUSED = true;
+const PORTAL_COUNTDOWN_PAUSED_READOUT = '-- : -- : -- : --';
+
+function arePortalCountdownTimersPaused() {
+    return PORTAL_COUNTDOWN_TIMERS_PAUSED === true;
+}
+
+function applyPausedPortalCountdownReadouts() {
+    const readout = PORTAL_COUNTDOWN_PAUSED_READOUT;
+    const transitionCountdown = document.getElementById('metrics-transition-countdown-display');
+    const subTimerDisplay = document.getElementById('dynamic-age-sub-timer-display');
+    const metricsCountdown = document.getElementById('metrics-countdown-clock-val');
+
+    if (transitionCountdown) transitionCountdown.innerText = readout;
+    if (metricsCountdown) metricsCountdown.innerText = readout;
+
+    if (subTimerDisplay) {
+        subTimerDisplay.textContent = readout;
+        subTimerDisplay.classList.remove('timer-readout-active', 'timer-readout-alert');
+        subTimerDisplay.style.removeProperty('color');
+    }
+}
+
 function initializeServerAgeClockTickerCountdown() {
+    if (arePortalCountdownTimersPaused()) {
+        applyPausedPortalCountdownReadouts();
+        return;
+    }
+
     let daysRemaining = 46;
     let hoursRemaining = 13;
     let minutesRemaining = 5;
@@ -101,7 +129,7 @@ function initializeServerAgeClockTickerCountdown() {
 
 let activeMainPortalView = 'portal';
 
-const PORTAL_PREVIEW_ONLY_VIEWS = ['discoveries', 'royalty', 'chronicles'];
+const PORTAL_PREVIEW_ONLY_VIEWS = ['lore', 'royalty', 'chronicles'];
 
 /** True on Live Server :5500 and other local dev hosts; false on royalarmies.com production. */
 function isPortalPreviewNavEnabled() {
@@ -154,6 +182,10 @@ function switchMainPortalView(viewName, clickEvent, chatChannelKey) {
         return;
     }
 
+    if (activeMainPortalView === 'lore' && viewName !== 'lore') {
+        stopPortalLoreNarration();
+    }
+
     const viewport = document.getElementById('main-portal-dynamic-viewport');
     if (!viewport) {
         console.warn('Portal viewport missing — add #main-portal-dynamic-viewport to main.html');
@@ -185,6 +217,7 @@ function switchMainPortalView(viewName, clickEvent, chatChannelKey) {
                 viewport.innerHTML = window.cachedAgePortalViewportHTML;
                 hydrateDevelopersLogDock();
                 initializeTacticalButtonEarthquakeEngine();
+                if (arePortalCountdownTimersPaused()) applyPausedPortalCountdownReadouts();
             } else {
                 restoreAgePortalHomeViewLayout(viewport);
             }
@@ -199,8 +232,8 @@ function switchMainPortalView(viewName, clickEvent, chatChannelKey) {
             renderMasterLeaderboardPortalCanvas(viewport);
             break;
 
-        case 'discoveries':
-            renderMasterDiscoveriesPortalCanvas(viewport);
+        case 'lore':
+            renderMasterLorePortalCanvas(viewport);
             break;
 
         case 'royalty':
@@ -352,8 +385,8 @@ function restoreAgePortalHomeViewLayout(viewport) {
                 </div>
             </div>
             <div class="portal-deployment-control-deck">
-                <h3 class="deployment-deck-title" id="dynamic-age-status-header">Loading age status...</h3>
-                <div id="dynamic-age-sub-timer-display" class="timer-readout-default"></div>
+                <h3 class="deployment-deck-title" id="dynamic-age-status-header">The Age has Yet to Arrive!</h3>
+                <div id="dynamic-age-sub-timer-display" class="timer-readout-default">-- : -- : -- : --</div>
                 <div class="deployment-action-button-row">
                     <div class="action-btn-aura-housing aura-glow-red">
                         <button class="deployment-image-trigger-btn" onclick="launchGameRoundSector(false, event)">
@@ -724,7 +757,8 @@ function getChatRosterDisplayRank(name, isSelf) {
     if (staffRole === 'owner') return 'Site Owner';
     if (staffRole === 'moderator') return 'Moderator';
     if (isSelf && typeof player !== 'undefined' && Number.isFinite(player.rank)) {
-        const rankIndex = Math.max(0, Math.min(player.rank - 1, 21));
+        const maxRankIndex = (typeof CHRONICLE_MAX_RANK === 'number' ? CHRONICLE_MAX_RANK : 50) - 1;
+        const rankIndex = Math.max(0, Math.min(player.rank - 1, maxRankIndex));
         if (typeof groundTitles !== 'undefined' && groundTitles[rankIndex]) {
             return groundTitles[rankIndex];
         }
@@ -1885,12 +1919,38 @@ function refreshCommanderMembershipBadgeDisplays() {
     });
 }
 
-function beginRoyaltyMembershipCheckout() {
+async function beginRoyaltyMembershipCheckout() {
     if (typeof playSelectSFX === 'function') playSelectSFX();
-    alert(
-        `Royalty membership (${CHRONICLE_PREMIUM_MONTHLY_PRICE_LABEL}) checkout is not live yet. ` +
-        'When billing is connected, subscribing grants the Royalty badge title and unlocks Premium Tier Rewards on The Chronicles.'
+    await showPortalAlert(
+        `Royalty membership (${CHRONICLE_PREMIUM_MONTHLY_PRICE_LABEL}) checkout is not live yet.\n\n` +
+        'When billing is connected, subscribing grants the Royalty badge title and unlocks Premium Tier Rewards on The Chronicles.',
+        'Checkout'
     );
+}
+
+async function beginRoyaltyMembershipDowngrade() {
+    if (typeof playSelectSFX === 'function') playSelectSFX();
+
+    const confirmed = await showPortalConfirm(
+        'Downgrade from Royalty to the free plan?\n\n' +
+        'You will lose the Royalty badge and access to Premium Tier Rewards on The Chronicles. ' +
+        'Your Bronze membership and Basic reward track remain.',
+        {
+            title: 'Downgrade membership',
+            confirmLabel: 'Downgrade',
+            cancelLabel: 'Keep Royalty'
+        }
+    );
+    if (!confirmed) return;
+
+    if (typeof applyCommanderMembershipTitle === 'function') {
+        applyCommanderMembershipTitle(FREE_MEMBERSHIP_BADGE_TITLE);
+    }
+
+    const viewport = document.getElementById('main-portal-dynamic-viewport');
+    if (viewport && typeof activeMainPortalView !== 'undefined' && activeMainPortalView === 'royalty') {
+        renderRoyaltyTierPortalCanvas(viewport);
+    }
 }
 
 function openUnlockPremiumTierPortal(clickEvent) {
@@ -1913,7 +1973,7 @@ const globalRoyaltyTierPackagesDatabase = [
         badgeTitleGranted: FREE_MEMBERSHIP_BADGE_TITLE,
         features: [
             'Bronze membership badge on profile and public dossier',
-            'Basic Chronicle Tier Rewards track (rank progression)',
+            'Basic Chronicle track — 50 levels, earn XP through play in Ages',
             'Access to standard Ages',
             'Default message recipient limits',
             'Standard resource production rates'
@@ -1930,7 +1990,7 @@ const globalRoyaltyTierPackagesDatabase = [
         badgeTitleGranted: ROYALTY_PAID_BADGE_TITLE,
         features: [
             'Royalty badge title displayed on your profile and in chat',
-            'Unlocks the Premium Chronicle Tier Rewards track',
+            'Unlocks the Premium Chronicle track — 50 levels, earn XP through play in Ages',
             'Priority queue when servers are busy',
             'Send messages to more recipients at once',
             '+15% resource generation bonus',
@@ -1956,14 +2016,39 @@ function renderRoyaltyTierPortalCanvas(viewport) {
             <div class="royalty-plans-deck">
                 <div class="royalty-tier-cards-flex-row">
                 ${globalRoyaltyTierPackagesDatabase.map((pack) => {
-                    const isActivePlan = (!pack.isPaidPlan && !isRoyalty) || (pack.isPaidPlan && isRoyalty);
+                    const isFreeCurrentPlan = !pack.isPaidPlan && !isRoyalty;
+                    const isPaidCurrentPlan = pack.isPaidPlan && isRoyalty;
+                    const isActivePlan = isFreeCurrentPlan || isPaidCurrentPlan;
                     const canSubscribe = pack.isPaidPlan && pack.enabled && !isActivePlan;
                     const actionHandler = canSubscribe ? 'onclick="beginRoyaltyMembershipCheckout()"' : '';
-                    const buttonLabel = isActivePlan ? 'Active' : pack.actionText;
-                    const buttonClass = canSubscribe ? 'pulse-buy-btn' : 'disabled-active-btn';
                     const badgeClass = pack.isPaidPlan
                         ? 'royalty-plan-pill royalty-plan-pill--paid'
                         : 'royalty-plan-pill royalty-plan-pill--free';
+
+                    let actionFooterMarkup = '';
+                    if (isFreeCurrentPlan) {
+                        actionFooterMarkup = `
+                            <div class="royalty-package-action-footer">
+                                <span class="royalty-package-status-label royalty-package-status-label--included" aria-current="true">Current plan</span>
+                            </div>`;
+                    } else if (isPaidCurrentPlan) {
+                        actionFooterMarkup = `
+                            <div class="royalty-package-action-footer">
+                                <button type="button" class="settings-btn master-action-btn royalty-package-action-btn royalty-package-action-btn--downgrade"
+                                        onclick="beginRoyaltyMembershipDowngrade()">
+                                    Downgrade
+                                </button>
+                            </div>`;
+                    } else {
+                        actionFooterMarkup = `
+                            <div class="royalty-package-action-footer">
+                                <button type="button" class="settings-btn master-action-btn royalty-package-action-btn pulse-buy-btn"
+                                        ${actionHandler}>
+                                    ${pack.actionText}
+                                </button>
+                            </div>`;
+                    }
+
                     return `
                     <article class="royalty-package-display-card royalty-package--${pack.planVariant} ${isActivePlan ? 'royalty-plan-current' : ''}">
                         <div class="royalty-package-card-header">
@@ -1979,12 +2064,7 @@ function renderRoyaltyTierPortalCanvas(viewport) {
                                 <li class="royalty-package-feature-item"><span class="royalty-package-feature-bullet" aria-hidden="true">✦</span><span>${feat}</span></li>
                             `).join('')}
                         </ul>
-                        <div class="royalty-package-action-footer">
-                            <button type="button" class="settings-btn master-action-btn royalty-package-action-btn ${buttonClass}"
-                                    ${canSubscribe ? actionHandler : 'disabled'}>
-                                ${buttonLabel}
-                            </button>
-                        </div>
+                        ${actionFooterMarkup}
                     </article>
                 `;
                 }).join('')}
@@ -1996,68 +2076,731 @@ function renderRoyaltyTierPortalCanvas(viewport) {
 
 
 /* ==========================================================================
-   SECTION 7: UNSEALED ACCOUNT RECORD DISCOVERIES ARCHIVE
+   SECTION 7: LORE CODEX — NATIONS OF AMNEK
    ========================================================================== */
 
-/* Block 17: DISCOVERIES ARCHIVE REPOSITORY LEDGER COMPILER */
-const playerAccountDiscoveriesDatabase = {
-    nations: [
-        { id: "vaelior", name: "Kingdom of Vaelior", excerpt: "Hailed far and wide as the radiant shield of the high crest valleys...", unlocked: true },
-        { id: "aesthene", name: "Sovereignty of Aesthene", excerpt: "A realm carved from glacier shelves, where frozen spires channel ancient frost arcs...", unlocked: true }
-    ]
+let portalLoreNarrationAudio = null;
+let portalLoreNarrationPlaying = false;
+let portalLoreActiveNationId = null;
+let portalLoreMusicDuckActive = false;
+let portalLoreMusicRestoreFadeActive = false;
+let portalLoreMusicRestoreFadeRaf = null;
+
+const PORTAL_LORE_NARRATION_MUSIC_DUCK_LEVEL = 0.1;
+const PORTAL_LORE_NARRATION_MUSIC_RESTORE_MS = 3000;
+
+const PORTAL_LORE_NATION_ACCENT = {
+    Vaelior: '#5a7a9a',
+    Aesthene: '#6a9eb8',
+    Khaerant: '#9a7a4a',
+    Aethelgard: '#6b8a6b',
+    Krall: '#8a4a4a',
+    Gorz: '#6a3050',
+    Thruun: '#9a6a3a',
+    Skaros: '#4a3a6a',
+    Lyllis: '#c5b878',
+    Saelthine: '#7a8a9a',
+    Vaerenth: '#5a8a7a',
+    Trex: '#8a6a4a',
+    Mynor: '#7a7a8a',
+    Zevros: '#4a5a8a',
+    Dravic: '#5a6a7a'
 };
 
-const CHRONICLE_BASIC_TIER_REWARDS = [
-    { rank: 5, title: 'Scout\'s Crest Frame', reward: 'Profile avatar border — bronze filigree', state: 'locked' },
-    { rank: 10, title: 'Quartermaster Stipend', reward: '+5% provision cap while enrolled in an Age', state: 'locked' },
-    { rank: 15, title: 'War Table Emote Pack I', reward: 'Three commander salute animations for chat', state: 'locked' },
-    { rank: 18, title: 'Campaign Pennant', reward: 'Nation-colored pennant on your public profile card', state: 'locked' },
-    { rank: 22, title: 'Lord-High Commendation', reward: 'Exclusive title flair and silver nameplate trim', state: 'locked' }
+const PORTAL_LORE_NATION_CREST = {
+    Vaelior: 'images/vaeliorcrest.png',
+    Aesthene: 'images/aesthenecrest.png',
+    Khaerant: 'images/khaerantcrest.png',
+    Aethelgard: 'images/aethelgardcrest.png',
+    Krall: 'images/krallcrest.png',
+    Gorz: 'images/gorzcrest.png',
+    Thruun: 'images/thruuncrest.png',
+    Skaros: 'images/skaroscrest.png',
+    Lyllis: 'images/lylliscrest.png',
+    Saelthine: 'images/saelthinecrest.png',
+    Vaerenth: 'images/vaerenthcrest.png',
+    Trex: 'images/trexcrest.png',
+    Mynor: 'images/mynorcrest.png',
+    Zevros: 'images/zevroscrest.png',
+    Dravic: 'images/draviccrest.png'
+};
+
+function resolvePortalLoreNationCrestSrc(nationName) {
+    const crestPath = PORTAL_LORE_NATION_CREST[nationName];
+    if (!crestPath) return '';
+    return resolvePortalLoreAudioUrl(crestPath);
+}
+
+function buildPortalLoreNationCrestMarkup(nationName, imgClass) {
+    const crestSrc = resolvePortalLoreNationCrestSrc(nationName);
+    if (!crestSrc) return '';
+    const safeSrc = escapePortalLoreHtml(crestSrc);
+    const safeClass = escapePortalLoreHtml(imgClass);
+    return `<img class="${safeClass}" src="${safeSrc}" alt="" loading="lazy" decoding="async" />`;
+}
+
+function escapePortalLoreHtml(value) {
+    return String(value ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+}
+
+const PORTAL_LORE_NATION_ARCHIVES = [
+        { name: "Vaelior", audio: "audio/vaeliorhistory.mp3", detail: `Hailed far and wide as the sole surviving nation of the Aidoriian bloodline in all the lands of Amnek, the folk of Vaelior govern their days by the venerated customs and deep-rooted traditions of their forebears. Though their ways and ancient stonework may be hoary with age, they yet hold a high and honored station among kingdoms. Their grand city is a frequent pilgrimage for wanderers and sages, seeking knowledge of their history from ages before Amnek's foundation. Its thoroughfares are wrought with ancient majesty, inspiring in many a soul a powerful longing to walk once more in that bygone era. While this realm strives for peace and shuns the throes of conflict, its watchful guardians are ever mindful of the perils that lurk beyond the waves, and have laid many defenses should war's shadow darken their gates.` },
+        { name: "Aesthene", audio: "audio/aesthenehistory.mp3", detail: `Aesthene stands as a sovereign realm, forged upon the singular pursuit of elemental mastery. In ages past, its founders broke away from the rigid tenets of the Aidoriian, whose strictures forbade the free and true deployment of sorcery. Thus, Aesthene was established as a hallowed sanctuary, dedicated to the deep and spiritual vow of attaining the pinnacle of arcane might, focused upon that specific, powerful branch known as Divine magic. Their great design was to raise a fortress so formidable that no hostile force might breach its walls. Having endured countless sieges and assaults from their less-than-neighborly rivals, Aesthene has, over the long years, rightfully earned the mantle of the mightiest defensive nation across the whole of Amnek.` },
+        { name: "Khaerant", audio: "audio/khaeranthistory.mp3", detail: `The nation of Khaerant is held by many to be naught but a dictatorship, albeit one reformed from the legacy of the Aidoriian rule. Its founding lords deemed the decrees of Old Aidoriia too feeble and did establish a realm governed by iron-willed, stricter tenets. Due to great discord among the Aidoriian council, these founders seceded from the Aidoriian Alliance to claim Khaerant as their sovereign domain. Though the royal coffers overflow with immense wealth, the realm's rigid laws oft prove an intolerable burden upon those subjects who take up residence within its borders. Yet, dark whispers persist of hidden subterranean labor pits, where the vanished toil to mend some unexplained shortfall in the treasury's accounts. Few souls dare voice these troubling tales, for the Sovereign's Host is equipped with the finest weapons and armor gold can procure, and the full extent of the treasury's employment is shrouded in dread. To entertain such sensitive whispers is known to bring swift disappearance without a trace.` },
+        { name: "Aethelgard", audio: "audio/aethelgardhistory.wav", detail: `The sovereign dominion of Aethelgard is ensconced deep within the heart of Oracle Mountain, a sanctuary veiled entirely from the world beyond by a perpetual, dense wood. The preservation of their solitude is held as their highest law, and thus have many—be they bold adventurers, weary travelers, cunning merchants, warring clans, or desperate brigands—sought to pierce its silent borders. So relentless are these incursions, aimed at glimpsing the arcane facilities sheltered within, that the nation’s wise leaders have expanded their reach establishing far-flung outposts to apprehend and deter trespassers long before they may threaten the inner sanctums. Aethelgard is a commonwealth comprised chiefly of venerable scholars, devoted to the great pursuit of knowledge, and the steadfast families who sustain their esoteric work. The rites and practices conducted within their national boundaries remain an enigma to all outsiders; yet, despite countless attempts, no soul or siege-ready host has ever succeeded in breaching their formidable defenses to uncover the profound secrets held deep within their stone halls. Nevertheless, ancient chronicles speak of forgotten carvings discovered in the caverns at the mountain’s base, which depict scenes dating back to the planet’s first Great Transition. This lore fuels the suspicion that Aethelgard’s scholars have unearthed some profound relic or truth intrinsically linked to those most ancient of texts.` },
+        { name: "Krall", audio: "audio/krallhistory.mp3", detail: `Verily, the Krall are numbered amongst the few nations which, by many accounts, have fallen into a state of decline since the golden age of Aidoriian law. 'Tis held by common assent that this dismal descent stems from a dark seed of outsiders, men whose only desires were a life steeped in perilous thrill and whom held little regard for the welfare of their fellows. Their very creed is to drown the lands in gore and sorrow, thus wreaking utter devastation upon all farthest reaches of Amnek. Though they bear the visage of mere brutes, let no one mistake their savagery for a want of keen wit. Their merciless and unforgiving spirit renders them oft-unpredictable, a fearsome boon against those armies that seek to govern chaos with strict order. Furthermore, these grim fiends possess a terror so profound they compel captured warriors to turn their blades upon their own brethren on the field of battle, finding wicked sport in every agonizing moment of the prisoners' torment.` },
+        { name: "Gorz", audio: "audio/gorzhistory.mp3", detail: `A realm forged in pure malice and heedless of the sacred laws of man, Gorz is justly branded as Satan’s very Throne. This vile land, a nest to every manner of degenerate filth, yet endures only through its frightful craft of bending the will of corrupt nobles and state officials, thus turning away all righteous crusades against this odious society. Even the guards who stand watch over this domain are foul and hellish, battling with a savage fury as if their very souls were gripped by the Fiend.` },
+        { name: "Thruun", audio: "audio/thruunhistory.mp3", detail: `In a place where explicit unending entertainment and deep-seeded corruption run unfettered and widespread doth flourish the nation of Thruun. It is whispered that Thruun harbors all manner of suspect souls: from the common peasant seeking fleeting, carnal pleasure, to the dishonest merchant who preys upon the destitute for his own gain, and even the cunning lord who schemes and plots, using vile means to advance his station. Verily, Thruun is nought but a boundless revelry, filled with folk who heed not the righteous conduct of war, nor the well-being of any save their own. Such is the tumult of their society that many a host hath sought to utterly cleanse Amnek of their presence. Yet, they are a treacherous realm, possessing the wealth to purchase the loyalty of defenders whose might far exceeds that of the ordinary fighting man. Though they possess no true invincibility, they are as unyielding and fierce as the folk of Krall, and as utterly vile as the denizens of Gorz.` },
+        { name: "Skaros", audio: "audio/skaroshistory.mp3", detail: `For generations past, Skaros hath been branded a dominion of black cults and devil-worshippers, whose foulest sorcery is bent upon dragging Amnek into the dread, shrieking void of eternal night. 'Tis a cursed realm, whose people revile the sacred light of the spirit, and whose priests practice dark rites to blight other kingdoms and bring forth their ruin. Three-quarters of the children born beneath that forsaken sky are forced into the hidden shrines of the Devil's servants in their tender years. Their schooling in the dark arts is savage and yields no mercy. Though Skaros commands many sorts of warriors to their defense, these men fight not of their own accord, and are but chattel—mere pawns set against the veiled fiends bred within the borders of that unholy land.` },
+        { name: "Lyllis", audio: "audio/lyllishistory.mp3", detail: `Regarded as the celestial light to Skaros’s shadow, the sovereign realm of Lyllis is dedicated to the preservation of a pristine spirit and the pursuit of divine transcendence. In their hubris or holy conviction, they style themselves as gods, professing a mandate from the heavens to restore the world to its primordial state. Yet, their sacred rites are whispered to be severe and unsettling. Their singular crusade is to cleanse the realm of all blemish and usher in the next Great Transition, a cleansing tide they believe shall scour all malice from the earth. Though they seldom forge alliances or declare open enmity, they are masters of subtle manipulation, bending the wills of other nations to serve their own inscrutable designs. Those few who have looked upon the folk of Lyllis speak of an unnerving chill, describing an encounter with beings who seem to have transcended the very essence of humanity.` },
+        { name: "Saelthine", audio: "audio/saelthinehistory.mp3", detail: `The realm of Saelthine is steeped in piety, its people devoted utterly to a singular Divine entity, rejecting the folly of lesser deities or the blasphemous notion that mortals might ascend to godhood. Though on the surface they appear as common folk, their society thrives upon the close embrace of many unique cultures and ancient customs, which they eagerly study and share in turn. The sagas and chronicles attest that Saelthine ever lends its strength to those who champion righteous order, standing firm against the wild and chaotic tides that plague the mortal coil. Yet, it is whispered among those who seek the obscured truths that the heart of Saelthine holds secrets and veiled matters that stir great curiosity and raise a host of unanswered questions.` },
+        { name: "Vaerenth", audio: "audio/vaerenthhistory.mp3", detail: `Vaerenth is a nation where the worship of manifold deities is practiced, and where a potent, ancient order of elder priests holds sway. These priests offer succor and aid to those in distress, but only if it aligns with the divine will of their pantheon, and only when a suitable recompense is rendered for their sacred works. It is said that the most ancient priests of Vaerenth, alone among all nations, are blessed with lives that stretch far beyond the common span of men, even for their own kin. Indeed, countless travelers bear witness that the populace of this kingdom doth partake in a longevity surpassing that of the average mortal. Whilst this grace has sown seeds of disquiet amongst some neighboring realms, many souls have yearned to claim residency in Vaerenth, drawn only by the whisper of these enduring lifespans. Yet, Vaerenth is known to guard its boundaries fiercely, granting permanent residency only to a select and chosen few. This stricture hath bred confusion and deep suspicion, prompting many to ponder what hidden mysteries lie within the heart of this secluded nation.` },
+        { name: "Trex", audio: "audio/trexhistory.mp3", detail: `Having disciplined themselves from dawn till dusk, braving the infernal heats of summer and the treacherous grip of winter's chill, the lineage of Trex has, across countless seasons, sired a progeny of unbreakable spirit. Their principal quest is the preservation of a hale and steadfast essence: in body, mind, and soul. Their deeds—to march, ascend, toil, and clash in battle for days without respite—bear powerful testament to their fervent vow and unwavering resolve in the pursuit of their aims. When the trumpets of war are silent, when their journeys cross the breadth of the realm, and even in moments of brief solace from the rapacious shadow of conflict, still do they hone their skills; ever preparing for the sudden, unforeseen threat that may arise.` },
+        { name: "Mynor", audio: "audio/mynorhistory.mp3", detail: `Following the Great Transition, this nation was claimed and given a new name by a guild of master Artificers and wise Scholars who desired the might and bounty of precise craft and ingenious workings. The Mynoran nation charted a course for their future, ensuring they might withstand any threat crossing their boundaries. Knowing full well the perils that yet stalked the lands of Amnek were dire indeed, and possessing no mastery of the arcane arts, they dedicated themselves to the study and mastery of combining the earth's base elements with the immutable laws of nature. Thus, they crafted great mechanisms that served as a mighty bulwark against any invader. Though they may not rush to battle with the same zeal as their neighbors, they hold confidence that their masterful creations shall endure and prevail against the ravages of any prolonged conflict, should they choose to take part.` },
+        { name: "Zevros", audio: "audio/zevroshistory.mp3", detail: `Behold Zevros, a true res publica whose citizens have consecrated their very existence to the grand pursuit of binding all kingdoms under a single, mighty banner, ruled by a High Echelon of government that guides their populace with wisdom and iron will. Their fealty to this sacred cause is manifest in their colossal legions and their peerless mastery of martial strategy. Three immutable virtues govern their society: Honour, Valor, and Liberty. The Honour of drawing the sword to shield all that they hold dear, and the glorious esteem gained by yielding one's breath upon the field that others may draw theirs. The boundless Valor born of courage, fortitude, and the steadfast resolve to mend a world grievously fractured by discord. Lastly, the march forward, knowing that the Liberty secured through ceaseless conquest shall grant every man and woman a life worthy of song and dream.` },
+        { name: "Dravic", audio: "audio/dravichistory.mp3", detail: `The nation of Dravic, revered as the elder kin to Aesthene, stands as a sovereign kingdom of unparalleled fortitude. Across the breadth of its domain, the very earth is woven with formidable bulwarks and hidden ballistae, forged into the bedrock to repel any foe from field or sky. Dubbed the "Watchful Eye" in the chronicles of old, Dravic possesses the uncanny power to turn the tides of war from behind its seamless, unbreachable walls. For generations, these ramparts have served as a sanctuary for those fleeing the storms of conflict, a role they fulfill even in this present age. Yet, whispers have recently stirred regarding spectral shadows lurking near the ancient mechanisms that sustain the kingdom's soaring foundations. These tales, however, are cast aside by the lords of the land, for no hand can be found to blame for such phantoms.` }
 ];
 
-const CHRONICLE_PREMIUM_TIER_REWARDS = [
-    { rank: 5, title: 'Gilded Chronicle Frame', reward: 'Animated gold avatar border for your commander dossier', state: 'locked' },
-    { rank: 10, title: 'Royal Courier Slots', reward: '+3 extra recipients per outbound message while subscribed', state: 'locked' },
-    { rank: 15, title: 'Premium War Table Emotes', reward: 'Six exclusive salute and victory animations for chat', state: 'locked' },
-    { rank: 18, title: 'Sovereign Banner Overlay', reward: 'Animated nation banner backdrop on your profile', state: 'locked' },
-    { rank: 22, title: 'Crownwright\'s Laurels', reward: 'Golden nameplate glow, crown flair, and premium chat badge', state: 'locked' }
+function getPortalLoreNationArchives() {
+    return PORTAL_LORE_NATION_ARCHIVES;
+}
+
+function buildPortalLoreNationId(name) {
+    return String(name || '').trim().toLowerCase().replace(/\s+/g, '-');
+}
+
+function buildPortalLoreNationEpithet(detail) {
+    const text = String(detail || '').trim();
+    if (!text) return '';
+    const sentenceEnd = text.search(/[.!?](\s|$)/);
+    const snippet = sentenceEnd > 40 && sentenceEnd < 160
+        ? text.slice(0, sentenceEnd + 1)
+        : text.slice(0, 120);
+    return snippet.length < text.length ? `${snippet.trim()}…` : snippet.trim();
+}
+
+function getPortalLoreNarrationBaseVolume() {
+    return 1;
+}
+
+function readStoredPortalGain(primaryKey, secondaryKey, fallback) {
+    const primary = parseFloat(localStorage.getItem(primaryKey));
+    if (Number.isFinite(primary)) return primary;
+    const secondary = parseFloat(localStorage.getItem(secondaryKey));
+    if (Number.isFinite(secondary)) return secondary;
+    return fallback;
+}
+
+function resolvePortalLoreAudioUrl(relativePath) {
+    const path = String(relativePath || '').trim().replace(/^\//, '');
+    if (!path) return '';
+    const origin = window.location.origin;
+    if (origin && origin !== 'null') {
+        return `${origin}/${path}`;
+    }
+    try {
+        return new URL(path, window.location.href).href;
+    } catch (err) {
+        return path;
+    }
+}
+
+function getPortalLoreNarrationAudioElement() {
+    return document.getElementById('portal-lore-narration-audio');
+}
+
+function resolvePortalLoreNarrationGain(nationName) {
+    const master = Number.isFinite(currentPortalMasterVol)
+        ? currentPortalMasterVol
+        : readStoredPortalGain('savedPortalMasterVol', 'savedMasterVol', 1);
+    const narration = Number.isFinite(currentPortalNarrationVol)
+        ? currentPortalNarrationVol
+        : readStoredPortalGain('savedPortalNarrationVol', 'savedNarrationVol', 1);
+    const gain = getPortalLoreNarrationBaseVolume() * narration * master;
+    return Math.min(1, Math.max(0, gain));
+}
+
+function applyPortalLoreNarrationVolume(nationName) {
+    const narrationEl = getPortalLoreNarrationAudioElement();
+    if (!narrationEl || !nationName) return;
+    narrationEl.volume = resolvePortalLoreNarrationGain(nationName);
+}
+
+function cancelPortalLoreMusicRestoreFade() {
+    if (portalLoreMusicRestoreFadeRaf != null) {
+        cancelAnimationFrame(portalLoreMusicRestoreFadeRaf);
+        portalLoreMusicRestoreFadeRaf = null;
+    }
+    portalLoreMusicRestoreFadeActive = false;
+}
+
+function easePortalMusicRestore(t) {
+    return 1 - Math.pow(1 - t, 3);
+}
+
+function beginPortalLoreNarrationMusicDuck() {
+    cancelPortalLoreMusicRestoreFade();
+    portalLoreMusicDuckActive = true;
+    if (typeof applyPortalBackgroundMusicVolume === 'function') {
+        applyPortalBackgroundMusicVolume();
+    }
+}
+
+function endPortalLoreNarrationMusicDuck() {
+    if (!portalLoreMusicDuckActive) return;
+    portalLoreMusicDuckActive = false;
+    cancelPortalLoreMusicRestoreFade();
+
+    const bgMusic = typeof getPortalBackgroundAudioElement === 'function'
+        ? getPortalBackgroundAudioElement()
+        : null;
+    if (!bgMusic || typeof resolvePortalBackgroundMusicGain !== 'function') {
+        if (typeof applyPortalBackgroundMusicVolume === 'function') {
+            applyPortalBackgroundMusicVolume();
+        }
+        return;
+    }
+
+    const startVol = bgMusic.volume;
+    const targetVol = resolvePortalBackgroundMusicGain();
+    if (Math.abs(startVol - targetVol) < 0.005) {
+        if (typeof applyPortalBackgroundMusicVolume === 'function') {
+            applyPortalBackgroundMusicVolume();
+        }
+        return;
+    }
+
+    portalLoreMusicRestoreFadeActive = true;
+    const fadeStart = performance.now();
+
+    function stepFade(now) {
+        const elapsed = now - fadeStart;
+        const progress = Math.min(1, elapsed / PORTAL_LORE_NARRATION_MUSIC_RESTORE_MS);
+        bgMusic.volume = startVol + (targetVol - startVol) * easePortalMusicRestore(progress);
+
+        if (progress < 1) {
+            portalLoreMusicRestoreFadeRaf = requestAnimationFrame(stepFade);
+            return;
+        }
+
+        cancelPortalLoreMusicRestoreFade();
+        if (typeof applyPortalBackgroundMusicVolume === 'function') {
+            applyPortalBackgroundMusicVolume();
+        }
+    }
+
+    portalLoreMusicRestoreFadeRaf = requestAnimationFrame(stepFade);
+}
+
+function stopPortalLoreNarration() {
+    const previousNationId = portalLoreActiveNationId;
+    const narrationEl = getPortalLoreNarrationAudioElement();
+    if (narrationEl) {
+        narrationEl.pause();
+        narrationEl.currentTime = 0;
+        narrationEl.removeAttribute('src');
+        narrationEl.load();
+    }
+    portalLoreNarrationAudio = null;
+    portalLoreNarrationPlaying = false;
+    endPortalLoreNarrationMusicDuck();
+    if (previousNationId) syncPortalLoreAudioButtonState(previousNationId);
+}
+
+function syncPortalLoreAudioButtonState(nationId) {
+    const isPlaying = portalLoreNarrationPlaying && portalLoreActiveNationId === nationId;
+    const btn = document.getElementById('lore-reader-audio-btn');
+    if (!btn) return;
+    const icon = btn.querySelector('.lore-audio-play-icon');
+    btn.classList.toggle('is-playing', isPlaying);
+    if (icon) icon.textContent = isPlaying ? '■' : '▶';
+    btn.setAttribute('aria-label', isPlaying ? 'Stop nation history' : 'Play nation history');
+}
+
+async function togglePortalLoreNarration(nationId) {
+    if (typeof playToggleLeverSFX === 'function') playToggleLeverSFX();
+
+    const archives = getPortalLoreNationArchives();
+    const nation = archives.find((entry) => buildPortalLoreNationId(entry.name) === nationId);
+    if (!nation || !nation.audio) {
+        if (typeof showPortalAlert === 'function') {
+            await showPortalAlert('No narration audio is available for this nation.', 'Lore audio');
+        }
+        return;
+    }
+
+    if (portalLoreNarrationPlaying && portalLoreActiveNationId === nationId) {
+        stopPortalLoreNarration();
+        return;
+    }
+
+    const narrationEl = getPortalLoreNarrationAudioElement();
+    if (!narrationEl) {
+        if (typeof showPortalAlert === 'function') {
+            await showPortalAlert('Lore audio player is missing from the page. Hard-refresh and try again.', 'Lore audio');
+        }
+        return;
+    }
+
+    if (portalLoreNarrationPlaying) {
+        stopPortalLoreNarration();
+    }
+
+    portalLoreActiveNationId = nationId;
+    const audioUrl = resolvePortalLoreAudioUrl(nation.audio);
+
+    narrationEl.pause();
+    narrationEl.currentTime = 0;
+    narrationEl.src = audioUrl;
+    narrationEl.volume = resolvePortalLoreNarrationGain(nation.name);
+    narrationEl.onended = () => {
+        portalLoreNarrationPlaying = false;
+        portalLoreNarrationAudio = null;
+        endPortalLoreNarrationMusicDuck();
+        syncPortalLoreAudioButtonState(nationId);
+    };
+
+    beginPortalLoreNarrationMusicDuck();
+
+    try {
+        await narrationEl.play();
+        portalLoreNarrationPlaying = true;
+        portalLoreNarrationAudio = narrationEl;
+        sessionStorage.setItem('royalArmiesAuthAudioPlay', 'granted');
+        syncPortalLoreAudioButtonState(nationId);
+    } catch (err) {
+        console.warn('Lore narration could not play:', err);
+        stopPortalLoreNarration();
+        if (typeof showPortalAlert === 'function') {
+            await showPortalAlert(
+                'Could not play nation narration. Check Voice & Narration volume in Audio settings, then click Listen again.',
+                'Lore audio'
+            );
+        }
+    }
+}
+
+function buildPortalLoreReaderPanelMarkup(nation) {
+    if (!nation) {
+        return `
+            <div class="lore-reader-empty-state">
+                <span class="lore-reader-empty-glyph" aria-hidden="true">📜</span>
+                <p>Select a nation from the codex to read its history and hear its chronicle.</p>
+            </div>
+        `;
+    }
+
+    const nationId = buildPortalLoreNationId(nation.name);
+    const accent = PORTAL_LORE_NATION_ACCENT[nation.name] || '#b89030';
+    const epithet = buildPortalLoreNationEpithet(nation.detail);
+    const crestMarkup = buildPortalLoreNationCrestMarkup(nation.name, 'lore-reader-crest');
+
+    return `
+        <div class="lore-reader-content" style="--lore-nation-accent: ${accent};">
+        <header class="lore-reader-header">
+            <div class="lore-reader-sigil-ring" aria-hidden="true">${crestMarkup}</div>
+            <div class="lore-reader-title-stack">
+                <span class="lore-reader-eyebrow">Nation chronicle</span>
+                <h2 class="lore-reader-nation-name">${escapePortalLoreHtml(nation.name)}</h2>
+                <p class="lore-reader-epithet">${escapePortalLoreHtml(epithet)}</p>
+            </div>
+            <button
+                type="button"
+                id="lore-reader-audio-btn"
+                class="lore-audio-play-btn"
+                aria-label="Play nation history"
+                onclick="togglePortalLoreNarration('${nationId}')"
+            >
+                <span class="lore-audio-play-icon" aria-hidden="true">▶</span>
+                <span class="lore-audio-play-label">Listen</span>
+            </button>
+        </header>
+        <div class="lore-reader-divider" aria-hidden="true"></div>
+        <div class="lore-reader-prose-scroll">
+            <p class="lore-reader-prose">${escapePortalLoreHtml(nation.detail)}</p>
+        </div>
+        </div>
+    `;
+}
+
+function selectPortalLoreNation(nationId) {
+    if (typeof playToggleLeverSFX === 'function') playToggleLeverSFX();
+
+    const archives = getPortalLoreNationArchives();
+    const nation = archives.find((entry) => buildPortalLoreNationId(entry.name) === nationId);
+    if (!nation) return;
+
+    if (portalLoreActiveNationId && portalLoreActiveNationId !== nationId) {
+        stopPortalLoreNarration();
+    }
+    portalLoreActiveNationId = nationId;
+
+    document.querySelectorAll('.lore-nation-chip').forEach((chip) => {
+        chip.classList.toggle('is-active', chip.getAttribute('data-nation-id') === nationId);
+    });
+
+    const readerPanel = document.getElementById('lore-reader-panel');
+    if (readerPanel) {
+        readerPanel.innerHTML = buildPortalLoreReaderPanelMarkup(nation);
+    }
+}
+
+window.selectPortalLoreNation = selectPortalLoreNation;
+window.togglePortalLoreNarration = togglePortalLoreNarration;
+window.stopPortalLoreNarration = stopPortalLoreNarration;
+
+const CHRONICLE_TIER_MAX_LEVEL = 50;
+const CHRONICLE_XP_STORAGE_KEY = 'savedChronicleMeritProgress';
+
+/** Success rarity tiers — game server or client rolls rarity, then XP is drawn from the action table. */
+const CHRONICLE_XP_SUCCESS_RARITIES = {
+    common: { label: 'Common', cssClass: 'chronicle-rarity-common' },
+    uncommon: { label: 'Uncommon', cssClass: 'chronicle-rarity-uncommon' },
+    rare: { label: 'Rare', cssClass: 'chronicle-rarity-rare' },
+    epic: { label: 'Epic', cssClass: 'chronicle-rarity-epic' },
+    legendary: { label: 'Legendary', cssClass: 'chronicle-rarity-legendary' }
+};
+
+/** Inclusive min/max Chronicle XP per action at each success rarity. */
+const CHRONICLE_XP_BY_ACTIVITY_AND_RARITY = {
+    cityBattles: {
+        common: [14, 22],
+        uncommon: [24, 34],
+        rare: [38, 52],
+        epic: [55, 72],
+        legendary: [80, 110]
+    },
+    pvpAttacks: {
+        common: [8, 14],
+        uncommon: [14, 22],
+        rare: [24, 34],
+        epic: [38, 50],
+        legendary: [55, 75]
+    },
+    loreDiscoveries: {
+        common: [10, 18],
+        uncommon: [18, 28],
+        rare: [32, 44],
+        epic: [48, 64],
+        legendary: [72, 98]
+    }
+};
+
+/** @deprecated Legacy flat weights used only when migrating old saved progress. */
+const CHRONICLE_LEGACY_XP_PER_ACTION = { cityBattles: 25, pvpAttacks: 12, loreDiscoveries: 18 };
+
+const CHRONICLE_ACTIVITY_META = [
+    { key: 'cityBattles', label: 'City battles', icon: '🏛️', hint: 'Join siege or defense of a city on the map' },
+    { key: 'pvpAttacks', label: 'PvP combat', icon: '⚔️', hint: 'Attack another commander in open PvP' },
+    { key: 'loreDiscoveries', label: 'Lore discoveries', icon: '📜', hint: 'Find hidden chronicle lore scattered on the map' }
 ];
 
-let activeChronicleRewardsTrack = 'basic';
+const CHRONICLE_LEVEL_EPITHETS = [
+    'Ledger Initiate', 'Field Observer', 'Skirmish Scribe', 'Banner Chronicler', 'Siege Witness',
+    'Duel Scribe', 'Lore Seeker', 'War Archivist', 'Vanguard Scribe', 'Battle Cantor',
+    'Citadel Herald', 'PvP Annotator', 'Relic Hunter', 'Frontline Archivist', 'War-Chronicle Knight',
+    'High Scribe', 'Siege Laureate', 'Bloodfield Historian', 'Mapward Sage', 'Grand Chronicler',
+    'Iron Quill', 'Bastion Keeper', 'Rivalry Scribe', 'Hidden Lore Walker', 'Siege Chronicler',
+    'Warband Archivist', 'Duelist Laureate', 'Codex Pathfinder', 'Citadel Loremaster', 'Chronicle Vanguard',
+    'Frontline Sovereign', 'PvP High Scribe', 'Relic Sovereign', 'Siege Archon', 'Lorebound Knight',
+    'War Sage', 'Battle Archivist', 'Map Legend', 'Citadel Paragon', 'Chronicle Warlord',
+    'Grand Mapwarden', 'High Lorekeeper', 'Siege Paragon', 'Bloodfield Sovereign', 'Relic Archon',
+    'Chronicle Ascendant', 'Amnek Witness', 'Age Chronicler', 'War of Ages Scribe', 'Eternal Loremaster',
+    'Chronicle Apex'
+];
 
-function getCommanderChronicleRankSnapshot() {
-    const currentRank = typeof player !== 'undefined' && Number.isFinite(player.rank) ? player.rank : 1;
-    const nextRankXp = typeof xpRequirements !== 'undefined' ? (xpRequirements[currentRank] || 90) : 90;
-    const groundTitle = typeof groundTitles !== 'undefined' && groundTitles[currentRank - 1]
-        ? groundTitles[currentRank - 1]
-        : 'Vintenary';
-    return { currentRank, nextRankXp, groundTitle };
+const CHRONICLE_LEVEL_XP_THRESHOLDS = (function buildChronicleLevelXpThresholds() {
+    const thresholds = [0];
+    for (let level = 2; level <= CHRONICLE_TIER_MAX_LEVEL; level += 1) {
+        thresholds.push(Math.round(28 * Math.pow(level - 1, 1.62)));
+    }
+    return thresholds;
+})();
+
+const CHRONICLE_BASIC_TIER_REWARDS_BY_RANK = {
+    5: { title: 'Scout\'s Crest Frame', reward: 'Profile avatar border — bronze filigree', state: 'locked' },
+    10: { title: 'Quartermaster Stipend', reward: '+5% provision cap while enrolled in an Age', state: 'locked' },
+    15: { title: 'War Table Emote Pack I', reward: 'Three commander salute animations for chat', state: 'locked' },
+    18: { title: 'Campaign Pennant', reward: 'Nation-colored pennant on your public profile card', state: 'locked' },
+    22: { title: 'Lord-High Commendation', reward: 'Exclusive title flair and silver nameplate trim', state: 'locked' },
+    25: { title: 'Veteran\'s March Pennant', reward: 'Animated campaign streamer on your public dossier', state: 'locked' },
+    30: { title: 'War Table Emote Pack II', reward: 'Six additional tactical salute animations for chat', state: 'locked' },
+    35: { title: 'Expeditioner\'s Kit', reward: '+8% march readiness bonus while enrolled in an Age', state: 'locked' },
+    40: { title: 'Silver Commendation Frame', reward: 'Animated silver avatar border and chronicle ribbon', state: 'locked' },
+    45: { title: 'High Command Insignia', reward: 'Exclusive commander insignia slot on your profile card', state: 'locked' },
+    50: { title: 'Chronicle Apex — Agebringer', reward: 'Legendary title flair, gold nameplate trim, and codex portrait frame', state: 'locked' }
+};
+
+const CHRONICLE_PREMIUM_TIER_REWARDS_BY_RANK = {
+    5: { title: 'Gilded Chronicle Frame', reward: 'Animated gold avatar border for your commander dossier', state: 'locked' },
+    10: { title: 'Royal Courier Slots', reward: '+3 extra recipients per outbound message while subscribed', state: 'locked' },
+    15: { title: 'Premium War Table Emotes', reward: 'Six exclusive salute and victory animations for chat', state: 'locked' },
+    18: { title: 'Sovereign Banner Overlay', reward: 'Animated nation banner backdrop on your profile', state: 'locked' },
+    22: { title: 'Crownwright\'s Laurels', reward: 'Golden nameplate glow, crown flair, and premium chat badge', state: 'locked' },
+    25: { title: 'Royal Vanguard Pennant', reward: 'Animated gold campaign streamer on your public dossier', state: 'locked' },
+    30: { title: 'Premium Emote Pack II', reward: 'Twelve exclusive Royalty salute and victory animations', state: 'locked' },
+    35: { title: 'Crown Provision Edict', reward: '+12% resource generation while Royalty is active', state: 'locked' },
+    40: { title: 'Sovereign Portrait Frame', reward: 'Animated royal portrait frame and crown chat badge tier II', state: 'locked' },
+    45: { title: 'Imperial Command Crest', reward: 'Exclusive animated crest slot on your commander dossier', state: 'locked' },
+    50: { title: 'Royal Chronicle Apex', reward: 'Supreme crown flair, radiant nameplate, and Royalty codex portrait frame', state: 'locked' }
+};
+
+function getChronicleTierRewardsByRankMap(trackKey) {
+    return trackKey === 'premium' ? CHRONICLE_PREMIUM_TIER_REWARDS_BY_RANK : CHRONICLE_BASIC_TIER_REWARDS_BY_RANK;
+}
+
+function getChronicleTierRewardEntry(rank, trackKey) {
+    const reward = getChronicleTierRewardsByRankMap(trackKey)[rank];
+    if (!reward) return null;
+    return { rank, ...reward };
+}
+
+function getChronicleTierLevelTitle(level) {
+    return CHRONICLE_LEVEL_EPITHETS[Math.min(Math.max(level, 1), CHRONICLE_LEVEL_EPITHETS.length) - 1]
+        || `Chronicle ${level}`;
+}
+
+function readChronicleXpProgressRaw() {
+    try {
+        const stored = localStorage.getItem(CHRONICLE_XP_STORAGE_KEY);
+        if (!stored) return null;
+        return JSON.parse(stored);
+    } catch (err) {
+        return null;
+    }
+}
+
+function createEmptyChronicleXpProgress() {
+    const byActivity = {};
+    CHRONICLE_ACTIVITY_META.forEach(({ key }) => {
+        byActivity[key] = { actions: 0, xp: 0 };
+    });
+    return { totalXp: 0, byActivity, lastGain: null };
+}
+
+function normalizeChronicleSuccessRarity(rarityKey) {
+    const key = String(rarityKey || 'common').toLowerCase();
+    return CHRONICLE_XP_SUCCESS_RARITIES[key] ? key : 'common';
+}
+
+function rollChronicleXpFromRange(range) {
+    const min = Math.min(range[0], range[1]);
+    const max = Math.max(range[0], range[1]);
+    return min + Math.floor(Math.random() * (max - min + 1));
+}
+
+function resolveChronicleXpRange(activityKey, rarityKey) {
+    const activityTable = CHRONICLE_XP_BY_ACTIVITY_AND_RARITY[activityKey];
+    if (!activityTable) return [0, 0];
+    const rarity = normalizeChronicleSuccessRarity(rarityKey);
+    return activityTable[rarity] || activityTable.common || [0, 0];
+}
+
+function rollChronicleXpForAction(activityKey, rarityKey) {
+    return rollChronicleXpFromRange(resolveChronicleXpRange(activityKey, rarityKey));
+}
+
+function formatChronicleXpRangeLabel(range) {
+    const min = Math.min(range[0], range[1]);
+    const max = Math.max(range[0], range[1]);
+    return min === max ? `${min}` : `${min}–${max}`;
+}
+
+function normalizeChronicleXpProgress(raw) {
+    if (!raw || typeof raw !== 'object') return createEmptyChronicleXpProgress();
+
+    if (Number.isFinite(raw.totalXp) && raw.byActivity && typeof raw.byActivity === 'object') {
+        const normalized = createEmptyChronicleXpProgress();
+        normalized.totalXp = Math.max(0, Math.round(raw.totalXp));
+        CHRONICLE_ACTIVITY_META.forEach(({ key }) => {
+            const bucket = raw.byActivity[key];
+            if (!bucket || typeof bucket !== 'object') return;
+            normalized.byActivity[key].actions = Math.max(0, parseInt(bucket.actions, 10) || 0);
+            normalized.byActivity[key].xp = Math.max(0, parseInt(bucket.xp, 10) || 0);
+        });
+        if (raw.lastGain && typeof raw.lastGain === 'object') {
+            normalized.lastGain = raw.lastGain;
+        }
+        return normalized;
+    }
+
+    const migrated = createEmptyChronicleXpProgress();
+    CHRONICLE_ACTIVITY_META.forEach(({ key }) => {
+        const legacyCount = parseInt(raw[key], 10);
+        if (!Number.isFinite(legacyCount) || legacyCount <= 0) return;
+        const legacyWeight = CHRONICLE_LEGACY_XP_PER_ACTION[key] || 0;
+        migrated.byActivity[key].actions = legacyCount;
+        migrated.byActivity[key].xp = legacyCount * legacyWeight;
+    });
+    migrated.totalXp = CHRONICLE_ACTIVITY_META.reduce(
+        (sum, { key }) => sum + (migrated.byActivity[key].xp || 0),
+        0
+    );
+    return migrated;
+}
+
+function persistChronicleXpProgress(progress) {
+    localStorage.setItem(CHRONICLE_XP_STORAGE_KEY, JSON.stringify(normalizeChronicleXpProgress(progress)));
+}
+
+function resolveChronicleLevelFromXp(totalXp) {
+    let level = 1;
+    for (let candidate = 2; candidate <= CHRONICLE_TIER_MAX_LEVEL; candidate += 1) {
+        if (totalXp >= CHRONICLE_LEVEL_XP_THRESHOLDS[candidate - 1]) {
+            level = candidate;
+        }
+    }
+    return level;
+}
+
+function getCommanderChronicleProgressSnapshot() {
+    const progress = normalizeChronicleXpProgress(readChronicleXpProgressRaw());
+    const totalXp = Math.max(0, progress.totalXp || 0);
+    const currentLevel = resolveChronicleLevelFromXp(totalXp);
+    const floorXp = CHRONICLE_LEVEL_XP_THRESHOLDS[currentLevel - 1] || 0;
+    const ceilingXp = currentLevel >= CHRONICLE_TIER_MAX_LEVEL
+        ? floorXp
+        : (CHRONICLE_LEVEL_XP_THRESHOLDS[currentLevel] || floorXp);
+    const xpInLevel = Math.max(0, totalXp - floorXp);
+    const spanToNext = Math.max(1, ceilingXp - floorXp);
+    const xpToNextLevel = currentLevel >= CHRONICLE_TIER_MAX_LEVEL ? 0 : spanToNext;
+    const progressPct = currentLevel >= CHRONICLE_TIER_MAX_LEVEL
+        ? 100
+        : Math.min(100, Math.round((xpInLevel / xpToNextLevel) * 100));
+    const levelEpithet = getChronicleTierLevelTitle(currentLevel);
+
+    const activities = CHRONICLE_ACTIVITY_META.map((meta) => {
+        const bucket = progress.byActivity[meta.key] || { actions: 0, xp: 0 };
+        return {
+            ...meta,
+            count: bucket.actions || 0,
+            xp: bucket.xp || 0
+        };
+    });
+
+    return {
+        progress,
+        totalXp,
+        totalMerit: totalXp,
+        currentLevel,
+        levelEpithet,
+        xpInLevel,
+        meritInLevel: xpInLevel,
+        xpToNextLevel,
+        meritToNextLevel: xpToNextLevel,
+        progressPct,
+        activities,
+        lastGain: progress.lastGain || null,
+        isMaxLevel: currentLevel >= CHRONICLE_TIER_MAX_LEVEL
+    };
+}
+
+/**
+ * Grant Chronicle tier XP from an in-game action.
+ * @param {string} activityKey - cityBattles | pvpAttacks | loreDiscoveries
+ * @param {object} [options]
+ * @param {string} [options.rarity] - common | uncommon | rare | epic | legendary (success rarity)
+ * @param {number} [options.xp] - exact XP from server (skips roll when set)
+ * @param {number} [options.amount=1] - how many actions to record
+ * @returns {{ snapshot: object, xpGained: number, rarity: string }}
+ */
+function recordChronicleXp(activityKey, options = {}) {
+    if (!CHRONICLE_XP_BY_ACTIVITY_AND_RARITY[activityKey]) {
+        return { snapshot: getCommanderChronicleProgressSnapshot(), xpGained: 0, rarity: 'common' };
+    }
+
+    const progress = normalizeChronicleXpProgress(readChronicleXpProgressRaw());
+    const rarity = normalizeChronicleSuccessRarity(options.rarity);
+    const actionCount = Math.max(1, parseInt(options.amount, 10) || 1);
+    let xpGained = 0;
+
+    if (Number.isFinite(options.xp)) {
+        xpGained = Math.max(0, Math.round(options.xp));
+    } else {
+        for (let i = 0; i < actionCount; i += 1) {
+            xpGained += rollChronicleXpForAction(activityKey, rarity);
+        }
+    }
+
+    progress.byActivity[activityKey].actions += actionCount;
+    progress.byActivity[activityKey].xp += xpGained;
+    progress.totalXp += xpGained;
+    progress.lastGain = {
+        activityKey,
+        rarity,
+        xp: xpGained,
+        actions: actionCount,
+        at: Date.now()
+    };
+
+    persistChronicleXpProgress(progress);
+    const snapshot = getCommanderChronicleProgressSnapshot();
+    if (typeof refreshChronicleRewardsTrackPanels === 'function') {
+        refreshChronicleRewardsTrackPanels();
+    }
+    refreshChronicleProgressHeader(snapshot);
+    return { snapshot, xpGained, rarity };
+}
+
+function recordChronicleActivity(activityKey, options = {}) {
+    if (typeof options === 'number') {
+        return recordChronicleXp(activityKey, { amount: options, rarity: 'common' }).snapshot;
+    }
+    return recordChronicleXp(activityKey, options).snapshot;
+}
+
+function isChronicleTierLevelReached(level) {
+    const { currentLevel } = getCommanderChronicleProgressSnapshot();
+    return currentLevel >= level;
 }
 
 function isChronicleRewardUnlocked(entry, trackKey) {
-    const { currentRank } = getCommanderChronicleRankSnapshot();
-    const rankMet = currentRank >= entry.rank;
-    if (trackKey === 'premium') {
-        return isCommanderRoyaltyMember() && rankMet && entry.state === 'unlocked';
-    }
-    return rankMet && entry.state === 'unlocked';
+    const levelMet = isChronicleTierLevelReached(entry.rank);
+    if (trackKey === 'premium' && !isCommanderRoyaltyMember()) return false;
+    return levelMet && entry.state === 'unlocked';
+}
+
+function isChronicleRewardEligible(entry, trackKey) {
+    if (!isChronicleTierLevelReached(entry.rank)) return false;
+    if (trackKey === 'premium' && !isCommanderRoyaltyMember()) return false;
+    return entry.state !== 'unlocked';
+}
+
+let activeChronicleRewardsTrack = 'basic';
+
+function buildChronicleXpEarnedExplanationMarkup() {
+    return `
+        <div class="chronicle-xp-rules-deck">
+            <p class="chronicle-xp-rules-lead">
+                Chronicle XP is earned by taking part in the living world of Amnek — joining <strong>city battles</strong>,
+                clashing with commanders in <strong>PvP</strong>, uncovering <strong>lore</strong> hidden across the map, and through
+                other deeds as Ages unfold. Payouts depend on what you do and how well you succeed; exact amounts are not shown here.
+            </p>
+        </div>
+    `;
 }
 
 function buildChronicleMilestoneCardMarkup(entry, trackKey) {
     const unlocked = isChronicleRewardUnlocked(entry, trackKey);
+    const eligible = isChronicleRewardEligible(entry, trackKey);
     const premiumLocked = trackKey === 'premium' && !isCommanderRoyaltyMember();
     const statusLabel = unlocked
         ? 'Claimed'
-        : (premiumLocked ? 'Royalty' : 'Locked');
+        : (eligible ? 'Eligible' : (premiumLocked ? 'Royalty' : 'Locked'));
     const statusClass = unlocked
         ? 'status-unlocked-text-tag'
-        : (premiumLocked ? 'status-premium-required-tag' : 'status-locked-text-tag');
+        : (eligible ? 'status-eligible-text-tag' : (premiumLocked ? 'status-premium-required-tag' : 'status-locked-text-tag'));
+    const levelTitle = getChronicleTierLevelTitle(entry.rank);
 
     return `
-        <div class="milestone-landmark-capsule-card ${unlocked ? 'landmark-node-unlocked' : 'landmark-node-locked'} ${premiumLocked ? 'landmark-node-premium-gated' : ''}">
+        <div class="milestone-landmark-capsule-card milestone-landmark-has-reward ${unlocked ? 'landmark-node-unlocked' : 'landmark-node-locked'} ${premiumLocked ? 'landmark-node-premium-gated' : ''}">
             <span class="milestone-badge-hexagon-icon" aria-hidden="true">${trackKey === 'premium' ? '👑' : '✦'}</span>
             <div class="milestone-meta-contents">
-                <span class="milestone-tier-level-label">Rank ${entry.rank}${trackKey === 'premium' ? ' · Premium track' : ''}</span>
+                <span class="milestone-tier-level-label">Level ${entry.rank} · ${levelTitle}${trackKey === 'premium' ? ' · Premium' : ''}</span>
                 <span class="milestone-title-string">${entry.title}</span>
                 <p class="milestone-reward-description-text">${entry.reward}</p>
                 ${premiumLocked ? `<p class="milestone-premium-hint">Requires <strong>Royalty</strong> membership (${CHRONICLE_PREMIUM_MONTHLY_PRICE_LABEL}) — unlock on the Royalty page.</p>` : ''}
@@ -2067,9 +2810,39 @@ function buildChronicleMilestoneCardMarkup(entry, trackKey) {
     `;
 }
 
+function buildChronicleLevelPassthroughMarkup(level, trackKey) {
+    const levelMet = isChronicleTierLevelReached(level);
+    const premiumLocked = trackKey === 'premium' && !isCommanderRoyaltyMember();
+    const statusLabel = levelMet
+        ? 'Reached'
+        : (premiumLocked ? 'Royalty' : 'Locked');
+    const statusClass = levelMet
+        ? 'status-reached-text-tag'
+        : (premiumLocked ? 'status-premium-required-tag' : 'status-locked-text-tag');
+    const levelTitle = getChronicleTierLevelTitle(level);
+
+    return `
+        <div class="milestone-landmark-capsule-card milestone-landmark-no-reward ${levelMet ? 'landmark-node-unlocked' : 'landmark-node-locked'} ${premiumLocked ? 'landmark-node-premium-gated' : ''}">
+            <span class="milestone-badge-hexagon-icon milestone-badge-level-only" aria-hidden="true">◇</span>
+            <div class="milestone-meta-contents">
+                <span class="milestone-tier-level-label">Level ${level} · ${levelTitle}${trackKey === 'premium' ? ' · Premium' : ''}</span>
+                <span class="milestone-title-string">Chronicle milestone</span>
+                <p class="milestone-reward-description-text">No tier reward at this level — keep earning Chronicle XP in the world to advance.</p>
+            </div>
+            <span class="milestone-status-action-deck ${statusClass}">${statusLabel}</span>
+        </div>
+    `;
+}
+
 function buildChronicleRewardsTrackMarkup(trackKey) {
-    const list = trackKey === 'premium' ? CHRONICLE_PREMIUM_TIER_REWARDS : CHRONICLE_BASIC_TIER_REWARDS;
-    return list.map((entry) => buildChronicleMilestoneCardMarkup(entry, trackKey)).join('');
+    const rows = [];
+    for (let level = 1; level <= CHRONICLE_TIER_MAX_LEVEL; level += 1) {
+        const entry = getChronicleTierRewardEntry(level, trackKey);
+        rows.push(entry
+            ? buildChronicleMilestoneCardMarkup(entry, trackKey)
+            : buildChronicleLevelPassthroughMarkup(level, trackKey));
+    }
+    return rows.join('');
 }
 
 function refreshChronicleRewardsTrackPanels() {
@@ -2100,24 +2873,47 @@ function activateChronicleRewardsTrack(trackKey, clickEvent) {
     refreshChronicleRewardsTrackPanels();
 }
 
+function refreshChronicleProgressHeader(snapshot) {
+    if (!snapshot) snapshot = getCommanderChronicleProgressSnapshot();
+    const levelReadout = document.getElementById('chronicle-level-readout');
+    const meritTag = document.getElementById('chronicle-merit-fraction-tag');
+    const fill = document.getElementById('chronicle-merit-progress-fill');
+    const totalTag = document.getElementById('chronicle-total-merit-tag');
+    if (levelReadout) {
+        levelReadout.textContent = `Chronicle Level ${snapshot.currentLevel} — ${snapshot.levelEpithet}`;
+    }
+    if (meritTag) {
+        meritTag.textContent = snapshot.isMaxLevel
+            ? `${snapshot.totalXp} XP · max level`
+            : `${snapshot.xpInLevel} / ${snapshot.xpToNextLevel} XP to next level`;
+    }
+    if (totalTag) totalTag.textContent = `${snapshot.totalXp} total Chronicle XP`;
+    if (fill) fill.style.width = `${snapshot.progressPct}%`;
+}
+
 function renderChroniclesProgressMatrixCanvas(viewport) {
-    const { currentRank, nextRankXp, groundTitle } = getCommanderChronicleRankSnapshot();
+    const snapshot = getCommanderChronicleProgressSnapshot();
     const isRoyalty = isCommanderRoyaltyMember();
+    const xpProgressLabel = snapshot.isMaxLevel
+        ? `${snapshot.totalXp} XP · max level`
+        : `${snapshot.xpInLevel} / ${snapshot.xpToNextLevel} XP to next level`;
 
     viewport.innerHTML = `
         <div class="chronicles-workspace-container">
             <header class="royalty-workspace-header-deck">
                 <h2 class="royalty-master-title">📜 Chronicle Tier Rewards</h2>
-                <p class="royalty-master-subtitle">Earn XP in Ages to climb ranks and unlock rewards. <strong>Basic Tier</strong> is free for every commander. <strong>Premium Tier</strong> unlocks when you subscribe on the <strong>Royalty</strong> page and earn the Royalty badge (${CHRONICLE_PREMIUM_MONTHLY_PRICE_LABEL}). This is not the development Roadmap.</p>
+                <p class="royalty-master-subtitle">Chronicle levels are <strong>not</strong> tied to commander rank promotions. Earn Chronicle XP by playing in Ages — battles, rivalries, discoveries, and more. Both tracks have <strong>50 levels</strong>; milestone rewards appear on select levels only. <strong>Premium Tier</strong> requires Royalty (${CHRONICLE_PREMIUM_MONTHLY_PRICE_LABEL}).</p>
             </header>
             <div class="chronicles-master-card-box">
                 <div class="chronicles-level-header-row">
-                    <span class="chronicles-main-rank-readout">Rank ${currentRank} — ${groundTitle}</span>
-                    <span class="chronicles-xp-fraction-tag">0 / ${nextRankXp} XP to next rank</span>
+                    <span class="chronicles-main-rank-readout" id="chronicle-level-readout">Chronicle Level ${snapshot.currentLevel} — ${snapshot.levelEpithet}</span>
+                    <span class="chronicles-xp-fraction-tag" id="chronicle-merit-fraction-tag">${xpProgressLabel}</span>
                 </div>
                 <div class="chronicles-progress-bar-track-bezel" aria-hidden="true">
-                    <div class="chronicles-progress-bar-fill-glow" style="width: 4%;"></div>
+                    <div class="chronicle-merit-progress-fill-glow chronicles-progress-bar-fill-glow" id="chronicle-merit-progress-fill" style="width: ${snapshot.progressPct}%;"></div>
                 </div>
+                <p class="chronicle-total-merit-readout" id="chronicle-total-merit-tag">${snapshot.totalXp} total Chronicle XP</p>
+                ${buildChronicleXpEarnedExplanationMarkup()}
             </div>
             <nav class="chronicle-rewards-track-tab-bar" aria-label="Chronicle reward tiers">
                 <button type="button" class="chronicle-rewards-track-tab ${activeChronicleRewardsTrack === 'basic' ? 'active' : ''}" data-chronicle-track="basic" onclick="activateChronicleRewardsTrack('basic', event)">
@@ -2137,15 +2933,19 @@ function renderChroniclesProgressMatrixCanvas(viewport) {
             </div>
             <div class="chronicle-rewards-tracks-deck">
                 <section class="chronicle-rewards-track-panel chronicle-rewards-track-panel-active" data-chronicle-track-panel="basic" id="chronicle-panel-basic">
-                    <h3 class="chronicles-grid-heading-label">Basic Tier — included for all commanders</h3>
-                    <div class="chronicles-milestones-grid-layout" id="chronicle-rewards-track-basic"></div>
+                    <h3 class="chronicles-grid-heading-label">Basic Tier — 50 levels (free)</h3>
+                    <div class="chronicles-milestones-scroll-bin">
+                        <div class="chronicles-milestones-grid-layout" id="chronicle-rewards-track-basic"></div>
+                    </div>
                 </section>
                 <section class="chronicle-rewards-track-panel chronicle-rewards-track-panel-hidden" data-chronicle-track-panel="premium" id="chronicle-panel-premium">
                     <div class="chronicle-premium-panel-header">
-                        <h3 class="chronicles-grid-heading-label">Premium Tier — Royalty members (${CHRONICLE_PREMIUM_MONTHLY_PRICE_LABEL})</h3>
+                        <h3 class="chronicles-grid-heading-label">Premium Tier — 50 levels (Royalty · ${CHRONICLE_PREMIUM_MONTHLY_PRICE_LABEL})</h3>
                         ${isRoyalty ? '' : `<button type="button" class="settings-btn chronicle-premium-panel-unlock-btn" onclick="openUnlockPremiumTierPortal(event)">Unlock Premium Tier</button>`}
                     </div>
-                    <div class="chronicles-milestones-grid-layout" id="chronicle-rewards-track-premium"></div>
+                    <div class="chronicles-milestones-scroll-bin">
+                        <div class="chronicles-milestones-grid-layout" id="chronicle-rewards-track-premium"></div>
+                    </div>
                 </section>
             </div>
         </div>
@@ -2159,6 +2959,12 @@ window.openRoyaltyMembershipFromChronicles = openUnlockPremiumTierPortal;
 window.hydrateCommanderMembershipFromStorage = hydrateCommanderMembershipFromStorage;
 window.applyCommanderMembershipTitle = applyCommanderMembershipTitle;
 window.beginRoyaltyMembershipCheckout = beginRoyaltyMembershipCheckout;
+window.beginRoyaltyMembershipDowngrade = beginRoyaltyMembershipDowngrade;
+window.getCommanderChronicleProgressSnapshot = getCommanderChronicleProgressSnapshot;
+window.recordChronicleXp = recordChronicleXp;
+window.recordChronicleActivity = recordChronicleActivity;
+window.rollChronicleXpForAction = rollChronicleXpForAction;
+window.resolveChronicleXpRange = resolveChronicleXpRange;
 
 /* ==========================================================================
    SECTION: EVOLUTION ROADMAP (DEVELOPMENT TIMELINE)
@@ -2252,7 +3058,7 @@ const ROADMAP_EVOLUTION_PHASES = [
             {
                 title: 'Age Portal navigation',
                 items: [
-                    'Dedicated portal home with sticky top navigation: Age Portal, Leaderboards, Community Chat, Discoveries, Royalty, Chronicle Tier Rewards, and this Evolution Roadmap.',
+                    'Dedicated portal home with sticky top navigation: Age Portal, Leaderboards, Community Chat, Lore, Royalty, Chronicle Tier Rewards, and this Evolution Roadmap.',
                     'Live Age metrics strip: cycle label, game mode, Great Transition countdown, leading nation, registered and active player rosters.',
                     'Join the Age deployment deck with tutorial vs standard entry, SFX, and visual feedback (battle screen redirect pending).'
                 ]
@@ -2295,8 +3101,8 @@ const ROADMAP_EVOLUTION_PHASES = [
             {
                 title: 'Hub surfaces',
                 items: [
-                    'Unlock Discoveries archive with full nation lore playback and unlock progression.',
-                    'Activate Chronicle Tier Rewards claim flow tied to live rank XP from Ages.',
+                    'Lore codex with full nation chronicles, audio narration, and unlock progression.',
+                    'Activate Chronicle Tier XP from city battles, PvP, and map lore with success-rarity payouts.',
                     'Expand Royalty membership checkout when premium billing is ready.'
                 ]
             },
@@ -2440,25 +3246,62 @@ function renderEvolutionRoadmapPortalCanvas(viewport) {
 
 window.toggleEvolutionRoadmapPhase = toggleEvolutionRoadmapPhase;
 
-function renderMasterDiscoveriesPortalCanvas(viewport) {
+function renderMasterLorePortalCanvas(viewport) {
+    const archives = getPortalLoreNationArchives();
+    const nationChips = archives.map((nation, index) => {
+        const nationId = buildPortalLoreNationId(nation.name);
+        const accent = PORTAL_LORE_NATION_ACCENT[nation.name] || '#b89030';
+        const epithet = buildPortalLoreNationEpithet(nation.detail);
+        const crestMarkup = buildPortalLoreNationCrestMarkup(nation.name, 'lore-nation-chip-crest');
+        const indexLabel = String(index + 1).padStart(2, '0');
+
+        return `
+            <button
+                type="button"
+                class="lore-nation-chip"
+                data-nation-id="${nationId}"
+                style="--lore-nation-accent: ${accent};"
+                onclick="selectPortalLoreNation('${nationId}')"
+            >
+                <span class="lore-nation-chip-index">${indexLabel}</span>
+                <span class="lore-nation-chip-sigil" aria-hidden="true">${crestMarkup}</span>
+                <span class="lore-nation-chip-copy">
+                    <span class="lore-nation-chip-name">${escapePortalLoreHtml(nation.name)}</span>
+                    <span class="lore-nation-chip-epithet">${escapePortalLoreHtml(epithet)}</span>
+                </span>
+            </button>
+        `;
+    }).join('');
+
     viewport.innerHTML = `
-        <div class="discoveries-workspace-chassis">
-            <div class="discoveries-sidebar-filters-deck">
-                <button class="chat-channel-btn active-channel-glow">🚩 Nations</button>
-            </div>
-            <div class="discoveries-main-scroll-track">
-                ${playerAccountDiscoveriesDatabase.nations.map(entry => `
-                    <div class="discovery-archive-ledger-card ledger-node-unlocked">
-                        <div class="discovery-card-header-row">
-                            <span class="discovery-card-name-title">👑 ${entry.name}</span>
-                            <span class="discovery-card-badge-tag tag-unlocked">UNLOCKED</span>
-                        </div>
-                        <p class="discovery-card-body-excerpt-text">"${entry.excerpt}"</p>
+        <div class="lore-workspace-chassis">
+            <header class="lore-codex-hero">
+                <p class="lore-codex-eyebrow">Royal Armies · Amnek</p>
+                <h2 class="lore-codex-title">Lore of the Fifteen Nations</h2>
+                <p class="lore-codex-lead">
+                    Explore the sovereign realms that shape the continent. Choose a nation to read its chronicle,
+                    then press <strong>Listen</strong> to hear its history narration.
+                </p>
+            </header>
+            <div class="lore-codex-body">
+                <aside class="lore-nation-index-deck" aria-label="Nation codex index">
+                    <p class="lore-index-label">Nation codex</p>
+                    <div class="lore-nation-index-scroll">
+                        ${nationChips || '<p class="lore-index-empty">Nation archives are loading…</p>'}
                     </div>
-                `).join('')}
+                </aside>
+                <article class="lore-reader-compartment" aria-live="polite">
+                    <div id="lore-reader-panel" class="lore-reader-panel">
+                        ${buildPortalLoreReaderPanelMarkup(null)}
+                    </div>
+                </article>
             </div>
         </div>
     `;
+
+    if (archives.length > 0) {
+        selectPortalLoreNation(buildPortalLoreNationId(archives[0].name));
+    }
 }
 
 /* ==========================================================================
@@ -2499,11 +3342,18 @@ function syncPortalJukeboxPlaybackUI(isPlaying) {
 }
 
 function applyPortalBackgroundMusicVolume() {
+    if (portalLoreMusicRestoreFadeActive) {
+        cancelPortalLoreMusicRestoreFade();
+    }
+
     const bgMusic = getPortalBackgroundAudioElement();
     if (!bgMusic) return 0;
 
-    const gain = resolvePortalBackgroundMusicGain();
-    bgMusic.volume = gain;
+    const userGain = resolvePortalBackgroundMusicGain();
+    const outputGain = portalLoreMusicDuckActive
+        ? PORTAL_LORE_NARRATION_MUSIC_DUCK_LEVEL
+        : userGain;
+    bgMusic.volume = outputGain;
 
     const muteBtnIcon = document.getElementById('media-mute-symbol-node');
     const volumeSlider = document.getElementById('media-volume-slider-input');
@@ -2511,17 +3361,17 @@ function applyPortalBackgroundMusicVolume() {
 
     if (userMutedViaDeck) {
         bgMusic.muted = true;
-    } else if (gain > 0) {
+    } else if (userGain > 0) {
         bgMusic.muted = false;
-        if (muteBtnIcon) muteBtnIcon.innerText = gain < 0.4 ? '🔉' : '🔊';
-        if (volumeSlider) volumeSlider.value = gain;
+        if (muteBtnIcon) muteBtnIcon.innerText = userGain < 0.4 ? '🔉' : '🔊';
+        if (volumeSlider) volumeSlider.value = userGain;
     } else {
         bgMusic.muted = true;
         if (muteBtnIcon) muteBtnIcon.innerText = '🔇';
         if (volumeSlider) volumeSlider.value = 0;
     }
 
-    return gain;
+    return outputGain;
 }
 
 function startPortalBackgroundMusic(options = {}) {
@@ -2583,8 +3433,8 @@ function bindPortalBackgroundMusicAutoplayUnlock() {
 let currentPortalMasterVol = 1.0;
 let currentPortalMusicVol = 0.5;
 hydratePortalVolumeStateFromStorage();
-let currentPortalNarrationVol = parseFloat(localStorage.getItem('savedNarrationVol')) ?? 0.7;
-let currentPortalSfxVol = parseFloat(localStorage.getItem('savedSfxVol')) ?? 0.4;
+let currentPortalNarrationVol = readStoredPortalGain('savedPortalNarrationVol', 'savedNarrationVol', 1);
+let currentPortalSfxVol = readStoredPortalGain('savedPortalSfxVol', 'savedSfxVol', 0.4);
 
 /* Block 19: REAL-TIME METALLIC SLIDERS CONSOLE CANVAS COMPILER */
 function renderStagingAudioMixerConsoleCanvas(viewport) {
@@ -2666,6 +3516,13 @@ function handleSliderVolumeInput(channelType, sliderElement) {
     else if (channelType === 'sfx') currentPortalSfxVol = calculatedGainValue;
 
     executePortalAudioVolumeCalibration();
+
+    if ((channelType === 'master' || channelType === 'narration') && portalLoreNarrationPlaying && portalLoreActiveNationId) {
+        const activeNation = getPortalLoreNationArchives().find(
+            (entry) => buildPortalLoreNationId(entry.name) === portalLoreActiveNationId
+        );
+        if (activeNation) applyPortalLoreNarrationVolume(activeNation.name);
+    }
 }
 
 function triggerAudioPreviewSample(channelType) {
@@ -2760,6 +3617,11 @@ function runDynamicAgeLifecycleTrackingEngine() {
     const transitionCountdownDisplay = document.getElementById('metrics-transition-countdown-display');
 
     applyPlaceholderAgeMetricBannerValues();
+
+    if (arePortalCountdownTimersPaused()) {
+        applyPausedPortalCountdownReadouts();
+        return;
+    }
 
     // Central Deployment Corridor Handle hooks maintained perfectly intact
     const statusHeader = document.getElementById('dynamic-age-status-header');

@@ -44,7 +44,7 @@ let saveConfirmationHideTimer = null;
 // Master Audio System Channels 
 let confirmedMasterVol = parseFloat(localStorage.getItem('savedMasterVol')) || 1.0; 
 let confirmedMusicVol = parseFloat(localStorage.getItem('savedMusicVol')) || 0.5; // NEW: Stored background music value register 
-let confirmedNarrationVol = parseFloat(localStorage.getItem('savedNarrationVol')) || 0.7; 
+let confirmedNarrationVol = parseFloat(localStorage.getItem('savedNarrationVol')) || 1; 
 let confirmedSfxVol = parseFloat(localStorage.getItem('savedSfxVol')) || 0.2; 
 let stagedMasterVol = confirmedMasterVol; 
 let stagedMusicVol = confirmedMusicVol; // NEW: Staged background music temporary register 
@@ -304,63 +304,72 @@ function closePenaltyOverlayWindow() {
 
 /* --- Section: Security Credentials Modification Engine --- */
 
-function manageSecurityUpdate(mode) {
-    if (typeof playToggleLeverSFX === 'function') playToggleLeverSFX();
-    
-    const overlay = document.getElementById('commander-security-overlay');
-    const headerTitle = document.getElementById('security-popup-header-title');
-    const textField = document.getElementById('security-popup-text-field');
-    const btnDock = document.getElementById('security-popup-btn-dock');
-    
-    if (!overlay || !headerTitle || !textField || !btnDock) return;
-    
-    // Reset any old interior element loops inside our container
-    textField.innerHTML = "";
-    btnDock.innerHTML = "";
-    
-    if (mode === 'email') {
-        headerTitle.innerText = "Update email address";
-        textField.innerHTML = `
-            <div style="margin-bottom: 12px; color: rgba(241,224,172,0.6); font-size: 0.75rem;">Current address: <span style="color: #ffd700;">${player.name}@royalfront.net</span></div>
-            <input type="email" id="security-email-input-field" placeholder="Enter new email address..." 
-                   style="width: 100% !important; background: rgba(0,0,0,0.6) !important; border: 1px solid rgba(184,144,48,0.4) !important; padding: 8px !important; color: #f1e0ac !important; font-family: 'Segoe UI', sans-serif !important; font-size: 0.8rem !important; box-sizing: border-box !important; outline: none !important;">
-        `;
-    } else if (mode === 'password') {
-        headerTitle.innerText = "Change password";
-        textField.innerHTML = `
-            <input type="password" id="security-pass-old-field" placeholder="Current password" 
-                   style="width: 100% !important; background: rgba(0,0,0,0.6) !important; border: 1px solid rgba(184,144,48,0.4) !important; padding: 8px !important; color: #f1e0ac !important; font-family: 'Segoe UI', sans-serif !important; font-size: 0.8rem !important; margin-bottom: 10px !important; box-sizing: border-box !important; outline: none !important;">
-            <input type="password" id="security-pass-new-field" placeholder="New password" 
-                   style="width: 100% !important; background: rgba(0,0,0,0.6) !important; border: 1px solid rgba(184,144,48,0.4) !important; padding: 8px !important; color: #f1e0ac !important; font-family: 'Segoe UI', sans-serif !important; font-size: 0.8rem !important; box-sizing: border-box !important; outline: none !important;">
-        `;
+const commanderSecurityProfileCache = { email: '', username: '', loaded: false };
+
+function escapeSecurityFormHtml(value) {
+    return String(value ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+}
+
+async function fetchCommanderSecurityProfile() {
+    const username = getActiveCommanderUsername();
+    commanderSecurityProfileCache.username = username;
+    commanderSecurityProfileCache.email = '';
+    commanderSecurityProfileCache.loaded = false;
+
+    if (!username || username.toLowerCase() === 'testaccount') {
+        return commanderSecurityProfileCache;
     }
-    
-    // Forge Action Buttons
-    const saveBtn = document.createElement('button');
-    saveBtn.className = 'suicide-danger-confirm-btn'; // Gold gradient color themes
-    saveBtn.innerText = "Save";
-    saveBtn.style.borderColor = "#b89030";
-    saveBtn.onclick = () => {
-        if (typeof playToggleLeverSFX === 'function') playToggleLeverSFX();
-        // Fire database preservation link traces
-        hasUnsavedChanges = true;
-        closeSecurityOverlayWindow();
-    };
-    
+
+    try {
+        const response = await fetch(
+            `/api/portal/account/security-profile?username=${encodeURIComponent(username)}`,
+            { cache: 'no-store' }
+        );
+        const payload = await response.json().catch(() => ({}));
+        if (response.ok && payload.status === 'ok') {
+            commanderSecurityProfileCache.email = payload.email || '';
+            commanderSecurityProfileCache.loaded = true;
+        }
+    } catch (err) {
+        console.warn('Could not load commander security profile:', err);
+    }
+
+    return commanderSecurityProfileCache;
+}
+
+function mountSecurityOverlayActions(primaryLabel, onPrimary, onCancel) {
+    const btnDock = document.getElementById('security-popup-btn-dock');
+    if (!btnDock) return;
+
+    btnDock.innerHTML = '';
+
+    const primaryBtn = document.createElement('button');
+    primaryBtn.type = 'button';
+    primaryBtn.className = 'suicide-danger-confirm-btn';
+    primaryBtn.style.borderColor = '#b89030';
+    primaryBtn.innerText = primaryLabel;
+    primaryBtn.onclick = onPrimary;
+
     const cancelBtn = document.createElement('button');
+    cancelBtn.type = 'button';
     cancelBtn.className = 'suicide-safe-retreat-btn';
-    cancelBtn.innerText = "Cancel";
-    cancelBtn.onclick = () => {
-        if (typeof playToggleLeverSFX === 'function') playToggleLeverSFX();
-        closeSecurityOverlayWindow();
-    };
-    
-    btnDock.appendChild(saveBtn);
+    cancelBtn.innerText = 'Cancel';
+    cancelBtn.onclick = onCancel;
+
+    btnDock.appendChild(primaryBtn);
     btnDock.appendChild(cancelBtn);
-    
-    // Reveal the global layout layers smoothly
+}
+
+function openSecurityOverlayWindow() {
+    const overlay = document.getElementById('commander-security-overlay');
+    if (!overlay) return;
     overlay.classList.remove('suicide-overlay-hidden');
     overlay.style.setProperty('display', 'flex', 'important');
+    overlay.setAttribute('aria-hidden', 'false');
 }
 
 function closeSecurityOverlayWindow() {
@@ -368,8 +377,176 @@ function closeSecurityOverlayWindow() {
     if (overlay) {
         overlay.style.setProperty('display', 'none', 'important');
         overlay.classList.add('suicide-overlay-hidden');
+        overlay.setAttribute('aria-hidden', 'true');
     }
 }
+
+function renderChangePasswordSecurityForm() {
+    const headerTitle = document.getElementById('security-popup-header-title');
+    const textField = document.getElementById('security-popup-text-field');
+    const username = escapeSecurityFormHtml(getActiveCommanderUsername());
+
+    if (headerTitle) headerTitle.innerText = 'Change Password';
+    if (!textField) return;
+
+    textField.innerHTML = `
+        <p class="security-account-form-lead">To change your password, confirm the email address you used when you signed up. We will send a reset link to that inbox.</p>
+        <p class="security-account-form-meta">Commander: <strong>${username}</strong></p>
+        <label class="security-account-form-label" for="security-password-reset-email">Signup email</label>
+        <input type="email" id="security-password-reset-email" class="security-account-form-input" placeholder="you@example.com" autocomplete="email">
+        <p class="security-account-form-hint">Open the link in that email to set a new password. The link expires after it is used once.</p>
+    `;
+
+    mountSecurityOverlayActions(
+        'Send reset link',
+        () => submitSecurityPasswordResetRequest(),
+        () => {
+            if (typeof playToggleLeverSFX === 'function') playToggleLeverSFX();
+            closeSecurityOverlayWindow();
+        }
+    );
+}
+
+function renderUpdateEmailSecurityForm(profile) {
+    const headerTitle = document.getElementById('security-popup-header-title');
+    const textField = document.getElementById('security-popup-text-field');
+    const currentEmail = profile.loaded && profile.email
+        ? escapeSecurityFormHtml(profile.email)
+        : 'Not on file yet';
+
+    if (headerTitle) headerTitle.innerText = 'Update Email Address';
+    if (!textField) return;
+
+    textField.innerHTML = `
+        <p class="security-account-form-lead">Enter your current password, then your new email. We will send a confirmation link to the <strong>new</strong> address.</p>
+        <p class="security-account-form-meta">Current email: <strong>${currentEmail}</strong></p>
+        <label class="security-account-form-label" for="security-email-password-field">Current password</label>
+        <input type="password" id="security-email-password-field" class="security-account-form-input" placeholder="Current password" autocomplete="current-password">
+        <label class="security-account-form-label" for="security-email-new-field">New email address</label>
+        <input type="email" id="security-email-new-field" class="security-account-form-input" placeholder="newyou@example.com" autocomplete="email">
+        <p class="security-account-form-hint">Your email will not change until you click the confirmation link sent to the new address.</p>
+    `;
+
+    mountSecurityOverlayActions(
+        'Send confirmation link',
+        () => submitSecurityEmailChangeRequest(),
+        () => {
+            if (typeof playToggleLeverSFX === 'function') playToggleLeverSFX();
+            closeSecurityOverlayWindow();
+        }
+    );
+}
+
+async function submitSecurityPasswordResetRequest() {
+    if (typeof playToggleLeverSFX === 'function') playToggleLeverSFX();
+
+    const username = getActiveCommanderUsername();
+    const emailInput = document.getElementById('security-password-reset-email');
+    const email = emailInput ? emailInput.value.trim() : '';
+
+    if (!username || username.toLowerCase() === 'testaccount') {
+        await showPortalAlert('Log in with a registered commander account to change your password.');
+        return;
+    }
+    if (!email || !email.includes('@')) {
+        await showPortalAlert('Enter the email address you used when you signed up.');
+        return;
+    }
+
+    try {
+        const response = await fetch('/api/portal/account/request-password-reset', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username, email })
+        });
+        const payload = await response.json().catch(() => ({}));
+
+        if (!response.ok || payload.status !== 'ok') {
+            await showPortalAlert(payload.message || 'Could not start password reset. Check your email and try again.', 'Password reset');
+            return;
+        }
+
+        closeSecurityOverlayWindow();
+        await showPortalAlert(
+            payload.message || 'If that email matches your account, a password reset link has been sent.',
+            'Check your email'
+        );
+    } catch (err) {
+        console.error('Password reset request failed:', err);
+        await showPortalAlert('Could not reach the server. Make sure node server.js is running and try again.', 'Connection error');
+    }
+}
+
+async function submitSecurityEmailChangeRequest() {
+    if (typeof playToggleLeverSFX === 'function') playToggleLeverSFX();
+
+    const username = getActiveCommanderUsername();
+    const passwordField = document.getElementById('security-email-password-field');
+    const newEmailField = document.getElementById('security-email-new-field');
+    const password = passwordField ? passwordField.value : '';
+    const newEmail = newEmailField ? newEmailField.value.trim() : '';
+
+    if (!username || username.toLowerCase() === 'testaccount') {
+        await showPortalAlert('Log in with a registered commander account to update your email.');
+        return;
+    }
+    if (!password) {
+        await showPortalAlert('Enter your current password to confirm this change.');
+        return;
+    }
+    if (!newEmail || !newEmail.includes('@')) {
+        await showPortalAlert('Enter a valid new email address.');
+        return;
+    }
+
+    try {
+        const response = await fetch('/api/portal/account/request-email-change', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username, password, newEmail })
+        });
+        const payload = await response.json().catch(() => ({}));
+
+        if (!response.ok || payload.status !== 'ok') {
+            await showPortalAlert(payload.message || 'Could not start email change. Check your details and try again.', 'Email update');
+            return;
+        }
+
+        closeSecurityOverlayWindow();
+        await showPortalAlert(
+            payload.message || 'Check your new email inbox and click the confirmation link to finish the update.',
+            'Confirmation sent'
+        );
+    } catch (err) {
+        console.error('Email change request failed:', err);
+        await showPortalAlert('Could not reach the server. Make sure node server.js is running and try again.', 'Connection error');
+    }
+}
+
+async function manageSecurityUpdate(mode) {
+    if (typeof playToggleLeverSFX === 'function') playToggleLeverSFX();
+
+    const overlay = document.getElementById('commander-security-overlay');
+    const textField = document.getElementById('security-popup-text-field');
+    const btnDock = document.getElementById('security-popup-btn-dock');
+
+    if (!overlay || !textField || !btnDock) return;
+
+    textField.innerHTML = '<p class="security-account-form-lead">Loading account security…</p>';
+    btnDock.innerHTML = '';
+    openSecurityOverlayWindow();
+
+    const profile = await fetchCommanderSecurityProfile();
+
+    if (mode === 'password') {
+        renderChangePasswordSecurityForm();
+    } else if (mode === 'email') {
+        renderUpdateEmailSecurityForm(profile);
+    }
+}
+
+window.manageSecurityUpdate = manageSecurityUpdate;
+window.closeSecurityOverlayWindow = closeSecurityOverlayWindow;
 
 
 
@@ -883,7 +1060,7 @@ function toggleMute() {
 const CHRONICLE_DATA = {
     alpha_0111: {
         title: "Alpha 0.1.11 — Age Portal",
-        details: "Royal Armies Alpha 0.1.11 is live. This update focuses on the Age Portal—the hub you reach after logging in.\n\nWhat's new: a dedicated portal home with navigation for the current Age, leaderboards, and community chat; a commander hub to edit your profile, read messages, and adjust audio settings; live registration and activity counts when connected to our servers; and a clearer Join the Age flow with sound and visual feedback (the full battle screen is still in development).\n\nAcross the site, menus, alerts, and chat labels have been rewritten in plain English. When we are actively building or testing, a notice may appear at the top of the page—thank you for your patience. On the live website, Discoveries, Royalty, and The Chronicles are visible but locked until their content is ready.\n\nWe are continuing work on the core game experience. Thank you for helping us shape Royal Armies."
+        details: "Royal Armies Alpha 0.1.11 is live. This update focuses on the Age Portal—the hub you reach after logging in.\n\nWhat's new: a dedicated portal home with navigation for the current Age, leaderboards, and community chat; a commander hub to edit your profile, read messages, and adjust audio settings; live registration and activity counts when connected to our servers; and a clearer Join the Age flow with sound and visual feedback (the full battle screen is still in development).\n\nAcross the site, menus, alerts, and chat labels have been rewritten in plain English. When we are actively building or testing, a notice may appear at the top of the page—thank you for your patience. On the live website, Lore, Royalty, and The Chronicles are visible but locked until their content is ready.\n\nWe are continuing work on the core game experience. Thank you for helping us shape Royal Armies."
     },
     genesis: { title: "Core framework", details: "Built the main UI theme, background slideshow, and first server connections." },
     audio: { title: "Audio system", details: "Added background music, UI sounds, volume controls, and smooth mute behavior." },
@@ -959,17 +1136,18 @@ async function handleLogin() {
     if (loader) loader.style.display = 'block';
 
     if (!userVal || !passVal) {
-        alert('Please enter your username and password.');
+        await showPortalAlert('Please enter your username and password.');
         restoreLoginAuthButtons();
         return;
     }
 
     if (!isAdmin && !isLandingServedByNexusBackend()) {
-        alert(
+        await showPortalAlert(
             'Login needs the Royal Armies server.\n\n' +
             '1. In a terminal, run: node server.js\n' +
             '2. Open: http://localhost:3000\n\n' +
-            'Preview-only URLs (for example Live Server on port 5500) cannot verify accounts.'
+            'Preview-only URLs (for example Live Server on port 5500) cannot verify accounts.',
+            'Server required'
         );
         restoreLoginAuthButtons();
         return;
@@ -994,7 +1172,7 @@ async function handleLogin() {
         const payload = await response.json().catch(() => ({}));
 
         if (!response.ok) {
-            alert(payload.message || 'Login failed. Check your username and password.');
+            await showPortalAlert(payload.message || 'Login failed. Check your username and password.', 'Login failed');
             restoreLoginAuthButtons();
             return;
         }
@@ -1007,7 +1185,7 @@ async function handleLogin() {
         initiatePostLoginSequence(false);
     } catch (err) {
         console.error('NEXUS login link error:', err);
-        alert('Cannot reach the Royal Armies server. Run node server.js locally (or use the live site) and try again.');
+        await showPortalAlert('Cannot reach the Royal Armies server. Run node server.js locally (or use the live site) and try again.', 'Connection error');
         restoreLoginAuthButtons();
     }
 }
@@ -1130,76 +1308,71 @@ function closeForgot() {
 
 /* --- THE SUBMISSION PROTOCOL (NEXUS Handshake Enabled) --- */
 
-function submitRegistration() {
+async function submitRegistration() {
     const user = document.getElementById('reg-username').value;
     const email = document.getElementById('reg-email').value;
     const pass = document.getElementById('reg-password').value;
     const confirm = document.getElementById('reg-confirm').value;
 
     if (!user || !email || !pass || !confirm) {
-        alert("Please fill in all registration fields.");
+        await showPortalAlert('Please fill in all registration fields.');
         return;
     }
     if (pass !== confirm) {
-        alert("Your passwords do not match. Re-verify your credentials.");
+        await showPortalAlert('Your passwords do not match. Re-verify your credentials.');
         return;
     }
 
-    fetch('/register', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username: user.trim(), email: email.trim(), password: pass })
-    })
-    .then(async (response) => {
+    try {
+        const response = await fetch('/register', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username: user.trim(), email: email.trim(), password: pass })
+        });
         const payload = await response.json().catch(() => ({}));
         if (response.ok) {
-            alert(payload.message || 'Registration saved. Check your email to confirm your account.');
+            await showPortalAlert(payload.message || 'Registration saved. Check your email to confirm your account.', 'Registration');
             closeRegister();
             return;
         }
-        alert(payload.message || 'Registration could not be completed.');
-    })
-    .catch((err) => {
+        await showPortalAlert(payload.message || 'Registration could not be completed.', 'Registration');
+    } catch (err) {
         console.error('Nexus Link Error:', err);
-        alert('Cannot reach the Royal Armies server. Make sure node server.js is running, then try again.');
-    });
-} // <--- Added this to close submitRegistration properly
+        await showPortalAlert('Cannot reach the Royal Armies server. Make sure node server.js is running, then try again.', 'Connection error');
+    }
+}
 
-function submitForgot(e) {
+async function submitForgot(e) {
     const emailInput = document.getElementById('forgot-email');
     const email = emailInput ? emailInput.value : '';
     const btn = e ? e.target : event.target;
 
     if (!email || !email.includes('@')) {
-        alert("Please enter a valid email address.");
+        await showPortalAlert('Please enter a valid email address.');
         return;
     }
 
     const originalText = btn.innerText;
     btn.disabled = true;
-    btn.innerText = "Sending...";
+    btn.innerText = 'Sending...';
 
-    fetch('/request-reset', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: email })
-    })
-    .then(response => {
-        if (!response.ok) throw new Error("Server Rejected Connection");
-        return response.json();
-    })
-    .then(data => {
-        alert("A one-time password link will be sent to the e-mail provided if it is in our records.");
+    try {
+        const response = await fetch('/request-reset', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email })
+        });
+        if (!response.ok) throw new Error('Server Rejected Connection');
+        await response.json().catch(() => ({}));
+        await showPortalAlert('A one-time password link will be sent to the e-mail provided if it is in our records.', 'Password reset');
         closeForgot();
-    })
-    .catch(err => {
-        console.error("Nexus Link Error:", err);
-        alert("Could not reach the server. Try again in a moment.");
-    })
-    .finally(() => {
+    } catch (err) {
+        console.error('Nexus Link Error:', err);
+        await showPortalAlert('Could not reach the server. Try again in a moment.', 'Connection error');
+    } finally {
         btn.disabled = false;
         btn.innerText = originalText;
-    });
+    }
 }
 
 /* --- Block 8: Archive Detail Logic (NEWLY RESTORED) --- */
@@ -1362,9 +1535,7 @@ function openLoreModal() {
         setTimeout(() => {
             modal.style.opacity = '1';
         }, 10);
-        // Automatically loads the 15 nations on open
-        loadLore('archives');
-        initLoreScrollSpy();
+        loadLore('settings');
     }
 }
 
@@ -1404,76 +1575,12 @@ function closeLoreModal() {
     } 
 }
 
-/* --- Block 15: Category Scroll-Spy (Final Grouping) --- */ 
-function initLoreScrollSpy() { 
-    const container = document.getElementById('lore-titles-container'); 
-    const header = document.querySelector('.lore-pane-left .pane-label'); 
-    
-    if (!container || !header) return; 
-
-    container.addEventListener('scroll', () => { 
-        const buttons = container.querySelectorAll('.update-item'); 
-        let activeCategory = "NATIONS"; 
-
-        buttons.forEach(btn => { 
-            const rect = btn.getBoundingClientRect(); 
-            const parentRect = container.getBoundingClientRect(); 
-
-            // Detect if the button is within the top 50px of the scroll window
-            if (rect.top >= parentRect.top && rect.top <= parentRect.top + 50) { 
-                const name = btn.innerText; 
-
-                // MAPPED TO YOUR SPECIFIC DIVISIONS
-                if (["Vaelior", "Aesthene", "Khaerant", "Aethelgard"].includes(name)) { 
-                    activeCategory = "Gilded Sovereignties"; 
-                } else if (["Krall", "Gorz", "Thruun", "Skaros"].includes(name)) { 
-                    activeCategory = "Primal Hordes"; 
-                } else if (["Lyllis", "Saelthine", "Vaerenth"].includes(name)) { 
-                    activeCategory = "Ethereal Covenants"; 
-                } else if (["Trex", "Mynor", "Zevros", "Dravic"].includes(name)) { 
-                    activeCategory = "Iron Vanguards"; 
-                } 
-            } 
-        }); 
-
-        if (header.innerText !== activeCategory) { 
-            header.innerText = activeCategory; 
-        } 
-    }); 
-}
-
 /* ==========================================
-   RAGE MODULE: LORE CONTENT ENGINE
+   RAGE MODULE: COMMANDER HUB CONTENT (messages, settings, profile)
+   Nation chronicles + narration live in script2.js (portal Lore tab).
    ========================================== */
 
-/* --- Section: The Great Library --- */
-
-/* Block 16: Nation Lore Repository */
 const nationLore = {
-    archives: [
-        { name: "Vaelior", audio: "audio/vaeliorhistory.mp3", detail: `Hailed far and wide as the sole surviving nation of the Aidoriian bloodline in all the lands of Amnek, the folk of Vaelior govern their days by the venerated customs and deep-rooted traditions of their forebears. Though their ways and ancient stonework may be hoary with age, they yet hold a high and honored station among kingdoms. Their grand city is a frequent pilgrimage for wanderers and sages, seeking knowledge of their history from ages before Amnek's foundation. Its thoroughfares are wrought with ancient majesty, inspiring in many a soul a powerful longing to walk once more in that bygone era. While this realm strives for peace and shuns the throes of conflict, its watchful guardians are ever mindful of the perils that lurk beyond the waves, and have laid many defenses should war's shadow darken their gates.` },
-        { name: "Aesthene", audio: "audio/aesthenehistory.mp3", detail: `Aesthene stands as a sovereign realm, forged upon the singular pursuit of elemental mastery. In ages past, its founders broke away from the rigid tenets of the Aidoriian, whose strictures forbade the free and true deployment of sorcery. Thus, Aesthene was established as a hallowed sanctuary, dedicated to the deep and spiritual vow of attaining the pinnacle of arcane might, focused upon that specific, powerful branch known as Divine magic. Their great design was to raise a fortress so formidable that no hostile force might breach its walls. Having endured countless sieges and assaults from their less-than-neighborly rivals, Aesthene has, over the long years, rightfully earned the mantle of the mightiest defensive nation across the whole of Amnek.` },
-        { name: "Khaerant", audio: "audio/khaeranthistory.mp3", detail: `The nation of Khaerant is held by many to be naught but a dictatorship, albeit one reformed from the legacy of the Aidoriian rule. Its founding lords deemed the decrees of Old Aidoriia too feeble and did establish a realm governed by iron-willed, stricter tenets. Due to great discord among the Aidoriian council, these founders seceded from the Aidoriian Alliance to claim Khaerant as their sovereign domain. Though the royal coffers overflow with immense wealth, the realm's rigid laws oft prove an intolerable burden upon those subjects who take up residence within its borders. Yet, dark whispers persist of hidden subterranean labor pits, where the vanished toil to mend some unexplained shortfall in the treasury's accounts. Few souls dare voice these troubling tales, for the Sovereign's Host is equipped with the finest weapons and armor gold can procure, and the full extent of the treasury's employment is shrouded in dread. To entertain such sensitive whispers is known to bring swift disappearance without a trace.` },
-        { name: "Aethelgard", audio: "audio/aethelgardhistory.wav", detail: `The sovereign dominion of Aethelgard is ensconced deep within the heart of Oracle Mountain, a sanctuary veiled entirely from the world beyond by a perpetual, dense wood. The preservation of their solitude is held as their highest law, and thus have many—be they bold adventurers, weary travelers, cunning merchants, warring clans, or desperate brigands—sought to pierce its silent borders. So relentless are these incursions, aimed at glimpsing the arcane facilities sheltered within, that the nation’s wise leaders have expanded their reach establishing far-flung outposts to apprehend and deter trespassers long before they may threaten the inner sanctums. Aethelgard is a commonwealth comprised chiefly of venerable scholars, devoted to the great pursuit of knowledge, and the steadfast families who sustain their esoteric work. The rites and practices conducted within their national boundaries remain an enigma to all outsiders; yet, despite countless attempts, no soul or siege-ready host has ever succeeded in breaching their formidable defenses to uncover the profound secrets held deep within their stone halls. Nevertheless, ancient chronicles speak of forgotten carvings discovered in the caverns at the mountain’s base, which depict scenes dating back to the planet’s first Great Transition. This lore fuels the suspicion that Aethelgard’s scholars have unearthed some profound relic or truth intrinsically linked to those most ancient of texts.` },
-        { name: "Krall", audio: "audio/krallhistory.mp3", detail: `Verily, the Krall are numbered amongst the few nations which, by many accounts, have fallen into a state of decline since the golden age of Aidoriian law. 'Tis held by common assent that this dismal descent stems from a dark seed of outsiders, men whose only desires were a life steeped in perilous thrill and whom held little regard for the welfare of their fellows. Their very creed is to drown the lands in gore and sorrow, thus wreaking utter devastation upon all farthest reaches of Amnek. Though they bear the visage of mere brutes, let no one mistake their savagery for a want of keen wit. Their merciless and unforgiving spirit renders them oft-unpredictable, a fearsome boon against those armies that seek to govern chaos with strict order. Furthermore, these grim fiends possess a terror so profound they compel captured warriors to turn their blades upon their own brethren on the field of battle, finding wicked sport in every agonizing moment of the prisoners' torment.` },
-        { name: "Gorz", audio: "audio/gorzhistory.mp3", detail: `A realm forged in pure malice and heedless of the sacred laws of man, Gorz is justly branded as Satan’s very Throne. This vile land, a nest to every manner of degenerate filth, yet endures only through its frightful craft of bending the will of corrupt nobles and state officials, thus turning away all righteous crusades against this odious society. Even the guards who stand watch over this domain are foul and hellish, battling with a savage fury as if their very souls were gripped by the Fiend.` },
-        { name: "Thruun", audio: "audio/thruunhistory.mp3", detail: `In a place where explicit unending entertainment and deep-seeded corruption run unfettered and widespread doth flourish the nation of Thruun. It is whispered that Thruun harbors all manner of suspect souls: from the common peasant seeking fleeting, carnal pleasure, to the dishonest merchant who preys upon the destitute for his own gain, and even the cunning lord who schemes and plots, using vile means to advance his station. Verily, Thruun is nought but a boundless revelry, filled with folk who heed not the righteous conduct of war, nor the well-being of any save their own. Such is the tumult of their society that many a host hath sought to utterly cleanse Amnek of their presence. Yet, they are a treacherous realm, possessing the wealth to purchase the loyalty of defenders whose might far exceeds that of the ordinary fighting man. Though they possess no true invincibility, they are as unyielding and fierce as the folk of Krall, and as utterly vile as the denizens of Gorz.` },
-        { name: "Skaros", audio: "audio/skaroshistory.mp3", detail: `For generations past, Skaros hath been branded a dominion of black cults and devil-worshippers, whose foulest sorcery is bent upon dragging Amnek into the dread, shrieking void of eternal night. 'Tis a cursed realm, whose people revile the sacred light of the spirit, and whose priests practice dark rites to blight other kingdoms and bring forth their ruin. Three-quarters of the children born beneath that forsaken sky are forced into the hidden shrines of the Devil's servants in their tender years. Their schooling in the dark arts is savage and yields no mercy. Though Skaros commands many sorts of warriors to their defense, these men fight not of their own accord, and are but chattel—mere pawns set against the veiled fiends bred within the borders of that unholy land.` },
-        { name: "Lyllis", audio: "audio/lyllishistory.mp3", detail: `Regarded as the celestial light to Skaros’s shadow, the sovereign realm of Lyllis is dedicated to the preservation of a pristine spirit and the pursuit of divine transcendence. In their hubris or holy conviction, they style themselves as gods, professing a mandate from the heavens to restore the world to its primordial state. Yet, their sacred rites are whispered to be severe and unsettling. Their singular crusade is to cleanse the realm of all blemish and usher in the next Great Transition, a cleansing tide they believe shall scour all malice from the earth. Though they seldom forge alliances or declare open enmity, they are masters of subtle manipulation, bending the wills of other nations to serve their own inscrutable designs. Those few who have looked upon the folk of Lyllis speak of an unnerving chill, describing an encounter with beings who seem to have transcended the very essence of humanity.` },
-        { name: "Saelthine", audio: "audio/saelthinehistory.mp3", detail: `The realm of Saelthine is steeped in piety, its people devoted utterly to a singular Divine entity, rejecting the folly of lesser deities or the blasphemous notion that mortals might ascend to godhood. Though on the surface they appear as common folk, their society thrives upon the close embrace of many unique cultures and ancient customs, which they eagerly study and share in turn. The sagas and chronicles attest that Saelthine ever lends its strength to those who champion righteous order, standing firm against the wild and chaotic tides that plague the mortal coil. Yet, it is whispered among those who seek the obscured truths that the heart of Saelthine holds secrets and veiled matters that stir great curiosity and raise a host of unanswered questions.` },
-        { name: "Vaerenth", audio: "audio/vaerenthhistory.mp3", detail: `Vaerenth is a nation where the worship of manifold deities is practiced, and where a potent, ancient order of elder priests holds sway. These priests offer succor and aid to those in distress, but only if it aligns with the divine will of their pantheon, and only when a suitable recompense is rendered for their sacred works. It is said that the most ancient priests of Vaerenth, alone among all nations, are blessed with lives that stretch far beyond the common span of men, even for their own kin. Indeed, countless travelers bear witness that the populace of this kingdom doth partake in a longevity surpassing that of the average mortal. Whilst this grace has sown seeds of disquiet amongst some neighboring realms, many souls have yearned to claim residency in Vaerenth, drawn only by the whisper of these enduring lifespans. Yet, Vaerenth is known to guard its boundaries fiercely, granting permanent residency only to a select and chosen few. This stricture hath bred confusion and deep suspicion, prompting many to ponder what hidden mysteries lie within the heart of this secluded nation.` },
-        { name: "Trex", audio: "audio/trexhistory.mp3", detail: `Having disciplined themselves from dawn till dusk, braving the infernal heats of summer and the treacherous grip of winter's chill, the lineage of Trex has, across countless seasons, sired a progeny of unbreakable spirit. Their principal quest is the preservation of a hale and steadfast essence: in body, mind, and soul. Their deeds—to march, ascend, toil, and clash in battle for days without respite—bear powerful testament to their fervent vow and unwavering resolve in the pursuit of their aims. When the trumpets of war are silent, when their journeys cross the breadth of the realm, and even in moments of brief solace from the rapacious shadow of conflict, still do they hone their skills; ever preparing for the sudden, unforeseen threat that may arise.` },
-        { name: "Mynor", audio: "audio/mynorhistory.mp3", detail: `Following the Great Transition, this nation was claimed and given a new name by a guild of master Artificers and wise Scholars who desired the might and bounty of precise craft and ingenious workings. The Mynoran nation charted a course for their future, ensuring they might withstand any threat crossing their boundaries. Knowing full well the perils that yet stalked the lands of Amnek were dire indeed, and possessing no mastery of the arcane arts, they dedicated themselves to the study and mastery of combining the earth's base elements with the immutable laws of nature. Thus, they crafted great mechanisms that served as a mighty bulwark against any invader. Though they may not rush to battle with the same zeal as their neighbors, they hold confidence that their masterful creations shall endure and prevail against the ravages of any prolonged conflict, should they choose to take part.` },
-        { name: "Zevros", audio: "audio/zevroshistory.mp3", detail: `Behold Zevros, a true res publica whose citizens have consecrated their very existence to the grand pursuit of binding all kingdoms under a single, mighty banner, ruled by a High Echelon of government that guides their populace with wisdom and iron will. Their fealty to this sacred cause is manifest in their colossal legions and their peerless mastery of martial strategy. Three immutable virtues govern their society: Honour, Valor, and Liberty. The Honour of drawing the sword to shield all that they hold dear, and the glorious esteem gained by yielding one's breath upon the field that others may draw theirs. The boundless Valor born of courage, fortitude, and the steadfast resolve to mend a world grievously fractured by discord. Lastly, the march forward, knowing that the Liberty secured through ceaseless conquest shall grant every man and woman a life worthy of song and dream.` },
-        { name: "Dravic", audio: "audio/dravichistory.mp3", detail: `The nation of Dravic, revered as the elder kin to Aesthene, stands as a sovereign kingdom of unparalleled fortitude. Across the breadth of its domain, the very earth is woven with formidable bulwarks and hidden ballistae, forged into the bedrock to repel any foe from field or sky. Dubbed the "Watchful Eye" in the chronicles of old, Dravic possesses the uncanny power to turn the tides of war from behind its seamless, unbreachable walls. For generations, these ramparts have served as a sanctuary for those fleeing the storms of conflict, a role they fulfill even in this present age. Yet, whispers have recently stirred regarding spectral shadows lurking near the ancient mechanisms that sustain the kingdom's soaring foundations. These tales, however, are cast aside by the lords of the land, for no hand can be found to blame for such phantoms.` }
-    ],
-    manuscripts: [
-        { name: "The First Era", detail: "The lost writings detailing the arrival of the Aidoriian bloodline." }
-    ],
-    letters: [
-        { name: "Letter to Aethelgard", detail: "A frantic warning sent during the Great Transition." }
-    ],
-    
     // ==========================================================================
     // NEW MESSAGING DATABASE LOGS (SAFELY ENCLOSED IN BACKTICKS AS A TEXT STRING)
     // ==========================================================================
@@ -1650,7 +1757,7 @@ const nationLore = {
                         <label class="settings-label">Narration Stream Volume</label>
                         <div class="settings-right-wrapper">
                             <!-- UPDATED NARRATION SLIDER: Fires a live voice text track audio preview -->
-                            <input type="range" min="0" max="1" step="0.05" value="0.7" class="settings-slider" id="narration-vol-slider" oninput="stageAudioVolume(); playLiveAudioPreview('narration')">
+                            <input type="range" min="0" max="1" step="0.05" value="1" class="settings-slider" id="narration-vol-slider" oninput="stageAudioVolume(); playLiveAudioPreview('narration')">
                         </div>
                     </div>
                     
@@ -1775,8 +1882,8 @@ const nationLore = {
                             <div class="profile-section-box footer-box-third critical-danger-zone">
                                 <label class="settings-label warning-title">Rank Reset</label>
                                 <div class="profile-btn-row-stacked">
-                                    <button class="danger-action-btn" onclick="triggerCommanderSuicide('rank')">Reset rank</button>
-                                    <button class="danger-action-btn" onclick="triggerCommanderSuicide('exile')">Leave active country</button>
+                                    <button class="danger-action-btn" onclick="triggerCommanderSuicide('rank')">Secede Rank</button>
+                                    <button class="danger-action-btn" onclick="triggerCommanderSuicide('exile')">Suicide out of Country</button>
                                 </div>
                             </div>
                         </div>
@@ -2100,7 +2207,12 @@ function loadLore(type, customMount) {
     
     // 🛡️ THE LEFT PANELS RESTORATION HOOK: Returns text instantly to the left pane header
     if (leftHeader) {
-        leftHeader.innerHTML = (type === 'settings') ? "SETTINGS" : "NATIONS";
+        leftHeader.innerHTML = (type === 'settings') ? "SETTINGS" : "COMMANDER";
+    }
+
+    if (type === 'archives' || type === 'manuscripts' || type === 'letters' || type === 'nations') {
+        body.innerHTML = '<p style="padding:12px;">Nation chronicles and audio narration are on the <strong>Age Portal</strong>. Log in and open the <strong>Lore</strong> tab.</p>';
+        return;
     }
     
     const oldHeader = document.getElementById('profile-extracted-header-banner');
@@ -2128,8 +2240,7 @@ function loadLore(type, customMount) {
     // ==========================================================================
     // 👤 INTERCEPT INTEGRATION 2: COMMANDER CUSTOMIZATION DASHBOARD WINDOW
     // ==========================================================================
-    if (nationLore[type]) {
-        if (type === 'profile' || (nationLore[type] && nationLore[type].name === "PROFILE_FULLSCREEN_MODE") || (nationLore[type][0] && nationLore[type][0].name === "PROFILE_FULLSCREEN_MODE")) {
+    if (type === 'profile' || (nationLore[type] && nationLore[type].name === "PROFILE_FULLSCREEN_MODE") || (nationLore[type] && nationLore[type][0] && nationLore[type][0].name === "PROFILE_FULLSCREEN_MODE")) {
             syncPlayerFromActiveCommanderStorage();
             if (modalFrame) modalFrame.classList.add(profileActiveClass);
             if (detailsHeader) detailsHeader.style.display = 'none';
@@ -2237,14 +2348,14 @@ function loadLore(type, customMount) {
                             <label class="settings-label">Login Information</label>
                             <div class="profile-btn-row-stacked">
                                 <button class="settings-btn" onclick="manageSecurityUpdate('email')">Update Email Address</button>
-                                <button class="settings-btn" onclick="manageSecurityUpdate('password')">Change Encryption Password</button>
+                                <button class="settings-btn" onclick="manageSecurityUpdate('password')">Change Password</button>
                             </div>
                         </div>
                         <div class="profile-section-box footer-box-third">
                             <label class="settings-label">Rank Reset</label>
                             <div class="profile-btn-row-stacked">
-                                <button type="button" class="settings-btn rank-reset-action-btn" onclick="triggerCommanderSuicide('rank')">Reset rank</button>
-                                <button type="button" class="settings-btn rank-reset-action-btn" onclick="triggerCommanderSuicide('exile')">Leave active country</button>
+                                <button type="button" class="settings-btn rank-reset-action-btn" onclick="triggerCommanderSuicide('rank')">Secede Rank</button>
+                                <button type="button" class="settings-btn rank-reset-action-btn" onclick="triggerCommanderSuicide('exile')">Suicide out of Country</button>
                             </div>
                         </div>
                     </div>
@@ -2262,51 +2373,26 @@ function loadLore(type, customMount) {
             if (footerHost) footerHost.appendChild(profileFooter);
             applyProfileRankResetButtonState();
             return;
-        }
-        
-        // ==========================================================================
-        // 📚 FALLBACK LAYER 3: ORIGINAL CORE COMPILING LOOPS (NATIONS/SETTINGS ARRAYS)
-        // ==========================================================================
-        let printedHeaders = { northern: false, desert: false };
-        nationLore[type].forEach(item => {
+    }
+
+    // ==========================================================================
+    // ⚙️ SETTINGS LIST (index radial menu)
+    // ==========================================================================
+    if (type === 'settings' && nationLore.settings) {
+        nationLore.settings.forEach(item => {
             const containerBox = container;
             if (!containerBox) return;
-            
-            if (type === 'nations') {
-                if ((item.name === "Aesthene" || item.name === "Vaelior") && !printedHeaders.northern) {
-                    printedHeaders.northern = true;
-                    const headerDiv = document.createElement('div');
-                    headerDiv.className = 'scrollable-list-zone-title';
-                    headerDiv.innerText = "NORTHERN ALLIANCES";
-                    containerBox.appendChild(headerDiv);
-                }
-                else if ((item.name === "Solaria" || item.name === "Kaelen") && !printedHeaders.desert) {
-                    printedHeaders.desert = true;
-                    const headerDiv = document.createElement('div');
-                    headerDiv.className = 'scrollable-list-zone-title';
-                    headerDiv.innerText = "DESERT REALMS";
-                    containerBox.appendChild(headerDiv);
-                }
-            }
-            
+
             const div = document.createElement('div');
             div.className = subnavItemClass;
             div.innerText = item.name;
             div.onclick = () => {
                 markHubChannelTabActive(div, containerBox);
-                if (currentNarration) {
-                    if (!currentNarration.src.includes('background_music') && !currentNarration.isAmbientTrack) {
-                        currentNarration.pause();
-                        currentNarration.currentTime = 0;
-                        currentNarration = null;
-                    }
-                }
                 body.innerHTML = item.detail;
-                
-                // 💡 DYNAMIC RE-ASSIGNMENT: Headers reveal only when a specific list option item is clicked!
-                if (leftHeader) leftHeader.innerText = (type === 'settings') ? "SETTINGS" : "NATIONS";
+
+                if (leftHeader) leftHeader.innerText = "SETTINGS";
                 if (detailsHeader) detailsHeader.innerHTML = item.name.toUpperCase();
-                
+
                 if (type === 'settings') {
                     setTimeout(() => {
                         if (item.name === "Visuals & Interface") {
@@ -2347,45 +2433,11 @@ function loadLore(type, customMount) {
                         }
                     }, 20);
                 }
-                
-                if (item.audio && detailsHeader) {
-                    const playBtn = document.createElement('span');
-                    playBtn.innerHTML = "► ";
-                    playBtn.className = "narration-btn";
-                    playBtn.onclick = (e) => {
-                        e.stopPropagation();
-                        if (currentNarration && currentNarration.src.includes(item.audio) && !currentNarration.paused) {
-                            currentNarration.pause();
-                            currentNarration.currentTime = 0;
-                            playBtn.innerHTML = "► ";
-                            return;
-                        }
-                        if (currentNarration) {
-                            if (!currentNarration.src.includes('background_music') && !currentNarration.isAmbientTrack) {
-                                currentNarration.pause();
-                                currentNarration.currentTime = 0;
-                            }
-                            document.querySelectorAll('.narration-btn').forEach(btn => btn.innerHTML = "► ");
-                        }
-                        currentNarration = new Audio(item.audio);
-                        let activeBaseVolume = 0.7;
-                        if (item.name === "Aesthene") activeBaseVolume = 0.4;
-                        else if (item.name === "Vaelior") activeBaseVolume = 0.6;
-                        currentNarration.volume = activeBaseVolume * confirmedNarrationVol * confirmedMasterVol;
-                        playBtn.innerHTML = "■ ";
-                        currentNarration.play();
-                        currentNarration.onended = () => {
-                            playBtn.innerHTML = "► ";
-                            currentNarration = null;
-                        };
-                    };
-                    detailsHeader.prepend(playBtn);
-                }
             };
             containerBox.appendChild(div);
         });
 
-        if (type === 'settings' && container && container.firstElementChild) {
+        if (container && container.firstElementChild) {
             container.firstElementChild.click();
         }
     }
@@ -2402,22 +2454,6 @@ function updateSlotLabel(text) {
         console.error("COULD NOT FIND slot-label-display ID!");
     }
 }
-
-/* --- Block 20: Tactical Scroll Engine --- */
-function scrollNations(direction) {
-    const container = document.getElementById('lore-titles-container');
-    if (!container) return;
-
-    // MATH: 50px (button height) + 12px (margin) = 62px
-    const scrollAmount = 62; 
-
-    if (direction === 'up') {
-        container.scrollTop -= scrollAmount;
-    } else {
-        container.scrollTop += scrollAmount;
-    }
-}
-
 
 /* --- Block 21: Unified Settings Controller Engine --- */
 let savedSettings = { scale: 1, highContrast: false }; // Retained framework fallback variables
@@ -2762,8 +2798,8 @@ function revertSettings() {
         stagedMasterVol = 1.0; 
         confirmedMusicVol = 0.5; // Resets music channel baseline back to 50%
         stagedMusicVol = 0.5;
-        confirmedNarrationVol = 0.7; 
-        stagedNarrationVol = 0.7; 
+        confirmedNarrationVol = 1; 
+        stagedNarrationVol = 1; 
         confirmedSfxVol = 0.2; 
         stagedSfxVol = 0.2; 
         
@@ -2796,7 +2832,7 @@ function revertSettings() {
         const sfxSlider = document.getElementById('sfx-vol-slider'); 
         if (masterSlider) masterSlider.value = 1.0; 
         if (musicSlider) musicSlider.value = 0.5;
-        if (narrationSlider) narrationSlider.value = 0.7; 
+        if (narrationSlider) narrationSlider.value = 1; 
         if (sfxSlider) sfxSlider.value = 0.2; 
         
         const vCheck = document.getElementById('verbosity-toggle-check'); 
@@ -2970,13 +3006,6 @@ function toggleProfilePrivacy() {
     }
 } 
 
-function manageSecurityUpdate(type) { 
-    if (typeof playToggleLeverSFX === 'function') playToggleLeverSFX(); 
-    showAetherWarningModal(() => { 
-        console.log(`Security gateway access granted for: ${type}`); 
-    }); 
-} 
-
 /* --- Block 29: Archon Multi-Stage Sequential Account Warning Engine --- */
 
 // 1. THE DIALOG DATA SEQUENCING MATRICES
@@ -2996,7 +3025,7 @@ const suicideDialogSequences = {
         },
         {
             text: "You're really doing this, huh? Honestly, I thought you were better than this. crippling your countries strength because you couldn't fight on through until the end. You should be ashamed of yourself.",
-            buttons: [{ text: "Reset Rank", action: "commit" }, { text: "RETREAT", action: "close" }]
+            buttons: [{ text: "Secede Rank", action: "commit" }, { text: "RETREAT", action: "close" }]
         },
         {
             text: "Deserter.",
@@ -3042,7 +3071,7 @@ const suicideDialogSequences = {
         },
         {
             text: "Last chance...",
-            buttons: [{ text: "Suicide", action: "commit" }, { text: "OKAY, FINE", action: "close" }]
+            buttons: [{ text: "Suicide out of Country", action: "commit" }, { text: "OKAY, FINE", action: "close" }]
         },
         {
             text: "Your account has been removed from the active country and your player record was cleared.",
@@ -3560,18 +3589,18 @@ async function executeOutgoingMessageDispatch() {
     const bodyText = document.getElementById('msg-body-input-element').value.trim();
 
     if (activeWartimeRecipients.length === 0 || !topic || !bodyText) {
-        alert("Choose at least one recipient and fill in both subject and message.");
+        await showPortalAlert('Choose at least one recipient and fill in both subject and message.');
         return;
     }
 
     const sender = getMailboxApiUsername();
     if (!sender) {
-        alert('Log in with a registered commander on the game server (port 3000) to send messages.');
+        await showPortalAlert('Log in with a registered commander on the game server (port 3000) to send messages.');
         return;
     }
 
     if (!isMailboxApiAvailable()) {
-        alert('Messages require the Royal Armies server. Start it with node server.js and open http://localhost:3000');
+        await showPortalAlert('Messages require the Royal Armies server. Start it with node server.js and open http://localhost:3000', 'Server required');
         return;
     }
 
@@ -3588,11 +3617,11 @@ async function executeOutgoingMessageDispatch() {
         });
         const payload = await response.json();
         if (!response.ok || payload.status !== 'ok') {
-            alert(payload.message || 'Could not send message. Check recipients and try again.');
+            await showPortalAlert(payload.message || 'Could not send message. Check recipients and try again.', 'Message not sent');
             return;
         }
 
-        alert(`Message sent to: ${(payload.recipients || activeWartimeRecipients).join(', ')}`);
+        await showPortalAlert(`Message sent to: ${(payload.recipients || activeWartimeRecipients).join(', ')}`, 'Message sent');
         await fetchCommanderMailboxFromServer();
         clearMessageComposeContext();
         resetMessageComposeFields();
@@ -3600,7 +3629,7 @@ async function executeOutgoingMessageDispatch() {
         window.pendingMessagesFolder = 'sent';
         reloadMessagesPanelView();
     } catch (err) {
-        alert('Could not reach the message server. Is node server.js running?');
+        await showPortalAlert('Could not reach the message server. Is node server.js running?', 'Connection error');
     }
 }
 
@@ -3609,23 +3638,23 @@ async function commitMessageToDraftCache() {
     const bodyText = document.getElementById('msg-body-input-element').value.trim() || "";
 
     if (!getMailboxApiUsername()) {
-        alert('Log in with a registered commander to save drafts.');
+        await showPortalAlert('Log in with a registered commander to save drafts.');
         return;
     }
 
     if (!isMailboxApiAvailable()) {
-        alert('Drafts require the Royal Armies server (node server.js on port 3000).');
+        await showPortalAlert('Drafts require the Royal Armies server (node server.js on port 3000).', 'Server required');
         return;
     }
 
     const saved = await saveMailboxDraftOnServer([...activeWartimeRecipients], topic, bodyText);
     if (!saved) {
-        alert('Could not save draft.');
+        await showPortalAlert('Could not save draft.');
         return;
     }
 
     await fetchCommanderMailboxFromServer();
-    alert("Draft saved.");
+    await showPortalAlert('Draft saved.', 'Draft saved');
     window.pendingMessagesHubChannel = 'messages';
     window.pendingMessagesFolder = 'drafts';
     reloadMessagesPanelView();
@@ -3857,7 +3886,7 @@ async function executeMassDossierPurge(track) {
     await fetchCommanderMailboxFromServer();
     renderDossierPortalListHTML(track);
     persistMailboxAndSyncNav();
-    alert(`Purged ${idsToPurge.length} message(s) from your ${track} folder.`);
+    await showPortalAlert(`Purged ${idsToPurge.length} message(s) from your ${track} folder.`, 'Messages purged');
 }
 
 window.syncNavMailboxIndicators = syncNavMailboxIndicators;

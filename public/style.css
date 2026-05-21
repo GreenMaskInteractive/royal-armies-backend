@@ -1831,32 +1831,6 @@ div.slot-aura#aura-messages,
     left: 370px;
 }
 
-.narration-btn {
-    position: absolute !important;
-    
-    /* 1. POSITIONING: Adjusted to sit nicely in the left gutter of the details pane */
-    left: 20px !important; 
-    top: 50% !important;
-    transform: translateY(-50%) !important;
-
-    /* 2. STYLE: Cleaned up (No red border!) */
-    cursor: pointer !important;
-    color: #d4af37 !important; 
-    font-size: 1.4rem !important; 
-    z-index: 5000006 !important; /* Above the panes, below the close btn */
-    
-    display: inline-block !important;
-    opacity: 1 !important;
-    transition: color 0.3s, transform 0.2s;
-}
-
-.narration-btn:hover {
-    color: #ffffff;
-    transform: translateY(-50%) scale(1.2);
-    text-shadow: 0 0 10px #d4af37;
-}
-
-
 #slot-label-display { 
     position: absolute !important; 
     top: 49.5% !important; 
@@ -3029,30 +3003,6 @@ body #commander-penalty-overlay,
 .suicide-popup-body-text span {
     display: inline-block !important;
     max-width: 100% !important;
-}
-
-
-
-/* THE EMBEDDED SCROLL ZONE TITLE SEPARATORS */
-.scrollable-list-zone-title {
-    font-family: 'RoyalDetails', serif !important;
-    font-size: 0.72rem !important;
-    font-weight: bold !important;
-    color: #b89030 !important; /* Aged medieval gold accent color lines */
-    letter-spacing: 1.5px !important;
-    text-shadow: 1px 1px 2px #000 !important;
-    
-    /* Spacing metrics separate the categories neatly inside your sidebar scroll track */
-    padding: 12px 10px 6px 10px !important;
-    margin-top: 5px !important;
-    border-bottom: 1px solid rgba(184, 144, 48, 0.15) !important; /* Elegant subtle dividing line */
-    background: transparent !important;
-    pointer-events: none !important; /* Completely blocks player cursor clicks or highlights on headings */
-}
-
-/* Add a slight top margin adjustment to titles that follow your active lists */
-.scrollable-list-zone-title:not(:first-child) {
-    margin-top: 15px !important;
 }
 
 

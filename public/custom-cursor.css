@@ -1,4 +1,4 @@
-/* Royal Armies — custom finger cursor + fingertip click burst */
+/* Royal Armies — gauntlet pointer cursor + fingertip click burst */
 
 html.royal-armies-custom-cursor,
 html.royal-armies-custom-cursor body,
@@ -10,8 +10,8 @@ html.royal-armies-custom-cursor body * {
     position: fixed;
     left: 0;
     top: 0;
-    width: 32px;
-    height: 32px;
+    width: 56px;
+    height: 56px;
     margin: 0;
     padding: 0;
     pointer-events: none;
@@ -27,10 +27,9 @@ html.royal-armies-custom-cursor body * {
 
 #royal-armies-custom-cursor img {
     display: block;
-    width: 32px;
-    height: 32px;
-    image-rendering: pixelated;
-    image-rendering: crisp-edges;
+    width: 56px;
+    height: 56px;
+    image-rendering: auto;
     user-select: none;
     -webkit-user-drag: none;
     pointer-events: none;

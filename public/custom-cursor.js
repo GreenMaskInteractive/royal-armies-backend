@@ -1,12 +1,14 @@
 /**
- * Custom finger cursor (images/cursor.png) with a click burst at the fingertip hotspot.
+ * Custom gauntlet pointer (images/cursor.png) with a click burst at the index fingertip.
+ * Full-size source: images/gamecursor.png — rebuild via scripts/build-gamecursor.py
  */
 (function initRoyalArmiesCustomCursor() {
     'use strict';
 
     const CURSOR_IMAGE_SRC = 'images/cursor.png';
-    const FINGERTIP_HOTSPOT_X = 7;
-    const FINGERTIP_HOTSPOT_Y = 7;
+    const CURSOR_DISPLAY_PX = 56;
+    const FINGERTIP_HOTSPOT_X = 3;
+    const FINGERTIP_HOTSPOT_Y = 3;
     const ROOT_CLASS = 'royal-armies-custom-cursor';
 
     if (!document.body) {
@@ -22,8 +24,8 @@
 
     const cursorImage = document.createElement('img');
     cursorImage.src = CURSOR_IMAGE_SRC;
-    cursorImage.width = 32;
-    cursorImage.height = 32;
+    cursorImage.width = CURSOR_DISPLAY_PX;
+    cursorImage.height = CURSOR_DISPLAY_PX;
     cursorImage.alt = '';
     cursorImage.draggable = false;
     cursorImage.decoding = 'async';

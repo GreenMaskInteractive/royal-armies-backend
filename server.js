@@ -413,6 +413,30 @@ function findCommanderByUsernameOrEmail(identifier) {
     }) || null;
 }
 
+function findCommanderByUsername(username) {
+    const normalized = normalizeLedgerUsername(username).toLowerCase();
+    if (!normalized) return null;
+
+    const commanders = db.get('commanders').value() || [];
+    return commanders.find((entry) => {
+        if (!entry) return false;
+        return String(entry.username || '').trim().toLowerCase() === normalized;
+    }) || null;
+}
+
+function getPublicSiteOrigin(req) {
+    const forwardedProto = req.headers['x-forwarded-proto'];
+    const forwardedHost = req.headers['x-forwarded-host'];
+    if (forwardedProto && forwardedHost) {
+        const proto = String(forwardedProto).split(',')[0].trim();
+        const host = String(forwardedHost).split(',')[0].trim();
+        return `${proto}://${host}`;
+    }
+    const host = req.get('host');
+    const protocol = req.protocol || 'http';
+    return host ? `${protocol}://${host}` : 'https://royalarmies.com';
+}
+
 /* ==========================================
    NEXUS MODULE: SERVER CONFIGURATION
    ========================================== */
@@ -486,14 +510,64 @@ const sendWelcomeEmail = async (playerEmail, playerName, token) => {
 
         if (error) {
             console.error("❌ Resend Error:", error);
-            throw error;
+            throw error; 
         }
         console.log("📜 Verification Scroll Sent! ID:", data.id);
         return data;
     } catch (err) {
         console.error("❌ Fatal Post Office Failure:", err);
-        throw err;
+        throw err; 
     }
+};
+
+const PORTAL_PASSWORD_RESET_OK_MESSAGE =
+    'If that email matches your account, a password reset link has been sent. Check your inbox.';
+
+const sendPasswordResetEmail = async (req, commanderEmail, commanderUsername, resetToken) => {
+    const origin = getPublicSiteOrigin(req);
+    const resetLink = `${origin}/reset-password?token=${encodeURIComponent(resetToken)}`;
+    const { data, error } = await resend.emails.send({
+        from: 'Royal Armies <noreply@royalarmies.com>',
+        to: [commanderEmail],
+        subject: '📜 Password Reset: Royal Armies',
+        html: `
+            <div style="background:#000; color:#d4af37; padding:40px; text-align:center; border:2px solid #d4af37; font-family: Georgia, serif;">
+                <h1>COMMANDER ${String(commanderUsername).toUpperCase()}</h1>
+                <p style="font-style: italic;">Use the link below to set a new password for your Royal Armies account.</p>
+                <div style="margin:30px 0;">
+                    <a href="${resetLink}" style="background:#d4af37; color:#000; padding:15px 30px; text-decoration:none; font-weight:bold; text-transform:uppercase; display:inline-block;">
+                        Reset Password
+                    </a>
+                </div>
+                <p style="font-size:0.8rem; color:#888;">If the button does not work, copy and paste this link:<br>${resetLink}</p>
+            </div>`
+    });
+    if (error) throw error;
+    return data;
+};
+
+const sendEmailChangeVerificationEmail = async (req, newEmail, commanderUsername, emailChangeToken) => {
+    const origin = getPublicSiteOrigin(req);
+    const verifyLink = `${origin}/verify-email-change?token=${encodeURIComponent(emailChangeToken)}`;
+    const { data, error } = await resend.emails.send({
+        from: 'Royal Armies <noreply@royalarmies.com>',
+        to: [newEmail],
+        subject: '📜 Confirm Your New Email: Royal Armies',
+        html: `
+            <div style="background:#000; color:#d4af37; padding:40px; text-align:center; border:2px solid #d4af37; font-family: Georgia, serif;">
+                <h1>CONFIRM EMAIL CHANGE</h1>
+                <p style="font-style: italic;">Commander <strong>${String(commanderUsername).toUpperCase()}</strong> requested to update the account email to this address.</p>
+                <p>Click below to confirm. If you did not request this, ignore this message.</p>
+                <div style="margin:30px 0;">
+                    <a href="${verifyLink}" style="background:#d4af37; color:#000; padding:15px 30px; text-decoration:none; font-weight:bold; text-transform:uppercase; display:inline-block;">
+                        Confirm New Email
+                    </a>
+                </div>
+                <p style="font-size:0.8rem; color:#888;">If the button does not work, copy and paste this link:<br>${verifyLink}</p>
+            </div>`
+    });
+    if (error) throw error;
+    return data;
 };
 
 /* --- Section: API Route Handlers --- */
@@ -519,7 +593,7 @@ app.post('/register', async (req, res) => {
 
     if (emailTaken) {
         console.log(`[NEXUS] Registration Denied: ${email} already exists.`);
-        return res.status(400).json({
+        return res.status(400).json({ 
             status: 'error',
             message: 'This E-Mail is already registered. Contact accountsdept@royalarmies.com!'
         });
@@ -540,7 +614,7 @@ app.post('/register', async (req, res) => {
         const joinedAt = new Date().toISOString();
         console.log(`[NEXUS] Handshake Received: Creating ledger entry for ${username}`);
 
-        db.get('commanders').push({
+        db.get('commanders').push({ 
             username,
             email,
             password: hashedPassword,
@@ -615,38 +689,27 @@ app.post('/api/login', async (req, res) => {
 
 /* Block 9: Password Reset Request Dispatch */
 app.post('/request-reset', async (req, res) => {
-    const { email } = req.body;
+    const email = normalizeLedgerEmail(req.body?.email);
     console.log(`[NEXUS] Recovery Handshake: Request for ${email}`);
-    const commander = db.get('commanders').find({ email }).value();
+    const commander = findCommanderByUsernameOrEmail(email);
 
     if (!commander) {
-        console.log("⚠️ Recovery Denied: Email not in Ledger.");
-        return res.status(200).json({ status: "success" });
+        console.log('⚠️ Recovery Denied: Email not in Ledger.');
+        return res.status(200).json({ status: 'success' });
     }
 
     const resetToken = crypto.randomBytes(16).toString('hex');
-    db.get('commanders').find({ email }).assign({ resetToken }).write();
+    db.get('commanders')
+        .find({ username: commander.username })
+        .assign({ resetToken })
+        .write();
 
     try {
-        const resetLink = `https://royalarmies.com/reset-password?token=${resetToken}`;
-        await resend.emails.send({
-            from: 'Royal Armies <noreply@royalarmies.com>',
-            to: [email],
-            subject: '📜 Forgotten Password: Password Reset Request',
-            html: `
-                <div style="background:#000; color:#d4af37; padding:40px; text-align:center; border:2px solid #d4af37; font-family: Georgia, serif;">
-                    <h1>COMMANDER ${commander.username.toUpperCase()}</h1>
-                    <p style="font-style: italic;">Here is your password reset link below.</p>
-                    <div style="margin:30px 0;">
-                        <a href="${resetLink}" style="background:#d4af37; color:#000; padding:15px 30px; text-decoration:none; font-weight:bold; text-transform:uppercase; display:inline-block;">
-                            Reset Password
-                        </a>
-                    </div>
-                </div>`
-        });
-        res.status(200).json({ status: "success" });
+        await sendPasswordResetEmail(req, commander.email, commander.username, resetToken);
+        res.status(200).json({ status: 'success' });
     } catch (err) {
-        res.status(500).json({ status: "error" });
+        console.error('[NEXUS] Password reset email failed:', err);
+        res.status(500).json({ status: 'error' });
     }
 });
 
@@ -658,7 +721,7 @@ app.get('/reset-password', (req, res) => {
 /* Block 11: Final Password Reset & Token Destruction */
 app.post('/reset-password', async (req, res) => {
     const { token, newPassword } = req.body;
-
+    
     const commander = db.get('commanders').find({ resetToken: token }).value();
 
     if (!commander) {
@@ -668,11 +731,11 @@ app.post('/reset-password', async (req, res) => {
 
     try {
         const hashedPassword = await bcrypt.hash(newPassword, 10);
-
+        
         db.get('commanders')
           .find({ email: commander.email })
-          .assign({
-              password: hashedPassword,
+          .assign({ 
+              password: hashedPassword, 
               resetToken: null
           })
           .write();
@@ -699,6 +762,207 @@ app.get('/verify', (req, res) => {
     } else {
         res.status(400).send("<h1>❌ INVALID TOKEN</h1>");
     }
+});
+
+/* Block 12b: Portal account security (profile settings) */
+app.get('/api/portal/account/security-profile', (req, res) => {
+    const username = normalizeLedgerUsername(req.query?.username);
+    if (!username) {
+        return res.status(400).json({ status: 'error', message: 'Username is required.' });
+    }
+
+    const commander = findCommanderByUsername(username);
+    if (!commander) {
+        return res.status(404).json({ status: 'error', message: 'Commander not found.' });
+    }
+
+    res.status(200).json({
+        status: 'ok',
+        email: commander.email || '',
+        verified: !!commander.verified
+    });
+});
+
+app.post('/api/portal/account/request-password-reset', async (req, res) => {
+    const username = normalizeLedgerUsername(req.body?.username);
+    const email = normalizeLedgerEmail(req.body?.email);
+
+    if (!username || !email) {
+        return res.status(400).json({
+            status: 'error',
+            message: 'Username and signup email are required.'
+        });
+    }
+
+    const commander = findCommanderByUsername(username);
+    const emailMatches = commander && normalizeLedgerEmail(commander.email) === email;
+
+    if (!emailMatches) {
+        console.log(`[NEXUS] Portal password reset denied for ${username} (email mismatch or unknown).`);
+        return res.status(200).json({
+            status: 'ok',
+            message: PORTAL_PASSWORD_RESET_OK_MESSAGE
+        });
+    }
+
+    try {
+        const resetToken = crypto.randomBytes(16).toString('hex');
+        db.get('commanders')
+            .find({ username: commander.username })
+            .assign({ resetToken })
+            .write();
+
+        await sendPasswordResetEmail(req, commander.email, commander.username, resetToken);
+        console.log(`[NEXUS] Portal password reset email sent for ${commander.username}`);
+        res.status(200).json({
+            status: 'ok',
+            message: PORTAL_PASSWORD_RESET_OK_MESSAGE
+        });
+    } catch (err) {
+        console.error('[NEXUS] Portal password reset email failed:', err);
+        res.status(500).json({
+            status: 'error',
+            message: 'Could not send the reset email. Try again shortly.'
+        });
+    }
+});
+
+app.post('/api/portal/account/request-email-change', async (req, res) => {
+    const username = normalizeLedgerUsername(req.body?.username);
+    const password = String(req.body?.password || '');
+    const newEmail = normalizeLedgerEmail(req.body?.newEmail);
+
+    if (!username || !password || !newEmail) {
+        return res.status(400).json({
+            status: 'error',
+            message: 'Username, password, and new email are required.'
+        });
+    }
+
+    const commander = findCommanderByUsername(username);
+    if (!commander || !commander.password) {
+        return res.status(401).json({
+            status: 'error',
+            message: 'Invalid password or commander account.'
+        });
+    }
+
+    try {
+        const passwordMatches = await bcrypt.compare(password, commander.password);
+        if (!passwordMatches) {
+            return res.status(401).json({
+                status: 'error',
+                message: 'Invalid password or commander account.'
+            });
+        }
+
+        if (normalizeLedgerEmail(commander.email) === newEmail) {
+            return res.status(400).json({
+                status: 'error',
+                message: 'That email is already on your account.'
+            });
+        }
+
+        const commanders = db.get('commanders').value() || [];
+        const emailTaken = commanders.some((entry) => {
+            if (!entry) return false;
+            if (String(entry.username || '').trim().toLowerCase() === username.toLowerCase()) {
+                return false;
+            }
+            return normalizeLedgerEmail(entry.email) === newEmail;
+        });
+
+        if (emailTaken) {
+            return res.status(400).json({
+                status: 'error',
+                message: 'That email is already registered to another commander.'
+            });
+        }
+
+        const emailChangeToken = crypto.randomBytes(16).toString('hex');
+        db.get('commanders')
+            .find({ username: commander.username })
+            .assign({
+                pendingNewEmail: newEmail,
+                emailChangeToken,
+                emailChangeRequestedAt: new Date().toISOString()
+            })
+            .write();
+
+        await sendEmailChangeVerificationEmail(req, newEmail, commander.username, emailChangeToken);
+        console.log(`[NEXUS] Email change confirmation sent for ${commander.username} → ${newEmail}`);
+
+        res.status(200).json({
+            status: 'ok',
+            message: `A confirmation link was sent to ${newEmail}. Open that inbox and click the link to finish updating your email.`
+        });
+    } catch (err) {
+        console.error('[NEXUS] Email change request failed:', err);
+        res.status(500).json({
+            status: 'error',
+            message: 'Could not send the confirmation email. Try again shortly.'
+        });
+    }
+});
+
+app.get('/verify-email-change', (req, res) => {
+    const token = String(req.query?.token || '').trim();
+    const commander = db.get('commanders').find({ emailChangeToken: token }).value();
+
+    if (!commander || !commander.pendingNewEmail) {
+        return res.status(400).send(`
+            <body style="background:#000;color:#d4af37;font-family:Georgia,serif;text-align:center;padding:80px 20px;">
+                <h1>INVALID OR EXPIRED LINK</h1>
+                <p>This email change link is no longer valid.</p>
+                <a href="/main.html" style="color:#fff;">Return to portal</a>
+            </body>`);
+    }
+
+    const newEmail = normalizeLedgerEmail(commander.pendingNewEmail);
+    const commanders = db.get('commanders').value() || [];
+    const emailTaken = commanders.some((entry) => {
+        if (!entry) return false;
+        if (String(entry.username || '').trim().toLowerCase() === String(commander.username).trim().toLowerCase()) {
+            return false;
+        }
+        return normalizeLedgerEmail(entry.email) === newEmail;
+    });
+
+    if (emailTaken) {
+        db.get('commanders')
+            .find({ username: commander.username })
+            .assign({
+                pendingNewEmail: null,
+                emailChangeToken: null,
+                emailChangeRequestedAt: null
+            })
+            .write();
+
+        return res.status(400).send(`
+            <body style="background:#000;color:#d4af37;font-family:Georgia,serif;text-align:center;padding:80px 20px;">
+                <h1>EMAIL UNAVAILABLE</h1>
+                <p>That address is already registered to another commander. Request a new change from your profile.</p>
+                <a href="/main.html" style="color:#fff;">Return to portal</a>
+            </body>`);
+    }
+
+    db.get('commanders')
+        .find({ username: commander.username })
+        .assign({
+            email: newEmail,
+            pendingNewEmail: null,
+            emailChangeToken: null,
+            emailChangeRequestedAt: null
+        })
+        .write();
+
+    console.log(`[NEXUS] Email updated for ${commander.username} → ${newEmail}`);
+    res.send(`
+        <body style="background:#000;color:#d4af37;font-family:Georgia,serif;text-align:center;padding:80px 20px;">
+            <h1>EMAIL UPDATED</h1>
+            <p>Your account email for <strong>${commander.username}</strong> is now <strong>${newEmail}</strong>.</p>
+            <a href="/main.html" style="color:#fff;">Return to portal</a>
+        </body>`);
 });
 
 /* Block 13: Age Portal live metrics & presence */

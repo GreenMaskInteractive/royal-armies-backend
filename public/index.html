@@ -300,12 +300,10 @@
             <div class="lore-content-area">
 
                 <div class="lore-pane-left">
-                    <h4 class="pane-label">NATIONS</h4>
-                    <div class="scroll-arrow up" onclick="scrollNations('up')">▲</div>
+                    <h4 class="pane-label">COMMANDER</h4>
                     <div class="lore-titles-list" id="lore-titles-container">
-                        <!-- Buttons are injected here by JS -->
+                        <!-- Settings list injected by JS -->
                     </div>
-                    <div class="scroll-arrow down" onclick="scrollNations('down')">▼</div>
                 </div>
 
                 <div class="lore-pane-right">
@@ -319,15 +317,6 @@
 
             <div class="radial-slots-wrapper">
                 <div id="slot-label-display">Main menu</div>
-
-                <img src="images/lostmanuscripts.png" class="radial-slot" id="slot-manuscripts" onmouseover="updateSlotLabel('Manuscripts')" onmouseout="updateSlotLabel('Main menu')" onclick="loadLore('manuscripts')">
-                <div class="slot-aura" id="aura-manuscripts"></div>
-
-                <img src="images/letters.png" class="radial-slot" id="slot-letters" onmouseover="updateSlotLabel('Letters')" onmouseout="updateSlotLabel('Main menu')" onclick="loadLore('letters')">
-                <div class="slot-aura" id="aura-letters"></div>
-
-                <img src="images/historicalarchives.png" class="radial-slot" id="slot-archives" onmouseover="updateSlotLabel('Archives')" onmouseout="updateSlotLabel('Main menu')" onclick="loadLore('archives')">
-                <div class="slot-aura" id="aura-archives"></div>
 
                 <img src="images/messageicon.png" class="nav-icon" id="slot-messages"
                      onmouseover="updateSlotLabel('Messages')"
@@ -384,7 +373,7 @@
     <!-- Block 21: Global Credentials Modification Gateway -->
     <div id="commander-security-overlay" class="suicide-overlay-hidden" style="display: none !important;">
         <div class="suicide-popup-bezel">
-            <div class="suicide-popup-header" id="security-popup-header-title">🛡️ CRYPT KEY MODIFICATION</div>
+            <div class="suicide-popup-header" id="security-popup-header-title">🛡️ Account security</div>
             <div class="suicide-popup-body-text" id="security-popup-text-field"></div>
             <div class="suicide-popup-action-row" id="security-popup-btn-dock"></div>
         </div>
@@ -406,6 +395,7 @@
     <!-- --- Section: External Engine Scripts --- -->
 
     <!-- Block 23: Data Repository Scripts -->
+    <script src="portal-alerts.js"></script>
     <script src="rank-data.js"></script>
     <script src="unit-data.js"></script>
 

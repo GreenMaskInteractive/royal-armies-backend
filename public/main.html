@@ -78,7 +78,7 @@
                 <div class="nav-tab active" onclick="switchMainPortalView('portal', event)">Age Portal</div>
                 <div class="nav-tab" onclick="switchMainPortalView('leaderboards', event)">Leaderboards</div>
                 <div class="nav-tab" onclick="switchMainPortalView('chat', event)">Community Chat</div>
-                <div class="nav-tab" data-portal-view="discoveries" onclick="switchMainPortalView('discoveries', event)">Discoveries</div>
+                <div class="nav-tab" data-portal-view="lore" onclick="switchMainPortalView('lore', event)">Lore</div>
                 <div class="nav-tab" data-portal-view="royalty" onclick="switchMainPortalView('royalty', event)">Royalty</div>
                 <div class="nav-tab" data-portal-view="chronicles" onclick="switchMainPortalView('chronicles', event)">The Chronicles</div>
                 <div class="nav-tab" onclick="switchMainPortalView('roadmap', event)">Roadmap</div>
@@ -117,7 +117,7 @@
                 <span class="metric-glyph-icon">🌌</span>
                 <div class="metric-text-stack">
                     <span class="metric-label-title">Great Transition Countdown:</span>
-                    <span class="metric-live-data-value" id="metrics-transition-countdown-display">00d : 00h : 00m : 00s</span>
+                    <span class="metric-live-data-value" id="metrics-transition-countdown-display">-- : -- : -- : --</span>
                 </div>
             </div>
 
@@ -164,9 +164,9 @@
 
             <div class="portal-deployment-control-deck custom-centered-row-deck" id="deployment-master-deck-container">
 
-                <h3 class="deployment-deck-title" id="dynamic-age-status-header">Loading age status...</h3>
+                <h3 class="deployment-deck-title" id="dynamic-age-status-header">The Age has Yet to Arrive!</h3>
 
-                <div id="dynamic-age-sub-timer-display" class="timer-readout-default"></div>
+                <div id="dynamic-age-sub-timer-display" class="timer-readout-default">-- : -- : -- : --</div>
 
                 <div class="deployment-action-button-row">
                     <div class="action-btn-aura-housing aura-glow-red">
@@ -416,8 +416,10 @@
     <audio id="portal-background-theme-audio" loop preload="auto" playsinline>
         <source src="audio/archimedeslullaby.wav" type="audio/wav">
     </audio>
+    <audio id="portal-lore-narration-audio" preload="none" playsinline></audio>
 
     <!-- Block 10: Commander Hub + Shared RAGE Logic -->
+    <script src="portal-alerts.js"></script>
     <script src="rank-data.js"></script>
     <script src="script.js"></script>
     <script src="commander-hub.js"></script>
