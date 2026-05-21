@@ -85,7 +85,9 @@ function setDyslexiaFontEnabled(enabled) {
         detailsBody = getActiveSettingsBodyElement();
     }
     if (!detailsBody) {
-        detailsBody = document.getElementById('commander-hub-body') || document.getElementById('lore-details-body');
+        detailsBody = document.getElementById('portal-commander-hub-body')
+            || document.getElementById('commander-hub-body')
+            || document.getElementById('lore-details-body');
     }
     if (detailsBody) {
         detailsBody.classList.toggle('dyslexia-font', enabled);
@@ -2180,12 +2182,15 @@ function resolveLoreUIMount(customMount) {
 }
 
 function getActiveSettingsBodyElement() {
-    return document.getElementById('commander-hub-body')
+    return document.getElementById('portal-commander-hub-body')
+        || document.getElementById('commander-hub-body')
         || document.getElementById('lore-details-body');
 }
 
 function reloadProfilePanelView() {
-    if (document.getElementById('commander-hub-modal')?.classList.contains('is-visible')) {
+    const hubPage = document.getElementById('portal-commander-hub-page');
+    const hubModal = document.getElementById('commander-hub-modal');
+    if (hubPage || hubModal?.classList.contains('is-visible')) {
         if (typeof loadCommanderHubSection === 'function') loadCommanderHubSection('profile');
         return;
     }
@@ -2193,7 +2198,9 @@ function reloadProfilePanelView() {
 }
 
 function reloadMessagesPanelView() {
-    if (document.getElementById('commander-hub-modal')?.classList.contains('is-visible')) {
+    const hubPage = document.getElementById('portal-commander-hub-page');
+    const hubModal = document.getElementById('commander-hub-modal');
+    if (hubPage || hubModal?.classList.contains('is-visible')) {
         if (typeof loadCommanderHubSection === 'function') {
             window.pendingMessagesHubChannel = 'messages';
             window.pendingMessagesFolder = activeMessagesFolder || 'inbox';
@@ -2817,6 +2824,11 @@ function playLiveAudioPreview(type) {
 }
 
 function resolveSaveConfirmationHost() {
+    const hubPage = document.getElementById('portal-commander-hub-page');
+    if (hubPage) {
+        return hubPage;
+    }
+
     const hubModal = document.getElementById('commander-hub-modal');
     if (hubModal && hubModal.classList.contains('is-visible')) {
         return hubModal.querySelector('.commander-hub-dialog') || hubModal;
@@ -2963,8 +2975,9 @@ function saveSettings() {
         const savedProfile = persistProfileFieldsFromEditor();
         hasUnsavedChanges = false;
 
-        const hubModal = document.getElementById('commander-hub-modal');
-        if (savedProfile && hubModal?.classList.contains('commander-hub-profile-active') && typeof reloadProfilePanelView === 'function') {
+        const hubFrame = document.getElementById('portal-commander-hub-page')
+            || document.getElementById('commander-hub-modal');
+        if (savedProfile && hubFrame?.classList.contains('commander-hub-profile-active') && typeof reloadProfilePanelView === 'function') {
             reloadProfilePanelView();
         }
 

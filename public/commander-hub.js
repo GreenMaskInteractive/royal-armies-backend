@@ -3,6 +3,22 @@
    ========================================================================== */
 
 function getCommanderHubUIMount() {
+    const pageRoot = document.getElementById('portal-commander-hub-page');
+    if (pageRoot) {
+        return {
+            container: document.getElementById('portal-commander-hub-subnav'),
+            body: document.getElementById('portal-commander-hub-body'),
+            detailsHeader: document.getElementById('portal-commander-hub-section-title'),
+            leftHeader: document.getElementById('portal-commander-hub-subnav-label'),
+            modalFrame: pageRoot,
+            profileHeaderHost: document.getElementById('portal-commander-hub-profile-header'),
+            profileFooterHost: document.getElementById('portal-commander-hub-profile-footer-host'),
+            profileActiveClass: 'commander-hub-profile-active',
+            subnavItemClass: 'commander-hub-subnav-item',
+            hideSubnavOnProfile: true
+        };
+    }
+
     return {
         container: document.getElementById('commander-hub-subnav'),
         body: document.getElementById('commander-hub-body'),
@@ -15,6 +31,54 @@ function getCommanderHubUIMount() {
         subnavItemClass: 'commander-hub-subnav-item',
         hideSubnavOnProfile: true
     };
+}
+
+function isCommanderHubPortalPageActive() {
+    return Boolean(document.getElementById('portal-commander-hub-page'));
+}
+
+function isCommanderHubModalOpen() {
+    const modal = document.getElementById('commander-hub-modal');
+    return Boolean(modal && modal.classList.contains('is-visible'));
+}
+
+function isCommanderHubSurfaceActive() {
+    return isCommanderHubPortalPageActive() || isCommanderHubModalOpen();
+}
+
+function normalizeCommanderHubTabName(tabName) {
+    if (tabName === 'edit-profile') return 'profile';
+    return tabName || 'profile';
+}
+
+function openCommanderHubPortalPage(initialTab, clickEvent) {
+    if (clickEvent) clickEvent.stopPropagation();
+
+    const tab = normalizeCommanderHubTabName(initialTab);
+    window.activeCommanderHubPortalTab = tab;
+
+    if (typeof switchMainPortalView === 'function') {
+        switchMainPortalView('commander', clickEvent);
+    }
+}
+
+function teardownCommanderHubPortalView() {
+    if (typeof hasUnsavedChanges !== 'undefined' && hasUnsavedChanges && typeof revertSettings === 'function') {
+        revertSettings();
+    }
+
+    if (typeof hideSaveChangesConfirmation === 'function') {
+        hideSaveChangesConfirmation();
+    }
+
+    const pageRoot = document.getElementById('portal-commander-hub-page');
+    if (pageRoot) {
+        pageRoot.classList.remove(
+            'commander-hub-profile-active',
+            'commander-hub-settings-active',
+            'commander-hub-messages-active'
+        );
+    }
 }
 
 function syncCommanderHubPlayerFromStorage() {
@@ -30,6 +94,11 @@ function syncCommanderHubPlayerFromStorage() {
 }
 
 function openCommanderHubModal(initialTab, clickEvent) {
+    if (typeof isPortalMobileNavLayout === 'function' && isPortalMobileNavLayout()) {
+        openCommanderHubPortalPage(initialTab, clickEvent);
+        return;
+    }
+
     const modal = document.getElementById('commander-hub-modal');
     if (!modal) return;
 
@@ -57,6 +126,14 @@ function openCommanderHubMessagesInbox(clickEvent) {
 }
 
 function closeCommanderHubModal() {
+    if (isCommanderHubPortalPageActive()) {
+        teardownCommanderHubPortalView();
+        if (typeof switchMainPortalView === 'function') {
+            switchMainPortalView('portal', null);
+        }
+        return;
+    }
+
     if (typeof hasUnsavedChanges !== 'undefined' && hasUnsavedChanges && typeof revertSettings === 'function') {
         revertSettings();
     }
@@ -105,7 +182,8 @@ function setCommanderHubTopNavActive(tabName, clickEvent) {
 }
 
 function syncCommanderHubSettingsActionDeck(tabName) {
-    const deck = document.getElementById('commander-hub-settings-action-deck');
+    const deck = document.getElementById('portal-commander-hub-settings-action-deck')
+        || document.getElementById('commander-hub-settings-action-deck');
     if (!deck) return;
 
     const showSettingsDeck = tabName === 'settings';
@@ -113,18 +191,19 @@ function syncCommanderHubSettingsActionDeck(tabName) {
 }
 
 function syncCommanderHubModalSectionState(tabName) {
-    const modal = document.getElementById('commander-hub-modal');
-    if (!modal) return;
+    const frame = document.getElementById('portal-commander-hub-page')
+        || document.getElementById('commander-hub-modal');
+    if (!frame) return;
 
-    modal.classList.remove(
+    frame.classList.remove(
         'commander-hub-profile-active',
         'commander-hub-settings-active',
         'commander-hub-messages-active'
     );
 
-    if (tabName === 'profile') modal.classList.add('commander-hub-profile-active');
-    else if (tabName === 'settings') modal.classList.add('commander-hub-settings-active');
-    else if (tabName === 'messages') modal.classList.add('commander-hub-messages-active');
+    if (tabName === 'profile') frame.classList.add('commander-hub-profile-active');
+    else if (tabName === 'settings') frame.classList.add('commander-hub-settings-active');
+    else if (tabName === 'messages') frame.classList.add('commander-hub-messages-active');
 
     syncCommanderHubSettingsActionDeck(tabName);
 }
@@ -135,9 +214,84 @@ function loadCommanderHubSection(tabName, clickEvent) {
         return;
     }
 
-    setCommanderHubTopNavActive(tabName, clickEvent);
-    syncCommanderHubModalSectionState(tabName);
-    loadLore(tabName, getCommanderHubUIMount());
+    const resolvedTab = normalizeCommanderHubTabName(tabName);
+    window.activeCommanderHubPortalTab = resolvedTab;
+
+    setCommanderHubTopNavActive(resolvedTab, clickEvent);
+    syncCommanderHubModalSectionState(resolvedTab);
+    loadLore(resolvedTab, getCommanderHubUIMount());
+
+    if (isCommanderHubPortalPageActive() && typeof syncPortalMobileNavChrome === 'function') {
+        syncPortalMobileNavChrome('commander');
+    }
+}
+
+function buildCommanderHubTopTabMarkup(activeTab) {
+    const tabs = [
+        { id: 'profile', label: 'Profile' },
+        { id: 'messages', label: 'Messages' },
+        { id: 'settings', label: 'Settings' },
+    ];
+
+    return tabs.map((entry) => {
+        const isActive = activeTab === entry.id;
+        return `<button type="button" class="commander-hub-top-tab${isActive ? ' active' : ''}" data-hub-tab="${entry.id}" onclick="loadCommanderHubSection('${entry.id}', event)">${entry.label}</button>`;
+    }).join('');
+}
+
+function renderCommanderHubPortalCanvas(viewport, initialTab) {
+    if (!viewport) return;
+
+    const tab = normalizeCommanderHubTabName(initialTab || window.activeCommanderHubPortalTab);
+    window.activeCommanderHubPortalTab = tab;
+
+    viewport.innerHTML = `
+        <div id="portal-commander-hub-page" class="portal-commander-hub-page commander-hub-page-canvas" role="region" aria-label="Commander account">
+            <header class="portal-commander-hub-intro">
+                <h2 class="portal-commander-hub-title">My Commander</h2>
+                <p class="portal-commander-hub-subtitle">Manage your profile, messages, and account settings.</p>
+            </header>
+
+            <nav class="commander-hub-top-nav portal-commander-hub-top-nav" aria-label="Account sections">
+                <div class="commander-hub-top-nav-bg" aria-hidden="true"></div>
+                ${buildCommanderHubTopTabMarkup(tab)}
+            </nav>
+
+            <div class="portal-save-confirmation-toast" aria-live="polite" hidden></div>
+
+            <div class="commander-hub-body-frame portal-commander-hub-body-frame">
+                <aside class="commander-hub-subnav-column" id="portal-commander-hub-subnav-column">
+                    <h4 class="commander-hub-subnav-label" id="portal-commander-hub-subnav-label">CHANNELS</h4>
+                    <div class="commander-hub-subnav-list" id="portal-commander-hub-subnav"></div>
+                </aside>
+
+                <div class="commander-hub-content-pane portal-commander-hub-content-pane" id="portal-commander-hub-content-pane">
+                    <h4 class="commander-hub-section-title" id="portal-commander-hub-section-title"></h4>
+                    <div id="portal-commander-hub-profile-header" class="commander-hub-profile-header-host"></div>
+                    <div id="portal-commander-hub-body" class="commander-hub-body"></div>
+                    <div id="portal-commander-hub-profile-footer-host" class="commander-hub-profile-footer-host"></div>
+                    <div id="portal-commander-hub-settings-action-deck" class="commander-hub-settings-action-deck" hidden>
+                        <button type="button" class="confirm-btn" onclick="saveSettings()">Confirm Changes</button>
+                        <button type="button" class="revert-btn" onclick="revertSettings()">Revert to Defaults</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+
+    syncCommanderHubPlayerFromStorage();
+    if (typeof loadCommanderMailboxDossiersFromStorage === 'function') {
+        loadCommanderMailboxDossiersFromStorage();
+    }
+    if (typeof autoDetectPlayerLocale === 'function') autoDetectPlayerLocale();
+
+    loadCommanderHubSection(tab, null);
+}
+
+function hydrateCommanderHubPortalPage(initialTab) {
+    const viewport = document.getElementById('main-portal-dynamic-viewport');
+    if (!viewport) return;
+    renderCommanderHubPortalCanvas(viewport, initialTab);
 }
 
 function escapePublicProfileHtml(str) {
@@ -433,8 +587,13 @@ function handlePublicProfileCardEscapeKey(e) {
 }
 
 window.openCommanderHubModal = openCommanderHubModal;
+window.openCommanderHubPortalPage = openCommanderHubPortalPage;
 window.openCommanderHubMessagesInbox = openCommanderHubMessagesInbox;
 window.closeCommanderHubModal = closeCommanderHubModal;
 window.loadCommanderHubSection = loadCommanderHubSection;
+window.renderCommanderHubPortalCanvas = renderCommanderHubPortalCanvas;
+window.hydrateCommanderHubPortalPage = hydrateCommanderHubPortalPage;
+window.teardownCommanderHubPortalView = teardownCommanderHubPortalView;
+window.isCommanderHubPortalPageActive = isCommanderHubPortalPageActive;
 window.openPublicCommanderProfileCard = openPublicCommanderProfileCard;
 window.closePublicCommanderProfileCard = closePublicCommanderProfileCard;

@@ -4029,6 +4029,7 @@ body:not(.portal-guest-mode) #portal-deployment-guest-cta {
    ========================================================================== */
 
 .commander-hub-dialog > .portal-save-confirmation-toast,
+.portal-commander-hub-page > .portal-save-confirmation-toast,
 #lore-modal .lore-content-area > .portal-save-confirmation-toast,
 .portal-save-confirmation-toast {
     position: absolute !important;
@@ -5117,6 +5118,36 @@ body:not(.portal-guest-mode) #portal-deployment-guest-cta {
     overflow: visible !important;
 }
 
+.portal-commander-hub-page {
+    position: relative !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 14px !important;
+    box-sizing: border-box !important;
+}
+
+.portal-commander-hub-intro {
+    text-align: left !important;
+}
+
+.portal-commander-hub-title {
+    margin: 0 0 6px !important;
+    font-family: 'Cinzel', serif !important;
+    font-size: 1.35rem !important;
+    color: #ffd700 !important;
+    letter-spacing: 1px !important;
+}
+
+.portal-commander-hub-subtitle {
+    margin: 0 !important;
+    font-family: 'Segoe UI', sans-serif !important;
+    font-size: 0.82rem !important;
+    line-height: 1.45 !important;
+    color: rgba(241, 224, 172, 0.62) !important;
+}
+
 #lore-modal .lore-content-area {
     position: relative !important;
 }
@@ -5320,11 +5351,11 @@ body:not(.portal-guest-mode) #portal-deployment-guest-cta {
 }
 
 /* Settings: fill modal height; scroll only when content overflows */
-#commander-hub-modal.commander-hub-settings-active .commander-hub-content-pane {
+#commander-hub-modal.commander-hub-settings-active .commander-hub-content-pane, #portal-commander-hub-page.commander-hub-settings-active .commander-hub-content-pane {
     min-height: 0 !important;
 }
 
-#commander-hub-modal.commander-hub-settings-active .commander-hub-body {
+#commander-hub-modal.commander-hub-settings-active .commander-hub-body, #portal-commander-hub-page.commander-hub-settings-active .commander-hub-body {
     display: flex !important;
     flex-direction: column !important;
     flex: 1 1 auto !important;
@@ -5332,7 +5363,7 @@ body:not(.portal-guest-mode) #portal-deployment-guest-cta {
     overflow: hidden !important;
 }
 
-#commander-hub-modal.commander-hub-settings-active .commander-hub-body > .settings-scroll-wrapper {
+#commander-hub-modal.commander-hub-settings-active .commander-hub-body > .settings-scroll-wrapper, #portal-commander-hub-page.commander-hub-settings-active .commander-hub-body > .settings-scroll-wrapper {
     flex: 1 1 auto !important;
     min-height: 0 !important;
     height: auto !important;
@@ -5340,30 +5371,30 @@ body:not(.portal-guest-mode) #portal-deployment-guest-cta {
     overflow-y: auto !important;
 }
 
-#commander-hub-modal.commander-hub-settings-active .commander-hub-body .settings-controls {
+#commander-hub-modal.commander-hub-settings-active .commander-hub-body .settings-controls, #portal-commander-hub-page.commander-hub-settings-active .commander-hub-body .settings-controls {
     display: none !important;
 }
 
-#commander-hub-modal.commander-hub-messages-active .commander-hub-body {
+#commander-hub-modal.commander-hub-messages-active .commander-hub-body, #portal-commander-hub-page.commander-hub-messages-active .commander-hub-body {
     display: flex !important;
     flex-direction: column !important;
     overflow: hidden !important;
 }
 
-#commander-hub-modal.commander-hub-messages-active .message-workspace-canvas {
+#commander-hub-modal.commander-hub-messages-active .message-workspace-canvas, #portal-commander-hub-page.commander-hub-messages-active .message-workspace-canvas {
     flex: 1 1 auto !important;
     min-height: 0 !important;
     height: auto !important;
 }
 
-#commander-hub-modal .message-mailbox-canvas {
+#commander-hub-modal .message-mailbox-canvas, #portal-commander-hub-page .message-mailbox-canvas {
     display: flex !important;
     flex-direction: column !important;
     gap: 0 !important;
     min-height: 0 !important;
 }
 
-#commander-hub-modal .msg-folder-tab-bar {
+#commander-hub-modal .msg-folder-tab-bar, #portal-commander-hub-page .msg-folder-tab-bar {
     display: flex !important;
     flex-direction: row !important;
     align-items: stretch !important;
@@ -5374,7 +5405,7 @@ body:not(.portal-guest-mode) #portal-deployment-guest-cta {
     padding: 0 4px !important;
 }
 
-#commander-hub-modal .msg-folder-tab {
+#commander-hub-modal .msg-folder-tab, #portal-commander-hub-page .msg-folder-tab {
     flex: 1 1 0 !important;
     min-width: 0 !important;
     padding: 8px 12px !important;
@@ -5393,39 +5424,39 @@ body:not(.portal-guest-mode) #portal-deployment-guest-cta {
     transition: color 0.15s ease, border-color 0.15s ease, background 0.15s ease !important;
 }
 
-#commander-hub-modal .msg-folder-tab:hover {
+#commander-hub-modal .msg-folder-tab:hover, #portal-commander-hub-page .msg-folder-tab:hover {
     color: #f1e0ac !important;
     background: rgba(43, 36, 26, 0.45) !important;
 }
 
-#commander-hub-modal .msg-folder-tab.active {
+#commander-hub-modal .msg-folder-tab.active, #portal-commander-hub-page .msg-folder-tab.active {
     color: #f1e0ac !important;
     border-bottom-color: #c9a227 !important;
     background: rgba(43, 36, 26, 0.65) !important;
 }
 
-#commander-hub-modal .msg-folder-panel {
+#commander-hub-modal .msg-folder-panel, #portal-commander-hub-page .msg-folder-panel {
     display: flex !important;
     flex-direction: column !important;
     flex: 1 1 auto !important;
     min-height: 0 !important;
 }
 
-#commander-hub-modal .msg-folder-panel-hidden {
+#commander-hub-modal .msg-folder-panel-hidden, #portal-commander-hub-page .msg-folder-panel-hidden {
     display: none !important;
 }
 
-#commander-hub-modal .msg-folder-panel-active .msg-portal-scroll-bin {
+#commander-hub-modal .msg-folder-panel-active .msg-portal-scroll-bin, #portal-commander-hub-page .msg-folder-panel-active .msg-portal-scroll-bin {
     flex: 1 1 auto !important;
     min-height: 0 !important;
 }
 
-#commander-hub-modal.commander-hub-messages-active .message-compose-canvas {
+#commander-hub-modal.commander-hub-messages-active .message-compose-canvas, #portal-commander-hub-page.commander-hub-messages-active .message-compose-canvas {
     height: 100% !important;
     max-height: 100% !important;
 }
 
-#commander-hub-modal .msg-compose-context-body {
+#commander-hub-modal .msg-compose-context-body, #portal-commander-hub-page .msg-compose-context-body {
     max-height: 110px !important;
 }
 
@@ -5435,51 +5466,56 @@ body:not(.portal-guest-mode) #portal-deployment-guest-cta {
 }
 
 /* Profile layout inside commander hub */
-#commander-hub-modal.commander-hub-profile-active .commander-hub-subnav-column {
+#commander-hub-modal.commander-hub-profile-active .commander-hub-subnav-column, #portal-commander-hub-page.commander-hub-profile-active .commander-hub-subnav-column {
     display: none !important;
 }
 
-#commander-hub-modal.commander-hub-profile-active .commander-hub-body-frame {
+#commander-hub-modal.commander-hub-profile-active .commander-hub-body-frame, #portal-commander-hub-page.commander-hub-profile-active .commander-hub-body-frame {
     padding-top: 20px !important;
 }
 
-#commander-hub-modal.commander-hub-profile-active .commander-hub-section-title {
+#commander-hub-modal.commander-hub-profile-active .commander-hub-section-title, #portal-commander-hub-page.commander-hub-profile-active .commander-hub-section-title {
     display: none !important;
 }
 
-#commander-hub-modal.commander-hub-profile-active .profile-fullscreen-header-card {
+#commander-hub-modal.commander-hub-profile-active .profile-fullscreen-header-card, #portal-commander-hub-page.commander-hub-profile-active .profile-fullscreen-header-card {
     width: 100% !important;
     margin-bottom: 12px !important;
 }
 
 #commander-hub-modal.commander-hub-profile-active .profile-fullscreen-split-row,
-#commander-hub-modal.commander-hub-profile-active .profile-fullscreen-footer-deck {
+#portal-commander-hub-page.commander-hub-profile-active .profile-fullscreen-split-row,
+#commander-hub-modal.commander-hub-profile-active .profile-fullscreen-footer-deck,
+#portal-commander-hub-page.commander-hub-profile-active .profile-fullscreen-footer-deck {
     width: 100% !important;
 }
 
-#commander-hub-modal.commander-hub-profile-active .settings-scroll-wrapper.profile-fullscreen-canvas {
+#commander-hub-modal.commander-hub-profile-active .settings-scroll-wrapper.profile-fullscreen-canvas, #portal-commander-hub-page.commander-hub-profile-active .settings-scroll-wrapper.profile-fullscreen-canvas {
     max-height: none !important;
     overflow: visible !important;
 }
 
-#commander-hub-modal .message-workspace-canvas {
+#commander-hub-modal .message-workspace-canvas, #portal-commander-hub-page .message-workspace-canvas {
     height: 100% !important;
     min-height: 420px !important;
 }
 
-#commander-hub-modal #msg-directory-floating-drawer {
+#commander-hub-modal #msg-directory-floating-drawer, #portal-commander-hub-page #msg-directory-floating-drawer {
     z-index: 300001 !important;
 }
 
 #commander-hub-modal .msg-directory-drawer-body > .drawer-category-scroll-bin,
+#portal-commander-hub-page .msg-directory-drawer-body > .drawer-category-scroll-bin,
 #commander-hub-modal .msg-directory-drawer-body > #drawer-main-category-view,
-#commander-hub-modal .msg-directory-drawer-body > #drawer-drilldown-category-view {
+#portal-commander-hub-page .msg-directory-drawer-body > #drawer-main-category-view,
+#commander-hub-modal .msg-directory-drawer-body > #drawer-drilldown-category-view,
+#portal-commander-hub-page .msg-directory-drawer-body > #drawer-drilldown-category-view {
     justify-content: flex-start !important;
     align-content: flex-start !important;
 }
 
 /* Profile: bio field uses bordered frame art directly (no white inner panel) */
-#commander-hub-modal .bio-bezel-frame-wrapper {
+#commander-hub-modal .bio-bezel-frame-wrapper , #portal-commander-hub-page .bio-bezel-frame-wrapper {
     background: none !important;
     padding: 0 !important;
     box-shadow: none !important;
@@ -5487,7 +5523,7 @@ body:not(.portal-guest-mode) #portal-deployment-guest-cta {
     min-height: 0 !important;
 }
 
-#commander-hub-modal #profile-bio-input {
+#commander-hub-modal #profile-bio-input , #portal-commander-hub-page #profile-bio-input {
     display: block !important;
     width: 100% !important;
     min-height: 112px !important;
@@ -5512,34 +5548,47 @@ body:not(.portal-guest-mode) #portal-deployment-guest-cta {
     margin: 0 !important;
 }
 
-#commander-hub-modal #profile-bio-input::placeholder {
+#commander-hub-modal #profile-bio-input::placeholder , #portal-commander-hub-page #profile-bio-input::placeholder {
     color: rgba(241, 224, 172, 0.45) !important;
 }
 
 /* Profile: justified copy alignment */
 #commander-hub-modal .profile-fullscreen-header-card,
+#portal-commander-hub-page .profile-fullscreen-header-card,
 #commander-hub-modal .profile-header-identity-group,
+#portal-commander-hub-page .profile-header-identity-group,
 #commander-hub-modal .profile-identity-sub-row,
+#portal-commander-hub-page .profile-identity-sub-row,
 #commander-hub-modal .profile-fullscreen-canvas,
+#portal-commander-hub-page .profile-fullscreen-canvas,
 #commander-hub-modal .profile-section-box,
+#portal-commander-hub-page .profile-section-box,
 #commander-hub-modal .profile-section-box label,
+#portal-commander-hub-page .profile-section-box label,
 #commander-hub-modal .profile-field-row,
+#portal-commander-hub-page .profile-field-row,
 #commander-hub-modal .toggle-label-text,
+#portal-commander-hub-page .toggle-label-text,
 #commander-hub-modal .empty-roster-txt,
+#portal-commander-hub-page .empty-roster-txt,
 #commander-hub-modal .alliance-capsule-badge,
-#commander-hub-modal .capsule-username-text {
+#portal-commander-hub-page .alliance-capsule-badge,
+#commander-hub-modal .capsule-username-text , #portal-commander-hub-page .capsule-username-text {
     text-align: justify !important;
     text-justify: inter-word !important;
 }
 
 #commander-hub-modal .profile-identity-title-row,
+#portal-commander-hub-page .profile-identity-title-row,
 #commander-hub-modal .profile-main-name,
+#portal-commander-hub-page .profile-main-name,
 #commander-hub-modal .membership-badge,
-#commander-hub-modal .settings-label {
+#portal-commander-hub-page .membership-badge,
+#commander-hub-modal .settings-label , #portal-commander-hub-page .settings-label {
     text-align: left !important;
 }
 
-#commander-hub-modal .profile-fullscreen-header-card {
+#commander-hub-modal .profile-fullscreen-header-card , #portal-commander-hub-page .profile-fullscreen-header-card {
     width: 100% !important;
     max-width: 100% !important;
     min-width: 0 !important;
@@ -5577,45 +5626,56 @@ body:not(.portal-guest-mode) #portal-deployment-guest-cta {
 
 /* Profile: themed scrollbar */
 #commander-hub-modal.commander-hub-profile-active .commander-hub-body,
+#portal-commander-hub-page.commander-hub-profile-active .commander-hub-body,
 #commander-hub-modal.commander-hub-profile-active .settings-scroll-wrapper.profile-fullscreen-canvas,
-#commander-hub-modal.commander-hub-profile-active .compact-grid-scroll-track {
+#portal-commander-hub-page.commander-hub-profile-active .settings-scroll-wrapper.profile-fullscreen-canvas,
+#commander-hub-modal.commander-hub-profile-active .compact-grid-scroll-track , #portal-commander-hub-page.commander-hub-profile-active .compact-grid-scroll-track {
     scrollbar-width: thin !important;
     scrollbar-color: #9a7a32 rgba(14, 11, 8, 0.85) !important;
 }
 
 #commander-hub-modal.commander-hub-profile-active .commander-hub-body::-webkit-scrollbar,
+#portal-commander-hub-page.commander-hub-profile-active .commander-hub-body::-webkit-scrollbar,
 #commander-hub-modal.commander-hub-profile-active .settings-scroll-wrapper.profile-fullscreen-canvas::-webkit-scrollbar,
-#commander-hub-modal.commander-hub-profile-active .compact-grid-scroll-track::-webkit-scrollbar {
+#portal-commander-hub-page.commander-hub-profile-active .settings-scroll-wrapper.profile-fullscreen-canvas::-webkit-scrollbar,
+#commander-hub-modal.commander-hub-profile-active .compact-grid-scroll-track::-webkit-scrollbar , #portal-commander-hub-page.commander-hub-profile-active .compact-grid-scroll-track::-webkit-scrollbar {
     width: 9px !important;
     height: 9px !important;
     display: block !important;
 }
 
 #commander-hub-modal.commander-hub-profile-active .commander-hub-body::-webkit-scrollbar-track,
+#portal-commander-hub-page.commander-hub-profile-active .commander-hub-body::-webkit-scrollbar-track,
 #commander-hub-modal.commander-hub-profile-active .settings-scroll-wrapper.profile-fullscreen-canvas::-webkit-scrollbar-track,
-#commander-hub-modal.commander-hub-profile-active .compact-grid-scroll-track::-webkit-scrollbar-track {
+#portal-commander-hub-page.commander-hub-profile-active .settings-scroll-wrapper.profile-fullscreen-canvas::-webkit-scrollbar-track,
+#commander-hub-modal.commander-hub-profile-active .compact-grid-scroll-track::-webkit-scrollbar-track , #portal-commander-hub-page.commander-hub-profile-active .compact-grid-scroll-track::-webkit-scrollbar-track {
     background: rgba(10, 8, 6, 0.88) !important;
     border-radius: 4px !important;
     border: 1px solid rgba(184, 144, 48, 0.12) !important;
 }
 
 #commander-hub-modal.commander-hub-profile-active .commander-hub-body::-webkit-scrollbar-thumb,
+#portal-commander-hub-page.commander-hub-profile-active .commander-hub-body::-webkit-scrollbar-thumb,
 #commander-hub-modal.commander-hub-profile-active .settings-scroll-wrapper.profile-fullscreen-canvas::-webkit-scrollbar-thumb,
-#commander-hub-modal.commander-hub-profile-active .compact-grid-scroll-track::-webkit-scrollbar-thumb {
+#portal-commander-hub-page.commander-hub-profile-active .settings-scroll-wrapper.profile-fullscreen-canvas::-webkit-scrollbar-thumb,
+#commander-hub-modal.commander-hub-profile-active .compact-grid-scroll-track::-webkit-scrollbar-thumb , #portal-commander-hub-page.commander-hub-profile-active .compact-grid-scroll-track::-webkit-scrollbar-thumb {
     background: linear-gradient(180deg, #c5a059 0%, #7a5f24 100%) !important;
     border-radius: 4px !important;
     border: 1px solid rgba(255, 215, 0, 0.22) !important;
 }
 
 #commander-hub-modal.commander-hub-profile-active .commander-hub-body::-webkit-scrollbar-thumb:hover,
+#portal-commander-hub-page.commander-hub-profile-active .commander-hub-body::-webkit-scrollbar-thumb:hover,
 #commander-hub-modal.commander-hub-profile-active .settings-scroll-wrapper.profile-fullscreen-canvas::-webkit-scrollbar-thumb:hover,
-#commander-hub-modal.commander-hub-profile-active .compact-grid-scroll-track::-webkit-scrollbar-thumb:hover {
+#portal-commander-hub-page.commander-hub-profile-active .settings-scroll-wrapper.profile-fullscreen-canvas::-webkit-scrollbar-thumb:hover,
+#commander-hub-modal.commander-hub-profile-active .compact-grid-scroll-track::-webkit-scrollbar-thumb:hover , #portal-commander-hub-page.commander-hub-profile-active .compact-grid-scroll-track::-webkit-scrollbar-thumb:hover {
     background: linear-gradient(180deg, #ffd700 0%, #9a7a32 100%) !important;
 }
 
 /* Rank reset controls locked until enrolled in an active Age round */
 #commander-hub-modal .rank-reset-action-btn.rank-reset-disabled,
-#commander-hub-modal .rank-reset-action-btn:disabled {
+#portal-commander-hub-page .rank-reset-action-btn.rank-reset-disabled,
+#commander-hub-modal .rank-reset-action-btn:disabled , #portal-commander-hub-page .rank-reset-action-btn:disabled {
     opacity: 0.38 !important;
     filter: grayscale(0.85) !important;
     cursor: not-allowed !important;
@@ -5628,20 +5688,20 @@ body:not(.portal-guest-mode) #portal-deployment-guest-cta {
 }
 
 /* Messages / Settings channel list scrollbar */
-#commander-hub-modal .commander-hub-subnav-list {
+#commander-hub-modal .commander-hub-subnav-list , #portal-commander-hub-page .commander-hub-subnav-list {
     scrollbar-width: thin !important;
     scrollbar-color: #9a7a32 rgba(14, 11, 8, 0.85) !important;
 }
 
-#commander-hub-modal .commander-hub-subnav-list::-webkit-scrollbar {
+#commander-hub-modal .commander-hub-subnav-list::-webkit-scrollbar , #portal-commander-hub-page .commander-hub-subnav-list::-webkit-scrollbar {
     width: 7px !important;
 }
 
-#commander-hub-modal .commander-hub-subnav-list::-webkit-scrollbar-track {
+#commander-hub-modal .commander-hub-subnav-list::-webkit-scrollbar-track , #portal-commander-hub-page .commander-hub-subnav-list::-webkit-scrollbar-track {
     background: rgba(10, 8, 6, 0.75) !important;
 }
 
-#commander-hub-modal .commander-hub-subnav-list::-webkit-scrollbar-thumb {
+#commander-hub-modal .commander-hub-subnav-list::-webkit-scrollbar-thumb , #portal-commander-hub-page .commander-hub-subnav-list::-webkit-scrollbar-thumb {
     background: linear-gradient(180deg, #b89030 0%, #6e5420 100%) !important;
     border-radius: 3px !important;
 }

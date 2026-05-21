@@ -344,6 +344,76 @@ body {
         transform: none !important;
     }
 
+    #commander-hub-modal.commander-hub-overlay {
+        display: none !important;
+        visibility: hidden !important;
+        pointer-events: none !important;
+    }
+
+    .portal-commander-hub-page {
+        width: 100% !important;
+        max-width: 100% !important;
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 12px !important;
+        box-sizing: border-box !important;
+        padding: 4px 0 20px !important;
+        min-height: 0 !important;
+    }
+
+    .portal-commander-hub-intro {
+        text-align: left !important;
+        padding: 0 2px 4px !important;
+        border-bottom: 1px solid rgba(184, 144, 48, 0.22) !important;
+        margin-bottom: 2px !important;
+    }
+
+    .portal-commander-hub-title {
+        margin: 0 0 6px !important;
+        font-family: 'Cinzel', serif !important;
+        font-size: 1.15rem !important;
+        color: #ffd700 !important;
+        letter-spacing: 1px !important;
+    }
+
+    .portal-commander-hub-subtitle {
+        margin: 0 !important;
+        font-family: 'Segoe UI', sans-serif !important;
+        font-size: 0.78rem !important;
+        line-height: 1.45 !important;
+        color: rgba(241, 224, 172, 0.62) !important;
+    }
+
+    .portal-commander-hub-page .commander-hub-top-nav {
+        position: relative !important;
+        width: 100% !important;
+    }
+
+    .portal-commander-hub-page .commander-hub-body-frame {
+        flex: 1 1 auto !important;
+        min-height: 0 !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        padding: 18px 14px 16px !important;
+    }
+
+    .portal-commander-hub-page .commander-hub-body {
+        min-height: 0 !important;
+        max-height: none !important;
+    }
+
+    .portal-commander-hub-page .message-workspace-canvas {
+        min-height: 280px !important;
+        height: auto !important;
+    }
+
+    .portal-commander-hub-page > .portal-save-confirmation-toast {
+        position: sticky !important;
+        bottom: 8px !important;
+        left: 8px !important;
+        z-index: 6 !important;
+    }
+
     .commander-hub-overlay {
         padding: 10px !important;
         align-items: flex-end !important;
@@ -356,12 +426,14 @@ body {
         max-height: 92dvh !important;
     }
 
-    .commander-hub-body-frame {
+    .commander-hub-body-frame,
+    .portal-commander-hub-body-frame {
         flex-direction: column !important;
         min-height: 0 !important;
     }
 
-    .commander-hub-subnav-column {
+    .commander-hub-subnav-column,
+    .portal-commander-hub-page .commander-hub-subnav-column {
         width: 100% !important;
         max-width: 100% !important;
         flex-shrink: 0 !important;
@@ -370,7 +442,8 @@ body {
         padding-bottom: 8px !important;
     }
 
-    .commander-hub-subnav-list {
+    .commander-hub-subnav-list,
+    .portal-commander-hub-page .commander-hub-subnav-list {
         flex-direction: row !important;
         flex-wrap: nowrap !important;
         overflow-x: auto !important;
@@ -1148,7 +1221,8 @@ body {
         padding: 16px 8px !important;
     }
 
-    .commander-hub-top-nav {
+    .commander-hub-top-nav,
+    .portal-commander-hub-page .commander-hub-top-nav {
         height: auto !important;
         min-height: 56px !important;
         padding: 8px 12px !important;
@@ -1156,7 +1230,8 @@ body {
         flex-wrap: wrap !important;
     }
 
-    .commander-hub-top-tab {
+    .commander-hub-top-tab,
+    .portal-commander-hub-page .commander-hub-top-tab {
         font-size: 0.82rem !important;
         padding: 10px 12px !important;
         flex: 1 1 auto !important;
@@ -1165,6 +1240,13 @@ body {
     .commander-hub-close-btn {
         top: 4px !important;
         right: 4px !important;
+    }
+
+    #main-portal-dynamic-viewport:has(.portal-commander-hub-page) {
+        width: 100% !important;
+        max-width: 100% !important;
+        padding-left: 0 !important;
+        padding-right: 0 !important;
     }
 
     .profile-identity-title-row {

@@ -134,7 +134,7 @@ function initializeServerAgeClockTickerCountdown() {
 let activeMainPortalView = 'portal';
 
 const PORTAL_PREVIEW_ONLY_VIEWS = ['royalty', 'chronicles'];
-const PORTAL_GUEST_LOCKED_VIEWS = ['chat', 'lore', 'royalty', 'chronicles'];
+const PORTAL_GUEST_LOCKED_VIEWS = ['chat', 'lore', 'royalty', 'chronicles', 'commander'];
 
 function isPortalNavViewAccessible(viewName) {
     if (!viewName) return true;
@@ -252,6 +252,13 @@ const PORTAL_MOBILE_NAV_VIEW_LABELS = {
     royalty: 'Royalty',
     chronicles: 'The Chronicles',
     roadmap: 'Roadmap',
+    settings: 'Settings',
+    commander: 'My Commander'
+};
+
+const PORTAL_COMMANDER_HUB_TAB_LABELS = {
+    profile: 'Edit Profile',
+    messages: 'Messages',
     settings: 'Settings'
 };
 
@@ -432,17 +439,31 @@ function portalMobileNavCommanderAction(action, event) {
             }
             break;
         case 'edit-profile':
-            if (typeof openCommanderHubModal === 'function') {
+            if (typeof isPortalMobileNavLayout === 'function' && isPortalMobileNavLayout()) {
+                if (typeof openCommanderHubPortalPage === 'function') {
+                    openCommanderHubPortalPage('profile', event);
+                }
+            } else if (typeof openCommanderHubModal === 'function') {
                 openCommanderHubModal('profile', event);
             }
             break;
         case 'messages':
-            if (typeof openCommanderHubMessagesInbox === 'function') {
+            if (typeof isPortalMobileNavLayout === 'function' && isPortalMobileNavLayout()) {
+                window.pendingMessagesHubChannel = 'messages';
+                window.pendingMessagesFolder = 'inbox';
+                if (typeof openCommanderHubPortalPage === 'function') {
+                    openCommanderHubPortalPage('messages', event);
+                }
+            } else if (typeof openCommanderHubMessagesInbox === 'function') {
                 openCommanderHubMessagesInbox(event);
             }
             break;
         case 'settings':
-            if (typeof openCommanderHubModal === 'function') {
+            if (typeof isPortalMobileNavLayout === 'function' && isPortalMobileNavLayout()) {
+                if (typeof openCommanderHubPortalPage === 'function') {
+                    openCommanderHubPortalPage('settings', event);
+                }
+            } else if (typeof openCommanderHubModal === 'function') {
                 openCommanderHubModal('settings', event);
             }
             break;
@@ -461,7 +482,11 @@ function portalMobileNavAuthAction(event) {
 
 function syncPortalMobileNavChrome(viewName) {
     const resolved = viewName || activeMainPortalView || 'portal';
-    const label = PORTAL_MOBILE_NAV_VIEW_LABELS[resolved] || PORTAL_MOBILE_NAV_VIEW_LABELS.portal;
+    let label = PORTAL_MOBILE_NAV_VIEW_LABELS[resolved] || PORTAL_MOBILE_NAV_VIEW_LABELS.portal;
+    if (resolved === 'commander') {
+        const tab = window.activeCommanderHubPortalTab || 'profile';
+        label = PORTAL_COMMANDER_HUB_TAB_LABELS[tab] || PORTAL_MOBILE_NAV_VIEW_LABELS.commander;
+    }
     const labelEl = document.getElementById('portal-mobile-nav-current-label');
     if (labelEl) labelEl.textContent = label;
 
@@ -623,6 +648,12 @@ function switchMainPortalView(viewName, clickEvent, chatChannelKey) {
         return;
     }
 
+    if (activeMainPortalView === 'commander' && viewName !== 'commander') {
+        if (typeof teardownCommanderHubPortalView === 'function') {
+            teardownCommanderHubPortalView();
+        }
+    }
+
     if (activeMainPortalView === 'lore' && viewName !== 'lore') {
         stopPortalLoreNarration();
     }
@@ -691,6 +722,12 @@ function switchMainPortalView(viewName, clickEvent, chatChannelKey) {
 
         case 'roadmap':
             renderEvolutionRoadmapPortalCanvas(viewport);
+            break;
+
+        case 'commander':
+            if (typeof renderCommanderHubPortalCanvas === 'function') {
+                renderCommanderHubPortalCanvas(viewport, window.activeCommanderHubPortalTab);
+            }
             break;
 
         case 'settings':
