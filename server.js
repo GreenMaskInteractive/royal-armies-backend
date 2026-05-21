@@ -75,8 +75,10 @@ const MAINTENANCE_ALERT_DEV_KEY = process.env.MAINTENANCE_ALERT_DEV_KEY || 'loca
 
 /* --- Section: Age Portal live presence (in-memory; no mock accounts) --- */
 const AGE_SESSION_ONLINE_TTL_MS = 5 * 60 * 1000;
+const PORTAL_BROWSE_ONLINE_TTL_MS = 90 * 1000;
 const HIDDEN_REGISTRATION_USERNAMES = new Set(['testaccount']);
 const ageSessionByUser = new Map();
+const portalBrowseSessionByUser = new Map();
 
 function isHiddenRegistrationUsername(username) {
     return HIDDEN_REGISTRATION_USERNAMES.has(String(username || '').trim().toLowerCase());
@@ -273,6 +275,69 @@ function pruneAgeSessionOnlineState() {
         session.isOnline = (now - session.lastSeen) <= AGE_SESSION_ONLINE_TTL_MS;
         ageSessionByUser.set(username, session);
     }
+}
+
+function touchPortalBrowseSession(username) {
+    const normalized = normalizeLedgerUsername(username);
+    if (!normalized || isHiddenRegistrationUsername(normalized)) return null;
+
+    const now = Date.now();
+    portalBrowseSessionByUser.set(normalized, { lastSeen: now });
+    return normalized;
+}
+
+function removePortalBrowseSession(username) {
+    const normalized = normalizeLedgerUsername(username);
+    if (!normalized) return;
+    portalBrowseSessionByUser.delete(normalized);
+}
+
+function prunePortalBrowseSessions() {
+    const now = Date.now();
+    for (const [username, session] of portalBrowseSessionByUser.entries()) {
+        if (!session || (now - session.lastSeen) > PORTAL_BROWSE_ONLINE_TTL_MS) {
+            portalBrowseSessionByUser.delete(username);
+        }
+    }
+}
+
+function getPortalBrowseMetrics() {
+    prunePortalBrowseSessions();
+
+    const portalBrowsingPlayers = [...portalBrowseSessionByUser.keys()].sort((a, b) =>
+        a.localeCompare(b, undefined, { sensitivity: 'base' })
+    );
+
+    return {
+        portalBrowsingCount: portalBrowsingPlayers.length,
+        portalBrowsingPlayers
+    };
+}
+
+function getPortalLiveMetricsPayload() {
+    const commanders = db.get('commanders').value() || [];
+    const visibleCommanders = commanders.filter(
+        (entry) => entry && entry.username && !isHiddenRegistrationUsername(entry.username)
+    );
+
+    const recentRegistrations = [...visibleCommanders]
+        .sort((a, b) => {
+            const aTime = Date.parse(a.joinedAt || 0) || 0;
+            const bTime = Date.parse(b.joinedAt || 0) || 0;
+            return bTime - aTime;
+        })
+        .slice(0, 25)
+        .map((entry) => ({
+            username: entry.username,
+            joinedAt: entry.joinedAt || null
+        }));
+
+    return {
+        registeredCount: visibleCommanders.length,
+        recentRegistrations,
+        ...getAgeSessionMetrics(),
+        ...getPortalBrowseMetrics()
+    };
 }
 
 function getAgeSessionMetrics() {
@@ -655,30 +720,7 @@ app.post('/api/portal/maintenance-alert', (req, res) => {
 });
 
 app.get('/api/portal/metrics', (req, res) => {
-    const commanders = db.get('commanders').value() || [];
-    const visibleCommanders = commanders.filter(
-        (entry) => entry && entry.username && !isHiddenRegistrationUsername(entry.username)
-    );
-
-    const recentRegistrations = [...visibleCommanders]
-        .sort((a, b) => {
-            const aTime = Date.parse(a.joinedAt || 0) || 0;
-            const bTime = Date.parse(b.joinedAt || 0) || 0;
-            return bTime - aTime;
-        })
-        .slice(0, 25)
-        .map((entry) => ({
-            username: entry.username,
-            joinedAt: entry.joinedAt || null
-        }));
-
-    const ageMetrics = getAgeSessionMetrics();
-
-    res.json({
-        registeredCount: visibleCommanders.length,
-        recentRegistrations,
-        ...ageMetrics
-    });
+    res.json(getPortalLiveMetricsPayload());
 });
 
 app.get('/api/portal/mailbox-recipient-roster', (req, res) => {
@@ -1011,24 +1053,30 @@ app.post('/api/portal/presence', (req, res) => {
         return res.status(400).json({ status: 'error', message: 'Username required.' });
     }
 
+    touchPortalBrowseSession(username);
+
     if (inAge) {
         touchAgeSession(username, { markOnline: true });
     } else {
         const normalized = normalizeLedgerUsername(username);
         const existing = normalized ? ageSessionByUser.get(normalized) : null;
         if (existing) {
+            existing.lastSeen = Date.now();
             existing.isOnline = false;
             ageSessionByUser.set(normalized, existing);
         }
     }
 
-    res.json({ status: 'ok', ...getAgeSessionMetrics() });
+    res.json({ status: 'ok', ...getPortalLiveMetricsPayload() });
 });
 
 app.post('/api/portal/presence/leave', (req, res) => {
     const username = String(req.body?.username || '').trim();
-    if (username) removeAgeSession(username);
-    res.json({ status: 'ok', ...getAgeSessionMetrics() });
+    if (username) {
+        removeAgeSession(username);
+        removePortalBrowseSession(username);
+    }
+    res.json({ status: 'ok', ...getPortalLiveMetricsPayload() });
 });
 
 app.post('/api/portal/age/join', (req, res) => {
@@ -1037,8 +1085,9 @@ app.post('/api/portal/age/join', (req, res) => {
         return res.status(400).json({ status: 'error', message: 'Username required.' });
     }
 
+    touchPortalBrowseSession(username);
     touchAgeSession(username, { markOnline: true });
-    res.json({ status: 'ok', ...getAgeSessionMetrics() });
+    res.json({ status: 'ok', ...getPortalLiveMetricsPayload() });
 });
 
 app.post('/api/portal/age/leave', (req, res) => {
@@ -1048,7 +1097,7 @@ app.post('/api/portal/age/leave', (req, res) => {
     }
 
     removeAgeSession(username);
-    res.json({ status: 'ok', ...getAgeSessionMetrics() });
+    res.json({ status: 'ok', ...getPortalLiveMetricsPayload() });
 });
 
 /* Block 14: Main Portal Route */

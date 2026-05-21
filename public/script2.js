@@ -11,6 +11,9 @@ window.onload = () => {
 
     if (typeof syncPlayerFromActiveCommanderStorage === "function") {
         syncPlayerFromActiveCommanderStorage();
+    }
+    if (typeof hydrateCommanderMembershipFromStorage === "function") {
+        hydrateCommanderMembershipFromStorage();
     } else if (typeof player !== "undefined") {
         player.name = savedCommanderUser;
     }
@@ -161,6 +164,10 @@ function switchMainPortalView(viewName, clickEvent, chatChannelKey) {
         activeChatChannelTrack = chatChannelKey;
     }
 
+    if (viewName !== 'chat') {
+        stopCommunityChatPresenceLoop();
+    }
+
     activeMainPortalView = viewName;
 
     document.querySelectorAll('.nav-tab').forEach(tab => tab.classList.remove('active'));
@@ -185,6 +192,7 @@ function switchMainPortalView(viewName, clickEvent, chatChannelKey) {
 
         case 'chat':
             renderCommunityChatPortalCanvas(viewport);
+            startCommunityChatPresenceLoop();
             break;
 
         case 'leaderboards':
@@ -201,6 +209,10 @@ function switchMainPortalView(viewName, clickEvent, chatChannelKey) {
 
         case 'chronicles':
             renderChroniclesProgressMatrixCanvas(viewport);
+            break;
+
+        case 'roadmap':
+            renderEvolutionRoadmapPortalCanvas(viewport);
             break;
 
         case 'settings':
@@ -458,7 +470,14 @@ function clearPortalPresenceSession() {
     const username = resolvePortalPresenceUsername();
     if (!username) return Promise.resolve();
 
-    return notifyPortalAgeSessionLeave().catch(() => {});
+    stopCommunityChatPresenceLoop();
+
+    return fetch('/api/portal/presence/leave', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username }),
+        keepalive: true
+    }).catch(() => notifyPortalAgeSessionLeave().catch(() => {}));
 }
 
 function executeLogoutRedirect() {
@@ -480,13 +499,18 @@ function executeLogoutRedirect() {
 
 let portalMetricsPollTimer = null;
 let portalPresenceHeartbeatTimer = null;
+let communityChatPresencePollTimer = null;
+const PORTAL_PRESENCE_HEARTBEAT_MS = 20000;
+const CHAT_PRESENCE_HEARTBEAT_MS = 8000;
 let portalLiveMetricsCache = {
     registeredCount: 0,
     recentRegistrations: [],
     ageOnlineCount: 0,
     agePlayingCount: 0,
     ageOnlinePlayers: [],
-    agePlayingPlayers: []
+    agePlayingPlayers: [],
+    portalBrowsingCount: 0,
+    portalBrowsingPlayers: []
 };
 
 function isCommanderPlayingActiveAgeLocally() {
@@ -543,14 +567,20 @@ function applyPortalLiveMetricsToBanner(metrics) {
     const recentRegistrations = Array.isArray(metrics?.recentRegistrations) ? metrics.recentRegistrations : [];
     const ageOnlinePlayers = Array.isArray(metrics?.ageOnlinePlayers) ? metrics.ageOnlinePlayers : [];
 
+    const portalBrowsingPlayers = Array.isArray(metrics?.portalBrowsingPlayers) ? metrics.portalBrowsingPlayers : [];
+
     portalLiveMetricsCache = {
         registeredCount,
         recentRegistrations,
         ageOnlineCount,
         agePlayingCount,
         ageOnlinePlayers,
-        agePlayingPlayers: Array.isArray(metrics?.agePlayingPlayers) ? metrics.agePlayingPlayers : []
+        agePlayingPlayers: Array.isArray(metrics?.agePlayingPlayers) ? metrics.agePlayingPlayers : [],
+        portalBrowsingCount: Number(metrics?.portalBrowsingCount) || portalBrowsingPlayers.length,
+        portalBrowsingPlayers
     };
+
+    refreshCommunityChatOnlineRosterIfVisible();
 
     if (registeredPlayersDisplay) {
         registeredPlayersDisplay.innerText = registeredCount.toLocaleString();
@@ -585,27 +615,106 @@ async function fetchPortalLiveMetrics() {
             ageOnlineCount: 0,
             agePlayingCount: 0,
             ageOnlinePlayers: [],
-            agePlayingPlayers: []
+            agePlayingPlayers: [],
+            portalBrowsingCount: 0,
+            portalBrowsingPlayers: []
         });
     }
 }
 
+function applyPortalMetricsPayload(metrics) {
+    if (!metrics || typeof metrics !== 'object') return;
+    applyPortalLiveMetricsToBanner(metrics);
+}
+
 async function sendPortalPresenceHeartbeat() {
     const username = resolvePortalPresenceUsername();
-    if (!username) return;
+    if (!username || username.toLowerCase() === 'testaccount') return null;
 
     try {
-        await fetch('/api/portal/presence', {
+        const response = await fetch('/api/portal/presence', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 username,
                 inAge: isCommanderPlayingActiveAgeLocally()
-            })
+            }),
+            cache: 'no-store'
         });
+        if (!response.ok) throw new Error(`presence ${response.status}`);
+        const metrics = await response.json();
+        applyPortalMetricsPayload(metrics);
+        return metrics;
     } catch (err) {
         console.warn('Portal presence heartbeat failed:', err);
+        return null;
     }
+}
+
+function startCommunityChatPresenceLoop() {
+    if (communityChatPresencePollTimer) clearInterval(communityChatPresencePollTimer);
+
+    const pulse = () => {
+        sendPortalPresenceHeartbeat();
+    };
+
+    pulse();
+    communityChatPresencePollTimer = setInterval(pulse, CHAT_PRESENCE_HEARTBEAT_MS);
+}
+
+function stopCommunityChatPresenceLoop() {
+    if (communityChatPresencePollTimer) {
+        clearInterval(communityChatPresencePollTimer);
+        communityChatPresencePollTimer = null;
+    }
+}
+
+function refreshCommunityChatOnlineRosterIfVisible() {
+    if (activeMainPortalView !== 'chat') return;
+    const bin = document.getElementById('chat-online-roster-dock');
+    if (bin) renderCommunityChatOnlineRoster(bin);
+}
+
+function renderCommunityChatOnlineRoster(targetBin) {
+    const bin = targetBin || document.getElementById('chat-online-roster-dock');
+    if (!bin) return;
+
+    const selfRaw = resolvePortalPresenceUsername() || getLoggedCommunityChatUsername();
+    const selfLower = normalizeCommunityChatUsername(selfRaw);
+    const playingSet = new Set(
+        (portalLiveMetricsCache.agePlayingPlayers || []).map((name) => normalizeCommunityChatUsername(name))
+    );
+
+    const seen = new Set();
+    const players = [];
+    (portalLiveMetricsCache.portalBrowsingPlayers || []).forEach((name) => {
+        const key = normalizeCommunityChatUsername(name);
+        if (!key || key === 'testaccount' || seen.has(key)) return;
+        seen.add(key);
+        players.push(String(name).trim());
+    });
+
+    if (selfLower && selfLower !== 'testaccount' && !seen.has(selfLower)) {
+        players.push(selfRaw.trim());
+        seen.add(selfLower);
+    }
+
+    players.sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
+
+    const countEl = document.getElementById('chat-online-roster-count');
+    if (countEl) countEl.textContent = String(players.length);
+
+    if (!players.length) {
+        bin.innerHTML = '<div class="chat-roster-empty-note">No commanders browsing the portal right now.</div>';
+        return;
+    }
+
+    bin.innerHTML = players.map((name) => {
+        const isSelf = normalizeCommunityChatUsername(name) === selfLower;
+        const inAge = playingSet.has(normalizeCommunityChatUsername(name));
+        const ageBadge = inAge ? '<span class="chat-roster-in-age-badge">In Age</span>' : '';
+        return `<div class="roster-commander-node-row status-online"><span class="status-dot" aria-hidden="true">●</span><span class="chat-roster-name">${escapeMetricRosterHtml(name)}${isSelf ? ' <em class="chat-roster-you-tag">(You)</em>' : ''}</span>${ageBadge}</div>`;
+    }).join('');
 }
 
 async function notifyPortalAgeSessionJoin() {
@@ -683,18 +792,20 @@ function initializePortalLivePlayerMetrics() {
         notifyPortalAgeSessionJoin();
     }
 
-    if (portalMetricsPollTimer) clearInterval(portalMetricsPollTimer);
-    portalMetricsPollTimer = setInterval(fetchPortalLiveMetrics, 15000);
-
     if (portalPresenceHeartbeatTimer) clearInterval(portalPresenceHeartbeatTimer);
     portalPresenceHeartbeatTimer = setInterval(() => {
-        sendPortalPresenceHeartbeat().then(fetchPortalLiveMetrics);
-    }, 60000);
+        if (activeMainPortalView === 'chat') return;
+        sendPortalPresenceHeartbeat();
+    }, PORTAL_PRESENCE_HEARTBEAT_MS);
+
+    if (portalMetricsPollTimer) clearInterval(portalMetricsPollTimer);
+    portalMetricsPollTimer = setInterval(fetchPortalLiveMetrics, 12000);
 
     document.addEventListener('visibilitychange', () => {
         if (document.visibilityState === 'visible') {
             sendPortalPresenceHeartbeat();
             fetchPortalLiveMetrics();
+            if (activeMainPortalView === 'chat') startCommunityChatPresenceLoop();
         }
     });
 
@@ -1041,7 +1152,6 @@ window.appendCommunityChatMessage = appendCommunityChatMessage;
 
 /* Block 11: MULTI-COLUMN COMPLIANCE CHAT COMPILER */
 function renderCommunityChatPortalCanvas(viewport) {
-    const activeRealUser = localStorage.getItem('activeCommanderUser') || 'testaccount';
     const channelMeta = getCommunityChatChannelMeta(activeChatChannelTrack);
 
     viewport.innerHTML = `
@@ -1061,15 +1171,21 @@ function renderCommunityChatPortalCanvas(viewport) {
                 <div class="chat-scrolling-messages-bin" id="chat-stream-render-viewport"></div>
                 <div class="chat-input-toolbar-row" id="chat-portal-input-interaction-tray"></div>
             </div>
-            <aside class="chat-sidebar-player-roster-deck">
-                <div class="player-roster-header-title">👥 In Channel</div>
-                <div class="player-roster-scrollable-track-bin">
-                    <div class="roster-commander-node-row status-online"><span class="status-dot">●</span> ${activeRealUser} (You)</div>
+            <aside class="chat-sidebar-player-roster-deck" aria-label="Commanders browsing the portal">
+                <div class="player-roster-header-title">
+                    <span>👥 Online Now</span>
+                    <span class="chat-online-roster-count" id="chat-online-roster-count">0</span>
+                </div>
+                <p class="chat-roster-subtitle">Commanders on the website (updates every few seconds)</p>
+                <div class="player-roster-scrollable-track-bin" id="chat-online-roster-dock">
+                    <div class="chat-roster-loading-note">Loading online roster…</div>
                 </div>
             </aside>
         </div>
     `;
     executeCompileActiveChannelMessageStrips();
+    refreshCommunityChatOnlineRosterIfVisible();
+    sendPortalPresenceHeartbeat();
 }
 
 function toggleActiveChatChannelStream(targetChannel) {
@@ -1413,70 +1529,159 @@ function executeAutomatedTokenCrestLearning(rawFlaggedTextString) {
 
 
 /* ==========================================================================
-   SECTION 6: STAGING ROYALTY REWARD MEMBERSHIPS
+   SECTION 6: ROYALTY PAID MEMBERSHIP (badge title + Premium Chronicle track)
    ========================================================================== */
 
-/* Block 15: PREMIUM ROYALS MEMBERSHIP CONFIGURATION DATA */
+const COMMANDER_MEMBERSHIP_STORAGE_KEY = 'savedCommanderMembershipTitle';
+const ROYALTY_PAID_BADGE_TITLE = 'Royalty';
+const FREE_MEMBERSHIP_BADGE_TITLE = 'Bronze';
+const CHRONICLE_PREMIUM_MONTHLY_PRICE_LABEL = '$10 / month';
+
+function getCommanderMembershipTitle() {
+    const stored = localStorage.getItem(COMMANDER_MEMBERSHIP_STORAGE_KEY);
+    if (stored === ROYALTY_PAID_BADGE_TITLE) return ROYALTY_PAID_BADGE_TITLE;
+    if (localStorage.getItem('savedChroniclePremiumMember') === 'true') return ROYALTY_PAID_BADGE_TITLE;
+    return FREE_MEMBERSHIP_BADGE_TITLE;
+}
+
+function isCommanderRoyaltyMember() {
+    return getCommanderMembershipTitle() === ROYALTY_PAID_BADGE_TITLE;
+}
+
+function applyCommanderMembershipTitle(title) {
+    const isRoyalty = title === ROYALTY_PAID_BADGE_TITLE;
+    const nextTitle = isRoyalty ? ROYALTY_PAID_BADGE_TITLE : FREE_MEMBERSHIP_BADGE_TITLE;
+    localStorage.setItem(COMMANDER_MEMBERSHIP_STORAGE_KEY, nextTitle);
+    if (isRoyalty) {
+        localStorage.setItem('savedChroniclePremiumMember', 'true');
+    } else {
+        localStorage.removeItem('savedChroniclePremiumMember');
+    }
+    if (typeof player !== 'undefined') {
+        player.membershipTitle = nextTitle;
+    }
+    refreshCommanderMembershipBadgeDisplays();
+    if (typeof refreshChronicleRewardsTrackPanels === 'function') {
+        refreshChronicleRewardsTrackPanels();
+    }
+}
+
+function hydrateCommanderMembershipFromStorage() {
+    if (typeof player === 'undefined') return;
+    player.membershipTitle = getCommanderMembershipTitle();
+    refreshCommanderMembershipBadgeDisplays();
+}
+
+function refreshCommanderMembershipBadgeDisplays() {
+    const title = getCommanderMembershipTitle();
+    const tierClass = title.toLowerCase();
+    document.querySelectorAll('.membership-badge').forEach((badge) => {
+        badge.textContent = `${title} Member`;
+        badge.className = `membership-badge tier-${tierClass}`;
+    });
+    document.querySelectorAll('.public-profile-membership').forEach((badge) => {
+        badge.textContent = `${title} Member`;
+        badge.className = `public-profile-membership tier-${tierClass}`;
+    });
+}
+
+function beginRoyaltyMembershipCheckout() {
+    if (typeof playSelectSFX === 'function') playSelectSFX();
+    alert(
+        `Royalty membership (${CHRONICLE_PREMIUM_MONTHLY_PRICE_LABEL}) checkout is not live yet. ` +
+        'When billing is connected, subscribing grants the Royalty badge title and unlocks Premium Tier Rewards on The Chronicles.'
+    );
+}
+
+function openUnlockPremiumTierPortal(clickEvent) {
+    if (clickEvent) {
+        clickEvent.preventDefault();
+        clickEvent.stopPropagation();
+    }
+    if (typeof playSelectSFX === 'function') playSelectSFX();
+    window.pendingRoyaltyMembershipFocus = 'royalty';
+    switchMainPortalView('royalty', null);
+}
+
+/* Block 15: Royalty membership plans (paid = Royalty badge) */
 const globalRoyaltyTierPackagesDatabase = [
     {
-        tier: "Standard",
-        cost: "Free",
-        glowClass: "standard-package-border",
-        badge: "FREE",
+        tier: 'Standard Commander',
+        cost: 'Free',
+        glowClass: 'standard-package-border',
+        badge: 'FREE',
+        badgeTitleGranted: FREE_MEMBERSHIP_BADGE_TITLE,
         features: [
-            "Access to standard Ages",
-            "Default message recipient limits",
-            "Standard resource production rates",
-            "Basic profile customization"
+            'Bronze membership badge on profile and public dossier',
+            'Basic Chronicle Tier Rewards track (rank progression)',
+            'Access to standard Ages',
+            'Default message recipient limits',
+            'Standard resource production rates'
         ],
-        actionText: "Current plan",
-        enabled: false
+        actionText: 'Current plan',
+        enabled: false,
+        isPaidPlan: false
     },
     {
-        tier: "Premium",
-        cost: "Paid membership",
-        glowClass: "vanguard-package-glow",
-        badge: "PREMIUM",
+        tier: 'Royalty',
+        cost: CHRONICLE_PREMIUM_MONTHLY_PRICE_LABEL,
+        glowClass: 'vanguard-package-glow',
+        badge: 'ROYALTY',
+        badgeTitleGranted: ROYALTY_PAID_BADGE_TITLE,
         features: [
-            "Priority queue when servers are busy",
-            "Send messages to more recipients at once",
-            "+15% resource generation bonus",
-            "Exclusive gold profile frame cosmetics"
+            'Royalty badge title displayed on your profile and in chat',
+            'Unlocks the Premium Chronicle Tier Rewards track',
+            'Priority queue when servers are busy',
+            'Send messages to more recipients at once',
+            '+15% resource generation bonus',
+            'Exclusive gold profile frame cosmetics'
         ],
-        actionText: "Upgrade",
-        enabled: true
+        actionText: 'Unlock Premium Tier',
+        enabled: true,
+        isPaidPlan: true
     }
 ];
 
 /* Block 16: ROYALTY MATRIX PORTAL ROUTER INTERCEPT ENGINE */
 function renderRoyaltyTierPortalCanvas(viewport) {
+    const isRoyalty = isCommanderRoyaltyMember();
+
     viewport.innerHTML = `
         <div class="royalty-workspace-container">
             <header class="royalty-workspace-header-deck">
-                <h2 class="royalty-master-title">👑 Membership</h2>
-                <p class="royalty-master-subtitle">Support the game to unlock premium perks, resource bonuses, and exclusive cosmetics.</p>
+                <h2 class="royalty-master-title">👑 Royalty Membership</h2>
+                <p class="royalty-master-subtitle">Subscribe monthly to earn the <strong>Royalty</strong> badge title and unlock <strong>Premium Tier Rewards</strong> on The Chronicles (${CHRONICLE_PREMIUM_MONTHLY_PRICE_LABEL}). Free commanders keep the Bronze badge and the Basic reward track.</p>
             </header>
+            ${isRoyalty ? `<div class="royalty-active-member-banner">You are a <strong>Royalty</strong> member — Premium Tier Rewards are unlocked on The Chronicles.</div>` : ''}
             <div class="royalty-tier-cards-flex-row">
-                ${globalRoyaltyTierPackagesDatabase.map(pack => `
-                    <div class="royalty-package-display-card ${pack.glowClass}">
+                ${globalRoyaltyTierPackagesDatabase.map((pack) => {
+                    const isActivePlan = (!pack.isPaidPlan && !isRoyalty) || (pack.isPaidPlan && isRoyalty);
+                    const canSubscribe = pack.isPaidPlan && pack.enabled && !isActivePlan;
+                    const actionHandler = canSubscribe ? 'onclick="beginRoyaltyMembershipCheckout()"' : '';
+                    const buttonLabel = isActivePlan ? 'Active' : pack.actionText;
+                    const buttonClass = canSubscribe ? 'pulse-buy-btn' : 'disabled-active-btn';
+                    return `
+                    <div class="royalty-package-display-card ${pack.glowClass} ${pack.isPaidPlan ? 'royalty-paid-plan-card' : ''} ${isActivePlan ? 'royalty-plan-current' : ''}">
                         <div class="package-header-row-block">
                             <span class="package-tier-name-title">${pack.tier}</span>
                             <span class="package-tier-badge-label">${pack.badge}</span>
                         </div>
                         <div class="package-cost-numerical-display">${pack.cost}</div>
+                        <p class="royalty-badge-title-grant">Badge title: <strong>${pack.badgeTitleGranted}</strong></p>
                         <ul class="package-features-bullet-list">
-                            ${pack.features.map(feat => `
+                            ${pack.features.map((feat) => `
                                 <li><span class="medieval-bullet-bullet">✦</span> ${feat}</li>
                             `).join('')}
                         </ul>
                         <div class="package-action-footer-deck">
-                            <button class="settings-btn master-action-btn ${pack.enabled ? 'pulse-buy-btn' : 'disabled-active-btn'}" 
-                                    ${pack.enabled ? `onclick="alert('Premium checkout for ${pack.tier} is not available yet.')"` : 'disabled'}>
-                                ${pack.actionText}
+                            <button type="button" class="settings-btn master-action-btn ${buttonClass} ${isActivePlan ? 'royalty-plan-current' : ''}"
+                                    ${canSubscribe ? actionHandler : 'disabled'}>
+                                ${buttonLabel}
                             </button>
                         </div>
                     </div>
-                `).join('')}
+                `;
+                }).join('')}
             </div>
         </div>
     `;
@@ -1495,22 +1700,438 @@ const playerAccountDiscoveriesDatabase = {
     ]
 };
 
-function renderChroniclesProgressMatrixCanvas(viewport) {
-    viewport.innerHTML = `
-        <div class="dashboard-news-card-box" style="width: 100% !important; max-width: 100% !important;">
-            <h2 class="card-title-header">📜 The Chronicles</h2>
-            <div class="card-scrollable-body-text">
-                <p style="margin-bottom: 16px; color: #f1e0ac;">
-                    This page will show the history of each Age, major alliances, and world events across Amnek.
-                    The interactive timeline is coming in a future update.
-                </p>
-                <p style="color: rgba(241,224,172,0.55); font-size: 0.85rem; margin: 0;">
-                    History feeds for this section are still being built.
-                </p>
+const CHRONICLE_BASIC_TIER_REWARDS = [
+    { rank: 5, title: 'Scout\'s Crest Frame', reward: 'Profile avatar border — bronze filigree', state: 'locked' },
+    { rank: 10, title: 'Quartermaster Stipend', reward: '+5% provision cap while enrolled in an Age', state: 'locked' },
+    { rank: 15, title: 'War Table Emote Pack I', reward: 'Three commander salute animations for chat', state: 'locked' },
+    { rank: 18, title: 'Campaign Pennant', reward: 'Nation-colored pennant on your public profile card', state: 'locked' },
+    { rank: 22, title: 'Lord-High Commendation', reward: 'Exclusive title flair and silver nameplate trim', state: 'locked' }
+];
+
+const CHRONICLE_PREMIUM_TIER_REWARDS = [
+    { rank: 5, title: 'Gilded Chronicle Frame', reward: 'Animated gold avatar border for your commander dossier', state: 'locked' },
+    { rank: 10, title: 'Royal Courier Slots', reward: '+3 extra recipients per outbound message while subscribed', state: 'locked' },
+    { rank: 15, title: 'Premium War Table Emotes', reward: 'Six exclusive salute and victory animations for chat', state: 'locked' },
+    { rank: 18, title: 'Sovereign Banner Overlay', reward: 'Animated nation banner backdrop on your profile', state: 'locked' },
+    { rank: 22, title: 'Crownwright\'s Laurels', reward: 'Golden nameplate glow, crown flair, and premium chat badge', state: 'locked' }
+];
+
+let activeChronicleRewardsTrack = 'basic';
+
+function getCommanderChronicleRankSnapshot() {
+    const currentRank = typeof player !== 'undefined' && Number.isFinite(player.rank) ? player.rank : 1;
+    const nextRankXp = typeof xpRequirements !== 'undefined' ? (xpRequirements[currentRank] || 90) : 90;
+    const groundTitle = typeof groundTitles !== 'undefined' && groundTitles[currentRank - 1]
+        ? groundTitles[currentRank - 1]
+        : 'Vintenary';
+    return { currentRank, nextRankXp, groundTitle };
+}
+
+function isChronicleRewardUnlocked(entry, trackKey) {
+    const { currentRank } = getCommanderChronicleRankSnapshot();
+    const rankMet = currentRank >= entry.rank;
+    if (trackKey === 'premium') {
+        return isCommanderRoyaltyMember() && rankMet && entry.state === 'unlocked';
+    }
+    return rankMet && entry.state === 'unlocked';
+}
+
+function buildChronicleMilestoneCardMarkup(entry, trackKey) {
+    const unlocked = isChronicleRewardUnlocked(entry, trackKey);
+    const premiumLocked = trackKey === 'premium' && !isCommanderRoyaltyMember();
+    const statusLabel = unlocked
+        ? 'Claimed'
+        : (premiumLocked ? 'Royalty' : 'Locked');
+    const statusClass = unlocked
+        ? 'status-unlocked-text-tag'
+        : (premiumLocked ? 'status-premium-required-tag' : 'status-locked-text-tag');
+
+    return `
+        <div class="milestone-landmark-capsule-card ${unlocked ? 'landmark-node-unlocked' : 'landmark-node-locked'} ${premiumLocked ? 'landmark-node-premium-gated' : ''}">
+            <span class="milestone-badge-hexagon-icon" aria-hidden="true">${trackKey === 'premium' ? '👑' : '✦'}</span>
+            <div class="milestone-meta-contents">
+                <span class="milestone-tier-level-label">Rank ${entry.rank}${trackKey === 'premium' ? ' · Premium track' : ''}</span>
+                <span class="milestone-title-string">${entry.title}</span>
+                <p class="milestone-reward-description-text">${entry.reward}</p>
+                ${premiumLocked ? `<p class="milestone-premium-hint">Requires <strong>Royalty</strong> membership (${CHRONICLE_PREMIUM_MONTHLY_PRICE_LABEL}) — unlock on the Royalty page.</p>` : ''}
             </div>
+            <span class="milestone-status-action-deck ${statusClass}">${statusLabel}</span>
         </div>
     `;
 }
+
+function buildChronicleRewardsTrackMarkup(trackKey) {
+    const list = trackKey === 'premium' ? CHRONICLE_PREMIUM_TIER_REWARDS : CHRONICLE_BASIC_TIER_REWARDS;
+    return list.map((entry) => buildChronicleMilestoneCardMarkup(entry, trackKey)).join('');
+}
+
+function refreshChronicleRewardsTrackPanels() {
+    const basicBin = document.getElementById('chronicle-rewards-track-basic');
+    const premiumBin = document.getElementById('chronicle-rewards-track-premium');
+    if (basicBin) basicBin.innerHTML = buildChronicleRewardsTrackMarkup('basic');
+    if (premiumBin) premiumBin.innerHTML = buildChronicleRewardsTrackMarkup('premium');
+
+    const premiumBanner = document.getElementById('chronicle-premium-upsell-banner');
+    if (premiumBanner) {
+        premiumBanner.hidden = isCommanderRoyaltyMember();
+    }
+
+    document.querySelectorAll('.chronicle-rewards-track-tab').forEach((tab) => {
+        tab.classList.toggle('active', tab.dataset.chronicleTrack === activeChronicleRewardsTrack);
+    });
+    document.querySelectorAll('.chronicle-rewards-track-panel').forEach((panel) => {
+        const isActive = panel.dataset.chronicleTrackPanel === activeChronicleRewardsTrack;
+        panel.classList.toggle('chronicle-rewards-track-panel-active', isActive);
+        panel.classList.toggle('chronicle-rewards-track-panel-hidden', !isActive);
+    });
+}
+
+function activateChronicleRewardsTrack(trackKey, clickEvent) {
+    if (clickEvent) clickEvent.stopPropagation();
+    activeChronicleRewardsTrack = trackKey === 'premium' ? 'premium' : 'basic';
+    if (typeof playToggleLeverSFX === 'function') playToggleLeverSFX();
+    refreshChronicleRewardsTrackPanels();
+}
+
+function renderChroniclesProgressMatrixCanvas(viewport) {
+    const { currentRank, nextRankXp, groundTitle } = getCommanderChronicleRankSnapshot();
+    const isRoyalty = isCommanderRoyaltyMember();
+
+    viewport.innerHTML = `
+        <div class="chronicles-workspace-container">
+            <header class="royalty-workspace-header-deck">
+                <h2 class="royalty-master-title">📜 Chronicle Tier Rewards</h2>
+                <p class="royalty-master-subtitle">Earn XP in Ages to climb ranks and unlock rewards. <strong>Basic Tier</strong> is free for every commander. <strong>Premium Tier</strong> unlocks when you subscribe on the <strong>Royalty</strong> page and earn the Royalty badge (${CHRONICLE_PREMIUM_MONTHLY_PRICE_LABEL}). This is not the development Roadmap.</p>
+            </header>
+            <div class="chronicles-master-card-box">
+                <div class="chronicles-level-header-row">
+                    <span class="chronicles-main-rank-readout">Rank ${currentRank} — ${groundTitle}</span>
+                    <span class="chronicles-xp-fraction-tag">0 / ${nextRankXp} XP to next rank</span>
+                </div>
+                <div class="chronicles-progress-bar-track-bezel" aria-hidden="true">
+                    <div class="chronicles-progress-bar-fill-glow" style="width: 4%;"></div>
+                </div>
+            </div>
+            <nav class="chronicle-rewards-track-tab-bar" aria-label="Chronicle reward tiers">
+                <button type="button" class="chronicle-rewards-track-tab ${activeChronicleRewardsTrack === 'basic' ? 'active' : ''}" data-chronicle-track="basic" onclick="activateChronicleRewardsTrack('basic', event)">
+                    <span class="chronicle-track-tab-title">Basic Tier Rewards</span>
+                    <span class="chronicle-track-tab-badge chronicle-track-tab-badge-free">FREE</span>
+                </button>
+                <button type="button" class="chronicle-rewards-track-tab ${activeChronicleRewardsTrack === 'premium' ? 'active' : ''}" data-chronicle-track="premium" onclick="activateChronicleRewardsTrack('premium', event)">
+                    <span class="chronicle-track-tab-title">Premium Tier Rewards</span>
+                    <span class="chronicle-track-tab-badge chronicle-track-tab-badge-premium">$10/mo</span>
+                </button>
+            </nav>
+            <div id="chronicle-premium-upsell-banner" class="chronicle-premium-upsell-banner" ${isRoyalty ? 'hidden' : ''}>
+                <div class="chronicle-premium-upsell-copy">
+                    <strong>Premium Tier Rewards</strong> unlock with <strong>Royalty</strong> membership (${CHRONICLE_PREMIUM_MONTHLY_PRICE_LABEL}). Subscribers receive the Royalty badge title on their profile.
+                </div>
+                <button type="button" class="settings-btn chronicle-premium-upsell-btn pulse-buy-btn" onclick="openUnlockPremiumTierPortal(event)">Unlock Premium Tier</button>
+            </div>
+            <div class="chronicle-rewards-tracks-deck">
+                <section class="chronicle-rewards-track-panel chronicle-rewards-track-panel-active" data-chronicle-track-panel="basic" id="chronicle-panel-basic">
+                    <h3 class="chronicles-grid-heading-label">Basic Tier — included for all commanders</h3>
+                    <div class="chronicles-milestones-grid-layout" id="chronicle-rewards-track-basic"></div>
+                </section>
+                <section class="chronicle-rewards-track-panel chronicle-rewards-track-panel-hidden" data-chronicle-track-panel="premium" id="chronicle-panel-premium">
+                    <div class="chronicle-premium-panel-header">
+                        <h3 class="chronicles-grid-heading-label">Premium Tier — Royalty members (${CHRONICLE_PREMIUM_MONTHLY_PRICE_LABEL})</h3>
+                        ${isRoyalty ? '' : `<button type="button" class="settings-btn chronicle-premium-panel-unlock-btn" onclick="openUnlockPremiumTierPortal(event)">Unlock Premium Tier</button>`}
+                    </div>
+                    <div class="chronicles-milestones-grid-layout" id="chronicle-rewards-track-premium"></div>
+                </section>
+            </div>
+        </div>
+    `;
+    refreshChronicleRewardsTrackPanels();
+}
+
+window.activateChronicleRewardsTrack = activateChronicleRewardsTrack;
+window.openUnlockPremiumTierPortal = openUnlockPremiumTierPortal;
+window.openRoyaltyMembershipFromChronicles = openUnlockPremiumTierPortal;
+window.hydrateCommanderMembershipFromStorage = hydrateCommanderMembershipFromStorage;
+window.applyCommanderMembershipTitle = applyCommanderMembershipTitle;
+window.beginRoyaltyMembershipCheckout = beginRoyaltyMembershipCheckout;
+
+/* ==========================================================================
+   SECTION: EVOLUTION ROADMAP (DEVELOPMENT TIMELINE)
+   ========================================================================== */
+
+const ROADMAP_EVOLUTION_PHASES = [
+    {
+        id: 'pre-alpha',
+        era: 'Pre-Alpha',
+        status: 'completed',
+        statusLabel: 'Completed',
+        period: 'World forge & creative foundation',
+        summary: 'Royal Armies began as a design document and art-led prototype: fifteen nations, dual Physical/Arcane faction fantasy, and a browser-first MMOHFT strategy pitch before any live portal existed.',
+        categories: [
+            {
+                title: 'Vision & product definition',
+                items: [
+                    'Defined the MMOHFT (Massively Multiplayer High-Fidelity Tactical) positioning for browser strategy veterans and modern players.',
+                    'Authored core Age rules: World Domination, Zone Wars, and Crown & Coalition victory matrices.',
+                    'Mapped fifteen sovereign nations with unique units, lore audio, and regional identity hooks.'
+                ]
+            },
+            {
+                title: 'Creative production',
+                items: [
+                    'Established the golden medieval UI art direction, crest language, and cinematic landing slideshow assets.',
+                    'Produced nation history voice lines and ambient tracks for lore discovery flows.',
+                    'Built the GIMP-centered asset pipeline to merge UI sheets and reduce load flicker.'
+                ]
+            },
+            {
+                title: 'Technical planning',
+                items: [
+                    'Selected persistent browser delivery (no heavy client download) as the primary distribution model.',
+                    'Outlined the NEXUS ledger concept for commander accounts, Ages, and future combat sync.',
+                    'Drafted rank, provision, and Battlemaster / Archmage progression tables (rank-data foundation).'
+                ]
+            }
+        ]
+    },
+    {
+        id: 'alpha-foundation',
+        era: 'Alpha 1.0 — Foundation',
+        status: 'completed',
+        statusLabel: 'Completed',
+        period: 'Landing portal & first server handshake',
+        summary: 'The first public-facing stack: cinematic landing page, account creation, and a Node-backed ledger so commanders could register and return with a verified identity.',
+        categories: [
+            {
+                title: 'Core framework',
+                items: [
+                    'Shipped the main UI theme, full-screen landing overlay, and rotating background slideshow.',
+                    'Wired the stone portal login form, registration modal, and password recovery request flow.',
+                    'Introduced the narrative intro box with typewriter pacing for first-time visitors.'
+                ]
+            },
+            {
+                title: 'Security & accounts',
+                items: [
+                    'Added bcrypt-protected commander records in the project ledger (db.json).',
+                    'Integrated Resend-powered verification email scrolls for new registrations.',
+                    'Built secure login against username or email with developer staging bypass for internal QA.'
+                ]
+            },
+            {
+                title: 'Audio & presentation',
+                items: [
+                    'Deployed dual-track audio (landing theme + login lullaby) with universal mute control.',
+                    'Added UI click/lever SFX hooks across portal interactions.',
+                    'Tuned volume staging sliders that persist to local storage.'
+                ]
+            },
+            {
+                title: 'Networking',
+                items: [
+                    'Connected the client to the NEXUS server for registration and authentication.',
+                    'Laid groundwork for live player state hooks and global event broadcasting.',
+                    'Published the wide roadmap panel and hub layout prototypes on the landing site.'
+                ]
+            }
+        ]
+    },
+    {
+        id: 'alpha-portal',
+        era: 'Alpha 0.1.11 — Age Portal',
+        status: 'current',
+        statusLabel: 'Live now',
+        period: 'Commander hub & live operations — May 2026',
+        summary: 'Today\'s build centers on main.html: the Age Portal staging deck where enrolled commanders manage profile, messages, metrics, and community systems while the tactical battle client is still in development.',
+        categories: [
+            {
+                title: 'Age Portal navigation',
+                items: [
+                    'Dedicated portal home with sticky top navigation: Age Portal, Leaderboards, Community Chat, Discoveries, Royalty, Chronicle Tier Rewards, and this Evolution Roadmap.',
+                    'Live Age metrics strip: cycle label, game mode, Great Transition countdown, leading nation, registered and active player rosters.',
+                    'Join the Age deployment deck with tutorial vs standard entry, SFX, and visual feedback (battle screen redirect pending).'
+                ]
+            },
+            {
+                title: 'Commander hub',
+                items: [
+                    'Modal hub for Edit Profile, Messages, and Settings without leaving the portal.',
+                    'Profile privacy controls: public vs private dossiers with sensitive field masking for other players.',
+                    'Avatar picker, bio, nation, timezone, achievements, and age history panels.',
+                    'Developer\'s Log sidebar mirroring shipped release notes (Alpha 0.1.11 entry).'
+                ]
+            },
+            {
+                title: 'Messaging & ledger API',
+                items: [
+                    'Ledger-backed inbox, drafts, and sent folders with server delivery between registered commanders.',
+                    'Unread indicators on avatar hub and Messages entry; owner roster picker for account administration.',
+                    'Maintenance alert bar driven by /api/portal/maintenance-alert for transparent downtime communication.'
+                ]
+            },
+            {
+                title: 'Community & polish',
+                items: [
+                    'Community chat channels with portal routing and presence-aware metrics.',
+                    'Leaderboard canvases compiled for portal display.',
+                    'Plain-language relabeling across menus, alerts, and hub tabs; production deploy to royalarmies.com on Render with persistent /data volume.'
+                ]
+            }
+        ]
+    },
+    {
+        id: 'alpha-11-bridge',
+        era: 'Alpha 1.1 — Portal completion',
+        status: 'upcoming',
+        statusLabel: 'Next',
+        period: 'Finishing hub surfaces & account depth',
+        summary: 'Closes the gap between the staging deck and a feature-complete social layer before the first playable Age loop lands.',
+        categories: [
+            {
+                title: 'Hub surfaces',
+                items: [
+                    'Unlock Discoveries archive with full nation lore playback and unlock progression.',
+                    'Activate Chronicle Tier Rewards claim flow tied to live rank XP from Ages.',
+                    'Expand Royalty membership checkout when premium billing is ready.'
+                ]
+            },
+            {
+                title: 'Account & compliance',
+                items: [
+                    'Email verification enforcement paths and resend-verify tooling for support.',
+                    'Session-hardened API calls replacing username-only mailbox queries where needed.',
+                    'Richer penalty / discipline overlays for moderated accounts.'
+                ]
+            },
+            {
+                title: 'Operations',
+                items: [
+                    'Automated deploy pipeline notes in Developer\'s Log from CI.',
+                    'Improved metrics: historical registration graph and Age enrollment funnel.',
+                    'Game redirect from Join the Age into the tactical client shell (game.html).'
+                ]
+            }
+        ]
+    },
+    {
+        id: 'alpha-2',
+        era: 'Alpha 2.0 — First playable Age',
+        status: 'upcoming',
+        statusLabel: 'Target horizon',
+        period: 'Playable round & sync combat foundation',
+        summary: 'The evolutionary leap from portal-only to a real Age round: map presence, unit actions, and shared battle state so testers can fight, earn XP, and climb the Chronicle tier track.',
+        categories: [
+            {
+                title: 'Playable loop',
+                items: [
+                    'Launch game.html tactical grid with capital deployment and nation assignment RNG.',
+                    'Enroll commanders into live Age rounds with provision economy and rank XP accrual.',
+                    'Wire victory mode logic stubs for Domination, Zone Wars, and Crown & Coalition timers.'
+                ]
+            },
+            {
+                title: 'Combat & classes',
+                items: [
+                    'Real-time combat hit resolution and spell animation sync between clients.',
+                    'Battlemaster and Archmage skill trees with crests and loadout slots.',
+                    'Nation-unique legendary battalion modules per lore bible.'
+                ]
+            },
+            {
+                title: 'World & economy',
+                items: [
+                    'Explorable world map sectors with zone audio and story checkpoints.',
+                    'Gold flow, vendors, and inventory scaffolding.',
+                    'Map capture events feeding leaderboard and Chronicle tier progress.'
+                ]
+            },
+            {
+                title: 'Multiplayer infrastructure',
+                items: [
+                    'Stable expansion of Aether-code logic for horizontal server scaling.',
+                    'Stress testing for alliance chat, mail volume, and Age session churn.',
+                    'Closed tester cohort with feedback loop into Developer\'s Log releases.'
+                ]
+            }
+        ]
+    }
+];
+
+function escapeRoadmapHtml(value) {
+    return String(value || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+}
+
+function renderRoadmapCategoryBlock(category) {
+    const items = (category.items || [])
+        .map((item) => `<li>${escapeRoadmapHtml(item)}</li>`)
+        .join('');
+    return `
+        <article class="evolution-roadmap-topic-card">
+            <h4 class="evolution-roadmap-topic-title">${escapeRoadmapHtml(category.title)}</h4>
+            <ul class="evolution-roadmap-topic-list">${items}</ul>
+        </article>
+    `;
+}
+
+function renderRoadmapPhaseCard(phase, index) {
+    const expanded = phase.status === 'current';
+    const categories = (phase.categories || []).map(renderRoadmapCategoryBlock).join('');
+    return `
+        <article class="evolution-roadmap-phase-card ${phase.status} ${expanded ? 'is-expanded' : ''}" data-roadmap-phase="${escapeRoadmapHtml(phase.id)}">
+            <button type="button" class="evolution-roadmap-phase-header" onclick="toggleEvolutionRoadmapPhase(this)" aria-expanded="${expanded ? 'true' : 'false'}">
+                <span class="evolution-roadmap-phase-rail">
+                    <span class="evolution-roadmap-phase-dot" aria-hidden="true"></span>
+                    ${index < ROADMAP_EVOLUTION_PHASES.length - 1 ? '<span class="evolution-roadmap-phase-line" aria-hidden="true"></span>' : ''}
+                </span>
+                <span class="evolution-roadmap-phase-copy">
+                    <span class="evolution-roadmap-phase-meta">
+                        <span class="evolution-roadmap-era">${escapeRoadmapHtml(phase.era)}</span>
+                        <span class="evolution-roadmap-status evolution-roadmap-status--${phase.status}">${escapeRoadmapHtml(phase.statusLabel)}</span>
+                    </span>
+                    <span class="evolution-roadmap-period">${escapeRoadmapHtml(phase.period)}</span>
+                    <span class="evolution-roadmap-summary">${escapeRoadmapHtml(phase.summary)}</span>
+                </span>
+                <span class="evolution-roadmap-chevron" aria-hidden="true">▼</span>
+            </button>
+            <div class="evolution-roadmap-phase-body">
+                <div class="evolution-roadmap-topic-grid">${categories}</div>
+            </div>
+        </article>
+    `;
+}
+
+function toggleEvolutionRoadmapPhase(headerBtn) {
+    const card = headerBtn?.closest?.('.evolution-roadmap-phase-card');
+    if (!card) return;
+    const willExpand = !card.classList.contains('is-expanded');
+    card.classList.toggle('is-expanded', willExpand);
+    headerBtn.setAttribute('aria-expanded', willExpand ? 'true' : 'false');
+}
+
+function renderEvolutionRoadmapPortalCanvas(viewport) {
+    const phaseMarkup = ROADMAP_EVOLUTION_PHASES.map(renderRoadmapPhaseCard).join('');
+    viewport.innerHTML = `
+        <div class="evolution-roadmap-workspace">
+            <header class="evolution-roadmap-hero">
+                <div class="evolution-roadmap-hero-copy">
+                    <p class="evolution-roadmap-eyebrow">Green Mask Interactive · Royal Armies</p>
+                    <h2 class="evolution-roadmap-title">Evolution Roadmap</h2>
+                    <p class="evolution-roadmap-lead">From pre-alpha concept through today\'s Age Portal build to the first playable Alpha 2.0 Age. This is the development timeline — not the in-game Chronicle tier reward track (see <strong>The Chronicles</strong> tab).</p>
+                </div>
+                <div class="evolution-roadmap-legend" aria-label="Roadmap status legend">
+                    <span class="evolution-roadmap-legend-item"><span class="evolution-roadmap-legend-swatch completed"></span> Shipped</span>
+                    <span class="evolution-roadmap-legend-item"><span class="evolution-roadmap-legend-swatch current"></span> Live now</span>
+                    <span class="evolution-roadmap-legend-item"><span class="evolution-roadmap-legend-swatch upcoming"></span> Planned</span>
+                </div>
+            </header>
+            <div class="evolution-roadmap-timeline">${phaseMarkup}</div>
+        </div>
+    `;
+}
+
+window.toggleEvolutionRoadmapPhase = toggleEvolutionRoadmapPhase;
 
 function renderMasterDiscoveriesPortalCanvas(viewport) {
     viewport.innerHTML = `

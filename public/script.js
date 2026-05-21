@@ -141,6 +141,9 @@ function syncPlayerFromActiveCommanderStorage() {
     const savedAvatar = localStorage.getItem('savedProfileAvatarUrl');
     if (savedAvatar) player.avatarUrl = savedAvatar;
     hydratePlayerPublicDossierFromStorage();
+    if (typeof hydrateCommanderMembershipFromStorage === 'function') {
+        hydrateCommanderMembershipFromStorage();
+    }
     loadCommanderMailboxDossiersFromStorage();
     fetchCommanderMailboxFromServer();
     refreshProfileCommanderNameDisplay();
@@ -1736,13 +1739,6 @@ const nationLore = {
                                 </div>
                             </div>
                             
-                            <div class="profile-section-box footer-box-third">
-                                <label class="settings-label">System Enforcement Simulator</label>
-                                <div class="profile-btn-row-stacked">
-                                    <button class="settings-btn" style="border-color: #cc0000 !important; color: #ff9999 !important;" onclick="checkSystemLoginPenalties()">Simulate Account Verification Login</button>
-                                </div>
-                            </div>
-                            
                             <div class="profile-section-box footer-box-third critical-danger-zone">
                                 <label class="settings-label warning-title">Rank Reset</label>
                                 <div class="profile-btn-row-stacked">
@@ -2209,12 +2205,6 @@ function loadLore(type, customMount) {
                             <div class="profile-btn-row-stacked">
                                 <button class="settings-btn" onclick="manageSecurityUpdate('email')">Update Email Address</button>
                                 <button class="settings-btn" onclick="manageSecurityUpdate('password')">Change Encryption Password</button>
-                            </div>
-                        </div>
-                        <div class="profile-section-box footer-box-third">
-                            <label class="settings-label">System Enforcement Simulator</label>
-                            <div class="profile-btn-row-stacked">
-                                <button class="settings-btn" style="border-color: #cc0000 !important; color: #ff9999 !important;" onclick="checkSystemLoginPenalties()">Simulate Account Verification Login</button>
                             </div>
                         </div>
                         <div class="profile-section-box footer-box-third">

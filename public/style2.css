@@ -1211,6 +1211,116 @@
     max-width: 180px !important;
 }
 
+.chat-sidebar-player-roster-deck {
+    width: 200px !important;
+    flex-shrink: 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 8px !important;
+    border-left: 1px solid rgba(184, 144, 48, 0.2) !important;
+    padding-left: 14px !important;
+    box-sizing: border-box !important;
+    min-height: 0 !important;
+    height: 100% !important;
+}
+
+.player-roster-header-title {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 8px !important;
+    font-family: 'Cinzel', serif !important;
+    font-size: 0.78rem !important;
+    color: #f1e0ac !important;
+    letter-spacing: 0.06em !important;
+    text-transform: uppercase !important;
+    margin: 0 !important;
+}
+
+.chat-online-roster-count {
+    font-family: 'Segoe UI', sans-serif !important;
+    font-size: 0.68rem !important;
+    font-weight: 700 !important;
+    color: #1a1408 !important;
+    background: linear-gradient(90deg, #c9a227 0%, #f1e0ac 100%) !important;
+    padding: 2px 8px !important;
+    border-radius: 999px !important;
+    min-width: 1.4em !important;
+    text-align: center !important;
+}
+
+.chat-roster-subtitle {
+    margin: 0 !important;
+    font-family: 'Segoe UI', sans-serif !important;
+    font-size: 0.65rem !important;
+    line-height: 1.35 !important;
+    color: rgba(241, 224, 172, 0.45) !important;
+}
+
+.player-roster-scrollable-track-bin {
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+    overflow-y: auto !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 6px !important;
+    padding-right: 4px !important;
+}
+
+.roster-commander-node-row {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    flex-wrap: wrap !important;
+    gap: 6px 8px !important;
+    padding: 8px 10px !important;
+    border-radius: 4px !important;
+    background: rgba(0, 0, 0, 0.35) !important;
+    border: 1px solid rgba(184, 144, 48, 0.15) !important;
+    font-family: 'Segoe UI', sans-serif !important;
+    font-size: 0.78rem !important;
+    color: rgba(241, 224, 172, 0.88) !important;
+}
+
+.roster-commander-node-row.status-online .status-dot {
+    color: #6fdc6f !important;
+    text-shadow: 0 0 6px rgba(111, 220, 111, 0.5) !important;
+    flex-shrink: 0 !important;
+}
+
+.chat-roster-name {
+    flex: 1 1 auto !important;
+    min-width: 0 !important;
+    word-break: break-word !important;
+}
+
+.chat-roster-you-tag {
+    font-style: normal !important;
+    color: #e8c96a !important;
+    font-weight: 600 !important;
+}
+
+.chat-roster-in-age-badge {
+    font-size: 0.58rem !important;
+    letter-spacing: 0.06em !important;
+    text-transform: uppercase !important;
+    color: #8aaee8 !important;
+    border: 1px solid rgba(106, 143, 199, 0.35) !important;
+    padding: 2px 6px !important;
+    border-radius: 3px !important;
+    background: rgba(106, 143, 199, 0.12) !important;
+}
+
+.chat-roster-empty-note,
+.chat-roster-loading-note {
+    padding: 16px 8px !important;
+    text-align: center !important;
+    font-family: 'Segoe UI', sans-serif !important;
+    font-size: 0.75rem !important;
+    font-style: italic !important;
+    color: rgba(241, 224, 172, 0.45) !important;
+}
+
 .chat-workspace-chassis {
     display: flex !important;
     flex-direction: row !important;
@@ -1732,6 +1842,177 @@
     flex-direction: column !important;
     gap: 10px !important;
     width: 100% !important;
+}
+
+.chronicle-rewards-track-tab-bar {
+    display: flex !important;
+    flex-direction: row !important;
+    gap: 10px !important;
+    flex-shrink: 0 !important;
+}
+
+.chronicle-rewards-track-tab {
+    flex: 1 1 0 !important;
+    min-width: 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    gap: 6px !important;
+    padding: 12px 14px !important;
+    border: 1px solid rgba(184, 144, 48, 0.25) !important;
+    border-radius: 4px !important;
+    background: rgba(0, 0, 0, 0.45) !important;
+    cursor: pointer !important;
+    transition: border-color 0.15s ease, background 0.15s ease, box-shadow 0.15s ease !important;
+}
+
+.chronicle-rewards-track-tab:hover {
+    border-color: rgba(201, 162, 39, 0.45) !important;
+    background: rgba(43, 36, 26, 0.5) !important;
+}
+
+.chronicle-rewards-track-tab.active {
+    border-color: rgba(201, 162, 39, 0.65) !important;
+    background: linear-gradient(180deg, rgba(43, 36, 26, 0.85) 0%, rgba(12, 10, 8, 0.95) 100%) !important;
+    box-shadow: 0 0 16px rgba(201, 162, 39, 0.15) !important;
+}
+
+.chronicle-track-tab-title {
+    font-family: 'Cinzel', serif !important;
+    font-size: 0.78rem !important;
+    color: #f1e0ac !important;
+    letter-spacing: 0.04em !important;
+    text-align: center !important;
+}
+
+.chronicle-track-tab-badge {
+    font-family: 'Segoe UI', sans-serif !important;
+    font-size: 0.62rem !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.08em !important;
+    text-transform: uppercase !important;
+    padding: 3px 10px !important;
+    border-radius: 999px !important;
+}
+
+.chronicle-track-tab-badge-free {
+    color: #a8c4f0 !important;
+    background: rgba(106, 143, 199, 0.18) !important;
+    border: 1px solid rgba(106, 143, 199, 0.35) !important;
+}
+
+.chronicle-track-tab-badge-premium {
+    color: #1a1408 !important;
+    background: linear-gradient(90deg, #c9a227 0%, #f1e0ac 100%) !important;
+    border: 1px solid #f1e0ac !important;
+}
+
+.chronicle-premium-upsell-banner {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 12px 16px !important;
+    padding: 14px 16px !important;
+    border-radius: 4px !important;
+    border: 1px solid rgba(201, 162, 39, 0.35) !important;
+    background: linear-gradient(135deg, rgba(201, 162, 39, 0.12) 0%, rgba(8, 6, 4, 0.85) 100%) !important;
+    flex-shrink: 0 !important;
+}
+
+.chronicle-premium-upsell-banner[hidden] {
+    display: none !important;
+}
+
+.chronicle-premium-upsell-copy {
+    flex: 1 1 240px !important;
+    font-family: 'Segoe UI', sans-serif !important;
+    font-size: 0.8rem !important;
+    line-height: 1.45 !important;
+    color: rgba(241, 224, 172, 0.85) !important;
+}
+
+.chronicle-premium-upsell-copy strong {
+    color: #f1e0ac !important;
+    font-weight: 600 !important;
+}
+
+.chronicle-premium-upsell-btn {
+    flex-shrink: 0 !important;
+    white-space: nowrap !important;
+}
+
+.chronicle-premium-panel-header {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 10px 14px !important;
+    flex-shrink: 0 !important;
+}
+
+.chronicle-premium-panel-unlock-btn {
+    flex-shrink: 0 !important;
+    white-space: nowrap !important;
+}
+
+.royalty-active-member-banner {
+    padding: 12px 14px !important;
+    margin-bottom: 14px !important;
+    border-radius: 4px !important;
+    border: 1px solid rgba(201, 162, 39, 0.45) !important;
+    background: linear-gradient(135deg, rgba(201, 162, 39, 0.18) 0%, rgba(8, 6, 4, 0.9) 100%) !important;
+    font-family: 'Segoe UI', sans-serif !important;
+    font-size: 0.82rem !important;
+    color: rgba(241, 224, 172, 0.9) !important;
+}
+
+.royalty-badge-title-grant {
+    font-family: 'Segoe UI', sans-serif !important;
+    font-size: 0.75rem !important;
+    color: rgba(241, 224, 172, 0.75) !important;
+    margin: 0 0 8px !important;
+}
+
+.chronicle-rewards-tracks-deck {
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
+}
+
+.chronicle-rewards-track-panel {
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+    display: none !important;
+    flex-direction: column !important;
+    gap: 10px !important;
+}
+
+.chronicle-rewards-track-panel-active {
+    display: flex !important;
+}
+
+.chronicle-rewards-track-panel-hidden {
+    display: none !important;
+}
+
+.landmark-node-premium-gated {
+    border-style: dashed !important;
+    border-color: rgba(201, 162, 39, 0.28) !important;
+}
+
+.milestone-premium-hint {
+    margin: 4px 0 0 0 !important;
+    font-family: 'Segoe UI', sans-serif !important;
+    font-size: 0.68rem !important;
+    font-style: italic !important;
+    color: rgba(201, 162, 39, 0.75) !important;
+}
+
+.status-premium-required-tag {
+    color: #e8c96a !important;
+    text-shadow: 0 0 4px rgba(255, 215, 0, 0.2) !important;
 }
 
 /* INDOOR INDIVIDUAL MILESTONE CARD BADGE CAPSULES */
@@ -2427,9 +2708,14 @@
     background: rgba(20, 16, 11, 0.9) !important;
 }
 
-.public-profile-membership.tier-bronze { color: #cd7f32 !important; border-color: #cd7f32 !important; }
-.public-profile-membership.tier-silver { color: #c0c0c0 !important; border-color: #c0c0c0 !important; }
-.public-profile-membership.tier-gold { color: #ffd700 !important; border-color: #ffd700 !important; }
+.public-profile-membership.tier-bronze,
+.membership-badge.tier-bronze { color: #cd7f32 !important; border-color: #cd7f32 !important; }
+.public-profile-membership.tier-royalty,
+.membership-badge.tier-royalty { color: #e8c547 !important; border-color: #c9a227 !important; }
+.public-profile-membership.tier-silver,
+.membership-badge.tier-silver { color: #c0c0c0 !important; border-color: #c0c0c0 !important; }
+.public-profile-membership.tier-gold,
+.membership-badge.tier-gold { color: #ffd700 !important; border-color: #ffd700 !important; }
 
 .public-profile-visibility-pill {
     font-family: 'Segoe UI', sans-serif !important;
@@ -3792,4 +4078,315 @@ body.developer-maintenance-alert-active #main-dashboard-canvas {
 body.developer-maintenance-alert-active #page-landing {
     padding-top: var(--developer-maintenance-alert-offset, 0px) !important;
     box-sizing: border-box !important;
+}
+
+/* ============================================================
+   Evolution Roadmap (portal tab)
+   ============================================================ */
+
+.evolution-roadmap-workspace {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 18px !important;
+    width: 100% !important;
+    height: 100% !important;
+    min-height: 0 !important;
+    flex: 1 1 auto !important;
+    box-sizing: border-box !important;
+}
+
+.evolution-roadmap-hero {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    align-items: flex-end !important;
+    justify-content: space-between !important;
+    gap: 16px 24px !important;
+    padding: 22px 26px !important;
+    background: linear-gradient(135deg, rgba(28, 22, 14, 0.92) 0%, rgba(10, 8, 6, 0.96) 55%, rgba(18, 14, 10, 0.9) 100%) !important;
+    border: 1px solid rgba(201, 162, 39, 0.35) !important;
+    border-radius: 6px !important;
+    box-shadow: 0 14px 32px rgba(0, 0, 0, 0.55), inset 0 1px 0 rgba(255, 215, 0, 0.08) !important;
+}
+
+.evolution-roadmap-eyebrow {
+    margin: 0 0 6px 0 !important;
+    font-family: 'Segoe UI', sans-serif !important;
+    font-size: 0.68rem !important;
+    letter-spacing: 0.14em !important;
+    text-transform: uppercase !important;
+    color: rgba(201, 162, 39, 0.85) !important;
+}
+
+.evolution-roadmap-title {
+    margin: 0 0 10px 0 !important;
+    font-family: 'Cinzel', serif !important;
+    font-size: 1.65rem !important;
+    font-weight: 700 !important;
+    color: #f4e4b8 !important;
+    letter-spacing: 0.04em !important;
+}
+
+.evolution-roadmap-lead {
+    margin: 0 !important;
+    max-width: 720px !important;
+    font-family: 'Segoe UI', sans-serif !important;
+    font-size: 0.86rem !important;
+    line-height: 1.55 !important;
+    color: rgba(241, 224, 172, 0.82) !important;
+}
+
+.evolution-roadmap-lead strong {
+    color: #e8c96a !important;
+    font-weight: 600 !important;
+}
+
+.evolution-roadmap-legend {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 12px 18px !important;
+    align-items: center !important;
+}
+
+.evolution-roadmap-legend-item {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    font-family: 'Segoe UI', sans-serif !important;
+    font-size: 0.72rem !important;
+    color: rgba(241, 224, 172, 0.7) !important;
+    letter-spacing: 0.03em !important;
+}
+
+.evolution-roadmap-legend-swatch {
+    width: 10px !important;
+    height: 10px !important;
+    border-radius: 50% !important;
+    flex-shrink: 0 !important;
+}
+
+.evolution-roadmap-legend-swatch.completed {
+    background: #6a8fc7 !important;
+    box-shadow: 0 0 8px rgba(106, 143, 199, 0.5) !important;
+}
+
+.evolution-roadmap-legend-swatch.current {
+    background: #c9a227 !important;
+    box-shadow: 0 0 10px rgba(201, 162, 39, 0.65) !important;
+}
+
+.evolution-roadmap-legend-swatch.upcoming {
+    background: rgba(241, 224, 172, 0.25) !important;
+    border: 1px dashed rgba(201, 162, 39, 0.35) !important;
+}
+
+.evolution-roadmap-timeline {
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+    overflow-y: auto !important;
+    padding: 4px 6px 12px 2px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 12px !important;
+}
+
+.evolution-roadmap-phase-card {
+    background: linear-gradient(180deg, rgba(16, 13, 10, 0.88) 0%, rgba(8, 7, 5, 0.95) 100%) !important;
+    border: 1px solid rgba(184, 144, 48, 0.22) !important;
+    border-radius: 6px !important;
+    overflow: hidden !important;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease !important;
+}
+
+.evolution-roadmap-phase-card.current {
+    border-color: rgba(201, 162, 39, 0.55) !important;
+    box-shadow: 0 0 22px rgba(201, 162, 39, 0.12) !important;
+}
+
+.evolution-roadmap-phase-card.is-expanded {
+    border-color: rgba(201, 162, 39, 0.4) !important;
+}
+
+.evolution-roadmap-phase-header {
+    width: 100% !important;
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: flex-start !important;
+    gap: 14px !important;
+    padding: 16px 18px !important;
+    margin: 0 !important;
+    border: none !important;
+    background: transparent !important;
+    cursor: pointer !important;
+    text-align: left !important;
+    color: inherit !important;
+    font: inherit !important;
+}
+
+.evolution-roadmap-phase-header:hover {
+    background: rgba(43, 36, 26, 0.35) !important;
+}
+
+.evolution-roadmap-phase-rail {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    width: 18px !important;
+    flex-shrink: 0 !important;
+    padding-top: 4px !important;
+}
+
+.evolution-roadmap-phase-dot {
+    width: 12px !important;
+    height: 12px !important;
+    border-radius: 50% !important;
+    border: 2px solid rgba(201, 162, 39, 0.5) !important;
+    background: #0d0a07 !important;
+    flex-shrink: 0 !important;
+}
+
+.evolution-roadmap-phase-card.completed .evolution-roadmap-phase-dot {
+    background: #6a8fc7 !important;
+    border-color: #8aaee8 !important;
+}
+
+.evolution-roadmap-phase-card.current .evolution-roadmap-phase-dot {
+    background: #c9a227 !important;
+    border-color: #f1e0ac !important;
+    box-shadow: 0 0 12px rgba(201, 162, 39, 0.7) !important;
+}
+
+.evolution-roadmap-phase-line {
+    flex: 1 1 auto !important;
+    width: 2px !important;
+    min-height: 24px !important;
+    margin-top: 6px !important;
+    background: linear-gradient(180deg, rgba(201, 162, 39, 0.45) 0%, rgba(201, 162, 39, 0.08) 100%) !important;
+}
+
+.evolution-roadmap-phase-copy {
+    flex: 1 1 auto !important;
+    min-width: 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 6px !important;
+}
+
+.evolution-roadmap-phase-meta {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    align-items: center !important;
+    gap: 10px 14px !important;
+}
+
+.evolution-roadmap-era {
+    font-family: 'Cinzel', serif !important;
+    font-size: 1.05rem !important;
+    font-weight: 700 !important;
+    color: #f4e4b8 !important;
+    letter-spacing: 0.03em !important;
+}
+
+.evolution-roadmap-status {
+    font-family: 'Segoe UI', sans-serif !important;
+    font-size: 0.62rem !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.1em !important;
+    text-transform: uppercase !important;
+    padding: 3px 10px !important;
+    border-radius: 999px !important;
+    border: 1px solid transparent !important;
+}
+
+.evolution-roadmap-status--completed {
+    color: #a8c4f0 !important;
+    background: rgba(106, 143, 199, 0.15) !important;
+    border-color: rgba(106, 143, 199, 0.35) !important;
+}
+
+.evolution-roadmap-status--current {
+    color: #1a1408 !important;
+    background: linear-gradient(90deg, #c9a227 0%, #f1e0ac 100%) !important;
+    border-color: #f1e0ac !important;
+}
+
+.evolution-roadmap-status--upcoming {
+    color: rgba(241, 224, 172, 0.55) !important;
+    background: rgba(0, 0, 0, 0.35) !important;
+    border-color: rgba(184, 144, 48, 0.2) !important;
+}
+
+.evolution-roadmap-period {
+    font-family: 'Segoe UI', sans-serif !important;
+    font-size: 0.72rem !important;
+    color: rgba(201, 162, 39, 0.75) !important;
+    letter-spacing: 0.04em !important;
+}
+
+.evolution-roadmap-summary {
+    font-family: 'Segoe UI', sans-serif !important;
+    font-size: 0.82rem !important;
+    line-height: 1.5 !important;
+    color: rgba(241, 224, 172, 0.78) !important;
+}
+
+.evolution-roadmap-chevron {
+    flex-shrink: 0 !important;
+    font-size: 0.65rem !important;
+    color: rgba(201, 162, 39, 0.6) !important;
+    transition: transform 0.2s ease !important;
+    margin-top: 6px !important;
+}
+
+.evolution-roadmap-phase-card.is-expanded .evolution-roadmap-chevron {
+    transform: rotate(180deg) !important;
+}
+
+.evolution-roadmap-phase-body {
+    display: none !important;
+    padding: 0 18px 18px 50px !important;
+    border-top: 1px solid rgba(184, 144, 48, 0.12) !important;
+}
+
+.evolution-roadmap-phase-card.is-expanded .evolution-roadmap-phase-body {
+    display: block !important;
+}
+
+.evolution-roadmap-topic-grid {
+    display: grid !important;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)) !important;
+    gap: 12px !important;
+    padding-top: 14px !important;
+}
+
+.evolution-roadmap-topic-card {
+    background: rgba(0, 0, 0, 0.35) !important;
+    border: 1px solid rgba(184, 144, 48, 0.15) !important;
+    border-radius: 4px !important;
+    padding: 14px 16px !important;
+}
+
+.evolution-roadmap-topic-title {
+    margin: 0 0 10px 0 !important;
+    font-family: 'Cinzel', serif !important;
+    font-size: 0.82rem !important;
+    color: #e8c96a !important;
+    letter-spacing: 0.06em !important;
+    text-transform: uppercase !important;
+}
+
+.evolution-roadmap-topic-list {
+    margin: 0 !important;
+    padding-left: 18px !important;
+    font-family: 'Segoe UI', sans-serif !important;
+    font-size: 0.78rem !important;
+    line-height: 1.45 !important;
+    color: rgba(241, 224, 172, 0.75) !important;
+}
+
+.evolution-roadmap-topic-list li {
+    margin-bottom: 6px !important;
+}
+
+.evolution-roadmap-topic-list li:last-child {
+    margin-bottom: 0 !important;
 }

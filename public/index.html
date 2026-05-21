@@ -19,6 +19,7 @@
     <!-- Block 3: Stylesheet Bridge -->
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="style2.css">
+    <link rel="stylesheet" href="custom-cursor.css">
 </head>
 <body>
 
@@ -48,49 +49,6 @@
             <div class="slide slide5"></div><div class="slide slide6"></div>
             <div class="slide slide7"></div><div class="slide slide8"></div>
             <div class="slide slide9"></div>
-        </div>
-
-        <!-- Block 5: Navigator Bar & Chronicle Hubs -->
-        <div class="navigator-bar">
-            <div class="updates-hub">
-                <img src="images/devupdatesicon.png" id="updates-icon" class="nav-icon" alt="Updates" onclick="toggleUpdates(event)">
-                <div id="updates-panel" class="updates-panel">
-                    <div class="updates-header">Updates</div>
-                    <div class="updates-scroll">
-                        <div class="update-item" onclick="openChronicleDetail('alpha_0111', event)"><span class="update-date">May 2026</span><h4 class="update-title">Alpha 0.1.11 — Age Portal</h4></div>
-                        <div class="update-item" onclick="openChronicleDetail('genesis', event)"><h4 class="update-title">Core framework</h4></div>
-                        <div class="update-item" onclick="openChronicleDetail('audio', event)"><h4 class="update-title">Audio system</h4></div>
-                        <div class="update-item" onclick="openChronicleDetail('narrative', event)"><h4 class="update-title">Story intro</h4></div>
-                        <div class="update-item" onclick="openChronicleDetail('interface', event)"><h4 class="update-title">Navigation and roadmap</h4></div>
-                        <div class="update-item" onclick="openChronicleDetail('security', event)"><h4 class="update-title">Login and accounts</h4></div>
-                        <div class="update-item" onclick="openChronicleDetail('assets', event)"><h4 class="update-title">Art pipeline</h4></div>
-                        <div class="update-item" onclick="openChronicleDetail('optimization', event)"><h4 class="update-title">Performance</h4></div>
-                        <div class="update-item" onclick="openChronicleDetail('networking', event)"><h4 class="update-title">Live sync</h4></div>
-                        <div class="update-item" onclick="openChronicleDetail('networking_nexus', event)"><h4 class="update-title">Registration server</h4></div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="updates-hub">
-                <img src="images/roadmapicon.png" id="roadmap-trigger" class="nav-icon" onclick="toggleRoadmap(true, event)" alt="Roadmap">
-                <div id="roadmap-modal" class="updates-panel">
-                    <div class="updates-header">Project Roadmap</div>
-                    <div class="updates-scroll">
-                        <div class="update-item" onclick="openChronicleDetail('roadmap_foundation', event)"><span class="update-date">Phase 1</span><h4 class="update-title">Foundation</h4></div>
-                        <div class="update-item" onclick="openChronicleDetail('roadmap_combat', event)"><span class="update-date">Phase 2</span><h4 class="update-title">Combat sync</h4></div>
-                        <div class="update-item" onclick="openChronicleDetail('roadmap_classes', event)"><span class="update-date">Phase 3</span><h4 class="update-title">Classes</h4></div>
-                        <div class="update-item" onclick="openChronicleDetail('roadmap_world', event)"><span class="update-date">Phase 4</span><h4 class="update-title">World map</h4></div>
-                        <div class="update-item" onclick="openChronicleDetail('roadmap_economy', event)"><span class="update-date">Phase 5</span><h4 class="update-title">Economy</h4></div>
-                        <div class="update-item" onclick="openChronicleDetail('roadmap_launch', event)"><span class="update-date">Phase 6</span><h4 class="update-title">Launch</h4></div>
-                    </div>
-                </div>
-            </div>
-
-            <div id="nav-discord" class="nav-icon" onclick="openDiscord()">
-                <img src="images/discordicon.png" alt="Discord">
-            </div>
-            <img src="images/loreicon.png" class="nav-icon" id="nav-lore" onclick="if (typeof openLoreModal === 'function') openLoreModal()" alt="Lore">
-            <img src="images/supporticon.png" class="nav-icon disabled" alt="Support">
         </div>
 
         <!-- --- Section: Login Portal & Auth Controls --- -->
@@ -459,6 +417,7 @@
     <script src="script.js?v=0.1.11"></script>
     <script src="maintenance-alert.js?v=0.1.11"></script>
     <script src="script2.js?v=0.1.11"></script>
+    <script src="custom-cursor.js"></script>
 
 </body>
 </html>
