@@ -315,8 +315,36 @@ body.portal-guest-mode #portal-mobile-commander-block {
 }
 
 .portal-brand-logo-static .portal-brand-logo-asset {
-    margin-bottom: -8px !important;
+    margin-bottom: -4px !important;
     pointer-events: none !important;
+}
+
+.portal-alpha-version-readout {
+    margin: 4px 0 0 0 !important;
+    padding: 0 !important;
+    font-family: 'Cinzel', serif !important;
+    font-size: 0.72rem !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.14em !important;
+    text-transform: uppercase !important;
+    color: rgba(232, 197, 71, 0.88) !important;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9) !important;
+    text-align: center !important;
+    line-height: 1.2 !important;
+}
+
+.portal-alpha-version-readout--mobile {
+    margin-top: 2px !important;
+    font-size: 0.62rem !important;
+    letter-spacing: 0.1em !important;
+}
+
+#portal-alpha-version-capsule .portal-alpha-version-value {
+    font-family: 'Cinzel', serif !important;
+    font-size: 0.82rem !important;
+    letter-spacing: 0.06em !important;
+    color: #e8c96a !important;
+    text-shadow: 0 0 6px rgba(201, 162, 39, 0.25) !important;
 }
 
 /* Block 5: CHROMATIC HEADER TEXT TABS SCALE ENGINE */

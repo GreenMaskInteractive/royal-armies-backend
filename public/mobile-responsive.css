@@ -187,6 +187,17 @@ body {
         grid-column: 4 / 7 !important;
     }
 
+    #portal-alpha-version-capsule {
+        order: 7 !important;
+        grid-column: 1 / -1 !important;
+        justify-content: center !important;
+        text-align: center !important;
+    }
+
+    #portal-alpha-version-capsule .metric-text-stack {
+        align-items: center !important;
+    }
+
     .portal-age-metrics-dashboard-bar .metric-roster-hover-cell .metric-roster-hover-trigger {
         min-height: 0 !important;
         height: auto !important;

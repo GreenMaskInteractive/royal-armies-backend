@@ -1359,8 +1359,15 @@ function toggleMute() {
 
 /* --- Section: Chronicle Data & Login Engine --- */
 
+/** Shown on the Age Portal (metrics strip, header) and in release notes. */
+const PORTAL_ALPHA_VERSION = 'Alpha 0.1.13';
+
 /* --- Block 2: The Chronicle Archives (Full Data Set) --- */
 const CHRONICLE_DATA = {
+    alpha_0113: {
+        title: "Alpha 0.1.13 — Royalty, Lore & Portal Polish",
+        details: "Royal Armies Alpha 0.1.13 polishes the Age Portal with clearer membership pages, a reworked Lore codex, profile medals, and quality-of-life fixes across desktop and mobile.\n\nWhat's new: the Royalty page now shows Standard and Premium plans with artwork and short perk lists for free and Royalty commanders; The Chronicles uses familiar Battle Pass wording with separate Free Pass and Premium Pass reward lanes; the Lore tab on desktop displays all fifteen nations in a 4×4 codex grid beside a wider story reader; commander profiles include a Medals section above Achievements, ready for honors you earn in Ages; desktop players see a custom gauntlet cursor without the default hand overlapping buttons and links; text sitting on the background artwork is easier to read across the hub; mobile messaging no longer pushes the recipient list down when you open a nation category; guests browsing on desktop see centered navigation tabs; the browser tab title now shows the full Royal Armies name.\n\nThe full battle client is still in development. Thank you for helping us shape Royal Armies."
+    },
     alpha_0112: {
         title: "Alpha 0.1.12 — Lore, Chat & Chronicles",
         publishAt: "2026-05-21T13:00:00.000Z",

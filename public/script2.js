@@ -59,6 +59,7 @@ window.onload = async () => {
     applyPortalNavAccessRestrictions();
     applyPortalGuestDeploymentChrome();
     hydrateDevelopersLogDock();
+    applyPortalAlphaVersionLabels();
 
     if (typeof loadCommanderMailboxDossiersFromStorage === 'function') {
         loadCommanderMailboxDossiersFromStorage();
@@ -777,7 +778,17 @@ function switchMainPortalView(viewName, clickEvent, chatChannelKey) {
 }
 
 /** Release IDs from CHRONICLE_DATA (script.js), newest first — shown in Developer's Log sidebar. */
-const DEVELOPER_LOG_RELEASE_IDS = ['alpha_0112', 'alpha_0111'];
+const DEVELOPER_LOG_RELEASE_IDS = ['alpha_0113', 'alpha_0112', 'alpha_0111'];
+
+function applyPortalAlphaVersionLabels() {
+    const label = typeof PORTAL_ALPHA_VERSION !== 'undefined'
+        ? PORTAL_ALPHA_VERSION
+        : 'Alpha 0.1.13';
+    document.querySelectorAll('[data-portal-alpha-version]').forEach((el) => {
+        el.textContent = label;
+    });
+    document.title = `Royal Armies - An MMOHFT Medieval-Fantasy Strategy Game (${label})`;
+}
 
 let developersLogScheduleTimer = null;
 
