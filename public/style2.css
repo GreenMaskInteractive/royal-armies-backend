@@ -6848,21 +6848,21 @@ body.developer-maintenance-alert-active #page-landing {
     }
 
     .lore-codex-body {
-        grid-template-columns: minmax(360px, 400px) minmax(0, 1fr) !important;
+        grid-template-columns: minmax(460px, 520px) minmax(0, 1fr) !important;
         gap: 20px !important;
     }
 
     .lore-nation-index-deck.portal-desktop-lore-index {
         flex-shrink: 0 !important;
         width: 100% !important;
-        max-width: 400px !important;
+        max-width: 520px !important;
         overflow: visible !important;
         align-self: start !important;
     }
 
     .lore-index-label {
-        font-size: 0.4rem !important;
-        margin-bottom: 8px !important;
+        font-size: 0.55rem !important;
+        margin-bottom: 10px !important;
     }
 
     .lore-nation-index-scroll {
@@ -6870,7 +6870,7 @@ body.developer-maintenance-alert-active #page-landing {
         grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
         grid-template-rows: repeat(4, minmax(0, auto)) !important;
         grid-auto-flow: row !important;
-        gap: 8px !important;
+        gap: 10px !important;
         overflow: visible !important;
         flex: none !important;
         min-height: 0 !important;
@@ -6882,10 +6882,10 @@ body.developer-maintenance-alert-active #page-landing {
         flex-direction: column !important;
         align-items: center !important;
         justify-content: flex-start !important;
-        gap: 4px !important;
+        gap: 6px !important;
         width: 100% !important;
         min-width: 0 !important;
-        padding: 8px 5px 7px !important;
+        padding: 10px 6px 9px !important;
         text-align: center !important;
     }
 
@@ -6894,13 +6894,13 @@ body.developer-maintenance-alert-active #page-landing {
     }
 
     .lore-nation-chip-index {
-        font-size: 0.32rem !important;
+        font-size: 0.55rem !important;
         line-height: 1 !important;
     }
 
     .lore-nation-chip-sigil {
-        width: 34px !important;
-        height: 34px !important;
+        width: 52px !important;
+        height: 52px !important;
     }
 
     .lore-nation-chip-copy {
@@ -6909,8 +6909,8 @@ body.developer-maintenance-alert-active #page-landing {
     }
 
     .lore-nation-chip-name {
-        font-size: 0.48rem !important;
-        line-height: 1.25 !important;
+        font-size: 0.72rem !important;
+        line-height: 1.3 !important;
         text-align: center !important;
         word-break: break-word !important;
     }
@@ -6927,16 +6927,26 @@ body.developer-maintenance-alert-active #page-landing {
         padding: 16px 18px 14px !important;
     }
 
+    .lore-reader-header {
+        grid-template-columns: 88px minmax(0, 1fr) auto !important;
+        gap: 18px !important;
+    }
+
+    .lore-reader-sigil-ring {
+        width: 88px !important;
+        height: 88px !important;
+    }
+
     .lore-reader-eyebrow {
         font-size: 0.48rem !important;
     }
 
     .lore-reader-nation-name {
-        font-size: 1.6rem !important;
+        font-size: 1.85rem !important;
     }
 
     .lore-reader-epithet {
-        font-size: 0.75rem !important;
+        font-size: 0.92rem !important;
     }
 
     .lore-audio-play-icon {
