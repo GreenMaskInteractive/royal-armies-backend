@@ -451,20 +451,37 @@ body {
     #portal-commander-hub-page.commander-hub-messages-active .message-workspace-canvas,
     #portal-commander-hub-page.commander-hub-profile-active .commander-hub-body,
     #portal-commander-hub-page.commander-hub-profile-active .settings-scroll-wrapper.profile-fullscreen-canvas,
-    #portal-commander-hub-page.commander-hub-view-profile-active .commander-hub-body {
-        overflow: visible !important;
+    #portal-commander-hub-page.commander-hub-view-profile-active .commander-hub-body,
+    #portal-commander-hub-page.commander-hub-view-profile-active .commander-hub-content-pane {
+        overflow-x: hidden !important;
         overflow-y: visible !important;
         max-height: none !important;
         height: auto !important;
-    }
-
-    #portal-commander-hub-page.commander-hub-view-profile-active .commander-hub-subnav-column,
-    #portal-commander-hub-page.commander-hub-view-profile-active .commander-hub-section-title {
-        display: none !important;
+        flex: 0 0 auto !important;
     }
 
     #portal-commander-hub-page.commander-hub-view-profile-active .commander-hub-body-frame {
-        padding-top: 18px !important;
+        overflow-x: hidden !important;
+        overflow-y: visible !important;
+        max-height: none !important;
+        height: auto !important;
+        padding: 12px 12px 8px !important;
+    }
+
+    #portal-commander-hub-page.commander-hub-view-profile-active .commander-hub-subnav-column,
+    #portal-commander-hub-page.commander-hub-view-profile-active .commander-hub-section-title,
+    #portal-commander-hub-page.commander-hub-view-profile-active .commander-hub-profile-header-host,
+    #portal-commander-hub-page.commander-hub-view-profile-active .commander-hub-profile-footer-host {
+        display: none !important;
+    }
+
+    #portal-commander-hub-page.commander-hub-view-profile-active .public-profile-hub-inline {
+        overflow-x: hidden !important;
+        max-width: 100% !important;
+    }
+
+    #portal-commander-hub-page.commander-hub-view-profile-active {
+        padding-bottom: 8px !important;
     }
 
     .portal-commander-hub-page .public-profile-hub-inline {
