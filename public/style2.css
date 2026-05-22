@@ -264,7 +264,8 @@ body.portal-guest-mode #portal-mobile-commander-block {
     padding: 14px 16px !important;
     border-radius: 4px !important;
     border: 1px solid rgba(201, 162, 39, 0.45) !important;
-    background: rgba(0, 0, 0, 0.42) !important;
+    background: linear-gradient(135deg, rgba(14, 11, 8, 0.96) 0%, rgba(6, 5, 4, 0.98) 100%) !important;
+    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.65) !important;
     font-family: 'Segoe UI', sans-serif !important;
     font-size: 0.9rem !important;
     line-height: 1.5 !important;
@@ -710,7 +711,7 @@ body.portal-guest-mode .portal-mobile-nav-page-item[data-portal-view="chronicles
 .dashboard-news-card-box {
     flex: none !important;              /* Disables auto-flex scaling to allow manual width handling */
     width: 1220px !important;           /* 🌟 INCREASE OR DECREASE THIS PIXEL VALUE MANUALLY TO FIT YOUR VIEWPORT */
-    background: linear-gradient(135deg, rgba(22, 18, 13, 0.8) 0%, rgba(13, 10, 8, 0.9) 100%) !important;
+    background: linear-gradient(135deg, rgba(14, 11, 8, 0.94) 0%, rgba(8, 6, 4, 0.97) 100%) !important;
     border: 1px solid rgba(184, 144, 48, 0.3) !important;
     border-radius: 4px !important;
     padding: 24px !important;
@@ -857,11 +858,11 @@ body:not(.portal-guest-mode) #portal-deployment-guest-cta {
 /* Block 11: THE AUTOMATIC DEPLOYMENT HORIZONTAL CENTERING DECK */
 .portal-deployment-control-deck {
     width: 100% !important;
-    background: transparent !important;       
-    border: none !important;                   
-    border-radius: 0 !important;
-    padding: 24px 20px !important;             /* Unlocks canvas room so dropshadow blooms don't choke hardware threads */
-    box-shadow: none !important;               
+    background: linear-gradient(135deg, rgba(14, 11, 8, 0.94) 0%, rgba(6, 5, 4, 0.97) 100%) !important;
+    border: 1px solid rgba(184, 144, 48, 0.28) !important;
+    border-radius: 6px !important;
+    padding: 24px 20px !important;
+    box-shadow: 0 14px 32px rgba(0, 0, 0, 0.65) !important;
     box-sizing: border-box !important;
     display: flex !important;
     flex-direction: column !important;
@@ -1096,13 +1097,16 @@ body:not(.portal-guest-mode) #portal-deployment-guest-cta {
 /* Block 15: SOCIAL SHORTCUT LINK TRAY BAR */
 .portal-staging-footer-bar {
     width: 100% !important;
-    border-top: 1px solid rgba(184, 144, 48, 0.15) !important;
-    padding-top: 15px !important;
+    border-top: 1px solid rgba(184, 144, 48, 0.28) !important;
+    padding: 18px 16px 14px !important;
     display: flex !important;
     justify-content: space-between !important;
     align-items: center !important;
     box-sizing: border-box !important;
     margin-top: auto !important;
+    border-radius: 6px !important;
+    background: linear-gradient(180deg, rgba(10, 8, 6, 0.88) 0%, rgba(6, 5, 4, 0.96) 100%) !important;
+    box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.45) !important;
 }
 
 .footer-social-dock { 
@@ -1112,8 +1116,9 @@ body:not(.portal-guest-mode) #portal-deployment-guest-cta {
 .footer-icon-link {
     font-family: 'Segoe UI', sans-serif !important;
     font-size: 0.72rem !important;
-    color: rgba(241, 224, 172, 0.4) !important;
+    color: rgba(244, 232, 200, 0.82) !important;
     text-decoration: none !important;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.85) !important;
     transition: color 0.2s ease !important;
 }
 .footer-icon-link:hover { 
@@ -1122,7 +1127,8 @@ body:not(.portal-guest-mode) #portal-deployment-guest-cta {
 .footer-version-tag { 
     font-family: 'Segoe UI', sans-serif !important; 
     font-size: 0.68rem !important; 
-    color: rgba(241, 224, 172, 0.2) !important; 
+    color: rgba(244, 232, 200, 0.58) !important;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.85) !important;
 }
 
 
@@ -3224,11 +3230,13 @@ body:not(.portal-guest-mode) #portal-deployment-guest-cta {
 .royalty-workspace-header-deck {
     flex-shrink: 0 !important;
     text-align: center !important;
-    border-bottom: 1px solid rgba(184, 144, 48, 0.2) !important;
-    padding: 0 12px 16px !important;
-    background:
-        linear-gradient(180deg, rgba(201, 162, 39, 0.06) 0%, transparent 72%),
-        transparent !important;
+    padding: 18px 20px 20px !important;
+    border-radius: 6px !important;
+    border: 1px solid rgba(184, 144, 48, 0.32) !important;
+    background: linear-gradient(135deg, rgba(14, 11, 8, 0.96) 0%, rgba(6, 5, 4, 0.98) 55%, rgba(18, 14, 10, 0.95) 100%) !important;
+    box-shadow:
+        0 14px 32px rgba(0, 0, 0, 0.7),
+        inset 0 1px 0 rgba(255, 215, 0, 0.06) !important;
 }
 
 .royalty-master-title {
@@ -3239,19 +3247,24 @@ body:not(.portal-guest-mode) #portal-deployment-guest-cta {
     color: #ffd700 !important;
     letter-spacing: 0.08em !important;
     text-transform: uppercase !important;
-    text-shadow: 0 2px 12px rgba(0, 0, 0, 0.65) !important;
+    text-shadow:
+        0 1px 2px rgba(0, 0, 0, 0.95),
+        0 2px 12px rgba(0, 0, 0, 0.75) !important;
 }
 
 .royalty-master-subtitle {
     margin: 0 !important;
     font-family: 'Segoe UI', sans-serif !important;
-    font-size: 0.8rem !important;
-    line-height: 1.5 !important;
-    color: rgba(241, 224, 172, 0.7) !important;
+    font-size: 0.82rem !important;
+    line-height: 1.55 !important;
+    color: #f4e8c8 !important;
+    text-shadow:
+        0 1px 2px rgba(0, 0, 0, 0.9),
+        0 2px 8px rgba(0, 0, 0, 0.75) !important;
 }
 
 .royalty-master-subtitle strong {
-    color: #f1e0ac !important;
+    color: #fff5d6 !important;
     font-weight: 600 !important;
 }
 
@@ -3880,18 +3893,20 @@ body:not(.portal-guest-mode) #portal-deployment-guest-cta {
     font-family: 'RoyalDetails', serif;
     font-size: 1.05rem;
     line-height: 1.8;
-    color: #ffffff;
+    color: #fff8ee;
     margin-bottom: 18px;
     letter-spacing: 0.5px;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.85);
 }
 
 .card-scrollable-body-text p.portal-intro-body {
     font-family: 'RoyalDetails', serif;
     font-size: 0.95rem;
     line-height: 1.7;
-    color: #b0b8c4;
+    color: #e8e2d6;
     margin-bottom: 16px;
     letter-spacing: 0.2px;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
 }
 
 .card-scrollable-body-text h3.portal-intro-subhead {
