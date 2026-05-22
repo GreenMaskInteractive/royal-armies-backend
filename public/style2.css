@@ -3384,8 +3384,8 @@ body:not(.portal-guest-mode) #portal-deployment-guest-cta {
     align-items: center !important;
     justify-content: center !important;
     width: 100% !important;
-    max-width: 300px !important;
-    min-height: 168px !important;
+    max-width: 600px !important;
+    min-height: 336px !important;
     padding: 12px 14px !important;
     box-sizing: border-box !important;
     border-radius: 4px !important;
@@ -3411,9 +3411,9 @@ body:not(.portal-guest-mode) #portal-deployment-guest-cta {
 .royalty-package-tier-art {
     display: block !important;
     width: 100% !important;
-    max-width: 260px !important;
+    max-width: 520px !important;
     height: auto !important;
-    max-height: 200px !important;
+    max-height: 400px !important;
     object-fit: contain !important;
     object-position: center !important;
     filter: drop-shadow(0 6px 14px rgba(0, 0, 0, 0.55)) !important;
@@ -3537,28 +3537,6 @@ body:not(.portal-guest-mode) #portal-deployment-guest-cta {
     line-height: 1.45 !important;
 }
 
-.royalty-package-feature-copy {
-    display: flex !important;
-    flex-direction: column !important;
-    gap: 4px !important;
-    min-width: 0 !important;
-}
-
-.royalty-package-feature-title {
-    font-family: 'Segoe UI', sans-serif !important;
-    font-size: 0.8rem !important;
-    font-weight: 600 !important;
-    color: rgba(241, 224, 172, 0.95) !important;
-}
-
-.royalty-package-feature-detail {
-    margin: 0 !important;
-    font-family: 'Segoe UI', sans-serif !important;
-    font-size: 0.74rem !important;
-    line-height: 1.5 !important;
-    color: rgba(241, 224, 172, 0.72) !important;
-}
-
 .royalty-package-action-footer {
     margin-top: auto !important;
     padding: 14px 20px 18px !important;
@@ -3631,11 +3609,11 @@ body:not(.portal-guest-mode) #portal-deployment-guest-cta {
 
     .royalty-package-visual-frame {
         max-width: 100% !important;
-        min-height: 150px !important;
+        min-height: 300px !important;
     }
 
     .royalty-package-tier-art {
-        max-height: 180px !important;
+        max-height: 360px !important;
     }
 }
 

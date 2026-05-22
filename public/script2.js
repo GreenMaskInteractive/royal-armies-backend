@@ -3121,28 +3121,6 @@ const ROYALTY_PLAN_TIER_ART = {
     }
 };
 
-function buildRoyaltyPackageFeatureItemMarkup(feature) {
-    if (typeof feature === 'string') {
-        return `
-            <li class="royalty-package-feature-item">
-                <span class="royalty-package-feature-bullet" aria-hidden="true">✦</span>
-                <span>${escapeMetricRosterHtml(feature)}</span>
-            </li>`;
-    }
-    const title = escapeMetricRosterHtml(feature.title || '');
-    const detail = feature.detail
-        ? `<p class="royalty-package-feature-detail">${escapeMetricRosterHtml(feature.detail)}</p>`
-        : '';
-    return `
-        <li class="royalty-package-feature-item royalty-package-feature-item--rich">
-            <span class="royalty-package-feature-bullet" aria-hidden="true">✦</span>
-            <div class="royalty-package-feature-copy">
-                <strong class="royalty-package-feature-title">${title}</strong>
-                ${detail}
-            </div>
-        </li>`;
-}
-
 function buildRoyaltyPackageVisualMarkup(planVariant) {
     const art = ROYALTY_PLAN_TIER_ART[planVariant] || ROYALTY_PLAN_TIER_ART.standard;
     return `
@@ -3153,8 +3131,8 @@ function buildRoyaltyPackageVisualMarkup(planVariant) {
                     class="royalty-package-tier-art"
                     src="${art.src}"
                     alt="${art.alt}"
-                    width="320"
-                    height="240"
+                    width="640"
+                    height="480"
                     loading="lazy"
                     decoding="async"
                 />
@@ -3171,14 +3149,8 @@ const globalRoyaltyTierPackagesDatabase = [
         badge: 'FREE',
         badgeTitleGranted: BASIC_MEMBER_DISPLAY_TITLE,
         features: [
-            {
-                title: 'Basic Member title',
-                detail: 'Displayed on your profile, in chat, and on your public commander dossier.'
-            },
-            {
-                title: 'Basic Tier Battle Pass',
-                detail: `The free ${CHRONICLE_TIER_MAX_LEVEL}-level lane on the Battle Pass—earn XP in Ages and claim milestone rewards as you rank up.`
-            },
+            'Basic Member title on profile and public dossier',
+            'Basic Tier Battle Pass',
             'And More!'
         ],
         actionText: 'Current plan',
@@ -3192,26 +3164,11 @@ const globalRoyaltyTierPackagesDatabase = [
         badge: 'ROYALTY',
         badgeTitleGranted: ROYALTY_MEMBER_DISPLAY_TITLE,
         features: [
-            {
-                title: 'Royalty Member title',
-                detail: 'Displayed on your profile, in chat, and on your public commander dossier.'
-            },
-            {
-                title: 'Premium Tier Battle Pass',
-                detail: `Unlocks the paid ${CHRONICLE_TIER_MAX_LEVEL}-level lane—earn Battle Pass XP in Ages and claim Royalty-only milestone rewards.`
-            },
-            {
-                title: 'Royal Tactician\'s War Room — Battle Simulator',
-                detail: 'Free commanders see a basic Win/Loss battle log. Royalty opens a visual war room: unit-by-unit performance, damage formulas, and round-by-round statistics so you can see exactly why a formation won or lost. In LastKnights-style rivalry, that data is power—study rival builds, counter-strat, and tune army compositions as the competitive meta evolves.'
-            },
-            {
-                title: 'Royalty cosmetics',
-                detail: 'Unique, hand-designed animated flair for your commander look—exclusive frames, accents, and dossier dressing beyond the free set.'
-            },
-            {
-                title: 'Exclusive gold profile frame',
-                detail: 'A premium animated gold border for your commander dossier and public profile card.'
-            },
+            'Royalty Member title on profile and public dossier',
+            'Premium Tier Battle Pass',
+            'Royal Tactician\'s War Room — visual battle analytics & round-by-round stats',
+            'Unique designed & animated Royalty cosmetics',
+            'Exclusive gold profile frame cosmetics',
             'And More!'
         ],
         actionText: `Unlock ${CHRONICLE_PREMIUM_PASS_LABEL}`,
@@ -3294,7 +3251,9 @@ function renderRoyaltyTierPortalCanvas(viewport) {
                             </div>
                             <div class="royalty-package-cost">${pack.cost}</div>
                             <ul class="royalty-package-features-list">
-                                ${pack.features.map((feat) => buildRoyaltyPackageFeatureItemMarkup(feat)).join('')}
+                                ${pack.features.map((feat) => `
+                                    <li class="royalty-package-feature-item"><span class="royalty-package-feature-bullet" aria-hidden="true">✦</span><span>${escapeMetricRosterHtml(feat)}</span></li>
+                                `).join('')}
                             </ul>
                         </div>
                         ${actionFooterMarkup}

@@ -1668,14 +1668,14 @@ body {
     }
 
     .royalty-package-visual-frame {
-        min-height: 130px !important;
+        min-height: 260px !important;
         max-width: 100% !important;
         padding: 10px !important;
     }
 
     .royalty-package-tier-art {
-        max-width: 220px !important;
-        max-height: 150px !important;
+        max-width: 440px !important;
+        max-height: 300px !important;
     }
 
     .royalty-package-info-deck {
