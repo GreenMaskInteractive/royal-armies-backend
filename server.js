@@ -705,6 +705,7 @@ function getPublicSiteOrigin(req) {
 
 /* Block 4: Framework & Service Imports */
 const express = require('express');
+const session = require('express-session');
 const fs = require('fs');
 const compression = require('compression');
 const { Resend } = require('resend');
@@ -726,6 +727,31 @@ const resend = new Resend('re_eMzwshB5_EmorLivvuzwbHk6jpAzWtpWE');
 app.use(compression());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+const PORTAL_SESSION_MAX_AGE_MS = 30 * 24 * 60 * 60 * 1000;
+
+app.use(session({
+    name: 'royalArmiesPortalSid',
+    secret: process.env.SESSION_SECRET || 'royal-armies-nexus-dev-session',
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+        httpOnly: true,
+        secure: isProduction,
+        sameSite: 'lax',
+        maxAge: PORTAL_SESSION_MAX_AGE_MS
+    }
+}));
+
+function setPortalSessionForUser(req, username, rememberMe = true) {
+    req.session.username = String(username || '').trim();
+    if (!req.session.username) return;
+    if (rememberMe === false) {
+        req.session.cookie.maxAge = null;
+    } else {
+        req.session.cookie.maxAge = PORTAL_SESSION_MAX_AGE_MS;
+    }
+}
 
 /* Local dev: allow Live Server / static preview origins to call the API on port 3000 */
 if (!isProduction) {
@@ -972,15 +998,62 @@ app.post('/api/login', async (req, res) => {
             });
         }
 
+        const rememberMe = req.body?.rememberMe !== false;
+        setPortalSessionForUser(req, commander.username, rememberMe);
+
         res.status(200).json({
             status: 'success',
             username: commander.username,
-            verified: !!commander.verified
+            verified: !!commander.verified,
+            rememberMe
         });
     } catch (error) {
         console.error('[NEXUS] Login compare failed:', error);
         res.status(500).json({ status: 'error', message: 'Login could not be completed.' });
     }
+});
+
+app.get('/api/auth/session', (req, res) => {
+    const username = String(req.session?.username || '').trim();
+    if (!username) {
+        return res.json({ authenticated: false });
+    }
+    res.json({
+        authenticated: true,
+        username
+    });
+});
+
+/** Local port 3000 only — bootstrap session as caleb_admin for full portal QA. */
+app.post('/api/auth/dev-session', (req, res) => {
+    if (isProduction) {
+        return res.status(403).json({ status: 'error', message: 'Not available in production.' });
+    }
+
+    const host = String(req.hostname || '').toLowerCase();
+    if (host !== 'localhost' && host !== '127.0.0.1' && host !== '[::1]') {
+        return res.status(403).json({ status: 'error', message: 'Local development only.' });
+    }
+
+    const mode = String(req.body?.mode || 'owner').toLowerCase();
+    const username = mode === 'player' ? 'DevPlayer' : 'caleb_admin';
+    setPortalSessionForUser(req, username, true);
+    res.json({ authenticated: true, username, dev: true, mode: mode === 'player' ? 'player' : 'owner' });
+});
+
+app.post('/api/auth/logout', (req, res) => {
+    const finish = () => res.json({ status: 'ok' });
+    if (typeof req.session?.destroy === 'function') {
+        return req.session.destroy((err) => {
+            if (err) {
+                console.warn('[NEXUS] Session destroy failed:', err);
+            }
+            res.clearCookie('royalArmiesPortalSid');
+            finish();
+        });
+    }
+    res.clearCookie('royalArmiesPortalSid');
+    finish();
 });
 
 /* Block 9: Password Reset Request Dispatch */

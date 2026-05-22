@@ -450,10 +450,10 @@ function getPublicProfileSnapshot(subjectPlayer) {
         country: source.country || '—',
         timezone: source.timezone || '—',
         membershipTitle: (typeof resolveCommanderMembershipTitleForUsername === 'function'
-            ? resolveCommanderMembershipTitleForUsername(source.name, source.membershipTitle || 'Bronze')
+            ? resolveCommanderMembershipTitleForUsername(source.name, source.membershipTitle || 'Basic')
             : (typeof isPortalSiteOwner === 'function' && isPortalSiteOwner(source.name)
                 ? 'Royalty'
-                : (source.membershipTitle || 'Bronze'))),
+                : (source.membershipTitle || 'Basic'))),
         description,
         privacy,
         rank: source.rank ?? 1,

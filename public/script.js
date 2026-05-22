@@ -124,6 +124,168 @@ function isMainPortalHub() {
     return !!document.getElementById('main-dashboard-canvas');
 }
 
+const PORTAL_AUTH_STORAGE_KEY = 'royalArmiesPortalAuth';
+const PORTAL_AUTH_RESTORE_MAX_AGE_MS = 30 * 24 * 60 * 60 * 1000;
+let portalAuthRestorePromise = null;
+
+function persistPortalAuth(username, rememberMe = true) {
+    const user = String(username || '').trim();
+    if (!user) return;
+    localStorage.setItem('activeCommanderUser', user);
+    localStorage.setItem(PORTAL_AUTH_STORAGE_KEY, JSON.stringify({
+        username: user,
+        rememberMe: rememberMe !== false,
+        savedAt: Date.now()
+    }));
+}
+
+function clearPortalAuthStorage() {
+    localStorage.removeItem('activeCommanderUser');
+    localStorage.removeItem(PORTAL_AUTH_STORAGE_KEY);
+}
+
+function restorePortalAuthFromLocalBundle() {
+    const raw = localStorage.getItem(PORTAL_AUTH_STORAGE_KEY);
+    if (!raw) return '';
+    try {
+        const bundle = JSON.parse(raw);
+        const user = String(bundle.username || '').trim();
+        if (!user) return '';
+        if (bundle.rememberMe === false) return '';
+        const savedAt = Number(bundle.savedAt) || 0;
+        if (savedAt && (Date.now() - savedAt) > PORTAL_AUTH_RESTORE_MAX_AGE_MS) {
+            clearPortalAuthStorage();
+            return '';
+        }
+        localStorage.setItem('activeCommanderUser', user);
+        return user;
+    } catch (_err) {
+        return '';
+    }
+}
+
+function shouldUsePortalSessionCookies() {
+    return typeof isLandingServedByNexusBackend === 'function' && isLandingServedByNexusBackend();
+}
+
+function canUsePortalAuthSessionApi() {
+    if (shouldUsePortalSessionCookies()) return true;
+    return typeof isMailboxApiAvailable === 'function' && isMailboxApiAvailable();
+}
+
+function resolvePortalLoginRememberMe() {
+    const checkbox = document.getElementById('login-remember-me');
+    if (checkbox) return checkbox.checked;
+    return shouldUsePortalSessionCookies();
+}
+
+async function bootstrapLocalDevPortalSession(mode) {
+    const playerMode = mode === 'player';
+    const devUser = playerMode
+        ? String((typeof LOCAL_DEV_PLAYER_BYPASS_USERNAME === 'string' && LOCAL_DEV_PLAYER_BYPASS_USERNAME) || 'DevPlayer').trim()
+        : String((typeof LOCAL_DEV_AUTO_LOGIN_USERNAME === 'string' && LOCAL_DEV_AUTO_LOGIN_USERNAME) || 'caleb_admin').trim();
+
+    persistPortalAuth(devUser, true);
+    if (typeof player !== 'undefined') player.name = devUser;
+
+    if (canUsePortalAuthSessionApi()) {
+        try {
+            await fetch(
+                typeof resolveRoyalArmiesApiUrl === 'function'
+                    ? resolveRoyalArmiesApiUrl('/api/auth/dev-session')
+                    : '/api/auth/dev-session',
+                {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    cache: 'no-store',
+                    body: JSON.stringify({ mode: playerMode ? 'player' : 'owner' })
+                }
+            );
+        } catch (_err) {
+            /* UI auth still works client-side on port 3000 */
+        }
+    }
+
+    return devUser;
+}
+
+async function applyLocalDevAutoLogin() {
+    if (typeof isLocalDevAutoLoginEnabled !== 'function' || !isLocalDevAutoLoginEnabled()) {
+        return '';
+    }
+    if (typeof shouldSkipLocalDevAutoLogin === 'function' && shouldSkipLocalDevAutoLogin()) {
+        return '';
+    }
+    return bootstrapLocalDevPortalSession('owner');
+}
+
+async function applyLocalDevPlayerBypassLogin() {
+    if (typeof isLocalDevAutoLoginEnabled !== 'function' || !isLocalDevAutoLoginEnabled()) {
+        return '';
+    }
+    if (typeof shouldSkipLocalDevAutoLogin === 'function' && shouldSkipLocalDevAutoLogin()) {
+        return '';
+    }
+    return bootstrapLocalDevPortalSession('player');
+}
+
+async function restorePortalAuthSession() {
+    if (typeof isLocalDevAutoLoginEnabled === 'function' && isLocalDevAutoLoginEnabled()) {
+        if (typeof shouldSkipLocalDevAutoLogin !== 'function' || !shouldSkipLocalDevAutoLogin()) {
+            const viewMode = typeof getLocalDevViewMode === 'function' ? getLocalDevViewMode() : 'owner';
+            if (viewMode === 'player') {
+                return applyLocalDevPlayerBypassLogin();
+            }
+            return applyLocalDevAutoLogin();
+        }
+    }
+
+    let username = String(localStorage.getItem('activeCommanderUser') || '').trim();
+    if (!username) {
+        username = restorePortalAuthFromLocalBundle();
+    }
+
+    if (username) {
+        if (typeof player !== 'undefined') player.name = username;
+        return username;
+    }
+
+    if (canUsePortalAuthSessionApi()) {
+        try {
+            const response = await fetch(
+                typeof resolveRoyalArmiesApiUrl === 'function'
+                    ? resolveRoyalArmiesApiUrl('/api/auth/session')
+                    : '/api/auth/session',
+                {
+                    method: 'GET',
+                    credentials: 'include',
+                    cache: 'no-store'
+                }
+            );
+            if (response.ok) {
+                const payload = await response.json().catch(() => ({}));
+                if (payload.authenticated && payload.username) {
+                    persistPortalAuth(payload.username, true);
+                    if (typeof player !== 'undefined') player.name = payload.username;
+                    return String(payload.username).trim();
+                }
+            }
+        } catch (_err) {
+            /* session unavailable */
+        }
+    }
+
+    return '';
+}
+
+function ensurePortalAuthRestored() {
+    if (!portalAuthRestorePromise) {
+        portalAuthRestorePromise = restorePortalAuthSession();
+    }
+    return portalAuthRestorePromise;
+}
+
 function isPortalUserAuthenticated() {
     const saved = localStorage.getItem('activeCommanderUser');
     return !!(saved && saved.trim() !== '');
@@ -193,6 +355,11 @@ function openMainPortalLoginModal() {
 
     closeRegister();
     closeForgot();
+
+    const rememberCheckbox = document.getElementById('login-remember-me');
+    if (rememberCheckbox) {
+        rememberCheckbox.checked = shouldUsePortalSessionCookies() || rememberCheckbox.checked;
+    }
 
     modal.classList.remove('main-portal-modal-hidden');
     modal.style.setProperty('display', 'flex', 'important');
@@ -302,7 +469,7 @@ var player = {
     // THE CHOSEN FACTORY DEFAULT: Replaced placeholder asset path with default Commander emblem
     avatarUrl: "images/avatars/commanderprofile01.png", 
     
-    membershipTitle: "Bronze", 
+    membershipTitle: "Basic", 
     description: "Royal Armies player. Looking for allies and a good Age run.", 
     privacy: "Public", 
     
@@ -1315,8 +1482,10 @@ async function handleLogin() {
         }
     }
 
+    const rememberMe = resolvePortalLoginRememberMe();
+
     if (isAdmin) {
-        localStorage.setItem('activeCommanderUser', userVal);
+        persistPortalAuth(userVal, rememberMe);
         if (typeof player !== 'undefined') player.name = userVal;
         refreshProfileCommanderNameDisplay();
         refreshLoggedUserTagDisplay();
@@ -1329,11 +1498,17 @@ async function handleLogin() {
     }
 
     try {
-        const response = await fetch('/api/login', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ username: userVal, password: passVal })
-        });
+        const response = await fetch(
+            typeof resolveRoyalArmiesApiUrl === 'function'
+                ? resolveRoyalArmiesApiUrl('/api/login')
+                : '/api/login',
+            {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: canUsePortalAuthSessionApi() ? 'include' : 'same-origin',
+                body: JSON.stringify({ username: userVal, password: passVal, rememberMe })
+            }
+        );
 
         const payload = await response.json().catch(() => ({}));
 
@@ -1344,7 +1519,7 @@ async function handleLogin() {
         }
 
         const ledgerUsername = payload.username || userVal;
-        localStorage.setItem('activeCommanderUser', ledgerUsername);
+        persistPortalAuth(ledgerUsername, payload.rememberMe !== false && rememberMe);
         if (typeof player !== 'undefined') player.name = ledgerUsername;
         refreshProfileCommanderNameDisplay();
         refreshLoggedUserTagDisplay();
@@ -1361,6 +1536,13 @@ async function handleLogin() {
 }
 
 function finishMainPortalLoginSession(isAdmin) {
+    if (typeof clearLocalDevLogoutFlag === 'function') {
+        clearLocalDevLogoutFlag();
+    }
+    if (typeof setLocalDevViewMode === 'function' && typeof isLocalDevAutoLoginEnabled === 'function' && isLocalDevAutoLoginEnabled()) {
+        const user = getActiveCommanderUsername().toLowerCase();
+        setLocalDevViewMode(user === 'caleb_admin' || isAdmin ? 'owner' : 'player');
+    }
     restoreLoginAuthButtons();
     closeMainPortalLoginModal();
     refreshMainPortalAuthChrome();
@@ -3364,13 +3546,23 @@ window.handleHeaderAuthAction = handleHeaderAuthAction;
 window.openMainPortalLoginModal = openMainPortalLoginModal;
 window.closeMainPortalLoginModal = closeMainPortalLoginModal;
 window.isPortalUserAuthenticated = isPortalUserAuthenticated;
+window.persistPortalAuth = persistPortalAuth;
+window.clearPortalAuthStorage = clearPortalAuthStorage;
+window.ensurePortalAuthRestored = ensurePortalAuthRestored;
+window.canUsePortalAuthSessionApi = canUsePortalAuthSessionApi;
 window.showSaveChangesConfirmation = showSaveChangesConfirmation;
 window.hideSaveChangesConfirmation = hideSaveChangesConfirmation;
 
-function bootstrapMainPortalAuthOnLoad() {
+async function bootstrapMainPortalAuthOnLoad() {
+    await ensurePortalAuthRestored();
     syncPlayerFromActiveCommanderStorage();
     if (isMainPortalHub()) {
         refreshMainPortalAuthChrome();
+        if (typeof applyPortalNavAccessRestrictions === 'function') {
+            applyPortalNavAccessRestrictions();
+        } else if (typeof applyPortalGuestDeploymentChrome === 'function') {
+            applyPortalGuestDeploymentChrome();
+        }
         if (typeof syncPortalMobileNavIdentity === 'function') {
             syncPortalMobileNavIdentity();
         }
@@ -3378,7 +3570,9 @@ function bootstrapMainPortalAuthOnLoad() {
 }
 
 if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', bootstrapMainPortalAuthOnLoad);
+    document.addEventListener('DOMContentLoaded', () => {
+        bootstrapMainPortalAuthOnLoad();
+    });
 } else {
     bootstrapMainPortalAuthOnLoad();
 } 

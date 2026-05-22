@@ -3,9 +3,13 @@
    ========================================================================== */
 
 /* Block 1: HARDWARE INITIALIZATION SERVICE RUNTIME */
-window.onload = () => {
+window.onload = async () => {
     console.log("Age Portal Matrix Loaded. Isolated Core Active.");
-    
+
+    if (typeof ensurePortalAuthRestored === 'function') {
+        await ensurePortalAuthRestored();
+    }
+
     // A. SECURE LOCAL RETRIEVAL HANDSHAKES: Pull saved keys directly out from device profile caches
     const savedCommanderUser = (typeof getActiveCommanderUsername === 'function')
         ? getActiveCommanderUsername()
@@ -136,8 +140,16 @@ let activeMainPortalView = 'portal';
 const PORTAL_PREVIEW_ONLY_VIEWS = ['royalty', 'chronicles'];
 const PORTAL_GUEST_LOCKED_VIEWS = ['chat', 'lore', 'royalty', 'chronicles', 'commander'];
 
+function isPortalDevFullAccessBypassActive() {
+    return typeof isPortalDevFullAccessBypass === 'function' && isPortalDevFullAccessBypass();
+}
+
 function isPortalNavViewAccessible(viewName) {
     if (!viewName) return true;
+
+    if (isPortalDevFullAccessBypassActive()) {
+        return true;
+    }
 
     const authed = typeof isPortalUserAuthenticated === 'function' && isPortalUserAuthenticated();
     if (!authed && PORTAL_GUEST_LOCKED_VIEWS.includes(viewName)) {
@@ -167,6 +179,14 @@ function getPortalNavLockTitle(viewName) {
 
 function setPortalNavControlAccessState(controlEl, viewName) {
     if (!controlEl || !viewName) return;
+
+    if (isPortalDevFullAccessBypassActive()) {
+        controlEl.classList.remove('portal-nav-guest-hidden', 'nav-tab-preview-locked');
+        controlEl.hidden = false;
+        controlEl.removeAttribute('aria-disabled');
+        controlEl.title = '';
+        return;
+    }
 
     const authed = typeof isPortalUserAuthenticated === 'function' && isPortalUserAuthenticated();
     const guestHidden = !authed && PORTAL_GUEST_LOCKED_VIEWS.includes(viewName);
@@ -642,6 +662,7 @@ function applyPortalNavAccessRestrictions() {
 
     applyPortalGuestDeploymentChrome();
     applyPortalMobileNavPreviewRestrictions();
+    document.body.classList.toggle('portal-dev-player-bypass', isPortalDevFullAccessBypassActive());
 }
 
 /* Block 3: EXTENSIBLE SYSTEM PANEL VIEW CONVERTER SWITCH (ROUTING RECONCILED) */
@@ -1052,7 +1073,14 @@ function executeLogoutRedirect() {
     console.log('Purging portal session and returning to landing page...');
 
     const redirectHome = () => {
-        localStorage.removeItem('activeCommanderUser');
+        if (typeof markLocalDevLogoutForGuestPreview === 'function') {
+            markLocalDevLogoutForGuestPreview();
+        }
+        if (typeof clearPortalAuthStorage === 'function') {
+            clearPortalAuthStorage();
+        } else {
+            localStorage.removeItem('activeCommanderUser');
+        }
         sessionStorage.removeItem('royalArmiesAuthAudioPlay');
         if (typeof refreshMainPortalAuthChrome === 'function') {
             refreshMainPortalAuthChrome();
@@ -1060,7 +1088,16 @@ function executeLogoutRedirect() {
         window.location.replace('/main.html');
     };
 
-    clearPortalPresenceSession().finally(redirectHome);
+    const logoutApi = (typeof resolveRoyalArmiesApiUrl === 'function')
+        ? resolveRoyalArmiesApiUrl('/api/auth/logout')
+        : '/api/auth/logout';
+    const serverLogout = (typeof canUsePortalAuthSessionApi === 'function' && canUsePortalAuthSessionApi())
+        ? fetch(logoutApi, { method: 'POST', credentials: 'include', keepalive: true }).catch(() => {})
+        : Promise.resolve();
+
+    serverLogout.finally(() => {
+        clearPortalPresenceSession().finally(redirectHome);
+    });
 }
 
 /* ==========================================================================
@@ -2861,13 +2898,44 @@ function executeAutomatedTokenCrestLearning(rawFlaggedTextString) {
 
 
 /* ==========================================================================
-   SECTION 6: ROYALTY PAID MEMBERSHIP (badge title + Premium Chronicle track)
+   SECTION 6: ROYALTY PAID MEMBERSHIP (member title + Premium Battle Pass)
    ========================================================================== */
 
 const COMMANDER_MEMBERSHIP_STORAGE_KEY = 'savedCommanderMembershipTitle';
 const ROYALTY_PAID_BADGE_TITLE = 'Royalty';
-const FREE_MEMBERSHIP_BADGE_TITLE = 'Bronze';
+const FREE_MEMBERSHIP_BADGE_TITLE = 'Basic';
+const ROYALTY_MEMBER_DISPLAY_TITLE = 'Royalty Member';
+const BASIC_MEMBER_DISPLAY_TITLE = 'Basic Member';
+
+function normalizeStoredMembershipTitle(stored) {
+    const value = String(stored || '').trim();
+    if (value === 'Royalty' || value === ROYALTY_MEMBER_DISPLAY_TITLE) return ROYALTY_PAID_BADGE_TITLE;
+    if (value === 'Bronze' || value === 'Basic' || value === BASIC_MEMBER_DISPLAY_TITLE) {
+        return FREE_MEMBERSHIP_BADGE_TITLE;
+    }
+    return value;
+}
+
+function formatMembershipDisplayTitle(title) {
+    const normalized = normalizeStoredMembershipTitle(title);
+    if (normalized === FREE_MEMBERSHIP_BADGE_TITLE) return BASIC_MEMBER_DISPLAY_TITLE;
+    if (normalized === ROYALTY_PAID_BADGE_TITLE) return ROYALTY_MEMBER_DISPLAY_TITLE;
+    if (/member$/i.test(String(title || '').trim())) return String(title).trim();
+    const base = String(title || '').trim();
+    return base ? `${base} Member` : BASIC_MEMBER_DISPLAY_TITLE;
+}
+
+function resolveMembershipBadgeTierClass(title) {
+    const normalized = normalizeStoredMembershipTitle(title).toLowerCase();
+    if (normalized === 'basic') return 'bronze';
+    return normalized;
+}
 const CHRONICLE_PREMIUM_MONTHLY_PRICE_LABEL = '$10 / month';
+const CHRONICLE_TIER_MAX_LEVEL = 50;
+/** Player-facing Battle Pass wording (common in level-based reward games). */
+const CHRONICLE_BATTLE_PASS_HEADING = 'Battle Pass';
+const CHRONICLE_FREE_PASS_LABEL = 'Free Pass';
+const CHRONICLE_PREMIUM_PASS_LABEL = 'Premium Pass';
 
 function isActiveCommanderPortalOwner() {
     return typeof isPortalSiteOwner === 'function' && isPortalSiteOwner();
@@ -2894,7 +2962,7 @@ function getCommanderMembershipTitle() {
     if (isActiveCommanderPortalOwner()) {
         return ROYALTY_PAID_BADGE_TITLE;
     }
-    const stored = localStorage.getItem(COMMANDER_MEMBERSHIP_STORAGE_KEY);
+    const stored = normalizeStoredMembershipTitle(localStorage.getItem(COMMANDER_MEMBERSHIP_STORAGE_KEY));
     if (stored === ROYALTY_PAID_BADGE_TITLE) return ROYALTY_PAID_BADGE_TITLE;
     if (localStorage.getItem('savedChroniclePremiumMember') === 'true') return ROYALTY_PAID_BADGE_TITLE;
     return FREE_MEMBERSHIP_BADGE_TITLE;
@@ -2920,9 +2988,9 @@ function buildCommanderMembershipBadgeRowMarkup(username, badgeClassName = 'memb
     const title = username
         ? resolveCommanderMembershipTitleForUsername(username)
         : getCommanderMembershipTitle();
-    const tierClass = title.toLowerCase();
+    const tierClass = resolveMembershipBadgeTierClass(title);
     const ownerTag = includeOwnerTag && shouldShowCommanderOwnerTag(username) ? buildCommanderOwnerTagMarkup() : '';
-    return `<span class="${badgeClassName} tier-${tierClass}">${title} Member</span>${ownerTag}`;
+    return `<span class="${badgeClassName} tier-${tierClass}">${formatMembershipDisplayTitle(title)}</span>${ownerTag}`;
 }
 
 function applyCommanderMembershipTitle(title) {
@@ -2999,7 +3067,7 @@ async function beginRoyaltyMembershipCheckout() {
     if (typeof playSelectSFX === 'function') playSelectSFX();
     await showPortalAlert(
         `Royalty membership (${CHRONICLE_PREMIUM_MONTHLY_PRICE_LABEL}) checkout is not live yet.\n\n` +
-        'When billing is connected, subscribing grants the Royalty badge title and unlocks Premium Tier Rewards on The Chronicles.',
+        `When billing is connected, subscribing grants the Royalty Member title and unlocks the ${CHRONICLE_PREMIUM_PASS_LABEL} on The Chronicles.`,
         'Checkout'
     );
 }
@@ -3009,8 +3077,8 @@ async function beginRoyaltyMembershipDowngrade() {
 
     const confirmed = await showPortalConfirm(
         'Downgrade from Royalty to the free plan?\n\n' +
-        'You will lose the Royalty badge and access to Premium Tier Rewards on The Chronicles. ' +
-        'Your Bronze membership and Basic reward track remain.',
+        `You will lose the Royalty Member title and access to the ${CHRONICLE_PREMIUM_PASS_LABEL} on The Chronicles. ` +
+        `Your Basic Member status and ${CHRONICLE_FREE_PASS_LABEL} remain.`,
         {
             title: 'Downgrade membership',
             confirmLabel: 'Downgrade',
@@ -3040,39 +3108,113 @@ function openUnlockPremiumTierPortal(clickEvent) {
 }
 
 /* Block 15: Royalty membership plans (paid = Royalty badge) */
+const ROYALTY_PLAN_TIER_ART = {
+    standard: {
+        src: 'images/basic.png',
+        alt: 'Standard membership crest',
+        label: 'Basic membership'
+    },
+    royalty: {
+        src: 'images/premium.png',
+        alt: 'Royalty premium membership crest',
+        label: 'Premium membership'
+    }
+};
+
+function buildRoyaltyPackageFeatureItemMarkup(feature) {
+    if (typeof feature === 'string') {
+        return `
+            <li class="royalty-package-feature-item">
+                <span class="royalty-package-feature-bullet" aria-hidden="true">✦</span>
+                <span>${escapeMetricRosterHtml(feature)}</span>
+            </li>`;
+    }
+    const title = escapeMetricRosterHtml(feature.title || '');
+    const detail = feature.detail
+        ? `<p class="royalty-package-feature-detail">${escapeMetricRosterHtml(feature.detail)}</p>`
+        : '';
+    return `
+        <li class="royalty-package-feature-item royalty-package-feature-item--rich">
+            <span class="royalty-package-feature-bullet" aria-hidden="true">✦</span>
+            <div class="royalty-package-feature-copy">
+                <strong class="royalty-package-feature-title">${title}</strong>
+                ${detail}
+            </div>
+        </li>`;
+}
+
+function buildRoyaltyPackageVisualMarkup(planVariant) {
+    const art = ROYALTY_PLAN_TIER_ART[planVariant] || ROYALTY_PLAN_TIER_ART.standard;
+    return `
+        <div class="royalty-package-visual-stage royalty-package-visual-stage--${planVariant}">
+            <p class="royalty-package-visual-eyebrow">${art.label}</p>
+            <div class="royalty-package-visual-frame">
+                <img
+                    class="royalty-package-tier-art"
+                    src="${art.src}"
+                    alt="${art.alt}"
+                    width="320"
+                    height="240"
+                    loading="lazy"
+                    decoding="async"
+                />
+            </div>
+        </div>
+    `;
+}
+
 const globalRoyaltyTierPackagesDatabase = [
     {
-        tier: 'Standard Commander',
+        tier: 'Standard',
         cost: 'Free',
         planVariant: 'standard',
         badge: 'FREE',
-        badgeTitleGranted: FREE_MEMBERSHIP_BADGE_TITLE,
+        badgeTitleGranted: BASIC_MEMBER_DISPLAY_TITLE,
         features: [
-            'Bronze membership badge on profile and public dossier',
-            'Basic Chronicle track — 50 levels, earn XP through play in Ages',
-            'Access to standard Ages',
-            'Default message recipient limits',
-            'Standard resource production rates'
+            {
+                title: 'Basic Member title',
+                detail: 'Displayed on your profile, in chat, and on your public commander dossier.'
+            },
+            {
+                title: 'Basic Tier Battle Pass',
+                detail: `The free ${CHRONICLE_TIER_MAX_LEVEL}-level lane on the Battle Pass—earn XP in Ages and claim milestone rewards as you rank up.`
+            },
+            'And More!'
         ],
         actionText: 'Current plan',
         enabled: false,
         isPaidPlan: false
     },
     {
-        tier: 'Royalty',
+        tier: 'Premium',
         cost: CHRONICLE_PREMIUM_MONTHLY_PRICE_LABEL,
         planVariant: 'royalty',
         badge: 'ROYALTY',
-        badgeTitleGranted: ROYALTY_PAID_BADGE_TITLE,
+        badgeTitleGranted: ROYALTY_MEMBER_DISPLAY_TITLE,
         features: [
-            'Royalty badge title displayed on your profile and in chat',
-            'Unlocks the Premium Chronicle track — 50 levels, earn XP through play in Ages',
-            'Priority queue when servers are busy',
-            'Send messages to more recipients at once',
-            '+15% resource generation bonus',
-            'Exclusive gold profile frame cosmetics'
+            {
+                title: 'Royalty Member title',
+                detail: 'Displayed on your profile, in chat, and on your public commander dossier.'
+            },
+            {
+                title: 'Premium Tier Battle Pass',
+                detail: `Unlocks the paid ${CHRONICLE_TIER_MAX_LEVEL}-level lane—earn Battle Pass XP in Ages and claim Royalty-only milestone rewards.`
+            },
+            {
+                title: 'Royal Tactician\'s War Room — Battle Simulator',
+                detail: 'Free commanders see a basic Win/Loss battle log. Royalty opens a visual war room: unit-by-unit performance, damage formulas, and round-by-round statistics so you can see exactly why a formation won or lost. In LastKnights-style rivalry, that data is power—study rival builds, counter-strat, and tune army compositions as the competitive meta evolves.'
+            },
+            {
+                title: 'Royalty cosmetics',
+                detail: 'Unique, hand-designed animated flair for your commander look—exclusive frames, accents, and dossier dressing beyond the free set.'
+            },
+            {
+                title: 'Exclusive gold profile frame',
+                detail: 'A premium animated gold border for your commander dossier and public profile card.'
+            },
+            'And More!'
         ],
-        actionText: 'Unlock Premium Tier',
+        actionText: `Unlock ${CHRONICLE_PREMIUM_PASS_LABEL}`,
         enabled: true,
         isPaidPlan: true
     }
@@ -3085,10 +3227,10 @@ function renderRoyaltyTierPortalCanvas(viewport) {
         <div class="royalty-workspace-container">
             <header class="royalty-workspace-header-deck">
                 <h2 class="royalty-master-title">👑 Royalty Membership</h2>
-                <p class="royalty-master-subtitle">As <strong>site owner</strong>, your profile shows the <strong>Royalty</strong> member title with an <strong>Owner</strong> tag. Paid membership plans are not required for you, and Chronicle free or premium tier tracks do not apply.</p>
+                <p class="royalty-master-subtitle">As <strong>site owner</strong>, your profile shows the <strong>Royalty Member</strong> title with an <strong>Owner</strong> tag. Paid membership plans are not required for you, and the ${CHRONICLE_FREE_PASS_LABEL} / ${CHRONICLE_PREMIUM_PASS_LABEL} lanes on the ${CHRONICLE_BATTLE_PASS_HEADING} do not apply.</p>
             </header>
             <div class="royalty-owner-exempt-banner">
-                <strong>Owner account</strong> — you are not enrolled in the Standard Commander or paid Royalty subscription flows. Commander tier rewards on The Chronicles are disabled for owner accounts.
+                <strong>Owner account</strong> — you are not enrolled in the Standard or Premium membership flows. ${CHRONICLE_BATTLE_PASS_HEADING} level rewards on The Chronicles are disabled for owner accounts.
             </div>
         </div>`;
         return;
@@ -3100,9 +3242,9 @@ function renderRoyaltyTierPortalCanvas(viewport) {
         <div class="royalty-workspace-container">
             <header class="royalty-workspace-header-deck">
                 <h2 class="royalty-master-title">👑 Royalty Membership</h2>
-                <p class="royalty-master-subtitle">Subscribe monthly to earn the <strong>Royalty</strong> badge title and unlock <strong>Premium Tier Rewards</strong> on The Chronicles (${CHRONICLE_PREMIUM_MONTHLY_PRICE_LABEL}). Free commanders keep the Bronze badge and the Basic reward track.</p>
+                <p class="royalty-master-subtitle">Subscribe monthly to earn the <strong>Royalty Member</strong> title and unlock the <strong>${CHRONICLE_PREMIUM_PASS_LABEL}</strong> on The Chronicles (${CHRONICLE_PREMIUM_MONTHLY_PRICE_LABEL}). Free commanders keep the <strong>Basic Member</strong> title and the <strong>${CHRONICLE_FREE_PASS_LABEL}</strong>.</p>
             </header>
-            ${isRoyalty ? `<div class="royalty-active-member-banner">You are a <strong>Royalty</strong> member — Premium Tier Rewards are unlocked on The Chronicles.</div>` : ''}
+            ${isRoyalty ? `<div class="royalty-active-member-banner">You are a <strong>Royalty Member</strong> — the <strong>${CHRONICLE_PREMIUM_PASS_LABEL}</strong> is unlocked on The Chronicles.</div>` : ''}
             <div class="royalty-plans-deck">
                 <div class="royalty-tier-cards-flex-row">
                 ${globalRoyaltyTierPackagesDatabase.map((pack) => {
@@ -3141,19 +3283,20 @@ function renderRoyaltyTierPortalCanvas(viewport) {
 
                     return `
                     <article class="royalty-package-display-card royalty-package--${pack.planVariant} ${isActivePlan ? 'royalty-plan-current' : ''}">
-                        <div class="royalty-package-card-header">
-                            <div class="royalty-package-title-block">
-                                <h3 class="royalty-package-tier-name">${pack.tier}</h3>
-                                <p class="royalty-badge-title-grant">Badge title: <strong>${pack.badgeTitleGranted}</strong></p>
+                        ${buildRoyaltyPackageVisualMarkup(pack.planVariant)}
+                        <div class="royalty-package-info-deck">
+                            <div class="royalty-package-card-header">
+                                <div class="royalty-package-title-block">
+                                    <h3 class="royalty-package-tier-name">${pack.tier}</h3>
+                                    <p class="royalty-badge-title-grant">Member title: <strong>${pack.badgeTitleGranted}</strong></p>
+                                </div>
+                                <span class="${badgeClass}">${pack.badge}</span>
                             </div>
-                            <span class="${badgeClass}">${pack.badge}</span>
+                            <div class="royalty-package-cost">${pack.cost}</div>
+                            <ul class="royalty-package-features-list">
+                                ${pack.features.map((feat) => buildRoyaltyPackageFeatureItemMarkup(feat)).join('')}
+                            </ul>
                         </div>
-                        <div class="royalty-package-cost">${pack.cost}</div>
-                        <ul class="royalty-package-features-list">
-                            ${pack.features.map((feat) => `
-                                <li class="royalty-package-feature-item"><span class="royalty-package-feature-bullet" aria-hidden="true">✦</span><span>${feat}</span></li>
-                            `).join('')}
-                        </ul>
                         ${actionFooterMarkup}
                     </article>
                 `;
@@ -3603,7 +3746,6 @@ window.togglePortalLoreNationMobilePicker = togglePortalLoreNationMobilePicker;
 window.togglePortalLoreNarration = togglePortalLoreNarration;
 window.stopPortalLoreNarration = stopPortalLoreNarration;
 
-const CHRONICLE_TIER_MAX_LEVEL = 50;
 const CHRONICLE_XP_STORAGE_KEY = 'savedChronicleMeritProgress';
 const CHRONICLE_XP_PROGRESS_VERSION = 2;
 
@@ -3710,7 +3852,7 @@ function getChronicleTierRewardEntry(rank, trackKey) {
 
 function getChronicleTierLevelTitle(level) {
     return CHRONICLE_LEVEL_EPITHETS[Math.min(Math.max(level, 1), CHRONICLE_LEVEL_EPITHETS.length) - 1]
-        || `Chronicle ${level}`;
+        || `Level ${level}`;
 }
 
 function readChronicleXpProgressRaw() {
@@ -3939,9 +4081,8 @@ function buildChronicleXpEarnedExplanationMarkup() {
     return `
         <div class="chronicle-xp-rules-deck">
             <p class="chronicle-xp-rules-lead">
-                Chronicle XP is earned by taking part in the living world of Amnek — joining <strong>city battles</strong>,
-                clashing with commanders in <strong>PvP</strong>, uncovering <strong>lore</strong> hidden across the map, and through
-                other deeds as Ages unfold. Payouts depend on what you do and how well you succeed; exact amounts are not shown here.
+                Battle Pass XP is earned in Ages — <strong>city battles</strong>, <strong>PvP</strong>, <strong>map lore</strong>,
+                and other world actions. Payouts depend on the activity and your success tier; exact amounts are not listed here.
             </p>
         </div>
     `;
@@ -3971,7 +4112,7 @@ function buildChronicleMilestoneCardMarkup(entry, trackKey) {
                 <span class="milestone-tier-level-label">Level ${entry.rank} · ${levelTitle}${trackKey === 'premium' ? ' · Premium' : ''}</span>
                 <span class="milestone-title-string">${entry.title}</span>
                 <p class="milestone-reward-description-text">${entry.reward}</p>
-                ${ownerExempt ? '<p class="milestone-premium-hint">Chronicle tier tracks do not apply to site owner accounts.</p>' : ''}
+                ${ownerExempt ? `<p class="milestone-premium-hint">${CHRONICLE_BATTLE_PASS_HEADING} passes do not apply to site owner accounts.</p>` : ''}
                 ${premiumLocked ? `<p class="milestone-premium-hint">Requires <strong>Royalty</strong> membership (${CHRONICLE_PREMIUM_MONTHLY_PRICE_LABEL}) — unlock on the Royalty page.</p>` : ''}
             </div>
             <span class="milestone-status-action-deck ${statusClass}">${statusLabel}</span>
@@ -3987,7 +4128,7 @@ function buildChronicleLevelPassthroughMarkup(level, trackKey) {
     const statusLabel = ownerExempt
         ? 'Owner'
         : (isBasicStart
-        ? 'Starting tier'
+        ? 'Pass start'
         : (levelMet ? 'Reached' : (premiumLocked ? 'Royalty' : 'Locked')));
     const statusClass = ownerExempt
         ? 'status-owner-exempt-tag'
@@ -3997,10 +4138,10 @@ function buildChronicleLevelPassthroughMarkup(level, trackKey) {
             ? 'status-reached-text-tag'
             : (premiumLocked ? 'status-premium-required-tag' : 'status-locked-text-tag')));
     const levelTitle = getChronicleTierLevelTitle(level);
-    const titleString = isBasicStart ? 'Free tier — level 1' : 'Chronicle milestone';
+    const titleString = isBasicStart ? `${CHRONICLE_FREE_PASS_LABEL} — Level 1` : 'Level reward';
     const description = isBasicStart
-        ? 'All commanders start at 0 Chronicle XP. The free track has no reward for level 1 — earn XP in Ages to climb higher.'
-        : 'No tier reward at this level — keep earning Chronicle XP in the world to advance.';
+        ? `All commanders start at 0 Battle Pass XP. The ${CHRONICLE_FREE_PASS_LABEL} has no reward at level 1 — play in Ages to rank up.`
+        : 'No level reward here — keep earning Battle Pass XP in Ages to unlock the next tier.';
 
     return `
         <div class="milestone-landmark-capsule-card milestone-landmark-no-reward ${levelMet ? 'landmark-node-unlocked' : 'landmark-node-locked'} ${premiumLocked ? 'landmark-node-premium-gated' : ''} ${isBasicStart ? 'milestone-basic-tier-start' : ''} ${ownerExempt ? 'landmark-node-owner-exempt' : ''}">
@@ -4061,14 +4202,14 @@ function refreshChronicleProgressHeader(snapshot) {
     const fill = document.getElementById('chronicle-merit-progress-fill');
     const totalTag = document.getElementById('chronicle-total-merit-tag');
     if (levelReadout) {
-        levelReadout.textContent = `Chronicle Level ${snapshot.currentLevel} — ${snapshot.levelEpithet}`;
+        levelReadout.textContent = `${CHRONICLE_BATTLE_PASS_HEADING} Level ${snapshot.currentLevel} — ${snapshot.levelEpithet}`;
     }
     if (meritTag) {
         meritTag.textContent = snapshot.isMaxLevel
             ? `${snapshot.totalXp} XP · max level`
             : `${snapshot.xpInLevel} / ${snapshot.xpToNextLevel} XP to next level`;
     }
-    if (totalTag) totalTag.textContent = `${snapshot.totalXp} total Chronicle XP`;
+    if (totalTag) totalTag.textContent = `${snapshot.totalXp} total Battle Pass XP`;
     if (fill) fill.style.width = `${snapshot.progressPct}%`;
 }
 
@@ -4077,11 +4218,11 @@ function renderChroniclesProgressMatrixCanvas(viewport) {
         viewport.innerHTML = `
         <div class="chronicles-workspace-container">
             <header class="royalty-workspace-header-deck">
-                <h2 class="royalty-master-title">📜 Chronicle Tier Rewards</h2>
-                <p class="royalty-master-subtitle">Chronicle <strong>Basic</strong> and <strong>Premium</strong> tier tracks are for commanders on the free and Royalty membership plans. As <strong>site owner</strong>, you are not enrolled in either track — your profile still shows <strong>Royalty Member</strong> with an <strong>Owner</strong> tag.</p>
+                <h2 class="royalty-master-title">📜 ${CHRONICLE_BATTLE_PASS_HEADING}</h2>
+                <p class="royalty-master-subtitle">The <strong>${CHRONICLE_FREE_PASS_LABEL}</strong> and <strong>${CHRONICLE_PREMIUM_PASS_LABEL}</strong> are for commanders on Standard and Royalty membership. As <strong>site owner</strong>, you are not enrolled in either pass — your profile still shows <strong>Royalty Member</strong> with an <strong>Owner</strong> tag.</p>
             </header>
             <div class="chronicle-owner-exempt-banner">
-                <strong>Owner account</strong> — free and premium Chronicle tier rewards are disabled. Other commanders earn XP through Ages to unlock milestone rewards on those tracks.
+                <strong>Owner account</strong> — ${CHRONICLE_FREE_PASS_LABEL} and ${CHRONICLE_PREMIUM_PASS_LABEL} level rewards are disabled. Other commanders earn Battle Pass XP in Ages to unlock rewards on those passes.
             </div>
         </div>`;
         return;
@@ -4096,47 +4237,47 @@ function renderChroniclesProgressMatrixCanvas(viewport) {
     viewport.innerHTML = `
         <div class="chronicles-workspace-container">
             <header class="royalty-workspace-header-deck">
-                <h2 class="royalty-master-title">📜 Chronicle Tier Rewards</h2>
-                <p class="royalty-master-subtitle">Chronicle levels are <strong>not</strong> tied to commander rank promotions. Earn Chronicle XP by playing in Ages — battles, rivalries, discoveries, and more. Both tracks have <strong>50 levels</strong>; milestone rewards appear on select levels only. <strong>Premium Tier</strong> requires Royalty (${CHRONICLE_PREMIUM_MONTHLY_PRICE_LABEL}).</p>
+                <h2 class="royalty-master-title">📜 ${CHRONICLE_BATTLE_PASS_HEADING}</h2>
+                <p class="royalty-master-subtitle">Battle Pass levels are <strong>not</strong> tied to commander rank. Earn Battle Pass XP in Ages — battles, rivalries, map lore, and more. Both passes have <strong>${CHRONICLE_TIER_MAX_LEVEL} levels</strong>; bonus loot unlocks on select levels only. The <strong>${CHRONICLE_PREMIUM_PASS_LABEL}</strong> requires Royalty membership (${CHRONICLE_PREMIUM_MONTHLY_PRICE_LABEL}).</p>
             </header>
             <div class="chronicles-master-card-box">
                 <div class="chronicles-level-header-row">
-                    <span class="chronicles-main-rank-readout" id="chronicle-level-readout">Chronicle Level ${snapshot.currentLevel} — ${snapshot.levelEpithet}</span>
+                    <span class="chronicles-main-rank-readout" id="chronicle-level-readout">${CHRONICLE_BATTLE_PASS_HEADING} Level ${snapshot.currentLevel} — ${snapshot.levelEpithet}</span>
                     <span class="chronicles-xp-fraction-tag" id="chronicle-merit-fraction-tag">${xpProgressLabel}</span>
                 </div>
                 <div class="chronicles-progress-bar-track-bezel" aria-hidden="true">
                     <div class="chronicle-merit-progress-fill-glow chronicles-progress-bar-fill-glow" id="chronicle-merit-progress-fill" style="width: ${snapshot.progressPct}%;"></div>
                 </div>
-                <p class="chronicle-total-merit-readout" id="chronicle-total-merit-tag">${snapshot.totalXp} total Chronicle XP</p>
+                <p class="chronicle-total-merit-readout" id="chronicle-total-merit-tag">${snapshot.totalXp} total Battle Pass XP</p>
                 ${buildChronicleXpEarnedExplanationMarkup()}
             </div>
-            <nav class="chronicle-rewards-track-tab-bar" aria-label="Chronicle reward tiers">
+            <nav class="chronicle-rewards-track-tab-bar" aria-label="Battle Pass reward lanes">
                 <button type="button" class="chronicle-rewards-track-tab ${activeChronicleRewardsTrack === 'basic' ? 'active' : ''}" data-chronicle-track="basic" onclick="activateChronicleRewardsTrack('basic', event)">
-                    <span class="chronicle-track-tab-title">Basic Tier Rewards</span>
+                    <span class="chronicle-track-tab-title">${CHRONICLE_FREE_PASS_LABEL}</span>
                     <span class="chronicle-track-tab-badge chronicle-track-tab-badge-free">FREE</span>
                 </button>
                 <button type="button" class="chronicle-rewards-track-tab ${activeChronicleRewardsTrack === 'premium' ? 'active' : ''}" data-chronicle-track="premium" onclick="activateChronicleRewardsTrack('premium', event)">
-                    <span class="chronicle-track-tab-title">Premium Tier Rewards</span>
+                    <span class="chronicle-track-tab-title">${CHRONICLE_PREMIUM_PASS_LABEL}</span>
                     <span class="chronicle-track-tab-badge chronicle-track-tab-badge-premium">$10/mo</span>
                 </button>
             </nav>
             <div id="chronicle-premium-upsell-banner" class="chronicle-premium-upsell-banner" ${isRoyalty ? 'hidden' : ''}>
                 <div class="chronicle-premium-upsell-copy">
-                    <strong>Premium Tier Rewards</strong> unlock with <strong>Royalty</strong> membership (${CHRONICLE_PREMIUM_MONTHLY_PRICE_LABEL}). Subscribers receive the Royalty badge title on their profile.
+                    The <strong>${CHRONICLE_PREMIUM_PASS_LABEL}</strong> unlocks with <strong>Premium</strong> membership (${CHRONICLE_PREMIUM_MONTHLY_PRICE_LABEL}). Subscribers also receive the <strong>Royalty Member</strong> title on their profile.
                 </div>
-                <button type="button" class="settings-btn chronicle-premium-upsell-btn pulse-buy-btn" onclick="openUnlockPremiumTierPortal(event)">Unlock Premium Tier</button>
+                <button type="button" class="settings-btn chronicle-premium-upsell-btn pulse-buy-btn" onclick="openUnlockPremiumTierPortal(event)">Unlock ${CHRONICLE_PREMIUM_PASS_LABEL}</button>
             </div>
             <div class="chronicle-rewards-tracks-deck">
                 <section class="chronicle-rewards-track-panel chronicle-rewards-track-panel-active" data-chronicle-track-panel="basic" id="chronicle-panel-basic">
-                    <h3 class="chronicles-grid-heading-label">Basic Tier — 50 levels (free)</h3>
+                    <h3 class="chronicles-grid-heading-label">${CHRONICLE_FREE_PASS_LABEL} — ${CHRONICLE_TIER_MAX_LEVEL} levels (free)</h3>
                     <div class="chronicles-milestones-scroll-bin">
                         <div class="chronicles-milestones-grid-layout" id="chronicle-rewards-track-basic"></div>
                     </div>
                 </section>
                 <section class="chronicle-rewards-track-panel chronicle-rewards-track-panel-hidden" data-chronicle-track-panel="premium" id="chronicle-panel-premium">
                     <div class="chronicle-premium-panel-header">
-                        <h3 class="chronicles-grid-heading-label">Premium Tier — 50 levels (Royalty · ${CHRONICLE_PREMIUM_MONTHLY_PRICE_LABEL})</h3>
-                        ${isRoyalty ? '' : `<button type="button" class="settings-btn chronicle-premium-panel-unlock-btn" onclick="openUnlockPremiumTierPortal(event)">Unlock Premium Tier</button>`}
+                        <h3 class="chronicles-grid-heading-label">${CHRONICLE_PREMIUM_PASS_LABEL} — ${CHRONICLE_TIER_MAX_LEVEL} levels (Royalty · ${CHRONICLE_PREMIUM_MONTHLY_PRICE_LABEL})</h3>
+                        ${isRoyalty ? '' : `<button type="button" class="settings-btn chronicle-premium-panel-unlock-btn" onclick="openUnlockPremiumTierPortal(event)">Unlock ${CHRONICLE_PREMIUM_PASS_LABEL}</button>`}
                     </div>
                     <div class="chronicles-milestones-scroll-bin">
                         <div class="chronicles-milestones-grid-layout" id="chronicle-rewards-track-premium"></div>
@@ -4258,7 +4399,7 @@ const ROADMAP_EVOLUTION_PHASES = [
             {
                 title: 'Age Portal navigation',
                 items: [
-                    'Dedicated portal home with sticky top navigation: Age Portal, Leaderboards, Community Chat, Lore, Royalty, Chronicle Tier Rewards, and this Evolution Roadmap.',
+                    `Dedicated portal home with sticky top navigation: Age Portal, Leaderboards, Community Chat, Lore, Royalty, ${CHRONICLE_BATTLE_PASS_HEADING}, and this Evolution Roadmap.`,
                     'Live Age metrics strip: cycle label, game mode, Great Transition countdown, leading nation, registered and active player rosters.',
                     'Join the Age deployment deck with tutorial vs standard entry, SFX, and visual feedback (battle screen redirect pending).'
                 ]
@@ -4302,7 +4443,7 @@ const ROADMAP_EVOLUTION_PHASES = [
                 title: 'Hub surfaces',
                 items: [
                     'Lore codex with full nation chronicles, audio narration, and unlock progression.',
-                    'Activate Chronicle Tier XP from city battles, PvP, and map lore with success-rarity payouts.',
+                    'Activate Battle Pass XP from city battles, PvP, and map lore with success-rarity payouts.',
                     'Expand Royalty membership checkout when premium billing is ready.'
                 ]
             },
@@ -4330,7 +4471,7 @@ const ROADMAP_EVOLUTION_PHASES = [
         status: 'upcoming',
         statusLabel: 'Target horizon',
         period: 'Playable round & sync combat foundation',
-        summary: 'The evolutionary leap from portal-only to a real Age round: map presence, unit actions, and shared battle state so testers can fight, earn XP, and climb the Chronicle tier track.',
+        summary: `The evolutionary leap from portal-only to a real Age round: map presence, unit actions, and shared battle state so testers can fight, earn XP, and climb the ${CHRONICLE_BATTLE_PASS_HEADING}.`,
         categories: [
             {
                 title: 'Playable loop',
@@ -4431,7 +4572,7 @@ function renderEvolutionRoadmapPortalCanvas(viewport) {
                 <div class="evolution-roadmap-hero-copy">
                     <p class="evolution-roadmap-eyebrow">Green Mask Interactive · Royal Armies</p>
                     <h2 class="evolution-roadmap-title">Evolution Roadmap</h2>
-                    <p class="evolution-roadmap-lead">From pre-alpha concept through today\'s Age Portal build to the first playable Alpha 2.0 Age. This is the development timeline — not the in-game Chronicle tier reward track (see <strong>The Chronicles</strong> tab).</p>
+                    <p class="evolution-roadmap-lead">From pre-alpha concept through today\'s Age Portal build to the first playable Alpha 2.0 Age. This is the development timeline — not the in-game <strong>${CHRONICLE_BATTLE_PASS_HEADING}</strong> (see <strong>The Chronicles</strong> tab).</p>
                 </div>
                 <div class="evolution-roadmap-legend" aria-label="Roadmap status legend">
                     <span class="evolution-roadmap-legend-item"><span class="evolution-roadmap-legend-swatch completed"></span> Shipped</span>
@@ -5605,6 +5746,7 @@ window.applyPortalNavAccessRestrictions = applyPortalNavAccessRestrictions;
 window.applyPortalGuestDeploymentChrome = applyPortalGuestDeploymentChrome;
 window.recacheAgePortalViewportSnapshot = recacheAgePortalViewportSnapshot;
 window.isPortalNavViewAccessible = isPortalNavViewAccessible;
+window.isPortalDevFullAccessBypassActive = isPortalDevFullAccessBypassActive;
 window.closeMainLogoutConfirmationWindow = closeMainLogoutConfirmationWindow;
 window.executeLogoutRedirect = executeLogoutRedirect;
 window.notifyPortalAgeSessionLeave = notifyPortalAgeSessionLeave;

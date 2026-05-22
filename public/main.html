@@ -15,7 +15,7 @@
     <!-- Block 2: Page Title & Stylesheet Bridge -->
     <title>Royal Armies - An MMOHFT Medieval-Fantasy Strategy Game</title>
     <link rel="stylesheet" href="style.css">
-    <link rel="stylesheet" href="style2.css?v=guest-nav-center-1">
+    <link rel="stylesheet" href="style2.css?v=royalty-perks-list-1">
     <link rel="stylesheet" href="custom-cursor.css">
     <link rel="stylesheet" href="mobile-responsive.css?v=commander-page-7">
     <link rel="stylesheet" href="dev-page-navigator.css">
@@ -476,6 +476,10 @@
                 <div class="main-portal-forgot-link-row">
                     <button type="button" class="main-portal-forgot-link" onclick="handleForgot(event)">Forgot my Password</button>
                 </div>
+                <label class="main-portal-remember-row" for="login-remember-me">
+                    <input type="checkbox" id="login-remember-me" checked>
+                    <span>Keep me logged in</span>
+                </label>
                 <div id="auth-loading" class="main-portal-auth-loading" style="display: none;">Authenticating...</div>
                 <div id="auth-buttons" class="main-portal-auth-btn-row">
                     <button type="button" id="btn-login-main" class="modal-action-btn confirm" onclick="handleLogin()">Login</button>
@@ -549,13 +553,13 @@
 
     <!-- Block 10: Commander Hub + Shared RAGE Logic -->
     <script src="dev-environment.js"></script>
-    <script src="dev-page-navigator.js"></script>
+    <script src="dev-page-navigator.js?v=dev-player-bypass-1"></script>
     <script src="portal-alerts.js"></script>
     <script src="rank-data.js"></script>
-    <script src="script.js"></script>
+    <script src="script.js?v=dev-player-bypass-1"></script>
     <script src="commander-hub.js"></script>
     <script src="maintenance-alert.js?v=0.1.13"></script>
-    <script src="script2.js"></script>
+    <script src="script2.js?v=royalty-perks-list-1"></script>
     <script src="custom-cursor.js?v=desktop-restore-1"></script>
 
 </body>
