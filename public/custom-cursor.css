@@ -1,8 +1,20 @@
 /* Royal Armies — gauntlet pointer cursor + fingertip click burst */
 
+/*
+ * Hide the OS cursor on desktop. Portal styles use #id .class { cursor: pointer }
+ * (specificity 1,1,0) which beats a plain html… body * rule (0,1,2).
+ * Scope to #main-dashboard-canvas and include [class]/[id] so we win 1,2,x rules too.
+ */
 html.royal-armies-custom-cursor,
 html.royal-armies-custom-cursor body,
-html.royal-armies-custom-cursor body * {
+html.royal-armies-custom-cursor body#main-dashboard-canvas,
+html.royal-armies-custom-cursor body#main-dashboard-canvas *,
+html.royal-armies-custom-cursor body#main-dashboard-canvas *::before,
+html.royal-armies-custom-cursor body#main-dashboard-canvas *::after,
+html.royal-armies-custom-cursor body#main-dashboard-canvas [class],
+html.royal-armies-custom-cursor body#main-dashboard-canvas [id],
+html.royal-armies-custom-cursor body#main-dashboard-canvas *::-webkit-slider-thumb,
+html.royal-armies-custom-cursor body#main-dashboard-canvas *::-moz-range-thumb {
     cursor: none !important;
 }
 
