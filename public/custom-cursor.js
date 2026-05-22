@@ -11,6 +11,30 @@
     const FINGERTIP_HOTSPOT_Y = 3;
     const ROOT_CLASS = 'royal-armies-custom-cursor';
     const TOUCH_CLASS = 'royal-armies-touch-device';
+    const NATIVE_HIDE_STYLE_ID = 'royal-armies-native-cursor-hide';
+    const NATIVE_HIDE_CSS = [
+        'html.royal-armies-custom-cursor,',
+        'html.royal-armies-custom-cursor body,',
+        'html.royal-armies-custom-cursor body#main-dashboard-canvas,',
+        'html.royal-armies-custom-cursor *,',
+        'html.royal-armies-custom-cursor *::before,',
+        'html.royal-armies-custom-cursor *::after,',
+        'html.royal-armies-custom-cursor body#main-dashboard-canvas *,',
+        'html.royal-armies-custom-cursor body#main-dashboard-canvas *::before,',
+        'html.royal-armies-custom-cursor body#main-dashboard-canvas *::after,',
+        'html.royal-armies-custom-cursor body#main-dashboard-canvas [class],',
+        'html.royal-armies-custom-cursor body#main-dashboard-canvas [id],',
+        'html.royal-armies-custom-cursor body#main-dashboard-canvas :is(',
+        '    a, button, input, select, textarea, label, summary,',
+        '    [role="button"], [role="link"], [role="tab"],',
+        '    [href], [onclick], .nav-tab, .footer-icon-link',
+        '),',
+        'html.royal-armies-custom-cursor body#main-dashboard-canvas *::-webkit-slider-thumb,',
+        'html.royal-armies-custom-cursor body#main-dashboard-canvas *::-moz-range-thumb {',
+        '    cursor: none !important;',
+        '}'
+    ].join('\n');
+    const CURSOR_OVERLAY_IDS = new Set(['royal-armies-custom-cursor', 'cursor-click-fx-layer']);
     const MQ_DESKTOP_LAYOUT = '(min-width: 1025px)';
     const MQ_MOBILE_LAYOUT = '(max-width: 1024px)';
     const MQ_TOUCH_PRIMARY = '(hover: none) and (pointer: coarse)';
@@ -27,6 +51,40 @@
     let cursorVisible = false;
     let clickPulseTimer = 0;
     let listenersBound = false;
+    /** Elements receiving inline cursor:none (beats #id .class pointer on buttons/links). */
+    let cursorHideStyledElements = new Set();
+
+    function isCursorOverlayElement(el) {
+        if (!(el instanceof HTMLElement)) return false;
+        if (CURSOR_OVERLAY_IDS.has(el.id)) return true;
+        return Boolean(el.closest('#royal-armies-custom-cursor, #cursor-click-fx-layer'));
+    }
+
+    function clearCursorHideInlineStyles() {
+        cursorHideStyledElements.forEach((el) => {
+            el.style.removeProperty('cursor');
+        });
+        cursorHideStyledElements.clear();
+    }
+
+    /** Force-hide OS pointer on the hit stack (buttons/links often beat stylesheet specificity). */
+    function enforceNativeCursorHiddenAtPoint(clientX, clientY) {
+        if (!shouldEnableCustomCursor()) return;
+
+        const nextStyled = new Set();
+        const stack = document.elementsFromPoint(clientX, clientY);
+
+        stack.forEach((node) => {
+            if (!(node instanceof HTMLElement) || isCursorOverlayElement(node)) return;
+            node.style.setProperty('cursor', 'none', 'important');
+            nextStyled.add(node);
+        });
+
+        cursorHideStyledElements.forEach((el) => {
+            if (!nextStyled.has(el)) el.style.removeProperty('cursor');
+        });
+        cursorHideStyledElements = nextStyled;
+    }
 
     function positionCursor(clientX, clientY) {
         if (!cursorShell) return;
@@ -79,6 +137,7 @@
         document.addEventListener('mousemove', (event) => {
             if (!shouldEnableCustomCursor()) return;
             positionCursor(event.clientX, event.clientY);
+            enforceNativeCursorHiddenAtPoint(event.clientX, event.clientY);
         }, { passive: true });
 
         document.addEventListener('mousedown', (event) => {
@@ -90,6 +149,29 @@
             if (!shouldEnableCustomCursor()) return;
             hideCursor();
         }, { passive: true });
+    }
+
+    function syncNativeCursorHidden(enable) {
+        const root = document.documentElement;
+        const body = document.body;
+        let styleEl = document.getElementById(NATIVE_HIDE_STYLE_ID);
+
+        if (!enable) {
+            root.style.removeProperty('cursor');
+            if (body) body.style.removeProperty('cursor');
+            styleEl?.remove();
+            clearCursorHideInlineStyles();
+            return;
+        }
+
+        if (!styleEl) {
+            styleEl = document.createElement('style');
+            styleEl.id = NATIVE_HIDE_STYLE_ID;
+        }
+        styleEl.textContent = NATIVE_HIDE_CSS;
+        document.head.appendChild(styleEl);
+        root.style.setProperty('cursor', 'none', 'important');
+        if (body) body.style.setProperty('cursor', 'none', 'important');
     }
 
     function mountCustomCursorElements() {
@@ -121,6 +203,7 @@
         const enable = shouldEnableCustomCursor();
         document.documentElement.classList.toggle(TOUCH_CLASS, !enable);
         document.documentElement.classList.toggle(ROOT_CLASS, enable);
+        syncNativeCursorHidden(enable);
 
         if (!enable) {
             hideCursor();

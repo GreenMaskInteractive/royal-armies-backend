@@ -4513,6 +4513,7 @@ body:not(.portal-guest-mode) #portal-deployment-guest-cta {
     padding: 24px 8px !important;
 }
 
+.public-profile-split-right .public-profile-medals-grid,
 .public-profile-split-right .public-profile-awards-grid {
     min-height: 52px !important;
 }
@@ -4608,12 +4609,102 @@ body:not(.portal-guest-mode) #portal-deployment-guest-cta {
     color: rgba(241, 224, 172, 0.62) !important;
 }
 
+.public-profile-medals-grid,
 .public-profile-awards-grid {
     display: flex !important;
     flex-wrap: wrap !important;
     gap: 10px !important;
     align-items: flex-start !important;
     min-height: 44px !important;
+}
+
+.public-profile-medal-chip {
+    position: relative !important;
+    width: 44px !important;
+    height: 44px !important;
+    flex-shrink: 0 !important;
+    cursor: help !important;
+    outline: none !important;
+}
+
+.public-profile-medal-icon-shell {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 44px !important;
+    height: 44px !important;
+    border-radius: 6px !important;
+    border: 2px solid rgba(168, 196, 232, 0.55) !important;
+    background: radial-gradient(circle at 30% 25%, rgba(48, 58, 78, 0.95) 0%, rgba(14, 11, 8, 1) 100%) !important;
+    box-shadow: 0 0 10px rgba(120, 160, 220, 0.18) !important;
+    transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease !important;
+}
+
+.public-profile-medal-icon-img {
+    width: 30px !important;
+    height: 30px !important;
+    object-fit: contain !important;
+    display: block !important;
+    pointer-events: none !important;
+}
+
+.public-profile-medal-icon-fallback {
+    font-size: 1.25rem !important;
+    line-height: 1 !important;
+    pointer-events: none !important;
+}
+
+.public-profile-medal-chip:hover .public-profile-medal-icon-shell,
+.public-profile-medal-chip:focus-visible .public-profile-medal-icon-shell {
+    transform: scale(1.08) !important;
+    border-color: #c8dcff !important;
+    box-shadow: 0 0 14px rgba(168, 196, 255, 0.35) !important;
+}
+
+.public-profile-split-right .public-profile-medal-tooltip {
+    left: auto !important;
+    right: 0 !important;
+    transform: translateY(4px) !important;
+}
+
+.public-profile-split-right .public-profile-medal-chip:hover .public-profile-medal-tooltip,
+.public-profile-split-right .public-profile-medal-chip:focus-visible .public-profile-medal-tooltip {
+    transform: translateY(0) !important;
+}
+
+.public-profile-medal-tooltip {
+    position: absolute !important;
+    left: 50% !important;
+    bottom: calc(100% + 8px) !important;
+    transform: translateX(-50%) translateY(4px) !important;
+    min-width: 180px !important;
+    max-width: 240px !important;
+    padding: 8px 10px !important;
+    border-radius: 4px !important;
+    border: 1px solid rgba(168, 196, 232, 0.45) !important;
+    background: rgba(10, 8, 6, 0.98) !important;
+    color: #f1e0ac !important;
+    font-family: 'Segoe UI', sans-serif !important;
+    font-size: 0.72rem !important;
+    line-height: 1.4 !important;
+    text-align: center !important;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.85) !important;
+    opacity: 0 !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+    z-index: 6 !important;
+    transition: opacity 0.18s ease, transform 0.18s ease, visibility 0.18s ease !important;
+}
+
+.public-profile-medal-chip:hover .public-profile-medal-tooltip,
+.public-profile-medal-chip:focus-visible .public-profile-medal-tooltip {
+    opacity: 1 !important;
+    visibility: visible !important;
+    transform: translateX(-50%) translateY(0) !important;
+}
+
+.public-profile-medals-empty {
+    width: 100% !important;
 }
 
 .public-profile-award-chip {

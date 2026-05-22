@@ -431,6 +431,22 @@ function loadCommanderAwardRecords(sourcePlayer) {
     return Array.isArray(awards) ? awards : [];
 }
 
+function loadCommanderMedalRecords(sourcePlayer) {
+    let medals = [];
+    if (sourcePlayer && Array.isArray(sourcePlayer.medals)) {
+        medals = sourcePlayer.medals;
+    }
+    if (!medals.length) {
+        try {
+            const cached = localStorage.getItem('savedCommanderMedals');
+            if (cached) medals = JSON.parse(cached);
+        } catch (err) {
+            medals = [];
+        }
+    }
+    return Array.isArray(medals) ? medals : [];
+}
+
 function getPublicProfileSnapshot(subjectPlayer) {
     const source = subjectPlayer || (typeof player !== 'undefined' ? player : null);
     if (!source) return null;
@@ -459,6 +475,7 @@ function getPublicProfileSnapshot(subjectPlayer) {
         rank: source.rank ?? 1,
         path: source.path || '',
         ageHistory: loadCommanderAgeHistoryRecords(source),
+        medals: loadCommanderMedalRecords(source),
         awards: loadCommanderAwardRecords(source)
     };
 }
@@ -484,6 +501,30 @@ function buildPublicProfileAgeHistoryHtml(ageHistory) {
     }).join('');
 
     return `<ul class="public-profile-age-history-list">${rows}</ul>`;
+}
+
+function buildPublicProfileMedalsHtml(medals) {
+    if (!medals.length) {
+        return '<p class="public-profile-empty-state public-profile-medals-empty">No medals earned yet.</p>';
+    }
+
+    const chips = medals.map((medal, index) => {
+        const label = medal.label || medal.name || `Medal ${index + 1}`;
+        const detail = medal.detail || medal.description || medal.citation || 'Medal details forthcoming.';
+        const iconUrl = medal.iconUrl || medal.icon || '';
+        const iconMarkup = iconUrl
+            ? `<img class="public-profile-medal-icon-img" src="${escapePublicProfileHtml(iconUrl)}" alt="">`
+            : `<span class="public-profile-medal-icon-fallback" aria-hidden="true">🎖</span>`;
+
+        return `
+            <div class="public-profile-medal-chip" tabindex="0" role="img" aria-label="${escapePublicProfileHtml(label)}: ${escapePublicProfileHtml(detail)}">
+                <span class="public-profile-medal-icon-shell">${iconMarkup}</span>
+                <span class="public-profile-medal-tooltip" role="tooltip">${escapePublicProfileHtml(detail)}</span>
+            </div>
+        `;
+    }).join('');
+
+    return `<div class="public-profile-medals-grid" role="list">${chips}</div>`;
 }
 
 function buildPublicProfileAwardsHtml(awards) {
@@ -540,6 +581,10 @@ function renderPublicProfileCardContent(snapshot, options) {
     const statsColumnSection = hideSensitiveDetails
         ? ''
         : `<div class="public-profile-split-column public-profile-split-right">
+                <section class="public-profile-section public-profile-medals-section">
+                    <h4 class="public-profile-section-label">Medals</h4>
+                    ${buildPublicProfileMedalsHtml(snapshot.medals)}
+                </section>
                 <section class="public-profile-section public-profile-awards-section">
                     <h4 class="public-profile-section-label">Achievements</h4>
                     ${buildPublicProfileAwardsHtml(snapshot.awards)}

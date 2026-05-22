@@ -405,8 +405,15 @@ function hydratePlayerPublicDossierFromStorage() {
     } catch (err) {
         player.awards = [];
     }
+    try {
+        const medalCache = localStorage.getItem('savedCommanderMedals');
+        if (medalCache) player.medals = JSON.parse(medalCache);
+    } catch (err) {
+        player.medals = [];
+    }
     if (!Array.isArray(player.ageHistory)) player.ageHistory = [];
     if (!Array.isArray(player.awards)) player.awards = [];
+    if (!Array.isArray(player.medals)) player.medals = [];
 }
 
 function syncPlayerFromActiveCommanderStorage() {
@@ -481,6 +488,8 @@ var player = {
     ageHistory: [],
     // Public dossier: { id, iconUrl?, label, achievement } — iconUrl optional until assets exist
     awards: [],
+    // Public dossier: { id, iconUrl?, label, detail } — service / campaign medals
+    medals: [],
     
     // Discipline Monitoring System (UPDATED EXTENSION COUPLING)
     // Seamlessly feeds exact properties into your live account verification popup loop!
