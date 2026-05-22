@@ -996,6 +996,11 @@ function launchGameRoundSector(isTutorialModeActive, clickEvent) {
         const destination = `game.html?tutorial=${isTutorialModeActive}`;
         window.setTimeout(() => {
             localStorage.setItem('savedCommanderInActiveAge', 'true');
+            if (typeof markJoinAgeAttemptForAchievement === 'function') {
+                markJoinAgeAttemptForAchievement();
+            } else if (window.RoyalArmiesAchievements && typeof window.RoyalArmiesAchievements.markJoinAgeAttemptForAchievement === 'function') {
+                window.RoyalArmiesAchievements.markJoinAgeAttemptForAchievement();
+            }
             notifyPortalAgeSessionJoin().finally(() => {
                 window.location.href = destination;
             });
@@ -1204,6 +1209,7 @@ function applyPortalLiveMetricsToBanner(metrics) {
         registeredPlayersDisplay.innerText = registeredCount.toLocaleString();
     }
     if (activePlayersDisplay) {
+        /* Playing in the Age (online) / total commanders currently in the Age session */
         activePlayersDisplay.innerText = `${ageOnlineCount.toLocaleString()} / ${agePlayingCount.toLocaleString()}`;
     }
 

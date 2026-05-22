@@ -76,6 +76,12 @@
     color: #fff3c4 !important;
 }
 
+.dev-page-navigator-go--secondary {
+    background: linear-gradient(180deg, rgba(32, 48, 72, 0.92) 0%, rgba(10, 14, 22, 0.98) 100%) !important;
+    border-color: rgba(168, 196, 232, 0.45) !important;
+    color: #d8e8ff !important;
+}
+
 @media (max-width: 480px) {
     .dev-page-navigator {
         left: 8px !important;

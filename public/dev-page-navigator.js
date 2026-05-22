@@ -9,6 +9,7 @@
     const DEV_SITE_PAGES = [
         { id: 'index', label: 'Landing (redirect → main)', file: 'index.html' },
         { id: 'main', label: 'Age Portal', file: 'main.html' },
+        { id: 'game', label: 'Game (WIP shell)', file: 'game.html' },
         { id: 'ageportal', label: 'Age Portal (legacy redirect)', file: 'ageportal.html' },
         { id: 'reset-password', label: 'Reset Password', file: 'reset-password.html' }
     ];
@@ -85,6 +86,10 @@
             `
             : '';
 
+        const achievementTestBtn = (typeof global.isLocalDevelopmentHost === 'function' && global.isLocalDevelopmentHost())
+            ? '<button type="button" id="dev-achievement-popup-test" class="dev-page-navigator-go dev-page-navigator-go--secondary" title="Preview the Whoa Slow Down achievement popup">Achievement</button>'
+            : '';
+
         return `
             <div id="dev-page-navigator" class="dev-page-navigator" role="navigation" aria-label="Developer page bypass">
                 <label class="dev-page-navigator-label" for="dev-page-navigator-select">
@@ -95,6 +100,7 @@
                 </label>
                 ${personaBlock}
                 <button type="button" id="dev-page-navigator-go" class="dev-page-navigator-go">Go</button>
+                ${achievementTestBtn}
             </div>
         `;
     }
@@ -132,6 +138,19 @@
                 const nextMode = personaSelect.value;
                 if (nextMode === getCurrentDevViewMode()) return;
                 applyDevViewMode(nextMode);
+            });
+        }
+
+        const achievementBtn = global.document.getElementById('dev-achievement-popup-test');
+        if (achievementBtn) {
+            achievementBtn.addEventListener('click', () => {
+                if (typeof global.previewWhoaSlowDownAchievementPopup === 'function') {
+                    global.previewWhoaSlowDownAchievementPopup({ grantIfMissing: false });
+                    return;
+                }
+                if (global.RoyalArmiesAchievements && typeof global.RoyalArmiesAchievements.previewWhoaSlowDownPopup === 'function') {
+                    global.RoyalArmiesAchievements.previewWhoaSlowDownPopup({ grantIfMissing: false });
+                }
             });
         }
     }

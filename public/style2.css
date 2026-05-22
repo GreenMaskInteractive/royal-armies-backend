@@ -7184,3 +7184,252 @@ body.developer-maintenance-alert-active #page-landing {
         font-size: 0.75rem !important;
     }
 }
+
+/* ==========================================================================
+   SECTION 20: GAME PAGE SHELL (WIP) & ACHIEVEMENT UNLOCK POPUP
+   ========================================================================== */
+
+#game-page-canvas,
+.game-page-canvas {
+    margin: 0 !important;
+    padding: 0 !important;
+    min-height: 100vh !important;
+    width: 100vw !important;
+    display: flex !important;
+    flex-direction: column !important;
+    box-sizing: border-box !important;
+    background-image: url('images/mainpagebg.png') !important;
+    background-size: cover !important;
+    background-position: center !important;
+    background-repeat: no-repeat !important;
+    background-attachment: fixed !important;
+    background-color: #050403 !important;
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
+    color: #f1e0ac !important;
+}
+
+.game-page-header {
+    flex-shrink: 0 !important;
+    margin-bottom: 0 !important;
+}
+
+.game-page-main {
+    flex: 1 1 auto !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 24px 20px 40px !important;
+    box-sizing: border-box !important;
+}
+
+.game-page-panel {
+    width: min(720px, 94vw) !important;
+    margin: 0 auto !important;
+}
+
+.game-page-panel-frame {
+    padding: 28px 32px 24px !important;
+    text-align: center !important;
+    box-sizing: border-box !important;
+}
+
+.game-page-eyebrow {
+    margin: 0 0 8px !important;
+    font-family: 'RoyalDetails', serif !important;
+    font-size: 0.72rem !important;
+    letter-spacing: 0.18em !important;
+    text-transform: uppercase !important;
+    color: rgba(184, 144, 48, 0.9) !important;
+}
+
+.game-page-heading {
+    margin: 0 0 16px !important;
+    font-family: 'Cinzel', serif !important;
+    font-size: clamp(1.35rem, 3.2vw, 1.85rem) !important;
+    color: #ffd700 !important;
+    letter-spacing: 0.06em !important;
+    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.9) !important;
+    line-height: 1.2 !important;
+}
+
+.game-page-copy {
+    text-align: left !important;
+    font-family: 'Segoe UI', sans-serif !important;
+    font-size: 0.92rem !important;
+    line-height: 1.55 !important;
+    color: rgba(241, 224, 172, 0.88) !important;
+    margin-bottom: 20px !important;
+}
+
+.game-page-copy p {
+    margin: 0 0 12px !important;
+}
+
+.game-page-copy p:last-child {
+    margin-bottom: 0 !important;
+}
+
+.game-page-actions {
+    display: flex !important;
+    justify-content: center !important;
+    padding-top: 8px !important;
+}
+
+.game-page-return-btn {
+    font-family: 'Cinzel', serif !important;
+    font-size: 0.88rem !important;
+    font-weight: bold !important;
+    letter-spacing: 0.08em !important;
+    padding: 10px 22px !important;
+    cursor: pointer !important;
+    border-radius: 2px !important;
+    border: 1px solid rgba(184, 144, 48, 0.55) !important;
+    color: #ffd700 !important;
+    background-image: url('images/borderedcontainer_thin.png') !important;
+    background-size: 100% 100% !important;
+    background-color: rgba(12, 10, 8, 0.92) !important;
+    transition: filter 0.2s ease, transform 0.1s ease !important;
+}
+
+.game-page-return-btn:hover {
+    filter: brightness(1.15) !important;
+}
+
+.game-page-return-btn:active {
+    transform: scale(0.98) !important;
+}
+
+.achievement-unlock-overlay {
+    position: fixed !important;
+    inset: 0 !important;
+    z-index: 280000 !important;
+    display: none;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 24px 16px !important;
+    box-sizing: border-box !important;
+    background: rgba(0, 0, 0, 0.86) !important;
+}
+
+.achievement-unlock-overlay.is-visible {
+    display: flex !important;
+}
+
+.achievement-unlock-dialog {
+    width: min(480px, 94vw) !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+}
+
+.achievement-unlock-banner-panel {
+    position: relative !important;
+    width: 100% !important;
+    min-height: 280px !important;
+    box-sizing: border-box !important;
+}
+
+.achievement-unlock-banner-art {
+    display: block !important;
+    width: 100% !important;
+    height: auto !important;
+    min-height: 240px !important;
+    object-fit: fill !important;
+    pointer-events: none !important;
+    user-select: none !important;
+}
+
+.achievement-unlock-banner-content {
+    position: absolute !important;
+    inset: 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    text-align: center !important;
+    padding: 28px 24px 22px !important;
+    box-sizing: border-box !important;
+    gap: 8px !important;
+}
+
+.achievement-unlock-eyebrow {
+    margin: 0 !important;
+    font-family: 'RoyalDetails', serif !important;
+    font-size: 0.68rem !important;
+    letter-spacing: 0.2em !important;
+    text-transform: uppercase !important;
+    color: rgba(255, 215, 0, 0.85) !important;
+}
+
+.achievement-unlock-icon-ring {
+    width: 88px !important;
+    height: 88px !important;
+    margin: 4px 0 2px !important;
+    padding: 6px !important;
+    border-radius: 12px !important;
+    border: 2px solid rgba(184, 144, 48, 0.65) !important;
+    background: radial-gradient(circle at 30% 20%, rgba(48, 38, 22, 0.95) 0%, rgba(8, 6, 4, 0.98) 100%) !important;
+    box-shadow: 0 0 18px rgba(184, 144, 48, 0.28) !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+
+.achievement-unlock-icon {
+    width: 64px !important;
+    height: 64px !important;
+    object-fit: contain !important;
+    display: block !important;
+}
+
+.achievement-unlock-title {
+    margin: 0 !important;
+    font-family: 'Cinzel', serif !important;
+    font-size: clamp(0.95rem, 2.8vw, 1.15rem) !important;
+    color: #ffd700 !important;
+    line-height: 1.25 !important;
+    text-shadow: 0 2px 6px rgba(0, 0, 0, 0.9) !important;
+    max-width: 100% !important;
+}
+
+.achievement-unlock-body {
+    margin: 0 !important;
+    font-family: 'Segoe UI', sans-serif !important;
+    font-size: 0.8rem !important;
+    line-height: 1.45 !important;
+    color: rgba(241, 224, 172, 0.9) !important;
+    max-width: 340px !important;
+}
+
+.achievement-unlock-dismiss-btn {
+    margin-top: 6px !important;
+    font-family: 'Cinzel', serif !important;
+    font-size: 0.78rem !important;
+    font-weight: bold !important;
+    letter-spacing: 0.08em !important;
+    padding: 8px 20px !important;
+    cursor: pointer !important;
+    border: 1px solid rgba(184, 144, 48, 0.5) !important;
+    border-radius: 2px !important;
+    color: #ffd700 !important;
+    background: rgba(12, 10, 8, 0.88) !important;
+    transition: filter 0.2s ease !important;
+}
+
+.achievement-unlock-dismiss-btn:hover {
+    filter: brightness(1.2) !important;
+}
+
+@media (max-width: 640px) {
+    .game-page-panel-frame {
+        padding: 22px 18px 18px !important;
+    }
+
+    .achievement-unlock-banner-content {
+        padding: 22px 16px 18px !important;
+    }
+
+    .achievement-unlock-title {
+        font-size: 0.92rem !important;
+    }
+}
