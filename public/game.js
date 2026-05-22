@@ -17,13 +17,16 @@
         return path;
     }
 
-    function resolveUsername() {
-        if (typeof global.getActiveCommanderUsername === 'function') {
-            const name = global.getActiveCommanderUsername();
-            if (name && String(name).trim()) return String(name).trim();
-        }
+    function resolveGamePageUsername() {
         const saved = global.localStorage.getItem('activeCommanderUser');
-        return saved && saved.trim() ? saved.trim() : '';
+        if (saved && saved.trim()) return saved.trim();
+
+        if (typeof global.getActiveCommanderUsername === 'function') {
+            const name = String(global.getActiveCommanderUsername() || '').trim();
+            if (name && name.toLowerCase() !== 'testaccount') return name;
+        }
+
+        return '';
     }
 
     function markPlayingActiveAgeLocally() {
@@ -43,7 +46,7 @@
     }
 
     async function postAgeJoin() {
-        const username = resolveUsername();
+        const username = resolveGamePageUsername();
         if (!username) return;
 
         try {
@@ -61,7 +64,7 @@
 
     async function postAgeLeave(useKeepalive) {
         if (ageSessionLeaveSent) return;
-        const username = resolveUsername();
+        const username = resolveGamePageUsername();
         if (!username) return;
 
         ageSessionLeaveSent = true;
@@ -84,7 +87,7 @@
     }
 
     async function sendGamePresenceHeartbeat() {
-        const username = resolveUsername();
+        const username = resolveGamePageUsername();
         if (!username || username.toLowerCase() === 'testaccount') return;
 
         try {
@@ -141,8 +144,12 @@
             await global.ensurePortalAuthRestored();
         }
 
-        const username = resolveUsername();
-        if (!username || username.toLowerCase() === 'testaccount') {
+        if (typeof global.applyLocalDevAutoLogin === 'function' && !resolveGamePageUsername()) {
+            await global.applyLocalDevAutoLogin();
+        }
+
+        const username = resolveGamePageUsername();
+        if (!username) {
             global.location.replace('main.html');
             return;
         }
@@ -155,7 +162,7 @@
     function handleJoinAgeAchievementUnlock() {
         if (typeof global.tryGrantWhoaSlowDownFromJoinAttempt !== 'function') return;
 
-        const result = global.tryGrantWhoaSlowDownFromJoinAttempt(resolveUsername());
+        const result = global.tryGrantWhoaSlowDownFromJoinAttempt(resolveGamePageUsername());
         if (result && result.granted && result.award && typeof global.showAchievementUnlockPopup === 'function') {
             global.setTimeout(() => global.showAchievementUnlockPopup(result.award), 520);
         }

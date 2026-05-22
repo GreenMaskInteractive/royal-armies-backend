@@ -106,7 +106,7 @@
 
     function ensureAchievementUnlockOverlay() {
         let overlay = global.document.getElementById('royal-armies-achievement-unlock-overlay');
-        if (overlay && !overlay.querySelector('.achievement-unlock-left-rail')) {
+        if (overlay && (!overlay.querySelector('.achievement-unlock-left-rail') || !overlay.querySelector('.achievement-unlock-sparkles'))) {
             overlay.remove();
             overlay = null;
         }
@@ -121,6 +121,14 @@
         overlay.innerHTML = `
             <div class="achievement-unlock-dialog" role="dialog" aria-modal="true" aria-labelledby="achievement-unlock-eyebrow">
                 <div class="achievement-unlock-banner-panel">
+                    <div class="achievement-unlock-sparkles" aria-hidden="true">
+                        <span class="achievement-sparkle achievement-sparkle--1"></span>
+                        <span class="achievement-sparkle achievement-sparkle--2"></span>
+                        <span class="achievement-sparkle achievement-sparkle--3"></span>
+                        <span class="achievement-sparkle achievement-sparkle--4"></span>
+                        <span class="achievement-sparkle achievement-sparkle--5"></span>
+                        <span class="achievement-sparkle achievement-sparkle--6"></span>
+                    </div>
                     <img class="achievement-unlock-banner-art" src="images/achievementsbanner.png" alt="" aria-hidden="true">
                     <div class="achievement-unlock-banner-content">
                         <div class="achievement-unlock-left-rail" aria-hidden="false">
@@ -159,6 +167,24 @@
         return overlay;
     }
 
+    function playAchievementEntranceAnimation(overlay) {
+        const dialog = overlay.querySelector('.achievement-unlock-dialog');
+        const panel = overlay.querySelector('.achievement-unlock-banner-panel');
+        if (!dialog) return;
+
+        overlay.classList.remove('is-backdrop-reveal');
+        dialog.classList.remove('is-pop-in-active');
+        if (panel) panel.classList.remove('is-sparkle-active');
+
+        void dialog.offsetWidth;
+
+        global.requestAnimationFrame(() => {
+            overlay.classList.add('is-backdrop-reveal');
+            dialog.classList.add('is-pop-in-active');
+            if (panel) panel.classList.add('is-sparkle-active');
+        });
+    }
+
     function showAchievementUnlockPopup(award) {
         const record = award || WHO_SLOW_DOWN_DEFINITION;
         const overlay = ensureAchievementUnlockOverlay();
@@ -181,6 +207,7 @@
         overlay.classList.add('is-visible');
         overlay.style.setProperty('display', 'flex', 'important');
         overlay.setAttribute('aria-hidden', 'false');
+        playAchievementEntranceAnimation(overlay);
 
         const dismissBtn = overlay.querySelector('#achievement-unlock-dismiss');
         if (dismissBtn) dismissBtn.focus();
@@ -189,7 +216,13 @@
     function closeAchievementUnlockPopup() {
         const overlay = global.document.getElementById('royal-armies-achievement-unlock-overlay');
         if (!overlay) return;
-        overlay.classList.remove('is-visible');
+
+        const dialog = overlay.querySelector('.achievement-unlock-dialog');
+        const panel = overlay.querySelector('.achievement-unlock-banner-panel');
+        overlay.classList.remove('is-visible', 'is-backdrop-reveal');
+        if (dialog) dialog.classList.remove('is-pop-in-active');
+        if (panel) panel.classList.remove('is-sparkle-active');
+
         overlay.classList.add('main-portal-modal-hidden');
         overlay.style.setProperty('display', 'none', 'important');
         overlay.setAttribute('aria-hidden', 'true');
