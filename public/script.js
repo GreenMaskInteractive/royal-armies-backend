@@ -426,7 +426,9 @@ function syncPlayerFromActiveCommanderStorage() {
         hydrateCommanderMembershipFromStorage();
     }
     loadCommanderMailboxDossiersFromStorage();
-    fetchCommanderMailboxFromServer();
+    fetchCommanderMailboxFromServer().finally(() => {
+        if (typeof startPortalMailboxPolling === 'function') startPortalMailboxPolling();
+    });
     refreshProfileCommanderNameDisplay();
     refreshLoggedUserTagDisplay();
     syncNavMailboxIndicators();
@@ -1018,6 +1020,7 @@ function loadCommanderMailboxDossiersFromStorage() {
     } catch (err) {
         console.warn('Mailbox restore skipped:', err.message);
     }
+    syncNavMailboxIndicators();
 }
 
 function saveCommanderMailboxDossiersToStorage() {
@@ -1149,16 +1152,45 @@ function countUnreadPlayerInboxMessages() {
     return playerInboundInboxDossier.filter((msg) => msg && msg.from && !msg.read).length;
 }
 
+const PORTAL_MAILBOX_POLL_MS = 30000;
+let portalMailboxPollTimer = null;
+let portalMailboxUnreadBaseline = null;
+
+function pulseMailboxUnreadArrival(targets) {
+    if (!targets || !targets.length) return;
+    targets.forEach((el) => {
+        if (!el) return;
+        el.classList.remove('mailbox-unread-arrival-pulse');
+        void el.offsetWidth;
+        el.classList.add('mailbox-unread-arrival-pulse');
+    });
+    window.setTimeout(() => {
+        targets.forEach((el) => el && el.classList.remove('mailbox-unread-arrival-pulse'));
+    }, 2600);
+}
+
 function syncNavMailboxIndicators() {
     const unreadCount = countUnreadPlayerInboxMessages();
+    const isNewArrival = portalMailboxUnreadBaseline !== null && unreadCount > portalMailboxUnreadBaseline;
+    portalMailboxUnreadBaseline = unreadCount;
+
     const wrapper = document.querySelector('.nav-avatar-hub-wrapper');
     const countEl = document.getElementById('nav-messages-unread-count');
     const messagesBtn = document.getElementById('nav-dropdown-messages-btn');
+    const mobileBlock = document.getElementById('portal-mobile-commander-block');
+    const mobileTrigger = document.getElementById('portal-mobile-commander-toggle');
+    const hasUnread = unreadCount > 0;
 
-    if (wrapper) wrapper.classList.toggle('has-unread-messages', unreadCount > 0);
+    if (wrapper) wrapper.classList.toggle('has-unread-messages', hasUnread);
+    if (mobileBlock) mobileBlock.classList.toggle('has-unread-messages', hasUnread);
+    if (mobileTrigger) mobileTrigger.classList.toggle('has-unread-messages', hasUnread);
+
+    if (isNewArrival) {
+        pulseMailboxUnreadArrival([wrapper, mobileBlock, mobileTrigger].filter(Boolean));
+    }
 
     if (countEl) {
-        if (unreadCount > 0) {
+        if (hasUnread) {
             countEl.textContent = String(unreadCount);
             countEl.hidden = false;
         } else {
@@ -1168,15 +1200,58 @@ function syncNavMailboxIndicators() {
     }
 
     if (messagesBtn) {
-        messagesBtn.classList.toggle('has-unread-messages', unreadCount > 0);
+        messagesBtn.classList.toggle('has-unread-messages', hasUnread);
         messagesBtn.setAttribute(
             'aria-label',
-            unreadCount > 0 ? `Messages, ${unreadCount} unread` : 'Messages'
+            hasUnread ? `Messages, ${unreadCount} unread` : 'Messages'
         );
     }
 
     if (typeof syncPortalMobileNavMailboxIndicators === 'function') {
         syncPortalMobileNavMailboxIndicators(unreadCount);
+    }
+}
+
+async function pollCommanderMailboxFromServer() {
+    if (typeof isPortalUserAuthenticated === 'function' && !isPortalUserAuthenticated()) {
+        portalMailboxUnreadBaseline = 0;
+        syncNavMailboxIndicators();
+        return false;
+    }
+    if (typeof fetchCommanderMailboxFromServer !== 'function') return false;
+    return fetchCommanderMailboxFromServer();
+}
+
+function startPortalMailboxPolling() {
+    if (portalMailboxPollTimer) {
+        clearInterval(portalMailboxPollTimer);
+        portalMailboxPollTimer = null;
+    }
+
+    if (typeof isMailboxApiAvailable === 'function' && !isMailboxApiAvailable()) {
+        syncNavMailboxIndicators();
+        return;
+    }
+
+    const runPoll = () => {
+        pollCommanderMailboxFromServer();
+    };
+
+    runPoll();
+    portalMailboxPollTimer = setInterval(runPoll, PORTAL_MAILBOX_POLL_MS);
+
+    if (!window.__royalArmiesMailboxVisibilityBound) {
+        window.__royalArmiesMailboxVisibilityBound = true;
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'visible') runPoll();
+        });
+    }
+}
+
+function stopPortalMailboxPolling() {
+    if (portalMailboxPollTimer) {
+        clearInterval(portalMailboxPollTimer);
+        portalMailboxPollTimer = null;
     }
 }
 
@@ -4102,9 +4177,11 @@ function openMessageComposeFromDossier(msg, mode) {
         resetMessageComposeFields();
 
         if (mode === 'reply') {
-            appendRecipientPill(msg.from);
+            setLockedReplyRecipient(msg.from);
             const subject = document.getElementById('msg-subject-input-element');
             if (subject) subject.value = normalizeReplyTopic(msg.topic);
+            const body = document.getElementById('msg-body-input-element');
+            if (body) body.focus();
         } else if (mode === 'forward') {
             const subject = document.getElementById('msg-subject-input-element');
             const body = document.getElementById('msg-body-input-element');
@@ -4303,8 +4380,25 @@ function drillDownDirectory(tier, payload) {
     resetRecipientDrawerScrollPosition();
 }
 
+function setLockedReplyRecipient(targetName) {
+    const name = String(targetName || '').trim();
+    if (!name) return false;
+
+    activeWartimeRecipients = [name];
+    const dock = document.getElementById('msg-recipient-pill-dock');
+    if (!dock) return false;
+
+    dock.innerHTML = '';
+    const pill = document.createElement('div');
+    pill.className = 'recipient-pill-capsule recipient-pill-capsule--reply-locked';
+    pill.id = `pill-node-${name.replace(/\s+/g, '-')}`;
+    pill.innerHTML = `<span>${escapeMessageHtml(name)}</span>`;
+    dock.appendChild(pill);
+    return true;
+}
+
 function appendRecipientPill(targetName) {
-    if (messageComposeMode === 'reply') return;
+    if (messageComposeMode === 'reply' && !messageComposeApplyingFromDossier) return;
     if (typeof playToggleLeverSFX === 'function') playToggleLeverSFX();
     
     // Prevent duplicate entries into target capsule lines
@@ -4656,5 +4750,8 @@ async function executeMassDossierPurge(track) {
 window.syncNavMailboxIndicators = syncNavMailboxIndicators;
 window.receiveCommanderInboxMessage = receiveCommanderInboxMessage;
 window.fetchCommanderMailboxFromServer = fetchCommanderMailboxFromServer;
+window.startPortalMailboxPolling = startPortalMailboxPolling;
+window.stopPortalMailboxPolling = stopPortalMailboxPolling;
+window.pollCommanderMailboxFromServer = pollCommanderMailboxFromServer;
 window.activateMessagesFolder = activateMessagesFolder;
 window.loadCommanderMailboxDossiersFromStorage = loadCommanderMailboxDossiersFromStorage;

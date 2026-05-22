@@ -72,6 +72,10 @@ window.onload = async () => {
         syncNavMailboxIndicators();
     }
 
+    if (typeof startPortalMailboxPolling === 'function') {
+        startPortalMailboxPolling();
+    }
+
     window.cachedAgePortalViewportHTML = snapshotAgePortalViewportForCache();
 };
 

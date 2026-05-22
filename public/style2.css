@@ -2685,11 +2685,52 @@ body:not(.portal-guest-mode) #portal-deployment-guest-cta {
     z-index: 0 !important;
 }
 
-.nav-avatar-hub-wrapper.has-unread-messages .nav-bar-embedded-avatar-thumbnail {
+.portal-mobile-commander-block.has-unread-messages .portal-mobile-commander-trigger {
+    position: relative !important;
+}
+
+.portal-mobile-commander-block.has-unread-messages .portal-mobile-commander-trigger::before {
+    content: '' !important;
+    position: absolute !important;
+    top: 50% !important;
+    left: 14px !important;
+    width: 36px !important;
+    height: 36px !important;
+    border-radius: 50% !important;
+    background: radial-gradient(circle, rgba(255, 215, 0, 0.55) 0%, rgba(255, 180, 40, 0.15) 55%, transparent 72%) !important;
+    transform: translate(-50%, -50%) !important;
+    animation: navAvatarUnreadPulseMobile 2.2s ease-in-out infinite !important;
+    pointer-events: none !important;
+    z-index: 0 !important;
+}
+
+@keyframes navAvatarUnreadPulseMobile {
+    0%, 100% {
+        transform: translate(-50%, -50%) scale(1);
+        opacity: 0.7;
+    }
+    50% {
+        transform: translate(-50%, -50%) scale(1.2);
+        opacity: 1;
+    }
+}
+
+.nav-avatar-hub-wrapper.has-unread-messages .nav-bar-embedded-avatar-thumbnail,
+.portal-mobile-commander-block.has-unread-messages .portal-mobile-commander-avatar {
     box-shadow:
         0 0 10px rgba(255, 215, 0, 0.75),
         0 0 20px rgba(255, 180, 40, 0.45),
         0 0 32px rgba(255, 140, 20, 0.2) !important;
+}
+
+.nav-avatar-hub-wrapper.mailbox-unread-arrival-pulse::before,
+.portal-mobile-commander-block.mailbox-unread-arrival-pulse .portal-mobile-commander-trigger::before {
+    animation: navAvatarUnreadArrivalBurst 2.4s ease-out 1 !important;
+}
+
+.nav-avatar-hub-wrapper.mailbox-unread-arrival-pulse .nav-bar-embedded-avatar-thumbnail,
+.portal-mobile-commander-block.mailbox-unread-arrival-pulse .portal-mobile-commander-avatar {
+    animation: navAvatarThumbnailArrivalGlow 2.4s ease-out 1 !important;
 }
 
 @keyframes navAvatarUnreadPulse {
@@ -2700,6 +2741,30 @@ body:not(.portal-guest-mode) #portal-deployment-guest-cta {
     50% {
         transform: scale(1.22);
         opacity: 1;
+    }
+}
+
+@keyframes navAvatarUnreadArrivalBurst {
+    0% {
+        transform: scale(0.85);
+        opacity: 0.35;
+    }
+    35% {
+        transform: scale(1.35);
+        opacity: 1;
+    }
+    100% {
+        transform: scale(1.12);
+        opacity: 0.8;
+    }
+}
+
+@keyframes navAvatarThumbnailArrivalGlow {
+    0%, 100% {
+        filter: none;
+    }
+    40% {
+        filter: brightness(1.25) drop-shadow(0 0 12px rgba(255, 215, 0, 0.95));
     }
 }
 
@@ -4110,6 +4175,11 @@ body:not(.portal-guest-mode) #portal-deployment-guest-cta {
     flex-shrink: 0 !important;
 }
 
+.dropdown-action-item-messages.has-unread-messages .dropdown-messages-unread-count,
+.portal-mobile-submenu-item-messages.has-unread-messages .dropdown-messages-unread-count {
+    animation: mailboxUnreadCountPulse 2s ease-in-out infinite !important;
+}
+
 .dropdown-messages-unread-count[hidden] {
     display: none !important;
 }
@@ -4130,8 +4200,30 @@ body:not(.portal-guest-mode) #portal-deployment-guest-cta {
 }
 
 .nav-avatar-hub-wrapper:hover .dropdown-action-item-messages.has-unread-messages .dropdown-messages-new-dot,
+.nav-avatar-hub-wrapper:focus-within .dropdown-action-item-messages.has-unread-messages .dropdown-messages-new-dot,
 .avatar-hover-dropdown-menu:hover .dropdown-action-item-messages.has-unread-messages .dropdown-messages-new-dot {
     opacity: 1 !important;
+    animation: messagesNewDotPulse 1.35s ease-in-out infinite !important;
+}
+
+@keyframes messagesNewDotPulse {
+    0%, 100% {
+        transform: scale(1);
+        box-shadow: 0 0 8px rgba(255, 215, 0, 0.85);
+    }
+    50% {
+        transform: scale(1.2);
+        box-shadow: 0 0 14px rgba(255, 215, 0, 1), 0 0 22px rgba(255, 180, 40, 0.55);
+    }
+}
+
+@keyframes mailboxUnreadCountPulse {
+    0%, 100% {
+        box-shadow: 0 0 8px rgba(255, 215, 0, 0.45);
+    }
+    50% {
+        box-shadow: 0 0 14px rgba(255, 215, 0, 0.85), 0 0 20px rgba(255, 180, 40, 0.35);
+    }
 }
 
 /* ==========================================================================
@@ -7317,7 +7409,7 @@ body.developer-maintenance-alert-active #page-landing {
 }
 
 .achievement-unlock-dialog {
-    width: min(480px, 94vw) !important;
+    width: min(560px, 94vw) !important;
     max-width: 100% !important;
     box-sizing: border-box !important;
 }
@@ -7325,7 +7417,7 @@ body.developer-maintenance-alert-active #page-landing {
 .achievement-unlock-banner-panel {
     position: relative !important;
     width: 100% !important;
-    min-height: 280px !important;
+    min-height: 200px !important;
     box-sizing: border-box !important;
 }
 
@@ -7333,7 +7425,7 @@ body.developer-maintenance-alert-active #page-landing {
     display: block !important;
     width: 100% !important;
     height: auto !important;
-    min-height: 240px !important;
+    min-height: 200px !important;
     object-fit: fill !important;
     pointer-events: none !important;
     user-select: none !important;
@@ -7343,36 +7435,59 @@ body.developer-maintenance-alert-active #page-landing {
     position: absolute !important;
     inset: 0 !important;
     display: flex !important;
+    flex-direction: row !important;
+    align-items: stretch !important;
+    justify-content: flex-start !important;
+    gap: 14px !important;
+    padding: 20px 18px 18px 16px !important;
+    box-sizing: border-box !important;
+}
+
+.achievement-unlock-left-rail {
+    flex: 0 0 132px !important;
+    display: flex !important;
     flex-direction: column !important;
     align-items: center !important;
     justify-content: center !important;
-    text-align: center !important;
-    padding: 28px 24px 22px !important;
+    gap: 10px !important;
+    padding: 10px 8px !important;
     box-sizing: border-box !important;
-    gap: 8px !important;
+    border-radius: 6px !important;
+    background: rgba(6, 5, 4, 0.72) !important;
+    border: 1px solid rgba(184, 144, 48, 0.35) !important;
+    box-shadow: inset 0 0 18px rgba(0, 0, 0, 0.55) !important;
 }
 
 .achievement-unlock-eyebrow {
     margin: 0 !important;
-    font-family: 'RoyalDetails', serif !important;
-    font-size: 0.68rem !important;
-    letter-spacing: 0.2em !important;
+    font-family: 'Cinzel', serif !important;
+    font-size: 0.62rem !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.12em !important;
+    line-height: 1.3 !important;
     text-transform: uppercase !important;
-    color: rgba(255, 215, 0, 0.85) !important;
+    text-align: center !important;
+    color: #ffe566 !important;
+    text-shadow:
+        0 1px 2px rgba(0, 0, 0, 1),
+        0 0 10px rgba(0, 0, 0, 0.85) !important;
 }
 
 .achievement-unlock-icon-ring {
     width: 88px !important;
     height: 88px !important;
-    margin: 4px 0 2px !important;
+    margin: 0 !important;
     padding: 6px !important;
     border-radius: 12px !important;
-    border: 2px solid rgba(184, 144, 48, 0.65) !important;
-    background: radial-gradient(circle at 30% 20%, rgba(48, 38, 22, 0.95) 0%, rgba(8, 6, 4, 0.98) 100%) !important;
-    box-shadow: 0 0 18px rgba(184, 144, 48, 0.28) !important;
+    border: 2px solid rgba(212, 175, 55, 0.75) !important;
+    background: radial-gradient(circle at 30% 20%, rgba(48, 38, 22, 0.98) 0%, rgba(8, 6, 4, 1) 100%) !important;
+    box-shadow:
+        0 0 16px rgba(255, 215, 0, 0.35),
+        inset 0 0 12px rgba(0, 0, 0, 0.65) !important;
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
+    flex-shrink: 0 !important;
 }
 
 .achievement-unlock-icon {
@@ -7380,44 +7495,80 @@ body.developer-maintenance-alert-active #page-landing {
     height: 64px !important;
     object-fit: contain !important;
     display: block !important;
+    filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.9)) !important;
+}
+
+.achievement-unlock-copy-rail {
+    flex: 1 1 auto !important;
+    min-width: 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    justify-content: center !important;
+    gap: 10px !important;
+    text-align: left !important;
+    padding: 12px 14px 12px 12px !important;
+    box-sizing: border-box !important;
+    border-radius: 6px !important;
+    background: linear-gradient(
+        135deg,
+        rgba(8, 6, 4, 0.88) 0%,
+        rgba(14, 11, 8, 0.82) 55%,
+        rgba(8, 6, 4, 0.9) 100%
+    ) !important;
+    border: 1px solid rgba(184, 144, 48, 0.28) !important;
+    box-shadow:
+        inset 0 0 24px rgba(0, 0, 0, 0.65),
+        0 4px 14px rgba(0, 0, 0, 0.45) !important;
 }
 
 .achievement-unlock-title {
     margin: 0 !important;
     font-family: 'Cinzel', serif !important;
-    font-size: clamp(0.95rem, 2.8vw, 1.15rem) !important;
-    color: #ffd700 !important;
-    line-height: 1.25 !important;
-    text-shadow: 0 2px 6px rgba(0, 0, 0, 0.9) !important;
+    font-size: clamp(0.92rem, 2.4vw, 1.08rem) !important;
+    font-weight: 700 !important;
+    color: #ffe566 !important;
+    line-height: 1.3 !important;
+    text-shadow:
+        0 1px 2px rgba(0, 0, 0, 1),
+        0 2px 8px rgba(0, 0, 0, 0.95),
+        0 0 12px rgba(0, 0, 0, 0.75) !important;
     max-width: 100% !important;
 }
 
 .achievement-unlock-body {
     margin: 0 !important;
     font-family: 'Segoe UI', sans-serif !important;
-    font-size: 0.8rem !important;
-    line-height: 1.45 !important;
-    color: rgba(241, 224, 172, 0.9) !important;
-    max-width: 340px !important;
+    font-size: 0.82rem !important;
+    line-height: 1.5 !important;
+    color: #f5ecd0 !important;
+    text-shadow:
+        0 1px 2px rgba(0, 0, 0, 1),
+        0 2px 6px rgba(0, 0, 0, 0.9) !important;
+    max-width: 100% !important;
 }
 
 .achievement-unlock-dismiss-btn {
-    margin-top: 6px !important;
+    margin-top: 4px !important;
+    align-self: flex-start !important;
     font-family: 'Cinzel', serif !important;
     font-size: 0.78rem !important;
     font-weight: bold !important;
     letter-spacing: 0.08em !important;
     padding: 8px 20px !important;
     cursor: pointer !important;
-    border: 1px solid rgba(184, 144, 48, 0.5) !important;
+    border: 1px solid rgba(212, 175, 55, 0.65) !important;
     border-radius: 2px !important;
-    color: #ffd700 !important;
-    background: rgba(12, 10, 8, 0.88) !important;
-    transition: filter 0.2s ease !important;
+    color: #ffe566 !important;
+    background: linear-gradient(180deg, rgba(32, 26, 16, 0.98) 0%, rgba(10, 8, 6, 1) 100%) !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.65) !important;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.9) !important;
+    transition: filter 0.2s ease, border-color 0.2s ease !important;
 }
 
 .achievement-unlock-dismiss-btn:hover {
-    filter: brightness(1.2) !important;
+    filter: brightness(1.15) !important;
+    border-color: #ffd700 !important;
 }
 
 @media (max-width: 640px) {
@@ -7426,10 +7577,37 @@ body.developer-maintenance-alert-active #page-landing {
     }
 
     .achievement-unlock-banner-content {
-        padding: 22px 16px 18px !important;
+        flex-direction: column !important;
+        align-items: stretch !important;
+        padding: 16px 14px 14px !important;
+        gap: 10px !important;
+    }
+
+    .achievement-unlock-left-rail {
+        flex: 0 0 auto !important;
+        flex-direction: row !important;
+        justify-content: flex-start !important;
+        gap: 12px !important;
+        padding: 10px 12px !important;
+    }
+
+    .achievement-unlock-eyebrow {
+        flex: 1 1 auto !important;
+        text-align: left !important;
+        font-size: 0.68rem !important;
+    }
+
+    .achievement-unlock-icon-ring {
+        width: 72px !important;
+        height: 72px !important;
+    }
+
+    .achievement-unlock-icon {
+        width: 52px !important;
+        height: 52px !important;
     }
 
     .achievement-unlock-title {
-        font-size: 0.92rem !important;
+        font-size: 0.9rem !important;
     }
 }

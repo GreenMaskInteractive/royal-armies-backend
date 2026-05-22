@@ -106,6 +106,10 @@
 
     function ensureAchievementUnlockOverlay() {
         let overlay = global.document.getElementById('royal-armies-achievement-unlock-overlay');
+        if (overlay && !overlay.querySelector('.achievement-unlock-left-rail')) {
+            overlay.remove();
+            overlay = null;
+        }
         if (overlay) return overlay;
 
         overlay = global.document.createElement('div');
@@ -119,13 +123,17 @@
                 <div class="achievement-unlock-banner-panel">
                     <img class="achievement-unlock-banner-art" src="images/achievementsbanner.png" alt="" aria-hidden="true">
                     <div class="achievement-unlock-banner-content">
-                        <p id="achievement-unlock-eyebrow" class="achievement-unlock-eyebrow">Achievement Unlocked</p>
-                        <div class="achievement-unlock-icon-ring">
-                            <img id="achievement-unlock-icon" class="achievement-unlock-icon" src="" alt="">
+                        <div class="achievement-unlock-left-rail" aria-hidden="false">
+                            <p id="achievement-unlock-eyebrow" class="achievement-unlock-eyebrow">Achievement Unlocked</p>
+                            <div class="achievement-unlock-icon-ring">
+                                <img id="achievement-unlock-icon" class="achievement-unlock-icon" src="" alt="">
+                            </div>
                         </div>
-                        <h2 id="achievement-unlock-title" class="achievement-unlock-title"></h2>
-                        <p id="achievement-unlock-body" class="achievement-unlock-body"></p>
-                        <button type="button" id="achievement-unlock-dismiss" class="achievement-unlock-dismiss-btn">Continue</button>
+                        <div class="achievement-unlock-copy-rail">
+                            <h2 id="achievement-unlock-title" class="achievement-unlock-title"></h2>
+                            <p id="achievement-unlock-body" class="achievement-unlock-body"></p>
+                            <button type="button" id="achievement-unlock-dismiss" class="achievement-unlock-dismiss-btn">Continue</button>
+                        </div>
                     </div>
                 </div>
             </div>
