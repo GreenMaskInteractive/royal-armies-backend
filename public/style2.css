@@ -6833,4 +6833,129 @@ body.developer-maintenance-alert-active #page-landing {
     color: var(--lore-nation-accent, #e8c96a) !important;
 }
 
-/* Lore codex mobile/tablet layout: mobile-responsive.css (max-width: 1024px) */
+/* Lore codex — desktop: 4×4 nation grid, reader on the right (mobile: mobile-responsive.css ≤1024px) */
+@media (min-width: 1025px) {
+    .lore-codex-eyebrow {
+        font-size: 0.38rem !important;
+    }
+
+    .lore-codex-title {
+        font-size: 1.15rem !important;
+    }
+
+    .lore-codex-lead {
+        font-size: 0.52rem !important;
+    }
+
+    .lore-codex-body {
+        grid-template-columns: minmax(360px, 400px) minmax(0, 1fr) !important;
+        gap: 20px !important;
+    }
+
+    .lore-nation-index-deck.portal-desktop-lore-index {
+        flex-shrink: 0 !important;
+        width: 100% !important;
+        max-width: 400px !important;
+        overflow: visible !important;
+        align-self: start !important;
+    }
+
+    .lore-index-label {
+        font-size: 0.4rem !important;
+        margin-bottom: 8px !important;
+    }
+
+    .lore-nation-index-scroll {
+        display: grid !important;
+        grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+        grid-template-rows: repeat(4, minmax(0, auto)) !important;
+        grid-auto-flow: row !important;
+        gap: 8px !important;
+        overflow: visible !important;
+        flex: none !important;
+        min-height: 0 !important;
+        padding-right: 0 !important;
+    }
+
+    .lore-nation-chip {
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: center !important;
+        justify-content: flex-start !important;
+        gap: 4px !important;
+        width: 100% !important;
+        min-width: 0 !important;
+        padding: 8px 5px 7px !important;
+        text-align: center !important;
+    }
+
+    .lore-nation-chip:hover {
+        transform: translateY(-2px) !important;
+    }
+
+    .lore-nation-chip-index {
+        font-size: 0.32rem !important;
+        line-height: 1 !important;
+    }
+
+    .lore-nation-chip-sigil {
+        width: 34px !important;
+        height: 34px !important;
+    }
+
+    .lore-nation-chip-copy {
+        align-items: center !important;
+        width: 100% !important;
+    }
+
+    .lore-nation-chip-name {
+        font-size: 0.48rem !important;
+        line-height: 1.25 !important;
+        text-align: center !important;
+        word-break: break-word !important;
+    }
+
+    .lore-nation-chip-epithet {
+        display: none !important;
+    }
+
+    .lore-reader-compartment {
+        min-width: 0 !important;
+    }
+
+    .lore-reader-panel {
+        padding: 16px 18px 14px !important;
+    }
+
+    .lore-reader-eyebrow {
+        font-size: 0.48rem !important;
+    }
+
+    .lore-reader-nation-name {
+        font-size: 1.6rem !important;
+    }
+
+    .lore-reader-epithet {
+        font-size: 0.75rem !important;
+    }
+
+    .lore-audio-play-icon {
+        font-size: 0.8rem !important;
+    }
+
+    .lore-audio-play-label {
+        font-size: 0.32rem !important;
+    }
+
+    .lore-reader-prose {
+        font-size: 0.85rem !important;
+    }
+
+    .lore-reader-prose::first-letter {
+        font-size: 3.55rem !important;
+    }
+
+    .lore-reader-empty-state {
+        font-size: 0.75rem !important;
+    }
+}
