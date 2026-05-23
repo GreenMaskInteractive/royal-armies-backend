@@ -610,16 +610,12 @@ function renderPublicProfileCardContent(snapshot, options) {
         </div>
     `;
 
-    const editProfileBtn = viewingSelf
-        ? (context === 'hub'
-            ? `<button type="button" class="public-profile-edit-link-btn" onclick="loadCommanderHubSection('profile', event)">Edit My Profile</button>`
-            : `<button type="button" class="public-profile-edit-link-btn" onclick="closePublicCommanderProfileCard(event); openCommanderHubModal('profile', event);">Edit My Profile</button>`)
+    const editProfileBtn = viewingSelf && context !== 'hub'
+        ? `<button type="button" class="public-profile-edit-link-btn" onclick="closePublicCommanderProfileCard(event); openCommanderHubModal('profile', event);">Edit My Profile</button>`
         : '';
 
     const footerMarkup = context === 'hub'
-        ? (editProfileBtn
-            ? `<footer class="public-profile-card-actions public-profile-card-actions--hub">${editProfileBtn}</footer>`
-            : '')
+        ? ''
         : `<footer class="public-profile-card-actions">
             ${editProfileBtn}
             <button type="button" class="public-profile-dismiss-btn" onclick="closePublicCommanderProfileCard(event)">Close</button>

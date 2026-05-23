@@ -6056,12 +6056,43 @@ body:not(.portal-guest-mode) #portal-deployment-guest-cta {
 
 #commander-hub-modal.commander-hub-view-profile-active .commander-hub-body-frame,
 #portal-commander-hub-page.commander-hub-view-profile-active .commander-hub-body-frame {
-    flex: 0 1 auto !important;
+    flex: 1 1 auto !important;
+    width: 100% !important;
+    max-width: 100% !important;
     min-height: 0 !important;
     padding: 14px 22px 10px 22px !important;
     overflow-x: hidden !important;
     overflow-y: visible !important;
-    align-items: flex-start !important;
+    align-items: stretch !important;
+}
+
+@media (min-width: 1025px) {
+    #commander-hub-modal.commander-hub-view-profile-active .commander-hub-body-frame,
+    #portal-commander-hub-page.commander-hub-view-profile-active .commander-hub-body-frame {
+        padding: 12px 14px 10px 14px !important;
+    }
+
+    #portal-commander-hub-page.commander-hub-view-profile-active.commander-hub-page-canvas {
+        width: 100% !important;
+        max-width: 100% !important;
+    }
+
+    #commander-hub-modal.commander-hub-view-profile-active .commander-hub-dialog {
+        width: min(1180px, 96vw) !important;
+    }
+
+    #commander-hub-modal.commander-hub-view-profile-active .public-profile-hub-inline,
+    #portal-commander-hub-page.commander-hub-view-profile-active .public-profile-hub-inline,
+    #commander-hub-modal.commander-hub-view-profile-active .public-profile-hub-inline .public-profile-split-body,
+    #portal-commander-hub-page.commander-hub-view-profile-active .public-profile-hub-inline .public-profile-split-body {
+        width: 100% !important;
+        max-width: 100% !important;
+    }
+
+    #commander-hub-modal.commander-hub-view-profile-active .public-profile-hub-inline .public-profile-split-body,
+    #portal-commander-hub-page.commander-hub-view-profile-active .public-profile-hub-inline .public-profile-split-body {
+        gap: 22px !important;
+    }
 }
 
 #commander-hub-modal.commander-hub-view-profile-active .commander-hub-body-frame {
@@ -6071,12 +6102,13 @@ body:not(.portal-guest-mode) #portal-deployment-guest-cta {
 
 #commander-hub-modal.commander-hub-view-profile-active .commander-hub-content-pane,
 #portal-commander-hub-page.commander-hub-view-profile-active .commander-hub-content-pane {
-    flex: 0 1 auto !important;
+    flex: 1 1 auto !important;
     min-height: 0 !important;
     width: 100% !important;
     max-width: 100% !important;
     gap: 0 !important;
     overflow-x: hidden !important;
+    align-self: stretch !important;
 }
 
 #commander-hub-modal.commander-hub-view-profile-active .commander-hub-profile-header-host,
@@ -6091,12 +6123,13 @@ body:not(.portal-guest-mode) #portal-deployment-guest-cta {
 
 #commander-hub-modal.commander-hub-view-profile-active .commander-hub-body,
 #portal-commander-hub-page.commander-hub-view-profile-active .commander-hub-body {
-    flex: 0 0 auto !important;
+    flex: 1 1 auto !important;
     width: 100% !important;
     max-width: 100% !important;
     min-height: 0 !important;
     overflow-x: hidden !important;
     overflow-y: visible !important;
+    align-self: stretch !important;
 }
 
 .public-profile-hub-inline {
