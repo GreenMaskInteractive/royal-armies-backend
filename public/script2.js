@@ -1003,7 +1003,7 @@ function launchGameRoundSector(isTutorialModeActive, clickEvent) {
 
     const attemptGamePageHandoff = () => {
         if (!deployPulseFinished || !selectAudioFinished) return;
-        const destination = `game.html?tutorial=${isTutorialModeActive}`;
+        const destination = `game.html?tutorial=${isTutorialModeActive}&joinAge=1`;
         window.setTimeout(() => {
             localStorage.setItem('savedCommanderInActiveAge', 'true');
             if (typeof markJoinAgeAttemptForAchievement === 'function') {

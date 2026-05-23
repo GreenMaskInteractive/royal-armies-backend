@@ -1,5 +1,5 @@
 /**
- * Commander achievements — local profile storage + unlock popup UI.
+ * Commander achievements — local profile storage + fixed lower-right unlock toasts.
  */
 (function initRoyalArmiesAchievementSystem(global) {
     'use strict';
@@ -7,6 +7,12 @@
     const WHO_SLOW_DOWN_ID = 'whoa_slow_down';
     const COMMANDER_AWARDS_STORAGE_KEY = 'savedCommanderAwards';
     const JOIN_AGE_ATTEMPT_FLAG = 'royalArmiesJoinAgeAttempt';
+    const JOIN_AGE_ATTEMPT_LOCAL_KEY = 'royalArmiesJoinAgeAttemptLocal';
+    const JOIN_AGE_ATTEMPT_LOCAL_TTL_MS = 5 * 60 * 1000;
+    const JOIN_AGE_QUERY_PARAM = 'joinAge';
+    const ACHIEVEMENT_TOAST_GROW_MS = 450;
+    const ACHIEVEMENT_TOAST_HOLD_MS = 7000;
+    const ACHIEVEMENT_TOAST_SHRINK_MS = 220;
 
     const WHO_SLOW_DOWN_DEFINITION = Object.freeze({
         id: WHO_SLOW_DOWN_ID,
@@ -15,18 +21,21 @@
         iconUrl: 'images/whoa_slow_down_icon.png'
     });
 
-    function escapeAchievementHtml(value) {
-        return String(value ?? '')
-            .replace(/&/g, '&amp;')
-            .replace(/</g, '&lt;')
-            .replace(/>/g, '&gt;')
-            .replace(/"/g, '&quot;');
+    let activeToastTimers = new WeakMap();
+
+    function clearAchievementToastTimers(toast) {
+        const timers = activeToastTimers.get(toast);
+        if (!timers) return;
+        timers.forEach((timerId) => global.clearTimeout(timerId));
+        activeToastTimers.delete(toast);
     }
 
     function resolveCommanderUsername() {
         if (typeof global.getActiveCommanderUsername === 'function') {
             const name = global.getActiveCommanderUsername();
-            if (name && String(name).trim()) return String(name).trim();
+            if (name && String(name).trim() && String(name).trim().toLowerCase() !== 'testaccount') {
+                return String(name).trim();
+            }
         }
         const saved = global.localStorage.getItem('activeCommanderUser');
         return saved && saved.trim() ? saved.trim() : '';
@@ -47,6 +56,14 @@
             /* ignore */
         }
         return [];
+    }
+
+    async function syncCommanderAwardsFromServer() {
+        if (typeof global.fetchCommanderDossierFromServer === 'function') {
+            await global.fetchCommanderDossierFromServer();
+            return true;
+        }
+        return false;
     }
 
     function persistCommanderAwardsList(awards) {
@@ -108,152 +125,175 @@
         return { granted: true, award, reason: 'granted' };
     }
 
-    function ensureAchievementUnlockOverlay() {
-        let overlay = global.document.getElementById('royal-armies-achievement-unlock-overlay');
-        if (overlay && (!overlay.querySelector('.achievement-unlock-left-rail') || !overlay.querySelector('.achievement-unlock-sparkles'))) {
-            overlay.remove();
-            overlay = null;
-        }
-        if (overlay) return overlay;
+    function ensureAchievementToastAnchor() {
+        let anchor = global.document.getElementById('royal-armies-achievement-toast-anchor');
+        if (anchor) return anchor;
 
-        overlay = global.document.createElement('div');
-        overlay.id = 'royal-armies-achievement-unlock-overlay';
-        overlay.className = 'achievement-unlock-overlay main-portal-modal-hidden';
-        overlay.setAttribute('role', 'presentation');
-        overlay.setAttribute('aria-hidden', 'true');
-        overlay.style.setProperty('display', 'none', 'important');
-        overlay.innerHTML = `
-            <div class="achievement-unlock-dialog" role="dialog" aria-modal="true" aria-labelledby="achievement-unlock-eyebrow">
-                <div class="achievement-unlock-banner-panel">
-                    <div class="achievement-unlock-sparkles" aria-hidden="true">
-                        <span class="achievement-sparkle achievement-sparkle--1"></span>
-                        <span class="achievement-sparkle achievement-sparkle--2"></span>
-                        <span class="achievement-sparkle achievement-sparkle--3"></span>
-                        <span class="achievement-sparkle achievement-sparkle--4"></span>
-                        <span class="achievement-sparkle achievement-sparkle--5"></span>
-                        <span class="achievement-sparkle achievement-sparkle--6"></span>
+        anchor = global.document.createElement('div');
+        anchor.id = 'royal-armies-achievement-toast-anchor';
+        anchor.className = 'achievement-toast-anchor';
+        anchor.setAttribute('role', 'presentation');
+        anchor.setAttribute('aria-live', 'polite');
+        anchor.setAttribute('aria-relevant', 'additions');
+        global.document.body.appendChild(anchor);
+        return anchor;
+    }
+
+    function buildAchievementToastElement(award) {
+        const record = award || WHO_SLOW_DOWN_DEFINITION;
+        const label = record.label || WHO_SLOW_DOWN_DEFINITION.label;
+        const body = record.achievement || record.description || WHO_SLOW_DOWN_DEFINITION.achievement;
+        const iconUrl = record.iconUrl || WHO_SLOW_DOWN_DEFINITION.iconUrl;
+
+        const toast = global.document.createElement('div');
+        toast.className = 'achievement-unlock-toast';
+        toast.setAttribute('role', 'status');
+        toast.setAttribute('aria-live', 'polite');
+        toast.innerHTML = `
+            <div class="achievement-unlock-banner-panel">
+                <div class="achievement-unlock-sparkles" aria-hidden="true">
+                    <span class="achievement-sparkle achievement-sparkle--1"></span>
+                    <span class="achievement-sparkle achievement-sparkle--2"></span>
+                    <span class="achievement-sparkle achievement-sparkle--3"></span>
+                    <span class="achievement-sparkle achievement-sparkle--4"></span>
+                    <span class="achievement-sparkle achievement-sparkle--5"></span>
+                    <span class="achievement-sparkle achievement-sparkle--6"></span>
+                </div>
+                <img class="achievement-unlock-banner-art" src="images/achievementsbanner.png" alt="" aria-hidden="true">
+                <div class="achievement-unlock-banner-content">
+                    <div class="achievement-unlock-left-rail">
+                        <p class="achievement-unlock-eyebrow">Achievement Unlocked</p>
+                        <div class="achievement-unlock-icon-ring">
+                            <img class="achievement-unlock-icon" src="${iconUrl}" alt="">
+                        </div>
                     </div>
-                    <img class="achievement-unlock-banner-art" src="images/achievementsbanner.png" alt="" aria-hidden="true">
-                    <div class="achievement-unlock-banner-content">
-                        <div class="achievement-unlock-left-rail" aria-hidden="false">
-                            <p id="achievement-unlock-eyebrow" class="achievement-unlock-eyebrow">Achievement Unlocked</p>
-                            <div class="achievement-unlock-icon-ring">
-                                <img id="achievement-unlock-icon" class="achievement-unlock-icon" src="" alt="">
-                            </div>
-                        </div>
-                        <div class="achievement-unlock-copy-rail">
-                            <h2 id="achievement-unlock-title" class="achievement-unlock-title"></h2>
-                            <p id="achievement-unlock-body" class="achievement-unlock-body"></p>
-                            <button type="button" id="achievement-unlock-dismiss" class="achievement-unlock-dismiss-btn">Continue</button>
-                        </div>
+                    <div class="achievement-unlock-copy-rail">
+                        <h2 class="achievement-unlock-title"></h2>
+                        <p class="achievement-unlock-body"></p>
                     </div>
                 </div>
             </div>
         `;
 
-        global.document.body.appendChild(overlay);
-
-        overlay.addEventListener('click', (event) => {
-            if (event.target === overlay) closeAchievementUnlockPopup();
-        });
-
-        const dismissBtn = overlay.querySelector('#achievement-unlock-dismiss');
-        if (dismissBtn) {
-            dismissBtn.addEventListener('click', () => closeAchievementUnlockPopup());
+        const iconEl = toast.querySelector('.achievement-unlock-icon');
+        const titleEl = toast.querySelector('.achievement-unlock-title');
+        const bodyEl = toast.querySelector('.achievement-unlock-body');
+        if (iconEl) {
+            iconEl.src = iconUrl;
+            iconEl.alt = label;
         }
+        if (titleEl) titleEl.textContent = label;
+        if (bodyEl) bodyEl.textContent = body;
 
-        global.document.addEventListener('keydown', (event) => {
-            if (event.key !== 'Escape') return;
-            if (!overlay.classList.contains('is-visible')) return;
-            closeAchievementUnlockPopup();
-        });
-
-        return overlay;
+        return toast;
     }
 
-    function playAchievementEntranceAnimation(overlay) {
-        const dialog = overlay.querySelector('.achievement-unlock-dialog');
-        const panel = overlay.querySelector('.achievement-unlock-banner-panel');
-        if (!dialog) return;
+    function runAchievementToastLifecycle(toast) {
+        const panel = toast.querySelector('.achievement-unlock-banner-panel');
+        clearAchievementToastTimers(toast);
 
-        overlay.classList.remove('is-backdrop-reveal');
-        dialog.classList.remove('is-pop-in-active');
+        toast.classList.remove('is-held', 'is-exiting');
+        toast.classList.add('is-growing');
         if (panel) panel.classList.remove('is-sparkle-active');
 
-        void dialog.offsetWidth;
+        void toast.offsetWidth;
 
         global.requestAnimationFrame(() => {
-            overlay.classList.add('is-backdrop-reveal');
-            dialog.classList.add('is-pop-in-active');
             if (panel) panel.classList.add('is-sparkle-active');
         });
+
+        const timers = [];
+
+        const growDoneTimer = global.setTimeout(() => {
+            toast.classList.remove('is-growing');
+            toast.classList.add('is-held');
+
+            const holdDoneTimer = global.setTimeout(() => {
+                toast.classList.remove('is-held');
+                toast.classList.add('is-exiting');
+                if (panel) panel.classList.remove('is-sparkle-active');
+
+                const removeTimer = global.setTimeout(() => {
+                    toast.remove();
+                    activeToastTimers.delete(toast);
+                }, ACHIEVEMENT_TOAST_SHRINK_MS);
+
+                timers.push(removeTimer);
+            }, ACHIEVEMENT_TOAST_HOLD_MS);
+
+            timers.push(holdDoneTimer);
+        }, ACHIEVEMENT_TOAST_GROW_MS);
+
+        timers.push(growDoneTimer);
+        activeToastTimers.set(toast, timers);
     }
 
     function showAchievementUnlockPopup(award) {
-        const record = award || WHO_SLOW_DOWN_DEFINITION;
-        const overlay = ensureAchievementUnlockOverlay();
-        const iconEl = overlay.querySelector('#achievement-unlock-icon');
-        const titleEl = overlay.querySelector('#achievement-unlock-title');
-        const bodyEl = overlay.querySelector('#achievement-unlock-body');
-
-        if (iconEl) {
-            iconEl.src = record.iconUrl || WHO_SLOW_DOWN_DEFINITION.iconUrl;
-            iconEl.alt = record.label || WHO_SLOW_DOWN_DEFINITION.label;
-        }
-        if (titleEl) {
-            titleEl.textContent = record.label || WHO_SLOW_DOWN_DEFINITION.label;
-        }
-        if (bodyEl) {
-            bodyEl.textContent = record.achievement || record.description || WHO_SLOW_DOWN_DEFINITION.achievement;
-        }
-
-        overlay.classList.remove('main-portal-modal-hidden');
-        overlay.classList.add('is-visible');
-        overlay.style.setProperty('display', 'flex', 'important');
-        overlay.setAttribute('aria-hidden', 'false');
-        playAchievementEntranceAnimation(overlay);
-
-        const dismissBtn = overlay.querySelector('#achievement-unlock-dismiss');
-        if (dismissBtn) dismissBtn.focus();
+        const anchor = ensureAchievementToastAnchor();
+        const toast = buildAchievementToastElement(award);
+        anchor.appendChild(toast);
+        runAchievementToastLifecycle(toast);
+        return toast;
     }
 
     function closeAchievementUnlockPopup() {
-        const overlay = global.document.getElementById('royal-armies-achievement-unlock-overlay');
-        if (!overlay) return;
-
-        const dialog = overlay.querySelector('.achievement-unlock-dialog');
-        const panel = overlay.querySelector('.achievement-unlock-banner-panel');
-        overlay.classList.remove('is-visible', 'is-backdrop-reveal');
-        if (dialog) dialog.classList.remove('is-pop-in-active');
-        if (panel) panel.classList.remove('is-sparkle-active');
-
-        overlay.classList.add('main-portal-modal-hidden');
-        overlay.style.setProperty('display', 'none', 'important');
-        overlay.setAttribute('aria-hidden', 'true');
+        const anchor = global.document.getElementById('royal-armies-achievement-toast-anchor');
+        if (!anchor) return;
+        anchor.querySelectorAll('.achievement-unlock-toast').forEach((toast) => {
+            clearAchievementToastTimers(toast);
+            toast.remove();
+        });
     }
 
     function markJoinAgeAttemptForAchievement() {
         try {
             global.sessionStorage.setItem(JOIN_AGE_ATTEMPT_FLAG, '1');
+            global.localStorage.setItem(JOIN_AGE_ATTEMPT_LOCAL_KEY, String(Date.now()));
         } catch (_err) {
             /* ignore */
         }
     }
 
     function consumeJoinAgeAttemptFlag() {
+        let consumed = false;
+
         try {
-            const flag = global.sessionStorage.getItem(JOIN_AGE_ATTEMPT_FLAG) === '1';
+            if (global.sessionStorage.getItem(JOIN_AGE_ATTEMPT_FLAG) === '1') {
+                consumed = true;
+            }
             global.sessionStorage.removeItem(JOIN_AGE_ATTEMPT_FLAG);
-            return flag;
+
+            const localStamp = parseInt(global.localStorage.getItem(JOIN_AGE_ATTEMPT_LOCAL_KEY) || '', 10);
+            if (Number.isFinite(localStamp) && (Date.now() - localStamp) <= JOIN_AGE_ATTEMPT_LOCAL_TTL_MS) {
+                consumed = true;
+            }
+            global.localStorage.removeItem(JOIN_AGE_ATTEMPT_LOCAL_KEY);
         } catch (_err) {
-            return false;
+            /* ignore */
         }
+
+        try {
+            const params = new URLSearchParams(global.location.search || '');
+            if (params.get(JOIN_AGE_QUERY_PARAM) === '1') {
+                consumed = true;
+                params.delete(JOIN_AGE_QUERY_PARAM);
+                const query = params.toString();
+                const nextUrl = `${global.location.pathname}${query ? `?${query}` : ''}${global.location.hash || ''}`;
+                global.history.replaceState({}, '', nextUrl);
+            }
+        } catch (_err) {
+            /* ignore */
+        }
+
+        return consumed;
     }
 
-    function tryGrantWhoaSlowDownFromJoinAttempt(username) {
+    async function tryGrantWhoaSlowDownFromJoinAttempt(username) {
         if (!consumeJoinAgeAttemptFlag()) {
             return { granted: false, award: null, reason: 'no_join_attempt' };
         }
+
+        await syncCommanderAwardsFromServer();
         return grantWhoaSlowDownAchievement(username);
     }
 
@@ -292,6 +332,8 @@
         WHO_SLOW_DOWN_ID,
         WHO_SLOW_DOWN_DEFINITION,
         JOIN_AGE_ATTEMPT_FLAG,
+        JOIN_AGE_ATTEMPT_LOCAL_KEY,
+        JOIN_AGE_QUERY_PARAM,
         markJoinAgeAttemptForAchievement,
         consumeJoinAgeAttemptFlag,
         hasCommanderAchievement,

@@ -7439,50 +7439,78 @@ body.developer-maintenance-alert-active #page-landing {
     transform: scale(0.98) !important;
 }
 
-.achievement-unlock-overlay {
+.achievement-toast-anchor {
     position: fixed !important;
-    inset: 0 !important;
-    z-index: 2147483646 !important;
-    display: none;
-    align-items: center !important;
-    justify-content: center !important;
-    padding: 24px 16px !important;
-    box-sizing: border-box !important;
-    background: rgba(0, 0, 0, 0) !important;
-    pointer-events: auto !important;
-    visibility: visible !important;
-}
-
-.achievement-unlock-overlay.is-visible,
-.achievement-unlock-overlay:not(.main-portal-modal-hidden) {
+    right: max(16px, env(safe-area-inset-right)) !important;
+    bottom: max(16px, env(safe-area-inset-bottom)) !important;
+    z-index: 2147483647 !important;
     display: flex !important;
-    pointer-events: auto !important;
-    visibility: visible !important;
-}
-
-.achievement-unlock-overlay.is-backdrop-reveal {
-    animation: achievementBackdropFadeIn 0.38s ease-out forwards !important;
-}
-
-.achievement-unlock-dialog {
-    width: min(560px, 94vw) !important;
-    max-width: 100% !important;
+    flex-direction: column !important;
+    align-items: flex-end !important;
+    justify-content: flex-end !important;
+    gap: 12px !important;
+    width: min(380px, calc(100vw - 24px)) !important;
+    max-width: calc(100vw - 24px) !important;
+    pointer-events: none !important;
     box-sizing: border-box !important;
-    transform: scale(0.88) !important;
+}
+
+.achievement-unlock-toast {
+    position: relative !important;
+    width: 100% !important;
+    pointer-events: auto !important;
+    transform: scale(0) !important;
+    transform-origin: bottom right !important;
     opacity: 0 !important;
     will-change: transform, opacity !important;
 }
 
-.achievement-unlock-dialog.is-pop-in-active {
-    animation: achievementDialogPopIn 0.56s cubic-bezier(0.22, 1.1, 0.36, 1) forwards !important;
+.achievement-unlock-toast.is-growing {
+    animation: achievementToastGrow 0.45s cubic-bezier(0.22, 1.12, 0.36, 1) forwards !important;
 }
 
-.achievement-unlock-banner-panel {
+.achievement-unlock-toast.is-held {
+    transform: scale(1) !important;
+    opacity: 1 !important;
+}
+
+.achievement-unlock-toast.is-exiting {
+    animation: achievementToastShrink 0.22s cubic-bezier(0.55, 0.06, 0.68, 0.19) forwards !important;
+}
+
+@keyframes achievementToastGrow {
+    0% {
+        transform: scale(0);
+        opacity: 0;
+    }
+    72% {
+        transform: scale(1.04);
+        opacity: 1;
+    }
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+@keyframes achievementToastShrink {
+    0% {
+        transform: scale(1);
+        opacity: 1;
+    }
+    100% {
+        transform: scale(0);
+        opacity: 0;
+    }
+}
+
+.achievement-unlock-toast .achievement-unlock-banner-panel {
     position: relative !important;
     width: 100% !important;
-    min-height: 200px !important;
+    min-height: 156px !important;
     box-sizing: border-box !important;
     overflow: visible !important;
+    filter: drop-shadow(0 10px 28px rgba(0, 0, 0, 0.88)) !important;
 }
 
 .achievement-unlock-sparkles {
@@ -7517,26 +7545,6 @@ body.developer-maintenance-alert-active #page-landing {
 .achievement-sparkle--5 { bottom: 16%; left: 20%; animation-delay: 1s !important; }
 .achievement-sparkle--6 { bottom: 10%; right: 18%; animation-delay: 1.25s !important; }
 
-@keyframes achievementBackdropFadeIn {
-    from { background: rgba(0, 0, 0, 0); }
-    to { background: rgba(0, 0, 0, 0.86); }
-}
-
-@keyframes achievementDialogPopIn {
-    0% {
-        transform: scale(0.88);
-        opacity: 0;
-    }
-    68% {
-        transform: scale(1.04);
-        opacity: 1;
-    }
-    100% {
-        transform: scale(1);
-        opacity: 1;
-    }
-}
-
 @keyframes achievementSparkleTwinkle {
     0%, 100% {
         opacity: 0;
@@ -7552,14 +7560,20 @@ body.developer-maintenance-alert-active #page-landing {
     }
 }
 
+.achievement-unlock-toast .achievement-unlock-banner-art,
 .achievement-unlock-banner-art {
     display: block !important;
     width: 100% !important;
     height: auto !important;
-    min-height: 200px !important;
+    min-height: 156px !important;
     object-fit: fill !important;
     pointer-events: none !important;
     user-select: none !important;
+}
+
+.achievement-unlock-toast .achievement-unlock-banner-content {
+    padding: 14px 12px 12px 12px !important;
+    gap: 10px !important;
 }
 
 .achievement-unlock-banner-content {
@@ -7576,20 +7590,23 @@ body.developer-maintenance-alert-active #page-landing {
 }
 
 @media (prefers-reduced-motion: reduce) {
-    .achievement-unlock-overlay.is-backdrop-reveal,
-    .achievement-unlock-dialog.is-pop-in-active,
+    .achievement-unlock-toast.is-growing,
+    .achievement-unlock-toast.is-exiting,
     .achievement-unlock-banner-panel.is-sparkle-active .achievement-sparkle {
         animation: none !important;
     }
 
-    .achievement-unlock-overlay.is-backdrop-reveal {
-        background: rgba(0, 0, 0, 0.86) !important;
-    }
-
-    .achievement-unlock-dialog.is-pop-in-active {
+    .achievement-unlock-toast.is-growing,
+    .achievement-unlock-toast.is-held,
+    .achievement-unlock-toast.is-exiting {
         transform: scale(1) !important;
         opacity: 1 !important;
     }
+}
+
+.achievement-unlock-toast .achievement-unlock-left-rail {
+    flex: 0 0 108px !important;
+    padding: 8px 6px !important;
 }
 
 .achievement-unlock-left-rail {
@@ -7622,6 +7639,12 @@ body.developer-maintenance-alert-active #page-landing {
         0 0 10px rgba(0, 0, 0, 0.85) !important;
 }
 
+.achievement-unlock-toast .achievement-unlock-icon-ring {
+    width: 72px !important;
+    height: 72px !important;
+    padding: 4px !important;
+}
+
 .achievement-unlock-icon-ring {
     width: 88px !important;
     height: 88px !important;
@@ -7637,6 +7660,11 @@ body.developer-maintenance-alert-active #page-landing {
     align-items: center !important;
     justify-content: center !important;
     flex-shrink: 0 !important;
+}
+
+.achievement-unlock-toast .achievement-unlock-icon {
+    width: 52px !important;
+    height: 52px !important;
 }
 
 .achievement-unlock-icon {
@@ -7697,30 +7725,13 @@ body.developer-maintenance-alert-active #page-landing {
     max-width: 100% !important;
 }
 
-.achievement-unlock-dismiss-btn {
-    margin-top: 4px !important;
-    align-self: flex-start !important;
-    font-family: 'Cinzel', serif !important;
-    font-size: 0.78rem !important;
-    font-weight: bold !important;
-    letter-spacing: 0.08em !important;
-    padding: 8px 20px !important;
-    cursor: pointer !important;
-    border: 1px solid rgba(212, 175, 55, 0.65) !important;
-    border-radius: 2px !important;
-    color: #ffe566 !important;
-    background: linear-gradient(180deg, rgba(32, 26, 16, 0.98) 0%, rgba(10, 8, 6, 1) 100%) !important;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.65) !important;
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.9) !important;
-    transition: filter 0.2s ease, border-color 0.2s ease !important;
-}
-
-.achievement-unlock-dismiss-btn:hover {
-    filter: brightness(1.15) !important;
-    border-color: #ffd700 !important;
-}
-
 @media (max-width: 640px) {
+    .achievement-toast-anchor {
+        right: max(10px, env(safe-area-inset-right)) !important;
+        bottom: max(10px, env(safe-area-inset-bottom)) !important;
+        width: min(340px, calc(100vw - 16px)) !important;
+    }
+
     .game-page-panel-frame {
         padding: 22px 18px 18px !important;
     }
