@@ -7682,13 +7682,13 @@ body.developer-maintenance-alert-active #page-landing {
 }
 
 .achievement-unlock-toast .achievement-unlock-left-rail {
-    flex: 0 0 34% !important;
-    max-width: 34% !important;
-    padding: 4px 3px !important;
-    gap: 4px !important;
-    background: rgba(6, 5, 4, 0.55) !important;
-    border: 1px solid rgba(184, 144, 48, 0.22) !important;
-    box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.45) !important;
+    flex: 0 0 26% !important;
+    max-width: 26% !important;
+    padding: 2px !important;
+    gap: 3px !important;
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
 }
 
 .achievement-unlock-toast .achievement-unlock-copy-rail {
@@ -7710,15 +7710,18 @@ body.developer-maintenance-alert-active #page-landing {
 }
 
 .achievement-unlock-toast .achievement-unlock-icon-ring {
-    width: 52px !important;
-    height: 52px !important;
-    padding: 3px !important;
-    border-radius: 8px !important;
+    width: auto !important;
+    height: auto !important;
+    padding: 0 !important;
+    border: none !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
 }
 
 .achievement-unlock-toast .achievement-unlock-icon {
-    width: 38px !important;
-    height: 38px !important;
+    width: 28px !important;
+    height: 28px !important;
 }
 
 .achievement-unlock-toast .achievement-unlock-title {
@@ -7756,8 +7759,12 @@ body.developer-maintenance-alert-active #page-landing {
 }
 
 .achievement-unlock-toast .achievement-unlock-left-rail {
-    flex: 0 0 108px !important;
-    padding: 8px 6px !important;
+    flex: 0 0 auto !important;
+    max-width: none !important;
+    padding: 2px !important;
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
 }
 
 .achievement-unlock-left-rail {
@@ -7791,9 +7798,18 @@ body.developer-maintenance-alert-active #page-landing {
 }
 
 .achievement-unlock-toast .achievement-unlock-icon-ring {
-    width: 72px !important;
-    height: 72px !important;
-    padding: 4px !important;
+    width: auto !important;
+    height: auto !important;
+    padding: 0 !important;
+    border: none !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+}
+
+.achievement-unlock-toast .achievement-unlock-icon {
+    width: 28px !important;
+    height: 28px !important;
 }
 
 .achievement-unlock-icon-ring {
@@ -7811,11 +7827,6 @@ body.developer-maintenance-alert-active #page-landing {
     align-items: center !important;
     justify-content: center !important;
     flex-shrink: 0 !important;
-}
-
-.achievement-unlock-toast .achievement-unlock-icon {
-    width: 52px !important;
-    height: 52px !important;
 }
 
 .achievement-unlock-icon {
@@ -7913,12 +7924,15 @@ body.developer-maintenance-alert-active #page-landing {
         padding: 0 !important;
     }
 
-    .achievement-unlock-left-rail {
+    .achievement-unlock-toast .achievement-unlock-left-rail {
         flex: 0 0 auto !important;
-        flex-direction: row !important;
-        justify-content: flex-start !important;
-        gap: 12px !important;
-        padding: 10px 12px !important;
+        flex-direction: column !important;
+        justify-content: center !important;
+        gap: 3px !important;
+        padding: 2px !important;
+        background: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
     }
 
     .achievement-unlock-eyebrow {
@@ -7927,14 +7941,18 @@ body.developer-maintenance-alert-active #page-landing {
         font-size: 0.68rem !important;
     }
 
-    .achievement-unlock-icon-ring {
-        width: 72px !important;
-        height: 72px !important;
+    .achievement-unlock-toast .achievement-unlock-icon-ring {
+        width: auto !important;
+        height: auto !important;
+        padding: 0 !important;
+        border: none !important;
+        background: transparent !important;
+        box-shadow: none !important;
     }
 
-    .achievement-unlock-icon {
-        width: 52px !important;
-        height: 52px !important;
+    .achievement-unlock-toast .achievement-unlock-icon {
+        width: 26px !important;
+        height: 26px !important;
     }
 
     .achievement-unlock-title {
