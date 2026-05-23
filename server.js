@@ -54,48 +54,81 @@ db.defaults({
     }
 }).write();
 
+const PORTAL_EARLY_ACCESS_MAINTENANCE = {
+    active: true,
+    title: 'Site under active development',
+    message: 'Royal Armies is still being built. You may hit brief outages, broken pages, or restarts while we finish the main website and game portal. Thanks for your patience during early access.',
+    windowLabel: 'Expect occasional downtime until the main site launch is complete.'
+};
+
 function getPortalMaintenanceAlert() {
     const stored = db.get('portal.maintenanceAlert').value() || {};
-    const result = {
-        active: stored.active === true,
-        title: String(stored.title || 'Scheduled maintenance').trim().slice(0, 120),
-        message: String(stored.message || '').trim().slice(0, 600),
-        windowLabel: String(stored.windowLabel || '').trim().slice(0, 160)
-    };
 
-    if (!isProduction && !result.message) {
+    if (stored.dismissed === true) {
         return {
-            active: true,
-            title: 'Site under active development',
-            message: 'Royal Armies is still being built. You may hit brief outages, broken pages, or restarts while we finish the main website and game portal. Thanks for your patience during early access.',
-            windowLabel: 'Expect occasional downtime until the main site launch is complete.'
+            active: false,
+            title: String(stored.title || 'Scheduled maintenance').trim().slice(0, 120),
+            message: '',
+            windowLabel: ''
         };
     }
 
-    return result;
+    const message = String(stored.message || '').trim();
+    const windowLabel = String(stored.windowLabel || '').trim();
+
+    return {
+        active: true,
+        title: String(stored.title || PORTAL_EARLY_ACCESS_MAINTENANCE.title).trim().slice(0, 120),
+        message: (message || PORTAL_EARLY_ACCESS_MAINTENANCE.message).slice(0, 600),
+        windowLabel: (windowLabel || PORTAL_EARLY_ACCESS_MAINTENANCE.windowLabel).slice(0, 160)
+    };
 }
 
 function setPortalMaintenanceAlert(patch = {}) {
-    const current = getPortalMaintenanceAlert();
+    const stored = db.get('portal.maintenanceAlert').value() || {};
     const next = {
-        active: patch.active !== undefined ? patch.active === true : current.active,
-        title: patch.title !== undefined
-            ? String(patch.title || 'Scheduled maintenance').trim().slice(0, 120)
-            : current.title,
-        message: patch.message !== undefined
-            ? String(patch.message || '').trim().slice(0, 600)
-            : current.message,
-        windowLabel: patch.windowLabel !== undefined
-            ? String(patch.windowLabel || '').trim().slice(0, 160)
-            : current.windowLabel
+        active: stored.active !== false,
+        dismissed: stored.dismissed === true,
+        title: stored.title || PORTAL_EARLY_ACCESS_MAINTENANCE.title,
+        message: stored.message || '',
+        windowLabel: stored.windowLabel || ''
     };
 
+    if (patch.active === false) {
+        next.active = false;
+        next.dismissed = patch.dismissed !== false;
+    } else if (patch.active === true) {
+        next.active = true;
+        next.dismissed = false;
+    }
+
+    if (patch.dismissed === true) {
+        next.dismissed = true;
+        next.active = false;
+    } else if (patch.dismissed === false) {
+        next.dismissed = false;
+        next.active = true;
+    }
+
+    if (patch.title !== undefined) {
+        next.title = String(patch.title || PORTAL_EARLY_ACCESS_MAINTENANCE.title).trim().slice(0, 120);
+    }
+    if (patch.message !== undefined) {
+        next.message = String(patch.message || '').trim().slice(0, 600);
+    }
+    if (patch.windowLabel !== undefined) {
+        next.windowLabel = String(patch.windowLabel || '').trim().slice(0, 160);
+    }
+
     if (next.active && !next.message) {
-        next.message = 'The site will be briefly unavailable while we apply fixes and updates.';
+        next.message = PORTAL_EARLY_ACCESS_MAINTENANCE.message;
+    }
+    if (next.active && !next.windowLabel) {
+        next.windowLabel = PORTAL_EARLY_ACCESS_MAINTENANCE.windowLabel;
     }
 
     db.set('portal.maintenanceAlert', next).write();
-    return next;
+    return getPortalMaintenanceAlert();
 }
 
 const MAINTENANCE_ALERT_DEV_KEY = process.env.MAINTENANCE_ALERT_DEV_KEY || 'local-dev-maintenance';

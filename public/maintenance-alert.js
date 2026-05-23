@@ -10,24 +10,22 @@
 const MAINTENANCE_ALERT_POLL_MS = 60000;
 const MAINTENANCE_ALERT_DEFAULT_DEV_KEY = 'local-dev-maintenance';
 
-const PORTAL_DEVELOPMENT_MAINTENANCE_FALLBACK = {
+const PORTAL_EARLY_ACCESS_MAINTENANCE = {
     active: true,
     title: 'Site under active development',
     message: 'Royal Armies is still being built. You may hit brief outages, broken pages, or restarts while we finish the main website and game portal. Thanks for your patience during early access.',
     windowLabel: 'Expect occasional downtime until the main site launch is complete.'
 };
 
-function isMainPortalPage() {
-    const path = (window.location.pathname || '').toLowerCase();
-    return path.endsWith('/main.html') || path.endsWith('/main');
+function resolveMaintenanceAlertApiUrl(path) {
+    if (typeof resolveRoyalArmiesApiUrl === 'function') {
+        return resolveRoyalArmiesApiUrl(path);
+    }
+    return path;
 }
 
-function isLocalPortalDevelopmentHost() {
-    const host = (window.location.hostname || '').toLowerCase();
-    return host === 'localhost'
-        || host === '127.0.0.1'
-        || host === '[::1]'
-        || host.endsWith('.local');
+function hasMaintenanceAlertBarElement() {
+    return !!document.getElementById('developer-maintenance-alert-bar');
 }
 
 function isMaintenanceAlertPayloadActive(payload) {
@@ -45,11 +43,15 @@ function normalizeMaintenanceAlertPayload(raw) {
 
 function resolveMaintenanceAlertPayload(payload) {
     const data = normalizeMaintenanceAlertPayload(payload);
-
-    if (isLocalPortalDevelopmentHost() && isMainPortalPage() && !isMaintenanceAlertPayloadActive(data)) {
-        return { ...PORTAL_DEVELOPMENT_MAINTENANCE_FALLBACK };
+    if (isMaintenanceAlertPayloadActive(data)) {
+        return data;
     }
-
+    if (data.active === false) {
+        return data;
+    }
+    if (hasMaintenanceAlertBarElement()) {
+        return { ...PORTAL_EARLY_ACCESS_MAINTENANCE };
+    }
     return data;
 }
 
@@ -58,6 +60,7 @@ let maintenanceAlertLastPayload = null;
 let maintenanceAlertInitialized = false;
 let maintenanceAlertRefreshGeneration = 0;
 let maintenanceAlertResizeBound = false;
+let maintenanceAlertVisibilityBound = false;
 
 function getMaintenanceAlertElements() {
     return {
@@ -92,7 +95,7 @@ function applyDeveloperMaintenanceAlert(payload) {
 
     const data = payload || {};
     const isActive = isMaintenanceAlertPayloadActive(data);
-    maintenanceAlertLastPayload = data;
+    maintenanceAlertLastPayload = isActive ? data : maintenanceAlertLastPayload;
 
     if (!isActive) {
         bar.hidden = true;
@@ -101,8 +104,10 @@ function applyDeveloperMaintenanceAlert(payload) {
         return;
     }
 
+    maintenanceAlertLastPayload = data;
+
     if (title) {
-        title.textContent = data.title || 'Scheduled maintenance';
+        title.textContent = data.title || PORTAL_EARLY_ACCESS_MAINTENANCE.title;
     }
     if (message) {
         message.textContent = data.message;
@@ -123,14 +128,14 @@ function applyDeveloperMaintenanceAlert(payload) {
     requestAnimationFrame(() => syncMaintenanceAlertPageOffset(bar));
 }
 
-function primeDevelopmentMaintenanceAlertOnMainPortal() {
-    if (isLocalPortalDevelopmentHost() && isMainPortalPage()) {
-        applyDeveloperMaintenanceAlert(PORTAL_DEVELOPMENT_MAINTENANCE_FALLBACK);
+function primeMaintenanceAlertBanner() {
+    if (hasMaintenanceAlertBarElement()) {
+        applyDeveloperMaintenanceAlert(PORTAL_EARLY_ACCESS_MAINTENANCE);
     }
 }
 
 async function fetchDeveloperMaintenanceAlert() {
-    const response = await fetch('/api/portal/maintenance-alert', { cache: 'no-store' });
+    const response = await fetch(resolveMaintenanceAlertApiUrl('/api/portal/maintenance-alert'), { cache: 'no-store' });
     if (!response.ok) {
         throw new Error(`Maintenance alert fetch failed (${response.status})`);
     }
@@ -166,9 +171,13 @@ async function refreshDeveloperMaintenanceAlert() {
         }
 
         console.warn('Developer maintenance alert unavailable:', err.message);
-        if (isMainPortalPage()) {
-            applyDeveloperMaintenanceAlert(PORTAL_DEVELOPMENT_MAINTENANCE_FALLBACK);
-            return PORTAL_DEVELOPMENT_MAINTENANCE_FALLBACK;
+        if (maintenanceAlertLastPayload && isMaintenanceAlertPayloadActive(maintenanceAlertLastPayload)) {
+            applyDeveloperMaintenanceAlert(maintenanceAlertLastPayload);
+            return maintenanceAlertLastPayload;
+        }
+        if (hasMaintenanceAlertBarElement()) {
+            applyDeveloperMaintenanceAlert(PORTAL_EARLY_ACCESS_MAINTENANCE);
+            return PORTAL_EARLY_ACCESS_MAINTENANCE;
         }
         applyDeveloperMaintenanceAlert({ active: false });
         return null;
@@ -176,7 +185,7 @@ async function refreshDeveloperMaintenanceAlert() {
 }
 
 async function postDeveloperMaintenanceAlert(patch, devKey) {
-    const response = await fetch('/api/portal/maintenance-alert', {
+    const response = await fetch(resolveMaintenanceAlertApiUrl('/api/portal/maintenance-alert'), {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -191,8 +200,24 @@ async function postDeveloperMaintenanceAlert(patch, devKey) {
     }
 
     maintenanceAlertRefreshGeneration += 1;
-    applyDeveloperMaintenanceAlert(normalizeMaintenanceAlertPayload(payload));
+    const resolved = resolveMaintenanceAlertPayload(normalizeMaintenanceAlertPayload(payload));
+    applyDeveloperMaintenanceAlert(resolved);
     return maintenanceAlertLastPayload;
+}
+
+function bindMaintenanceAlertVisibilityRefresh() {
+    if (maintenanceAlertVisibilityBound) return;
+    maintenanceAlertVisibilityBound = true;
+
+    document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible') {
+            refreshDeveloperMaintenanceAlert();
+        }
+    });
+
+    window.addEventListener('focus', () => {
+        refreshDeveloperMaintenanceAlert();
+    });
 }
 
 function initializeDeveloperMaintenanceAlert() {
@@ -201,7 +226,7 @@ function initializeDeveloperMaintenanceAlert() {
     }
     maintenanceAlertInitialized = true;
 
-    primeDevelopmentMaintenanceAlertOnMainPortal();
+    primeMaintenanceAlertBanner();
     refreshDeveloperMaintenanceAlert();
 
     if (maintenanceAlertPollTimer) {
@@ -218,6 +243,8 @@ function initializeDeveloperMaintenanceAlert() {
             }
         });
     }
+
+    bindMaintenanceAlertVisibilityRefresh();
 }
 
 const DeveloperMaintenanceAlert = {
@@ -225,11 +252,12 @@ const DeveloperMaintenanceAlert = {
     configure: (patch, devKey) => postDeveloperMaintenanceAlert(patch, devKey),
     activate: (message, windowLabel, title) => postDeveloperMaintenanceAlert({
         active: true,
-        title: title || 'Scheduled maintenance',
-        message: message || 'The site will be briefly unavailable while we apply fixes and updates.',
-        windowLabel: windowLabel || ''
+        dismissed: false,
+        title: title || PORTAL_EARLY_ACCESS_MAINTENANCE.title,
+        message: message || PORTAL_EARLY_ACCESS_MAINTENANCE.message,
+        windowLabel: windowLabel || PORTAL_EARLY_ACCESS_MAINTENANCE.windowLabel
     }),
-    deactivate: () => postDeveloperMaintenanceAlert({ active: false }),
+    deactivate: () => postDeveloperMaintenanceAlert({ active: false, dismissed: true }),
     getLastPayload: () => maintenanceAlertLastPayload
 };
 
