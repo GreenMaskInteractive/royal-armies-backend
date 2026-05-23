@@ -149,7 +149,7 @@
     width: 100% !important;
     max-width: 100% !important;
     box-sizing: border-box !important;
-    padding: 0 20px 2px 25px !important;
+    padding: 0 20px 2px 20px !important;
     margin: 0 0 -2px 0 !important;
     min-height: 56px !important;
     position: relative !important;
@@ -191,6 +191,13 @@
     max-height: none !important;
     width: auto !important;
     padding: 0 !important;
+}
+
+/* Desktop nav: avatar + commander name row (beats .nav-embedded-account-label padding: 0) */
+@media (min-width: 1025px) {
+    .portal-nav-commander-identity-row.nav-embedded-account-label {
+        padding: 0 20px 2px 35px !important;
+    }
 }
 
 .nav-account-identity-cluster {
