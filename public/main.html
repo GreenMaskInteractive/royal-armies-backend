@@ -47,6 +47,20 @@
         <!-- --- Section: Sticky Navigation Chassis --- -->
 
         <!-- Block 4: Three-Column Sticky Navigation Bar -->
+        <div class="portal-desktop-nav-stack portal-desktop-nav-only">
+            <div class="portal-nav-commander-identity-row nav-embedded-account-label">
+                <div class="nav-avatar-hub-wrapper">
+                    <img id="nav-embedded-avatar-crest" src="" alt="Commander avatar" class="nav-bar-embedded-avatar-thumbnail" tabindex="0">
+                </div>
+                <div class="nav-account-identity-cluster">
+                    <div class="nav-account-identity-stack">
+                        <strong id="logged-user-tag">Loading...</strong>
+                        <div id="nav-commander-membership-badge-row" class="commander-membership-badge-row nav-commander-membership-badge-row" hidden></div>
+                    </div>
+                    <div id="nav-commander-owner-tag-slot" class="nav-commander-owner-tag-slot" hidden></div>
+                </div>
+            </div>
+
         <div class="portal-mobile-nav-bar-clip">
         <nav class="main-portal-nav-bar" id="portal-navigation-chassis">
 
@@ -104,27 +118,16 @@
                 </div>
             </div>
 
-            <div class="nav-embedded-account-label portal-desktop-nav-only">
-                <div class="nav-avatar-hub-wrapper">
-                    <img id="nav-embedded-avatar-crest" src="" alt="Crest" class="nav-bar-embedded-avatar-thumbnail">
-
-                    <div class="avatar-hover-dropdown-menu">
-                        <button type="button" class="dropdown-action-item dropdown-action-item-view-profile" onclick="openPublicCommanderProfileCard(event)">View Profile</button>
-                        <button type="button" class="dropdown-action-item" onclick="openCommanderHubModal('profile', event)">Edit Profile</button>
-                        <button type="button" id="nav-dropdown-messages-btn" class="dropdown-action-item dropdown-action-item-messages" onclick="openCommanderHubMessagesInbox(event)">
-                            <span id="nav-messages-unread-count" class="dropdown-messages-unread-count" hidden></span>
-                            <span class="dropdown-messages-label">Messages</span>
-                            <span class="dropdown-messages-new-dot" aria-hidden="true"></span>
-                        </button>
-                        <button type="button" class="dropdown-action-item" onclick="openCommanderHubModal('settings', event)">Settings</button>
-                    </div>
-                </div>
-                <div class="nav-account-identity-cluster">
-                    <div class="nav-account-identity-stack">
-                        <strong id="logged-user-tag">Loading...</strong>
-                        <div id="nav-commander-membership-badge-row" class="commander-membership-badge-row nav-commander-membership-badge-row" hidden></div>
-                    </div>
-                    <div id="nav-commander-owner-tag-slot" class="nav-commander-owner-tag-slot" hidden></div>
+            <div class="portal-nav-commander-menu-rail portal-desktop-nav-only" aria-label="Commander quick actions">
+                <div class="avatar-hover-dropdown-menu" id="portal-desktop-commander-menu">
+                    <button type="button" class="dropdown-action-item dropdown-action-item-view-profile" onclick="openPublicCommanderProfileCard(event)">View Profile</button>
+                    <button type="button" class="dropdown-action-item" onclick="openCommanderHubModal('profile', event)">Edit Profile</button>
+                    <button type="button" id="nav-dropdown-messages-btn" class="dropdown-action-item dropdown-action-item-messages" onclick="openCommanderHubMessagesInbox(event)">
+                        <span id="nav-messages-unread-count" class="dropdown-messages-unread-count" hidden></span>
+                        <span class="dropdown-messages-label">Messages</span>
+                        <span class="dropdown-messages-new-dot" aria-hidden="true"></span>
+                    </button>
+                    <button type="button" class="dropdown-action-item" onclick="openCommanderHubModal('settings', event)">Settings</button>
                 </div>
             </div>
 
@@ -145,6 +148,7 @@
                 </button>
             </div>
         </nav>
+        </div>
         </div>
 
         <!-- Developer maintenance notice — in document flow directly under nav (not fixed over header) -->

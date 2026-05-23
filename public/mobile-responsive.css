@@ -668,12 +668,14 @@ body {
    ============================================================================= */
 @media (max-width: 1024px) {
     .portal-desktop-nav-only,
-    .portal-desktop-header-only {
+    .portal-desktop-header-only,
+    .portal-desktop-nav-stack {
         display: none !important;
     }
 
     .main-portal-nav-bar .nav-tabs-centered-flex-dock,
     .main-portal-nav-bar .nav-embedded-account-label,
+    .main-portal-nav-bar .portal-nav-commander-menu-rail,
     .main-portal-nav-bar .nav-right-logout-action-dock,
     .main-portal-nav-bar .nav-tab {
         display: none !important;
@@ -2218,12 +2220,31 @@ body {
         overflow: visible !important;
     }
 
-    .nav-embedded-account-label {
+    .portal-desktop-nav-stack {
+        display: block !important;
+    }
+
+    .portal-nav-commander-identity-row {
+        width: 100% !important;
+        min-height: 56px !important;
+        overflow: visible !important;
+        z-index: 100000 !important;
+    }
+
+    .portal-nav-commander-menu-rail {
         width: 300px !important;
-        height: 40px !important;
-        max-height: 40px !important;
-        order: unset !important;
+        min-width: 300px !important;
         flex: 0 0 300px !important;
+        overflow: visible !important;
+        z-index: 100000 !important;
+    }
+
+    .nav-embedded-account-label {
+        width: auto !important;
+        height: auto !important;
+        max-height: none !important;
+        order: unset !important;
+        flex: 0 0 auto !important;
         overflow: visible !important;
         z-index: 100000 !important;
     }
