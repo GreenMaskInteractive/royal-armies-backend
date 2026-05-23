@@ -18,7 +18,8 @@
         id: WHO_SLOW_DOWN_ID,
         label: "Whoa, slow down! We're not finished yet.",
         achievement: 'Attempt to JOIN AGE before the game engine has been developed.',
-        iconUrl: 'images/whoa_slow_down_icon.png'
+        iconUrl: 'images/whoa_slow_down_icon.png',
+        xpReward: 30
     });
 
     let activeToastTimers = new WeakMap();
@@ -105,9 +106,19 @@
             achievement: definition.achievement,
             description: definition.achievement,
             iconUrl: definition.iconUrl,
+            xpReward: Number(definition.xpReward ?? definition.xp ?? definition.chronicleXp ?? 0) || 0,
             username: subject,
             earnedAt: new Date().toISOString()
         };
+    }
+
+    function resolveAchievementToastDisplay(record) {
+        const source = record || WHO_SLOW_DOWN_DEFINITION;
+        const title = String(source.label || WHO_SLOW_DOWN_DEFINITION.label).trim();
+        const iconUrl = source.iconUrl || WHO_SLOW_DOWN_DEFINITION.iconUrl;
+        const xpValue = Number(source.xpReward ?? source.xp ?? source.chronicleXp ?? WHO_SLOW_DOWN_DEFINITION.xpReward ?? 0);
+        const xpLabel = Number.isFinite(xpValue) && xpValue > 0 ? `${xpValue} XP` : '';
+        return { title, iconUrl, xpLabel };
     }
 
     function grantWhoaSlowDownAchievement(username) {
@@ -166,34 +177,25 @@
     }
 
     function buildAchievementToastElement(award) {
-        const record = award || WHO_SLOW_DOWN_DEFINITION;
-        const label = record.label || WHO_SLOW_DOWN_DEFINITION.label;
-        const iconUrl = record.iconUrl || WHO_SLOW_DOWN_DEFINITION.iconUrl;
+        const display = resolveAchievementToastDisplay(award);
 
         const toast = global.document.createElement('div');
         toast.className = 'achievement-unlock-toast';
         toast.setAttribute('role', 'status');
         toast.setAttribute('aria-live', 'polite');
         toast.innerHTML = `
-            <div class="achievement-unlock-banner-panel">
-                <div class="achievement-unlock-sparkles" aria-hidden="true">
-                    <span class="achievement-sparkle achievement-sparkle--1"></span>
-                    <span class="achievement-sparkle achievement-sparkle--2"></span>
-                    <span class="achievement-sparkle achievement-sparkle--3"></span>
-                    <span class="achievement-sparkle achievement-sparkle--4"></span>
-                    <span class="achievement-sparkle achievement-sparkle--5"></span>
-                    <span class="achievement-sparkle achievement-sparkle--6"></span>
-                </div>
-                <img class="achievement-unlock-banner-art" src="images/achievementsbanner.png" alt="" aria-hidden="true">
-                <div class="achievement-unlock-banner-content">
-                    <div class="achievement-unlock-left-rail">
-                        <p class="achievement-unlock-eyebrow">Achievement Unlocked</p>
-                        <div class="achievement-unlock-icon-ring">
-                            <img class="achievement-unlock-icon" src="${iconUrl}" alt="">
-                        </div>
+            <div class="achievement-unlock-card">
+                <div class="achievement-unlock-card-glow" aria-hidden="true"></div>
+                <div class="achievement-unlock-card-body">
+                    <div class="achievement-unlock-icon-slot">
+                        <img class="achievement-unlock-icon" src="${display.iconUrl}" alt="">
                     </div>
-                    <div class="achievement-unlock-copy-rail">
-                        <h2 class="achievement-unlock-title"></h2>
+                    <div class="achievement-unlock-copy">
+                        <p class="achievement-unlock-headline">Achievement Unlocked!</p>
+                        <p class="achievement-unlock-detail">
+                            <span class="achievement-unlock-xp"></span>
+                            <span class="achievement-unlock-title"></span>
+                        </p>
                     </div>
                 </div>
             </div>
@@ -201,27 +203,32 @@
 
         const iconEl = toast.querySelector('.achievement-unlock-icon');
         const titleEl = toast.querySelector('.achievement-unlock-title');
+        const xpEl = toast.querySelector('.achievement-unlock-xp');
         if (iconEl) {
-            iconEl.src = iconUrl;
-            iconEl.alt = label;
+            iconEl.src = display.iconUrl;
+            iconEl.alt = display.title;
         }
-        if (titleEl) titleEl.textContent = label;
+        if (titleEl) titleEl.textContent = display.title;
+        if (xpEl) {
+            xpEl.textContent = display.xpLabel;
+            xpEl.hidden = !display.xpLabel;
+        }
 
         return toast;
     }
 
     function runAchievementToastLifecycle(toast) {
-        const panel = toast.querySelector('.achievement-unlock-banner-panel');
+        const card = toast.querySelector('.achievement-unlock-card');
         clearAchievementToastTimers(toast);
 
         toast.classList.remove('is-held', 'is-exiting');
         toast.classList.add('is-growing');
-        if (panel) panel.classList.remove('is-sparkle-active');
+        if (card) card.classList.remove('is-reveal-active');
 
         void toast.offsetWidth;
 
         global.requestAnimationFrame(() => {
-            if (panel) panel.classList.add('is-sparkle-active');
+            if (card) card.classList.add('is-reveal-active');
         });
 
         const timers = [];
@@ -233,7 +240,7 @@
             const holdDoneTimer = global.setTimeout(() => {
                 toast.classList.remove('is-held');
                 toast.classList.add('is-exiting');
-                if (panel) panel.classList.remove('is-sparkle-active');
+                if (card) card.classList.remove('is-reveal-active');
 
                 const removeTimer = global.setTimeout(() => {
                     toast.remove();
