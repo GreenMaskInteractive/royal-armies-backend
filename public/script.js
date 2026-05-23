@@ -1693,6 +1693,17 @@ async function handleLogin() {
         return;
     }
 
+    if (typeof autoDetectPlayerLocale === 'function') {
+        autoDetectPlayerLocale();
+    }
+
+    const loginLocale = (typeof player !== 'undefined' && player)
+        ? {
+            country: String(player.country || '').trim(),
+            timezone: String(player.timezone || '').trim()
+        }
+        : {};
+
     try {
         const response = await fetch(
             typeof resolveRoyalArmiesApiUrl === 'function'
@@ -1702,7 +1713,13 @@ async function handleLogin() {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 credentials: canUsePortalAuthSessionApi() ? 'include' : 'same-origin',
-                body: JSON.stringify({ username: userVal, password: passVal, rememberMe })
+                body: JSON.stringify({
+                    username: userVal,
+                    password: passVal,
+                    rememberMe,
+                    country: loginLocale.country,
+                    timezone: loginLocale.timezone
+                })
             }
         );
 
@@ -1759,6 +1776,9 @@ function finishMainPortalLoginSession(isAdmin) {
     }
     if (!isAdmin) {
         console.log('Login accepted. Age Portal session active.');
+        if (typeof syncCommanderLocaleAfterAuth === 'function') {
+            syncCommanderLocaleAfterAuth();
+        }
     }
     if (!isAdmin && typeof maybeShowPendingLoginAchievementUnlocks === 'function') {
         setTimeout(() => maybeShowPendingLoginAchievementUnlocks(), 700);
@@ -2578,7 +2598,29 @@ function persistCommanderLocaleToServer() {
     }
 }
 
+async function syncCommanderLocaleAfterAuth() {
+    if (typeof autoDetectPlayerLocale === 'function') {
+        autoDetectPlayerLocale();
+    }
+
+    if (typeof player === 'undefined' || !player) return;
+
+    const country = String(player.country || '').trim();
+    const timezone = String(player.timezone || '').trim();
+    if (!country && !timezone) return;
+
+    const username = typeof getActiveCommanderUsername === 'function'
+        ? getActiveCommanderUsername()
+        : (localStorage.getItem('activeCommanderUser') || '');
+    if (!username || String(username).trim().toLowerCase() === 'testaccount') return;
+
+    if (typeof scheduleCommanderDossierSave === 'function') {
+        await scheduleCommanderDossierSave({ country, timezone }, { immediate: true });
+    }
+}
+
 window.persistCommanderLocaleToServer = persistCommanderLocaleToServer;
+window.syncCommanderLocaleAfterAuth = syncCommanderLocaleAfterAuth;
 
 function getDefaultLoreUIMount() {
     return {
@@ -3808,6 +3850,9 @@ async function bootstrapMainPortalAuthOnLoad() {
     syncPlayerFromActiveCommanderStorage();
     if (isPortalUserAuthenticated() && typeof fetchCommanderDossierFromServer === 'function') {
         await fetchCommanderDossierFromServer();
+        if (typeof syncCommanderLocaleAfterAuth === 'function') {
+            await syncCommanderLocaleAfterAuth();
+        }
     } else if (typeof enrichAchievementRecords === 'function' && typeof player !== 'undefined' && Array.isArray(player.awards)) {
         player.awards = enrichAchievementRecords(player.awards);
         try {

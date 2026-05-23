@@ -1534,6 +1534,17 @@ app.post('/api/login', async (req, res) => {
 
         ensureWelcomeSystemMessageForCommander(commander.username);
 
+        const localePatch = buildCommanderDossierPatch({
+            country: req.body?.country,
+            timezone: req.body?.timezone
+        });
+        if (localePatch.country || localePatch.timezone) {
+            db.get('commanders')
+                .find({ username: commander.username })
+                .assign(localePatch)
+                .write();
+        }
+
         res.status(200).json({
             status: 'success',
             username: commander.username,
