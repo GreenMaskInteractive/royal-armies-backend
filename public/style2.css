@@ -578,13 +578,6 @@ body.portal-guest-mode .portal-mobile-nav-page-item[data-portal-view="chronicles
     padding-left: 14px !important;
 }
 
-/* 🌟 CENTERED PRIORITY CONTROLLER: Forces the 3-month countdown layout element dead center */
-.metric-capsule-cell.centered-priority-node {
-    order: 0 !important;
-    border-right: 1px dashed rgba(184, 144, 48, 0.22) !important;
-    padding-right: 20px !important;
-}
-
 .metric-roster-hover-cell {
     z-index: 2 !important;
 }

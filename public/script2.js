@@ -4396,7 +4396,7 @@ const ROADMAP_EVOLUTION_PHASES = [
                 title: 'Age Portal navigation',
                 items: [
                     `Dedicated portal home with sticky top navigation: Age Portal, Leaderboards, Community Chat, Lore, Royalty, ${CHRONICLE_BATTLE_PASS_HEADING}, and this Evolution Roadmap.`,
-                    'Live Age metrics strip: cycle label, game mode, Great Transition countdown, leading nation, registered and active player rosters.',
+                    'Live Age metrics strip: Great Transition countdown, game mode, Age cycle, leading nation, registered and active player rosters.',
                     'Join the Age deployment deck with tutorial vs standard entry, SFX, and visual feedback (battle screen redirect pending).'
                 ]
             },
