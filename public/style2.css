@@ -7562,8 +7562,11 @@ body.developer-maintenance-alert-active #page-landing {
 .achievement-toast-anchor {
     position: fixed !important;
     right: max(16px, env(safe-area-inset-right)) !important;
-    bottom: max(16px, env(safe-area-inset-bottom)) !important;
-    z-index: 2147483647 !important;
+    bottom: max(
+        var(--achievement-toast-stack-bottom, calc(24px + 88px + 16px)),
+        env(safe-area-inset-bottom)
+    ) !important;
+    z-index: 999999990 !important;
     display: flex !important;
     flex-direction: column !important;
     align-items: flex-end !important;
@@ -7766,8 +7769,8 @@ body.developer-maintenance-alert-active #page-landing {
 }
 
 .achievement-unlock-toast .achievement-unlock-icon {
-    width: 28px !important;
-    height: 28px !important;
+    width: 40px !important;
+    height: 40px !important;
 }
 
 .achievement-unlock-toast .achievement-unlock-title {
@@ -7854,8 +7857,8 @@ body.developer-maintenance-alert-active #page-landing {
 }
 
 .achievement-unlock-toast .achievement-unlock-icon {
-    width: 28px !important;
-    height: 28px !important;
+    width: 40px !important;
+    height: 40px !important;
 }
 
 .achievement-unlock-icon-ring {
@@ -7936,7 +7939,10 @@ body.developer-maintenance-alert-active #page-landing {
 @media (max-width: 640px) {
     .achievement-toast-anchor {
         right: max(10px, env(safe-area-inset-right)) !important;
-        bottom: max(10px, env(safe-area-inset-bottom)) !important;
+        bottom: max(
+            var(--achievement-toast-stack-bottom, calc(24px + 88px + 12px)),
+            env(safe-area-inset-bottom)
+        ) !important;
         width: min(272px, calc(100vw - 16px)) !important;
     }
 
@@ -7997,8 +8003,8 @@ body.developer-maintenance-alert-active #page-landing {
     }
 
     .achievement-unlock-toast .achievement-unlock-icon {
-        width: 26px !important;
-        height: 26px !important;
+        width: 36px !important;
+        height: 36px !important;
     }
 
     .achievement-unlock-title {

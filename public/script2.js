@@ -327,6 +327,10 @@ function mountPortalMediaPlayerForViewport() {
     deck.classList.toggle('is-mobile-nav-docked', dockInNav);
     home.hidden = dockInNav;
     home.style.display = dockInNav ? 'none' : '';
+
+    if (typeof syncAchievementToastStackPosition === 'function') {
+        requestAnimationFrame(() => syncAchievementToastStackPosition());
+    }
 }
 
 function isPortalMobileNavMenuOpen() {
@@ -4919,6 +4923,9 @@ window.addEventListener('resize', () => {
     }
     mountPortalMediaPlayerForViewport();
     applyPortalMobileNavLayoutMode();
+    if (typeof syncAchievementToastStackPosition === 'function') {
+        syncAchievementToastStackPosition();
+    }
     if (window.matchMedia('(min-width: 1025px)').matches) {
         closePortalMobileNavMenus();
     } else if (isPortalMobileNavMenuOpen()) {
@@ -5712,6 +5719,11 @@ function togglePortalMediaPlayerExpanded() {
 
     deck.classList.toggle('is-media-expanded');
     syncPortalMediaPlayerExpandUI();
+    if (typeof syncAchievementToastStackPosition === 'function') {
+        requestAnimationFrame(() => {
+            requestAnimationFrame(() => syncAchievementToastStackPosition());
+        });
+    }
 }
 
 function ensurePortalMediaPlayerCollapsedByDefault() {

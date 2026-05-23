@@ -125,9 +125,34 @@
         return { granted: true, award, reason: 'granted' };
     }
 
+    function syncAchievementToastStackPosition() {
+        const anchor = global.document.getElementById('royal-armies-achievement-toast-anchor');
+        if (!anchor) return;
+
+        const gapPx = 14;
+        const deck = global.document.getElementById('portal-floating-media-player-deck');
+        let bottomPx = 16 + gapPx;
+
+        if (deck) {
+            const style = global.getComputedStyle(deck);
+            const visible = style.display !== 'none' && style.visibility !== 'hidden' && style.opacity !== '0';
+            if (visible) {
+                const rect = deck.getBoundingClientRect();
+                if (rect.height > 0 && rect.top < global.innerHeight) {
+                    bottomPx = Math.max(bottomPx, global.innerHeight - rect.top + gapPx);
+                }
+            }
+        }
+
+        anchor.style.setProperty('--achievement-toast-stack-bottom', `${Math.round(bottomPx)}px`);
+    }
+
     function ensureAchievementToastAnchor() {
         let anchor = global.document.getElementById('royal-armies-achievement-toast-anchor');
-        if (anchor) return anchor;
+        if (anchor) {
+            syncAchievementToastStackPosition();
+            return anchor;
+        }
 
         anchor = global.document.createElement('div');
         anchor.id = 'royal-armies-achievement-toast-anchor';
@@ -136,6 +161,7 @@
         anchor.setAttribute('aria-live', 'polite');
         anchor.setAttribute('aria-relevant', 'additions');
         global.document.body.appendChild(anchor);
+        syncAchievementToastStackPosition();
         return anchor;
     }
 
@@ -226,6 +252,7 @@
 
     function showAchievementUnlockPopup(award) {
         const anchor = ensureAchievementToastAnchor();
+        syncAchievementToastStackPosition();
         const toast = buildAchievementToastElement(award);
         anchor.appendChild(toast);
         runAchievementToastLifecycle(toast);
@@ -338,6 +365,7 @@
         showAchievementUnlockPopup,
         closeAchievementUnlockPopup,
         previewWhoaSlowDownPopup,
+        syncAchievementToastStackPosition,
         isLocalAchievementDevToolsEnabled,
         maybeRunDevAchievementPopupFromQuery
     };
@@ -348,4 +376,7 @@
     global.showAchievementUnlockPopup = showAchievementUnlockPopup;
     global.previewWhoaSlowDownAchievementPopup = previewWhoaSlowDownPopup;
     global.maybeRunDevAchievementPopupFromQuery = maybeRunDevAchievementPopupFromQuery;
+    global.syncAchievementToastStackPosition = syncAchievementToastStackPosition;
+
+    global.addEventListener('resize', syncAchievementToastStackPosition, { passive: true });
 })(window);
