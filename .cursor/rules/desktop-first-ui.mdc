@@ -1,0 +1,19 @@
+---
+description: Default to PC/desktop for UI and layout unless the user asks for mobile
+alwaysApply: true
+---
+
+# Desktop-first UI assumptions
+
+Unless the user explicitly mentions **mobile**, **phone**, **tablet**, **touch**, or similar (e.g. "mobile version"), assume they mean the **PC / desktop** experience.
+
+## When implementing UI changes
+
+- Prioritize desktop viewport, layout, spacing, and hover interactions.
+- Do not default to mobile breakpoints, touch targets, or mobile-only reflows unless asked.
+- If a change affects both, implement and verify **desktop first**; only adjust mobile when the user requests it or when a desktop fix clearly breaks small screens.
+
+## Examples
+
+- "Make the read message popup wider" → widen the desktop popup; do not treat this as a mobile-only task.
+- "Fix the nav on mobile" → apply mobile-specific styles and breakpoints.
