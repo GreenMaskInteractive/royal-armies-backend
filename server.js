@@ -2234,6 +2234,21 @@ app.delete('/api/portal/mailbox/drafts/:draftId', (req, res) => {
     res.json({ status: 'ok', removedId: draftId });
 });
 
+function getCommunityChatMentionRosterPayload() {
+    const commanders = db.get('commanders').value() || [];
+    const usernames = commanders
+        .filter((entry) => entry?.username && !isHiddenRegistrationUsername(entry.username))
+        .map((entry) => String(entry.username).trim())
+        .filter(Boolean)
+        .sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
+
+    return { status: 'ok', usernames };
+}
+
+app.get('/api/portal/community-chat/mention-roster', (req, res) => {
+    res.json(getCommunityChatMentionRosterPayload());
+});
+
 app.get('/api/portal/community-chat', (req, res) => {
     let store = readCommunityChatStore();
     store = maybeRunScheduledCommunityChatPurge(store);

@@ -1871,8 +1871,12 @@ const COMMUNITY_CHAT_CHANNEL_REGISTRY = [
 let activeChatChannelTrack = 'general';
 const CHAT_MENTION_ALERT_MAX_VISIBLE = 4;
 const CHAT_MENTION_PREVIEW_MAX_CHARS = 110;
+const CHAT_MENTION_SUGGESTION_MAX = 8;
 let chatMentionAlertRegistry = {};
 let chatMentionAlertCounter = 0;
+let communityChatMentionRosterCache = [];
+let communityChatMentionRosterLoadPromise = null;
+let communityChatMentionSuggestState = null;
 let userMuteExpirationRegistry = {};
 let userBanExpirationRegistry = {}; 
 let administrativeBehavioralReviewQueue = [];
@@ -1929,6 +1933,306 @@ function isUserOnCommunityChatPanel() {
 function extractMentionedUsernamesFromChatText(text) {
     const matches = String(text || '').match(/@([a-zA-Z0-9_\-]+)/g) || [];
     return matches.map((token) => token.slice(1).toLowerCase());
+}
+
+function getCommunityChatOnlineUsernameKeys() {
+    const seen = new Set();
+    const keys = [];
+    (portalLiveMetricsCache.portalBrowsingPlayers || []).forEach((name) => {
+        const key = normalizeCommunityChatUsername(name);
+        if (!key || key === 'testaccount' || isRoyalGuardBotUsername(name) || seen.has(key)) return;
+        seen.add(key);
+        keys.push(key);
+    });
+    return keys;
+}
+
+function getCommunityChatMentionCandidatePool() {
+    const seen = new Set();
+    const pool = [];
+
+    const pushName = (name) => {
+        const trimmed = String(name || '').trim();
+        const key = normalizeCommunityChatUsername(trimmed);
+        if (!trimmed || !key || key === 'testaccount' || isRoyalGuardBotUsername(trimmed) || seen.has(key)) return;
+        seen.add(key);
+        pool.push(trimmed);
+    };
+
+    communityChatMentionRosterCache.forEach(pushName);
+    getCommunityChatOnlineUsernameKeys().forEach((key) => {
+        const fromBrowsing = (portalLiveMetricsCache.portalBrowsingPlayers || []).find(
+            (name) => normalizeCommunityChatUsername(name) === key
+        );
+        pushName(fromBrowsing || key);
+    });
+    (portalLiveMetricsCache.agePlayingPlayers || []).forEach(pushName);
+    (portalLiveMetricsCache.recentRegistrations || []).forEach((entry) => {
+        pushName(typeof entry === 'string' ? entry : entry?.username);
+    });
+
+    const selfName = getLoggedCommunityChatUsername();
+    pushName(selfName);
+
+    return pool.sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
+}
+
+async function loadCommunityChatMentionRoster(forceReload) {
+    if (!isCommunityChatApiAvailable()) {
+        communityChatMentionRosterCache = getCommunityChatMentionCandidatePool();
+        return communityChatMentionRosterCache;
+    }
+    if (!forceReload && communityChatMentionRosterCache.length) {
+        return communityChatMentionRosterCache;
+    }
+    if (!forceReload && communityChatMentionRosterLoadPromise) {
+        return communityChatMentionRosterLoadPromise;
+    }
+
+    communityChatMentionRosterLoadPromise = fetch('/api/portal/community-chat/mention-roster')
+        .then((response) => (response.ok ? response.json() : null))
+        .then((payload) => {
+            if (payload?.status === 'ok' && Array.isArray(payload.usernames)) {
+                communityChatMentionRosterCache = payload.usernames
+                    .map((name) => String(name || '').trim())
+                    .filter(Boolean);
+            }
+            return getCommunityChatMentionCandidatePool();
+        })
+        .catch(() => getCommunityChatMentionCandidatePool())
+        .finally(() => {
+            communityChatMentionRosterLoadPromise = null;
+        });
+
+    return communityChatMentionRosterLoadPromise;
+}
+
+function getActiveCommunityChatMentionQuery(field) {
+    if (!field) return null;
+
+    const value = String(field.value || '');
+    const caret = Number.isFinite(field.selectionStart) ? field.selectionStart : value.length;
+    const beforeCaret = value.slice(0, caret);
+    const match = beforeCaret.match(/@([a-zA-Z0-9_\-]*)$/);
+    if (!match) return null;
+
+    return {
+        query: match[1] || '',
+        startIndex: caret - match[0].length,
+        endIndex: caret
+    };
+}
+
+function filterCommunityChatMentionCandidates(query) {
+    const pool = getCommunityChatMentionCandidatePool();
+    const normalizedQuery = String(query || '').trim().toLowerCase();
+    const onlineSet = new Set(getCommunityChatOnlineUsernameKeys());
+
+    let matches = pool;
+    if (normalizedQuery) {
+        matches = pool.filter((name) => normalizeCommunityChatUsername(name).includes(normalizedQuery));
+    }
+
+    matches = matches.slice().sort((a, b) => {
+        const aKey = normalizeCommunityChatUsername(a);
+        const bKey = normalizeCommunityChatUsername(b);
+        const aStarts = normalizedQuery && aKey.startsWith(normalizedQuery) ? 0 : 1;
+        const bStarts = normalizedQuery && bKey.startsWith(normalizedQuery) ? 0 : 1;
+        if (aStarts !== bStarts) return aStarts - bStarts;
+        const aOnline = onlineSet.has(aKey) ? 0 : 1;
+        const bOnline = onlineSet.has(bKey) ? 0 : 1;
+        if (aOnline !== bOnline) return aOnline - bOnline;
+        return a.localeCompare(b, undefined, { sensitivity: 'base' });
+    });
+
+    return matches.slice(0, CHAT_MENTION_SUGGESTION_MAX);
+}
+
+function hideCommunityChatMentionSuggestDropdown() {
+    communityChatMentionSuggestState = null;
+    const dropdown = document.getElementById('chat-mention-suggest-dropdown');
+    if (dropdown) {
+        dropdown.hidden = true;
+        dropdown.innerHTML = '';
+    }
+}
+
+function renderCommunityChatMentionSuggestDropdown(field, matches, highlightIndex) {
+    const anchor = field?.closest('.chat-input-mention-anchor');
+    let dropdown = document.getElementById('chat-mention-suggest-dropdown');
+    if (!anchor) return;
+
+    if (!dropdown) {
+        dropdown = document.createElement('div');
+        dropdown.id = 'chat-mention-suggest-dropdown';
+        dropdown.className = 'chat-mention-suggest-dropdown';
+        dropdown.setAttribute('role', 'listbox');
+        dropdown.setAttribute('aria-label', 'Mention suggestions');
+        anchor.insertBefore(dropdown, field);
+    }
+
+    if (!matches.length) {
+        dropdown.innerHTML = '<p class="chat-mention-suggest-empty">No matching commanders</p>';
+        dropdown.hidden = false;
+        return;
+    }
+
+    dropdown.innerHTML = matches.map((name, index) => {
+        const highlighted = index === highlightIndex ? ' is-highlighted' : '';
+        return `
+            <button
+                type="button"
+                class="chat-mention-suggest-item${highlighted}"
+                role="option"
+                aria-selected="${index === highlightIndex ? 'true' : 'false'}"
+                data-mention-username="${escapeMetricRosterHtml(name)}"
+            ><span class="chat-mention-suggest-at" aria-hidden="true">@</span>${escapeMetricRosterHtml(name)}</button>
+        `;
+    }).join('');
+    dropdown.hidden = false;
+}
+
+function refreshCommunityChatMentionSuggestFromField(field) {
+    const active = getActiveCommunityChatMentionQuery(field);
+    if (!active) {
+        hideCommunityChatMentionSuggestDropdown();
+        return;
+    }
+
+    const matches = filterCommunityChatMentionCandidates(active.query);
+    if (!matches.length) {
+        communityChatMentionSuggestState = {
+            matches: [],
+            highlightIndex: 0,
+            startIndex: active.startIndex,
+            endIndex: active.endIndex
+        };
+        renderCommunityChatMentionSuggestDropdown(field, [], 0);
+        return;
+    }
+
+    const previousHighlight = communityChatMentionSuggestState?.highlightIndex || 0;
+    const highlightIndex = Math.min(previousHighlight, matches.length - 1);
+
+    communityChatMentionSuggestState = {
+        matches,
+        highlightIndex,
+        startIndex: active.startIndex,
+        endIndex: active.endIndex
+    };
+
+    renderCommunityChatMentionSuggestDropdown(field, matches, highlightIndex);
+}
+
+function applyCommunityChatMentionSelection(field, username) {
+    const active = communityChatMentionSuggestState || getActiveCommunityChatMentionQuery(field);
+    if (!field || !active || !username) return;
+
+    const value = String(field.value || '');
+    const before = value.slice(0, active.startIndex);
+    const after = value.slice(active.endIndex);
+    const mentionToken = `@${String(username).trim()} `;
+    field.value = `${before}${mentionToken}${after}`;
+
+    const caret = (before + mentionToken).length;
+    field.setSelectionRange(caret, caret);
+    hideCommunityChatMentionSuggestDropdown();
+    field.focus();
+}
+
+function selectCommunityChatMentionSuggestion(clickEvent, username) {
+    if (clickEvent) {
+        clickEvent.preventDefault();
+        clickEvent.stopPropagation();
+    }
+    const field = document.getElementById('chat-portal-message-input-field');
+    const resolvedUsername = username
+        || clickEvent?.currentTarget?.dataset?.mentionUsername
+        || '';
+    if (!field || !resolvedUsername) return;
+    applyCommunityChatMentionSelection(field, resolvedUsername);
+}
+
+function handleCommunityChatMentionInput(event) {
+    const field = event?.target;
+    if (!field || field.id !== 'chat-portal-message-input-field') return;
+
+    loadCommunityChatMentionRoster().then(() => {
+        refreshCommunityChatMentionSuggestFromField(field);
+    });
+}
+
+function handleCommunityChatMentionKeydown(event) {
+    const field = event?.target;
+    if (!field || field.id !== 'chat-portal-message-input-field') return;
+
+    const dropdown = document.getElementById('chat-mention-suggest-dropdown');
+    const isOpen = dropdown && !dropdown.hidden;
+    const state = communityChatMentionSuggestState;
+
+    if (isOpen && state?.matches?.length) {
+        if (event.key === 'ArrowDown') {
+            event.preventDefault();
+            state.highlightIndex = (state.highlightIndex + 1) % state.matches.length;
+            renderCommunityChatMentionSuggestDropdown(field, state.matches, state.highlightIndex);
+            return;
+        }
+        if (event.key === 'ArrowUp') {
+            event.preventDefault();
+            state.highlightIndex = (state.highlightIndex - 1 + state.matches.length) % state.matches.length;
+            renderCommunityChatMentionSuggestDropdown(field, state.matches, state.highlightIndex);
+            return;
+        }
+        if (event.key === 'Enter' || event.key === 'Tab') {
+            event.preventDefault();
+            applyCommunityChatMentionSelection(field, state.matches[state.highlightIndex]);
+            return;
+        }
+    }
+
+    if (event.key === 'Escape' && isOpen) {
+        event.preventDefault();
+        hideCommunityChatMentionSuggestDropdown();
+        return;
+    }
+
+    if (event.key === 'Enter') {
+        handleChatInputFieldSubmit(event);
+        return;
+    }
+
+    setTimeout(() => {
+        if (getActiveCommunityChatMentionQuery(field)) {
+            refreshCommunityChatMentionSuggestFromField(field);
+        } else {
+            hideCommunityChatMentionSuggestDropdown();
+        }
+    }, 0);
+}
+
+function wireCommunityChatMentionAutocomplete(field) {
+    if (!field || field.dataset.mentionAutocompleteWired === 'true') return;
+    field.dataset.mentionAutocompleteWired = 'true';
+
+    field.addEventListener('input', handleCommunityChatMentionInput);
+    field.addEventListener('keydown', handleCommunityChatMentionKeydown);
+    field.addEventListener('click', handleCommunityChatMentionInput);
+    field.addEventListener('blur', () => {
+        setTimeout(() => hideCommunityChatMentionSuggestDropdown(), 140);
+    });
+
+    const anchor = field.closest('.chat-input-mention-anchor');
+    if (anchor && anchor.dataset.mentionSuggestWired !== 'true') {
+        anchor.dataset.mentionSuggestWired = 'true';
+        anchor.addEventListener('mousedown', (clickEvent) => {
+            const option = clickEvent.target.closest('[data-mention-username]');
+            if (!option) return;
+            clickEvent.preventDefault();
+            selectCommunityChatMentionSuggestion(null, option.dataset.mentionUsername);
+        });
+    }
+
+    loadCommunityChatMentionRoster();
 }
 
 function buildChatMentionPreviewSnippet(text) {
@@ -2301,6 +2605,7 @@ window.appendCommunityChatMessage = appendCommunityChatMessage;
 window.beginReplyToCommunityChatMessage = beginReplyToCommunityChatMessage;
 window.beginEditCommunityChatMessage = beginEditCommunityChatMessage;
 window.cancelCommunityChatComposeMode = cancelCommunityChatComposeMode;
+window.selectCommunityChatMentionSuggestion = selectCommunityChatMentionSuggestion;
 
 /* Block 11: MULTI-COLUMN COMPLIANCE CHAT COMPILER */
 function renderCommunityChatPortalCanvas(viewport) {
@@ -2349,6 +2654,7 @@ function renderCommunityChatPortalCanvas(viewport) {
     refreshCommunityChatOnlineRosterIfVisible();
     sendPortalPresenceHeartbeat();
     loadCommunityChatHistory();
+    loadCommunityChatMentionRoster(true);
 }
 
 function toggleActiveChatChannelStream(targetChannel) {
@@ -2526,7 +2832,10 @@ function renderCommunityChatInputTray() {
         <div class="chat-input-toolbar-stack">
             ${composeBanner}
             <div class="chat-input-toolbar-row-inner">
-                <input type="text" id="chat-portal-message-input-field" placeholder="Message ${escapeCommunityChatDisplayHtml(channelLabel)}… Use @username to shout out" onkeydown="handleChatInputFieldSubmit(event)">
+                <div class="chat-input-mention-anchor">
+                    <input type="text" id="chat-portal-message-input-field" placeholder="Message ${escapeCommunityChatDisplayHtml(channelLabel)}… Use @username to shout out" autocomplete="off" spellcheck="false">
+                    <div id="chat-mention-suggest-dropdown" class="chat-mention-suggest-dropdown" role="listbox" aria-label="Mention suggestions" hidden></div>
+                </div>
                 <button type="button" class="settings-btn mini-btn" onclick="executeSubmitNewPortalChatMessage()">${sendLabel}</button>
             </div>
             <p class="chat-retention-policy-notice" id="chat-retention-policy-notice" role="note"></p>
@@ -2538,6 +2847,9 @@ function renderCommunityChatInputTray() {
         const field = document.getElementById('chat-portal-message-input-field');
         if (field) field.value = communityChatComposeState.snippet || '';
     }
+
+    const field = document.getElementById('chat-portal-message-input-field');
+    if (field) wireCommunityChatMentionAutocomplete(field);
 }
 
 function updateAdministrativeReviewBadgeMetrics() {
