@@ -389,7 +389,7 @@ const MAILBOX_BODY_MAX = 4000;
 const MAILBOX_RECIPIENTS_MAX = 25;
 const ROYAL_ARMIES_DISCORD_INVITE_URL = 'https://discord.gg/7tGBCt7cXX';
 const WELCOME_SYSTEM_MESSAGE_KEY = 'welcome_to_royal_armies_v1';
-const WELCOME_SYSTEM_MESSAGE_FROM = 'Royal Armies';
+const WELCOME_SYSTEM_MESSAGE_FROM = 'Ledger System';
 const WELCOME_SYSTEM_MESSAGE_TOPIC = 'Welcome to the Royal Armies!';
 
 function formatMailboxDisplayDate(isoValue) {
@@ -506,9 +506,23 @@ function backfillWelcomeSystemMessagesForAllCommanders() {
         if (result.delivered) delivered += 1;
     });
 
-    if (delivered > 0) {
+    let relabeled = 0;
+    messages.forEach((row) => {
+        if (!row || row.channel !== 'system' || row.systemMessageKey !== WELCOME_SYSTEM_MESSAGE_KEY) return;
+        if (String(row.from || '').trim() !== WELCOME_SYSTEM_MESSAGE_FROM) {
+            row.from = WELCOME_SYSTEM_MESSAGE_FROM;
+            relabeled += 1;
+        }
+    });
+
+    if (delivered > 0 || relabeled > 0) {
         writeMailboxMessageStore(messages);
-        console.log(`[NEXUS] Delivered welcome system message to ${delivered} commander(s).`);
+        if (delivered > 0) {
+            console.log(`[NEXUS] Delivered welcome system message to ${delivered} commander(s).`);
+        }
+        if (relabeled > 0) {
+            console.log(`[NEXUS] Updated welcome system message sender label for ${relabeled} message(s).`);
+        }
     }
 }
 

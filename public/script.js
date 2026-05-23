@@ -4187,6 +4187,19 @@ function selectPresetAvatar(chosenUrl) {
 }
 
 /* --- MESSAGE COMPOSE: REPLY / FORWARD CONTEXT --- */
+const SYSTEM_MESSAGE_FROM_LABEL = 'Ledger System';
+const SYSTEM_MESSAGE_HEADER_LABEL = 'System Message';
+const COMMANDER_DISPATCH_HEADER_LABEL = 'Commander Dispatch';
+
+function formatMailboxFromLabel(msg, track) {
+    if (track === 'system') return SYSTEM_MESSAGE_FROM_LABEL;
+    return msg?.from || 'Unsent Draft Record';
+}
+
+function formatMailboxOverlayHeaderLabel(track) {
+    if (track === 'system') return SYSTEM_MESSAGE_HEADER_LABEL;
+    return COMMANDER_DISPATCH_HEADER_LABEL;
+}
 function escapeMessageHtml(str) {
     return String(str ?? '')
         .replace(/&/g, '&amp;')
@@ -4707,7 +4720,9 @@ function renderDossierPortalListHTML(targetTrack) {
         row.onclick = () => openFocusedDossierReadingOverlay(msg, targetTrack);
         
         let metaSender = 'System';
-        if (targetTrack === 'sent') {
+        if (targetTrack === 'system') {
+            metaSender = SYSTEM_MESSAGE_FROM_LABEL;
+        } else if (targetTrack === 'sent') {
             const sentTo = Array.isArray(msg.recipients) && msg.recipients.length
                 ? msg.recipients.join(', ')
                 : (msg.to || '');
@@ -4759,13 +4774,18 @@ function openFocusedDossierReadingOverlay(msg, track) {
 
     if (!overlay || !textField || !btnDock) return;
 
+    const overlayHeader = document.getElementById('suicide-popup-header-title');
+    if (overlayHeader) {
+        overlayHeader.textContent = formatMailboxOverlayHeaderLabel(track);
+    }
+
     // Inject letter text layout formats inside your golden bezel
     const sentToLine = track === 'sent'
         ? (Array.isArray(msg.recipients) && msg.recipients.length ? msg.recipients.join(', ') : (msg.to || ''))
         : '';
     const headerFromLine = track === 'sent'
         ? `<strong>TO:</strong> ${sentToLine || 'Unknown'}<br>`
-        : `<strong>FROM:</strong> ${msg.from || 'Unsent Draft Record'}<br>`;
+        : `<strong>FROM:</strong> ${formatMailboxFromLabel(msg, track)}<br>`;
 
     const bodyAlign = track === 'system' && msg?.bodyFormat === 'html' ? 'left' : 'center';
     textField.innerHTML = `
@@ -4773,7 +4793,7 @@ function openFocusedDossierReadingOverlay(msg, track) {
             ${headerFromLine}
             <strong>TOPIC:</strong> ${msg.topic}
         </div>
-        <div style="text-align:${bodyAlign} !important; font-family:'Segoe UI',sans-serif; color:#ffffff; font-size:0.85rem; line-height:1.5; min-height:80px; max-height:180px; overflow-y:auto; padding:5px; white-space:pre-wrap;">
+        <div class="msg-reading-body-scroll portal-gold-scrollbar" style="text-align:${bodyAlign} !important; font-family:'Segoe UI',sans-serif; color:#ffffff; font-size:0.85rem; line-height:1.5; min-height:80px; max-height:180px; overflow-y:auto; padding:5px; white-space:pre-wrap;">
             ${formatMailboxReadingBody(msg, track)}
         </div>
     `;

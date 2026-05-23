@@ -6280,6 +6280,52 @@ body:not(.portal-guest-mode) #portal-deployment-guest-cta {
     background: linear-gradient(180deg, #ffd700 0%, #9a7a32 100%) !important;
 }
 
+/* Portal-wide gold scrollbars (main page canvas keeps hidden track) */
+*:not(#main-dashboard-canvas) {
+    scrollbar-width: thin !important;
+    scrollbar-color: #9a7a32 rgba(10, 8, 6, 0.88) !important;
+}
+
+*:not(#main-dashboard-canvas)::-webkit-scrollbar {
+    width: 9px !important;
+    height: 9px !important;
+    display: block !important;
+}
+
+*:not(#main-dashboard-canvas)::-webkit-scrollbar-track {
+    background: rgba(10, 8, 6, 0.88) !important;
+    border-radius: 4px !important;
+    border: 1px solid rgba(184, 144, 48, 0.12) !important;
+}
+
+*:not(#main-dashboard-canvas)::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, #c5a059 0%, #7a5f24 100%) !important;
+    border-radius: 4px !important;
+    border: 1px solid rgba(255, 215, 0, 0.22) !important;
+}
+
+*:not(#main-dashboard-canvas)::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(180deg, #ffd700 0%, #9a7a32 100%) !important;
+}
+
+#commander-suicide-overlay .suicide-popup-body-text,
+#commander-penalty-overlay .suicide-popup-body-text,
+#commander-security-overlay .suicide-popup-body-text,
+.msg-portal-scroll-bin,
+.drawer-category-scroll-bin,
+.chat-scrolling-messages-bin,
+.leaderboard-scrollable-table-bin,
+.player-roster-scrollable-track-bin,
+.chronicles-milestones-scroll-bin,
+.card-scrollable-body-text,
+.lore-reader-prose-scroll,
+.settings-scroll-wrapper,
+.commander-hub-body,
+.commander-hub-subnav-list {
+    scrollbar-width: thin !important;
+    scrollbar-color: #9a7a32 rgba(10, 8, 6, 0.88) !important;
+}
+
 /* Profile: themed scrollbar */
 #commander-hub-modal.commander-hub-profile-active .commander-hub-body,
 #portal-commander-hub-page.commander-hub-profile-active .commander-hub-body,
