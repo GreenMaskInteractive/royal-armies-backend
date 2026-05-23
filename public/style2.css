@@ -1928,6 +1928,9 @@ body:not(.portal-guest-mode) #portal-deployment-guest-cta {
 }
 
 .chat-roster-legend-item {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 5px !important;
     font-family: 'Segoe UI', sans-serif !important;
     font-size: 0.58rem !important;
     letter-spacing: 0.05em !important;
@@ -1935,6 +1938,29 @@ body:not(.portal-guest-mode) #portal-deployment-guest-cta {
     padding: 2px 7px !important;
     border-radius: 999px !important;
     border: 1px solid transparent !important;
+}
+
+.chat-roster-legend-dot {
+    width: 8px !important;
+    height: 8px !important;
+    border-radius: 50% !important;
+    border: 1px solid #120e0a !important;
+    flex-shrink: 0 !important;
+}
+
+.chat-roster-legend-dot--chat-active {
+    background: #6fdc6f !important;
+    box-shadow: 0 0 5px rgba(111, 220, 111, 0.55) !important;
+}
+
+.chat-roster-legend-dot--portal-browsing {
+    background: #6a9fd4 !important;
+    box-shadow: 0 0 5px rgba(106, 159, 212, 0.5) !important;
+}
+
+.chat-roster-legend-dot--idle {
+    background: #e8c227 !important;
+    box-shadow: 0 0 5px rgba(232, 194, 39, 0.5) !important;
 }
 
 .chat-roster-legend-item--portal {
@@ -2053,19 +2079,24 @@ body:not(.portal-guest-mode) #portal-deployment-guest-cta {
     height: 11px !important;
     border-radius: 50% !important;
     border: 2px solid #120e0a !important;
+    background: #6a9fd4 !important;
+    box-shadow: 0 0 6px rgba(106, 159, 212, 0.5) !important;
+}
+
+.chat-roster-presence-ring--chat-active {
     background: #6fdc6f !important;
-    box-shadow: 0 0 6px rgba(111, 220, 111, 0.55) !important;
+    box-shadow: 0 0 8px rgba(111, 220, 111, 0.6) !important;
+    animation: chat-roster-presence-pulse 2.2s ease-in-out infinite !important;
 }
 
-.chat-roster-commander-card--portal .chat-roster-presence-ring {
-    background: #c9a227 !important;
-    box-shadow: 0 0 6px rgba(201, 162, 39, 0.45) !important;
-}
-
-.chat-roster-commander-card--in-age .chat-roster-presence-ring {
+.chat-roster-presence-ring--portal-browsing {
     background: #6a9fd4 !important;
     box-shadow: 0 0 8px rgba(106, 159, 212, 0.55) !important;
-    animation: chat-roster-presence-pulse 2.2s ease-in-out infinite !important;
+}
+
+.chat-roster-presence-ring--idle {
+    background: #e8c227 !important;
+    box-shadow: 0 0 8px rgba(232, 194, 39, 0.55) !important;
 }
 
 .chat-roster-avatar-crown,
@@ -2275,10 +2306,40 @@ body:not(.portal-guest-mode) #portal-deployment-guest-cta {
     font-size: 0.55rem !important;
 }
 
-.chat-roster-status-pill--portal {
-    color: rgba(241, 224, 172, 0.75) !important;
-    border: 1px solid rgba(184, 144, 48, 0.25) !important;
-    background: rgba(0, 0, 0, 0.35) !important;
+.chat-roster-status-pill--portal-browsing {
+    color: #9ec5ef !important;
+    border: 1px solid rgba(106, 159, 212, 0.45) !important;
+    background: rgba(106, 159, 212, 0.14) !important;
+}
+
+.chat-roster-status-pill--chat-active {
+    color: #b8f0b8 !important;
+    border: 1px solid rgba(111, 220, 111, 0.45) !important;
+    background: rgba(111, 220, 111, 0.14) !important;
+}
+
+.chat-roster-status-pill--idle {
+    color: #f1e0ac !important;
+    border: 1px solid rgba(232, 194, 39, 0.45) !important;
+    background: rgba(232, 194, 39, 0.12) !important;
+}
+
+.chat-roster-status-pill--self-portal {
+    color: #d8ecff !important;
+    border: 1px solid rgba(138, 174, 232, 0.55) !important;
+    background: linear-gradient(90deg, rgba(106, 143, 199, 0.45) 0%, rgba(138, 174, 232, 0.25) 100%) !important;
+}
+
+.chat-roster-status-pill--self-chat {
+    color: #eaffea !important;
+    border: 1px solid rgba(111, 220, 111, 0.55) !important;
+    background: linear-gradient(90deg, rgba(70, 150, 70, 0.5) 0%, rgba(111, 220, 111, 0.28) 100%) !important;
+}
+
+.chat-roster-status-pill--self-idle {
+    color: #fff4c9 !important;
+    border: 1px solid rgba(232, 194, 39, 0.55) !important;
+    background: linear-gradient(90deg, rgba(160, 130, 20, 0.45) 0%, rgba(232, 194, 39, 0.22) 100%) !important;
 }
 
 .chat-roster-status-pill--in-age {

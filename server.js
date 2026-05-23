@@ -136,6 +136,8 @@ const MAINTENANCE_ALERT_DEV_KEY = process.env.MAINTENANCE_ALERT_DEV_KEY || 'loca
 /* --- Section: Age Portal live presence (in-memory; no mock accounts) --- */
 const AGE_SESSION_ONLINE_TTL_MS = 5 * 60 * 1000;
 const PORTAL_BROWSE_ONLINE_TTL_MS = 90 * 1000;
+const CHAT_PRESENCE_ACTIVE_MS = 25 * 1000;
+const PORTAL_PRESENCE_IDLE_MS = 10 * 60 * 1000;
 const HIDDEN_REGISTRATION_USERNAMES = new Set(['testaccount']);
 const ageSessionByUser = new Map();
 const portalBrowseSessionByUser = new Map();
@@ -658,13 +660,38 @@ function pruneAgeSessionOnlineState() {
     }
 }
 
-function touchPortalBrowseSession(username) {
+function touchPortalBrowseSession(username, options = {}) {
     const normalized = normalizeLedgerUsername(username);
     if (!normalized || isHiddenRegistrationUsername(normalized)) return null;
 
     const now = Date.now();
-    portalBrowseSessionByUser.set(normalized, { lastSeen: now });
+    const existing = portalBrowseSessionByUser.get(normalized) || {};
+    const activityAt = Number(options.lastActivityAt);
+    const next = {
+        lastSeen: now,
+        chatLastSeen: options.onCommunityChat === true
+            ? now
+            : (existing.chatLastSeen || null),
+        lastActivityAt: Number.isFinite(activityAt) && activityAt > 0
+            ? Math.max(existing.lastActivityAt || 0, activityAt)
+            : (existing.lastActivityAt || now)
+    };
+
+    portalBrowseSessionByUser.set(normalized, next);
     return normalized;
+}
+
+function resolvePortalBrowsePresenceState(session, now = Date.now()) {
+    if (!session) return null;
+    if ((now - session.lastSeen) > PORTAL_BROWSE_ONLINE_TTL_MS) return null;
+
+    const lastActivity = session.lastActivityAt || session.lastSeen;
+    if ((now - lastActivity) >= PORTAL_PRESENCE_IDLE_MS) return 'idle';
+
+    const chatLastSeen = session.chatLastSeen || 0;
+    if (chatLastSeen && (now - chatLastSeen) <= CHAT_PRESENCE_ACTIVE_MS) return 'chat';
+
+    return 'portal';
 }
 
 function removePortalBrowseSession(username) {
@@ -685,9 +712,15 @@ function prunePortalBrowseSessions() {
 function getPortalBrowseMetrics() {
     prunePortalBrowseSessions();
 
-    const portalBrowsingPlayers = [...portalBrowseSessionByUser.keys()].sort((a, b) =>
-        a.localeCompare(b, undefined, { sensitivity: 'base' })
-    );
+    const now = Date.now();
+    const portalBrowsingPlayers = [...portalBrowseSessionByUser.entries()]
+        .map(([username, session]) => {
+            const presence = resolvePortalBrowsePresenceState(session, now);
+            if (!presence) return null;
+            return { username, presence };
+        })
+        .filter(Boolean)
+        .sort((a, b) => a.username.localeCompare(b.username, undefined, { sensitivity: 'base' }));
 
     return {
         portalBrowsingCount: portalBrowsingPlayers.length,
@@ -2360,12 +2393,17 @@ app.get('/api/portal/community-chat/archive', (req, res) => {
 app.post('/api/portal/presence', (req, res) => {
     const username = String(req.body?.username || '').trim();
     const inAge = req.body?.inAge === true;
+    const onCommunityChat = req.body?.onCommunityChat === true;
+    const lastActivityAt = Number(req.body?.lastActivityAt);
 
     if (!username) {
         return res.status(400).json({ status: 'error', message: 'Username required.' });
     }
 
-    touchPortalBrowseSession(username);
+    touchPortalBrowseSession(username, {
+        onCommunityChat,
+        lastActivityAt: Number.isFinite(lastActivityAt) && lastActivityAt > 0 ? lastActivityAt : undefined
+    });
 
     if (inAge) {
         touchAgeSession(username, { markOnline: true });

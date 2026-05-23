@@ -705,6 +705,9 @@ function switchMainPortalView(viewName, clickEvent, chatChannelKey) {
     }
 
     if (viewName !== 'chat') {
+        if (activeMainPortalView === 'chat') {
+            sendPortalPresenceHeartbeat({ onCommunityChat: false });
+        }
         stopCommunityChatPresenceLoop();
         stopCommunityChatSyncLoop();
     }
@@ -1139,6 +1142,8 @@ let portalPresenceHeartbeatTimer = null;
 let communityChatPresencePollTimer = null;
 const PORTAL_PRESENCE_HEARTBEAT_MS = 20000;
 const CHAT_PRESENCE_HEARTBEAT_MS = 8000;
+const PORTAL_PRESENCE_IDLE_MS = 10 * 60 * 1000;
+let portalUserLastActivityAt = Date.now();
 let portalLiveMetricsCache = {
     registeredCount: 0,
     recentRegistrations: [],
@@ -1149,6 +1154,51 @@ let portalLiveMetricsCache = {
     portalBrowsingCount: 0,
     portalBrowsingPlayers: []
 };
+
+function bumpPortalUserActivityTimestamp() {
+    portalUserLastActivityAt = Date.now();
+}
+
+function initializePortalUserActivityTracking() {
+    if (window.portalUserActivityTrackingWired) return;
+    window.portalUserActivityTrackingWired = true;
+
+    const bump = () => bumpPortalUserActivityTimestamp();
+    ['pointerdown', 'keydown', 'scroll', 'touchstart'].forEach((eventName) => {
+        document.addEventListener(eventName, bump, { passive: true });
+    });
+}
+
+function normalizePortalBrowsingPlayerEntry(entry) {
+    if (!entry) return null;
+    if (typeof entry === 'string') {
+        const username = entry.trim();
+        return username ? { username, presence: 'portal' } : null;
+    }
+    const username = String(entry.username || '').trim();
+    if (!username) return null;
+    const presence = ['chat', 'portal', 'idle'].includes(entry.presence) ? entry.presence : 'portal';
+    return { username, presence };
+}
+
+function getPortalBrowsingPresenceMap() {
+    const map = new Map();
+    (portalLiveMetricsCache.portalBrowsingPlayers || []).forEach((entry) => {
+        const normalized = normalizePortalBrowsingPlayerEntry(entry);
+        if (!normalized) return;
+        const key = normalizeCommunityChatUsername(normalized.username);
+        if (!key) return;
+        map.set(key, normalized.presence);
+    });
+    return map;
+}
+
+function resolveLocalCommunityChatPresenceState() {
+    const idleFor = Date.now() - portalUserLastActivityAt;
+    if (idleFor >= PORTAL_PRESENCE_IDLE_MS) return 'idle';
+    if (activeMainPortalView === 'chat') return 'chat';
+    return 'portal';
+}
 
 function isCommanderPlayingActiveAgeLocally() {
     return localStorage.getItem('savedCommanderInActiveAge') === 'true';
@@ -1265,9 +1315,12 @@ function applyPortalMetricsPayload(metrics) {
     applyPortalLiveMetricsToBanner(metrics);
 }
 
-async function sendPortalPresenceHeartbeat() {
+async function sendPortalPresenceHeartbeat(options = {}) {
     const username = resolvePortalPresenceUsername();
     if (!username || username.toLowerCase() === 'testaccount') return null;
+
+    const onCommunityChat = options.onCommunityChat === true
+        || (options.onCommunityChat !== false && activeMainPortalView === 'chat');
 
     try {
         const response = await fetch('/api/portal/presence', {
@@ -1275,7 +1328,9 @@ async function sendPortalPresenceHeartbeat() {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 username,
-                inAge: isCommanderPlayingActiveAgeLocally()
+                inAge: isCommanderPlayingActiveAgeLocally(),
+                onCommunityChat,
+                lastActivityAt: portalUserLastActivityAt
             }),
             cache: 'no-store'
         });
@@ -1293,7 +1348,7 @@ function startCommunityChatPresenceLoop() {
     if (communityChatPresencePollTimer) clearInterval(communityChatPresencePollTimer);
 
     const pulse = () => {
-        sendPortalPresenceHeartbeat();
+        sendPortalPresenceHeartbeat({ onCommunityChat: true });
     };
 
     pulse();
@@ -1416,17 +1471,33 @@ function formatCommunityChatSenderMarkup(sender) {
     return `<span class="chat-message-sender-name"><strong>${safeName}:</strong></span>`;
 }
 
-function getChatRosterStatusMeta(inAge, isSelf) {
-    if (isSelf && inAge) {
-        return { pillClass: 'chat-roster-status-pill--self-age', icon: '⚔', label: 'You · In Age' };
+function getChatRosterPresenceRingClass(presenceState) {
+    if (presenceState === 'chat') return 'chat-roster-presence-ring--chat-active';
+    if (presenceState === 'idle') return 'chat-roster-presence-ring--idle';
+    return 'chat-roster-presence-ring--portal-browsing';
+}
+
+function getChatRosterStatusMeta(inAge, isSelf, presenceState) {
+    const presence = presenceState || 'portal';
+
+    if (presence === 'idle') {
+        const idleMeta = { pillClass: 'chat-roster-status-pill--idle', icon: '●', label: 'Away' };
+        if (isSelf) return { ...idleMeta, pillClass: 'chat-roster-status-pill--self-idle', label: 'You · Away' };
+        return idleMeta;
     }
-    if (isSelf) {
-        return { pillClass: 'chat-roster-status-pill--self', icon: '◆', label: 'You' };
+    if (presence === 'chat') {
+        const chatMeta = { pillClass: 'chat-roster-status-pill--chat-active', icon: '●', label: 'In Chat' };
+        if (isSelf) return { ...chatMeta, pillClass: 'chat-roster-status-pill--self-chat', label: 'You · In Chat' };
+        return chatMeta;
     }
+
+    const portalMeta = { pillClass: 'chat-roster-status-pill--portal-browsing', icon: '●', label: 'On Site' };
+    if (isSelf) return { ...portalMeta, pillClass: 'chat-roster-status-pill--self-portal', label: 'You · On Site' };
+
     if (inAge) {
         return { pillClass: 'chat-roster-status-pill--in-age', icon: '⚔', label: 'In Age' };
     }
-    return { pillClass: 'chat-roster-status-pill--portal', icon: '◈', label: 'Portal' };
+    return portalMeta;
 }
 
 const chatRosterExpandedCommanders = new Set();
@@ -1545,12 +1616,14 @@ function buildRoyalGuardBotRosterCardMarkup() {
     `;
 }
 
-function buildCommunityChatRosterCardMarkup(name, selfLower, playingSet) {
+function buildCommunityChatRosterCardMarkup(name, selfLower, playingSet, presenceState) {
     if (isRoyalGuardBotUsername(name)) return '';
     const isSelf = normalizeCommunityChatUsername(name) === selfLower;
     const inAge = playingSet.has(normalizeCommunityChatUsername(name));
     const staffRole = typeof getPortalStaffRole === 'function' ? getPortalStaffRole(name) : null;
-    const status = getChatRosterStatusMeta(inAge, isSelf);
+    const resolvedPresence = presenceState || 'portal';
+    const presenceRingClass = getChatRosterPresenceRingClass(resolvedPresence);
+    const status = getChatRosterStatusMeta(inAge, isSelf, resolvedPresence);
     const isExpandable = isChatRosterCardExpandable(staffRole);
     const expandKey = isExpandable ? getChatRosterExpandKey(name, staffRole) : '';
     const isExpanded = isExpandable && chatRosterExpandedCommanders.has(expandKey);
@@ -1558,7 +1631,8 @@ function buildCommunityChatRosterCardMarkup(name, selfLower, playingSet) {
         staffRole === 'owner' ? 'chat-roster-commander-card--owner' : '',
         staffRole === 'moderator' ? 'chat-roster-commander-card--moderator' : '',
         isSelf ? 'chat-roster-commander-card--self' : '',
-        inAge ? 'chat-roster-commander-card--in-age' : 'chat-roster-commander-card--portal',
+        inAge ? 'chat-roster-commander-card--in-age' : '',
+        `chat-roster-commander-card--presence-${resolvedPresence}`,
         isExpandable ? 'chat-roster-commander-card--expandable' : 'chat-roster-commander-card--slim',
         isExpanded ? 'is-expanded' : ''
     ].filter(Boolean).join(' ');
@@ -1575,7 +1649,7 @@ function buildCommunityChatRosterCardMarkup(name, selfLower, playingSet) {
         <article class="chat-roster-commander-card ${cardModifiers}" data-roster-commander="${escapeMetricRosterHtml(normalizeCommunityChatUsername(name))}"${staffRole ? ` data-staff-role="${staffRole}"` : ''} ${expandInteractionAttrs}>
             <div class="chat-roster-avatar-wrap">
                 <img class="chat-roster-avatar" src="${escapeMetricRosterHtml(getChatRosterAvatarUrl(name))}" alt="" width="40" height="40" loading="lazy" decoding="async">
-                <span class="chat-roster-presence-ring" aria-hidden="true"></span>
+                <span class="chat-roster-presence-ring ${presenceRingClass}" aria-hidden="true" title="${escapeMetricRosterHtml(status.label)}"></span>
                 ${staffRole === 'owner' ? '<span class="chat-roster-avatar-crown" aria-hidden="true">👑</span>' : ''}
                 ${staffRole === 'moderator' ? '<span class="chat-roster-avatar-mod-shield" aria-hidden="true">🛡</span>' : ''}
             </div>
@@ -1600,37 +1674,63 @@ function renderCommunityChatOnlineRoster(targetBin) {
     const playingSet = new Set(
         (portalLiveMetricsCache.agePlayingPlayers || []).map((name) => normalizeCommunityChatUsername(name))
     );
+    const presenceByUser = getPortalBrowsingPresenceMap();
 
     const seen = new Set();
-    const players = [];
-    (portalLiveMetricsCache.portalBrowsingPlayers || []).forEach((name) => {
-        const key = normalizeCommunityChatUsername(name);
-        if (!key || key === 'testaccount' || isRoyalGuardBotUsername(name) || seen.has(key)) return;
+    const rosterEntries = [];
+    (portalLiveMetricsCache.portalBrowsingPlayers || []).forEach((entry) => {
+        const normalized = normalizePortalBrowsingPlayerEntry(entry);
+        if (!normalized) return;
+        const key = normalizeCommunityChatUsername(normalized.username);
+        if (!key || key === 'testaccount' || isRoyalGuardBotUsername(normalized.username) || seen.has(key)) return;
         seen.add(key);
-        players.push(String(name).trim());
+        rosterEntries.push({
+            username: normalized.username,
+            presence: presenceByUser.get(key) || normalized.presence || 'portal'
+        });
     });
 
     if (selfLower && selfLower !== 'testaccount' && !seen.has(selfLower)) {
-        players.push(selfRaw.trim());
+        rosterEntries.push({
+            username: selfRaw.trim(),
+            presence: resolveLocalCommunityChatPresenceState()
+        });
         seen.add(selfLower);
     }
 
-    const sortedPlayers = sortCommunityChatRosterPlayers(players, selfLower, playingSet);
-    const inAgeCount = sortedPlayers.filter((name) => playingSet.has(normalizeCommunityChatUsername(name))).length;
+    const sortedNames = sortCommunityChatRosterPlayers(
+        rosterEntries.map((entry) => entry.username),
+        selfLower,
+        playingSet
+    );
+    const entryByKey = new Map(
+        rosterEntries.map((entry) => [normalizeCommunityChatUsername(entry.username), entry])
+    );
+    const sortedEntries = sortedNames
+        .map((name) => entryByKey.get(normalizeCommunityChatUsername(name)))
+        .filter(Boolean);
+    const inAgeCount = sortedEntries.filter((entry) => (
+        playingSet.has(normalizeCommunityChatUsername(entry.username))
+    )).length;
 
     const countEl = document.getElementById('chat-online-roster-count');
-    if (countEl) countEl.textContent = String(sortedPlayers.length);
+    if (countEl) countEl.textContent = String(sortedEntries.length);
 
     const inAgeCountEl = document.getElementById('chat-online-in-age-count');
     if (inAgeCountEl) inAgeCountEl.textContent = String(inAgeCount);
 
     const botCard = buildRoyalGuardBotRosterCardMarkup();
-    const humanCards = sortedPlayers
-        .map((name) => buildCommunityChatRosterCardMarkup(name, selfLower, playingSet))
+    const humanCards = sortedEntries
+        .map((entry) => buildCommunityChatRosterCardMarkup(
+            entry.username,
+            selfLower,
+            playingSet,
+            entry.presence
+        ))
         .filter(Boolean)
         .join('');
 
-    if (!sortedPlayers.length) {
+    if (!sortedEntries.length) {
         bin.innerHTML = `${botCard}
             <div class="chat-roster-empty-state chat-roster-empty-state--humans-only">
                 <span class="chat-roster-empty-icon" aria-hidden="true">👥</span>
@@ -1701,6 +1801,7 @@ function bindMetricRosterHoverPopover(cellId, triggerId, popoverId) {
 }
 
 function initializePortalLivePlayerMetrics() {
+    initializePortalUserActivityTracking();
     bindMetricRosterHoverPopover(
         'metric-registered-players-cell',
         'metrics-registered-label-trigger',
@@ -1938,9 +2039,11 @@ function extractMentionedUsernamesFromChatText(text) {
 function getCommunityChatOnlineUsernameKeys() {
     const seen = new Set();
     const keys = [];
-    (portalLiveMetricsCache.portalBrowsingPlayers || []).forEach((name) => {
-        const key = normalizeCommunityChatUsername(name);
-        if (!key || key === 'testaccount' || isRoyalGuardBotUsername(name) || seen.has(key)) return;
+    (portalLiveMetricsCache.portalBrowsingPlayers || []).forEach((entry) => {
+        const normalized = normalizePortalBrowsingPlayerEntry(entry);
+        if (!normalized) return;
+        const key = normalizeCommunityChatUsername(normalized.username);
+        if (!key || key === 'testaccount' || isRoyalGuardBotUsername(normalized.username) || seen.has(key)) return;
         seen.add(key);
         keys.push(key);
     });
@@ -1960,11 +2063,9 @@ function getCommunityChatMentionCandidatePool() {
     };
 
     communityChatMentionRosterCache.forEach(pushName);
-    getCommunityChatOnlineUsernameKeys().forEach((key) => {
-        const fromBrowsing = (portalLiveMetricsCache.portalBrowsingPlayers || []).find(
-            (name) => normalizeCommunityChatUsername(name) === key
-        );
-        pushName(fromBrowsing || key);
+    (portalLiveMetricsCache.portalBrowsingPlayers || []).forEach((entry) => {
+        const normalized = normalizePortalBrowsingPlayerEntry(entry);
+        if (normalized) pushName(normalized.username);
     });
     (portalLiveMetricsCache.agePlayingPlayers || []).forEach(pushName);
     (portalLiveMetricsCache.recentRegistrations || []).forEach((entry) => {
@@ -2636,11 +2737,13 @@ function renderCommunityChatPortalCanvas(viewport) {
                         <span class="chat-online-roster-count" id="chat-online-roster-count">0</span>
                     </div>
                     <p class="chat-roster-subtitle"><span id="chat-online-in-age-count">0</span> in the Age · click Royal Guard, Owner, or Mod for details</p>
-                    <div class="chat-roster-status-legend" aria-label="Roster badges">
+                    <div class="chat-roster-status-legend" aria-label="Roster presence and badges">
+                        <span class="chat-roster-legend-item"><span class="chat-roster-legend-dot chat-roster-legend-dot--chat-active" aria-hidden="true"></span> In Chat</span>
+                        <span class="chat-roster-legend-item"><span class="chat-roster-legend-dot chat-roster-legend-dot--portal-browsing" aria-hidden="true"></span> On Site</span>
+                        <span class="chat-roster-legend-item"><span class="chat-roster-legend-dot chat-roster-legend-dot--idle" aria-hidden="true"></span> Away (10m+)</span>
                         <span class="chat-roster-legend-item chat-roster-legend-item--royal-guard-bot"><span aria-hidden="true">🤖</span> Royal Guard</span>
                         <span class="chat-roster-legend-item chat-roster-legend-item--owner"><span aria-hidden="true">👑</span> Owner</span>
                         <span class="chat-roster-legend-item chat-roster-legend-item--moderator"><span aria-hidden="true">🛡</span> Mod</span>
-                        <span class="chat-roster-legend-item chat-roster-legend-item--portal"><span aria-hidden="true">◈</span> Portal</span>
                         <span class="chat-roster-legend-item chat-roster-legend-item--in-age"><span aria-hidden="true">⚔</span> In Age</span>
                     </div>
                 </div>
