@@ -4017,6 +4017,7 @@ function triggerCommanderSuicide(mode) {
     
     const overlay = document.getElementById('commander-suicide-overlay');
     if (overlay) {
+        overlay.classList.remove('mailbox-reading-overlay');
         // 2. Clear the inline display constraints to unlock visual rendering passes
         overlay.style.setProperty('display', 'flex', 'important');
         
@@ -4125,6 +4126,7 @@ function handleSuicideActionSelection(action) {
 function closeSuicideOverlayWindow() {
     const overlay = document.getElementById('commander-suicide-overlay');
     if (overlay) {
+        overlay.classList.remove('mailbox-reading-overlay');
         // 1. Forcefully lock down direct hardware display properties back to silent zero
         overlay.style.setProperty('display', 'none', 'important');
         
@@ -4792,7 +4794,7 @@ function openFocusedDossierReadingOverlay(msg, track) {
             ${headerFromLine}
             <strong>TOPIC:</strong> ${msg.topic}
         </div>
-        <div class="msg-reading-body-scroll portal-gold-scrollbar" style="text-align:justify !important; font-family:'Segoe UI',sans-serif; color:#ffffff; font-size:0.85rem; line-height:1.5; min-height:80px; max-height:180px; overflow-y:auto; padding:5px; white-space:pre-wrap;">
+        <div class="msg-reading-body-scroll portal-gold-scrollbar">
             ${formatMailboxReadingBody(msg, track)}
         </div>
     `;
@@ -4847,6 +4849,7 @@ function openFocusedDossierReadingOverlay(msg, track) {
     btnDock.appendChild(deleteBtn);
     btnDock.appendChild(returnBtn);
 
+    overlay.classList.add('mailbox-reading-overlay');
     overlay.style.setProperty('display', 'flex', 'important');
     overlay.classList.remove('suicide-overlay-hidden');
 }

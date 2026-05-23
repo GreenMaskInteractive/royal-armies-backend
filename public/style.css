@@ -2994,8 +2994,8 @@ body #commander-penalty-overlay,
 
 
 /* THE POPUP DISCIPLINE TEXT RADIAL SHRUNK MATRIX */
-/* Targets both your Suicide warnings and your System Penalty notification descriptions */
-#commander-suicide-overlay .suicide-popup-body-text,
+/* Suicide / penalty only — mailbox reads use .mailbox-reading-overlay (style2.css) */
+#commander-suicide-overlay:not(.mailbox-reading-overlay) .suicide-popup-body-text,
 #commander-penalty-overlay .suicide-popup-body-text {
     font-family: 'Segoe UI', sans-serif !important;
     font-size: 0.82rem !important;

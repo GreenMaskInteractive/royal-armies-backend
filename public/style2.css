@@ -6328,6 +6328,43 @@ html.royal-armies-custom-cursor *::-webkit-scrollbar-corner {
     cursor: none !important;
 }
 
+/* Mailbox read popup — explicit width (flex parent otherwise shrink-wraps to 360px text) */
+body #commander-suicide-overlay.mailbox-reading-overlay > .suicide-popup-bezel {
+    width: min(840px, calc(100vw - 40px)) !important;
+    max-width: min(840px, calc(100vw - 40px)) !important;
+    min-width: min(840px, calc(100vw - 40px)) !important;
+    min-height: 300px !important;
+    padding: 32px 44px 28px 44px !important;
+    flex-shrink: 0 !important;
+    align-self: center !important;
+}
+
+body #commander-suicide-overlay.mailbox-reading-overlay .suicide-popup-body-text {
+    max-width: none !important;
+    width: 100% !important;
+    margin: 15px 0 20px !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    padding: 0 !important;
+    max-height: none !important;
+    text-align: left !important;
+}
+
+#commander-suicide-overlay.mailbox-reading-overlay .msg-reading-body-scroll {
+    text-align: justify !important;
+    text-justify: inter-word !important;
+    font-family: 'Segoe UI', sans-serif !important;
+    color: #ffffff !important;
+    font-size: 0.88rem !important;
+    line-height: 1.55 !important;
+    min-height: 100px !important;
+    max-height: min(340px, 50vh) !important;
+    overflow-y: auto !important;
+    padding: 6px 4px 6px 0 !important;
+    white-space: pre-wrap !important;
+    box-sizing: border-box !important;
+}
+
 #commander-suicide-overlay .suicide-popup-body-text,
 #commander-penalty-overlay .suicide-popup-body-text,
 #commander-security-overlay .suicide-popup-body-text,
