@@ -233,6 +233,8 @@
                 global.player.privacy = dossier.privacy;
             }
             if (dossier.avatarUrl) global.player.avatarUrl = dossier.avatarUrl;
+            if (dossier.country) global.player.country = String(dossier.country);
+            if (dossier.timezone) global.player.timezone = String(dossier.timezone);
             if (Array.isArray(dossier.ageHistory)) global.player.ageHistory = dossier.ageHistory.slice();
             if (Array.isArray(dossier.awards)) {
                 global.player.awards = typeof global.enrichAchievementRecords === 'function'
@@ -255,6 +257,14 @@
         }
         if (typeof global.refreshProfileCommanderNameDisplay === 'function') {
             global.refreshProfileCommanderNameDisplay();
+        }
+
+        const needsLocaleDetect = !String(dossier.country || '').trim() || !String(dossier.timezone || '').trim();
+        if (needsLocaleDetect && typeof global.autoDetectPlayerLocale === 'function') {
+            global.autoDetectPlayerLocale();
+        }
+        if (typeof global.persistCommanderLocaleToServer === 'function') {
+            global.persistCommanderLocaleToServer();
         }
     }
 
@@ -291,6 +301,8 @@
             dossier.medals = Array.isArray(global.player.medals) ? global.player.medals : [];
             dossier.membershipTitle = String(global.player.membershipTitle || 'Basic');
             dossier.premiumMember = global.localStorage.getItem(LEGACY_KEYS.premiumMember) === 'true';
+            if (global.player.country) dossier.country = String(global.player.country).trim();
+            if (global.player.timezone) dossier.timezone = String(global.player.timezone).trim();
         }
         try {
             const chronicleRaw = global.localStorage.getItem(LEGACY_KEYS.chronicleXp);

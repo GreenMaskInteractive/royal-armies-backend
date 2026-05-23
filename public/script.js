@@ -2556,7 +2556,29 @@ function autoDetectPlayerLocale() {
         player.country = "Global Sector";
         player.timezone = "Local Time (GMT+0)";
     }
+
+    if (typeof persistCommanderLocaleToServer === 'function') {
+        persistCommanderLocaleToServer();
+    }
 }
+
+function persistCommanderLocaleToServer() {
+    if (typeof player === 'undefined' || !player) return;
+    const country = String(player.country || '').trim();
+    const timezone = String(player.timezone || '').trim();
+    if (!country && !timezone) return;
+
+    const username = typeof getActiveCommanderUsername === 'function'
+        ? getActiveCommanderUsername()
+        : (localStorage.getItem('activeCommanderUser') || '');
+    if (!username || String(username).trim().toLowerCase() === 'testaccount') return;
+
+    if (typeof scheduleCommanderDossierSave === 'function') {
+        scheduleCommanderDossierSave({ country, timezone });
+    }
+}
+
+window.persistCommanderLocaleToServer = persistCommanderLocaleToServer;
 
 function getDefaultLoreUIMount() {
     return {

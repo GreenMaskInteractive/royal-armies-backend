@@ -1127,6 +1127,8 @@ function serializeCommanderDossierForClient(commander) {
         bio: bioSource.trim().slice(0, COMMANDER_PROFILE_BIO_MAX),
         privacy: normalizeCommanderProfilePrivacy(commander.privacy),
         avatarUrl: String(commander.avatarUrl || '').slice(0, 512),
+        country: String(commander.country || '').trim().slice(0, 120),
+        timezone: String(commander.timezone || '').trim().slice(0, 120),
         ageHistory: normalizeCommanderDossierArray(commander.ageHistory, 50),
         awards: enrichCommanderAwardsForClient(commander.awards),
         medals: normalizeCommanderDossierArray(commander.medals, 100),
@@ -1152,6 +1154,12 @@ function buildCommanderDossierPatch(body) {
     }
     if ('avatarUrl' in body) {
         patch.avatarUrl = String(body.avatarUrl ?? '').trim().slice(0, 512);
+    }
+    if ('country' in body) {
+        patch.country = String(body.country ?? '').trim().slice(0, 120);
+    }
+    if ('timezone' in body) {
+        patch.timezone = String(body.timezone ?? '').trim().slice(0, 120);
     }
     if ('ageHistory' in body) {
         patch.ageHistory = normalizeCommanderDossierArray(body.ageHistory, 50);
@@ -1181,7 +1189,7 @@ function buildCommanderDossierPatch(body) {
     if (Object.keys(patch).length) {
         patch.dossierUpdatedAt = new Date().toISOString();
     }
-    if ('bio' in patch || 'privacy' in patch || 'avatarUrl' in patch) {
+    if ('bio' in patch || 'privacy' in patch || 'avatarUrl' in patch || 'country' in patch || 'timezone' in patch) {
         patch.profileUpdatedAt = patch.dossierUpdatedAt || new Date().toISOString();
     }
 
@@ -1450,6 +1458,8 @@ app.post('/register', async (req, res) => {
             bio: '',
             privacy: 'Public',
             avatarUrl: '',
+            country: '',
+            timezone: '',
             ageHistory: [],
             awards: [],
             medals: [],
