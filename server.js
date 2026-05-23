@@ -947,11 +947,35 @@ function buildCommanderAchievementRecord(definition, username) {
         label: definition.label,
         achievement: copy,
         description: copy,
-        iconUrl: definition.iconUrl,
+        iconUrl: String(definition.iconUrl || '').trim(),
         xpReward: Number(definition.xpReward ?? definition.xp ?? 0) || 0,
         username: subject,
         earnedAt: new Date().toISOString()
     };
+}
+
+function enrichCommanderAwardsForClient(awards) {
+    const list = normalizeCommanderDossierArray(awards, 100);
+    return sortCommanderAwardsByCatalog(list.map((entry) => {
+        const id = String(entry?.id || entry?.achievementId || '').trim();
+        const definition = ACHIEVEMENT_CATALOG[id];
+        const copy = entry?.achievement || entry?.description || definition?.achievement || '';
+
+        if (!definition) {
+            const iconUrl = String(entry?.iconUrl || entry?.icon || '').trim();
+            return iconUrl ? { ...entry, iconUrl } : entry;
+        }
+
+        return {
+            ...entry,
+            id: definition.id,
+            label: entry.label || definition.label,
+            achievement: copy,
+            description: copy,
+            iconUrl: String(entry.iconUrl || entry.icon || definition.iconUrl).trim(),
+            xpReward: Number(entry.xpReward ?? entry.xp ?? definition.xpReward) || 0
+        };
+    }));
 }
 
 function insertCommanderAchievementInCatalogOrder(awards, record) {
@@ -981,8 +1005,16 @@ function ensureFirstTimerAchievementForCommander(commander, options = {}) {
     const definition = ACHIEVEMENT_CATALOG.first_timer;
     const awards = normalizeCommanderDossierArray(commander.awards, 100);
     if (commanderAwardsIncludeId(awards, definition.id)) {
-        commander.awards = sortCommanderAwardsByCatalog(awards);
-        return { added: false, record: null, reason: 'already_owned' };
+        const enriched = enrichCommanderAwardsForClient(awards);
+        const repaired = JSON.stringify(enriched) !== JSON.stringify(awards);
+        commander.awards = enriched;
+        if (repaired && options.deferWrite !== true) {
+            db.get('commanders')
+                .find({ username: commander.username })
+                .assign({ awards: commander.awards })
+                .write();
+        }
+        return { added: false, record: null, reason: repaired ? 'repaired_metadata' : 'already_owned' };
     }
 
     const record = buildCommanderAchievementRecord(definition, commander.username);
@@ -1001,17 +1033,28 @@ function ensureFirstTimerAchievementForCommander(commander, options = {}) {
 function backfillFirstTimerAchievementForAllCommanders() {
     const commanders = db.get('commanders').value() || [];
     let added = 0;
+    let repaired = 0;
 
     commanders.forEach((commander) => {
         const username = String(commander?.username || '').trim();
         if (!username || isHiddenRegistrationUsername(username)) return;
+
+        const before = JSON.stringify(commander.awards || []);
+        commander.awards = enrichCommanderAwardsForClient(commander.awards);
+        if (JSON.stringify(commander.awards) !== before) repaired += 1;
+
         const result = ensureFirstTimerAchievementForCommander(commander, { deferWrite: true });
         if (result.added) added += 1;
     });
 
-    if (added > 0) {
+    if (added > 0 || repaired > 0) {
         db.set('commanders', commanders).write();
-        console.log(`[NEXUS] Granted First Timer achievement to ${added} commander(s).`);
+        if (added > 0) {
+            console.log(`[NEXUS] Granted First Timer achievement to ${added} commander(s).`);
+        }
+        if (repaired > 0) {
+            console.log(`[NEXUS] Repaired achievement icon metadata for ${repaired} commander(s).`);
+        }
     }
 }
 
@@ -1052,7 +1095,7 @@ function serializeCommanderDossierForClient(commander) {
         privacy: normalizeCommanderProfilePrivacy(commander.privacy),
         avatarUrl: String(commander.avatarUrl || '').slice(0, 512),
         ageHistory: normalizeCommanderDossierArray(commander.ageHistory, 50),
-        awards: sortCommanderAwardsByCatalog(normalizeCommanderDossierArray(commander.awards, 100)),
+        awards: enrichCommanderAwardsForClient(commander.awards),
         medals: normalizeCommanderDossierArray(commander.medals, 100),
         membershipTitle: String(commander.membershipTitle || 'Basic').slice(0, 64),
         premiumMember: !!commander.premiumMember,
@@ -1081,7 +1124,7 @@ function buildCommanderDossierPatch(body) {
         patch.ageHistory = normalizeCommanderDossierArray(body.ageHistory, 50);
     }
     if ('awards' in body) {
-        patch.awards = sortCommanderAwardsByCatalog(normalizeCommanderDossierArray(body.awards, 100));
+        patch.awards = enrichCommanderAwardsForClient(body.awards);
     }
     if ('medals' in body) {
         patch.medals = normalizeCommanderDossierArray(body.medals, 100);

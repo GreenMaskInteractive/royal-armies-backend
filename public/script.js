@@ -3784,6 +3784,16 @@ window.hideSaveChangesConfirmation = hideSaveChangesConfirmation;
 async function bootstrapMainPortalAuthOnLoad() {
     await ensurePortalAuthRestored();
     syncPlayerFromActiveCommanderStorage();
+    if (isPortalUserAuthenticated() && typeof fetchCommanderDossierFromServer === 'function') {
+        await fetchCommanderDossierFromServer();
+    } else if (typeof enrichAchievementRecords === 'function' && typeof player !== 'undefined' && Array.isArray(player.awards)) {
+        player.awards = enrichAchievementRecords(player.awards);
+        try {
+            localStorage.setItem('savedCommanderAwards', JSON.stringify(player.awards));
+        } catch (_err) {
+            /* ignore */
+        }
+    }
     if (isMainPortalHub()) {
         refreshMainPortalAuthChrome();
         if (typeof applyPortalNavAccessRestrictions === 'function') {

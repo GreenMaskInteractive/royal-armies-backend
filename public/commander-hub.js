@@ -432,7 +432,14 @@ function loadCommanderAwardRecords(sourcePlayer) {
             awards = [];
         }
     }
-    return sortCommanderAwardDisplayList(Array.isArray(awards) ? awards : []);
+    const list = Array.isArray(awards) ? awards : [];
+    if (typeof enrichAchievementRecords === 'function') {
+        return enrichAchievementRecords(list);
+    }
+    if (window.RoyalArmiesAchievements && typeof window.RoyalArmiesAchievements.enrichAchievementRecords === 'function') {
+        return window.RoyalArmiesAchievements.enrichAchievementRecords(list);
+    }
+    return sortCommanderAwardDisplayList(list);
 }
 
 function sortCommanderAwardDisplayList(awards) {
@@ -560,7 +567,13 @@ function buildPublicProfileAwardsHtml(awards) {
     const chips = awards.map((award, index) => {
         const label = award.label || award.name || `Award ${index + 1}`;
         const achievement = award.achievement || award.description || 'Achievement details forthcoming.';
-        const iconUrl = award.iconUrl || award.icon || '';
+        const iconUrl = (typeof resolveAchievementIconUrl === 'function')
+            ? resolveAchievementIconUrl(award)
+            : (typeof window !== 'undefined'
+                && window.RoyalArmiesAchievements
+                && typeof window.RoyalArmiesAchievements.resolveAchievementIconUrl === 'function'
+                ? window.RoyalArmiesAchievements.resolveAchievementIconUrl(award)
+                : (award.iconUrl || award.icon || ''));
         const iconMarkup = iconUrl
             ? `<img class="public-profile-award-icon-img" src="${escapePublicProfileHtml(iconUrl)}" alt="">`
             : `<span class="public-profile-award-icon-fallback" aria-hidden="true">🏅</span>`;

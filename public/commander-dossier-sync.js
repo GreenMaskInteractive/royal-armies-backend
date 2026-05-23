@@ -234,7 +234,11 @@
             }
             if (dossier.avatarUrl) global.player.avatarUrl = dossier.avatarUrl;
             if (Array.isArray(dossier.ageHistory)) global.player.ageHistory = dossier.ageHistory.slice();
-            if (Array.isArray(dossier.awards)) global.player.awards = dossier.awards.slice();
+            if (Array.isArray(dossier.awards)) {
+                global.player.awards = typeof global.enrichAchievementRecords === 'function'
+                    ? global.enrichAchievementRecords(dossier.awards)
+                    : dossier.awards.slice();
+            }
             if (Array.isArray(dossier.medals)) global.player.medals = dossier.medals.slice();
             if (dossier.membershipTitle) global.player.membershipTitle = dossier.membershipTitle;
         }

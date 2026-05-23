@@ -74,6 +74,57 @@
         });
     }
 
+    function resolvePortalPublicAssetUrl(relativePath) {
+        const raw = String(relativePath || '').trim();
+        if (!raw) return '';
+        if (/^https?:\/\//i.test(raw) || raw.startsWith('data:')) return raw;
+
+        try {
+            if (raw.startsWith('/')) {
+                return new URL(raw, global.location.origin).href;
+            }
+            return new URL(raw, global.location.href).href;
+        } catch (_err) {
+            const normalized = raw.replace(/^\.\//, '');
+            return normalized.startsWith('/') ? normalized : `/${normalized}`;
+        }
+    }
+
+    function enrichAchievementRecord(record) {
+        if (!record || typeof record !== 'object') return record;
+
+        const id = String(record.id || record.achievementId || '').trim();
+        const definition = ACHIEVEMENT_DEFINITIONS[id];
+        const copy = record.achievement || record.description || definition?.achievement || '';
+        const catalogIcon = definition?.iconUrl || '';
+        const iconUrl = resolvePortalPublicAssetUrl(record.iconUrl || record.icon || catalogIcon);
+
+        if (!definition) {
+            return iconUrl ? { ...record, iconUrl } : record;
+        }
+
+        return {
+            ...record,
+            id: definition.id,
+            label: record.label || definition.label,
+            achievement: copy,
+            description: copy,
+            iconUrl,
+            xpReward: Number(record.xpReward ?? record.xp ?? definition.xpReward) || 0
+        };
+    }
+
+    function enrichAchievementRecords(awards) {
+        return sortAwardsByDisplayOrder(
+            (Array.isArray(awards) ? awards : []).map((entry) => enrichAchievementRecord(entry))
+        );
+    }
+
+    function resolveAchievementIconUrl(record) {
+        const enriched = enrichAchievementRecord(record || {});
+        return enriched.iconUrl || resolvePortalPublicAssetUrl(FIRST_TIMER_DEFINITION.iconUrl);
+    }
+
     function loadCommanderAwardsList() {
         let list = [];
         if (typeof global.player !== 'undefined' && Array.isArray(global.player.awards)) {
@@ -89,7 +140,7 @@
                 /* ignore */
             }
         }
-        return sortAwardsByDisplayOrder(list);
+        return enrichAchievementRecords(list);
     }
 
     async function syncCommanderAwardsFromServer() {
@@ -101,7 +152,7 @@
     }
 
     function persistCommanderAwardsList(awards) {
-        const list = sortAwardsByDisplayOrder(Array.isArray(awards) ? awards : []);
+        const list = enrichAchievementRecords(Array.isArray(awards) ? awards : []);
         try {
             global.localStorage.setItem(COMMANDER_AWARDS_STORAGE_KEY, JSON.stringify(list));
         } catch (_err) {
@@ -195,9 +246,9 @@
     }
 
     function resolveAchievementToastDisplay(record) {
-        const source = record || FIRST_TIMER_DEFINITION;
+        const source = enrichAchievementRecord(record || FIRST_TIMER_DEFINITION);
         const title = String(source.label || FIRST_TIMER_DEFINITION.label).trim();
-        const iconUrl = source.iconUrl || FIRST_TIMER_DEFINITION.iconUrl;
+        const iconUrl = resolveAchievementIconUrl(source);
         const xpValue = Number(source.xpReward ?? source.xp ?? source.chronicleXp ?? 0);
         const xpLabel = Number.isFinite(xpValue) && xpValue > 0 ? `${xpValue} XP` : '';
         return { title, iconUrl, xpLabel };
@@ -272,8 +323,15 @@
         const titleEl = toast.querySelector('.achievement-unlock-title');
         const xpEl = toast.querySelector('.achievement-unlock-xp');
         if (iconEl) {
-            iconEl.src = display.iconUrl;
+            const fallbackIcon = resolveAchievementIconUrl(award);
+            iconEl.src = display.iconUrl || fallbackIcon;
             iconEl.alt = display.title;
+            iconEl.onerror = () => {
+                if (fallbackIcon && iconEl.src !== fallbackIcon) {
+                    iconEl.onerror = null;
+                    iconEl.src = fallbackIcon;
+                }
+            };
         }
         if (titleEl) titleEl.textContent = display.title;
         if (xpEl) {
@@ -503,6 +561,9 @@
         JOIN_AGE_QUERY_PARAM,
         PENDING_UNLOCKS_SESSION_KEY,
         sortAwardsByDisplayOrder,
+        enrichAchievementRecords,
+        resolveAchievementIconUrl,
+        resolvePortalPublicAssetUrl,
         markJoinAgeAttemptForAchievement,
         consumeJoinAgeAttemptFlag,
         hasCommanderAchievement,
@@ -537,6 +598,8 @@
     global.maybeShowPendingLoginAchievementUnlocks = maybeShowPendingLoginAchievementUnlocks;
     global.syncAchievementToastStackPosition = syncAchievementToastStackPosition;
     global.sortCommanderAwardsByDisplayOrder = sortAwardsByDisplayOrder;
+    global.enrichAchievementRecords = enrichAchievementRecords;
+    global.resolveAchievementIconUrl = resolveAchievementIconUrl;
 
     global.addEventListener('resize', syncAchievementToastStackPosition, { passive: true });
 })(window);
