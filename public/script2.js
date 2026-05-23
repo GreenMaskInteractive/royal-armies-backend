@@ -982,6 +982,12 @@ function launchGameRoundSector(isTutorialModeActive, clickEvent) {
     if (joinAgePortalTransitionActive) return;
     joinAgePortalTransitionActive = true;
 
+    if (typeof markJoinAgeAttemptForAchievement === 'function') {
+        markJoinAgeAttemptForAchievement();
+    } else if (window.RoyalArmiesAchievements && typeof window.RoyalArmiesAchievements.markJoinAgeAttemptForAchievement === 'function') {
+        window.RoyalArmiesAchievements.markJoinAgeAttemptForAchievement();
+    }
+
     const clickedHousing = clickEvent?.target?.closest?.('.action-btn-aura-housing')
         ?? clickEvent?.currentTarget?.closest?.('.action-btn-aura-housing');
 

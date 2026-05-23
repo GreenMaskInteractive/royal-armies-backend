@@ -157,6 +157,10 @@
         markPlayingActiveAgeLocally();
         await postAgeJoin();
         startGamePresenceLoop();
+
+        if (typeof global.fetchCommanderDossierFromServer === 'function') {
+            await global.fetchCommanderDossierFromServer();
+        }
     }
 
     function handleJoinAgeAchievementUnlock() {

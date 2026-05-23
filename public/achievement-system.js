@@ -33,19 +33,20 @@
     }
 
     function loadCommanderAwardsList() {
-        let awards = [];
         if (typeof global.player !== 'undefined' && Array.isArray(global.player.awards)) {
-            awards = global.player.awards.slice();
+            return global.player.awards.slice();
         }
-        if (!awards.length) {
-            try {
-                const cached = global.localStorage.getItem(COMMANDER_AWARDS_STORAGE_KEY);
-                if (cached) awards = JSON.parse(cached);
-            } catch (_err) {
-                awards = [];
+
+        try {
+            const cached = global.localStorage.getItem(COMMANDER_AWARDS_STORAGE_KEY);
+            if (cached) {
+                const parsed = JSON.parse(cached);
+                return Array.isArray(parsed) ? parsed : [];
             }
+        } catch (_err) {
+            /* ignore */
         }
-        return Array.isArray(awards) ? awards : [];
+        return [];
     }
 
     function persistCommanderAwardsList(awards) {
