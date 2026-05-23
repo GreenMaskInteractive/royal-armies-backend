@@ -126,7 +126,7 @@
             event.preventDefault();
             stopGamePresenceLoop();
             await postAgeLeave(false);
-            global.location.href = 'main.html';
+            global.location.href = '/main';
         });
     }
 
@@ -150,7 +150,7 @@
 
         const username = resolveGamePageUsername();
         if (!username) {
-            global.location.replace('main.html');
+            global.location.replace('/main');
             return;
         }
 

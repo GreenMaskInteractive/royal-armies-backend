@@ -1010,7 +1010,7 @@ function launchGameRoundSector(isTutorialModeActive, clickEvent) {
 
     const attemptGamePageHandoff = () => {
         if (!deployPulseFinished || !selectAudioFinished) return;
-        const destination = `game.html?tutorial=${isTutorialModeActive}&joinAge=1`;
+        const destination = `/game?tutorial=${isTutorialModeActive}&joinAge=1`;
         window.setTimeout(() => {
             localStorage.setItem('savedCommanderInActiveAge', 'true');
             if (typeof markJoinAgeAttemptForAchievement === 'function') {
@@ -1118,7 +1118,7 @@ function executeLogoutRedirect() {
         if (typeof refreshMainPortalAuthChrome === 'function') {
             refreshMainPortalAuthChrome();
         }
-        window.location.replace('/main.html');
+        window.location.replace('/main');
     };
 
     const logoutApi = (typeof resolveRoyalArmiesApiUrl === 'function')

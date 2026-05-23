@@ -1619,7 +1619,7 @@ function restoreLoginAuthButtons() {
 
 function redirectToAgePortal() {
     sessionStorage.setItem('royalArmiesAuthAudioPlay', 'granted');
-    window.location.assign('/main.html');
+    window.location.assign('/main');
 }
 
 async function handleLogin() {

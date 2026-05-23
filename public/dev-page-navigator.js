@@ -7,15 +7,19 @@
     const DEV_NAV_PORTS = new Set(['3000', '5500']);
 
     const DEV_SITE_PAGES = [
-        { id: 'index', label: 'Landing (redirect → main)', file: 'index.html' },
-        { id: 'main', label: 'Age Portal', file: 'main.html' },
-        { id: 'game', label: 'Game (WIP shell)', file: 'game.html' },
-        { id: 'ageportal', label: 'Age Portal (legacy redirect)', file: 'ageportal.html' },
-        { id: 'reset-password', label: 'Reset Password', file: 'reset-password.html' }
+        { id: 'index', label: 'Landing (redirect → main)', path: '/main', file: 'index.html' },
+        { id: 'main', label: 'Age Portal', path: '/main', file: 'main.html' },
+        { id: 'game', label: 'Game (WIP shell)', path: '/game', file: 'game.html' },
+        { id: 'ageportal', label: 'Age Portal (legacy redirect)', path: '/main', file: 'ageportal.html' },
+        { id: 'reset-password', label: 'Reset Password', path: '/reset-password', file: 'reset-password.html' }
     ];
 
     function isDevPageNavigatorEnabled() {
         return DEV_NAV_PORTS.has(String(global.location.port || ''));
+    }
+
+    function usesExtensionlessDevUrls() {
+        return String(global.location.port || '') === '3000';
     }
 
     function getPageDirectoryBase() {
@@ -24,12 +28,22 @@
         return lastSlash >= 0 ? path.slice(0, lastSlash + 1) : '/';
     }
 
-    function isDevPortalPersonaPage() {
-        const file = (global.location.pathname || '').split('/').pop() || '';
-        return file === 'main.html' || file === 'game.html' || file === '';
+    function getPathSlug() {
+        const segment = (global.location.pathname || '').split('/').filter(Boolean).pop() || '';
+        return segment.replace(/\.html$/i, '').toLowerCase();
     }
 
-    function resolveDevPageHref(fileName) {
+    function isDevPortalPersonaPage() {
+        const slug = getPathSlug();
+        return slug === 'main' || slug === 'game' || slug === '';
+    }
+
+    function resolveDevPageHref(page) {
+        if (!page) return '/';
+        if (usesExtensionlessDevUrls()) {
+            return page.path || '/main';
+        }
+        const fileName = page.file || 'main.html';
         const base = getPageDirectoryBase();
         if (base.endsWith('/')) {
             return `${base}${fileName}`;
@@ -38,14 +52,22 @@
     }
 
     function getCurrentPageId() {
-        const file = (global.location.pathname || '').split('/').pop() || '';
-        const match = DEV_SITE_PAGES.find((page) => page.file === file);
+        const slug = getPathSlug();
+        const match = DEV_SITE_PAGES.find((page) => {
+            const pageSlug = (page.path || '').replace(/^\//, '').toLowerCase();
+            const fileSlug = (page.file || '').replace(/\.html$/i, '').toLowerCase();
+            return slug === pageSlug || slug === fileSlug;
+        });
         return match ? match.id : '';
     }
 
-    function navigateToDevPage(fileName) {
-        if (!fileName) return;
-        global.location.assign(resolveDevPageHref(fileName));
+    function navigateToDevPage(pageRef) {
+        const page = typeof pageRef === 'string'
+            ? DEV_SITE_PAGES.find((entry) => entry.file === pageRef || entry.path === pageRef)
+            : pageRef;
+        const href = resolveDevPageHref(page || DEV_SITE_PAGES[1]);
+        if (!href) return;
+        global.location.assign(href);
     }
 
     function getCurrentDevViewMode() {
@@ -91,7 +113,8 @@
         const currentId = getCurrentPageId();
         const pageOptions = DEV_SITE_PAGES.map((page) => {
             const selected = page.id === currentId ? ' selected' : '';
-            return `<option value="${page.file}"${selected}>${page.label}</option>`;
+            const value = usesExtensionlessDevUrls() ? (page.path || '/main') : (page.file || 'main.html');
+            return `<option value="${value}"${selected}>${page.label}</option>`;
         }).join('');
 
         const viewMode = getCurrentDevViewMode();
@@ -145,13 +168,13 @@
 
         if (select) {
             select.addEventListener('change', () => {
-                navigateToDevPage(select.value);
+                global.location.assign(select.value);
             });
         }
 
         if (goBtn && select) {
             goBtn.addEventListener('click', () => {
-                navigateToDevPage(select.value);
+                global.location.assign(select.value);
             });
         }
 

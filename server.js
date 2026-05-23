@@ -1283,9 +1283,32 @@ if (!isProduction) {
     });
 }
 
-/* Legacy portal filename → main hub (bookmarks, old deploys, cached login script) */
-app.get(['/ageportal.html', '/ageportal'], (req, res) => {
-    res.redirect(301, '/main.html');
+const PUBLIC_DIR = path.join(__dirname, 'public');
+
+const PORTAL_HTML_PAGES = {
+    main: 'main.html',
+    game: 'game.html',
+    'reset-password': 'reset-password.html'
+};
+
+/* Extensionless portal URLs (before static so the address bar never shows .html) */
+app.get(['/ageportal', '/ageportal.html', '/index.html'], (req, res) => {
+    res.redirect(301, '/main');
+});
+
+app.get(['/main.html', '/game.html', '/reset-password.html'], (req, res) => {
+    const slug = req.path.replace(/^\//, '').replace(/\.html$/i, '');
+    res.redirect(301, `/${slug}`);
+});
+
+Object.entries(PORTAL_HTML_PAGES).forEach(([slug, fileName]) => {
+    app.get(`/${slug}`, (req, res) => {
+        res.sendFile(path.join(PUBLIC_DIR, fileName));
+    });
+});
+
+app.get(['/', '/index'], (req, res) => {
+    res.redirect(301, '/main');
 });
 
 /* Block 6b: Portal maintenance alert API (before static so routes are never shadowed) */
@@ -1306,7 +1329,7 @@ app.post('/api/portal/maintenance-alert', (req, res) => {
     res.json({ status: 'ok', ...payload });
 });
 
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static(PUBLIC_DIR));
 
 /* --- Section: Email Dispatch Engine --- */
 
@@ -1627,11 +1650,6 @@ app.post('/request-reset', async (req, res) => {
     }
 });
 
-/* Block 10: Reset Password Page Deliverer */
-app.get('/reset-password', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'reset-password.html'));
-});
-
 /* Block 11: Final Password Reset & Token Destruction */
 app.post('/reset-password', async (req, res) => {
     const { token, newPassword } = req.body;
@@ -1931,7 +1949,7 @@ app.get('/verify-email-change', (req, res) => {
             <body style="background:#000;color:#d4af37;font-family:Georgia,serif;text-align:center;padding:80px 20px;">
                 <h1>INVALID OR EXPIRED LINK</h1>
                 <p>This email change link is no longer valid.</p>
-                <a href="/main.html" style="color:#fff;">Return to portal</a>
+                <a href="/main" style="color:#fff;">Return to portal</a>
             </body>`);
     }
 
@@ -1959,7 +1977,7 @@ app.get('/verify-email-change', (req, res) => {
             <body style="background:#000;color:#d4af37;font-family:Georgia,serif;text-align:center;padding:80px 20px;">
                 <h1>EMAIL UNAVAILABLE</h1>
                 <p>That address is already registered to another commander. Request a new change from your profile.</p>
-                <a href="/main.html" style="color:#fff;">Return to portal</a>
+                <a href="/main" style="color:#fff;">Return to portal</a>
             </body>`);
     }
 
@@ -1978,7 +1996,7 @@ app.get('/verify-email-change', (req, res) => {
         <body style="background:#000;color:#d4af37;font-family:Georgia,serif;text-align:center;padding:80px 20px;">
             <h1>EMAIL UPDATED</h1>
             <p>Your account email for <strong>${commander.username}</strong> is now <strong>${newEmail}</strong>.</p>
-            <a href="/main.html" style="color:#fff;">Return to portal</a>
+            <a href="/main" style="color:#fff;">Return to portal</a>
         </body>`);
 });
 
@@ -2490,11 +2508,6 @@ app.post('/api/portal/age/leave', (req, res) => {
 
     removeAgeSession(username);
     res.json({ status: 'ok', ...getPortalLiveMetricsPayload() });
-});
-
-/* Block 14: Site root — Age Portal hub (landing page offline) */
-app.get(['/', '/index', '/index.html'], (req, res) => {
-    res.redirect(301, '/main.html');
 });
 
 /* ==========================================
