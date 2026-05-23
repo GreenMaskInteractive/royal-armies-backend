@@ -663,11 +663,9 @@ function renderPublicProfileCardContent(snapshot, options) {
 
     const visibilityPill = `<span class="public-profile-visibility-pill ${isPublic ? 'is-public' : 'is-private'}">${isPublic ? 'Public Profile' : 'Private Profile'}</span>`;
 
-    const bioColumnContent = hideSensitiveDetails
-        ? `<p class="public-profile-private-msg public-profile-private-notice">This commander keeps their nation, time zone, medals, achievements, and Age history private. Their public card still shows rank, class, and membership.</p>`
-        : (snapshot.description
-            ? `<p class="public-profile-bio-text">${escapePublicProfileHtml(snapshot.description)}</p>`
-            : '<p class="public-profile-empty-state public-profile-bio-empty">No bio written yet.</p>');
+    const bioColumnContent = snapshot.description
+        ? `<p class="public-profile-bio-text">${escapePublicProfileHtml(snapshot.description)}</p>`
+        : '<p class="public-profile-empty-state public-profile-bio-empty">No bio written yet.</p>';
 
     const locationMetaRow = hideSensitiveDetails
         ? ''
@@ -693,8 +691,17 @@ function renderPublicProfileCardContent(snapshot, options) {
                 </section>
            </div>`;
 
-    const splitBodySection = `
-        <div class="public-profile-split-body${hideSensitiveDetails ? ' public-profile-split-body--restricted' : ''}">
+    const splitBodySection = hideSensitiveDetails
+        ? `
+        <div class="public-profile-split-body public-profile-split-body--restricted public-profile-split-body--private-only">
+            <section class="public-profile-section public-profile-bio-section">
+                <h4 class="public-profile-section-label">Bio</h4>
+                <div class="public-profile-bio-panel">${bioColumnContent}</div>
+            </section>
+        </div>
+    `
+        : `
+        <div class="public-profile-split-body">
             <div class="public-profile-split-column public-profile-split-left">
                 <section class="public-profile-section public-profile-bio-section">
                     <h4 class="public-profile-section-label">Bio</h4>
@@ -710,6 +717,21 @@ function renderPublicProfileCardContent(snapshot, options) {
         : `<footer class="public-profile-card-actions">
             <button type="button" class="public-profile-dismiss-btn" onclick="closePublicCommanderProfileCard(event)">Close</button>
         </footer>`;
+
+    if (hideSensitiveDetails) {
+        return `
+            <header class="public-profile-identity-header public-profile-identity-header--private-only">
+                <div class="public-profile-avatar-ring">
+                    <img class="public-profile-avatar-img" src="${escapePublicProfileHtml(snapshot.avatarUrl)}" alt="${escapePublicProfileHtml(snapshot.name)} emblem">
+                </div>
+                <div class="public-profile-identity-copy">
+                    <h2 id="public-profile-card-title" class="public-profile-commander-name">${escapePublicProfileHtml(snapshot.name)}</h2>
+                </div>
+            </header>
+            ${splitBodySection}
+            ${footerMarkup}
+        `;
+    }
 
     return `
         <header class="public-profile-identity-header">
