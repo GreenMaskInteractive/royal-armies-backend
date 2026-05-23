@@ -218,7 +218,11 @@ function syncCommanderHubModalSectionState(tabName) {
 }
 
 function loadCommanderHubSection(tabName, clickEvent) {
-    const resolvedTab = normalizeCommanderHubTabName(tabName);
+    let resolvedTab = normalizeCommanderHubTabName(tabName);
+    const mount = getCommanderHubUIMount();
+    if (resolvedTab === 'view-profile' && mount.modalFrame?.id === 'commander-hub-modal') {
+        resolvedTab = 'profile';
+    }
 
     if (resolvedTab === 'view-profile') {
         window.activeCommanderHubPortalTab = resolvedTab;
@@ -610,14 +614,9 @@ function renderPublicProfileCardContent(snapshot, options) {
         </div>
     `;
 
-    const editProfileBtn = viewingSelf && context !== 'hub'
-        ? `<button type="button" class="public-profile-edit-link-btn" onclick="closePublicCommanderProfileCard(event); openCommanderHubModal('profile', event);">Edit My Profile</button>`
-        : '';
-
     const footerMarkup = context === 'hub'
         ? ''
         : `<footer class="public-profile-card-actions">
-            ${editProfileBtn}
             <button type="button" class="public-profile-dismiss-btn" onclick="closePublicCommanderProfileCard(event)">Close</button>
         </footer>`;
 
