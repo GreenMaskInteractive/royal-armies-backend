@@ -142,7 +142,6 @@
     function buildAchievementToastElement(award) {
         const record = award || WHO_SLOW_DOWN_DEFINITION;
         const label = record.label || WHO_SLOW_DOWN_DEFINITION.label;
-        const body = record.achievement || record.description || WHO_SLOW_DOWN_DEFINITION.achievement;
         const iconUrl = record.iconUrl || WHO_SLOW_DOWN_DEFINITION.iconUrl;
 
         const toast = global.document.createElement('div');
@@ -169,7 +168,6 @@
                     </div>
                     <div class="achievement-unlock-copy-rail">
                         <h2 class="achievement-unlock-title"></h2>
-                        <p class="achievement-unlock-body"></p>
                     </div>
                 </div>
             </div>
@@ -177,13 +175,11 @@
 
         const iconEl = toast.querySelector('.achievement-unlock-icon');
         const titleEl = toast.querySelector('.achievement-unlock-title');
-        const bodyEl = toast.querySelector('.achievement-unlock-body');
         if (iconEl) {
             iconEl.src = iconUrl;
             iconEl.alt = label;
         }
         if (titleEl) titleEl.textContent = label;
-        if (bodyEl) bodyEl.textContent = body;
 
         return toast;
     }

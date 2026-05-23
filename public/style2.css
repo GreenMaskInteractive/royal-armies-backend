@@ -7694,8 +7694,10 @@ body.developer-maintenance-alert-active #page-landing {
 .achievement-unlock-toast .achievement-unlock-copy-rail {
     flex: 1 1 auto !important;
     min-width: 0 !important;
-    gap: 4px !important;
+    gap: 0 !important;
     padding: 6px 7px !important;
+    align-items: center !important;
+    justify-content: center !important;
     background: rgba(8, 6, 4, 0.55) !important;
     border: 1px solid rgba(184, 144, 48, 0.18) !important;
     box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.45) !important;
@@ -7721,12 +7723,8 @@ body.developer-maintenance-alert-active #page-landing {
 
 .achievement-unlock-toast .achievement-unlock-title {
     font-size: 0.68rem !important;
-    line-height: 1.2 !important;
-}
-
-.achievement-unlock-toast .achievement-unlock-body {
-    font-size: 0.58rem !important;
-    line-height: 1.35 !important;
+    line-height: 1.25 !important;
+    margin: 0 !important;
 }
 
 .achievement-unlock-banner-content {
