@@ -2021,8 +2021,8 @@ body {
     }
 
     .lore-reader-prose {
-        font-size: 0.65rem !important;
-        line-height: 1.38 !important;
+        font-size: 1.15rem !important;
+        line-height: 1.8 !important;
     }
 
     .lore-reader-prose::first-letter {

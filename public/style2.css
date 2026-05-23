@@ -149,7 +149,7 @@
     width: 100% !important;
     max-width: 100% !important;
     box-sizing: border-box !important;
-    padding: 0 20px 2px 20px !important;
+    padding: 0 20px 2px 25px !important;
     margin: 0 0 -2px 0 !important;
     min-height: 56px !important;
     position: relative !important;
@@ -7384,7 +7384,7 @@ body.developer-maintenance-alert-active #page-landing {
     }
 
     .lore-reader-prose {
-        font-size: 0.85rem !important;
+        font-size: 1.15rem !important;
     }
 
     .lore-reader-prose::first-letter {
