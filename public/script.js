@@ -232,6 +232,10 @@ async function applyLocalDevPlayerBypassLogin() {
 
 async function restorePortalAuthSession() {
     if (typeof isLocalDevAutoLoginEnabled === 'function' && isLocalDevAutoLoginEnabled()) {
+        if (typeof getLocalDevViewMode === 'function' && getLocalDevViewMode() === 'guest') {
+            clearPortalAuthStorage();
+            return '';
+        }
         if (typeof shouldSkipLocalDevAutoLogin !== 'function' || !shouldSkipLocalDevAutoLogin()) {
             const viewMode = typeof getLocalDevViewMode === 'function' ? getLocalDevViewMode() : 'owner';
             if (viewMode === 'player') {
@@ -389,10 +393,16 @@ function closeMainPortalLoginModal() {
 
 function hydratePlayerPublicDossierFromStorage() {
     if (typeof player === 'undefined') return;
-    const savedBio = localStorage.getItem('savedCommanderBio');
-    if (savedBio !== null) player.description = savedBio;
-    const savedPrivacy = localStorage.getItem('savedCommanderPrivacy');
-    if (savedPrivacy === 'Public' || savedPrivacy === 'Private') player.privacy = savedPrivacy;
+    if (typeof hydrateCommanderDossierFromLocalCache === 'function') {
+        hydrateCommanderDossierFromLocalCache();
+        if (!Array.isArray(player.ageHistory)) player.ageHistory = [];
+        if (!Array.isArray(player.awards)) player.awards = [];
+        if (!Array.isArray(player.medals)) player.medals = [];
+        return;
+    }
+    const cachedProfile = readCommanderProfileFromLocalCache();
+    player.description = cachedProfile.bio;
+    player.privacy = cachedProfile.privacy;
     try {
         const ageCache = localStorage.getItem('savedCommanderAgeHistory');
         if (ageCache) player.ageHistory = JSON.parse(ageCache);
@@ -426,6 +436,11 @@ function syncPlayerFromActiveCommanderStorage() {
         hydrateCommanderMembershipFromStorage();
     }
     loadCommanderMailboxDossiersFromStorage();
+    if (typeof fetchCommanderDossierFromServer === 'function') {
+        fetchCommanderDossierFromServer();
+    } else if (typeof fetchCommanderProfileFromServer === 'function') {
+        fetchCommanderProfileFromServer();
+    }
     fetchCommanderMailboxFromServer().finally(() => {
         if (typeof startPortalMailboxPolling === 'function') startPortalMailboxPolling();
     });
@@ -1041,6 +1056,96 @@ function getMailboxApiUsername() {
     const trimmed = String(user || '').trim();
     if (!trimmed || trimmed.toLowerCase() === 'testaccount') return '';
     return trimmed;
+}
+
+function getCommanderProfileStorageKey() {
+    const user = getMailboxApiUsername();
+    const fallback = typeof getActiveCommanderUsername === 'function' ? getActiveCommanderUsername() : '';
+    const trimmed = String(user || fallback || '').trim();
+    return `royalArmiesCommanderProfile:${trimmed || 'guest'}`;
+}
+
+function readCommanderProfileFromLocalCache() {
+    try {
+        const raw = localStorage.getItem(getCommanderProfileStorageKey());
+        if (raw) {
+            const data = JSON.parse(raw);
+            return {
+                bio: data.bio != null ? String(data.bio) : '',
+                privacy: data.privacy === 'Private' ? 'Private' : 'Public'
+            };
+        }
+    } catch (err) {
+        console.warn('Profile cache read skipped:', err.message);
+    }
+
+    const savedBio = localStorage.getItem('savedCommanderBio');
+    const savedPrivacy = localStorage.getItem('savedCommanderPrivacy');
+    return {
+        bio: savedBio !== null ? String(savedBio) : '',
+        privacy: savedPrivacy === 'Private' ? 'Private' : 'Public'
+    };
+}
+
+function cacheCommanderProfileLocally(bio, privacy) {
+    const payload = {
+        bio: String(bio ?? ''),
+        privacy: privacy === 'Private' ? 'Private' : 'Public',
+        savedAt: Date.now()
+    };
+
+    try {
+        localStorage.setItem(getCommanderProfileStorageKey(), JSON.stringify(payload));
+        localStorage.setItem('savedCommanderBio', payload.bio);
+        localStorage.setItem('savedCommanderPrivacy', payload.privacy);
+    } catch (err) {
+        console.warn('Profile cache save skipped:', err.message);
+    }
+}
+
+async function fetchCommanderProfileFromServer() {
+    const username = getMailboxApiUsername();
+    if (!username || !isMailboxApiAvailable()) return false;
+
+    try {
+        const response = await fetch(
+            `/api/portal/account/profile?username=${encodeURIComponent(username)}`,
+            { cache: 'no-store' }
+        );
+        const payload = await response.json();
+        if (!response.ok || payload.status !== 'ok') return false;
+
+        if (typeof player !== 'undefined') {
+            player.description = String(payload.bio ?? '');
+            player.privacy = payload.privacy === 'Private' ? 'Private' : 'Public';
+            cacheCommanderProfileLocally(player.description, player.privacy);
+        }
+        return true;
+    } catch (err) {
+        console.warn('Profile sync failed:', err.message);
+        return false;
+    }
+}
+
+async function saveCommanderProfileToServer(bio, privacy) {
+    const username = getMailboxApiUsername();
+    if (!username || !isMailboxApiAvailable()) return null;
+
+    try {
+        const response = await fetch('/api/portal/account/profile', {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username, bio, privacy })
+        });
+        const payload = await response.json();
+        if (!response.ok || payload.status !== 'ok') return false;
+
+        cacheCommanderProfileLocally(payload.bio ?? bio, payload.privacy ?? privacy);
+        return true;
+    } catch (err) {
+        console.warn('Profile save failed:', err.message);
+        return false;
+    }
 }
 
 /* isMailboxApiAvailable — provided by dev-environment.js */
@@ -2698,6 +2803,9 @@ function loadCommanderAgeResetStore() {
 
 function saveCommanderAgeResetStore(store) {
     localStorage.setItem(COMMANDER_AGE_RESET_USAGE_KEY, JSON.stringify(store || {}));
+    if (typeof scheduleCommanderDossierSave === 'function') {
+        scheduleCommanderDossierSave({ ageResetUsage: store || {} });
+    }
 }
 
 function createFreshCommanderAgeResetEntry(sessionKey) {
@@ -3429,8 +3537,8 @@ function captureProfileBioFromEditor() {
     if (typeof player !== 'undefined' && player.description != null) {
         return String(player.description).trim();
     }
-    const cachedBio = localStorage.getItem('savedCommanderBio');
-    return cachedBio !== null ? cachedBio.trim() : '';
+    const cachedBio = readCommanderProfileFromLocalCache().bio;
+    return cachedBio.trim();
 }
 
 function captureProfilePrivacyFromEditor() {
@@ -3441,28 +3549,36 @@ function captureProfilePrivacyFromEditor() {
     if (typeof player !== 'undefined' && (player.privacy === 'Public' || player.privacy === 'Private')) {
         return player.privacy;
     }
-    const cachedPrivacy = localStorage.getItem('savedCommanderPrivacy');
+    const cachedPrivacy = readCommanderProfileFromLocalCache().privacy;
     return cachedPrivacy === 'Private' ? 'Private' : 'Public';
 }
 
-function persistProfileFieldsFromEditor() {
-    if (typeof player === 'undefined') return false;
+async function persistProfileFieldsFromEditor() {
+    if (typeof player === 'undefined') return { saved: false, synced: null };
 
     const nextBio = captureProfileBioFromEditor();
     const nextPrivacy = captureProfilePrivacyFromEditor();
 
     player.description = nextBio;
     player.privacy = nextPrivacy;
-    localStorage.setItem('savedCommanderBio', nextBio);
-    localStorage.setItem('savedCommanderPrivacy', nextPrivacy);
+    cacheCommanderProfileLocally(nextBio, nextPrivacy);
 
-    return true;
+    if (typeof scheduleCommanderDossierSave === 'function') {
+        const synced = await scheduleCommanderDossierSave(
+            { bio: nextBio, privacy: nextPrivacy },
+            { immediate: true }
+        );
+        return { saved: true, synced };
+    }
+
+    const synced = await saveCommanderProfileToServer(nextBio, nextPrivacy);
+    return { saved: true, synced };
 }
 
 function saveSettings() { 
     if (typeof playToggleLeverSFX === 'function') playToggleLeverSFX();
 
-    setTimeout(() => {
+    setTimeout(async () => {
         confirmedScale = stagedScale; 
         document.documentElement.style.setProperty('--ui-scale', confirmedScale);
 
@@ -3503,7 +3619,14 @@ function saveSettings() {
         localStorage.setItem('savedPortalMasterVol', confirmedMasterVol);
         localStorage.setItem('savedPortalMusicVol', confirmedMusicVol);
 
-        const savedProfile = persistProfileFieldsFromEditor();
+        const profileResult = await persistProfileFieldsFromEditor();
+        const savedProfile = profileResult.saved;
+        if (typeof saveFullCommanderDossierToServer === 'function') {
+            const dossierSynced = await saveFullCommanderDossierToServer();
+            if (savedProfile && profileResult.synced !== false && dossierSynced === false) {
+                profileResult.synced = false;
+            }
+        }
         hasUnsavedChanges = false;
 
         const hubFrame = document.getElementById('portal-commander-hub-page')
@@ -3525,11 +3648,15 @@ function saveSettings() {
             }
         }
 
-        showSaveChangesConfirmation(
-            savedProfile
-                ? 'Profile and settings changes have been saved.'
-                : 'Your changes have been saved.'
-        );
+        let confirmationText = 'Your changes have been saved.';
+        if (savedProfile) {
+            if (profileResult.synced === false) {
+                confirmationText = 'Settings saved. Your profile bio could not sync to your account — try again shortly.';
+            } else {
+                confirmationText = 'Profile and settings changes have been saved.';
+            }
+        }
+        showSaveChangesConfirmation(confirmationText);
     }, 10);
 } 
 
@@ -3657,6 +3784,11 @@ async function bootstrapMainPortalAuthOnLoad() {
         if (typeof syncPortalMobileNavIdentity === 'function') {
             syncPortalMobileNavIdentity();
         }
+    }
+    if (typeof maybeRunDevAchievementPopupFromQuery === 'function') {
+        maybeRunDevAchievementPopupFromQuery();
+    } else if (window.RoyalArmiesAchievements && typeof window.RoyalArmiesAchievements.maybeRunDevAchievementPopupFromQuery === 'function') {
+        window.RoyalArmiesAchievements.maybeRunDevAchievementPopupFromQuery();
     }
 }
 
@@ -4047,6 +4179,9 @@ function selectPresetAvatar(chosenUrl) {
     // Saves the selected image path onto your device disk cache layout tracks!
     // This allows your isolated script2.js file to read and load your custom choice natively.
     localStorage.setItem("savedProfileAvatarUrl", chosenUrl);
+    if (typeof scheduleCommanderDossierSave === 'function') {
+        scheduleCommanderDossierSave({ avatarUrl: chosenUrl });
+    }
     
     closeAvatarArmorySelector();
 }

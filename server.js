@@ -351,6 +351,7 @@ function updateCommunityChatMessageInStore(store, messageId, posterUsername, pat
 
 /* --- Section: Commander mailbox (ledger-backed player mail) --- */
 const MAILBOX_TOPIC_MAX = 60;
+const COMMANDER_PROFILE_BIO_MAX = 250;
 const MAILBOX_BODY_MAX = 4000;
 const MAILBOX_RECIPIENTS_MAX = 25;
 
@@ -684,6 +685,196 @@ function findCommanderByUsername(username) {
     }) || null;
 }
 
+function normalizeCommanderProfilePrivacy(value) {
+    return String(value || '').trim() === 'Private' ? 'Private' : 'Public';
+}
+
+function getDefaultCommanderChronicleXp() {
+    return {
+        version: 2,
+        totalXp: 0,
+        byActivity: {
+            cityBattles: { actions: 0, xp: 0 },
+            pvpAttacks: { actions: 0, xp: 0 },
+            loreDiscoveries: { actions: 0, xp: 0 }
+        },
+        lastGain: null
+    };
+}
+
+function getDefaultCommanderPreferences() {
+    return {
+        uiScale: 1,
+        textScale: 1,
+        highContrast: false,
+        masterVol: 1,
+        musicVol: 0.5,
+        narrationVol: 1,
+        sfxVol: 0.2,
+        verbosity: 'Detailed',
+        pings: 'Enabled',
+        safetyLock: 'Double-Click',
+        dyslexiaFont: false,
+        portalMasterVol: 1,
+        portalMusicVol: 0.5,
+        portalNarrationVol: 1,
+        portalSfxVol: 0.2
+    };
+}
+
+function clampNumber(value, min, max, fallback) {
+    const parsed = Number(value);
+    if (!Number.isFinite(parsed)) return fallback;
+    return Math.min(max, Math.max(min, parsed));
+}
+
+function normalizeCommanderPreferences(raw) {
+    const defaults = getDefaultCommanderPreferences();
+    const source = raw && typeof raw === 'object' ? raw : {};
+    return {
+        uiScale: clampNumber(source.uiScale, 0.5, 2, defaults.uiScale),
+        textScale: clampNumber(source.textScale, 0.75, 1.5, defaults.textScale),
+        highContrast: !!source.highContrast,
+        masterVol: clampNumber(source.masterVol, 0, 1, defaults.masterVol),
+        musicVol: clampNumber(source.musicVol, 0, 1, defaults.musicVol),
+        narrationVol: clampNumber(source.narrationVol, 0, 1, defaults.narrationVol),
+        sfxVol: clampNumber(source.sfxVol, 0, 1, defaults.sfxVol),
+        verbosity: String(source.verbosity || defaults.verbosity),
+        pings: String(source.pings || defaults.pings),
+        safetyLock: String(source.safetyLock || defaults.safetyLock),
+        dyslexiaFont: !!source.dyslexiaFont,
+        portalMasterVol: clampNumber(source.portalMasterVol, 0, 1, defaults.portalMasterVol),
+        portalMusicVol: clampNumber(source.portalMusicVol, 0, 1, defaults.portalMusicVol),
+        portalNarrationVol: clampNumber(source.portalNarrationVol, 0, 1, defaults.portalNarrationVol),
+        portalSfxVol: clampNumber(source.portalSfxVol, 0, 1, defaults.portalSfxVol)
+    };
+}
+
+function normalizeCommanderChronicleXp(raw) {
+    const defaults = getDefaultCommanderChronicleXp();
+    if (!raw || typeof raw !== 'object') return defaults;
+    const byActivity = { ...defaults.byActivity };
+    if (raw.byActivity && typeof raw.byActivity === 'object') {
+        for (const key of Object.keys(byActivity)) {
+            const bucket = raw.byActivity[key];
+            if (bucket && typeof bucket === 'object') {
+                byActivity[key] = {
+                    actions: Math.max(0, parseInt(bucket.actions, 10) || 0),
+                    xp: Math.max(0, parseInt(bucket.xp, 10) || 0)
+                };
+            }
+        }
+    }
+    return {
+        version: 2,
+        totalXp: Math.max(0, parseInt(raw.totalXp, 10) || 0),
+        byActivity,
+        lastGain: raw.lastGain && typeof raw.lastGain === 'object' ? raw.lastGain : null
+    };
+}
+
+function normalizeCommanderDossierArray(raw, maxItems = 200) {
+    if (!Array.isArray(raw)) return [];
+    return raw.slice(0, maxItems).filter((entry) => entry && typeof entry === 'object');
+}
+
+function normalizeCommanderAgeResetUsage(raw) {
+    if (!raw || typeof raw !== 'object') return {};
+    const next = {};
+    for (const [key, value] of Object.entries(raw)) {
+        if (!value || typeof value !== 'object') continue;
+        next[String(key).slice(0, 64)] = {
+            sessionKey: String(value.sessionKey || '').slice(0, 128),
+            rankResetsUsed: Math.max(0, Math.min(10, parseInt(value.rankResetsUsed, 10) || 0)),
+            exileResetsUsed: Math.max(0, Math.min(10, parseInt(value.exileResetsUsed, 10) || 0))
+        };
+    }
+    return next;
+}
+
+function serializeCommanderProfileForClient(commander) {
+    if (!commander) return null;
+    const dossier = serializeCommanderDossierForClient(commander);
+    return {
+        status: 'ok',
+        username: dossier.username,
+        bio: dossier.bio,
+        privacy: dossier.privacy,
+        profileUpdatedAt: dossier.profileUpdatedAt
+    };
+}
+
+function serializeCommanderDossierForClient(commander) {
+    if (!commander) return null;
+    const legacyBio = commander.description != null ? String(commander.description) : '';
+    const bioSource = commander.bio != null ? String(commander.bio) : legacyBio;
+    return {
+        status: 'ok',
+        username: commander.username,
+        bio: bioSource.trim().slice(0, COMMANDER_PROFILE_BIO_MAX),
+        privacy: normalizeCommanderProfilePrivacy(commander.privacy),
+        avatarUrl: String(commander.avatarUrl || '').slice(0, 512),
+        ageHistory: normalizeCommanderDossierArray(commander.ageHistory, 50),
+        awards: normalizeCommanderDossierArray(commander.awards, 100),
+        medals: normalizeCommanderDossierArray(commander.medals, 100),
+        membershipTitle: String(commander.membershipTitle || 'Basic').slice(0, 64),
+        premiumMember: !!commander.premiumMember,
+        chronicleXp: normalizeCommanderChronicleXp(commander.chronicleXp),
+        ageResetUsage: normalizeCommanderAgeResetUsage(commander.ageResetUsage),
+        preferences: normalizeCommanderPreferences(commander.preferences),
+        profileUpdatedAt: commander.profileUpdatedAt || null,
+        dossierUpdatedAt: commander.dossierUpdatedAt || null
+    };
+}
+
+function buildCommanderDossierPatch(body) {
+    const patch = {};
+    if (!body || typeof body !== 'object') return patch;
+
+    if ('bio' in body) {
+        patch.bio = String(body.bio ?? '').trim().slice(0, COMMANDER_PROFILE_BIO_MAX);
+    }
+    if ('privacy' in body) {
+        patch.privacy = normalizeCommanderProfilePrivacy(body.privacy);
+    }
+    if ('avatarUrl' in body) {
+        patch.avatarUrl = String(body.avatarUrl ?? '').trim().slice(0, 512);
+    }
+    if ('ageHistory' in body) {
+        patch.ageHistory = normalizeCommanderDossierArray(body.ageHistory, 50);
+    }
+    if ('awards' in body) {
+        patch.awards = normalizeCommanderDossierArray(body.awards, 100);
+    }
+    if ('medals' in body) {
+        patch.medals = normalizeCommanderDossierArray(body.medals, 100);
+    }
+    if ('membershipTitle' in body) {
+        patch.membershipTitle = String(body.membershipTitle ?? 'Basic').slice(0, 64);
+    }
+    if ('premiumMember' in body) {
+        patch.premiumMember = !!body.premiumMember;
+    }
+    if ('chronicleXp' in body) {
+        patch.chronicleXp = normalizeCommanderChronicleXp(body.chronicleXp);
+    }
+    if ('ageResetUsage' in body) {
+        patch.ageResetUsage = normalizeCommanderAgeResetUsage(body.ageResetUsage);
+    }
+    if ('preferences' in body) {
+        patch.preferences = normalizeCommanderPreferences(body.preferences);
+    }
+
+    if (Object.keys(patch).length) {
+        patch.dossierUpdatedAt = new Date().toISOString();
+    }
+    if ('bio' in patch || 'privacy' in patch || 'avatarUrl' in patch) {
+        patch.profileUpdatedAt = patch.dossierUpdatedAt || new Date().toISOString();
+    }
+
+    return patch;
+}
+
 function getPublicSiteOrigin(req) {
     const forwardedProto = req.headers['x-forwarded-proto'];
     const forwardedHost = req.headers['x-forwarded-host'];
@@ -942,7 +1133,18 @@ app.post('/register', async (req, res) => {
             password: hashedPassword,
             token,
             verified: false,
-            joinedAt
+            joinedAt,
+            bio: '',
+            privacy: 'Public',
+            avatarUrl: '',
+            ageHistory: [],
+            awards: [],
+            medals: [],
+            membershipTitle: 'Basic',
+            premiumMember: false,
+            chronicleXp: getDefaultCommanderChronicleXp(),
+            ageResetUsage: {},
+            preferences: getDefaultCommanderPreferences()
         }).write();
 
         console.log(`[NEXUS] Success: ${username} added to the Ledger.`);
@@ -1150,6 +1352,88 @@ app.get('/api/portal/account/security-profile', (req, res) => {
         email: commander.email || '',
         verified: !!commander.verified
     });
+});
+
+app.get('/api/portal/account/profile', (req, res) => {
+    const username = resolveLedgerCommanderUsername(req.query?.username || '');
+    if (!username) {
+        return res.status(400).json({ status: 'error', message: 'Valid commander account required.' });
+    }
+
+    const commander = findCommanderByUsername(username);
+    if (!commander) {
+        return res.status(404).json({ status: 'error', message: 'Commander not found.' });
+    }
+
+    res.status(200).json(serializeCommanderProfileForClient(commander));
+});
+
+app.patch('/api/portal/account/profile', (req, res) => {
+    const username = resolveLedgerCommanderUsername(req.body?.username || '');
+    if (!username) {
+        return res.status(400).json({ status: 'error', message: 'Valid commander account required.' });
+    }
+
+    const commander = findCommanderByUsername(username);
+    if (!commander) {
+        return res.status(404).json({ status: 'error', message: 'Commander not found.' });
+    }
+
+    const patch = buildCommanderDossierPatch({
+        bio: req.body?.bio,
+        privacy: req.body?.privacy,
+        avatarUrl: req.body?.avatarUrl
+    });
+    if (!Object.keys(patch).length) {
+        return res.status(400).json({ status: 'error', message: 'No profile fields to update.' });
+    }
+
+    db.get('commanders')
+        .find({ username: commander.username })
+        .assign(patch)
+        .write();
+
+    const updated = findCommanderByUsername(username);
+    res.status(200).json(serializeCommanderProfileForClient(updated));
+});
+
+app.get('/api/portal/account/dossier', (req, res) => {
+    const username = resolveLedgerCommanderUsername(req.query?.username || '');
+    if (!username) {
+        return res.status(400).json({ status: 'error', message: 'Valid commander account required.' });
+    }
+
+    const commander = findCommanderByUsername(username);
+    if (!commander) {
+        return res.status(404).json({ status: 'error', message: 'Commander not found.' });
+    }
+
+    res.status(200).json(serializeCommanderDossierForClient(commander));
+});
+
+app.patch('/api/portal/account/dossier', (req, res) => {
+    const username = resolveLedgerCommanderUsername(req.body?.username || '');
+    if (!username) {
+        return res.status(400).json({ status: 'error', message: 'Valid commander account required.' });
+    }
+
+    const commander = findCommanderByUsername(username);
+    if (!commander) {
+        return res.status(404).json({ status: 'error', message: 'Commander not found.' });
+    }
+
+    const patch = buildCommanderDossierPatch(req.body?.patch || req.body);
+    if (!Object.keys(patch).length) {
+        return res.status(400).json({ status: 'error', message: 'No dossier fields to update.' });
+    }
+
+    db.get('commanders')
+        .find({ username: commander.username })
+        .assign(patch)
+        .write();
+
+    const updated = findCommanderByUsername(username);
+    res.status(200).json(serializeCommanderDossierForClient(updated));
 });
 
 app.post('/api/portal/account/request-password-reset', async (req, res) => {

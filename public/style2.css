@@ -7395,17 +7395,22 @@ body.developer-maintenance-alert-active #page-landing {
 .achievement-unlock-overlay {
     position: fixed !important;
     inset: 0 !important;
-    z-index: 280000 !important;
+    z-index: 2147483646 !important;
     display: none;
     align-items: center !important;
     justify-content: center !important;
     padding: 24px 16px !important;
     box-sizing: border-box !important;
     background: rgba(0, 0, 0, 0) !important;
+    pointer-events: auto !important;
+    visibility: visible !important;
 }
 
-.achievement-unlock-overlay.is-visible {
+.achievement-unlock-overlay.is-visible,
+.achievement-unlock-overlay:not(.main-portal-modal-hidden) {
     display: flex !important;
+    pointer-events: auto !important;
+    visibility: visible !important;
 }
 
 .achievement-unlock-overlay.is-backdrop-reveal {

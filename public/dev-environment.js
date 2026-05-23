@@ -71,9 +71,9 @@
         return isNexusBackendSameOrigin() || isLocalDevelopmentHost();
     }
 
-    /** Auto sign-in as caleb_admin on localhost:3000 only (not production). */
+    /** Auto sign-in as caleb_admin on local dev (port 3000, Live Server :5500, etc.). */
     function isLocalDevAutoLoginEnabled() {
-        return isNexusBackendSameOrigin() && isLocalDevelopmentHost() && !isProductionRoyalArmiesHost();
+        return isLocalDevelopmentHost() && !isProductionRoyalArmiesHost();
     }
 
     function getLocalDevViewMode() {

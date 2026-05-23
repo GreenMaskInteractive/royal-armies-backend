@@ -18,15 +18,15 @@
         return DEV_NAV_PORTS.has(String(global.location.port || ''));
     }
 
-    function isMainPortalPage() {
-        const file = (global.location.pathname || '').split('/').pop() || '';
-        return file === 'main.html' || file === '';
-    }
-
     function getPageDirectoryBase() {
         const path = global.location.pathname || '/';
         const lastSlash = path.lastIndexOf('/');
         return lastSlash >= 0 ? path.slice(0, lastSlash + 1) : '/';
+    }
+
+    function isDevPortalPersonaPage() {
+        const file = (global.location.pathname || '').split('/').pop() || '';
+        return file === 'main.html' || file === 'game.html' || file === '';
     }
 
     function resolveDevPageHref(fileName) {
@@ -55,13 +55,35 @@
         return 'owner';
     }
 
-    function applyDevViewMode(mode) {
+    function resolveDevAuthLogoutUrl() {
+        if (typeof global.resolveRoyalArmiesApiUrl === 'function') {
+            return global.resolveRoyalArmiesApiUrl('/api/auth/logout');
+        }
+        return '/api/auth/logout';
+    }
+
+    async function clearDevPortalAuthSession() {
+        if (typeof global.clearPortalAuthStorage === 'function') {
+            global.clearPortalAuthStorage();
+        }
+        try {
+            await global.fetch(resolveDevAuthLogoutUrl(), {
+                method: 'POST',
+                credentials: 'include',
+                cache: 'no-store'
+            });
+        } catch (_err) {
+            /* local preview may not have a session cookie */
+        }
+    }
+
+    async function applyDevViewMode(mode) {
         if (typeof global.setLocalDevViewMode === 'function') {
             global.setLocalDevViewMode(mode);
         }
-        if (typeof global.portalAuthRestorePromise !== 'undefined') {
-            global.portalAuthRestorePromise = null;
-        }
+
+        await clearDevPortalAuthSession();
+
         global.location.reload();
     }
 
@@ -73,7 +95,7 @@
         }).join('');
 
         const viewMode = getCurrentDevViewMode();
-        const personaBlock = isMainPortalPage()
+        const personaBlock = isDevPortalPersonaPage()
             ? `
                 <label class="dev-page-navigator-label dev-page-navigator-label--persona" for="dev-portal-persona-select">
                     <span class="dev-page-navigator-eyebrow">Portal view</span>
@@ -144,13 +166,16 @@
         const achievementBtn = global.document.getElementById('dev-achievement-popup-test');
         if (achievementBtn) {
             achievementBtn.addEventListener('click', () => {
-                if (typeof global.previewWhoaSlowDownAchievementPopup === 'function') {
-                    global.previewWhoaSlowDownAchievementPopup({ grantIfMissing: false });
+                const preview = typeof global.previewWhoaSlowDownAchievementPopup === 'function'
+                    ? global.previewWhoaSlowDownAchievementPopup
+                    : (global.RoyalArmiesAchievements && typeof global.RoyalArmiesAchievements.previewWhoaSlowDownPopup === 'function'
+                        ? global.RoyalArmiesAchievements.previewWhoaSlowDownPopup.bind(global.RoyalArmiesAchievements)
+                        : null);
+                if (!preview) {
+                    global.alert('Achievement preview is unavailable — reload with achievement-system.js loaded.');
                     return;
                 }
-                if (global.RoyalArmiesAchievements && typeof global.RoyalArmiesAchievements.previewWhoaSlowDownPopup === 'function') {
-                    global.RoyalArmiesAchievements.previewWhoaSlowDownPopup({ grantIfMissing: false });
-                }
+                preview({ grantIfMissing: true });
             });
         }
     }

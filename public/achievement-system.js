@@ -58,6 +58,9 @@
         if (typeof global.player !== 'undefined') {
             global.player.awards = list;
         }
+        if (typeof global.scheduleCommanderDossierSave === 'function') {
+            global.scheduleCommanderDossierSave({ awards: list }, { immediate: true });
+        }
         return list;
     }
 
@@ -305,4 +308,5 @@
     global.tryGrantWhoaSlowDownFromJoinAttempt = tryGrantWhoaSlowDownFromJoinAttempt;
     global.showAchievementUnlockPopup = showAchievementUnlockPopup;
     global.previewWhoaSlowDownAchievementPopup = previewWhoaSlowDownPopup;
+    global.maybeRunDevAchievementPopupFromQuery = maybeRunDevAchievementPopupFromQuery;
 })(window);

@@ -3030,6 +3030,12 @@ function applyCommanderMembershipTitle(title) {
     if (typeof player !== 'undefined') {
         player.membershipTitle = nextTitle;
     }
+    if (typeof scheduleCommanderDossierSave === 'function') {
+        scheduleCommanderDossierSave({
+            membershipTitle: nextTitle,
+            premiumMember: isRoyalty
+        });
+    }
     refreshCommanderMembershipBadgeDisplays();
     if (typeof refreshChronicleRewardsTrackPanels === 'function') {
         refreshChronicleRewardsTrackPanels();
@@ -3919,7 +3925,11 @@ function resetChronicleXpProgress() {
 }
 
 function persistChronicleXpProgress(progress) {
-    localStorage.setItem(CHRONICLE_XP_STORAGE_KEY, JSON.stringify(normalizeChronicleXpProgress(progress)));
+    const normalized = normalizeChronicleXpProgress(progress);
+    localStorage.setItem(CHRONICLE_XP_STORAGE_KEY, JSON.stringify(normalized));
+    if (typeof scheduleCommanderDossierSave === 'function') {
+        scheduleCommanderDossierSave({ chronicleXp: normalized });
+    }
 }
 
 function resolveChronicleLevelFromXp(totalXp) {
