@@ -387,6 +387,10 @@ const MAILBOX_TOPIC_MAX = 60;
 const COMMANDER_PROFILE_BIO_MAX = 250;
 const MAILBOX_BODY_MAX = 4000;
 const MAILBOX_RECIPIENTS_MAX = 25;
+const ROYAL_ARMIES_DISCORD_INVITE_URL = 'https://discord.gg/7tGBCt7cXX';
+const WELCOME_SYSTEM_MESSAGE_KEY = 'welcome_to_royal_armies_v1';
+const WELCOME_SYSTEM_MESSAGE_FROM = 'Royal Armies';
+const WELCOME_SYSTEM_MESSAGE_TOPIC = 'Welcome to the Royal Armies!';
 
 function formatMailboxDisplayDate(isoValue) {
     const parsed = Date.parse(isoValue || '');
@@ -435,10 +439,77 @@ function serializeMailboxMessageForClient(row) {
         to: row.to || '',
         topic: row.topic || 'No subject',
         body: row.body || '',
+        bodyFormat: row.bodyFormat === 'html' ? 'html' : 'text',
         read: !!row.read,
         date: formatMailboxDisplayDate(row.sentAt),
         sentAt: row.sentAt || null
     };
+}
+
+function buildWelcomeSystemMessageBodyHtml() {
+    return [
+        'We are so excited to have you on board! Royal Armies is planned to be the greatest evolutionary version of the PBBG franchise ever made and you will be able to see its development first hand. We hope you enjoy what this game has to offer and can tell all of your friends about it!',
+        '',
+        `If you would like to be a part of the growing community we have built outside of the game you can always join our official discord <a href="${ROYAL_ARMIES_DISCORD_INVITE_URL}" target="_blank" rel="noopener noreferrer" style="color:#ffd700;text-decoration:underline;">here</a>.`
+    ].join('\n\n');
+}
+
+function commanderHasWelcomeSystemMessage(messages, ownerLower) {
+    return messages.some((row) => row
+        && row.channel === 'system'
+        && String(row.to || '').toLowerCase() === ownerLower
+        && row.systemMessageKey === WELCOME_SYSTEM_MESSAGE_KEY);
+}
+
+function ensureWelcomeSystemMessageForCommander(username, options = {}) {
+    const owner = resolveLedgerCommanderUsername(username);
+    if (!owner) {
+        return { delivered: false, reason: 'unknown_commander' };
+    }
+
+    const ownerLower = owner.toLowerCase();
+    const messages = options.messages || getMailboxMessageStore();
+
+    if (commanderHasWelcomeSystemMessage(messages, ownerLower)) {
+        return { delivered: false, reason: 'already_delivered' };
+    }
+
+    messages.push({
+        id: createMailboxRecordId(),
+        channel: 'system',
+        systemMessageKey: WELCOME_SYSTEM_MESSAGE_KEY,
+        from: WELCOME_SYSTEM_MESSAGE_FROM,
+        to: owner,
+        topic: WELCOME_SYSTEM_MESSAGE_TOPIC,
+        body: buildWelcomeSystemMessageBodyHtml(),
+        bodyFormat: 'html',
+        read: false,
+        sentAt: new Date().toISOString()
+    });
+
+    if (options.deferWrite !== true) {
+        writeMailboxMessageStore(messages);
+    }
+
+    return { delivered: true, reason: 'delivered' };
+}
+
+function backfillWelcomeSystemMessagesForAllCommanders() {
+    const commanders = db.get('commanders').value() || [];
+    const messages = getMailboxMessageStore();
+    let delivered = 0;
+
+    commanders.forEach((entry) => {
+        const username = String(entry?.username || '').trim();
+        if (!username || isHiddenRegistrationUsername(username)) return;
+        const result = ensureWelcomeSystemMessageForCommander(username, { messages, deferWrite: true });
+        if (result.delivered) delivered += 1;
+    });
+
+    if (delivered > 0) {
+        writeMailboxMessageStore(messages);
+        console.log(`[NEXUS] Delivered welcome system message to ${delivered} commander(s).`);
+    }
 }
 
 function serializeMailboxSentForClient(row) {
@@ -533,6 +604,8 @@ function getMailboxPayloadForUser(username) {
     if (!owner) {
         return { status: 'error', message: 'Unknown commander account.' };
     }
+
+    ensureWelcomeSystemMessageForCommander(owner);
 
     const ownerLower = owner.toLowerCase();
     const inbox = getMailboxMessageStore()
@@ -1235,6 +1308,7 @@ app.post('/api/login', async (req, res) => {
 
         const rememberMe = req.body?.rememberMe !== false;
         setPortalSessionForUser(req, commander.username, rememberMe);
+        ensureWelcomeSystemMessageForCommander(commander.username);
 
         res.status(200).json({
             status: 'success',
@@ -2154,6 +2228,7 @@ app.get(['/', '/index', '/index.html'], (req, res) => {
 
 /* Block 15: Nexus Engine Ignition */
 app.listen(PORT, () => {
+    backfillWelcomeSystemMessagesForAllCommanders();
     console.log(`========================================`);
     console.log(` NEXUS ENGINE ONLINE: Port ${PORT}`);
     console.log(` GREEN MASK INTERACTIVE: ALPHA 0.1.11`);
