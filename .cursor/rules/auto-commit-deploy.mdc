@@ -1,0 +1,45 @@
+---
+description: After code changes, commit and push to main to deploy on Render (unless opted out)
+alwaysApply: true
+---
+
+# Auto commit and deploy
+
+After completing requested code changes or fixes in this repo, **commit and push to `main`** unless the user explicitly says not to (e.g. "don't commit", "no push", "local only").
+
+## When to skip
+
+- User asked for review, planning, or questions only (no implementation)
+- User said not to commit or deploy
+- There are no changes to commit
+- Changes likely contain secrets (`.env`, credentials) — warn instead of committing
+
+## Commit workflow
+
+1. Run in parallel: `git status`, `git diff`, `git log -1 --oneline`
+2. Stage only relevant files; **do not commit** local test ledger data in `db.json` unless the user asked to
+3. Write a concise commit message focused on **why**
+4. Commit, then `git push origin main`
+5. Run `git status` after commit to verify success
+6. If pre-commit hook fails, fix and create a **new** commit (do not amend unless amend rules allow)
+
+## Git safety (always)
+
+- Never update git config
+- Never force-push to `main`
+- Never skip hooks unless the user explicitly requests it
+- Do not push if the user opted out for that task
+
+## Deploy
+
+Pushing to `main` triggers Render to redeploy [royalarmies.com](https://royalarmies.com). After push, optionally verify a key endpoint (e.g. `/api/portal/metrics`) if the change affects production behavior.
+
+## Example
+
+User: "Fix the mailbox reply bug."
+
+→ Implement fix → commit → push to `main` → briefly confirm deploy unless the user said not to.
+
+User: "Fix the mailbox reply bug but don't deploy yet."
+
+→ Implement fix → stop before commit/push.
