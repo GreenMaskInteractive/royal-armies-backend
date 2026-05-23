@@ -860,6 +860,7 @@ body {
         object-fit: contain !important;
         object-position: center center !important;
         margin: 0 !important;
+        margin-bottom: 0 !important;
         padding: 0 !important;
         vertical-align: top !important;
     }
@@ -2169,7 +2170,7 @@ body {
 
     .over-bar-utility-deck {
         padding: 12px 40px 0 40px !important;
-        margin-bottom: -22px !important;
+        margin-bottom: -34px !important;
     }
 
     .main-portal-nav-bar {
