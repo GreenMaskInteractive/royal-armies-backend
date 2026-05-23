@@ -1645,14 +1645,12 @@ function buildRoyalGuardBotRosterCardMarkup() {
             aria-label="${escapeMetricRosterHtml(botName)} — click for details"
             onclick="toggleChatRosterCardExpand(event)"
             onkeydown="handleChatRosterCardExpandKeydown(event)">
-            <div class="chat-roster-avatar-wrap">
-                <div class="chat-roster-avatar chat-roster-avatar--royal-guard-bot" aria-hidden="true">🛡</div>
-                <span class="chat-roster-presence-ring" aria-hidden="true"></span>
-                <span class="chat-roster-avatar-bot-mark" aria-hidden="true">🤖</span>
-            </div>
             <div class="chat-roster-commander-body">
                 <div class="chat-roster-commander-topline">
-                    <span class="chat-roster-name">${escapeMetricRosterHtml(botName)}</span>
+                    <span class="chat-roster-name-row">
+                        <span class="chat-roster-presence-ring chat-roster-presence-ring--bot" aria-hidden="true"></span>
+                        <span class="chat-roster-name">${escapeMetricRosterHtml(botName)}</span>
+                    </span>
                     <span class="chat-roster-status-pill chat-roster-status-pill--bot"><span class="chat-roster-status-pill-icon" aria-hidden="true">●</span>Online</span>
                     ${buildChatRosterExpandHintMarkup()}
                 </div>
@@ -1697,15 +1695,12 @@ function buildCommunityChatRosterCardMarkup(name, selfLower, playingSet, presenc
 
     return `
         <article class="chat-roster-commander-card chat-roster-commander-card--profile-open ${cardModifiers}" data-roster-commander="${escapeMetricRosterHtml(normalizeCommunityChatUsername(name))}"${staffRole ? ` data-staff-role="${staffRole}"` : ''} ${profileInteractionAttrs}${isExpandable ? ` data-roster-expand-key="${expandKey}"` : ''}>
-            <div class="chat-roster-avatar-wrap">
-                <img class="chat-roster-avatar" src="${escapeMetricRosterHtml(getChatRosterAvatarUrl(name))}" alt="" width="40" height="40" loading="lazy" decoding="async">
-                <span class="chat-roster-presence-ring ${presenceRingClass}" aria-hidden="true" title="${escapeMetricRosterHtml(status.label)}"></span>
-                ${staffRole === 'owner' ? '<span class="chat-roster-avatar-crown" aria-hidden="true">👑</span>' : ''}
-                ${staffRole === 'moderator' ? '<span class="chat-roster-avatar-mod-shield" aria-hidden="true">🛡</span>' : ''}
-            </div>
             <div class="chat-roster-commander-body">
                 <div class="chat-roster-commander-topline">
-                    <span class="chat-roster-name">${escapeMetricRosterHtml(name)}</span>
+                    <span class="chat-roster-name-row">
+                        <span class="chat-roster-presence-ring ${presenceRingClass}" aria-hidden="true" title="${escapeMetricRosterHtml(status.label)}"></span>
+                        <span class="chat-roster-name" title="${escapeMetricRosterHtml(name)}">${escapeMetricRosterHtml(name)}</span>
+                    </span>
                     <span class="chat-roster-status-pill ${status.pillClass}"><span class="chat-roster-status-pill-icon" aria-hidden="true">${status.icon}</span>${escapeMetricRosterHtml(status.label)}</span>
                     ${expandButtonMarkup}
                 </div>

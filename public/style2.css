@@ -2072,15 +2072,20 @@ body:not(.portal-guest-mode) #portal-deployment-guest-cta {
 }
 
 .chat-roster-presence-ring {
-    position: absolute !important;
-    right: -1px !important;
-    bottom: -1px !important;
-    width: 11px !important;
-    height: 11px !important;
+    position: relative !important;
+    flex-shrink: 0 !important;
+    width: 10px !important;
+    height: 10px !important;
     border-radius: 50% !important;
     border: 2px solid #120e0a !important;
     background: #6a9fd4 !important;
     box-shadow: 0 0 6px rgba(106, 159, 212, 0.5) !important;
+}
+
+.chat-roster-presence-ring--bot {
+    background: #ff4d4d !important;
+    box-shadow: 0 0 8px rgba(255, 77, 77, 0.65) !important;
+    animation: chat-roster-presence-pulse 2s ease-in-out infinite !important;
 }
 
 .chat-roster-presence-ring--chat-active {
@@ -2305,9 +2310,19 @@ body:not(.portal-guest-mode) #portal-deployment-guest-cta {
 
 .chat-roster-commander-topline {
     display: flex !important;
-    align-items: flex-start !important;
+    align-items: center !important;
     justify-content: space-between !important;
     gap: 6px !important;
+    min-width: 0 !important;
+}
+
+.chat-roster-name-row {
+    display: flex !important;
+    align-items: center !important;
+    gap: 7px !important;
+    flex: 1 1 auto !important;
+    min-width: 0 !important;
+    overflow: hidden !important;
 }
 
 .chat-roster-name {
@@ -2317,8 +2332,10 @@ body:not(.portal-guest-mode) #portal-deployment-guest-cta {
     font-size: 0.78rem !important;
     font-weight: 700 !important;
     color: #f1e0ac !important;
-    line-height: 1.25 !important;
-    word-break: break-word !important;
+    line-height: 1.2 !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
 }
 
 .chat-roster-commander-card--self .chat-roster-name {
