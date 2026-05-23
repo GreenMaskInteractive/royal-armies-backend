@@ -2594,6 +2594,13 @@ body:not(.portal-guest-mode) #portal-deployment-guest-cta {
 .chat-message-body-text-content {
     line-height: 1.45 !important;
     word-break: break-word !important;
+    text-align: justify !important;
+    text-justify: inter-word !important;
+}
+
+.chat-message-reply-quote-text {
+    text-align: justify !important;
+    text-justify: inter-word !important;
 }
 
 .chat-message-meta-left {
@@ -2665,6 +2672,8 @@ body:not(.portal-guest-mode) #portal-deployment-guest-cta {
     flex: 1 1 auto !important;
     min-width: 0 !important;
     line-height: 1.4 !important;
+    text-align: justify !important;
+    text-justify: inter-word !important;
 }
 
 .chat-compose-context-cancel {
@@ -4419,6 +4428,8 @@ body:not(.portal-guest-mode) #portal-deployment-guest-cta {
     margin-bottom: 8px !important;
     font-style: italic !important;
     word-break: break-word !important;
+    text-align: justify !important;
+    text-justify: inter-word !important;
 }
 
 .chat-mention-alert-cta {
@@ -6010,6 +6021,8 @@ body:not(.portal-guest-mode) #portal-deployment-guest-cta {
 
 #commander-hub-modal .msg-compose-context-body, #portal-commander-hub-page .msg-compose-context-body {
     max-height: 110px !important;
+    text-align: justify !important;
+    text-justify: inter-word !important;
 }
 
 .commander-hub-profile-footer-host .settings-controls,
@@ -6306,6 +6319,13 @@ body:not(.portal-guest-mode) #portal-deployment-guest-cta {
 
 *:not(#main-dashboard-canvas)::-webkit-scrollbar-thumb:hover {
     background: linear-gradient(180deg, #ffd700 0%, #9a7a32 100%) !important;
+}
+
+html.royal-armies-custom-cursor *::-webkit-scrollbar,
+html.royal-armies-custom-cursor *::-webkit-scrollbar-track,
+html.royal-armies-custom-cursor *::-webkit-scrollbar-thumb,
+html.royal-armies-custom-cursor *::-webkit-scrollbar-corner {
+    cursor: none !important;
 }
 
 #commander-suicide-overlay .suicide-popup-body-text,

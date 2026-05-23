@@ -30,7 +30,11 @@
         '    [href], [onclick], .nav-tab, .footer-icon-link',
         '),',
         'html.royal-armies-custom-cursor body#main-dashboard-canvas *::-webkit-slider-thumb,',
-        'html.royal-armies-custom-cursor body#main-dashboard-canvas *::-moz-range-thumb {',
+        'html.royal-armies-custom-cursor body#main-dashboard-canvas *::-moz-range-thumb,',
+        'html.royal-armies-custom-cursor *::-webkit-scrollbar,',
+        'html.royal-armies-custom-cursor *::-webkit-scrollbar-track,',
+        'html.royal-armies-custom-cursor *::-webkit-scrollbar-thumb,',
+        'html.royal-armies-custom-cursor *::-webkit-scrollbar-corner {',
         '    cursor: none !important;',
         '}'
     ].join('\n');
@@ -51,6 +55,9 @@
     let cursorVisible = false;
     let clickPulseTimer = 0;
     let listenersBound = false;
+    let pointerButtonHeld = false;
+    let lastPointerX = 0;
+    let lastPointerY = 0;
     /** Elements receiving inline cursor:none (beats #id .class pointer on buttons/links). */
     let cursorHideStyledElements = new Set();
 
@@ -130,23 +137,53 @@
         pulseCursorPress();
     }
 
+    function trackPointer(clientX, clientY) {
+        if (!Number.isFinite(clientX) || !Number.isFinite(clientY)) return;
+        lastPointerX = clientX;
+        lastPointerY = clientY;
+        positionCursor(clientX, clientY);
+        enforceNativeCursorHiddenAtPoint(clientX, clientY);
+    }
+
     function bindCursorListeners() {
         if (listenersBound) return;
         listenersBound = true;
 
-        document.addEventListener('mousemove', (event) => {
+        window.addEventListener('mousemove', (event) => {
             if (!shouldEnableCustomCursor()) return;
-            positionCursor(event.clientX, event.clientY);
-            enforceNativeCursorHiddenAtPoint(event.clientX, event.clientY);
-        }, { passive: true });
+            trackPointer(event.clientX, event.clientY);
+        }, true);
 
-        document.addEventListener('mousedown', (event) => {
+        window.addEventListener('pointermove', (event) => {
+            if (!shouldEnableCustomCursor()) return;
+            trackPointer(event.clientX, event.clientY);
+        }, true);
+
+        window.addEventListener('mousedown', (event) => {
             if (!shouldEnableCustomCursor() || event.button !== 0) return;
+            pointerButtonHeld = true;
+            trackPointer(event.clientX, event.clientY);
             handlePress(event.clientX, event.clientY);
-        }, { passive: true });
+        }, true);
+
+        window.addEventListener('mouseup', (event) => {
+            if (!shouldEnableCustomCursor()) return;
+            pointerButtonHeld = false;
+            trackPointer(event.clientX, event.clientY);
+        }, true);
+
+        window.addEventListener('scroll', () => {
+            if (!shouldEnableCustomCursor() || !pointerButtonHeld) return;
+            trackPointer(lastPointerX, lastPointerY);
+        }, true);
 
         document.addEventListener('mouseleave', () => {
-            if (!shouldEnableCustomCursor()) return;
+            if (!shouldEnableCustomCursor() || pointerButtonHeld) return;
+            hideCursor();
+        }, { passive: true });
+
+        window.addEventListener('blur', () => {
+            pointerButtonHeld = false;
             hideCursor();
         }, { passive: true });
     }
@@ -206,6 +243,7 @@
         syncNativeCursorHidden(enable);
 
         if (!enable) {
+            pointerButtonHeld = false;
             hideCursor();
             return;
         }

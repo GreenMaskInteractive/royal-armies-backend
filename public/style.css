@@ -2868,7 +2868,8 @@ body #commander-security-overlay,
     font-size: 0.85rem !important;
     color: #f1e0ac !important;
     line-height: 1.5 !important;
-    text-align: center !important;
+    text-align: justify !important;
+    text-justify: inter-word !important;
     margin-top: 15px !important;
     margin-bottom: 20px !important;
     max-height: 280px !important;
@@ -2999,7 +3000,8 @@ body #commander-penalty-overlay,
     font-family: 'Segoe UI', sans-serif !important;
     font-size: 0.82rem !important;
     line-height: 1.5 !important;
-    text-align: center !important;
+    text-align: justify !important;
+    text-justify: inter-word !important;
     
     /* THE PARAGRAPH COMPRESSION FIX: */
     /* Hard-locks text boundaries so sentences never wrap past a comfortable reading scale */
@@ -3328,6 +3330,17 @@ body #commander-penalty-overlay,
     overflow-y: auto !important;
     padding-right: 4px !important;
     font-style: italic !important;
+    text-align: justify !important;
+    text-justify: inter-word !important;
+}
+
+.msg-reading-body-scroll {
+    text-align: justify !important;
+    text-justify: inter-word !important;
+}
+
+#msg-body-input-element {
+    text-align: justify !important;
 }
 
 .msg-compose-field-locked {

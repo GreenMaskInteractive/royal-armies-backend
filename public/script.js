@@ -4787,13 +4787,12 @@ function openFocusedDossierReadingOverlay(msg, track) {
         ? `<strong>TO:</strong> ${sentToLine || 'Unknown'}<br>`
         : `<strong>FROM:</strong> ${formatMailboxFromLabel(msg, track)}<br>`;
 
-    const bodyAlign = track === 'system' && msg?.bodyFormat === 'html' ? 'left' : 'center';
     textField.innerHTML = `
         <div style="text-align:left !important; font-family:'Segoe UI',sans-serif; color:#f1e0ac; font-size:0.8rem; border-bottom:1px solid rgba(184,144,48,0.2); padding-bottom:8px; margin-bottom:12px;">
             ${headerFromLine}
             <strong>TOPIC:</strong> ${msg.topic}
         </div>
-        <div class="msg-reading-body-scroll portal-gold-scrollbar" style="text-align:${bodyAlign} !important; font-family:'Segoe UI',sans-serif; color:#ffffff; font-size:0.85rem; line-height:1.5; min-height:80px; max-height:180px; overflow-y:auto; padding:5px; white-space:pre-wrap;">
+        <div class="msg-reading-body-scroll portal-gold-scrollbar" style="text-align:justify !important; font-family:'Segoe UI',sans-serif; color:#ffffff; font-size:0.85rem; line-height:1.5; min-height:80px; max-height:180px; overflow-y:auto; padding:5px; white-space:pre-wrap;">
             ${formatMailboxReadingBody(msg, track)}
         </div>
     `;
