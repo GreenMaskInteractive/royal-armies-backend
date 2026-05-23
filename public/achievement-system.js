@@ -4,8 +4,10 @@
 (function initRoyalArmiesAchievementSystem(global) {
     'use strict';
 
+    const FIRST_TIMER_ID = 'first_timer';
     const WHO_SLOW_DOWN_ID = 'whoa_slow_down';
     const COMMANDER_AWARDS_STORAGE_KEY = 'savedCommanderAwards';
+    const PENDING_UNLOCKS_SESSION_KEY = 'royalArmiesPendingAchievementUnlocks';
     const JOIN_AGE_ATTEMPT_FLAG = 'royalArmiesJoinAgeAttempt';
     const JOIN_AGE_ATTEMPT_LOCAL_KEY = 'royalArmiesJoinAgeAttemptLocal';
     const JOIN_AGE_ATTEMPT_LOCAL_TTL_MS = 5 * 60 * 1000;
@@ -13,6 +15,15 @@
     const ACHIEVEMENT_TOAST_GROW_MS = 450;
     const ACHIEVEMENT_TOAST_HOLD_MS = 7000;
     const ACHIEVEMENT_TOAST_SHRINK_MS = 220;
+    const ACHIEVEMENT_DISPLAY_ORDER = [FIRST_TIMER_ID, WHO_SLOW_DOWN_ID];
+
+    const FIRST_TIMER_DEFINITION = Object.freeze({
+        id: FIRST_TIMER_ID,
+        label: 'First Timer',
+        achievement: 'Logging in for the first time',
+        iconUrl: 'images/firsttimericon.png',
+        xpReward: 15
+    });
 
     const WHO_SLOW_DOWN_DEFINITION = Object.freeze({
         id: WHO_SLOW_DOWN_ID,
@@ -20,6 +31,11 @@
         achievement: 'Attempt to JOIN AGE before the game engine has been developed.',
         iconUrl: 'images/whoa_slow_down_icon.png',
         xpReward: 30
+    });
+
+    const ACHIEVEMENT_DEFINITIONS = Object.freeze({
+        [FIRST_TIMER_ID]: FIRST_TIMER_DEFINITION,
+        [WHO_SLOW_DOWN_ID]: WHO_SLOW_DOWN_DEFINITION
     });
 
     let activeToastTimers = new WeakMap();
@@ -42,21 +58,38 @@
         return saved && saved.trim() ? saved.trim() : '';
     }
 
-    function loadCommanderAwardsList() {
-        if (typeof global.player !== 'undefined' && Array.isArray(global.player.awards)) {
-            return global.player.awards.slice();
-        }
+    function sortAwardsByDisplayOrder(awards) {
+        const orderIndex = (entry) => {
+            const id = String(entry?.id || entry?.achievementId || '').trim();
+            const idx = ACHIEVEMENT_DISPLAY_ORDER.indexOf(id);
+            return idx === -1 ? ACHIEVEMENT_DISPLAY_ORDER.length + 1 : idx;
+        };
 
-        try {
-            const cached = global.localStorage.getItem(COMMANDER_AWARDS_STORAGE_KEY);
-            if (cached) {
-                const parsed = JSON.parse(cached);
-                return Array.isArray(parsed) ? parsed : [];
+        return (Array.isArray(awards) ? awards : []).slice().sort((a, b) => {
+            const orderDiff = orderIndex(a) - orderIndex(b);
+            if (orderDiff !== 0) return orderDiff;
+            const aTime = Date.parse(a?.earnedAt || '') || 0;
+            const bTime = Date.parse(b?.earnedAt || '') || 0;
+            return aTime - bTime;
+        });
+    }
+
+    function loadCommanderAwardsList() {
+        let list = [];
+        if (typeof global.player !== 'undefined' && Array.isArray(global.player.awards)) {
+            list = global.player.awards.slice();
+        } else {
+            try {
+                const cached = global.localStorage.getItem(COMMANDER_AWARDS_STORAGE_KEY);
+                if (cached) {
+                    const parsed = JSON.parse(cached);
+                    list = Array.isArray(parsed) ? parsed : [];
+                }
+            } catch (_err) {
+                /* ignore */
             }
-        } catch (_err) {
-            /* ignore */
         }
-        return [];
+        return sortAwardsByDisplayOrder(list);
     }
 
     async function syncCommanderAwardsFromServer() {
@@ -68,7 +101,7 @@
     }
 
     function persistCommanderAwardsList(awards) {
-        const list = Array.isArray(awards) ? awards : [];
+        const list = sortAwardsByDisplayOrder(Array.isArray(awards) ? awards : []);
         try {
             global.localStorage.setItem(COMMANDER_AWARDS_STORAGE_KEY, JSON.stringify(list));
         } catch (_err) {
@@ -100,11 +133,12 @@
 
     function buildAwardRecord(definition, username) {
         const subject = String(username || resolveCommanderUsername() || '').trim();
+        const copy = definition.achievement || definition.description || '';
         return {
             id: definition.id,
             label: definition.label,
-            achievement: definition.achievement,
-            description: definition.achievement,
+            achievement: copy,
+            description: copy,
             iconUrl: definition.iconUrl,
             xpReward: Number(definition.xpReward ?? definition.xp ?? definition.chronicleXp ?? 0) || 0,
             username: subject,
@@ -112,28 +146,61 @@
         };
     }
 
-    function resolveAchievementToastDisplay(record) {
-        const source = record || WHO_SLOW_DOWN_DEFINITION;
-        const title = String(source.label || WHO_SLOW_DOWN_DEFINITION.label).trim();
-        const iconUrl = source.iconUrl || WHO_SLOW_DOWN_DEFINITION.iconUrl;
-        const xpValue = Number(source.xpReward ?? source.xp ?? source.chronicleXp ?? WHO_SLOW_DOWN_DEFINITION.xpReward ?? 0);
-        const xpLabel = Number.isFinite(xpValue) && xpValue > 0 ? `${xpValue} XP` : '';
-        return { title, iconUrl, xpLabel };
+    function insertAwardInDisplayOrder(awards, record) {
+        const next = awards.slice();
+        const recordId = String(record?.id || '').trim();
+        const recordOrder = ACHIEVEMENT_DISPLAY_ORDER.indexOf(recordId);
+        let insertAt = next.length;
+
+        for (let i = 0; i < next.length; i += 1) {
+            const existingId = String(next[i]?.id || next[i]?.achievementId || '').trim();
+            const existingOrder = ACHIEVEMENT_DISPLAY_ORDER.indexOf(existingId);
+            if (existingOrder !== -1 && recordOrder !== -1 && existingOrder > recordOrder) {
+                insertAt = i;
+                break;
+            }
+        }
+
+        next.splice(insertAt, 0, record);
+        return sortAwardsByDisplayOrder(next);
     }
 
-    function grantWhoaSlowDownAchievement(username) {
+    function grantAchievementById(achievementId, username) {
+        const id = String(achievementId || '').trim();
+        const definition = ACHIEVEMENT_DEFINITIONS[id];
+        if (!definition) {
+            return { granted: false, award: null, reason: 'unknown_achievement' };
+        }
+
         const subject = String(username || resolveCommanderUsername() || '').trim();
         if (!subject) {
             return { granted: false, award: null, reason: 'no_username' };
         }
-        if (hasCommanderAchievement(WHO_SLOW_DOWN_ID, subject)) {
+        if (hasCommanderAchievement(id, subject)) {
             return { granted: false, award: null, reason: 'already_owned' };
         }
 
-        const award = buildAwardRecord(WHO_SLOW_DOWN_DEFINITION, subject);
-        const nextAwards = loadCommanderAwardsList().concat([award]);
+        const award = buildAwardRecord(definition, subject);
+        const nextAwards = insertAwardInDisplayOrder(loadCommanderAwardsList(), award);
         persistCommanderAwardsList(nextAwards);
         return { granted: true, award, reason: 'granted' };
+    }
+
+    function grantFirstTimerAchievement(username) {
+        return grantAchievementById(FIRST_TIMER_ID, username);
+    }
+
+    function grantWhoaSlowDownAchievement(username) {
+        return grantAchievementById(WHO_SLOW_DOWN_ID, username);
+    }
+
+    function resolveAchievementToastDisplay(record) {
+        const source = record || FIRST_TIMER_DEFINITION;
+        const title = String(source.label || FIRST_TIMER_DEFINITION.label).trim();
+        const iconUrl = source.iconUrl || FIRST_TIMER_DEFINITION.iconUrl;
+        const xpValue = Number(source.xpReward ?? source.xp ?? source.chronicleXp ?? 0);
+        const xpLabel = Number.isFinite(xpValue) && xpValue > 0 ? `${xpValue} XP` : '';
+        return { title, iconUrl, xpLabel };
     }
 
     function syncAchievementToastStackPosition() {
@@ -266,6 +333,56 @@
         return toast;
     }
 
+    function waitMs(ms) {
+        return new Promise((resolve) => global.setTimeout(resolve, ms));
+    }
+
+    async function showAchievementUnlockQueue(awards) {
+        const queue = sortAwardsByDisplayOrder(Array.isArray(awards) ? awards : []);
+        if (!queue.length) return;
+
+        await syncCommanderAwardsFromServer();
+
+        for (let i = 0; i < queue.length; i += 1) {
+            if (i > 0) {
+                await waitMs(ACHIEVEMENT_TOAST_GROW_MS + ACHIEVEMENT_TOAST_HOLD_MS + ACHIEVEMENT_TOAST_SHRINK_MS + 120);
+            }
+            showAchievementUnlockPopup(queue[i]);
+        }
+    }
+
+    function stashPendingAchievementUnlocks(unlocks) {
+        const list = Array.isArray(unlocks) ? unlocks.filter((entry) => entry && typeof entry === 'object') : [];
+        if (!list.length) return;
+        try {
+            global.sessionStorage.setItem(PENDING_UNLOCKS_SESSION_KEY, JSON.stringify(list));
+        } catch (_err) {
+            /* ignore */
+        }
+    }
+
+    function consumePendingAchievementUnlocks() {
+        try {
+            const raw = global.sessionStorage.getItem(PENDING_UNLOCKS_SESSION_KEY);
+            global.sessionStorage.removeItem(PENDING_UNLOCKS_SESSION_KEY);
+            if (!raw) return [];
+            const parsed = JSON.parse(raw);
+            return Array.isArray(parsed) ? parsed : [];
+        } catch (_err) {
+            return [];
+        }
+    }
+
+    async function processLoginAchievementUnlocks(loginPayload) {
+        const fromPayload = Array.isArray(loginPayload?.achievementUnlocks)
+            ? loginPayload.achievementUnlocks
+            : [];
+        const pending = consumePendingAchievementUnlocks();
+        const combined = sortAwardsByDisplayOrder(fromPayload.concat(pending));
+        if (!combined.length) return;
+        await showAchievementUnlockQueue(combined);
+    }
+
     function closeAchievementUnlockPopup() {
         const anchor = global.document.getElementById('royal-armies-achievement-toast-anchor');
         if (!anchor) return;
@@ -327,19 +444,26 @@
         return grantWhoaSlowDownAchievement(username);
     }
 
-    function previewWhoaSlowDownPopup(options) {
+    function previewAchievementPopup(achievementId, options) {
         const opts = options && typeof options === 'object' ? options : {};
+        const id = String(achievementId || WHO_SLOW_DOWN_ID).trim();
+        const definition = ACHIEVEMENT_DEFINITIONS[id] || WHO_SLOW_DOWN_DEFINITION;
+
         if (opts.grantIfMissing) {
-            const result = grantWhoaSlowDownAchievement(opts.username);
+            const result = grantAchievementById(id, opts.username);
             if (result.granted && result.award) {
                 showAchievementUnlockPopup(result.award);
                 return result;
             }
         }
 
-        const existing = loadCommanderAwardsList().find((entry) => String(entry?.id || '') === WHO_SLOW_DOWN_ID);
-        showAchievementUnlockPopup(existing || buildAwardRecord(WHO_SLOW_DOWN_DEFINITION, opts.username));
-        return { granted: false, award: existing || WHO_SLOW_DOWN_DEFINITION, reason: 'preview' };
+        const existing = loadCommanderAwardsList().find((entry) => String(entry?.id || '') === id);
+        showAchievementUnlockPopup(existing || buildAwardRecord(definition, opts.username));
+        return { granted: false, award: existing || definition, reason: 'preview' };
+    }
+
+    function previewWhoaSlowDownPopup(options) {
+        return previewAchievementPopup(WHO_SLOW_DOWN_ID, options);
     }
 
     function isLocalAchievementDevToolsEnabled() {
@@ -353,37 +477,66 @@
             if (params.get('devAchievement') === '1' || params.get('devTestAchievement') === '1') {
                 global.setTimeout(() => previewWhoaSlowDownPopup({ grantIfMissing: false }), 400);
             }
+            if (params.get('devFirstTimerAchievement') === '1') {
+                global.setTimeout(() => previewAchievementPopup(FIRST_TIMER_ID, { grantIfMissing: false }), 400);
+            }
         } catch (_err) {
             /* ignore */
         }
     }
 
+    async function maybeShowPendingLoginAchievementUnlocks() {
+        const pending = consumePendingAchievementUnlocks();
+        if (!pending.length) return;
+        await showAchievementUnlockQueue(pending);
+    }
+
     global.RoyalArmiesAchievements = {
+        FIRST_TIMER_ID,
+        FIRST_TIMER_DEFINITION,
         WHO_SLOW_DOWN_ID,
         WHO_SLOW_DOWN_DEFINITION,
+        ACHIEVEMENT_DEFINITIONS,
+        ACHIEVEMENT_DISPLAY_ORDER,
         JOIN_AGE_ATTEMPT_FLAG,
         JOIN_AGE_ATTEMPT_LOCAL_KEY,
         JOIN_AGE_QUERY_PARAM,
+        PENDING_UNLOCKS_SESSION_KEY,
+        sortAwardsByDisplayOrder,
         markJoinAgeAttemptForAchievement,
         consumeJoinAgeAttemptFlag,
         hasCommanderAchievement,
+        grantAchievementById,
+        grantFirstTimerAchievement,
         grantWhoaSlowDownAchievement,
         tryGrantWhoaSlowDownFromJoinAttempt,
         showAchievementUnlockPopup,
+        showAchievementUnlockQueue,
+        stashPendingAchievementUnlocks,
+        consumePendingAchievementUnlocks,
+        processLoginAchievementUnlocks,
         closeAchievementUnlockPopup,
+        previewAchievementPopup,
         previewWhoaSlowDownPopup,
         syncAchievementToastStackPosition,
         isLocalAchievementDevToolsEnabled,
-        maybeRunDevAchievementPopupFromQuery
+        maybeRunDevAchievementPopupFromQuery,
+        maybeShowPendingLoginAchievementUnlocks
     };
 
     global.markJoinAgeAttemptForAchievement = markJoinAgeAttemptForAchievement;
     global.grantWhoaSlowDownAchievement = grantWhoaSlowDownAchievement;
+    global.grantFirstTimerAchievement = grantFirstTimerAchievement;
     global.tryGrantWhoaSlowDownFromJoinAttempt = tryGrantWhoaSlowDownFromJoinAttempt;
     global.showAchievementUnlockPopup = showAchievementUnlockPopup;
+    global.showAchievementUnlockQueue = showAchievementUnlockQueue;
+    global.stashPendingAchievementUnlocks = stashPendingAchievementUnlocks;
+    global.processLoginAchievementUnlocks = processLoginAchievementUnlocks;
     global.previewWhoaSlowDownAchievementPopup = previewWhoaSlowDownPopup;
     global.maybeRunDevAchievementPopupFromQuery = maybeRunDevAchievementPopupFromQuery;
+    global.maybeShowPendingLoginAchievementUnlocks = maybeShowPendingLoginAchievementUnlocks;
     global.syncAchievementToastStackPosition = syncAchievementToastStackPosition;
+    global.sortCommanderAwardsByDisplayOrder = sortAwardsByDisplayOrder;
 
     global.addEventListener('resize', syncAchievementToastStackPosition, { passive: true });
 })(window);

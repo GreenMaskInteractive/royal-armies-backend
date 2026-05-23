@@ -432,7 +432,28 @@ function loadCommanderAwardRecords(sourcePlayer) {
             awards = [];
         }
     }
-    return Array.isArray(awards) ? awards : [];
+    return sortCommanderAwardDisplayList(Array.isArray(awards) ? awards : []);
+}
+
+function sortCommanderAwardDisplayList(awards) {
+    if (window.RoyalArmiesAchievements && typeof window.RoyalArmiesAchievements.sortAwardsByDisplayOrder === 'function') {
+        return window.RoyalArmiesAchievements.sortAwardsByDisplayOrder(awards);
+    }
+
+    const order = ['first_timer', 'whoa_slow_down'];
+    const orderIndex = (entry) => {
+        const id = String(entry?.id || entry?.achievementId || '').trim();
+        const idx = order.indexOf(id);
+        return idx === -1 ? order.length + 1 : idx;
+    };
+
+    return (Array.isArray(awards) ? awards : []).slice().sort((a, b) => {
+        const orderDiff = orderIndex(a) - orderIndex(b);
+        if (orderDiff !== 0) return orderDiff;
+        const aTime = Date.parse(a?.earnedAt || '') || 0;
+        const bTime = Date.parse(b?.earnedAt || '') || 0;
+        return aTime - bTime;
+    });
 }
 
 function loadCommanderMedalRecords(sourcePlayer) {

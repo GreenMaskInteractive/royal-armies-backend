@@ -898,6 +898,123 @@ function normalizeCommanderDossierArray(raw, maxItems = 200) {
     return raw.slice(0, maxItems).filter((entry) => entry && typeof entry === 'object');
 }
 
+const ACHIEVEMENT_CATALOG_ORDER = ['first_timer', 'whoa_slow_down'];
+
+const ACHIEVEMENT_CATALOG = Object.freeze({
+    first_timer: Object.freeze({
+        id: 'first_timer',
+        label: 'First Timer',
+        achievement: 'Logging in for the first time',
+        iconUrl: 'images/firsttimericon.png',
+        xpReward: 15
+    }),
+    whoa_slow_down: Object.freeze({
+        id: 'whoa_slow_down',
+        label: "Whoa, slow down! We're not finished yet.",
+        achievement: 'Attempt to JOIN AGE before the game engine has been developed.',
+        iconUrl: 'images/whoa_slow_down_icon.png',
+        xpReward: 30
+    })
+});
+
+function commanderAwardsIncludeId(awards, achievementId) {
+    const id = String(achievementId || '').trim();
+    if (!id) return false;
+    return awards.some((entry) => String(entry?.id || entry?.achievementId || '').trim() === id);
+}
+
+function sortCommanderAwardsByCatalog(awards) {
+    const orderIndex = (entry) => {
+        const id = String(entry?.id || entry?.achievementId || '').trim();
+        const idx = ACHIEVEMENT_CATALOG_ORDER.indexOf(id);
+        return idx === -1 ? ACHIEVEMENT_CATALOG_ORDER.length + 1 : idx;
+    };
+
+    return awards.slice().sort((a, b) => {
+        const orderDiff = orderIndex(a) - orderIndex(b);
+        if (orderDiff !== 0) return orderDiff;
+        const aTime = Date.parse(a?.earnedAt || '') || 0;
+        const bTime = Date.parse(b?.earnedAt || '') || 0;
+        return aTime - bTime;
+    });
+}
+
+function buildCommanderAchievementRecord(definition, username) {
+    const subject = String(username || '').trim();
+    const copy = definition.achievement || definition.description || '';
+    return {
+        id: definition.id,
+        label: definition.label,
+        achievement: copy,
+        description: copy,
+        iconUrl: definition.iconUrl,
+        xpReward: Number(definition.xpReward ?? definition.xp ?? 0) || 0,
+        username: subject,
+        earnedAt: new Date().toISOString()
+    };
+}
+
+function insertCommanderAchievementInCatalogOrder(awards, record) {
+    const next = awards.slice();
+    const recordId = String(record?.id || '').trim();
+    const recordOrder = ACHIEVEMENT_CATALOG_ORDER.indexOf(recordId);
+    let insertAt = next.length;
+
+    for (let i = 0; i < next.length; i += 1) {
+        const existingId = String(next[i]?.id || next[i]?.achievementId || '').trim();
+        const existingOrder = ACHIEVEMENT_CATALOG_ORDER.indexOf(existingId);
+        if (existingOrder !== -1 && recordOrder !== -1 && existingOrder > recordOrder) {
+            insertAt = i;
+            break;
+        }
+    }
+
+    next.splice(insertAt, 0, record);
+    return sortCommanderAwardsByCatalog(next);
+}
+
+function ensureFirstTimerAchievementForCommander(commander, options = {}) {
+    if (!commander || !commander.username) {
+        return { added: false, record: null, reason: 'unknown_commander' };
+    }
+
+    const definition = ACHIEVEMENT_CATALOG.first_timer;
+    const awards = normalizeCommanderDossierArray(commander.awards, 100);
+    if (commanderAwardsIncludeId(awards, definition.id)) {
+        commander.awards = sortCommanderAwardsByCatalog(awards);
+        return { added: false, record: null, reason: 'already_owned' };
+    }
+
+    const record = buildCommanderAchievementRecord(definition, commander.username);
+    commander.awards = insertCommanderAchievementInCatalogOrder(awards, record);
+
+    if (options.deferWrite !== true) {
+        db.get('commanders')
+            .find({ username: commander.username })
+            .assign({ awards: commander.awards })
+            .write();
+    }
+
+    return { added: true, record, reason: 'granted' };
+}
+
+function backfillFirstTimerAchievementForAllCommanders() {
+    const commanders = db.get('commanders').value() || [];
+    let added = 0;
+
+    commanders.forEach((commander) => {
+        const username = String(commander?.username || '').trim();
+        if (!username || isHiddenRegistrationUsername(username)) return;
+        const result = ensureFirstTimerAchievementForCommander(commander, { deferWrite: true });
+        if (result.added) added += 1;
+    });
+
+    if (added > 0) {
+        db.set('commanders', commanders).write();
+        console.log(`[NEXUS] Granted First Timer achievement to ${added} commander(s).`);
+    }
+}
+
 function normalizeCommanderAgeResetUsage(raw) {
     if (!raw || typeof raw !== 'object') return {};
     const next = {};
@@ -935,7 +1052,7 @@ function serializeCommanderDossierForClient(commander) {
         privacy: normalizeCommanderProfilePrivacy(commander.privacy),
         avatarUrl: String(commander.avatarUrl || '').slice(0, 512),
         ageHistory: normalizeCommanderDossierArray(commander.ageHistory, 50),
-        awards: normalizeCommanderDossierArray(commander.awards, 100),
+        awards: sortCommanderAwardsByCatalog(normalizeCommanderDossierArray(commander.awards, 100)),
         medals: normalizeCommanderDossierArray(commander.medals, 100),
         membershipTitle: String(commander.membershipTitle || 'Basic').slice(0, 64),
         premiumMember: !!commander.premiumMember,
@@ -964,7 +1081,7 @@ function buildCommanderDossierPatch(body) {
         patch.ageHistory = normalizeCommanderDossierArray(body.ageHistory, 50);
     }
     if ('awards' in body) {
-        patch.awards = normalizeCommanderDossierArray(body.awards, 100);
+        patch.awards = sortCommanderAwardsByCatalog(normalizeCommanderDossierArray(body.awards, 100));
     }
     if ('medals' in body) {
         patch.medals = normalizeCommanderDossierArray(body.medals, 100);
@@ -1322,13 +1439,21 @@ app.post('/api/login', async (req, res) => {
 
         const rememberMe = req.body?.rememberMe !== false;
         setPortalSessionForUser(req, commander.username, rememberMe);
+
+        const achievementUnlocks = [];
+        const firstTimerResult = ensureFirstTimerAchievementForCommander(commander);
+        if (firstTimerResult.added && firstTimerResult.record) {
+            achievementUnlocks.push(firstTimerResult.record);
+        }
+
         ensureWelcomeSystemMessageForCommander(commander.username);
 
         res.status(200).json({
             status: 'success',
             username: commander.username,
             verified: !!commander.verified,
-            rememberMe
+            rememberMe,
+            achievementUnlocks
         });
     } catch (error) {
         console.error('[NEXUS] Login compare failed:', error);
@@ -2243,6 +2368,7 @@ app.get(['/', '/index', '/index.html'], (req, res) => {
 /* Block 15: Nexus Engine Ignition */
 app.listen(PORT, () => {
     backfillWelcomeSystemMessagesForAllCommanders();
+    backfillFirstTimerAchievementForAllCommanders();
     console.log(`========================================`);
     console.log(` NEXUS ENGINE ONLINE: Port ${PORT}`);
     console.log(` GREEN MASK INTERACTIVE: ALPHA 0.1.11`);

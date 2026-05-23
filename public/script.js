@@ -1719,6 +1719,11 @@ async function handleLogin() {
         if (typeof player !== 'undefined') player.name = ledgerUsername;
         refreshProfileCommanderNameDisplay();
         refreshLoggedUserTagDisplay();
+        if (typeof stashPendingAchievementUnlocks === 'function') {
+            stashPendingAchievementUnlocks(payload.achievementUnlocks);
+        } else if (window.RoyalArmiesAchievements && typeof window.RoyalArmiesAchievements.stashPendingAchievementUnlocks === 'function') {
+            window.RoyalArmiesAchievements.stashPendingAchievementUnlocks(payload.achievementUnlocks);
+        }
         if (isMainPortalHub()) {
             finishMainPortalLoginSession(false);
         } else {
@@ -1754,6 +1759,11 @@ function finishMainPortalLoginSession(isAdmin) {
     }
     if (!isAdmin) {
         console.log('Login accepted. Age Portal session active.');
+    }
+    if (!isAdmin && typeof maybeShowPendingLoginAchievementUnlocks === 'function') {
+        setTimeout(() => maybeShowPendingLoginAchievementUnlocks(), 700);
+    } else if (!isAdmin && window.RoyalArmiesAchievements && typeof window.RoyalArmiesAchievements.maybeShowPendingLoginAchievementUnlocks === 'function') {
+        setTimeout(() => window.RoyalArmiesAchievements.maybeShowPendingLoginAchievementUnlocks(), 700);
     }
 }
 
@@ -3789,6 +3799,11 @@ async function bootstrapMainPortalAuthOnLoad() {
         maybeRunDevAchievementPopupFromQuery();
     } else if (window.RoyalArmiesAchievements && typeof window.RoyalArmiesAchievements.maybeRunDevAchievementPopupFromQuery === 'function') {
         window.RoyalArmiesAchievements.maybeRunDevAchievementPopupFromQuery();
+    }
+    if (isPortalUserAuthenticated() && typeof maybeShowPendingLoginAchievementUnlocks === 'function') {
+        setTimeout(() => maybeShowPendingLoginAchievementUnlocks(), 900);
+    } else if (isPortalUserAuthenticated() && window.RoyalArmiesAchievements && typeof window.RoyalArmiesAchievements.maybeShowPendingLoginAchievementUnlocks === 'function') {
+        setTimeout(() => window.RoyalArmiesAchievements.maybeShowPendingLoginAchievementUnlocks(), 900);
     }
 }
 
