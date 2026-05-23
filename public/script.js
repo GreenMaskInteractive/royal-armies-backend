@@ -4803,16 +4803,14 @@ function openFocusedDossierReadingOverlay(msg, track) {
 
     if (track === 'inbox') {
         const replyBtn = document.createElement('button');
-        replyBtn.className = 'suicide-danger-confirm-btn';
+        replyBtn.className = 'suicide-safe-retreat-btn';
         replyBtn.innerText = 'Reply';
-        replyBtn.style.borderColor = '#b89030';
         replyBtn.onclick = () => openMessageComposeFromDossier(msg, 'reply');
         btnDock.appendChild(replyBtn);
 
         const forwardBtn = document.createElement('button');
-        forwardBtn.className = 'suicide-danger-confirm-btn';
+        forwardBtn.className = 'suicide-safe-retreat-btn';
         forwardBtn.innerText = 'Forward';
-        forwardBtn.style.borderColor = '#6a8fc7';
         forwardBtn.onclick = () => openMessageComposeFromDossier(msg, 'forward');
         btnDock.appendChild(forwardBtn);
     }
@@ -4843,7 +4841,7 @@ function openFocusedDossierReadingOverlay(msg, track) {
 
     const returnBtn = document.createElement('button');
     returnBtn.className = 'suicide-safe-retreat-btn';
-    returnBtn.innerText = "CLOSE LOG";
+    returnBtn.innerText = 'Close';
     returnBtn.onclick = () => closeSuicideOverlayWindow();
 
     btnDock.appendChild(deleteBtn);
