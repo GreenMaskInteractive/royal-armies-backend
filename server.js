@@ -905,7 +905,7 @@ const ACHIEVEMENT_CATALOG = Object.freeze({
         id: 'first_timer',
         label: 'First Timer',
         achievement: 'Logging in for the first time',
-        iconUrl: 'images/firsttimericon.png',
+        iconUrl: 'images/first_timer.png',
         xpReward: 15
     }),
     whoa_slow_down: Object.freeze({
@@ -972,7 +972,7 @@ function enrichCommanderAwardsForClient(awards) {
             label: entry.label || definition.label,
             achievement: copy,
             description: copy,
-            iconUrl: String(entry.iconUrl || entry.icon || definition.iconUrl).trim(),
+            iconUrl: String(definition.iconUrl).trim(),
             xpReward: Number(entry.xpReward ?? entry.xp ?? definition.xpReward) || 0
         };
     }));

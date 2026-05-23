@@ -21,7 +21,7 @@
         id: FIRST_TIMER_ID,
         label: 'First Timer',
         achievement: 'Logging in for the first time',
-        iconUrl: 'images/firsttimericon.png',
+        iconUrl: 'images/first_timer.png',
         xpReward: 15
     });
 
@@ -97,7 +97,8 @@
         const definition = ACHIEVEMENT_DEFINITIONS[id];
         const copy = record.achievement || record.description || definition?.achievement || '';
         const catalogIcon = definition?.iconUrl || '';
-        const iconUrl = resolvePortalPublicAssetUrl(record.iconUrl || record.icon || catalogIcon);
+        const rawIcon = definition ? catalogIcon : (record.iconUrl || record.icon || catalogIcon);
+        const iconUrl = resolvePortalPublicAssetUrl(rawIcon);
 
         if (!definition) {
             return iconUrl ? { ...record, iconUrl } : record;
