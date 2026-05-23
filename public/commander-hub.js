@@ -661,8 +661,6 @@ function renderPublicProfileCardContent(snapshot, options) {
     const rankTitle = getCommanderRankTitle(snapshot.rank, snapshot.path);
     const classTitle = getCommanderClassTitle(snapshot.path);
 
-    const visibilityPill = `<span class="public-profile-visibility-pill ${isPublic ? 'is-public' : 'is-private'}">${isPublic ? 'Public Profile' : 'Private Profile'}</span>`;
-
     const bioColumnContent = snapshot.description
         ? `<p class="public-profile-bio-text">${escapePublicProfileHtml(snapshot.description)}</p>`
         : '<p class="public-profile-empty-state public-profile-bio-empty">No bio written yet.</p>';
@@ -743,7 +741,6 @@ function renderPublicProfileCardContent(snapshot, options) {
                 <h2 id="public-profile-card-title" class="public-profile-commander-name">${escapePublicProfileHtml(snapshot.name)}</h2>
                 <div class="public-profile-badge-row commander-membership-badge-row">
                     ${membershipBadgeRowMarkup}
-                    ${visibilityPill}
                 </div>
                 ${locationMetaRow}
                 <div class="public-profile-meta-row">
