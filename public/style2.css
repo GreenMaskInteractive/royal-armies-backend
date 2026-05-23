@@ -4839,6 +4839,23 @@ body:not(.portal-guest-mode) #portal-deployment-guest-cta {
     flex: 1 1 100% !important;
 }
 
+.public-profile-split-body--private-only {
+    display: block !important;
+    margin-top: 4px !important;
+}
+
+.public-profile-split-body--private-only .public-profile-bio-section {
+    width: 100% !important;
+}
+
+.public-profile-identity-header--private-only .public-profile-identity-copy {
+    justify-content: center !important;
+}
+
+.public-profile-identity-header--private-only .public-profile-commander-name {
+    margin: 0 !important;
+}
+
 .public-profile-meta-row {
     display: flex !important;
     flex-wrap: wrap !important;
