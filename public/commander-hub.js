@@ -543,7 +543,10 @@ function buildPublicProfileAwardsHtml(awards) {
         return `
             <div class="public-profile-award-chip" tabindex="0" role="img" aria-label="${escapePublicProfileHtml(label)}: ${escapePublicProfileHtml(achievement)}">
                 <span class="public-profile-award-icon-shell">${iconMarkup}</span>
-                <span class="public-profile-award-tooltip" role="tooltip">${escapePublicProfileHtml(achievement)}</span>
+                <span class="public-profile-award-tooltip" role="tooltip">
+                    <span class="public-profile-award-tooltip-title">${escapePublicProfileHtml(label)}</span>
+                    <span class="public-profile-award-tooltip-body">${escapePublicProfileHtml(achievement)}</span>
+                </span>
             </div>
         `;
     }).join('');
