@@ -2220,6 +2220,45 @@ body:not(.portal-guest-mode) #portal-deployment-guest-cta {
     gap: 0 !important;
 }
 
+.chat-roster-commander-card--profile-open {
+    cursor: pointer !important;
+}
+
+.chat-roster-commander-card--profile-open:hover {
+    border-color: rgba(201, 162, 39, 0.42) !important;
+    background: rgba(255, 215, 0, 0.04) !important;
+}
+
+.chat-roster-commander-card--profile-open:focus-visible {
+    outline: 2px solid rgba(201, 162, 39, 0.55) !important;
+    outline-offset: 2px !important;
+}
+
+.chat-roster-expand-btn {
+    flex-shrink: 0 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 22px !important;
+    height: 22px !important;
+    margin-left: 2px !important;
+    padding: 0 !important;
+    border: 1px solid rgba(184, 144, 48, 0.28) !important;
+    border-radius: 3px !important;
+    background: rgba(0, 0, 0, 0.35) !important;
+    color: rgba(241, 224, 172, 0.75) !important;
+    font-size: 0.72rem !important;
+    line-height: 1 !important;
+    cursor: pointer !important;
+}
+
+.chat-roster-expand-btn:hover,
+.chat-roster-expand-btn:focus-visible {
+    border-color: rgba(255, 215, 0, 0.45) !important;
+    color: #ffd978 !important;
+    background: rgba(255, 215, 0, 0.08) !important;
+}
+
 .chat-roster-commander-card--expandable {
     cursor: pointer !important;
 }

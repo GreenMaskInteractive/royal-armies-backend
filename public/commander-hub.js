@@ -479,11 +479,64 @@ function loadCommanderMedalRecords(sourcePlayer) {
     return Array.isArray(medals) ? medals : [];
 }
 
+function resolvePublicProfileViewerUsername() {
+    if (typeof getActiveCommanderUsername === 'function') {
+        const active = getActiveCommanderUsername();
+        if (active && String(active).trim()) return String(active).trim();
+    }
+    const saved = localStorage.getItem('activeCommanderUser');
+    return saved && saved.trim() ? saved.trim() : '';
+}
+
+function buildSubjectPlayerFromPublicProfilePayload(data) {
+    if (!data || data.status !== 'ok') return null;
+
+    const username = String(data.username || '').trim();
+    if (!username) return null;
+
+    return {
+        name: username,
+        avatarUrl: String(data.avatarUrl || '').trim() || 'images/avatars/commanderprofile01.png',
+        country: String(data.country || '—'),
+        timezone: String(data.timezone || '—'),
+        membershipTitle: data.membershipTitle || 'Basic',
+        description: String(data.bio || ''),
+        privacy: data.privacy === 'Private' ? 'Private' : 'Public',
+        rank: Number(data.rank) || 1,
+        path: String(data.path || ''),
+        ageHistory: Array.isArray(data.ageHistory) ? data.ageHistory : [],
+        medals: Array.isArray(data.medals) ? data.medals : [],
+        awards: Array.isArray(data.awards) ? data.awards : []
+    };
+}
+
+async function fetchCommanderPublicProfileForViewer(username) {
+    const name = String(username || '').trim();
+    if (!name) return null;
+
+    try {
+        const response = await fetch(
+            `/api/portal/commanders/${encodeURIComponent(name)}/public-profile`,
+            { cache: 'no-store' }
+        );
+        if (!response.ok) return null;
+        const payload = await response.json();
+        return buildSubjectPlayerFromPublicProfilePayload(payload);
+    } catch (_err) {
+        return null;
+    }
+}
+
 function getPublicProfileSnapshot(subjectPlayer) {
     const source = subjectPlayer || (typeof player !== 'undefined' ? player : null);
     if (!source) return null;
 
-    const viewingSelf = !subjectPlayer;
+    const viewerUsername = resolvePublicProfileViewerUsername();
+    const subjectName = String(source.name || source.username || '').trim();
+    const viewingSelf = !subjectPlayer
+        || (viewerUsername
+            && subjectName
+            && subjectName.toLowerCase() === viewerUsername.toLowerCase());
     const storedBio = viewingSelf ? localStorage.getItem('savedCommanderBio') : null;
     const storedPrivacy = viewingSelf ? localStorage.getItem('savedCommanderPrivacy') : null;
     const description = storedBio !== null ? storedBio : (source.description || '');
@@ -608,9 +661,13 @@ function renderPublicProfileCardContent(snapshot, options) {
     const rankTitle = getCommanderRankTitle(snapshot.rank, snapshot.path);
     const classTitle = getCommanderClassTitle(snapshot.path);
 
-    const bioColumnContent = snapshot.description
-        ? `<p class="public-profile-bio-text">${escapePublicProfileHtml(snapshot.description)}</p>`
-        : '<p class="public-profile-empty-state public-profile-bio-empty">No bio written yet.</p>';
+    const visibilityPill = `<span class="public-profile-visibility-pill ${isPublic ? 'is-public' : 'is-private'}">${isPublic ? 'Public Profile' : 'Private Profile'}</span>`;
+
+    const bioColumnContent = hideSensitiveDetails
+        ? `<p class="public-profile-private-msg public-profile-private-notice">This commander keeps their nation, time zone, medals, achievements, and Age history private. Their public card still shows rank, class, and membership.</p>`
+        : (snapshot.description
+            ? `<p class="public-profile-bio-text">${escapePublicProfileHtml(snapshot.description)}</p>`
+            : '<p class="public-profile-empty-state public-profile-bio-empty">No bio written yet.</p>');
 
     const locationMetaRow = hideSensitiveDetails
         ? ''
@@ -664,6 +721,7 @@ function renderPublicProfileCardContent(snapshot, options) {
                 <h2 id="public-profile-card-title" class="public-profile-commander-name">${escapePublicProfileHtml(snapshot.name)}</h2>
                 <div class="public-profile-badge-row commander-membership-badge-row">
                     ${membershipBadgeRowMarkup}
+                    ${visibilityPill}
                 </div>
                 ${locationMetaRow}
                 <div class="public-profile-meta-row">
@@ -677,22 +735,12 @@ function renderPublicProfileCardContent(snapshot, options) {
     `;
 }
 
-function openPublicCommanderProfileCard(clickEvent, subjectPlayer) {
-    if (clickEvent) clickEvent.stopPropagation();
-
-    if (!subjectPlayer && isCommanderHubPortalPageActive()) {
-        loadCommanderHubSection('view-profile', clickEvent);
-        return;
-    }
-
-    syncCommanderHubPlayerFromStorage();
-
-    const snapshot = getPublicProfileSnapshot(subjectPlayer);
-    if (!snapshot) return;
+function showPublicCommanderProfileOverlay(snapshot) {
+    if (!snapshot) return false;
 
     const overlay = document.getElementById('public-commander-profile-overlay');
     const mount = document.getElementById('public-profile-card-mount');
-    if (!overlay || !mount) return;
+    if (!overlay || !mount) return false;
 
     mount.innerHTML = renderPublicProfileCardContent(snapshot);
     overlay.classList.add('is-visible');
@@ -703,6 +751,32 @@ function openPublicCommanderProfileCard(clickEvent, subjectPlayer) {
     });
 
     document.addEventListener('keydown', handlePublicProfileCardEscapeKey);
+    return true;
+}
+
+async function openPublicCommanderProfileCard(clickEvent, subjectPlayerOrUsername) {
+    if (clickEvent) clickEvent.stopPropagation();
+
+    if (!subjectPlayerOrUsername && isCommanderHubPortalPageActive()) {
+        loadCommanderHubSection('view-profile', clickEvent);
+        return;
+    }
+
+    syncCommanderHubPlayerFromStorage();
+
+    let subjectPlayer = (subjectPlayerOrUsername && typeof subjectPlayerOrUsername === 'object')
+        ? subjectPlayerOrUsername
+        : null;
+
+    if (!subjectPlayer && typeof subjectPlayerOrUsername === 'string') {
+        subjectPlayer = await fetchCommanderPublicProfileForViewer(subjectPlayerOrUsername);
+        if (!subjectPlayer) return;
+    }
+
+    const snapshot = getPublicProfileSnapshot(subjectPlayer);
+    if (!snapshot) return;
+
+    showPublicCommanderProfileOverlay(snapshot);
 }
 
 function closePublicCommanderProfileCard(clickEvent) {
@@ -736,3 +810,5 @@ window.teardownCommanderHubPortalView = teardownCommanderHubPortalView;
 window.isCommanderHubPortalPageActive = isCommanderHubPortalPageActive;
 window.openPublicCommanderProfileCard = openPublicCommanderProfileCard;
 window.closePublicCommanderProfileCard = closePublicCommanderProfileCard;
+window.fetchCommanderPublicProfileForViewer = fetchCommanderPublicProfileForViewer;
+window.showPublicCommanderProfileOverlay = showPublicCommanderProfileOverlay;

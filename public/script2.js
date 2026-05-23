@@ -1559,8 +1559,56 @@ function handleChatRosterCardExpandKeydown(event) {
     toggleChatRosterCardExpand(event);
 }
 
+function handleChatRosterExpandButtonClick(event) {
+    if (event) {
+        event.preventDefault();
+        event.stopPropagation();
+    }
+    const card = event?.currentTarget?.closest('.chat-roster-commander-card');
+    if (!card) return;
+    toggleChatRosterCardExpand({ ...event, currentTarget: card });
+}
+
+function handleChatRosterExpandButtonKeydown(event) {
+    if (event.key !== 'Enter' && event.key !== ' ') return;
+    handleChatRosterExpandButtonClick(event);
+}
+
+async function openCommunityChatRosterCommanderProfile(clickEvent) {
+    if (clickEvent) {
+        clickEvent.preventDefault();
+        clickEvent.stopPropagation();
+    }
+
+    const trigger = clickEvent?.currentTarget;
+    const username = String(
+        trigger?.dataset?.rosterProfileCommander
+        || trigger?.closest('[data-roster-profile-commander]')?.dataset?.rosterProfileCommander
+        || ''
+    ).trim();
+    if (!username || isRoyalGuardBotUsername(username)) return;
+
+    if (typeof playSelectSFX === 'function') playSelectSFX();
+
+    if (typeof openPublicCommanderProfileCard === 'function') {
+        const selfRaw = resolvePortalPresenceUsername() || getLoggedCommunityChatUsername();
+        const isSelf = normalizeCommunityChatUsername(username) === normalizeCommunityChatUsername(selfRaw);
+        await openPublicCommanderProfileCard(null, isSelf ? undefined : username);
+    }
+}
+
+function handleCommunityChatRosterProfileKeydown(event) {
+    if (event.key !== 'Enter' && event.key !== ' ') return;
+    event.preventDefault();
+    openCommunityChatRosterCommanderProfile(event);
+}
+
 window.toggleChatRosterCardExpand = toggleChatRosterCardExpand;
 window.handleChatRosterCardExpandKeydown = handleChatRosterCardExpandKeydown;
+window.handleChatRosterExpandButtonClick = handleChatRosterExpandButtonClick;
+window.handleChatRosterExpandButtonKeydown = handleChatRosterExpandButtonKeydown;
+window.openCommunityChatRosterCommanderProfile = openCommunityChatRosterCommanderProfile;
+window.handleCommunityChatRosterProfileKeydown = handleCommunityChatRosterProfileKeydown;
 
 function sortCommunityChatRosterPlayers(players, selfLower, playingSet) {
     const rosterScore = (name) => {
@@ -1641,12 +1689,14 @@ function buildCommunityChatRosterCardMarkup(name, selfLower, playingSet, presenc
         ? `<div class="chat-roster-commander-expand-panel" ${isExpanded ? '' : 'hidden'}>${buildChatRosterExpandPanelMarkup(name, isSelf, inAge, staffRole)}</div>`
         : '';
 
-    const expandInteractionAttrs = isExpandable
-        ? `role="button" tabindex="0" aria-expanded="${isExpanded ? 'true' : 'false'}" aria-label="${escapeMetricRosterHtml(name)} — click for details" data-roster-expand-key="${expandKey}" onclick="toggleChatRosterCardExpand(event)" onkeydown="handleChatRosterCardExpandKeydown(event)"`
+    const profileInteractionAttrs = `role="button" tabindex="0" data-roster-profile-commander="${escapeMetricRosterHtml(name)}" aria-label="View ${escapeMetricRosterHtml(name)} profile" onclick="openCommunityChatRosterCommanderProfile(event)" onkeydown="handleCommunityChatRosterProfileKeydown(event)"`;
+
+    const expandButtonMarkup = isExpandable
+        ? `<button type="button" class="chat-roster-expand-btn" aria-expanded="${isExpanded ? 'true' : 'false'}" aria-label="Toggle ${escapeMetricRosterHtml(name)} staff details" data-roster-expand-key="${expandKey}" onclick="handleChatRosterExpandButtonClick(event)" onkeydown="handleChatRosterExpandButtonKeydown(event)">${isExpanded ? '▾' : '▸'}</button>`
         : '';
 
     return `
-        <article class="chat-roster-commander-card ${cardModifiers}" data-roster-commander="${escapeMetricRosterHtml(normalizeCommunityChatUsername(name))}"${staffRole ? ` data-staff-role="${staffRole}"` : ''} ${expandInteractionAttrs}>
+        <article class="chat-roster-commander-card chat-roster-commander-card--profile-open ${cardModifiers}" data-roster-commander="${escapeMetricRosterHtml(normalizeCommunityChatUsername(name))}"${staffRole ? ` data-staff-role="${staffRole}"` : ''} ${profileInteractionAttrs}${isExpandable ? ` data-roster-expand-key="${expandKey}"` : ''}>
             <div class="chat-roster-avatar-wrap">
                 <img class="chat-roster-avatar" src="${escapeMetricRosterHtml(getChatRosterAvatarUrl(name))}" alt="" width="40" height="40" loading="lazy" decoding="async">
                 <span class="chat-roster-presence-ring ${presenceRingClass}" aria-hidden="true" title="${escapeMetricRosterHtml(status.label)}"></span>
@@ -1657,7 +1707,7 @@ function buildCommunityChatRosterCardMarkup(name, selfLower, playingSet, presenc
                 <div class="chat-roster-commander-topline">
                     <span class="chat-roster-name">${escapeMetricRosterHtml(name)}</span>
                     <span class="chat-roster-status-pill ${status.pillClass}"><span class="chat-roster-status-pill-icon" aria-hidden="true">${status.icon}</span>${escapeMetricRosterHtml(status.label)}</span>
-                    ${isExpandable ? buildChatRosterExpandHintMarkup() : ''}
+                    ${expandButtonMarkup}
                 </div>
                 ${expandPanelMarkup}
             </div>
@@ -2736,7 +2786,7 @@ function renderCommunityChatPortalCanvas(viewport) {
                         <span class="chat-roster-header-label">Active Players</span>
                         <span class="chat-online-roster-count" id="chat-online-roster-count">0</span>
                     </div>
-                    <p class="chat-roster-subtitle"><span id="chat-online-in-age-count">0</span> in the Age · click Royal Guard, Owner, or Mod for details</p>
+                    <p class="chat-roster-subtitle"><span id="chat-online-in-age-count">0</span> in the Age · click a player for their profile · Owner/Mod ▸ for staff details</p>
                     <div class="chat-roster-status-legend" aria-label="Roster presence and badges">
                         <span class="chat-roster-legend-item"><span class="chat-roster-legend-dot chat-roster-legend-dot--chat-active" aria-hidden="true"></span> In Chat</span>
                         <span class="chat-roster-legend-item"><span class="chat-roster-legend-dot chat-roster-legend-dot--portal-browsing" aria-hidden="true"></span> On Site</span>

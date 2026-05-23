@@ -1676,6 +1676,27 @@ app.get('/api/portal/account/security-profile', (req, res) => {
     });
 });
 
+app.get('/api/portal/commanders/:username/public-profile', (req, res) => {
+    const username = resolveLedgerCommanderUsername(req.params?.username || '');
+    if (!username || isHiddenRegistrationUsername(username)) {
+        return res.status(404).json({ status: 'error', message: 'Commander not found.' });
+    }
+
+    const commander = findCommanderByUsername(username);
+    if (!commander) {
+        return res.status(404).json({ status: 'error', message: 'Commander not found.' });
+    }
+
+    const dossier = serializeCommanderDossierForClient(commander);
+    res.status(200).json({
+        ...dossier,
+        rank: Number(commander.rank) || 1,
+        path: String(commander.path || '').slice(0, 16),
+        country: String(commander.country || '—').slice(0, 120),
+        timezone: String(commander.timezone || '—').slice(0, 120)
+    });
+});
+
 app.get('/api/portal/account/profile', (req, res) => {
     const username = resolveLedgerCommanderUsername(req.query?.username || '');
     if (!username) {
