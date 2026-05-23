@@ -4191,7 +4191,7 @@ function selectPresetAvatar(chosenUrl) {
 /* --- MESSAGE COMPOSE: REPLY / FORWARD CONTEXT --- */
 const SYSTEM_MESSAGE_FROM_LABEL = 'Ledger System';
 const SYSTEM_MESSAGE_HEADER_LABEL = 'System Message';
-const COMMANDER_DISPATCH_HEADER_LABEL = 'Commander Dispatch';
+const COMMANDER_DISPATCH_HEADER_LABEL = 'Message';
 
 function formatMailboxFromLabel(msg, track) {
     if (track === 'system') return SYSTEM_MESSAGE_FROM_LABEL;
