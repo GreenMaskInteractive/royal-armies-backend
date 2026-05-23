@@ -156,16 +156,6 @@
     z-index: 2 !important;
 }
 
-.portal-nav-commander-identity-row::after {
-    content: '' !important;
-    position: absolute !important;
-    left: 0 !important;
-    right: 0 !important;
-    bottom: -10px !important;
-    height: 12px !important;
-    pointer-events: auto !important;
-}
-
 .portal-nav-commander-menu-rail {
     display: flex !important;
     align-items: center !important;
@@ -2743,7 +2733,6 @@ body:not(.portal-guest-mode) #portal-deployment-guest-cta {
     cursor: pointer !important;
 }
 
-.portal-nav-commander-identity-row:hover .nav-bar-embedded-avatar-thumbnail,
 .nav-avatar-hub-wrapper:hover .nav-bar-embedded-avatar-thumbnail,
 .nav-avatar-hub-wrapper:focus-within .nav-bar-embedded-avatar-thumbnail {
     box-shadow: 0 0 14px rgba(255, 215, 0, 0.48) !important;
@@ -4157,11 +4146,24 @@ body:not(.portal-guest-mode) #portal-deployment-guest-cta {
     display: inline-flex !important;
     align-items: center !important;
     justify-content: center !important;
+    width: 46px !important;
+    height: 46px !important;
     padding-bottom: 0 !important;
     top: 0 !important;
     z-index: 20 !important;
     overflow: visible !important;
     flex-shrink: 0 !important;
+}
+
+.nav-avatar-hub-wrapper::after {
+    content: '' !important;
+    position: absolute !important;
+    left: 50% !important;
+    bottom: -14px !important;
+    width: 46px !important;
+    height: 16px !important;
+    transform: translateX(-50%) !important;
+    pointer-events: auto !important;
 }
 
 /* Horizontal commander quick menu inside the nav bar left rail */
@@ -4194,7 +4196,7 @@ body:not(.portal-guest-mode) #portal-deployment-guest-cta {
     pointer-events: none !important;
 }
 
-.portal-desktop-nav-stack:has(.portal-nav-commander-identity-row:hover) .avatar-hover-dropdown-menu,
+.portal-desktop-nav-stack:has(.nav-avatar-hub-wrapper:hover) .avatar-hover-dropdown-menu,
 .portal-desktop-nav-stack:has(.portal-nav-commander-menu-rail:hover) .avatar-hover-dropdown-menu,
 .portal-desktop-nav-stack:has(.nav-avatar-hub-wrapper:focus-within) .avatar-hover-dropdown-menu,
 .portal-desktop-nav-stack:has(.avatar-hover-dropdown-menu:focus-within) .avatar-hover-dropdown-menu {
@@ -4289,7 +4291,7 @@ body:not(.portal-guest-mode) #portal-deployment-guest-cta {
 
 .nav-avatar-hub-wrapper:hover .dropdown-action-item-messages.has-unread-messages .dropdown-messages-new-dot,
 .nav-avatar-hub-wrapper:focus-within .dropdown-action-item-messages.has-unread-messages .dropdown-messages-new-dot,
-.portal-desktop-nav-stack:has(.portal-nav-commander-identity-row:hover) .dropdown-action-item-messages.has-unread-messages .dropdown-messages-new-dot,
+.portal-desktop-nav-stack:has(.nav-avatar-hub-wrapper:hover) .dropdown-action-item-messages.has-unread-messages .dropdown-messages-new-dot,
 .portal-desktop-nav-stack:has(.portal-nav-commander-menu-rail:hover) .dropdown-action-item-messages.has-unread-messages .dropdown-messages-new-dot,
 .avatar-hover-dropdown-menu:hover .dropdown-action-item-messages.has-unread-messages .dropdown-messages-new-dot {
     opacity: 1 !important;
