@@ -585,10 +585,10 @@ function patchGameChatUiPreferences(commander, body = {}) {
         next.gameChatOpacity = clampNumber(body.opacity, 15, 100, current.gameChatOpacity);
     }
     if (body.width !== undefined) {
-        next.gameChatPanelWidth = clampNumber(body.width, 280, 2400, current.gameChatPanelWidth);
+        next.gameChatPanelWidth = clampNumber(body.width, 280, 960, current.gameChatPanelWidth);
     }
     if (body.height !== undefined) {
-        next.gameChatPanelHeight = clampNumber(body.height, 200, 1600, current.gameChatPanelHeight);
+        next.gameChatPanelHeight = clampNumber(body.height, 200, 840, current.gameChatPanelHeight);
     }
     if (body.activeTab !== undefined) {
         const tab = String(body.activeTab || '').trim();
@@ -1121,8 +1121,8 @@ function normalizeCommanderPreferences(raw) {
         portalNarrationVol: clampNumber(source.portalNarrationVol, 0, 1, defaults.portalNarrationVol),
         portalSfxVol: clampNumber(source.portalSfxVol, 0, 1, defaults.portalSfxVol),
         gameChatOpacity: clampNumber(source.gameChatOpacity, 15, 100, defaults.gameChatOpacity),
-        gameChatPanelWidth: clampNumber(source.gameChatPanelWidth, 280, 2400, defaults.gameChatPanelWidth),
-        gameChatPanelHeight: clampNumber(source.gameChatPanelHeight, 200, 1600, defaults.gameChatPanelHeight),
+        gameChatPanelWidth: clampNumber(source.gameChatPanelWidth, 280, 960, defaults.gameChatPanelWidth),
+        gameChatPanelHeight: clampNumber(source.gameChatPanelHeight, 200, 840, defaults.gameChatPanelHeight),
         gameChatActiveTab: GAME_CHAT_UI_TABS.has(String(source.gameChatActiveTab || '').trim())
             ? String(source.gameChatActiveTab).trim()
             : defaults.gameChatActiveTab

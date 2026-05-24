@@ -15,6 +15,8 @@
     const UI_SAVE_DEBOUNCE_MS = 350;
     const MIN_WIDTH = 280;
     const MIN_HEIGHT = 200;
+    const MAX_WIDTH = 960;
+    const MAX_HEIGHT = 840;
     const DEFAULT_WIDTH = 380;
     const DEFAULT_HEIGHT = 320;
 
@@ -350,13 +352,32 @@
         }
     }
 
+    function clampChatPanelSize(width, height, anchorLeft) {
+        const sideInset = 16;
+        const bottomInset = 16;
+        const topInset = 72;
+        const viewportMaxWidth = Math.floor(global.innerWidth - anchorLeft - sideInset);
+        const viewportMaxHeight = Math.floor(global.innerHeight - bottomInset - topInset);
+        const maxWidth = Math.min(MAX_WIDTH, viewportMaxWidth);
+        const maxHeight = Math.min(MAX_HEIGHT, viewportMaxHeight);
+
+        return {
+            width: Math.max(MIN_WIDTH, Math.min(maxWidth, Math.round(width))),
+            height: Math.max(MIN_HEIGHT, Math.min(maxHeight, Math.round(height)))
+        };
+    }
+
     function applyUiFromServer(ui, options = {}) {
         if (!ui || typeof ui !== 'object') return;
 
         const module = global.document.getElementById('game-chat-module');
         if (module) {
-            const width = Math.max(MIN_WIDTH, Number(ui.width) || DEFAULT_WIDTH);
-            const height = Math.max(MIN_HEIGHT, Number(ui.height) || DEFAULT_HEIGHT);
+            const anchorLeft = module.getBoundingClientRect().left;
+            const { width, height } = clampChatPanelSize(
+                Number(ui.width) || DEFAULT_WIDTH,
+                Number(ui.height) || DEFAULT_HEIGHT,
+                anchorLeft
+            );
             module.style.setProperty('--game-chat-width', `${width}px`);
             module.style.setProperty('--game-chat-height', `${height}px`);
         }
@@ -367,15 +388,6 @@
         if (TAB_LABELS[tab]) {
             setActiveTab(tab, { skipServerSave: true });
         }
-    }
-
-    function getFreeformResizeLimits(module, anchorLeft) {
-        const sideInset = 16;
-        const bottomInset = 16;
-        const topInset = 72;
-        const maxWidth = Math.max(MIN_WIDTH, Math.floor(global.innerWidth - anchorLeft - sideInset));
-        const maxHeight = Math.max(MIN_HEIGHT, Math.floor(global.innerHeight - bottomInset - topInset));
-        return { maxWidth, maxHeight };
     }
 
     function bindResizeHandle() {
@@ -390,13 +402,15 @@
         let anchorLeft = 0;
 
         const onPointerMove = (event) => {
-            const { maxWidth, maxHeight } = getFreeformResizeLimits(module, anchorLeft);
             const deltaX = event.clientX - startX;
             const deltaY = event.clientY - startY;
-            const nextWidth = Math.max(MIN_WIDTH, Math.min(maxWidth, startWidth + deltaX));
-            const nextHeight = Math.max(MIN_HEIGHT, Math.min(maxHeight, startHeight - deltaY));
-            module.style.setProperty('--game-chat-width', `${nextWidth}px`);
-            module.style.setProperty('--game-chat-height', `${nextHeight}px`);
+            const { width, height } = clampChatPanelSize(
+                startWidth + deltaX,
+                startHeight - deltaY,
+                anchorLeft
+            );
+            module.style.setProperty('--game-chat-width', `${width}px`);
+            module.style.setProperty('--game-chat-height', `${height}px`);
         };
 
         const endResize = (event) => {
@@ -407,10 +421,14 @@
             global.document.removeEventListener('pointerup', endResize);
             global.document.removeEventListener('pointercancel', endResize);
             module.classList.remove('is-resizing');
-            scheduleUiSave({
-                width: module.offsetWidth,
-                height: module.offsetHeight
-            });
+            const { width, height } = clampChatPanelSize(
+                module.offsetWidth,
+                module.offsetHeight,
+                anchorLeft
+            );
+            module.style.setProperty('--game-chat-width', `${width}px`);
+            module.style.setProperty('--game-chat-height', `${height}px`);
+            scheduleUiSave({ width, height });
         };
 
         handle.addEventListener('pointerdown', (event) => {

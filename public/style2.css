@@ -7961,8 +7961,8 @@ body.developer-maintenance-alert-active #page-landing {
     height: var(--game-chat-height) !important;
     min-width: 280px !important;
     min-height: 200px !important;
-    max-width: calc(100vw - 32px) !important;
-    max-height: calc(100dvh - 88px) !important;
+    max-width: min(960px, calc(100vw - 32px)) !important;
+    max-height: min(840px, calc(100dvh - 88px)) !important;
     z-index: 999999900 !important;
     box-sizing: border-box !important;
     display: flex !important;
@@ -7973,8 +7973,6 @@ body.developer-maintenance-alert-active #page-landing {
 
 .game-chat-module.is-resizing {
     user-select: none !important;
-    max-width: calc(100vw - 16px) !important;
-    max-height: calc(100dvh - 72px) !important;
 }
 
 .game-chat-module-panel {
