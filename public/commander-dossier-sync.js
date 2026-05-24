@@ -282,6 +282,12 @@
         if (typeof global.persistCommanderLocaleToServer === 'function') {
             global.persistCommanderLocaleToServer();
         }
+
+        if (typeof global.applyPortalDeploymentDeckPresentation === 'function') {
+            global.applyPortalDeploymentDeckPresentation();
+        } else if (typeof global.applyPortalGuestDeploymentChrome === 'function') {
+            global.applyPortalGuestDeploymentChrome();
+        }
     }
 
     function collectPreferencesFromRuntime() {

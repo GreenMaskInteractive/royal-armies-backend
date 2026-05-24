@@ -6337,6 +6337,11 @@ window.onload = () => {
     initializeTacticalButtonEarthquakeEngine();
     mountPortalMediaPlayerForViewport();
     ensurePortalMediaPlayerCollapsedByDefault();
+    if (typeof applyPortalDeploymentDeckPresentation === 'function') {
+        applyPortalDeploymentDeckPresentation();
+    } else if (typeof applyPortalGuestDeploymentChrome === 'function') {
+        applyPortalGuestDeploymentChrome();
+    }
     window.cachedAgePortalViewportHTML = snapshotAgePortalViewportForCache();
     if (getPortalBackgroundAudioElement()?.paused) {
         startPortalBackgroundMusic({ silentFail: true });

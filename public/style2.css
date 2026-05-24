@@ -1139,6 +1139,15 @@ body:not(.portal-guest-mode) #portal-deployment-guest-cta {
     box-sizing: border-box !important;
 }
 
+#portal-deployment-member-actions[hidden],
+.portal-deployment-member-actions[hidden],
+#portal-deployment-server-panel[hidden],
+.portal-deployment-server-panel[hidden],
+#portal-deployment-guest-cta[hidden],
+.portal-deployment-guest-cta[hidden] {
+    display: none !important;
+}
+
 /* Block 13: SILHOUETTE SHAPE SHIELD DECK CONTROLLERS */
 .action-btn-aura-housing {
     position: relative !important;
