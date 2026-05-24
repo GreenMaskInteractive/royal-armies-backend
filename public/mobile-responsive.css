@@ -1365,8 +1365,8 @@ body {
         font-size: 0.34rem !important;
     }
 
-    #dynamic-age-sub-timer-display {
-        font-size: 1.31rem !important;
+    .portal-age-countdown-panel #dynamic-age-sub-timer-display {
+        font-size: 1rem !important;
     }
 
     .portal-age-metrics-dashboard-bar .metric-roster-hover-cell .metric-roster-hover-trigger {
