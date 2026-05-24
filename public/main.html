@@ -15,7 +15,7 @@
     <!-- Block 2: Page Title & Stylesheet Bridge -->
     <title>Royal Armies - An MMOHFT Medieval-Fantasy Strategy Game</title>
     <link rel="stylesheet" href="style.css?v=mailbox-read-popup-wide-2">
-    <link rel="stylesheet" href="style2.css?v=route-fade-1">
+    <link rel="stylesheet" href="style2.css?v=server-panel-1">
     <link rel="stylesheet" href="mobile-responsive.css?v=lore-prose-nav-nudge-1">
     <link rel="stylesheet" href="dev-page-navigator.css">
     <link rel="stylesheet" href="custom-cursor.css?v=scrollbar-cursor-1">
@@ -259,6 +259,17 @@
                             <button class="deployment-image-trigger-btn" onclick="launchGameRoundSector(true, event)">
                                 <img src="images/joinagetutorialbtn.png" alt="Join tutorial age">
                             </button>
+                        </div>
+                    </div>
+
+                    <div id="portal-deployment-server-panel" class="portal-deployment-server-panel" hidden>
+                        <h4 class="portal-server-panel-heading">Server</h4>
+                        <div class="portal-server-panel-controls">
+                            <label class="portal-server-panel-label" for="portal-active-server-select">Active server</label>
+                            <select id="portal-active-server-select" class="portal-active-server-select" aria-label="Active server">
+                                <option value="amnek" selected>Amnek Server</option>
+                            </select>
+                            <button type="button" id="portal-rejoin-age-btn" class="portal-rejoin-age-btn confirm-btn">Join</button>
                         </div>
                     </div>
                 </div>
@@ -579,7 +590,7 @@
     <script src="script.js?v=locale-login-sync-1"></script>
     <script src="commander-hub.js?v=remove-profile-visibility-pill-1"></script>
     <script src="maintenance-alert.js?v=maintenance-always-on-1"></script>
-    <script src="script2.js?v=join-age-route-fade-1"></script>
+    <script src="script2.js?v=server-panel-1"></script>
     <script src="custom-cursor.js?v=scrollbar-cursor-1"></script>
 
 </body>

@@ -233,6 +233,141 @@ function applyPortalGuestDeploymentChrome() {
     if (guestCta) guestCta.hidden = authed;
     if (accountLabel) accountLabel.hidden = !authed;
     if (mobileCommanderBlock) mobileCommanderBlock.hidden = !authed;
+
+    applyPortalDeploymentDeckPresentation();
+}
+
+const PORTAL_ACTIVE_AGE_SERVERS = [
+    { id: 'amnek', label: 'Amnek Server' }
+];
+const PORTAL_DEFAULT_SERVER_ID = 'amnek';
+const DEPLOYMENT_PANEL_UNLOCK_SUFFIX = 'ageDeploymentPanelUnlocked';
+const DEPLOYMENT_TUTORIAL_SUFFIX = 'ageDeploymentTutorialMode';
+const DEPLOYMENT_SERVER_SUFFIX = 'ageDeploymentSelectedServerId';
+
+function resolveDeploymentStorageKey(suffix) {
+    const username = String(localStorage.getItem('activeCommanderUser') || '').trim().toLowerCase();
+    return username ? `royalArmies_${username}_${suffix}` : `royalArmies_guest_${suffix}`;
+}
+
+function isCommanderAgeDeploymentPanelUnlocked() {
+    if (localStorage.getItem(resolveDeploymentStorageKey(DEPLOYMENT_PANEL_UNLOCK_SUFFIX)) === 'true') {
+        return true;
+    }
+    return false;
+}
+
+function markCommanderAgeDeploymentPanelUnlocked(isTutorialModeActive) {
+    localStorage.setItem(resolveDeploymentStorageKey(DEPLOYMENT_PANEL_UNLOCK_SUFFIX), 'true');
+    localStorage.setItem(resolveDeploymentStorageKey(DEPLOYMENT_TUTORIAL_SUFFIX), isTutorialModeActive ? 'true' : 'false');
+    if (!localStorage.getItem(resolveDeploymentStorageKey(DEPLOYMENT_SERVER_SUFFIX))) {
+        localStorage.setItem(resolveDeploymentStorageKey(DEPLOYMENT_SERVER_SUFFIX), PORTAL_DEFAULT_SERVER_ID);
+    }
+}
+
+function readCommanderTutorialModePreference() {
+    return localStorage.getItem(resolveDeploymentStorageKey(DEPLOYMENT_TUTORIAL_SUFFIX)) === 'true';
+}
+
+function readCommanderSelectedServerId() {
+    const saved = localStorage.getItem(resolveDeploymentStorageKey(DEPLOYMENT_SERVER_SUFFIX));
+    if (saved && PORTAL_ACTIVE_AGE_SERVERS.some((server) => server.id === saved)) {
+        return saved;
+    }
+    return PORTAL_DEFAULT_SERVER_ID;
+}
+
+function hydratePortalActiveServerSelect() {
+    const select = document.getElementById('portal-active-server-select');
+    if (!select) return;
+
+    const current = readCommanderSelectedServerId();
+    select.innerHTML = PORTAL_ACTIVE_AGE_SERVERS.map((server) => (
+        `<option value="${server.id}"${server.id === current ? ' selected' : ''}>${server.label}</option>`
+    )).join('');
+}
+
+function bindPortalDeploymentServerPanelControls() {
+    const select = document.getElementById('portal-active-server-select');
+    const joinBtn = document.getElementById('portal-rejoin-age-btn');
+
+    if (select && select.dataset.bound !== '1') {
+        select.dataset.bound = '1';
+        select.addEventListener('change', () => {
+            localStorage.setItem(resolveDeploymentStorageKey(DEPLOYMENT_SERVER_SUFFIX), select.value);
+        });
+    }
+
+    if (joinBtn && joinBtn.dataset.bound !== '1') {
+        joinBtn.dataset.bound = '1';
+        joinBtn.addEventListener('click', (event) => {
+            event.preventDefault();
+            rejoinSelectedAgeServer(event);
+        });
+    }
+}
+
+function applyPortalDeploymentDeckPresentation() {
+    const authed = typeof isPortalUserAuthenticated === 'function' && isPortalUserAuthenticated();
+    const showServerPanel = authed && isCommanderAgeDeploymentPanelUnlocked();
+
+    const joinActions = document.getElementById('portal-deployment-member-actions');
+    const serverPanel = document.getElementById('portal-deployment-server-panel');
+
+    if (joinActions) joinActions.hidden = showServerPanel;
+    if (serverPanel) {
+        serverPanel.hidden = !showServerPanel;
+        if (showServerPanel) {
+            hydratePortalActiveServerSelect();
+            bindPortalDeploymentServerPanelControls();
+        }
+    }
+}
+
+function rejoinSelectedAgeServer(clickEvent) {
+    if (typeof isPortalUserAuthenticated === 'function' && !isPortalUserAuthenticated()) {
+        if (typeof openMainPortalGuestRegister === 'function') {
+            openMainPortalGuestRegister(clickEvent);
+        }
+        return;
+    }
+
+    if (joinAgePortalTransitionActive) return;
+    joinAgePortalTransitionActive = true;
+
+    const select = document.getElementById('portal-active-server-select');
+    const serverId = select?.value || readCommanderSelectedServerId();
+    localStorage.setItem(resolveDeploymentStorageKey(DEPLOYMENT_SERVER_SUFFIX), serverId);
+
+    const isTutorialModeActive = readCommanderTutorialModePreference();
+    haltAllPortalAudioForGameLaunch();
+
+    if (typeof beginCommanderAgeResetSession === 'function') {
+        beginCommanderAgeResetSession();
+    }
+
+    const destination = `/game?tutorial=${isTutorialModeActive}&joinAge=0&server=${encodeURIComponent(serverId)}`;
+
+    notifyPortalAgeSessionJoin().finally(() => {
+        localStorage.setItem('savedCommanderInActiveAge', 'true');
+        if (window.RoyalArmiesPageRouteTransition && typeof window.RoyalArmiesPageRouteTransition.navigateTo === 'function') {
+            window.RoyalArmiesPageRouteTransition.navigateTo(destination);
+        } else {
+            window.location.href = destination;
+        }
+    });
+}
+
+function renderPortalDeploymentServerPanelMarkup() {
+    return `
+                    <div id="portal-deployment-server-panel" class="portal-deployment-server-panel" hidden>
+                        <h4 class="portal-server-panel-heading">Server</h4>
+                        <div class="portal-server-panel-controls">
+                            <label class="portal-server-panel-label" for="portal-active-server-select">Active server</label>
+                            <select id="portal-active-server-select" class="portal-active-server-select" aria-label="Active server"></select>
+                            <button type="button" id="portal-rejoin-age-btn" class="portal-rejoin-age-btn confirm-btn">Join</button>
+                        </div>
+                    </div>`;
 }
 
 function recacheAgePortalViewportSnapshot() {
@@ -258,6 +393,7 @@ function renderPortalDeploymentDeckMarkup() {
                             </button>
                         </div>
                     </div>
+                    ${renderPortalDeploymentServerPanelMarkup()}
                 </div>
                 <div id="portal-deployment-guest-cta" class="portal-deployment-guest-cta" hidden>
                     <div class="portal-join-now-aura-housing">
@@ -1010,9 +1146,11 @@ function launchGameRoundSector(isTutorialModeActive, clickEvent) {
 
     const attemptGamePageHandoff = () => {
         if (!deployPulseFinished || !selectAudioFinished) return;
-        const destination = `/game?tutorial=${isTutorialModeActive}&joinAge=1`;
+        const destination = `/game?tutorial=${isTutorialModeActive}&joinAge=1&server=${encodeURIComponent(readCommanderSelectedServerId())}`;
         window.setTimeout(() => {
             localStorage.setItem('savedCommanderInActiveAge', 'true');
+            markCommanderAgeDeploymentPanelUnlocked(isTutorialModeActive);
+            applyPortalDeploymentDeckPresentation();
             if (typeof markJoinAgeAttemptForAchievement === 'function') {
                 markJoinAgeAttemptForAchievement();
             } else if (window.RoyalArmiesAchievements && typeof window.RoyalArmiesAchievements.markJoinAgeAttemptForAchievement === 'function') {
@@ -6216,6 +6354,9 @@ window.positionPortalMobileNavMenu = positionPortalMobileNavMenu;
 window.triggerMainDashboardLogout = triggerMainDashboardLogout;
 window.applyPortalNavAccessRestrictions = applyPortalNavAccessRestrictions;
 window.applyPortalGuestDeploymentChrome = applyPortalGuestDeploymentChrome;
+window.applyPortalDeploymentDeckPresentation = applyPortalDeploymentDeckPresentation;
+window.rejoinSelectedAgeServer = rejoinSelectedAgeServer;
+window.launchGameRoundSector = launchGameRoundSector;
 window.recacheAgePortalViewportSnapshot = recacheAgePortalViewportSnapshot;
 window.isPortalNavViewAccessible = isPortalNavViewAccessible;
 window.isPortalDevFullAccessBypassActive = isPortalDevFullAccessBypassActive;

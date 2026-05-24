@@ -968,6 +968,77 @@ body:not(.portal-guest-mode) #portal-deployment-guest-cta {
 }
 
 /* Block 11: THE AUTOMATIC DEPLOYMENT HORIZONTAL CENTERING DECK */
+.portal-deployment-server-panel {
+    width: 100% !important;
+    max-width: 420px !important;
+    margin: 4px auto 0 auto !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 14px !important;
+    box-sizing: border-box !important;
+}
+
+.portal-server-panel-heading {
+    margin: 0 !important;
+    font-family: 'RoyalDetails', serif !important;
+    font-size: 0.95rem !important;
+    letter-spacing: 0.14em !important;
+    text-transform: uppercase !important;
+    text-align: center !important;
+    color: #ffd700 !important;
+    text-shadow: 2px 2px 4px #000, 0 0 10px rgba(255, 215, 0, 0.35) !important;
+}
+
+.portal-server-panel-controls {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 12px !important;
+    padding: 16px 18px !important;
+    border: 1px solid rgba(184, 144, 48, 0.35) !important;
+    border-radius: 4px !important;
+    background: linear-gradient(135deg, rgba(36, 41, 54, 0.95) 0%, rgba(10, 12, 16, 0.98) 100%) !important;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04), 0 8px 18px rgba(0, 0, 0, 0.45) !important;
+}
+
+.portal-server-panel-label {
+    font-family: 'Segoe UI', sans-serif !important;
+    font-size: 0.78rem !important;
+    letter-spacing: 0.08em !important;
+    text-transform: uppercase !important;
+    color: rgba(241, 224, 172, 0.78) !important;
+}
+
+.portal-active-server-select {
+    width: 100% !important;
+    padding: 10px 12px !important;
+    border: 1px solid rgba(184, 144, 48, 0.45) !important;
+    border-radius: 3px !important;
+    background: rgba(0, 0, 0, 0.55) !important;
+    color: #f1e0ac !important;
+    font-family: 'Segoe UI', sans-serif !important;
+    font-size: 0.9rem !important;
+    cursor: pointer !important;
+}
+
+.portal-active-server-select:focus {
+    outline: none !important;
+    border-color: rgba(255, 215, 0, 0.75) !important;
+    box-shadow: 0 0 0 2px rgba(255, 215, 0, 0.18) !important;
+}
+
+.portal-rejoin-age-btn {
+    width: 100% !important;
+    margin-top: 2px !important;
+    padding: 11px 16px !important;
+    font-family: 'Cinzel', serif !important;
+    font-size: 0.88rem !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.1em !important;
+    text-transform: uppercase !important;
+}
+
 .portal-deployment-control-deck {
     width: 100% !important;
     background: linear-gradient(135deg, rgba(14, 11, 8, 0.94) 0%, rgba(6, 5, 4, 0.97) 100%) !important;
