@@ -118,7 +118,7 @@ body {
     }
 
     .staging-deck-master-wrapper {
-        margin-top: 0 !important;
+        margin-top: 50px !important;
         padding-left: 16px !important;
         padding-right: 16px !important;
         gap: 8px !important;
@@ -2210,7 +2210,7 @@ body {
 
     .staging-deck-master-wrapper {
         padding: 0 40px 40px 40px !important;
-        margin-top: -132px !important;
+        margin-top: -82px !important;
     }
 
     .over-bar-utility-deck {

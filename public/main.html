@@ -15,12 +15,28 @@
     <!-- Block 2: Page Title & Stylesheet Bridge -->
     <title>Royal Armies - An MMOHFT Medieval-Fantasy Strategy Game</title>
     <link rel="stylesheet" href="style.css?v=mailbox-read-popup-wide-2">
-    <link rel="stylesheet" href="style2.css?v=dropdown-logout-border-1">
-    <link rel="stylesheet" href="mobile-responsive.css?v=dropdown-logout-border-1">
+    <link rel="stylesheet" href="style2.css?v=logo-offset-age-lock-1">
+    <link rel="stylesheet" href="mobile-responsive.css?v=logo-offset-age-lock-1">
     <link rel="stylesheet" href="dev-page-navigator.css">
     <link rel="stylesheet" href="custom-cursor.css?v=scrollbar-cursor-1">
 </head>
 <body id="main-dashboard-canvas">
+<script>
+(function enforceEarlyActiveAgePortalLock() {
+    try {
+        if (localStorage.getItem('savedCommanderInActiveAge') !== 'true') return;
+        var username = String(localStorage.getItem('activeCommanderUser') || '').trim().toLowerCase();
+        if (!username) return;
+        var tutorial = localStorage.getItem('royalArmies_' + username + '_ageDeploymentTutorialMode') === 'true';
+        var server = localStorage.getItem('royalArmies_' + username + '_ageDeploymentSelectedServerId') || 'amnek';
+        var destination = '/how-did-you-get-here?tutorial=' + tutorial + '&joinAge=0&server=' + encodeURIComponent(server);
+        if (window.location.pathname.replace(/\/$/, '') === '/how-did-you-get-here') return;
+        window.location.replace(destination);
+    } catch (_err) {
+        /* ignore */
+    }
+})();
+</script>
 <script src="page-route-transition.js?v=route-fade-1"></script>
 
     <!-- ==========================================
@@ -641,7 +657,7 @@
     <script src="portal-alerts.js?v=nexus-rift-acronyms-1"></script>
     <script src="rift-error-display.js?v=nexus-rift-acronyms-1"></script>
     <script src="rank-data.js"></script>
-    <script src="script.js?v=dropdown-logout-1"></script>
+    <script src="script.js?v=logo-offset-age-lock-1"></script>
     <script src="commander-hub.js?v=save-confirmation-toast-fix-1"></script>
     <script src="maintenance-alert.js?v=maintenance-always-on-1"></script>
     <script src="script2.js?v=server-join-fix-1"></script>

@@ -74,7 +74,7 @@
     width: 100% !important;
     max-width: 100% !important;
     min-height: calc(100vh - 80px) !important;
-    margin: 0 !important;
+    margin: 50px 0 0 0 !important;
     padding: 0 40px 40px 40px !important; 
     box-sizing: border-box !important;
     flex-grow: 1 !important;
@@ -675,6 +675,16 @@
     margin-top: 4px !important;
     font-size: 0.62rem !important;
     letter-spacing: 0.24em !important;
+}
+
+@media (max-width: 1024px) {
+    .portal-mobile-nav-brand-row + * {
+        margin-top: 50px !important;
+    }
+
+    .portal-mobile-nav-menu-scroll {
+        margin-top: 50px !important;
+    }
 }
 
 .portal-alpha-version-readout {

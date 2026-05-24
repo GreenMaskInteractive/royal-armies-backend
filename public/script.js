@@ -1824,6 +1824,10 @@ function restoreLoginAuthButtons() {
 
 function redirectToAgePortal() {
     sessionStorage.setItem('royalArmiesAuthAudioPlay', 'granted');
+    if (isCommanderEnrolledInActiveAgeRound() && isPortalUserAuthenticated()) {
+        window.location.assign(resolveActiveAgeHandoffUrl());
+        return;
+    }
     window.location.assign('/main');
 }
 
@@ -3069,6 +3073,31 @@ function isCommanderEnrolledInActiveAgeRound() {
     return localStorage.getItem('savedCommanderInActiveAge') === 'true';
 }
 
+function resolveCommanderDeploymentStorageKey(suffix) {
+    const username = String(localStorage.getItem('activeCommanderUser') || '').trim().toLowerCase();
+    return username ? `royalArmies_${username}_${suffix}` : `royalArmies_guest_${suffix}`;
+}
+
+function resolveActiveAgeHandoffUrl() {
+    const tutorial = localStorage.getItem(resolveCommanderDeploymentStorageKey('ageDeploymentTutorialMode')) === 'true';
+    const server = localStorage.getItem(resolveCommanderDeploymentStorageKey('ageDeploymentSelectedServerId')) || 'amnek';
+    return `/how-did-you-get-here?tutorial=${tutorial}&joinAge=0&server=${encodeURIComponent(server)}`;
+}
+
+function enforceActiveAgePortalLock() {
+    if (!isMainPortalHub()) return false;
+    if (!isCommanderEnrolledInActiveAgeRound()) return false;
+    if (!isPortalUserAuthenticated()) return false;
+
+    const destination = resolveActiveAgeHandoffUrl();
+    if (window.RoyalArmiesPageRouteTransition && typeof window.RoyalArmiesPageRouteTransition.navigateTo === 'function') {
+        window.RoyalArmiesPageRouteTransition.navigateTo(destination);
+    } else {
+        window.location.replace(destination);
+    }
+    return true;
+}
+
 const COMMANDER_RANK_RESET_LIMIT = 3;
 const COMMANDER_EXILE_RESET_LIMIT = 1;
 const COMMANDER_AGE_RESET_USAGE_KEY = 'savedCommanderAgeResetUsage';
@@ -4190,6 +4219,8 @@ window.handleLogin = handleLogin;
 window.confirmSelection = confirmSelection; 
 window.selectClass = selectClass;
 window.isCommanderEnrolledInActiveAgeRound = isCommanderEnrolledInActiveAgeRound;
+window.resolveActiveAgeHandoffUrl = resolveActiveAgeHandoffUrl;
+window.enforceActiveAgePortalLock = enforceActiveAgePortalLock;
 window.applyProfileRankResetButtonState = applyProfileRankResetButtonState;
 window.applyPortalMobileVisualSettingsRestrictions = applyPortalMobileVisualSettingsRestrictions;
 window.beginCommanderAgeResetSession = beginCommanderAgeResetSession;
@@ -4216,6 +4247,7 @@ window.captureProfileEditorBaseline = captureProfileEditorBaseline;
 
 async function bootstrapMainPortalAuthOnLoad() {
     await ensurePortalAuthRestored();
+    if (enforceActiveAgePortalLock()) return;
     syncPlayerFromActiveCommanderStorage();
     if (isPortalUserAuthenticated() && typeof fetchCommanderDossierFromServer === 'function') {
         await fetchCommanderDossierFromServer();
