@@ -421,15 +421,6 @@
         refreshGamePageNavChrome();
     }
 
-    async function handleJoinAgeAchievementUnlock() {
-        if (typeof global.tryGrantWhoaSlowDownFromJoinAttempt !== 'function') return;
-
-        const result = await global.tryGrantWhoaSlowDownFromJoinAttempt(resolveGamePageUsername());
-        if (result && result.granted && result.award && typeof global.showAchievementUnlockPopup === 'function') {
-            global.showAchievementUnlockPopup(result.award);
-        }
-    }
-
     function registerUnloadHandlers() {
         global.addEventListener('pagehide', () => {
             stopGamePresenceLoop();
@@ -447,7 +438,6 @@
         registerUnloadHandlers();
         setActiveGameView('overview');
         await bootstrapGamePageSession();
-        await handleJoinAgeAchievementUnlock();
 
         if (typeof global.bindPortalNewMessagesBarNavigation === 'function') {
             global.bindPortalNewMessagesBarNavigation();
@@ -457,10 +447,6 @@
         }
         if (typeof global.startPortalMailboxPolling === 'function') {
             global.startPortalMailboxPolling();
-        }
-
-        if (global.RoyalArmiesAchievements && typeof global.RoyalArmiesAchievements.maybeRunDevAchievementPopupFromQuery === 'function') {
-            global.RoyalArmiesAchievements.maybeRunDevAchievementPopupFromQuery();
         }
     }
 

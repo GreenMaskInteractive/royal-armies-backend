@@ -227,10 +227,19 @@
         }
     }
 
+    async function showHandoffAchievementUnlocks() {
+        if (global.RoyalArmiesAchievements && typeof global.RoyalArmiesAchievements.maybeShowPendingLoginAchievementUnlocks === 'function') {
+            await global.RoyalArmiesAchievements.maybeShowPendingLoginAchievementUnlocks();
+        } else if (typeof global.maybeShowPendingLoginAchievementUnlocks === 'function') {
+            await global.maybeShowPendingLoginAchievementUnlocks();
+        }
+    }
+
     async function bootHowDidYouGetHerePage() {
         registerUnloadHandlers();
         bindReturnButton();
         await bootstrapPageSession();
+        await showHandoffAchievementUnlocks();
         await handleJoinAgeAchievementUnlock();
 
         if (global.RoyalArmiesAchievements && typeof global.RoyalArmiesAchievements.maybeRunDevAchievementPopupFromQuery === 'function') {

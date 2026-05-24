@@ -255,7 +255,13 @@
         return { title, iconUrl, xpLabel };
     }
 
+    function isAchievementPopupHostPage() {
+        return !!global.document.getElementById('how-did-you-get-here-canvas');
+    }
+
     function syncAchievementToastStackPosition() {
+        if (!isAchievementPopupHostPage()) return;
+
         const anchor = global.document.getElementById('royal-armies-achievement-toast-anchor');
         if (!anchor) return;
 
@@ -384,6 +390,7 @@
     }
 
     function showAchievementUnlockPopup(award) {
+        if (!isAchievementPopupHostPage()) return null;
         const anchor = ensureAchievementToastAnchor();
         syncAchievementToastStackPosition();
         const toast = buildAchievementToastElement(award);
@@ -397,6 +404,7 @@
     }
 
     async function showAchievementUnlockQueue(awards) {
+        if (!isAchievementPopupHostPage()) return;
         const queue = sortAwardsByDisplayOrder(Array.isArray(awards) ? awards : []);
         if (!queue.length) return;
 
@@ -443,6 +451,7 @@
     }
 
     function closeAchievementUnlockPopup() {
+        if (!isAchievementPopupHostPage()) return;
         const anchor = global.document.getElementById('royal-armies-achievement-toast-anchor');
         if (!anchor) return;
         anchor.querySelectorAll('.achievement-unlock-toast').forEach((toast) => {
@@ -504,6 +513,9 @@
     }
 
     function previewAchievementPopup(achievementId, options) {
+        if (!isAchievementPopupHostPage()) {
+            return { granted: false, award: null, reason: 'popup_host_unavailable' };
+        }
         const opts = options && typeof options === 'object' ? options : {};
         const id = String(achievementId || WHO_SLOW_DOWN_ID).trim();
         const definition = ACHIEVEMENT_DEFINITIONS[id] || WHO_SLOW_DOWN_DEFINITION;
@@ -530,7 +542,7 @@
     }
 
     function maybeRunDevAchievementPopupFromQuery() {
-        if (!isLocalAchievementDevToolsEnabled()) return;
+        if (!isLocalAchievementDevToolsEnabled() || !isAchievementPopupHostPage()) return;
         try {
             const params = new URLSearchParams(global.location.search || '');
             if (params.get('devAchievement') === '1' || params.get('devTestAchievement') === '1') {
@@ -545,6 +557,7 @@
     }
 
     async function maybeShowPendingLoginAchievementUnlocks() {
+        if (!isAchievementPopupHostPage()) return;
         const pending = consumePendingAchievementUnlocks();
         if (!pending.length) return;
         await showAchievementUnlockQueue(pending);
@@ -582,6 +595,7 @@
         previewWhoaSlowDownPopup,
         syncAchievementToastStackPosition,
         isLocalAchievementDevToolsEnabled,
+        isAchievementPopupHostPage,
         maybeRunDevAchievementPopupFromQuery,
         maybeShowPendingLoginAchievementUnlocks
     };
@@ -602,5 +616,9 @@
     global.enrichAchievementRecords = enrichAchievementRecords;
     global.resolveAchievementIconUrl = resolveAchievementIconUrl;
 
-    global.addEventListener('resize', syncAchievementToastStackPosition, { passive: true });
+    global.addEventListener('resize', () => {
+        if (isAchievementPopupHostPage()) {
+            syncAchievementToastStackPosition();
+        }
+    }, { passive: true });
 })(window);

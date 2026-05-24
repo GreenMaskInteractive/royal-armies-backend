@@ -1989,11 +1989,6 @@ function finishMainPortalLoginSession(isAdmin) {
             syncCommanderLocaleAfterAuth();
         }
     }
-    if (!isAdmin && typeof maybeShowPendingLoginAchievementUnlocks === 'function') {
-        setTimeout(() => maybeShowPendingLoginAchievementUnlocks(), 700);
-    } else if (!isAdmin && window.RoyalArmiesAchievements && typeof window.RoyalArmiesAchievements.maybeShowPendingLoginAchievementUnlocks === 'function') {
-        setTimeout(() => window.RoyalArmiesAchievements.maybeShowPendingLoginAchievementUnlocks(), 700);
-    }
 }
 
 /* --- Block 5: Post-Login Transition --- */
@@ -3892,7 +3887,7 @@ function captureProfilePrivacyFromEditor() {
     return cachedPrivacy === 'Private' ? 'Private' : 'Public';
 }
 
-async function persistProfileFieldsFromEditor() {
+async function persistProfileFieldsFromEditor(options = {}) {
     if (typeof player === 'undefined') return { saved: false, synced: null };
 
     const nextBio = captureProfileBioFromEditor();
@@ -3901,6 +3896,10 @@ async function persistProfileFieldsFromEditor() {
     player.description = nextBio;
     player.privacy = nextPrivacy;
     cacheCommanderProfileLocally(nextBio, nextPrivacy);
+
+    if (options.localOnly) {
+        return { saved: true, synced: null };
+    }
 
     if (typeof scheduleCommanderDossierSave === 'function') {
         const synced = await scheduleCommanderDossierSave(
@@ -4068,12 +4067,19 @@ function saveSettings() {
         localStorage.setItem('savedPortalMasterVol', confirmedMasterVol);
         localStorage.setItem('savedPortalMusicVol', confirmedMusicVol);
 
-        const profileResult = await persistProfileFieldsFromEditor();
+        const profileResult = await persistProfileFieldsFromEditor({ localOnly: true });
         const savedProfile = profileResult.saved;
-        if (typeof saveFullCommanderDossierToServer === 'function') {
-            const dossierSynced = await saveFullCommanderDossierToServer();
-            if (savedProfile && profileResult.synced !== false && dossierSynced === false) {
-                profileResult.synced = false;
+        let profileSynced = null;
+        if (savedProfile) {
+            if (typeof saveFullCommanderDossierToServer === 'function') {
+                profileSynced = await saveFullCommanderDossierToServer();
+            } else if (typeof scheduleCommanderDossierSave === 'function') {
+                profileSynced = await scheduleCommanderDossierSave(
+                    { bio: player.description, privacy: player.privacy },
+                    { immediate: true }
+                );
+            } else {
+                profileSynced = await saveCommanderProfileToServer(player.description, player.privacy);
             }
         }
         hasUnsavedChanges = false;
@@ -4102,7 +4108,7 @@ function saveSettings() {
 
         let confirmationText = 'Your changes have been saved.';
         if (savedProfile) {
-            if (profileResult.synced === false) {
+            if (profileSynced === false) {
                 confirmationText = 'Settings saved. Your profile bio could not sync to your account — try again shortly.';
             } else {
                 confirmationText = 'Profile and settings changes have been saved.';
@@ -4272,16 +4278,6 @@ async function bootstrapMainPortalAuthOnLoad() {
         if (typeof syncPortalMobileNavIdentity === 'function') {
             syncPortalMobileNavIdentity();
         }
-    }
-    if (typeof maybeRunDevAchievementPopupFromQuery === 'function') {
-        maybeRunDevAchievementPopupFromQuery();
-    } else if (window.RoyalArmiesAchievements && typeof window.RoyalArmiesAchievements.maybeRunDevAchievementPopupFromQuery === 'function') {
-        window.RoyalArmiesAchievements.maybeRunDevAchievementPopupFromQuery();
-    }
-    if (isPortalUserAuthenticated() && typeof maybeShowPendingLoginAchievementUnlocks === 'function') {
-        setTimeout(() => maybeShowPendingLoginAchievementUnlocks(), 900);
-    } else if (isPortalUserAuthenticated() && window.RoyalArmiesAchievements && typeof window.RoyalArmiesAchievements.maybeShowPendingLoginAchievementUnlocks === 'function') {
-        setTimeout(() => window.RoyalArmiesAchievements.maybeShowPendingLoginAchievementUnlocks(), 900);
     }
 }
 

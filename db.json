@@ -1,15 +1,61 @@
 {
-  "commanders": [],
+  "commanders": [
+    {
+      "username": "caleb_admin",
+      "email": "x@dev.local",
+      "bio": "Synced bio works",
+      "privacy": "Public",
+      "awards": [
+        {
+          "id": "first_timer",
+          "label": "First Timer",
+          "achievement": "Logging in for the first time",
+          "description": "Logging in for the first time",
+          "iconUrl": "images/first_timer.png",
+          "xpReward": 15,
+          "username": "caleb_admin",
+          "earnedAt": "2026-05-24T21:31:49.881Z"
+        }
+      ],
+      "dossierUpdatedAt": "2026-05-24T21:31:58.153Z",
+      "profileUpdatedAt": "2026-05-24T21:31:58.153Z"
+    }
+  ],
   "portal": {
     "maintenanceAlert": {
       "active": true,
       "title": "Site under active development",
       "message": "Royal Armies is still being built. You may hit brief outages, broken pages, or restarts while we finish the main website and game portal. Thanks for your patience during early access.",
       "windowLabel": "Expect occasional downtime until the main site launch is complete."
+    },
+    "communityChat": {
+      "lastPurgeAt": "2026-05-24T21:28:30.386Z",
+      "nextMessageId": 1,
+      "channels": {
+        "general": [],
+        "bugs": [],
+        "gameplay": [],
+        "help": [],
+        "offtopic": []
+      },
+      "archive": []
     }
   },
   "mailbox": {
-    "messages": [],
+    "messages": [
+      {
+        "id": 1779658309880,
+        "channel": "system",
+        "systemMessageKey": "welcome_to_royal_armies_v1",
+        "from": "Ledger System",
+        "to": "caleb_admin",
+        "topic": "Welcome to the Royal Armies!",
+        "body": "We are so excited to have you on board! Royal Armies is planned to be the greatest evolutionary version of the PBBG franchise ever made and you will be able to see its development first hand. We hope you enjoy what this game has to offer and can tell all of your friends about it!\n\n\n\nIf you would like to be a part of the growing community we have built outside of the game you can always join our official discord <a href=\"https://discord.gg/7tGBCt7cXX\" target=\"_blank\" rel=\"noopener noreferrer\" style=\"color:#ffd700;text-decoration:underline;\">here</a>.",
+        "bodyFormat": "html",
+        "read": false,
+        "sentAt": "2026-05-24T21:31:49.880Z"
+      }
+    ],
     "drafts": []
   }
 }

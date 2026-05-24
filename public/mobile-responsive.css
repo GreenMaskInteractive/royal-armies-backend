@@ -49,6 +49,13 @@ body {
     .over-bar-utility-deck {
         padding-left: max(12px, env(safe-area-inset-left)) !important;
         padding-right: max(12px, env(safe-area-inset-right)) !important;
+        padding-bottom: 8px !important;
+    }
+
+    .portal-brand-header .portal-early-access-readout {
+        font-size: 0.62rem !important;
+        letter-spacing: 0.24em !important;
+        margin-top: -44px !important;
     }
 
     .developer-maintenance-alert-bar {
@@ -118,7 +125,7 @@ body {
     }
 
     .staging-deck-master-wrapper {
-        margin-top: 50px !important;
+        margin-top: 0 !important;
         padding-left: 16px !important;
         padding-right: 16px !important;
         gap: 8px !important;
@@ -142,6 +149,58 @@ body {
         flex-direction: column !important;
         align-items: stretch !important;
         gap: 16px !important;
+    }
+
+    #panel-age-portal-mode.age-portal-view-canvas {
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 16px !important;
+    }
+
+    #panel-age-portal-mode > .portal-twin-split-deck-row {
+        display: contents !important;
+    }
+
+    #panel-age-portal-mode .portal-twin-split-deck-row > .dashboard-news-card-box:first-child,
+    #panel-age-portal-mode .portal-age-intro-card {
+        order: 1 !important;
+        width: 100% !important;
+        max-width: 100% !important;
+    }
+
+    #panel-age-portal-mode > .portal-deployment-control-deck {
+        order: 2 !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        justify-self: stretch !important;
+    }
+
+    #panel-age-portal-mode > .portal-deployment-control-deck .deployment-action-button-row {
+        flex-direction: row !important;
+        flex-wrap: wrap !important;
+        justify-content: center !important;
+    }
+
+    #panel-age-portal-mode .portal-sidebar-flex-column {
+        order: 3 !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        height: auto !important;
+        min-height: 0 !important;
+    }
+
+    #panel-age-portal-mode .portal-sidebar-flex-column .dashboard-news-card-box,
+    #panel-age-portal-mode .portal-sidebar-flex-column .portal-developers-log-card {
+        max-width: 100% !important;
+        height: auto !important;
+        min-height: 0 !important;
+        overflow: visible !important;
+    }
+
+    #panel-age-portal-mode #dashboard-patch-notes-dock,
+    #panel-age-portal-mode .portal-developers-log-scroll {
+        max-height: min(420px, 52vh) !important;
+        overflow-y: auto !important;
     }
 
     /* Slim age metrics strip — stacked above nav; 3 rows: countdown | cycle+mode+nation | rosters */
@@ -679,7 +738,6 @@ body {
    ============================================================================= */
 @media (max-width: 1024px) {
     .portal-desktop-nav-only,
-    .portal-desktop-header-only,
     .portal-desktop-nav-stack {
         display: none !important;
     }
@@ -2224,12 +2282,12 @@ body {
 
     .staging-deck-master-wrapper {
         padding: 0 40px 40px 40px !important;
-        margin-top: -82px !important;
+        margin-top: 0 !important;
     }
 
     .over-bar-utility-deck {
-        padding: 12px 40px 0 40px !important;
-        margin-bottom: -34px !important;
+        padding: 12px 40px 10px 40px !important;
+        margin-bottom: 0 !important;
     }
 
     .main-portal-nav-bar {
@@ -2280,7 +2338,7 @@ body {
         align-items: stretch !important;
     }
 
-    .portal-desktop-header-only {
+    .portal-brand-header {
         display: flex !important;
     }
 

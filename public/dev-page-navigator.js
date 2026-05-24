@@ -132,7 +132,11 @@
             `
             : '';
 
-        const achievementTestBtn = (typeof global.isLocalDevelopmentHost === 'function' && global.isLocalDevelopmentHost())
+        const achievementTestBtn = (
+            typeof global.isLocalDevelopmentHost === 'function'
+            && global.isLocalDevelopmentHost()
+            && getCurrentPageId() === 'how-did-you-get-here'
+        )
             ? '<button type="button" id="dev-achievement-popup-test" class="dev-page-navigator-go dev-page-navigator-go--secondary" title="Preview the Whoa Slow Down achievement popup">Achievement</button>'
             : '';
 

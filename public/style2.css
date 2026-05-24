@@ -39,8 +39,8 @@
     justify-content: center !important;
     align-items: center !important;
     width: 100% !important;
-    padding: 12px 40px 0 40px !important;
-    margin-bottom: -34px !important;
+    padding: 12px 40px 10px 40px !important;
+    margin-bottom: 0 !important;
     box-sizing: border-box !important;
     background: linear-gradient(180deg, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0) 100%) !important;
     z-index: 100 !important;
@@ -74,12 +74,11 @@
     width: 100% !important;
     max-width: 100% !important;
     min-height: calc(100vh - 80px) !important;
-    margin: 50px 0 0 0 !important;
+    margin: 0 !important;
     padding: 0 40px 40px 40px !important; 
     box-sizing: border-box !important;
     flex-grow: 1 !important;
     gap: 20px !important;
-    margin-top: -132px !important;
 }
 
 
@@ -651,7 +650,7 @@
 .portal-early-access-readout {
     position: relative !important;
     z-index: 2 !important;
-    margin: 6px 0 0 0 !important;
+    margin: -42px 0 0 0 !important;
     padding: 0 !important;
     font-family: 'Cinzel', serif !important;
     font-size: 0.78rem !important;
@@ -663,28 +662,6 @@
     text-align: center !important;
     line-height: 1 !important;
     white-space: nowrap !important;
-}
-
-@media (min-width: 1025px) {
-    .portal-desktop-header-only .portal-early-access-readout {
-        margin: -180px 0 0 0 !important;
-    }
-}
-
-.portal-early-access-readout--mobile {
-    margin-top: -46px !important;
-    font-size: 0.62rem !important;
-    letter-spacing: 0.24em !important;
-}
-
-@media (max-width: 1024px) {
-    .portal-mobile-nav-brand-row + * {
-        margin-top: 50px !important;
-    }
-
-    .portal-mobile-nav-menu-scroll {
-        margin-top: 50px !important;
-    }
 }
 
 .portal-alpha-version-readout {
@@ -1221,6 +1198,118 @@ body.portal-guest-mode #portal-mobile-nav-auth-btn {
 #panel-age-portal-mode.age-portal-view-canvas {
     height: auto !important;
     flex: none !important;
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) min(420px, 100%) !important;
+    grid-template-areas:
+        "intro deploy"
+        "intro updates" !important;
+    grid-template-rows: auto 1fr !important;
+    gap: 16px 24px !important;
+    align-items: stretch !important;
+}
+
+#panel-age-portal-mode > .portal-deployment-control-deck {
+    grid-area: deploy !important;
+    width: 100% !important;
+    max-width: 420px !important;
+    margin: 0 !important;
+    justify-self: end !important;
+    align-self: start !important;
+    padding: 18px 16px !important;
+}
+
+#panel-age-portal-mode > .portal-twin-split-deck-row {
+    display: contents !important;
+}
+
+#panel-age-portal-mode .portal-twin-split-deck-row > .dashboard-news-card-box:first-child,
+#panel-age-portal-mode .portal-age-intro-card {
+    grid-area: intro !important;
+    width: auto !important;
+    max-width: none !important;
+    flex: none !important;
+    height: auto !important;
+    min-height: 0 !important;
+    margin-top: 0 !important;
+    align-self: start !important;
+}
+
+#panel-age-portal-mode .portal-sidebar-flex-column {
+    grid-area: updates !important;
+    width: 100% !important;
+    max-width: 420px !important;
+    right: auto !important;
+    position: static !important;
+    margin: 0 !important;
+    justify-self: end !important;
+    align-self: stretch !important;
+    min-height: 0 !important;
+    height: 100% !important;
+    gap: 0 !important;
+}
+
+#panel-age-portal-mode .portal-sidebar-flex-column .portal-developers-log-card,
+#panel-age-portal-mode .portal-sidebar-flex-column .dashboard-news-card-box {
+    width: 100% !important;
+    max-width: 420px !important;
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+    height: auto !important;
+    padding: 18px 16px !important;
+    border-radius: 6px !important;
+    border: 1px solid rgba(184, 144, 48, 0.28) !important;
+    box-shadow: 0 14px 32px rgba(0, 0, 0, 0.65) !important;
+    overflow: hidden !important;
+    gap: 12px !important;
+}
+
+#panel-age-portal-mode #dashboard-patch-notes-dock,
+#panel-age-portal-mode .portal-developers-log-scroll {
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
+    padding-right: 6px !important;
+    scrollbar-width: thin !important;
+    scrollbar-color: #9a7a32 rgba(10, 8, 6, 0.88) !important;
+}
+
+#panel-age-portal-mode #dashboard-patch-notes-dock::-webkit-scrollbar,
+#panel-age-portal-mode .portal-developers-log-scroll::-webkit-scrollbar {
+    width: 8px !important;
+    display: block !important;
+}
+
+#panel-age-portal-mode #dashboard-patch-notes-dock::-webkit-scrollbar-track,
+#panel-age-portal-mode .portal-developers-log-scroll::-webkit-scrollbar-track {
+    background: rgba(10, 8, 6, 0.88) !important;
+    border-radius: 4px !important;
+    border: 1px solid rgba(184, 144, 48, 0.12) !important;
+}
+
+#panel-age-portal-mode #dashboard-patch-notes-dock::-webkit-scrollbar-thumb,
+#panel-age-portal-mode .portal-developers-log-scroll::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, #c5a059 0%, #7a5f24 100%) !important;
+    border-radius: 4px !important;
+    border: 1px solid rgba(255, 215, 0, 0.22) !important;
+}
+
+#panel-age-portal-mode #dashboard-patch-notes-dock::-webkit-scrollbar-thumb:hover,
+#panel-age-portal-mode .portal-developers-log-scroll::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(180deg, #ffd700 0%, #9a7a32 100%) !important;
+}
+
+#panel-age-portal-mode .portal-sidebar-flex-column .portal-deployment-control-deck {
+    display: none !important;
+}
+
+#panel-age-portal-mode > .portal-deployment-control-deck .deployment-action-button-row {
+    flex-direction: column !important;
+    gap: 14px !important;
+}
+
+#panel-age-portal-mode > .portal-deployment-control-deck .action-btn-aura-housing {
+    width: min(260px, 100%) !important;
 }
 
 #panel-age-portal-mode .portal-twin-split-deck-row {
@@ -1274,12 +1363,13 @@ body.portal-guest-mode #portal-mobile-nav-auth-btn {
     flex-direction: column !important;
     gap: 24px !important;
     align-items: stretch !important;
-    justify-content: flex-start !important; /* Locks sidebar updates panel to the roof edge */
-    width: 320px !important;
+    justify-content: flex-start !important;
+    width: min(420px, 100%) !important;
     height: auto !important;
     flex-shrink: 0 !important;
-    position: relative !important; 
-    right: 905px !important; /* Adjust this value to shift your sidebar left/right */
+    position: static !important;
+    right: auto !important;
+    margin: 0 !important;
 }
 
 .portal-sidebar-flex-column .dashboard-news-card-box {
@@ -8109,7 +8199,7 @@ body.developer-maintenance-alert-active #page-landing {
 }
 
 /* ==========================================================================
-   SECTION 20: GAME PAGE SHELL (WIP) & ACHIEVEMENT UNLOCK POPUP
+   SECTION 20: GAME PAGE SHELL (WIP) & HANDOFF ACHIEVEMENT POPUP
    ========================================================================== */
 
 .royal-armies-route-transition {
@@ -8599,7 +8689,7 @@ body.developer-maintenance-alert-active #page-landing {
     border-color: rgba(255, 215, 0, 0.98) !important;
 }
 
-.achievement-toast-anchor {
+body#how-did-you-get-here-canvas .achievement-toast-anchor {
     position: fixed !important;
     right: max(16px, env(safe-area-inset-right)) !important;
     bottom: max(
@@ -8618,7 +8708,7 @@ body.developer-maintenance-alert-active #page-landing {
     box-sizing: border-box !important;
 }
 
-.achievement-unlock-toast {
+body#how-did-you-get-here-canvas .achievement-unlock-toast {
     position: relative !important;
     width: 100% !important;
     pointer-events: auto !important;
@@ -8628,16 +8718,16 @@ body.developer-maintenance-alert-active #page-landing {
     will-change: transform, opacity !important;
 }
 
-.achievement-unlock-toast.is-growing {
+body#how-did-you-get-here-canvas .achievement-unlock-toast.is-growing {
     animation: achievementToastGrow 0.45s cubic-bezier(0.22, 1.12, 0.36, 1) forwards !important;
 }
 
-.achievement-unlock-toast.is-held {
+body#how-did-you-get-here-canvas .achievement-unlock-toast.is-held {
     transform: scale(1) !important;
     opacity: 1 !important;
 }
 
-.achievement-unlock-toast.is-exiting {
+body#how-did-you-get-here-canvas .achievement-unlock-toast.is-exiting {
     animation: achievementToastShrink 0.22s cubic-bezier(0.55, 0.06, 0.68, 0.19) forwards !important;
 }
 
@@ -8668,7 +8758,7 @@ body.developer-maintenance-alert-active #page-landing {
 }
 
 /* Achievement unlock toast — rectangular console-style banner */
-.achievement-unlock-card {
+body#how-did-you-get-here-canvas .achievement-unlock-card {
     position: relative !important;
     width: 100% !important;
     max-width: 360px !important;
@@ -8688,7 +8778,7 @@ body.developer-maintenance-alert-active #page-landing {
         inset 0 1px 0 rgba(255, 215, 0, 0.08) !important;
 }
 
-.achievement-unlock-card::before {
+body#how-did-you-get-here-canvas .achievement-unlock-card::before {
     content: '' !important;
     position: absolute !important;
     top: 0 !important;
@@ -8700,7 +8790,7 @@ body.developer-maintenance-alert-active #page-landing {
     z-index: 2 !important;
 }
 
-.achievement-unlock-card-glow {
+body#how-did-you-get-here-canvas .achievement-unlock-card-glow {
     position: absolute !important;
     inset: 0 !important;
     pointer-events: none !important;
@@ -8712,7 +8802,7 @@ body.developer-maintenance-alert-active #page-landing {
     transition: opacity 0.35s ease !important;
 }
 
-.achievement-unlock-card.is-reveal-active .achievement-unlock-card-glow {
+body#how-did-you-get-here-canvas .achievement-unlock-card.is-reveal-active .achievement-unlock-card-glow {
     opacity: 1 !important;
     animation: achievementCardGlowPulse 2.4s ease-in-out infinite !important;
 }
@@ -8722,7 +8812,7 @@ body.developer-maintenance-alert-active #page-landing {
     50% { opacity: 1; }
 }
 
-.achievement-unlock-card-body {
+body#how-did-you-get-here-canvas .achievement-unlock-card-body {
     position: relative !important;
     z-index: 1 !important;
     display: flex !important;
@@ -8734,7 +8824,7 @@ body.developer-maintenance-alert-active #page-landing {
     box-sizing: border-box !important;
 }
 
-.achievement-unlock-icon-slot {
+body#how-did-you-get-here-canvas .achievement-unlock-icon-slot {
     flex: 0 0 56px !important;
     width: 56px !important;
     height: 56px !important;
@@ -8750,7 +8840,7 @@ body.developer-maintenance-alert-active #page-landing {
     overflow: hidden !important;
 }
 
-.achievement-unlock-icon {
+body#how-did-you-get-here-canvas .achievement-unlock-icon {
     width: 48px !important;
     height: 48px !important;
     object-fit: contain !important;
@@ -8758,7 +8848,7 @@ body.developer-maintenance-alert-active #page-landing {
     filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.85)) !important;
 }
 
-.achievement-unlock-copy {
+body#how-did-you-get-here-canvas .achievement-unlock-copy {
     flex: 1 1 auto !important;
     min-width: 0 !important;
     display: flex !important;
@@ -8767,7 +8857,7 @@ body.developer-maintenance-alert-active #page-landing {
     gap: 5px !important;
 }
 
-.achievement-unlock-headline {
+body#how-did-you-get-here-canvas .achievement-unlock-headline {
     margin: 0 !important;
     font-family: 'Cinzel', serif !important;
     font-size: 0.98rem !important;
@@ -8778,7 +8868,7 @@ body.developer-maintenance-alert-active #page-landing {
     text-shadow: 0 1px 3px rgba(0, 0, 0, 0.95) !important;
 }
 
-.achievement-unlock-detail {
+body#how-did-you-get-here-canvas .achievement-unlock-detail {
     margin: 0 !important;
     display: flex !important;
     flex-wrap: wrap !important;
@@ -8790,24 +8880,24 @@ body.developer-maintenance-alert-active #page-landing {
     color: rgba(241, 224, 172, 0.92) !important;
 }
 
-.achievement-unlock-xp {
+body#how-did-you-get-here-canvas .achievement-unlock-xp {
     flex-shrink: 0 !important;
     font-weight: 700 !important;
     color: #ffe566 !important;
     text-shadow: 0 0 8px rgba(255, 215, 0, 0.35) !important;
 }
 
-.achievement-unlock-xp[hidden] {
+body#how-did-you-get-here-canvas .achievement-unlock-xp[hidden] {
     display: none !important;
 }
 
-.achievement-unlock-xp:not([hidden]) + .achievement-unlock-title::before {
+body#how-did-you-get-here-canvas .achievement-unlock-xp:not([hidden]) + .achievement-unlock-title::before {
     content: '— ' !important;
     color: rgba(241, 224, 172, 0.55) !important;
     font-weight: 400 !important;
 }
 
-.achievement-unlock-title {
+body#how-did-you-get-here-canvas .achievement-unlock-title {
     margin: 0 !important;
     min-width: 0 !important;
     font-weight: 600 !important;
@@ -8818,22 +8908,22 @@ body.developer-maintenance-alert-active #page-landing {
 
 
 @media (prefers-reduced-motion: reduce) {
-    .achievement-unlock-toast.is-growing,
-    .achievement-unlock-toast.is-exiting,
-    .achievement-unlock-card.is-reveal-active .achievement-unlock-card-glow {
+    body#how-did-you-get-here-canvas .achievement-unlock-toast.is-growing,
+    body#how-did-you-get-here-canvas .achievement-unlock-toast.is-exiting,
+    body#how-did-you-get-here-canvas .achievement-unlock-card.is-reveal-active .achievement-unlock-card-glow {
         animation: none !important;
     }
 
-    .achievement-unlock-toast.is-growing,
-    .achievement-unlock-toast.is-held,
-    .achievement-unlock-toast.is-exiting {
+    body#how-did-you-get-here-canvas .achievement-unlock-toast.is-growing,
+    body#how-did-you-get-here-canvas .achievement-unlock-toast.is-held,
+    body#how-did-you-get-here-canvas .achievement-unlock-toast.is-exiting {
         transform: scale(1) !important;
         opacity: 1 !important;
     }
 }
 
 @media (max-width: 640px) {
-    .achievement-toast-anchor {
+    body#how-did-you-get-here-canvas .achievement-toast-anchor {
         right: max(10px, env(safe-area-inset-right)) !important;
         bottom: max(
             var(--achievement-toast-stack-bottom, calc(24px + 88px + 12px)),
@@ -8842,33 +8932,33 @@ body.developer-maintenance-alert-active #page-landing {
         width: min(320px, calc(100vw - 16px)) !important;
     }
 
-    .achievement-unlock-card {
+    body#how-did-you-get-here-canvas .achievement-unlock-card {
         max-width: 320px !important;
         min-height: 72px !important;
     }
 
-    .achievement-unlock-card-body {
+    body#how-did-you-get-here-canvas .achievement-unlock-card-body {
         min-height: 72px !important;
         padding: 10px 12px 10px 16px !important;
         gap: 12px !important;
     }
 
-    .achievement-unlock-icon-slot {
+    body#how-did-you-get-here-canvas .achievement-unlock-icon-slot {
         flex: 0 0 50px !important;
         width: 50px !important;
         height: 50px !important;
     }
 
-    .achievement-unlock-icon {
+    body#how-did-you-get-here-canvas .achievement-unlock-icon {
         width: 42px !important;
         height: 42px !important;
     }
 
-    .achievement-unlock-headline {
+    body#how-did-you-get-here-canvas .achievement-unlock-headline {
         font-size: 0.88rem !important;
     }
 
-    .achievement-unlock-detail {
+    body#how-did-you-get-here-canvas .achievement-unlock-detail {
         font-size: 0.75rem !important;
     }
 

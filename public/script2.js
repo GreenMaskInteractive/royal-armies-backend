@@ -1079,9 +1079,9 @@ function renderDevelopersLogMarkup() {
 
 function renderDevelopersLogSidebarShell() {
     return `
-        <article class="dashboard-news-card-box">
+        <article class="dashboard-news-card-box portal-developers-log-card">
             <h2 class="card-title-header">Developer's Log</h2>
-            <div class="card-scrollable-body-text" id="dashboard-patch-notes-dock">
+            <div class="card-scrollable-body-text portal-gold-scrollbar portal-developers-log-scroll" id="dashboard-patch-notes-dock">
                 ${renderDevelopersLogMarkup()}
             </div>
         </article>
@@ -1097,8 +1097,9 @@ function hydrateDevelopersLogDock() {
 function restoreAgePortalHomeViewLayout(viewport) {
     viewport.innerHTML = `
         <div class="age-portal-view-canvas" id="panel-age-portal-mode">
+            ${renderPortalDeploymentDeckMarkup()}
             <div class="portal-twin-split-deck-row">
-                <article class="dashboard-news-card-box">
+                <article class="dashboard-news-card-box portal-age-intro-card">
                     <h2 class="card-title-header">👑 Introduction Into Royal Armies</h2>
                     <div class="card-scrollable-body-text">
                         <p style="margin-bottom: 16px; color: #ffffff; font-size: 1.05rem;">
@@ -1151,7 +1152,6 @@ function restoreAgePortalHomeViewLayout(viewport) {
                     ${renderDevelopersLogSidebarShell()}
                 </div>
             </div>
-            ${renderPortalDeploymentDeckMarkup()}
         </div>
     `;
     hydrateDevelopersLogDock();

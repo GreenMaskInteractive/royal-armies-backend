@@ -151,6 +151,7 @@ const PORTAL_BROWSE_ONLINE_TTL_MS = 90 * 1000;
 const CHAT_PRESENCE_ACTIVE_MS = 25 * 1000;
 const PORTAL_PRESENCE_IDLE_MS = 10 * 60 * 1000;
 const HIDDEN_REGISTRATION_USERNAMES = new Set(['testaccount']);
+const DEV_BOOTSTRAP_USERNAMES = new Set(['caleb_admin', 'devplayer']);
 const ageSessionByUser = new Map();
 const portalBrowseSessionByUser = new Map();
 
@@ -1056,6 +1057,66 @@ function findCommanderByUsername(username) {
     }) || null;
 }
 
+function isLocalDevHostRequest(req) {
+    const host = String(req?.hostname || '').toLowerCase();
+    return host === 'localhost' || host === '127.0.0.1' || host === '[::1]';
+}
+
+function buildDefaultCommanderLedgerRecord(username) {
+    const normalized = normalizeLedgerUsername(username);
+    return {
+        username: normalized,
+        email: `${normalized.toLowerCase()}@dev.local`,
+        password: '',
+        token: '',
+        verified: true,
+        joinedAt: new Date().toISOString(),
+        bio: '',
+        privacy: 'Public',
+        avatarUrl: '',
+        country: '',
+        timezone: '',
+        gameNation: '',
+        allianceId: '',
+        ageHistory: [],
+        awards: [],
+        medals: [],
+        membershipTitle: 'Basic',
+        premiumMember: false,
+        chronicleXp: getDefaultCommanderChronicleXp(),
+        ageResetUsage: {},
+        preferences: getDefaultCommanderPreferences()
+    };
+}
+
+function ensureLocalDevCommanderInLedger(username, req) {
+    const normalized = normalizeLedgerUsername(username);
+    if (!normalized || isHiddenRegistrationUsername(normalized)) return null;
+
+    const sessionUser = normalizeLedgerUsername(req?.session?.username || '');
+    const isBootstrapUser = DEV_BOOTSTRAP_USERNAMES.has(normalized.toLowerCase());
+    const sessionMatches = sessionUser && sessionUser.toLowerCase() === normalized.toLowerCase();
+    if (!isBootstrapUser && !sessionMatches) return null;
+
+    const existing = findCommanderByUsername(normalized);
+    if (existing) return existing;
+
+    const record = buildDefaultCommanderLedgerRecord(normalized);
+    db.get('commanders').push(record).write();
+    console.log(`[NEXUS] Local dev ledger entry created for ${normalized}.`);
+    return findCommanderByUsername(normalized);
+}
+
+function resolvePortalAccountUsername(rawUsername, req) {
+    const resolved = resolveLedgerCommanderUsername(rawUsername);
+    if (resolved) return resolved;
+
+    if (isProduction || !isLocalDevHostRequest(req)) return null;
+
+    const commander = ensureLocalDevCommanderInLedger(rawUsername, req);
+    return commander ? String(commander.username).trim() : null;
+}
+
 function normalizeCommanderProfilePrivacy(value) {
     return String(value || '').trim() === 'Private' ? 'Private' : 'Public';
 }
@@ -1817,6 +1878,7 @@ app.post('/api/auth/dev-session', (req, res) => {
 
     const mode = String(req.body?.mode || 'owner').toLowerCase();
     const username = mode === 'player' ? 'DevPlayer' : 'caleb_admin';
+    ensureLocalDevCommanderInLedger(username, req);
     setPortalSessionForUser(req, username, true);
     res.json({ authenticated: true, username, dev: true, mode: mode === 'player' ? 'player' : 'owner' });
 });
@@ -1949,7 +2011,7 @@ app.get('/api/portal/commanders/:username/public-profile', (req, res) => {
 });
 
 app.get('/api/portal/account/profile', (req, res) => {
-    const username = resolveLedgerCommanderUsername(req.query?.username || '');
+    const username = resolvePortalAccountUsername(req.query?.username || '', req);
     if (!username) {
         return sendApiError(res, 'NEXUS-GEN-003');
     }
@@ -1963,7 +2025,7 @@ app.get('/api/portal/account/profile', (req, res) => {
 });
 
 app.patch('/api/portal/account/profile', (req, res) => {
-    const username = resolveLedgerCommanderUsername(req.body?.username || '');
+    const username = resolvePortalAccountUsername(req.body?.username || '', req);
     if (!username) {
         return sendApiError(res, 'NEXUS-GEN-003');
     }
@@ -1992,7 +2054,7 @@ app.patch('/api/portal/account/profile', (req, res) => {
 });
 
 app.get('/api/portal/account/dossier', (req, res) => {
-    const username = resolveLedgerCommanderUsername(req.query?.username || '');
+    const username = resolvePortalAccountUsername(req.query?.username || '', req);
     if (!username) {
         return sendApiError(res, 'NEXUS-GEN-003');
     }
@@ -2006,7 +2068,7 @@ app.get('/api/portal/account/dossier', (req, res) => {
 });
 
 app.patch('/api/portal/account/dossier', (req, res) => {
-    const username = resolveLedgerCommanderUsername(req.body?.username || '');
+    const username = resolvePortalAccountUsername(req.body?.username || '', req);
     if (!username) {
         return sendApiError(res, 'NEXUS-GEN-003');
     }
