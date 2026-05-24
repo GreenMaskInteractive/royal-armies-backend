@@ -35,6 +35,9 @@
             card.classList.add('is-commander-menu-open');
             menu.hidden = false;
             settingsBtn.setAttribute('aria-expanded', 'true');
+            if (typeof global.syncNavMailboxIndicators === 'function') {
+                global.syncNavMailboxIndicators();
+            }
         } else {
             closePortalCommanderIdentityMenu();
         }
