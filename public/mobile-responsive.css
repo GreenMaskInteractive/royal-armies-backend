@@ -1149,21 +1149,22 @@ body {
         font-size: 0.72rem !important;
     }
 
-    .portal-mobile-guest-login-block {
+    #portal-mobile-nav-auth-btn {
         display: none !important;
+    }
+
+    .portal-mobile-guest-login-block:not([hidden]) {
+        display: flex !important;
         flex-direction: column !important;
         flex-shrink: 0 !important;
         width: 100% !important;
         position: relative !important;
-        z-index: 999999976 !important;
         pointer-events: auto !important;
-        padding: 0 max(12px, env(safe-area-inset-left)) 0 max(12px, env(safe-area-inset-right)) !important;
+        padding: 0 6px 6px !important;
         box-sizing: border-box !important;
-        background: linear-gradient(180deg, rgba(0, 0, 0, 0.35) 0%, transparent 100%) !important;
-        order: 1 !important;
     }
 
-    body.portal-guest-mode #portal-mobile-guest-login-block {
+    .portal-mobile-member-auth-row:not([hidden]) {
         display: flex !important;
     }
 

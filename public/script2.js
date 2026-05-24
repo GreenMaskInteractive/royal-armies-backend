@@ -226,15 +226,17 @@ function applyPortalGuestDeploymentChrome() {
 
     const memberBlock = document.getElementById('portal-deployment-member-block');
     const guestCta = document.getElementById('portal-deployment-guest-cta');
-    const accountLabel = document.querySelector('.nav-embedded-account-label');
-    const mobileCommanderBlock = document.getElementById('portal-mobile-commander-block');
+    const desktopGuestCard = document.getElementById('portal-desktop-guest-auth-card');
+    const desktopMemberCluster = document.getElementById('portal-desktop-member-auth-cluster');
     const mobileGuestLoginBlock = document.getElementById('portal-mobile-guest-login-block');
+    const mobileMemberRow = document.getElementById('portal-mobile-member-auth-row');
 
     if (memberBlock) memberBlock.hidden = !authed;
     if (guestCta) guestCta.hidden = authed;
-    if (accountLabel) accountLabel.hidden = !authed;
-    if (mobileCommanderBlock) mobileCommanderBlock.hidden = !authed;
+    if (desktopGuestCard) desktopGuestCard.hidden = authed;
+    if (desktopMemberCluster) desktopMemberCluster.hidden = !authed;
     if (mobileGuestLoginBlock) mobileGuestLoginBlock.hidden = authed;
+    if (mobileMemberRow) mobileMemberRow.hidden = !authed;
 
     applyPortalDeploymentDeckPresentation();
 }

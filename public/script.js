@@ -304,9 +304,10 @@ function bindPortalAuthActionControls() {
     if (!isMainPortalHub()) return;
 
     const controls = [
-        document.getElementById('metrics-auth-action-btn'),
+        document.getElementById('portal-desktop-login-btn'),
+        document.getElementById('portal-desktop-logout-btn'),
         document.getElementById('portal-mobile-guest-login-btn'),
-        document.getElementById('portal-mobile-nav-auth-btn')
+        document.getElementById('portal-mobile-logout-btn')
     ].filter(Boolean);
 
     controls.forEach((btn) => {
@@ -315,7 +316,7 @@ function bindPortalAuthActionControls() {
         btn.addEventListener('click', (event) => {
             event.preventDefault();
             event.stopPropagation();
-            if (btn.id === 'portal-mobile-nav-auth-btn' && typeof closePortalMobileNavMenus === 'function') {
+            if (typeof closePortalMobileNavMenus === 'function') {
                 closePortalMobileNavMenus();
             }
             handleHeaderAuthAction();
@@ -328,30 +329,37 @@ function refreshMainPortalAuthChrome() {
 
     bindPortalAuthActionControls();
 
-    const metricsLabel = document.getElementById('metrics-auth-action-label');
-    const metricsIcon = document.getElementById('metrics-auth-action-icon');
-    const metricsBtn = document.getElementById('metrics-auth-action-btn');
+    const desktopGuestCard = document.getElementById('portal-desktop-guest-auth-card');
+    const desktopMemberCluster = document.getElementById('portal-desktop-member-auth-cluster');
+    const mobileGuestLoginBlock = document.getElementById('portal-mobile-guest-login-block');
+    const mobileMemberRow = document.getElementById('portal-mobile-member-auth-row');
     const mobileNavAuthBtn = document.getElementById('portal-mobile-nav-auth-btn');
-    const mobileNavAuthLabel = document.getElementById('portal-mobile-nav-auth-label');
-    const mobileNavAuthIcon = document.getElementById('portal-mobile-nav-auth-icon');
+    const metricsBtn = document.getElementById('metrics-auth-action-btn');
     const authed = isPortalUserAuthenticated();
     const authLabelText = authed ? 'Log Out' : 'Log In';
     const authIconSrc = authed ? 'images/logouticon.png' : 'images/profileicon.png';
     const authAriaLabel = authed ? 'Log out of Age Portal' : 'Log in to Age Portal';
 
-    if (metricsLabel) metricsLabel.textContent = authLabelText;
-    if (metricsIcon) metricsIcon.src = authIconSrc;
-    if (metricsBtn) {
-        metricsBtn.hidden = false;
-        metricsBtn.setAttribute('aria-label', authAriaLabel);
-    }
+    if (desktopGuestCard) desktopGuestCard.hidden = authed;
+    if (desktopMemberCluster) desktopMemberCluster.hidden = !authed;
+    if (mobileGuestLoginBlock) mobileGuestLoginBlock.hidden = authed;
+    if (mobileMemberRow) mobileMemberRow.hidden = !authed;
+    if (mobileNavAuthBtn) mobileNavAuthBtn.hidden = true;
+    if (metricsBtn) metricsBtn.hidden = true;
 
-    if (mobileNavAuthLabel) mobileNavAuthLabel.textContent = authLabelText;
-    if (mobileNavAuthIcon) mobileNavAuthIcon.src = authIconSrc;
-    if (mobileNavAuthBtn) {
-        mobileNavAuthBtn.hidden = !authed;
-        mobileNavAuthBtn.setAttribute('aria-label', authAriaLabel);
-    }
+    const desktopLogoutLabel = document.getElementById('portal-desktop-logout-label');
+    const desktopLogoutIcon = document.getElementById('portal-desktop-logout-icon');
+    const desktopLogoutBtn = document.getElementById('portal-desktop-logout-btn');
+    const mobileLogoutLabel = document.getElementById('portal-mobile-logout-label');
+    const mobileLogoutIcon = document.getElementById('portal-mobile-logout-icon');
+    const mobileLogoutBtn = document.getElementById('portal-mobile-logout-btn');
+
+    if (desktopLogoutLabel) desktopLogoutLabel.textContent = authLabelText;
+    if (desktopLogoutIcon) desktopLogoutIcon.src = authIconSrc;
+    if (desktopLogoutBtn) desktopLogoutBtn.setAttribute('aria-label', authAriaLabel);
+    if (mobileLogoutLabel) mobileLogoutLabel.textContent = authLabelText;
+    if (mobileLogoutIcon) mobileLogoutIcon.src = authIconSrc;
+    if (mobileLogoutBtn) mobileLogoutBtn.setAttribute('aria-label', authAriaLabel);
 
     if (typeof refreshLoggedUserTagDisplay === 'function') {
         refreshLoggedUserTagDisplay();

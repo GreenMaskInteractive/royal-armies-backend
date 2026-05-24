@@ -15,8 +15,8 @@
     <!-- Block 2: Page Title & Stylesheet Bridge -->
     <title>Royal Armies - An MMOHFT Medieval-Fantasy Strategy Game</title>
     <link rel="stylesheet" href="style.css?v=mailbox-read-popup-wide-2">
-    <link rel="stylesheet" href="style2.css?v=auth-outside-nav-2">
-    <link rel="stylesheet" href="mobile-responsive.css?v=auth-outside-nav-2">
+    <link rel="stylesheet" href="style2.css?v=identity-auth-slot-1">
+    <link rel="stylesheet" href="mobile-responsive.css?v=identity-auth-slot-1">
     <link rel="stylesheet" href="dev-page-navigator.css">
     <link rel="stylesheet" href="custom-cursor.css?v=scrollbar-cursor-1">
 </head>
@@ -49,11 +49,28 @@
 
         <!-- Block 4: Three-Column Sticky Navigation Bar -->
         <div class="portal-desktop-nav-stack portal-desktop-nav-only">
-            <div class="portal-nav-commander-identity-row nav-embedded-account-label">
+            <div class="portal-nav-commander-identity-row nav-embedded-account-label" id="portal-desktop-auth-row">
                 <div class="portal-commander-identity-shell" id="portal-commander-identity-shell">
                     <button type="button" class="portal-commander-new-messages-bar" id="portal-commander-new-messages-bar" hidden aria-live="polite" aria-label="You have new messages. Open messages.">
                         <span class="portal-commander-new-messages-bar-text">You have new messages</span>
                     </button>
+
+                    <div id="portal-desktop-guest-auth-card" class="portal-desktop-guest-auth-card" hidden>
+                        <button type="button" id="portal-desktop-login-btn" class="portal-commander-identity-card portal-desktop-guest-auth-trigger" aria-label="Log in to Age Portal">
+                            <div class="portal-commander-identity-card-body">
+                                <div class="nav-avatar-hub-wrapper">
+                                    <img src="images/profileicon.png" alt="" class="nav-bar-embedded-avatar-thumbnail portal-desktop-guest-auth-icon" aria-hidden="true">
+                                </div>
+                                <div class="nav-account-identity-cluster">
+                                    <div class="nav-account-identity-stack">
+                                        <strong id="portal-desktop-guest-auth-label">Log In</strong>
+                                    </div>
+                                </div>
+                            </div>
+                        </button>
+                    </div>
+
+                    <div id="portal-desktop-member-auth-cluster" class="portal-desktop-member-auth-cluster">
                 <div class="portal-commander-identity-card" id="portal-commander-identity-card">
                     <button type="button"
                         class="portal-commander-identity-settings-btn"
@@ -87,17 +104,13 @@
                         <button type="button" class="dropdown-action-item" role="menuitem" onclick="portalDesktopCommanderMenuAction('settings', event)">Settings</button>
                     </div>
                 </div>
+                    <button type="button" id="portal-desktop-logout-btn" class="header-logout-btn portal-desktop-logout-btn" aria-label="Log out of Age Portal">
+                        <img id="portal-desktop-logout-icon" src="images/logouticon.png" alt="" class="header-logout-icon" aria-hidden="true">
+                        <span id="portal-desktop-logout-label" class="header-logout-label">Log Out</span>
+                    </button>
+                    </div>
                 </div>
             </div>
-
-        <div class="portal-mobile-guest-login-block" id="portal-mobile-guest-login-block" hidden>
-            <button type="button" class="portal-mobile-commander-trigger portal-mobile-guest-login-trigger" id="portal-mobile-guest-login-btn" aria-label="Log in to Age Portal">
-                <img class="portal-mobile-commander-avatar portal-mobile-guest-login-icon" id="portal-mobile-guest-login-icon" src="images/profileicon.png" alt="" aria-hidden="true">
-                <span class="portal-mobile-commander-identity">
-                    <strong class="portal-mobile-commander-name" id="portal-mobile-guest-login-label">Log In</strong>
-                </span>
-            </button>
-        </div>
 
         <div class="portal-mobile-nav-bar-clip">
         <nav class="main-portal-nav-bar" id="portal-navigation-chassis">
@@ -121,6 +134,15 @@
                             <button type="button" class="portal-commander-new-messages-bar" id="portal-mobile-new-messages-bar" hidden aria-live="polite" aria-label="You have new messages. Open messages.">
                                 <span class="portal-commander-new-messages-bar-text">You have new messages</span>
                             </button>
+                        <div class="portal-mobile-guest-login-block" id="portal-mobile-guest-login-block" hidden>
+                            <button type="button" class="portal-mobile-commander-trigger portal-mobile-guest-login-trigger portal-mobile-guest-auth-card" id="portal-mobile-guest-login-btn" aria-label="Log in to Age Portal">
+                                <img class="portal-mobile-commander-avatar portal-mobile-guest-login-icon" id="portal-mobile-guest-login-icon" src="images/profileicon.png" alt="" aria-hidden="true">
+                                <span class="portal-mobile-commander-identity">
+                                    <strong class="portal-mobile-commander-name" id="portal-mobile-guest-login-label">Log In</strong>
+                                </span>
+                            </button>
+                        </div>
+                        <div class="portal-mobile-member-auth-row" id="portal-mobile-member-auth-row">
                         <div class="portal-mobile-commander-block" id="portal-mobile-commander-block">
                             <button type="button" class="portal-mobile-commander-trigger" id="portal-mobile-commander-toggle" aria-expanded="false" aria-controls="portal-mobile-commander-submenu" onclick="togglePortalMobileCommanderSubmenu(event)">
                                 <img class="portal-mobile-commander-avatar" id="portal-mobile-nav-avatar" src="images/avatars/commanderprofile01.png" alt="">
@@ -139,6 +161,11 @@
                                 </button>
                                 <button type="button" class="portal-mobile-submenu-item" onclick="portalMobileNavCommanderAction('settings', event)">Settings</button>
                             </div>
+                        </div>
+                        <button type="button" id="portal-mobile-logout-btn" class="header-logout-btn portal-mobile-inline-logout-btn" aria-label="Log out of Age Portal">
+                            <img id="portal-mobile-logout-icon" src="images/logouticon.png" alt="" class="header-logout-icon portal-mobile-nav-auth-icon" aria-hidden="true">
+                            <span id="portal-mobile-logout-label" class="header-logout-label">Log Out</span>
+                        </button>
                         </div>
                         </div>
                     </div>
@@ -622,10 +649,10 @@
     <script src="portal-alerts.js?v=nexus-rift-acronyms-1"></script>
     <script src="rift-error-display.js?v=nexus-rift-acronyms-1"></script>
     <script src="rank-data.js"></script>
-    <script src="script.js?v=auth-outside-nav-2"></script>
+    <script src="script.js?v=identity-auth-slot-1"></script>
     <script src="commander-hub.js?v=save-confirmation-toast-fix-1"></script>
     <script src="maintenance-alert.js?v=maintenance-always-on-1"></script>
-    <script src="script2.js?v=auth-outside-nav-2"></script>
+    <script src="script2.js?v=identity-auth-slot-1"></script>
     <script src="custom-cursor.js?v=scrollbar-cursor-1"></script>
 
 </body>
