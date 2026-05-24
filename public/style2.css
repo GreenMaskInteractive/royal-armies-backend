@@ -163,7 +163,7 @@
     align-items: stretch !important;
     width: min(100%, 420px) !important;
     min-height: 72px !important;
-    padding: 10px 44px 10px 12px !important;
+    padding: 10px 58px 10px 12px !important;
     box-sizing: border-box !important;
     border: 2px solid #b89030 !important;
     border-radius: 4px !important;
@@ -220,8 +220,8 @@
 }
 
 .portal-commander-identity-settings-icon {
-    width: 21px !important;
-    height: 21px !important;
+    width: 41px !important;
+    height: 41px !important;
     object-fit: contain !important;
     display: block !important;
     opacity: 0.92 !important;
