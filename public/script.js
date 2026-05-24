@@ -59,6 +59,9 @@ let stagedVerbosity = confirmedVerbosity;
 let stagedPings = confirmedPings; 
 let stagedSafetyLock = confirmedSafetyLock; 
 
+let confirmedGameChatOpacity = Math.max(15, Math.min(100, parseFloat(localStorage.getItem('savedGameChatOpacity')) || 85));
+let stagedGameChatOpacity = confirmedGameChatOpacity;
+
 // RUN INSTANTLY ON BOOT: Sync visual styles (skip landing index — uses landing-login.css)
 if (document.getElementById('page-landing')) {
     document.documentElement.style.setProperty('--text-scale', String(confirmedTextScale));
@@ -2428,6 +2431,15 @@ const nationLore = {
                                 </label>
                             </div>
                         </div>
+
+                        <div class="settings-group">
+                            <label class="settings-label">In-Game Chat Transparency</label>
+                            <div class="settings-right-wrapper">
+                                <input type="range" min="15" max="100" step="5" value="85" class="settings-slider" id="game-chat-opacity-slider" oninput="stageGameChatOpacity(this.value)">
+                                <span id="game-chat-opacity-value" class="settings-value-label">85%</span>
+                            </div>
+                        </div>
+                        <p class="settings-hint-line">Adjusts the Age session chat panel background opacity (15%–100%).</p>
                     </div>
                 `
             },
@@ -3276,6 +3288,12 @@ function loadLore(type, customMount) {
                             if (sfxSlider) sfxSlider.value = confirmedSfxVol;
                         }
                         else if (item.name === "Gameplay & Strategy") {
+                            const chatOpacitySlider = document.getElementById('game-chat-opacity-slider');
+                            if (chatOpacitySlider) chatOpacitySlider.value = confirmedGameChatOpacity;
+                            stagedGameChatOpacity = confirmedGameChatOpacity;
+                            const chatOpacityLabel = document.getElementById('game-chat-opacity-value');
+                            if (chatOpacityLabel) chatOpacityLabel.textContent = `${confirmedGameChatOpacity}%`;
+
                             const vCheck = document.getElementById('verbosity-toggle-check');
                             if (vCheck) vCheck.checked = (confirmedVerbosity === "Detailed");
                             const vText = document.getElementById('verbosity-label-text');
@@ -3422,6 +3440,21 @@ function stageUIScale(val) {
     const label = document.getElementById('scale-value');
     if (label) {
         label.innerText = Math.round(stagedScale * 100) + "%";
+    }
+}
+
+function stageGameChatOpacity(val) {
+    hasUnsavedChanges = true;
+    stagedGameChatOpacity = Math.max(15, Math.min(100, Number(val) || 85));
+
+    const label = document.getElementById('game-chat-opacity-value');
+    if (label) label.textContent = `${stagedGameChatOpacity}%`;
+
+    if (global.RoyalArmiesGameChat && typeof global.RoyalArmiesGameChat.applyPanelOpacity === 'function') {
+        global.RoyalArmiesGameChat.applyPanelOpacity(stagedGameChatOpacity, {
+            skipPreferenceSync: true,
+            skipSettingsUi: true
+        });
     }
 }
 
@@ -3677,6 +3710,14 @@ function saveSettings() {
         confirmedVerbosity = stagedVerbosity; 
         confirmedPings = stagedPings; 
         confirmedSafetyLock = stagedSafetyLock; 
+        confirmedGameChatOpacity = stagedGameChatOpacity;
+
+        if (global.RoyalArmiesGameChat && typeof global.RoyalArmiesGameChat.applyPanelOpacity === 'function') {
+            global.RoyalArmiesGameChat.applyPanelOpacity(confirmedGameChatOpacity, {
+                skipPreferenceSync: true,
+                skipSettingsUi: true
+            });
+        }
         
         // 2. PERSISTENT STORAGE HANDSHAKE (UPDATED FOR BACKGROUND MUSIC)
         localStorage.setItem('savedUIScale', confirmedScale); 
@@ -3689,6 +3730,7 @@ function saveSettings() {
         localStorage.setItem('savedPings', confirmedPings); 
         localStorage.setItem('savedSafetyLock', confirmedSafetyLock); 
         localStorage.setItem('savedDyslexiaFont', isDyslexiaActive);
+        localStorage.setItem('savedGameChatOpacity', confirmedGameChatOpacity);
 
         localStorage.setItem('savedPortalMasterVol', confirmedMasterVol);
         localStorage.setItem('savedPortalMusicVol', confirmedMusicVol);
@@ -3758,6 +3800,8 @@ function revertSettings() {
         confirmedVerbosity = "Detailed"; stagedVerbosity = "Detailed"; 
         confirmedPings = "Enabled"; stagedPings = "Enabled"; 
         confirmedSafetyLock = "Double-Click"; stagedSafetyLock = "Double-Click"; 
+        confirmedGameChatOpacity = 85;
+        stagedGameChatOpacity = 85;
         
         document.documentElement.style.setProperty('--ui-scale', 1); 
         localStorage.clear(); 
@@ -3804,6 +3848,14 @@ function revertSettings() {
         
         const lText = document.getElementById('lock-label-text'); 
         if (lText) lText.innerText = "Double"; 
+
+        const chatOpacitySlider = document.getElementById('game-chat-opacity-slider');
+        if (chatOpacitySlider) chatOpacitySlider.value = 85;
+        const chatOpacityLabel = document.getElementById('game-chat-opacity-value');
+        if (chatOpacityLabel) chatOpacityLabel.textContent = '85%';
+        if (global.RoyalArmiesGameChat && typeof global.RoyalArmiesGameChat.applyPanelOpacity === 'function') {
+            global.RoyalArmiesGameChat.applyPanelOpacity(85, { skipPreferenceSync: true, skipSettingsUi: true });
+        }
         
         document.body.classList.remove('high-contrast-mode'); 
         setDyslexiaFontEnabled(false);

@@ -1,15 +1,8 @@
 /**
- * Royal Armies in-game chat — fixed lower-left module with category tabs,
- * transparency settings, resize, and community chat aggregation for Global.
+ * Royal Armies in-game chat — server-backed module (messages, UI prefs, community feed).
  */
 (function initRoyalArmiesGameChat(global) {
     'use strict';
-
-    const STORAGE_MESSAGES_KEY = 'royalArmiesGameChatMessages';
-    const STORAGE_OPACITY_KEY = 'savedGameChatOpacity';
-    const STORAGE_SIZE_KEY = 'savedGameChatPanelSize';
-    const STORAGE_ALLIANCE_KEY = 'gameAllianceActive';
-    const STORAGE_ACTIVE_TAB_KEY = 'savedGameChatActiveTab';
 
     const TAB_LABELS = {
         system: 'System',
@@ -18,17 +11,24 @@
         alliance: 'Alliance'
     };
 
-    const CHANNELS = ['system', 'global', 'country', 'alliance'];
-    const COMMUNITY_POLL_MS = 30000;
+    const SYNC_POLL_MS = 12000;
+    const UI_SAVE_DEBOUNCE_MS = 350;
     const MIN_WIDTH = 280;
     const MIN_HEIGHT = 200;
     const DEFAULT_WIDTH = 380;
     const DEFAULT_HEIGHT = 320;
 
     let activeTab = 'global';
-    let gameMessages = [];
+    let messagesByChannel = {
+        system: [],
+        global: [],
+        country: [],
+        alliance: []
+    };
     let communityMessages = [];
-    let communityPollTimer = null;
+    let hasAlliance = false;
+    let syncPollTimer = null;
+    let uiSaveTimer = null;
 
     function resolveApiUrl(path) {
         if (typeof global.resolveRoyalArmiesApiUrl === 'function') {
@@ -41,10 +41,6 @@
         const saved = global.localStorage.getItem('activeCommanderUser');
         if (saved && saved.trim()) return saved.trim();
         return '';
-    }
-
-    function hasActiveAlliance() {
-        return global.localStorage.getItem(STORAGE_ALLIANCE_KEY) === 'true';
     }
 
     function escapeHtml(value) {
@@ -61,74 +57,18 @@
         return `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
     }
 
-    function loadStoredMessages() {
-        try {
-            const raw = global.localStorage.getItem(STORAGE_MESSAGES_KEY);
-            const parsed = raw ? JSON.parse(raw) : [];
-            gameMessages = Array.isArray(parsed) ? parsed.filter(Boolean) : [];
-        } catch (_err) {
-            gameMessages = [];
-        }
-    }
-
-    function saveStoredMessages() {
-        try {
-            global.localStorage.setItem(STORAGE_MESSAGES_KEY, JSON.stringify(gameMessages.slice(-400)));
-        } catch (_err) {
-            /* ignore */
-        }
-    }
-
-    function createMessage(channel, text, author, source) {
-        const sentAt = new Date().toISOString();
+    function normalizeGameMessage(raw) {
+        if (!raw || typeof raw !== 'object') return null;
+        const sentAt = raw.sentAt || new Date().toISOString();
         return {
-            id: `game-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-            channel,
-            source: source || 'game',
-            author: author || 'System',
-            text: String(text || '').trim(),
+            id: `game-${raw.id}`,
+            channel: String(raw.channel || 'global').trim(),
+            source: raw.source === 'system' ? 'system' : 'game',
+            author: String(raw.sender || 'Commander').trim(),
+            text: String(raw.text || '').trim(),
             sentAt,
-            displayTime: formatClockTime(sentAt)
+            displayTime: String(raw.time || '').trim() || formatClockTime(sentAt)
         };
-    }
-
-    function appendGameMessage(channel, text, author, source) {
-        const entry = createMessage(channel, text, author, source);
-        if (!entry.text) return null;
-        gameMessages.push(entry);
-        saveStoredMessages();
-        renderActiveChatStream();
-        return entry;
-    }
-
-    function seedDemoMessagesIfEmpty() {
-        if (gameMessages.some((entry) => entry.channel === 'system')) return;
-        appendGameMessage(
-            'system',
-            'Khaeran has captured Thornwall from Aethelgard.',
-            'System',
-            'game'
-        );
-        appendGameMessage(
-            'global',
-            'Commanders, rally at the capital gates before the next Age cycle.',
-            'Herald',
-            'game'
-        );
-        appendGameMessage(
-            'country',
-            'Country channel secured — same-nation allies only.',
-            'System',
-            'game'
-        );
-        if (hasActiveAlliance()) {
-            appendGameMessage(
-                'alliance',
-                'Alliance channel online — coordinate with allied nations here.',
-                'System',
-                'game'
-            );
-        }
     }
 
     function normalizeCommunityMessage(raw) {
@@ -146,58 +86,138 @@
         };
     }
 
-    async function fetchCommunityMessagesForGlobalFeed() {
+    function flattenGameMessages() {
+        return Object.keys(messagesByChannel).flatMap((key) => messagesByChannel[key] || []);
+    }
+
+    function applyServerPayload(payload) {
+        if (!payload || payload.status !== 'ok') return false;
+
+        messagesByChannel = {
+            system: (payload.messagesByChannel?.system || []).map(normalizeGameMessage).filter(Boolean),
+            global: (payload.messagesByChannel?.global || []).map(normalizeGameMessage).filter(Boolean),
+            country: (payload.messagesByChannel?.country || []).map(normalizeGameMessage).filter(Boolean),
+            alliance: (payload.messagesByChannel?.alliance || []).map(normalizeGameMessage).filter(Boolean)
+        };
+
+        communityMessages = (payload.communityMessages || [])
+            .map(normalizeCommunityMessage)
+            .filter(Boolean);
+
+        hasAlliance = payload.hasAlliance === true;
+
+        if (payload.ui) {
+            applyUiFromServer(payload.ui, { skipServerSave: true });
+        }
+
+        updateAllianceTabVisibility();
+        updateComposeState();
+        renderActiveChatStream();
+        return true;
+    }
+
+    async function fetchGameChatFromServer() {
+        const username = resolveUsername();
+        if (!username) return false;
+
         try {
-            const response = await global.fetch(resolveApiUrl('/api/portal/community-chat'), {
-                cache: 'no-store',
-                credentials: 'include'
-            });
-            if (!response.ok) return;
-
+            const response = await global.fetch(
+                resolveApiUrl(`/api/portal/game-chat?username=${encodeURIComponent(username)}`),
+                { cache: 'no-store', credentials: 'include' }
+            );
+            if (!response.ok) return false;
             const payload = await response.json();
-            if (payload.status !== 'ok' || !Array.isArray(payload.messages)) return;
-
-            communityMessages = payload.messages
-                .map(normalizeCommunityMessage)
-                .filter(Boolean);
-            renderActiveChatStream();
+            return applyServerPayload(payload);
         } catch (err) {
-            console.warn('Game chat community sync failed:', err);
+            console.warn('Game chat sync failed:', err);
+            return false;
         }
     }
 
-    function startCommunityPoll() {
-        if (communityPollTimer) global.clearInterval(communityPollTimer);
-        fetchCommunityMessagesForGlobalFeed();
-        communityPollTimer = global.setInterval(fetchCommunityMessagesForGlobalFeed, COMMUNITY_POLL_MS);
+    async function postGameChatMessage(channel, text) {
+        const username = resolveUsername();
+        if (!username || !text) return false;
+
+        try {
+            const response = await global.fetch(resolveApiUrl('/api/portal/game-chat/messages'), {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+                cache: 'no-store',
+                body: JSON.stringify({ username, channel, text })
+            });
+            const payload = await response.json().catch(() => ({}));
+            if (!response.ok || payload.status !== 'ok') {
+                console.warn('Game chat post failed:', payload.message || response.status);
+                return false;
+            }
+            return applyServerPayload(payload);
+        } catch (err) {
+            console.warn('Game chat post error:', err);
+            return false;
+        }
     }
 
-    function stopCommunityPoll() {
-        if (communityPollTimer) {
-            global.clearInterval(communityPollTimer);
-            communityPollTimer = null;
+    async function postSystemEvent(text) {
+        const username = resolveUsername();
+        if (!username || !text) return false;
+
+        try {
+            const response = await global.fetch(resolveApiUrl('/api/portal/game-chat/system-events'), {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+                cache: 'no-store',
+                body: JSON.stringify({ username, text })
+            });
+            if (!response.ok) return false;
+            await fetchGameChatFromServer();
+            return true;
+        } catch (err) {
+            console.warn('Game chat system event failed:', err);
+            return false;
+        }
+    }
+
+    function scheduleUiSave(patch) {
+        if (uiSaveTimer) global.clearTimeout(uiSaveTimer);
+        uiSaveTimer = global.setTimeout(() => {
+            uiSaveTimer = null;
+            saveUiToServer(patch);
+        }, UI_SAVE_DEBOUNCE_MS);
+    }
+
+    async function saveUiToServer(patch) {
+        const username = resolveUsername();
+        if (!username) return;
+
+        try {
+            await global.fetch(resolveApiUrl('/api/portal/game-chat/ui'), {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+                cache: 'no-store',
+                body: JSON.stringify({ username, ...patch })
+            });
+        } catch (err) {
+            console.warn('Game chat UI save failed:', err);
         }
     }
 
     function getMessagesForActiveTab() {
-        const combined = [
-            ...gameMessages,
-            ...communityMessages
-        ];
-
         if (activeTab === 'global') {
-            return [...gameMessages, ...communityMessages]
+            return [...flattenGameMessages(), ...communityMessages]
                 .sort((a, b) => Date.parse(a.sentAt || '') - Date.parse(b.sentAt || ''));
         }
 
         if (activeTab === 'system') {
-            return gameMessages
-                .filter((entry) => entry.channel === 'system')
+            return (messagesByChannel.system || [])
+                .slice()
                 .sort((a, b) => Date.parse(a.sentAt || '') - Date.parse(b.sentAt || ''));
         }
 
-        return combined
-            .filter((entry) => entry.channel === activeTab)
+        return (messagesByChannel[activeTab] || [])
+            .slice()
             .sort((a, b) => Date.parse(a.sentAt || '') - Date.parse(b.sentAt || ''));
     }
 
@@ -253,16 +273,11 @@
         viewport.scrollTop = viewport.scrollHeight;
     }
 
-    function setActiveTab(tabId) {
+    function setActiveTab(tabId, options = {}) {
         if (!TAB_LABELS[tabId]) return;
-        if (tabId === 'alliance' && !hasActiveAlliance()) return;
+        if (tabId === 'alliance' && !hasAlliance) return;
 
         activeTab = tabId;
-        try {
-            global.localStorage.setItem(STORAGE_ACTIVE_TAB_KEY, tabId);
-        } catch (_err) {
-            /* ignore */
-        }
 
         global.document.querySelectorAll('.game-chat-tab[data-game-chat-tab]').forEach((btn) => {
             const isActive = btn.getAttribute('data-game-chat-tab') === tabId;
@@ -272,6 +287,10 @@
 
         updateComposeState();
         renderActiveChatStream();
+
+        if (!options.skipServerSave) {
+            scheduleUiSave({ activeTab: tabId });
+        }
     }
 
     function updateComposeState() {
@@ -279,7 +298,7 @@
         const sendBtn = global.document.getElementById('game-chat-compose-send');
         const hint = global.document.getElementById('game-chat-compose-hint');
         const readOnly = activeTab === 'system';
-        const allianceBlocked = activeTab === 'alliance' && !hasActiveAlliance();
+        const allianceBlocked = activeTab === 'alliance' && !hasAlliance;
 
         if (input) {
             input.disabled = readOnly || allianceBlocked;
@@ -298,71 +317,55 @@
 
     function updateAllianceTabVisibility() {
         const tab = global.document.getElementById('game-chat-tab-alliance');
-        const visible = hasActiveAlliance();
         if (tab) {
-            tab.hidden = !visible;
-            tab.setAttribute('aria-hidden', visible ? 'false' : 'true');
+            tab.hidden = !hasAlliance;
+            tab.setAttribute('aria-hidden', hasAlliance ? 'false' : 'true');
         }
-        if (!visible && activeTab === 'alliance') {
-            setActiveTab('global');
+        if (!hasAlliance && activeTab === 'alliance') {
+            setActiveTab('global', { skipServerSave: false });
         }
     }
 
-    function applyOpacityPercent(percent) {
+    function applyPanelOpacity(percent, options = {}) {
         const clamped = Math.max(15, Math.min(100, Number(percent) || 85));
         const alpha = clamped / 100;
         const module = global.document.getElementById('game-chat-module');
-        const readout = global.document.getElementById('game-chat-opacity-value');
-        const slider = global.document.getElementById('game-chat-opacity-slider');
 
         if (module) {
             module.style.setProperty('--game-chat-panel-opacity', String(alpha));
         }
-        if (readout) readout.textContent = `${clamped}%`;
-        if (slider && Number(slider.value) !== clamped) slider.value = String(clamped);
 
-        try {
-            global.localStorage.setItem(STORAGE_OPACITY_KEY, String(clamped));
-        } catch (_err) {
-            /* ignore */
+        if (!options.skipPreferenceSync && typeof global.confirmedGameChatOpacity !== 'undefined') {
+            global.confirmedGameChatOpacity = clamped;
+            global.stagedGameChatOpacity = clamped;
         }
-    }
 
-    function restoreOpacitySetting() {
-        const stored = Number(global.localStorage.getItem(STORAGE_OPACITY_KEY));
-        applyOpacityPercent(Number.isFinite(stored) ? stored : 85);
-    }
-
-    function restorePanelSize() {
-        const module = global.document.getElementById('game-chat-module');
-        if (!module) return;
-
-        try {
-            const raw = global.localStorage.getItem(STORAGE_SIZE_KEY);
-            const parsed = raw ? JSON.parse(raw) : null;
-            if (parsed && Number(parsed.width) >= MIN_WIDTH && Number(parsed.height) >= MIN_HEIGHT) {
-                module.style.width = `${parsed.width}px`;
-                module.style.height = `${parsed.height}px`;
-                return;
+        if (!options.skipSettingsUi) {
+            const settingsLabel = global.document.getElementById('game-chat-opacity-value');
+            const settingsSlider = global.document.getElementById('game-chat-opacity-slider');
+            if (settingsLabel) settingsLabel.textContent = `${clamped}%`;
+            if (settingsSlider && Number(settingsSlider.value) !== clamped) {
+                settingsSlider.value = String(clamped);
             }
-        } catch (_err) {
-            /* ignore */
         }
-
-        module.style.width = `${DEFAULT_WIDTH}px`;
-        module.style.height = `${DEFAULT_HEIGHT}px`;
     }
 
-    function persistPanelSize() {
+    function applyUiFromServer(ui, options = {}) {
+        if (!ui || typeof ui !== 'object') return;
+
         const module = global.document.getElementById('game-chat-module');
-        if (!module) return;
-        try {
-            global.localStorage.setItem(STORAGE_SIZE_KEY, JSON.stringify({
-                width: module.offsetWidth,
-                height: module.offsetHeight
-            }));
-        } catch (_err) {
-            /* ignore */
+        if (module) {
+            const width = Math.max(MIN_WIDTH, Number(ui.width) || DEFAULT_WIDTH);
+            const height = Math.max(MIN_HEIGHT, Number(ui.height) || DEFAULT_HEIGHT);
+            module.style.width = `${width}px`;
+            module.style.height = `${height}px`;
+        }
+
+        applyPanelOpacity(ui.opacity, { skipSettingsUi: true });
+
+        const tab = String(ui.activeTab || 'global').trim();
+        if (TAB_LABELS[tab]) {
+            setActiveTab(tab, { skipServerSave: true });
         }
     }
 
@@ -389,7 +392,10 @@
             global.document.removeEventListener('pointermove', onPointerMove);
             global.document.removeEventListener('pointerup', onPointerUp);
             module.classList.remove('is-resizing');
-            persistPanelSize();
+            scheduleUiSave({
+                width: module.offsetWidth,
+                height: module.offsetHeight
+            });
         };
 
         handle.addEventListener('pointerdown', (event) => {
@@ -404,17 +410,20 @@
         });
     }
 
-    function handleComposeSubmit(event) {
+    async function handleComposeSubmit(event) {
         event.preventDefault();
         if (activeTab === 'system') return;
-        if (activeTab === 'alliance' && !hasActiveAlliance()) return;
+        if (activeTab === 'alliance' && !hasAlliance) return;
 
         const input = global.document.getElementById('game-chat-compose-input');
+        const sendBtn = global.document.getElementById('game-chat-compose-send');
         const text = String(input?.value || '').trim();
         if (!text) return;
 
-        appendGameMessage(activeTab, text, resolveUsername() || 'Commander', 'game');
-        if (input) input.value = '';
+        if (sendBtn) sendBtn.disabled = true;
+        const ok = await postGameChatMessage(activeTab, text);
+        if (ok && input) input.value = '';
+        updateComposeState();
     }
 
     function bindGameChatControls() {
@@ -426,26 +435,18 @@
 
         const form = global.document.getElementById('game-chat-compose-form');
         if (form) form.addEventListener('submit', handleComposeSubmit);
-
-        const slider = global.document.getElementById('game-chat-opacity-slider');
-        if (slider) {
-            slider.addEventListener('input', () => {
-                applyOpacityPercent(slider.value);
-            });
-        }
     }
 
-    function restoreActiveTab() {
-        const stored = global.localStorage.getItem(STORAGE_ACTIVE_TAB_KEY);
-        if (stored && TAB_LABELS[stored]) {
-            if (stored === 'alliance' && !hasActiveAlliance()) {
-                setActiveTab('global');
-                return;
-            }
-            setActiveTab(stored);
-            return;
+    function startSyncPoll() {
+        if (syncPollTimer) global.clearInterval(syncPollTimer);
+        syncPollTimer = global.setInterval(fetchGameChatFromServer, SYNC_POLL_MS);
+    }
+
+    function stopSyncPoll() {
+        if (syncPollTimer) {
+            global.clearInterval(syncPollTimer);
+            syncPollTimer = null;
         }
-        setActiveTab('global');
     }
 
     function mountGameChatModule() {
@@ -465,12 +466,6 @@
                         </nav>
                     </header>
 
-                    <div class="game-chat-settings-bar" aria-label="Chat module settings">
-                        <label class="game-chat-settings-label" for="game-chat-opacity-slider">Transparency</label>
-                        <input type="range" id="game-chat-opacity-slider" class="game-chat-opacity-slider" min="15" max="100" step="5" value="85">
-                        <span id="game-chat-opacity-value" class="game-chat-opacity-value">85%</span>
-                    </div>
-
                     <div id="game-chat-messages" class="game-chat-messages" role="log" aria-live="polite" aria-relevant="additions"></div>
 
                     <p id="game-chat-compose-hint" class="game-chat-compose-hint" hidden></p>
@@ -489,44 +484,31 @@
         global.document.body.appendChild(module);
     }
 
-    function bootGameChatModule() {
+    async function bootGameChatModule() {
         if (!global.document.getElementById('game-page-canvas')) return;
 
         mountGameChatModule();
-        loadStoredMessages();
-        seedDemoMessagesIfEmpty();
-        restorePanelSize();
-        restoreOpacitySetting();
-        updateAllianceTabVisibility();
         bindGameChatControls();
         bindResizeHandle();
-        restoreActiveTab();
-        startCommunityPoll();
 
-        global.addEventListener('pagehide', stopCommunityPoll);
+        await fetchGameChatFromServer();
+        startSyncPoll();
+
+        global.addEventListener('pagehide', stopSyncPoll);
     }
 
     global.RoyalArmiesGameChat = {
-        setAllianceActive(active) {
-            try {
-                global.localStorage.setItem(STORAGE_ALLIANCE_KEY, active ? 'true' : 'false');
-            } catch (_err) {
-                /* ignore */
-            }
-            updateAllianceTabVisibility();
-            renderActiveChatStream();
-            updateComposeState();
-        },
-        appendSystemEvent(text) {
-            return appendGameMessage('system', text, 'System', 'game');
-        },
-        refreshCommunityFeed: fetchCommunityMessagesForGlobalFeed,
+        refresh: fetchGameChatFromServer,
+        appendSystemEvent: postSystemEvent,
         setActiveTab,
-        getActiveTab: () => activeTab
+        getActiveTab: () => activeTab,
+        applyPanelOpacity
     };
 
     if (global.document.readyState === 'loading') {
-        global.document.addEventListener('DOMContentLoaded', bootGameChatModule);
+        global.document.addEventListener('DOMContentLoaded', () => {
+            bootGameChatModule();
+        });
     } else {
         bootGameChatModule();
     }

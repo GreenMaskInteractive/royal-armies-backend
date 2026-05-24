@@ -46,6 +46,16 @@ db.defaults({
                 offtopic: []
             },
             archive: []
+        },
+        gameChat: {
+            nextMessageId: 1,
+            channels: {
+                system: [],
+                global: [],
+                country: [],
+                alliance: []
+            },
+            archive: []
         }
     },
     mailbox: {
@@ -158,6 +168,12 @@ const COMMUNITY_CHAT_PURGE_EVERY_MS = 15 * 24 * 60 * 60 * 1000;
 const COMMUNITY_CHAT_TEXT_MAX = 1200;
 const COMMUNITY_CHAT_ARCHIVE_MAX = 50000;
 const ROYAL_GUARD_BOT_SENDER = 'Royal Guard Bot';
+
+const GAME_CHAT_CHANNEL_IDS = ['system', 'global', 'country', 'alliance'];
+const GAME_CHAT_UI_TABS = new Set(GAME_CHAT_CHANNEL_IDS);
+const GAME_CHAT_TEXT_MAX = 500;
+const GAME_CHAT_MAX_PER_CHANNEL = 300;
+const GAME_CHAT_ARCHIVE_MAX = 10000;
 
 function isCommunityChatChannelId(channelId) {
     return COMMUNITY_CHAT_CHANNEL_IDS.includes(String(channelId || '').trim());
@@ -382,6 +398,206 @@ function updateCommunityChatMessageInStore(store, messageId, posterUsername, pat
     }
 
     return { error: 'Message not found.' };
+}
+
+function isGameChatChannelId(channelId) {
+    return GAME_CHAT_CHANNEL_IDS.includes(String(channelId || '').trim());
+}
+
+function sanitizeGameChatMessageEntry(raw = {}) {
+    const sentAt = raw.sentAt || new Date().toISOString();
+    const time = String(raw.time || '').trim().slice(0, 12)
+        || new Date(sentAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
+    const channel = isGameChatChannelId(raw.channel) ? raw.channel : 'global';
+
+    return {
+        id: Number(raw.id),
+        channel,
+        sender: String(raw.sender || '').trim().slice(0, 80),
+        text: String(raw.text || '').trim().slice(0, GAME_CHAT_TEXT_MAX),
+        time,
+        sentAt,
+        source: raw.source === 'system' ? 'system' : 'game',
+        nationKey: String(raw.nationKey || '').trim().slice(0, 80) || null,
+        allianceId: String(raw.allianceId || '').trim().slice(0, 80) || null
+    };
+}
+
+function normalizeGameChatStore(stored) {
+    const channels = {};
+    GAME_CHAT_CHANNEL_IDS.forEach((channelId) => {
+        const rows = Array.isArray(stored?.channels?.[channelId]) ? stored.channels[channelId] : [];
+        channels[channelId] = rows
+            .map(sanitizeGameChatMessageEntry)
+            .filter((row) => Number.isFinite(row.id) && row.sender && row.text);
+    });
+
+    return {
+        nextMessageId: Math.max(1, parseInt(stored?.nextMessageId, 10) || 1),
+        channels,
+        archive: Array.isArray(stored?.archive) ? stored.archive.slice(-GAME_CHAT_ARCHIVE_MAX) : []
+    };
+}
+
+function readGameChatStore() {
+    const stored = db.get('portal.gameChat').value();
+    const normalized = normalizeGameChatStore(stored || {});
+    if (!stored) {
+        db.set('portal.gameChat', normalized).write();
+    }
+    return normalized;
+}
+
+function writeGameChatStore(store) {
+    const next = normalizeGameChatStore(store);
+    db.set('portal.gameChat', next).write();
+    return next;
+}
+
+function trimGameChatChannelToCap(store, channelId) {
+    const list = store.channels[channelId];
+    while (list.length > GAME_CHAT_MAX_PER_CHANNEL) {
+        const removed = list.shift();
+        store.archive.push({
+            ...sanitizeGameChatMessageEntry(removed),
+            archivedAt: new Date().toISOString()
+        });
+    }
+    if (store.archive.length > GAME_CHAT_ARCHIVE_MAX) {
+        store.archive = store.archive.slice(-GAME_CHAT_ARCHIVE_MAX);
+    }
+}
+
+function appendGameChatSystemEventToStore(store, text) {
+    const messageText = String(text || '').trim().slice(0, GAME_CHAT_TEXT_MAX);
+    if (!messageText) {
+        return { error: 'System event text is required.' };
+    }
+
+    const entry = sanitizeGameChatMessageEntry({
+        id: store.nextMessageId++,
+        channel: 'system',
+        sender: 'System',
+        text: messageText,
+        sentAt: new Date().toISOString(),
+        source: 'system'
+    });
+
+    store.channels.system.push(entry);
+    trimGameChatChannelToCap(store, 'system');
+    return { entry };
+}
+
+function ensureGameChatSeedMessages(store) {
+    if (store.channels.system.length) return store;
+    appendGameChatSystemEventToStore(
+        store,
+        'Khaeran has captured Thornwall from Aethelgard.'
+    );
+    return store;
+}
+
+function appendGameChatMessageToStore(store, payload, commander) {
+    const channel = isGameChatChannelId(payload.channel) ? payload.channel : 'global';
+    if (channel === 'system') {
+        return { error: 'System channel is read-only.' };
+    }
+
+    const sender = String(payload.sender || commander?.username || '').trim().slice(0, 80);
+    const text = String(payload.text || '').trim().slice(0, GAME_CHAT_TEXT_MAX);
+    if (!sender || !text) {
+        return { error: 'Sender and message text are required.' };
+    }
+
+    const poster = String(payload.posterUsername || payload.username || commander?.username || '').trim().toLowerCase();
+    if (poster && poster !== sender.toLowerCase()) {
+        return { error: 'Sender must match the posting commander.' };
+    }
+
+    const gameNation = String(commander?.gameNation || '').trim();
+    const allianceId = String(commander?.allianceId || '').trim();
+
+    if (channel === 'country' && !gameNation) {
+        return { error: 'Nation assignment required before using country chat.' };
+    }
+    if (channel === 'alliance' && !allianceId) {
+        return { error: 'Alliance chat unlocks once your nation forms an alliance.' };
+    }
+
+    const entry = sanitizeGameChatMessageEntry({
+        id: store.nextMessageId++,
+        channel,
+        sender,
+        text,
+        sentAt: new Date().toISOString(),
+        source: 'game',
+        nationKey: channel === 'country' ? gameNation : null,
+        allianceId: channel === 'alliance' ? allianceId : null
+    });
+
+    store.channels[channel].push(entry);
+    trimGameChatChannelToCap(store, channel);
+    return { entry, channelMessages: store.channels[channel] };
+}
+
+function getGameChatUiFromCommander(commander) {
+    const prefs = normalizeCommanderPreferences(commander?.preferences);
+    return {
+        opacity: prefs.gameChatOpacity,
+        width: prefs.gameChatPanelWidth,
+        height: prefs.gameChatPanelHeight,
+        activeTab: prefs.gameChatActiveTab
+    };
+}
+
+function filterGameChatMessagesForViewer(store, commander) {
+    const gameNation = String(commander?.gameNation || '').trim();
+    const allianceId = String(commander?.allianceId || '').trim();
+    const nationKey = gameNation.toLowerCase();
+    const allianceKey = allianceId.toLowerCase();
+
+    const visible = {};
+    GAME_CHAT_CHANNEL_IDS.forEach((channelId) => {
+        visible[channelId] = (store.channels[channelId] || []).filter((entry) => {
+            if (channelId === 'country') {
+                return nationKey && String(entry.nationKey || '').trim().toLowerCase() === nationKey;
+            }
+            if (channelId === 'alliance') {
+                return allianceKey && String(entry.allianceId || '').trim().toLowerCase() === allianceKey;
+            }
+            return true;
+        });
+    });
+
+    return {
+        messagesByChannel: visible,
+        hasAlliance: !!allianceId,
+        gameNation,
+        allianceId
+    };
+}
+
+function patchGameChatUiPreferences(commander, body = {}) {
+    const current = normalizeCommanderPreferences(commander.preferences);
+    const next = { ...current };
+
+    if (body.opacity !== undefined) {
+        next.gameChatOpacity = clampNumber(body.opacity, 15, 100, current.gameChatOpacity);
+    }
+    if (body.width !== undefined) {
+        next.gameChatPanelWidth = clampNumber(body.width, 280, 2400, current.gameChatPanelWidth);
+    }
+    if (body.height !== undefined) {
+        next.gameChatPanelHeight = clampNumber(body.height, 200, 1600, current.gameChatPanelHeight);
+    }
+    if (body.activeTab !== undefined) {
+        const tab = String(body.activeTab || '').trim();
+        if (GAME_CHAT_UI_TABS.has(tab)) {
+            next.gameChatActiveTab = tab;
+        }
+    }
+
+    return next;
 }
 
 /* --- Section: Commander mailbox (ledger-backed player mail) --- */
@@ -871,7 +1087,11 @@ function getDefaultCommanderPreferences() {
         portalMasterVol: 1,
         portalMusicVol: 0.5,
         portalNarrationVol: 1,
-        portalSfxVol: 0.2
+        portalSfxVol: 0.2,
+        gameChatOpacity: 85,
+        gameChatPanelWidth: 380,
+        gameChatPanelHeight: 320,
+        gameChatActiveTab: 'global'
     };
 }
 
@@ -899,7 +1119,13 @@ function normalizeCommanderPreferences(raw) {
         portalMasterVol: clampNumber(source.portalMasterVol, 0, 1, defaults.portalMasterVol),
         portalMusicVol: clampNumber(source.portalMusicVol, 0, 1, defaults.portalMusicVol),
         portalNarrationVol: clampNumber(source.portalNarrationVol, 0, 1, defaults.portalNarrationVol),
-        portalSfxVol: clampNumber(source.portalSfxVol, 0, 1, defaults.portalSfxVol)
+        portalSfxVol: clampNumber(source.portalSfxVol, 0, 1, defaults.portalSfxVol),
+        gameChatOpacity: clampNumber(source.gameChatOpacity, 15, 100, defaults.gameChatOpacity),
+        gameChatPanelWidth: clampNumber(source.gameChatPanelWidth, 280, 2400, defaults.gameChatPanelWidth),
+        gameChatPanelHeight: clampNumber(source.gameChatPanelHeight, 200, 1600, defaults.gameChatPanelHeight),
+        gameChatActiveTab: GAME_CHAT_UI_TABS.has(String(source.gameChatActiveTab || '').trim())
+            ? String(source.gameChatActiveTab).trim()
+            : defaults.gameChatActiveTab
     };
 }
 
@@ -1129,6 +1355,8 @@ function serializeCommanderDossierForClient(commander) {
         avatarUrl: String(commander.avatarUrl || '').slice(0, 512),
         country: String(commander.country || '').trim().slice(0, 120),
         timezone: String(commander.timezone || '').trim().slice(0, 120),
+        gameNation: String(commander.gameNation || '').trim().slice(0, 80),
+        allianceId: String(commander.allianceId || '').trim().slice(0, 80),
         ageHistory: normalizeCommanderDossierArray(commander.ageHistory, 50),
         awards: enrichCommanderAwardsForClient(commander.awards),
         medals: normalizeCommanderDossierArray(commander.medals, 100),
@@ -1483,6 +1711,8 @@ app.post('/register', async (req, res) => {
             avatarUrl: '',
             country: '',
             timezone: '',
+            gameNation: '',
+            allianceId: '',
             ageHistory: [],
             awards: [],
             medals: [],
@@ -2447,6 +2677,123 @@ app.get('/api/portal/community-chat/archive', (req, res) => {
         count: archive.length,
         totalArchived: store.archive.length,
         retention: getCommunityChatRetentionMeta(store)
+    });
+});
+
+app.get('/api/portal/game-chat', (req, res) => {
+    const username = resolveLedgerCommanderUsername(req.query?.username || '');
+    if (!username) {
+        return res.status(400).json({ status: 'error', message: 'Username required.' });
+    }
+
+    const commander = db.get('commanders').find({ username }).value();
+    if (!commander) {
+        return res.status(404).json({ status: 'error', message: 'Commander not found.' });
+    }
+
+    let gameStore = readGameChatStore();
+    gameStore = ensureGameChatSeedMessages(gameStore);
+    writeGameChatStore(gameStore);
+
+    let communityStore = readCommunityChatStore();
+    communityStore = maybeRunScheduledCommunityChatPurge(communityStore);
+    writeCommunityChatStore(communityStore);
+
+    const filtered = filterGameChatMessagesForViewer(gameStore, commander);
+
+    res.json({
+        status: 'ok',
+        messagesByChannel: filtered.messagesByChannel,
+        communityMessages: flattenCommunityChatActiveMessages(communityStore),
+        hasAlliance: filtered.hasAlliance,
+        gameNation: filtered.gameNation,
+        allianceId: filtered.allianceId,
+        ui: getGameChatUiFromCommander(commander)
+    });
+});
+
+app.post('/api/portal/game-chat/messages', (req, res) => {
+    const posterUsername = resolveLedgerCommanderUsername(req.body?.username || req.body?.posterUsername || '');
+    if (!posterUsername) {
+        return res.status(400).json({ status: 'error', message: 'Username required.' });
+    }
+
+    const commander = db.get('commanders').find({ username: posterUsername }).value();
+    if (!commander) {
+        return res.status(404).json({ status: 'error', message: 'Commander not found.' });
+    }
+
+    let store = readGameChatStore();
+    store = ensureGameChatSeedMessages(store);
+
+    const result = appendGameChatMessageToStore(store, {
+        ...req.body,
+        posterUsername,
+        sender: posterUsername
+    }, commander);
+
+    if (result.error) {
+        return res.status(400).json({ status: 'error', message: result.error });
+    }
+
+    store = writeGameChatStore(store);
+    let communityStore = readCommunityChatStore();
+    communityStore = maybeRunScheduledCommunityChatPurge(communityStore);
+    writeCommunityChatStore(communityStore);
+
+    const filtered = filterGameChatMessagesForViewer(store, commander);
+
+    res.json({
+        status: 'ok',
+        message: result.entry,
+        messagesByChannel: filtered.messagesByChannel,
+        communityMessages: flattenCommunityChatActiveMessages(communityStore),
+        hasAlliance: filtered.hasAlliance,
+        gameNation: filtered.gameNation,
+        allianceId: filtered.allianceId,
+        ui: getGameChatUiFromCommander(commander)
+    });
+});
+
+app.post('/api/portal/game-chat/system-events', (req, res) => {
+    const requester = resolveLedgerCommanderUsername(req.body?.username || '');
+    if (!requester || !isMailboxRecipientRosterAdmin(requester)) {
+        return res.status(403).json({ status: 'error', message: 'Owner access required for system events.' });
+    }
+
+    let store = readGameChatStore();
+    const result = appendGameChatSystemEventToStore(store, req.body?.text);
+    if (result.error) {
+        return res.status(400).json({ status: 'error', message: result.error });
+    }
+
+    store = writeGameChatStore(store);
+    res.json({ status: 'ok', message: result.entry });
+});
+
+app.patch('/api/portal/game-chat/ui', (req, res) => {
+    const username = resolveLedgerCommanderUsername(req.body?.username || '');
+    if (!username) {
+        return res.status(400).json({ status: 'error', message: 'Username required.' });
+    }
+
+    const commander = db.get('commanders').find({ username }).value();
+    if (!commander) {
+        return res.status(404).json({ status: 'error', message: 'Commander not found.' });
+    }
+
+    const nextPreferences = patchGameChatUiPreferences(commander, req.body || {});
+    db.get('commanders')
+        .find({ username })
+        .assign({
+            preferences: nextPreferences,
+            dossierUpdatedAt: new Date().toISOString()
+        })
+        .write();
+
+    res.json({
+        status: 'ok',
+        ui: getGameChatUiFromCommander({ preferences: nextPreferences })
     });
 });
 

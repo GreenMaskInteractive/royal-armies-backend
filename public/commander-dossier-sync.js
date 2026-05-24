@@ -117,6 +117,7 @@
         setNum('savedPortalMusicVol', prefs.portalMusicVol);
         setNum('savedPortalNarrationVol', prefs.portalNarrationVol);
         setNum('savedPortalSfxVol', prefs.portalSfxVol);
+        setNum('savedGameChatOpacity', prefs.gameChatOpacity);
     }
 
     function readLegacyDossierFallback() {
@@ -156,7 +157,8 @@
                 portalMasterVol: parseFloat(global.localStorage.getItem('savedPortalMasterVol')) || 1,
                 portalMusicVol: parseFloat(global.localStorage.getItem('savedPortalMusicVol')) || 0.5,
                 portalNarrationVol: parseFloat(global.localStorage.getItem('savedPortalNarrationVol')) || 1,
-                portalSfxVol: parseFloat(global.localStorage.getItem('savedPortalSfxVol')) || 0.2
+                portalSfxVol: parseFloat(global.localStorage.getItem('savedPortalSfxVol')) || 0.2,
+                gameChatOpacity: parseFloat(global.localStorage.getItem('savedGameChatOpacity')) || 85
             };
         } catch (_err) {
             /* ignore malformed legacy cache */
@@ -222,6 +224,20 @@
         if (typeof global.applyPortalBackgroundMusicVolume === 'function') {
             global.applyPortalBackgroundMusicVolume();
         }
+
+        if (Number.isFinite(Number(preferences.gameChatOpacity))) {
+            const opacity = Math.max(15, Math.min(100, Number(preferences.gameChatOpacity)));
+            if (typeof global.confirmedGameChatOpacity !== 'undefined') {
+                global.confirmedGameChatOpacity = opacity;
+                global.stagedGameChatOpacity = opacity;
+            }
+            if (global.RoyalArmiesGameChat && typeof global.RoyalArmiesGameChat.applyPanelOpacity === 'function') {
+                global.RoyalArmiesGameChat.applyPanelOpacity(opacity, {
+                    skipPreferenceSync: true,
+                    skipSettingsUi: true
+                });
+            }
+        }
     }
 
     function applyCommanderDossierToClient(dossier) {
@@ -286,7 +302,10 @@
             portalMasterVol: Number(global.localStorage.getItem('savedPortalMasterVol')) || 1,
             portalMusicVol: Number(global.localStorage.getItem('savedPortalMusicVol')) || 0.5,
             portalNarrationVol: Number(global.localStorage.getItem('savedPortalNarrationVol')) || 1,
-            portalSfxVol: Number(global.localStorage.getItem('savedPortalSfxVol')) || 0.2
+            portalSfxVol: Number(global.localStorage.getItem('savedPortalSfxVol')) || 0.2,
+            gameChatOpacity: typeof global.confirmedGameChatOpacity !== 'undefined'
+                ? global.confirmedGameChatOpacity
+                : (Number(global.localStorage.getItem('savedGameChatOpacity')) || 85)
         };
     }
 
