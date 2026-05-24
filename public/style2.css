@@ -8319,6 +8319,224 @@ body.developer-maintenance-alert-active #page-landing {
     width: 100% !important;
     flex: 0 1 auto !important;
     margin: 235px auto 0 auto !important;
+    padding: 0 16px !important;
+    box-sizing: border-box !important;
+}
+
+.game-class-picker {
+    width: 100%;
+    max-width: min(1280px, 98vw);
+    margin: 0 auto;
+}
+
+.game-class-picker-defs {
+    position: absolute;
+    width: 0;
+    height: 0;
+    overflow: hidden;
+    pointer-events: none;
+}
+
+.game-class-picker-layout {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: clamp(16px, 2.4vw, 32px);
+    width: 100%;
+}
+
+.game-class-picker-core {
+    flex: 0 1 auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: clamp(10px, 1.4vw, 18px);
+    min-width: 0;
+}
+
+.game-class-picker-title {
+    display: block;
+    width: min(520px, 72vw);
+    height: auto;
+    margin: 0 auto;
+    user-select: none;
+    pointer-events: none;
+}
+
+.game-class-picker-artboard {
+    position: relative;
+    display: inline-block;
+    width: min(920px, 92vw);
+    line-height: 0;
+    user-select: none;
+}
+
+.game-class-picker-art {
+    display: block;
+    width: 100%;
+    height: auto;
+    pointer-events: none;
+    user-select: none;
+}
+
+.game-class-picker-art--color {
+    position: relative;
+    z-index: 1;
+}
+
+.game-class-picker-art--gray {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    filter: grayscale(1) brightness(0.58) contrast(0.92);
+    transition: opacity 0.28s ease;
+}
+
+.game-class-picker-zone {
+    position: absolute;
+    inset: 0;
+    z-index: 3;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.game-class-picker-zone--arcane {
+    clip-path: url(#game-class-clip-arcane);
+}
+
+.game-class-picker-zone--physical {
+    clip-path: url(#game-class-clip-physical);
+}
+
+.game-class-picker-zone-reveal,
+.game-class-picker-zone-outline {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background-image: url('images/chooseclass.png');
+    background-repeat: no-repeat;
+    background-size: 100% 100%;
+    background-position: center center;
+    opacity: 0;
+    transition: opacity 0.28s ease, filter 0.28s ease;
+}
+
+.game-class-picker-zone--arcane .game-class-picker-zone-reveal,
+.game-class-picker-zone--arcane .game-class-picker-zone-outline {
+    clip-path: url(#game-class-clip-arcane);
+}
+
+.game-class-picker-zone--physical .game-class-picker-zone-reveal,
+.game-class-picker-zone--physical .game-class-picker-zone-outline {
+    clip-path: url(#game-class-clip-physical);
+}
+
+.game-class-picker-zone-reveal {
+    z-index: 1;
+}
+
+.game-class-picker-zone-outline {
+    z-index: 2;
+    opacity: 0 !important;
+    pointer-events: none;
+}
+
+.game-class-picker-zone.is-hovered .game-class-picker-zone-reveal,
+.game-class-picker-zone.is-selected .game-class-picker-zone-reveal {
+    opacity: 1;
+    filter: drop-shadow(0 0 5px rgba(255, 215, 0, 0.95))
+        drop-shadow(0 0 14px rgba(255, 190, 60, 0.72))
+        drop-shadow(0 0 24px rgba(255, 150, 0, 0.42));
+}
+
+.game-class-picker-zone:focus-visible {
+    outline: 2px solid rgba(255, 215, 0, 0.85);
+    outline-offset: 4px;
+}
+
+.game-class-picker-side-panel {
+    flex: 0 0 min(300px, 28vw);
+    width: min(300px, 28vw);
+    align-self: center;
+    animation: game-class-picker-panel-in 0.32s ease;
+}
+
+.game-class-picker-side-panel[hidden] {
+    display: none !important;
+}
+
+.game-class-picker-side-panel-frame {
+    padding: 22px 20px 20px !important;
+    text-align: left !important;
+}
+
+.game-class-picker-side-panel-title {
+    margin: 0 0 12px !important;
+    font-family: 'Cinzel', serif !important;
+    font-size: 1.05rem !important;
+    letter-spacing: 0.06em !important;
+    color: rgba(255, 215, 0, 0.95) !important;
+    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.85) !important;
+}
+
+.game-class-picker-side-panel-body {
+    margin: 0 0 18px !important;
+    font-family: 'RoyalDetails', serif !important;
+    font-size: 0.92rem !important;
+    line-height: 1.55 !important;
+    color: rgba(235, 225, 200, 0.92) !important;
+}
+
+.game-class-picker-side-panel-close {
+    width: 100%;
+}
+
+.game-class-picker.has-selection .game-class-picker-art--gray {
+    opacity: 1;
+}
+
+@keyframes game-class-picker-panel-in {
+    from {
+        opacity: 0;
+        transform: translateX(var(--game-class-panel-shift, 0));
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+.game-class-picker[data-active-edge="left"] .game-class-picker-side-panel--left {
+    --game-class-panel-shift: -12px;
+}
+
+.game-class-picker[data-active-edge="right"] .game-class-picker-side-panel--right {
+    --game-class-panel-shift: 12px;
+}
+
+@media (max-width: 960px) {
+    .game-class-picker-layout {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .game-class-picker-side-panel {
+        flex: 0 1 auto;
+        width: min(420px, 92vw);
+    }
+
+    .game-class-picker-side-panel--left,
+    .game-class-picker-side-panel--right {
+        order: 2;
+    }
+
+    .game-class-picker-core {
+        order: 1;
+    }
 }
 
 .game-page-class-modal-img {
