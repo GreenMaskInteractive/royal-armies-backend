@@ -7763,6 +7763,29 @@ body.developer-maintenance-alert-active #page-landing {
    SECTION 20: GAME PAGE SHELL (WIP) & ACHIEVEMENT UNLOCK POPUP
    ========================================================================== */
 
+.royal-armies-route-transition {
+    position: fixed !important;
+    inset: 0 !important;
+    z-index: 2147483646 !important;
+    pointer-events: none !important;
+    opacity: 0 !important;
+    background: #060504 !important;
+    transition: opacity 1.1s ease-in-out !important;
+}
+
+.royal-armies-route-transition.is-visible {
+    pointer-events: auto !important;
+}
+
+.royal-armies-route-transition.is-covered,
+.royal-armies-route-transition.is-fading-out {
+    opacity: 1 !important;
+}
+
+.royal-armies-route-transition.is-revealing {
+    opacity: 0 !important;
+}
+
 #game-page-canvas,
 .game-page-canvas {
     margin: 0 !important;

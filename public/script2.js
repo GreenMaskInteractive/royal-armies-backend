@@ -1019,7 +1019,11 @@ function launchGameRoundSector(isTutorialModeActive, clickEvent) {
                 window.RoyalArmiesAchievements.markJoinAgeAttemptForAchievement();
             }
             notifyPortalAgeSessionJoin().finally(() => {
-                window.location.href = destination;
+                if (window.RoyalArmiesPageRouteTransition && typeof window.RoyalArmiesPageRouteTransition.navigateTo === 'function') {
+                    window.RoyalArmiesPageRouteTransition.navigateTo(destination);
+                } else {
+                    window.location.href = destination;
+                }
             });
         }, JOIN_AGE_POST_SELECT_DELAY_MS);
     };

@@ -133,6 +133,10 @@
     async function returnToAgePortal() {
         stopGamePresenceLoop();
         await postAgeLeave(false);
+        if (global.RoyalArmiesPageRouteTransition && typeof global.RoyalArmiesPageRouteTransition.navigateTo === 'function') {
+            await global.RoyalArmiesPageRouteTransition.navigateTo('/main');
+            return;
+        }
         global.location.href = '/main';
     }
 
