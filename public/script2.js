@@ -307,14 +307,21 @@ function bindPortalDeploymentServerPanelControls() {
     }
 }
 
+function canUsePortalJoinAgeButtons() {
+    return typeof isPortalSiteOwner === 'function' && isPortalSiteOwner();
+}
+
 function applyPortalDeploymentDeckPresentation() {
     const authed = typeof isPortalUserAuthenticated === 'function' && isPortalUserAuthenticated();
     const showServerPanel = authed && isCommanderAgeDeploymentPanelUnlocked();
+    const showJoinButtons = authed && !showServerPanel && canUsePortalJoinAgeButtons();
 
     const joinActions = document.getElementById('portal-deployment-member-actions');
     const serverPanel = document.getElementById('portal-deployment-server-panel');
+    const countdownPanel = document.getElementById('portal-age-countdown-panel');
 
-    if (joinActions) joinActions.hidden = showServerPanel;
+    if (joinActions) joinActions.hidden = !showJoinButtons;
+    if (countdownPanel) countdownPanel.hidden = !authed;
     if (serverPanel) {
         serverPanel.hidden = !showServerPanel;
         if (showServerPanel) {
@@ -358,6 +365,13 @@ function rejoinSelectedAgeServer(clickEvent) {
     });
 }
 
+function renderPortalAgeCountdownPanelMarkup() {
+    return `
+                    <div id="portal-age-countdown-panel" class="portal-age-countdown-panel">
+                        <div id="dynamic-age-sub-timer-display" class="timer-readout-default">-- : -- : -- : --</div>
+                    </div>`;
+}
+
 function renderPortalDeploymentServerPanelMarkup() {
     return `
                     <div id="portal-deployment-server-panel" class="portal-deployment-server-panel" hidden>
@@ -380,7 +394,7 @@ function renderPortalDeploymentDeckMarkup() {
             <div class="portal-deployment-control-deck custom-centered-row-deck" id="deployment-master-deck-container">
                 <div id="portal-deployment-member-block" class="portal-deployment-member-block">
                     <h3 class="deployment-deck-title" id="dynamic-age-status-header">The Age has Yet to Arrive!</h3>
-                    <div id="dynamic-age-sub-timer-display" class="timer-readout-default">-- : -- : -- : --</div>
+                    ${renderPortalAgeCountdownPanelMarkup()}
                     <div class="deployment-action-button-row portal-deployment-member-actions" id="portal-deployment-member-actions">
                         <div class="action-btn-aura-housing aura-glow-red">
                             <button class="deployment-image-trigger-btn" onclick="launchGameRoundSector(false, event)">
@@ -1119,6 +1133,10 @@ function launchGameRoundSector(isTutorialModeActive, clickEvent) {
         if (typeof openMainPortalGuestRegister === 'function') {
             openMainPortalGuestRegister(clickEvent);
         }
+        return;
+    }
+
+    if (!canUsePortalJoinAgeButtons()) {
         return;
     }
 
@@ -6354,6 +6372,7 @@ window.positionPortalMobileNavMenu = positionPortalMobileNavMenu;
 window.triggerMainDashboardLogout = triggerMainDashboardLogout;
 window.applyPortalNavAccessRestrictions = applyPortalNavAccessRestrictions;
 window.applyPortalGuestDeploymentChrome = applyPortalGuestDeploymentChrome;
+window.canUsePortalJoinAgeButtons = canUsePortalJoinAgeButtons;
 window.applyPortalDeploymentDeckPresentation = applyPortalDeploymentDeckPresentation;
 window.rejoinSelectedAgeServer = rejoinSelectedAgeServer;
 window.launchGameRoundSector = launchGameRoundSector;

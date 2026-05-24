@@ -302,12 +302,16 @@ body {
         white-space: nowrap !important;
     }
 
-    #dynamic-age-sub-timer-display {
-        width: min(485px, 100%) !important;
-        max-width: 100% !important;
+    .portal-age-countdown-panel,
+    .portal-deployment-server-panel {
+        max-width: min(420px, 100%) !important;
+    }
+
+    .portal-age-countdown-panel #dynamic-age-sub-timer-display {
+        width: 100% !important;
         height: auto !important;
-        min-height: 160px !important;
-        font-size: 1.31rem !important;
+        min-height: 0 !important;
+        font-size: 1rem !important;
     }
 
     /* Join Age buttons: no hover/build SFX or aura shake on mobile; click select SFX stays in JS */

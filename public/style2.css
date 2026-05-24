@@ -968,15 +968,35 @@ body:not(.portal-guest-mode) #portal-deployment-guest-cta {
 }
 
 /* Block 11: THE AUTOMATIC DEPLOYMENT HORIZONTAL CENTERING DECK */
+.portal-age-countdown-panel,
 .portal-deployment-server-panel {
     width: 100% !important;
     max-width: 420px !important;
-    margin: 4px auto 0 auto !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+    box-sizing: border-box !important;
+}
+
+.portal-age-countdown-panel {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    margin-top: 0 !important;
+    margin-bottom: 14px !important;
+    padding: 16px 18px !important;
+    border: 1px solid rgba(184, 144, 48, 0.35) !important;
+    border-radius: 4px !important;
+    background: linear-gradient(135deg, rgba(36, 41, 54, 0.95) 0%, rgba(10, 12, 16, 0.98) 100%) !important;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04), 0 8px 18px rgba(0, 0, 0, 0.45) !important;
+}
+
+.portal-deployment-server-panel {
+    margin-top: 0 !important;
+    margin-bottom: 0 !important;
     display: flex !important;
     flex-direction: column !important;
     align-items: stretch !important;
     gap: 14px !important;
-    box-sizing: border-box !important;
 }
 
 .portal-server-panel-heading {
@@ -1037,6 +1057,45 @@ body:not(.portal-guest-mode) #portal-deployment-guest-cta {
     font-weight: 700 !important;
     letter-spacing: 0.1em !important;
     text-transform: uppercase !important;
+}
+
+.portal-age-countdown-panel #dynamic-age-sub-timer-display {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 100% !important;
+    height: auto !important;
+    min-height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: none !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    background-image: none !important;
+    box-shadow: none !important;
+    filter: none !important;
+    font-family: 'Share Tech Mono', 'Consolas', monospace !important;
+    font-size: 1rem !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.14em !important;
+    line-height: 1.2 !important;
+    color: #e2ba3b !important;
+    text-shadow: 0 0 10px rgba(226, 186, 59, 0.45), 1px 1px 2px rgba(0, 0, 0, 0.85) !important;
+    transition: color 0.3s ease, text-shadow 0.3s ease !important;
+}
+
+.portal-age-countdown-panel #dynamic-age-sub-timer-display.timer-readout-active {
+    color: #d4c4a0 !important;
+}
+
+.portal-age-countdown-panel #dynamic-age-sub-timer-display.timer-readout-alert,
+.portal-age-countdown-panel #dynamic-age-sub-timer-display[style*="color: rgb(255, 85, 85)"],
+.portal-age-countdown-panel #dynamic-age-sub-timer-display[style*="color: #ff5555"] {
+    color: #ff6666 !important;
+    background: transparent !important;
+    background-image: none !important;
+    border: none !important;
+    text-shadow: 0 0 12px rgba(255, 80, 80, 0.55), 1px 1px 2px rgba(0, 0, 0, 0.9) !important;
 }
 
 .portal-deployment-control-deck {
@@ -1120,73 +1179,7 @@ body:not(.portal-guest-mode) #portal-deployment-guest-cta {
     opacity: 1.0 !important;                  /* Forces full solid pixel color layout presentation down onto the fields */
 }
 
-/* Block 14: ADVANCED TACTICAL TERMINAL ENGINE */
-/* 🌟 RECONCILED HARDWARE DESIGN: OPAQUE SOLID CHISELED SLATE / OBSIDIAN STONE CHASSIS */
-#dynamic-age-sub-timer-display {
-    display: inline-flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    position: relative !important;
-    
-    /* 🌟 THE SOLID STONE TRANSPARENCY FIX: */
-    /* Uses solid solid hex colors without channel alpha parameters to strip image transparency blocks */
-    background: #15181f !important;            
-    background-image: linear-gradient(135deg, #242936 0%, #15181f 50%, #0a0c10 100%) !important;
-    background-size: 100% 100% !important;   
-    
-    /* PROPORTIONAL FIXED BOUNDS */
-    width: 485px !important;                 
-    height: 250px !important;                
-    margin: 16px 0 24px 0 !important;
-    padding: 0 !important;
-    box-sizing: border-box !important;
-    align-self: center !important;           
-    
-    /* HEAVY ROCK WALL EDGE FRAMES RIMS */
-    border: 3px solid #38404d !important;    
-    border-top-color: #4f5a6b !important;   /* High ceiling lighting simulation highlight rim line */
-    border-left-color: #444d5c !important;
-    border-bottom-color: #1a1e24 !important; /* Low floor shadow crease */
-    border-right-color: #22262f !important;
-    border-radius: 6px !important;
-    
-    /* VOLUMETRIC STONE CARVING INSET DEPTH SHADOWS DECK */
-    box-shadow: inset 0 0 25px rgba(0, 0, 0, 0.95),
-                inset 5px 5px 10px rgba(0, 0, 0, 0.8),
-                0 15px 35px rgba(0, 0, 0, 0.9) !important;
-                
-    /* INCORPORATE TERMINAL READOUT TYPOGRAPHY GEOMETRY SPECS */
-    font-family: 'Share Tech Mono', 'Orbitron', 'Consolas', monospace !important;
-    font-size: 2.50rem !important;           
-    font-weight: 900 !important;
-    
-    /* RUNIC CARVED TEXT STYLING MATRICES */
-    color: #e2ba3b !important;               /* Matte runic gold emulates fluid amber trapped inside stone fissures */
-    letter-spacing: 5px !important;          
-    
-    /* RUNIC GLOW EMISSIONS LIT LAYER SHADOWS FILTERS */
-    text-shadow: 0 0 15px rgba(226, 186, 59, 0.65),
-                 0 0 30px rgba(184, 144, 48, 0.3),
-                 -2px -2px 1px #000,          /* Replicates a physical chiseled depth indent drop-cut line */
-                 2px 2px 2px rgba(0, 0, 0, 0.95) !important; 
-    
-    transition: opacity 0.3s ease-in-out, transform 0.5s cubic-bezier(0.25, 1, 0.5, 1) !important;
-}
-
-/* MAGMATIC TRANSLATION OVERRIDE CHANNELS */
-#dynamic-age-sub-timer-display[style*="color: rgb(255, 85, 85)"],
-#dynamic-age-sub-timer-display[style*="color: #ff5555"] {
-    color: #ff3333 !important;
-    background: #180707 !important;
-    background-image: linear-gradient(135deg, #2d1111 0%, #180707 50%, #0a0202 100%) !important;
-    border-color: #551818 !important;
-    border-top-color: #752525 !important;
-    text-shadow: 0 0 15px rgba(255, 51, 51, 0.95),
-                 0 0 35px rgba(255, 0, 0, 0.6),
-                 -2px -2px 1px #000,
-                 2px 2px 2px #000 !important;
-    filter: drop-shadow(0 0 15px rgba(255, 0, 0, 0.4)) !important;
-}
+/* Block 14: deployment countdown — panel chrome lives on .portal-age-countdown-panel */
 
 /* ==========================================================================
    SECTION 6: SILHOUETTE GLOW TIMELINES & FILTER EFFECTS
@@ -5441,93 +5434,8 @@ body:not(.portal-guest-mode) #portal-deployment-guest-cta {
 }
 
 /* ==========================================================================
-   SECTION 19: GIANT COMBAT LAUNCHERS PANELS | Block 29: Timer Box Stylization
+   SECTION 19: deployment countdown (see .portal-age-countdown-panel near Block 11)
    ========================================================================== */
-
-/* 🌟 RAW ASSET CORE: STALWART HUD CONTAINER LOADING YOUR PNG EXCLUSIVELY */
-#dynamic-age-sub-timer-display {
-    display: inline-flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    position: relative !important;
-    
-    /* 🌟 THE ABSOLUTE NO-BORDER ASSET CORE ROUTING MASK: */
-    /* 1. Completely wipes away all secondary CSS border slices and outline tracks */
-    /* 2. Renders your raw countdowntimermodal.png natively with zero external margins */
-    background-image: url('images/countdowntimermodal.png') !important;
-    background-size: contain !important;       /* 🌟 Safely spans your artwork to its native proportions with zero clipping */
-    background-repeat: no-repeat !important;
-    background-position: center !important;
-    background-color: transparent !important;  /* 🌟 Keeps the surrounding outer box canvas 100% transparent */
-    
-    /* 🌟 THE CRITICAL REMOVAL EXTENSIONS: Strips out the border-image variables entirely */
-    border: none !important;                   /* 🔥 BLOCKS ALL OUTSIDE BORDER MARGINS IMMEDIATELY */
-    border-image: none !important;             /* 🔥 COMPLETELY STOPS INTERIOR GRAPHIC SLICING TRAPS */
-    border-image-source: none !important;
-    opacity: 1.0 !important;                  
-    
-    /* ⚙️ VIEWPORT PARAMETERS: Countdown modal frame */
-    width: 688px !important;
-    height: 258px !important;
-    margin: 16px 0 24px 0 !important;
-    padding: 0 50px !important;
-    box-shadow: none !important;               /* Blocks box shadow rectangles from tracing corners */
-    box-sizing: border-box !important;
-    align-self: center !important;           
-    
-    /* PURE CONTURED DROP SHADOWING FILTERS */
-    filter: drop-shadow(0 15px 25px rgba(0, 0, 0, 0.95)) !important; /* Casts shadow directly beneath your custom image outlines */
-                
-    /* MEDIEVAL CARVED STONE NUMERAL READOUT */
-    font-family: 'Cinzel', 'RoyalDetails', Georgia, serif !important;
-    font-size: 1.71rem !important; /* 2.65rem − 0.94rem (~15px smaller numerals) */
-    font-weight: 700 !important;
-    font-variant: normal !important;
-    letter-spacing: 8px !important;
-    text-transform: none !important;
-    line-height: 1 !important;
-
-    color: #b5a48a !important;
-    -webkit-text-stroke: 1px rgba(42, 36, 30, 0.9) !important;
-    paint-order: stroke fill !important;
-
-    text-shadow:
-        0 0 1px rgba(28, 24, 20, 1),
-        1px 2px 0 rgba(18, 15, 12, 0.95),
-        2px 4px 6px rgba(0, 0, 0, 0.88),
-        -1px -1px 0 rgba(210, 198, 175, 0.22),
-        0 -1px 0 rgba(165, 152, 128, 0.12) !important;
-
-    transition: opacity 0.3s ease-in-out, transform 0.5s cubic-bezier(0.25, 1, 0.5, 1), color 0.4s ease !important;
-}
-
-/* Warm sandstone-gold when the age is actively running */
-#dynamic-age-sub-timer-display.timer-readout-active {
-    color: #d4c4a0 !important;
-    -webkit-text-stroke: 1px rgba(55, 45, 32, 0.92) !important;
-    text-shadow:
-        0 0 1px rgba(35, 28, 20, 1),
-        1px 2px 0 rgba(22, 18, 12, 0.95),
-        2px 4px 6px rgba(0, 0, 0, 0.88),
-        -1px -1px 0 rgba(235, 220, 185, 0.28),
-        0 -1px 0 rgba(190, 175, 140, 0.15) !important;
-}
-
-/* Ember-carved stone during critical intermission */
-#dynamic-age-sub-timer-display.timer-readout-alert,
-#dynamic-age-sub-timer-display[style*="color: rgb(255, 85, 85)"],
-#dynamic-age-sub-timer-display[style*="color: #ff5555"] {
-    color: #9a6f5c !important;
-    -webkit-text-stroke: 1px rgba(55, 22, 18, 0.92) !important;
-    background-color: transparent !important;
-    text-shadow:
-        0 0 1px rgba(40, 14, 12, 1),
-        1px 2px 0 rgba(28, 10, 8, 0.95),
-        2px 4px 6px rgba(0, 0, 0, 0.9),
-        -1px -1px 0 rgba(200, 130, 110, 0.2),
-        0 -1px 0 rgba(140, 70, 60, 0.1) !important;
-    filter: drop-shadow(0 0 10px rgba(90, 25, 20, 0.45)) drop-shadow(0 15px 25px rgba(0, 0, 0, 0.95)) !important;
-}
 
 /* ==========================================================================
    SECTION 14: FLOATING STAGE AUDIO PLAYER PLACEMENT MAPS
