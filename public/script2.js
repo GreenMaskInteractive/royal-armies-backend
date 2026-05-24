@@ -254,6 +254,18 @@ function isCommanderAgeDeploymentPanelUnlocked() {
     if (localStorage.getItem(resolveDeploymentStorageKey(DEPLOYMENT_PANEL_UNLOCK_SUFFIX)) === 'true') {
         return true;
     }
+
+    // Commanders who joined before unlock persistence shipped still earn the join-age achievement.
+    const hasJoinAgeAchievement =
+        (window.RoyalArmiesAchievements && typeof window.RoyalArmiesAchievements.hasCommanderAchievement === 'function'
+            && window.RoyalArmiesAchievements.hasCommanderAchievement('whoa_slow_down'))
+        || (typeof hasCommanderAchievement === 'function' && hasCommanderAchievement('whoa_slow_down'));
+
+    if (hasJoinAgeAchievement) {
+        markCommanderAgeDeploymentPanelUnlocked(readCommanderTutorialModePreference());
+        return true;
+    }
+
     return false;
 }
 
@@ -329,6 +341,8 @@ function applyPortalDeploymentDeckPresentation() {
             bindPortalDeploymentServerPanelControls();
         }
     }
+
+    recacheAgePortalViewportSnapshot();
 }
 
 function rejoinSelectedAgeServer(clickEvent) {
@@ -1142,6 +1156,9 @@ function launchGameRoundSector(isTutorialModeActive, clickEvent) {
 
     if (joinAgePortalTransitionActive) return;
     joinAgePortalTransitionActive = true;
+
+    markCommanderAgeDeploymentPanelUnlocked(isTutorialModeActive);
+    applyPortalDeploymentDeckPresentation();
 
     if (typeof markJoinAgeAttemptForAchievement === 'function') {
         markJoinAgeAttemptForAchievement();

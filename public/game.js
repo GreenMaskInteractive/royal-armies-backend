@@ -300,6 +300,28 @@
         });
     }
 
+    function persistAgeDeploymentPanelUnlockFromGamePage() {
+        try {
+            const username = String(global.localStorage.getItem('activeCommanderUser') || '').trim().toLowerCase();
+            if (!username) return;
+
+            global.localStorage.setItem(`royalArmies_${username}_ageDeploymentPanelUnlocked`, 'true');
+
+            const params = new URLSearchParams(global.location.search);
+            global.localStorage.setItem(
+                `royalArmies_${username}_ageDeploymentTutorialMode`,
+                params.get('tutorial') === 'true' ? 'true' : 'false'
+            );
+
+            const serverKey = `royalArmies_${username}_ageDeploymentSelectedServerId`;
+            if (!global.localStorage.getItem(serverKey)) {
+                global.localStorage.setItem(serverKey, 'amnek');
+            }
+        } catch (_err) {
+            /* ignore */
+        }
+    }
+
     async function bootstrapGamePageSession() {
         if (typeof global.ensurePortalAuthRestored === 'function') {
             await global.ensurePortalAuthRestored();
@@ -318,6 +340,8 @@
         if (typeof global.syncPlayerFromActiveCommanderStorage === 'function') {
             global.syncPlayerFromActiveCommanderStorage();
         }
+
+        persistAgeDeploymentPanelUnlockFromGamePage();
 
         markPlayingActiveAgeLocally();
         await postAgeJoin();
