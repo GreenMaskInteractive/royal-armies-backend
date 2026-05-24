@@ -1,0 +1,31 @@
+---
+description: Permanent Royal Armies coding-system acronyms (NEXUS, MAP, RIFT, FLEX)
+alwaysApply: true
+---
+
+# Royal Armies coding-system acronyms
+
+These four acronyms are the **permanent, canonical names** for each layer of the Royal Armies stack. Use them in file names, comments, logs, and error-code prefixes where appropriate.
+
+| Acronym | Layer | Scope | Full name |
+|---------|--------|--------|-----------|
+| **NEXUS** | Server | `server.js`, Node modules loaded only by the server (e.g. `nexus-error-codes.js`, `nexus-response-errors.js`) | **N**etwork **E**nvironment **X**ypher **U**tility **S**ystem |
+| **MAP** | Markup | All `.html` files | **M**arkup **A**rchitecture **P**rotocol |
+| **RIFT** | Client runtime | All `.js` files **except** `server.js` (e.g. `script.js`, `rift-error-codes.js`, `rift-error-display.js`) | **R**untime **I**nstruction **F**low **T**erminal |
+| **FLEX** | Presentation | All `.css` files (e.g. `style.css`, `style2.css`, `mobile-responsive.css`) | **F**ront-end **L**ayout **E**lement **X**-Interface |
+
+## Error codes
+
+- **API / ledger errors** (originate from NEXUS): `NEXUS-<CATEGORY>-<NNN>` — e.g. `NEXUS-AUTH-003`, `NEXUS-MAIL-008`, `NEXUS-GAME-004`.
+- **Client-only runtime errors** (RIFT, no server round-trip): `RIFT-<CATEGORY>-<NNN>` — e.g. `RIFT-NET-001` (connection failure).
+- Legacy `RA-*` codes are resolved automatically for backward compatibility; do not add new `RA-*` codes.
+
+## Conventions
+
+- Server logs and comments: `[NEXUS]` prefix (already used in `server.js`).
+- New server-side helpers: prefer `nexus-*.js` at repo root.
+- New client scripts: descriptive names; error/registry bundles use `rift-*.js` under `public/`.
+- New stylesheets: existing `style*.css` naming is fine; layer is **FLEX** in docs and comments.
+- New HTML pages: layer is **MAP** in docs and comments.
+
+Do not rename the four acronyms or reassign them to different file types without an explicit product decision.

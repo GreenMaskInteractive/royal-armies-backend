@@ -14,8 +14,8 @@
 const path = require('path');
 const low = require('lowdb');
 const FileSync = require('lowdb/adapters/FileSync');
-const { sendApiError, sendStoreError, storeErrorHttpStatus } = require('./server-errors');
-const { listErrorCodes } = require('./error-codes');
+const { sendApiError, sendStoreError, storeErrorHttpStatus } = require('./nexus-response-errors');
+const { listErrorCodes } = require('./nexus-error-codes');
 
 /* Block 2: Environment Path Resolution */
 const isProduction = process.env.RENDER === 'true';
@@ -836,7 +836,7 @@ function serializeMailboxDraftForClient(row) {
 function getMailboxPayloadForUser(username) {
     const owner = resolveLedgerCommanderUsername(username);
     if (!owner) {
-        return { status: 'error', code: 'RA-GEN-005', message: 'Unknown commander account.' };
+        return { status: 'error', code: 'NEXUS-GEN-005', message: 'Unknown commander account.' };
     }
 
     ensureWelcomeSystemMessageForCommander(owner);
@@ -1549,7 +1549,7 @@ app.get('/api/portal/maintenance-alert', (req, res) => {
 app.post('/api/portal/maintenance-alert', (req, res) => {
     const devKey = String(req.headers['x-dev-key'] || req.body?.devKey || '').trim();
     if (!devKey || devKey !== MAINTENANCE_ALERT_DEV_KEY) {
-        return sendApiError(res, 'RA-AUTH-011');
+        return sendApiError(res, 'NEXUS-AUTH-011');
     }
 
     const payload = setPortalMaintenanceAlert(req.body || {});
@@ -1663,7 +1663,7 @@ app.post('/register', async (req, res) => {
     const password = String(req.body?.password || '');
 
     if (!username || !email || !password) {
-        return sendApiError(res, 'RA-AUTH-005');
+        return sendApiError(res, 'NEXUS-AUTH-005');
     }
 
     const commanders = db.get('commanders').value() || [];
@@ -1674,12 +1674,12 @@ app.post('/register', async (req, res) => {
 
     if (emailTaken) {
         console.log(`[NEXUS] Registration Denied: ${email} already exists.`);
-        return sendApiError(res, 'RA-AUTH-006');
+        return sendApiError(res, 'NEXUS-AUTH-006');
     }
 
     if (usernameTaken) {
         console.log(`[NEXUS] Registration Denied: ${username} already exists.`);
-        return sendApiError(res, 'RA-AUTH-007');
+        return sendApiError(res, 'NEXUS-AUTH-007');
     }
 
     try {
@@ -1733,7 +1733,7 @@ app.post('/register', async (req, res) => {
         });
     } catch (error) {
         console.error('❌ NEXUS Critical Error:', error);
-        return sendApiError(res, 'RA-AUTH-008', { http: 500 });
+        return sendApiError(res, 'NEXUS-AUTH-008', { http: 500 });
     }
 });
 
@@ -1743,18 +1743,18 @@ app.post('/api/login', async (req, res) => {
     const password = String(req.body?.password || '');
 
     if (!identifier || !password) {
-        return sendApiError(res, 'RA-AUTH-001');
+        return sendApiError(res, 'NEXUS-AUTH-001');
     }
 
     const commander = findCommanderByUsernameOrEmail(identifier);
     if (!commander || !commander.password) {
-        return sendApiError(res, 'RA-AUTH-002');
+        return sendApiError(res, 'NEXUS-AUTH-002');
     }
 
     try {
         const passwordMatches = await bcrypt.compare(password, commander.password);
         if (!passwordMatches) {
-            return sendApiError(res, 'RA-AUTH-003');
+            return sendApiError(res, 'NEXUS-AUTH-003');
         }
 
         const rememberMe = req.body?.rememberMe !== false;
@@ -1788,7 +1788,7 @@ app.post('/api/login', async (req, res) => {
         });
     } catch (error) {
         console.error('[NEXUS] Login compare failed:', error);
-        return sendApiError(res, 'RA-AUTH-004', { http: 500 });
+        return sendApiError(res, 'NEXUS-AUTH-004', { http: 500 });
     }
 });
 
@@ -1806,12 +1806,12 @@ app.get('/api/auth/session', (req, res) => {
 /** Local port 3000 only — bootstrap session as caleb_admin for full portal QA. */
 app.post('/api/auth/dev-session', (req, res) => {
     if (isProduction) {
-        return sendApiError(res, 'RA-AUTH-009');
+        return sendApiError(res, 'NEXUS-AUTH-009');
     }
 
     const host = String(req.hostname || '').toLowerCase();
     if (host !== 'localhost' && host !== '127.0.0.1' && host !== '[::1]') {
-        return sendApiError(res, 'RA-AUTH-010');
+        return sendApiError(res, 'NEXUS-AUTH-010');
     }
 
     const mode = String(req.body?.mode || 'owner').toLowerCase();
@@ -1857,7 +1857,7 @@ app.post('/request-reset', async (req, res) => {
         res.status(200).json({ status: 'success' });
     } catch (err) {
         console.error('[NEXUS] Password reset email failed:', err);
-        return sendApiError(res, 'RA-ACCT-002', { http: 500 });
+        return sendApiError(res, 'NEXUS-ACCT-002', { http: 500 });
     }
 });
 
@@ -1911,12 +1911,12 @@ app.get('/verify', (req, res) => {
 app.get('/api/portal/account/security-profile', (req, res) => {
     const username = normalizeLedgerUsername(req.query?.username);
     if (!username) {
-        return sendApiError(res, 'RA-GEN-006');
+        return sendApiError(res, 'NEXUS-GEN-006');
     }
 
     const commander = findCommanderByUsername(username);
     if (!commander) {
-        return sendApiError(res, 'RA-GEN-004');
+        return sendApiError(res, 'NEXUS-GEN-004');
     }
 
     res.status(200).json({
@@ -1929,12 +1929,12 @@ app.get('/api/portal/account/security-profile', (req, res) => {
 app.get('/api/portal/commanders/:username/public-profile', (req, res) => {
     const username = resolveLedgerCommanderUsername(req.params?.username || '');
     if (!username || isHiddenRegistrationUsername(username)) {
-        return sendApiError(res, 'RA-GEN-004');
+        return sendApiError(res, 'NEXUS-GEN-004');
     }
 
     const commander = findCommanderByUsername(username);
     if (!commander) {
-        return sendApiError(res, 'RA-GEN-004');
+        return sendApiError(res, 'NEXUS-GEN-004');
     }
 
     const dossier = serializeCommanderDossierForClient(commander);
@@ -1950,12 +1950,12 @@ app.get('/api/portal/commanders/:username/public-profile', (req, res) => {
 app.get('/api/portal/account/profile', (req, res) => {
     const username = resolveLedgerCommanderUsername(req.query?.username || '');
     if (!username) {
-        return sendApiError(res, 'RA-GEN-003');
+        return sendApiError(res, 'NEXUS-GEN-003');
     }
 
     const commander = findCommanderByUsername(username);
     if (!commander) {
-        return sendApiError(res, 'RA-GEN-004');
+        return sendApiError(res, 'NEXUS-GEN-004');
     }
 
     res.status(200).json(serializeCommanderProfileForClient(commander));
@@ -1964,12 +1964,12 @@ app.get('/api/portal/account/profile', (req, res) => {
 app.patch('/api/portal/account/profile', (req, res) => {
     const username = resolveLedgerCommanderUsername(req.body?.username || '');
     if (!username) {
-        return sendApiError(res, 'RA-GEN-003');
+        return sendApiError(res, 'NEXUS-GEN-003');
     }
 
     const commander = findCommanderByUsername(username);
     if (!commander) {
-        return sendApiError(res, 'RA-GEN-004');
+        return sendApiError(res, 'NEXUS-GEN-004');
     }
 
     const patch = buildCommanderDossierPatch({
@@ -1978,7 +1978,7 @@ app.patch('/api/portal/account/profile', (req, res) => {
         avatarUrl: req.body?.avatarUrl
     });
     if (!Object.keys(patch).length) {
-        return sendApiError(res, 'RA-ACCT-008');
+        return sendApiError(res, 'NEXUS-ACCT-008');
     }
 
     db.get('commanders')
@@ -1993,12 +1993,12 @@ app.patch('/api/portal/account/profile', (req, res) => {
 app.get('/api/portal/account/dossier', (req, res) => {
     const username = resolveLedgerCommanderUsername(req.query?.username || '');
     if (!username) {
-        return sendApiError(res, 'RA-GEN-003');
+        return sendApiError(res, 'NEXUS-GEN-003');
     }
 
     const commander = findCommanderByUsername(username);
     if (!commander) {
-        return sendApiError(res, 'RA-GEN-004');
+        return sendApiError(res, 'NEXUS-GEN-004');
     }
 
     res.status(200).json(serializeCommanderDossierForClient(commander));
@@ -2007,17 +2007,17 @@ app.get('/api/portal/account/dossier', (req, res) => {
 app.patch('/api/portal/account/dossier', (req, res) => {
     const username = resolveLedgerCommanderUsername(req.body?.username || '');
     if (!username) {
-        return sendApiError(res, 'RA-GEN-003');
+        return sendApiError(res, 'NEXUS-GEN-003');
     }
 
     const commander = findCommanderByUsername(username);
     if (!commander) {
-        return sendApiError(res, 'RA-GEN-004');
+        return sendApiError(res, 'NEXUS-GEN-004');
     }
 
     const patch = buildCommanderDossierPatch(req.body?.patch || req.body);
     if (!Object.keys(patch).length) {
-        return sendApiError(res, 'RA-ACCT-009');
+        return sendApiError(res, 'NEXUS-ACCT-009');
     }
 
     db.get('commanders')
@@ -2034,7 +2034,7 @@ app.post('/api/portal/account/request-password-reset', async (req, res) => {
     const email = normalizeLedgerEmail(req.body?.email);
 
     if (!username || !email) {
-        return sendApiError(res, 'RA-ACCT-001');
+        return sendApiError(res, 'NEXUS-ACCT-001');
     }
 
     const commander = findCommanderByUsername(username);
@@ -2063,7 +2063,7 @@ app.post('/api/portal/account/request-password-reset', async (req, res) => {
         });
     } catch (err) {
         console.error('[NEXUS] Portal password reset email failed:', err);
-        return sendApiError(res, 'RA-ACCT-002', { http: 500 });
+        return sendApiError(res, 'NEXUS-ACCT-002', { http: 500 });
     }
 });
 
@@ -2073,22 +2073,22 @@ app.post('/api/portal/account/request-email-change', async (req, res) => {
     const newEmail = normalizeLedgerEmail(req.body?.newEmail);
 
     if (!username || !password || !newEmail) {
-        return sendApiError(res, 'RA-ACCT-003');
+        return sendApiError(res, 'NEXUS-ACCT-003');
     }
 
     const commander = findCommanderByUsername(username);
     if (!commander || !commander.password) {
-        return sendApiError(res, 'RA-ACCT-004');
+        return sendApiError(res, 'NEXUS-ACCT-004');
     }
 
     try {
         const passwordMatches = await bcrypt.compare(password, commander.password);
         if (!passwordMatches) {
-            return sendApiError(res, 'RA-ACCT-004');
+            return sendApiError(res, 'NEXUS-ACCT-004');
         }
 
         if (normalizeLedgerEmail(commander.email) === newEmail) {
-            return sendApiError(res, 'RA-ACCT-005');
+            return sendApiError(res, 'NEXUS-ACCT-005');
         }
 
         const commanders = db.get('commanders').value() || [];
@@ -2101,7 +2101,7 @@ app.post('/api/portal/account/request-email-change', async (req, res) => {
         });
 
         if (emailTaken) {
-            return sendApiError(res, 'RA-ACCT-006');
+            return sendApiError(res, 'NEXUS-ACCT-006');
         }
 
         const emailChangeToken = crypto.randomBytes(16).toString('hex');
@@ -2123,7 +2123,7 @@ app.post('/api/portal/account/request-email-change', async (req, res) => {
         });
     } catch (err) {
         console.error('[NEXUS] Email change request failed:', err);
-        return sendApiError(res, 'RA-ACCT-007', { http: 500 });
+        return sendApiError(res, 'NEXUS-ACCT-007', { http: 500 });
     }
 });
 
@@ -2224,7 +2224,7 @@ app.get('/api/portal/mailbox-recipient-roster', (req, res) => {
 app.get('/api/portal/mailbox', (req, res) => {
     const username = normalizeLedgerUsername(req.query?.username || '');
     if (!username) {
-        return sendApiError(res, 'RA-GEN-002');
+        return sendApiError(res, 'NEXUS-GEN-002');
     }
 
     const payload = getMailboxPayloadForUser(username);
@@ -2242,10 +2242,10 @@ app.post('/api/portal/mailbox/send', (req, res) => {
     const body = String(req.body?.body || '').trim().slice(0, MAILBOX_BODY_MAX);
 
     if (!sender) {
-        return sendApiError(res, 'RA-MAIL-001');
+        return sendApiError(res, 'NEXUS-MAIL-001');
     }
     if (!topic || !body) {
-        return sendApiError(res, 'RA-MAIL-002');
+        return sendApiError(res, 'NEXUS-MAIL-002');
     }
 
     const recipients = [];
@@ -2261,7 +2261,7 @@ app.post('/api/portal/mailbox/send', (req, res) => {
     }
 
     if (!recipients.length) {
-        return sendApiError(res, 'RA-MAIL-003');
+        return sendApiError(res, 'NEXUS-MAIL-003');
     }
 
     const sentAt = new Date().toISOString();
@@ -2317,10 +2317,10 @@ app.post('/api/portal/mailbox/inject', (req, res) => {
     const systemMessageKey = String(req.body?.systemMessageKey || '').trim().slice(0, 80);
 
     if (!to) {
-        return sendApiError(res, 'RA-MAIL-004');
+        return sendApiError(res, 'NEXUS-MAIL-004');
     }
     if (channel !== 'inbox' && channel !== 'system') {
-        return sendApiError(res, 'RA-MAIL-005');
+        return sendApiError(res, 'NEXUS-MAIL-005');
     }
 
     const from = channel === 'system'
@@ -2328,7 +2328,7 @@ app.post('/api/portal/mailbox/inject', (req, res) => {
         : String(req.body?.from || '').trim().slice(0, 80);
 
     if (channel === 'inbox' && !from) {
-        return sendApiError(res, 'RA-MAIL-006');
+        return sendApiError(res, 'NEXUS-MAIL-006');
     }
 
     const messages = getMailboxMessageStore();
@@ -2373,10 +2373,10 @@ app.patch('/api/portal/mailbox/:messageId/read', (req, res) => {
     const messageId = Number(req.params.messageId);
 
     if (!username) {
-        return sendApiError(res, 'RA-GEN-007');
+        return sendApiError(res, 'NEXUS-GEN-007');
     }
     if (!Number.isFinite(messageId)) {
-        return sendApiError(res, 'RA-CHAT-005');
+        return sendApiError(res, 'NEXUS-CHAT-005');
     }
 
     const ownerLower = username.toLowerCase();
@@ -2386,7 +2386,7 @@ app.patch('/api/portal/mailbox/:messageId/read', (req, res) => {
     );
 
     if (!hit) {
-        return sendApiError(res, 'RA-MAIL-008');
+        return sendApiError(res, 'NEXUS-MAIL-008');
     }
 
     hit.read = true;
@@ -2401,10 +2401,10 @@ app.delete('/api/portal/mailbox/:messageId', (req, res) => {
     const channel = String(req.body?.channel || req.query?.channel || 'inbox').toLowerCase();
 
     if (!username) {
-        return sendApiError(res, 'RA-GEN-007');
+        return sendApiError(res, 'NEXUS-GEN-007');
     }
     if (!Number.isFinite(messageId)) {
-        return sendApiError(res, 'RA-CHAT-005');
+        return sendApiError(res, 'NEXUS-CHAT-005');
     }
 
     const ownerLower = username.toLowerCase();
@@ -2423,7 +2423,7 @@ app.delete('/api/portal/mailbox/:messageId', (req, res) => {
     });
 
     if (nextMessages.length === messages.length) {
-        return sendApiError(res, 'RA-MAIL-008');
+        return sendApiError(res, 'NEXUS-MAIL-008');
     }
 
     writeMailboxMessageStore(nextMessages);
@@ -2437,10 +2437,10 @@ app.post('/api/portal/mailbox/purge', (req, res) => {
     const ids = new Set(idsRaw.map((id) => Number(id)).filter((id) => Number.isFinite(id)));
 
     if (!username) {
-        return sendApiError(res, 'RA-GEN-007');
+        return sendApiError(res, 'NEXUS-GEN-007');
     }
     if (!ids.size) {
-        return sendApiError(res, 'RA-MAIL-009');
+        return sendApiError(res, 'NEXUS-MAIL-009');
     }
 
     const ownerLower = username.toLowerCase();
@@ -2472,7 +2472,7 @@ app.post('/api/portal/mailbox/drafts', (req, res) => {
     const draftId = Number(req.body?.id);
 
     if (!owner) {
-        return sendApiError(res, 'RA-GEN-003');
+        return sendApiError(res, 'NEXUS-GEN-003');
     }
 
     const recipients = [];
@@ -2524,10 +2524,10 @@ app.delete('/api/portal/mailbox/drafts/:draftId', (req, res) => {
     const draftId = Number(req.params.draftId);
 
     if (!owner) {
-        return sendApiError(res, 'RA-GEN-003');
+        return sendApiError(res, 'NEXUS-GEN-003');
     }
     if (!Number.isFinite(draftId)) {
-        return sendApiError(res, 'RA-MAIL-010');
+        return sendApiError(res, 'NEXUS-MAIL-010');
     }
 
     const ownerLower = owner.toLowerCase();
@@ -2538,7 +2538,7 @@ app.delete('/api/portal/mailbox/drafts/:draftId', (req, res) => {
     });
 
     if (nextDrafts.length === drafts.length) {
-        return sendApiError(res, 'RA-MAIL-011');
+        return sendApiError(res, 'NEXUS-MAIL-011');
     }
 
     writeMailboxDraftStore(nextDrafts);
@@ -2584,7 +2584,7 @@ app.get('/api/portal/community-chat', (req, res) => {
 app.post('/api/portal/community-chat/messages', (req, res) => {
     const posterUsername = resolveLedgerCommanderUsername(req.body?.username || req.body?.posterUsername || '');
     if (!posterUsername) {
-        return sendApiError(res, 'RA-GEN-002');
+        return sendApiError(res, 'NEXUS-GEN-002');
     }
 
     let store = readCommunityChatStore();
@@ -2613,7 +2613,7 @@ app.post('/api/portal/community-chat/messages', (req, res) => {
 app.patch('/api/portal/community-chat/messages/:messageId', (req, res) => {
     const posterUsername = resolveLedgerCommanderUsername(req.body?.username || '');
     if (!posterUsername) {
-        return sendApiError(res, 'RA-GEN-002');
+        return sendApiError(res, 'NEXUS-GEN-002');
     }
 
     let store = readCommunityChatStore();
@@ -2639,7 +2639,7 @@ app.patch('/api/portal/community-chat/messages/:messageId', (req, res) => {
 app.get('/api/portal/community-chat/archive', (req, res) => {
     const requester = resolveLedgerCommanderUsername(req.query?.username || '');
     if (!isMailboxRecipientRosterAdmin(requester)) {
-        return sendApiError(res, 'RA-CHAT-009');
+        return sendApiError(res, 'NEXUS-CHAT-009');
     }
 
     let store = readCommunityChatStore();
@@ -2668,12 +2668,12 @@ app.get('/api/portal/community-chat/archive', (req, res) => {
 app.get('/api/portal/game-chat', (req, res) => {
     const username = resolveLedgerCommanderUsername(req.query?.username || '');
     if (!username) {
-        return sendApiError(res, 'RA-GEN-002');
+        return sendApiError(res, 'NEXUS-GEN-002');
     }
 
     const commander = db.get('commanders').find({ username }).value();
     if (!commander) {
-        return sendApiError(res, 'RA-GEN-004');
+        return sendApiError(res, 'NEXUS-GEN-004');
     }
 
     let gameStore = readGameChatStore();
@@ -2700,12 +2700,12 @@ app.get('/api/portal/game-chat', (req, res) => {
 app.post('/api/portal/game-chat/messages', (req, res) => {
     const posterUsername = resolveLedgerCommanderUsername(req.body?.username || req.body?.posterUsername || '');
     if (!posterUsername) {
-        return sendApiError(res, 'RA-GEN-002');
+        return sendApiError(res, 'NEXUS-GEN-002');
     }
 
     const commander = db.get('commanders').find({ username: posterUsername }).value();
     if (!commander) {
-        return sendApiError(res, 'RA-GEN-004');
+        return sendApiError(res, 'NEXUS-GEN-004');
     }
 
     let store = readGameChatStore();
@@ -2743,7 +2743,7 @@ app.post('/api/portal/game-chat/messages', (req, res) => {
 app.post('/api/portal/game-chat/system-events', (req, res) => {
     const requester = resolveLedgerCommanderUsername(req.body?.username || '');
     if (!requester || !isMailboxRecipientRosterAdmin(requester)) {
-        return sendApiError(res, 'RA-GAME-005');
+        return sendApiError(res, 'NEXUS-GAME-005');
     }
 
     let store = readGameChatStore();
@@ -2759,12 +2759,12 @@ app.post('/api/portal/game-chat/system-events', (req, res) => {
 app.patch('/api/portal/game-chat/ui', (req, res) => {
     const username = resolveLedgerCommanderUsername(req.body?.username || '');
     if (!username) {
-        return sendApiError(res, 'RA-GEN-002');
+        return sendApiError(res, 'NEXUS-GEN-002');
     }
 
     const commander = db.get('commanders').find({ username }).value();
     if (!commander) {
-        return sendApiError(res, 'RA-GEN-004');
+        return sendApiError(res, 'NEXUS-GEN-004');
     }
 
     const nextPreferences = patchGameChatUiPreferences(commander, req.body || {});
@@ -2789,7 +2789,7 @@ app.post('/api/portal/presence', (req, res) => {
     const lastActivityAt = Number(req.body?.lastActivityAt);
 
     if (!username) {
-        return sendApiError(res, 'RA-GEN-002');
+        return sendApiError(res, 'NEXUS-GEN-002');
     }
 
     touchPortalBrowseSession(username, {
@@ -2824,7 +2824,7 @@ app.post('/api/portal/presence/leave', (req, res) => {
 app.post('/api/portal/age/join', (req, res) => {
     const username = String(req.body?.username || '').trim();
     if (!username) {
-        return sendApiError(res, 'RA-GEN-002');
+        return sendApiError(res, 'NEXUS-GEN-002');
     }
 
     touchPortalBrowseSession(username);
@@ -2835,7 +2835,7 @@ app.post('/api/portal/age/join', (req, res) => {
 app.post('/api/portal/age/leave', (req, res) => {
     const username = String(req.body?.username || '').trim();
     if (!username) {
-        return sendApiError(res, 'RA-GEN-002');
+        return sendApiError(res, 'NEXUS-GEN-002');
     }
 
     removeAgeSession(username);

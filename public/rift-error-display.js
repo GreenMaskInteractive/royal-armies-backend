@@ -1,17 +1,18 @@
 /**
- * Royal Armies — client-side error code resolution and in-game alerts.
+ * RIFT — client-side error code resolution and in-game alerts.
+ * Runtime Instruction Flow Terminal.
  */
-(function initRoyalArmiesErrorDisplay(global) {
+(function initRiftErrorDisplay(global) {
     'use strict';
 
-    const registry = global.RoyalArmiesErrorCodes || {};
+    const registry = global.RiftErrorCodes || global.NexusErrorCodes || global.RoyalArmiesErrorCodes || {};
     const resolveErrorCode = registry.resolveErrorCode || function fallbackResolve(code) {
-        return String(code || 'RA-GEN-001');
+        return String(code || 'NEXUS-GEN-001');
     };
     const buildErrorPayload = registry.buildErrorPayload || function fallbackBuild(code) {
         return {
             status: 'error',
-            code: String(code || 'RA-GEN-001'),
+            code: String(code || 'NEXUS-GEN-001'),
             title: 'Error',
             message: String(code || 'An error occurred.')
         };
@@ -19,7 +20,7 @@
 
     function normalizeErrorPayload(input, fallbackTitle) {
         if (!input || typeof input !== 'object') {
-            return buildErrorPayload('RA-GEN-001', { title: fallbackTitle || 'Error' });
+            return buildErrorPayload('NEXUS-GEN-001', { title: fallbackTitle || 'Error' });
         }
 
         const code = input.code ? resolveErrorCode(input.code) : resolveErrorCode(input.message);
@@ -37,14 +38,14 @@
         };
     }
 
-    function formatRoyalArmiesErrorText(payload) {
+    function formatRiftErrorText(payload) {
         const normalized = normalizeErrorPayload(payload);
         return `${normalized.message}\n\nError code: ${normalized.code}`;
     }
 
-    async function showRoyalArmiesError(input, fallbackTitle) {
+    async function showRiftError(input, fallbackTitle) {
         const normalized = normalizeErrorPayload(input, fallbackTitle);
-        const body = formatRoyalArmiesErrorText(normalized);
+        const body = formatRiftErrorText(normalized);
 
         if (typeof global.showPortalAlert === 'function') {
             await global.showPortalAlert(body, normalized.title);
@@ -55,7 +56,7 @@
         return normalized;
     }
 
-    async function handleRoyalArmiesApiFailure(response, payload, fallbackTitle) {
+    async function handleRiftApiFailure(response, payload, fallbackTitle) {
         const merged = payload && typeof payload === 'object'
             ? payload
             : { message: fallbackTitle || 'Request failed.' };
@@ -64,16 +65,22 @@
             merged.code = resolveErrorCode(merged.message);
         }
 
-        return showRoyalArmiesError(merged, fallbackTitle);
+        return showRiftError(merged, fallbackTitle);
     }
 
-    async function showRoyalArmiesNetworkError(fallbackTitle) {
-        return showRoyalArmiesError({ code: 'RA-NET-001' }, fallbackTitle || 'Connection error');
+    async function showRiftNetworkError(fallbackTitle) {
+        return showRiftError({ code: 'RIFT-NET-001' }, fallbackTitle || 'Connection error');
     }
+
+    global.normalizeRiftErrorPayload = normalizeErrorPayload;
+    global.formatRiftErrorText = formatRiftErrorText;
+    global.showRiftError = showRiftError;
+    global.handleRiftApiFailure = handleRiftApiFailure;
+    global.showRiftNetworkError = showRiftNetworkError;
 
     global.normalizeRoyalArmiesErrorPayload = normalizeErrorPayload;
-    global.formatRoyalArmiesErrorText = formatRoyalArmiesErrorText;
-    global.showRoyalArmiesError = showRoyalArmiesError;
-    global.handleRoyalArmiesApiFailure = handleRoyalArmiesApiFailure;
-    global.showRoyalArmiesNetworkError = showRoyalArmiesNetworkError;
+    global.formatRoyalArmiesErrorText = formatRiftErrorText;
+    global.showRoyalArmiesError = showRiftError;
+    global.handleRoyalArmiesApiFailure = handleRiftApiFailure;
+    global.showRoyalArmiesNetworkError = showRiftNetworkError;
 })(window);

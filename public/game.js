@@ -58,12 +58,16 @@
     }
 
     async function notifyGameSessionError(response, payload, fallbackTitle, networkCode) {
+        if (typeof global.handleRiftApiFailure === 'function') {
+            await global.handleRiftApiFailure(response, payload, fallbackTitle);
+            return;
+        }
         if (typeof global.handleRoyalArmiesApiFailure === 'function') {
             await global.handleRoyalArmiesApiFailure(response, payload, fallbackTitle);
             return;
         }
-        if (typeof global.showRoyalArmiesError === 'function') {
-            await global.showRoyalArmiesError(payload || { code: networkCode }, fallbackTitle);
+        if (typeof global.showRiftError === 'function') {
+            await global.showRiftError(payload || { code: networkCode }, fallbackTitle);
             return;
         }
         console.warn(fallbackTitle, payload?.message || payload);
@@ -83,11 +87,13 @@
             });
             const payload = await response.json().catch(() => ({}));
             if (!response.ok || payload.status === 'error') {
-                await notifyGameSessionError(response, payload, 'Age session', 'RA-GAME-006');
+                await notifyGameSessionError(response, payload, 'Age session', 'NEXUS-GAME-006');
             }
         } catch (err) {
             console.warn('Age join sync failed:', err);
-            if (typeof global.showRoyalArmiesNetworkError === 'function') {
+            if (typeof global.showRiftNetworkError === 'function') {
+                await global.showRiftNetworkError('Age session');
+            } else if (typeof global.showRoyalArmiesNetworkError === 'function') {
                 await global.showRoyalArmiesNetworkError('Age session');
             }
         }
@@ -114,11 +120,13 @@
             const response = await global.fetch(resolveApiUrl('/api/portal/age/leave'), fetchOptions);
             const payload = await response.json().catch(() => ({}));
             if (!response.ok || payload.status === 'error') {
-                await notifyGameSessionError(response, payload, 'Age session', 'RA-GAME-007');
+                await notifyGameSessionError(response, payload, 'Age session', 'NEXUS-GAME-007');
             }
         } catch (err) {
             console.warn('Age leave sync failed:', err);
-            if (typeof global.showRoyalArmiesNetworkError === 'function') {
+            if (typeof global.showRiftNetworkError === 'function') {
+                await global.showRiftNetworkError('Age session');
+            } else if (typeof global.showRoyalArmiesNetworkError === 'function') {
                 await global.showRoyalArmiesNetworkError('Age session');
             }
         }
@@ -138,7 +146,7 @@
             });
             const payload = await response.json().catch(() => ({}));
             if (!response.ok || payload.status === 'error') {
-                await notifyGameSessionError(response, payload, 'Presence', 'RA-GAME-008');
+                await notifyGameSessionError(response, payload, 'Presence', 'NEXUS-GAME-008');
             }
         } catch (err) {
             console.warn('Game presence heartbeat failed:', err);

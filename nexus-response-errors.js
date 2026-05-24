@@ -1,11 +1,12 @@
 /**
- * Royal Armies — server-side API error response helpers.
+ * NEXUS — server-side API error response helpers.
+ * Network Environment Xypher Utility System.
  */
 const {
     getErrorDefinition,
     resolveErrorCode,
     buildErrorPayload
-} = require('./error-codes');
+} = require('./nexus-error-codes');
 
 function sendApiError(res, codeOrLegacy, overrides = {}) {
     const resolved = resolveErrorCode(codeOrLegacy);
@@ -16,10 +17,10 @@ function sendApiError(res, codeOrLegacy, overrides = {}) {
 }
 
 function sendStoreError(res, result, overrides = {}) {
-    if (!result) return sendApiError(res, 'RA-GEN-001', overrides);
+    if (!result) return sendApiError(res, 'NEXUS-GEN-001', overrides);
     if (result.errorCode) return sendApiError(res, result.errorCode, overrides);
     if (result.error) return sendApiError(res, result.error, overrides);
-    return sendApiError(res, 'RA-GEN-001', overrides);
+    return sendApiError(res, 'NEXUS-GEN-001', overrides);
 }
 
 function storeErrorHttpStatus(result, fallback = 400) {

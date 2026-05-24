@@ -21,7 +21,14 @@
 - Ensure strict styling overrides. Apply cascading specificity modifiers, element body hooks, and defensive '!important' declarations to enforce layout density and keep boundaries safe across small and large displays.
 - Keep custom webkit formatting rules cleanly integrated into any newly compiled scroll track bins or metallic audio mixer range sliders.
 
-# --- SECTION 4: NODE BACKEND ENGINE & SECURITY KEYS PROTOCOLS ---
-- Keep Express.js REST endpoints cleanly isolated inside 'server.js' using sequential initialization passes.
+# --- SECTION 4: CODING-SYSTEM ACRONYMS (PERMANENT) ---
+- **NEXUS** — `server.js` and server-only Node modules (Network Environment Xypher Utility System). API error codes: `NEXUS-*`.
+- **MAP** — all `.html` files (Markup Architecture Protocol).
+- **RIFT** — all client `.js` except `server.js` (Runtime Instruction Flow Terminal). Client-only error codes: `RIFT-*`.
+- **FLEX** — all `.css` files (Front-end Layout Element X-Interface).
+- See `.cursor/rules/coding-system-acronyms.mdc` for full conventions.
+
+# --- SECTION 5: NODE BACKEND ENGINE & SECURITY KEYS PROTOCOLS ---
+- Keep Express.js REST endpoints cleanly isolated inside 'server.js' (NEXUS) using sequential initialization passes.
 - Maintain single-use token lifecycle patterns. Burn or nullify verification handles immediately after password resets or user authentication transitions are processed.
 - Ensure cross-platform environment adaptability. Use dynamic production conditional filters (e.g., process.env.RENDER) when configuring path parameters or system tracking logs.

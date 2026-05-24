@@ -119,12 +119,16 @@
     }
 
     async function notifyGameError(response, payload, fallbackTitle) {
+        if (typeof global.handleRiftApiFailure === 'function') {
+            await global.handleRiftApiFailure(response, payload, fallbackTitle || 'Game chat');
+            return;
+        }
         if (typeof global.handleRoyalArmiesApiFailure === 'function') {
             await global.handleRoyalArmiesApiFailure(response, payload, fallbackTitle || 'Game chat');
             return;
         }
-        if (typeof global.showRoyalArmiesError === 'function') {
-            await global.showRoyalArmiesError(payload, fallbackTitle || 'Game chat');
+        if (typeof global.showRiftError === 'function') {
+            await global.showRiftError(payload, fallbackTitle || 'Game chat');
             return;
         }
         console.warn(fallbackTitle || 'Game chat error:', payload?.message || payload);
@@ -147,7 +151,9 @@
             return applyServerPayload(payload);
         } catch (err) {
             console.warn('Game chat sync failed:', err);
-            if (typeof global.showRoyalArmiesNetworkError === 'function') {
+            if (typeof global.showRiftNetworkError === 'function') {
+                await global.showRiftNetworkError('Game chat');
+            } else if (typeof global.showRoyalArmiesNetworkError === 'function') {
                 await global.showRoyalArmiesNetworkError('Game chat');
             }
             return false;
@@ -174,7 +180,9 @@
             return applyServerPayload(payload);
         } catch (err) {
             console.warn('Game chat post error:', err);
-            if (typeof global.showRoyalArmiesNetworkError === 'function') {
+            if (typeof global.showRiftNetworkError === 'function') {
+                await global.showRiftNetworkError('Game chat');
+            } else if (typeof global.showRoyalArmiesNetworkError === 'function') {
                 await global.showRoyalArmiesNetworkError('Game chat');
             }
             return false;
