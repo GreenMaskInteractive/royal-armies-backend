@@ -185,25 +185,33 @@
     position: absolute !important;
     top: 8px !important;
     right: 8px !important;
-    width: 30px !important;
-    height: 30px !important;
-    padding: 4px !important;
+    width: auto !important;
+    height: auto !important;
+    padding: 0 !important;
     margin: 0 !important;
-    border: 1px solid rgba(184, 144, 48, 0.45) !important;
-    border-radius: 3px !important;
-    background: linear-gradient(180deg, rgba(36, 30, 20, 0.95) 0%, rgba(12, 10, 8, 0.98) 100%) !important;
+    border: none !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
     display: inline-flex !important;
     align-items: center !important;
     justify-content: center !important;
     cursor: pointer !important;
     z-index: 3 !important;
-    transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease !important;
+    transition: filter 0.2s ease, transform 0.2s ease !important;
 }
 
 .portal-commander-identity-settings-btn:hover,
 .portal-commander-identity-card.is-commander-menu-open .portal-commander-identity-settings-btn {
-    border-color: rgba(255, 215, 0, 0.75) !important;
-    box-shadow: 0 0 10px rgba(255, 215, 0, 0.28) !important;
+    border: none !important;
+    background: transparent !important;
+    box-shadow: none !important;
+}
+
+.portal-commander-identity-settings-btn:hover .portal-commander-identity-settings-icon,
+.portal-commander-identity-card.is-commander-menu-open .portal-commander-identity-settings-icon {
+    filter: sepia(0.35) saturate(1.4) hue-rotate(5deg) brightness(1.25)
+        drop-shadow(0 0 8px rgba(255, 215, 0, 0.55)) !important;
 }
 
 .portal-commander-identity-settings-btn:focus-visible {
@@ -212,8 +220,8 @@
 }
 
 .portal-commander-identity-settings-icon {
-    width: 18px !important;
-    height: 18px !important;
+    width: 21px !important;
+    height: 21px !important;
     object-fit: contain !important;
     display: block !important;
     opacity: 0.92 !important;
