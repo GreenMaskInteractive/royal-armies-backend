@@ -242,7 +242,7 @@ function applyPortalGuestDeploymentChrome() {
 }
 
 const PORTAL_ACTIVE_AGE_SERVERS = [
-    { id: 'amnek', label: 'Amnek Server' }
+    { id: 'amnek', label: 'Amnek Server (Under Development)' }
 ];
 const PORTAL_DEFAULT_SERVER_ID = 'amnek';
 const DEPLOYMENT_PANEL_UNLOCK_SUFFIX = 'ageDeploymentPanelUnlocked';
