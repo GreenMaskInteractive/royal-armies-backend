@@ -1,14 +1,20 @@
 /**
- * Royal Armies game shell — under-development placeholder with live Age presence.
+ * Royal Armies game shell — Age presence, game nav, and session handoff.
  */
 (function initRoyalArmiesGamePage(global) {
     'use strict';
 
     const GAME_PRESENCE_HEARTBEAT_MS = 20000;
     const ACTIVE_AGE_STORAGE_KEY = 'savedCommanderInActiveAge';
+    const GAME_VIEW_LABELS = {
+        overview: 'Overview',
+        city: 'City',
+        map: 'Map'
+    };
 
     let presenceHeartbeatTimer = null;
     let ageSessionLeaveSent = false;
+    let activeGameView = 'overview';
 
     function resolveApiUrl(path) {
         if (typeof global.resolveRoyalArmiesApiUrl === 'function') {
@@ -27,6 +33,12 @@
         }
 
         return '';
+    }
+
+    function resolveGameAvatarUrl() {
+        const saved = global.localStorage.getItem('savedProfileAvatarUrl');
+        if (saved && saved.trim()) return saved.trim();
+        return 'images/avatars/commanderprofile01.png';
     }
 
     function markPlayingActiveAgeLocally() {
@@ -118,25 +130,170 @@
         }
     }
 
+    async function returnToAgePortal() {
+        stopGamePresenceLoop();
+        await postAgeLeave(false);
+        global.location.href = '/main';
+    }
+
+    function refreshGamePageNavChrome() {
+        const username = resolveGamePageUsername();
+        const avatarUrl = resolveGameAvatarUrl();
+
+        const tag = global.document.getElementById('logged-user-tag');
+        const mobileName = global.document.getElementById('game-mobile-nav-username');
+        const avatarDesktop = global.document.getElementById('nav-embedded-avatar-crest');
+        const avatarMobile = global.document.getElementById('game-mobile-nav-avatar');
+
+        if (tag) tag.textContent = username || 'Commander';
+        if (mobileName) mobileName.textContent = username || 'Commander';
+        if (avatarDesktop) avatarDesktop.src = avatarUrl;
+        if (avatarMobile) avatarMobile.src = avatarUrl;
+
+        if (typeof global.refreshLoggedUserTagDisplay === 'function') {
+            global.refreshLoggedUserTagDisplay();
+        }
+        if (typeof global.hydrateCommanderMembershipFromStorage === 'function') {
+            global.hydrateCommanderMembershipFromStorage();
+        }
+    }
+
+    function syncGameMobileNavLabel(viewId) {
+        const label = global.document.getElementById('game-mobile-nav-current-label');
+        if (label) {
+            label.textContent = GAME_VIEW_LABELS[viewId] || GAME_VIEW_LABELS.overview;
+        }
+    }
+
+    function setActiveGameView(viewId, clickEvent) {
+        const nextView = GAME_VIEW_LABELS[viewId] ? viewId : 'overview';
+        activeGameView = nextView;
+
+        if (clickEvent) {
+            clickEvent.preventDefault();
+            clickEvent.stopPropagation();
+        }
+
+        global.document.querySelectorAll('.game-page-view[data-game-view]').forEach((panel) => {
+            const isActive = panel.getAttribute('data-game-view') === nextView;
+            panel.classList.toggle('is-active', isActive);
+            panel.hidden = !isActive;
+        });
+
+        global.document.querySelectorAll('.game-page-nav-tabs .nav-tab[data-game-view]').forEach((tab) => {
+            tab.classList.toggle('active', tab.getAttribute('data-game-view') === nextView);
+        });
+
+        global.document.querySelectorAll('#game-mobile-nav-pages .portal-mobile-nav-page-item[data-game-view]').forEach((btn) => {
+            btn.classList.toggle('is-active', btn.getAttribute('data-game-view') === nextView);
+        });
+
+        syncGameMobileNavLabel(nextView);
+        closeGameMobileNavMenu();
+    }
+
+    function isGameMobileNavLayout() {
+        return global.matchMedia('(max-width: 1024px)').matches;
+    }
+
+    function closeGameMobileNavMenu() {
+        const shell = global.document.getElementById('game-mobile-nav-shell');
+        const menu = global.document.getElementById('game-mobile-nav-menu');
+        const toggle = global.document.getElementById('game-mobile-nav-toggle');
+        if (!shell || !menu || !toggle) return;
+
+        shell.classList.remove('is-nav-open');
+        menu.hidden = true;
+        menu.classList.remove('is-menu-open');
+        menu.setAttribute('inert', '');
+        toggle.setAttribute('aria-expanded', 'false');
+    }
+
+    function openGameMobileNavMenu() {
+        const shell = global.document.getElementById('game-mobile-nav-shell');
+        const menu = global.document.getElementById('game-mobile-nav-menu');
+        const toggle = global.document.getElementById('game-mobile-nav-toggle');
+        if (!shell || !menu || !toggle) return;
+
+        shell.classList.add('is-nav-open');
+        menu.hidden = false;
+        menu.classList.add('is-menu-open');
+        menu.removeAttribute('inert');
+        toggle.setAttribute('aria-expanded', 'true');
+    }
+
+    function toggleGameMobileNavMenu(event) {
+        if (event) event.preventDefault();
+        const shell = global.document.getElementById('game-mobile-nav-shell');
+        if (!shell) return;
+        if (shell.classList.contains('is-nav-open')) {
+            closeGameMobileNavMenu();
+            return;
+        }
+        openGameMobileNavMenu();
+    }
+
+    function bindGamePageNavigation() {
+        global.document.querySelectorAll('.game-page-nav-tabs .nav-tab[data-game-view]').forEach((tab) => {
+            tab.addEventListener('click', (event) => {
+                setActiveGameView(tab.getAttribute('data-game-view') || 'overview', event);
+            });
+            tab.addEventListener('keydown', (event) => {
+                if (event.key !== 'Enter' && event.key !== ' ') return;
+                setActiveGameView(tab.getAttribute('data-game-view') || 'overview', event);
+            });
+        });
+
+        global.document.querySelectorAll('#game-mobile-nav-pages .portal-mobile-nav-page-item[data-game-view]').forEach((btn) => {
+            btn.addEventListener('click', (event) => {
+                setActiveGameView(btn.getAttribute('data-game-view') || 'overview', event);
+            });
+        });
+
+        const mobileToggle = global.document.getElementById('game-mobile-nav-toggle');
+        if (mobileToggle) {
+            mobileToggle.addEventListener('click', toggleGameMobileNavMenu);
+        }
+
+        const headerAuthBtn = global.document.getElementById('header-auth-action-btn');
+        if (headerAuthBtn) {
+            headerAuthBtn.addEventListener('click', (event) => {
+                event.preventDefault();
+                returnToAgePortal();
+            });
+        }
+
+        const mobileAuthBtn = global.document.getElementById('game-mobile-nav-auth-btn');
+        if (mobileAuthBtn) {
+            mobileAuthBtn.addEventListener('click', (event) => {
+                event.preventDefault();
+                returnToAgePortal();
+            });
+        }
+
+        global.document.addEventListener('click', (event) => {
+            if (!isGameMobileNavLayout()) return;
+            const shell = global.document.getElementById('game-mobile-nav-shell');
+            if (!shell || !shell.classList.contains('is-nav-open')) return;
+            if (event.target.closest('#game-mobile-nav-shell')) return;
+            closeGameMobileNavMenu();
+        });
+
+        global.addEventListener('resize', () => {
+            if (!isGameMobileNavLayout()) {
+                closeGameMobileNavMenu();
+            }
+        });
+    }
+
     function bindReturnToPortalButton() {
         const button = global.document.getElementById('game-return-portal-btn');
         if (!button) return;
 
         button.addEventListener('click', async (event) => {
             event.preventDefault();
-            stopGamePresenceLoop();
-            await postAgeLeave(false);
-            global.location.href = '/main';
+            await returnToAgePortal();
         });
-    }
-
-    function bindTutorialLabel() {
-        const params = new URLSearchParams(global.location.search || '');
-        const isTutorial = params.get('tutorial') === 'true';
-        const label = global.document.getElementById('game-age-mode-label');
-        if (label) {
-            label.textContent = isTutorial ? 'Tutorial Age' : 'Active Age';
-        }
     }
 
     async function bootstrapGamePageSession() {
@@ -154,6 +311,10 @@
             return;
         }
 
+        if (typeof global.syncPlayerFromActiveCommanderStorage === 'function') {
+            global.syncPlayerFromActiveCommanderStorage();
+        }
+
         markPlayingActiveAgeLocally();
         await postAgeJoin();
         startGamePresenceLoop();
@@ -161,6 +322,8 @@
         if (typeof global.fetchCommanderDossierFromServer === 'function') {
             await global.fetchCommanderDossierFromServer();
         }
+
+        refreshGamePageNavChrome();
     }
 
     async function handleJoinAgeAchievementUnlock() {
@@ -185,9 +348,10 @@
     }
 
     async function bootGamePage() {
-        bindTutorialLabel();
+        bindGamePageNavigation();
         bindReturnToPortalButton();
         registerUnloadHandlers();
+        setActiveGameView('overview');
         await bootstrapGamePageSession();
         await handleJoinAgeAchievementUnlock();
 
@@ -195,6 +359,8 @@
             global.RoyalArmiesAchievements.maybeRunDevAchievementPopupFromQuery();
         }
     }
+
+    global.switchGamePageView = setActiveGameView;
 
     if (global.document.readyState === 'loading') {
         global.document.addEventListener('DOMContentLoaded', () => {

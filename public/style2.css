@@ -359,15 +359,18 @@ body.portal-guest-mode #portal-mobile-commander-block {
     user-select: none !important;
     margin: 0 !important;
     padding: 0 !important;
-    line-height: 0 !important;
+    line-height: 1.2 !important;
 }
 
 .portal-brand-logo-static .portal-brand-logo-asset {
     margin-bottom: 0 !important;
     pointer-events: none !important;
+    position: relative !important;
+    z-index: 1 !important;
 }
 
 .portal-brand-logo-stack {
+    position: relative !important;
     display: flex !important;
     flex-direction: column !important;
     align-items: center !important;
@@ -375,11 +378,19 @@ body.portal-guest-mode #portal-mobile-commander-block {
     gap: 0 !important;
     margin: 0 !important;
     padding: 0 !important;
-    line-height: 1 !important;
+    line-height: 1.2 !important;
+}
+
+.portal-brand-logo-stack .portal-brand-logo-asset,
+.portal-brand-logo-stack .portal-mobile-nav-brand-logo {
+    position: relative !important;
+    z-index: 1 !important;
 }
 
 .portal-early-access-readout {
-    margin: -44px 0 0 0 !important;
+    position: relative !important;
+    z-index: 2 !important;
+    margin: 6px 0 0 0 !important;
     padding: 0 !important;
     font-family: 'Cinzel', serif !important;
     font-size: 0.78rem !important;
@@ -387,13 +398,14 @@ body.portal-guest-mode #portal-mobile-commander-block {
     letter-spacing: 0.32em !important;
     text-transform: uppercase !important;
     color: rgba(255, 224, 148, 0.94) !important;
-    text-shadow: 0 1px 4px rgba(0, 0, 0, 0.92) !important;
+    text-shadow: 0 1px 4px rgba(0, 0, 0, 0.92), 0 0 12px rgba(0, 0, 0, 0.85) !important;
     text-align: center !important;
     line-height: 1 !important;
+    white-space: nowrap !important;
 }
 
 .portal-early-access-readout--mobile {
-    margin-top: -40px !important;
+    margin-top: 4px !important;
     font-size: 0.62rem !important;
     letter-spacing: 0.24em !important;
 }
@@ -7756,11 +7768,12 @@ body.developer-maintenance-alert-active #page-landing {
     margin: 0 !important;
     padding: 0 !important;
     min-height: 100vh !important;
+    min-height: 100dvh !important;
     width: 100vw !important;
     display: flex !important;
     flex-direction: column !important;
     box-sizing: border-box !important;
-    background-image: url('images/mainpagebg.png') !important;
+    background-image: url('images/stonewallbg.png') !important;
     background-size: cover !important;
     background-position: center !important;
     background-repeat: no-repeat !important;
@@ -7771,18 +7784,87 @@ body.developer-maintenance-alert-active #page-landing {
     color: #f1e0ac !important;
 }
 
-.game-page-header {
+.game-page-staging-deck {
+    width: 100% !important;
     flex-shrink: 0 !important;
-    margin-bottom: 0 !important;
+    padding: 0 40px !important;
+    box-sizing: border-box !important;
+}
+
+.game-page-nav-stack {
+    width: 100% !important;
+}
+
+.game-page-nav-stack .portal-nav-commander-identity-row {
+    margin-bottom: -2px !important;
+}
+
+.game-page-nav-bar .game-page-nav-tabs {
+    flex: 1 1 auto !important;
+    justify-content: center !important;
+}
+
+.portal-mobile-commander-trigger--static {
+    cursor: default !important;
+    pointer-events: none !important;
 }
 
 .game-page-main {
     flex: 1 1 auto !important;
     display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    gap: 20px !important;
+    padding: 0 20px 40px !important;
+    box-sizing: border-box !important;
+    width: 100% !important;
+    min-height: 0 !important;
+}
+
+.game-page-view {
+    display: none !important;
+    width: 100% !important;
+    flex-direction: column !important;
+    align-items: center !important;
+}
+
+.game-page-view.is-active {
+    display: flex !important;
+}
+
+.game-page-view-placeholder {
+    margin: 120px auto 0 auto !important;
+    font-family: 'Cinzel', serif !important;
+    font-size: 1.1rem !important;
+    letter-spacing: 0.08em !important;
+    color: rgba(255, 215, 0, 0.82) !important;
+    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.9) !important;
+    text-align: center !important;
+}
+
+.game-page-class-modal-stage {
+    display: flex !important;
     align-items: center !important;
     justify-content: center !important;
-    padding: 24px 20px 40px !important;
-    box-sizing: border-box !important;
+    width: 100% !important;
+    flex: 0 1 auto !important;
+    margin: 235px auto 0 auto !important;
+}
+
+.game-page-class-modal-img {
+    display: block !important;
+    width: auto !important;
+    max-width: min(960px, 94vw) !important;
+    max-height: min(calc(100dvh - 120px), 88vh) !important;
+    height: auto !important;
+    object-fit: contain !important;
+    object-position: center center !important;
+    margin: 0 auto !important;
+    user-select: none !important;
+    pointer-events: none !important;
+    transform: scale(2) !important;
+    transform-origin: center center !important;
 }
 
 .game-page-panel {
@@ -7860,6 +7942,278 @@ body.developer-maintenance-alert-active #page-landing {
 
 .game-page-return-btn:active {
     transform: scale(0.98) !important;
+}
+
+/* --- In-game chat module (fixed lower-left, all game views) --- */
+.game-chat-module {
+    --game-chat-panel-opacity: 0.85;
+    position: fixed !important;
+    left: max(16px, env(safe-area-inset-left)) !important;
+    bottom: max(16px, env(safe-area-inset-bottom)) !important;
+    width: 380px !important;
+    height: 320px !important;
+    min-width: 280px !important;
+    min-height: 200px !important;
+    max-width: min(55vw, calc(100vw - 32px)) !important;
+    max-height: min(65vh, calc(100dvh - 120px)) !important;
+    z-index: 999999900 !important;
+    box-sizing: border-box !important;
+    display: flex !important;
+    flex-direction: column !important;
+    pointer-events: auto !important;
+}
+
+.game-chat-module.is-resizing {
+    user-select: none !important;
+}
+
+.game-chat-module-panel {
+    display: flex !important;
+    flex-direction: column !important;
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+    height: 100% !important;
+    box-sizing: border-box !important;
+    border: 1px solid rgba(184, 144, 48, 0.45) !important;
+    border-radius: 4px !important;
+    background: rgba(8, 6, 4, var(--game-chat-panel-opacity)) !important;
+    box-shadow: 0 10px 28px rgba(0, 0, 0, 0.55) !important;
+    backdrop-filter: blur(2px) !important;
+    overflow: hidden !important;
+}
+
+.game-chat-module-header {
+    flex-shrink: 0 !important;
+    padding: 8px 8px 0 8px !important;
+    border-bottom: 1px solid rgba(184, 144, 48, 0.22) !important;
+}
+
+.game-chat-tabs {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 4px !important;
+}
+
+.game-chat-tab {
+    flex: 1 1 auto !important;
+    min-width: 0 !important;
+    padding: 6px 8px !important;
+    border: 1px solid rgba(184, 144, 48, 0.28) !important;
+    border-bottom: none !important;
+    border-radius: 3px 3px 0 0 !important;
+    background: rgba(0, 0, 0, 0.35) !important;
+    color: rgba(241, 224, 172, 0.78) !important;
+    font-family: 'Cinzel', serif !important;
+    font-size: 0.68rem !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.06em !important;
+    text-transform: uppercase !important;
+    cursor: pointer !important;
+    transition: color 0.15s ease, background 0.15s ease, border-color 0.15s ease !important;
+}
+
+.game-chat-tab:hover {
+    color: #ffd700 !important;
+    background: rgba(184, 144, 48, 0.12) !important;
+}
+
+.game-chat-tab.is-active {
+    color: #ffd700 !important;
+    background: rgba(184, 144, 48, 0.2) !important;
+    border-color: rgba(184, 144, 48, 0.55) !important;
+}
+
+.game-chat-tab[hidden] {
+    display: none !important;
+}
+
+.game-chat-settings-bar {
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    flex-shrink: 0 !important;
+    padding: 6px 10px !important;
+    border-bottom: 1px solid rgba(184, 144, 48, 0.18) !important;
+    background: rgba(0, 0, 0, 0.22) !important;
+}
+
+.game-chat-settings-label {
+    flex-shrink: 0 !important;
+    font-family: 'Segoe UI', sans-serif !important;
+    font-size: 0.72rem !important;
+    letter-spacing: 0.04em !important;
+    color: rgba(241, 224, 172, 0.75) !important;
+}
+
+.game-chat-opacity-slider {
+    flex: 1 1 auto !important;
+    min-width: 0 !important;
+    accent-color: #d4af37 !important;
+    cursor: pointer !important;
+}
+
+.game-chat-opacity-value {
+    flex-shrink: 0 !important;
+    min-width: 38px !important;
+    text-align: right !important;
+    font-family: 'Segoe UI', sans-serif !important;
+    font-size: 0.72rem !important;
+    color: rgba(255, 215, 0, 0.88) !important;
+}
+
+.game-chat-messages {
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
+    padding: 10px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 8px !important;
+    box-sizing: border-box !important;
+}
+
+.game-chat-empty {
+    margin: auto 0 !important;
+    text-align: center !important;
+    font-family: 'Segoe UI', sans-serif !important;
+    font-size: 0.82rem !important;
+    color: rgba(241, 224, 172, 0.55) !important;
+}
+
+.game-chat-msg {
+    text-align: left !important;
+    font-family: 'Segoe UI', sans-serif !important;
+    font-size: 0.82rem !important;
+    line-height: 1.45 !important;
+    padding: 4px 2px !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.04) !important;
+}
+
+.game-chat-msg-meta {
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    margin-bottom: 2px !important;
+}
+
+.game-chat-msg-time {
+    font-size: 0.68rem !important;
+    letter-spacing: 0.04em !important;
+    color: rgba(241, 224, 172, 0.45) !important;
+}
+
+.game-chat-msg-tag {
+    font-size: 0.62rem !important;
+    letter-spacing: 0.05em !important;
+    text-transform: uppercase !important;
+    color: rgba(241, 224, 172, 0.5) !important;
+}
+
+.game-chat-msg-author {
+    font-weight: 700 !important;
+    margin-right: 4px !important;
+}
+
+.game-chat-msg--system {
+    color: rgba(255, 196, 120, 0.95) !important;
+    font-style: italic !important;
+}
+
+.game-chat-msg--global,
+.game-chat-msg--global .game-chat-msg-body,
+.game-chat-msg--global .game-chat-msg-author {
+    color: rgba(236, 236, 236, 0.92) !important;
+}
+
+.game-chat-msg--country,
+.game-chat-msg--country .game-chat-msg-body,
+.game-chat-msg--country .game-chat-msg-author {
+    color: #ffd700 !important;
+}
+
+.game-chat-msg--alliance,
+.game-chat-msg--alliance .game-chat-msg-body,
+.game-chat-msg--alliance .game-chat-msg-author {
+    color: #78b8ff !important;
+}
+
+.game-chat-compose-hint {
+    flex-shrink: 0 !important;
+    margin: 0 !important;
+    padding: 0 10px 4px 10px !important;
+    font-size: 0.72rem !important;
+    color: rgba(241, 224, 172, 0.62) !important;
+}
+
+.game-chat-compose-form {
+    flex-shrink: 0 !important;
+    display: flex !important;
+    gap: 6px !important;
+    padding: 8px 10px 10px 10px !important;
+    border-top: 1px solid rgba(184, 144, 48, 0.18) !important;
+    box-sizing: border-box !important;
+}
+
+.game-chat-compose-input {
+    flex: 1 1 auto !important;
+    min-width: 0 !important;
+    padding: 8px 10px !important;
+    border: 1px solid rgba(184, 144, 48, 0.35) !important;
+    border-radius: 2px !important;
+    background: rgba(0, 0, 0, 0.45) !important;
+    color: #f1e0ac !important;
+    font-family: 'Segoe UI', sans-serif !important;
+    font-size: 0.82rem !important;
+}
+
+.game-chat-compose-input:disabled {
+    opacity: 0.55 !important;
+    cursor: not-allowed !important;
+}
+
+.game-chat-compose-send {
+    flex-shrink: 0 !important;
+    padding: 8px 12px !important;
+    border: 1px solid rgba(184, 144, 48, 0.45) !important;
+    border-radius: 2px !important;
+    background: rgba(12, 10, 8, 0.92) !important;
+    color: #ffd700 !important;
+    font-family: 'Cinzel', serif !important;
+    font-size: 0.72rem !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.06em !important;
+    cursor: pointer !important;
+}
+
+.game-chat-compose-send:disabled {
+    opacity: 0.45 !important;
+    cursor: not-allowed !important;
+}
+
+.game-chat-resize-handle {
+    position: absolute !important;
+    top: 0 !important;
+    right: 0 !important;
+    width: 18px !important;
+    height: 18px !important;
+    padding: 0 !important;
+    border: none !important;
+    background: transparent !important;
+    cursor: nesw-resize !important;
+    z-index: 2 !important;
+}
+
+.game-chat-resize-handle::after {
+    content: '' !important;
+    position: absolute !important;
+    top: 4px !important;
+    right: 4px !important;
+    width: 10px !important;
+    height: 10px !important;
+    border-top: 2px solid rgba(255, 215, 0, 0.55) !important;
+    border-right: 2px solid rgba(255, 215, 0, 0.55) !important;
+    box-sizing: border-box !important;
 }
 
 .achievement-toast-anchor {

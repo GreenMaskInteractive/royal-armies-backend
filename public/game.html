@@ -5,55 +5,112 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Royal Armies - Age Session (In Development)</title>
     <link rel="stylesheet" href="style.css?v=mailbox-read-popup-wide-2">
-    <link rel="stylesheet" href="style2.css?v=nav-owner-cluster-fix-1">
-    <link rel="stylesheet" href="mobile-responsive.css?v=game-page-1">
+    <link rel="stylesheet" href="style2.css?v=game-chat-module-1">
+    <link rel="stylesheet" href="mobile-responsive.css?v=game-chat-module-1">
     <link rel="stylesheet" href="dev-page-navigator.css">
     <link rel="stylesheet" href="custom-cursor.css?v=scrollbar-cursor-1">
 </head>
 <body id="game-page-canvas" class="game-page-canvas">
 
-    <header class="game-page-header over-bar-utility-deck">
-        <div class="header-logo-housing-block portal-brand-logo-static">
-            <div class="portal-brand-logo-stack">
-                <img src="images/royalarmiestitle.png" alt="Royal Armies Official Title Logo" class="portal-brand-logo-asset">
-                <p class="portal-early-access-readout">Early Access</p>
+    <div class="game-page-staging-deck">
+        <div class="portal-desktop-nav-stack game-page-nav-stack">
+            <div class="portal-nav-commander-identity-row nav-embedded-account-label portal-desktop-nav-only">
+                <div class="nav-avatar-hub-wrapper">
+                    <img id="nav-embedded-avatar-crest" src="images/avatars/commanderprofile01.png" alt="Commander avatar" class="nav-bar-embedded-avatar-thumbnail" tabindex="0">
+                </div>
+                <div class="nav-account-identity-cluster">
+                    <div class="nav-account-identity-stack">
+                        <strong id="logged-user-tag">Loading...</strong>
+                        <div id="nav-commander-membership-badge-row" class="commander-membership-badge-row nav-commander-membership-badge-row" hidden></div>
+                    </div>
+                    <div id="nav-commander-owner-tag-slot" class="nav-commander-owner-tag-slot" hidden></div>
+                </div>
+            </div>
+
+            <div class="portal-mobile-nav-bar-clip">
+                <nav class="main-portal-nav-bar game-page-nav-bar" id="game-navigation-chassis" aria-label="Game navigation">
+
+                    <div class="portal-mobile-nav-shell" id="game-mobile-nav-shell">
+                        <button type="button" class="portal-mobile-nav-toggle" id="game-mobile-nav-toggle" aria-expanded="false" aria-controls="game-mobile-nav-menu">
+                            <span class="portal-mobile-nav-toggle-label" id="game-mobile-nav-current-label">Overview</span>
+                            <span class="portal-mobile-nav-chevron" aria-hidden="true">▾</span>
+                        </button>
+                        <div class="portal-mobile-nav-menu" id="game-mobile-nav-menu" hidden inert>
+                            <div class="portal-mobile-nav-menu-sticky-head">
+                                <div class="portal-mobile-commander-block" id="game-mobile-commander-block">
+                                    <div class="portal-mobile-commander-trigger portal-mobile-commander-trigger--static">
+                                        <img class="portal-mobile-commander-avatar" id="game-mobile-nav-avatar" src="images/avatars/commanderprofile01.png" alt="">
+                                        <span class="portal-mobile-commander-identity">
+                                            <strong class="portal-mobile-commander-name" id="game-mobile-nav-username">Loading...</strong>
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="portal-mobile-nav-menu-scroll">
+                                <nav class="portal-mobile-nav-pages" id="game-mobile-nav-pages" aria-label="Game sections">
+                                    <button type="button" class="portal-mobile-nav-page-item is-active" data-game-view="overview">Overview</button>
+                                    <button type="button" class="portal-mobile-nav-page-item" data-game-view="city">City</button>
+                                    <button type="button" class="portal-mobile-nav-page-item" data-game-view="map">Map</button>
+                                </nav>
+                                <button type="button" class="portal-mobile-nav-auth-btn" id="game-mobile-nav-auth-btn">
+                                    <img id="game-mobile-nav-auth-icon" src="images/logouticon.png" alt="" class="portal-mobile-nav-auth-icon" aria-hidden="true">
+                                    <span id="game-mobile-nav-auth-label">Return to Portal</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="portal-nav-commander-menu-rail portal-desktop-nav-only" aria-hidden="true"></div>
+
+                    <div class="nav-tabs-centered-flex-dock portal-desktop-nav-only game-page-nav-tabs">
+                        <div class="nav-tab active" data-game-view="overview" role="button" tabindex="0">Overview</div>
+                        <div class="nav-tab" data-game-view="city" role="button" tabindex="0">City</div>
+                        <div class="nav-tab" data-game-view="map" role="button" tabindex="0">Map</div>
+                    </div>
+
+                    <div class="nav-right-logout-action-dock portal-desktop-nav-only">
+                        <button type="button" id="header-auth-action-btn" class="header-logout-btn" aria-label="Return to Age Portal">
+                            <img id="header-auth-action-icon" src="images/logouticon.png" alt="" class="header-logout-icon" aria-hidden="true">
+                            <span id="header-auth-action-label" class="header-logout-label">Return to Portal</span>
+                        </button>
+                    </div>
+                </nav>
             </div>
         </div>
-    </header>
+    </div>
 
-    <main class="game-page-main" aria-labelledby="game-page-heading">
-        <section class="game-page-panel" aria-live="polite">
-            <div class="game-page-panel-frame bordered-modal-panel">
-                <p class="game-page-eyebrow" id="game-age-mode-label">Active Age</p>
-                <h1 id="game-page-heading" class="game-page-heading">The Age Awaits Its Engine</h1>
-
-                <div class="game-page-copy">
-                    <p>Our sincerest apologies, Commander — the full battle realm is still being forged.</p>
-                    <p>The <strong>game client</strong> is actively under development. We know how excited you must be for the release of Royal Armies, and we are grateful for your patience while we finish the experience worthy of your armies.</p>
-                    <p>Your presence here still registers on the Age Portal metrics while you remain on this page. When you return to the hub, you will be removed from the live Age counts until the true campaign launches.</p>
-                </div>
-
-                <div class="game-page-actions">
-                    <button type="button" id="game-return-portal-btn" class="game-page-return-btn confirm-btn">Return to Age Portal</button>
-                </div>
-            </div>
+    <main class="game-page-main">
+        <section class="game-page-view game-page-view--overview is-active" data-game-view="overview" aria-label="Overview">
+            <section class="game-page-class-modal-stage" aria-label="Choose your class">
+                <img
+                    src="images/chooseclassmodal.png"
+                    alt="Choose your class"
+                    class="game-page-class-modal-img"
+                    id="game-choose-class-modal"
+                >
+            </section>
         </section>
+
+        <section class="game-page-view game-page-view--city" data-game-view="city" aria-label="City" hidden>
+            <p class="game-page-view-placeholder">City view coming soon.</p>
+        </section>
+
+        <section class="game-page-view game-page-view--map" data-game-view="map" aria-label="Map" hidden>
+            <p class="game-page-view-placeholder">Map view coming soon.</p>
+        </section>
+
+        <div class="game-page-actions">
+            <button type="button" id="game-return-portal-btn" class="game-page-return-btn confirm-btn">Return to Age Portal</button>
+        </div>
     </main>
 
     <script src="dev-environment.js"></script>
     <script src="commander-dossier-sync.js?v=dossier-sync-1"></script>
     <script src="script.js?v=message-popup-buttons-1"></script>
     <script src="achievement-system.js?v=first-timer-icon-png-1"></script>
-    <script src="game.js?v=achievement-toast-1"></script>
+    <script src="game.js?v=game-page-nav-1"></script>
+    <script src="game-chat.js?v=game-chat-module-1"></script>
     <script src="dev-page-navigator.js?v=dev-tools-fix-1"></script>
     <script src="custom-cursor.js?v=scrollbar-cursor-1"></script>
-    <script>
-        (function applyGamePageAlphaLabel() {
-            var label = typeof PORTAL_ALPHA_VERSION !== 'undefined' ? PORTAL_ALPHA_VERSION : 'Alpha 0.1.13';
-            document.querySelectorAll('[data-portal-alpha-version]').forEach(function (el) {
-                el.textContent = label;
-            });
-        })();
-    </script>
 </body>
 </html>

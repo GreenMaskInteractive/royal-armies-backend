@@ -673,6 +673,14 @@ body {
         display: none !important;
     }
 
+    #game-page-canvas .game-page-nav-stack {
+        display: block !important;
+    }
+
+    #game-page-canvas .game-page-staging-deck {
+        padding: 0 max(12px, env(safe-area-inset-left)) max(0px, env(safe-area-inset-right)) !important;
+    }
+
     .main-portal-nav-bar .nav-tabs-centered-flex-dock,
     .main-portal-nav-bar .nav-embedded-account-label,
     .main-portal-nav-bar .portal-nav-commander-menu-rail,
@@ -713,6 +721,10 @@ body {
     }
 
     #portal-mobile-nav-shell.is-nav-open {
+        z-index: 999999990 !important;
+    }
+
+    #game-mobile-nav-shell.is-nav-open {
         z-index: 999999990 !important;
     }
 
@@ -820,13 +832,17 @@ body {
         transform: rotate(180deg) !important;
     }
 
+    #game-mobile-nav-shell.is-nav-open > .portal-mobile-nav-toggle .portal-mobile-nav-chevron {
+        transform: rotate(180deg) !important;
+    }
+
     .portal-mobile-nav-brand-row {
         display: flex !important;
         justify-content: center !important;
         align-items: center !important;
         padding: 8px 10px 6px !important;
         margin: 0 !important;
-        line-height: 0 !important;
+        line-height: 1.2 !important;
         min-height: 0 !important;
         flex-shrink: 0 !important;
         flex-grow: 0 !important;
@@ -2224,6 +2240,10 @@ body {
         display: block !important;
     }
 
+    #game-page-canvas .game-page-nav-stack {
+        display: block !important;
+    }
+
     .portal-nav-commander-identity-row {
         width: 100% !important;
         min-height: 56px !important;
@@ -2271,6 +2291,23 @@ body {
 
     #page-landing .slide {
         inset: -20% !important;
+    }
+}
+
+@media (max-width: 1024px) {
+    #game-page-canvas .game-chat-module {
+        width: min(360px, calc(100vw - 24px)) !important;
+        max-width: calc(100vw - 24px) !important;
+        left: max(12px, env(safe-area-inset-left)) !important;
+        bottom: max(12px, env(safe-area-inset-bottom)) !important;
+    }
+}
+
+@media (max-width: 640px) {
+    #game-page-canvas .game-chat-module {
+        width: calc(100vw - 20px) !important;
+        max-width: calc(100vw - 20px) !important;
+        height: min(42vh, 280px) !important;
     }
 }
 
