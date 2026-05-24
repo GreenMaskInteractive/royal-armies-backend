@@ -1260,6 +1260,49 @@ function countUnreadPlayerInboxMessages() {
     return playerInboundInboxDossier.filter((msg) => msg && msg.from && !msg.read).length;
 }
 
+function countUnreadSystemMessages() {
+    return playerSystemInboxDossier.filter((msg) => msg && !msg.read).length;
+}
+
+function getUnreadMailboxBreakdown() {
+    const inbox = countUnreadPlayerInboxMessages();
+    const system = countUnreadSystemMessages();
+    return {
+        inbox,
+        system,
+        total: inbox + system
+    };
+}
+
+function countUnreadMailboxMessages() {
+    return getUnreadMailboxBreakdown().total;
+}
+
+function resolvePreferredMailboxNavigation() {
+    const { inbox, system } = getUnreadMailboxBreakdown();
+    if (inbox > 0) {
+        return { hubChannel: 'messages', folder: 'inbox' };
+    }
+    if (system > 0) {
+        return { hubChannel: 'system', folder: null };
+    }
+    return { hubChannel: 'messages', folder: 'inbox' };
+}
+
+function updatePortalNewMessagesBarLabels(unreadCount) {
+    const label = unreadCount === 1
+        ? 'You have a new message'
+        : `You have new messages (${unreadCount})`;
+
+    document.querySelectorAll('.portal-commander-new-messages-bar-text').forEach((el) => {
+        el.textContent = label;
+    });
+
+    document.querySelectorAll('.portal-commander-new-messages-bar').forEach((bar) => {
+        bar.setAttribute('aria-label', `${label}. Open messages.`);
+    });
+}
+
 const PORTAL_MAILBOX_POLL_MS = 30000;
 let portalMailboxPollTimer = null;
 let portalMailboxUnreadBaseline = null;
@@ -1318,7 +1361,7 @@ function syncCommanderHubMessagesTabBadges(unreadCount) {
 }
 
 function syncNavMailboxIndicators() {
-    const unreadCount = countUnreadPlayerInboxMessages();
+    const { total: unreadCount } = getUnreadMailboxBreakdown();
     const isNewArrival = portalMailboxUnreadBaseline !== null && unreadCount > portalMailboxUnreadBaseline;
     portalMailboxUnreadBaseline = unreadCount;
 
@@ -1330,6 +1373,7 @@ function syncNavMailboxIndicators() {
     const hasUnread = unreadCount > 0;
 
     if (hasUnread) {
+        updatePortalNewMessagesBarLabels(unreadCount);
         revealPortalNewMessagesBar(messageShells, isNewArrival);
     } else {
         hidePortalNewMessagesBar(messageShells);
@@ -1358,6 +1402,94 @@ function syncNavMailboxIndicators() {
     if (typeof syncPortalMobileNavMailboxIndicators === 'function') {
         syncPortalMobileNavMailboxIndicators(unreadCount);
     }
+}
+
+function openMailboxFromNewMessagesBar(clickEvent) {
+    if (clickEvent) {
+        clickEvent.preventDefault();
+        clickEvent.stopPropagation();
+    }
+    if (typeof playToggleLeverSFX === 'function') playToggleLeverSFX();
+
+    const preferred = resolvePreferredMailboxNavigation();
+    window.pendingMessagesHubChannel = preferred.hubChannel;
+    window.pendingMessagesFolder = preferred.folder;
+
+    const onMainPortal = Boolean(
+        document.getElementById('portal-navigation-chassis')
+        || document.getElementById('portal-commander-hub-page')
+        || document.getElementById('commander-hub-modal')
+    );
+
+    if (onMainPortal) {
+        if (typeof openCommanderHubModal === 'function') {
+            openCommanderHubModal('messages', clickEvent);
+            return;
+        }
+        if (typeof switchMainPortalView === 'function') {
+            switchMainPortalView('commander', clickEvent);
+        }
+        if (typeof loadCommanderHubSection === 'function') {
+            loadCommanderHubSection('messages', clickEvent);
+            return;
+        }
+        if (typeof loadLore === 'function') {
+            loadLore('messages');
+        }
+        return;
+    }
+
+    try {
+        sessionStorage.setItem('royalArmiesPendingMailboxNav', JSON.stringify(preferred));
+    } catch (_err) {
+        /* ignore */
+    }
+
+    if (window.RoyalArmiesPageRouteTransition && typeof window.RoyalArmiesPageRouteTransition.navigateTo === 'function') {
+        window.RoyalArmiesPageRouteTransition.navigateTo('/main');
+        return;
+    }
+    window.location.href = '/main';
+}
+
+function consumePendingMailboxNavigation() {
+    let raw = null;
+    try {
+        raw = sessionStorage.getItem('royalArmiesPendingMailboxNav');
+        if (raw) sessionStorage.removeItem('royalArmiesPendingMailboxNav');
+    } catch (_err) {
+        return;
+    }
+    if (!raw) return;
+
+    try {
+        const pending = JSON.parse(raw);
+        window.pendingMessagesHubChannel = pending.hubChannel || 'messages';
+        window.pendingMessagesFolder = pending.folder || 'inbox';
+    } catch (_err) {
+        return;
+    }
+
+    window.setTimeout(() => {
+        if (typeof openCommanderHubModal === 'function') {
+            openCommanderHubModal('messages', null);
+            return;
+        }
+        if (typeof switchMainPortalView === 'function') {
+            switchMainPortalView('commander', null);
+        }
+        if (typeof loadCommanderHubSection === 'function') {
+            loadCommanderHubSection('messages', null);
+        }
+    }, 120);
+}
+
+function bindPortalNewMessagesBarNavigation() {
+    document.querySelectorAll('.portal-commander-new-messages-bar').forEach((bar) => {
+        if (!bar || bar.dataset.mailboxNavBound === 'true') return;
+        bar.dataset.mailboxNavBound = 'true';
+        bar.addEventListener('click', openMailboxFromNewMessagesBar);
+    });
 }
 
 async function pollCommanderMailboxFromServer() {
@@ -3979,9 +4111,13 @@ async function bootstrapMainPortalAuthOnLoad() {
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => {
         bootstrapMainPortalAuthOnLoad();
+        bindPortalNewMessagesBarNavigation();
+        consumePendingMailboxNavigation();
     });
 } else {
     bootstrapMainPortalAuthOnLoad();
+    bindPortalNewMessagesBarNavigation();
+    consumePendingMailboxNavigation();
 } 
 
 /* --- Block 25: Intercept Security Warning Overlay Engine --- */ 
@@ -4936,7 +5072,7 @@ function renderDossierPortalListHTML(targetTrack) {
         listBin.appendChild(row);
     });
 
-    if (targetTrack === 'inbox') syncNavMailboxIndicators();
+    if (targetTrack === 'inbox' || targetTrack === 'system') syncNavMailboxIndicators();
 }
 
 /* --- HIGH FANTASY POPUP DISPATCH READING WINDOW --- */
@@ -5096,6 +5232,8 @@ async function executeMassDossierPurge(track) {
 }
 
 window.syncNavMailboxIndicators = syncNavMailboxIndicators;
+window.openMailboxFromNewMessagesBar = openMailboxFromNewMessagesBar;
+window.bindPortalNewMessagesBarNavigation = bindPortalNewMessagesBarNavigation;
 window.receiveCommanderInboxMessage = receiveCommanderInboxMessage;
 window.fetchCommanderMailboxFromServer = fetchCommanderMailboxFromServer;
 window.startPortalMailboxPolling = startPortalMailboxPolling;

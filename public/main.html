@@ -15,7 +15,7 @@
     <!-- Block 2: Page Title & Stylesheet Bridge -->
     <title>Royal Armies - An MMOHFT Medieval-Fantasy Strategy Game</title>
     <link rel="stylesheet" href="style.css?v=mailbox-read-popup-wide-2">
-    <link rel="stylesheet" href="style2.css?v=commander-dropdown-messages-count-1">
+    <link rel="stylesheet" href="style2.css?v=mailbox-system-unread-bar-1">
     <link rel="stylesheet" href="mobile-responsive.css?v=new-messages-bar-1">
     <link rel="stylesheet" href="dev-page-navigator.css">
     <link rel="stylesheet" href="custom-cursor.css?v=scrollbar-cursor-1">
@@ -51,9 +51,9 @@
         <div class="portal-desktop-nav-stack portal-desktop-nav-only">
             <div class="portal-nav-commander-identity-row nav-embedded-account-label">
                 <div class="portal-commander-identity-shell" id="portal-commander-identity-shell">
-                    <div class="portal-commander-new-messages-bar" id="portal-commander-new-messages-bar" hidden aria-live="polite">
+                    <button type="button" class="portal-commander-new-messages-bar" id="portal-commander-new-messages-bar" hidden aria-live="polite" aria-label="You have new messages. Open messages.">
                         <span class="portal-commander-new-messages-bar-text">You have new messages</span>
-                    </div>
+                    </button>
                 <div class="portal-commander-identity-card" id="portal-commander-identity-card">
                     <button type="button"
                         class="portal-commander-identity-settings-btn"
@@ -109,9 +109,9 @@
                         </div>
                         <div id="portal-mobile-nav-media-mount" class="portal-mobile-nav-media-mount" aria-label="Background music player"></div>
                         <div class="portal-commander-identity-shell portal-mobile-commander-shell" id="portal-mobile-commander-shell">
-                            <div class="portal-commander-new-messages-bar" id="portal-mobile-new-messages-bar" hidden aria-live="polite">
+                            <button type="button" class="portal-commander-new-messages-bar" id="portal-mobile-new-messages-bar" hidden aria-live="polite" aria-label="You have new messages. Open messages.">
                                 <span class="portal-commander-new-messages-bar-text">You have new messages</span>
-                            </div>
+                            </button>
                         <div class="portal-mobile-commander-block" id="portal-mobile-commander-block">
                             <button type="button" class="portal-mobile-commander-trigger" id="portal-mobile-commander-toggle" aria-expanded="false" aria-controls="portal-mobile-commander-submenu" onclick="togglePortalMobileCommanderSubmenu(event)">
                                 <img class="portal-mobile-commander-avatar" id="portal-mobile-nav-avatar" src="images/avatars/commanderprofile01.png" alt="">
@@ -611,8 +611,8 @@
     <script src="portal-alerts.js?v=error-codes-1"></script>
     <script src="error-display.js?v=error-codes-1"></script>
     <script src="rank-data.js"></script>
-    <script src="script.js?v=new-messages-bar-1"></script>
-    <script src="commander-hub.js?v=new-messages-bar-1"></script>
+    <script src="script.js?v=mailbox-system-unread-bar-1"></script>
+    <script src="commander-hub.js?v=mailbox-system-unread-bar-1"></script>
     <script src="maintenance-alert.js?v=maintenance-always-on-1"></script>
     <script src="script2.js?v=commander-identity-card-1"></script>
     <script src="custom-cursor.js?v=scrollbar-cursor-1"></script>

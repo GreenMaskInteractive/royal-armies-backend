@@ -413,6 +413,16 @@
         await bootstrapGamePageSession();
         await handleJoinAgeAchievementUnlock();
 
+        if (typeof global.bindPortalNewMessagesBarNavigation === 'function') {
+            global.bindPortalNewMessagesBarNavigation();
+        }
+        if (typeof global.fetchCommanderMailboxFromServer === 'function') {
+            await global.fetchCommanderMailboxFromServer();
+        }
+        if (typeof global.startPortalMailboxPolling === 'function') {
+            global.startPortalMailboxPolling();
+        }
+
         if (global.RoyalArmiesAchievements && typeof global.RoyalArmiesAchievements.maybeRunDevAchievementPopupFromQuery === 'function') {
             global.RoyalArmiesAchievements.maybeRunDevAchievementPopupFromQuery();
         }
