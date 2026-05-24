@@ -671,7 +671,7 @@
 .portal-early-access-readout {
     position: relative !important;
     z-index: 2 !important;
-    margin: -50px 0 0 0 !important;
+    margin: 6px 0 0 0 !important;
     padding: 0 !important;
     font-family: 'Cinzel', serif !important;
     font-size: 0.78rem !important;
@@ -685,8 +685,14 @@
     white-space: nowrap !important;
 }
 
+@media (min-width: 1025px) {
+    .portal-desktop-header-only .portal-early-access-readout {
+        margin: -130px 0 0 0 !important;
+    }
+}
+
 .portal-early-access-readout--mobile {
-    margin-top: -6px !important;
+    margin-top: 4px !important;
     font-size: 0.62rem !important;
     letter-spacing: 0.24em !important;
 }
