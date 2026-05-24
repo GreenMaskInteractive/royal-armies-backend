@@ -357,8 +357,8 @@
         if (module) {
             const width = Math.max(MIN_WIDTH, Number(ui.width) || DEFAULT_WIDTH);
             const height = Math.max(MIN_HEIGHT, Number(ui.height) || DEFAULT_HEIGHT);
-            module.style.width = `${width}px`;
-            module.style.height = `${height}px`;
+            module.style.setProperty('--game-chat-width', `${width}px`);
+            module.style.setProperty('--game-chat-height', `${height}px`);
         }
 
         applyPanelOpacity(ui.opacity, { skipSettingsUi: true });
@@ -383,14 +383,18 @@
             const maxWidth = Math.min(global.innerWidth - 32, Math.floor(global.innerWidth * 0.55));
             const maxHeight = Math.min(global.innerHeight - 120, Math.floor(global.innerHeight * 0.65));
             const nextWidth = Math.max(MIN_WIDTH, Math.min(maxWidth, startWidth + (event.clientX - startX)));
-            const nextHeight = Math.max(MIN_HEIGHT, Math.min(maxHeight, startHeight - (event.clientY - startY)));
-            module.style.width = `${nextWidth}px`;
-            module.style.height = `${nextHeight}px`;
+            const nextHeight = Math.max(MIN_HEIGHT, Math.min(maxHeight, startHeight + (event.clientY - startY)));
+            module.style.setProperty('--game-chat-width', `${nextWidth}px`);
+            module.style.setProperty('--game-chat-height', `${nextHeight}px`);
         };
 
-        const onPointerUp = () => {
+        const endResize = (event) => {
+            if (event && handle.hasPointerCapture(event.pointerId)) {
+                handle.releasePointerCapture(event.pointerId);
+            }
             global.document.removeEventListener('pointermove', onPointerMove);
-            global.document.removeEventListener('pointerup', onPointerUp);
+            global.document.removeEventListener('pointerup', endResize);
+            global.document.removeEventListener('pointercancel', endResize);
             module.classList.remove('is-resizing');
             scheduleUiSave({
                 width: module.offsetWidth,
@@ -399,14 +403,18 @@
         };
 
         handle.addEventListener('pointerdown', (event) => {
+            if (event.button !== 0) return;
             event.preventDefault();
+            event.stopPropagation();
             startX = event.clientX;
             startY = event.clientY;
             startWidth = module.offsetWidth;
             startHeight = module.offsetHeight;
             module.classList.add('is-resizing');
+            handle.setPointerCapture(event.pointerId);
             global.document.addEventListener('pointermove', onPointerMove);
-            global.document.addEventListener('pointerup', onPointerUp);
+            global.document.addEventListener('pointerup', endResize);
+            global.document.addEventListener('pointercancel', endResize);
         });
     }
 
@@ -474,8 +482,8 @@
                         <input id="game-chat-compose-input" class="game-chat-compose-input" type="text" maxlength="500" autocomplete="off" placeholder="Message Global…">
                         <button id="game-chat-compose-send" type="submit" class="game-chat-compose-send">Send</button>
                     </form>
+                    <button type="button" id="game-chat-resize-handle" class="game-chat-resize-handle" aria-label="Resize chat panel" title="Drag to resize"></button>
                 </div>
-                <button type="button" id="game-chat-resize-handle" class="game-chat-resize-handle" aria-label="Resize chat panel"></button>
             </aside>
         `.trim();
 

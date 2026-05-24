@@ -7773,39 +7773,16 @@ body.developer-maintenance-alert-active #page-landing {
     display: flex !important;
     flex-direction: column !important;
     box-sizing: border-box !important;
-    background-color: #0a0908 !important;
+    background-color: #060504 !important;
     background-image:
-        radial-gradient(ellipse 120% 70% at 50% -10%, rgba(52, 46, 40, 0.28) 0%, transparent 58%),
-        radial-gradient(ellipse 90% 55% at 50% 108%, rgba(0, 0, 0, 0.62) 0%, transparent 52%),
-        repeating-linear-gradient(
-            93deg,
-            #141210 0,
-            #141210 1px,
-            #100e0c 1px,
-            #100e0c 68px,
-            #1a1714 68px,
-            #1a1714 69px,
-            #0c0a09 69px,
-            #0c0a09 136px
-        ),
-        repeating-linear-gradient(
-            3deg,
-            #12100f 0,
-            #12100f 38px,
-            #080706 38px,
-            #080706 39px,
-            #161311 39px,
-            #161311 76px
-        ),
-        linear-gradient(180deg, #151311 0%, #0c0a09 42%, #060504 100%) !important;
-    background-size:
-        100% 100%,
-        100% 100%,
-        136px 136px,
-        76px 76px,
-        100% 100% !important;
+        radial-gradient(ellipse 90% 55% at 50% -12%, rgba(184, 144, 48, 0.14) 0%, transparent 58%),
+        radial-gradient(ellipse 70% 50% at 100% 100%, rgba(90, 58, 22, 0.1) 0%, transparent 52%),
+        radial-gradient(ellipse 55% 45% at 0% 88%, rgba(48, 36, 20, 0.12) 0%, transparent 50%),
+        radial-gradient(ellipse 120% 80% at 50% 50%, rgba(18, 14, 10, 0.35) 0%, transparent 70%),
+        linear-gradient(168deg, #14110e 0%, #0c0a09 36%, #080706 68%, #030302 100%) !important;
+    background-size: 100% 100% !important;
     background-position: center center !important;
-    background-repeat: repeat, repeat, repeat, repeat, no-repeat !important;
+    background-repeat: no-repeat !important;
     background-attachment: fixed !important;
     overflow-x: hidden !important;
     overflow-y: auto !important;
@@ -7975,11 +7952,13 @@ body.developer-maintenance-alert-active #page-landing {
 /* --- In-game chat module (fixed lower-left, all game views) --- */
 .game-chat-module {
     --game-chat-panel-opacity: 0.85;
+    --game-chat-width: 380px;
+    --game-chat-height: 320px;
     position: fixed !important;
     left: max(16px, env(safe-area-inset-left)) !important;
     bottom: max(16px, env(safe-area-inset-bottom)) !important;
-    width: 380px !important;
-    height: 320px !important;
+    width: var(--game-chat-width) !important;
+    height: var(--game-chat-height) !important;
     min-width: 280px !important;
     min-height: 200px !important;
     max-width: min(55vw, calc(100vw - 32px)) !important;
@@ -7997,6 +7976,7 @@ body.developer-maintenance-alert-active #page-landing {
 }
 
 .game-chat-module-panel {
+    position: relative !important;
     display: flex !important;
     flex-direction: column !important;
     flex: 1 1 auto !important;
@@ -8145,7 +8125,7 @@ body.developer-maintenance-alert-active #page-landing {
     flex-shrink: 0 !important;
     display: flex !important;
     gap: 6px !important;
-    padding: 8px 10px 10px 10px !important;
+    padding: 8px 42px 10px 10px !important;
     border-top: 1px solid rgba(184, 144, 48, 0.18) !important;
     box-sizing: border-box !important;
 }
@@ -8188,63 +8168,58 @@ body.developer-maintenance-alert-active #page-landing {
 
 .game-chat-resize-handle {
     position: absolute !important;
-    top: -10px !important;
-    right: -10px !important;
-    width: 52px !important;
-    height: 52px !important;
+    bottom: 0 !important;
+    right: 0 !important;
+    width: 40px !important;
+    height: 40px !important;
     padding: 0 !important;
     margin: 0 !important;
     border: none !important;
-    border-radius: 0 4px 0 0 !important;
-    background: transparent !important;
-    cursor: nesw-resize !important;
+    border-radius: 0 0 3px 0 !important;
+    background: rgba(8, 6, 4, 0.55) !important;
+    cursor: nwse-resize !important;
     touch-action: none !important;
-    z-index: 12 !important;
+    z-index: 20 !important;
+    pointer-events: auto !important;
 }
 
 .game-chat-resize-handle::before {
     content: '' !important;
     position: absolute !important;
-    inset: 10px 10px 10px 10px !important;
-    border-radius: 0 3px 0 0 !important;
+    inset: 0 !important;
+    border-radius: 0 0 3px 0 !important;
     background: linear-gradient(
-        135deg,
-        rgba(255, 215, 0, 0.22) 0%,
-        rgba(255, 215, 0, 0.08) 45%,
-        transparent 55%
+        315deg,
+        rgba(255, 215, 0, 0.2) 0%,
+        rgba(255, 215, 0, 0.06) 42%,
+        transparent 52%
     ) !important;
-    opacity: 0.65 !important;
-    transition: opacity 0.15s ease, background 0.15s ease !important;
+    opacity: 0.75 !important;
+    transition: opacity 0.15s ease !important;
     pointer-events: none !important;
 }
 
 .game-chat-resize-handle:hover::before,
 .game-chat-module.is-resizing .game-chat-resize-handle::before {
     opacity: 1 !important;
-    background: linear-gradient(
-        135deg,
-        rgba(255, 215, 0, 0.38) 0%,
-        rgba(255, 215, 0, 0.14) 45%,
-        transparent 55%
-    ) !important;
 }
 
 .game-chat-resize-handle::after {
     content: '' !important;
     position: absolute !important;
-    top: 14px !important;
-    right: 14px !important;
-    width: 16px !important;
-    height: 16px !important;
-    border-top: 2px solid rgba(255, 215, 0, 0.72) !important;
-    border-right: 2px solid rgba(255, 215, 0, 0.72) !important;
+    bottom: 9px !important;
+    right: 9px !important;
+    width: 14px !important;
+    height: 14px !important;
+    border-bottom: 2px solid rgba(255, 215, 0, 0.75) !important;
+    border-right: 2px solid rgba(255, 215, 0, 0.75) !important;
     box-sizing: border-box !important;
     pointer-events: none !important;
 }
 
 .game-chat-resize-handle:hover::after,
 .game-chat-module.is-resizing .game-chat-resize-handle::after {
-    border-color: rgba(255, 215, 0, 0.95) !important;
+    border-color: rgba(255, 215, 0, 0.98) !important;
 }
 
 .achievement-toast-anchor {

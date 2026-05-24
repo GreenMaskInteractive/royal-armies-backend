@@ -2296,7 +2296,7 @@ body {
 
 @media (max-width: 1024px) {
     #game-page-canvas .game-chat-module {
-        width: min(360px, calc(100vw - 24px)) !important;
+        --game-chat-width: min(360px, calc(100vw - 24px));
         max-width: calc(100vw - 24px) !important;
         left: max(12px, env(safe-area-inset-left)) !important;
         bottom: max(12px, env(safe-area-inset-bottom)) !important;
@@ -2305,9 +2305,9 @@ body {
 
 @media (max-width: 640px) {
     #game-page-canvas .game-chat-module {
-        width: calc(100vw - 20px) !important;
+        --game-chat-width: calc(100vw - 20px);
+        --game-chat-height: min(42vh, 280px);
         max-width: calc(100vw - 20px) !important;
-        height: min(42vh, 280px) !important;
     }
 }
 
