@@ -431,6 +431,29 @@ body.portal-guest-mode #portal-mobile-commander-block {
     display: none !important;
 }
 
+.portal-mobile-guest-login-block {
+    display: none !important;
+    flex-direction: column !important;
+    flex-shrink: 0 !important;
+    width: 100% !important;
+}
+
+body.portal-guest-mode #portal-mobile-guest-login-block {
+    display: flex !important;
+}
+
+.portal-mobile-guest-login-trigger {
+    cursor: pointer !important;
+}
+
+.portal-mobile-guest-login-icon {
+    object-fit: contain !important;
+    padding: 5px !important;
+    box-sizing: border-box !important;
+    background: rgba(8, 6, 4, 0.55) !important;
+    border-radius: 50% !important;
+}
+
 .nav-commander-membership-badge-row {
     padding-left: 0 !important;
     flex-wrap: nowrap !important;
@@ -865,6 +888,20 @@ body.portal-guest-mode .portal-mobile-nav-page-item[data-portal-view="chronicles
 }
 
 .metrics-auth-action-btn[hidden] {
+    display: none !important;
+}
+
+@media (max-width: 1024px) {
+    .metrics-auth-action-btn {
+        display: none !important;
+    }
+
+    .metric-capsule-auth-build-column .metric-auth-build-stack {
+        gap: 0 !important;
+    }
+}
+
+body.portal-guest-mode #portal-mobile-nav-auth-btn {
     display: none !important;
 }
 

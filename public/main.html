@@ -15,8 +15,8 @@
     <!-- Block 2: Page Title & Stylesheet Bridge -->
     <title>Royal Armies - An MMOHFT Medieval-Fantasy Strategy Game</title>
     <link rel="stylesheet" href="style.css?v=mailbox-read-popup-wide-2">
-    <link rel="stylesheet" href="style2.css?v=early-access-metrics-login-1">
-    <link rel="stylesheet" href="mobile-responsive.css?v=early-access-metrics-login-1">
+    <link rel="stylesheet" href="style2.css?v=metrics-only-auth-login-1">
+    <link rel="stylesheet" href="mobile-responsive.css?v=metrics-only-auth-login-1">
     <link rel="stylesheet" href="dev-page-navigator.css">
     <link rel="stylesheet" href="custom-cursor.css?v=scrollbar-cursor-1">
 </head>
@@ -112,6 +112,14 @@
                             <button type="button" class="portal-commander-new-messages-bar" id="portal-mobile-new-messages-bar" hidden aria-live="polite" aria-label="You have new messages. Open messages.">
                                 <span class="portal-commander-new-messages-bar-text">You have new messages</span>
                             </button>
+                        <div class="portal-mobile-guest-login-block" id="portal-mobile-guest-login-block" hidden>
+                            <button type="button" class="portal-mobile-commander-trigger portal-mobile-guest-login-trigger" id="portal-mobile-guest-login-btn" onclick="portalMobileNavAuthAction(event)" aria-label="Log in to Age Portal">
+                                <img class="portal-mobile-commander-avatar portal-mobile-guest-login-icon" id="portal-mobile-guest-login-icon" src="images/profileicon.png" alt="" aria-hidden="true">
+                                <span class="portal-mobile-commander-identity">
+                                    <strong class="portal-mobile-commander-name" id="portal-mobile-guest-login-label">Log In</strong>
+                                </span>
+                            </button>
+                        </div>
                         <div class="portal-mobile-commander-block" id="portal-mobile-commander-block">
                             <button type="button" class="portal-mobile-commander-trigger" id="portal-mobile-commander-toggle" aria-expanded="false" aria-controls="portal-mobile-commander-submenu" onclick="togglePortalMobileCommanderSubmenu(event)">
                                 <img class="portal-mobile-commander-avatar" id="portal-mobile-nav-avatar" src="images/avatars/commanderprofile01.png" alt="">
@@ -161,12 +169,6 @@
                 <div class="nav-tab" data-portal-view="roadmap" onclick="switchMainPortalView('roadmap', event)">Roadmap</div>
             </div>
 
-            <div class="nav-right-logout-action-dock portal-desktop-nav-only">
-                <button type="button" id="header-auth-action-btn" class="header-logout-btn" onclick="handleHeaderAuthAction()" aria-label="Log in to Age Portal">
-                    <img id="header-auth-action-icon" src="images/profileicon.png" alt="" class="header-logout-icon" aria-hidden="true">
-                    <span id="header-auth-action-label" class="header-logout-label">Log In</span>
-                </button>
-            </div>
         </nav>
         </div>
         </div>
@@ -619,10 +621,10 @@
     <script src="portal-alerts.js?v=nexus-rift-acronyms-1"></script>
     <script src="rift-error-display.js?v=nexus-rift-acronyms-1"></script>
     <script src="rank-data.js"></script>
-    <script src="script.js?v=early-access-metrics-login-1"></script>
+    <script src="script.js?v=metrics-only-auth-login-1"></script>
     <script src="commander-hub.js?v=save-confirmation-toast-fix-1"></script>
     <script src="maintenance-alert.js?v=maintenance-always-on-1"></script>
-    <script src="script2.js?v=how-did-you-get-here-1"></script>
+    <script src="script2.js?v=metrics-only-auth-login-1"></script>
     <script src="custom-cursor.js?v=scrollbar-cursor-1"></script>
 
 </body>

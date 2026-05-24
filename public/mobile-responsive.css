@@ -1149,6 +1149,17 @@ body {
         font-size: 0.72rem !important;
     }
 
+    .portal-mobile-guest-login-block {
+        display: none !important;
+        flex-direction: column !important;
+        flex-shrink: 0 !important;
+        width: 100% !important;
+    }
+
+    body.portal-guest-mode #portal-mobile-guest-login-block {
+        display: flex !important;
+    }
+
     .portal-mobile-commander-block {
         display: flex !important;
         flex-direction: column !important;

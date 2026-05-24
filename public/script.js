@@ -303,25 +303,29 @@ function isPortalUserAuthenticated() {
 function refreshMainPortalAuthChrome() {
     if (!isMainPortalHub()) return;
 
-    const label = document.getElementById('header-auth-action-label');
-    const icon = document.getElementById('header-auth-action-icon');
-    const btn = document.getElementById('header-auth-action-btn');
     const metricsLabel = document.getElementById('metrics-auth-action-label');
     const metricsIcon = document.getElementById('metrics-auth-action-icon');
     const metricsBtn = document.getElementById('metrics-auth-action-btn');
+    const mobileNavAuthBtn = document.getElementById('portal-mobile-nav-auth-btn');
+    const mobileNavAuthLabel = document.getElementById('portal-mobile-nav-auth-label');
+    const mobileNavAuthIcon = document.getElementById('portal-mobile-nav-auth-icon');
     const authed = isPortalUserAuthenticated();
+    const authLabelText = authed ? 'Log Out' : 'Log In';
+    const authIconSrc = authed ? 'images/logouticon.png' : 'images/profileicon.png';
+    const authAriaLabel = authed ? 'Log out of Age Portal' : 'Log in to Age Portal';
 
-    if (label) label.textContent = authed ? 'Log Out' : 'Log In';
-    if (icon) icon.src = authed ? 'images/logouticon.png' : 'images/profileicon.png';
-    if (btn) {
-        btn.setAttribute('aria-label', authed ? 'Log out of Age Portal' : 'Log in to Age Portal');
+    if (metricsLabel) metricsLabel.textContent = authLabelText;
+    if (metricsIcon) metricsIcon.src = authIconSrc;
+    if (metricsBtn) {
+        metricsBtn.hidden = false;
+        metricsBtn.setAttribute('aria-label', authAriaLabel);
     }
 
-    if (metricsLabel) metricsLabel.textContent = authed ? 'Log Out' : 'Log In';
-    if (metricsIcon) metricsIcon.src = authed ? 'images/logouticon.png' : 'images/profileicon.png';
-    if (metricsBtn) {
-        metricsBtn.hidden = authed;
-        metricsBtn.setAttribute('aria-label', authed ? 'Log out of Age Portal' : 'Log in to Age Portal');
+    if (mobileNavAuthLabel) mobileNavAuthLabel.textContent = authLabelText;
+    if (mobileNavAuthIcon) mobileNavAuthIcon.src = authIconSrc;
+    if (mobileNavAuthBtn) {
+        mobileNavAuthBtn.hidden = !authed;
+        mobileNavAuthBtn.setAttribute('aria-label', authAriaLabel);
     }
 
     if (typeof refreshLoggedUserTagDisplay === 'function') {

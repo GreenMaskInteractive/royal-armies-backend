@@ -228,11 +228,13 @@ function applyPortalGuestDeploymentChrome() {
     const guestCta = document.getElementById('portal-deployment-guest-cta');
     const accountLabel = document.querySelector('.nav-embedded-account-label');
     const mobileCommanderBlock = document.getElementById('portal-mobile-commander-block');
+    const mobileGuestLoginBlock = document.getElementById('portal-mobile-guest-login-block');
 
     if (memberBlock) memberBlock.hidden = !authed;
     if (guestCta) guestCta.hidden = authed;
     if (accountLabel) accountLabel.hidden = !authed;
     if (mobileCommanderBlock) mobileCommanderBlock.hidden = !authed;
+    if (mobileGuestLoginBlock) mobileGuestLoginBlock.hidden = authed;
 
     applyPortalDeploymentDeckPresentation();
 }
@@ -704,10 +706,11 @@ function syncPortalMobileNavIdentity() {
     const avatarMobile = document.getElementById('portal-mobile-nav-avatar');
     const nameDesktop = document.getElementById('logged-user-tag');
     const nameMobile = document.getElementById('portal-mobile-nav-username');
-    const authLabelDesktop = document.getElementById('header-auth-action-label');
-    const authIconDesktop = document.getElementById('header-auth-action-icon');
     const authLabelMobile = document.getElementById('portal-mobile-nav-auth-label');
     const authIconMobile = document.getElementById('portal-mobile-nav-auth-icon');
+    const authed = typeof isPortalUserAuthenticated === 'function' && isPortalUserAuthenticated();
+    const authLabelText = authed ? 'Log Out' : 'Log In';
+    const authIconSrc = authed ? 'images/logouticon.png' : 'images/profileicon.png';
 
     const fallbackAvatar = 'images/avatars/commanderprofile01.png';
     const avatarSrc = (avatarDesktop && avatarDesktop.src) ? avatarDesktop.src : fallbackAvatar;
@@ -716,12 +719,8 @@ function syncPortalMobileNavIdentity() {
     if (nameMobile && nameDesktop) {
         nameMobile.textContent = nameDesktop.textContent || '';
     }
-    if (authLabelMobile && authLabelDesktop) {
-        authLabelMobile.textContent = authLabelDesktop.textContent || 'Log In';
-    }
-    if (authIconMobile && authIconDesktop) {
-        authIconMobile.src = authIconDesktop.src || 'images/profileicon.png';
-    }
+    if (authLabelMobile) authLabelMobile.textContent = authLabelText;
+    if (authIconMobile) authIconMobile.src = authIconSrc;
 
     const membershipDesktop = document.getElementById('nav-commander-membership-badge-row');
     const membershipMobile = document.getElementById('portal-mobile-nav-membership-slot');
