@@ -118,6 +118,18 @@
         return true;
     }
 
+    async function notifyGameError(response, payload, fallbackTitle) {
+        if (typeof global.handleRoyalArmiesApiFailure === 'function') {
+            await global.handleRoyalArmiesApiFailure(response, payload, fallbackTitle || 'Game chat');
+            return;
+        }
+        if (typeof global.showRoyalArmiesError === 'function') {
+            await global.showRoyalArmiesError(payload, fallbackTitle || 'Game chat');
+            return;
+        }
+        console.warn(fallbackTitle || 'Game chat error:', payload?.message || payload);
+    }
+
     async function fetchGameChatFromServer() {
         const username = resolveUsername();
         if (!username) return false;
@@ -127,11 +139,17 @@
                 resolveApiUrl(`/api/portal/game-chat?username=${encodeURIComponent(username)}`),
                 { cache: 'no-store', credentials: 'include' }
             );
-            if (!response.ok) return false;
-            const payload = await response.json();
+            const payload = await response.json().catch(() => ({}));
+            if (!response.ok || payload.status === 'error') {
+                await notifyGameError(response, payload, 'Game chat');
+                return false;
+            }
             return applyServerPayload(payload);
         } catch (err) {
             console.warn('Game chat sync failed:', err);
+            if (typeof global.showRoyalArmiesNetworkError === 'function') {
+                await global.showRoyalArmiesNetworkError('Game chat');
+            }
             return false;
         }
     }
@@ -150,12 +168,15 @@
             });
             const payload = await response.json().catch(() => ({}));
             if (!response.ok || payload.status !== 'ok') {
-                console.warn('Game chat post failed:', payload.message || response.status);
+                await notifyGameError(response, payload, 'Game chat');
                 return false;
             }
             return applyServerPayload(payload);
         } catch (err) {
             console.warn('Game chat post error:', err);
+            if (typeof global.showRoyalArmiesNetworkError === 'function') {
+                await global.showRoyalArmiesNetworkError('Game chat');
+            }
             return false;
         }
     }
@@ -172,11 +193,18 @@
                 cache: 'no-store',
                 body: JSON.stringify({ username, text })
             });
-            if (!response.ok) return false;
+            const payload = await response.json().catch(() => ({}));
+            if (!response.ok || payload.status !== 'ok') {
+                await notifyGameError(response, payload, 'System event');
+                return false;
+            }
             await fetchGameChatFromServer();
             return true;
         } catch (err) {
             console.warn('Game chat system event failed:', err);
+            if (typeof global.showRoyalArmiesNetworkError === 'function') {
+                await global.showRoyalArmiesNetworkError('System event');
+            }
             return false;
         }
     }
@@ -459,9 +487,13 @@
         if (!text) return;
 
         if (sendBtn) sendBtn.disabled = true;
-        const ok = await postGameChatMessage(activeTab, text);
-        if (ok && input) input.value = '';
-        updateComposeState();
+        try {
+            const ok = await postGameChatMessage(activeTab, text);
+            if (ok && input) input.value = '';
+            updateComposeState();
+        } finally {
+            if (sendBtn) sendBtn.disabled = false;
+        }
     }
 
     function bindGameChatControls() {

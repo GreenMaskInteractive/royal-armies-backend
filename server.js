@@ -14,6 +14,8 @@
 const path = require('path');
 const low = require('lowdb');
 const FileSync = require('lowdb/adapters/FileSync');
+const { sendApiError, sendStoreError, storeErrorHttpStatus } = require('./server-errors');
+const { listErrorCodes } = require('./error-codes');
 
 /* Block 2: Environment Path Resolution */
 const isProduction = process.env.RENDER === 'true';
@@ -318,7 +320,7 @@ function appendCommunityChatMessageToStore(store, payload) {
     const text = String(payload.text || '').trim().slice(0, COMMUNITY_CHAT_TEXT_MAX);
 
     if (!sender || !text) {
-        return { error: 'Sender and message text are required.' };
+        return { errorCode: 'CHAT_SENDER_TEXT_REQUIRED' };
     }
 
     const poster = String(payload.posterUsername || payload.username || '').trim().toLowerCase();
@@ -326,18 +328,18 @@ function appendCommunityChatMessageToStore(store, payload) {
     const isBot = senderKey === ROYAL_GUARD_BOT_SENDER.toLowerCase();
 
     if (isBot && payload.systemBot !== true) {
-        return { error: 'System bot messages require authorization.' };
+        return { errorCode: 'CHAT_BOT_AUTH_REQUIRED' };
     }
 
     if (!isBot && poster && poster !== senderKey) {
-        return { error: 'Sender must match the posting commander.' };
+        return { errorCode: 'CHAT_SENDER_MISMATCH' };
     }
 
     const replyTo = normalizeCommunityChatReplyTo(payload.replyTo);
     if (replyTo && !isBot) {
         const replySenderKey = String(replyTo.sender || '').trim().toLowerCase();
         if (replySenderKey && replySenderKey === senderKey) {
-            return { error: 'You cannot reply to your own message.' };
+            return { errorCode: 'CHAT_SELF_REPLY' };
         }
     }
 
@@ -364,13 +366,13 @@ function appendCommunityChatMessageToStore(store, payload) {
 function updateCommunityChatMessageInStore(store, messageId, posterUsername, patch) {
     const id = Number(messageId);
     if (!Number.isFinite(id)) {
-        return { error: 'Invalid message id.' };
+        return { errorCode: 'CHAT_INVALID_MESSAGE_ID' };
     }
 
     const poster = String(posterUsername || '').trim().toLowerCase();
     const text = String(patch.text || '').trim().slice(0, COMMUNITY_CHAT_TEXT_MAX);
     if (!text) {
-        return { error: 'Message text cannot be empty.' };
+        return { errorCode: 'CHAT_EMPTY_MESSAGE' };
     }
 
     for (const channelId of COMMUNITY_CHAT_CHANNEL_IDS) {
@@ -380,7 +382,7 @@ function updateCommunityChatMessageInStore(store, messageId, posterUsername, pat
 
         const row = list[index];
         if (String(row.sender || '').trim().toLowerCase() !== poster) {
-            return { error: 'You can only edit your own messages.' };
+            return { errorCode: 'CHAT_EDIT_OWN_ONLY' };
         }
 
         const editedAt = new Date().toISOString();
@@ -397,7 +399,7 @@ function updateCommunityChatMessageInStore(store, messageId, posterUsername, pat
         return { entry: row, channelMessages: list };
     }
 
-    return { error: 'Message not found.' };
+    return { errorCode: 'CHAT_MESSAGE_NOT_FOUND' };
 }
 
 function isGameChatChannelId(channelId) {
@@ -471,7 +473,7 @@ function trimGameChatChannelToCap(store, channelId) {
 function appendGameChatSystemEventToStore(store, text) {
     const messageText = String(text || '').trim().slice(0, GAME_CHAT_TEXT_MAX);
     if (!messageText) {
-        return { error: 'System event text is required.' };
+        return { errorCode: 'GAME_SYSTEM_TEXT_REQUIRED' };
     }
 
     const entry = sanitizeGameChatMessageEntry({
@@ -500,28 +502,28 @@ function ensureGameChatSeedMessages(store) {
 function appendGameChatMessageToStore(store, payload, commander) {
     const channel = isGameChatChannelId(payload.channel) ? payload.channel : 'global';
     if (channel === 'system') {
-        return { error: 'System channel is read-only.' };
+        return { errorCode: 'GAME_SYSTEM_READ_ONLY' };
     }
 
     const sender = String(payload.sender || commander?.username || '').trim().slice(0, 80);
     const text = String(payload.text || '').trim().slice(0, GAME_CHAT_TEXT_MAX);
     if (!sender || !text) {
-        return { error: 'Sender and message text are required.' };
+        return { errorCode: 'CHAT_SENDER_TEXT_REQUIRED' };
     }
 
     const poster = String(payload.posterUsername || payload.username || commander?.username || '').trim().toLowerCase();
     if (poster && poster !== sender.toLowerCase()) {
-        return { error: 'Sender must match the posting commander.' };
+        return { errorCode: 'CHAT_SENDER_MISMATCH' };
     }
 
     const gameNation = String(commander?.gameNation || '').trim();
     const allianceId = String(commander?.allianceId || '').trim();
 
     if (channel === 'country' && !gameNation) {
-        return { error: 'Nation assignment required before using country chat.' };
+        return { errorCode: 'GAME_NATION_REQUIRED' };
     }
     if (channel === 'alliance' && !allianceId) {
-        return { error: 'Alliance chat unlocks once your nation forms an alliance.' };
+        return { errorCode: 'GAME_ALLIANCE_REQUIRED' };
     }
 
     const entry = sanitizeGameChatMessageEntry({
@@ -834,7 +836,7 @@ function serializeMailboxDraftForClient(row) {
 function getMailboxPayloadForUser(username) {
     const owner = resolveLedgerCommanderUsername(username);
     if (!owner) {
-        return { status: 'error', message: 'Unknown commander account.' };
+        return { status: 'error', code: 'RA-GEN-005', message: 'Unknown commander account.' };
     }
 
     ensureWelcomeSystemMessageForCommander(owner);
@@ -1547,10 +1549,7 @@ app.get('/api/portal/maintenance-alert', (req, res) => {
 app.post('/api/portal/maintenance-alert', (req, res) => {
     const devKey = String(req.headers['x-dev-key'] || req.body?.devKey || '').trim();
     if (!devKey || devKey !== MAINTENANCE_ALERT_DEV_KEY) {
-        return res.status(403).json({
-            status: 'error',
-            message: 'Invalid or missing developer key (X-Dev-Key header).'
-        });
+        return sendApiError(res, 'RA-AUTH-011');
     }
 
     const payload = setPortalMaintenanceAlert(req.body || {});
@@ -1664,10 +1663,7 @@ app.post('/register', async (req, res) => {
     const password = String(req.body?.password || '');
 
     if (!username || !email || !password) {
-        return res.status(400).json({
-            status: 'error',
-            message: 'Username, email, and password are required.'
-        });
+        return sendApiError(res, 'RA-AUTH-005');
     }
 
     const commanders = db.get('commanders').value() || [];
@@ -1678,18 +1674,12 @@ app.post('/register', async (req, res) => {
 
     if (emailTaken) {
         console.log(`[NEXUS] Registration Denied: ${email} already exists.`);
-        return res.status(400).json({ 
-            status: 'error',
-            message: 'This E-Mail is already registered. Contact accountsdept@royalarmies.com!'
-        });
+        return sendApiError(res, 'RA-AUTH-006');
     }
 
     if (usernameTaken) {
         console.log(`[NEXUS] Registration Denied: ${username} already exists.`);
-        return res.status(400).json({
-            status: 'error',
-            message: 'This username is already taken. Choose a different commander name.'
-        });
+        return sendApiError(res, 'RA-AUTH-007');
     }
 
     try {
@@ -1743,7 +1733,7 @@ app.post('/register', async (req, res) => {
         });
     } catch (error) {
         console.error('❌ NEXUS Critical Error:', error);
-        res.status(500).json({ status: 'error', message: 'Could not save registration. Please try again.' });
+        return sendApiError(res, 'RA-AUTH-008', { http: 500 });
     }
 });
 
@@ -1753,27 +1743,18 @@ app.post('/api/login', async (req, res) => {
     const password = String(req.body?.password || '');
 
     if (!identifier || !password) {
-        return res.status(400).json({
-            status: 'error',
-            message: 'Username and password are required.'
-        });
+        return sendApiError(res, 'RA-AUTH-001');
     }
 
     const commander = findCommanderByUsernameOrEmail(identifier);
     if (!commander || !commander.password) {
-        return res.status(401).json({
-            status: 'error',
-            message: 'No registered commander found with those credentials.'
-        });
+        return sendApiError(res, 'RA-AUTH-002');
     }
 
     try {
         const passwordMatches = await bcrypt.compare(password, commander.password);
         if (!passwordMatches) {
-            return res.status(401).json({
-                status: 'error',
-                message: 'Invalid password for that commander account.'
-            });
+            return sendApiError(res, 'RA-AUTH-003');
         }
 
         const rememberMe = req.body?.rememberMe !== false;
@@ -1807,7 +1788,7 @@ app.post('/api/login', async (req, res) => {
         });
     } catch (error) {
         console.error('[NEXUS] Login compare failed:', error);
-        res.status(500).json({ status: 'error', message: 'Login could not be completed.' });
+        return sendApiError(res, 'RA-AUTH-004', { http: 500 });
     }
 });
 
@@ -1825,12 +1806,12 @@ app.get('/api/auth/session', (req, res) => {
 /** Local port 3000 only — bootstrap session as caleb_admin for full portal QA. */
 app.post('/api/auth/dev-session', (req, res) => {
     if (isProduction) {
-        return res.status(403).json({ status: 'error', message: 'Not available in production.' });
+        return sendApiError(res, 'RA-AUTH-009');
     }
 
     const host = String(req.hostname || '').toLowerCase();
     if (host !== 'localhost' && host !== '127.0.0.1' && host !== '[::1]') {
-        return res.status(403).json({ status: 'error', message: 'Local development only.' });
+        return sendApiError(res, 'RA-AUTH-010');
     }
 
     const mode = String(req.body?.mode || 'owner').toLowerCase();
@@ -1876,7 +1857,7 @@ app.post('/request-reset', async (req, res) => {
         res.status(200).json({ status: 'success' });
     } catch (err) {
         console.error('[NEXUS] Password reset email failed:', err);
-        res.status(500).json({ status: 'error' });
+        return sendApiError(res, 'RA-ACCT-002', { http: 500 });
     }
 });
 
@@ -1930,12 +1911,12 @@ app.get('/verify', (req, res) => {
 app.get('/api/portal/account/security-profile', (req, res) => {
     const username = normalizeLedgerUsername(req.query?.username);
     if (!username) {
-        return res.status(400).json({ status: 'error', message: 'Username is required.' });
+        return sendApiError(res, 'RA-GEN-006');
     }
 
     const commander = findCommanderByUsername(username);
     if (!commander) {
-        return res.status(404).json({ status: 'error', message: 'Commander not found.' });
+        return sendApiError(res, 'RA-GEN-004');
     }
 
     res.status(200).json({
@@ -1948,12 +1929,12 @@ app.get('/api/portal/account/security-profile', (req, res) => {
 app.get('/api/portal/commanders/:username/public-profile', (req, res) => {
     const username = resolveLedgerCommanderUsername(req.params?.username || '');
     if (!username || isHiddenRegistrationUsername(username)) {
-        return res.status(404).json({ status: 'error', message: 'Commander not found.' });
+        return sendApiError(res, 'RA-GEN-004');
     }
 
     const commander = findCommanderByUsername(username);
     if (!commander) {
-        return res.status(404).json({ status: 'error', message: 'Commander not found.' });
+        return sendApiError(res, 'RA-GEN-004');
     }
 
     const dossier = serializeCommanderDossierForClient(commander);
@@ -1969,12 +1950,12 @@ app.get('/api/portal/commanders/:username/public-profile', (req, res) => {
 app.get('/api/portal/account/profile', (req, res) => {
     const username = resolveLedgerCommanderUsername(req.query?.username || '');
     if (!username) {
-        return res.status(400).json({ status: 'error', message: 'Valid commander account required.' });
+        return sendApiError(res, 'RA-GEN-003');
     }
 
     const commander = findCommanderByUsername(username);
     if (!commander) {
-        return res.status(404).json({ status: 'error', message: 'Commander not found.' });
+        return sendApiError(res, 'RA-GEN-004');
     }
 
     res.status(200).json(serializeCommanderProfileForClient(commander));
@@ -1983,12 +1964,12 @@ app.get('/api/portal/account/profile', (req, res) => {
 app.patch('/api/portal/account/profile', (req, res) => {
     const username = resolveLedgerCommanderUsername(req.body?.username || '');
     if (!username) {
-        return res.status(400).json({ status: 'error', message: 'Valid commander account required.' });
+        return sendApiError(res, 'RA-GEN-003');
     }
 
     const commander = findCommanderByUsername(username);
     if (!commander) {
-        return res.status(404).json({ status: 'error', message: 'Commander not found.' });
+        return sendApiError(res, 'RA-GEN-004');
     }
 
     const patch = buildCommanderDossierPatch({
@@ -1997,7 +1978,7 @@ app.patch('/api/portal/account/profile', (req, res) => {
         avatarUrl: req.body?.avatarUrl
     });
     if (!Object.keys(patch).length) {
-        return res.status(400).json({ status: 'error', message: 'No profile fields to update.' });
+        return sendApiError(res, 'RA-ACCT-008');
     }
 
     db.get('commanders')
@@ -2012,12 +1993,12 @@ app.patch('/api/portal/account/profile', (req, res) => {
 app.get('/api/portal/account/dossier', (req, res) => {
     const username = resolveLedgerCommanderUsername(req.query?.username || '');
     if (!username) {
-        return res.status(400).json({ status: 'error', message: 'Valid commander account required.' });
+        return sendApiError(res, 'RA-GEN-003');
     }
 
     const commander = findCommanderByUsername(username);
     if (!commander) {
-        return res.status(404).json({ status: 'error', message: 'Commander not found.' });
+        return sendApiError(res, 'RA-GEN-004');
     }
 
     res.status(200).json(serializeCommanderDossierForClient(commander));
@@ -2026,17 +2007,17 @@ app.get('/api/portal/account/dossier', (req, res) => {
 app.patch('/api/portal/account/dossier', (req, res) => {
     const username = resolveLedgerCommanderUsername(req.body?.username || '');
     if (!username) {
-        return res.status(400).json({ status: 'error', message: 'Valid commander account required.' });
+        return sendApiError(res, 'RA-GEN-003');
     }
 
     const commander = findCommanderByUsername(username);
     if (!commander) {
-        return res.status(404).json({ status: 'error', message: 'Commander not found.' });
+        return sendApiError(res, 'RA-GEN-004');
     }
 
     const patch = buildCommanderDossierPatch(req.body?.patch || req.body);
     if (!Object.keys(patch).length) {
-        return res.status(400).json({ status: 'error', message: 'No dossier fields to update.' });
+        return sendApiError(res, 'RA-ACCT-009');
     }
 
     db.get('commanders')
@@ -2053,10 +2034,7 @@ app.post('/api/portal/account/request-password-reset', async (req, res) => {
     const email = normalizeLedgerEmail(req.body?.email);
 
     if (!username || !email) {
-        return res.status(400).json({
-            status: 'error',
-            message: 'Username and signup email are required.'
-        });
+        return sendApiError(res, 'RA-ACCT-001');
     }
 
     const commander = findCommanderByUsername(username);
@@ -2085,10 +2063,7 @@ app.post('/api/portal/account/request-password-reset', async (req, res) => {
         });
     } catch (err) {
         console.error('[NEXUS] Portal password reset email failed:', err);
-        res.status(500).json({
-            status: 'error',
-            message: 'Could not send the reset email. Try again shortly.'
-        });
+        return sendApiError(res, 'RA-ACCT-002', { http: 500 });
     }
 });
 
@@ -2098,34 +2073,22 @@ app.post('/api/portal/account/request-email-change', async (req, res) => {
     const newEmail = normalizeLedgerEmail(req.body?.newEmail);
 
     if (!username || !password || !newEmail) {
-        return res.status(400).json({
-            status: 'error',
-            message: 'Username, password, and new email are required.'
-        });
+        return sendApiError(res, 'RA-ACCT-003');
     }
 
     const commander = findCommanderByUsername(username);
     if (!commander || !commander.password) {
-        return res.status(401).json({
-            status: 'error',
-            message: 'Invalid password or commander account.'
-        });
+        return sendApiError(res, 'RA-ACCT-004');
     }
 
     try {
         const passwordMatches = await bcrypt.compare(password, commander.password);
         if (!passwordMatches) {
-            return res.status(401).json({
-                status: 'error',
-                message: 'Invalid password or commander account.'
-            });
+            return sendApiError(res, 'RA-ACCT-004');
         }
 
         if (normalizeLedgerEmail(commander.email) === newEmail) {
-            return res.status(400).json({
-                status: 'error',
-                message: 'That email is already on your account.'
-            });
+            return sendApiError(res, 'RA-ACCT-005');
         }
 
         const commanders = db.get('commanders').value() || [];
@@ -2138,10 +2101,7 @@ app.post('/api/portal/account/request-email-change', async (req, res) => {
         });
 
         if (emailTaken) {
-            return res.status(400).json({
-                status: 'error',
-                message: 'That email is already registered to another commander.'
-            });
+            return sendApiError(res, 'RA-ACCT-006');
         }
 
         const emailChangeToken = crypto.randomBytes(16).toString('hex');
@@ -2163,10 +2123,7 @@ app.post('/api/portal/account/request-email-change', async (req, res) => {
         });
     } catch (err) {
         console.error('[NEXUS] Email change request failed:', err);
-        res.status(500).json({
-            status: 'error',
-            message: 'Could not send the confirmation email. Try again shortly.'
-        });
+        return sendApiError(res, 'RA-ACCT-007', { http: 500 });
     }
 });
 
@@ -2231,6 +2188,10 @@ app.get('/verify-email-change', (req, res) => {
 });
 
 /* Block 13: Age Portal live metrics & presence */
+app.get('/api/portal/error-codes', (req, res) => {
+    res.json({ status: 'ok', codes: listErrorCodes() });
+});
+
 app.get('/api/portal/metrics', (req, res) => {
     res.json(getPortalLiveMetricsPayload());
 });
@@ -2263,7 +2224,7 @@ app.get('/api/portal/mailbox-recipient-roster', (req, res) => {
 app.get('/api/portal/mailbox', (req, res) => {
     const username = normalizeLedgerUsername(req.query?.username || '');
     if (!username) {
-        return res.status(400).json({ status: 'error', message: 'Username required.' });
+        return sendApiError(res, 'RA-GEN-002');
     }
 
     const payload = getMailboxPayloadForUser(username);
@@ -2281,10 +2242,10 @@ app.post('/api/portal/mailbox/send', (req, res) => {
     const body = String(req.body?.body || '').trim().slice(0, MAILBOX_BODY_MAX);
 
     if (!sender) {
-        return res.status(400).json({ status: 'error', message: 'Valid sender commander required.' });
+        return sendApiError(res, 'RA-MAIL-001');
     }
     if (!topic || !body) {
-        return res.status(400).json({ status: 'error', message: 'Subject and message body are required.' });
+        return sendApiError(res, 'RA-MAIL-002');
     }
 
     const recipients = [];
@@ -2300,7 +2261,7 @@ app.post('/api/portal/mailbox/send', (req, res) => {
     }
 
     if (!recipients.length) {
-        return res.status(400).json({ status: 'error', message: 'Choose at least one valid recipient.' });
+        return sendApiError(res, 'RA-MAIL-003');
     }
 
     const sentAt = new Date().toISOString();
@@ -2356,10 +2317,10 @@ app.post('/api/portal/mailbox/inject', (req, res) => {
     const systemMessageKey = String(req.body?.systemMessageKey || '').trim().slice(0, 80);
 
     if (!to) {
-        return res.status(400).json({ status: 'error', message: 'Valid recipient commander required.' });
+        return sendApiError(res, 'RA-MAIL-004');
     }
     if (channel !== 'inbox' && channel !== 'system') {
-        return res.status(400).json({ status: 'error', message: 'Channel must be inbox or system.' });
+        return sendApiError(res, 'RA-MAIL-005');
     }
 
     const from = channel === 'system'
@@ -2367,7 +2328,7 @@ app.post('/api/portal/mailbox/inject', (req, res) => {
         : String(req.body?.from || '').trim().slice(0, 80);
 
     if (channel === 'inbox' && !from) {
-        return res.status(400).json({ status: 'error', message: 'Sender name required.' });
+        return sendApiError(res, 'RA-MAIL-006');
     }
 
     const messages = getMailboxMessageStore();
@@ -2412,10 +2373,10 @@ app.patch('/api/portal/mailbox/:messageId/read', (req, res) => {
     const messageId = Number(req.params.messageId);
 
     if (!username) {
-        return res.status(400).json({ status: 'error', message: 'Valid commander username required.' });
+        return sendApiError(res, 'RA-GEN-007');
     }
     if (!Number.isFinite(messageId)) {
-        return res.status(400).json({ status: 'error', message: 'Invalid message id.' });
+        return sendApiError(res, 'RA-CHAT-005');
     }
 
     const ownerLower = username.toLowerCase();
@@ -2425,7 +2386,7 @@ app.patch('/api/portal/mailbox/:messageId/read', (req, res) => {
     );
 
     if (!hit) {
-        return res.status(404).json({ status: 'error', message: 'Message not found for this commander.' });
+        return sendApiError(res, 'RA-MAIL-008');
     }
 
     hit.read = true;
@@ -2440,10 +2401,10 @@ app.delete('/api/portal/mailbox/:messageId', (req, res) => {
     const channel = String(req.body?.channel || req.query?.channel || 'inbox').toLowerCase();
 
     if (!username) {
-        return res.status(400).json({ status: 'error', message: 'Valid commander username required.' });
+        return sendApiError(res, 'RA-GEN-007');
     }
     if (!Number.isFinite(messageId)) {
-        return res.status(400).json({ status: 'error', message: 'Invalid message id.' });
+        return sendApiError(res, 'RA-CHAT-005');
     }
 
     const ownerLower = username.toLowerCase();
@@ -2462,7 +2423,7 @@ app.delete('/api/portal/mailbox/:messageId', (req, res) => {
     });
 
     if (nextMessages.length === messages.length) {
-        return res.status(404).json({ status: 'error', message: 'Message not found for this commander.' });
+        return sendApiError(res, 'RA-MAIL-008');
     }
 
     writeMailboxMessageStore(nextMessages);
@@ -2476,10 +2437,10 @@ app.post('/api/portal/mailbox/purge', (req, res) => {
     const ids = new Set(idsRaw.map((id) => Number(id)).filter((id) => Number.isFinite(id)));
 
     if (!username) {
-        return res.status(400).json({ status: 'error', message: 'Valid commander username required.' });
+        return sendApiError(res, 'RA-GEN-007');
     }
     if (!ids.size) {
-        return res.status(400).json({ status: 'error', message: 'No message ids supplied.' });
+        return sendApiError(res, 'RA-MAIL-009');
     }
 
     const ownerLower = username.toLowerCase();
@@ -2511,7 +2472,7 @@ app.post('/api/portal/mailbox/drafts', (req, res) => {
     const draftId = Number(req.body?.id);
 
     if (!owner) {
-        return res.status(400).json({ status: 'error', message: 'Valid commander account required.' });
+        return sendApiError(res, 'RA-GEN-003');
     }
 
     const recipients = [];
@@ -2563,10 +2524,10 @@ app.delete('/api/portal/mailbox/drafts/:draftId', (req, res) => {
     const draftId = Number(req.params.draftId);
 
     if (!owner) {
-        return res.status(400).json({ status: 'error', message: 'Valid commander account required.' });
+        return sendApiError(res, 'RA-GEN-003');
     }
     if (!Number.isFinite(draftId)) {
-        return res.status(400).json({ status: 'error', message: 'Invalid draft id.' });
+        return sendApiError(res, 'RA-MAIL-010');
     }
 
     const ownerLower = owner.toLowerCase();
@@ -2577,7 +2538,7 @@ app.delete('/api/portal/mailbox/drafts/:draftId', (req, res) => {
     });
 
     if (nextDrafts.length === drafts.length) {
-        return res.status(404).json({ status: 'error', message: 'Draft not found for this commander.' });
+        return sendApiError(res, 'RA-MAIL-011');
     }
 
     writeMailboxDraftStore(nextDrafts);
@@ -2623,7 +2584,7 @@ app.get('/api/portal/community-chat', (req, res) => {
 app.post('/api/portal/community-chat/messages', (req, res) => {
     const posterUsername = resolveLedgerCommanderUsername(req.body?.username || req.body?.posterUsername || '');
     if (!posterUsername) {
-        return res.status(400).json({ status: 'error', message: 'Username required.' });
+        return sendApiError(res, 'RA-GEN-002');
     }
 
     let store = readCommunityChatStore();
@@ -2634,8 +2595,8 @@ app.post('/api/portal/community-chat/messages', (req, res) => {
         posterUsername
     });
 
-    if (result.error) {
-        return res.status(400).json({ status: 'error', message: result.error });
+    if (result.errorCode || result.error) {
+        return sendStoreError(res, result);
     }
 
     store = writeCommunityChatStore(store);
@@ -2652,7 +2613,7 @@ app.post('/api/portal/community-chat/messages', (req, res) => {
 app.patch('/api/portal/community-chat/messages/:messageId', (req, res) => {
     const posterUsername = resolveLedgerCommanderUsername(req.body?.username || '');
     if (!posterUsername) {
-        return res.status(400).json({ status: 'error', message: 'Username required.' });
+        return sendApiError(res, 'RA-GEN-002');
     }
 
     let store = readCommunityChatStore();
@@ -2660,11 +2621,8 @@ app.patch('/api/portal/community-chat/messages/:messageId', (req, res) => {
 
     const result = updateCommunityChatMessageInStore(store, req.params.messageId, posterUsername, req.body || {});
 
-    if (result.error) {
-        return res.status(result.error === 'Message not found.' ? 404 : 403).json({
-            status: 'error',
-            message: result.error
-        });
+    if (result.errorCode || result.error) {
+        return sendStoreError(res, result, { http: storeErrorHttpStatus(result, 400) });
     }
 
     store = writeCommunityChatStore(store);
@@ -2681,7 +2639,7 @@ app.patch('/api/portal/community-chat/messages/:messageId', (req, res) => {
 app.get('/api/portal/community-chat/archive', (req, res) => {
     const requester = resolveLedgerCommanderUsername(req.query?.username || '');
     if (!isMailboxRecipientRosterAdmin(requester)) {
-        return res.status(403).json({ status: 'error', message: 'Owner access required for chat archives.' });
+        return sendApiError(res, 'RA-CHAT-009');
     }
 
     let store = readCommunityChatStore();
@@ -2710,12 +2668,12 @@ app.get('/api/portal/community-chat/archive', (req, res) => {
 app.get('/api/portal/game-chat', (req, res) => {
     const username = resolveLedgerCommanderUsername(req.query?.username || '');
     if (!username) {
-        return res.status(400).json({ status: 'error', message: 'Username required.' });
+        return sendApiError(res, 'RA-GEN-002');
     }
 
     const commander = db.get('commanders').find({ username }).value();
     if (!commander) {
-        return res.status(404).json({ status: 'error', message: 'Commander not found.' });
+        return sendApiError(res, 'RA-GEN-004');
     }
 
     let gameStore = readGameChatStore();
@@ -2742,12 +2700,12 @@ app.get('/api/portal/game-chat', (req, res) => {
 app.post('/api/portal/game-chat/messages', (req, res) => {
     const posterUsername = resolveLedgerCommanderUsername(req.body?.username || req.body?.posterUsername || '');
     if (!posterUsername) {
-        return res.status(400).json({ status: 'error', message: 'Username required.' });
+        return sendApiError(res, 'RA-GEN-002');
     }
 
     const commander = db.get('commanders').find({ username: posterUsername }).value();
     if (!commander) {
-        return res.status(404).json({ status: 'error', message: 'Commander not found.' });
+        return sendApiError(res, 'RA-GEN-004');
     }
 
     let store = readGameChatStore();
@@ -2759,8 +2717,8 @@ app.post('/api/portal/game-chat/messages', (req, res) => {
         sender: posterUsername
     }, commander);
 
-    if (result.error) {
-        return res.status(400).json({ status: 'error', message: result.error });
+    if (result.errorCode || result.error) {
+        return sendStoreError(res, result);
     }
 
     store = writeGameChatStore(store);
@@ -2785,13 +2743,13 @@ app.post('/api/portal/game-chat/messages', (req, res) => {
 app.post('/api/portal/game-chat/system-events', (req, res) => {
     const requester = resolveLedgerCommanderUsername(req.body?.username || '');
     if (!requester || !isMailboxRecipientRosterAdmin(requester)) {
-        return res.status(403).json({ status: 'error', message: 'Owner access required for system events.' });
+        return sendApiError(res, 'RA-GAME-005');
     }
 
     let store = readGameChatStore();
     const result = appendGameChatSystemEventToStore(store, req.body?.text);
-    if (result.error) {
-        return res.status(400).json({ status: 'error', message: result.error });
+    if (result.errorCode || result.error) {
+        return sendStoreError(res, result);
     }
 
     store = writeGameChatStore(store);
@@ -2801,12 +2759,12 @@ app.post('/api/portal/game-chat/system-events', (req, res) => {
 app.patch('/api/portal/game-chat/ui', (req, res) => {
     const username = resolveLedgerCommanderUsername(req.body?.username || '');
     if (!username) {
-        return res.status(400).json({ status: 'error', message: 'Username required.' });
+        return sendApiError(res, 'RA-GEN-002');
     }
 
     const commander = db.get('commanders').find({ username }).value();
     if (!commander) {
-        return res.status(404).json({ status: 'error', message: 'Commander not found.' });
+        return sendApiError(res, 'RA-GEN-004');
     }
 
     const nextPreferences = patchGameChatUiPreferences(commander, req.body || {});
@@ -2831,7 +2789,7 @@ app.post('/api/portal/presence', (req, res) => {
     const lastActivityAt = Number(req.body?.lastActivityAt);
 
     if (!username) {
-        return res.status(400).json({ status: 'error', message: 'Username required.' });
+        return sendApiError(res, 'RA-GEN-002');
     }
 
     touchPortalBrowseSession(username, {
@@ -2866,7 +2824,7 @@ app.post('/api/portal/presence/leave', (req, res) => {
 app.post('/api/portal/age/join', (req, res) => {
     const username = String(req.body?.username || '').trim();
     if (!username) {
-        return res.status(400).json({ status: 'error', message: 'Username required.' });
+        return sendApiError(res, 'RA-GEN-002');
     }
 
     touchPortalBrowseSession(username);
@@ -2877,7 +2835,7 @@ app.post('/api/portal/age/join', (req, res) => {
 app.post('/api/portal/age/leave', (req, res) => {
     const username = String(req.body?.username || '').trim();
     if (!username) {
-        return res.status(400).json({ status: 'error', message: 'Username required.' });
+        return sendApiError(res, 'RA-GEN-002');
     }
 
     removeAgeSession(username);

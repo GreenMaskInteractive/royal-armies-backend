@@ -57,20 +57,39 @@
         }
     }
 
+    async function notifyGameSessionError(response, payload, fallbackTitle, networkCode) {
+        if (typeof global.handleRoyalArmiesApiFailure === 'function') {
+            await global.handleRoyalArmiesApiFailure(response, payload, fallbackTitle);
+            return;
+        }
+        if (typeof global.showRoyalArmiesError === 'function') {
+            await global.showRoyalArmiesError(payload || { code: networkCode }, fallbackTitle);
+            return;
+        }
+        console.warn(fallbackTitle, payload?.message || payload);
+    }
+
     async function postAgeJoin() {
         const username = resolveGamePageUsername();
         if (!username) return;
 
         try {
-            await global.fetch(resolveApiUrl('/api/portal/age/join'), {
+            const response = await global.fetch(resolveApiUrl('/api/portal/age/join'), {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ username }),
                 cache: 'no-store',
                 credentials: 'include'
             });
+            const payload = await response.json().catch(() => ({}));
+            if (!response.ok || payload.status === 'error') {
+                await notifyGameSessionError(response, payload, 'Age session', 'RA-GAME-006');
+            }
         } catch (err) {
             console.warn('Age join sync failed:', err);
+            if (typeof global.showRoyalArmiesNetworkError === 'function') {
+                await global.showRoyalArmiesNetworkError('Age session');
+            }
         }
     }
 
@@ -92,9 +111,16 @@
         if (useKeepalive) fetchOptions.keepalive = true;
 
         try {
-            await global.fetch(resolveApiUrl('/api/portal/age/leave'), fetchOptions);
+            const response = await global.fetch(resolveApiUrl('/api/portal/age/leave'), fetchOptions);
+            const payload = await response.json().catch(() => ({}));
+            if (!response.ok || payload.status === 'error') {
+                await notifyGameSessionError(response, payload, 'Age session', 'RA-GAME-007');
+            }
         } catch (err) {
             console.warn('Age leave sync failed:', err);
+            if (typeof global.showRoyalArmiesNetworkError === 'function') {
+                await global.showRoyalArmiesNetworkError('Age session');
+            }
         }
     }
 
@@ -103,13 +129,17 @@
         if (!username || username.toLowerCase() === 'testaccount') return;
 
         try {
-            await global.fetch(resolveApiUrl('/api/portal/presence'), {
+            const response = await global.fetch(resolveApiUrl('/api/portal/presence'), {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ username, inAge: true }),
                 cache: 'no-store',
                 credentials: 'include'
             });
+            const payload = await response.json().catch(() => ({}));
+            if (!response.ok || payload.status === 'error') {
+                await notifyGameSessionError(response, payload, 'Presence', 'RA-GAME-008');
+            }
         } catch (err) {
             console.warn('Game presence heartbeat failed:', err);
         }
