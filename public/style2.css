@@ -435,14 +435,7 @@ body.portal-guest-mode #portal-mobile-commander-block {
     flex-direction: column !important;
     flex-shrink: 0 !important;
     width: 100% !important;
-    position: relative !important;
-    z-index: 100001 !important;
-    pointer-events: auto !important;
     box-sizing: border-box !important;
-}
-
-body.portal-guest-mode #portal-mobile-guest-login-block {
-    display: flex !important;
 }
 
 .portal-mobile-guest-login-trigger {
@@ -921,8 +914,23 @@ body.portal-guest-mode .portal-mobile-nav-page-item[data-portal-view="chronicles
 }
 
 @media (min-width: 1025px) {
-    #portal-mobile-guest-login-block {
+    #portal-mobile-guest-login-block,
+    body.portal-guest-mode #portal-mobile-guest-login-block {
         display: none !important;
+    }
+
+    .portal-desktop-nav-stack {
+        order: 0 !important;
+        flex: 0 0 auto !important;
+    }
+
+    .portal-age-metrics-dashboard-bar {
+        order: 1 !important;
+        flex: 0 0 auto !important;
+    }
+
+    .dynamic-portal-view-container {
+        order: 2 !important;
     }
 }
 

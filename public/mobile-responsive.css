@@ -1160,6 +1160,7 @@ body {
         padding: 0 max(12px, env(safe-area-inset-left)) 0 max(12px, env(safe-area-inset-right)) !important;
         box-sizing: border-box !important;
         background: linear-gradient(180deg, rgba(0, 0, 0, 0.35) 0%, transparent 100%) !important;
+        order: 1 !important;
     }
 
     body.portal-guest-mode #portal-mobile-guest-login-block {
