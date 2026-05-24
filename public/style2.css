@@ -8183,33 +8183,11 @@ body.developer-maintenance-alert-active #page-landing {
     padding: 0 !important;
     margin: 0 !important;
     border: none !important;
-    border-radius: 0 3px 0 0 !important;
-    background: rgba(8, 6, 4, 0.55) !important;
+    background: transparent !important;
     cursor: nesw-resize !important;
     touch-action: none !important;
     z-index: 20 !important;
     pointer-events: auto !important;
-}
-
-.game-chat-resize-handle::before {
-    content: '' !important;
-    position: absolute !important;
-    inset: 0 !important;
-    border-radius: 0 3px 0 0 !important;
-    background: linear-gradient(
-        135deg,
-        rgba(255, 215, 0, 0.2) 0%,
-        rgba(255, 215, 0, 0.06) 42%,
-        transparent 52%
-    ) !important;
-    opacity: 0.75 !important;
-    transition: opacity 0.15s ease !important;
-    pointer-events: none !important;
-}
-
-.game-chat-resize-handle:hover::before,
-.game-chat-module.is-resizing .game-chat-resize-handle::before {
-    opacity: 1 !important;
 }
 
 .game-chat-resize-handle::after {
@@ -8223,6 +8201,7 @@ body.developer-maintenance-alert-active #page-landing {
     border-right: 2px solid rgba(255, 215, 0, 0.75) !important;
     box-sizing: border-box !important;
     pointer-events: none !important;
+    transition: border-color 0.15s ease !important;
 }
 
 .game-chat-resize-handle:hover::after,
