@@ -671,7 +671,7 @@
 .portal-early-access-readout {
     position: relative !important;
     z-index: 2 !important;
-    margin: -4px 0 0 0 !important;
+    margin: -50px 0 0 0 !important;
     padding: 0 !important;
     font-family: 'Cinzel', serif !important;
     font-size: 0.78rem !important;
@@ -759,22 +759,10 @@ body.portal-guest-mode .portal-mobile-nav-page-item[data-portal-view="chronicles
     display: none !important;
 }
 
-/* Desktop guest nav: center visible page tabs on the bar (no left profile column) */
+/* Desktop guest nav: keep tabs centered inside the bar shell */
 @media (min-width: 1025px) {
     body.portal-guest-mode .main-portal-nav-bar {
-        justify-content: flex-start !important;
-    }
-
-    body.portal-guest-mode .nav-tabs-centered-flex-dock {
-        position: relative !important;
-        left: auto !important;
-        top: auto !important;
-        transform: none !important;
-        flex: 1 1 auto !important;
-        width: auto !important;
-        max-width: none !important;
         justify-content: center !important;
-        text-align: center !important;
     }
 }
 
@@ -979,9 +967,72 @@ body.portal-guest-mode .portal-mobile-nav-page-item[data-portal-view="chronicles
 }
 
 @media (min-width: 1025px) {
+    .portal-desktop-nav-stack.portal-desktop-nav-only {
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: stretch !important;
+    }
+
     .portal-desktop-nav-stack {
         order: 0 !important;
         flex: 0 0 auto !important;
+    }
+
+    .portal-mobile-nav-bar-clip {
+        display: block !important;
+        height: 100px !important;
+        min-height: 100px !important;
+        max-height: 100px !important;
+        overflow: visible !important;
+        flex-shrink: 0 !important;
+    }
+
+    .main-portal-nav-bar {
+        display: flex !important;
+        flex-direction: row !important;
+        flex-wrap: nowrap !important;
+        align-items: center !important;
+        justify-content: center !important;
+        height: 100px !important;
+        min-height: 100px !important;
+        max-height: 100px !important;
+        overflow: visible !important;
+    }
+
+    .main-portal-nav-bar > .portal-mobile-nav-shell {
+        display: none !important;
+        position: absolute !important;
+        width: 0 !important;
+        height: 0 !important;
+        overflow: hidden !important;
+        pointer-events: none !important;
+        visibility: hidden !important;
+    }
+
+    .main-portal-nav-bar .nav-tabs-centered-flex-dock.portal-desktop-nav-only {
+        display: flex !important;
+        flex: 1 1 auto !important;
+        align-self: center !important;
+        align-items: center !important;
+        justify-content: center !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        min-height: 0 !important;
+    }
+
+    body.portal-guest-mode .main-portal-nav-bar {
+        justify-content: center !important;
+    }
+
+    body.portal-guest-mode .nav-tabs-centered-flex-dock {
+        position: relative !important;
+        left: auto !important;
+        top: auto !important;
+        transform: none !important;
+        flex: 1 1 auto !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        justify-content: center !important;
     }
 
     .portal-age-metrics-dashboard-bar {

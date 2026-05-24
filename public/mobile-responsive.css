@@ -2245,6 +2245,12 @@ body {
         display: flex !important;
     }
 
+    .portal-desktop-nav-stack.portal-desktop-nav-only {
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: stretch !important;
+    }
+
     .portal-desktop-header-only {
         display: flex !important;
     }
@@ -2253,7 +2259,7 @@ body {
         overflow: visible !important;
         height: 100px !important;
         min-height: 100px !important;
-        max-height: none !important;
+        max-height: 100px !important;
     }
 
     .main-portal-nav-bar {
@@ -2265,6 +2271,20 @@ body {
         left: auto !important;
         transform: none !important;
         overflow: visible !important;
+        flex-direction: row !important;
+        flex-wrap: nowrap !important;
+        align-items: center !important;
+        justify-content: center !important;
+    }
+
+    .main-portal-nav-bar > .portal-mobile-nav-shell {
+        display: none !important;
+        position: absolute !important;
+        width: 0 !important;
+        height: 0 !important;
+        overflow: hidden !important;
+        pointer-events: none !important;
+        visibility: hidden !important;
     }
 
     .portal-desktop-nav-stack {
