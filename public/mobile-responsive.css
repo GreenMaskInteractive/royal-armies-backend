@@ -1295,6 +1295,21 @@ body {
         color: #ffd700 !important;
     }
 
+    .portal-mobile-submenu-item.portal-mobile-submenu-item-logout {
+        margin-top: 8px !important;
+        border: 1px solid rgba(212, 175, 55, 0.82) !important;
+        text-align: center !important;
+        justify-content: center !important;
+        box-shadow: inset 0 0 0 1px rgba(255, 215, 0, 0.08) !important;
+    }
+
+    .portal-mobile-submenu-item.portal-mobile-submenu-item-logout:hover,
+    .portal-mobile-submenu-item.portal-mobile-submenu-item-logout:active {
+        border-color: rgba(255, 215, 0, 0.92) !important;
+        background: rgba(184, 144, 48, 0.14) !important;
+        box-shadow: inset 0 0 0 1px rgba(255, 215, 0, 0.18), 0 0 10px rgba(255, 215, 0, 0.12) !important;
+    }
+
     .portal-mobile-nav-pages {
         display: flex !important;
         flex-direction: column !important;

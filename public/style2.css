@@ -470,26 +470,6 @@
     background: rgba(8, 6, 4, 0.55) !important;
 }
 
-.portal-commander-identity-menu .dropdown-action-item-logout,
-.portal-mobile-submenu-item-logout {
-    margin-top: 6px !important;
-    border: 1px solid rgba(184, 144, 48, 0.55) !important;
-    border-radius: 3px !important;
-    color: rgba(255, 208, 128, 0.96) !important;
-    width: 100% !important;
-    flex: 0 0 auto !important;
-    text-align: center !important;
-    box-sizing: border-box !important;
-}
-
-.portal-commander-identity-menu .dropdown-action-item-logout:hover,
-.portal-mobile-submenu-item-logout:hover,
-.portal-mobile-submenu-item-logout:active {
-    border-color: rgba(255, 215, 0, 0.75) !important;
-    color: #ffd700 !important;
-    background: rgba(184, 144, 48, 0.12) !important;
-}
-
 .portal-mobile-guest-auth-card {
     width: 100% !important;
     border: 1px solid rgba(184, 144, 48, 0.35) !important;
@@ -4867,6 +4847,33 @@ body:not(.portal-guest-mode) #portal-deployment-guest-cta {
 .dropdown-action-item-messages.has-unread-messages .dropdown-messages-unread-count,
 .portal-mobile-submenu-item-messages.has-unread-messages .dropdown-messages-unread-count {
     animation: mailboxUnreadCountPulse 2s ease-in-out infinite !important;
+}
+
+.portal-commander-identity-menu .dropdown-action-item.dropdown-action-item-logout,
+.avatar-hover-dropdown-menu .dropdown-action-item.dropdown-action-item-logout,
+.portal-mobile-submenu-item.portal-mobile-submenu-item-logout {
+    margin-top: 8px !important;
+    border: 1px solid rgba(212, 175, 55, 0.82) !important;
+    border-radius: 3px !important;
+    color: rgba(255, 208, 128, 0.96) !important;
+    width: 100% !important;
+    flex: 0 0 auto !important;
+    text-align: center !important;
+    box-sizing: border-box !important;
+    box-shadow: inset 0 0 0 1px rgba(255, 215, 0, 0.08) !important;
+}
+
+.portal-commander-identity-menu .dropdown-action-item.dropdown-action-item-logout:hover,
+.portal-commander-identity-menu .dropdown-action-item.dropdown-action-item-logout:focus-visible,
+.avatar-hover-dropdown-menu .dropdown-action-item.dropdown-action-item-logout:hover,
+.avatar-hover-dropdown-menu .dropdown-action-item.dropdown-action-item-logout:focus-visible,
+.portal-mobile-submenu-item.portal-mobile-submenu-item-logout:hover,
+.portal-mobile-submenu-item.portal-mobile-submenu-item-logout:active,
+.portal-mobile-submenu-item.portal-mobile-submenu-item-logout:focus-visible {
+    border-color: rgba(255, 215, 0, 0.92) !important;
+    color: #ffd700 !important;
+    background: rgba(184, 144, 48, 0.14) !important;
+    box-shadow: inset 0 0 0 1px rgba(255, 215, 0, 0.18), 0 0 10px rgba(255, 215, 0, 0.12) !important;
 }
 
 .dropdown-messages-unread-count[hidden] {
