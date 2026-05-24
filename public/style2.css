@@ -426,7 +426,6 @@
 }
 
 body.portal-guest-mode .nav-embedded-account-label,
-body.portal-guest-mode .portal-desktop-nav-stack,
 body.portal-guest-mode #portal-mobile-commander-block {
     display: none !important;
 }
@@ -436,6 +435,10 @@ body.portal-guest-mode #portal-mobile-commander-block {
     flex-direction: column !important;
     flex-shrink: 0 !important;
     width: 100% !important;
+    position: relative !important;
+    z-index: 100001 !important;
+    pointer-events: auto !important;
+    box-sizing: border-box !important;
 }
 
 body.portal-guest-mode #portal-mobile-guest-login-block {
@@ -444,6 +447,8 @@ body.portal-guest-mode #portal-mobile-guest-login-block {
 
 .portal-mobile-guest-login-trigger {
     cursor: pointer !important;
+    pointer-events: auto !important;
+    touch-action: manipulation !important;
 }
 
 .portal-mobile-guest-login-icon {
@@ -820,6 +825,8 @@ body.portal-guest-mode .portal-mobile-nav-page-item[data-portal-view="chronicles
     box-shadow: 0 8px 25px rgba(0,0,0,0.95) !important;
     box-sizing: border-box !important;
     margin-bottom: 20px !important;
+    position: relative !important;
+    z-index: 100 !important;
     
     /* HORIZONTAL METRICS DISPATCH FLEX ARRANGEMENTS GRID */
     display: flex !important;
@@ -877,6 +884,18 @@ body.portal-guest-mode .portal-mobile-nav-page-item[data-portal-view="chronicles
     min-height: 30px !important;
     padding: 4px 14px 4px 10px !important;
     font-size: 0.72rem !important;
+    position: relative !important;
+    z-index: 5 !important;
+    pointer-events: auto !important;
+    cursor: pointer !important;
+}
+
+.metric-auth-build-stack {
+    pointer-events: auto !important;
+}
+
+.metric-capsule-auth-build-column {
+    pointer-events: auto !important;
 }
 
 .metrics-auth-action-btn:hover {
@@ -898,6 +917,12 @@ body.portal-guest-mode .portal-mobile-nav-page-item[data-portal-view="chronicles
 
     .metric-capsule-auth-build-column .metric-auth-build-stack {
         gap: 0 !important;
+    }
+}
+
+@media (min-width: 1025px) {
+    #portal-mobile-guest-login-block {
+        display: none !important;
     }
 }
 

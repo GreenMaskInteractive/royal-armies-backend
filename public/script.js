@@ -300,8 +300,33 @@ function isPortalUserAuthenticated() {
     return !!(saved && saved.trim() !== '');
 }
 
+function bindPortalAuthActionControls() {
+    if (!isMainPortalHub()) return;
+
+    const controls = [
+        document.getElementById('metrics-auth-action-btn'),
+        document.getElementById('portal-mobile-guest-login-btn'),
+        document.getElementById('portal-mobile-nav-auth-btn')
+    ].filter(Boolean);
+
+    controls.forEach((btn) => {
+        if (btn.dataset.boundPortalAuthAction === 'true') return;
+        btn.dataset.boundPortalAuthAction = 'true';
+        btn.addEventListener('click', (event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            if (btn.id === 'portal-mobile-nav-auth-btn' && typeof closePortalMobileNavMenus === 'function') {
+                closePortalMobileNavMenus();
+            }
+            handleHeaderAuthAction();
+        });
+    });
+}
+
 function refreshMainPortalAuthChrome() {
     if (!isMainPortalHub()) return;
+
+    bindPortalAuthActionControls();
 
     const metricsLabel = document.getElementById('metrics-auth-action-label');
     const metricsIcon = document.getElementById('metrics-auth-action-icon');
