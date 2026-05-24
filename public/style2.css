@@ -667,12 +667,12 @@
 
 @media (min-width: 1025px) {
     .portal-desktop-header-only .portal-early-access-readout {
-        margin: -130px 0 0 0 !important;
+        margin: -180px 0 0 0 !important;
     }
 }
 
 .portal-early-access-readout--mobile {
-    margin-top: 4px !important;
+    margin-top: -46px !important;
     font-size: 0.62rem !important;
     letter-spacing: 0.24em !important;
 }
