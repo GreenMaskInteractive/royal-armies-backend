@@ -305,9 +305,7 @@ function bindPortalAuthActionControls() {
 
     const controls = [
         document.getElementById('portal-desktop-login-btn'),
-        document.getElementById('portal-desktop-logout-btn'),
-        document.getElementById('portal-mobile-guest-login-btn'),
-        document.getElementById('portal-mobile-logout-btn')
+        document.getElementById('portal-mobile-guest-login-btn')
     ].filter(Boolean);
 
     controls.forEach((btn) => {
@@ -332,34 +330,17 @@ function refreshMainPortalAuthChrome() {
     const desktopGuestCard = document.getElementById('portal-desktop-guest-auth-card');
     const desktopMemberCluster = document.getElementById('portal-desktop-member-auth-cluster');
     const mobileGuestLoginBlock = document.getElementById('portal-mobile-guest-login-block');
-    const mobileMemberRow = document.getElementById('portal-mobile-member-auth-row');
+    const mobileCommanderBlock = document.getElementById('portal-mobile-commander-block');
     const mobileNavAuthBtn = document.getElementById('portal-mobile-nav-auth-btn');
     const metricsBtn = document.getElementById('metrics-auth-action-btn');
     const authed = isPortalUserAuthenticated();
-    const authLabelText = authed ? 'Log Out' : 'Log In';
-    const authIconSrc = authed ? 'images/logouticon.png' : 'images/profileicon.png';
-    const authAriaLabel = authed ? 'Log out of Age Portal' : 'Log in to Age Portal';
 
     if (desktopGuestCard) desktopGuestCard.hidden = authed;
     if (desktopMemberCluster) desktopMemberCluster.hidden = !authed;
     if (mobileGuestLoginBlock) mobileGuestLoginBlock.hidden = authed;
-    if (mobileMemberRow) mobileMemberRow.hidden = !authed;
+    if (mobileCommanderBlock) mobileCommanderBlock.hidden = !authed;
     if (mobileNavAuthBtn) mobileNavAuthBtn.hidden = true;
     if (metricsBtn) metricsBtn.hidden = true;
-
-    const desktopLogoutLabel = document.getElementById('portal-desktop-logout-label');
-    const desktopLogoutIcon = document.getElementById('portal-desktop-logout-icon');
-    const desktopLogoutBtn = document.getElementById('portal-desktop-logout-btn');
-    const mobileLogoutLabel = document.getElementById('portal-mobile-logout-label');
-    const mobileLogoutIcon = document.getElementById('portal-mobile-logout-icon');
-    const mobileLogoutBtn = document.getElementById('portal-mobile-logout-btn');
-
-    if (desktopLogoutLabel) desktopLogoutLabel.textContent = authLabelText;
-    if (desktopLogoutIcon) desktopLogoutIcon.src = authIconSrc;
-    if (desktopLogoutBtn) desktopLogoutBtn.setAttribute('aria-label', authAriaLabel);
-    if (mobileLogoutLabel) mobileLogoutLabel.textContent = authLabelText;
-    if (mobileLogoutIcon) mobileLogoutIcon.src = authIconSrc;
-    if (mobileLogoutBtn) mobileLogoutBtn.setAttribute('aria-label', authAriaLabel);
 
     if (typeof refreshLoggedUserTagDisplay === 'function') {
         refreshLoggedUserTagDisplay();

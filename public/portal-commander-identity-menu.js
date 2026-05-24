@@ -68,6 +68,13 @@
                     global.openCommanderHubModal('settings', event);
                 }
                 break;
+            case 'logout':
+                if (typeof global.handleHeaderAuthAction === 'function') {
+                    global.handleHeaderAuthAction();
+                } else if (typeof global.triggerMainDashboardLogout === 'function') {
+                    global.triggerMainDashboardLogout();
+                }
+                break;
             default:
                 break;
         }

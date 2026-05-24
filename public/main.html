@@ -15,8 +15,8 @@
     <!-- Block 2: Page Title & Stylesheet Bridge -->
     <title>Royal Armies - An MMOHFT Medieval-Fantasy Strategy Game</title>
     <link rel="stylesheet" href="style.css?v=mailbox-read-popup-wide-2">
-    <link rel="stylesheet" href="style2.css?v=identity-auth-slot-1">
-    <link rel="stylesheet" href="mobile-responsive.css?v=identity-auth-slot-1">
+    <link rel="stylesheet" href="style2.css?v=dropdown-logout-1">
+    <link rel="stylesheet" href="mobile-responsive.css?v=dropdown-logout-1">
     <link rel="stylesheet" href="dev-page-navigator.css">
     <link rel="stylesheet" href="custom-cursor.css?v=scrollbar-cursor-1">
 </head>
@@ -102,12 +102,9 @@
                             <span id="nav-messages-unread-count" class="dropdown-messages-unread-count" hidden></span>
                         </button>
                         <button type="button" class="dropdown-action-item" role="menuitem" onclick="portalDesktopCommanderMenuAction('settings', event)">Settings</button>
+                        <button type="button" id="nav-dropdown-logout-btn" class="dropdown-action-item dropdown-action-item-logout" role="menuitem" onclick="portalDesktopCommanderMenuAction('logout', event)">Log Out</button>
                     </div>
                 </div>
-                    <button type="button" id="portal-desktop-logout-btn" class="header-logout-btn portal-desktop-logout-btn" aria-label="Log out of Age Portal">
-                        <img id="portal-desktop-logout-icon" src="images/logouticon.png" alt="" class="header-logout-icon" aria-hidden="true">
-                        <span id="portal-desktop-logout-label" class="header-logout-label">Log Out</span>
-                    </button>
                     </div>
                 </div>
             </div>
@@ -142,7 +139,7 @@
                                 </span>
                             </button>
                         </div>
-                        <div class="portal-mobile-member-auth-row" id="portal-mobile-member-auth-row">
+                        </div>
                         <div class="portal-mobile-commander-block" id="portal-mobile-commander-block">
                             <button type="button" class="portal-mobile-commander-trigger" id="portal-mobile-commander-toggle" aria-expanded="false" aria-controls="portal-mobile-commander-submenu" onclick="togglePortalMobileCommanderSubmenu(event)">
                                 <img class="portal-mobile-commander-avatar" id="portal-mobile-nav-avatar" src="images/avatars/commanderprofile01.png" alt="">
@@ -160,12 +157,8 @@
                                     <span id="portal-mobile-messages-unread" class="dropdown-messages-unread-count" hidden></span>
                                 </button>
                                 <button type="button" class="portal-mobile-submenu-item" onclick="portalMobileNavCommanderAction('settings', event)">Settings</button>
+                                <button type="button" id="portal-mobile-dropdown-logout-btn" class="portal-mobile-submenu-item portal-mobile-submenu-item-logout" onclick="portalMobileNavCommanderAction('logout', event)">Log Out</button>
                             </div>
-                        </div>
-                        <button type="button" id="portal-mobile-logout-btn" class="header-logout-btn portal-mobile-inline-logout-btn" aria-label="Log out of Age Portal">
-                            <img id="portal-mobile-logout-icon" src="images/logouticon.png" alt="" class="header-logout-icon portal-mobile-nav-auth-icon" aria-hidden="true">
-                            <span id="portal-mobile-logout-label" class="header-logout-label">Log Out</span>
-                        </button>
                         </div>
                         </div>
                     </div>
@@ -642,17 +635,17 @@
     <!-- Block 10: Commander Hub + Shared RAGE Logic -->
     <script src="dev-environment.js"></script>
     <script src="commander-dossier-sync.js?v=deployment-deck-refresh-1"></script>
-    <script src="portal-commander-identity-menu.js?v=commander-dropdown-messages-count-1"></script>
+    <script src="portal-commander-identity-menu.js?v=dropdown-logout-1"></script>
     <script src="achievement-system.js?v=first-timer-icon-png-1"></script>
     <script src="dev-page-navigator.js?v=dev-tools-fix-1"></script>
     <script src="rift-error-codes.js?v=nexus-rift-acronyms-1"></script>
     <script src="portal-alerts.js?v=nexus-rift-acronyms-1"></script>
     <script src="rift-error-display.js?v=nexus-rift-acronyms-1"></script>
     <script src="rank-data.js"></script>
-    <script src="script.js?v=identity-auth-slot-1"></script>
+    <script src="script.js?v=dropdown-logout-1"></script>
     <script src="commander-hub.js?v=save-confirmation-toast-fix-1"></script>
     <script src="maintenance-alert.js?v=maintenance-always-on-1"></script>
-    <script src="script2.js?v=identity-auth-slot-1"></script>
+    <script src="script2.js?v=dropdown-logout-1"></script>
     <script src="custom-cursor.js?v=scrollbar-cursor-1"></script>
 
 </body>

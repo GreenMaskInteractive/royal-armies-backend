@@ -1164,7 +1164,7 @@ body {
         box-sizing: border-box !important;
     }
 
-    .portal-mobile-member-auth-row:not([hidden]) {
+    #portal-mobile-commander-block:not([hidden]) {
         display: flex !important;
     }
 

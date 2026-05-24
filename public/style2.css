@@ -425,23 +425,16 @@
     max-width: 100% !important;
 }
 
-body.portal-guest-mode #portal-mobile-commander-block {
-    display: none !important;
-}
-
 .portal-desktop-member-auth-cluster {
-    display: flex !important;
-    flex-direction: row !important;
-    align-items: center !important;
-    gap: 10px !important;
-    width: min(100%, 520px) !important;
+    display: block !important;
+    width: min(100%, 420px) !important;
     min-width: 0 !important;
 }
 
 .portal-desktop-member-auth-cluster[hidden],
 .portal-desktop-guest-auth-card[hidden],
-.portal-mobile-member-auth-row[hidden],
 #portal-mobile-guest-login-block[hidden],
+#portal-mobile-commander-block[hidden],
 #portal-mobile-nav-auth-btn,
 #metrics-auth-action-btn {
     display: none !important;
@@ -477,32 +470,24 @@ body.portal-guest-mode #portal-mobile-commander-block {
     background: rgba(8, 6, 4, 0.55) !important;
 }
 
-.portal-desktop-logout-btn {
-    flex-shrink: 0 !important;
-    align-self: center !important;
-    transform: translateY(0) !important;
-}
-
-.portal-mobile-member-auth-row {
-    display: flex !important;
-    flex-direction: row !important;
-    align-items: stretch !important;
-    gap: 8px !important;
+.portal-commander-identity-menu .dropdown-action-item-logout,
+.portal-mobile-submenu-item-logout {
+    margin-top: 6px !important;
+    border: 1px solid rgba(184, 144, 48, 0.55) !important;
+    border-radius: 3px !important;
+    color: rgba(255, 208, 128, 0.96) !important;
     width: 100% !important;
-}
-
-.portal-mobile-member-auth-row .portal-mobile-commander-block {
-    flex: 1 1 auto !important;
-    min-width: 0 !important;
-}
-
-.portal-mobile-inline-logout-btn {
     flex: 0 0 auto !important;
-    align-self: center !important;
-    min-height: 36px !important;
-    padding: 4px 10px !important;
-    transform: none !important;
-    font-size: 0.68rem !important;
+    text-align: center !important;
+    box-sizing: border-box !important;
+}
+
+.portal-commander-identity-menu .dropdown-action-item-logout:hover,
+.portal-mobile-submenu-item-logout:hover,
+.portal-mobile-submenu-item-logout:active {
+    border-color: rgba(255, 215, 0, 0.75) !important;
+    color: #ffd700 !important;
+    background: rgba(184, 144, 48, 0.12) !important;
 }
 
 .portal-mobile-guest-auth-card {
