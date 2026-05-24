@@ -303,24 +303,29 @@ function hydratePortalActiveServerSelect() {
     )).join('');
 }
 
+function ensurePortalDeploymentServerPanelDelegation() {
+    if (document.body?.dataset?.portalServerPanelDelegated === '1') return;
+    if (document.body) {
+        document.body.dataset.portalServerPanelDelegated = '1';
+    }
+
+    document.addEventListener('click', (event) => {
+        const joinBtn = event.target.closest('#portal-rejoin-age-btn');
+        if (!joinBtn) return;
+        event.preventDefault();
+        rejoinSelectedAgeServer(event);
+    });
+
+    document.addEventListener('change', (event) => {
+        const select = event.target.closest('#portal-active-server-select');
+        if (!select) return;
+        localStorage.setItem(resolveDeploymentStorageKey(DEPLOYMENT_SERVER_SUFFIX), select.value);
+    });
+}
+
 function bindPortalDeploymentServerPanelControls() {
-    const select = document.getElementById('portal-active-server-select');
-    const joinBtn = document.getElementById('portal-rejoin-age-btn');
-
-    if (select && select.dataset.bound !== '1') {
-        select.dataset.bound = '1';
-        select.addEventListener('change', () => {
-            localStorage.setItem(resolveDeploymentStorageKey(DEPLOYMENT_SERVER_SUFFIX), select.value);
-        });
-    }
-
-    if (joinBtn && joinBtn.dataset.bound !== '1') {
-        joinBtn.dataset.bound = '1';
-        joinBtn.addEventListener('click', (event) => {
-            event.preventDefault();
-            rejoinSelectedAgeServer(event);
-        });
-    }
+    ensurePortalDeploymentServerPanelDelegation();
+    hydratePortalActiveServerSelect();
 }
 
 function canUsePortalJoinAgeButtons() {
@@ -341,13 +346,18 @@ function applyPortalDeploymentDeckPresentation() {
     if (serverPanel) {
         serverPanel.hidden = !showServerPanel;
         if (showServerPanel) {
-            hydratePortalActiveServerSelect();
+            joinAgePortalTransitionActive = false;
             bindPortalDeploymentServerPanelControls();
         }
+    } else if (authed) {
+        ensurePortalDeploymentServerPanelDelegation();
     }
 
     recacheAgePortalViewportSnapshot();
 }
+
+let joinAgePortalTransitionActive = false;
+let portalAgeRejoinTransitionActive = false;
 
 function rejoinSelectedAgeServer(clickEvent) {
     if (typeof isPortalUserAuthenticated === 'function' && !isPortalUserAuthenticated()) {
@@ -357,8 +367,8 @@ function rejoinSelectedAgeServer(clickEvent) {
         return;
     }
 
-    if (joinAgePortalTransitionActive) return;
-    joinAgePortalTransitionActive = true;
+    if (portalAgeRejoinTransitionActive) return;
+    portalAgeRejoinTransitionActive = true;
 
     const select = document.getElementById('portal-active-server-select');
     const serverId = select?.value || readCommanderSelectedServerId();
@@ -380,6 +390,8 @@ function rejoinSelectedAgeServer(clickEvent) {
         } else {
             window.location.href = destination;
         }
+    }).catch(() => {
+        portalAgeRejoinTransitionActive = false;
     });
 }
 
@@ -397,7 +409,7 @@ function renderPortalDeploymentServerPanelMarkup() {
                         <div class="portal-server-panel-controls">
                             <label class="portal-server-panel-label" for="portal-active-server-select">Active server</label>
                             <select id="portal-active-server-select" class="portal-active-server-select" aria-label="Active server"></select>
-                            <button type="button" id="portal-rejoin-age-btn" class="portal-rejoin-age-btn confirm-btn">Join</button>
+                            <button type="button" id="portal-rejoin-age-btn" class="portal-rejoin-age-btn confirm-btn" onclick="rejoinSelectedAgeServer(event)">Join</button>
                         </div>
                     </div>`;
 }
@@ -1151,8 +1163,6 @@ function restoreAgePortalHomeViewLayout(viewport) {
 const JOIN_AGE_POST_SELECT_DELAY_MS = 400;
 const JOIN_AGE_DEPLOY_PULSE_GROW_MS = 420;
 const JOIN_AGE_DEPLOY_PULSE_SETTLE_MS = 720;
-
-let joinAgePortalTransitionActive = false;
 
 function launchGameRoundSector(isTutorialModeActive, clickEvent) {
     if (typeof isPortalUserAuthenticated === 'function' && !isPortalUserAuthenticated()) {
@@ -6414,6 +6424,7 @@ window.canUsePortalJoinAgeButtons = canUsePortalJoinAgeButtons;
 window.applyPortalDeploymentDeckPresentation = applyPortalDeploymentDeckPresentation;
 window.rejoinSelectedAgeServer = rejoinSelectedAgeServer;
 window.launchGameRoundSector = launchGameRoundSector;
+ensurePortalDeploymentServerPanelDelegation();
 window.recacheAgePortalViewportSnapshot = recacheAgePortalViewportSnapshot;
 window.isPortalNavViewAccessible = isPortalNavViewAccessible;
 window.isPortalDevFullAccessBypassActive = isPortalDevFullAccessBypassActive;
