@@ -369,6 +369,15 @@
         }
     }
 
+    function getFreeformResizeLimits(module, anchorLeft) {
+        const sideInset = 16;
+        const bottomInset = 16;
+        const topInset = 72;
+        const maxWidth = Math.max(MIN_WIDTH, Math.floor(global.innerWidth - anchorLeft - sideInset));
+        const maxHeight = Math.max(MIN_HEIGHT, Math.floor(global.innerHeight - bottomInset - topInset));
+        return { maxWidth, maxHeight };
+    }
+
     function bindResizeHandle() {
         const module = global.document.getElementById('game-chat-module');
         const handle = global.document.getElementById('game-chat-resize-handle');
@@ -378,12 +387,14 @@
         let startY = 0;
         let startWidth = 0;
         let startHeight = 0;
+        let anchorLeft = 0;
 
         const onPointerMove = (event) => {
-            const maxWidth = Math.min(global.innerWidth - 32, Math.floor(global.innerWidth * 0.55));
-            const maxHeight = Math.min(global.innerHeight - 120, Math.floor(global.innerHeight * 0.65));
-            const nextWidth = Math.max(MIN_WIDTH, Math.min(maxWidth, startWidth + (event.clientX - startX)));
-            const nextHeight = Math.max(MIN_HEIGHT, Math.min(maxHeight, startHeight + (event.clientY - startY)));
+            const { maxWidth, maxHeight } = getFreeformResizeLimits(module, anchorLeft);
+            const deltaX = event.clientX - startX;
+            const deltaY = event.clientY - startY;
+            const nextWidth = Math.max(MIN_WIDTH, Math.min(maxWidth, startWidth + deltaX));
+            const nextHeight = Math.max(MIN_HEIGHT, Math.min(maxHeight, startHeight - deltaY));
             module.style.setProperty('--game-chat-width', `${nextWidth}px`);
             module.style.setProperty('--game-chat-height', `${nextHeight}px`);
         };
@@ -410,6 +421,7 @@
             startY = event.clientY;
             startWidth = module.offsetWidth;
             startHeight = module.offsetHeight;
+            anchorLeft = module.getBoundingClientRect().left;
             module.classList.add('is-resizing');
             handle.setPointerCapture(event.pointerId);
             global.document.addEventListener('pointermove', onPointerMove);
@@ -472,6 +484,7 @@
                             <button type="button" class="game-chat-tab" data-game-chat-tab="country" role="tab" aria-selected="false">Country</button>
                             <button type="button" class="game-chat-tab" data-game-chat-tab="alliance" role="tab" aria-selected="false" id="game-chat-tab-alliance" hidden>Alliance</button>
                         </nav>
+                        <button type="button" id="game-chat-resize-handle" class="game-chat-resize-handle" aria-label="Resize chat panel" title="Drag to resize"></button>
                     </header>
 
                     <div id="game-chat-messages" class="game-chat-messages" role="log" aria-live="polite" aria-relevant="additions"></div>
@@ -482,7 +495,6 @@
                         <input id="game-chat-compose-input" class="game-chat-compose-input" type="text" maxlength="500" autocomplete="off" placeholder="Message Global…">
                         <button id="game-chat-compose-send" type="submit" class="game-chat-compose-send">Send</button>
                     </form>
-                    <button type="button" id="game-chat-resize-handle" class="game-chat-resize-handle" aria-label="Resize chat panel" title="Drag to resize"></button>
                 </div>
             </aside>
         `.trim();
