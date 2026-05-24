@@ -6098,7 +6098,7 @@ window.onload = () => {
 // JUKEBOX REPERTOIRE LIST LEDGER MAP: Expand this ledger array with your custom wav/mp3 files
 const royalArmiesPlaylistRepository = [
     { title: "🎵 ARCHIMEDES' LULLABY", file: "audio/archimedeslullaby.wav" },
-    { title: "Cascading Skies", file: "audio/cascadingskies.wav" }
+    { title: "🎵 CASCADING SKIES", file: "audio/cascadingskies.wav" }
 ];
 
 let currentTrackIndexMarker = 0;
