@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Royal Armies - Age Session (In Development)</title>
     <link rel="stylesheet" href="style.css?v=mailbox-read-popup-wide-2">
-    <link rel="stylesheet" href="style2.css?v=mailbox-system-unread-bar-1">
-    <link rel="stylesheet" href="mobile-responsive.css?v=game-chat-module-1">
+    <link rel="stylesheet" href="style2.css?v=game-dropdown-return-portal-1">
+    <link rel="stylesheet" href="mobile-responsive.css?v=game-dropdown-return-portal-1">
     <link rel="stylesheet" href="dev-page-navigator.css">
     <link rel="stylesheet" href="custom-cursor.css?v=scrollbar-cursor-1">
 </head>
@@ -51,6 +51,8 @@
                             <span id="nav-messages-unread-count" class="dropdown-messages-unread-count" hidden></span>
                         </button>
                         <button type="button" class="dropdown-action-item" role="menuitem" onclick="portalDesktopCommanderMenuAction('settings', event)">Settings</button>
+                        <button type="button" id="game-nav-dropdown-return-portal-btn" class="dropdown-action-item dropdown-action-item-return-portal" role="menuitem" onclick="portalDesktopCommanderMenuAction('return-to-portal', event)">Return to Age Portal</button>
+                        <button type="button" id="game-nav-dropdown-logout-btn" class="dropdown-action-item dropdown-action-item-logout" role="menuitem" onclick="portalDesktopCommanderMenuAction('logout', event)">Log Out</button>
                     </div>
                 </div>
                 </div>
@@ -67,11 +69,23 @@
                         <div class="portal-mobile-nav-menu" id="game-mobile-nav-menu" hidden inert>
                             <div class="portal-mobile-nav-menu-sticky-head">
                                 <div class="portal-mobile-commander-block" id="game-mobile-commander-block">
-                                    <div class="portal-mobile-commander-trigger portal-mobile-commander-trigger--static">
+                                    <button type="button" class="portal-mobile-commander-trigger" id="game-mobile-commander-toggle" aria-expanded="false" aria-controls="game-mobile-commander-submenu" onclick="toggleGameMobileCommanderSubmenu(event)">
                                         <img class="portal-mobile-commander-avatar" id="game-mobile-nav-avatar" src="images/avatars/commanderprofile01.png" alt="">
                                         <span class="portal-mobile-commander-identity">
                                             <strong class="portal-mobile-commander-name" id="game-mobile-nav-username">Loading...</strong>
                                         </span>
+                                        <span class="portal-mobile-nav-chevron portal-mobile-commander-chevron" aria-hidden="true">▾</span>
+                                    </button>
+                                    <div class="portal-mobile-commander-submenu" id="game-mobile-commander-submenu" hidden>
+                                        <button type="button" class="portal-mobile-submenu-item" onclick="gameMobileNavCommanderAction('view-profile', event)">View Profile Card</button>
+                                        <button type="button" class="portal-mobile-submenu-item" onclick="gameMobileNavCommanderAction('edit-profile', event)">Edit Profile</button>
+                                        <button type="button" class="portal-mobile-submenu-item portal-mobile-submenu-item-messages" id="game-mobile-messages-btn" onclick="gameMobileNavCommanderAction('messages', event)">
+                                            <span class="dropdown-messages-label">Messages</span>
+                                            <span id="game-mobile-messages-unread" class="dropdown-messages-unread-count" hidden></span>
+                                        </button>
+                                        <button type="button" class="portal-mobile-submenu-item" onclick="gameMobileNavCommanderAction('settings', event)">Settings</button>
+                                        <button type="button" id="game-mobile-dropdown-return-portal-btn" class="portal-mobile-submenu-item portal-mobile-submenu-item-return-portal" onclick="gameMobileNavCommanderAction('return-to-portal', event)">Return to Age Portal</button>
+                                        <button type="button" id="game-mobile-dropdown-logout-btn" class="portal-mobile-submenu-item portal-mobile-submenu-item-logout" onclick="gameMobileNavCommanderAction('logout', event)">Log Out</button>
                                     </div>
                                 </div>
                             </div>
@@ -81,10 +95,6 @@
                                     <button type="button" class="portal-mobile-nav-page-item" data-game-view="city">City</button>
                                     <button type="button" class="portal-mobile-nav-page-item" data-game-view="map">Map</button>
                                 </nav>
-                                <button type="button" class="portal-mobile-nav-auth-btn" id="game-mobile-nav-auth-btn">
-                                    <img id="game-mobile-nav-auth-icon" src="images/logouticon.png" alt="" class="portal-mobile-nav-auth-icon" aria-hidden="true">
-                                    <span id="game-mobile-nav-auth-label">Return to Portal</span>
-                                </button>
                             </div>
                         </div>
                     </div>
@@ -95,12 +105,6 @@
                         <div class="nav-tab" data-game-view="map" role="button" tabindex="0">Map</div>
                     </div>
 
-                    <div class="nav-right-logout-action-dock portal-desktop-nav-only">
-                        <button type="button" id="header-auth-action-btn" class="header-logout-btn" aria-label="Return to Age Portal">
-                            <img id="header-auth-action-icon" src="images/logouticon.png" alt="" class="header-logout-icon" aria-hidden="true">
-                            <span id="header-auth-action-label" class="header-logout-label">Return to Portal</span>
-                        </button>
-                    </div>
                 </nav>
             </div>
         </div>
@@ -125,10 +129,6 @@
         <section class="game-page-view game-page-view--map" data-game-view="map" aria-label="Map" hidden>
             <p class="game-page-view-placeholder">Map view coming soon.</p>
         </section>
-
-        <div class="game-page-actions">
-            <button type="button" id="game-return-portal-btn" class="game-page-return-btn confirm-btn">Return to Age Portal</button>
-        </div>
     </main>
 
     <script src="dev-environment.js"></script>
@@ -137,9 +137,9 @@
     <script src="rift-error-display.js?v=nexus-rift-acronyms-1"></script>
     <script src="commander-dossier-sync.js?v=dossier-sync-1"></script>
     <script src="script.js?v=mailbox-system-unread-bar-1"></script>
-    <script src="portal-commander-identity-menu.js?v=commander-dropdown-messages-count-1"></script>
+    <script src="portal-commander-identity-menu.js?v=game-dropdown-return-portal-1"></script>
     <script src="achievement-system.js?v=first-timer-icon-png-1"></script>
-    <script src="game.js?v=mailbox-system-unread-bar-1"></script>
+    <script src="game.js?v=game-dropdown-return-portal-1"></script>
     <script src="game-chat.js?v=error-codes-1"></script>
     <script src="dev-page-navigator.js?v=dev-tools-fix-1"></script>
     <script src="custom-cursor.js?v=scrollbar-cursor-1"></script>

@@ -68,6 +68,11 @@
                     global.openCommanderHubModal('settings', event);
                 }
                 break;
+            case 'return-to-portal':
+                if (typeof global.returnToGameAgePortal === 'function') {
+                    global.returnToGameAgePortal();
+                }
+                break;
             case 'logout':
                 if (typeof global.handleHeaderAuthAction === 'function') {
                     global.handleHeaderAuthAction();

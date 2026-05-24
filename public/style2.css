@@ -4859,6 +4859,31 @@ body:not(.portal-guest-mode) #portal-deployment-guest-cta {
     animation: mailboxUnreadCountPulse 2s ease-in-out infinite !important;
 }
 
+.portal-commander-identity-menu .dropdown-action-item.dropdown-action-item-return-portal,
+.avatar-hover-dropdown-menu .dropdown-action-item.dropdown-action-item-return-portal,
+.portal-mobile-submenu-item.portal-mobile-submenu-item-return-portal {
+    margin-top: 8px !important;
+    border: 1px solid rgba(184, 144, 48, 0.55) !important;
+    border-radius: 3px !important;
+    color: rgba(255, 224, 148, 0.96) !important;
+    width: 100% !important;
+    flex: 0 0 auto !important;
+    text-align: center !important;
+    box-sizing: border-box !important;
+}
+
+.portal-commander-identity-menu .dropdown-action-item.dropdown-action-item-return-portal:hover,
+.portal-commander-identity-menu .dropdown-action-item.dropdown-action-item-return-portal:focus-visible,
+.avatar-hover-dropdown-menu .dropdown-action-item.dropdown-action-item-return-portal:hover,
+.avatar-hover-dropdown-menu .dropdown-action-item.dropdown-action-item-return-portal:focus-visible,
+.portal-mobile-submenu-item.portal-mobile-submenu-item-return-portal:hover,
+.portal-mobile-submenu-item.portal-mobile-submenu-item-return-portal:active,
+.portal-mobile-submenu-item.portal-mobile-submenu-item-return-portal:focus-visible {
+    border-color: rgba(255, 215, 0, 0.75) !important;
+    color: #ffd700 !important;
+    background: rgba(184, 144, 48, 0.1) !important;
+}
+
 .portal-commander-identity-menu .dropdown-action-item.dropdown-action-item-logout,
 .avatar-hover-dropdown-menu .dropdown-action-item.dropdown-action-item-logout,
 .portal-mobile-submenu-item.portal-mobile-submenu-item-logout {

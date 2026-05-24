@@ -275,6 +275,61 @@
         openGameMobileNavMenu();
     }
 
+    function toggleGameMobileCommanderSubmenu(event) {
+        if (event) event.stopPropagation();
+        const submenu = global.document.getElementById('game-mobile-commander-submenu');
+        const toggle = global.document.getElementById('game-mobile-commander-toggle');
+        if (!submenu || !toggle) return;
+
+        const menu = global.document.getElementById('game-mobile-nav-menu');
+        const willOpen = submenu.hidden;
+        submenu.hidden = !willOpen;
+        toggle.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
+        if (menu) {
+            menu.classList.toggle('is-commander-submenu-open', willOpen);
+        }
+    }
+
+    function gameMobileNavCommanderAction(action, event) {
+        if (event) event.stopPropagation();
+        closeGameMobileNavMenu();
+
+        switch (action) {
+            case 'view-profile':
+                if (typeof global.openPublicCommanderProfileCard === 'function') {
+                    global.openPublicCommanderProfileCard(event);
+                }
+                break;
+            case 'edit-profile':
+                if (typeof global.openCommanderHubModal === 'function') {
+                    global.openCommanderHubModal('profile', event);
+                }
+                break;
+            case 'messages':
+                if (typeof global.openCommanderHubMessagesInbox === 'function') {
+                    global.openCommanderHubMessagesInbox(event);
+                }
+                break;
+            case 'settings':
+                if (typeof global.openCommanderHubModal === 'function') {
+                    global.openCommanderHubModal('settings', event);
+                }
+                break;
+            case 'return-to-portal':
+                returnToAgePortal();
+                break;
+            case 'logout':
+                if (typeof global.handleHeaderAuthAction === 'function') {
+                    global.handleHeaderAuthAction();
+                } else if (typeof global.triggerMainDashboardLogout === 'function') {
+                    global.triggerMainDashboardLogout();
+                }
+                break;
+            default:
+                break;
+        }
+    }
+
     function bindGamePageNavigation() {
         global.document.querySelectorAll('.game-page-nav-tabs .nav-tab[data-game-view]').forEach((tab) => {
             tab.addEventListener('click', (event) => {
@@ -297,22 +352,6 @@
             mobileToggle.addEventListener('click', toggleGameMobileNavMenu);
         }
 
-        const headerAuthBtn = global.document.getElementById('header-auth-action-btn');
-        if (headerAuthBtn) {
-            headerAuthBtn.addEventListener('click', (event) => {
-                event.preventDefault();
-                returnToAgePortal();
-            });
-        }
-
-        const mobileAuthBtn = global.document.getElementById('game-mobile-nav-auth-btn');
-        if (mobileAuthBtn) {
-            mobileAuthBtn.addEventListener('click', (event) => {
-                event.preventDefault();
-                returnToAgePortal();
-            });
-        }
-
         global.document.addEventListener('click', (event) => {
             if (!isGameMobileNavLayout()) return;
             const shell = global.document.getElementById('game-mobile-nav-shell');
@@ -325,16 +364,6 @@
             if (!isGameMobileNavLayout()) {
                 closeGameMobileNavMenu();
             }
-        });
-    }
-
-    function bindReturnToPortalButton() {
-        const button = global.document.getElementById('game-return-portal-btn');
-        if (!button) return;
-
-        button.addEventListener('click', async (event) => {
-            event.preventDefault();
-            await returnToAgePortal();
         });
     }
 
@@ -415,7 +444,6 @@
 
     async function bootGamePage() {
         bindGamePageNavigation();
-        bindReturnToPortalButton();
         registerUnloadHandlers();
         setActiveGameView('overview');
         await bootstrapGamePageSession();
@@ -437,6 +465,9 @@
     }
 
     global.switchGamePageView = setActiveGameView;
+    global.returnToGameAgePortal = returnToAgePortal;
+    global.toggleGameMobileCommanderSubmenu = toggleGameMobileCommanderSubmenu;
+    global.gameMobileNavCommanderAction = gameMobileNavCommanderAction;
 
     if (global.document.readyState === 'loading') {
         global.document.addEventListener('DOMContentLoaded', () => {

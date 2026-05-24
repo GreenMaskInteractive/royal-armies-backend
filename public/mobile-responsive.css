@@ -1295,6 +1295,20 @@ body {
         color: #ffd700 !important;
     }
 
+    .portal-mobile-submenu-item.portal-mobile-submenu-item-return-portal {
+        margin-top: 8px !important;
+        border: 1px solid rgba(184, 144, 48, 0.55) !important;
+        text-align: center !important;
+        justify-content: center !important;
+    }
+
+    .portal-mobile-submenu-item.portal-mobile-submenu-item-return-portal:hover,
+    .portal-mobile-submenu-item.portal-mobile-submenu-item-return-portal:active {
+        border-color: rgba(255, 215, 0, 0.75) !important;
+        background: rgba(184, 144, 48, 0.1) !important;
+        color: #ffd700 !important;
+    }
+
     .portal-mobile-submenu-item.portal-mobile-submenu-item-logout {
         margin-top: 8px !important;
         border: 1px solid rgba(212, 175, 55, 0.82) !important;
