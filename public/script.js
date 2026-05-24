@@ -1283,6 +1283,8 @@ function syncNavMailboxIndicators() {
     portalMailboxUnreadBaseline = unreadCount;
 
     const wrapper = document.querySelector('.nav-avatar-hub-wrapper');
+    const identityCard = document.getElementById('portal-commander-identity-card');
+    const settingsBtn = document.getElementById('portal-commander-identity-settings-btn');
     const countEl = document.getElementById('nav-messages-unread-count');
     const messagesBtn = document.getElementById('nav-dropdown-messages-btn');
     const mobileBlock = document.getElementById('portal-mobile-commander-block');
@@ -1290,6 +1292,8 @@ function syncNavMailboxIndicators() {
     const hasUnread = unreadCount > 0;
 
     if (wrapper) wrapper.classList.toggle('has-unread-messages', hasUnread);
+    if (identityCard) identityCard.classList.toggle('has-unread-messages', hasUnread);
+    if (settingsBtn) settingsBtn.classList.toggle('has-unread-messages', hasUnread);
     if (mobileBlock) mobileBlock.classList.toggle('has-unread-messages', hasUnread);
     if (mobileTrigger) mobileTrigger.classList.toggle('has-unread-messages', hasUnread);
 

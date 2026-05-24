@@ -253,7 +253,7 @@ function loadCommanderHubSection(tabName, clickEvent) {
 
 function buildCommanderHubTopTabMarkup(activeTab) {
     const tabs = [
-        { id: 'view-profile', label: 'View', title: 'View Profile' },
+        { id: 'view-profile', label: 'View', title: 'View Profile Card' },
         { id: 'profile', label: 'Edit', title: 'Edit Profile' },
         { id: 'messages', label: 'Comms', title: 'Communication' },
         { id: 'settings', label: 'Settings', title: 'Settings' },

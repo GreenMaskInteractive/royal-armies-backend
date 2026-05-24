@@ -15,7 +15,7 @@
     <!-- Block 2: Page Title & Stylesheet Bridge -->
     <title>Royal Armies - An MMOHFT Medieval-Fantasy Strategy Game</title>
     <link rel="stylesheet" href="style.css?v=mailbox-read-popup-wide-2">
-    <link rel="stylesheet" href="style2.css?v=logo-content-nudge-up-1">
+    <link rel="stylesheet" href="style2.css?v=commander-identity-card-1">
     <link rel="stylesheet" href="mobile-responsive.css?v=logo-content-nudge-up-1">
     <link rel="stylesheet" href="dev-page-navigator.css">
     <link rel="stylesheet" href="custom-cursor.css?v=scrollbar-cursor-1">
@@ -50,15 +50,39 @@
         <!-- Block 4: Three-Column Sticky Navigation Bar -->
         <div class="portal-desktop-nav-stack portal-desktop-nav-only">
             <div class="portal-nav-commander-identity-row nav-embedded-account-label">
-                <div class="nav-avatar-hub-wrapper">
-                    <img id="nav-embedded-avatar-crest" src="" alt="Commander avatar" class="nav-bar-embedded-avatar-thumbnail" tabindex="0">
-                </div>
-                <div class="nav-account-identity-cluster">
-                    <div class="nav-account-identity-stack">
-                        <strong id="logged-user-tag">Loading...</strong>
-                        <div id="nav-commander-membership-badge-row" class="commander-membership-badge-row nav-commander-membership-badge-row" hidden></div>
+                <div class="portal-commander-identity-card" id="portal-commander-identity-card">
+                    <button type="button"
+                        class="portal-commander-identity-settings-btn"
+                        id="portal-commander-identity-settings-btn"
+                        onclick="togglePortalCommanderIdentityMenu(event)"
+                        aria-expanded="false"
+                        aria-controls="portal-desktop-commander-menu"
+                        aria-label="Open commander menu"
+                        title="Commander menu">
+                        <img src="images/settingsicon.png" alt="" class="portal-commander-identity-settings-icon" aria-hidden="true">
+                    </button>
+                    <div class="portal-commander-identity-card-body">
+                        <div class="nav-avatar-hub-wrapper">
+                            <img id="nav-embedded-avatar-crest" src="" alt="Commander avatar" class="nav-bar-embedded-avatar-thumbnail" tabindex="0">
+                        </div>
+                        <div class="nav-account-identity-cluster">
+                            <div class="nav-account-identity-stack">
+                                <strong id="logged-user-tag">Loading...</strong>
+                                <div id="nav-commander-membership-badge-row" class="commander-membership-badge-row nav-commander-membership-badge-row" hidden></div>
+                            </div>
+                            <div id="nav-commander-owner-tag-slot" class="nav-commander-owner-tag-slot" hidden></div>
+                        </div>
                     </div>
-                    <div id="nav-commander-owner-tag-slot" class="nav-commander-owner-tag-slot" hidden></div>
+                    <div class="portal-commander-identity-menu" id="portal-desktop-commander-menu" role="menu" hidden>
+                        <button type="button" class="dropdown-action-item dropdown-action-item-view-profile" role="menuitem" onclick="portalDesktopCommanderMenuAction('view-profile', event)">View Profile Card</button>
+                        <button type="button" class="dropdown-action-item" role="menuitem" onclick="portalDesktopCommanderMenuAction('edit-profile', event)">Edit Profile</button>
+                        <button type="button" id="nav-dropdown-messages-btn" class="dropdown-action-item dropdown-action-item-messages" role="menuitem" onclick="portalDesktopCommanderMenuAction('messages', event)">
+                            <span id="nav-messages-unread-count" class="dropdown-messages-unread-count" hidden></span>
+                            <span class="dropdown-messages-label">Messages</span>
+                            <span class="dropdown-messages-new-dot" aria-hidden="true"></span>
+                        </button>
+                        <button type="button" class="dropdown-action-item" role="menuitem" onclick="portalDesktopCommanderMenuAction('settings', event)">Settings</button>
+                    </div>
                 </div>
             </div>
 
@@ -90,7 +114,7 @@
                                 <span class="portal-mobile-nav-chevron portal-mobile-commander-chevron" aria-hidden="true">▾</span>
                             </button>
                             <div class="portal-mobile-commander-submenu" id="portal-mobile-commander-submenu" hidden>
-                                <button type="button" class="portal-mobile-submenu-item" onclick="portalMobileNavCommanderAction('view-profile', event)">View Profile</button>
+                                <button type="button" class="portal-mobile-submenu-item" onclick="portalMobileNavCommanderAction('view-profile', event)">View Profile Card</button>
                                 <button type="button" class="portal-mobile-submenu-item" onclick="portalMobileNavCommanderAction('edit-profile', event)">Edit Profile</button>
                                 <button type="button" class="portal-mobile-submenu-item portal-mobile-submenu-item-messages" id="portal-mobile-messages-btn" onclick="portalMobileNavCommanderAction('messages', event)">
                                     <span id="portal-mobile-messages-unread" class="dropdown-messages-unread-count" hidden></span>
@@ -116,19 +140,6 @@
                         <span id="portal-mobile-nav-auth-label">Log In</span>
                     </button>
                     </div>
-                </div>
-            </div>
-
-            <div class="portal-nav-commander-menu-rail portal-desktop-nav-only" aria-label="Commander quick actions">
-                <div class="avatar-hover-dropdown-menu" id="portal-desktop-commander-menu">
-                    <button type="button" class="dropdown-action-item dropdown-action-item-view-profile" onclick="openPublicCommanderProfileCard(event)">View Profile</button>
-                    <button type="button" class="dropdown-action-item" onclick="openCommanderHubModal('profile', event)">Edit Profile</button>
-                    <button type="button" id="nav-dropdown-messages-btn" class="dropdown-action-item dropdown-action-item-messages" onclick="openCommanderHubMessagesInbox(event)">
-                        <span id="nav-messages-unread-count" class="dropdown-messages-unread-count" hidden></span>
-                        <span class="dropdown-messages-label">Messages</span>
-                        <span class="dropdown-messages-new-dot" aria-hidden="true"></span>
-                    </button>
-                    <button type="button" class="dropdown-action-item" onclick="openCommanderHubModal('settings', event)">Settings</button>
                 </div>
             </div>
 
@@ -585,14 +596,15 @@
     <!-- Block 10: Commander Hub + Shared RAGE Logic -->
     <script src="dev-environment.js"></script>
     <script src="commander-dossier-sync.js?v=deployment-deck-refresh-1"></script>
+    <script src="portal-commander-identity-menu.js?v=commander-identity-card-1"></script>
     <script src="achievement-system.js?v=first-timer-icon-png-1"></script>
     <script src="dev-page-navigator.js?v=dev-tools-fix-1"></script>
     <script src="portal-alerts.js"></script>
     <script src="rank-data.js"></script>
-    <script src="script.js?v=locale-login-sync-1"></script>
+    <script src="script.js?v=commander-identity-card-1"></script>
     <script src="commander-hub.js?v=remove-profile-visibility-pill-1"></script>
     <script src="maintenance-alert.js?v=maintenance-always-on-1"></script>
-    <script src="script2.js?v=deployment-hidden-fix-1"></script>
+    <script src="script2.js?v=commander-identity-card-1"></script>
     <script src="custom-cursor.js?v=scrollbar-cursor-1"></script>
 
 </body>

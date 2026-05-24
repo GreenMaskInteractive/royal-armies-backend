@@ -561,6 +561,10 @@ function closePortalMobileNavMenus() {
 
     if (commanderSub) commanderSub.hidden = true;
     if (commanderToggle) commanderToggle.setAttribute('aria-expanded', 'false');
+
+    if (typeof closePortalCommanderIdentityMenu === 'function') {
+        closePortalCommanderIdentityMenu();
+    }
 }
 
 function positionPortalMobileNavMenu() {

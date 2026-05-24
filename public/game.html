@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Royal Armies - Age Session (In Development)</title>
     <link rel="stylesheet" href="style.css?v=mailbox-read-popup-wide-2">
-    <link rel="stylesheet" href="style2.css?v=route-fade-1">
+    <link rel="stylesheet" href="style2.css?v=commander-identity-card-1">
     <link rel="stylesheet" href="mobile-responsive.css?v=game-chat-module-1">
     <link rel="stylesheet" href="dev-page-navigator.css">
     <link rel="stylesheet" href="custom-cursor.css?v=scrollbar-cursor-1">
@@ -16,15 +16,39 @@
     <div class="game-page-staging-deck">
         <div class="portal-desktop-nav-stack game-page-nav-stack">
             <div class="portal-nav-commander-identity-row nav-embedded-account-label portal-desktop-nav-only">
-                <div class="nav-avatar-hub-wrapper">
-                    <img id="nav-embedded-avatar-crest" src="images/avatars/commanderprofile01.png" alt="Commander avatar" class="nav-bar-embedded-avatar-thumbnail" tabindex="0">
-                </div>
-                <div class="nav-account-identity-cluster">
-                    <div class="nav-account-identity-stack">
-                        <strong id="logged-user-tag">Loading...</strong>
-                        <div id="nav-commander-membership-badge-row" class="commander-membership-badge-row nav-commander-membership-badge-row" hidden></div>
+                <div class="portal-commander-identity-card" id="portal-commander-identity-card">
+                    <button type="button"
+                        class="portal-commander-identity-settings-btn"
+                        id="portal-commander-identity-settings-btn"
+                        onclick="togglePortalCommanderIdentityMenu(event)"
+                        aria-expanded="false"
+                        aria-controls="portal-desktop-commander-menu"
+                        aria-label="Open commander menu"
+                        title="Commander menu">
+                        <img src="images/settingsicon.png" alt="" class="portal-commander-identity-settings-icon" aria-hidden="true">
+                    </button>
+                    <div class="portal-commander-identity-card-body">
+                        <div class="nav-avatar-hub-wrapper">
+                            <img id="nav-embedded-avatar-crest" src="images/avatars/commanderprofile01.png" alt="Commander avatar" class="nav-bar-embedded-avatar-thumbnail" tabindex="0">
+                        </div>
+                        <div class="nav-account-identity-cluster">
+                            <div class="nav-account-identity-stack">
+                                <strong id="logged-user-tag">Loading...</strong>
+                                <div id="nav-commander-membership-badge-row" class="commander-membership-badge-row nav-commander-membership-badge-row" hidden></div>
+                            </div>
+                            <div id="nav-commander-owner-tag-slot" class="nav-commander-owner-tag-slot" hidden></div>
+                        </div>
                     </div>
-                    <div id="nav-commander-owner-tag-slot" class="nav-commander-owner-tag-slot" hidden></div>
+                    <div class="portal-commander-identity-menu" id="portal-desktop-commander-menu" role="menu" hidden>
+                        <button type="button" class="dropdown-action-item dropdown-action-item-view-profile" role="menuitem" onclick="portalDesktopCommanderMenuAction('view-profile', event)">View Profile Card</button>
+                        <button type="button" class="dropdown-action-item" role="menuitem" onclick="portalDesktopCommanderMenuAction('edit-profile', event)">Edit Profile</button>
+                        <button type="button" id="nav-dropdown-messages-btn" class="dropdown-action-item dropdown-action-item-messages" role="menuitem" onclick="portalDesktopCommanderMenuAction('messages', event)">
+                            <span id="nav-messages-unread-count" class="dropdown-messages-unread-count" hidden></span>
+                            <span class="dropdown-messages-label">Messages</span>
+                            <span class="dropdown-messages-new-dot" aria-hidden="true"></span>
+                        </button>
+                        <button type="button" class="dropdown-action-item" role="menuitem" onclick="portalDesktopCommanderMenuAction('settings', event)">Settings</button>
+                    </div>
                 </div>
             </div>
 
@@ -60,8 +84,6 @@
                             </div>
                         </div>
                     </div>
-
-                    <div class="portal-nav-commander-menu-rail portal-desktop-nav-only" aria-hidden="true"></div>
 
                     <div class="nav-tabs-centered-flex-dock portal-desktop-nav-only game-page-nav-tabs">
                         <div class="nav-tab active" data-game-view="overview" role="button" tabindex="0">Overview</div>
@@ -107,9 +129,10 @@
 
     <script src="dev-environment.js"></script>
     <script src="commander-dossier-sync.js?v=dossier-sync-1"></script>
-    <script src="script.js?v=message-popup-buttons-1"></script>
+    <script src="script.js?v=commander-identity-card-1"></script>
+    <script src="portal-commander-identity-menu.js?v=commander-identity-card-1"></script>
     <script src="achievement-system.js?v=first-timer-icon-png-1"></script>
-    <script src="game.js?v=deployment-panel-unlock-fix-1"></script>
+    <script src="game.js?v=commander-identity-card-1"></script>
     <script src="game-chat.js?v=game-chat-size-limits-1"></script>
     <script src="dev-page-navigator.js?v=dev-tools-fix-1"></script>
     <script src="custom-cursor.js?v=scrollbar-cursor-1"></script>
