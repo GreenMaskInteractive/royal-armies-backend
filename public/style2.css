@@ -8001,13 +8001,15 @@ body.developer-maintenance-alert-active #page-landing {
 .game-chat-tabs {
     display: flex !important;
     flex-wrap: wrap !important;
+    align-items: flex-start !important;
     gap: 4px !important;
 }
 
 .game-chat-tab {
-    flex: 1 1 auto !important;
+    flex: 0 0 auto !important;
+    width: auto !important;
     min-width: 0 !important;
-    padding: 6px 8px !important;
+    padding: 6px 10px !important;
     border: 1px solid rgba(184, 144, 48, 0.28) !important;
     border-bottom: none !important;
     border-radius: 3px 3px 0 0 !important;
@@ -8018,6 +8020,10 @@ body.developer-maintenance-alert-active #page-landing {
     font-weight: 700 !important;
     letter-spacing: 0.06em !important;
     text-transform: uppercase !important;
+    line-height: 1.2 !important;
+    white-space: nowrap !important;
+    text-align: center !important;
+    box-sizing: border-box !important;
     cursor: pointer !important;
     transition: color 0.15s ease, background 0.15s ease, border-color 0.15s ease !important;
 }
