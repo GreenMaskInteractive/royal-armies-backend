@@ -1,0 +1,38 @@
+---
+description: Cloudflare edge caching for static assets; cache-bust and API conventions
+alwaysApply: true
+---
+
+# Cloudflare static cache (production)
+
+Production ([royalarmies.com](https://royalarmies.com)) sits behind **Cloudflare** with a **Cache Rule** that **overrides Edge TTL** and caches responses for these extensions:
+
+`jpg`, `jpeg`, `png`, `gif`, `webp`, `svg`, `ico`, `mp3`, `ogg`, `wav`, `css`, `js`, `woff`, `woff2`
+
+Assume cached static files can be **stale at the edge** until TTL expires unless cache is purged.
+
+## Client-side assets (CSS, JS, images, fonts, audio)
+
+When changing files under `public/` that match the extensions above:
+
+1. **Bump the cache-bust query** on every HTML reference to that asset, e.g. `script2.js?v=feature-name-1` → `feature-name-2`.
+2. Update **all pages** that load the file (`main.html`, `game.html`, `index.html`, etc.).
+3. Prefer **descriptive `v=` tokens** over timestamps so diffs stay readable.
+
+Do **not** rely on "users hard-refreshing" after deploy; without a new `?v=`, Cloudflare may serve old JS/CSS.
+
+## APIs and dynamic player data
+
+- Keep commander/account/game state on **`/api/...`** (or other non-cached paths). Do not expose dynamic JSON at URLs ending in `.js`, `.css`, etc.
+- New endpoints must return data that is **user-specific or time-sensitive** only with appropriate **`Cache-Control`** (e.g. `no-store` or private) if there is any chance of intermediary caching.
+- Do not add dynamic player/dossier/session payloads to static `.js` bundles expecting them to update per user without a deploy.
+
+## Server static middleware
+
+Express still serves `public/` as static files; Cloudflare caches those responses at the edge by extension. Backend logic in `server.js` is unaffected, but **browsers and Cloudflare** will cache the static file responses.
+
+## Checklist after UI/asset deploys
+
+- [ ] Changed `.js` / `.css` / images / audio → bumped `?v=` in HTML (and any other referrers)
+- [ ] New API route is not disguised as a cached extension
+- [ ] Sensitive or per-user responses are not cacheable at the edge
