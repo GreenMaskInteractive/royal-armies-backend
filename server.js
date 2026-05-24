@@ -2350,21 +2350,44 @@ app.post('/api/portal/mailbox/send', (req, res) => {
 
 app.post('/api/portal/mailbox/inject', (req, res) => {
     const to = resolveLedgerCommanderUsername(req.body?.to || req.body?.recipient || '');
-    const from = String(req.body?.from || '').trim().slice(0, 80);
+    const channel = String(req.body?.channel || 'inbox').toLowerCase();
     const topic = String(req.body?.topic || '').trim().slice(0, MAILBOX_TOPIC_MAX) || 'No subject';
     const body = String(req.body?.body || '').trim().slice(0, MAILBOX_BODY_MAX);
+    const systemMessageKey = String(req.body?.systemMessageKey || '').trim().slice(0, 80);
 
     if (!to) {
         return res.status(400).json({ status: 'error', message: 'Valid recipient commander required.' });
     }
-    if (!from) {
+    if (channel !== 'inbox' && channel !== 'system') {
+        return res.status(400).json({ status: 'error', message: 'Channel must be inbox or system.' });
+    }
+
+    const from = channel === 'system'
+        ? WELCOME_SYSTEM_MESSAGE_FROM
+        : String(req.body?.from || '').trim().slice(0, 80);
+
+    if (channel === 'inbox' && !from) {
         return res.status(400).json({ status: 'error', message: 'Sender name required.' });
+    }
+
+    const messages = getMailboxMessageStore();
+    if (channel === 'system' && systemMessageKey) {
+        const ownerLower = to.toLowerCase();
+        const alreadyDelivered = messages.some(
+            (row) => row
+                && row.channel === 'system'
+                && String(row.to || '').toLowerCase() === ownerLower
+                && row.systemMessageKey === systemMessageKey
+        );
+        if (alreadyDelivered) {
+            return res.status(200).json({ status: 'ok', message: 'System message already delivered.', skipped: true });
+        }
     }
 
     const sentAt = new Date().toISOString();
     const row = {
         id: createMailboxRecordId(),
-        channel: 'inbox',
+        channel,
         from,
         to,
         topic,
@@ -2373,7 +2396,11 @@ app.post('/api/portal/mailbox/inject', (req, res) => {
         sentAt
     };
 
-    const messages = getMailboxMessageStore();
+    if (channel === 'system') {
+        row.bodyFormat = req.body?.bodyFormat === 'html' ? 'html' : 'text';
+        if (systemMessageKey) row.systemMessageKey = systemMessageKey;
+    }
+
     messages.push(row);
     writeMailboxMessageStore(messages);
 
