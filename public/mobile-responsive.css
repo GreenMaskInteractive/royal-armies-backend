@@ -187,6 +187,7 @@ body {
         grid-column: 4 / 7 !important;
     }
 
+    #portal-metrics-auth-build-column,
     #portal-alpha-version-capsule {
         order: 7 !important;
         grid-column: 1 / -1 !important;
@@ -194,6 +195,12 @@ body {
         text-align: center !important;
     }
 
+    #portal-metrics-auth-build-column .metric-auth-build-readout,
+    #portal-alpha-version-capsule {
+        justify-content: center !important;
+    }
+
+    #portal-metrics-auth-build-column .metric-text-stack,
     #portal-alpha-version-capsule .metric-text-stack {
         align-items: center !important;
     }

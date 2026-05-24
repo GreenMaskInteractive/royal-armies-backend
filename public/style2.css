@@ -575,7 +575,7 @@ body.portal-guest-mode #portal-mobile-commander-block {
 .portal-early-access-readout {
     position: relative !important;
     z-index: 2 !important;
-    margin: 6px 0 0 0 !important;
+    margin: -4px 0 0 0 !important;
     padding: 0 !important;
     font-family: 'Cinzel', serif !important;
     font-size: 0.78rem !important;
@@ -590,7 +590,7 @@ body.portal-guest-mode #portal-mobile-commander-block {
 }
 
 .portal-early-access-readout--mobile {
-    margin-top: 4px !important;
+    margin-top: -6px !important;
     font-size: 0.62rem !important;
     letter-spacing: 0.24em !important;
 }
@@ -821,6 +821,59 @@ body.portal-guest-mode .portal-mobile-nav-page-item[data-portal-view="chronicles
 .metric-capsule-cell.metric-capsule-divider {
     border-left: 1px dashed rgba(184, 144, 48, 0.22) !important;
     padding-left: 14px !important;
+}
+
+.metric-capsule-auth-build-column {
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 0 !important;
+    min-width: 0 !important;
+}
+
+.metric-auth-build-stack {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 8px !important;
+    width: 100% !important;
+}
+
+.metric-auth-build-readout {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 10px !important;
+    width: 100% !important;
+}
+
+.metrics-auth-action-btn {
+    transform: none !important;
+    min-height: 30px !important;
+    padding: 4px 14px 4px 10px !important;
+    font-size: 0.72rem !important;
+}
+
+.metrics-auth-action-btn:hover {
+    transform: translateY(-1px) !important;
+}
+
+.metrics-auth-action-btn:active {
+    transform: translateY(0) !important;
+}
+
+.metrics-auth-action-btn[hidden] {
+    display: none !important;
+}
+
+.metric-capsule-auth-build-column:has(.metrics-auth-action-btn[hidden]) {
+    justify-content: center !important;
+}
+
+.metric-capsule-auth-build-column:has(.metrics-auth-action-btn[hidden]) .metric-auth-build-stack {
+    gap: 0 !important;
 }
 
 .metric-roster-hover-cell {

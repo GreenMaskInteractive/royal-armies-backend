@@ -306,12 +306,22 @@ function refreshMainPortalAuthChrome() {
     const label = document.getElementById('header-auth-action-label');
     const icon = document.getElementById('header-auth-action-icon');
     const btn = document.getElementById('header-auth-action-btn');
+    const metricsLabel = document.getElementById('metrics-auth-action-label');
+    const metricsIcon = document.getElementById('metrics-auth-action-icon');
+    const metricsBtn = document.getElementById('metrics-auth-action-btn');
     const authed = isPortalUserAuthenticated();
 
     if (label) label.textContent = authed ? 'Log Out' : 'Log In';
     if (icon) icon.src = authed ? 'images/logouticon.png' : 'images/profileicon.png';
     if (btn) {
         btn.setAttribute('aria-label', authed ? 'Log out of Age Portal' : 'Log in to Age Portal');
+    }
+
+    if (metricsLabel) metricsLabel.textContent = authed ? 'Log Out' : 'Log In';
+    if (metricsIcon) metricsIcon.src = authed ? 'images/logouticon.png' : 'images/profileicon.png';
+    if (metricsBtn) {
+        metricsBtn.hidden = authed;
+        metricsBtn.setAttribute('aria-label', authed ? 'Log out of Age Portal' : 'Log in to Age Portal');
     }
 
     if (typeof refreshLoggedUserTagDisplay === 'function') {

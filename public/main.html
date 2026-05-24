@@ -15,8 +15,8 @@
     <!-- Block 2: Page Title & Stylesheet Bridge -->
     <title>Royal Armies - An MMOHFT Medieval-Fantasy Strategy Game</title>
     <link rel="stylesheet" href="style.css?v=mailbox-read-popup-wide-2">
-    <link rel="stylesheet" href="style2.css?v=profile-save-undo-fix-1">
-    <link rel="stylesheet" href="mobile-responsive.css?v=new-messages-bar-1">
+    <link rel="stylesheet" href="style2.css?v=early-access-metrics-login-1">
+    <link rel="stylesheet" href="mobile-responsive.css?v=early-access-metrics-login-1">
     <link rel="stylesheet" href="dev-page-navigator.css">
     <link rel="stylesheet" href="custom-cursor.css?v=scrollbar-cursor-1">
 </head>
@@ -244,11 +244,19 @@
                 </div>
             </div>
 
-            <div class="metric-capsule-cell metric-capsule-divider metric-capsule-build-version" id="portal-alpha-version-capsule">
-                <span class="metric-glyph-icon" aria-hidden="true">⚙</span>
-                <div class="metric-text-stack">
-                    <span class="metric-label-title">Portal Build</span>
-                    <span class="metric-live-data-value portal-alpha-version-value" data-portal-alpha-version>Alpha 0.1.13</span>
+            <div class="metric-capsule-cell metric-capsule-divider metric-capsule-auth-build-column" id="portal-metrics-auth-build-column">
+                <div class="metric-auth-build-stack">
+                    <button type="button" id="metrics-auth-action-btn" class="header-logout-btn metrics-auth-action-btn" onclick="handleHeaderAuthAction()" aria-label="Log in to Age Portal">
+                        <img id="metrics-auth-action-icon" src="images/profileicon.png" alt="" class="header-logout-icon" aria-hidden="true">
+                        <span id="metrics-auth-action-label" class="header-logout-label">Log In</span>
+                    </button>
+                    <div class="metric-auth-build-readout" id="portal-alpha-version-capsule">
+                        <span class="metric-glyph-icon" aria-hidden="true">⚙</span>
+                        <div class="metric-text-stack">
+                            <span class="metric-label-title">Portal Build</span>
+                            <span class="metric-live-data-value portal-alpha-version-value" data-portal-alpha-version>Alpha 0.1.13</span>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -611,7 +619,7 @@
     <script src="portal-alerts.js?v=nexus-rift-acronyms-1"></script>
     <script src="rift-error-display.js?v=nexus-rift-acronyms-1"></script>
     <script src="rank-data.js"></script>
-    <script src="script.js?v=profile-save-undo-fix-1"></script>
+    <script src="script.js?v=early-access-metrics-login-1"></script>
     <script src="commander-hub.js?v=save-confirmation-toast-fix-1"></script>
     <script src="maintenance-alert.js?v=maintenance-always-on-1"></script>
     <script src="script2.js?v=how-did-you-get-here-1"></script>
