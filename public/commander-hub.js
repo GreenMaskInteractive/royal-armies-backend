@@ -2,23 +2,7 @@
    COMMANDER HUB MODAL — Age Portal Profile / Messages / Settings
    ========================================================================== */
 
-function getCommanderHubUIMount() {
-    const pageRoot = document.getElementById('portal-commander-hub-page');
-    if (pageRoot) {
-        return {
-            container: document.getElementById('portal-commander-hub-subnav'),
-            body: document.getElementById('portal-commander-hub-body'),
-            detailsHeader: document.getElementById('portal-commander-hub-section-title'),
-            leftHeader: document.getElementById('portal-commander-hub-subnav-label'),
-            modalFrame: pageRoot,
-            profileHeaderHost: document.getElementById('portal-commander-hub-profile-header'),
-            profileFooterHost: document.getElementById('portal-commander-hub-profile-footer-host'),
-            profileActiveClass: 'commander-hub-profile-active',
-            subnavItemClass: 'commander-hub-subnav-item',
-            hideSubnavOnProfile: true
-        };
-    }
-
+function getCommanderHubModalMount() {
     return {
         container: document.getElementById('commander-hub-subnav'),
         body: document.getElementById('commander-hub-body'),
@@ -31,6 +15,62 @@ function getCommanderHubUIMount() {
         subnavItemClass: 'commander-hub-subnav-item',
         hideSubnavOnProfile: true
     };
+}
+
+function getCommanderHubPortalPageMount() {
+    const pageRoot = document.getElementById('portal-commander-hub-page');
+    if (!pageRoot) return null;
+
+    return {
+        container: document.getElementById('portal-commander-hub-subnav'),
+        body: document.getElementById('portal-commander-hub-body'),
+        detailsHeader: document.getElementById('portal-commander-hub-section-title'),
+        leftHeader: document.getElementById('portal-commander-hub-subnav-label'),
+        modalFrame: pageRoot,
+        profileHeaderHost: document.getElementById('portal-commander-hub-profile-header'),
+        profileFooterHost: document.getElementById('portal-commander-hub-profile-footer-host'),
+        profileActiveClass: 'commander-hub-profile-active',
+        subnavItemClass: 'commander-hub-subnav-item',
+        hideSubnavOnProfile: true
+    };
+}
+
+function getActiveCommanderHubFrame() {
+    const modal = document.getElementById('commander-hub-modal');
+    if (modal?.classList.contains('is-visible')) {
+        return modal;
+    }
+
+    const pageRoot = document.getElementById('portal-commander-hub-page');
+    if (pageRoot) {
+        return pageRoot;
+    }
+
+    return modal || null;
+}
+
+function getCommanderHubSaveConfirmationHost() {
+    const frame = getActiveCommanderHubFrame();
+    if (!frame) return null;
+
+    if (frame.id === 'commander-hub-modal') {
+        return frame.querySelector('.commander-hub-dialog') || frame;
+    }
+
+    return frame;
+}
+
+function getCommanderHubUIMount() {
+    if (isCommanderHubModalOpen()) {
+        return getCommanderHubModalMount();
+    }
+
+    const portalMount = getCommanderHubPortalPageMount();
+    if (portalMount) {
+        return portalMount;
+    }
+
+    return getCommanderHubModalMount();
 }
 
 function isCommanderHubPortalPageActive() {
@@ -198,8 +238,7 @@ function syncCommanderHubSettingsActionDeck(tabName) {
 }
 
 function syncCommanderHubModalSectionState(tabName) {
-    const frame = document.getElementById('portal-commander-hub-page')
-        || document.getElementById('commander-hub-modal');
+    const frame = getActiveCommanderHubFrame();
     if (!frame) return;
 
     frame.classList.remove(
@@ -831,6 +870,8 @@ window.renderCommanderHubPortalCanvas = renderCommanderHubPortalCanvas;
 window.hydrateCommanderHubPortalPage = hydrateCommanderHubPortalPage;
 window.teardownCommanderHubPortalView = teardownCommanderHubPortalView;
 window.isCommanderHubPortalPageActive = isCommanderHubPortalPageActive;
+window.getActiveCommanderHubFrame = getActiveCommanderHubFrame;
+window.getCommanderHubSaveConfirmationHost = getCommanderHubSaveConfirmationHost;
 window.openPublicCommanderProfileCard = openPublicCommanderProfileCard;
 window.closePublicCommanderProfileCard = closePublicCommanderProfileCard;
 window.fetchCommanderPublicProfileForViewer = fetchCommanderPublicProfileForViewer;

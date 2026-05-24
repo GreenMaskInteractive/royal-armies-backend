@@ -10,6 +10,7 @@
         { id: 'index', label: 'Landing (redirect → main)', path: '/main', file: 'index.html' },
         { id: 'main', label: 'Age Portal', path: '/main', file: 'main.html' },
         { id: 'game', label: 'Game (WIP shell)', path: '/game', file: 'game.html' },
+        { id: 'how-did-you-get-here', label: 'Join Age placeholder', path: '/how-did-you-get-here', file: 'how-did-you-get-here.html' },
         { id: 'ageportal', label: 'Age Portal (legacy redirect)', path: '/main', file: 'ageportal.html' },
         { id: 'reset-password', label: 'Reset Password', path: '/reset-password', file: 'reset-password.html' }
     ];
@@ -35,7 +36,7 @@
 
     function isDevPortalPersonaPage() {
         const slug = getPathSlug();
-        return slug === 'main' || slug === 'game' || slug === '';
+        return slug === 'main' || slug === 'game' || slug === 'how-did-you-get-here' || slug === '';
     }
 
     function resolveDevPageHref(page) {

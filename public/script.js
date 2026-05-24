@@ -38,7 +38,9 @@ const TEXT_SCALE_MAX = 1.5;
 const TEXT_SCALE_BASE_PX = 16;
 let confirmedTextScale = parseFloat(localStorage.getItem('savedTextScale')) || 1.0;
 let stagedTextScale = confirmedTextScale;
-let hasUnsavedChanges = false; // System safety guard toggle 
+let hasUnsavedChanges = false; // System safety guard toggle
+const appRuntimeGlobal = typeof globalThis !== 'undefined' ? globalThis : window;
+let profileEditorBaseline = null; 
 let saveConfirmationHideTimer = null;
 
 // Master Audio System Channels 
@@ -2832,9 +2834,10 @@ function getActiveSettingsBodyElement() {
 }
 
 function reloadProfilePanelView() {
-    const hubPage = document.getElementById('portal-commander-hub-page');
-    const hubModal = document.getElementById('commander-hub-modal');
-    if (hubPage || hubModal?.classList.contains('is-visible')) {
+    const hubFrame = typeof getActiveCommanderHubFrame === 'function'
+        ? getActiveCommanderHubFrame()
+        : null;
+    if (hubFrame) {
         if (typeof loadCommanderHubSection === 'function') loadCommanderHubSection('profile');
         return;
     }
@@ -2842,9 +2845,10 @@ function reloadProfilePanelView() {
 }
 
 function reloadMessagesPanelView() {
-    const hubPage = document.getElementById('portal-commander-hub-page');
-    const hubModal = document.getElementById('commander-hub-modal');
-    if (hubPage || hubModal?.classList.contains('is-visible')) {
+    const hubFrame = typeof getActiveCommanderHubFrame === 'function'
+        ? getActiveCommanderHubFrame()
+        : null;
+    if (hubFrame) {
         if (typeof loadCommanderHubSection === 'function') {
             window.pendingMessagesHubChannel = 'messages';
             window.pendingMessagesFolder = activeMessagesFolder || 'inbox';
@@ -3405,11 +3409,13 @@ function loadLore(type, customMount) {
             profileFooter.id = 'profile-fullscreen-action-footer';
             profileFooter.className = 'settings-controls profile-fullscreen-controls';
             profileFooter.innerHTML = `
-                <button class="confirm-btn" onclick="saveSettings()">Save Changes</button>
-                <button class="revert-btn" onclick="revertSettings()">Undo Changes</button>
+                <button type="button" class="confirm-btn">Save Changes</button>
+                <button type="button" class="revert-btn">Undo Changes</button>
             `;
             const footerHost = mount.profileFooterHost || paneRight;
             if (footerHost) footerHost.appendChild(profileFooter);
+            captureProfileEditorBaseline();
+            bindProfileEditorFooterActions(profileFooter);
             applyProfileRankResetButtonState();
             return;
     }
@@ -3622,8 +3628,8 @@ function stageGameChatOpacity(val) {
     const label = document.getElementById('game-chat-opacity-value');
     if (label) label.textContent = `${stagedGameChatOpacity}%`;
 
-    if (global.RoyalArmiesGameChat && typeof global.RoyalArmiesGameChat.applyPanelOpacity === 'function') {
-        global.RoyalArmiesGameChat.applyPanelOpacity(stagedGameChatOpacity, {
+    if (appRuntimeGlobal.RoyalArmiesGameChat && typeof appRuntimeGlobal.RoyalArmiesGameChat.applyPanelOpacity === 'function') {
+        appRuntimeGlobal.RoyalArmiesGameChat.applyPanelOpacity(stagedGameChatOpacity, {
             skipPreferenceSync: true,
             skipSettingsUi: true
         });
@@ -3742,14 +3748,11 @@ function playLiveAudioPreview(type) {
 }
 
 function resolveSaveConfirmationHost() {
-    const hubPage = document.getElementById('portal-commander-hub-page');
-    if (hubPage) {
-        return hubPage;
-    }
-
-    const hubModal = document.getElementById('commander-hub-modal');
-    if (hubModal && hubModal.classList.contains('is-visible')) {
-        return hubModal.querySelector('.commander-hub-dialog') || hubModal;
+    if (typeof getCommanderHubSaveConfirmationHost === 'function') {
+        const commanderHost = getCommanderHubSaveConfirmationHost();
+        if (commanderHost) {
+            return commanderHost;
+        }
     }
 
     const loreModal = document.getElementById('lore-modal');
@@ -3854,6 +3857,107 @@ async function persistProfileFieldsFromEditor() {
     return { saved: true, synced };
 }
 
+function isCommanderHubProfileEditorActive() {
+    const frame = typeof getActiveCommanderHubFrame === 'function'
+        ? getActiveCommanderHubFrame()
+        : (document.getElementById('commander-hub-modal') || document.getElementById('portal-commander-hub-page'));
+    if (frame?.classList.contains('commander-hub-profile-active')) {
+        return true;
+    }
+
+    const loreModal = document.getElementById('lore-modal');
+    return Boolean(loreModal?.classList.contains('fullscreen-profile-active-state'));
+}
+
+function captureProfileEditorBaseline() {
+    if (typeof player === 'undefined') return;
+
+    const cached = readCommanderProfileFromLocalCache();
+    const savedAvatar = localStorage.getItem('savedProfileAvatarUrl');
+    profileEditorBaseline = {
+        bio: cached.bio,
+        privacy: cached.privacy,
+        avatarUrl: savedAvatar && savedAvatar.trim() ? savedAvatar.trim() : player.avatarUrl
+    };
+}
+
+function bindProfileEditorFooterActions(footerRoot) {
+    if (!footerRoot) return;
+
+    const saveBtn = footerRoot.querySelector('.confirm-btn');
+    const revertBtn = footerRoot.querySelector('.revert-btn');
+
+    if (saveBtn) {
+        saveBtn.type = 'button';
+        saveBtn.addEventListener('click', (event) => {
+            event.preventDefault();
+            saveSettings();
+        });
+    }
+
+    if (revertBtn) {
+        revertBtn.type = 'button';
+        revertBtn.addEventListener('click', (event) => {
+            event.preventDefault();
+            revertSettings();
+        });
+    }
+}
+
+function revertProfileEditorChanges() {
+    if (typeof player === 'undefined') return;
+
+    if (!profileEditorBaseline) {
+        captureProfileEditorBaseline();
+    }
+
+    const baseline = profileEditorBaseline || readCommanderProfileFromLocalCache();
+    const avatarUrl = baseline.avatarUrl
+        || localStorage.getItem('savedProfileAvatarUrl')
+        || player.avatarUrl;
+
+    player.description = baseline.bio ?? '';
+    player.privacy = baseline.privacy === 'Private' ? 'Private' : 'Public';
+    player.avatarUrl = avatarUrl;
+
+    try {
+        localStorage.setItem('savedProfileAvatarUrl', avatarUrl);
+    } catch (_err) {
+        /* ignore */
+    }
+
+    const bioInput = document.getElementById('profile-bio-input');
+    if (bioInput) bioInput.value = player.description;
+
+    const privacyCheck = document.getElementById('privacy-toggle-check');
+    if (privacyCheck) privacyCheck.checked = player.privacy === 'Public';
+
+    const privacyLabel = document.getElementById('privacy-label-text');
+    if (privacyLabel) {
+        privacyLabel.innerHTML = `Visibility: <strong>${player.privacy}</strong>`;
+    }
+
+    const profileAvatar = document.getElementById('profile-avatar-display');
+    if (profileAvatar) profileAvatar.src = avatarUrl;
+
+    document.querySelectorAll('#avatar-preset-selection-bin .avatar-thumb-lever').forEach((thumb) => {
+        thumb.classList.toggle('selected-avatar-border', thumb.getAttribute('src') === avatarUrl);
+    });
+
+    if (typeof setAvatarArmorySelectorVisible === 'function') {
+        setAvatarArmorySelectorVisible(false);
+    }
+
+    if (typeof refreshLoggedUserTagDisplay === 'function') {
+        refreshLoggedUserTagDisplay();
+    } else {
+        const navAvatar = document.getElementById('nav-embedded-avatar-crest');
+        if (navAvatar) navAvatar.src = avatarUrl;
+    }
+
+    hasUnsavedChanges = false;
+}
+
 function saveSettings() { 
     if (typeof playToggleLeverSFX === 'function') playToggleLeverSFX();
 
@@ -3884,8 +3988,8 @@ function saveSettings() {
         confirmedSafetyLock = stagedSafetyLock; 
         confirmedGameChatOpacity = stagedGameChatOpacity;
 
-        if (global.RoyalArmiesGameChat && typeof global.RoyalArmiesGameChat.applyPanelOpacity === 'function') {
-            global.RoyalArmiesGameChat.applyPanelOpacity(confirmedGameChatOpacity, {
+        if (appRuntimeGlobal.RoyalArmiesGameChat && typeof appRuntimeGlobal.RoyalArmiesGameChat.applyPanelOpacity === 'function') {
+            appRuntimeGlobal.RoyalArmiesGameChat.applyPanelOpacity(confirmedGameChatOpacity, {
                 skipPreferenceSync: true,
                 skipSettingsUi: true
             });
@@ -3917,10 +4021,13 @@ function saveSettings() {
         }
         hasUnsavedChanges = false;
 
-        const hubFrame = document.getElementById('portal-commander-hub-page')
-            || document.getElementById('commander-hub-modal');
+        const hubFrame = typeof getActiveCommanderHubFrame === 'function'
+            ? getActiveCommanderHubFrame()
+            : (document.getElementById('commander-hub-modal') || document.getElementById('portal-commander-hub-page'));
         if (savedProfile && hubFrame?.classList.contains('commander-hub-profile-active') && typeof reloadProfilePanelView === 'function') {
             reloadProfilePanelView();
+        } else if (savedProfile && isCommanderHubProfileEditorActive()) {
+            captureProfileEditorBaseline();
         }
 
         if (typeof applyPortalBackgroundMusicVolume === 'function') {
@@ -3952,6 +4059,13 @@ function saveSettings() {
 
 function revertSettings() { 
     if (typeof playToggleLeverSFX === 'function') playToggleLeverSFX();
+
+    if (isCommanderHubProfileEditorActive()) {
+        setTimeout(() => {
+            revertProfileEditorChanges();
+        }, 10);
+        return;
+    }
 
     setTimeout(() => {
         // 1. INITIALIZE FACTORY BASES (UPDATED FOR BACKGROUND MUSIC)
@@ -4025,8 +4139,8 @@ function revertSettings() {
         if (chatOpacitySlider) chatOpacitySlider.value = 85;
         const chatOpacityLabel = document.getElementById('game-chat-opacity-value');
         if (chatOpacityLabel) chatOpacityLabel.textContent = '85%';
-        if (global.RoyalArmiesGameChat && typeof global.RoyalArmiesGameChat.applyPanelOpacity === 'function') {
-            global.RoyalArmiesGameChat.applyPanelOpacity(85, { skipPreferenceSync: true, skipSettingsUi: true });
+        if (appRuntimeGlobal.RoyalArmiesGameChat && typeof appRuntimeGlobal.RoyalArmiesGameChat.applyPanelOpacity === 'function') {
+            appRuntimeGlobal.RoyalArmiesGameChat.applyPanelOpacity(85, { skipPreferenceSync: true, skipSettingsUi: true });
         }
         
         document.body.classList.remove('high-contrast-mode'); 
@@ -4068,6 +4182,9 @@ window.ensurePortalAuthRestored = ensurePortalAuthRestored;
 window.canUsePortalAuthSessionApi = canUsePortalAuthSessionApi;
 window.showSaveChangesConfirmation = showSaveChangesConfirmation;
 window.hideSaveChangesConfirmation = hideSaveChangesConfirmation;
+window.saveSettings = saveSettings;
+window.revertSettings = revertSettings;
+window.captureProfileEditorBaseline = captureProfileEditorBaseline;
 
 async function bootstrapMainPortalAuthOnLoad() {
     await ensurePortalAuthRestored();

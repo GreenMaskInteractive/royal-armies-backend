@@ -1518,6 +1518,7 @@ const PUBLIC_DIR = path.join(__dirname, 'public');
 const PORTAL_HTML_PAGES = {
     main: 'main.html',
     game: 'game.html',
+    'how-did-you-get-here': 'how-did-you-get-here.html',
     'reset-password': 'reset-password.html'
 };
 
@@ -1526,7 +1527,7 @@ app.get(['/ageportal', '/ageportal.html', '/index.html'], (req, res) => {
     res.redirect(301, '/main');
 });
 
-app.get(['/main.html', '/game.html', '/reset-password.html'], (req, res) => {
+app.get(['/main.html', '/game.html', '/how-did-you-get-here.html', '/reset-password.html'], (req, res) => {
     const slug = req.path.replace(/^\//, '').replace(/\.html$/i, '');
     res.redirect(301, `/${slug}`);
 });

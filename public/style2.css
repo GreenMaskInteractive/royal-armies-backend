@@ -6182,6 +6182,26 @@ body:not(.portal-guest-mode) #portal-deployment-guest-cta {
 
 .commander-hub-profile-footer-host {
     flex-shrink: 0 !important;
+    position: relative !important;
+    z-index: 6 !important;
+    pointer-events: auto !important;
+}
+
+#commander-hub-modal .commander-hub-profile-footer-host .profile-fullscreen-controls,
+#portal-commander-hub-page .commander-hub-profile-footer-host .profile-fullscreen-controls {
+    transform: none !important;
+    justify-content: center !important;
+    gap: 40px !important;
+    pointer-events: auto !important;
+}
+
+#commander-hub-modal .commander-hub-profile-footer-host .confirm-btn,
+#commander-hub-modal .commander-hub-profile-footer-host .revert-btn,
+#portal-commander-hub-page .commander-hub-profile-footer-host .confirm-btn,
+#portal-commander-hub-page .commander-hub-profile-footer-host .revert-btn {
+    pointer-events: auto !important;
+    position: relative !important;
+    z-index: 2 !important;
 }
 
 /* Settings: fill modal height; scroll only when content overflows */
@@ -7829,7 +7849,9 @@ body.developer-maintenance-alert-active #page-landing {
 }
 
 #game-page-canvas,
-.game-page-canvas {
+.game-page-canvas,
+#how-did-you-get-here-canvas,
+.how-did-you-get-here-canvas {
     margin: 0 !important;
     padding: 0 !important;
     min-height: 100vh !important;
@@ -8012,6 +8034,22 @@ body.developer-maintenance-alert-active #page-landing {
 
 .game-page-return-btn:active {
     transform: scale(0.98) !important;
+}
+
+.how-did-you-get-here-main {
+    flex: 1 1 auto !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 100% !important;
+    min-height: 100vh !important;
+    min-height: 100dvh !important;
+    padding: 32px 20px 48px !important;
+    box-sizing: border-box !important;
+}
+
+.how-did-you-get-here-panel {
+    margin: 0 auto !important;
 }
 
 /* --- In-game chat module (fixed lower-left, all game views) --- */

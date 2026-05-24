@@ -367,7 +367,7 @@ function rejoinSelectedAgeServer(clickEvent) {
         beginCommanderAgeResetSession();
     }
 
-    const destination = `/game?tutorial=${isTutorialModeActive}&joinAge=0&server=${encodeURIComponent(serverId)}`;
+    const destination = `/how-did-you-get-here?tutorial=${isTutorialModeActive}&joinAge=0&server=${encodeURIComponent(serverId)}`;
 
     notifyPortalAgeSessionJoin().finally(() => {
         localStorage.setItem('savedCommanderInActiveAge', 'true');
@@ -1185,7 +1185,7 @@ function launchGameRoundSector(isTutorialModeActive, clickEvent) {
 
     const attemptGamePageHandoff = () => {
         if (!deployPulseFinished || !selectAudioFinished) return;
-        const destination = `/game?tutorial=${isTutorialModeActive}&joinAge=1&server=${encodeURIComponent(readCommanderSelectedServerId())}`;
+        const destination = `/how-did-you-get-here?tutorial=${isTutorialModeActive}&joinAge=1&server=${encodeURIComponent(readCommanderSelectedServerId())}`;
         window.setTimeout(() => {
             localStorage.setItem('savedCommanderInActiveAge', 'true');
             markCommanderAgeDeploymentPanelUnlocked(isTutorialModeActive);
