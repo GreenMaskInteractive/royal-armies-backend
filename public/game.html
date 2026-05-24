@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Royal Armies - Age Session (In Development)</title>
     <link rel="stylesheet" href="style.css?v=mailbox-read-popup-wide-2">
-    <link rel="stylesheet" href="style2.css?v=commander-settings-icon-41px-1">
+    <link rel="stylesheet" href="style2.css?v=new-messages-bar-1">
     <link rel="stylesheet" href="mobile-responsive.css?v=game-chat-module-1">
     <link rel="stylesheet" href="dev-page-navigator.css">
     <link rel="stylesheet" href="custom-cursor.css?v=scrollbar-cursor-1">
@@ -16,6 +16,10 @@
     <div class="game-page-staging-deck">
         <div class="portal-desktop-nav-stack game-page-nav-stack">
             <div class="portal-nav-commander-identity-row nav-embedded-account-label portal-desktop-nav-only">
+                <div class="portal-commander-identity-shell" id="portal-commander-identity-shell">
+                    <div class="portal-commander-new-messages-bar" id="portal-commander-new-messages-bar" hidden aria-live="polite">
+                        <span class="portal-commander-new-messages-bar-text">You have new messages</span>
+                    </div>
                 <div class="portal-commander-identity-card" id="portal-commander-identity-card">
                     <button type="button"
                         class="portal-commander-identity-settings-btn"
@@ -43,12 +47,12 @@
                         <button type="button" class="dropdown-action-item dropdown-action-item-view-profile" role="menuitem" onclick="portalDesktopCommanderMenuAction('view-profile', event)">View Profile Card</button>
                         <button type="button" class="dropdown-action-item" role="menuitem" onclick="portalDesktopCommanderMenuAction('edit-profile', event)">Edit Profile</button>
                         <button type="button" id="nav-dropdown-messages-btn" class="dropdown-action-item dropdown-action-item-messages" role="menuitem" onclick="portalDesktopCommanderMenuAction('messages', event)">
-                            <span id="nav-messages-unread-count" class="dropdown-messages-unread-count" hidden></span>
                             <span class="dropdown-messages-label">Messages</span>
-                            <span class="dropdown-messages-new-dot" aria-hidden="true"></span>
+                            <span id="nav-messages-unread-count" class="dropdown-messages-unread-count" hidden></span>
                         </button>
                         <button type="button" class="dropdown-action-item" role="menuitem" onclick="portalDesktopCommanderMenuAction('settings', event)">Settings</button>
                     </div>
+                </div>
                 </div>
             </div>
 
@@ -129,7 +133,7 @@
 
     <script src="dev-environment.js"></script>
     <script src="commander-dossier-sync.js?v=dossier-sync-1"></script>
-    <script src="script.js?v=commander-identity-card-1"></script>
+    <script src="script.js?v=new-messages-bar-1"></script>
     <script src="portal-commander-identity-menu.js?v=commander-identity-card-1"></script>
     <script src="achievement-system.js?v=first-timer-icon-png-1"></script>
     <script src="game.js?v=commander-identity-card-1"></script>

@@ -262,7 +262,10 @@ function buildCommanderHubTopTabMarkup(activeTab) {
     return tabs.map((entry) => {
         const isActive = activeTab === entry.id;
         const titleAttr = entry.title ? ` title="${entry.title}"` : '';
-        return `<button type="button" class="commander-hub-top-tab${isActive ? ' active' : ''}" data-hub-tab="${entry.id}"${titleAttr} onclick="handleCommanderHubTopTabClick('${entry.id}', event)">${entry.label}</button>`;
+        const messagesBadge = entry.id === 'messages'
+            ? '<span class="commander-hub-tab-unread-count" hidden></span>'
+            : '';
+        return `<button type="button" class="commander-hub-top-tab${isActive ? ' active' : ''}" data-hub-tab="${entry.id}"${titleAttr} onclick="handleCommanderHubTopTabClick('${entry.id}', event)">${entry.label}${messagesBadge}</button>`;
     }).join('');
 }
 
@@ -336,6 +339,7 @@ function renderCommanderHubPortalCanvas(viewport, initialTab) {
     if (typeof autoDetectPlayerLocale === 'function') autoDetectPlayerLocale();
 
     loadCommanderHubSection(tab, null);
+    if (typeof syncNavMailboxIndicators === 'function') syncNavMailboxIndicators();
 }
 
 function hydrateCommanderHubPortalPage(initialTab) {

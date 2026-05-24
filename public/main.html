@@ -15,8 +15,8 @@
     <!-- Block 2: Page Title & Stylesheet Bridge -->
     <title>Royal Armies - An MMOHFT Medieval-Fantasy Strategy Game</title>
     <link rel="stylesheet" href="style.css?v=mailbox-read-popup-wide-2">
-    <link rel="stylesheet" href="style2.css?v=commander-settings-icon-41px-1">
-    <link rel="stylesheet" href="mobile-responsive.css?v=logo-content-nudge-up-1">
+    <link rel="stylesheet" href="style2.css?v=new-messages-bar-1">
+    <link rel="stylesheet" href="mobile-responsive.css?v=new-messages-bar-1">
     <link rel="stylesheet" href="dev-page-navigator.css">
     <link rel="stylesheet" href="custom-cursor.css?v=scrollbar-cursor-1">
 </head>
@@ -50,6 +50,10 @@
         <!-- Block 4: Three-Column Sticky Navigation Bar -->
         <div class="portal-desktop-nav-stack portal-desktop-nav-only">
             <div class="portal-nav-commander-identity-row nav-embedded-account-label">
+                <div class="portal-commander-identity-shell" id="portal-commander-identity-shell">
+                    <div class="portal-commander-new-messages-bar" id="portal-commander-new-messages-bar" hidden aria-live="polite">
+                        <span class="portal-commander-new-messages-bar-text">You have new messages</span>
+                    </div>
                 <div class="portal-commander-identity-card" id="portal-commander-identity-card">
                     <button type="button"
                         class="portal-commander-identity-settings-btn"
@@ -77,12 +81,12 @@
                         <button type="button" class="dropdown-action-item dropdown-action-item-view-profile" role="menuitem" onclick="portalDesktopCommanderMenuAction('view-profile', event)">View Profile Card</button>
                         <button type="button" class="dropdown-action-item" role="menuitem" onclick="portalDesktopCommanderMenuAction('edit-profile', event)">Edit Profile</button>
                         <button type="button" id="nav-dropdown-messages-btn" class="dropdown-action-item dropdown-action-item-messages" role="menuitem" onclick="portalDesktopCommanderMenuAction('messages', event)">
-                            <span id="nav-messages-unread-count" class="dropdown-messages-unread-count" hidden></span>
                             <span class="dropdown-messages-label">Messages</span>
-                            <span class="dropdown-messages-new-dot" aria-hidden="true"></span>
+                            <span id="nav-messages-unread-count" class="dropdown-messages-unread-count" hidden></span>
                         </button>
                         <button type="button" class="dropdown-action-item" role="menuitem" onclick="portalDesktopCommanderMenuAction('settings', event)">Settings</button>
                     </div>
+                </div>
                 </div>
             </div>
 
@@ -104,6 +108,10 @@
                             </div>
                         </div>
                         <div id="portal-mobile-nav-media-mount" class="portal-mobile-nav-media-mount" aria-label="Background music player"></div>
+                        <div class="portal-commander-identity-shell portal-mobile-commander-shell" id="portal-mobile-commander-shell">
+                            <div class="portal-commander-new-messages-bar" id="portal-mobile-new-messages-bar" hidden aria-live="polite">
+                                <span class="portal-commander-new-messages-bar-text">You have new messages</span>
+                            </div>
                         <div class="portal-mobile-commander-block" id="portal-mobile-commander-block">
                             <button type="button" class="portal-mobile-commander-trigger" id="portal-mobile-commander-toggle" aria-expanded="false" aria-controls="portal-mobile-commander-submenu" onclick="togglePortalMobileCommanderSubmenu(event)">
                                 <img class="portal-mobile-commander-avatar" id="portal-mobile-nav-avatar" src="images/avatars/commanderprofile01.png" alt="">
@@ -117,12 +125,12 @@
                                 <button type="button" class="portal-mobile-submenu-item" onclick="portalMobileNavCommanderAction('view-profile', event)">View Profile Card</button>
                                 <button type="button" class="portal-mobile-submenu-item" onclick="portalMobileNavCommanderAction('edit-profile', event)">Edit Profile</button>
                                 <button type="button" class="portal-mobile-submenu-item portal-mobile-submenu-item-messages" id="portal-mobile-messages-btn" onclick="portalMobileNavCommanderAction('messages', event)">
+                                    <span class="dropdown-messages-label">Messages</span>
                                     <span id="portal-mobile-messages-unread" class="dropdown-messages-unread-count" hidden></span>
-                                    <span>Messages</span>
-                                    <span class="dropdown-messages-new-dot" aria-hidden="true"></span>
                                 </button>
                                 <button type="button" class="portal-mobile-submenu-item" onclick="portalMobileNavCommanderAction('settings', event)">Settings</button>
                             </div>
+                        </div>
                         </div>
                     </div>
                     <div class="portal-mobile-nav-menu-scroll">
@@ -428,7 +436,7 @@
             <nav class="commander-hub-top-nav" aria-label="Account hub sections">
                 <div class="commander-hub-top-nav-bg" aria-hidden="true"></div>
                 <button type="button" class="commander-hub-top-tab active" data-hub-tab="profile" onclick="handleCommanderHubTopTabClick('profile', event)">Profile</button>
-                <button type="button" class="commander-hub-top-tab" data-hub-tab="messages" onclick="handleCommanderHubTopTabClick('messages', event)">Communication</button>
+                <button type="button" class="commander-hub-top-tab" data-hub-tab="messages" onclick="handleCommanderHubTopTabClick('messages', event)">Communication<span class="commander-hub-tab-unread-count" hidden></span></button>
                 <button type="button" class="commander-hub-top-tab" data-hub-tab="settings" onclick="handleCommanderHubTopTabClick('settings', event)">Settings</button>
             </nav>
 
@@ -601,8 +609,8 @@
     <script src="dev-page-navigator.js?v=dev-tools-fix-1"></script>
     <script src="portal-alerts.js"></script>
     <script src="rank-data.js"></script>
-    <script src="script.js?v=commander-identity-card-1"></script>
-    <script src="commander-hub.js?v=remove-profile-visibility-pill-1"></script>
+    <script src="script.js?v=new-messages-bar-1"></script>
+    <script src="commander-hub.js?v=new-messages-bar-1"></script>
     <script src="maintenance-alert.js?v=maintenance-always-on-1"></script>
     <script src="script2.js?v=commander-identity-card-1"></script>
     <script src="custom-cursor.js?v=scrollbar-cursor-1"></script>

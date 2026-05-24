@@ -1235,11 +1235,6 @@ body {
         border: none !important;
     }
 
-    .portal-mobile-submenu-item-messages.has-unread-messages .dropdown-messages-new-dot {
-        opacity: 1 !important;
-        animation: messagesNewDotPulse 1.35s ease-in-out infinite !important;
-    }
-
     .portal-mobile-submenu-item {
         display: flex !important;
         align-items: center !important;

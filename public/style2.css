@@ -156,6 +156,70 @@
     z-index: 2 !important;
 }
 
+.portal-commander-identity-shell {
+    position: relative !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    width: min(100%, 420px) !important;
+    overflow: visible !important;
+}
+
+.portal-commander-new-messages-bar {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 100% !important;
+    max-height: 0 !important;
+    overflow: hidden !important;
+    margin: 0 !important;
+    padding: 0 10px !important;
+    box-sizing: border-box !important;
+    border: 1px solid transparent !important;
+    border-bottom: none !important;
+    border-radius: 4px 4px 0 0 !important;
+    background: linear-gradient(180deg, rgba(58, 44, 18, 0.98) 0%, rgba(36, 28, 12, 0.96) 100%) !important;
+    opacity: 0 !important;
+    transform: translateY(6px) !important;
+    transition:
+        max-height 0.35s cubic-bezier(0.4, 0, 0.2, 1),
+        opacity 0.28s ease,
+        transform 0.35s cubic-bezier(0.4, 0, 0.2, 1),
+        border-color 0.28s ease !important;
+}
+
+.portal-commander-new-messages-bar-text {
+    display: block !important;
+    width: 100% !important;
+    padding: 4px 0 !important;
+    font-family: 'Cinzel', serif !important;
+    font-size: 0.62rem !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.12em !important;
+    text-transform: uppercase !important;
+    text-align: center !important;
+    color: rgba(255, 224, 148, 0.96) !important;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9) !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+}
+
+.portal-commander-identity-shell.has-unread-messages .portal-commander-new-messages-bar {
+    max-height: 24px !important;
+    opacity: 1 !important;
+    transform: translateY(0) !important;
+    border-color: rgba(184, 144, 48, 0.55) !important;
+}
+
+.portal-commander-identity-shell.is-new-messages-arrival .portal-commander-new-messages-bar {
+    box-shadow: 0 0 14px rgba(255, 215, 0, 0.28) !important;
+}
+
+.portal-mobile-commander-shell {
+    width: 100% !important;
+}
+
 .portal-commander-identity-card {
     position: relative !important;
     display: flex !important;
@@ -227,18 +291,6 @@
     opacity: 0.92 !important;
     filter: sepia(0.35) saturate(1.4) hue-rotate(5deg) brightness(1.15)
         drop-shadow(0 0 4px rgba(255, 215, 0, 0.35)) !important;
-}
-
-.portal-commander-identity-card.has-unread-messages .portal-commander-identity-settings-btn::after {
-    content: '' !important;
-    position: absolute !important;
-    top: 3px !important;
-    right: 3px !important;
-    width: 7px !important;
-    height: 7px !important;
-    border-radius: 50% !important;
-    background: #ffd700 !important;
-    box-shadow: 0 0 8px rgba(255, 215, 0, 0.85) !important;
 }
 
 .portal-commander-identity-menu {
@@ -3151,103 +3203,6 @@ body:not(.portal-guest-mode) #portal-deployment-guest-cta {
     transform: scale(1.03) !important;
 }
 
-.nav-avatar-hub-wrapper.has-unread-messages::before {
-    content: '' !important;
-    position: absolute !important;
-    top: 2px !important;
-    left: 0 !important;
-    width: 46px !important;
-    height: 46px !important;
-    border-radius: 50% !important;
-    background: radial-gradient(circle, rgba(255, 215, 0, 0.55) 0%, rgba(255, 180, 40, 0.15) 55%, transparent 72%) !important;
-    animation: navAvatarUnreadPulse 2.2s ease-in-out infinite !important;
-    pointer-events: none !important;
-    z-index: 0 !important;
-}
-
-.portal-mobile-commander-block.has-unread-messages .portal-mobile-commander-trigger {
-    position: relative !important;
-}
-
-.portal-mobile-commander-block.has-unread-messages .portal-mobile-commander-trigger::before {
-    content: '' !important;
-    position: absolute !important;
-    top: 50% !important;
-    left: 14px !important;
-    width: 36px !important;
-    height: 36px !important;
-    border-radius: 50% !important;
-    background: radial-gradient(circle, rgba(255, 215, 0, 0.55) 0%, rgba(255, 180, 40, 0.15) 55%, transparent 72%) !important;
-    transform: translate(-50%, -50%) !important;
-    animation: navAvatarUnreadPulseMobile 2.2s ease-in-out infinite !important;
-    pointer-events: none !important;
-    z-index: 0 !important;
-}
-
-@keyframes navAvatarUnreadPulseMobile {
-    0%, 100% {
-        transform: translate(-50%, -50%) scale(1);
-        opacity: 0.7;
-    }
-    50% {
-        transform: translate(-50%, -50%) scale(1.2);
-        opacity: 1;
-    }
-}
-
-.nav-avatar-hub-wrapper.has-unread-messages .nav-bar-embedded-avatar-thumbnail,
-.portal-mobile-commander-block.has-unread-messages .portal-mobile-commander-avatar {
-    box-shadow:
-        0 0 10px rgba(255, 215, 0, 0.75),
-        0 0 20px rgba(255, 180, 40, 0.45),
-        0 0 32px rgba(255, 140, 20, 0.2) !important;
-}
-
-.nav-avatar-hub-wrapper.mailbox-unread-arrival-pulse::before,
-.portal-mobile-commander-block.mailbox-unread-arrival-pulse .portal-mobile-commander-trigger::before {
-    animation: navAvatarUnreadArrivalBurst 2.4s ease-out 1 !important;
-}
-
-.nav-avatar-hub-wrapper.mailbox-unread-arrival-pulse .nav-bar-embedded-avatar-thumbnail,
-.portal-mobile-commander-block.mailbox-unread-arrival-pulse .portal-mobile-commander-avatar {
-    animation: navAvatarThumbnailArrivalGlow 2.4s ease-out 1 !important;
-}
-
-@keyframes navAvatarUnreadPulse {
-    0%, 100% {
-        transform: scale(1);
-        opacity: 0.75;
-    }
-    50% {
-        transform: scale(1.22);
-        opacity: 1;
-    }
-}
-
-@keyframes navAvatarUnreadArrivalBurst {
-    0% {
-        transform: scale(0.85);
-        opacity: 0.35;
-    }
-    35% {
-        transform: scale(1.35);
-        opacity: 1;
-    }
-    100% {
-        transform: scale(1.12);
-        opacity: 0.8;
-    }
-}
-
-@keyframes navAvatarThumbnailArrivalGlow {
-    0%, 100% {
-        filter: none;
-    }
-    40% {
-        filter: brightness(1.25) drop-shadow(0 0 12px rgba(255, 215, 0, 0.95));
-    }
-}
-
 /* ============================================================
    SECTION 12: ALIGNMENT | Block 22: Absolute Input Field Breakout
    ============================================================ */
@@ -4614,10 +4569,12 @@ body:not(.portal-guest-mode) #portal-deployment-guest-cta {
 }
 
 .portal-commander-identity-menu .dropdown-action-item-messages,
-.avatar-hover-dropdown-menu .dropdown-action-item-messages {
+.avatar-hover-dropdown-menu .dropdown-action-item-messages,
+.portal-mobile-submenu-item-messages {
     display: flex !important;
     align-items: center !important;
-    gap: 8px !important;
+    justify-content: space-between !important;
+    gap: 10px !important;
 }
 
 .dropdown-messages-unread-count {
@@ -4649,35 +4606,36 @@ body:not(.portal-guest-mode) #portal-deployment-guest-cta {
 
 .dropdown-messages-label {
     flex: 1 1 auto !important;
+    text-align: left !important;
 }
 
-.dropdown-messages-new-dot {
-    width: 8px !important;
-    height: 8px !important;
-    border-radius: 50% !important;
-    background: #ffd700 !important;
-    box-shadow: 0 0 8px rgba(255, 215, 0, 0.85) !important;
-    opacity: 0 !important;
+.commander-hub-top-tab[data-hub-tab="messages"] {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+}
+
+.commander-hub-tab-unread-count {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    min-width: 18px !important;
+    height: 18px !important;
+    padding: 0 5px !important;
+    border-radius: 9px !important;
+    background: linear-gradient(180deg, #ffd978 0%, #c5a059 100%) !important;
+    color: #1a1208 !important;
+    font-family: 'Segoe UI', sans-serif !important;
+    font-size: 0.68rem !important;
+    font-weight: 700 !important;
+    line-height: 1 !important;
+    box-shadow: 0 0 8px rgba(255, 215, 0, 0.45) !important;
     flex-shrink: 0 !important;
-    transition: opacity 0.2s ease, box-shadow 0.2s ease !important;
+    margin-left: auto !important;
 }
 
-.portal-commander-identity-card.is-commander-menu-open .dropdown-action-item-messages.has-unread-messages .dropdown-messages-new-dot,
-.nav-avatar-hub-wrapper:hover .dropdown-action-item-messages.has-unread-messages .dropdown-messages-new-dot,
-.nav-avatar-hub-wrapper:focus-within .dropdown-action-item-messages.has-unread-messages .dropdown-messages-new-dot {
-    opacity: 1 !important;
-    animation: messagesNewDotPulse 1.35s ease-in-out infinite !important;
-}
-
-@keyframes messagesNewDotPulse {
-    0%, 100% {
-        transform: scale(1);
-        box-shadow: 0 0 8px rgba(255, 215, 0, 0.85);
-    }
-    50% {
-        transform: scale(1.2);
-        box-shadow: 0 0 14px rgba(255, 215, 0, 1), 0 0 22px rgba(255, 180, 40, 0.55);
-    }
+.commander-hub-tab-unread-count[hidden] {
+    display: none !important;
 }
 
 @keyframes mailboxUnreadCountPulse {

@@ -1264,17 +1264,57 @@ const PORTAL_MAILBOX_POLL_MS = 30000;
 let portalMailboxPollTimer = null;
 let portalMailboxUnreadBaseline = null;
 
-function pulseMailboxUnreadArrival(targets) {
-    if (!targets || !targets.length) return;
-    targets.forEach((el) => {
-        if (!el) return;
-        el.classList.remove('mailbox-unread-arrival-pulse');
-        void el.offsetWidth;
-        el.classList.add('mailbox-unread-arrival-pulse');
+function revealPortalNewMessagesBar(shells, isNewArrival) {
+    if (!shells || !shells.length) return;
+    shells.forEach((shell) => {
+        if (!shell) return;
+        shell.classList.add('has-unread-messages');
+        const bar = shell.querySelector('.portal-commander-new-messages-bar');
+        if (bar) bar.hidden = false;
+        if (isNewArrival) {
+            shell.classList.remove('is-new-messages-arrival');
+            void shell.offsetWidth;
+            shell.classList.add('is-new-messages-arrival');
+        }
     });
-    window.setTimeout(() => {
-        targets.forEach((el) => el && el.classList.remove('mailbox-unread-arrival-pulse'));
-    }, 2600);
+    if (isNewArrival) {
+        window.setTimeout(() => {
+            shells.forEach((shell) => shell && shell.classList.remove('is-new-messages-arrival'));
+        }, 900);
+    }
+}
+
+function hidePortalNewMessagesBar(shells) {
+    if (!shells || !shells.length) return;
+    shells.forEach((shell) => {
+        if (!shell) return;
+        shell.classList.remove('has-unread-messages', 'is-new-messages-arrival');
+        const bar = shell.querySelector('.portal-commander-new-messages-bar');
+        if (bar) bar.hidden = true;
+    });
+}
+
+function syncCommanderHubMessagesTabBadges(unreadCount) {
+    const count = Number.isFinite(unreadCount) ? unreadCount : 0;
+    const hasUnread = count > 0;
+
+    document.querySelectorAll('.commander-hub-top-tab[data-hub-tab="messages"]').forEach((tab) => {
+        let badge = tab.querySelector('.commander-hub-tab-unread-count');
+        if (!badge) {
+            badge = document.createElement('span');
+            badge.className = 'commander-hub-tab-unread-count';
+            tab.appendChild(badge);
+        }
+        if (hasUnread) {
+            badge.textContent = String(count);
+            badge.hidden = false;
+            tab.classList.add('has-unread-messages');
+        } else {
+            badge.textContent = '';
+            badge.hidden = true;
+            tab.classList.remove('has-unread-messages');
+        }
+    });
 }
 
 function syncNavMailboxIndicators() {
@@ -1282,23 +1322,17 @@ function syncNavMailboxIndicators() {
     const isNewArrival = portalMailboxUnreadBaseline !== null && unreadCount > portalMailboxUnreadBaseline;
     portalMailboxUnreadBaseline = unreadCount;
 
-    const wrapper = document.querySelector('.nav-avatar-hub-wrapper');
-    const identityCard = document.getElementById('portal-commander-identity-card');
-    const settingsBtn = document.getElementById('portal-commander-identity-settings-btn');
+    const identityShell = document.getElementById('portal-commander-identity-shell');
+    const mobileShell = document.getElementById('portal-mobile-commander-shell');
+    const messageShells = [identityShell, mobileShell].filter(Boolean);
     const countEl = document.getElementById('nav-messages-unread-count');
     const messagesBtn = document.getElementById('nav-dropdown-messages-btn');
-    const mobileBlock = document.getElementById('portal-mobile-commander-block');
-    const mobileTrigger = document.getElementById('portal-mobile-commander-toggle');
     const hasUnread = unreadCount > 0;
 
-    if (wrapper) wrapper.classList.toggle('has-unread-messages', hasUnread);
-    if (identityCard) identityCard.classList.toggle('has-unread-messages', hasUnread);
-    if (settingsBtn) settingsBtn.classList.toggle('has-unread-messages', hasUnread);
-    if (mobileBlock) mobileBlock.classList.toggle('has-unread-messages', hasUnread);
-    if (mobileTrigger) mobileTrigger.classList.toggle('has-unread-messages', hasUnread);
-
-    if (isNewArrival) {
-        pulseMailboxUnreadArrival([wrapper, mobileBlock, mobileTrigger].filter(Boolean));
+    if (hasUnread) {
+        revealPortalNewMessagesBar(messageShells, isNewArrival);
+    } else {
+        hidePortalNewMessagesBar(messageShells);
     }
 
     if (countEl) {
@@ -1318,6 +1352,8 @@ function syncNavMailboxIndicators() {
             hasUnread ? `Messages, ${unreadCount} unread` : 'Messages'
         );
     }
+
+    syncCommanderHubMessagesTabBadges(unreadCount);
 
     if (typeof syncPortalMobileNavMailboxIndicators === 'function') {
         syncPortalMobileNavMailboxIndicators(unreadCount);
