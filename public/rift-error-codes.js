@@ -132,6 +132,24 @@
             message: 'Invalid or missing developer key (X-Dev-Key header).',
             category: 'auth'
         },
+        'NEXUS-AUTH-012': {
+            http: 400,
+            title: 'Registration failed',
+            message: 'Username must be at least 5 characters.',
+            category: 'auth'
+        },
+        'NEXUS-AUTH-013': {
+            http: 400,
+            title: 'Registration failed',
+            message: 'Username must be 15 characters or fewer.',
+            category: 'auth'
+        },
+        'NEXUS-AUTH-014': {
+            http: 400,
+            title: 'Registration failed',
+            message: 'Username may only use letters and numbers, with at most one period (.), one underscore (_), and one dash (-).',
+            category: 'auth'
+        },
 
         /* --- Account / profile --- */
         'NEXUS-ACCT-001': {

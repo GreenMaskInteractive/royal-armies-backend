@@ -1,8 +1,12 @@
 /**
- * Desktop commander identity card — settings menu toggle and actions.
+ * Desktop commander identity card — menu toggle on avatar/name plate and actions.
  */
 (function initPortalCommanderIdentityMenu(global) {
     'use strict';
+
+    function getPortalCommanderIdentityTrigger() {
+        return global.document.getElementById('portal-commander-identity-trigger');
+    }
 
     function isPortalCommanderIdentityMenuOpen() {
         const card = global.document.getElementById('portal-commander-identity-card');
@@ -12,11 +16,11 @@
     function closePortalCommanderIdentityMenu() {
         const card = global.document.getElementById('portal-commander-identity-card');
         const menu = global.document.getElementById('portal-desktop-commander-menu');
-        const settingsBtn = global.document.getElementById('portal-commander-identity-settings-btn');
+        const trigger = getPortalCommanderIdentityTrigger();
 
         if (card) card.classList.remove('is-commander-menu-open');
         if (menu) menu.hidden = true;
-        if (settingsBtn) settingsBtn.setAttribute('aria-expanded', 'false');
+        if (trigger) trigger.setAttribute('aria-expanded', 'false');
     }
 
     function togglePortalCommanderIdentityMenu(event) {
@@ -27,14 +31,14 @@
 
         const card = global.document.getElementById('portal-commander-identity-card');
         const menu = global.document.getElementById('portal-desktop-commander-menu');
-        const settingsBtn = global.document.getElementById('portal-commander-identity-settings-btn');
-        if (!card || !menu || !settingsBtn) return;
+        const trigger = getPortalCommanderIdentityTrigger();
+        if (!card || !menu || !trigger) return;
 
         const willOpen = !isPortalCommanderIdentityMenuOpen();
         if (willOpen) {
             card.classList.add('is-commander-menu-open');
             menu.hidden = false;
-            settingsBtn.setAttribute('aria-expanded', 'true');
+            trigger.setAttribute('aria-expanded', 'true');
             if (typeof global.syncNavMailboxIndicators === 'function') {
                 global.syncNavMailboxIndicators();
             }
@@ -85,6 +89,22 @@
         }
     }
 
+    function bindPortalCommanderIdentityTriggerHandlers() {
+        const trigger = getPortalCommanderIdentityTrigger();
+        if (!trigger || trigger.dataset.commanderMenuTriggerBound === 'true') return;
+        trigger.dataset.commanderMenuTriggerBound = 'true';
+
+        trigger.addEventListener('click', (event) => {
+            togglePortalCommanderIdentityMenu(event);
+        });
+
+        trigger.addEventListener('keydown', (event) => {
+            if (event.key !== 'Enter' && event.key !== ' ') return;
+            event.preventDefault();
+            togglePortalCommanderIdentityMenu(event);
+        });
+    }
+
     function bindPortalCommanderIdentityMenuDismissHandlers() {
         if (global.document.documentElement.dataset.portalCommanderMenuBound === 'true') return;
         global.document.documentElement.dataset.portalCommanderMenuBound = 'true';
@@ -100,6 +120,11 @@
         });
     }
 
+    function initPortalCommanderIdentityMenuBindings() {
+        bindPortalCommanderIdentityTriggerHandlers();
+        bindPortalCommanderIdentityMenuDismissHandlers();
+    }
+
     global.isPortalCommanderIdentityMenuOpen = isPortalCommanderIdentityMenuOpen;
     global.closePortalCommanderIdentityMenu = closePortalCommanderIdentityMenu;
     global.togglePortalCommanderIdentityMenu = togglePortalCommanderIdentityMenu;
@@ -107,8 +132,8 @@
     global.bindPortalCommanderIdentityMenuDismissHandlers = bindPortalCommanderIdentityMenuDismissHandlers;
 
     if (global.document.readyState === 'loading') {
-        global.document.addEventListener('DOMContentLoaded', bindPortalCommanderIdentityMenuDismissHandlers, { once: true });
+        global.document.addEventListener('DOMContentLoaded', initPortalCommanderIdentityMenuBindings, { once: true });
     } else {
-        bindPortalCommanderIdentityMenuDismissHandlers();
+        initPortalCommanderIdentityMenuBindings();
     }
 })(window);

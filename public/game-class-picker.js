@@ -1,174 +1,181 @@
 /**
- * Choose-class artboard — paired character hover, click-to-lock, and side panels.
+ * Choose-class artboard — four independent character masks with grayscale-to-color click selection.
+ *
+ * HOW TO TUNE MASK SHAPES
+ * -----------------------
+ * 1. Open public/images/chooseclass.png in any image editor.
+ * 2. Read pixel coordinates for each corner of a character silhouette.
+ * 3. Edit the `points` arrays below (native image size: 2752 × 1536).
+ * 4. Add or remove [x, y] pairs to tighten/loosen each polygon.
+ * 5. Reload /game — masks and click targets update automatically.
  */
 (function initGameClassPicker(global) {
     'use strict';
 
-    const PANEL_COPY = {
-        arcane: {
-            title: 'The Arcane Path',
-            body: 'Channel world-shattering magic with the elder sage and crystal arcanist. Arcane commanders bend reality, summon elemental power, and rewrite the mathematics of the battlefield.',
-            edge: 'left'
+  /** Must match chooseclass.png native dimensions. */
+    const ARTBOARD = { width: 2752, height: 1536 };
+
+    /**
+     * Placeholder silhouettes for the four characters.
+     * Each entry is an ordered list of [x, y] pixel coordinates tracing the character outline.
+     */
+    const CHARACTER_MASKS = {
+        mage: {
+            id: 'mage',
+            name: 'Left Mage',
+            ariaLabel: 'Left Mage — elder scholar',
+            // Left Mage: hood, book, and robe on the far left.
+            points: [
+                [110, 1410], [110, 820], [160, 520], [230, 400], [310, 360],
+                [420, 480], [460, 720], [480, 1410]
+            ]
         },
-        physical: {
-            title: 'The Physical Path',
-            body: 'Lead with steel through the shield-maiden and the armored knight. Physical commanders crush fortifications, hold the line with heavy arms, and dominate through raw martial superiority.',
-            edge: 'right'
+        sorceress: {
+            id: 'sorceress',
+            name: 'Middle-Left Sorceress',
+            ariaLabel: 'Middle-Left Sorceress — crystal staff wielder',
+            // Sorceress: purple robes and staff between the mage and center pillar.
+            points: [
+                [520, 1410], [540, 860], [580, 520], [680, 380], [780, 400],
+                [880, 560], [950, 820], [980, 1410]
+            ]
+        },
+        knight: {
+            id: 'knight',
+            name: 'Middle-Right Knight',
+            ariaLabel: 'Middle-Right Knight — armored guardian',
+            // Knight: standing plate armor to the right of the center pillar.
+            points: [
+                [1380, 1410], [1400, 620], [1480, 420], [1580, 380], [1680, 420],
+                [1750, 620], [1780, 1410]
+            ]
+        },
+        soldier: {
+            id: 'soldier',
+            name: 'Right Soldier',
+            ariaLabel: 'Right Soldier — seated veteran',
+            // Soldier: seated knight and sword on the far right.
+            points: [
+                [1820, 1410], [1850, 900], [1920, 700], [2050, 650], [2200, 700],
+                [2400, 850], [2550, 1100], [2600, 1410]
+            ]
         }
     };
 
-    let activeSelection = null;
-    let hoveredSelection = null;
+    let activeCharacterId = null;
 
     function getPickerRoot() {
         return global.document.getElementById('game-class-picker');
     }
 
-    function getZones() {
-        const root = getPickerRoot();
-        if (!root) return [];
-        return Array.from(root.querySelectorAll('.game-class-picker-zone'));
+    function pointsToSvgString(points) {
+        return points.map(([x, y]) => `${x},${y}`).join(' ');
     }
 
-    function setZoneVisualState(zone, state) {
-        if (!zone) return;
-        zone.classList.toggle('is-hovered', state === 'hovered');
-        zone.classList.toggle('is-selected', state === 'selected');
-        zone.setAttribute('aria-pressed', state === 'selected' ? 'true' : 'false');
+    function pointsToCssPolygon(points) {
+        const pairs = points.map(([x, y]) => {
+            const px = ((x / ARTBOARD.width) * 100).toFixed(4);
+            const py = ((y / ARTBOARD.height) * 100).toFixed(4);
+            return `${px}% ${py}%`;
+        });
+        return `polygon(${pairs.join(', ')})`;
     }
 
-    function refreshZoneVisualStates() {
-        getZones().forEach((zone) => {
-            const id = zone.dataset.classGroup;
-            let state = null;
-            if (activeSelection === id) state = 'selected';
-            else if (hoveredSelection === id) state = 'hovered';
-            setZoneVisualState(zone, state);
+    function applyMaskGeometry(root) {
+        const hitmap = root.querySelector('.game-class-picker-hitmap');
+
+        Object.values(CHARACTER_MASKS).forEach((mask) => {
+            const pointString = pointsToSvgString(mask.points);
+            const cssPolygon = pointsToCssPolygon(mask.points);
+
+            const hitZone = hitmap?.querySelector(`[data-character-id="${mask.id}"]`);
+            if (hitZone) {
+                hitZone.setAttribute('points', pointString);
+            }
+
+            const layer = root.querySelector(`.game-class-character[data-character-id="${mask.id}"]`);
+            if (layer) {
+                layer.style.clipPath = cssPolygon;
+                layer.style.webkitClipPath = cssPolygon;
+            }
         });
     }
 
-    function renderSidePanel(panel, groupId) {
-        if (!panel) return;
-        const copy = PANEL_COPY[groupId];
-        if (!copy) {
-            panel.hidden = true;
-            panel.innerHTML = '';
-            return;
-        }
-
-        panel.hidden = false;
-        panel.innerHTML = `
-            <div class="game-class-picker-side-panel-frame bordered-modal-panel">
-                <h2 class="game-class-picker-side-panel-title">${copy.title}</h2>
-                <p class="game-class-picker-side-panel-body">${copy.body}</p>
-                <button type="button" class="game-class-picker-side-panel-close confirm-btn">Close</button>
-            </div>
-        `;
-
-        const closeBtn = panel.querySelector('.game-class-picker-side-panel-close');
-        if (closeBtn) {
-            closeBtn.addEventListener('click', (event) => {
-                event.preventDefault();
-                event.stopPropagation();
-                clearSelection();
-            });
-        }
-    }
-
-    function updateSidePanels() {
+    function getCharacterLayers() {
         const root = getPickerRoot();
-        if (!root) return;
-
-        const leftPanel = root.querySelector('.game-class-picker-side-panel--left');
-        const rightPanel = root.querySelector('.game-class-picker-side-panel--right');
-
-        if (!activeSelection) {
-            if (leftPanel) {
-                leftPanel.hidden = true;
-                leftPanel.innerHTML = '';
-            }
-            if (rightPanel) {
-                rightPanel.hidden = true;
-                rightPanel.innerHTML = '';
-            }
-            root.classList.remove('has-selection');
-            delete root.dataset.activeEdge;
-            return;
-        }
-
-        const copy = PANEL_COPY[activeSelection];
-        root.classList.add('has-selection');
-        root.dataset.activeEdge = copy ? copy.edge : '';
-
-        if (leftPanel) {
-            if (copy?.edge === 'left') renderSidePanel(leftPanel, activeSelection);
-            else {
-                leftPanel.hidden = true;
-                leftPanel.innerHTML = '';
-            }
-        }
-        if (rightPanel) {
-            if (copy?.edge === 'right') renderSidePanel(rightPanel, activeSelection);
-            else {
-                rightPanel.hidden = true;
-                rightPanel.innerHTML = '';
-            }
-        }
+        if (!root) return [];
+        return Array.from(root.querySelectorAll('.game-class-character'));
     }
 
-    function clearSelection() {
-        activeSelection = null;
-        hoveredSelection = null;
-        refreshZoneVisualStates();
-        updateSidePanels();
+    function getHitZones() {
+        const root = getPickerRoot();
+        if (!root) return [];
+        return Array.from(root.querySelectorAll('.game-class-hit-zone'));
     }
 
-    function selectGroup(groupId) {
-        activeSelection = groupId;
-        refreshZoneVisualStates();
-        updateSidePanels();
+    function refreshSelectionState() {
+        getCharacterLayers().forEach((layer) => {
+            const isActive = layer.dataset.characterId === activeCharacterId;
+            layer.classList.toggle('selected', isActive);
+            layer.classList.toggle('is-active', isActive);
+            layer.setAttribute('aria-hidden', isActive ? 'true' : 'false');
+        });
+
+        getHitZones().forEach((zone) => {
+            const isActive = zone.dataset.characterId === activeCharacterId;
+            zone.classList.toggle('selected', isActive);
+            zone.classList.toggle('is-active', isActive);
+            zone.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+        });
     }
 
-    function bindZone(zone) {
-        const groupId = zone.dataset.classGroup;
-        if (!groupId) return;
+    function selectCharacter(characterId) {
+        if (activeCharacterId === characterId) {
+            activeCharacterId = null;
+        } else {
+            activeCharacterId = characterId;
+        }
+        refreshSelectionState();
+    }
+
+    function bindHitZone(zone) {
+        const characterId = zone.dataset.characterId;
+        if (!characterId) return;
 
         zone.addEventListener('mouseenter', () => {
-            hoveredSelection = groupId;
-            refreshZoneVisualStates();
+            const layer = getPickerRoot()?.querySelector(`.game-class-character[data-character-id="${characterId}"]`);
+            layer?.classList.add('is-hovered');
+            zone.classList.add('is-hovered');
         });
 
         zone.addEventListener('mouseleave', () => {
-            if (hoveredSelection === groupId) hoveredSelection = null;
-            refreshZoneVisualStates();
-        });
-
-        zone.addEventListener('focus', () => {
-            hoveredSelection = groupId;
-            refreshZoneVisualStates();
-        });
-
-        zone.addEventListener('blur', () => {
-            if (hoveredSelection === groupId) hoveredSelection = null;
-            refreshZoneVisualStates();
+            const layer = getPickerRoot()?.querySelector(`.game-class-character[data-character-id="${characterId}"]`);
+            layer?.classList.remove('is-hovered');
+            zone.classList.remove('is-hovered');
         });
 
         zone.addEventListener('click', (event) => {
             event.preventDefault();
-            if (activeSelection === groupId) {
-                clearSelection();
-                return;
-            }
-            selectGroup(groupId);
+            event.stopPropagation();
+            selectCharacter(characterId);
+        });
+
+        zone.addEventListener('keydown', (event) => {
+            if (event.key !== 'Enter' && event.key !== ' ') return;
+            event.preventDefault();
+            selectCharacter(characterId);
         });
     }
 
     function bindPickerDismiss() {
         global.document.addEventListener('pointerdown', (event) => {
             const root = getPickerRoot();
-            if (!root || !activeSelection) return;
-            if (root.contains(event.target)) return;
-            clearSelection();
+            if (!root || !activeCharacterId) return;
+            if (event.target.closest('.game-class-hit-zone')) return;
+            if (root.contains(event.target)) {
+                activeCharacterId = null;
+                refreshSelectionState();
+            }
         });
     }
 
@@ -176,13 +183,24 @@
         const root = getPickerRoot();
         if (!root || root.dataset.initialized === 'true') return;
 
-        getZones().forEach(bindZone);
+        root.dataset.artWidth = String(ARTBOARD.width);
+        root.dataset.artHeight = String(ARTBOARD.height);
+
+        applyMaskGeometry(root);
+        getHitZones().forEach(bindHitZone);
         bindPickerDismiss();
+        refreshSelectionState();
+
         root.dataset.initialized = 'true';
     }
 
+    global.CHARACTER_MASKS = CHARACTER_MASKS;
+    global.GAME_CLASS_ARTBOARD = ARTBOARD;
     global.initGameClassPicker = initGameClassPicker;
-    global.clearGameClassPickerSelection = clearSelection;
+    global.clearGameClassPickerSelection = function clearGameClassPickerSelection() {
+        activeCharacterId = null;
+        refreshSelectionState();
+    };
 
     if (global.document.readyState === 'loading') {
         global.document.addEventListener('DOMContentLoaded', initGameClassPicker);

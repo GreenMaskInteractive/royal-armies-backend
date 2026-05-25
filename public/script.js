@@ -32,13 +32,13 @@ let narrativeFinished = false;
 let currentNarration = null; // Managed audio tracker channel slot 
 let globalBackgroundMusic = null; // THE TRACKING HOOK: Locks onto your ambient soundtrack 
 let confirmedScale = parseFloat(localStorage.getItem('savedUIScale')) || 1.0; 
-let stagedScale = confirmedScale;
+let stagedScale = confirmedScale; 
 const TEXT_SCALE_MIN = 0.75;
 const TEXT_SCALE_MAX = 1.5;
 const TEXT_SCALE_BASE_PX = 16;
 let confirmedTextScale = parseFloat(localStorage.getItem('savedTextScale')) || 1.0;
 let stagedTextScale = confirmedTextScale;
-let hasUnsavedChanges = false; // System safety guard toggle
+let hasUnsavedChanges = false; // System safety guard toggle 
 const appRuntimeGlobal = typeof globalThis !== 'undefined' ? globalThis : window;
 let profileEditorBaseline = null; 
 let saveConfirmationHideTimer = null;
@@ -68,7 +68,7 @@ let stagedGameChatOpacity = confirmedGameChatOpacity;
 if (document.getElementById('page-landing')) {
     document.documentElement.style.setProperty('--text-scale', String(confirmedTextScale));
 } else {
-    document.documentElement.style.setProperty('--ui-scale', confirmedScale);
+document.documentElement.style.setProperty('--ui-scale', confirmedScale); 
     applyTextScaleToDocument(confirmedTextScale, { silent: true });
 }
 if (localStorage.getItem('savedHighContrast') === 'true') { 
@@ -698,7 +698,7 @@ function mountSecurityOverlayActions(primaryLabel, onPrimary, onCancel) {
     primaryBtn.style.borderColor = '#b89030';
     primaryBtn.innerText = primaryLabel;
     primaryBtn.onclick = onPrimary;
-
+    
     const cancelBtn = document.createElement('button');
     cancelBtn.type = 'button';
     cancelBtn.className = 'suicide-safe-retreat-btn';
@@ -708,7 +708,7 @@ function mountSecurityOverlayActions(primaryLabel, onPrimary, onCancel) {
     btnDock.appendChild(primaryBtn);
     btnDock.appendChild(cancelBtn);
 }
-
+    
 function openSecurityOverlayWindow() {
     const overlay = document.getElementById('commander-security-overlay');
     if (!overlay) return;
@@ -1843,7 +1843,7 @@ async function handleLogin() {
     }
     const loader = document.getElementById('auth-loading');
     if (loader) loader.style.display = 'block';
-
+    
     if (!userVal || !passVal) {
         await showPortalAlert('Please enter your username and password.');
         restoreLoginAuthButtons();
@@ -2076,7 +2076,7 @@ function handleRegister() {
     if (isMainPortalHub()) {
         closeMainPortalLoginModal();
     } else {
-        closeAllActiveUI();
+    closeAllActiveUI();
     }
     const modal = document.getElementById('register-modal');
     if (modal) {
@@ -2104,9 +2104,9 @@ function handleForgot(e) {
     if (isMainPortalHub()) {
         closeMainPortalLoginModal();
     } else {
-        try {
+    try {
             if (typeof closeAllActiveUI === 'function') closeAllActiveUI();
-        } catch (err) {
+    } catch (err) {
             console.warn('NEXUS: UI Cleanup bypassed.');
         }
     }
@@ -2143,6 +2143,20 @@ async function submitRegistration() {
         await showPortalAlert('Please fill in all registration fields.');
         return;
     }
+
+    const usernameValidation = typeof NexusAccountValidation !== 'undefined'
+        && typeof NexusAccountValidation.validateRegistrationUsername === 'function'
+        ? NexusAccountValidation.validateRegistrationUsername(user)
+        : null;
+    if (usernameValidation && !usernameValidation.ok) {
+        if (typeof showRiftError === 'function') {
+            await showRiftError({ code: usernameValidation.code, message: usernameValidation.message }, 'Registration failed');
+        } else {
+            await showPortalAlert(usernameValidation.message || 'Invalid username.', 'Registration failed');
+        }
+        return;
+    }
+
     if (pass !== confirm) {
         await showPortalAlert('Your passwords do not match. Re-verify your credentials.');
         return;
@@ -2150,9 +2164,13 @@ async function submitRegistration() {
 
     try {
         const response = await fetch('/register', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ username: user.trim(), email: email.trim(), password: pass })
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                username: usernameValidation?.username || user.trim(),
+                email: email.trim(),
+                password: pass
+            })
         });
         const payload = await response.json().catch(() => ({}));
         if (response.ok) {
@@ -2160,10 +2178,18 @@ async function submitRegistration() {
             closeRegister();
             return;
         }
+        if (typeof handleRiftApiFailure === 'function') {
+            await handleRiftApiFailure(response, payload, 'Registration failed');
+            return;
+        }
         await showPortalAlert(payload.message || 'Registration could not be completed.', 'Registration');
     } catch (err) {
         console.error('Nexus Link Error:', err);
-        await showPortalAlert('Cannot reach the Royal Armies server. Make sure node server.js is running, then try again.', 'Connection error');
+        if (typeof showRiftNetworkError === 'function') {
+            await showRiftNetworkError('Connection error');
+        } else {
+            await showPortalAlert('Cannot reach the Royal Armies server. Make sure node server.js is running, then try again.', 'Connection error');
+        }
     }
 }
 
@@ -2183,8 +2209,8 @@ async function submitForgot(e) {
 
     try {
         const response = await fetch('/request-reset', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ email })
         });
         if (!response.ok) throw new Error('Server Rejected Connection');
@@ -2370,7 +2396,7 @@ function toggleDyslexiaFont(e) {
         e.stopPropagation();
     }
     
-    hasUnsavedChanges = true;
+    hasUnsavedChanges = true; 
     setDyslexiaFontEnabled(!isDyslexiaFontEnabled());
 }
 
@@ -2427,12 +2453,12 @@ const nationLore = {
                         <div id="msg-directory-floating-drawer" class="msg-floating-drawer-hidden" onclick="event.stopPropagation()">
                             <div class="drawer-header-title">📜 Recipients</div>
                             <div class="msg-directory-drawer-body">
-                                <div class="drawer-category-scroll-bin" id="drawer-main-category-view">
-                                    <div class="drawer-node-row" onclick="drillDownDirectory('country')">Country<span>►</span></div>
-                                    <div class="drawer-node-row" onclick="drillDownDirectory('allies')">🤝 Allies <span>►</span></div>
-                                    <div class="drawer-node-row" onclick="drillDownDirectory('other')">🌐 Other<span>►</span></div>
-                                </div>
-                                <div class="drawer-category-scroll-bin msg-drawer-pane-hidden" id="drawer-drilldown-category-view"></div>
+                            <div class="drawer-category-scroll-bin" id="drawer-main-category-view">
+                                <div class="drawer-node-row" onclick="drillDownDirectory('country')">Country<span>►</span></div>
+                                <div class="drawer-node-row" onclick="drillDownDirectory('allies')">🤝 Allies <span>►</span></div>
+                                <div class="drawer-node-row" onclick="drillDownDirectory('other')">🌐 Other<span>►</span></div>
+                            </div>
+                            <div class="drawer-category-scroll-bin msg-drawer-pane-hidden" id="drawer-drilldown-category-view"></div>
                             </div>
                         </div>
                     </div>
@@ -2464,12 +2490,12 @@ const nationLore = {
                         <button type="button" class="msg-folder-tab" data-msg-folder="sent" onclick="activateMessagesFolder('sent', event)">Sent</button>
                     </nav>
                     <div class="msg-folder-panel msg-folder-panel-active" id="msg-folder-panel-inbox" data-msg-folder-panel="inbox">
-                        <div class="msg-portal-toolbar">
-                            <button class="settings-btn mini-btn" id="msg-multi-delete-toggle" onclick="toggleMassDeletionMode('inbox')">Delete Multiple</button>
-                            <button class="settings-btn mini-btn msg-drawer-pane-hidden" id="msg-select-all-btn" onclick="executeSelectAllMessageCheckboxes('inbox')">Select All</button>
+                    <div class="msg-portal-toolbar">
+                        <button class="settings-btn mini-btn" id="msg-multi-delete-toggle" onclick="toggleMassDeletionMode('inbox')">Delete Multiple</button>
+                        <button class="settings-btn mini-btn msg-drawer-pane-hidden" id="msg-select-all-btn" onclick="executeSelectAllMessageCheckboxes('inbox')">Select All</button>
                             <button class="settings-btn mini-btn msg-drawer-pane-hidden" id="msg-confirm-delete-btn" style="border-color: #cc0000 !important; color: #ff9999 !important;" onclick="executeMassDossierPurge('inbox')">Delete selected</button>
-                        </div>
-                        <div class="msg-portal-scroll-bin" id="msg-inbox-render-dock"></div>
+                    </div>
+                    <div class="msg-portal-scroll-bin" id="msg-inbox-render-dock"></div>
                     </div>
                     <div class="msg-folder-panel msg-folder-panel-hidden" id="msg-folder-panel-drafts" data-msg-folder-panel="drafts">
                         <div class="msg-portal-scroll-bin" id="msg-drafts-render-dock"></div>
@@ -2630,8 +2656,8 @@ const nationLore = {
                                     <input type="checkbox" id="lock-toggle-check" onclick="toggleSafetyLock()">
                                     <div class="toggle-slider-track"></div>
                                 </label>
-                            </div>
                         </div>
+                    </div>
 
                         <div class="settings-group">
                             <label class="settings-label">In-Game Chat Transparency</label>
@@ -2898,8 +2924,8 @@ function normalizeMessagesHubChannelKey(trackKey) {
 
 function activateMessagesFolder(folderKey, clickEvent) {
     if (clickEvent) clickEvent.stopPropagation();
-    if (typeof playToggleLeverSFX === 'function') playToggleLeverSFX();
-
+                if (typeof playToggleLeverSFX === 'function') playToggleLeverSFX();
+                
     const allowed = ['inbox', 'drafts', 'sent'];
     activeMessagesFolder = allowed.includes(folderKey) ? folderKey : 'inbox';
 
@@ -2955,9 +2981,9 @@ function activateMessagesHubChannel(trackKey, mount, activeBtn) {
     } else if (resolvedTrackKey === 'system') {
         clearMessageComposeContext();
         fetchCommanderMailboxFromServer().finally(() => renderDossierPortalListHTML('system'));
-    } else {
-        const drawer = document.getElementById('msg-directory-floating-drawer');
-        if (drawer) drawer.className = 'msg-floating-drawer-hidden';
+                } else {
+                    const drawer = document.getElementById('msg-directory-floating-drawer');
+                    if (drawer) drawer.className = 'msg-floating-drawer-hidden';
         if (!messageComposeApplyingFromDossier) {
             clearMessageComposeContext();
         }
@@ -3032,7 +3058,7 @@ function mountMessagesHubView(mount, preferredChannel) {
         btn.dataset.msgChannel = trackKey;
         btn.innerText = getCommanderHubCompactSubnavLabel(tabNamesMapping[idx]);
         btn.onclick = () => activateMessagesHubChannel(trackKey, mount, btn);
-        container.appendChild(btn);
+            container.appendChild(btn);
         channelButtons.push({ trackKey, btn });
     });
 
@@ -3045,7 +3071,7 @@ function mountMessagesHubView(mount, preferredChannel) {
     }
 
     window.setTimeout(() => {
-        const drawer = document.getElementById('msg-directory-floating-drawer');
+            const drawer = document.getElementById('msg-directory-floating-drawer');
         if (drawer) drawer.className = 'msg-floating-drawer-hidden';
         if (typeof syncRecipientDirectoryMobilePresentation === 'function') {
             syncRecipientDirectoryMobilePresentation(false);
@@ -3061,7 +3087,7 @@ function mountMessagesHubView(mount, preferredChannel) {
         loadMailboxAdminRecipientRoster().then(() => {
             renderRecipientDrawerRootCategories();
         });
-    }, 15);
+        }, 15);
 }
 
 function isCommanderEnrolledInActiveAgeRound() {
@@ -3365,13 +3391,13 @@ function loadLore(type, customMount) {
                         <div id="avatar-active-display-group">
                             <img id="profile-avatar-display" src="${player.avatarUrl}" alt="Avatar" class="clickable-avatar-badge" onclick="openAvatarArmorySelector(event)">
                         </div>
-                    </div>
+                            </div>
                     <div class="profile-header-identity-group">
                         <div class="profile-identity-title-row">
                             <span class="profile-main-name">${player.name}</span>
                             <div class="commander-membership-badge-row profile-identity-badge-row">${
                                 typeof buildCommanderMembershipBadgeRowMarkup === 'function'
-                                    ? buildCommanderMembershipBadgeRowMarkup(player.name)
+                                    ? buildCommanderMembershipBadgeRowMarkup(player.name, 'membership-badge', { includeOwnerTag: true })
                                     : `<span class="membership-badge tier-${player.membershipTitle.toLowerCase()}">${player.membershipTitle} Member</span>`
                             }</div>
                         </div>
@@ -3384,7 +3410,7 @@ function loadLore(type, customMount) {
                 if (headerHost) {
                     headerHost.appendChild(topHeaderCard);
                 } else {
-                    paneRight.insertBefore(topHeaderCard, body);
+                paneRight.insertBefore(topHeaderCard, body);
                 }
             }
             
@@ -3470,26 +3496,26 @@ function loadLore(type, customMount) {
             bindProfileEditorFooterActions(profileFooter);
             applyProfileRankResetButtonState();
             return;
-    }
-
-    // ==========================================================================
+        }
+        
+        // ==========================================================================
     // ⚙️ SETTINGS LIST (index radial menu)
-    // ==========================================================================
+        // ==========================================================================
     if (type === 'settings' && nationLore.settings) {
         nationLore.settings.forEach(item => {
             const containerBox = container;
             if (!containerBox) return;
-
+            
             const div = document.createElement('div');
             div.className = subnavItemClass;
             div.innerText = getCommanderHubCompactSubnavLabel(item.name);
             div.onclick = () => {
                 markHubChannelTabActive(div, containerBox);
                 body.innerHTML = item.detail;
-
+                
                 if (leftHeader) leftHeader.innerText = "SETTINGS";
                 if (detailsHeader) detailsHeader.innerHTML = item.name.toUpperCase();
-
+                
                 if (type === 'settings') {
                     setTimeout(() => {
                         if (item.name === "Visuals & Interface") {
@@ -4019,7 +4045,7 @@ function saveSettings() {
 
     setTimeout(async () => {
         confirmedScale = stagedScale; 
-        document.documentElement.style.setProperty('--ui-scale', confirmedScale);
+        document.documentElement.style.setProperty('--ui-scale', confirmedScale); 
 
         confirmedTextScale = stagedTextScale;
         applyTextScaleToDocument(confirmedTextScale, { silent: true });
@@ -4061,7 +4087,7 @@ function saveSettings() {
         localStorage.setItem('savedVerbosity', confirmedVerbosity); 
         localStorage.setItem('savedPings', confirmedPings); 
         localStorage.setItem('savedSafetyLock', confirmedSafetyLock); 
-        localStorage.setItem('savedDyslexiaFont', isDyslexiaActive);
+        localStorage.setItem('savedDyslexiaFont', isDyslexiaActive); 
         localStorage.setItem('savedGameChatOpacity', confirmedGameChatOpacity);
 
         localStorage.setItem('savedPortalMasterVol', confirmedMasterVol);
@@ -4082,7 +4108,7 @@ function saveSettings() {
                 profileSynced = await saveCommanderProfileToServer(player.description, player.privacy);
             }
         }
-        hasUnsavedChanges = false;
+        hasUnsavedChanges = false; 
 
         const hubFrame = typeof getActiveCommanderHubFrame === 'function'
             ? getActiveCommanderHubFrame()
@@ -4133,7 +4159,7 @@ function revertSettings() {
     setTimeout(() => {
         // 1. INITIALIZE FACTORY BASES (UPDATED FOR BACKGROUND MUSIC)
         confirmedScale = 1; 
-        stagedScale = 1;
+        stagedScale = 1; 
         confirmedTextScale = 1;
         stagedTextScale = 1;
         applyTextScaleToDocument(1, { silent: true });
@@ -4157,7 +4183,7 @@ function revertSettings() {
         
         // 2. RE-SYNC ACTIVE VIEW SLIDERS IF RENDERED ON THE MONITOR (UPDATED FOR BACKGROUND MUSIC)
         const scaleSlider = document.getElementById('ui-scale-slider'); 
-        if (scaleSlider) scaleSlider.value = 1;
+        if (scaleSlider) scaleSlider.value = 1; 
 
         const textScaleSlider = document.getElementById('text-scale-slider');
         if (textScaleSlider) textScaleSlider.value = 1;
@@ -4223,7 +4249,7 @@ function revertSettings() {
 /* --- Section: Window-Scoped API Surface --- */ 
 window.handleLogin = handleLogin; 
 window.confirmSelection = confirmSelection; 
-window.selectClass = selectClass;
+window.selectClass = selectClass; 
 window.isCommanderEnrolledInActiveAgeRound = isCommanderEnrolledInActiveAgeRound;
 window.resolveActiveAgeHandoffUrl = resolveActiveAgeHandoffUrl;
 window.enforceActiveAgePortalLock = enforceActiveAgePortalLock;
@@ -4611,7 +4637,7 @@ function handleSuicideActionSelection(action) {
         if (typeof saveSettings === 'function') saveSettings();
         reloadProfilePanelView();
         applyProfileRankResetButtonState();
-
+        
         closeSuicideOverlayWindow();
     }
 }
@@ -4642,7 +4668,7 @@ function openAvatarArmorySelector(e) {
     if (e) e.stopPropagation();
     if (typeof playToggleLeverSFX === 'function') playToggleLeverSFX();
     setAvatarArmorySelectorVisible(true);
-
+    
     const selectorBin = document.getElementById('avatar-preset-selection-bin');
     if (
         selectorBin
@@ -4877,11 +4903,11 @@ function toggleRecipientDirectory(e) {
     
     if (drawer.classList.contains('msg-floating-drawer-hidden')) {
         const openDrawer = () => {
-            drawer.classList.remove('msg-floating-drawer-hidden');
+        drawer.classList.remove('msg-floating-drawer-hidden');
             syncRecipientDirectoryMobilePresentation(true);
             drillDownDirectory('root');
             resetRecipientDrawerScrollPosition();
-            document.addEventListener('click', closeRecipientDrawerOutsideDismissalLatch);
+        document.addEventListener('click', closeRecipientDrawerOutsideDismissalLatch);
         };
 
         if (isMailboxRecipientRosterAdmin()) {
@@ -4970,8 +4996,8 @@ function drillDownDirectory(tier, payload) {
                 appendRecipientDrawerEmptyNote(drillPane, 'No allied nation rosters available yet.');
             } else {
                 allies.forEach((allyNation, index) => {
-                    drillPane.innerHTML += `<div class="drawer-node-row" onclick="drillDownDirectory('ally-nation', ${index})">🤝 ${allyNation.name} Sector <span>►</span></div>`;
-                });
+                drillPane.innerHTML += `<div class="drawer-node-row" onclick="drillDownDirectory('ally-nation', ${index})">🤝 ${allyNation.name} Sector <span>►</span></div>`;
+            });
             }
         }
     }
@@ -5116,9 +5142,9 @@ async function executeOutgoingMessageDispatch() {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 sender,
-                recipients: [...activeWartimeRecipients],
+        recipients: [...activeWartimeRecipients],
                 topic,
-                body: bodyText
+        body: bodyText
             })
         });
         const payload = await response.json();
@@ -5325,7 +5351,7 @@ function openFocusedDossierReadingOverlay(msg, track) {
             await deleteMailboxDraftOnServer(msg.id);
             playerDraftsInboxDossier = playerDraftsInboxDossier.filter((m) => m.id !== msg.id);
         }
-
+        
         closeSuicideOverlayWindow();
         await fetchCommanderMailboxFromServer();
         renderDossierPortalListHTML(track);

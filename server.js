@@ -15,6 +15,7 @@ const path = require('path');
 const low = require('lowdb');
 const FileSync = require('lowdb/adapters/FileSync');
 const { sendApiError, sendStoreError, storeErrorHttpStatus } = require('./nexus-response-errors');
+const { validateRegistrationUsername } = require('./public/nexus-account-validation');
 const { listErrorCodes } = require('./nexus-error-codes');
 
 /* Block 2: Environment Path Resolution */
@@ -1720,13 +1721,19 @@ const sendEmailChangeVerificationEmail = async (req, newEmail, commanderUsername
 
 /* Block 8: Commander Registration Endpoint */
 app.post('/register', async (req, res) => {
-    const username = normalizeLedgerUsername(req.body?.username);
     const email = normalizeLedgerEmail(req.body?.email);
     const password = String(req.body?.password || '');
 
-    if (!username || !email || !password) {
+    if (!email || !password) {
         return sendApiError(res, 'NEXUS-AUTH-005');
     }
+
+    const usernameValidation = validateRegistrationUsername(req.body?.username);
+    if (!usernameValidation.ok) {
+        return sendApiError(res, usernameValidation.code);
+    }
+
+    const username = usernameValidation.username;
 
     const commanders = db.get('commanders').value() || [];
     const emailTaken = commanders.some((entry) => normalizeLedgerEmail(entry?.email) === email);

@@ -1,6 +1,19 @@
 /* Royal Armies — gauntlet pointer cursor + fingertip click burst */
 /* Native cursor hide rules are injected last via custom-cursor.js (beats #id .class pointer rules). */
 
+/* Scrollbars use OS pointer hit targets; hide them while gauntlet is active (wheel scroll still works). */
+html.royal-armies-custom-cursor,
+html.royal-armies-custom-cursor * {
+    scrollbar-width: none !important;
+    -ms-overflow-style: none !important;
+}
+
+html.royal-armies-custom-cursor *::-webkit-scrollbar {
+    width: 0 !important;
+    height: 0 !important;
+    display: none !important;
+}
+
 #royal-armies-custom-cursor {
     position: fixed;
     left: 0;

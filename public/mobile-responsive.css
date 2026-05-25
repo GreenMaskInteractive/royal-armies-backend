@@ -52,10 +52,17 @@ body {
         padding-bottom: 8px !important;
     }
 
+    .portal-brand-logo-stack {
+        --portal-early-access-lift: 144px;
+    }
+
     .portal-brand-header .portal-early-access-readout {
+        position: absolute !important;
+        top: calc(100% - var(--portal-early-access-lift, 144px)) !important;
+        margin: 0 !important;
+        margin-top: 0 !important;
         font-size: 0.62rem !important;
         letter-spacing: 0.24em !important;
-        margin-top: -44px !important;
     }
 
     .developer-maintenance-alert-bar {
@@ -151,10 +158,77 @@ body {
         gap: 16px !important;
     }
 
-    #panel-age-portal-mode.age-portal-view-canvas {
+    #panel-age-portal-mode.age-portal-view-canvas,
+    #panel-age-portal-mode.portal-age-portal-layout-mounted {
         display: flex !important;
         flex-direction: column !important;
         gap: 16px !important;
+    }
+
+    #panel-age-portal-mode .portal-age-intro-card,
+    #panel-age-portal-mode .portal-age-portal-right-stack {
+        grid-column: auto !important;
+        grid-row: auto !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        height: auto !important;
+    }
+
+    #panel-age-portal-mode.portal-age-portal-layout-mounted .portal-age-portal-right-stack {
+        height: auto !important;
+        align-self: auto !important;
+    }
+
+    #panel-age-portal-mode.portal-age-portal-layout-mounted .portal-age-intro-card {
+        order: 1 !important;
+        width: 100% !important;
+        max-width: 100% !important;
+    }
+
+    #panel-age-portal-mode.portal-age-portal-layout-mounted .portal-age-portal-right-stack {
+        order: 2 !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        flex: 0 1 auto !important;
+    }
+
+    #panel-age-portal-mode.portal-age-portal-layout-mounted .portal-age-portal-right-stack > .portal-deployment-control-deck {
+        width: 100% !important;
+        max-width: 100% !important;
+    }
+
+    #panel-age-portal-mode.portal-age-portal-layout-mounted .portal-age-portal-right-stack > .portal-deployment-control-deck .deployment-action-button-row {
+        flex-direction: row !important;
+        flex-wrap: wrap !important;
+        justify-content: center !important;
+    }
+
+    #panel-age-portal-mode.portal-age-portal-layout-mounted .portal-age-portal-right-stack .portal-sidebar-flex-column {
+        width: 100% !important;
+        max-width: 100% !important;
+        height: auto !important;
+        min-height: 0 !important;
+    }
+
+    #panel-age-portal-mode.portal-age-portal-layout-mounted .portal-age-portal-right-stack .portal-developers-log-card,
+    #panel-age-portal-mode.portal-age-portal-layout-mounted .portal-age-portal-right-stack .portal-sidebar-flex-column .dashboard-news-card-box {
+        max-width: 100% !important;
+        height: auto !important;
+        min-height: 0 !important;
+        overflow: hidden !important;
+    }
+
+    #panel-age-portal-mode.portal-age-portal-layout-mounted .portal-age-portal-right-stack #dashboard-patch-notes-dock,
+    #panel-age-portal-mode.portal-age-portal-layout-mounted .portal-age-portal-right-stack .portal-developers-log-scroll {
+        max-height: min(420px, 52vh) !important;
+        overflow-y: auto !important;
+    }
+
+    .portal-age-intro-art {
+        float: none !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        margin: 0 0 18px 0 !important;
     }
 
     #panel-age-portal-mode > .portal-twin-split-deck-row {
@@ -368,9 +442,42 @@ body {
         white-space: nowrap !important;
     }
 
+    .portal-universal-game-time-panel,
     .portal-age-countdown-panel,
     .portal-deployment-server-panel {
         max-width: min(420px, 100%) !important;
+    }
+
+    .portal-universal-game-time-display {
+        font-size: clamp(1.15rem, 5.4vw, 1.95rem) !important;
+        max-width: 52% !important;
+        transform: translateY(-4%) !important;
+        grid-template-columns:
+            0.78em 0.78em 0.3em 0.94em 0.94em 0.3em 0.78em 0.78em !important;
+        column-gap: 0.01em !important;
+    }
+
+    .portal-game-time-char--wing-outer {
+        font-size: 0.56em !important;
+    }
+
+    .portal-game-time-char--center {
+        font-size: 1em !important;
+    }
+
+    .portal-server-panel-header {
+        flex-wrap: wrap !important;
+        justify-content: center !important;
+        gap: 8px !important;
+    }
+
+    .portal-server-panel-heading {
+        text-align: center !important;
+        width: 100% !important;
+    }
+
+    .portal-server-status-pill {
+        margin: 0 auto !important;
     }
 
     .portal-age-countdown-panel #dynamic-age-sub-timer-display {
@@ -1286,9 +1393,10 @@ body {
 
     .portal-mobile-commander-identity {
         display: flex !important;
-        flex-direction: column !important;
-        align-items: flex-start !important;
-        gap: 3px !important;
+        flex-direction: row !important;
+        align-items: center !important;
+        flex-wrap: nowrap !important;
+        gap: 6px !important;
         flex: 1 1 auto !important;
         min-width: 0 !important;
     }
@@ -1296,7 +1404,7 @@ body {
     .portal-mobile-commander-name {
         color: #ffd700 !important;
         font-family: 'Cinzel', serif !important;
-        font-size: 0.78rem !important;
+        font-size: 0.9rem !important;
         font-weight: bold !important;
         letter-spacing: 0.06em !important;
         white-space: nowrap !important;
@@ -2202,9 +2310,10 @@ body {
         max-width: 36vw !important;
     }
 
-    .nav-commander-membership-badge-row .membership-badge {
-        font-size: 0.52rem !important;
-        padding: 1px 5px !important;
+    .nav-commander-membership-badge-row .membership-badge,
+    .portal-mobile-nav-membership-slot .membership-badge {
+        font-size: 0.66rem !important;
+        padding: 1px 6px !important;
     }
 
     .chat-scrolling-messages-bin {

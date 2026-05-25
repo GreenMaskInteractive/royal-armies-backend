@@ -36,6 +36,22 @@
         'html.royal-armies-custom-cursor *::-webkit-scrollbar-thumb,',
         'html.royal-armies-custom-cursor *::-webkit-scrollbar-corner {',
         '    cursor: none !important;',
+        '}',
+        '/* Native scrollbar thumbs steal the OS pointer; hide bars but keep wheel/trackpad scroll. */',
+        'html.royal-armies-custom-cursor,',
+        'html.royal-armies-custom-cursor * {',
+        '    scrollbar-width: none !important;',
+        '    -ms-overflow-style: none !important;',
+        '}',
+        'html.royal-armies-custom-cursor *::-webkit-scrollbar {',
+        '    width: 0 !important;',
+        '    height: 0 !important;',
+        '    display: none !important;',
+        '    background: transparent !important;',
+        '}',
+        'html.royal-armies-custom-cursor *::-webkit-scrollbar-thumb,',
+        'html.royal-armies-custom-cursor *::-webkit-scrollbar-track {',
+        '    display: none !important;',
         '}'
     ].join('\n');
     const CURSOR_OVERLAY_IDS = new Set(['royal-armies-custom-cursor', 'cursor-click-fx-layer']);

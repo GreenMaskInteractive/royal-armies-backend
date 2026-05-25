@@ -695,12 +695,10 @@ function renderPublicProfileCardContent(snapshot, options) {
     const hideSensitiveDetails = !isPublic && !viewingSelf;
 
     const membershipBadgeRowMarkup = typeof buildCommanderMembershipBadgeRowMarkup === 'function'
-        ? buildCommanderMembershipBadgeRowMarkup(snapshot.name, 'public-profile-membership')
-        : `<span class="public-profile-membership tier-${String(snapshot.membershipTitle).toLowerCase()}">${escapePublicProfileHtml(snapshot.membershipTitle)} Member</span>${
-            typeof isPortalSiteOwner === 'function' && isPortalSiteOwner(snapshot.name)
-                ? '<span class="commander-owner-tag" title="Site owner"><span class="commander-owner-tag-icon" aria-hidden="true">👑</span>Owner</span>'
-                : ''
-        }`;
+        ? buildCommanderMembershipBadgeRowMarkup(snapshot.name, 'public-profile-membership', {
+            includeOwnerTag: viewingSelf
+        })
+        : `<span class="public-profile-membership tier-${String(snapshot.membershipTitle).toLowerCase()}">${escapePublicProfileHtml(snapshot.membershipTitle)} Member</span>`;
     const rankTitle = getCommanderRankTitle(snapshot.rank, snapshot.path);
     const classTitle = getCommanderClassTitle(snapshot.path);
 

@@ -15,10 +15,10 @@
     <!-- Block 2: Page Title & Stylesheet Bridge -->
     <title>Royal Armies - An MMOHFT Medieval-Fantasy Strategy Game</title>
     <link rel="stylesheet" href="style.css?v=mailbox-read-popup-wide-2">
-    <link rel="stylesheet" href="style2.css?v=early-access-up-50-2">
-    <link rel="stylesheet" href="mobile-responsive.css?v=early-access-up-50-2">
+    <link rel="stylesheet" href="style2.css?v=membership-nametag-tab-9">
+    <link rel="stylesheet" href="mobile-responsive.css?v=nav-commander-identity-inline-2">
     <link rel="stylesheet" href="dev-page-navigator.css">
-    <link rel="stylesheet" href="custom-cursor.css?v=scrollbar-cursor-1">
+    <link rel="stylesheet" href="custom-cursor.css?v=scrollbar-cursor-2">
 </head>
 <body id="main-dashboard-canvas">
 <script>
@@ -79,7 +79,7 @@
                                 </div>
                                 <div class="nav-account-identity-cluster">
                                     <div class="nav-account-identity-stack">
-                                        <strong id="portal-desktop-guest-auth-label">Log In</strong>
+                                        <strong id="portal-desktop-guest-auth-label">LOG IN</strong>
                                     </div>
                                 </div>
                             </div>
@@ -88,26 +88,22 @@
 
                     <div id="portal-desktop-member-auth-cluster" class="portal-desktop-member-auth-cluster">
                 <div class="portal-commander-identity-card" id="portal-commander-identity-card">
-                    <button type="button"
-                        class="portal-commander-identity-settings-btn"
-                        id="portal-commander-identity-settings-btn"
-                        onclick="togglePortalCommanderIdentityMenu(event)"
+                    <div class="portal-commander-identity-card-body portal-commander-identity-trigger"
+                        id="portal-commander-identity-trigger"
+                        role="button"
+                        tabindex="0"
                         aria-expanded="false"
                         aria-controls="portal-desktop-commander-menu"
                         aria-label="Open commander menu"
                         title="Commander menu">
-                        <img src="images/settingsicon.png" alt="" class="portal-commander-identity-settings-icon" aria-hidden="true">
-                    </button>
-                    <div class="portal-commander-identity-card-body">
                         <div class="nav-avatar-hub-wrapper">
-                            <img id="nav-embedded-avatar-crest" src="" alt="Commander avatar" class="nav-bar-embedded-avatar-thumbnail" tabindex="0">
+                            <img id="nav-embedded-avatar-crest" src="" alt="Commander avatar" class="nav-bar-embedded-avatar-thumbnail">
                         </div>
                         <div class="nav-account-identity-cluster">
                             <div class="nav-account-identity-stack">
                                 <strong id="logged-user-tag">Loading...</strong>
-                                <div id="nav-commander-membership-badge-row" class="commander-membership-badge-row nav-commander-membership-badge-row" hidden></div>
                             </div>
-                            <div id="nav-commander-owner-tag-slot" class="nav-commander-owner-tag-slot" hidden></div>
+                            <div id="nav-commander-membership-badge-row" class="commander-membership-badge-row nav-commander-membership-badge-row nav-commander-membership-tab" hidden></div>
                         </div>
                     </div>
                     <div class="portal-commander-identity-menu" id="portal-desktop-commander-menu" role="menu" hidden>
@@ -150,7 +146,7 @@
                             <button type="button" class="portal-mobile-commander-trigger portal-mobile-guest-login-trigger portal-mobile-guest-auth-card" id="portal-mobile-guest-login-btn" aria-label="Log in to Age Portal">
                                 <img class="portal-mobile-commander-avatar portal-mobile-guest-login-icon" id="portal-mobile-guest-login-icon" src="images/profileicon.png" alt="" aria-hidden="true">
                                 <span class="portal-mobile-commander-identity">
-                                    <strong class="portal-mobile-commander-name" id="portal-mobile-guest-login-label">Log In</strong>
+                                    <strong class="portal-mobile-commander-name" id="portal-mobile-guest-login-label">LOG IN</strong>
                                 </span>
                             </button>
                         </div>
@@ -188,7 +184,7 @@
                     </nav>
                     <button type="button" class="portal-mobile-nav-auth-btn" id="portal-mobile-nav-auth-btn">
                         <img id="portal-mobile-nav-auth-icon" src="images/profileicon.png" alt="" class="portal-mobile-nav-auth-icon" aria-hidden="true">
-                        <span id="portal-mobile-nav-auth-label">Log In</span>
+                        <span id="portal-mobile-nav-auth-label">LOG IN</span>
                     </button>
                     </div>
                 </div>
@@ -285,7 +281,7 @@
                 <div class="metric-auth-build-stack">
                     <button type="button" id="metrics-auth-action-btn" class="header-logout-btn metrics-auth-action-btn" aria-label="Log in to Age Portal">
                         <img id="metrics-auth-action-icon" src="images/profileicon.png" alt="" class="header-logout-icon" aria-hidden="true">
-                        <span id="metrics-auth-action-label" class="header-logout-label">Log In</span>
+                        <span id="metrics-auth-action-label" class="header-logout-label">LOG IN</span>
                     </button>
                     <div class="metric-auth-build-readout" id="portal-alpha-version-capsule">
                         <span class="metric-glyph-icon" aria-hidden="true">⚙</span>
@@ -308,33 +304,35 @@
 
             <div class="portal-deployment-control-deck custom-centered-row-deck" id="deployment-master-deck-container">
 
-                <div id="portal-deployment-member-block" class="portal-deployment-member-block">
-                    <h3 class="deployment-deck-title" id="dynamic-age-status-header">The Age has Yet to Arrive!</h3>
+                <div id="portal-universal-game-time-panel" class="portal-universal-game-time-panel" aria-label="Game time">
+                    <div id="portal-universal-game-time-display" class="portal-universal-game-time-display" aria-live="polite">--:--:--</div>
+                </div>
 
-                    <div id="portal-age-countdown-panel" class="portal-age-countdown-panel">
+                <div id="portal-deployment-member-block" class="portal-deployment-member-block">
+                    <div id="portal-age-countdown-panel" class="portal-age-countdown-panel" hidden aria-hidden="true">
                         <div id="dynamic-age-sub-timer-display" class="timer-readout-default">-- : -- : -- : --</div>
                     </div>
 
                     <div class="deployment-action-button-row portal-deployment-member-actions" id="portal-deployment-member-actions">
                         <div class="action-btn-aura-housing aura-glow-red">
-                            <button class="deployment-image-trigger-btn" onclick="launchGameRoundSector(false, event)">
-                                <img src="images/joinagebtn.png" alt="Join active age">
-                            </button>
+                            <button type="button" class="portal-join-age-btn portal-join-age-btn--primary" onclick="launchGameRoundSector(false, event)">Join Age</button>
                         </div>
                         <div class="action-btn-aura-housing aura-glow-blue">
-                            <button class="deployment-image-trigger-btn" onclick="launchGameRoundSector(true, event)">
-                                <img src="images/joinagetutorialbtn.png" alt="Join tutorial age">
-                            </button>
+                            <button type="button" class="portal-join-age-btn portal-join-age-btn--tutorial" onclick="launchGameRoundSector(true, event)">Tutorial Age</button>
                         </div>
                     </div>
 
                     <div id="portal-deployment-server-panel" class="portal-deployment-server-panel" hidden>
-                        <h4 class="portal-server-panel-heading">Server</h4>
+                        <div class="portal-server-panel-header">
+                            <h4 class="portal-server-panel-heading">Server Dashboard</h4>
+                        </div>
                         <div class="portal-server-panel-controls">
-                            <label class="portal-server-panel-label" for="portal-active-server-select">Active server</label>
-                            <select id="portal-active-server-select" class="portal-active-server-select" aria-label="Active server">
-                                <option value="amnek" selected>Amnek Server (Under Development)</option>
-                            </select>
+                            <label class="portal-server-panel-label" for="portal-active-server-select">Universal Servers</label>
+                            <div class="portal-server-select-shell">
+                                <select id="portal-active-server-select" class="portal-active-server-select" aria-label="Active server">
+                                    <option value="amnek" selected>Amnek Server (Under Development)</option>
+                                </select>
+                            </div>
                             <button type="button" id="portal-rejoin-age-btn" class="portal-rejoin-age-btn confirm-btn" onclick="rejoinSelectedAgeServer(event)">Join</button>
                         </div>
                     </div>
@@ -353,7 +351,16 @@
 
                 <article class="dashboard-news-card-box portal-age-intro-card">
                     <h2 class="card-title-header">👑 Introduction Into Royal Armies</h2>
-                    <div class="card-scrollable-body-text">
+                    <div class="card-scrollable-body-text portal-age-intro-body-wrap">
+                        <figure class="portal-age-intro-art">
+                            <img
+                                src="images/amnekart4.png"
+                                alt="Illustrated map of the continent of Amnek"
+                                class="portal-age-intro-art-image"
+                                width="920"
+                                height="920"
+                            >
+                        </figure>
                         <p class="portal-intro-lead">
                             Welcome to <strong>Royal Armies</strong>, a Massively Multiplayer High-Fidelity Tactical (MMOHFT) strategy ecosystem and the first browser game of its kind. Inspired by both the depth of modern MMO titles and the fast, competitive nature of classic persistent browser-based games, Royal Armies is engineered to give old-school veterans a familiar home while providing a highly responsive, visually stimulating world that captures the new generation of strategy gamers.
                         </p>
@@ -374,6 +381,7 @@
                         <p class="portal-intro-body">
                             Your objective is absolute coordination. To survive, you must join fellow commanders, march in real-time grid matrices, rise through the ranks, and capture key defensive strongholds. Your ultimate target? Wipe rival nations completely off the dynamic world map.
                         </p>
+                        <div class="portal-intro-wrap-clear" aria-hidden="true"></div>
                         <h3 class="portal-intro-subhead">🏆 Choose Your Path to Victory</h3>
                         <p class="portal-intro-body">
                             Total world domination is not your only path to absolute renown. Royal Armies features three distinct, highly competitive game modes:
@@ -560,11 +568,14 @@
     <div id="chat-mention-alert-stack" class="chat-mention-alert-stack" aria-live="polite" aria-label="Community chat shoutout alerts"></div>
 
     <div id="main-portal-login-modal" class="main-portal-modal-hidden" style="display: none !important;" role="dialog" aria-modal="true" aria-labelledby="main-portal-login-title">
-        <div class="portal-overlay-modal-bezel main-portal-login-bezel bordered-modal-panel">
+        <div class="main-portal-auth-modal-frame portal-deployment-server-panel">
             <button type="button" class="main-portal-modal-close-btn" onclick="closeMainPortalLoginModal()" aria-label="Close login">
                 <img src="images/closebtn.png" alt="" class="main-portal-modal-close-icon" aria-hidden="true">
             </button>
-            <h3 id="main-portal-login-title" class="main-portal-auth-modal-title">Login Portal</h3>
+            <div class="portal-server-panel-header">
+                <h4 id="main-portal-login-title" class="portal-server-panel-heading">Login Portal</h4>
+            </div>
+            <div class="portal-server-panel-controls main-portal-auth-panel-body">
             <div id="login-content-wrapper" class="main-portal-login-form-stack">
                 <input type="text" id="login-username" class="main-portal-auth-field" placeholder="USERNAME" autocomplete="username">
                 <input type="password" id="login-password" class="main-portal-auth-field" placeholder="PASSWORD" autocomplete="current-password">
@@ -577,48 +588,57 @@
                 </label>
                 <div id="auth-loading" class="main-portal-auth-loading" style="display: none;">Authenticating...</div>
                 <div id="auth-buttons" class="main-portal-auth-btn-row">
-                    <button type="button" id="btn-login-main" class="modal-action-btn confirm" onclick="handleLogin()">Login</button>
-                    <button type="button" id="btn-register-main" class="modal-action-btn cancel" onclick="handleRegister()">Create Account</button>
+                    <button type="button" id="btn-login-main" class="portal-rejoin-age-btn confirm-btn" onclick="handleLogin()">Login</button>
+                    <button type="button" id="btn-register-main" class="modal-action-btn cancel main-portal-auth-secondary-btn" onclick="handleRegister()">Create Account</button>
                 </div>
+            </div>
             </div>
         </div>
     </div>
 
     <div id="register-modal" class="main-portal-auth-overlay main-portal-modal-hidden" style="display: none; opacity: 0;" role="dialog" aria-modal="true" aria-labelledby="register-modal-title">
-        <div class="portal-overlay-modal-bezel main-portal-register-bezel bordered-modal-panel">
+        <div class="main-portal-auth-modal-frame portal-deployment-server-panel">
             <button type="button" class="main-portal-modal-close-btn" onclick="closeRegister()" aria-label="Close registration">
                 <img src="images/closebtn.png" alt="" class="main-portal-modal-close-icon" aria-hidden="true">
             </button>
-            <h2 id="register-modal-title" class="main-portal-auth-modal-title">Create New Account</h2>
+            <div class="portal-server-panel-header">
+                <h4 id="register-modal-title" class="portal-server-panel-heading">Create New Account</h4>
+            </div>
+            <div class="portal-server-panel-controls main-portal-auth-panel-body">
             <div class="register-form main-portal-register-form">
-                <div class="reg-group"><label>Preferred Username*</label><input type="text" id="reg-username" class="reg-input" autocomplete="username"></div>
-                <div class="reg-group"><label>Email Address*</label><input type="email" id="reg-email" class="reg-input" autocomplete="email"></div>
-                <div class="reg-group"><label>Password*</label><input type="password" id="reg-password" class="reg-input" autocomplete="new-password"></div>
-                <div class="reg-group"><label>Confirm Password*</label><input type="password" id="reg-confirm" class="reg-input" autocomplete="new-password"></div>
-                <div class="modal-action-btn-row">
-                    <button type="button" class="modal-action-btn confirm" onclick="submitRegistration()">Confirm</button>
-                    <button type="button" class="modal-action-btn cancel" onclick="closeRegister()">Cancel</button>
+                <div class="reg-group"><label class="portal-server-panel-label">Preferred Username*</label><input type="text" id="reg-username" class="reg-input main-portal-auth-field" autocomplete="username" minlength="5" maxlength="15" pattern="[A-Za-z0-9._\-]+" title="5–15 characters: letters, numbers, and at most one period, underscore, or dash."><p class="main-portal-auth-field-hint">5–15 characters. Letters and numbers only; at most one <strong>.</strong> <strong>_</strong> or <strong>-</strong>.</p></div>
+                <div class="reg-group"><label class="portal-server-panel-label">Email Address*</label><input type="email" id="reg-email" class="reg-input main-portal-auth-field" autocomplete="email"></div>
+                <div class="reg-group"><label class="portal-server-panel-label">Password*</label><input type="password" id="reg-password" class="reg-input main-portal-auth-field" autocomplete="new-password"></div>
+                <div class="reg-group"><label class="portal-server-panel-label">Confirm Password*</label><input type="password" id="reg-confirm" class="reg-input main-portal-auth-field" autocomplete="new-password"></div>
+                <div class="modal-action-btn-row main-portal-auth-btn-row">
+                    <button type="button" class="portal-rejoin-age-btn confirm-btn" onclick="submitRegistration()">Confirm</button>
+                    <button type="button" class="modal-action-btn cancel main-portal-auth-secondary-btn" onclick="closeRegister()">Cancel</button>
                 </div>
+            </div>
             </div>
         </div>
     </div>
 
     <div id="forgot-modal" class="main-portal-auth-overlay main-portal-modal-hidden" style="display: none; opacity: 0;" role="dialog" aria-modal="true" aria-labelledby="forgot-modal-title">
-        <div class="portal-overlay-modal-bezel main-portal-forgot-bezel bordered-modal-panel">
+        <div class="main-portal-auth-modal-frame portal-deployment-server-panel">
             <button type="button" class="main-portal-modal-close-btn" onclick="closeForgot()" aria-label="Close password recovery">
                 <img src="images/closebtn.png" alt="" class="main-portal-modal-close-icon" aria-hidden="true">
             </button>
-            <h2 id="forgot-modal-title" class="main-portal-auth-modal-title">Account Recovery</h2>
+            <div class="portal-server-panel-header">
+                <h4 id="forgot-modal-title" class="portal-server-panel-heading">Account Recovery</h4>
+            </div>
+            <div class="portal-server-panel-controls main-portal-auth-panel-body">
             <div class="register-form main-portal-forgot-form">
                 <p class="main-portal-forgot-copy">Enter your email address to receive a one-time password reset link.</p>
                 <div class="reg-group">
-                    <label>Email Address*</label>
-                    <input type="email" id="forgot-email" class="reg-input" placeholder="commander@example.com" autocomplete="email">
+                    <label class="portal-server-panel-label">Email Address*</label>
+                    <input type="email" id="forgot-email" class="reg-input main-portal-auth-field" placeholder="commander@example.com" autocomplete="email">
                 </div>
-                <div class="modal-action-btn-row">
-                    <button type="button" class="modal-action-btn confirm" onclick="submitForgot(event)">Send</button>
-                    <button type="button" class="modal-action-btn cancel" onclick="closeForgot()">Cancel</button>
+                <div class="modal-action-btn-row main-portal-auth-btn-row">
+                    <button type="button" class="portal-rejoin-age-btn confirm-btn" onclick="submitForgot(event)">Send</button>
+                    <button type="button" class="modal-action-btn cancel main-portal-auth-secondary-btn" onclick="closeForgot()">Cancel</button>
                 </div>
+            </div>
             </div>
         </div>
     </div>
@@ -649,18 +669,19 @@
     <!-- Block 10: Commander Hub + Shared RAGE Logic -->
     <script src="dev-environment.js"></script>
     <script src="commander-dossier-sync.js?v=deployment-deck-refresh-1"></script>
-    <script src="portal-commander-identity-menu.js?v=dropdown-logout-1"></script>
+    <script src="portal-commander-identity-menu.js?v=avatar-name-menu-trigger-1"></script>
     <script src="achievement-system.js?v=first-timer-icon-png-1"></script>
     <script src="dev-page-navigator.js?v=dev-tools-fix-1"></script>
-    <script src="rift-error-codes.js?v=nexus-rift-acronyms-1"></script>
+    <script src="nexus-account-validation.js?v=registration-username-rules-1"></script>
+    <script src="rift-error-codes.js?v=registration-username-rules-1"></script>
     <script src="portal-alerts.js?v=nexus-rift-acronyms-1"></script>
     <script src="rift-error-display.js?v=nexus-rift-acronyms-1"></script>
     <script src="rank-data.js"></script>
-    <script src="script.js?v=profile-dossier-sync-fix-1"></script>
-    <script src="commander-hub.js?v=save-confirmation-toast-fix-1"></script>
+    <script src="script.js?v=registration-username-rules-1"></script>
+    <script src="commander-hub.js?v=owner-tag-profile-only-1"></script>
     <script src="maintenance-alert.js?v=maintenance-always-on-1"></script>
-    <script src="script2.js?v=developers-log-scroll-1"></script>
-    <script src="custom-cursor.js?v=scrollbar-cursor-1"></script>
+    <script src="script2.js?v=owner-tag-profile-only-1"></script>
+    <script src="custom-cursor.js?v=scrollbar-cursor-2"></script>
 
 </body>
 </html>

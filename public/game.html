@@ -5,10 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Royal Armies - Age Session (In Development)</title>
     <link rel="stylesheet" href="style.css?v=mailbox-read-popup-wide-2">
-    <link rel="stylesheet" href="style2.css?v=choose-class-picker-1">
-    <link rel="stylesheet" href="mobile-responsive.css?v=choose-class-picker-1">
+    <link rel="stylesheet" href="style2.css?v=membership-nametag-tab-9">
+    <link rel="stylesheet" href="mobile-responsive.css?v=choose-class-characters-2">
     <link rel="stylesheet" href="dev-page-navigator.css">
-    <link rel="stylesheet" href="custom-cursor.css?v=scrollbar-cursor-1">
+    <link rel="stylesheet" href="custom-cursor.css?v=scrollbar-cursor-2">
 </head>
 <body id="game-page-canvas" class="game-page-canvas">
 <script src="page-route-transition.js?v=route-fade-1"></script>
@@ -21,26 +21,22 @@
                         <span class="portal-commander-new-messages-bar-text">You have new messages</span>
                     </button>
                 <div class="portal-commander-identity-card" id="portal-commander-identity-card">
-                    <button type="button"
-                        class="portal-commander-identity-settings-btn"
-                        id="portal-commander-identity-settings-btn"
-                        onclick="togglePortalCommanderIdentityMenu(event)"
+                    <div class="portal-commander-identity-card-body portal-commander-identity-trigger"
+                        id="portal-commander-identity-trigger"
+                        role="button"
+                        tabindex="0"
                         aria-expanded="false"
                         aria-controls="portal-desktop-commander-menu"
                         aria-label="Open commander menu"
                         title="Commander menu">
-                        <img src="images/settingsicon.png" alt="" class="portal-commander-identity-settings-icon" aria-hidden="true">
-                    </button>
-                    <div class="portal-commander-identity-card-body">
                         <div class="nav-avatar-hub-wrapper">
-                            <img id="nav-embedded-avatar-crest" src="images/avatars/commanderprofile01.png" alt="Commander avatar" class="nav-bar-embedded-avatar-thumbnail" tabindex="0">
+                            <img id="nav-embedded-avatar-crest" src="images/avatars/commanderprofile01.png" alt="Commander avatar" class="nav-bar-embedded-avatar-thumbnail">
                         </div>
                         <div class="nav-account-identity-cluster">
                             <div class="nav-account-identity-stack">
                                 <strong id="logged-user-tag">Loading...</strong>
-                                <div id="nav-commander-membership-badge-row" class="commander-membership-badge-row nav-commander-membership-badge-row" hidden></div>
                             </div>
-                            <div id="nav-commander-owner-tag-slot" class="nav-commander-owner-tag-slot" hidden></div>
+                            <div id="nav-commander-membership-badge-row" class="commander-membership-badge-row nav-commander-membership-badge-row nav-commander-membership-tab" hidden></div>
                         </div>
                     </div>
                     <div class="portal-commander-identity-menu" id="portal-desktop-commander-menu" role="menu" hidden>
@@ -114,66 +110,49 @@
         <section class="game-page-view game-page-view--overview is-active" data-game-view="overview" aria-label="Overview">
             <section class="game-page-class-modal-stage" aria-label="Choose your class">
                 <div id="game-class-picker" class="game-class-picker">
-                    <svg class="game-class-picker-defs" width="0" height="0" aria-hidden="true" focusable="false">
-                        <defs>
-                            <clipPath id="game-class-clip-arcane" clipPathUnits="objectBoundingBox">
-                                <path d="M 0.025,0.90 L 0.025,0.48 L 0.045,0.30 L 0.065,0.20 L 0.085,0.17 L 0.105,0.19 L 0.120,0.34 L 0.135,0.44 L 0.145,0.90 Z M 0.195,0.90 L 0.205,0.58 L 0.220,0.34 L 0.250,0.17 L 0.285,0.14 L 0.320,0.15 L 0.345,0.24 L 0.365,0.42 L 0.385,0.90 Z" />
-                            </clipPath>
-                            <clipPath id="game-class-clip-physical" clipPathUnits="objectBoundingBox">
-                                <path d="M 0.535,0.90 L 0.545,0.36 L 0.575,0.18 L 0.610,0.15 L 0.645,0.17 L 0.665,0.30 L 0.680,0.90 Z M 0.725,0.90 L 0.735,0.58 L 0.760,0.44 L 0.795,0.38 L 0.840,0.38 L 0.880,0.44 L 0.905,0.52 L 0.915,0.90 Z" />
-                            </clipPath>
-                        </defs>
-                    </svg>
+                    <!-- Character mask coordinates: edit CHARACTER_MASKS in game-class-picker.js -->
+                    <img
+                        src="images/chooseclasstitle.png"
+                        alt="Choose Your Class"
+                        class="game-class-picker-title"
+                    >
 
-                    <div class="game-class-picker-layout">
-                        <aside class="game-class-picker-side-panel game-class-picker-side-panel--left" hidden aria-live="polite"></aside>
+                    <div class="game-class-picker-artboard">
+                        <img
+                            src="images/chooseclass.png"
+                            alt="Choose your class — four commanders in a stone hall"
+                            class="game-class-picker-base"
+                            width="2752"
+                            height="1536"
+                        >
 
-                        <div class="game-class-picker-core">
-                            <img
-                                src="images/chooseclasstitle.png"
-                                alt="Choose Your Class"
-                                class="game-class-picker-title"
-                            >
-
-                            <div class="game-class-picker-artboard">
-                                <img
-                                    src="images/chooseclass.png"
-                                    alt=""
-                                    class="game-class-picker-art game-class-picker-art--color"
-                                    aria-hidden="true"
-                                >
-                                <img
-                                    src="images/chooseclass.png"
-                                    alt=""
-                                    class="game-class-picker-art game-class-picker-art--gray"
-                                    aria-hidden="true"
-                                >
-
-                                <button
-                                    type="button"
-                                    class="game-class-picker-zone game-class-picker-zone--arcane"
-                                    data-class-group="arcane"
-                                    aria-label="Arcane path — elder sage and crystal arcanist"
-                                    aria-pressed="false"
-                                >
-                                    <span class="game-class-picker-zone-reveal" aria-hidden="true"></span>
-                                    <span class="game-class-picker-zone-outline" aria-hidden="true"></span>
-                                </button>
-
-                                <button
-                                    type="button"
-                                    class="game-class-picker-zone game-class-picker-zone--physical"
-                                    data-class-group="physical"
-                                    aria-label="Physical path — shield-maiden and armored knight"
-                                    aria-pressed="false"
-                                >
-                                    <span class="game-class-picker-zone-reveal" aria-hidden="true"></span>
-                                    <span class="game-class-picker-zone-outline" aria-hidden="true"></span>
-                                </button>
+                        <div class="game-class-picker-characters" aria-hidden="true">
+                            <div class="game-class-character" data-character-id="mage">
+                                <img src="images/chooseclass.png" alt="">
+                            </div>
+                            <div class="game-class-character" data-character-id="sorceress">
+                                <img src="images/chooseclass.png" alt="">
+                            </div>
+                            <div class="game-class-character" data-character-id="knight">
+                                <img src="images/chooseclass.png" alt="">
+                            </div>
+                            <div class="game-class-character" data-character-id="soldier">
+                                <img src="images/chooseclass.png" alt="">
                             </div>
                         </div>
 
-                        <aside class="game-class-picker-side-panel game-class-picker-side-panel--right" hidden aria-live="polite"></aside>
+                        <svg
+                            class="game-class-picker-hitmap"
+                            viewBox="0 0 2752 1536"
+                            preserveAspectRatio="xMidYMid meet"
+                            role="group"
+                            aria-label="Select a character"
+                        >
+                            <polygon class="game-class-hit-zone" data-character-id="mage" points="" tabindex="0" role="button" aria-label="Left Mage" aria-pressed="false"></polygon>
+                            <polygon class="game-class-hit-zone" data-character-id="sorceress" points="" tabindex="0" role="button" aria-label="Middle-Left Sorceress" aria-pressed="false"></polygon>
+                            <polygon class="game-class-hit-zone" data-character-id="knight" points="" tabindex="0" role="button" aria-label="Middle-Right Knight" aria-pressed="false"></polygon>
+                            <polygon class="game-class-hit-zone" data-character-id="soldier" points="" tabindex="0" role="button" aria-label="Right Soldier" aria-pressed="false"></polygon>
+                        </svg>
                     </div>
                 </div>
             </section>
@@ -194,11 +173,11 @@
     <script src="rift-error-display.js?v=nexus-rift-acronyms-1"></script>
     <script src="commander-dossier-sync.js?v=dossier-sync-1"></script>
     <script src="script.js?v=mailbox-system-unread-bar-1"></script>
-    <script src="portal-commander-identity-menu.js?v=game-dropdown-return-portal-1"></script>
-    <script src="game-class-picker.js?v=choose-class-picker-1"></script>
+    <script src="portal-commander-identity-menu.js?v=avatar-name-menu-trigger-1"></script>
+    <script src="game-class-picker.js?v=choose-class-characters-2"></script>
     <script src="game.js?v=choose-class-picker-1"></script>
     <script src="game-chat.js?v=error-codes-1"></script>
     <script src="dev-page-navigator.js?v=handoff-achievement-popup-1"></script>
-    <script src="custom-cursor.js?v=scrollbar-cursor-1"></script>
+    <script src="custom-cursor.js?v=scrollbar-cursor-2"></script>
 </body>
 </html>

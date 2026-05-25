@@ -54,11 +54,13 @@ window.onload = async () => {
     
     // Launch active chronometer ticker sand-clock calculations loop
     initializeServerAgeClockTickerCountdown();
+    initializeUniversalGameTimeClock();
     initializePortalLivePlayerMetrics();
 
     applyPortalNavAccessRestrictions();
     applyPortalGuestDeploymentChrome();
     hydrateDevelopersLogDock();
+    mountAgePortalHomeLayout();
     applyPortalAlphaVersionLabels();
 
     if (typeof loadCommanderMailboxDossiersFromStorage === 'function') {
@@ -85,6 +87,57 @@ const PORTAL_COUNTDOWN_PAUSED_READOUT = '-- : -- : -- : --';
 
 function arePortalCountdownTimersPaused() {
     return PORTAL_COUNTDOWN_TIMERS_PAUSED === true;
+}
+
+function formatUniversalGameTimeClock(now = new Date()) {
+    const hours = String(now.getUTCHours()).padStart(2, '0');
+    const minutes = String(now.getUTCMinutes()).padStart(2, '0');
+    const seconds = String(now.getUTCSeconds()).padStart(2, '0');
+    return `${hours}:${minutes}:${seconds}`;
+}
+
+/** Matches countdowntimermodal.png: thin wings (L/R), tall center crest (MM). */
+const PORTAL_GAME_TIME_CHAR_SCALE_CLASSES = [
+    'portal-game-time-char--wing-outer',
+    'portal-game-time-char--wing-inner',
+    'portal-game-time-char--sep',
+    'portal-game-time-char--center',
+    'portal-game-time-char--center',
+    'portal-game-time-char--sep',
+    'portal-game-time-char--wing-inner',
+    'portal-game-time-char--wing-outer'
+];
+
+function renderUniversalGameTimeDisplay(display, timeString) {
+    if (!display) return;
+
+    const chars = String(timeString || '').padEnd(8, '-').slice(0, 8);
+    const slots = display.querySelectorAll('.portal-game-time-char');
+
+    if (slots.length !== 8) {
+        display.innerHTML = chars.split('').map((ch, index) => {
+            const scaleClass = PORTAL_GAME_TIME_CHAR_SCALE_CLASSES[index] || 'portal-game-time-char--wing-inner';
+            return `<span class="portal-game-time-char ${scaleClass}" data-slot="${index}">${ch}</span>`;
+        }).join('');
+    } else {
+        slots.forEach((slot, index) => {
+            slot.textContent = chars[index];
+        });
+    }
+
+    display.setAttribute('aria-label', `Game time ${chars}`);
+}
+
+function initializeUniversalGameTimeClock() {
+    const display = document.getElementById('portal-universal-game-time-display');
+    if (!display) return;
+
+    const tick = () => {
+        renderUniversalGameTimeDisplay(display, formatUniversalGameTimeClock(new Date()));
+    };
+
+    tick();
+    window.setInterval(tick, 1000);
 }
 
 function applyPausedPortalCountdownReadouts() {
@@ -340,9 +393,14 @@ function applyPortalDeploymentDeckPresentation() {
     const joinActions = document.getElementById('portal-deployment-member-actions');
     const serverPanel = document.getElementById('portal-deployment-server-panel');
     const countdownPanel = document.getElementById('portal-age-countdown-panel');
+    const gameTimePanel = document.getElementById('portal-universal-game-time-panel');
 
     if (joinActions) joinActions.hidden = !showJoinButtons;
-    if (countdownPanel) countdownPanel.hidden = !authed;
+    if (gameTimePanel) gameTimePanel.hidden = false;
+    if (countdownPanel) {
+        countdownPanel.hidden = true;
+        countdownPanel.setAttribute('aria-hidden', 'true');
+    }
     if (serverPanel) {
         serverPanel.hidden = !showServerPanel;
         if (showServerPanel) {
@@ -395,9 +453,16 @@ function rejoinSelectedAgeServer(clickEvent) {
     });
 }
 
+function renderPortalUniversalGameTimePanelMarkup() {
+    return `
+                    <div id="portal-universal-game-time-panel" class="portal-universal-game-time-panel" aria-label="Game time">
+                        <div id="portal-universal-game-time-display" class="portal-universal-game-time-display" aria-live="polite">--:--:--</div>
+                    </div>`;
+}
+
 function renderPortalAgeCountdownPanelMarkup() {
     return `
-                    <div id="portal-age-countdown-panel" class="portal-age-countdown-panel">
+                    <div id="portal-age-countdown-panel" class="portal-age-countdown-panel" hidden aria-hidden="true">
                         <div id="dynamic-age-sub-timer-display" class="timer-readout-default">-- : -- : -- : --</div>
                     </div>`;
 }
@@ -405,10 +470,14 @@ function renderPortalAgeCountdownPanelMarkup() {
 function renderPortalDeploymentServerPanelMarkup() {
     return `
                     <div id="portal-deployment-server-panel" class="portal-deployment-server-panel" hidden>
-                        <h4 class="portal-server-panel-heading">Server</h4>
+                        <div class="portal-server-panel-header">
+                            <h4 class="portal-server-panel-heading">Server Dashboard</h4>
+                        </div>
                         <div class="portal-server-panel-controls">
-                            <label class="portal-server-panel-label" for="portal-active-server-select">Active server</label>
-                            <select id="portal-active-server-select" class="portal-active-server-select" aria-label="Active server"></select>
+                            <label class="portal-server-panel-label" for="portal-active-server-select">Universal Servers</label>
+                            <div class="portal-server-select-shell">
+                                <select id="portal-active-server-select" class="portal-active-server-select" aria-label="Active server"></select>
+                            </div>
                             <button type="button" id="portal-rejoin-age-btn" class="portal-rejoin-age-btn confirm-btn" onclick="rejoinSelectedAgeServer(event)">Join</button>
                         </div>
                     </div>`;
@@ -422,19 +491,15 @@ function recacheAgePortalViewportSnapshot() {
 function renderPortalDeploymentDeckMarkup() {
     return `
             <div class="portal-deployment-control-deck custom-centered-row-deck" id="deployment-master-deck-container">
+                    ${renderPortalUniversalGameTimePanelMarkup()}
                 <div id="portal-deployment-member-block" class="portal-deployment-member-block">
-                    <h3 class="deployment-deck-title" id="dynamic-age-status-header">The Age has Yet to Arrive!</h3>
                     ${renderPortalAgeCountdownPanelMarkup()}
                     <div class="deployment-action-button-row portal-deployment-member-actions" id="portal-deployment-member-actions">
                         <div class="action-btn-aura-housing aura-glow-red">
-                            <button class="deployment-image-trigger-btn" onclick="launchGameRoundSector(false, event)">
-                                <img src="images/joinagebtn.png" alt="Join active age">
-                            </button>
+                            <button type="button" class="portal-join-age-btn portal-join-age-btn--primary" onclick="launchGameRoundSector(false, event)">Join Age</button>
                         </div>
                         <div class="action-btn-aura-housing aura-glow-blue">
-                            <button class="deployment-image-trigger-btn" onclick="launchGameRoundSector(true, event)">
-                                <img src="images/joinagetutorialbtn.png" alt="Join tutorial age">
-                            </button>
+                            <button type="button" class="portal-join-age-btn portal-join-age-btn--tutorial" onclick="launchGameRoundSector(true, event)">Tutorial Age</button>
                         </div>
                     </div>
                     ${renderPortalDeploymentServerPanelMarkup()}
@@ -473,6 +538,9 @@ if (typeof window !== 'undefined') {
         const drawer = document.getElementById('msg-directory-floating-drawer');
         if (drawer && typeof syncRecipientDirectoryMobilePresentation === 'function') {
             syncRecipientDirectoryMobilePresentation(!drawer.classList.contains('msg-floating-drawer-hidden'));
+        }
+        if (typeof syncAgePortalPanelHeights === 'function') {
+            syncAgePortalPanelHeights();
         }
     });
 }
@@ -730,7 +798,7 @@ function syncPortalMobileNavIdentity() {
     const authLabelMobile = document.getElementById('portal-mobile-nav-auth-label');
     const authIconMobile = document.getElementById('portal-mobile-nav-auth-icon');
     const authed = typeof isPortalUserAuthenticated === 'function' && isPortalUserAuthenticated();
-    const authLabelText = authed ? 'Log Out' : 'Log In';
+    const authLabelText = authed ? 'LOG OUT' : 'LOG IN';
     const authIconSrc = authed ? 'images/logouticon.png' : 'images/profileicon.png';
 
     const fallbackAvatar = 'images/avatars/commanderprofile01.png';
@@ -916,6 +984,7 @@ function switchMainPortalView(viewName, clickEvent, chatChannelKey) {
             if (window.cachedAgePortalViewportHTML) {
                 viewport.innerHTML = window.cachedAgePortalViewportHTML;
                 hydrateDevelopersLogDock();
+                mountAgePortalHomeLayout();
                 initializeTacticalButtonEarthquakeEngine();
                 if (arePortalCountdownTimersPaused()) applyPausedPortalCountdownReadouts();
             } else {
@@ -1088,6 +1157,77 @@ function renderDevelopersLogSidebarShell() {
     `;
 }
 
+function mountAgePortalHomeLayout() {
+    const panel = document.getElementById('panel-age-portal-mode');
+    if (!panel) return;
+
+    const intro = panel.querySelector('.portal-age-intro-card');
+    const deploy = panel.querySelector('#deployment-master-deck-container')
+        || panel.querySelector('.portal-deployment-control-deck');
+    const sidebar = panel.querySelector('.portal-sidebar-flex-column');
+    if (!intro || !deploy || !sidebar) return;
+
+    let stack = panel.querySelector('.portal-age-portal-right-stack');
+    if (!stack) {
+        stack = document.createElement('div');
+        stack.className = 'portal-age-portal-right-stack';
+    }
+
+    const twinRow = panel.querySelector('.portal-twin-split-deck-row');
+    if (twinRow) {
+        if (intro.parentElement === twinRow) intro.remove();
+        if (sidebar.parentElement === twinRow) sidebar.remove();
+        if (!twinRow.children.length) twinRow.remove();
+    }
+
+    if (deploy.parentElement !== stack) {
+        deploy.remove();
+        stack.appendChild(deploy);
+    }
+    if (sidebar.parentElement !== stack) {
+        sidebar.remove();
+        stack.appendChild(sidebar);
+    }
+    if (!panel.contains(stack)) panel.appendChild(stack);
+    if (!panel.contains(intro)) panel.insertBefore(intro, stack);
+
+    panel.classList.add('portal-age-portal-layout-mounted');
+    syncAgePortalPanelHeights();
+    bindAgePortalIntroResizeObserver();
+}
+
+function syncAgePortalPanelHeights() {
+    const panel = document.getElementById('panel-age-portal-mode');
+    if (!panel || !panel.classList.contains('portal-age-portal-layout-mounted')) return;
+    if (window.matchMedia('(max-width: 1024px)').matches) {
+        const stack = panel.querySelector('.portal-age-portal-right-stack');
+        if (stack) stack.style.maxHeight = '';
+        return;
+    }
+
+    const intro = panel.querySelector('.portal-age-intro-card');
+    const stack = panel.querySelector('.portal-age-portal-right-stack');
+    if (!intro || !stack) return;
+
+    stack.style.maxHeight = `${intro.offsetHeight}px`;
+}
+
+let agePortalIntroResizeObserver = null;
+
+function bindAgePortalIntroResizeObserver() {
+    const intro = document.querySelector('#panel-age-portal-mode .portal-age-intro-card');
+    if (!intro || typeof ResizeObserver === 'undefined') return;
+
+    if (agePortalIntroResizeObserver) {
+        agePortalIntroResizeObserver.disconnect();
+    }
+
+    agePortalIntroResizeObserver = new ResizeObserver(() => {
+        syncAgePortalPanelHeights();
+    });
+    agePortalIntroResizeObserver.observe(intro);
+}
+
 function hydrateDevelopersLogDock() {
     const dock = document.getElementById('dashboard-patch-notes-dock');
     if (dock) dock.innerHTML = renderDevelopersLogMarkup();
@@ -1101,7 +1241,10 @@ function restoreAgePortalHomeViewLayout(viewport) {
             <div class="portal-twin-split-deck-row">
                 <article class="dashboard-news-card-box portal-age-intro-card">
                     <h2 class="card-title-header">👑 Introduction Into Royal Armies</h2>
-                    <div class="card-scrollable-body-text">
+                    <div class="card-scrollable-body-text portal-age-intro-body-wrap">
+                        <figure class="portal-age-intro-art">
+                            <img src="images/amnekart4.png" alt="Illustrated map of the continent of Amnek" class="portal-age-intro-art-image" width="920" height="920">
+                        </figure>
                         <p style="margin-bottom: 16px; color: #ffffff; font-size: 1.05rem;">
                             Welcome to <strong>Royal Armies</strong>, a Massively Multiplayer High-Fidelity Tactical (MMOHFT) strategy ecosystem and the first browser game of its kind. Inspired by both the depth of modern MMO titles and the fast, competitive nature of classic persistent browser-based games, Royal Armies is engineered to give old-school veterans a familiar home while providing a highly responsive, visually stimulating world that captures the new generation of strategy gamers.
                         </p>
@@ -1124,6 +1267,7 @@ function restoreAgePortalHomeViewLayout(viewport) {
                         <p style="margin-bottom: 20px;">
                             Once your faction is locked, you are randomly assigned to one of fifteen unique nations, housing a synchronized blend of both paths. You will immediately deploy into your regional Capital. From there, you will recruit standard tactical units alongside a legendary specialized battalion 100% unique to your country's individual lore. Your objective is absolute coordination. To survive, you must join fellow commanders, march in real-time grid matrices, rise through the ranks, and capture key defensive strongholds. Your ultimate target? Wipe rival nations completely off the dynamic world map.
                         </p>
+                        <div class="portal-intro-wrap-clear" aria-hidden="true"></div>
 
                         <h3 style="color: #c5a059; font-size: 1.1rem; margin-bottom: 10px;">🏆 Choose Your Path to Victory</h3>
                         <p style="margin-bottom: 16px;">
@@ -1155,6 +1299,7 @@ function restoreAgePortalHomeViewLayout(viewport) {
         </div>
     `;
     hydrateDevelopersLogDock();
+    mountAgePortalHomeLayout();
     initializeTacticalButtonEarthquakeEngine();
     applyPortalGuestDeploymentChrome();
 }
@@ -3674,7 +3819,7 @@ function shouldShowCommanderOwnerTag(username) {
 }
 
 function buildCommanderMembershipBadgeRowMarkup(username, badgeClassName = 'membership-badge', options = {}) {
-    const includeOwnerTag = options.includeOwnerTag !== false;
+    const includeOwnerTag = options.includeOwnerTag === true;
     const title = username
         ? resolveCommanderMembershipTitleForUsername(username)
         : getCommanderMembershipTitle();
@@ -3722,9 +3867,14 @@ function refreshCommanderMembershipBadgeDisplays() {
     const tierClass = title.toLowerCase();
     const playerName = typeof player !== 'undefined' ? player.name : undefined;
 
-    document.querySelectorAll('.profile-identity-badge-row, .commander-membership-badge-row').forEach((row) => {
+    document.querySelectorAll('.profile-identity-badge-row').forEach((row) => {
+        row.innerHTML = buildCommanderMembershipBadgeRowMarkup(playerName, 'membership-badge', { includeOwnerTag: true });
+    });
+
+    document.querySelectorAll('.commander-membership-badge-row').forEach((row) => {
         if (row.id === 'nav-commander-membership-badge-row') return;
         if (row.classList.contains('public-profile-badge-row')) return;
+        if (row.classList.contains('profile-identity-badge-row')) return;
         row.innerHTML = buildCommanderMembershipBadgeRowMarkup(playerName, 'membership-badge');
     });
 
@@ -3737,13 +3887,13 @@ function refreshCommanderMembershipBadgeDisplays() {
     const navBadgeRow = document.getElementById('nav-commander-membership-badge-row');
     const navOwnerSlot = document.getElementById('nav-commander-owner-tag-slot');
     if (navBadgeRow) {
-        navBadgeRow.innerHTML = buildCommanderMembershipBadgeRowMarkup(undefined, 'membership-badge', { includeOwnerTag: false });
+        navBadgeRow.innerHTML = buildCommanderMembershipBadgeRowMarkup(undefined, 'membership-badge');
         navBadgeRow.hidden = false;
+        navBadgeRow.removeAttribute('aria-hidden');
     }
     if (navOwnerSlot) {
-        const showOwner = shouldShowCommanderOwnerTag();
-        navOwnerSlot.innerHTML = showOwner ? buildCommanderOwnerTagMarkup() : '';
-        navOwnerSlot.hidden = !showOwner;
+        navOwnerSlot.innerHTML = '';
+        navOwnerSlot.hidden = true;
     }
 
     document.querySelectorAll('.membership-badge').forEach((badge) => {
