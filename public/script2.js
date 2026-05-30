@@ -382,7 +382,7 @@ function bindPortalDeploymentServerPanelControls() {
 }
 
 function canUsePortalJoinAgeButtons() {
-    return typeof isPortalSiteOwner === 'function' && isPortalSiteOwner();
+    return typeof isPortalUserAuthenticated === 'function' && isPortalUserAuthenticated();
 }
 
 function applyPortalDeploymentDeckPresentation() {
