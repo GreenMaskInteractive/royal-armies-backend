@@ -40,6 +40,8 @@ const {
     getMovePointRules,
     buildBorderActionHints,
     getCatalogCity,
+    loadCityCatalog,
+    resolveCatalogCityId,
     resolveCatalogNationKey,
     TRANSFER_OWNERSHIP_RSD_COST,
     AGE_ALPHA_DEFAULT_MAP_NATION
@@ -1062,6 +1064,102 @@ function buildAgeMovementStatePayload(username, commander) {
         cityLosers: store.cityLosers,
         alliedNationIds: mapNation ? resolveAlliedNationIds(mapNation) : [],
         rules
+    };
+}
+
+function getAgeSessionForUsername(username) {
+    pruneAgeSessionOnlineState();
+    const canonical = resolveLedgerCommanderUsername(username) || normalizeLedgerUsername(username);
+    if (!canonical) return null;
+
+    const direct = ageSessionByUser.get(canonical);
+    if (direct) return direct;
+
+    const lower = canonical.toLowerCase();
+    for (const [key, session] of ageSessionByUser.entries()) {
+        if (String(key).toLowerCase() === lower) {
+            return session;
+        }
+    }
+
+    return null;
+}
+
+function resolveCatalogNationDisplayName(nationKey) {
+    const nationId = resolveCatalogNationKey(nationKey);
+    if (!nationId) return '';
+
+    const catalog = loadCityCatalog();
+    const nation = (catalog.nations || []).find((entry) => entry.id === nationId);
+    return nation?.name ? String(nation.name).trim() : nationId;
+}
+
+function resolveCommanderCatalogCityId(commander) {
+    const mapNation = resolveCommanderMapNationKey(commander);
+    if (!mapNation) return '';
+
+    const username = String(commander?.username || '').trim();
+    if (!username) return '';
+
+    const movement = readCommanderMovementRecord(username, mapNation);
+    const rawCityId = movement.catalogCityId || resolveDefaultCapitalCityId(mapNation);
+    return resolveCatalogCityId(rawCityId, mapNation);
+}
+
+function buildAgeNationPlayersPayload(nationId, viewerUsername) {
+    const nation = resolveCatalogNationKey(nationId);
+    if (!nation) {
+        return {
+            nationId: '',
+            nationName: '',
+            players: [],
+            totalForces: 0,
+            onlineCount: 0
+        };
+    }
+
+    const nationName = resolveCatalogNationDisplayName(nation);
+    const commanders = db.get('commanders').value() || [];
+    const viewerLower = viewerUsername ? String(viewerUsername).trim().toLowerCase() : '';
+    const players = [];
+
+    commanders.forEach((commander) => {
+        if (!commander?.username || isHiddenRegistrationUsername(commander.username)) return;
+
+        const mapNation = resolveCommanderMapNationKey(commander);
+        if (mapNation !== nation) return;
+
+        const username = String(commander.username).trim();
+        const movement = readCommanderMovementRecord(username, mapNation);
+        const catalogCityId = movement.catalogCityId || resolveDefaultCapitalCityId(mapNation);
+        const city = getCatalogCity(catalogCityId);
+        const session = getAgeSessionForUsername(username);
+
+        players.push({
+            username,
+            displayName: username,
+            catalogCityId,
+            cityName: city?.name || '',
+            online: Boolean(session?.isOnline),
+            membershipTitle: String(commander.membershipTitle || 'Basic').trim() || 'Basic',
+            isSelf: Boolean(viewerLower && username.toLowerCase() === viewerLower)
+        });
+    });
+
+    players.sort((left, right) => left.username.localeCompare(
+        right.username,
+        undefined,
+        { sensitivity: 'base' }
+    ));
+
+    const onlineCount = players.filter((player) => player.online).length;
+
+    return {
+        nationId: nation,
+        nationName,
+        players,
+        totalForces: players.length,
+        onlineCount
     };
 }
 
@@ -4055,6 +4153,29 @@ app.get('/api/portal/age/movement-state', (req, res) => {
     res.json({
         status: 'ok',
         ...buildAgeMovementStatePayload(username, commander)
+    });
+});
+
+app.get('/api/portal/age/nation-players', (req, res) => {
+    const username = resolveLedgerCommanderUsername(req.query?.username || '');
+    if (!username) {
+        return sendApiError(res, 'NEXUS-GEN-002');
+    }
+
+    const commander = db.get('commanders').find({ username }).value();
+    if (!commander) {
+        return sendApiError(res, 'NEXUS-GEN-004');
+    }
+
+    const requestedNation = String(req.query?.nationId || '').trim();
+    const nationId = requestedNation || resolveCommanderMapNationKey(commander);
+    if (!resolveCatalogNationKey(nationId)) {
+        return sendApiError(res, 'NEXUS-AGE-008');
+    }
+
+    res.json({
+        status: 'ok',
+        ...buildAgeNationPlayersPayload(nationId, username)
     });
 });
 

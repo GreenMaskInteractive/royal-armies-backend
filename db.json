@@ -17,8 +17,10 @@
           "earnedAt": "2026-05-24T21:31:49.881Z"
         }
       ],
-      "dossierUpdatedAt": "2026-05-24T21:31:58.153Z",
-      "profileUpdatedAt": "2026-05-24T21:31:58.153Z"
+      "dossierUpdatedAt": "2026-05-30T09:55:53.000Z",
+      "profileUpdatedAt": "2026-05-30T09:55:53.000Z",
+      "country": "North America",
+      "timezone": "New York (GMT-4)"
     }
   ],
   "portal": {
@@ -38,7 +40,78 @@
         "help": [],
         "offtopic": []
       },
+      "archive": [],
+      "restrictionsByUser": {}
+    },
+    "gameChat": {
+      "nextMessageId": 3,
+      "channels": {
+        "system": [
+          {
+            "id": 1,
+            "channel": "system",
+            "sender": "System",
+            "text": "Khaeran has captured Thornwall from Aethelgard.",
+            "time": "20:06",
+            "sentAt": "2026-05-28T00:06:21.561Z",
+            "source": "system",
+            "nationKey": null,
+            "allianceId": null
+          },
+          {
+            "id": 2,
+            "channel": "system",
+            "sender": "Nation Council",
+            "text": "Council status: Training Permitted → Stop Training (caleb_admin)",
+            "time": "20:06",
+            "sentAt": "2026-05-28T00:06:29.693Z",
+            "source": "system",
+            "nationKey": "staging:caleb_admin",
+            "allianceId": null
+          }
+        ],
+        "global": [],
+        "country": [],
+        "alliance": []
+      },
       "archive": []
+    },
+    "nationCouncilBoards": {
+      "staging:caleb_admin": {
+        "statusId": "stop-training",
+        "previousStatusId": null,
+        "noticeText": "test notice",
+        "nextSfTime": "",
+        "expectedPvpTime": "",
+        "updatedAt": "2026-05-28T00:06:29.691Z",
+        "updatedBy": "caleb_admin"
+      },
+      "north america": {
+        "statusId": "training-permitted",
+        "previousStatusId": null,
+        "noticeText": "## **Hey Guys!**\nLet's do Our best today!!!",
+        "nextSfTime": "TBD",
+        "expectedPvpTime": "Not Now",
+        "updatedAt": "2026-05-28T03:21:21.431Z",
+        "updatedBy": "caleb_admin"
+      }
+    },
+    "gameAge": {
+      "activeSlug": "alpha",
+      "startedAt": null,
+      "endedAt": "2026-05-30T09:52:29.298Z",
+      "countryChatClearedAt": "2026-05-28T00:07:31.122Z"
+    },
+    "ageMovement": {
+      "commanders": {
+        "caleb_admin": {
+          "catalogCityId": "aesthene-glypham",
+          "movePoints": 2,
+          "lastMovePointRegenAt": "2026-05-30T10:00:00.000Z"
+        }
+      },
+      "cityHolders": {},
+      "cityLosers": {}
     }
   },
   "mailbox": {
@@ -52,7 +125,7 @@
         "topic": "Welcome to the Royal Armies!",
         "body": "We are so excited to have you on board! Royal Armies is planned to be the greatest evolutionary version of the PBBG franchise ever made and you will be able to see its development first hand. We hope you enjoy what this game has to offer and can tell all of your friends about it!\n\n\n\nIf you would like to be a part of the growing community we have built outside of the game you can always join our official discord <a href=\"https://discord.gg/7tGBCt7cXX\" target=\"_blank\" rel=\"noopener noreferrer\" style=\"color:#ffd700;text-decoration:underline;\">here</a>.",
         "bodyFormat": "html",
-        "read": false,
+        "read": true,
         "sentAt": "2026-05-24T21:31:49.880Z"
       }
     ],

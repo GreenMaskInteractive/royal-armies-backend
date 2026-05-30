@@ -52,11 +52,10 @@
 
         return templates.map((template, index) => {
             const goal = randomIntFromSeed(`${baseSeed}|${template.id}|goal`, template.goalMin, template.goalMax);
-            const progressMax = Math.max(goal, Math.floor(goal * 1.2));
-            const progress = randomIntFromSeed(`${baseSeed}|${template.id}|progress`, 0, progressMax);
             const difficultyIndex = randomIntFromSeed(`${baseSeed}|${template.id}|difficulty`, 0, WEEKLY_MISSION_DIFFICULTY_TITLES.length - 1);
             const difficulty = WEEKLY_MISSION_DIFFICULTY_TITLES[difficultyIndex];
-            const status = resolveMissionStatus(progress, goal);
+            const progress = 0;
+            const status = 'not-started';
             return {
                 id: template.id,
                 title: template.title,
