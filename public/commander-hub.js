@@ -688,6 +688,12 @@ function buildPublicProfileAwardsHtml(awards) {
     return `<div class="public-profile-awards-grid" role="list">${chips}</div>`;
 }
 
+function buildRoyaltyProfileNameBadgeMarkup(membershipTitle) {
+    const normalized = String(membershipTitle || '').trim().toLowerCase();
+    if (normalized !== 'royalty' && normalized !== 'premium') return '';
+    return '<img class="public-profile-royalty-name-badge" src="images/royaltybadge.png" alt="Royalty premium member" loading="lazy" decoding="async">';
+}
+
 function renderPublicProfileCardContent(snapshot, options) {
     const context = options?.context === 'hub' ? 'hub' : 'overlay';
     const isPublic = snapshot.privacy === 'Public';
@@ -699,6 +705,7 @@ function renderPublicProfileCardContent(snapshot, options) {
             includeOwnerTag: viewingSelf
         })
         : `<span class="public-profile-membership tier-${String(snapshot.membershipTitle).toLowerCase()}">${escapePublicProfileHtml(snapshot.membershipTitle)} Member</span>`;
+    const royaltyNameBadgeMarkup = buildRoyaltyProfileNameBadgeMarkup(snapshot.membershipTitle);
     const rankTitle = getCommanderRankTitle(snapshot.rank, snapshot.path);
     const classTitle = getCommanderClassTitle(snapshot.path);
 
@@ -764,7 +771,7 @@ function renderPublicProfileCardContent(snapshot, options) {
                     <img class="public-profile-avatar-img" src="${escapePublicProfileHtml(snapshot.avatarUrl)}" alt="${escapePublicProfileHtml(snapshot.name)} emblem">
                 </div>
                 <div class="public-profile-identity-copy">
-                    <h2 id="public-profile-card-title" class="public-profile-commander-name">${escapePublicProfileHtml(snapshot.name)}</h2>
+                    <h2 id="public-profile-card-title" class="public-profile-commander-name">${royaltyNameBadgeMarkup}${escapePublicProfileHtml(snapshot.name)}</h2>
                 </div>
             </header>
             ${splitBodySection}
@@ -779,7 +786,7 @@ function renderPublicProfileCardContent(snapshot, options) {
             </div>
             <div class="public-profile-identity-copy">
                 <p class="public-profile-eyebrow">Player profile</p>
-                <h2 id="public-profile-card-title" class="public-profile-commander-name">${escapePublicProfileHtml(snapshot.name)}</h2>
+                <h2 id="public-profile-card-title" class="public-profile-commander-name">${royaltyNameBadgeMarkup}${escapePublicProfileHtml(snapshot.name)}</h2>
                 <div class="public-profile-badge-row commander-membership-badge-row">
                     ${membershipBadgeRowMarkup}
                 </div>

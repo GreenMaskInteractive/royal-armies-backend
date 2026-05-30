@@ -11,7 +11,8 @@
         alliance: 'Alliance'
     };
 
-    const SYNC_POLL_MS = 12000;
+    const SYNC_POLL_LIVE_MS = 2500;
+    const SYNC_POLL_BACKGROUND_MS = 10000;
     const UI_SAVE_DEBOUNCE_MS = 350;
     const MIN_WIDTH = 280;
     const MIN_HEIGHT = 200;
@@ -28,9 +29,68 @@
         alliance: []
     };
     let communityMessages = [];
+    let viewerRestrictions = null;
+    let composeErrorMessage = '';
     let hasAlliance = false;
     let syncPollTimer = null;
     let uiSaveTimer = null;
+    let chatSessionEnabled = false;
+    let chatSyncSince = '';
+    let chatPollInFlight = false;
+
+    function isGameChatUnlocked() {
+        if (typeof global.isOfficialAgePageActive === 'function') {
+            return global.isOfficialAgePageActive();
+        }
+        if (global.RoyalArmiesOfficialAge && typeof global.RoyalArmiesOfficialAge.isOfficialAgePageActive === 'function') {
+            return global.RoyalArmiesOfficialAge.isOfficialAgePageActive();
+        }
+        return false;
+    }
+
+    function getAgeBottomChatMessagesHost() {
+        return global.document.getElementById('age-map-bottom-chat-messages-host');
+    }
+
+    function getAgeBottomChatComposeHost() {
+        return global.document.getElementById('age-map-bottom-chat-compose-host');
+    }
+
+    function getAgeChatDockHosts() {
+        const messagesHost = getAgeBottomChatMessagesHost();
+        const composeHost = getAgeBottomChatComposeHost();
+        if (!messagesHost || !composeHost) return [];
+        return [messagesHost, composeHost];
+    }
+
+    function isAgeChatDocked() {
+        return Boolean(getAgeChatDockHosts().length) && isGameChatUnlocked();
+    }
+
+    function setAgeChatDockVisibility(unlocked) {
+        getAgeChatDockHosts().forEach((host) => {
+            host.hidden = !unlocked;
+            host.setAttribute('aria-hidden', unlocked ? 'false' : 'true');
+            host.classList.toggle('is-age-chat-gated', !unlocked);
+        });
+    }
+
+    function refreshGameChatVisibility() {
+        const dockHosts = getAgeChatDockHosts();
+        const unlocked = isGameChatUnlocked() && chatSessionEnabled;
+
+        if (dockHosts.length) {
+            setAgeChatDockVisibility(unlocked);
+            return;
+        }
+
+        const module = global.document.getElementById('game-chat-module');
+        if (!module) return;
+
+        module.hidden = !unlocked;
+        module.setAttribute('aria-hidden', unlocked ? 'false' : 'true');
+        module.classList.toggle('is-age-chat-gated', !unlocked);
+    }
 
     function resolveApiUrl(path) {
         if (typeof global.resolveRoyalArmiesApiUrl === 'function') {
@@ -41,8 +101,52 @@
 
     function resolveUsername() {
         const saved = global.localStorage.getItem('activeCommanderUser');
-        if (saved && saved.trim()) return saved.trim();
+        if (saved && saved.trim()) {
+            const name = saved.trim();
+            if (name.toLowerCase() !== 'testaccount') return name;
+        }
+
+        if (typeof global.getActiveCommanderUsername === 'function') {
+            const name = String(global.getActiveCommanderUsername() || '').trim();
+            if (name && name.toLowerCase() !== 'testaccount') return name;
+        }
+
         return '';
+    }
+
+    function resolveComposeErrorMessage(response, payload, err) {
+        if (err) {
+            const isLocal = typeof global.isLocalDevelopmentHost === 'function' && global.isLocalDevelopmentHost();
+            const isLiveStatic = typeof global.isLiveStaticPreviewHost === 'function' && global.isLiveStaticPreviewHost();
+            if (isLocal && isLiveStatic) {
+                return 'Could not reach the game server. Run node server.js on port 3000 while using Live Server.';
+            }
+            if (isLocal) {
+                return 'Could not reach the game server. Start it with node server.js.';
+            }
+            return 'Could not send your message. Check your connection and try again.';
+        }
+
+        const code = String(payload?.code || payload?.errorCode || '').trim();
+        if (code === 'NEXUS-GEN-004') {
+            return 'Your commander account was not found on the server. Log in again from the portal.';
+        }
+        if (code === 'NEXUS-CHAT-010') {
+            return 'You are banned from global chat for 15 days because of repeated rule violations.';
+        }
+        if (code === 'NEXUS-CHAT-011') {
+            return 'You are temporarily muted from global chat. The mute lifts in 30 minutes.';
+        }
+        if (code === 'NEXUS-GEN-002') {
+            return 'Sign in from the portal before sending chat messages.';
+        }
+
+        const message = String(payload?.message || '').trim();
+        if (message) return message;
+        if (response && !response.ok) {
+            return `Message could not be sent (HTTP ${response.status}).`;
+        }
+        return 'Message could not be sent. Try again in a moment.';
     }
 
     function escapeHtml(value) {
@@ -73,8 +177,14 @@
         };
     }
 
+    function isGeneralCommunityChannel(channelId) {
+        return String(channelId || 'general').trim().toLowerCase() === 'general';
+    }
+
     function normalizeCommunityMessage(raw) {
         if (!raw || typeof raw !== 'object') return null;
+        const communityChannel = String(raw.channel || 'general').trim();
+        if (!isGeneralCommunityChannel(communityChannel)) return null;
         const sentAt = raw.sentAt || new Date().toISOString();
         return {
             id: `community-${raw.id}`,
@@ -84,17 +194,93 @@
             text: String(raw.text || '').trim(),
             sentAt,
             displayTime: String(raw.time || '').trim() || formatClockTime(sentAt),
-            communityChannel: String(raw.channel || 'general').trim()
+            communityChannel,
+            visible: raw.visible !== false,
+            recipientAlertOnly: raw.recipientAlertOnly === true
         };
+    }
+
+    function normalizeViewerKey(value) {
+        return String(value || '').trim().toLowerCase();
+    }
+
+    function isRoyalGuardBotAuthor(name) {
+        if (typeof global.isRoyalGuardBotAccount === 'function') {
+            return global.isRoyalGuardBotAccount(name);
+        }
+        return normalizeViewerKey(name) === 'royal guard bot';
+    }
+
+    function isMessageVisibleInGlobalTab(entry, viewerUsername) {
+        if (!entry) return false;
+        if (isRoyalGuardBotAuthor(entry.author)) return false;
+
+        if (entry.visible === false) {
+            if (
+                entry.recipientAlertOnly
+                && viewerUsername
+                && normalizeViewerKey(entry.author) === normalizeViewerKey(viewerUsername)
+            ) {
+                return true;
+            }
+            return false;
+        }
+
+        return true;
+    }
+
+    function applyViewerRestrictionsFromServer(restrictions) {
+        viewerRestrictions = restrictions && typeof restrictions === 'object' ? restrictions : null;
+    }
+
+    function getActiveGlobalChatRestriction() {
+        const active = viewerRestrictions?.active;
+        if (!active || !active.until) return null;
+
+        const untilMs = Date.parse(active.until);
+        if (!Number.isFinite(untilMs) || untilMs <= Date.now()) return null;
+        return active;
+    }
+
+    function isGlobalChatComposeBlocked() {
+        return activeTab === 'global' && Boolean(getActiveGlobalChatRestriction());
     }
 
     function flattenGameMessages() {
         return Object.keys(messagesByChannel).flatMap((key) => messagesByChannel[key] || []);
     }
 
-    function applyServerPayload(payload) {
-        if (!payload || payload.status !== 'ok') return false;
+    function sortMessagesBySentAt(entries) {
+        return entries.slice().sort((a, b) => Date.parse(a.sentAt || '') - Date.parse(b.sentAt || ''));
+    }
 
+    function mergeMessageList(existing, incoming) {
+        const merged = new Map();
+        (existing || []).forEach((entry) => {
+            if (entry && entry.id) merged.set(entry.id, entry);
+        });
+        (incoming || []).forEach((entry) => {
+            if (entry && entry.id) merged.set(entry.id, entry);
+        });
+        return sortMessagesBySentAt(Array.from(merged.values()));
+    }
+
+    function computeChatSyncSince() {
+        const candidates = [
+            ...flattenGameMessages(),
+            ...communityMessages
+        ];
+        let maxMs = 0;
+        candidates.forEach((entry) => {
+            const sentMs = Date.parse(entry.sentAt || '');
+            if (Number.isFinite(sentMs) && sentMs > maxMs) {
+                maxMs = sentMs;
+            }
+        });
+        return maxMs > 0 ? new Date(maxMs).toISOString() : '';
+    }
+
+    function replaceChannelsFromServer(payload) {
         messagesByChannel = {
             system: (payload.messagesByChannel?.system || []).map(normalizeGameMessage).filter(Boolean),
             global: (payload.messagesByChannel?.global || []).map(normalizeGameMessage).filter(Boolean),
@@ -105,8 +291,66 @@
         communityMessages = (payload.communityMessages || [])
             .map(normalizeCommunityMessage)
             .filter(Boolean);
+    }
+
+    function mergeChannelsFromServer(payload) {
+        Object.keys(messagesByChannel).forEach((channelId) => {
+            const incoming = (payload.messagesByChannel?.[channelId] || [])
+                .map(normalizeGameMessage)
+                .filter(Boolean);
+            if (!incoming.length) return;
+            messagesByChannel[channelId] = mergeMessageList(messagesByChannel[channelId], incoming);
+        });
+
+        const incomingCommunity = (payload.communityMessages || [])
+            .map(normalizeCommunityMessage)
+            .filter(Boolean);
+        if (incomingCommunity.length) {
+            communityMessages = mergeMessageList(communityMessages, incomingCommunity);
+        }
+    }
+
+    function upsertConfirmedMessageFromServer(channel, serverMessage) {
+        if (!serverMessage || typeof serverMessage !== 'object') return;
+
+        if (channel === 'global') {
+            const normalized = normalizeCommunityMessage({
+                ...serverMessage,
+                channel: serverMessage.channel || 'general'
+            });
+            if (!normalized) return;
+            communityMessages = mergeMessageList(
+                communityMessages.filter((entry) => !entry.pending),
+                [normalized]
+            );
+            return;
+        }
+
+        const normalized = normalizeGameMessage({
+            ...serverMessage,
+            channel: serverMessage.channel || channel
+        });
+        if (!normalized) return;
+        messagesByChannel[channel] = mergeMessageList(
+            (messagesByChannel[channel] || []).filter((entry) => !entry.pending),
+            [normalized]
+        );
+    }
+
+    function applyServerPayload(payload) {
+        if (!payload || payload.status !== 'ok') return false;
+
+        if (payload.syncMode === 'incremental' && chatSyncSince) {
+            mergeChannelsFromServer(payload);
+        } else {
+            replaceChannelsFromServer(payload);
+        }
+
+        composeErrorMessage = '';
 
         hasAlliance = payload.hasAlliance === true;
+        applyViewerRestrictionsFromServer(payload.viewerRestrictions);
+        chatSyncSince = computeChatSyncSince();
 
         if (payload.ui) {
             applyUiFromServer(payload.ui, { skipServerSave: true });
@@ -116,6 +360,21 @@
         updateComposeState();
         renderActiveChatStream();
         return true;
+    }
+
+    function buildOptimisticMessage(channel, text) {
+        const username = resolveUsername();
+        const sentAt = new Date().toISOString();
+        return {
+            id: `pending-${Date.now()}`,
+            channel,
+            source: 'game',
+            author: username || 'Commander',
+            text,
+            sentAt,
+            displayTime: formatClockTime(sentAt),
+            pending: true
+        };
     }
 
     async function notifyGameError(response, payload, fallbackTitle) {
@@ -136,13 +395,22 @@
 
     async function fetchGameChatFromServer() {
         const username = resolveUsername();
-        if (!username) return false;
+        if (!username || !chatSessionEnabled) return false;
+        if (chatPollInFlight) return false;
+
+        chatPollInFlight = true;
 
         try {
-            const response = await global.fetch(
-                resolveApiUrl(`/api/portal/game-chat?username=${encodeURIComponent(username)}`),
-                { cache: 'no-store', credentials: 'include' }
-            );
+            const url = new URL(resolveApiUrl('/api/portal/game-chat'), global.location.href);
+            url.searchParams.set('username', username);
+            if (chatSyncSince) {
+                url.searchParams.set('since', chatSyncSince);
+            }
+
+            const response = await global.fetch(url.toString(), {
+                cache: 'no-store',
+                credentials: 'include'
+            });
             const payload = await response.json().catch(() => ({}));
             if (!response.ok || payload.status === 'error') {
                 await notifyGameError(response, payload, 'Game chat');
@@ -157,12 +425,19 @@
                 await global.showRoyalArmiesNetworkError('Game chat');
             }
             return false;
+        } finally {
+            chatPollInFlight = false;
         }
     }
 
     async function postGameChatMessage(channel, text) {
         const username = resolveUsername();
-        if (!username || !text) return false;
+        if (!username) {
+            composeErrorMessage = 'Sign in from the portal before sending chat messages.';
+            updateComposeState();
+            return false;
+        }
+        if (!text) return false;
 
         try {
             const response = await global.fetch(resolveApiUrl('/api/portal/game-chat/messages'), {
@@ -174,12 +449,18 @@
             });
             const payload = await response.json().catch(() => ({}));
             if (!response.ok || payload.status !== 'ok') {
+                composeErrorMessage = resolveComposeErrorMessage(response, payload, null);
                 await notifyGameError(response, payload, 'Game chat');
+                updateComposeState();
                 return false;
             }
+
+            upsertConfirmedMessageFromServer(channel, payload.message);
             return applyServerPayload(payload);
         } catch (err) {
             console.warn('Game chat post error:', err);
+            composeErrorMessage = resolveComposeErrorMessage(null, null, err);
+            updateComposeState();
             if (typeof global.showRiftNetworkError === 'function') {
                 await global.showRiftNetworkError('Game chat');
             } else if (typeof global.showRoyalArmiesNetworkError === 'function') {
@@ -244,19 +525,17 @@
 
     function getMessagesForActiveTab() {
         if (activeTab === 'global') {
-            return [...flattenGameMessages(), ...communityMessages]
-                .sort((a, b) => Date.parse(a.sentAt || '') - Date.parse(b.sentAt || ''));
+            const viewerUsername = resolveUsername();
+            const gameGlobal = messagesByChannel.global || [];
+            const merged = sortMessagesBySentAt([...gameGlobal, ...communityMessages]);
+            return merged.filter((entry) => isMessageVisibleInGlobalTab(entry, viewerUsername));
         }
 
         if (activeTab === 'system') {
-            return (messagesByChannel.system || [])
-                .slice()
-                .sort((a, b) => Date.parse(a.sentAt || '') - Date.parse(b.sentAt || ''));
+            return sortMessagesBySentAt(messagesByChannel.system || []);
         }
 
-        return (messagesByChannel[activeTab] || [])
-            .slice()
-            .sort((a, b) => Date.parse(a.sentAt || '') - Date.parse(b.sentAt || ''));
+        return sortMessagesBySentAt(messagesByChannel[activeTab] || []);
     }
 
     function resolveMessageToneClass(entry) {
@@ -297,8 +576,10 @@
                 ? escapeHtml(entry.text)
                 : `<strong class="game-chat-msg-author">${authorLabel}</strong> ${escapeHtml(entry.text)}`;
 
+            const pendingClass = entry.pending ? ' is-pending' : '';
+
             return `
-                <article class="game-chat-msg ${toneClass}" data-message-id="${escapeHtml(entry.id)}">
+                <article class="game-chat-msg ${toneClass}${pendingClass}" data-message-id="${escapeHtml(entry.id)}">
                     <div class="game-chat-msg-meta">
                         <span class="game-chat-msg-time">${escapeHtml(entry.displayTime || '--:--')}</span>
                         ${communityTag}
@@ -337,19 +618,35 @@
         const hint = global.document.getElementById('game-chat-compose-hint');
         const readOnly = activeTab === 'system';
         const allianceBlocked = activeTab === 'alliance' && !hasAlliance;
+        const globalRestriction = getActiveGlobalChatRestriction();
+        const globalBlocked = isGlobalChatComposeBlocked();
 
         if (input) {
-            input.disabled = readOnly || allianceBlocked;
-            input.placeholder = readOnly
-                ? 'System events appear here automatically.'
-                : `Message ${TAB_LABELS[activeTab] || 'chat'}…`;
+            input.disabled = readOnly || allianceBlocked || globalBlocked;
+            if (globalBlocked && globalRestriction?.type === 'ban') {
+                input.placeholder = 'You are banned from global chat.';
+            } else if (globalBlocked && globalRestriction?.type === 'mute') {
+                input.placeholder = 'You are temporarily muted from global chat.';
+            } else {
+                input.placeholder = readOnly
+                    ? 'System events appear here automatically.'
+                    : `Message ${TAB_LABELS[activeTab] || 'chat'}…`;
+            }
         }
-        if (sendBtn) sendBtn.disabled = readOnly || allianceBlocked;
+        if (sendBtn) sendBtn.disabled = readOnly || allianceBlocked || globalBlocked;
         if (hint) {
-            hint.textContent = readOnly
-                ? 'System feed is read-only.'
-                : (allianceBlocked ? 'Alliance chat unlocks when your nation forms an alliance.' : '');
-            hint.hidden = !(readOnly || allianceBlocked);
+            if (composeErrorMessage) {
+                hint.textContent = composeErrorMessage;
+            } else if (globalBlocked && globalRestriction?.type === 'ban') {
+                hint.textContent = '🔴 You are banned from global chat for 15 days because of repeated rule violations.';
+            } else if (globalBlocked && globalRestriction?.type === 'mute') {
+                hint.textContent = '⏳ You are temporarily muted from global chat. The mute lifts in 30 minutes.';
+            } else {
+                hint.textContent = readOnly
+                    ? 'System feed is read-only.'
+                    : (allianceBlocked ? 'Alliance chat unlocks when your nation forms an alliance.' : '');
+            }
+            hint.hidden = !(composeErrorMessage || readOnly || allianceBlocked || globalBlocked);
         }
     }
 
@@ -407,7 +704,7 @@
         if (!ui || typeof ui !== 'object') return;
 
         const module = global.document.getElementById('game-chat-module');
-        if (module) {
+        if (module && !getAgeChatDockHosts().length) {
             const anchorLeft = module.getBoundingClientRect().left;
             const { width, height } = clampChatPanelSize(
                 Number(ui.width) || DEFAULT_WIDTH,
@@ -427,9 +724,12 @@
     }
 
     function bindResizeHandle() {
+        if (global.__riftGameChatResizeBound) return;
+        global.__riftGameChatResizeBound = true;
+
         const module = global.document.getElementById('game-chat-module');
         const handle = global.document.getElementById('game-chat-resize-handle');
-        if (!module || !handle) return;
+        if (!module || !handle || getAgeChatDockHosts().length) return;
 
         let startX = 0;
         let startY = 0;
@@ -488,16 +788,43 @@
         event.preventDefault();
         if (activeTab === 'system') return;
         if (activeTab === 'alliance' && !hasAlliance) return;
+        if (isGlobalChatComposeBlocked()) return;
 
         const input = global.document.getElementById('game-chat-compose-input');
         const sendBtn = global.document.getElementById('game-chat-compose-send');
         const text = String(input?.value || '').trim();
         if (!text) return;
 
+        composeErrorMessage = '';
+
+        const optimistic = buildOptimisticMessage(activeTab, text);
+        if (activeTab === 'global') {
+            communityMessages = [...communityMessages, {
+                ...optimistic,
+                source: 'community',
+                communityChannel: 'general',
+                visible: true,
+                recipientAlertOnly: false
+            }];
+        } else {
+            messagesByChannel[activeTab] = [...(messagesByChannel[activeTab] || []), optimistic];
+        }
+        if (input) input.value = '';
+        renderActiveChatStream();
+
         if (sendBtn) sendBtn.disabled = true;
         try {
             const ok = await postGameChatMessage(activeTab, text);
-            if (ok && input) input.value = '';
+            if (!ok) {
+                if (activeTab === 'global') {
+                    communityMessages = communityMessages.filter((entry) => entry.id !== optimistic.id);
+                } else {
+                    messagesByChannel[activeTab] = (messagesByChannel[activeTab] || [])
+                        .filter((entry) => entry.id !== optimistic.id);
+                }
+                if (input) input.value = text;
+                renderActiveChatStream();
+            }
             updateComposeState();
         } finally {
             if (sendBtn) sendBtn.disabled = false;
@@ -505,19 +832,52 @@
     }
 
     function bindGameChatControls() {
-        global.document.querySelectorAll('.game-chat-tab[data-game-chat-tab]').forEach((btn) => {
-            btn.addEventListener('click', () => {
-                setActiveTab(btn.getAttribute('data-game-chat-tab') || 'global');
-            });
+        if (global.__riftGameChatControlsBound) return;
+        global.__riftGameChatControlsBound = true;
+
+        global.document.addEventListener('click', (event) => {
+            const tab = event.target.closest('.game-chat-tab[data-game-chat-tab]');
+            if (!tab) return;
+            setActiveTab(tab.getAttribute('data-game-chat-tab') || 'global');
         });
 
-        const form = global.document.getElementById('game-chat-compose-form');
-        if (form) form.addEventListener('submit', handleComposeSubmit);
+        global.document.addEventListener('submit', (event) => {
+            const form = event.target.closest('#game-chat-compose-form');
+            if (!form) return;
+            handleComposeSubmit(event);
+        });
+
+        global.document.addEventListener('keydown', (event) => {
+            if (event.key !== 'Enter' || event.shiftKey) return;
+            const input = event.target;
+            if (!input || input.id !== 'game-chat-compose-input') return;
+            if (input.disabled) return;
+
+            event.preventDefault();
+
+            const form = global.document.getElementById('game-chat-compose-form');
+            if (form && typeof form.requestSubmit === 'function') {
+                form.requestSubmit();
+                return;
+            }
+
+            handleComposeSubmit(event);
+        });
+    }
+
+    function getSyncPollIntervalMs() {
+        if (global.document.hidden) return SYNC_POLL_BACKGROUND_MS;
+        return SYNC_POLL_LIVE_MS;
     }
 
     function startSyncPoll() {
         if (syncPollTimer) global.clearInterval(syncPollTimer);
-        syncPollTimer = global.setInterval(fetchGameChatFromServer, SYNC_POLL_MS);
+        syncPollTimer = global.setInterval(fetchGameChatFromServer, getSyncPollIntervalMs());
+    }
+
+    function restartSyncPoll() {
+        if (!chatSessionEnabled) return;
+        startSyncPoll();
     }
 
     function stopSyncPoll() {
@@ -527,32 +887,72 @@
         }
     }
 
+    function buildGameChatTabsMarkup() {
+        return `
+            <nav class="game-chat-tabs" role="tablist" aria-label="Chat categories">
+                <button type="button" class="game-chat-tab" data-game-chat-tab="system" role="tab" aria-selected="false">System</button>
+                <button type="button" class="game-chat-tab is-active" data-game-chat-tab="global" role="tab" aria-selected="true">Global</button>
+                <button type="button" class="game-chat-tab" data-game-chat-tab="country" role="tab" aria-selected="false">Country</button>
+                <button type="button" class="game-chat-tab" data-game-chat-tab="alliance" role="tab" aria-selected="false" id="game-chat-tab-alliance" hidden>Alliance</button>
+            </nav>
+        `.trim();
+    }
+
+    function buildGameChatComposeMarkup() {
+        return `
+            <form id="game-chat-compose-form" class="game-chat-compose-form">
+                <input id="game-chat-compose-input" class="game-chat-compose-input" type="text" maxlength="500" autocomplete="off" placeholder="Message Global…">
+                <button id="game-chat-compose-send" type="submit" class="game-chat-compose-send">Send</button>
+            </form>
+        `.trim();
+    }
+
+    function mountAgeDockedChatSplit() {
+        const messagesHost = getAgeBottomChatMessagesHost();
+        const composeHost = getAgeBottomChatComposeHost();
+        if (!messagesHost || !composeHost) return;
+        if (global.document.getElementById('game-chat-messages')) return;
+
+        messagesHost.classList.add('age-map-hud-panel', 'game-chat-module--age-docked');
+        messagesHost.setAttribute('aria-label', 'Chat messages');
+        messagesHost.innerHTML = `
+            <header class="game-chat-module-header">
+                ${buildGameChatTabsMarkup()}
+            </header>
+            <div id="game-chat-messages" class="game-chat-messages" role="log" aria-live="polite" aria-relevant="additions"></div>
+            <p id="game-chat-compose-hint" class="game-chat-compose-hint" hidden></p>
+        `.trim();
+
+        composeHost.classList.add('game-chat-module--age-docked');
+        composeHost.setAttribute('aria-label', 'Chat message');
+        composeHost.innerHTML = buildGameChatComposeMarkup();
+    }
+
     function mountGameChatModule() {
-        if (!global.document.getElementById('game-page-canvas')) return;
-        if (global.document.getElementById('game-chat-module')) return;
+        if (!isGameChatUnlocked()) return;
+        if (global.document.getElementById('game-chat-messages')) return;
+
+        if (getAgeChatDockHosts().length) {
+            mountAgeDockedChatSplit();
+            return;
+        }
+
+        const resizeHandleMarkup = '<button type="button" id="game-chat-resize-handle" class="game-chat-resize-handle" aria-label="Resize chat panel" title="Drag to resize"></button>';
 
         const wrapper = global.document.createElement('div');
         wrapper.innerHTML = `
             <aside id="game-chat-module" class="game-chat-module" aria-label="In-game chat">
                 <div class="game-chat-module-panel">
                     <header class="game-chat-module-header">
-                        <nav class="game-chat-tabs" role="tablist" aria-label="Chat categories">
-                            <button type="button" class="game-chat-tab" data-game-chat-tab="system" role="tab" aria-selected="false">System</button>
-                            <button type="button" class="game-chat-tab is-active" data-game-chat-tab="global" role="tab" aria-selected="true">Global</button>
-                            <button type="button" class="game-chat-tab" data-game-chat-tab="country" role="tab" aria-selected="false">Country</button>
-                            <button type="button" class="game-chat-tab" data-game-chat-tab="alliance" role="tab" aria-selected="false" id="game-chat-tab-alliance" hidden>Alliance</button>
-                        </nav>
-                        <button type="button" id="game-chat-resize-handle" class="game-chat-resize-handle" aria-label="Resize chat panel" title="Drag to resize"></button>
+                        ${buildGameChatTabsMarkup()}
+                        ${resizeHandleMarkup}
                     </header>
 
                     <div id="game-chat-messages" class="game-chat-messages" role="log" aria-live="polite" aria-relevant="additions"></div>
 
                     <p id="game-chat-compose-hint" class="game-chat-compose-hint" hidden></p>
 
-                    <form id="game-chat-compose-form" class="game-chat-compose-form">
-                        <input id="game-chat-compose-input" class="game-chat-compose-input" type="text" maxlength="500" autocomplete="off" placeholder="Message Global…">
-                        <button id="game-chat-compose-send" type="submit" class="game-chat-compose-send">Send</button>
-                    </form>
+                    ${buildGameChatComposeMarkup()}
                 </div>
             </aside>
         `.trim();
@@ -562,17 +962,35 @@
         global.document.body.appendChild(module);
     }
 
-    async function bootGameChatModule() {
-        if (!global.document.getElementById('game-page-canvas')) return;
+    async function enableGameChatForOfficialAge() {
+        if (!isGameChatUnlocked()) return;
 
         mountGameChatModule();
         bindGameChatControls();
-        bindResizeHandle();
 
+        if (getAgeChatDockHosts().length) {
+            /* Age dock uses fixed split layout — no resize handle. */
+        } else {
+            bindResizeHandle();
+        }
+
+        if (chatSessionEnabled) {
+            refreshGameChatVisibility();
+            return;
+        }
+
+        chatSessionEnabled = true;
+        chatSyncSince = '';
+        refreshGameChatVisibility();
         await fetchGameChatFromServer();
         startSyncPoll();
+    }
+
+    async function bootGameChatModule() {
+        if (!isGameChatUnlocked()) return;
 
         global.addEventListener('pagehide', stopSyncPoll);
+        global.document.addEventListener('visibilitychange', restartSyncPoll);
     }
 
     global.RoyalArmiesGameChat = {
@@ -580,7 +998,9 @@
         appendSystemEvent: postSystemEvent,
         setActiveTab,
         getActiveTab: () => activeTab,
-        applyPanelOpacity
+        applyPanelOpacity,
+        refreshVisibility: refreshGameChatVisibility,
+        enableForOfficialAge: enableGameChatForOfficialAge
     };
 
     if (global.document.readyState === 'loading') {

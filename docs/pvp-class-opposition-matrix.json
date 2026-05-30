@@ -1,0 +1,101 @@
+{
+  "meta": {
+    "title": "PvP class opposition matrix",
+    "status": "locked-in",
+    "purpose": "unit-balancing",
+    "capturedAt": "2026-05-27",
+    "notes": "Canonical PvP ease-of-combat loop. Each class opposes exactly one physical and one magic target class."
+  },
+  "classes": [
+    {
+      "classId": "physical_infantry",
+      "displayName": "Physical Infantry",
+      "lane": "physical",
+      "archetype": "infantry",
+      "opposesPhysical": "physical_cavalry",
+      "opposesMagic": "magic_artillery",
+      "easeOfCombatLogic": "Braced lines stop horse charges / Can rush inside dead zones of rune cannons."
+    },
+    {
+      "classId": "physical_cavalry",
+      "displayName": "Physical Cavalry",
+      "lane": "physical",
+      "archetype": "cavalry",
+      "opposesPhysical": "physical_artillery",
+      "opposesMagic": "magic_infantry",
+      "easeOfCombatLogic": "Flanking speed cuts down ballista crews / Tramples casters before barriers go up."
+    },
+    {
+      "classId": "physical_artillery",
+      "displayName": "Physical Artillery",
+      "lane": "physical",
+      "archetype": "artillery",
+      "opposesPhysical": "physical_beasts",
+      "opposesMagic": "magic_cavalry",
+      "easeOfCombatLogic": "Heavy siege bolts pierce giant beasts / High-velocity iron drops flying/enchanted riders."
+    },
+    {
+      "classId": "physical_beasts",
+      "displayName": "Physical Beasts",
+      "lane": "physical",
+      "archetype": "beasts",
+      "opposesPhysical": "physical_infantry",
+      "opposesMagic": "magic_artillery",
+      "easeOfCombatLogic": "Raw feral mass crushes tightly packed foot blocks / Monsters trample backline batteries."
+    },
+    {
+      "classId": "magic_infantry",
+      "displayName": "Magic Infantry",
+      "lane": "magic",
+      "archetype": "infantry",
+      "opposesPhysical": "physical_infantry",
+      "opposesMagic": "magic_cavalry",
+      "easeOfCombatLogic": "AOE spells incinerate slow foot paths / Summoned gravity wells ground magic mounts."
+    },
+    {
+      "classId": "magic_cavalry",
+      "displayName": "Magic Cavalry",
+      "lane": "magic",
+      "archetype": "cavalry",
+      "opposesPhysical": "physical_beasts",
+      "opposesMagic": "magic_artillery",
+      "easeOfCombatLogic": "High-speed phase blinks easily kite slow beasts / Ethereal speed slips past rune grids."
+    },
+    {
+      "classId": "magic_artillery",
+      "displayName": "Magic Artillery",
+      "lane": "magic",
+      "archetype": "artillery",
+      "opposesPhysical": "physical_cavalry",
+      "opposesMagic": "magic_beasts",
+      "easeOfCombatLogic": "Tracking chain-lightning fries open cavalry arcs / Long-range beams target colossal dragons."
+    },
+    {
+      "classId": "magic_beasts",
+      "displayName": "Magic Beasts",
+      "lane": "magic",
+      "archetype": "beasts",
+      "opposesPhysical": "physical_artillery",
+      "opposesMagic": "magic_infantry",
+      "easeOfCombatLogic": "Anti-magic hide shrugs mechanical siege fire / Colossal size steps over static mage circles."
+    }
+  ],
+  "advantagePairs": [
+    { "attacker": "physical_infantry", "defender": "physical_cavalry" },
+    { "attacker": "physical_infantry", "defender": "magic_artillery" },
+    { "attacker": "physical_cavalry", "defender": "physical_artillery" },
+    { "attacker": "physical_cavalry", "defender": "magic_infantry" },
+    { "attacker": "physical_artillery", "defender": "physical_beasts" },
+    { "attacker": "physical_artillery", "defender": "magic_cavalry" },
+    { "attacker": "physical_beasts", "defender": "physical_infantry" },
+    { "attacker": "physical_beasts", "defender": "magic_artillery" },
+    { "attacker": "magic_infantry", "defender": "physical_infantry" },
+    { "attacker": "magic_infantry", "defender": "magic_cavalry" },
+    { "attacker": "magic_cavalry", "defender": "physical_beasts" },
+    { "attacker": "magic_cavalry", "defender": "magic_artillery" },
+    { "attacker": "magic_artillery", "defender": "physical_cavalry" },
+    { "attacker": "magic_artillery", "defender": "magic_beasts" },
+    { "attacker": "magic_beasts", "defender": "physical_artillery" },
+    { "attacker": "magic_beasts", "defender": "magic_infantry" }
+  ]
+}

@@ -76,6 +76,65 @@
         return isLocalDevelopmentHost() && !isProductionRoyalArmiesHost();
     }
 
+    /** Hide NEXUS/RIFT error code footers in alerts while developing locally. */
+    function shouldShowRiftErrorCodes() {
+        return !isLocalDevelopmentHost();
+    }
+
+    /** Skip error popups on localhost / Live Server / file:// previews. */
+    function shouldSuppressLocalDevErrorPopups() {
+        return isLocalDevelopmentHost();
+    }
+
+    function isErrorLikePortalAlert(message, title) {
+        const t = String(title || '').trim().toLowerCase();
+        const m = String(message || '').trim().toLowerCase();
+
+        if (t === 'message sent' || t === 'draft saved' || t === 'messages purged') {
+            return false;
+        }
+
+        if (t === 'registration' && (m.includes('saved') || m.includes('check your email') || m.includes('confirm'))) {
+            return false;
+        }
+
+        if (t === 'password reset' && (m.includes('one-time password') || m.includes('e-mail provided'))) {
+            return false;
+        }
+
+        const errorTitleFragments = ['failed', 'error', 'denied', 'not sent', 'connection'];
+        if (errorTitleFragments.some((frag) => t.includes(frag))) {
+            return true;
+        }
+
+        const errorMessageFragments = [
+            'could not',
+            'cannot reach',
+            'make sure node',
+            'server.js is running',
+            'nexus-',
+            'rift-',
+            'login failed',
+            'invalid username',
+            'invalid password',
+            'already registered',
+            'already taken',
+            'please enter',
+            'please fill',
+            'do not match',
+            'log in with',
+            'choose at least',
+            'check your username',
+            'check your email and try again',
+            'check recipients',
+            'enter the email',
+            'enter your current password',
+            'enter a valid',
+            're-verify your credentials'
+        ];
+        return errorMessageFragments.some((frag) => m.includes(frag));
+    }
+
     function getLocalDevViewMode() {
         try {
             const stored = global.sessionStorage.getItem(LOCAL_DEV_VIEW_MODE_KEY);
@@ -182,6 +241,9 @@
     global.isLandingServedByNexusBackend = isLandingServedByNexusBackend;
     global.isMailboxApiAvailable = isMailboxApiAvailable;
     global.isLocalDevAutoLoginEnabled = isLocalDevAutoLoginEnabled;
+    global.shouldShowRiftErrorCodes = shouldShowRiftErrorCodes;
+    global.shouldSuppressLocalDevErrorPopups = shouldSuppressLocalDevErrorPopups;
+    global.isErrorLikePortalAlert = isErrorLikePortalAlert;
     global.shouldSkipLocalDevAutoLogin = shouldSkipLocalDevAutoLogin;
     global.markLocalDevLogoutForGuestPreview = markLocalDevLogoutForGuestPreview;
     global.clearLocalDevLogoutFlag = clearLocalDevLogoutFlag;
@@ -201,6 +263,9 @@
         isLandingServedByNexusBackend,
         isMailboxApiAvailable,
         isLocalDevAutoLoginEnabled,
+        shouldShowRiftErrorCodes,
+        shouldSuppressLocalDevErrorPopups,
+        isErrorLikePortalAlert,
         shouldSkipLocalDevAutoLogin,
         markLocalDevLogoutForGuestPreview,
         clearLocalDevLogoutFlag,

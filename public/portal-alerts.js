@@ -123,7 +123,22 @@
         });
     }
 
+    function shouldSuppressPortalAlertPopup(message, title) {
+        if (typeof window.shouldSuppressLocalDevErrorPopups !== 'function' || !window.shouldSuppressLocalDevErrorPopups()) {
+            return false;
+        }
+        if (typeof window.isErrorLikePortalAlert === 'function') {
+            return window.isErrorLikePortalAlert(message, title);
+        }
+        return true;
+    }
+
     function showPortalAlert(message, title) {
+        if (shouldSuppressPortalAlertPopup(message, title)) {
+            console.warn('[Royal Armies — local dev] Alert suppressed:', title || 'Notice', message);
+            return Promise.resolve(undefined);
+        }
+
         return openPortalAlertModal({
             mode: 'alert',
             message,

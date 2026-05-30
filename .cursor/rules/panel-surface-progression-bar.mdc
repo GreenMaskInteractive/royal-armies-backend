@@ -1,0 +1,48 @@
+---
+description: Modal/panel backgrounds must match the onboarding progression bar surface
+globs: public/**/*.html,public/**/*.css
+alwaysApply: false
+---
+
+# Panel surface — progression bar style (FLEX)
+
+Unless the user says otherwise, **modals, popups, and container panels** use the same background treatment as the **game onboarding progression bar** (`#game-onboarding-progress`).
+
+## Canonical surface
+
+- **Outer shell (layout only):** `portal-deployment-server-panel` — positioning, width, no custom gradient overrides.
+- **Visible frame (required):** `portal-server-panel-controls` — gold-trim dark gradient, inset highlights, corner brackets (`::before` / `::after`).
+
+Reference in `style2.css` (~`.portal-server-panel-controls`):
+
+```css
+border: 1px solid rgba(197, 160, 89, 0.42);
+border-radius: 6px;
+background:
+  linear-gradient(180deg, rgba(255, 215, 0, 0.07) 0%, transparent 22%),
+  linear-gradient(145deg, rgba(28, 22, 14, 0.96) 0%, rgba(8, 6, 4, 0.98) 55%, rgba(18, 14, 10, 0.94) 100%);
+/* + inset/outer box-shadows and corner brackets */
+```
+
+## MAP markup pattern
+
+```html
+<aside class="… portal-deployment-server-panel">
+  <div class="portal-server-panel-controls game-page-panel-bezel">
+    <!-- panel content -->
+  </div>
+</aside>
+```
+
+Game onboarding uses `game-onboarding-progress-bezel` on the bezel for tighter padding; other game panels use `game-page-panel-bezel`.
+
+## Do not
+
+- Put one-off `linear-gradient(160deg, rgba(36, 32, 24, …))` backgrounds on game/portal panels when this surface applies.
+- Replace `portal-server-panel-controls` with `borderedcontainer_thin.png` or other frame images **unless** the user explicitly requests that asset for a specific dialog.
+
+## When migrating existing UI
+
+1. Wrap content in `portal-server-panel-controls`.
+2. Remove duplicate `background`, `border`, and `box-shadow` from the outer shell.
+3. Bump `style2.css?v=` (and other referrers) per cloudflare-static-cache rule.

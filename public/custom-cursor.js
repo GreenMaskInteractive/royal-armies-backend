@@ -16,21 +16,30 @@
         'html.royal-armies-custom-cursor,',
         'html.royal-armies-custom-cursor body,',
         'html.royal-armies-custom-cursor body#main-dashboard-canvas,',
+        'html.royal-armies-custom-cursor body#game-page-canvas,',
         'html.royal-armies-custom-cursor *,',
         'html.royal-armies-custom-cursor *::before,',
         'html.royal-armies-custom-cursor *::after,',
         'html.royal-armies-custom-cursor body#main-dashboard-canvas *,',
+        'html.royal-armies-custom-cursor body#game-page-canvas *,',
         'html.royal-armies-custom-cursor body#main-dashboard-canvas *::before,',
         'html.royal-armies-custom-cursor body#main-dashboard-canvas *::after,',
+        'html.royal-armies-custom-cursor body#game-page-canvas *::before,',
+        'html.royal-armies-custom-cursor body#game-page-canvas *::after,',
         'html.royal-armies-custom-cursor body#main-dashboard-canvas [class],',
+        'html.royal-armies-custom-cursor body#game-page-canvas [class],',
         'html.royal-armies-custom-cursor body#main-dashboard-canvas [id],',
+        'html.royal-armies-custom-cursor body#game-page-canvas [id],',
         'html.royal-armies-custom-cursor body#main-dashboard-canvas :is(',
+        'html.royal-armies-custom-cursor body#game-page-canvas :is(',
         '    a, button, input, select, textarea, label, summary,',
         '    [role="button"], [role="link"], [role="tab"],',
         '    [href], [onclick], .nav-tab, .footer-icon-link',
         '),',
         'html.royal-armies-custom-cursor body#main-dashboard-canvas *::-webkit-slider-thumb,',
+        'html.royal-armies-custom-cursor body#game-page-canvas *::-webkit-slider-thumb,',
         'html.royal-armies-custom-cursor body#main-dashboard-canvas *::-moz-range-thumb,',
+        'html.royal-armies-custom-cursor body#game-page-canvas *::-moz-range-thumb,',
         'html.royal-armies-custom-cursor *::-webkit-scrollbar,',
         'html.royal-armies-custom-cursor *::-webkit-scrollbar-track,',
         'html.royal-armies-custom-cursor *::-webkit-scrollbar-thumb,',
@@ -78,8 +87,8 @@
     let cursorHideStyledElements = new Set();
 
     function isCursorOverlayElement(el) {
-        if (!(el instanceof HTMLElement)) return false;
-        if (CURSOR_OVERLAY_IDS.has(el.id)) return true;
+        if (!(el instanceof Element)) return false;
+        if (el.id && CURSOR_OVERLAY_IDS.has(el.id)) return true;
         return Boolean(el.closest('#royal-armies-custom-cursor, #cursor-click-fx-layer'));
     }
 
@@ -98,7 +107,7 @@
         const stack = document.elementsFromPoint(clientX, clientY);
 
         stack.forEach((node) => {
-            if (!(node instanceof HTMLElement) || isCursorOverlayElement(node)) return;
+            if (!(node instanceof Element) || isCursorOverlayElement(node)) return;
             node.style.setProperty('cursor', 'none', 'important');
             nextStyled.add(node);
         });

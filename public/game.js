@@ -6,15 +6,22 @@
 
     const GAME_PRESENCE_HEARTBEAT_MS = 20000;
     const ACTIVE_AGE_STORAGE_KEY = 'savedCommanderInActiveAge';
+    const GAME_ONBOARDING_STEPS = ['class', 'region', 'tutorial', 'join-battle'];
     const GAME_VIEW_LABELS = {
-        overview: 'Overview',
-        city: 'City',
-        map: 'Map'
+        class: 'Choose a Class',
+        region: 'Choose Starting Location',
+        tutorial: 'Tutorial',
+        'join-battle': 'Join the Battle'
     };
+    const GAME_ONBOARDING_SLIDE_MS = 480;
+    const GAME_SESSION_FADE_MS = 900;
 
     let presenceHeartbeatTimer = null;
     let ageSessionLeaveSent = false;
-    let activeGameView = 'overview';
+    let activeGameView = 'class';
+    let furthestUnlockedStepIndex = 0;
+    let isOnboardingViewAnimating = false;
+    let onboardingViewTransitionTimer = null;
 
     function resolveApiUrl(path) {
         if (typeof global.resolveRoyalArmiesApiUrl === 'function') {
@@ -39,6 +46,232 @@
         const saved = global.localStorage.getItem('savedProfileAvatarUrl');
         if (saved && saved.trim()) return saved.trim();
         return 'images/avatars/commanderprofile01.png';
+    }
+
+    function getGameTutorialConcludedStorageKey() {
+        const username = resolveGamePageUsername();
+        if (!username) return '';
+        return `royalArmies_${username.toLowerCase()}_gameTutorialConcluded`;
+    }
+
+    function getGameSessionStartedStorageKey() {
+        const username = resolveGamePageUsername();
+        if (!username) return '';
+        return `royalArmies_${username.toLowerCase()}_gameSessionStarted`;
+    }
+
+    function isGameSessionStarted() {
+        const storageKey = getGameSessionStartedStorageKey();
+        if (!storageKey) return false;
+        try {
+            return global.localStorage.getItem(storageKey) === 'true';
+        } catch (_err) {
+            return false;
+        }
+    }
+
+    function markGameSessionStarted() {
+        const storageKey = getGameSessionStartedStorageKey();
+        if (!storageKey) return false;
+
+        try {
+            global.localStorage.setItem(storageKey, 'true');
+        } catch (_err) {
+            return false;
+        }
+
+        return true;
+    }
+
+    function clearGameSessionStarted() {
+        const storageKey = getGameSessionStartedStorageKey();
+        if (!storageKey) return false;
+
+        try {
+            global.localStorage.removeItem(storageKey);
+        } catch (_err) {
+            return false;
+        }
+
+        return true;
+    }
+
+    function clearGameTutorialConcluded() {
+        const storageKey = getGameTutorialConcludedStorageKey();
+        if (!storageKey) return false;
+
+        try {
+            global.localStorage.removeItem(storageKey);
+        } catch (_err) {
+            return false;
+        }
+
+        return true;
+    }
+
+    function shouldResetProgressionFromDevBypass() {
+        try {
+            return new URLSearchParams(global.location.search).get('riftProgressionReset') === '1';
+        } catch (_err) {
+            return false;
+        }
+    }
+
+    function consumeProgressionResetQuery() {
+        try {
+            const url = new URL(global.location.href);
+            if (!url.searchParams.has('riftProgressionReset')) return;
+            url.searchParams.delete('riftProgressionReset');
+            const next = `${url.pathname}${url.search}${url.hash}`;
+            global.history.replaceState(null, '', next);
+        } catch (_err) {
+            /* ignore */
+        }
+    }
+
+    function resetGameProgressionToStart() {
+        clearGameSessionStarted();
+        clearGameTutorialConcluded();
+        furthestUnlockedStepIndex = 0;
+        resetGameOnboardingSelections();
+        applyGameTutorialConcludedChrome();
+        applyGameSessionChrome();
+        setActiveGameViewInstant('class');
+
+        if (global.RoyalArmiesGameRegionsMap && typeof global.RoyalArmiesGameRegionsMap.scheduleFlankLayout === 'function') {
+            global.RoyalArmiesGameRegionsMap.scheduleFlankLayout();
+        }
+    }
+
+    function resetGameOnboardingSelections() {
+        if (typeof global.clearGameClassPickerSelection === 'function') {
+            global.clearGameClassPickerSelection();
+        }
+        if (global.RoyalArmiesGameRegionsMap && typeof global.RoyalArmiesGameRegionsMap.resetLocationPicker === 'function') {
+            global.RoyalArmiesGameRegionsMap.resetLocationPicker();
+        } else if (global.RoyalArmiesGameRegionsMap && typeof global.RoyalArmiesGameRegionsMap.setSelectedRegionId === 'function') {
+            global.RoyalArmiesGameRegionsMap.setSelectedRegionId(null);
+        }
+    }
+
+    function returnToGameOnboardingStart(event) {
+        if (event) {
+            event.preventDefault();
+            event.stopPropagation();
+        }
+        if (isOnboardingViewAnimating) {
+            return false;
+        }
+
+        clearGameSessionStarted();
+        furthestUnlockedStepIndex = 0;
+        resetGameOnboardingSelections();
+
+        applyGameSessionChrome();
+        setActiveGameViewInstant('class');
+
+        if (global.RoyalArmiesGameRegionsMap && typeof global.RoyalArmiesGameRegionsMap.scheduleFlankLayout === 'function') {
+            global.RoyalArmiesGameRegionsMap.scheduleFlankLayout();
+        }
+
+        return true;
+    }
+
+    function prefersReducedGameMotion() {
+        try {
+            return global.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        } catch (_err) {
+            return false;
+        }
+    }
+
+    function waitGameTransition(ms) {
+        return new Promise((resolve) => {
+            global.setTimeout(resolve, ms);
+        });
+    }
+
+    function waitForGameTransitionPaint() {
+        return new Promise((resolve) => {
+            global.requestAnimationFrame(() => {
+                global.requestAnimationFrame(resolve);
+            });
+        });
+    }
+
+    function ensureGameSessionTransitionOverlay() {
+        let overlay = global.document.getElementById('game-onboarding-session-transition');
+        if (!overlay) {
+            overlay = global.document.createElement('div');
+            overlay.id = 'game-onboarding-session-transition';
+            overlay.className = 'game-onboarding-session-transition';
+            overlay.setAttribute('aria-hidden', 'true');
+            const mountTarget = global.document.body || global.document.documentElement;
+            mountTarget.appendChild(overlay);
+        }
+        return overlay;
+    }
+
+    function applyGameSessionChrome() {
+        const canvas = global.document.getElementById('game-page-canvas');
+        const viewport = global.document.getElementById('game-page-viewport');
+        const progress = global.document.getElementById('game-onboarding-progress');
+        const sessionStage = global.document.getElementById('game-session-stage');
+        const started = isGameSessionStarted();
+
+        if (canvas) {
+            canvas.classList.toggle('game-session-active', started);
+            canvas.classList.toggle('game-onboarding-active', !started);
+        }
+        if (viewport) viewport.hidden = started;
+        if (progress) progress.hidden = started;
+        if (sessionStage) sessionStage.hidden = !started;
+    }
+
+    function isGameTutorialConcluded() {
+        const storageKey = getGameTutorialConcludedStorageKey();
+        if (!storageKey) return false;
+        try {
+            return global.localStorage.getItem(storageKey) === 'true';
+        } catch (_err) {
+            return false;
+        }
+    }
+
+    function applyGameTutorialConcludedChrome() {
+        const canvas = global.document.getElementById('game-page-canvas');
+        if (canvas) {
+            canvas.classList.toggle('game-tutorial-concluded', isGameTutorialConcluded());
+        }
+
+        const completeBtn = global.document.getElementById('game-tutorial-complete-btn');
+        if (completeBtn) {
+            completeBtn.hidden = isGameTutorialConcluded();
+        }
+    }
+
+    function markGameTutorialConcluded(event) {
+        if (event) {
+            event.preventDefault();
+            event.stopPropagation();
+        }
+
+        const storageKey = getGameTutorialConcludedStorageKey();
+        if (!storageKey) return false;
+
+        try {
+            global.localStorage.setItem(storageKey, 'true');
+        } catch (_err) {
+            return false;
+        }
+
+        applyGameTutorialConcludedChrome();
+
+        if (activeGameView === 'tutorial') {
+            advanceGameOnboarding();
+        }
+
+        return true;
     }
 
     function markPlayingActiveAgeLocally() {
@@ -172,10 +405,10 @@
         stopGamePresenceLoop();
         await postAgeLeave(false);
         if (global.RoyalArmiesPageRouteTransition && typeof global.RoyalArmiesPageRouteTransition.navigateTo === 'function') {
-            await global.RoyalArmiesPageRouteTransition.navigateTo('/main');
+            await global.RoyalArmiesPageRouteTransition.navigateTo('/main.html');
             return;
         }
-        global.location.href = '/main';
+        global.location.href = '/main.html';
     }
 
     function refreshGamePageNavChrome() {
@@ -198,101 +431,290 @@
         if (typeof global.hydrateCommanderMembershipFromStorage === 'function') {
             global.hydrateCommanderMembershipFromStorage();
         }
+
+        applyGameTutorialConcludedChrome();
     }
 
-    function syncGameMobileNavLabel(viewId) {
-        const label = global.document.getElementById('game-mobile-nav-current-label');
-        if (label) {
-            label.textContent = GAME_VIEW_LABELS[viewId] || GAME_VIEW_LABELS.overview;
+    function getGameOnboardingStepIndex(viewId) {
+        return GAME_ONBOARDING_STEPS.indexOf(viewId);
+    }
+
+    function canNavigateBackToOnboardingStep(stepId, fromViewId) {
+        return stepId === 'class' && fromViewId === 'region';
+    }
+
+    function refreshGameOnboardingProgress(viewId) {
+        const activeIndex = getGameOnboardingStepIndex(viewId);
+
+        global.document.querySelectorAll('.game-onboarding-step[data-game-view]').forEach((step) => {
+            const stepId = step.getAttribute('data-game-view');
+            const stepIndex = getGameOnboardingStepIndex(stepId);
+            const isActive = stepId === viewId;
+            const isComplete = stepIndex >= 0 && stepIndex < activeIndex;
+            const isUpcoming = stepIndex > activeIndex;
+            const isClickable = isComplete && canNavigateBackToOnboardingStep(stepId, viewId);
+
+            step.classList.toggle('is-active', isActive);
+            step.classList.toggle('is-complete', isComplete);
+            step.classList.toggle('is-upcoming', isUpcoming);
+            step.classList.toggle('is-clickable', isClickable);
+
+            if (isActive) {
+                step.setAttribute('aria-current', 'step');
+            } else {
+                step.removeAttribute('aria-current');
+            }
+
+            if (isClickable) {
+                step.setAttribute('role', 'button');
+                step.setAttribute('tabindex', '0');
+                step.removeAttribute('aria-disabled');
+            } else {
+                step.removeAttribute('role');
+                step.removeAttribute('tabindex');
+            }
+
+            if (isUpcoming) {
+                step.setAttribute('aria-disabled', 'true');
+            } else if (!isClickable) {
+                step.removeAttribute('aria-disabled');
+            }
+        });
+
+        const progressRoot = global.document.getElementById('game-onboarding-progress');
+        if (progressRoot && activeIndex >= 0) {
+            const fillPct = GAME_ONBOARDING_STEPS.length > 1
+                ? (activeIndex / (GAME_ONBOARDING_STEPS.length - 1)) * 100
+                : 0;
+            progressRoot.style.setProperty('--game-onboarding-fill', `${fillPct}%`);
+            progressRoot.dataset.activeStep = viewId;
         }
     }
 
-    function setActiveGameView(viewId, clickEvent) {
-        const nextView = GAME_VIEW_LABELS[viewId] ? viewId : 'overview';
+    function getGameOnboardingViewPanel(viewId) {
+        return global.document.querySelector(`.game-page-view[data-game-view="${viewId}"]`);
+    }
+
+    function scheduleRegionFlankLayoutIfNeeded(viewId) {
+        if (viewId === 'region' && global.RoyalArmiesGameRegionsMap && typeof global.RoyalArmiesGameRegionsMap.scheduleFlankLayout === 'function') {
+            global.RoyalArmiesGameRegionsMap.scheduleFlankLayout();
+        }
+    }
+
+    function clearOnboardingViewTransitionTimer() {
+        if (onboardingViewTransitionTimer) {
+            global.clearTimeout(onboardingViewTransitionTimer);
+            onboardingViewTransitionTimer = null;
+        }
+    }
+
+    function finishOnboardingViewTransition(incomingPanel, nextView) {
+        clearOnboardingViewTransitionTimer();
+
+        if (incomingPanel) {
+            incomingPanel.classList.remove('is-onboarding-entering');
+        }
+
+        isOnboardingViewAnimating = false;
+        scheduleRegionFlankLayoutIfNeeded(nextView);
+    }
+
+    function setActiveGameViewInstant(nextView) {
         activeGameView = nextView;
-
-        if (clickEvent) {
-            clickEvent.preventDefault();
-            clickEvent.stopPropagation();
-        }
 
         global.document.querySelectorAll('.game-page-view[data-game-view]').forEach((panel) => {
             const isActive = panel.getAttribute('data-game-view') === nextView;
+            panel.classList.remove('is-onboarding-entering', 'is-onboarding-exiting');
             panel.classList.toggle('is-active', isActive);
             panel.hidden = !isActive;
         });
 
-        global.document.querySelectorAll('.game-page-nav-tabs .nav-tab[data-game-view]').forEach((tab) => {
-            tab.classList.toggle('active', tab.getAttribute('data-game-view') === nextView);
-        });
-
-        global.document.querySelectorAll('#game-mobile-nav-pages .portal-mobile-nav-page-item[data-game-view]').forEach((btn) => {
-            btn.classList.toggle('is-active', btn.getAttribute('data-game-view') === nextView);
-        });
-
-        syncGameMobileNavLabel(nextView);
-        closeGameMobileNavMenu();
+        refreshGameOnboardingProgress(nextView);
+        scheduleRegionFlankLayoutIfNeeded(nextView);
+        closeGameMobileCommanderSubmenu();
     }
 
-    function isGameMobileNavLayout() {
-        return global.matchMedia('(max-width: 1024px)').matches;
-    }
+    function setActiveGameViewAnimated(nextView) {
+        const outgoingPanel = getGameOnboardingViewPanel(activeGameView);
+        const incomingPanel = getGameOnboardingViewPanel(nextView);
 
-    function closeGameMobileNavMenu() {
-        const shell = global.document.getElementById('game-mobile-nav-shell');
-        const menu = global.document.getElementById('game-mobile-nav-menu');
-        const toggle = global.document.getElementById('game-mobile-nav-toggle');
-        if (!shell || !menu || !toggle) return;
-
-        shell.classList.remove('is-nav-open');
-        menu.hidden = true;
-        menu.classList.remove('is-menu-open');
-        menu.setAttribute('inert', '');
-        toggle.setAttribute('aria-expanded', 'false');
-    }
-
-    function openGameMobileNavMenu() {
-        const shell = global.document.getElementById('game-mobile-nav-shell');
-        const menu = global.document.getElementById('game-mobile-nav-menu');
-        const toggle = global.document.getElementById('game-mobile-nav-toggle');
-        if (!shell || !menu || !toggle) return;
-
-        shell.classList.add('is-nav-open');
-        menu.hidden = false;
-        menu.classList.add('is-menu-open');
-        menu.removeAttribute('inert');
-        toggle.setAttribute('aria-expanded', 'true');
-    }
-
-    function toggleGameMobileNavMenu(event) {
-        if (event) event.preventDefault();
-        const shell = global.document.getElementById('game-mobile-nav-shell');
-        if (!shell) return;
-        if (shell.classList.contains('is-nav-open')) {
-            closeGameMobileNavMenu();
+        if (!incomingPanel || activeGameView === nextView) {
             return;
         }
-        openGameMobileNavMenu();
+
+        if (prefersReducedGameMotion() || !outgoingPanel) {
+            setActiveGameViewInstant(nextView);
+            return;
+        }
+
+        if (isOnboardingViewAnimating) {
+            return;
+        }
+
+        isOnboardingViewAnimating = true;
+        activeGameView = nextView;
+        refreshGameOnboardingProgress(nextView);
+        closeGameMobileCommanderSubmenu();
+
+        incomingPanel.hidden = true;
+        incomingPanel.classList.remove('is-active', 'is-onboarding-entering');
+        outgoingPanel.classList.remove('is-onboarding-exiting');
+        void outgoingPanel.offsetWidth;
+        outgoingPanel.classList.add('is-onboarding-exiting');
+
+        let exitPhaseDone = false;
+
+        const beginIncomingSlide = () => {
+            if (exitPhaseDone) return;
+            exitPhaseDone = true;
+            clearOnboardingViewTransitionTimer();
+
+            outgoingPanel.classList.remove('is-onboarding-exiting', 'is-active');
+            outgoingPanel.hidden = true;
+
+            incomingPanel.hidden = false;
+            incomingPanel.classList.add('is-active');
+            incomingPanel.classList.remove('is-onboarding-entering');
+
+            let enterPhaseDone = false;
+
+            const completeTransition = () => {
+                if (enterPhaseDone || !isOnboardingViewAnimating) return;
+                enterPhaseDone = true;
+                clearOnboardingViewTransitionTimer();
+                finishOnboardingViewTransition(incomingPanel, nextView);
+            };
+
+            const bindEnterCompletion = () => {
+                incomingPanel.addEventListener('animationend', (event) => {
+                    if (event.target !== incomingPanel) return;
+                    if (event.animationName !== 'game-onboarding-view-slide-in') return;
+                    completeTransition();
+                }, { once: true });
+
+                clearOnboardingViewTransitionTimer();
+                onboardingViewTransitionTimer = global.setTimeout(completeTransition, GAME_ONBOARDING_SLIDE_MS + 80);
+            };
+
+            global.requestAnimationFrame(() => {
+                global.requestAnimationFrame(() => {
+                    void incomingPanel.offsetWidth;
+                    incomingPanel.classList.add('is-onboarding-entering');
+                    bindEnterCompletion();
+                });
+            });
+        };
+
+        outgoingPanel.addEventListener('animationend', (event) => {
+            if (event.target !== outgoingPanel) return;
+            if (event.animationName !== 'game-onboarding-view-slide-out') return;
+            beginIncomingSlide();
+        }, { once: true });
+
+        clearOnboardingViewTransitionTimer();
+        onboardingViewTransitionTimer = global.setTimeout(beginIncomingSlide, GAME_ONBOARDING_SLIDE_MS + 80);
+    }
+
+    function setActiveGameView(viewId, clickEvent, options) {
+        if (clickEvent) {
+            clickEvent.preventDefault();
+            clickEvent.stopPropagation();
+            return;
+        }
+
+        const nextView = GAME_VIEW_LABELS[viewId] ? viewId : 'class';
+        const nextIndex = getGameOnboardingStepIndex(nextView);
+        if (nextIndex < 0 || nextIndex !== furthestUnlockedStepIndex) {
+            return;
+        }
+
+        const animate = options && options.animate === true;
+        if (animate) {
+            setActiveGameViewAnimated(nextView);
+            return;
+        }
+
+        setActiveGameViewInstant(nextView);
+    }
+
+    async function runGameSessionFadeTransition(runWhileCovered) {
+        const overlay = ensureGameSessionTransitionOverlay();
+        overlay.classList.remove('is-revealing');
+        overlay.classList.add('is-visible', 'is-covered');
+        overlay.setAttribute('aria-hidden', 'false');
+
+        await waitForGameTransitionPaint();
+        await waitGameTransition(GAME_SESSION_FADE_MS);
+
+        if (typeof runWhileCovered === 'function') {
+            await runWhileCovered();
+        }
+
+        overlay.classList.remove('is-covered');
+        overlay.classList.add('is-revealing');
+        await waitForGameTransitionPaint();
+        await waitGameTransition(GAME_SESSION_FADE_MS + 80);
+
+        overlay.classList.remove('is-visible', 'is-revealing');
+        overlay.setAttribute('aria-hidden', 'true');
+    }
+
+    function resolveOfficialAgePagePath() {
+        if (typeof global.getOfficialAgePagePath === 'function') {
+            return global.getOfficialAgePagePath();
+        }
+        return '/agealpha.html';
+    }
+
+    async function enterGameSessionFromOnboarding() {
+        if (isGameSessionStarted() || isOnboardingViewAnimating) {
+            return false;
+        }
+        if (activeGameView !== 'join-battle') {
+            return false;
+        }
+
+        const agePath = resolveOfficialAgePagePath();
+
+        await runGameSessionFadeTransition(async () => {
+            if (!markGameSessionStarted()) return;
+            if (global.RoyalArmiesPageRouteTransition && typeof global.RoyalArmiesPageRouteTransition.navigateTo === 'function') {
+                await global.RoyalArmiesPageRouteTransition.navigateTo(agePath);
+                return;
+            }
+            global.location.assign(agePath);
+        });
+
+        return true;
+    }
+
+    function closeGameMobileCommanderSubmenu() {
+        const submenu = global.document.getElementById('game-mobile-commander-submenu');
+        const toggle = global.document.getElementById('game-mobile-commander-toggle');
+        const clip = global.document.getElementById('game-mobile-commander-clip');
+        if (!submenu || !toggle) return;
+
+        submenu.hidden = true;
+        toggle.setAttribute('aria-expanded', 'false');
+        if (clip) clip.classList.remove('is-commander-open');
     }
 
     function toggleGameMobileCommanderSubmenu(event) {
         if (event) event.stopPropagation();
         const submenu = global.document.getElementById('game-mobile-commander-submenu');
         const toggle = global.document.getElementById('game-mobile-commander-toggle');
+        const clip = global.document.getElementById('game-mobile-commander-clip');
         if (!submenu || !toggle) return;
 
-        const menu = global.document.getElementById('game-mobile-nav-menu');
         const willOpen = submenu.hidden;
         submenu.hidden = !willOpen;
         toggle.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
-        if (menu) {
-            menu.classList.toggle('is-commander-submenu-open', willOpen);
-        }
+        if (clip) clip.classList.toggle('is-commander-open', willOpen);
     }
 
     function gameMobileNavCommanderAction(action, event) {
         if (event) event.stopPropagation();
-        closeGameMobileNavMenu();
+        closeGameMobileCommanderSubmenu();
 
         switch (action) {
             case 'view-profile':
@@ -330,40 +752,94 @@
         }
     }
 
-    function bindGamePageNavigation() {
-        global.document.querySelectorAll('.game-page-nav-tabs .nav-tab[data-game-view]').forEach((tab) => {
-            tab.addEventListener('click', (event) => {
-                setActiveGameView(tab.getAttribute('data-game-view') || 'overview', event);
-            });
-            tab.addEventListener('keydown', (event) => {
-                if (event.key !== 'Enter' && event.key !== ' ') return;
-                setActiveGameView(tab.getAttribute('data-game-view') || 'overview', event);
-            });
-        });
-
-        global.document.querySelectorAll('#game-mobile-nav-pages .portal-mobile-nav-page-item[data-game-view]').forEach((btn) => {
-            btn.addEventListener('click', (event) => {
-                setActiveGameView(btn.getAttribute('data-game-view') || 'overview', event);
-            });
-        });
-
-        const mobileToggle = global.document.getElementById('game-mobile-nav-toggle');
-        if (mobileToggle) {
-            mobileToggle.addEventListener('click', toggleGameMobileNavMenu);
+    function advanceGameOnboarding() {
+        if (isOnboardingViewAnimating || isGameSessionStarted()) {
+            return false;
         }
 
-        global.document.addEventListener('click', (event) => {
-            if (!isGameMobileNavLayout()) return;
-            const shell = global.document.getElementById('game-mobile-nav-shell');
-            if (!shell || !shell.classList.contains('is-nav-open')) return;
-            if (event.target.closest('#game-mobile-nav-shell')) return;
-            closeGameMobileNavMenu();
+        const currentIndex = getGameOnboardingStepIndex(activeGameView);
+        if (currentIndex < 0 || currentIndex >= GAME_ONBOARDING_STEPS.length - 1) {
+            return false;
+        }
+
+        const nextIndex = currentIndex + 1;
+        furthestUnlockedStepIndex = Math.max(furthestUnlockedStepIndex, nextIndex);
+        setActiveGameView(GAME_ONBOARDING_STEPS[nextIndex], null, { animate: true });
+        return true;
+    }
+
+    function returnToClassFromLocationPicker(event) {
+        if (event) {
+            event.preventDefault();
+            event.stopPropagation();
+        }
+        if (isOnboardingViewAnimating || isGameSessionStarted() || activeGameView !== 'region') {
+            return false;
+        }
+
+        if (global.RoyalArmiesGameRegionsMap && typeof global.RoyalArmiesGameRegionsMap.resetLocationPicker === 'function') {
+            global.RoyalArmiesGameRegionsMap.resetLocationPicker();
+        }
+
+        furthestUnlockedStepIndex = 0;
+        setActiveGameView('class', null, { animate: true });
+        return true;
+    }
+
+    function onOnboardingProgressStepClick(event) {
+        const step = event.target.closest('.game-onboarding-step.is-clickable');
+        if (!step) return;
+
+        const stepId = step.getAttribute('data-game-view');
+        if (stepId === 'class') {
+            returnToClassFromLocationPicker(event);
+        }
+    }
+
+    function onOnboardingProgressStepKeydown(event) {
+        if (event.key !== 'Enter' && event.key !== ' ') return;
+        const step = event.target.closest('.game-onboarding-step.is-clickable');
+        if (!step) return;
+        event.preventDefault();
+        onOnboardingProgressStepClick(event);
+    }
+
+    function bindGameOnboardingProgression() {
+        const progressTrack = global.document.querySelector('.game-onboarding-progress-track');
+        if (progressTrack && progressTrack.dataset.riftBound !== '1') {
+            progressTrack.dataset.riftBound = '1';
+            progressTrack.addEventListener('click', onOnboardingProgressStepClick);
+            progressTrack.addEventListener('keydown', onOnboardingProgressStepKeydown);
+        }
+
+        global.addEventListener('royalarmies:class-confirmed', () => {
+            if (activeGameView !== 'class') return;
+            advanceGameOnboarding();
         });
 
-        global.addEventListener('resize', () => {
-            if (!isGameMobileNavLayout()) {
-                closeGameMobileNavMenu();
-            }
+        const joinBattleBtn = global.document.getElementById('game-join-battle-continue-btn');
+        if (joinBattleBtn) {
+            joinBattleBtn.addEventListener('click', () => {
+                if (activeGameView !== 'join-battle' || isOnboardingViewAnimating) return;
+                enterGameSessionFromOnboarding();
+            });
+        }
+
+        const sessionBackBtn = global.document.getElementById('game-session-back-to-onboarding-btn');
+        if (sessionBackBtn && sessionBackBtn.dataset.riftBound !== '1') {
+            sessionBackBtn.dataset.riftBound = '1';
+            sessionBackBtn.addEventListener('click', (event) => {
+                returnToGameOnboardingStart(event);
+            });
+        }
+    }
+
+    function bindGamePageNavigation() {
+        global.document.addEventListener('click', (event) => {
+            const clip = global.document.getElementById('game-mobile-commander-clip');
+            if (!clip || !clip.classList.contains('is-commander-open')) return;
+            if (event.target.closest('#game-mobile-commander-clip')) return;
+            closeGameMobileCommanderSubmenu();
         });
     }
 
@@ -400,7 +876,7 @@
 
         const username = resolveGamePageUsername();
         if (!username) {
-            global.location.replace('/main');
+            global.location.replace('/main.html');
             return;
         }
 
@@ -434,9 +910,28 @@
     }
 
     async function bootGamePage() {
+        if (shouldResetProgressionFromDevBypass()) {
+            resetGameProgressionToStart();
+            consumeProgressionResetQuery();
+        }
+
+        if (isGameSessionStarted()) {
+            const agePath = resolveOfficialAgePagePath();
+            if (global.RoyalArmiesPageRouteTransition && typeof global.RoyalArmiesPageRouteTransition.navigateTo === 'function') {
+                await global.RoyalArmiesPageRouteTransition.navigateTo(agePath);
+                return;
+            }
+            global.location.replace(agePath);
+            return;
+        }
+
+        applyGameTutorialConcludedChrome();
+        applyGameSessionChrome();
+        bindGameOnboardingProgression();
         bindGamePageNavigation();
         registerUnloadHandlers();
-        setActiveGameView('overview');
+        setActiveGameView('class');
+
         await bootstrapGamePageSession();
 
         if (typeof global.bindPortalNewMessagesBarNavigation === 'function') {
@@ -450,10 +945,25 @@
         }
     }
 
-    global.switchGamePageView = setActiveGameView;
+    global.switchGamePageView = function switchGamePageView(viewId) {
+        setActiveGameView(viewId);
+    };
+    global.advanceGameOnboarding = advanceGameOnboarding;
+    global.returnToClassFromLocationPicker = returnToClassFromLocationPicker;
+    global.enterGameSessionFromOnboarding = enterGameSessionFromOnboarding;
+    global.returnToGameOnboardingStart = returnToGameOnboardingStart;
+    global.isGameSessionStarted = isGameSessionStarted;
+    global.isGameOnboardingViewAnimating = function isGameOnboardingViewAnimating() {
+        return isOnboardingViewAnimating;
+    };
+    global.getFurthestUnlockedGameOnboardingStepIndex = function getFurthestUnlockedGameOnboardingStepIndex() {
+        return furthestUnlockedStepIndex;
+    };
     global.returnToGameAgePortal = returnToAgePortal;
     global.toggleGameMobileCommanderSubmenu = toggleGameMobileCommanderSubmenu;
     global.gameMobileNavCommanderAction = gameMobileNavCommanderAction;
+    global.isGameTutorialConcluded = isGameTutorialConcluded;
+    global.markGameTutorialConcluded = markGameTutorialConcluded;
 
     if (global.document.readyState === 'loading') {
         global.document.addEventListener('DOMContentLoaded', () => {

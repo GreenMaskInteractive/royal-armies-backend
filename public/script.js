@@ -561,6 +561,35 @@ var player = {
     ]
 };
 
+/** All preset portraits in public/images/avatars (commander + archmage sets). */
+const PORTAL_AVATAR_PRESET_LIBRARY = [
+    'images/avatars/commanderprofile01.png',
+    'images/avatars/commanderprofile02.png',
+    'images/avatars/commanderprofile03.png',
+    'images/avatars/commanderprofile04.png',
+    'images/avatars/commanderprofile05.png',
+    'images/avatars/commanderprofile06.png',
+    'images/avatars/commanderprofile07.png',
+    'images/avatars/commanderprofile08.png',
+    'images/avatars/archmageprofile01.png',
+    'images/avatars/archmageprofile02.png',
+    'images/avatars/archmageprofile03.png',
+    'images/avatars/archmageprofile04.png',
+    'images/avatars/archmageprofile05.png',
+    'images/avatars/archmageprofile06.png',
+    'images/avatars/archmageprofile07.png',
+    'images/avatars/archmageprofile08.png'
+];
+
+function buildAvatarPresetGridMarkup(selectedAvatarUrl) {
+    const selected = String(selectedAvatarUrl || '').trim();
+    return PORTAL_AVATAR_PRESET_LIBRARY.map((avatarUrl) => {
+        const selectedClass = selected === avatarUrl ? 'selected-avatar-border' : '';
+        const escapedUrl = avatarUrl.replace(/'/g, '\\\'');
+        return `<img src="${avatarUrl}" alt="" class="avatar-thumb-lever ${selectedClass}" onclick="selectPresetAvatar('${escapedUrl}')">`;
+    }).join('');
+}
+
 const globalPenaltyCatalog = {
     chat: {
         name: "Communication Restriction",
@@ -1476,10 +1505,10 @@ function openMailboxFromNewMessagesBar(clickEvent) {
     }
 
     if (window.RoyalArmiesPageRouteTransition && typeof window.RoyalArmiesPageRouteTransition.navigateTo === 'function') {
-        window.RoyalArmiesPageRouteTransition.navigateTo('/main');
+        window.RoyalArmiesPageRouteTransition.navigateTo('/main.html');
         return;
     }
-    window.location.href = '/main';
+    window.location.href = '/main.html';
 }
 
 function consumePendingMailboxNavigation() {
@@ -1745,10 +1774,14 @@ function toggleMute() {
 /* --- Section: Chronicle Data & Login Engine --- */
 
 /** Shown on the Age Portal (metrics strip, header) and in release notes. */
-const PORTAL_ALPHA_VERSION = 'Alpha 0.1.13';
+const PORTAL_ALPHA_VERSION = 'Alpha 0.1.14';
 
 /* --- Block 2: The Chronicle Archives (Full Data Set) --- */
 const CHRONICLE_DATA = {
+    alpha_0114: {
+        title: "Alpha 0.1.14 — Aesthene Onboarding & Age Map",
+        details: "Royal Armies Alpha 0.1.14 locks starting-location onboarding to Aesthene in Crescent Ridge while we finish nation border art, and saves your pledge on the server before you continue.\n\nWhat's new: the region and nation picker now shows only Crescent Ridge and Aesthene — the first nation with finalized map borders; confirming your nation writes gameNation to your commander ledger through NEXUS and seeds your Age movement record at the capital; move points regenerate on UTC half-hour ticks aligned to the universal game clock (:00 and :30); the Age world map keeps your location pin centered on your city at every zoom level, with highlights and clicks working through the pin; titles and headers across the portal use the Royal Family display typeface.\n\nMore nations and regions will reopen as their borders are ready. Thank you for helping us shape Royal Armies."
+    },
     alpha_0113: {
         title: "Alpha 0.1.13 — Royalty, Lore & Portal Polish",
         details: "Royal Armies Alpha 0.1.13 polishes the Age Portal with clearer membership pages, a reworked Lore codex, profile medals, and quality-of-life fixes across desktop and mobile.\n\nWhat's new: the Royalty page now shows Standard and Premium plans with artwork and short perk lists for free and Royalty commanders; The Chronicles uses familiar Battle Pass wording with separate Free Pass and Premium Pass reward lanes; the Lore tab on desktop displays all fifteen nations in a 4×4 codex grid beside a wider story reader; commander profiles include a Medals section above Achievements, ready for honors you earn in Ages; desktop players see a custom gauntlet cursor without the default hand overlapping buttons and links; text sitting on the background artwork is easier to read across the hub; mobile messaging no longer pushes the recipient list down when you open a nation category; guests browsing on desktop see centered navigation tabs; the browser tab title now shows the full Royal Armies name.\n\nThe full battle client is still in development. Thank you for helping us shape Royal Armies."
@@ -1828,7 +1861,7 @@ function redirectToAgePortal() {
         window.location.assign(resolveActiveAgeHandoffUrl());
         return;
     }
-    window.location.assign('/main');
+    window.location.assign('/main.html');
 }
 
 async function handleLogin() {
@@ -1941,20 +1974,42 @@ async function handleLogin() {
         }
 
         const ledgerUsername = payload.username || userVal;
-        persistPortalAuth(ledgerUsername, payload.rememberMe !== false && rememberMe);
-        if (typeof player !== 'undefined') player.name = ledgerUsername;
-        refreshProfileCommanderNameDisplay();
-        refreshLoggedUserTagDisplay();
-        if (typeof stashPendingAchievementUnlocks === 'function') {
-            stashPendingAchievementUnlocks(payload.achievementUnlocks);
-        } else if (window.RoyalArmiesAchievements && typeof window.RoyalArmiesAchievements.stashPendingAchievementUnlocks === 'function') {
-            window.RoyalArmiesAchievements.stashPendingAchievementUnlocks(payload.achievementUnlocks);
+
+        const completeLedgerLogin = () => {
+            persistPortalAuth(ledgerUsername, payload.rememberMe !== false && rememberMe);
+            if (typeof player !== 'undefined') player.name = ledgerUsername;
+            refreshProfileCommanderNameDisplay();
+            refreshLoggedUserTagDisplay();
+            if (typeof stashPendingAchievementUnlocks === 'function') {
+                stashPendingAchievementUnlocks(payload.achievementUnlocks);
+            } else if (window.RoyalArmiesAchievements && typeof window.RoyalArmiesAchievements.stashPendingAchievementUnlocks === 'function') {
+                window.RoyalArmiesAchievements.stashPendingAchievementUnlocks(payload.achievementUnlocks);
+            }
+            if (isMainPortalHub()) {
+                finishMainPortalLoginSession(false);
+            } else {
+                initiatePostLoginSequence(false);
+            }
+        };
+
+        if (payload.requiresTermsAcceptance) {
+            persistPortalAuth(ledgerUsername, payload.rememberMe !== false && rememberMe);
+            if (typeof player !== 'undefined') player.name = ledgerUsername;
+            if (typeof promptReturningUserTermsAcceptance === 'function') {
+                promptReturningUserTermsAcceptance(() => {
+                    completeLedgerLogin();
+                });
+            } else {
+                await showPortalAlert(
+                    'You must accept the Terms of Service and Privacy Policy before continuing.',
+                    'Terms required'
+                );
+                restoreLoginAuthButtons();
+            }
+            return;
         }
-        if (isMainPortalHub()) {
-            finishMainPortalLoginSession(false);
-        } else {
-            initiatePostLoginSequence(false);
-        }
+
+        completeLedgerLogin();
     } catch (err) {
         console.error('NEXUS login link error:', err);
         await showPortalAlert('Cannot reach the Royal Armies server. Run node server.js locally (or use the live site) and try again.', 'Connection error');
@@ -2085,6 +2140,9 @@ function handleRegister() {
         modal.setAttribute('aria-hidden', 'false');
         setTimeout(() => { modal.style.opacity = '1'; }, 10);
     }
+    if (typeof bindRegistrationTermsControls === 'function') {
+        bindRegistrationTermsControls();
+    }
 }
 
 function closeRegister() {
@@ -2162,6 +2220,20 @@ async function submitRegistration() {
         return;
     }
 
+    const termsAccepted = typeof registrationTermsAccepted === 'function'
+        ? registrationTermsAccepted()
+        : Boolean(document.getElementById('reg-terms-accepted')?.checked);
+    if (!termsAccepted) {
+        await showPortalAlert(
+            'You must confirm that you are at least 13 years old and agree to the Terms of Service and Privacy Policy.',
+            'Registration'
+        );
+        if (typeof syncRegistrationTermsSubmitState === 'function') {
+            syncRegistrationTermsSubmitState();
+        }
+        return;
+    }
+
     try {
         const response = await fetch('/register', {
         method: 'POST',
@@ -2169,12 +2241,19 @@ async function submitRegistration() {
             body: JSON.stringify({
                 username: usernameValidation?.username || user.trim(),
                 email: email.trim(),
-                password: pass
+                password: pass,
+                termsAccepted: true,
+                termsVersion: window.RoyalArmiesLegalTermsVersion || '2026-05-28'
             })
         });
         const payload = await response.json().catch(() => ({}));
         if (response.ok) {
             await showPortalAlert(payload.message || 'Registration saved. Check your email to confirm your account.', 'Registration');
+            const termsCheckbox = document.getElementById('reg-terms-accepted');
+            if (termsCheckbox) termsCheckbox.checked = false;
+            if (typeof syncRegistrationTermsSubmitState === 'function') {
+                syncRegistrationTermsSubmitState();
+            }
             closeRegister();
             return;
         }
@@ -3102,7 +3181,7 @@ function resolveCommanderDeploymentStorageKey(suffix) {
 function resolveActiveAgeHandoffUrl() {
     const tutorial = localStorage.getItem(resolveCommanderDeploymentStorageKey('ageDeploymentTutorialMode')) === 'true';
     const server = localStorage.getItem(resolveCommanderDeploymentStorageKey('ageDeploymentSelectedServerId')) || 'amnek';
-    return `/how-did-you-get-here?tutorial=${tutorial}&joinAge=0&server=${encodeURIComponent(server)}`;
+    return `/how-did-you-get-here.html?tutorial=${tutorial}&joinAge=0&server=${encodeURIComponent(server)}`;
 }
 
 function enforceActiveAgePortalLock() {
@@ -3422,14 +3501,7 @@ function loadLore(type, customMount) {
                                 <div id="avatar-preset-selection-bin" class="profile-avatar-preset-bin" hidden>
                                     <div class="avatar-selection-header">Choose avatar</div>
                                     <div class="avatar-thumbnail-grid">
-                                        <img src="images/avatars/commanderprofile01.png" class="avatar-thumb-lever ${player.avatarUrl === 'images/avatars/commanderprofile01.png' ? 'selected-avatar-border' : ''}" onclick="selectPresetAvatar('images/avatars/commanderprofile01.png')">
-                                        <img src="images/avatars/commanderprofile02.png" class="avatar-thumb-lever ${player.avatarUrl === 'images/avatars/commanderprofile02.png' ? 'selected-avatar-border' : ''}" onclick="selectPresetAvatar('images/avatars/commanderprofile02.png')">
-                                        <img src="images/avatars/commanderprofile03.png" class="avatar-thumb-lever ${player.avatarUrl === 'images/avatars/commanderprofile03.png' ? 'selected-avatar-border' : ''}" onclick="selectPresetAvatar('images/avatars/commanderprofile03.png')">
-                                        <img src="images/avatars/commanderprofile04.png" class="avatar-thumb-lever ${player.avatarUrl === 'images/avatars/commanderprofile04.png' ? 'selected-avatar-border' : ''}" onclick="selectPresetAvatar('images/avatars/commanderprofile04.png')">
-                                        <img src="images/avatars/commanderprofile05.png" class="avatar-thumb-lever ${player.avatarUrl === 'images/avatars/commanderprofile05.png' ? 'selected-avatar-border' : ''}" onclick="selectPresetAvatar('images/avatars/commanderprofile05.png')">
-                                        <img src="images/avatars/commanderprofile06.png" class="avatar-thumb-lever ${player.avatarUrl === 'images/avatars/commanderprofile06.png' ? 'selected-avatar-border' : ''}" onclick="selectPresetAvatar('images/avatars/commanderprofile06.png')">
-                                        <img src="images/avatars/commanderprofile07.png" class="avatar-thumb-lever ${player.avatarUrl === 'images/avatars/commanderprofile07.png' ? 'selected-avatar-border' : ''}" onclick="selectPresetAvatar('images/avatars/commanderprofile07.png')">
-                                        <img src="images/avatars/commanderprofile08.png" class="avatar-thumb-lever ${player.avatarUrl === 'images/avatars/commanderprofile08.png' ? 'selected-avatar-border' : ''}" onclick="selectPresetAvatar('images/avatars/commanderprofile08.png')">
+                                        ${buildAvatarPresetGridMarkup(player.avatarUrl)}
                                     </div>
                                     <button type="button" class="settings-btn mini-btn close-armory-btn" onclick="closeAvatarArmorySelector(event)">Return</button>
                                 </div>

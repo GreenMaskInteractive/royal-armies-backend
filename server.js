@@ -17,6 +17,40 @@ const FileSync = require('lowdb/adapters/FileSync');
 const { sendApiError, sendStoreError, storeErrorHttpStatus } = require('./nexus-response-errors');
 const { validateRegistrationUsername } = require('./public/nexus-account-validation');
 const { listErrorCodes } = require('./nexus-error-codes');
+const {
+    calculateNationTreasuryCaptureReward,
+    getDefaultNationTreasuryRecord,
+    getNationTreasuryRewardRules,
+    normalizeNationTreasuryEventType,
+    normalizeNationTreasuryRecord,
+    normalizePlayersInCityCount,
+    buildNationTreasuryRewardMeta
+} = require('./nexus-nation-treasury');
+const {
+    applyMovePointRegen,
+    spendMovePoint,
+    validateTravel,
+    validateAssault,
+    validateTransfer,
+    resolveCityHolder,
+    resolveCityLoser,
+    resolveDefaultCapitalCityId,
+    normalizeCommanderMovementRecord,
+    getDefaultCommanderMovementRecord,
+    getMovePointRules,
+    buildBorderActionHints,
+    getCatalogCity,
+    resolveCatalogNationKey,
+    resolveDefaultCapitalCityId,
+    TRANSFER_OWNERSHIP_RSD_COST,
+    AGE_ALPHA_DEFAULT_MAP_NATION
+} = require('./nexus-age-movement');
+const {
+    isOnboardingNationAllowed,
+    isOnboardingRegionAllowed,
+    resolveOnboardingNationId,
+    getOnboardingOpenConfig
+} = require('./nexus-onboarding');
 
 /* Block 2: Environment Path Resolution */
 const isProduction = process.env.RENDER === 'true';
@@ -48,7 +82,8 @@ db.defaults({
                 help: [],
                 offtopic: []
             },
-            archive: []
+            archive: [],
+            restrictionsByUser: {}
         },
         gameChat: {
             nextMessageId: 1,
@@ -59,7 +94,15 @@ db.defaults({
                 alliance: []
             },
             archive: []
-        }
+        },
+        gameAge: {
+            activeSlug: 'alpha',
+            startedAt: null,
+            endedAt: null,
+            countryChatClearedAt: null
+        },
+        nationCouncilBoards: {},
+        nationTreasuries: {}
     },
     mailbox: {
         messages: [],
@@ -172,6 +215,13 @@ const COMMUNITY_CHAT_PURGE_EVERY_MS = 15 * 24 * 60 * 60 * 1000;
 const COMMUNITY_CHAT_TEXT_MAX = 1200;
 const COMMUNITY_CHAT_ARCHIVE_MAX = 50000;
 const ROYAL_GUARD_BOT_SENDER = 'Royal Guard Bot';
+const COMMUNITY_CHAT_MUTE_MS = 30 * 60 * 1000;
+const COMMUNITY_CHAT_BAN_MS = 15 * 24 * 60 * 60 * 1000;
+const GAME_CHAT_GLOBAL_COMMUNITY_CHANNEL = 'general';
+
+function isRoyalGuardBotSender(sender) {
+    return String(sender || '').trim().toLowerCase() === ROYAL_GUARD_BOT_SENDER.toLowerCase();
+}
 
 const GAME_CHAT_CHANNEL_IDS = ['system', 'global', 'country', 'alliance'];
 const GAME_CHAT_UI_TABS = new Set(GAME_CHAT_CHANNEL_IDS);
@@ -226,11 +276,99 @@ function normalizeCommunityChatStore(stored) {
 
     const archive = Array.isArray(stored?.archive) ? stored.archive : [];
 
+    const restrictionsByUser = {};
+    const rawRestrictions = stored?.restrictionsByUser;
+    if (rawRestrictions && typeof rawRestrictions === 'object') {
+        Object.keys(rawRestrictions).forEach((usernameKey) => {
+            const row = rawRestrictions[usernameKey];
+            if (!row || typeof row !== 'object') return;
+            const key = String(usernameKey || '').trim().toLowerCase();
+            if (!key) return;
+            restrictionsByUser[key] = {
+                mutedUntil: row.mutedUntil ? String(row.mutedUntil) : null,
+                bannedUntil: row.bannedUntil ? String(row.bannedUntil) : null
+            };
+        });
+    }
+
     return {
         lastPurgeAt: stored?.lastPurgeAt ? String(stored.lastPurgeAt) : null,
         nextMessageId: Math.max(1, parseInt(stored?.nextMessageId, 10) || 1),
         channels,
-        archive: archive.slice(-COMMUNITY_CHAT_ARCHIVE_MAX)
+        archive: archive.slice(-COMMUNITY_CHAT_ARCHIVE_MAX),
+        restrictionsByUser
+    };
+}
+
+function getCommunityChatRestrictionsRow(store, username) {
+    const key = String(username || '').trim().toLowerCase();
+    if (!key) return { mutedUntil: null, bannedUntil: null };
+    const row = store.restrictionsByUser?.[key];
+    if (!row) return { mutedUntil: null, bannedUntil: null };
+    return {
+        mutedUntil: row.mutedUntil ? String(row.mutedUntil) : null,
+        bannedUntil: row.bannedUntil ? String(row.bannedUntil) : null
+    };
+}
+
+function getCommunityChatRestrictionBlock(username, store) {
+    const row = getCommunityChatRestrictionsRow(store, username);
+    const now = Date.now();
+    const bannedMs = Date.parse(row.bannedUntil || '');
+    if (Number.isFinite(bannedMs) && bannedMs > now) {
+        return { errorCode: 'CHAT_USER_BANNED', until: row.bannedUntil };
+    }
+    const mutedMs = Date.parse(row.mutedUntil || '');
+    if (Number.isFinite(mutedMs) && mutedMs > now) {
+        return { errorCode: 'CHAT_USER_MUTED', until: row.mutedUntil };
+    }
+    return null;
+}
+
+function serializeCommunityChatRestrictionsForClient(username, store) {
+    const row = getCommunityChatRestrictionsRow(store, username);
+    const block = getCommunityChatRestrictionBlock(username, store);
+    return {
+        mutedUntil: row.mutedUntil,
+        bannedUntil: row.bannedUntil,
+        active: block
+            ? { type: block.errorCode === 'CHAT_USER_BANNED' ? 'ban' : 'mute', until: block.until }
+            : null
+    };
+}
+
+function applyCommunityChatRestrictionToStore(store, targetUsername, action) {
+    const key = String(targetUsername || '').trim().toLowerCase();
+    if (!key) {
+        return { errorCode: 'CHAT_RESTRICTION_TARGET_REQUIRED' };
+    }
+
+    const now = Date.now();
+    const nextRestrictions = { ...(store.restrictionsByUser || {}) };
+    const row = { ...getCommunityChatRestrictionsRow(store, key) };
+
+    switch (String(action || '').trim().toLowerCase()) {
+        case 'mute':
+            row.mutedUntil = new Date(now + COMMUNITY_CHAT_MUTE_MS).toISOString();
+            break;
+        case 'ban':
+            row.bannedUntil = new Date(now + COMMUNITY_CHAT_BAN_MS).toISOString();
+            break;
+        case 'clear_mute':
+            row.mutedUntil = null;
+            break;
+        case 'clear_ban':
+            row.bannedUntil = null;
+            break;
+        default:
+            return { errorCode: 'CHAT_RESTRICTION_ACTION_INVALID' };
+    }
+
+    nextRestrictions[key] = row;
+    store.restrictionsByUser = nextRestrictions;
+    return {
+        targetUsername: key,
+        restrictions: serializeCommunityChatRestrictionsForClient(key, store)
     };
 }
 
@@ -316,6 +454,13 @@ function flattenCommunityChatActiveMessages(store) {
     return rows;
 }
 
+/** Community messages exposed to in-game Global tab — general channel only. */
+function flattenCommunityChatGeneralChannelMessages(store) {
+    const rows = (store.channels[GAME_CHAT_GLOBAL_COMMUNITY_CHANNEL] || []).slice();
+    rows.sort((a, b) => Date.parse(a.sentAt) - Date.parse(b.sentAt));
+    return rows;
+}
+
 function appendCommunityChatMessageToStore(store, payload) {
     const channel = isCommunityChatChannelId(payload.channel) ? payload.channel : 'general';
     const sender = String(payload.sender || '').trim().slice(0, 80);
@@ -327,14 +472,23 @@ function appendCommunityChatMessageToStore(store, payload) {
 
     const poster = String(payload.posterUsername || payload.username || '').trim().toLowerCase();
     const senderKey = sender.toLowerCase();
-    const isBot = senderKey === ROYAL_GUARD_BOT_SENDER.toLowerCase();
+    const isBot = isRoyalGuardBotSender(sender);
+    const isModerator = isMailboxRecipientRosterAdmin(poster);
+    const isDisciplinaryNotice = payload.disciplinaryNotice === true && isModerator;
 
     if (isBot && payload.systemBot !== true) {
         return { errorCode: 'CHAT_BOT_AUTH_REQUIRED' };
     }
 
-    if (!isBot && poster && poster !== senderKey) {
+    if (!isBot && !isDisciplinaryNotice && poster && poster !== senderKey) {
         return { errorCode: 'CHAT_SENDER_MISMATCH' };
+    }
+
+    if (!isBot && poster) {
+        const restrictionBlock = getCommunityChatRestrictionBlock(poster, store);
+        if (restrictionBlock) {
+            return restrictionBlock;
+        }
     }
 
     const replyTo = normalizeCommunityChatReplyTo(payload.replyTo);
@@ -352,9 +506,9 @@ function appendCommunityChatMessageToStore(store, payload) {
         text,
         time: payload.time,
         sentAt: new Date().toISOString(),
-        visible: payload.visible !== false,
+        visible: isDisciplinaryNotice ? payload.visible === true : payload.visible !== false,
         originalText: payload.originalText || text,
-        recipientAlertOnly: false,
+        recipientAlertOnly: isDisciplinaryNotice && payload.recipientAlertOnly === true,
         replyTo,
         isEdited: false,
         editedAt: null
@@ -458,6 +612,115 @@ function writeGameChatStore(store) {
     return next;
 }
 
+function normalizeOfficialAgeSlug(value) {
+    const slug = String(value || 'alpha').trim().toLowerCase().replace(/[^a-z0-9_-]/g, '');
+    return slug || 'alpha';
+}
+
+function readPortalGameAgeMeta() {
+    const stored = db.get('portal.gameAge').value() || {};
+    return {
+        activeSlug: normalizeOfficialAgeSlug(stored.activeSlug || 'alpha'),
+        startedAt: stored.startedAt ? String(stored.startedAt) : null,
+        endedAt: stored.endedAt ? String(stored.endedAt) : null,
+        countryChatClearedAt: stored.countryChatClearedAt ? String(stored.countryChatClearedAt) : null
+    };
+}
+
+function writePortalGameAgeMeta(meta) {
+    db.set('portal.gameAge', {
+        activeSlug: normalizeOfficialAgeSlug(meta?.activeSlug || 'alpha'),
+        startedAt: meta?.startedAt || null,
+        endedAt: meta?.endedAt || null,
+        countryChatClearedAt: meta?.countryChatClearedAt || null
+    }).write();
+}
+
+function formatOfficialAgeLabel(ageSlug) {
+    const slug = normalizeOfficialAgeSlug(ageSlug);
+    if (slug === 'alpha') return 'Age Alpha';
+    if (/^\d+$/.test(slug)) return `Age ${slug}`;
+    return `Age ${slug.charAt(0).toUpperCase()}${slug.slice(1)}`;
+}
+
+function wipeGameChatCountryChannel(store, archiveReason = 'age_transition') {
+    const removed = store.channels.country.splice(0);
+    removed.forEach((message) => {
+        store.archive.push({
+            ...sanitizeGameChatMessageEntry(message),
+            archivedAt: new Date().toISOString(),
+            archiveReason
+        });
+    });
+
+    if (store.archive.length > GAME_CHAT_ARCHIVE_MAX) {
+        store.archive = store.archive.slice(-GAME_CHAT_ARCHIVE_MAX);
+    }
+
+    return removed.length;
+}
+
+function prepareCountryChatForAgeStart(ageSlug) {
+    const nextSlug = normalizeOfficialAgeSlug(ageSlug);
+    const meta = readPortalGameAgeMeta();
+    let store = readGameChatStore();
+    store = ensureGameChatSeedMessages(store);
+
+    if (meta.activeSlug === nextSlug) {
+        return { wiped: 0, ageSlug: nextSlug, slugChanged: false };
+    }
+
+    const wiped = wipeGameChatCountryChannel(store, 'age_slug_change');
+    appendGameChatSystemEventToStore(
+        store,
+        `Country chat cleared — ${formatOfficialAgeLabel(nextSlug)} has begun.`
+    );
+    writeGameChatStore(store);
+    writePortalGameAgeMeta({
+        activeSlug: nextSlug,
+        startedAt: new Date().toISOString(),
+        endedAt: null,
+        countryChatClearedAt: new Date().toISOString()
+    });
+
+    console.log(`[NEXUS] Country chat wiped for new age (${meta.activeSlug} → ${nextSlug}), removed ${wiped} message(s).`);
+    return { wiped, ageSlug: nextSlug, slugChanged: true };
+}
+
+function finalizeCountryChatForAgeEnd() {
+    let store = readGameChatStore();
+    const pendingCount = (store.channels.country || []).length;
+    const clearedAt = new Date().toISOString();
+    const meta = readPortalGameAgeMeta();
+
+    if (!pendingCount) {
+        writePortalGameAgeMeta({
+            ...meta,
+            endedAt: clearedAt,
+            countryChatClearedAt: meta.countryChatClearedAt || clearedAt
+        });
+        return 0;
+    }
+
+    const wiped = wipeGameChatCountryChannel(store, 'age_ended');
+    appendGameChatSystemEventToStore(store, 'Country chat cleared — the age has ended.');
+    writeGameChatStore(store);
+    writePortalGameAgeMeta({
+        ...meta,
+        endedAt: clearedAt,
+        countryChatClearedAt: clearedAt
+    });
+
+    console.log(`[NEXUS] Country chat wiped at age end, removed ${wiped} message(s).`);
+    return wiped;
+}
+
+function maybeFinalizeCountryChatAfterAgeVacant() {
+    const activeSessions = [...ageSessionByUser.keys()].filter((username) => !isHiddenRegistrationUsername(username));
+    if (activeSessions.length > 0) return 0;
+    return finalizeCountryChatForAgeEnd();
+}
+
 function trimGameChatChannelToCap(store, channelId) {
     const list = store.channels[channelId];
     while (list.length > GAME_CHAT_MAX_PER_CHANNEL) {
@@ -490,6 +753,351 @@ function appendGameChatSystemEventToStore(store, text) {
     store.channels.system.push(entry);
     trimGameChatChannelToCap(store, 'system');
     return { entry };
+}
+
+const COUNCIL_BOARD_STATUS_IDS = [
+    'training-permitted',
+    'light-training-permitted',
+    'stop-training',
+    'enemy-bordering',
+    'sf-time',
+    'rejoin'
+];
+
+const COUNCIL_BOARD_STATUS_LABELS = {
+    'training-permitted': 'Training Permitted',
+    'light-training-permitted': 'Light Training Permitted',
+    'stop-training': 'Stop Training',
+    'enemy-bordering': 'Enemy Bordering',
+    'sf-time': 'SF Time',
+    rejoin: 'Rejoin'
+};
+
+function isCouncilBoardStatusId(statusId) {
+    return COUNCIL_BOARD_STATUS_IDS.includes(statusId);
+}
+
+function getDefaultCouncilBoardState() {
+    return {
+        statusId: 'training-permitted',
+        previousStatusId: null,
+        noticeText: '',
+        nextSfTime: '',
+        expectedPvpTime: '',
+        updatedAt: null,
+        updatedBy: null
+    };
+}
+
+function normalizeCouncilBoardState(raw = {}) {
+    const base = getDefaultCouncilBoardState();
+    const statusId = isCouncilBoardStatusId(raw.statusId) ? raw.statusId : base.statusId;
+    const previousStatusId = isCouncilBoardStatusId(raw.previousStatusId) ? raw.previousStatusId : null;
+
+    return {
+        statusId,
+        previousStatusId,
+        noticeText: String(raw.noticeText || '').replace(/<[^>]*>/g, '').trim().slice(0, 2000),
+        nextSfTime: String(raw.nextSfTime || '').trim().slice(0, 80),
+        expectedPvpTime: String(raw.expectedPvpTime || '').trim().slice(0, 80),
+        updatedAt: raw.updatedAt || null,
+        updatedBy: String(raw.updatedBy || '').trim().slice(0, 80) || null
+    };
+}
+
+function readNationCouncilBoardsMap() {
+    const stored = db.get('portal.nationCouncilBoards').value();
+    return stored && typeof stored === 'object' && !Array.isArray(stored) ? stored : {};
+}
+
+function writeNationCouncilBoardsMap(map) {
+    db.set('portal.nationCouncilBoards', map && typeof map === 'object' ? map : {}).write();
+}
+
+function resolveCouncilBoardNationKey(commander) {
+    const gameNation = String(commander?.gameNation || '').trim();
+    if (gameNation) return gameNation;
+
+    const country = String(commander?.country || '').trim();
+    if (country && country !== '—' && country.toLowerCase() !== 'n/a') {
+        return country;
+    }
+
+    const username = String(commander?.username || '').trim().toLowerCase();
+    if (username) return `staging:${username}`;
+
+    return '';
+}
+
+function getCouncilBoardStorageKey(nationKey) {
+    return String(nationKey || '').trim().toLowerCase();
+}
+
+function readCouncilBoardForNation(nationKey) {
+    const storageKey = getCouncilBoardStorageKey(nationKey);
+    if (!storageKey) return getDefaultCouncilBoardState();
+
+    const boards = readNationCouncilBoardsMap();
+    return normalizeCouncilBoardState(boards[storageKey] || getDefaultCouncilBoardState());
+}
+
+function writeCouncilBoardForNation(nationKey, boardState) {
+    const storageKey = getCouncilBoardStorageKey(nationKey);
+    if (!storageKey) {
+        return { errorCode: 'GAME_NATION_REQUIRED' };
+    }
+
+    const boards = readNationCouncilBoardsMap();
+    boards[storageKey] = normalizeCouncilBoardState(boardState);
+    writeNationCouncilBoardsMap(boards);
+    return { board: boards[storageKey] };
+}
+
+function readNationTreasuriesMap() {
+    const stored = db.get('portal.nationTreasuries').value();
+    return stored && typeof stored === 'object' && !Array.isArray(stored) ? stored : {};
+}
+
+function writeNationTreasuriesMap(map) {
+    db.set('portal.nationTreasuries', map && typeof map === 'object' ? map : {}).write();
+}
+
+function readNationTreasuryForNation(nationKey) {
+    const storageKey = getCouncilBoardStorageKey(nationKey);
+    if (!storageKey) return getDefaultNationTreasuryRecord();
+
+    const treasuries = readNationTreasuriesMap();
+    return normalizeNationTreasuryRecord(treasuries[storageKey] || getDefaultNationTreasuryRecord());
+}
+
+function awardNationTreasuryRsd(nationKey, amount, meta = {}) {
+    const storageKey = getCouncilBoardStorageKey(nationKey);
+    if (!storageKey) {
+        return { errorCode: 'GAME_NATION_REQUIRED' };
+    }
+
+    const grant = Math.max(0, Math.floor(Number(amount) || 0));
+    if (!grant) {
+        return { errorCode: 'NEXUS-GEN-002' };
+    }
+
+    const treasuries = readNationTreasuriesMap();
+    const current = normalizeNationTreasuryRecord(treasuries[storageKey] || getDefaultNationTreasuryRecord());
+    const next = normalizeNationTreasuryRecord({
+        rsd: current.rsd + grant,
+        updatedAt: new Date().toISOString()
+    });
+
+    treasuries[storageKey] = next;
+    writeNationTreasuriesMap(treasuries);
+
+    return {
+        treasury: next,
+        grantedRsd: grant,
+        meta: buildNationTreasuryRewardMeta(meta)
+    };
+}
+
+function awardNationTreasuryForCaptureEvent(nationKey, eventType, playersInCity, details = {}) {
+    const normalizedEvent = normalizeNationTreasuryEventType(eventType);
+    if (!normalizedEvent) {
+        return { errorCode: 'NEXUS-GEN-002' };
+    }
+
+    const players = normalizePlayersInCityCount(playersInCity);
+    const grant = calculateNationTreasuryCaptureReward(players);
+    return awardNationTreasuryRsd(nationKey, grant, {
+        eventType: normalizedEvent,
+        playersInCity: players,
+        cityId: details.cityId,
+        cityName: details.cityName,
+        awardedBy: details.awardedBy
+    });
+}
+
+function debitNationTreasuryRsd(nationKey, amount, meta = {}) {
+    const storageKey = getCouncilBoardStorageKey(nationKey);
+    if (!storageKey) {
+        return { errorCode: 'GAME_NATION_REQUIRED' };
+    }
+
+    const debit = Math.max(0, Math.floor(Number(amount) || 0));
+    if (!debit) {
+        return { errorCode: 'NEXUS-GEN-002' };
+    }
+
+    const treasuries = readNationTreasuriesMap();
+    const current = normalizeNationTreasuryRecord(treasuries[storageKey] || getDefaultNationTreasuryRecord());
+    if (current.rsd < debit) {
+        return { errorCode: 'NEXUS-AGE-004' };
+    }
+
+    const next = normalizeNationTreasuryRecord({
+        rsd: current.rsd - debit,
+        updatedAt: new Date().toISOString()
+    });
+
+    treasuries[storageKey] = next;
+    writeNationTreasuriesMap(treasuries);
+
+    return {
+        treasury: next,
+        debitedRsd: debit,
+        meta: buildNationTreasuryRewardMeta({
+            ...meta,
+            eventType: meta.eventType || 'city-capture'
+        })
+    };
+}
+
+function readAgeMovementStore() {
+    const stored = db.get('portal.ageMovement').value();
+    const base = stored && typeof stored === 'object' && !Array.isArray(stored) ? stored : {};
+    return {
+        commanders: base.commanders && typeof base.commanders === 'object' ? base.commanders : {},
+        cityHolders: base.cityHolders && typeof base.cityHolders === 'object' ? base.cityHolders : {},
+        cityLosers: base.cityLosers && typeof base.cityLosers === 'object' ? base.cityLosers : {}
+    };
+}
+
+function writeAgeMovementStore(store) {
+    db.set('portal.ageMovement', {
+        commanders: store.commanders && typeof store.commanders === 'object' ? store.commanders : {},
+        cityHolders: store.cityHolders && typeof store.cityHolders === 'object' ? store.cityHolders : {},
+        cityLosers: store.cityLosers && typeof store.cityLosers === 'object' ? store.cityLosers : {}
+    }).write();
+}
+
+function resolveCommanderStorageUsername(username) {
+    return String(username || '').trim().toLowerCase();
+}
+
+function resolveNationAllianceId(nationKey) {
+    const needle = getCouncilBoardStorageKey(nationKey);
+    if (!needle) return '';
+
+    const commanders = db.get('commanders').value() || [];
+    for (let index = 0; index < commanders.length; index += 1) {
+        const commander = commanders[index];
+        const commanderNation = getCouncilBoardStorageKey(resolveCouncilBoardNationKey(commander));
+        if (commanderNation !== needle) continue;
+        const allianceId = String(commander.allianceId || '').trim().toLowerCase();
+        if (allianceId) return allianceId;
+    }
+    return '';
+}
+
+function areNationsAllied(nationA, nationB) {
+    const a = getCouncilBoardStorageKey(nationA);
+    const b = getCouncilBoardStorageKey(nationB);
+    if (!a || !b || a === b) return a === b;
+    const allianceA = resolveNationAllianceId(a);
+    const allianceB = resolveNationAllianceId(b);
+    return Boolean(allianceA && allianceB && allianceA === allianceB);
+}
+
+function readCommanderMovementRecord(username, nationKey) {
+    const storageUsername = resolveCommanderStorageUsername(username);
+    const store = readAgeMovementStore();
+    const raw = store.commanders[storageUsername];
+    const normalized = normalizeCommanderMovementRecord(raw, nationKey);
+    const regen = applyMovePointRegen(normalized);
+    return {
+        ...normalized,
+        movePoints: regen.movePoints,
+        lastMovePointRegenAt: regen.lastMovePointRegenAt
+    };
+}
+
+function writeCommanderMovementRecord(username, record) {
+    const storageUsername = resolveCommanderStorageUsername(username);
+    const store = readAgeMovementStore();
+    store.commanders[storageUsername] = record;
+    writeAgeMovementStore(store);
+    return record;
+}
+
+function resolveAlliedNationIds(nationKey) {
+    const allianceId = resolveNationAllianceId(nationKey);
+    if (!allianceId) return [];
+
+    const selfKey = getCouncilBoardStorageKey(nationKey);
+    const allied = new Set();
+    const commanders = db.get('commanders').value() || [];
+
+    commanders.forEach((commander) => {
+        const commanderNation = getCouncilBoardStorageKey(resolveCouncilBoardNationKey(commander));
+        const commanderAlliance = String(commander.allianceId || '').trim().toLowerCase();
+        if (!commanderNation || commanderNation === selfKey) return;
+        if (commanderAlliance && commanderAlliance === allianceId) {
+            allied.add(commanderNation);
+        }
+    });
+
+    return [...allied];
+}
+
+function resolveCommanderMapNationKey(commander) {
+    const gameNation = resolveCatalogNationKey(commander?.gameNation);
+    if (gameNation) return gameNation;
+    const council = resolveCatalogNationKey(resolveCouncilBoardNationKey(commander));
+    if (council) return council;
+    return AGE_ALPHA_DEFAULT_MAP_NATION;
+}
+
+function buildAgeMovementStatePayload(username, commander) {
+    const councilNation = resolveCouncilBoardNationKey(commander);
+    const mapNation = resolveCommanderMapNationKey(commander);
+    const movement = readCommanderMovementRecord(username, mapNation || councilNation);
+    const store = readAgeMovementStore();
+    const rules = getMovePointRules();
+
+    return {
+        gameNation: councilNation,
+        mapNation,
+        catalogCityId: mapNation ? (movement.catalogCityId || resolveDefaultCapitalCityId(mapNation)) : '',
+        movePoints: movement.movePoints,
+        movePointsMax: rules.movePointsMax,
+        lastMovePointRegenAt: movement.lastMovePointRegenAt,
+        cityHolders: store.cityHolders,
+        cityLosers: store.cityLosers,
+        alliedNationIds: mapNation ? resolveAlliedNationIds(mapNation) : [],
+        rules
+    };
+}
+
+function formatCouncilBoardStatusAlert(previousStatusId, nextStatusId, actorUsername) {
+    const previousLabel = COUNCIL_BOARD_STATUS_LABELS[previousStatusId] || 'Unknown';
+    const nextLabel = COUNCIL_BOARD_STATUS_LABELS[nextStatusId] || 'Unknown';
+    const actor = String(actorUsername || '').trim();
+    const actorSuffix = actor ? ` (${actor})` : '';
+    return `Council status: ${previousLabel} → ${nextLabel}${actorSuffix}`;
+}
+
+function appendGameChatNationSystemEventToStore(store, nationKey, text) {
+    const messageText = String(text || '').trim().slice(0, GAME_CHAT_TEXT_MAX);
+    const nation = String(nationKey || '').trim();
+    if (!messageText || !nation) {
+        return { errorCode: 'GAME_NATION_SYSTEM_EVENT_INVALID' };
+    }
+
+    const entry = sanitizeGameChatMessageEntry({
+        id: store.nextMessageId++,
+        channel: 'system',
+        sender: 'Nation Council',
+        text: messageText,
+        sentAt: new Date().toISOString(),
+        source: 'system',
+        nationKey: nation
+    });
+
+    store.channels.system.push(entry);
+    trimGameChatChannelToCap(store, 'system');
+    return { entry };
+}
+
+function canEditNationCouncilBoard(_commander) {
+    return true;
 }
 
 function ensureGameChatSeedMessages(store) {
@@ -569,6 +1177,11 @@ function filterGameChatMessagesForViewer(store, commander) {
             if (channelId === 'alliance') {
                 return allianceKey && String(entry.allianceId || '').trim().toLowerCase() === allianceKey;
             }
+            if (channelId === 'system') {
+                const entryNation = String(entry.nationKey || '').trim().toLowerCase();
+                if (!entryNation) return true;
+                return nationKey && entryNation === nationKey;
+            }
             return true;
         });
     });
@@ -578,6 +1191,43 @@ function filterGameChatMessagesForViewer(store, commander) {
         hasAlliance: !!allianceId,
         gameNation,
         allianceId
+    };
+}
+
+function sliceGameChatRowsAfterSince(rows, sinceIso) {
+    const sinceMs = Date.parse(sinceIso || '');
+    if (!Number.isFinite(sinceMs)) {
+        return Array.isArray(rows) ? rows : [];
+    }
+
+    return (Array.isArray(rows) ? rows : []).filter((entry) => {
+        const sentMs = Date.parse(entry.sentAt || '');
+        return Number.isFinite(sentMs) && sentMs > sinceMs;
+    });
+}
+
+function buildGameChatSyncPayload(filtered, communityMessages, sinceIso) {
+    if (!sinceIso) {
+        return {
+            ...filtered,
+            communityMessages,
+            syncMode: 'full'
+        };
+    }
+
+    const messagesByChannel = {};
+    GAME_CHAT_CHANNEL_IDS.forEach((channelId) => {
+        messagesByChannel[channelId] = sliceGameChatRowsAfterSince(
+            filtered.messagesByChannel[channelId] || [],
+            sinceIso
+        );
+    });
+
+    return {
+        ...filtered,
+        messagesByChannel,
+        communityMessages: sliceGameChatRowsAfterSince(communityMessages, sinceIso),
+        syncMode: 'incremental'
     };
 }
 
@@ -1045,6 +1695,49 @@ function findCommanderByUsernameOrEmail(identifier) {
         const email = normalizeLedgerEmail(entry.email);
         return username === lowerNeedle || email === lowerNeedle;
     }) || null;
+}
+
+const LEGAL_TERMS_VERSION = '2026-05-28';
+
+function getCommanderTermsAcceptedAt(commander) {
+    if (!commander) return null;
+    const at = commander.terms_accepted_at || commander.termsAcceptedAt;
+    return at ? String(at) : null;
+}
+
+function commanderHasAcceptedTerms(commander) {
+    return Boolean(getCommanderTermsAcceptedAt(commander));
+}
+
+function applyTermsAcceptanceToCommander(username, termsVersion) {
+    const normalized = normalizeLedgerUsername(username);
+    if (!normalized) return null;
+
+    const acceptedAt = new Date().toISOString();
+    const version = String(termsVersion || LEGAL_TERMS_VERSION).trim().slice(0, 32) || LEGAL_TERMS_VERSION;
+
+    db.get('commanders')
+        .find({ username: normalized })
+        .assign({
+            termsAccepted: true,
+            termsAcceptedAt: acceptedAt,
+            terms_accepted_at: acceptedAt,
+            termsVersion: version
+        })
+        .write();
+
+    return findCommanderByUsername(normalized);
+}
+
+function assertCommanderAcceptedTermsForJoinAge(commander) {
+    if (!commanderHasAcceptedTerms(commander)) {
+        return {
+            ok: false,
+            code: 'NEXUS-GAME-011',
+            message: 'You must accept the terms before joining this round.'
+        };
+    }
+    return { ok: true };
 }
 
 function findCommanderByUsername(username) {
@@ -1581,27 +2274,47 @@ const PORTAL_HTML_PAGES = {
     main: 'main.html',
     game: 'game.html',
     'how-did-you-get-here': 'how-did-you-get-here.html',
-    'reset-password': 'reset-password.html'
+    'reset-password': 'reset-password.html',
+    terms: 'terms.html'
 };
 
-/* Extensionless portal URLs (before static so the address bar never shows .html) */
-app.get(['/ageportal', '/ageportal.html', '/index.html'], (req, res) => {
-    res.redirect(301, '/main');
+const OFFICIAL_AGE_HTML_PAGES = {
+    agealpha: 'agealpha.html'
+};
+
+/* Canonical .html portal URLs (before static so routes are not shadowed) */
+function redirectWithQuery(req, res, targetPath) {
+    const queryIndex = req.url.indexOf('?');
+    const query = queryIndex >= 0 ? req.url.slice(queryIndex) : '';
+    res.redirect(301, `${targetPath}${query}`);
+}
+
+app.get(['/ageportal', '/ageportal.html', '/index.html', '/', '/index'], (req, res) => {
+    redirectWithQuery(req, res, '/main.html');
 });
 
-app.get(['/main.html', '/game.html', '/how-did-you-get-here.html', '/reset-password.html'], (req, res) => {
-    const slug = req.path.replace(/^\//, '').replace(/\.html$/i, '');
-    res.redirect(301, `/${slug}`);
+app.get(['/legal', '/legal.html'], (req, res) => {
+    redirectWithQuery(req, res, '/terms.html');
 });
 
 Object.entries(PORTAL_HTML_PAGES).forEach(([slug, fileName]) => {
-    app.get(`/${slug}`, (req, res) => {
+    app.get(`/${fileName}`, (req, res) => {
         res.sendFile(path.join(PUBLIC_DIR, fileName));
+    });
+
+    app.get(`/${slug}`, (req, res) => {
+        redirectWithQuery(req, res, `/${fileName}`);
     });
 });
 
-app.get(['/', '/index'], (req, res) => {
-    res.redirect(301, '/main');
+Object.entries(OFFICIAL_AGE_HTML_PAGES).forEach(([slug, fileName]) => {
+    app.get(`/${fileName}`, (req, res) => {
+        res.sendFile(path.join(PUBLIC_DIR, fileName));
+    });
+
+    app.get(`/${slug}`, (req, res) => {
+        redirectWithQuery(req, res, `/${fileName}`);
+    });
 });
 
 /* Block 6b: Portal maintenance alert API (before static so routes are never shadowed) */
@@ -1751,11 +2464,20 @@ app.post('/register', async (req, res) => {
         return sendApiError(res, 'NEXUS-AUTH-007');
     }
 
+    const termsAccepted = req.body?.termsAccepted === true
+        || req.body?.termsAccepted === 'true'
+        || req.body?.agreeToTerms === true
+        || req.body?.agreeToTerms === 'true';
+    if (!termsAccepted) {
+        return sendApiError(res, 'NEXUS-AUTH-015');
+    }
+
     try {
         const saltRounds = 10;
         const hashedPassword = await bcrypt.hash(password, saltRounds);
         const token = crypto.randomBytes(16).toString('hex');
         const joinedAt = new Date().toISOString();
+        const termsVersion = String(req.body?.termsVersion || LEGAL_TERMS_VERSION).trim().slice(0, 32) || LEGAL_TERMS_VERSION;
         console.log(`[NEXUS] Handshake Received: Creating ledger entry for ${username}`);
 
         db.get('commanders').push({ 
@@ -1765,6 +2487,10 @@ app.post('/register', async (req, res) => {
             token,
             verified: false,
             joinedAt,
+            termsAccepted: true,
+            termsAcceptedAt: joinedAt,
+            terms_accepted_at: joinedAt,
+            termsVersion,
             bio: '',
             privacy: 'Public',
             avatarUrl: '',
@@ -1848,12 +2574,16 @@ app.post('/api/login', async (req, res) => {
                 .write();
         }
 
+        const requiresTermsAcceptance = !commanderHasAcceptedTerms(commander);
+
         res.status(200).json({
-            status: 'success',
+            status: requiresTermsAcceptance ? 'terms_required' : 'success',
             username: commander.username,
             verified: !!commander.verified,
             rememberMe,
-            achievementUnlocks
+            requiresTermsAcceptance,
+            termsVersion: LEGAL_TERMS_VERSION,
+            achievementUnlocks: requiresTermsAcceptance ? [] : achievementUnlocks
         });
     } catch (error) {
         console.error('[NEXUS] Login compare failed:', error);
@@ -1866,9 +2596,82 @@ app.get('/api/auth/session', (req, res) => {
     if (!username) {
         return res.json({ authenticated: false });
     }
+    const commander = findCommanderByUsername(username);
+    const termsAcceptedAt = commander ? getCommanderTermsAcceptedAt(commander) : null;
     res.json({
         authenticated: true,
-        username
+        username,
+        requiresTermsAcceptance: commander ? !commanderHasAcceptedTerms(commander) : false,
+        termsAcceptedAt,
+        terms_accepted_at: termsAcceptedAt,
+        termsVersion: LEGAL_TERMS_VERSION
+    });
+});
+
+app.post('/api/portal/account/accept-terms', (req, res) => {
+    const username = String(req.session?.username || '').trim();
+    if (!username) {
+        return sendApiError(res, 'NEXUS-AUTH-001');
+    }
+
+    const agreed = req.body?.termsAccepted === true
+        || req.body?.termsAccepted === 'true'
+        || req.body?.agreeToTerms === true
+        || req.body?.agreeToTerms === 'true';
+    if (!agreed) {
+        return sendApiError(res, 'NEXUS-AUTH-015');
+    }
+
+    const commander = findCommanderByUsername(username);
+    if (!commander) {
+        return sendApiError(res, 'NEXUS-GEN-004');
+    }
+
+    const updated = applyTermsAcceptanceToCommander(
+        commander.username,
+        req.body?.termsVersion
+    );
+
+    const achievementUnlocks = [];
+    const firstTimerResult = ensureFirstTimerAchievementForCommander(updated || commander);
+    if (firstTimerResult.added && firstTimerResult.record) {
+        achievementUnlocks.push(firstTimerResult.record);
+    }
+
+    const acceptedAt = getCommanderTermsAcceptedAt(updated || commander);
+    const successToken = crypto.randomBytes(24).toString('hex');
+
+    res.status(200).json({
+        status: 'success',
+        username: updated?.username || commander.username,
+        termsAcceptedAt: acceptedAt,
+        terms_accepted_at: acceptedAt,
+        termsVersion: updated?.termsVersion || LEGAL_TERMS_VERSION,
+        requiresTermsAcceptance: false,
+        successToken,
+        achievementUnlocks
+    });
+});
+
+app.get('/api/portal/legal/terms-version', (req, res) => {
+    res.json({
+        termsVersion: LEGAL_TERMS_VERSION,
+        termsUrl: '/terms'
+    });
+});
+
+/** Standby — returns 501 until payment processor checkout is wired. */
+app.post('/api/portal/billing/royalty/checkout-session', (req, res) => {
+    const username = String(req.session?.username || '').trim();
+    if (!username) {
+        return sendApiError(res, 'NEXUS-AUTH-001');
+    }
+
+    return res.status(501).json({
+        status: 'standby',
+        checkoutLive: false,
+        message: 'Royalty membership billing is not connected yet.',
+        termsUrl: '/terms'
     });
 });
 
@@ -2206,7 +3009,7 @@ app.get('/verify-email-change', (req, res) => {
             <body style="background:#000;color:#d4af37;font-family:Georgia,serif;text-align:center;padding:80px 20px;">
                 <h1>INVALID OR EXPIRED LINK</h1>
                 <p>This email change link is no longer valid.</p>
-                <a href="/main" style="color:#fff;">Return to portal</a>
+                <a href="/main.html" style="color:#fff;">Return to portal</a>
             </body>`);
     }
 
@@ -2234,7 +3037,7 @@ app.get('/verify-email-change', (req, res) => {
             <body style="background:#000;color:#d4af37;font-family:Georgia,serif;text-align:center;padding:80px 20px;">
                 <h1>EMAIL UNAVAILABLE</h1>
                 <p>That address is already registered to another commander. Request a new change from your profile.</p>
-                <a href="/main" style="color:#fff;">Return to portal</a>
+                <a href="/main.html" style="color:#fff;">Return to portal</a>
             </body>`);
     }
 
@@ -2253,7 +3056,7 @@ app.get('/verify-email-change', (req, res) => {
         <body style="background:#000;color:#d4af37;font-family:Georgia,serif;text-align:center;padding:80px 20px;">
             <h1>EMAIL UPDATED</h1>
             <p>Your account email for <strong>${commander.username}</strong> is now <strong>${newEmail}</strong>.</p>
-            <a href="/main" style="color:#fff;">Return to portal</a>
+            <a href="/main.html" style="color:#fff;">Return to portal</a>
         </body>`);
 });
 
@@ -2642,12 +3445,18 @@ app.get('/api/portal/community-chat', (req, res) => {
         messagesByChannel[channelId] = store.channels[channelId];
     });
 
+    const viewerUsername = resolveLedgerCommanderUsername(req.query?.username || '');
+    const viewerRestrictions = viewerUsername
+        ? serializeCommunityChatRestrictionsForClient(viewerUsername, store)
+        : null;
+
     res.json({
         status: 'ok',
         messages,
         messagesByChannel,
         channelMessages: channel && isCommunityChatChannelId(channel) ? store.channels[channel] : null,
-        retention: getCommunityChatRetentionMeta(store)
+        retention: getCommunityChatRetentionMeta(store),
+        viewerRestrictions
     });
 });
 
@@ -2676,7 +3485,36 @@ app.post('/api/portal/community-chat/messages', (req, res) => {
         message: result.entry,
         channelMessages: result.channelMessages,
         messages: flattenCommunityChatActiveMessages(store),
-        retention: getCommunityChatRetentionMeta(store)
+        retention: getCommunityChatRetentionMeta(store),
+        viewerRestrictions: serializeCommunityChatRestrictionsForClient(posterUsername, store)
+    });
+});
+
+app.post('/api/portal/community-chat/restrictions', (req, res) => {
+    const moderator = resolveLedgerCommanderUsername(req.body?.username || req.body?.moderatorUsername || '');
+    if (!moderator || !isMailboxRecipientRosterAdmin(moderator)) {
+        return sendApiError(res, 'NEXUS-CHAT-009');
+    }
+
+    const targetUsername = resolveLedgerCommanderUsername(req.body?.targetUsername || req.body?.offender || '');
+    if (!targetUsername) {
+        return sendApiError(res, 'NEXUS-GEN-002');
+    }
+
+    let store = readCommunityChatStore();
+    store = maybeRunScheduledCommunityChatPurge(store);
+
+    const result = applyCommunityChatRestrictionToStore(store, targetUsername, req.body?.action);
+    if (result.errorCode || result.error) {
+        return sendStoreError(res, result);
+    }
+
+    store = writeCommunityChatStore(store);
+
+    res.json({
+        status: 'ok',
+        targetUsername: result.targetUsername,
+        restrictions: result.restrictions
     });
 });
 
@@ -2755,14 +3593,20 @@ app.get('/api/portal/game-chat', (req, res) => {
     writeCommunityChatStore(communityStore);
 
     const filtered = filterGameChatMessagesForViewer(gameStore, commander);
+    const since = String(req.query.since || '').trim();
+    const communityMessages = flattenCommunityChatGeneralChannelMessages(communityStore);
+    const syncPayload = buildGameChatSyncPayload(filtered, communityMessages, since);
+    const viewerRestrictions = serializeCommunityChatRestrictionsForClient(username, communityStore);
 
     res.json({
         status: 'ok',
-        messagesByChannel: filtered.messagesByChannel,
-        communityMessages: flattenCommunityChatActiveMessages(communityStore),
-        hasAlliance: filtered.hasAlliance,
-        gameNation: filtered.gameNation,
-        allianceId: filtered.allianceId,
+        messagesByChannel: syncPayload.messagesByChannel,
+        communityMessages: syncPayload.communityMessages,
+        hasAlliance: syncPayload.hasAlliance,
+        gameNation: syncPayload.gameNation,
+        allianceId: syncPayload.allianceId,
+        syncMode: syncPayload.syncMode,
+        viewerRestrictions,
         ui: getGameChatUiFromCommander(commander)
     });
 });
@@ -2778,35 +3622,525 @@ app.post('/api/portal/game-chat/messages', (req, res) => {
         return sendApiError(res, 'NEXUS-GEN-004');
     }
 
+    const requestedChannel = isGameChatChannelId(req.body?.channel) ? String(req.body.channel).trim() : 'global';
+
+    let communityStore = readCommunityChatStore();
+    communityStore = maybeRunScheduledCommunityChatPurge(communityStore);
+
     let store = readGameChatStore();
     store = ensureGameChatSeedMessages(store);
 
-    const result = appendGameChatMessageToStore(store, {
-        ...req.body,
-        posterUsername,
-        sender: posterUsername
-    }, commander);
+    let result;
+    if (requestedChannel === 'global') {
+        result = appendCommunityChatMessageToStore(communityStore, {
+            channel: GAME_CHAT_GLOBAL_COMMUNITY_CHANNEL,
+            sender: posterUsername,
+            text: req.body?.text,
+            posterUsername
+        });
+    } else {
+        result = appendGameChatMessageToStore(store, {
+            ...req.body,
+            posterUsername,
+            sender: posterUsername
+        }, commander);
+    }
 
     if (result.errorCode || result.error) {
         return sendStoreError(res, result);
     }
 
-    store = writeGameChatStore(store);
-    let communityStore = readCommunityChatStore();
-    communityStore = maybeRunScheduledCommunityChatPurge(communityStore);
-    writeCommunityChatStore(communityStore);
+    if (requestedChannel === 'global') {
+        communityStore = writeCommunityChatStore(communityStore);
+    } else {
+        store = writeGameChatStore(store);
+        communityStore = writeCommunityChatStore(communityStore);
+    }
 
     const filtered = filterGameChatMessagesForViewer(store, commander);
+    const communityMessages = flattenCommunityChatGeneralChannelMessages(communityStore);
+    const viewerRestrictions = serializeCommunityChatRestrictionsForClient(posterUsername, communityStore);
 
     res.json({
         status: 'ok',
         message: result.entry,
         messagesByChannel: filtered.messagesByChannel,
-        communityMessages: flattenCommunityChatActiveMessages(communityStore),
+        communityMessages,
         hasAlliance: filtered.hasAlliance,
         gameNation: filtered.gameNation,
         allianceId: filtered.allianceId,
+        syncMode: 'full',
+        viewerRestrictions,
         ui: getGameChatUiFromCommander(commander)
+    });
+});
+
+app.get('/api/portal/age/council-board', (req, res) => {
+    const username = resolveLedgerCommanderUsername(req.query?.username || '');
+    if (!username) {
+        return sendApiError(res, 'NEXUS-GEN-002');
+    }
+
+    const commander = db.get('commanders').find({ username }).value();
+    if (!commander) {
+        return sendApiError(res, 'NEXUS-GEN-004');
+    }
+
+    const gameNation = resolveCouncilBoardNationKey(commander);
+    const board = readCouncilBoardForNation(gameNation);
+
+    res.json({
+        status: 'ok',
+        gameNation,
+        board,
+        canEdit: canEditNationCouncilBoard(commander),
+        statusCatalog: COUNCIL_BOARD_STATUS_IDS.map((id) => ({
+            id,
+            label: COUNCIL_BOARD_STATUS_LABELS[id]
+        }))
+    });
+});
+
+app.patch('/api/portal/age/council-board', (req, res) => {
+    const username = resolveLedgerCommanderUsername(req.body?.username || '');
+    if (!username) {
+        return sendApiError(res, 'NEXUS-GEN-002');
+    }
+
+    const commander = db.get('commanders').find({ username }).value();
+    if (!commander) {
+        return sendApiError(res, 'NEXUS-GEN-004');
+    }
+
+    if (!canEditNationCouncilBoard(commander)) {
+        return sendApiError(res, 'NEXUS-GAME-005');
+    }
+
+    const gameNation = resolveCouncilBoardNationKey(commander);
+    if (!gameNation) {
+        return sendApiError(res, 'GAME_NATION_REQUIRED');
+    }
+
+    const body = req.body || {};
+    const current = readCouncilBoardForNation(gameNation);
+    let nextStatusId = current.statusId;
+    let previousStatusId = current.previousStatusId;
+
+    if (body.revertFromEnemyBordering === true && current.statusId === 'enemy-bordering') {
+        nextStatusId = isCouncilBoardStatusId(current.previousStatusId)
+            ? current.previousStatusId
+            : 'training-permitted';
+        previousStatusId = null;
+    } else if (isCouncilBoardStatusId(body.statusId)) {
+        nextStatusId = body.statusId;
+        if (nextStatusId === 'enemy-bordering' && current.statusId !== 'enemy-bordering') {
+            previousStatusId = current.statusId;
+        } else if (nextStatusId !== 'enemy-bordering') {
+            previousStatusId = null;
+        }
+    }
+
+    const nextBoard = normalizeCouncilBoardState({
+        statusId: nextStatusId,
+        previousStatusId,
+        noticeText: 'noticeText' in body ? body.noticeText : current.noticeText,
+        nextSfTime: 'nextSfTime' in body ? body.nextSfTime : current.nextSfTime,
+        expectedPvpTime: 'expectedPvpTime' in body ? body.expectedPvpTime : current.expectedPvpTime,
+        updatedAt: new Date().toISOString(),
+        updatedBy: username
+    });
+
+    const writeResult = writeCouncilBoardForNation(gameNation, nextBoard);
+    if (writeResult.errorCode) {
+        return sendStoreError(res, writeResult);
+    }
+
+    let systemMessage = null;
+    if (writeResult.board.statusId !== current.statusId) {
+        let store = readGameChatStore();
+        const alertText = formatCouncilBoardStatusAlert(current.statusId, writeResult.board.statusId, username);
+        const eventResult = appendGameChatNationSystemEventToStore(store, gameNation, alertText);
+        if (!eventResult.errorCode && !eventResult.error) {
+            store = writeGameChatStore(store);
+            systemMessage = eventResult.entry;
+        }
+    }
+
+    res.json({
+        status: 'ok',
+        gameNation,
+        board: writeResult.board,
+        statusChanged: writeResult.board.statusId !== current.statusId,
+        systemMessage
+    });
+});
+
+app.get('/api/portal/age/nation-treasury', (req, res) => {
+    const username = resolveLedgerCommanderUsername(req.query?.username || '');
+    if (!username) {
+        return sendApiError(res, 'NEXUS-GEN-002');
+    }
+
+    const commander = db.get('commanders').find({ username }).value();
+    if (!commander) {
+        return sendApiError(res, 'NEXUS-GEN-004');
+    }
+
+    const gameNation = resolveCouncilBoardNationKey(commander);
+    const treasury = readNationTreasuryForNation(gameNation);
+    const rewardRules = getNationTreasuryRewardRules();
+
+    res.json({
+        status: 'ok',
+        gameNation,
+        rsd: treasury.rsd,
+        currency: rewardRules.currency,
+        currencyLabel: rewardRules.currencyLabel,
+        updatedAt: treasury.updatedAt,
+        rewardRules
+    });
+});
+
+app.post('/api/portal/age/nation-treasury/capture-reward', (req, res) => {
+    const requester = resolveLedgerCommanderUsername(req.body?.username || '');
+    if (!requester || !isMailboxRecipientRosterAdmin(requester)) {
+        return sendApiError(res, 'NEXUS-GAME-005');
+    }
+
+    const nationKey = String(req.body?.nationKey || req.body?.gameNation || '').trim();
+    if (!nationKey) {
+        return sendApiError(res, 'GAME_NATION_REQUIRED');
+    }
+
+    const eventType = normalizeNationTreasuryEventType(req.body?.eventType);
+    if (!eventType) {
+        return sendApiError(res, 'NEXUS-GEN-002');
+    }
+
+    const result = awardNationTreasuryForCaptureEvent(
+        nationKey,
+        eventType,
+        req.body?.playersInCity,
+        {
+            cityId: req.body?.cityId,
+            cityName: req.body?.cityName,
+            awardedBy: requester
+        }
+    );
+
+    if (result.errorCode) {
+        return sendStoreError(res, result);
+    }
+
+    res.json({
+        status: 'ok',
+        gameNation: nationKey,
+        grantedRsd: result.grantedRsd,
+        treasury: result.treasury,
+        meta: result.meta,
+        rewardRules: getNationTreasuryRewardRules()
+    });
+});
+
+app.get('/api/portal/game/onboarding-config', (req, res) => {
+    res.json({
+        status: 'ok',
+        config: getOnboardingOpenConfig()
+    });
+});
+
+app.post('/api/portal/game/onboarding-nation', (req, res) => {
+    const username = resolveLedgerCommanderUsername(req.body?.username || '');
+    if (!username) {
+        return sendApiError(res, 'NEXUS-GEN-002');
+    }
+
+    const commander = db.get('commanders').find({ username }).value();
+    if (!commander) {
+        return sendApiError(res, 'NEXUS-GEN-004');
+    }
+
+    const termsGate = assertCommanderAcceptedTermsForJoinAge(commander);
+    if (!termsGate.ok) {
+        return res.status(403).json({
+            status: 'error',
+            code: termsGate.code,
+            message: termsGate.message,
+            requiresTermsAcceptance: true
+        });
+    }
+
+    const regionId = String(req.body?.regionId || '').trim();
+    if (!isOnboardingRegionAllowed(regionId)) {
+        return sendApiError(res, 'NEXUS-GAME-013');
+    }
+
+    const nationId = resolveOnboardingNationId(req.body?.nationId);
+    if (!nationId) {
+        return sendApiError(res, 'NEXUS-GAME-012');
+    }
+
+    const existingNation = resolveCatalogNationKey(commander.gameNation);
+    if (existingNation && existingNation !== nationId) {
+        return sendApiError(res, 'NEXUS-GAME-014');
+    }
+
+    if (!existingNation) {
+        db.get('commanders')
+            .find({ username })
+            .assign({
+                gameNation: nationId,
+                onboardingRegionId: regionId,
+                gameNationSetAt: new Date().toISOString()
+            })
+            .write();
+    }
+
+    const updated = db.get('commanders').find({ username }).value();
+    const movementNation = resolveCommanderMapNationKey(updated);
+    const defaultMovement = getDefaultCommanderMovementRecord(movementNation);
+    const existingMovement = readCommanderMovementRecord(username, movementNation);
+    if (!existingMovement.catalogCityId) {
+        writeCommanderMovementRecord(username, defaultMovement);
+    }
+
+    const dossier = serializeCommanderDossierForClient(updated);
+
+    res.json({
+        status: 'ok',
+        gameNation: nationId,
+        regionId,
+        dossier,
+        movement: buildAgeMovementStatePayload(username, updated)
+    });
+});
+
+app.get('/api/portal/age/movement-state', (req, res) => {
+    const username = resolveLedgerCommanderUsername(req.query?.username || '');
+    if (!username) {
+        return sendApiError(res, 'NEXUS-GEN-002');
+    }
+
+    const commander = db.get('commanders').find({ username }).value();
+    if (!commander) {
+        return sendApiError(res, 'NEXUS-GEN-004');
+    }
+
+    const mapNation = resolveCommanderMapNationKey(commander);
+    const councilNation = resolveCouncilBoardNationKey(commander);
+    const movement = readCommanderMovementRecord(username, mapNation || councilNation);
+    writeCommanderMovementRecord(username, movement);
+
+    res.json({
+        status: 'ok',
+        ...buildAgeMovementStatePayload(username, commander)
+    });
+});
+
+app.post('/api/portal/age/travel', (req, res) => {
+    const username = resolveLedgerCommanderUsername(req.body?.username || '');
+    if (!username) {
+        return sendApiError(res, 'NEXUS-GEN-002');
+    }
+
+    const commander = db.get('commanders').find({ username }).value();
+    if (!commander) {
+        return sendApiError(res, 'NEXUS-GEN-004');
+    }
+
+    const gameNation = resolveCommanderMapNationKey(commander);
+    if (!gameNation) {
+        return sendApiError(res, 'NEXUS-AGE-008');
+    }
+
+    const targetCityId = String(req.body?.targetCityId || '').trim();
+    const movement = readCommanderMovementRecord(username, gameNation);
+    const store = readAgeMovementStore();
+
+    const validation = validateTravel(
+        gameNation,
+        movement.catalogCityId,
+        targetCityId,
+        store.cityHolders
+    );
+    if (validation.errorCode) {
+        return sendApiError(res, validation.errorCode);
+    }
+
+    const spend = spendMovePoint(movement);
+    if (spend.errorCode) {
+        return sendApiError(res, spend.errorCode);
+    }
+
+    const nextRecord = writeCommanderMovementRecord(username, {
+        catalogCityId: targetCityId,
+        movePoints: spend.movePoints,
+        lastMovePointRegenAt: spend.lastMovePointRegenAt
+    });
+
+    res.json({
+        status: 'ok',
+        action: 'travel',
+        ...buildAgeMovementStatePayload(username, commander),
+        catalogCityId: nextRecord.catalogCityId,
+        movePoints: nextRecord.movePoints,
+        lastMovePointRegenAt: nextRecord.lastMovePointRegenAt,
+        targetCityId
+    });
+});
+
+app.post('/api/portal/age/assault', (req, res) => {
+    const username = resolveLedgerCommanderUsername(req.body?.username || '');
+    if (!username) {
+        return sendApiError(res, 'NEXUS-GEN-002');
+    }
+
+    const commander = db.get('commanders').find({ username }).value();
+    if (!commander) {
+        return sendApiError(res, 'NEXUS-GEN-004');
+    }
+
+    const gameNation = resolveCommanderMapNationKey(commander);
+    if (!gameNation) {
+        return sendApiError(res, 'NEXUS-AGE-008');
+    }
+
+    const targetCityId = String(req.body?.targetCityId || '').trim();
+    const movement = readCommanderMovementRecord(username, gameNation);
+    const store = readAgeMovementStore();
+
+    const validation = validateAssault(
+        gameNation,
+        movement.catalogCityId,
+        targetCityId,
+        store.cityHolders,
+        areNationsAllied
+    );
+    if (validation.errorCode) {
+        return sendApiError(res, validation.errorCode);
+    }
+
+    const spend = spendMovePoint(movement);
+    if (spend.errorCode) {
+        return sendApiError(res, spend.errorCode);
+    }
+
+    const targetCity = validation.targetCity;
+    const previousHolder = resolveCityHolder(targetCity, store.cityHolders);
+    store.cityHolders[targetCityId] = getCouncilBoardStorageKey(gameNation);
+    store.cityLosers[targetCityId] = previousHolder;
+
+    const nextRecord = writeCommanderMovementRecord(username, {
+        catalogCityId: targetCityId,
+        movePoints: spend.movePoints,
+        lastMovePointRegenAt: spend.lastMovePointRegenAt
+    });
+    writeAgeMovementStore(store);
+
+    const captureReward = awardNationTreasuryForCaptureEvent(
+        gameNation,
+        'city-capture',
+        normalizePlayersInCityCount(req.body?.playersInCity),
+        {
+            cityId: targetCityId,
+            cityName: targetCity.name,
+            awardedBy: username
+        }
+    );
+
+    res.json({
+        status: 'ok',
+        action: 'assault',
+        catalogCityId: nextRecord.catalogCityId,
+        movePoints: nextRecord.movePoints,
+        movePointsMax: getMovePointRules().movePointsMax,
+        lastMovePointRegenAt: nextRecord.lastMovePointRegenAt,
+        targetCityId,
+        previousHolderNationId: previousHolder,
+        newHolderNationId: getCouncilBoardStorageKey(gameNation),
+        cityHolders: store.cityHolders,
+        cityLosers: store.cityLosers,
+        captureReward: captureReward.errorCode ? null : {
+            grantedRsd: captureReward.grantedRsd,
+            treasury: captureReward.treasury
+        },
+        rules: getMovePointRules()
+    });
+});
+
+app.post('/api/portal/age/transfer-ownership', (req, res) => {
+    const username = resolveLedgerCommanderUsername(req.body?.username || '');
+    if (!username) {
+        return sendApiError(res, 'NEXUS-GEN-002');
+    }
+
+    const commander = db.get('commanders').find({ username }).value();
+    if (!commander) {
+        return sendApiError(res, 'NEXUS-GEN-004');
+    }
+
+    const gameNation = resolveCommanderMapNationKey(commander);
+    if (!gameNation) {
+        return sendApiError(res, 'NEXUS-AGE-008');
+    }
+
+    const targetCityId = String(req.body?.targetCityId || '').trim();
+    const movement = readCommanderMovementRecord(username, gameNation);
+    const store = readAgeMovementStore();
+
+    const validation = validateTransfer(
+        gameNation,
+        movement.catalogCityId,
+        targetCityId,
+        store.cityHolders,
+        areNationsAllied
+    );
+    if (validation.errorCode) {
+        return sendApiError(res, validation.errorCode);
+    }
+
+    const targetCity = validation.targetCity;
+    const allyNationId = validation.allyNationId;
+    const transferCost = validation.transferRsdCost || TRANSFER_OWNERSHIP_RSD_COST;
+
+    const debit = debitNationTreasuryRsd(gameNation, transferCost, {
+        eventType: 'city-capture',
+        cityId: targetCityId,
+        cityName: targetCity.name,
+        awardedBy: username
+    });
+    if (debit.errorCode) {
+        return sendApiError(res, debit.errorCode);
+    }
+
+    const credit = awardNationTreasuryRsd(allyNationId, transferCost, {
+        eventType: 'city-capture',
+        cityId: targetCityId,
+        cityName: targetCity.name,
+        awardedBy: username
+    });
+    if (credit.errorCode) {
+        return sendApiError(res, credit.errorCode);
+    }
+
+    const previousHolder = resolveCityHolder(targetCity, store.cityHolders);
+    store.cityHolders[targetCityId] = getCouncilBoardStorageKey(gameNation);
+    store.cityLosers[targetCityId] = previousHolder;
+    writeAgeMovementStore(store);
+
+    res.json({
+        status: 'ok',
+        action: 'transfer-ownership',
+        targetCityId,
+        previousHolderNationId: previousHolder,
+        newHolderNationId: getCouncilBoardStorageKey(gameNation),
+        transferRsdCost: transferCost,
+        allyNationId,
+        payerTreasury: debit.treasury,
+        allyTreasury: credit.treasury,
+        cityHolders: store.cityHolders,
+        cityLosers: store.cityLosers,
+        rules: getMovePointRules()
     });
 });
 
@@ -2892,14 +4226,40 @@ app.post('/api/portal/presence/leave', (req, res) => {
 });
 
 app.post('/api/portal/age/join', (req, res) => {
-    const username = String(req.body?.username || '').trim();
+    const sessionUsername = String(req.session?.username || '').trim();
+    const bodyUsername = String(req.body?.username || '').trim();
+    const username = resolvePortalAccountUsername(bodyUsername || sessionUsername, req);
     if (!username) {
         return sendApiError(res, 'NEXUS-GEN-002');
     }
 
+    if (sessionUsername && bodyUsername && bodyUsername.toLowerCase() !== sessionUsername.toLowerCase()) {
+        return sendApiError(res, 'NEXUS-AUTH-011');
+    }
+
+    const commander = findCommanderByUsername(username);
+    if (!commander) {
+        return sendApiError(res, 'NEXUS-GEN-004');
+    }
+
+    const termsGate = assertCommanderAcceptedTermsForJoinAge(commander);
+    if (!termsGate.ok) {
+        return sendApiError(res, termsGate.code, {
+            message: termsGate.message
+        });
+    }
+
+    const ageSlug = normalizeOfficialAgeSlug(req.body?.ageSlug || readPortalGameAgeMeta().activeSlug);
+    const ageChatReset = prepareCountryChatForAgeStart(ageSlug);
+
     touchPortalBrowseSession(username);
     touchAgeSession(username, { markOnline: true });
-    res.json({ status: 'ok', ...getPortalLiveMetricsPayload() });
+    res.json({
+        status: 'ok',
+        ageSlug,
+        countryChatWiped: ageChatReset.wiped,
+        ...getPortalLiveMetricsPayload()
+    });
 });
 
 app.post('/api/portal/age/leave', (req, res) => {
@@ -2909,7 +4269,12 @@ app.post('/api/portal/age/leave', (req, res) => {
     }
 
     removeAgeSession(username);
-    res.json({ status: 'ok', ...getPortalLiveMetricsPayload() });
+    const countryChatWiped = maybeFinalizeCountryChatAfterAgeVacant();
+    res.json({
+        status: 'ok',
+        countryChatWiped,
+        ...getPortalLiveMetricsPayload()
+    });
 });
 
 /* ==========================================

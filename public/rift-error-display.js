@@ -38,13 +38,42 @@
         };
     }
 
+    function shouldAppendErrorCodeFooter() {
+        if (typeof global.shouldShowRiftErrorCodes === 'function') {
+            return global.shouldShowRiftErrorCodes();
+        }
+        if (typeof global.isLocalDevelopmentHost === 'function') {
+            return !global.isLocalDevelopmentHost();
+        }
+        return true;
+    }
+
     function formatRiftErrorText(payload) {
         const normalized = normalizeErrorPayload(payload);
+        if (!shouldAppendErrorCodeFooter()) {
+            return normalized.message;
+        }
         return `${normalized.message}\n\nError code: ${normalized.code}`;
+    }
+
+    function shouldSuppressRiftErrorPopup() {
+        if (typeof global.shouldSuppressLocalDevErrorPopups === 'function') {
+            return global.shouldSuppressLocalDevErrorPopups();
+        }
+        if (typeof global.isLocalDevelopmentHost === 'function') {
+            return global.isLocalDevelopmentHost();
+        }
+        return false;
     }
 
     async function showRiftError(input, fallbackTitle) {
         const normalized = normalizeErrorPayload(input, fallbackTitle);
+
+        if (shouldSuppressRiftErrorPopup()) {
+            console.warn('[RIFT — local dev] Error popup suppressed:', normalized.title, normalized.message, normalized.code);
+            return normalized;
+        }
+
         const body = formatRiftErrorText(normalized);
 
         if (typeof global.showPortalAlert === 'function') {

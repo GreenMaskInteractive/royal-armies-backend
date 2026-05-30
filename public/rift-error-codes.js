@@ -150,6 +150,18 @@
             message: 'Username may only use letters and numbers, with at most one period (.), one underscore (_), and one dash (-).',
             category: 'auth'
         },
+        'NEXUS-AUTH-015': {
+            http: 400,
+            title: 'Registration failed',
+            message: 'You must confirm that you are at least 13 years old and agree to the Terms of Service and Privacy Policy.',
+            category: 'auth'
+        },
+        'NEXUS-AUTH-016': {
+            http: 403,
+            title: 'Terms required',
+            message: 'You must accept the Terms of Service and Privacy Policy before continuing.',
+            category: 'auth'
+        },
 
         /* --- Account / profile --- */
         'NEXUS-ACCT-001': {
@@ -330,6 +342,18 @@
             message: 'Owner access required for chat archives.',
             category: 'community-chat'
         },
+        'NEXUS-CHAT-010': {
+            http: 403,
+            title: 'Community chat',
+            message: 'You are banned from chat because of repeated rule violations.',
+            category: 'community-chat'
+        },
+        'NEXUS-CHAT-011': {
+            http: 403,
+            title: 'Community chat',
+            message: 'You are temporarily muted from chat.',
+            category: 'community-chat'
+        },
 
         /* --- In-game chat & session --- */
         'NEXUS-GAME-001': {
@@ -392,6 +416,91 @@
             message: 'Could not save chat panel settings.',
             category: 'game'
         },
+        'NEXUS-GAME-011': {
+            http: 403,
+            title: 'Terms required',
+            message: 'You must accept the terms before joining this round.',
+            category: 'game'
+        },
+        'NEXUS-GAME-012': {
+            http: 400,
+            title: 'Starting nation',
+            message: 'That nation is not open for onboarding during this alpha.',
+            category: 'game'
+        },
+        'NEXUS-GAME-013': {
+            http: 400,
+            title: 'Starting region',
+            message: 'That region is not open for onboarding during this alpha.',
+            category: 'game'
+        },
+        'NEXUS-GAME-014': {
+            http: 409,
+            title: 'Starting nation',
+            message: 'You have already pledged to a nation for this Age.',
+            category: 'game'
+        },
+
+        'NEXUS-AGE-001': {
+            http: 400,
+            title: 'Move points',
+            message: 'No move points remaining. Regain 1 at each game-clock half-hour tick (:00 and :30 UTC, max 3).',
+            category: 'game'
+        },
+        'NEXUS-AGE-002': {
+            http: 400,
+            title: 'Movement',
+            message: 'That city does not border your current position.',
+            category: 'game'
+        },
+        'NEXUS-AGE-003': {
+            http: 400,
+            title: 'Movement',
+            message: 'Unknown city or invalid movement target.',
+            category: 'game'
+        },
+        'NEXUS-AGE-004': {
+            http: 400,
+            title: 'Nation Treasury',
+            message: 'Insufficient Royal Silver Dollars in your nation treasury.',
+            category: 'game'
+        },
+        'NEXUS-AGE-005': {
+            http: 400,
+            title: 'Assault',
+            message: 'You cannot assault an allied city.',
+            category: 'game'
+        },
+        'NEXUS-AGE-006': {
+            http: 400,
+            title: 'Travel',
+            message: 'You can only travel to cities owned by your nation.',
+            category: 'game'
+        },
+        'NEXUS-AGE-007': {
+            http: 400,
+            title: 'Transfer',
+            message: 'Ownership can only be transferred from a bordering allied city.',
+            category: 'game'
+        },
+        'NEXUS-AGE-008': {
+            http: 400,
+            title: 'Movement',
+            message: 'Nation assignment required before moving on the map.',
+            category: 'game'
+        },
+        'NEXUS-AGE-009': {
+            http: 400,
+            title: 'Movement',
+            message: 'You are already in that city.',
+            category: 'game'
+        },
+        'NEXUS-AGE-010': {
+            http: 400,
+            title: 'Assault',
+            message: 'You already hold that city.',
+            category: 'game'
+        },
 
         /* --- Client-only network --- */
         'RIFT-NET-001': {
@@ -430,6 +539,8 @@
         CHAT_EMPTY_MESSAGE: 'NEXUS-CHAT-006',
         CHAT_EDIT_OWN_ONLY: 'NEXUS-CHAT-007',
         CHAT_MESSAGE_NOT_FOUND: 'NEXUS-CHAT-008',
+        CHAT_USER_BANNED: 'NEXUS-CHAT-010',
+        CHAT_USER_MUTED: 'NEXUS-CHAT-011',
         GAME_SYSTEM_TEXT_REQUIRED: 'NEXUS-GAME-001',
         GAME_SYSTEM_READ_ONLY: 'NEXUS-GAME-002',
         GAME_NATION_REQUIRED: 'NEXUS-GAME-003',

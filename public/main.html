@@ -14,9 +14,9 @@
 
     <!-- Block 2: Page Title & Stylesheet Bridge -->
     <title>Royal Armies - An MMOHFT Medieval-Fantasy Strategy Game</title>
-    <link rel="stylesheet" href="style.css?v=mailbox-read-popup-wide-2">
-    <link rel="stylesheet" href="style2.css?v=membership-nametag-tab-9">
-    <link rel="stylesheet" href="mobile-responsive.css?v=nav-commander-identity-inline-2">
+    <link rel="stylesheet" href="style.css?v=royal-family-titles-1">
+    <link rel="stylesheet" href="style2.css?v=royal-family-titles-1">
+    <link rel="stylesheet" href="mobile-responsive.css?v=royal-family-titles-1">
     <link rel="stylesheet" href="dev-page-navigator.css">
     <link rel="stylesheet" href="custom-cursor.css?v=scrollbar-cursor-2">
 </head>
@@ -29,8 +29,9 @@
         if (!username) return;
         var tutorial = localStorage.getItem('royalArmies_' + username + '_ageDeploymentTutorialMode') === 'true';
         var server = localStorage.getItem('royalArmies_' + username + '_ageDeploymentSelectedServerId') || 'amnek';
-        var destination = '/how-did-you-get-here?tutorial=' + tutorial + '&joinAge=0&server=' + encodeURIComponent(server);
-        if (window.location.pathname.replace(/\/$/, '') === '/how-did-you-get-here') return;
+        var destination = '/how-did-you-get-here.html?tutorial=' + tutorial + '&joinAge=0&server=' + encodeURIComponent(server);
+        var pathBase = window.location.pathname.replace(/\/$/, '').replace(/\.html$/i, '');
+        if (pathBase === '/how-did-you-get-here') return;
         window.location.replace(destination);
     } catch (_err) {
         /* ignore */
@@ -49,7 +50,7 @@
     <header class="over-bar-utility-deck portal-brand-header">
         <div class="header-logo-housing-block portal-brand-logo-static" aria-hidden="false">
             <div class="portal-brand-logo-stack">
-                <img src="images/royalarmiestitle.png" alt="Royal Armies Official Title Logo" class="portal-brand-logo-asset">
+                <img src="images/royalarmiestitle.png?v=logo-trim-gimp-1" alt="Royal Armies Official Title Logo" class="portal-brand-logo-asset">
                 <p class="portal-early-access-readout">Early Access</p>
             </div>
         </div>
@@ -134,7 +135,7 @@
                     <div class="portal-mobile-nav-menu-sticky-head">
                         <div class="portal-mobile-nav-brand-row" aria-hidden="false">
                             <div class="portal-brand-logo-stack">
-                                <img src="images/royalarmiestitle.png" alt="Royal Armies" class="portal-mobile-nav-brand-logo">
+                                <img src="images/royalarmiestitle.png?v=logo-trim-gimp-1" alt="Royal Armies" class="portal-mobile-nav-brand-logo">
                             </div>
                         </div>
                         <div id="portal-mobile-nav-media-mount" class="portal-mobile-nav-media-mount" aria-label="Background music player"></div>
@@ -610,8 +611,12 @@
                 <div class="reg-group"><label class="portal-server-panel-label">Email Address*</label><input type="email" id="reg-email" class="reg-input main-portal-auth-field" autocomplete="email"></div>
                 <div class="reg-group"><label class="portal-server-panel-label">Password*</label><input type="password" id="reg-password" class="reg-input main-portal-auth-field" autocomplete="new-password"></div>
                 <div class="reg-group"><label class="portal-server-panel-label">Confirm Password*</label><input type="password" id="reg-confirm" class="reg-input main-portal-auth-field" autocomplete="new-password"></div>
+                <label class="main-portal-terms-row" for="reg-terms-accepted">
+                    <input type="checkbox" id="reg-terms-accepted">
+                    <span>I am at least 13 years old and I agree to the <a href="/terms" target="_blank" rel="noopener noreferrer">Terms of Service and Privacy Policy</a>.</span>
+                </label>
                 <div class="modal-action-btn-row main-portal-auth-btn-row">
-                    <button type="button" class="portal-rejoin-age-btn confirm-btn" onclick="submitRegistration()">Confirm</button>
+                    <button type="button" id="reg-submit-btn" class="portal-rejoin-age-btn confirm-btn" onclick="submitRegistration()" disabled aria-disabled="true">Confirm</button>
                     <button type="button" class="modal-action-btn cancel main-portal-auth-secondary-btn" onclick="closeRegister()">Cancel</button>
                 </div>
             </div>
@@ -639,6 +644,29 @@
                     <button type="button" class="modal-action-btn cancel main-portal-auth-secondary-btn" onclick="closeForgot()">Cancel</button>
                 </div>
             </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="terms-dashboard-gate" class="terms-dashboard-gate" hidden aria-modal="true" aria-labelledby="terms-dashboard-gate-title" aria-hidden="true">
+        <div class="terms-dashboard-gate-scrim" aria-hidden="true"></div>
+        <div class="terms-dashboard-gate-panel portal-deployment-server-panel bordered-modal-panel" role="document">
+            <header class="terms-dashboard-gate-header">
+                <h3 id="terms-dashboard-gate-title" class="terms-dashboard-gate-title">Legal Update: Action Required</h3>
+            </header>
+            <div class="terms-dashboard-gate-body">
+                <p class="terms-dashboard-gate-lead">
+                    We have updated our Terms of Service &amp; Privacy Policy to better protect your account, your data, and the Royal Armies virtual economy. You must review and accept these updates before joining the next Age.
+                </p>
+                <label class="main-portal-terms-row terms-dashboard-gate-checkbox" for="terms-dashboard-accepted">
+                    <input type="checkbox" id="terms-dashboard-accepted">
+                    <span>I am at least 13 years old and I explicitly agree to the updated <a href="/terms" target="_blank" rel="noopener noreferrer">Terms of Service &amp; Privacy Policy</a>.</span>
+                </label>
+                <p id="terms-dashboard-feedback" class="terms-dashboard-feedback" hidden role="alert"></p>
+                <div class="terms-dashboard-gate-actions modal-action-btn-row">
+                    <button type="button" id="terms-dashboard-confirm-btn" class="portal-rejoin-age-btn confirm-btn" disabled aria-disabled="true">Confirm &amp; Play</button>
+                    <button type="button" id="terms-dashboard-logout-btn" class="modal-action-btn cancel main-portal-auth-secondary-btn">Log Out</button>
+                </div>
             </div>
         </div>
     </div>
@@ -671,16 +699,18 @@
     <script src="commander-dossier-sync.js?v=deployment-deck-refresh-1"></script>
     <script src="portal-commander-identity-menu.js?v=avatar-name-menu-trigger-1"></script>
     <script src="achievement-system.js?v=first-timer-icon-png-1"></script>
-    <script src="dev-page-navigator.js?v=dev-tools-fix-1"></script>
+    <script src="dev-page-navigator.js?v=dev-nav-drag-fix-1"></script>
     <script src="nexus-account-validation.js?v=registration-username-rules-1"></script>
-    <script src="rift-error-codes.js?v=registration-username-rules-1"></script>
-    <script src="portal-alerts.js?v=nexus-rift-acronyms-1"></script>
-    <script src="rift-error-display.js?v=nexus-rift-acronyms-1"></script>
+    <script src="rift-error-codes.js?v=legal-terms-compliance-1"></script>
+    <script src="terms-acceptance.js?v=terms-dashboard-gate-1"></script>
+    <script src="royalty-billing.js?v=legal-terms-compliance-1"></script>
+    <script src="portal-alerts.js?v=local-silent-error-popups-1"></script>
+    <script src="rift-error-display.js?v=local-silent-error-popups-1"></script>
     <script src="rank-data.js"></script>
-    <script src="script.js?v=registration-username-rules-1"></script>
-    <script src="commander-hub.js?v=owner-tag-profile-only-1"></script>
+    <script src="script.js?v=alpha-0114-devlog-1"></script>
+    <script src="commander-hub.js?v=royalty-badge-profile-name-1"></script>
     <script src="maintenance-alert.js?v=maintenance-always-on-1"></script>
-    <script src="script2.js?v=owner-tag-profile-only-1"></script>
+    <script src="script2.js?v=alpha-0114-devlog-1"></script>
     <script src="custom-cursor.js?v=scrollbar-cursor-2"></script>
 
 </body>

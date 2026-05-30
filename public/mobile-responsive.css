@@ -853,6 +853,66 @@ body {
         display: block !important;
     }
 
+    #game-page-canvas .portal-nav-commander-identity-row.portal-desktop-nav-only {
+        display: none !important;
+    }
+
+    #game-page-canvas .game-page-mobile-commander-clip {
+        display: block !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        margin: 10px 0 8px 0 !important;
+        position: relative !important;
+        z-index: 100000 !important;
+    }
+
+    #game-page-canvas .game-page-mobile-commander-block {
+        width: 100% !important;
+    }
+
+    #game-page-canvas .game-onboarding-progress {
+        max-width: 100% !important;
+        padding-left: max(10px, env(safe-area-inset-left)) !important;
+        padding-right: max(10px, env(safe-area-inset-right)) !important;
+    }
+
+    #game-page-canvas .game-onboarding-progress-track {
+        padding: 14px 10px 12px !important;
+    }
+
+    #game-page-canvas .game-onboarding-step-label {
+        font-size: 0.52rem !important;
+        letter-spacing: 0.06em !important;
+    }
+
+    #game-page-canvas .game-onboarding-step-marker {
+        width: 28px !important;
+        height: 28px !important;
+        font-size: 0.68rem !important;
+    }
+
+    #game-page-canvas .game-onboarding-progress-track::before,
+    #game-page-canvas .game-onboarding-progress-track::after {
+        left: 8% !important;
+        right: 8% !important;
+        top: 24px !important;
+    }
+
+    #game-page-canvas .game-onboarding-progress-track::after {
+        width: calc(84% * (var(--game-onboarding-fill, 0%) / 100)) !important;
+    }
+
+    #game-page-canvas .game-page-class-modal-stage {
+        margin-top: 0 !important;
+    }
+
+    #game-page-canvas,
+    #game-page-canvas.game-page-canvas {
+        height: 100dvh !important;
+        max-height: 100dvh !important;
+        overflow: hidden !important;
+    }
+
     #game-page-canvas .game-page-staging-deck {
         padding: 0 max(12px, env(safe-area-inset-left)) max(0px, env(safe-area-inset-right)) !important;
     }
@@ -2391,7 +2451,7 @@ body {
 
     .staging-deck-master-wrapper {
         padding: 0 40px 40px 40px !important;
-        margin-top: 0 !important;
+        margin-top: -130px !important;
     }
 
     .over-bar-utility-deck {
@@ -2534,6 +2594,7 @@ body {
 }
 
 @media (max-width: 1024px) {
+    #age-page-canvas .game-chat-module:not(.game-chat-module--age-docked):not(.is-resizing),
     #game-page-canvas .game-chat-module:not(.is-resizing) {
         --game-chat-width: min(360px, calc(100vw - 24px));
         max-width: calc(100vw - 24px) !important;
@@ -2543,6 +2604,7 @@ body {
 }
 
 @media (max-width: 640px) {
+    #age-page-canvas .game-chat-module:not(.game-chat-module--age-docked):not(.is-resizing),
     #game-page-canvas .game-chat-module:not(.is-resizing) {
         --game-chat-width: calc(100vw - 20px);
         --game-chat-height: min(42vh, 280px);
@@ -2550,3 +2612,26 @@ body {
     }
 }
 
+/* Royal Family on titles/headers — wins over mobile Cinzel overrides above */
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+th,
+.nav-tab,
+.metric-label-title,
+.card-title-header,
+.modal-alert-header,
+.portal-server-panel-heading,
+.portal-intro-subhead,
+.suicide-popup-header,
+[class*="-title"],
+[class*="-heading"],
+[class*="-eyebrow"],
+[class*="-section-title"],
+[class*="-section-label"],
+[class*="-grid-heading"] {
+    font-family: var(--font-title) !important;
+}

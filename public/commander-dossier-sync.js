@@ -251,6 +251,7 @@
             if (dossier.avatarUrl) global.player.avatarUrl = dossier.avatarUrl;
             if (dossier.country) global.player.country = String(dossier.country);
             if (dossier.timezone) global.player.timezone = String(dossier.timezone);
+            if (dossier.gameNation) global.player.gameNation = String(dossier.gameNation);
             if (Array.isArray(dossier.ageHistory)) global.player.ageHistory = dossier.ageHistory.slice();
             if (Array.isArray(dossier.awards)) {
                 global.player.awards = typeof global.enrichAchievementRecords === 'function'
@@ -328,6 +329,7 @@
             dossier.premiumMember = global.localStorage.getItem(LEGACY_KEYS.premiumMember) === 'true';
             if (global.player.country) dossier.country = String(global.player.country).trim();
             if (global.player.timezone) dossier.timezone = String(global.player.timezone).trim();
+            if (global.player.gameNation) dossier.gameNation = String(global.player.gameNation).trim();
         }
         try {
             const chronicleRaw = global.localStorage.getItem(LEGACY_KEYS.chronicleXp);

@@ -2,22 +2,80 @@
 
 .dev-page-navigator {
     position: fixed !important;
-    bottom: max(12px, env(safe-area-inset-bottom)) !important;
-    left: max(12px, env(safe-area-inset-left)) !important;
     z-index: 2147483640 !important;
     display: flex !important;
     flex-direction: row !important;
     flex-wrap: wrap !important;
-    align-items: flex-end !important;
+    align-items: center !important;
+    justify-content: center !important;
     gap: 8px !important;
     max-width: min(96vw, 640px) !important;
-    padding: 8px 12px !important;
+    padding: 8px 30px 8px 12px !important;
     border-radius: 6px !important;
     border: 1px solid rgba(201, 162, 39, 0.55) !important;
     background: rgba(8, 6, 4, 0.94) !important;
     box-shadow: 0 6px 24px rgba(0, 0, 0, 0.65), 0 0 12px rgba(255, 215, 0, 0.12) !important;
     font-family: 'Segoe UI', Tahoma, sans-serif !important;
     pointer-events: auto !important;
+}
+
+.dev-page-navigator:not(.is-drag-positioned) {
+    left: 50% !important;
+    right: auto !important;
+    bottom: max(12px, env(safe-area-inset-bottom)) !important;
+    top: auto !important;
+    transform: translateX(-50%) !important;
+}
+
+.dev-page-navigator.is-drag-positioned {
+    right: auto !important;
+    bottom: auto !important;
+    transform: none !important;
+}
+
+.dev-page-navigator.is-dragging {
+    user-select: none !important;
+    cursor: grabbing !important;
+    touch-action: none !important;
+}
+
+.dev-page-navigator-move-handle {
+    position: absolute !important;
+    top: 4px !important;
+    right: 4px !important;
+    width: 22px !important;
+    height: 22px !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    border-radius: 3px !important;
+    border: 1px solid rgba(184, 144, 48, 0.5) !important;
+    background: rgba(0, 0, 0, 0.5) !important;
+    color: #ffd978 !important;
+    cursor: grab !important;
+    touch-action: none !important;
+    z-index: 2 !important;
+}
+
+.dev-page-navigator-move-handle:hover {
+    border-color: rgba(255, 215, 0, 0.65) !important;
+    color: #fff3c4 !important;
+    background: rgba(24, 20, 14, 0.88) !important;
+}
+
+.dev-page-navigator-move-icon {
+    display: block !important;
+    pointer-events: none !important;
+}
+
+.dev-page-navigator-drag-handle {
+    cursor: grab !important;
+}
+
+.dev-page-navigator.is-dragging .dev-page-navigator-drag-handle {
+    cursor: grabbing !important;
 }
 
 .dev-page-navigator-label {
@@ -84,12 +142,12 @@
 
 @media (max-width: 480px) {
     .dev-page-navigator {
-        left: 8px !important;
-        right: 8px !important;
         flex-wrap: wrap !important;
+        max-width: calc(100vw - 24px) !important;
     }
 
-    .dev-page-navigator-select {
+    .dev-page-navigator-select,
+    .dev-page-navigator-select--persona {
         width: 100% !important;
         max-width: 100% !important;
     }

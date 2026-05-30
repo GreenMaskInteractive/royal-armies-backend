@@ -5,14 +5,13 @@
     'use strict';
 
     const DEV_NAV_PORTS = new Set(['3000', '5500']);
+    const DEV_NAV_POSITION_STORAGE_KEY = 'royalArmies_devPageNavigatorPosition';
 
     const DEV_SITE_PAGES = [
-        { id: 'index', label: 'Landing (redirect → main)', path: '/main', file: 'index.html' },
-        { id: 'main', label: 'Age Portal', path: '/main', file: 'main.html' },
-        { id: 'game', label: 'Game (WIP shell)', path: '/game', file: 'game.html' },
-        { id: 'how-did-you-get-here', label: 'Join Age placeholder', path: '/how-did-you-get-here', file: 'how-did-you-get-here.html' },
-        { id: 'ageportal', label: 'Age Portal (legacy redirect)', path: '/main', file: 'ageportal.html' },
-        { id: 'reset-password', label: 'Reset Password', path: '/reset-password', file: 'reset-password.html' }
+        { id: 'main', label: 'Age Portal', path: '/main.html', file: 'main.html' },
+        { id: 'game', label: 'Game (progression)', path: '/game.html', file: 'game.html' },
+        { id: 'agealpha', label: 'Age Alpha (live session)', path: '/agealpha.html', file: 'agealpha.html' },
+        { id: 'how-did-you-get-here', label: 'Join Age placeholder', path: '/how-did-you-get-here.html', file: 'how-did-you-get-here.html' }
     ];
 
     function isDevPageNavigatorEnabled() {
@@ -20,7 +19,7 @@
     }
 
     function usesExtensionlessDevUrls() {
-        return String(global.location.port || '') === '3000';
+        return false;
     }
 
     function getPageDirectoryBase() {
@@ -36,26 +35,58 @@
 
     function isDevPortalPersonaPage() {
         const slug = getPathSlug();
-        return slug === 'main' || slug === 'game' || slug === 'how-did-you-get-here' || slug === '';
+        return slug === 'main' || slug === 'game' || slug === 'agealpha' || slug === 'how-did-you-get-here' || slug === '';
     }
 
     function resolveDevPageHref(page) {
-        if (!page) return '/';
-        if (usesExtensionlessDevUrls()) {
-            return page.path || '/main';
-        }
+        if (!page) return '/main.html';
+
         const fileName = page.file || 'main.html';
-        const base = getPageDirectoryBase();
-        if (base.endsWith('/')) {
-            return `${base}${fileName}`;
+        let href = page.path && page.path.startsWith('/')
+            ? page.path
+            : (() => {
+                const base = getPageDirectoryBase();
+                return base.endsWith('/') ? `${base}${fileName}` : `${base}/${fileName}`;
+            })();
+
+        if (page.id === 'game' || fileName === 'game.html') {
+            const url = new URL(href, global.location.href);
+            url.searchParams.set('riftProgressionReset', '1');
+            href = `${url.pathname}${url.search}`;
         }
-        return `${base}/${fileName}`;
+
+        if (page.id === 'agealpha' || fileName === 'agealpha.html') {
+            const url = new URL(href, global.location.href);
+            url.searchParams.set('riftAgeDevBypass', '1');
+            href = `${url.pathname}${url.search}`;
+        }
+
+        return href;
+    }
+
+    function findDevPageFromSelect(select) {
+        if (!select) return null;
+        const selectedOption = select.options[select.selectedIndex];
+        const pageId = selectedOption && selectedOption.getAttribute('data-dev-page-id');
+        if (pageId) {
+            const byId = DEV_SITE_PAGES.find((entry) => entry.id === pageId);
+            if (byId) return byId;
+        }
+
+        const optionPath = String(select.value || '').split('?')[0];
+        return DEV_SITE_PAGES.find((entry) => {
+            const entryPath = entry.path || '';
+            const entryFile = entry.file || '';
+            return entryPath === optionPath
+                || entryFile === optionPath.replace(/^\//, '')
+                || `/${entryFile}` === optionPath;
+        }) || null;
     }
 
     function getCurrentPageId() {
         const slug = getPathSlug();
         const match = DEV_SITE_PAGES.find((page) => {
-            const pageSlug = (page.path || '').replace(/^\//, '').toLowerCase();
+            const pageSlug = (page.path || '').replace(/^\//, '').replace(/\.html$/i, '').toLowerCase();
             const fileSlug = (page.file || '').replace(/\.html$/i, '').toLowerCase();
             return slug === pageSlug || slug === fileSlug;
         });
@@ -66,7 +97,7 @@
         const page = typeof pageRef === 'string'
             ? DEV_SITE_PAGES.find((entry) => entry.file === pageRef || entry.path === pageRef)
             : pageRef;
-        const href = resolveDevPageHref(page || DEV_SITE_PAGES[1]);
+        const href = resolveDevPageHref(page || DEV_SITE_PAGES[0]);
         if (!href) return;
         global.location.assign(href);
     }
@@ -114,8 +145,8 @@
         const currentId = getCurrentPageId();
         const pageOptions = DEV_SITE_PAGES.map((page) => {
             const selected = page.id === currentId ? ' selected' : '';
-            const value = usesExtensionlessDevUrls() ? (page.path || '/main') : (page.file || 'main.html');
-            return `<option value="${value}"${selected}>${page.label}</option>`;
+            const value = usesExtensionlessDevUrls() ? (page.path || '/main.html') : (page.path || page.file || 'main.html');
+            return `<option value="${value}" data-dev-page-id="${page.id}"${selected}>${page.label}</option>`;
         }).join('');
 
         const viewMode = getCurrentDevViewMode();
@@ -142,6 +173,16 @@
 
         return `
             <div id="dev-page-navigator" class="dev-page-navigator" role="navigation" aria-label="Developer page bypass">
+                <button
+                    type="button"
+                    id="dev-page-navigator-move-handle"
+                    class="dev-page-navigator-move-handle dev-page-navigator-drag-handle"
+                    aria-label="Drag dev bypass panel"
+                    title="Drag to move">
+                    <svg class="dev-page-navigator-move-icon" viewBox="0 0 24 24" width="14" height="14" aria-hidden="true" focusable="false">
+                        <path fill="currentColor" d="M10 9h4V6h3l-5-5-5 5h3v3zm-4 4h3v4H6l-5 5 5 5v-3h3v-4H6zm14 0v3h3l-5 5-5-5h3v-4h-4zm-4-9v3h-4V6H6l5-5 5 5h-3z"/>
+                    </svg>
+                </button>
                 <label class="dev-page-navigator-label" for="dev-page-navigator-select">
                     <span class="dev-page-navigator-eyebrow">Dev bypass · :${global.location.port}</span>
                     <select id="dev-page-navigator-select" class="dev-page-navigator-select" title="Jump to another page">
@@ -155,6 +196,173 @@
         `;
     }
 
+    function readSavedDevNavPosition() {
+        try {
+            const raw = global.localStorage.getItem(DEV_NAV_POSITION_STORAGE_KEY);
+            if (!raw) return null;
+            const parsed = JSON.parse(raw);
+            if (typeof parsed.x !== 'number' || typeof parsed.y !== 'number') return null;
+            if (!Number.isFinite(parsed.x) || !Number.isFinite(parsed.y)) return null;
+            return parsed;
+        } catch (_err) {
+            return null;
+        }
+    }
+
+    function saveDevNavPosition(x, y) {
+        try {
+            global.localStorage.setItem(DEV_NAV_POSITION_STORAGE_KEY, JSON.stringify({ x, y }));
+        } catch (_err) {
+            /* ignore */
+        }
+    }
+
+    function clampDevNavPosition(bar, x, y) {
+        const width = bar.offsetWidth || bar.getBoundingClientRect().width;
+        const height = bar.offsetHeight || bar.getBoundingClientRect().height;
+        const maxX = Math.max(0, global.innerWidth - width);
+        const maxY = Math.max(0, global.innerHeight - height);
+        return {
+            x: Math.max(0, Math.min(maxX, Math.round(x))),
+            y: Math.max(0, Math.min(maxY, Math.round(y)))
+        };
+    }
+
+    function applyDevNavPosition(bar, x, y) {
+        const clamped = clampDevNavPosition(bar, x, y);
+        bar.classList.add('is-drag-positioned');
+        bar.style.setProperty('left', `${clamped.x}px`, 'important');
+        bar.style.setProperty('top', `${clamped.y}px`, 'important');
+        bar.style.setProperty('right', 'auto', 'important');
+        bar.style.setProperty('bottom', 'auto', 'important');
+        bar.style.setProperty('transform', 'none', 'important');
+        return clamped;
+    }
+
+    function getDefaultDevNavPosition(bar) {
+        const rect = bar.getBoundingClientRect();
+        const bottomInset = 12;
+        return {
+            x: (global.innerWidth - rect.width) / 2,
+            y: global.innerHeight - rect.height - bottomInset
+        };
+    }
+
+    function initDevNavPosition(bar) {
+        const saved = readSavedDevNavPosition();
+        if (saved) {
+            applyDevNavPosition(bar, saved.x, saved.y);
+            return;
+        }
+
+        global.requestAnimationFrame(() => {
+            const pos = getDefaultDevNavPosition(bar);
+            applyDevNavPosition(bar, pos.x, pos.y);
+        });
+    }
+
+    function isDevNavDragExcludedTarget(target) {
+        return Boolean(target && target.closest('select, input, textarea, option, label'));
+    }
+
+    function bindDevNavDrag(bar) {
+        if (!bar || bar.dataset.devNavDragBound === '1') return;
+        bar.dataset.devNavDragBound = '1';
+
+        let startX = 0;
+        let startY = 0;
+        let originX = 0;
+        let originY = 0;
+        let dragging = false;
+        let activePointerId = null;
+        let captureTarget = null;
+
+        const onPointerMove = (event) => {
+            if (!dragging || event.pointerId !== activePointerId) return;
+            event.preventDefault();
+            const next = applyDevNavPosition(
+                bar,
+                originX + (event.clientX - startX),
+                originY + (event.clientY - startY)
+            );
+            saveDevNavPosition(next.x, next.y);
+        };
+
+        const endDrag = (event) => {
+            if (!dragging) return;
+            if (event && activePointerId !== null && event.pointerId !== activePointerId) return;
+
+            dragging = false;
+            activePointerId = null;
+            bar.classList.remove('is-dragging');
+
+            if (captureTarget && typeof captureTarget.releasePointerCapture === 'function') {
+                try {
+                    if (event && captureTarget.hasPointerCapture(event.pointerId)) {
+                        captureTarget.releasePointerCapture(event.pointerId);
+                    }
+                } catch (_err) {
+                    /* ignore */
+                }
+            }
+            captureTarget = null;
+
+            global.document.removeEventListener('pointermove', onPointerMove);
+            global.document.removeEventListener('pointerup', endDrag);
+            global.document.removeEventListener('pointercancel', endDrag);
+        };
+
+        const startDrag = (event, handleEl) => {
+            if (event.button !== 0) return;
+            if (!handleEl && isDevNavDragExcludedTarget(event.target)) return;
+            if (handleEl && !bar.contains(handleEl)) return;
+
+            event.preventDefault();
+            event.stopPropagation();
+
+            const rect = bar.getBoundingClientRect();
+            originX = rect.left;
+            originY = rect.top;
+            startX = event.clientX;
+            startY = event.clientY;
+            dragging = true;
+            activePointerId = event.pointerId;
+            bar.classList.add('is-dragging');
+            applyDevNavPosition(bar, originX, originY);
+
+            captureTarget = handleEl || bar;
+            if (captureTarget && typeof captureTarget.setPointerCapture === 'function') {
+                captureTarget.setPointerCapture(event.pointerId);
+            }
+
+            global.document.addEventListener('pointermove', onPointerMove, { passive: false });
+            global.document.addEventListener('pointerup', endDrag);
+            global.document.addEventListener('pointercancel', endDrag);
+        };
+
+        const moveHandle = bar.querySelector('#dev-page-navigator-move-handle');
+        if (moveHandle) {
+            moveHandle.addEventListener('pointerdown', (event) => {
+                startDrag(event, moveHandle);
+            });
+        }
+
+        bar.addEventListener('pointerdown', (event) => {
+            if (event.target.closest('#dev-page-navigator-move-handle')) return;
+            if (event.target.closest('.dev-page-navigator-go, .dev-page-navigator-select, #dev-portal-persona-select')) {
+                return;
+            }
+            startDrag(event, null);
+        });
+
+        global.addEventListener('resize', () => {
+            if (!bar.classList.contains('is-drag-positioned')) return;
+            const rect = bar.getBoundingClientRect();
+            const next = applyDevNavPosition(bar, rect.left, rect.top);
+            saveDevNavPosition(next.x, next.y);
+        });
+    }
+
     function mountDevPageNavigator() {
         if (!isDevPageNavigatorEnabled() || global.document.getElementById('dev-page-navigator')) {
             return;
@@ -166,6 +374,8 @@
         if (!bar) return;
 
         global.document.body.appendChild(bar);
+        initDevNavPosition(bar);
+        bindDevNavDrag(bar);
 
         const select = global.document.getElementById('dev-page-navigator-select');
         const goBtn = global.document.getElementById('dev-page-navigator-go');
@@ -173,13 +383,13 @@
 
         if (select) {
             select.addEventListener('change', () => {
-                global.location.assign(select.value);
+                navigateToDevPage(findDevPageFromSelect(select) || select.value);
             });
         }
 
         if (goBtn && select) {
             goBtn.addEventListener('click', () => {
-                global.location.assign(select.value);
+                navigateToDevPage(findDevPageFromSelect(select) || select.value);
             });
         }
 

@@ -426,6 +426,15 @@ function rejoinSelectedAgeServer(clickEvent) {
     }
 
     if (portalAgeRejoinTransitionActive) return;
+
+    ensurePortalTermsComplianceBeforeJoinAge().then((termsOk) => {
+        if (!termsOk) return;
+        rejoinSelectedAgeServerAfterTermsCheck(clickEvent);
+    });
+}
+
+function rejoinSelectedAgeServerAfterTermsCheck(clickEvent) {
+    if (portalAgeRejoinTransitionActive) return;
     portalAgeRejoinTransitionActive = true;
 
     const select = document.getElementById('portal-active-server-select');
@@ -439,17 +448,23 @@ function rejoinSelectedAgeServer(clickEvent) {
         beginCommanderAgeResetSession();
     }
 
-    const destination = `/how-did-you-get-here?tutorial=${isTutorialModeActive}&joinAge=0&server=${encodeURIComponent(serverId)}`;
+    const destination = `/how-did-you-get-here.html?tutorial=${isTutorialModeActive}&joinAge=0&server=${encodeURIComponent(serverId)}`;
 
-    notifyPortalAgeSessionJoin().finally(() => {
-        localStorage.setItem('savedCommanderInActiveAge', 'true');
-        if (window.RoyalArmiesPageRouteTransition && typeof window.RoyalArmiesPageRouteTransition.navigateTo === 'function') {
-            window.RoyalArmiesPageRouteTransition.navigateTo(destination);
-        } else {
-            window.location.href = destination;
+    verifyPortalAgeJoinAllowed().then((joinAllowed) => {
+        if (!joinAllowed) {
+            portalAgeRejoinTransitionActive = false;
+            return;
         }
-    }).catch(() => {
-        portalAgeRejoinTransitionActive = false;
+        notifyPortalAgeSessionJoin().finally(() => {
+            localStorage.setItem('savedCommanderInActiveAge', 'true');
+            if (window.RoyalArmiesPageRouteTransition && typeof window.RoyalArmiesPageRouteTransition.navigateTo === 'function') {
+                window.RoyalArmiesPageRouteTransition.navigateTo(destination);
+            } else {
+                window.location.href = destination;
+            }
+        }).catch(() => {
+            portalAgeRejoinTransitionActive = false;
+        });
     });
 }
 
@@ -1046,7 +1061,7 @@ function switchMainPortalView(viewName, clickEvent, chatChannelKey) {
 }
 
 /** Release IDs from CHRONICLE_DATA (script.js), newest first — shown in Developer's Log sidebar. */
-const DEVELOPER_LOG_RELEASE_IDS = ['alpha_0113', 'alpha_0112', 'alpha_0111'];
+const DEVELOPER_LOG_RELEASE_IDS = ['alpha_0114', 'alpha_0113', 'alpha_0112', 'alpha_0111'];
 
 function applyPortalAlphaVersionLabels() {
     const label = typeof PORTAL_ALPHA_VERSION !== 'undefined'
@@ -1309,6 +1324,13 @@ const JOIN_AGE_POST_SELECT_DELAY_MS = 400;
 const JOIN_AGE_DEPLOY_PULSE_GROW_MS = 420;
 const JOIN_AGE_DEPLOY_PULSE_SETTLE_MS = 720;
 
+async function ensurePortalTermsComplianceBeforeJoinAge() {
+    if (typeof blockJoinAgeUntilTermsAccepted === 'function') {
+        return blockJoinAgeUntilTermsAccepted();
+    }
+    return true;
+}
+
 function launchGameRoundSector(isTutorialModeActive, clickEvent) {
     if (typeof isPortalUserAuthenticated === 'function' && !isPortalUserAuthenticated()) {
         if (typeof openMainPortalGuestRegister === 'function') {
@@ -1321,6 +1343,15 @@ function launchGameRoundSector(isTutorialModeActive, clickEvent) {
         return;
     }
 
+    if (joinAgePortalTransitionActive) return;
+
+    ensurePortalTermsComplianceBeforeJoinAge().then((termsOk) => {
+        if (!termsOk) return;
+        launchGameRoundSectorAfterTermsCheck(isTutorialModeActive, clickEvent);
+    });
+}
+
+function launchGameRoundSectorAfterTermsCheck(isTutorialModeActive, clickEvent) {
     if (joinAgePortalTransitionActive) return;
     joinAgePortalTransitionActive = true;
 
@@ -1348,8 +1379,13 @@ function launchGameRoundSector(isTutorialModeActive, clickEvent) {
 
     const attemptGamePageHandoff = () => {
         if (!deployPulseFinished || !selectAudioFinished) return;
-        const destination = `/how-did-you-get-here?tutorial=${isTutorialModeActive}&joinAge=1&server=${encodeURIComponent(readCommanderSelectedServerId())}`;
-        window.setTimeout(() => {
+        const destination = `/how-did-you-get-here.html?tutorial=${isTutorialModeActive}&joinAge=1&server=${encodeURIComponent(readCommanderSelectedServerId())}`;
+        verifyPortalAgeJoinAllowed().then((joinAllowed) => {
+            if (!joinAllowed) {
+                joinAgePortalTransitionActive = false;
+                return;
+            }
+            window.setTimeout(() => {
             localStorage.setItem('savedCommanderInActiveAge', 'true');
             markCommanderAgeDeploymentPanelUnlocked(isTutorialModeActive);
             applyPortalDeploymentDeckPresentation();
@@ -1365,7 +1401,8 @@ function launchGameRoundSector(isTutorialModeActive, clickEvent) {
                     window.location.href = destination;
                 }
             });
-        }, JOIN_AGE_POST_SELECT_DELAY_MS);
+            }, JOIN_AGE_POST_SELECT_DELAY_MS);
+        });
     };
 
     if (clickedHousing && !isPortalMobileNavLayout()) {
@@ -1462,7 +1499,7 @@ function executeLogoutRedirect() {
         if (typeof refreshMainPortalAuthChrome === 'function') {
             refreshMainPortalAuthChrome();
         }
-        window.location.replace('/main');
+        window.location.replace('/main.html');
     };
 
     const logoutApi = (typeof resolveRoyalArmiesApiUrl === 'function')
@@ -2132,18 +2169,52 @@ function renderCommunityChatOnlineRoster(targetBin) {
     bin.innerHTML = botCard + humanCards;
 }
 
-async function notifyPortalAgeSessionJoin() {
+async function requestPortalAgeJoin() {
     const username = resolvePortalPresenceUsername();
-    if (!username) return;
+    if (!username) {
+        return { ok: false, payload: { message: 'No commander session.' } };
+    }
+
+    const joinUrl = typeof resolveRoyalArmiesApiUrl === 'function'
+        ? resolveRoyalArmiesApiUrl('/api/portal/age/join')
+        : '/api/portal/age/join';
+    const credentials = typeof canUsePortalAuthSessionApi === 'function' && canUsePortalAuthSessionApi()
+        ? 'include'
+        : 'same-origin';
 
     try {
-        await fetch('/api/portal/age/join', {
+        const response = await fetch(joinUrl, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
+            credentials,
             body: JSON.stringify({ username })
         });
+        const payload = await response.json().catch(() => ({}));
+        return { ok: response.ok, payload, response };
     } catch (err) {
         console.warn('Portal age join sync failed:', err);
+        return { ok: false, payload: { message: 'Connection error.' } };
+    }
+}
+
+async function verifyPortalAgeJoinAllowed() {
+    const result = await requestPortalAgeJoin();
+    if (result.ok) return true;
+
+    if (result.payload?.code === 'NEXUS-GAME-011' || result.payload?.requiresTermsAcceptance) {
+        if (typeof promptReturningUserTermsAcceptance === 'function') {
+            promptReturningUserTermsAcceptance();
+        }
+    } else if (typeof showPortalAlert === 'function' && result.payload?.message) {
+        await showPortalAlert(result.payload.message, 'Cannot join Age');
+    }
+    return false;
+}
+
+async function notifyPortalAgeSessionJoin() {
+    const result = await requestPortalAgeJoin();
+    if (!result.ok) {
+        console.warn('Portal age join blocked:', result.payload?.message || 'request failed');
     }
 }
 
@@ -2765,7 +2836,7 @@ function normalizeCommunityChatLogFromServer(raw) {
         sentAt,
         visible: raw.visible !== false,
         originalText: raw.originalText || raw.text,
-        recipientAlertOnly: false,
+        recipientAlertOnly: raw.recipientAlertOnly === true,
         replyTo: raw.replyTo || null,
         editedAt: raw.editedAt || null,
         isEdited: !!raw.isEdited
@@ -2824,11 +2895,93 @@ function updateCommunityChatRetentionNoticeElement() {
     notice.innerHTML = formatCommunityChatRetentionNoticeInnerHtml();
 }
 
+function syncCommunityChatRestrictionRegistries(viewerRestrictions) {
+    const loggedUser = getLoggedCommunityChatUsername();
+    if (!loggedUser) return;
+
+    const now = Date.now();
+    const bannedMs = Date.parse(viewerRestrictions?.bannedUntil || '');
+    if (Number.isFinite(bannedMs) && bannedMs > now) {
+        userBanExpirationRegistry[loggedUser] = bannedMs;
+    } else {
+        delete userBanExpirationRegistry[loggedUser];
+    }
+
+    const mutedMs = Date.parse(viewerRestrictions?.mutedUntil || '');
+    if (Number.isFinite(mutedMs) && mutedMs > now) {
+        userMuteExpirationRegistry[loggedUser] = mutedMs;
+    } else {
+        delete userMuteExpirationRegistry[loggedUser];
+    }
+}
+
+async function postCommunityChatRestrictionToServer(action, targetUsername) {
+    if (!isCommunityChatApiAvailable()) return false;
+
+    const username = getLoggedCommunityChatUsername();
+    if (!username || !targetUsername) return false;
+
+    try {
+        const response = await fetch('/api/portal/community-chat/restrictions', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                username,
+                targetUsername,
+                action
+            })
+        });
+        const payload = await response.json().catch(() => ({}));
+        if (!response.ok || payload.status !== 'ok') {
+            console.warn('Community chat restriction failed:', payload.message || response.status);
+            return false;
+        }
+        return true;
+    } catch (err) {
+        console.warn('Community chat restriction error:', err);
+        return false;
+    }
+}
+
+async function postCommunityChatDisciplinaryNoticeToServer(noticePayload) {
+    if (!isCommunityChatApiAvailable()) return null;
+
+    const username = getLoggedCommunityChatUsername();
+    if (!username) return null;
+
+    try {
+        const response = await fetch('/api/portal/community-chat/messages', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                username,
+                disciplinaryNotice: true,
+                ...noticePayload
+            })
+        });
+        const payload = await response.json().catch(() => ({}));
+        if (!response.ok || payload.status !== 'ok') {
+            console.warn('Community chat disciplinary notice failed:', payload.message || response.status);
+            return null;
+        }
+
+        mergeServerCommunityChatMessages(payload.messages || [payload.message]);
+        return normalizeCommunityChatLogFromServer(payload.message);
+    } catch (err) {
+        console.warn('Community chat disciplinary notice error:', err);
+        return null;
+    }
+}
+
 async function fetchCommunityChatFromServer() {
     if (!isCommunityChatApiAvailable()) return false;
 
+    const username = getLoggedCommunityChatUsername();
+    const url = new URL('/api/portal/community-chat', window.location.href);
+    if (username) url.searchParams.set('username', username);
+
     try {
-        const response = await fetch('/api/portal/community-chat');
+        const response = await fetch(url.toString());
         if (!response.ok) return false;
 
         const payload = await response.json();
@@ -2836,6 +2989,7 @@ async function fetchCommunityChatFromServer() {
 
         mergeServerCommunityChatMessages(payload.messages);
         communityChatRetentionMeta = payload.retention || communityChatRetentionMeta;
+        syncCommunityChatRestrictionRegistries(payload.viewerRestrictions);
         updateCommunityChatRetentionNoticeElement();
 
         if (activeMainPortalView === 'chat') {
@@ -2902,6 +3056,7 @@ async function postCommunityChatMessageToServer(messagePayload) {
 
         mergeServerCommunityChatMessages(payload.messages || [payload.message]);
         communityChatRetentionMeta = payload.retention || communityChatRetentionMeta;
+        syncCommunityChatRestrictionRegistries(payload.viewerRestrictions);
         updateCommunityChatRetentionNoticeElement();
         return normalizeCommunityChatLogFromServer(payload.message);
     } catch (err) {
@@ -3603,7 +3758,7 @@ async function executeSubmitNewPortalChatMessage() {
 }
 
 /* Block 13: Staff Override Moderation Disciplinary Logic */
-function executeStaffModerationAction(actionType, targetQueueIndex) {
+async function executeStaffModerationAction(actionType, targetQueueIndex) {
     const targetIncident = administrativeBehavioralReviewQueue[targetQueueIndex];
     if (!targetIncident) return;
 
@@ -3644,6 +3799,7 @@ function executeStaffModerationAction(actionType, targetQueueIndex) {
         case 'mute':
             console.log(`MODERATOR ACTION: Muting user: ${offender}`);
             userMuteExpirationRegistry[offender] = Date.now() + (30 * 60 * 1000);
+            await postCommunityChatRestrictionToServer('mute', offender);
             
             // Also trigger adaptive learning if a mute action was executed on a message card
             if (targetIncident.text) executeAutomatedTokenCrestLearning(targetIncident.text);
@@ -3652,20 +3808,32 @@ function executeStaffModerationAction(actionType, targetQueueIndex) {
                 if (log.sender === offender && log.channel === targetIncident.channel) log.visible = false;
             });
             
-            communityChatLogsDirectory.push({
-                id: Date.now(),
-                channel: targetIncident.channel,
-                sender: offender,
-                text: "Your communication access has been temporarily suspended for 30 minutes due to behavioral violations.",
-                time: cleanTimeStr,
-                visible: false,
-                recipientAlertOnly: true
-            });
+            if (isCommunityChatApiAvailable() && isCommunityChatServerBackedChannel(targetIncident.channel)) {
+                await postCommunityChatDisciplinaryNoticeToServer({
+                    channel: targetIncident.channel,
+                    sender: offender,
+                    text: 'Your communication access has been temporarily suspended for 30 minutes due to behavioral violations.',
+                    time: cleanTimeStr,
+                    visible: false,
+                    recipientAlertOnly: true
+                });
+            } else {
+                communityChatLogsDirectory.push({
+                    id: Date.now(),
+                    channel: targetIncident.channel,
+                    sender: offender,
+                    text: 'Your communication access has been temporarily suspended for 30 minutes due to behavioral violations.',
+                    time: cleanTimeStr,
+                    visible: false,
+                    recipientAlertOnly: true
+                });
+            }
             break;
 
         case 'ban':
             console.log(`MODERATOR ACTION: Banning user: ${offender}`);
             userBanExpirationRegistry[offender] = Date.now() + (15 * 24 * 60 * 60 * 1000);
+            await postCommunityChatRestrictionToServer('ban', offender);
             
             if (targetIncident.text) executeAutomatedTokenCrestLearning(targetIncident.text);
 
@@ -3673,15 +3841,26 @@ function executeStaffModerationAction(actionType, targetQueueIndex) {
                 if (log.sender === offender && log.channel === targetIncident.channel) log.visible = false;
             });
 
-            communityChatLogsDirectory.push({
-                id: Date.now(),
-                channel: targetIncident.channel,
-                sender: offender,
-                text: "Your communication access has been terminated for 15 Days due to code of conduct failures.",
-                time: cleanTimeStr,
-                visible: false,
-                recipientAlertOnly: true
-            });
+            if (isCommunityChatApiAvailable() && isCommunityChatServerBackedChannel(targetIncident.channel)) {
+                await postCommunityChatDisciplinaryNoticeToServer({
+                    channel: targetIncident.channel,
+                    sender: offender,
+                    text: 'Your communication access has been terminated for 15 Days due to code of conduct failures.',
+                    time: cleanTimeStr,
+                    visible: false,
+                    recipientAlertOnly: true
+                });
+            } else {
+                communityChatLogsDirectory.push({
+                    id: Date.now(),
+                    channel: targetIncident.channel,
+                    sender: offender,
+                    text: 'Your communication access has been terminated for 15 Days due to code of conduct failures.',
+                    time: cleanTimeStr,
+                    visible: false,
+                    recipientAlertOnly: true
+                });
+            }
             break;
     }
 
@@ -3911,6 +4090,12 @@ function refreshCommanderMembershipBadgeDisplays() {
 
 async function beginRoyaltyMembershipCheckout() {
     if (typeof playSelectSFX === 'function') playSelectSFX();
+    if (window.RoyalArmiesRoyaltyBilling && typeof window.RoyalArmiesRoyaltyBilling.beginRoyaltyMembershipCheckout === 'function') {
+        return window.RoyalArmiesRoyaltyBilling.beginRoyaltyMembershipCheckout({
+            premiumPassLabel: CHRONICLE_PREMIUM_PASS_LABEL,
+            priceLabel: CHRONICLE_PREMIUM_MONTHLY_PRICE_LABEL
+        });
+    }
     await showPortalAlert(
         `Royalty membership (${CHRONICLE_PREMIUM_MONTHLY_PRICE_LABEL}) checkout is not live yet.\n\n` +
         `When billing is connected, subscribing grants the Royalty Member title and unlocks the ${CHRONICLE_PREMIUM_PASS_LABEL} on The Chronicles.`,
@@ -4075,11 +4260,16 @@ function renderRoyaltyTierPortalCanvas(viewport) {
                                 </button>
                             </div>`;
                     } else {
+                        const complianceMarkup = typeof buildRoyaltyCheckoutComplianceMarkup === 'function'
+                            ? buildRoyaltyCheckoutComplianceMarkup()
+                            : '';
                         actionFooterMarkup = `
                             <div class="royalty-package-action-footer">
+                                ${complianceMarkup}
                                 <button type="button" class="settings-btn master-action-btn royalty-package-action-btn pulse-buy-btn"
-                                        ${actionHandler}>
-                                    ${pack.actionText}
+                                        ${actionHandler}
+                                        aria-describedby="royalty-checkout-compliance-note">
+                                    Purchase
                                 </button>
                             </div>`;
                     }

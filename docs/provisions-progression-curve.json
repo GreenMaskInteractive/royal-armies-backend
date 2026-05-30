@@ -1,0 +1,96 @@
+{
+  "meta": {
+    "title": "Compressed legacy provisions progression curve",
+    "status": "locked-in",
+    "purpose": "unit-balancing",
+    "capturedAt": "2026-05-27",
+    "resourceDisplayName": "Provisions",
+    "resourceKey": "provisions"
+  },
+  "constants": {
+    "rank1StartingGold": 20000,
+    "movePointsMax": 3,
+    "movePointRegenPerTick": 1,
+    "movePointTickMinutes": 30,
+    "rank1BaseProvisions": 132,
+    "rankUpPayoutProvisions": 110,
+    "rankUpPayoutFromRank": 2,
+    "rankUpPayoutThroughRank": 21,
+    "maxCommanderRank": 22,
+    "maxCumulativeCap": 2332,
+    "tier1UnitProvisionCost": 11,
+    "rank1StarterInfantryUnits": 12,
+    "endgameEliteUnitEstimate": {
+      "averageUpc": 55,
+      "maxBarracksUnits": 42
+    }
+  },
+  "phases": [
+    {
+      "phaseId": "the_start",
+      "label": "The Start",
+      "rankFrom": 1,
+      "rankTo": 1,
+      "summary": "Tight initial roster split between PvP and Rank drop units."
+    },
+    {
+      "phaseId": "the_swarm",
+      "label": "The Swarm",
+      "rankFrom": 2,
+      "rankTo": 6,
+      "summary": "Roster swells horizontally. Players buy alternative counter classes."
+    },
+    {
+      "phaseId": "the_pivot",
+      "label": "The Pivot",
+      "rankFrom": 7,
+      "rankTo": 9,
+      "summary": "Training battles get too hard for Tier 1. Buying ends; promotion begins.",
+      "recruitingStops": true
+    },
+    {
+      "phaseId": "the_squeeze",
+      "label": "The Squeeze",
+      "rankFrom": 10,
+      "rankTo": 21,
+      "summary": "Steady flat rewards. Must dismiss Tier 1 swarms to afford elite upgrades.",
+      "rosterShrinks": true
+    },
+    {
+      "phaseId": "the_end",
+      "label": "The End",
+      "rankFrom": 22,
+      "rankTo": 22,
+      "summary": "Permanent freeze. Barracks hold ~42 max-tier elite units (55 UPC average).",
+      "payoutStops": true
+    }
+  ],
+  "ranks": [
+    { "rank": 1, "payoutProvisions": 132, "cumulativeCap": 132, "maxTier1UnitsAt11Upc": 12, "phaseId": "the_start", "notes": "Base pool — exactly 12× 11 UPC Tier 1 infantry." },
+    { "rank": 2, "payoutProvisions": 110, "cumulativeCap": 242, "maxTier1UnitsAt11Upc": 22, "phaseId": "the_swarm" },
+    { "rank": 3, "payoutProvisions": 110, "cumulativeCap": 352, "maxTier1UnitsAt11Upc": 32, "phaseId": "the_swarm" },
+    { "rank": 4, "payoutProvisions": 110, "cumulativeCap": 462, "maxTier1UnitsAt11Upc": 42, "phaseId": "the_swarm" },
+    { "rank": 5, "payoutProvisions": 110, "cumulativeCap": 572, "maxTier1UnitsAt11Upc": 52, "phaseId": "the_swarm" },
+    { "rank": 6, "payoutProvisions": 110, "cumulativeCap": 682, "maxTier1UnitsAt11Upc": 62, "phaseId": "the_swarm" },
+    { "rank": 7, "payoutProvisions": 110, "cumulativeCap": 792, "maxTier1UnitsAt11Upc": null, "phaseId": "the_pivot", "recruitingStops": true },
+    { "rank": 8, "payoutProvisions": 110, "cumulativeCap": 902, "maxTier1UnitsAt11Upc": null, "phaseId": "the_pivot", "recruitingStops": true },
+    { "rank": 9, "payoutProvisions": 110, "cumulativeCap": 1012, "maxTier1UnitsAt11Upc": null, "phaseId": "the_pivot", "recruitingStops": true },
+    { "rank": 10, "payoutProvisions": 110, "cumulativeCap": 1122, "maxTier1UnitsAt11Upc": null, "phaseId": "the_squeeze", "rosterShrinks": true },
+    { "rank": 11, "payoutProvisions": 110, "cumulativeCap": 1232, "maxTier1UnitsAt11Upc": null, "phaseId": "the_squeeze", "rosterShrinks": true },
+    { "rank": 12, "payoutProvisions": 110, "cumulativeCap": 1342, "maxTier1UnitsAt11Upc": null, "phaseId": "the_squeeze", "rosterShrinks": true },
+    { "rank": 13, "payoutProvisions": 110, "cumulativeCap": 1452, "maxTier1UnitsAt11Upc": null, "phaseId": "the_squeeze", "rosterShrinks": true },
+    { "rank": 14, "payoutProvisions": 110, "cumulativeCap": 1562, "maxTier1UnitsAt11Upc": null, "phaseId": "the_squeeze", "rosterShrinks": true },
+    { "rank": 15, "payoutProvisions": 110, "cumulativeCap": 1672, "maxTier1UnitsAt11Upc": null, "phaseId": "the_squeeze", "rosterShrinks": true },
+    { "rank": 16, "payoutProvisions": 110, "cumulativeCap": 1782, "maxTier1UnitsAt11Upc": null, "phaseId": "the_squeeze", "rosterShrinks": true },
+    { "rank": 17, "payoutProvisions": 110, "cumulativeCap": 1892, "maxTier1UnitsAt11Upc": null, "phaseId": "the_squeeze", "rosterShrinks": true },
+    { "rank": 18, "payoutProvisions": 110, "cumulativeCap": 2002, "maxTier1UnitsAt11Upc": null, "phaseId": "the_squeeze", "rosterShrinks": true },
+    { "rank": 19, "payoutProvisions": 110, "cumulativeCap": 2112, "maxTier1UnitsAt11Upc": null, "phaseId": "the_squeeze", "rosterShrinks": true },
+    { "rank": 20, "payoutProvisions": 110, "cumulativeCap": 2222, "maxTier1UnitsAt11Upc": null, "phaseId": "the_squeeze", "rosterShrinks": true },
+    { "rank": 21, "payoutProvisions": 110, "cumulativeCap": 2332, "maxTier1UnitsAt11Upc": null, "phaseId": "the_squeeze", "rosterShrinks": true },
+    { "rank": 22, "payoutProvisions": 0, "cumulativeCap": 2332, "maxTier1UnitsAt11Upc": null, "phaseId": "the_end", "payoutStops": true, "notes": "Final elite squad — ~42 units at ~55 UPC average." }
+  ],
+  "formulas": {
+    "cumulativeCapAtRank": "rank === 1 ? 132 : rank <= 21 ? 132 + (rank - 1) * 110 : 2332",
+    "maxTier1Units": "floor(cumulativeCap / 11) when recruiting active"
+  }
+}

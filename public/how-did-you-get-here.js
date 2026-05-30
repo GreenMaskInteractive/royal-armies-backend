@@ -160,10 +160,10 @@
         stopPresenceLoop();
         await postAgeLeave(false);
         if (global.RoyalArmiesPageRouteTransition && typeof global.RoyalArmiesPageRouteTransition.navigateTo === 'function') {
-            await global.RoyalArmiesPageRouteTransition.navigateTo('/main');
+            await global.RoyalArmiesPageRouteTransition.navigateTo('/main.html');
             return;
         }
-        global.location.href = '/main';
+        global.location.href = '/main.html';
     }
 
     function registerUnloadHandlers() {
@@ -208,7 +208,7 @@
 
         const username = resolvePageUsername();
         if (!username) {
-            global.location.replace('/main');
+            global.location.replace('/main.html');
             return;
         }
 

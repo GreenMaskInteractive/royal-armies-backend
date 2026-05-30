@@ -18,6 +18,7 @@
     --success: #228b22;
     --border: #444;
     --font-dyslexia: 'OpenDyslexic', 'Comic Sans MS', 'Verdana', 'Trebuchet MS', Arial, sans-serif;
+    --font-title: 'Royal Family', 'RoyalDetails', serif;
     --text-scale: 1;
     --portal-root-font-size: 16px;
 }
@@ -76,6 +77,37 @@ select {
     src: url('fonts/Metamorphous-Regular.ttf') format('truetype');
     font-weight: normal;
     font-style: normal;
+}
+
+@font-face {
+    font-family: 'Royal Family';
+    src: url('fonts/Metamorphous-Regular.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+}
+
+/* Canonical title / header typography (Royal Family display face) */
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+th,
+.nav-tab,
+.metric-label-title,
+.card-title-header,
+.modal-alert-header,
+.portal-server-panel-heading,
+.portal-intro-subhead,
+.suicide-popup-header,
+[class*="-title"],
+[class*="-heading"],
+[class*="-eyebrow"],
+[class*="-section-title"],
+[class*="-section-label"],
+[class*="-grid-heading"] {
+    font-family: var(--font-title) !important;
 }
 
 /* OpenDyslexic — widely used dyslexia-friendly typeface */
