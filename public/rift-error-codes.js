@@ -162,6 +162,12 @@
             message: 'You must accept the Terms of Service and Privacy Policy before continuing.',
             category: 'auth'
         },
+        'NEXUS-AUTH-017': {
+            http: 401,
+            title: 'Session expired',
+            message: 'Your portal session expired after 6 hours of inactivity. Please sign in again.',
+            category: 'auth'
+        },
 
         /* --- Account / profile --- */
         'NEXUS-ACCT-001': {

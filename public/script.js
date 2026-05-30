@@ -131,7 +131,129 @@ function isMainPortalHub() {
 
 const PORTAL_AUTH_STORAGE_KEY = 'royalArmiesPortalAuth';
 const PORTAL_AUTH_RESTORE_MAX_AGE_MS = 30 * 24 * 60 * 60 * 1000;
+const PORTAL_LAST_ACTIVITY_STORAGE_KEY = 'royalArmiesPortalLastActivityAt';
+const PORTAL_INACTIVITY_LOGOUT_MS = 6 * 60 * 60 * 1000;
+const PORTAL_INACTIVITY_CHECK_INTERVAL_MS = 60 * 1000;
 let portalAuthRestorePromise = null;
+let portalInactivityLogoutTimer = null;
+let portalInactivityLogoutInFlight = false;
+
+function readPortalLastActivityAt() {
+    const raw = localStorage.getItem(PORTAL_LAST_ACTIVITY_STORAGE_KEY);
+    const parsed = Number(raw);
+    return Number.isFinite(parsed) && parsed > 0 ? parsed : 0;
+}
+
+function touchPortalLastActivityAt(timestampMs) {
+    const next = Number.isFinite(timestampMs) && timestampMs > 0 ? timestampMs : Date.now();
+    try {
+        localStorage.setItem(PORTAL_LAST_ACTIVITY_STORAGE_KEY, String(next));
+    } catch (_err) {
+        /* ignore quota errors */
+    }
+    return next;
+}
+
+function clearPortalLastActivityAt() {
+    localStorage.removeItem(PORTAL_LAST_ACTIVITY_STORAGE_KEY);
+}
+
+function isPortalAuthInactiveExpired(referenceMs) {
+    const last = Number.isFinite(referenceMs) && referenceMs > 0
+        ? referenceMs
+        : readPortalLastActivityAt();
+    if (!last) return false;
+    return (Date.now() - last) >= PORTAL_INACTIVITY_LOGOUT_MS;
+}
+
+function wirePortalInactivityActivityListeners() {
+    if (window.portalInactivityActivityListenersWired) return;
+    window.portalInactivityActivityListenersWired = true;
+
+    const bump = () => touchPortalLastActivityAt();
+    ['pointerdown', 'keydown', 'scroll', 'touchstart'].forEach((eventName) => {
+        document.addEventListener(eventName, bump, { passive: true });
+    });
+}
+
+function stopPortalInactivityLogoutWatch() {
+    if (portalInactivityLogoutTimer) {
+        clearInterval(portalInactivityLogoutTimer);
+        portalInactivityLogoutTimer = null;
+    }
+}
+
+async function executeInactivityLogout(options) {
+    if (portalInactivityLogoutInFlight) return;
+    portalInactivityLogoutInFlight = true;
+    stopPortalInactivityLogoutWatch();
+
+    const opts = options && typeof options === 'object' ? options : {};
+    if (opts.silent !== true && typeof showPortalAlert === 'function') {
+        await showPortalAlert(
+            'You were logged out after 6 hours of inactivity. Please sign in again to continue.',
+            'Session expired'
+        );
+    }
+
+    if (typeof executeLogoutRedirect === 'function') {
+        executeLogoutRedirect();
+        return;
+    }
+
+    if (typeof clearPortalAuthStorage === 'function') {
+        clearPortalAuthStorage();
+    } else {
+        localStorage.removeItem('activeCommanderUser');
+        clearPortalLastActivityAt();
+    }
+
+    if (typeof refreshMainPortalAuthChrome === 'function') {
+        refreshMainPortalAuthChrome();
+    }
+
+    if (canUsePortalAuthSessionApi()) {
+        try {
+            await fetch(
+                typeof resolveRoyalArmiesApiUrl === 'function'
+                    ? resolveRoyalArmiesApiUrl('/api/auth/logout')
+                    : '/api/auth/logout',
+                { method: 'POST', credentials: 'include', cache: 'no-store' }
+            );
+        } catch (_err) {
+            /* ignore */
+        }
+    }
+
+    portalInactivityLogoutInFlight = false;
+}
+
+async function checkPortalInactivityLogout(options) {
+    if (!isPortalUserAuthenticated()) return false;
+    if (!isPortalAuthInactiveExpired()) return false;
+
+    await executeInactivityLogout(options);
+    return true;
+}
+
+function startPortalInactivityLogoutWatch() {
+    if (!isPortalUserAuthenticated()) return;
+    wirePortalInactivityActivityListeners();
+    if (!readPortalLastActivityAt()) {
+        touchPortalLastActivityAt();
+    }
+    if (portalInactivityLogoutTimer) return;
+
+    document.addEventListener('visibilitychange', onPortalInactivityVisibilityCheck);
+    portalInactivityLogoutTimer = setInterval(() => {
+        checkPortalInactivityLogout({ silent: false });
+    }, PORTAL_INACTIVITY_CHECK_INTERVAL_MS);
+}
+
+function onPortalInactivityVisibilityCheck() {
+    if (document.visibilityState !== 'visible') return;
+    checkPortalInactivityLogout({ silent: false });
+}
 
 function persistPortalAuth(username, rememberMe = true) {
     const user = String(username || '').trim();
@@ -142,11 +264,15 @@ function persistPortalAuth(username, rememberMe = true) {
         rememberMe: rememberMe !== false,
         savedAt: Date.now()
     }));
+    touchPortalLastActivityAt();
+    startPortalInactivityLogoutWatch();
 }
 
 function clearPortalAuthStorage() {
     localStorage.removeItem('activeCommanderUser');
     localStorage.removeItem(PORTAL_AUTH_STORAGE_KEY);
+    clearPortalLastActivityAt();
+    stopPortalInactivityLogoutWatch();
 }
 
 function restorePortalAuthFromLocalBundle() {
@@ -255,8 +381,31 @@ async function restorePortalAuthSession() {
         username = restorePortalAuthFromLocalBundle();
     }
 
+    if (username && isPortalAuthInactiveExpired()) {
+        clearPortalAuthStorage();
+        try {
+            sessionStorage.setItem('royalArmiesInactivityLogoutNotice', '1');
+        } catch (_err) {
+            /* ignore */
+        }
+        if (canUsePortalAuthSessionApi()) {
+            try {
+                await fetch(
+                    typeof resolveRoyalArmiesApiUrl === 'function'
+                        ? resolveRoyalArmiesApiUrl('/api/auth/logout')
+                        : '/api/auth/logout',
+                    { method: 'POST', credentials: 'include', cache: 'no-store' }
+                );
+            } catch (_err) {
+                /* ignore */
+            }
+        }
+        return '';
+    }
+
     if (username) {
         if (typeof player !== 'undefined') player.name = username;
+        startPortalInactivityLogoutWatch();
         return username;
     }
 
@@ -274,9 +423,16 @@ async function restorePortalAuthSession() {
             );
             if (response.ok) {
                 const payload = await response.json().catch(() => ({}));
+                if (payload.inactivityLogout) {
+                    clearPortalAuthStorage();
+                    return '';
+                }
                 if (payload.authenticated && payload.username) {
                     persistPortalAuth(payload.username, true);
                     if (typeof player !== 'undefined') player.name = payload.username;
+                    if (Number.isFinite(Number(payload.lastActivityAt)) && Number(payload.lastActivityAt) > 0) {
+                        touchPortalLastActivityAt(Number(payload.lastActivityAt));
+                    }
                     return String(payload.username).trim();
                 }
             }
@@ -2048,6 +2204,9 @@ function finishMainPortalLoginSession(isAdmin) {
     restoreLoginAuthButtons();
     closeMainPortalLoginModal();
     refreshMainPortalAuthChrome();
+    if (typeof startPortalInactivityLogoutWatch === 'function') {
+        startPortalInactivityLogoutWatch();
+    }
     if (typeof recacheAgePortalViewportSnapshot === 'function') {
         recacheAgePortalViewportSnapshot();
     }
@@ -4363,6 +4522,10 @@ window.isPortalUserAuthenticated = isPortalUserAuthenticated;
 window.persistPortalAuth = persistPortalAuth;
 window.clearPortalAuthStorage = clearPortalAuthStorage;
 window.ensurePortalAuthRestored = ensurePortalAuthRestored;
+window.touchPortalLastActivityAt = touchPortalLastActivityAt;
+window.checkPortalInactivityLogout = checkPortalInactivityLogout;
+window.startPortalInactivityLogoutWatch = startPortalInactivityLogoutWatch;
+window.executeInactivityLogout = executeInactivityLogout;
 window.canUsePortalAuthSessionApi = canUsePortalAuthSessionApi;
 window.showSaveChangesConfirmation = showSaveChangesConfirmation;
 window.hideSaveChangesConfirmation = hideSaveChangesConfirmation;
@@ -4372,6 +4535,16 @@ window.captureProfileEditorBaseline = captureProfileEditorBaseline;
 
 async function bootstrapMainPortalAuthOnLoad() {
     await ensurePortalAuthRestored();
+    if (sessionStorage.getItem('royalArmiesInactivityLogoutNotice') === '1') {
+        sessionStorage.removeItem('royalArmiesInactivityLogoutNotice');
+        if (typeof showPortalAlert === 'function') {
+            await showPortalAlert(
+                'You were logged out after 6 hours of inactivity. Please sign in again to continue.',
+                'Session expired'
+            );
+        }
+    }
+    if (await checkPortalInactivityLogout({ silent: false })) return;
     if (enforceActiveAgePortalLock()) return;
     syncPlayerFromActiveCommanderStorage();
     if (isPortalUserAuthenticated() && typeof fetchCommanderDossierFromServer === 'function') {

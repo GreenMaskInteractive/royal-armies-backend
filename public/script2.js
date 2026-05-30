@@ -1538,6 +1538,9 @@ let portalLiveMetricsCache = {
 
 function bumpPortalUserActivityTimestamp() {
     portalUserLastActivityAt = Date.now();
+    if (typeof touchPortalLastActivityAt === 'function') {
+        touchPortalLastActivityAt(portalUserLastActivityAt);
+    }
 }
 
 function initializePortalUserActivityTracking() {
@@ -1704,9 +1707,16 @@ async function sendPortalPresenceHeartbeat(options = {}) {
         || (options.onCommunityChat !== false && activeMainPortalView === 'chat');
 
     try {
-        const response = await fetch('/api/portal/presence', {
+        const presenceUrl = typeof resolveRoyalArmiesApiUrl === 'function'
+            ? resolveRoyalArmiesApiUrl('/api/portal/presence')
+            : '/api/portal/presence';
+        const credentials = typeof canUsePortalAuthSessionApi === 'function' && canUsePortalAuthSessionApi()
+            ? 'include'
+            : 'same-origin';
+        const response = await fetch(presenceUrl, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
+            credentials,
             body: JSON.stringify({
                 username,
                 inAge: isCommanderPlayingActiveAgeLocally(),
@@ -1715,10 +1725,16 @@ async function sendPortalPresenceHeartbeat(options = {}) {
             }),
             cache: 'no-store'
         });
+        const payload = await response.json().catch(() => ({}));
+        if (payload?.inactivityLogout || payload?.code === 'NEXUS-AUTH-017') {
+            if (typeof executeInactivityLogout === 'function') {
+                executeInactivityLogout({ silent: false });
+            }
+            return null;
+        }
         if (!response.ok) throw new Error(`presence ${response.status}`);
-        const metrics = await response.json();
-        applyPortalMetricsPayload(metrics);
-        return metrics;
+        applyPortalMetricsPayload(payload);
+        return payload;
     } catch (err) {
         console.warn('Portal presence heartbeat failed:', err);
         return null;
@@ -2262,6 +2278,9 @@ function bindMetricRosterHoverPopover(cellId, triggerId, popoverId) {
 
 function initializePortalLivePlayerMetrics() {
     initializePortalUserActivityTracking();
+    if (typeof startPortalInactivityLogoutWatch === 'function') {
+        startPortalInactivityLogoutWatch();
+    }
     bindMetricRosterHoverPopover(
         'metric-registered-players-cell',
         'metrics-registered-label-trigger',

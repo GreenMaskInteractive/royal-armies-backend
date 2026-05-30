@@ -2229,6 +2229,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 const PORTAL_SESSION_MAX_AGE_MS = 30 * 24 * 60 * 60 * 1000;
+const PORTAL_INACTIVITY_TIMEOUT_MS = 6 * 60 * 60 * 1000;
 
 app.use(session({
     name: 'royalArmiesPortalSid',
@@ -2243,9 +2244,75 @@ app.use(session({
     }
 }));
 
+function getPortalSessionLastActivityAt(req) {
+    const session = req.session;
+    if (!session) return 0;
+
+    const lastActivity = Number(session.lastActivityAt);
+    if (Number.isFinite(lastActivity) && lastActivity > 0) return lastActivity;
+
+    const loginAt = Number(session.loginAt);
+    if (Number.isFinite(loginAt) && loginAt > 0) return loginAt;
+
+    return 0;
+}
+
+function isPortalSessionInactive(req, nowMs = Date.now()) {
+    const username = String(req.session?.username || '').trim();
+    if (!username) return false;
+
+    const lastActivity = getPortalSessionLastActivityAt(req);
+    if (!lastActivity) return false;
+
+    return (nowMs - lastActivity) >= PORTAL_INACTIVITY_TIMEOUT_MS;
+}
+
+function touchPortalSessionActivity(req, activityAtMs) {
+    if (!req.session?.username) return;
+
+    const candidate = Number.isFinite(Number(activityAtMs)) && Number(activityAtMs) > 0
+        ? Number(activityAtMs)
+        : Date.now();
+    const previous = getPortalSessionLastActivityAt(req);
+    req.session.lastActivityAt = Math.max(previous || 0, candidate);
+}
+
+function destroyPortalSessionForInactivity(req, res, callback) {
+    const finish = typeof callback === 'function' ? callback : () => {};
+    if (typeof req.session?.destroy === 'function') {
+        return req.session.destroy((err) => {
+            if (err) {
+                console.warn('[NEXUS] Session destroy failed:', err);
+            }
+            if (res && typeof res.clearCookie === 'function') {
+                res.clearCookie('royalArmiesPortalSid');
+            }
+            finish();
+        });
+    }
+    if (res && typeof res.clearCookie === 'function') {
+        res.clearCookie('royalArmiesPortalSid');
+    }
+    finish();
+}
+
+function rejectInactivePortalSession(req, res) {
+    if (!isPortalSessionInactive(req)) return false;
+
+    destroyPortalSessionForInactivity(req, res, () => {
+        sendApiError(res, 'NEXUS-AUTH-017');
+    });
+    return true;
+}
+
 function setPortalSessionForUser(req, username, rememberMe = true) {
     req.session.username = String(username || '').trim();
     if (!req.session.username) return;
+
+    const nowMs = Date.now();
+    req.session.loginAt = nowMs;
+    req.session.lastActivityAt = nowMs;
+
     if (rememberMe === false) {
         req.session.cookie.maxAge = null;
     } else {
@@ -2270,6 +2337,28 @@ if (!isProduction) {
         next();
     });
 }
+
+app.use((req, res, next) => {
+    const username = String(req.session?.username || '').trim();
+    if (!username) return next();
+
+    const path = String(req.path || '');
+    const inactivityExemptPaths = new Set([
+        '/api/login',
+        '/api/register',
+        '/api/auth/logout',
+        '/api/auth/session',
+        '/api/auth/dev-session',
+        '/api/portal/metrics',
+        '/api/portal/presence',
+        '/api/portal/presence/leave',
+        '/api/portal/legal/terms-version'
+    ]);
+    if (inactivityExemptPaths.has(path)) return next();
+
+    if (rejectInactivePortalSession(req, res)) return;
+    next();
+});
 
 const PUBLIC_DIR = path.join(__dirname, 'public');
 
@@ -2599,6 +2688,18 @@ app.get('/api/auth/session', (req, res) => {
     if (!username) {
         return res.json({ authenticated: false });
     }
+
+    if (isPortalSessionInactive(req)) {
+        return destroyPortalSessionForInactivity(req, res, () => {
+            res.json({
+                authenticated: false,
+                inactivityLogout: true,
+                requiresTermsAcceptance: false,
+                termsVersion: LEGAL_TERMS_VERSION
+            });
+        });
+    }
+
     const commander = findCommanderByUsername(username);
     const termsAcceptedAt = commander ? getCommanderTermsAcceptedAt(commander) : null;
     res.json({
@@ -2607,7 +2708,8 @@ app.get('/api/auth/session', (req, res) => {
         requiresTermsAcceptance: commander ? !commanderHasAcceptedTerms(commander) : false,
         termsAcceptedAt,
         terms_accepted_at: termsAcceptedAt,
-        termsVersion: LEGAL_TERMS_VERSION
+        termsVersion: LEGAL_TERMS_VERSION,
+        lastActivityAt: getPortalSessionLastActivityAt(req)
     });
 });
 
@@ -2654,6 +2756,8 @@ app.post('/api/portal/account/accept-terms', (req, res) => {
 
     const acceptedAt = getCommanderTermsAcceptedAt(updated || commander);
     const successToken = crypto.randomBytes(24).toString('hex');
+
+    touchPortalSessionActivity(req, Date.now());
 
     res.status(200).json({
         status: 'success',
@@ -4208,6 +4312,25 @@ app.post('/api/portal/presence', (req, res) => {
 
     if (!username) {
         return sendApiError(res, 'NEXUS-GEN-002');
+    }
+
+    const sessionUsername = String(req.session?.username || '').trim();
+    const normalized = normalizeLedgerUsername(username);
+    if (sessionUsername && normalized && sessionUsername.toLowerCase() === normalized.toLowerCase()) {
+        const clientActivity = Number.isFinite(lastActivityAt) && lastActivityAt > 0
+            ? lastActivityAt
+            : Date.now();
+        touchPortalSessionActivity(req, clientActivity);
+        if (isPortalSessionInactive(req)) {
+            return destroyPortalSessionForInactivity(req, res, () => {
+                res.status(401).json({
+                    status: 'error',
+                    code: 'NEXUS-AUTH-017',
+                    inactivityLogout: true,
+                    message: 'Your portal session expired after 6 hours of inactivity.'
+                });
+            });
+        }
     }
 
     touchPortalBrowseSession(username, {
