@@ -41,7 +41,6 @@ const {
     buildBorderActionHints,
     getCatalogCity,
     resolveCatalogNationKey,
-    resolveDefaultCapitalCityId,
     TRANSFER_OWNERSHIP_RSD_COST,
     AGE_ALPHA_DEFAULT_MAP_NATION
 } = require('./nexus-age-movement');
