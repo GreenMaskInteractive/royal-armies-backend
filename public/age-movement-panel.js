@@ -70,13 +70,13 @@
 
     let currentCityId = '';
     let playersOnlineOnly = false;
-    let nationPlayersCache = [];
-    let nationPlayersMeta = {
-        nationId: '',
-        nationName: '',
+    let cityPlayersCache = [];
+    let cityPlayersMeta = {
+        catalogCityId: '',
+        cityName: '',
         loading: false
     };
-    let nationPlayersRefreshPromise = null;
+    let cityPlayersRefreshPromise = null;
 
     function resolveUsername() {
         const saved = global.localStorage.getItem('activeCommanderUser');
@@ -168,7 +168,7 @@
             }
         }
         renderMovementPanel();
-        refreshNationPlayersFromServer();
+        refreshCityPlayersFromServer();
         global.RoyalArmiesPlayerLocPins?.refreshLocalPlayerPin?.();
     }
 
@@ -292,7 +292,7 @@
 
         syncCityInfoPanelLayoutMode(target);
         if (target === 'players') {
-            refreshNationPlayersFromServer();
+            refreshCityPlayersFromServer();
         }
     }
 
@@ -306,14 +306,19 @@
         return `${origin}/${path}`;
     }
 
-    function resolveNationIdForPlayers() {
-        const movementNation = global.RoyalArmiesAgeMovement?.resolvePlayerNationId?.();
-        if (movementNation) return normalizeNationId(movementNation);
+    function resolveViewerCatalogCityId() {
+        return String(global.RoyalArmiesAgeMovement?.getCatalogCityId?.() || '').trim();
+    }
 
-        const panelNation = resolveCommanderNationId();
-        if (panelNation) return panelNation;
+    function resolveCityDisplayName() {
+        if (cityPlayersMeta.cityName) return cityPlayersMeta.cityName;
 
-        return DEFAULT_NATION_ID;
+        const catalogCityId = resolveViewerCatalogCityId();
+        if (!catalogCityId) return getCurrentCity()?.name || '';
+
+        const catalog = global.RoyalArmiesAgeWorldMap?.getCatalog?.();
+        const catalogCity = catalog?.cities?.find((entry) => entry.id === catalogCityId);
+        return catalogCity?.name || getCurrentCity()?.name || '';
     }
 
     function applyNationForcesHud(totalForces) {
@@ -322,51 +327,52 @@
         el.textContent = String(totalForces);
     }
 
-    function getNationPlayers() {
-        return nationPlayersCache.slice();
+    function getCityPlayers() {
+        return cityPlayersCache.slice();
     }
 
-    async function refreshNationPlayersFromServer() {
+    async function refreshCityPlayersFromServer() {
         const username = resolveUsername();
         if (!username) {
-            nationPlayersCache = [];
-            nationPlayersMeta.loading = false;
+            cityPlayersCache = [];
+            cityPlayersMeta.loading = false;
             renderPlayersTab();
             return;
         }
 
-        if (nationPlayersRefreshPromise) {
-            return nationPlayersRefreshPromise;
+        if (cityPlayersRefreshPromise) {
+            return cityPlayersRefreshPromise;
         }
 
-        const nationId = resolveNationIdForPlayers();
-        nationPlayersMeta.loading = true;
+        const catalogCityId = resolveViewerCatalogCityId();
+        cityPlayersMeta.loading = true;
         renderPlayersTab();
 
-        nationPlayersRefreshPromise = (async () => {
+        cityPlayersRefreshPromise = (async () => {
             try {
-                const url = resolveApiUrl(
-                    `/api/portal/age/nation-players?username=${encodeURIComponent(username)}`
-                    + `&nationId=${encodeURIComponent(nationId)}`
-                );
+                const query = new URLSearchParams({ username });
+                if (catalogCityId) {
+                    query.set('catalogCityId', catalogCityId);
+                }
+                const url = resolveApiUrl(`/api/portal/age/city-players?${query.toString()}`);
                 const response = await fetch(url, { credentials: 'same-origin' });
                 const data = await response.json();
                 if (data?.status === 'ok' && Array.isArray(data.players)) {
-                    nationPlayersCache = data.players;
-                    nationPlayersMeta.nationId = data.nationId || nationId;
-                    nationPlayersMeta.nationName = data.nationName || '';
+                    cityPlayersCache = data.players;
+                    cityPlayersMeta.catalogCityId = data.catalogCityId || catalogCityId;
+                    cityPlayersMeta.cityName = data.cityName || resolveCityDisplayName();
                     applyNationForcesHud(data.totalForces);
                 }
             } catch (error) {
                 // Keep the last roster if refresh fails.
             } finally {
-                nationPlayersMeta.loading = false;
-                nationPlayersRefreshPromise = null;
+                cityPlayersMeta.loading = false;
+                cityPlayersRefreshPromise = null;
                 renderPlayersTab();
             }
         })();
 
-        return nationPlayersRefreshPromise;
+        return cityPlayersRefreshPromise;
     }
 
     function escapePlayerHtml(value) {
@@ -472,14 +478,11 @@
 
         setPlayersFilterMode(playersOnlineOnly);
 
-        const nationName = nationPlayersMeta.nationName
-            || global.RoyalArmiesAgeWorldMap?.getCatalog?.()?.nations
-                ?.find((entry) => entry.id === resolveNationIdForPlayers())?.name
-            || '';
+        const cityName = resolveCityDisplayName();
 
         if (cityLabel) {
-            if (nationName) {
-                cityLabel.textContent = `Commanders in ${nationName}`;
+            if (cityName) {
+                cityLabel.textContent = `Commanders in ${cityName}`;
                 cityLabel.hidden = false;
             } else {
                 cityLabel.textContent = '';
@@ -487,7 +490,7 @@
             }
         }
 
-        if (nationPlayersMeta.loading && !nationPlayersCache.length) {
+        if (cityPlayersMeta.loading && !cityPlayersCache.length) {
             if (summary) {
                 summary.textContent = '';
                 summary.hidden = true;
@@ -503,7 +506,7 @@
             return;
         }
 
-        const allPlayers = getNationPlayers();
+        const allPlayers = getCityPlayers();
         const onlineCount = allPlayers.filter((player) => player.online).length;
         const visiblePlayers = sortCityPlayers(filterCityPlayers(allPlayers, playersOnlineOnly));
 
@@ -545,12 +548,14 @@
 
         if (empty) {
             if (!allPlayers.length) {
-                empty.textContent = 'No commanders in this nation yet.';
+                empty.textContent = cityName
+                    ? `No commanders in ${cityName} yet.`
+                    : 'No commanders in this city yet.';
                 empty.hidden = false;
             } else if (!visiblePlayers.length) {
                 empty.textContent = playersOnlineOnly
-                    ? 'No commanders online in this nation.'
-                    : 'No commanders in this nation yet.';
+                    ? `No commanders online in ${cityName || 'this city'}.`
+                    : (cityName ? `No commanders in ${cityName} yet.` : 'No commanders in this city yet.');
                 empty.hidden = false;
             } else {
                 empty.hidden = true;
@@ -568,7 +573,7 @@
         bindPlayersTabControls();
         syncCityInfoPanelLayoutMode('city');
         renderMovementPanel();
-        refreshNationPlayersFromServer();
+        refreshCityPlayersFromServer();
 
         if (typeof global.refreshAgeViewTabs === 'function') {
             global.refreshAgeViewTabs();
@@ -582,7 +587,7 @@
             currentCityId = resolveDefaultCity()?.id || '';
         }
         renderMovementPanel();
-        refreshNationPlayersFromServer();
+        refreshCityPlayersFromServer();
 
         if (typeof global.refreshAgeViewTabs === 'function') {
             global.refreshAgeViewTabs();
@@ -590,7 +595,7 @@
     }
 
     global.addEventListener('royalarmies:age-movement-updated', () => {
-        refreshNationPlayersFromServer();
+        refreshCityPlayersFromServer();
     });
 
     global.RoyalArmiesAgeMovementPanel = {

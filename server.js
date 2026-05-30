@@ -1106,6 +1106,27 @@ function resolveCommanderCatalogCityId(commander) {
     return resolveCatalogCityId(rawCityId, mapNation);
 }
 
+function countNationAgeJoinedForces(nationId) {
+    const nation = resolveCatalogNationKey(nationId);
+    if (!nation) return 0;
+
+    const commanders = db.get('commanders').value() || [];
+    let count = 0;
+
+    commanders.forEach((commander) => {
+        if (!commander?.username || isHiddenRegistrationUsername(commander.username)) return;
+
+        const mapNation = resolveCommanderMapNationKey(commander);
+        if (mapNation !== nation) return;
+
+        if (!getAgeSessionForUsername(commander.username)) return;
+
+        count += 1;
+    });
+
+    return count;
+}
+
 function buildAgeNationPlayersPayload(nationId, viewerUsername) {
     const nation = resolveCatalogNationKey(nationId);
     if (!nation) {
@@ -1158,7 +1179,96 @@ function buildAgeNationPlayersPayload(nationId, viewerUsername) {
         nationId: nation,
         nationName,
         players,
-        totalForces: players.length,
+        totalForces: countNationAgeJoinedForces(nation),
+        onlineCount
+    };
+}
+
+function buildAgeCityPlayersPayload(catalogCityId, viewerUsername) {
+    const viewerCommander = viewerUsername
+        ? db.get('commanders').find({ username: viewerUsername }).value()
+        : null;
+    const viewerNation = viewerCommander ? resolveCommanderMapNationKey(viewerCommander) : '';
+
+    let resolvedCityId = resolveCatalogCityId(catalogCityId, viewerNation);
+    if (!resolvedCityId && viewerCommander) {
+        resolvedCityId = resolveCommanderCatalogCityId(viewerCommander);
+    }
+
+    const city = resolvedCityId ? getCatalogCity(resolvedCityId) : null;
+    if (!resolvedCityId || !city) {
+        const nationForces = viewerNation
+            ? countNationAgeJoinedForces(viewerNation)
+            : 0;
+
+        return {
+            catalogCityId: '',
+            cityName: '',
+            players: [],
+            totalForces: nationForces,
+            onlineCount: 0
+        };
+    }
+
+    const commanders = db.get('commanders').value() || [];
+    const viewerLower = viewerUsername ? String(viewerUsername).trim().toLowerCase() : '';
+    const players = [];
+    const seenUsernames = new Set();
+
+    commanders.forEach((commander) => {
+        if (!commander?.username || isHiddenRegistrationUsername(commander.username)) return;
+
+        const username = String(commander.username).trim();
+        const commanderCityId = resolveCommanderCatalogCityId(commander);
+        if (commanderCityId !== resolvedCityId) return;
+
+        const session = getAgeSessionForUsername(username);
+        const mapNation = resolveCommanderMapNationKey(commander);
+
+        players.push({
+            username,
+            displayName: username,
+            catalogCityId: commanderCityId,
+            nationId: mapNation,
+            online: Boolean(session?.isOnline),
+            membershipTitle: String(commander.membershipTitle || 'Basic').trim() || 'Basic',
+            isSelf: Boolean(viewerLower && username.toLowerCase() === viewerLower)
+        });
+        seenUsernames.add(username.toLowerCase());
+    });
+
+    if (viewerCommander && viewerLower && !seenUsernames.has(viewerLower)) {
+        const viewerCityId = resolveCommanderCatalogCityId(viewerCommander);
+        if (viewerCityId === resolvedCityId) {
+            const session = getAgeSessionForUsername(viewerCommander.username);
+            players.push({
+                username: viewerCommander.username,
+                displayName: viewerCommander.username,
+                catalogCityId: viewerCityId,
+                nationId: viewerNation,
+                online: Boolean(session?.isOnline),
+                membershipTitle: String(viewerCommander.membershipTitle || 'Basic').trim() || 'Basic',
+                isSelf: true
+            });
+        }
+    }
+
+    players.sort((left, right) => left.username.localeCompare(
+        right.username,
+        undefined,
+        { sensitivity: 'base' }
+    ));
+
+    const onlineCount = players.filter((player) => player.online).length;
+    const nationForces = viewerNation
+        ? countNationAgeJoinedForces(viewerNation)
+        : 0;
+
+    return {
+        catalogCityId: resolvedCityId,
+        cityName: city.name || '',
+        players,
+        totalForces: nationForces,
         onlineCount
     };
 }
@@ -4176,6 +4286,25 @@ app.get('/api/portal/age/nation-players', (req, res) => {
     res.json({
         status: 'ok',
         ...buildAgeNationPlayersPayload(nationId, username)
+    });
+});
+
+app.get('/api/portal/age/city-players', (req, res) => {
+    const username = resolveLedgerCommanderUsername(req.query?.username || '');
+    if (!username) {
+        return sendApiError(res, 'NEXUS-GEN-002');
+    }
+
+    const commander = db.get('commanders').find({ username }).value();
+    if (!commander) {
+        return sendApiError(res, 'NEXUS-GEN-004');
+    }
+
+    const catalogCityId = String(req.query?.catalogCityId || '').trim();
+
+    res.json({
+        status: 'ok',
+        ...buildAgeCityPlayersPayload(catalogCityId, username)
     });
 });
 

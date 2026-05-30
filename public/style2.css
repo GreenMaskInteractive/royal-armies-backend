@@ -14160,7 +14160,7 @@ body.developer-maintenance-alert-active #page-landing {
 }
 
 #age-page-canvas .age-map-frame.is-settlement-map-frame .game-region-map-bg {
-    object-fit: cover;
+    object-fit: fill;
 }
 
 #age-page-canvas[data-age-view="city"] #age-world-map-svg {
@@ -15129,11 +15129,20 @@ html.age-world-map-pan-locked #cursor-click-fx-layer {
 
 #age-page-canvas .age-world-map-frame .age-world-map-settlement-bg {
     position: absolute;
-    inset: var(--game-region-map-bezel);
-    width: auto;
-    height: auto;
+    top: var(--game-region-map-bezel);
+    left: var(--game-region-map-bezel);
+    width: calc(100% - (2 * var(--game-region-map-bezel)));
+    height: calc(100% - (2 * var(--game-region-map-bezel)));
+    max-width: none;
+    max-height: none;
     display: block;
+    box-sizing: border-box;
     object-fit: fill;
+    pointer-events: none;
+    border-radius: 2px;
+    box-shadow:
+        inset 0 0 0 1px rgba(255, 215, 0, 0.22),
+        inset 0 0 24px rgba(0, 0, 0, 0.35);
     image-rendering: high-quality;
     image-rendering: -webkit-optimize-contrast;
 }
