@@ -9319,9 +9319,10 @@ body.developer-maintenance-alert-active #page-landing {
     --game-shell-chrome-top: clamp(56px, 9vh, 88px);
     --game-shell-progress-h: clamp(88px, 14vh, 118px);
     --game-shell-title-h: clamp(44px, 7vh, 72px);
+    --game-class-title-gap: clamp(0.65rem, 1.8vh, 1.35rem);
     --game-class-art-max-h: max(
         180px,
-        calc(100dvh - var(--game-shell-chrome-top) - var(--game-shell-progress-h) - var(--game-shell-title-h) - 36px)
+        calc(100dvh - var(--game-shell-chrome-top) - var(--game-shell-progress-h) - var(--game-shell-title-h) - var(--game-class-title-gap) - 36px)
     );
     margin: 0 !important;
     padding: 0 !important;
@@ -11182,10 +11183,16 @@ body.developer-maintenance-alert-active #page-landing {
     overflow: hidden !important;
 }
 
-.game-page-view--class,
-.game-page-view--class .game-class-picker,
-.game-page-view--class .game-class-picker-stage {
+.game-page-view--class {
+    overflow: hidden !important;
+}
+
+.game-page-view--class .game-class-picker {
     overflow: visible !important;
+}
+
+.game-page-view--class .game-class-picker-stage {
+    overflow: hidden !important;
 }
 
 .game-class-picker {
@@ -11194,17 +11201,20 @@ body.developer-maintenance-alert-active #page-landing {
     height: 100%;
     max-height: 100%;
     margin: 0 auto;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: clamp(4px, 1vh, 12px);
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr);
+    grid-template-columns: minmax(0, 1fr);
+    align-content: start;
+    justify-items: center;
+    row-gap: var(--game-class-title-gap);
     min-height: 0;
     box-sizing: border-box;
 }
 
 .game-class-picker-stage {
+    grid-row: 2;
     position: relative;
+    z-index: 1;
     flex: 1 1 auto;
     width: 100%;
     max-width: min(1960px, 98vw);
@@ -11490,6 +11500,9 @@ body.developer-maintenance-alert-active #page-landing {
 
 .game-class-picker-title {
     display: block;
+    grid-row: 1;
+    position: relative;
+    z-index: 12;
     width: auto;
     max-width: min(520px, 72vw);
     max-height: var(--game-shell-title-h);
@@ -11544,6 +11557,7 @@ body.developer-maintenance-alert-active #page-landing {
 }
 
 .game-class-option-art-stack {
+    --game-class-stack-h: var(--game-class-art-max-h);
     position: relative;
     display: flex;
     align-items: flex-end;
@@ -11551,19 +11565,19 @@ body.developer-maintenance-alert-active #page-landing {
     flex-shrink: 0;
     width: auto;
     max-width: min(42vw, 480px);
-    height: var(--game-class-art-max-h);
-    max-height: var(--game-class-art-max-h);
+    height: var(--game-class-stack-h);
+    max-height: var(--game-class-stack-h);
     overflow: visible;
 }
 
 .game-class-option-bg-window {
     position: absolute;
     left: 50%;
-    bottom: -130px;
+    bottom: calc(var(--game-class-stack-h) * -0.169);
     z-index: 0;
     display: block;
-    width: 1276px;
-    height: 832px;
+    width: calc(var(--game-class-stack-h) * 1.662);
+    height: calc(var(--game-class-stack-h) * 1.083);
     max-width: none;
     max-height: none;
     transform: translateX(-50%);
@@ -11573,12 +11587,16 @@ body.developer-maintenance-alert-active #page-landing {
     pointer-events: none;
 }
 
+.game-class-option-column--battlemaster .game-class-option-art-stack {
+    --game-class-stack-h: calc(var(--game-class-art-max-h) * 0.9);
+}
+
 .game-class-option-column--battlemaster .game-class-option-img {
-    transform: translateY(-25px);
+    transform: translateY(calc(var(--game-class-stack-h) * -0.033));
 }
 
 .game-class-option-column--archmage .game-class-option-img {
-    transform: translateY(-30px);
+    transform: translateY(calc(var(--game-class-stack-h) * -0.039));
 }
 
 .game-class-option-img {
@@ -11586,8 +11604,8 @@ body.developer-maintenance-alert-active #page-landing {
     z-index: 1;
     display: block;
     width: auto;
-    height: var(--game-class-art-max-h);
-    max-height: var(--game-class-art-max-h);
+    height: var(--game-class-stack-h, var(--game-class-art-max-h));
+    max-height: var(--game-class-stack-h, var(--game-class-art-max-h));
     max-width: min(42vw, 480px);
     flex-shrink: 0;
     object-fit: contain;
@@ -11649,9 +11667,9 @@ body.developer-maintenance-alert-active #page-landing {
     .game-page-canvas {
         --game-class-art-max-h: max(
             135px,
-            calc((100dvh - var(--game-shell-chrome-top) - var(--game-shell-progress-h) - var(--game-shell-title-h) - 36px) * 0.75)
+            calc((100dvh - var(--game-shell-chrome-top) - var(--game-shell-progress-h) - var(--game-shell-title-h) - var(--game-class-title-gap) - 36px) * 0.75)
         );
-        --game-class-duo-offset: 220px;
+        --game-class-duo-offset: clamp(120px, calc(var(--game-class-art-max-h) * 0.44), 240px);
     }
 
     .game-class-option-column {
@@ -11672,8 +11690,9 @@ body.developer-maintenance-alert-active #page-landing {
 
     .game-class-option-column--battlemaster .game-class-option-art-stack,
     .game-class-option-column--battlemaster .game-class-option-img {
-        height: calc(var(--game-class-art-max-h) * 0.9);
-        max-height: calc(var(--game-class-art-max-h) * 0.9);
+        --game-class-stack-h: calc(var(--game-class-art-max-h) * 0.9);
+        height: var(--game-class-stack-h);
+        max-height: var(--game-class-stack-h);
         max-width: min(28.35vw, 324px);
     }
 
@@ -11696,18 +11715,15 @@ body.developer-maintenance-alert-active #page-landing {
     }
 
     .game-class-picker {
-        justify-content: flex-start !important;
-        align-items: center !important;
-        flex: 0 1 auto !important;
+        align-content: start !important;
         height: auto !important;
         max-height: none !important;
-        gap: 10px !important;
+        row-gap: var(--game-class-title-gap) !important;
     }
 
     .game-class-picker-title {
         margin-top: 0 !important;
         margin-bottom: 0 !important;
-        transform: translateY(105px) !important;
     }
 
     .game-class-picker-stage {
