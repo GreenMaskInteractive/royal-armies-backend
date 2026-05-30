@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Royal Armies — Age Alpha</title>
     <link rel="stylesheet" href="style.css?v=royal-family-titles-1">
-    <link rel="stylesheet" href="style2.css?v=settlement-map-fill-1">
-    <link rel="stylesheet" href="mobile-responsive.css?v=royal-family-titles-1">
+    <link rel="stylesheet" href="style2.css?v=player-list-move-points-1">
+    <link rel="stylesheet" href="mobile-responsive.css?v=age-mobile-hud-1">
     <link rel="stylesheet" href="dev-page-navigator.css">
     <link rel="stylesheet" href="custom-cursor.css?v=scrollbar-cursor-3">
 </head>
@@ -67,6 +67,26 @@
                             <span class="age-map-resource-value" id="age-hud-move-points" aria-label="3 of 3 move points">3</span>
                         </li>
                     </ul>
+                    <div class="age-mobile-hud-controls age-mobile-only" aria-label="Mobile panel shortcuts">
+                        <button
+                            type="button"
+                            class="age-mobile-hud-toggle-btn"
+                            id="age-mobile-toggle-reports"
+                            data-age-mobile-toggle="reports"
+                            aria-expanded="false"
+                            aria-controls="age-map-hud-left">
+                            Nation
+                        </button>
+                        <button
+                            type="button"
+                            class="age-mobile-hud-toggle-btn"
+                            id="age-mobile-toggle-city-info"
+                            data-age-mobile-toggle="city-info"
+                            aria-expanded="false"
+                            aria-controls="age-map-hud-right">
+                            City Info
+                        </button>
+                    </div>
                 </div>
                 <div class="age-map-top-bar-clock-cluster portal-desktop-nav-only" aria-label="Game time">
                     <div id="portal-universal-game-time-panel" class="portal-universal-game-time-panel" aria-label="Game time">
@@ -75,7 +95,7 @@
                 </div>
             </header>
 
-            <aside class="age-map-hud age-map-hud--left" aria-label="Council board and nation reports">
+            <aside class="age-map-hud age-map-hud--left" id="age-map-hud-left" aria-label="Council board and nation reports">
                 <div class="age-map-hud-panel-inner age-map-hud-panel-inner--left">
                     <section class="age-council-board" id="age-council-board" aria-label="Nation council board">
                         <header class="age-council-board-header">
@@ -205,7 +225,7 @@
                 </div>
             </aside>
 
-            <aside class="age-map-hud age-map-hud--right age-map-hud-panel" aria-label="City info">
+            <aside class="age-map-hud age-map-hud--right age-map-hud-panel" id="age-map-hud-right" aria-label="City info">
                 <div class="age-map-hud-panel-inner age-map-hud-panel-inner--right">
                     <section class="age-map-hud-section age-city-info-panel" aria-label="City and players">
                         <div class="age-city-info-tabs" role="tablist" aria-label="City info views">
@@ -518,6 +538,28 @@
                         <button type="button" class="age-map-view-tab" data-age-view-tab="realm" role="tab" aria-selected="false" tabindex="-1">Realm</button>
                     </div>
                     <div class="age-map-bottom-dock-controls">
+                    <div class="portal-mobile-nav-bar-clip game-page-mobile-commander-clip age-page-mobile-commander-clip" id="game-mobile-commander-clip">
+                        <div class="portal-mobile-commander-block game-page-mobile-commander-block" id="game-mobile-commander-block">
+                            <button type="button" class="portal-mobile-commander-trigger" id="game-mobile-commander-toggle" aria-expanded="false" aria-controls="game-mobile-commander-submenu" onclick="toggleGameMobileCommanderSubmenu(event)">
+                                <img class="portal-mobile-commander-avatar" id="game-mobile-nav-avatar" src="images/avatars/commanderprofile01.png" alt="">
+                                <span class="portal-mobile-commander-identity">
+                                    <strong class="portal-mobile-commander-name" id="game-mobile-nav-username">Loading...</strong>
+                                </span>
+                                <span class="portal-mobile-nav-chevron portal-mobile-commander-chevron" aria-hidden="true">▾</span>
+                            </button>
+                            <div class="portal-mobile-commander-submenu" id="game-mobile-commander-submenu" hidden>
+                                <button type="button" class="portal-mobile-submenu-item" onclick="gameMobileNavCommanderAction('view-profile', event)">View Profile Card</button>
+                                <button type="button" class="portal-mobile-submenu-item" onclick="gameMobileNavCommanderAction('edit-profile', event)">Edit Profile</button>
+                                <button type="button" class="portal-mobile-submenu-item portal-mobile-submenu-item-messages" id="game-mobile-messages-btn" onclick="gameMobileNavCommanderAction('messages', event)">
+                                    <span class="dropdown-messages-label">Messages</span>
+                                    <span id="game-mobile-messages-unread" class="dropdown-messages-unread-count" hidden></span>
+                                </button>
+                                <button type="button" class="portal-mobile-submenu-item" onclick="gameMobileNavCommanderAction('settings', event)">Settings</button>
+                                <button type="button" id="game-mobile-dropdown-return-portal-btn" class="portal-mobile-submenu-item portal-mobile-submenu-item-return-portal" onclick="gameMobileNavCommanderAction('return-to-portal', event)">Return to Age Portal</button>
+                                <button type="button" id="game-mobile-dropdown-logout-btn" class="portal-mobile-submenu-item portal-mobile-submenu-item-logout" onclick="gameMobileNavCommanderAction('logout', event)">Log Out</button>
+                            </div>
+                        </div>
+                    </div>
                     <div class="age-map-bottom-commander-nametag portal-desktop-nav-only" aria-label="Commander">
                         <div class="portal-commander-identity-shell" id="portal-commander-identity-shell">
                             <button type="button" class="portal-commander-new-messages-bar" id="portal-commander-new-messages-bar" hidden aria-live="polite" aria-label="You have new messages. Open messages.">
@@ -561,6 +603,8 @@
             </footer>
         </div>
     </main>
+
+    <div id="age-mobile-hud-backdrop" class="age-mobile-hud-backdrop age-mobile-only" hidden aria-hidden="true"></div>
 
     <div id="age-council-board-editor" class="age-council-board-editor" hidden aria-hidden="true">
         <div id="age-council-board-editor-backdrop" class="age-council-board-editor-backdrop" aria-hidden="true"></div>
@@ -687,14 +731,14 @@
     <script src="rift-official-age.js?v=official-age-page-1"></script>
     <script src="game-chat.js?v=game-chat-send-fix-1"></script>
     <script src="age-council-board.js?v=council-editor-preview-1"></script>
-    <script src="age-movement-panel.js?v=city-players-map-1"></script>
+    <script src="age-movement-panel.js?v=city-players-move-points-1"></script>
     <script src="rift-nation-treasury.js?v=nation-treasury-tip-1"></script>
     <script src="rift-age-movement.js?v=move-point-half-hour-tick-1"></script>
     <script src="rift-player-loc-pins.js?v=player-loc-pins-1"></script>
     <script src="age-world-map.js?v=player-loc-pin-center-2"></script>
     <script src="age-view-tabs.js?v=age-highlight-canvas-sync-1"></script>
     <script src="age-left-reports-panel.js?v=weekly-missions-not-started-1"></script>
-    <script src="age-page.js?v=move-point-half-hour-tick-1"></script>
+    <script src="age-page.js?v=age-mobile-hud-1"></script>
     <script src="dev-page-navigator.js?v=dev-nav-drag-fix-1"></script>
     <script src="custom-cursor.js?v=scrollbar-cursor-3"></script>
 </body>

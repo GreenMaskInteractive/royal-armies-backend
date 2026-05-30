@@ -1106,6 +1106,21 @@ function resolveCommanderCatalogCityId(commander) {
     return resolveCatalogCityId(rawCityId, mapNation);
 }
 
+function resolveCommanderMovePointsPayload(commander) {
+    const rules = getMovePointRules();
+    const mapNation = resolveCommanderMapNationKey(commander);
+    const username = String(commander?.username || '').trim();
+    if (!username || !mapNation) {
+        return { movePoints: 0, movePointsMax: rules.movePointsMax };
+    }
+
+    const movement = readCommanderMovementRecord(username, mapNation);
+    return {
+        movePoints: movement.movePoints,
+        movePointsMax: rules.movePointsMax
+    };
+}
+
 function countNationAgeJoinedForces(nationId) {
     const nation = resolveCatalogNationKey(nationId);
     if (!nation) return 0;
@@ -1224,6 +1239,7 @@ function buildAgeCityPlayersPayload(catalogCityId, viewerUsername) {
 
         const session = getAgeSessionForUsername(username);
         const mapNation = resolveCommanderMapNationKey(commander);
+        const movePoints = resolveCommanderMovePointsPayload(commander);
 
         players.push({
             username,
@@ -1232,6 +1248,8 @@ function buildAgeCityPlayersPayload(catalogCityId, viewerUsername) {
             nationId: mapNation,
             online: Boolean(session?.isOnline),
             membershipTitle: String(commander.membershipTitle || 'Basic').trim() || 'Basic',
+            movePoints: movePoints.movePoints,
+            movePointsMax: movePoints.movePointsMax,
             isSelf: Boolean(viewerLower && username.toLowerCase() === viewerLower)
         });
         seenUsernames.add(username.toLowerCase());
@@ -1241,6 +1259,7 @@ function buildAgeCityPlayersPayload(catalogCityId, viewerUsername) {
         const viewerCityId = resolveCommanderCatalogCityId(viewerCommander);
         if (viewerCityId === resolvedCityId) {
             const session = getAgeSessionForUsername(viewerCommander.username);
+            const movePoints = resolveCommanderMovePointsPayload(viewerCommander);
             players.push({
                 username: viewerCommander.username,
                 displayName: viewerCommander.username,
@@ -1248,6 +1267,8 @@ function buildAgeCityPlayersPayload(catalogCityId, viewerUsername) {
                 nationId: viewerNation,
                 online: Boolean(session?.isOnline),
                 membershipTitle: String(viewerCommander.membershipTitle || 'Basic').trim() || 'Basic',
+                movePoints: movePoints.movePoints,
+                movePointsMax: movePoints.movePointsMax,
                 isSelf: true
             });
         }

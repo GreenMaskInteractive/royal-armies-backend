@@ -14,6 +14,7 @@
     const LEFT_HUD_STACK_GAP_PX = 10;
     const LEFT_REPORTS_MIN_HEIGHT_PX = 150;
     const LEFT_COLUMN_CHAT_CLEARANCE_PX = 10;
+    const AGE_MOBILE_LAYOUT_MQ = '(max-width: 1024px)';
 
     let councilBoardLayoutObserver = null;
 
@@ -377,6 +378,105 @@
         setAgeHudMovePointsDisplay(AGE_HUD_MOVE_POINTS_MAX);
     }
 
+    function isAgeMobileLayout() {
+        return global.matchMedia(AGE_MOBILE_LAYOUT_MQ).matches;
+    }
+
+    function closeAgeMobileHudPanels() {
+        const canvas = global.document.getElementById('age-page-canvas');
+        const backdrop = global.document.getElementById('age-mobile-hud-backdrop');
+        if (canvas) {
+            canvas.classList.remove('is-age-mobile-reports-open', 'is-age-mobile-city-info-open');
+        }
+
+        ['age-mobile-toggle-reports', 'age-mobile-toggle-city-info'].forEach((id) => {
+            const button = global.document.getElementById(id);
+            if (button) button.setAttribute('aria-expanded', 'false');
+        });
+
+        if (backdrop) {
+            backdrop.hidden = true;
+            backdrop.setAttribute('aria-hidden', 'true');
+        }
+    }
+
+    function openAgeMobileHudPanel(panel) {
+        const canvas = global.document.getElementById('age-page-canvas');
+        const backdrop = global.document.getElementById('age-mobile-hud-backdrop');
+        if (!canvas) return;
+
+        closeAgeMobileHudPanels();
+
+        if (panel === 'reports') {
+            canvas.classList.add('is-age-mobile-reports-open');
+            global.document.getElementById('age-mobile-toggle-reports')?.setAttribute('aria-expanded', 'true');
+        } else if (panel === 'city-info') {
+            canvas.classList.add('is-age-mobile-city-info-open');
+            global.document.getElementById('age-mobile-toggle-city-info')?.setAttribute('aria-expanded', 'true');
+        }
+
+        if (backdrop) {
+            backdrop.hidden = false;
+            backdrop.setAttribute('aria-hidden', 'false');
+        }
+    }
+
+    function toggleAgeMobileHudPanel(panel) {
+        const canvas = global.document.getElementById('age-page-canvas');
+        if (!canvas) return;
+
+        const openClass = panel === 'reports'
+            ? 'is-age-mobile-reports-open'
+            : 'is-age-mobile-city-info-open';
+
+        if (canvas.classList.contains(openClass)) {
+            closeAgeMobileHudPanels();
+            return;
+        }
+
+        openAgeMobileHudPanel(panel);
+    }
+
+    function bindAgeMobileHudControls() {
+        const reportsBtn = global.document.getElementById('age-mobile-toggle-reports');
+        const cityBtn = global.document.getElementById('age-mobile-toggle-city-info');
+        const backdrop = global.document.getElementById('age-mobile-hud-backdrop');
+
+        if (reportsBtn && reportsBtn.dataset.ageMobileHudBound !== 'true') {
+            reportsBtn.dataset.ageMobileHudBound = 'true';
+            reportsBtn.addEventListener('click', () => toggleAgeMobileHudPanel('reports'));
+        }
+
+        if (cityBtn && cityBtn.dataset.ageMobileHudBound !== 'true') {
+            cityBtn.dataset.ageMobileHudBound = 'true';
+            cityBtn.addEventListener('click', () => toggleAgeMobileHudPanel('city-info'));
+        }
+
+        if (backdrop && backdrop.dataset.ageMobileHudBound !== 'true') {
+            backdrop.dataset.ageMobileHudBound = 'true';
+            backdrop.addEventListener('click', closeAgeMobileHudPanels);
+        }
+
+        if (global.document.body.dataset.ageMobileHudResizeBound !== 'true') {
+            global.document.body.dataset.ageMobileHudResizeBound = 'true';
+            global.addEventListener('resize', () => {
+                if (!isAgeMobileLayout()) closeAgeMobileHudPanels();
+            }, { passive: true });
+        }
+
+        global.document.addEventListener('click', (event) => {
+            const viewTab = event.target.closest('[data-age-view-tab]');
+            if (viewTab && viewTab.getAttribute('data-age-view-tab') !== 'map') {
+                closeAgeMobileHudPanels();
+            }
+        });
+
+        global.document.addEventListener('keydown', (event) => {
+            if (event.key !== 'Escape') return;
+            closeAgeMobileHudPanels();
+        });
+    }
+
     function refreshNavChrome() {
         const username = resolvePageUsername();
         const avatarUrl = resolveGameAvatarUrl();
@@ -591,6 +691,18 @@
         const mapFrame = global.document.querySelector('#age-page-canvas .age-map-frame');
         if (!canvas || !mapFrame) return;
 
+        if (isAgeMobileLayout()) {
+            [
+                '--age-council-board-top',
+                '--age-council-board-left',
+                '--age-council-board-width',
+                '--age-council-board-height',
+                '--age-left-column-height',
+                '--age-left-reports-height'
+            ].forEach((prop) => canvas.style.removeProperty(prop));
+            return;
+        }
+
         const mapRect = mapFrame.getBoundingClientRect();
         if (mapRect.width < 8 || mapRect.height < 8) return;
 
@@ -690,6 +802,7 @@
         refreshAgeHudMovePoints();
 
         bindPageNavigation();
+        bindAgeMobileHudControls();
         registerUnloadHandlers();
         try {
             await bootstrapAgePageSession();

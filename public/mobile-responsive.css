@@ -866,6 +866,25 @@ body {
         z-index: 100000 !important;
     }
 
+    #age-page-canvas .age-page-mobile-commander-clip {
+        display: block !important;
+        flex: 1 1 auto !important;
+        width: auto !important;
+        min-width: 0 !important;
+        max-width: min(240px, 46vw) !important;
+        margin: 0 !important;
+        position: relative !important;
+        z-index: 6 !important;
+    }
+
+    #age-page-canvas .age-page-mobile-commander-clip .portal-mobile-commander-block {
+        width: 100% !important;
+    }
+
+    #age-page-canvas .age-page-mobile-commander-clip .portal-mobile-commander-submenu {
+        z-index: 30 !important;
+    }
+
     #game-page-canvas .game-page-mobile-commander-block {
         width: 100% !important;
     }
@@ -907,7 +926,9 @@ body {
     }
 
     #game-page-canvas,
-    #game-page-canvas.game-page-canvas {
+    #game-page-canvas.game-page-canvas,
+    #age-page-canvas,
+    #age-page-canvas.age-page-canvas {
         height: 100dvh !important;
         max-height: 100dvh !important;
         overflow: hidden !important;
@@ -2590,6 +2611,336 @@ body {
 
     #page-landing .slide {
         inset: -20% !important;
+    }
+
+    .age-mobile-only,
+    .age-mobile-hud-backdrop {
+        display: none !important;
+    }
+
+    #age-page-canvas .age-page-mobile-commander-clip {
+        display: none !important;
+    }
+}
+
+/* =============================================================================
+   Age map page — mobile / tablet HUD reflow (≤ 1024px)
+   ============================================================================= */
+.age-mobile-only {
+    display: none !important;
+}
+
+@media (max-width: 1024px) {
+    .age-mobile-only {
+        display: block !important;
+    }
+
+    .age-mobile-hud-controls.age-mobile-only {
+        display: flex !important;
+    }
+
+    #age-page-canvas {
+        --age-map-slot-gap: 6px;
+        --age-map-hud-top-bar-height: auto;
+        --age-map-hud-bottom-bar-height: 52px;
+        --age-chat-messages-width: min(calc(100vw - 24px), 100%);
+        --age-chat-compose-width: min(calc(100vw - 24px), 100%);
+        --age-chat-messages-height: min(132px, 20vh);
+        --age-chat-messages-gap: 8px;
+        --age-age-mobile-dock-stack: calc(
+            var(--age-map-hud-bottom-bar-height)
+            + var(--age-chat-messages-gap)
+            + var(--age-chat-messages-height)
+            + 12px
+        );
+    }
+
+    #age-page-canvas .age-page-main,
+    #age-page-canvas .age-map-shell {
+        height: 100% !important;
+        min-height: 0 !important;
+        max-height: 100dvh !important;
+    }
+
+    #age-page-canvas .age-map-hud--top {
+        left: max(8px, env(safe-area-inset-left)) !important;
+        right: max(8px, env(safe-area-inset-right)) !important;
+        top: max(8px, env(safe-area-inset-top)) !important;
+    }
+
+    #age-page-canvas .age-map-hud-top-bar {
+        flex-wrap: wrap !important;
+        align-items: stretch !important;
+        height: auto !important;
+        min-height: 0 !important;
+        padding: 8px 10px !important;
+        gap: 8px !important;
+    }
+
+    #age-page-canvas .age-map-top-bar-brand {
+        flex: 1 1 100% !important;
+        max-width: none !important;
+        --age-top-bar-logo-slot-w: min(150px, 38vw) !important;
+        --age-top-bar-logo-slot-h: 42px !important;
+    }
+
+    #age-page-canvas .age-map-top-bar-separator {
+        margin: 0 8px !important;
+        height: 36px !important;
+    }
+
+    #age-page-canvas .age-map-age-badge-title {
+        font-size: 0.92rem !important;
+    }
+
+    #age-page-canvas .age-map-resource-strip {
+        flex: 1 1 100% !important;
+        display: flex !important;
+        flex-wrap: nowrap !important;
+        gap: 6px !important;
+        overflow-x: auto !important;
+        overflow-y: hidden !important;
+        -webkit-overflow-scrolling: touch !important;
+        scrollbar-width: none !important;
+        padding-bottom: 2px !important;
+    }
+
+    #age-page-canvas .age-map-resource-strip::-webkit-scrollbar {
+        display: none !important;
+    }
+
+    #age-page-canvas .age-map-resource-item {
+        flex: 0 0 auto !important;
+        min-width: 72px !important;
+        padding: 4px 8px !important;
+    }
+
+    #age-page-canvas .age-map-resource-label {
+        font-size: 0.52rem !important;
+    }
+
+    #age-page-canvas .age-map-resource-value {
+        font-size: 0.82rem !important;
+    }
+
+    .age-mobile-hud-controls {
+        flex: 1 1 100% !important;
+        align-items: center !important;
+        justify-content: flex-end !important;
+        gap: 8px !important;
+    }
+
+    .age-mobile-hud-toggle-btn {
+        appearance: none !important;
+        border: 1px solid rgba(184, 144, 48, 0.42) !important;
+        border-radius: 999px !important;
+        padding: 8px 12px !important;
+        min-height: 44px !important;
+        font-family: 'Cinzel', serif !important;
+        font-size: 0.62rem !important;
+        font-weight: 700 !important;
+        letter-spacing: 0.08em !important;
+        text-transform: uppercase !important;
+        color: rgba(236, 220, 180, 0.92) !important;
+        background: rgba(0, 0, 0, 0.42) !important;
+        cursor: pointer !important;
+        touch-action: manipulation !important;
+    }
+
+    .age-mobile-hud-toggle-btn[aria-expanded="true"] {
+        border-color: rgba(255, 215, 0, 0.72) !important;
+        color: #ffd978 !important;
+        background: rgba(48, 40, 24, 0.92) !important;
+    }
+
+    #age-page-canvas[data-age-view="city"] [data-age-mobile-toggle="city-info"],
+    #age-page-canvas[data-age-view="realm"] [data-age-mobile-toggle="city-info"] {
+        display: none !important;
+    }
+
+    #age-page-canvas .age-map-hud--left,
+    #age-page-canvas .age-map-hud--right {
+        display: none !important;
+    }
+
+    #age-page-canvas.is-age-mobile-reports-open #age-map-hud-left,
+    #age-page-canvas.is-age-mobile-city-info-open #age-map-hud-right {
+        display: flex !important;
+        position: fixed !important;
+        top: calc(max(8px, env(safe-area-inset-top)) + 88px) !important;
+        left: max(8px, env(safe-area-inset-left)) !important;
+        right: max(8px, env(safe-area-inset-right)) !important;
+        bottom: calc(max(8px, env(safe-area-inset-bottom)) + var(--age-age-mobile-dock-stack)) !important;
+        width: auto !important;
+        height: auto !important;
+        max-width: none !important;
+        max-height: none !important;
+        margin: 0 !important;
+        z-index: 24 !important;
+        overflow: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+        background: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+    }
+
+    #age-page-canvas[data-age-view="city"] #age-map-hud-right,
+    #age-page-canvas[data-age-view="realm"] #age-map-hud-right {
+        display: flex !important;
+        position: fixed !important;
+        top: calc(max(8px, env(safe-area-inset-top)) + 88px) !important;
+        left: max(8px, env(safe-area-inset-left)) !important;
+        right: max(8px, env(safe-area-inset-right)) !important;
+        bottom: calc(max(8px, env(safe-area-inset-bottom)) + var(--age-age-mobile-dock-stack)) !important;
+        width: auto !important;
+        height: auto !important;
+        max-width: none !important;
+        max-height: none !important;
+        margin: 0 !important;
+        z-index: 14 !important;
+        overflow: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+    }
+
+    #age-page-canvas[data-age-view="city"] #age-map-hud-left,
+    #age-page-canvas[data-age-view="realm"] #age-map-hud-left {
+        display: none !important;
+    }
+
+    .age-mobile-hud-backdrop {
+        position: fixed !important;
+        inset: 0 !important;
+        z-index: 20 !important;
+        background: rgba(0, 0, 0, 0.58) !important;
+        backdrop-filter: blur(2px) !important;
+        -webkit-backdrop-filter: blur(2px) !important;
+    }
+
+    .age-mobile-hud-backdrop[hidden] {
+        display: none !important;
+    }
+
+    #age-page-canvas .age-map-hud--bottom {
+        left: max(8px, env(safe-area-inset-left)) !important;
+        right: max(8px, env(safe-area-inset-right)) !important;
+        bottom: max(8px, env(safe-area-inset-bottom)) !important;
+        z-index: 16 !important;
+    }
+
+    #age-page-canvas .age-map-bottom-dock-shell::before {
+        display: none !important;
+        content: none !important;
+        flex: 0 0 0 !important;
+        width: 0 !important;
+        min-width: 0 !important;
+        max-width: 0 !important;
+    }
+
+    #age-page-canvas .age-map-bottom-dock-shell {
+        flex-direction: column !important;
+        align-items: stretch !important;
+        min-height: 0 !important;
+        gap: 8px !important;
+        padding: 8px !important;
+    }
+
+    #age-page-canvas .age-map-bottom-dock-chat-column {
+        position: relative !important;
+        left: auto !important;
+        bottom: auto !important;
+        order: 1 !important;
+        width: 100% !important;
+        min-width: 0 !important;
+        max-width: none !important;
+        min-height: 0 !important;
+    }
+
+    #age-page-canvas .age-map-bottom-chat-messages-host {
+        position: relative !important;
+        left: auto !important;
+        bottom: auto !important;
+        width: 100% !important;
+        max-width: none !important;
+        height: var(--age-chat-messages-height) !important;
+        margin-bottom: var(--age-chat-messages-gap) !important;
+    }
+
+    #age-page-canvas .age-map-bottom-chat-compose-host {
+        position: relative !important;
+        left: auto !important;
+        bottom: auto !important;
+        width: 100% !important;
+        max-width: none !important;
+        height: var(--age-map-hud-bottom-bar-height) !important;
+        padding: 0 6px !important;
+    }
+
+    #age-page-canvas .age-map-bottom-dock-shell > .age-map-view-tabs {
+        position: relative !important;
+        left: auto !important;
+        top: auto !important;
+        transform: none !important;
+        order: 2 !important;
+        justify-content: center !important;
+        width: 100% !important;
+        margin: 0 !important;
+    }
+
+    #age-page-canvas .age-map-view-tab {
+        min-height: 44px !important;
+        padding: 10px 14px !important;
+        touch-action: manipulation !important;
+    }
+
+    #age-page-canvas .age-map-bottom-dock-controls {
+        order: 3 !important;
+        flex: 0 0 auto !important;
+        width: 100% !important;
+        height: auto !important;
+        min-height: var(--age-map-hud-bottom-bar-height) !important;
+        padding: 0 !important;
+        justify-content: flex-end !important;
+    }
+
+    #age-page-canvas .age-map-hud--right {
+        right: max(8px, env(safe-area-inset-right)) !important;
+    }
+
+    #age-page-canvas .age-world-map-terrain-controls {
+        top: calc(max(8px, env(safe-area-inset-top)) + 92px) !important;
+        left: max(8px, env(safe-area-inset-left)) !important;
+        z-index: 10 !important;
+    }
+
+    #age-page-canvas .age-world-map-terrain-toggle {
+        min-height: 44px !important;
+        touch-action: manipulation !important;
+    }
+
+    #age-page-canvas .game-chat-module--age-docked {
+        width: 100% !important;
+        max-width: none !important;
+    }
+
+    #age-page-canvas .game-chat-module--age-docked .game-chat-messages {
+        max-height: calc(var(--age-chat-messages-height) - 42px) !important;
+    }
+}
+
+@media (max-width: 768px) {
+    #age-page-canvas {
+        --age-chat-messages-height: min(118px, 18vh);
+    }
+
+    #age-page-canvas .age-map-top-bar-brand {
+        --age-top-bar-logo-slot-w: min(128px, 42vw) !important;
+    }
+
+    #age-page-canvas.is-age-mobile-reports-open #age-map-hud-left,
+    #age-page-canvas.is-age-mobile-city-info-open #age-map-hud-right,
+    #age-page-canvas[data-age-view="city"] #age-map-hud-right,
+    #age-page-canvas[data-age-view="realm"] #age-map-hud-right {
+        top: calc(max(8px, env(safe-area-inset-top)) + 112px) !important;
     }
 }
 

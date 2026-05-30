@@ -388,6 +388,20 @@
         return normalized === 'royalty' || normalized === 'premium';
     }
 
+    function formatPlayerMovePointsLabel(player) {
+        const current = Number(player?.movePoints);
+        const max = Number(player?.movePointsMax);
+        if (!Number.isFinite(current) || !Number.isFinite(max)) return '—';
+        return `${current}/${max}`;
+    }
+
+    function formatPlayerMovePointsAria(player) {
+        const current = Number(player?.movePoints);
+        const max = Number(player?.movePointsMax);
+        if (!Number.isFinite(current) || !Number.isFinite(max)) return 'Move points unknown';
+        return `${current} of ${max} move points`;
+    }
+
     function sortCityPlayers(players) {
         return players.slice().sort((left, right) => {
             if (left.online !== right.online) {
@@ -533,12 +547,15 @@
                     const displayName = player.isSelf
                         ? `${player.displayName} (you)`
                         : player.displayName;
+                    const movePointsLabel = formatPlayerMovePointsLabel(player);
+                    const movePointsAria = formatPlayerMovePointsAria(player);
                     return (
                         `<li class="age-city-info-player-row${player.online ? ' is-online' : ''}${player.isSelf ? ' is-self' : ''}">`
                         + (isRoyaltyMembershipTitle(player.membershipTitle)
                             ? '<img class="age-city-info-player-royalty-badge" src="images/royaltybadge.png" alt="Royalty premium member" loading="lazy" decoding="async">'
                             : '')
                         + `<span class="age-city-info-player-name">${escapePlayerHtml(displayName)}</span>`
+                        + `<span class="age-city-info-player-move-points" title="Move points" aria-label="${escapePlayerHtml(movePointsAria)}">${escapePlayerHtml(movePointsLabel)}</span>`
                         + `<span class="age-city-info-player-presence">${player.online ? 'Online' : 'Offline'}</span>`
                         + '</li>'
                     );
