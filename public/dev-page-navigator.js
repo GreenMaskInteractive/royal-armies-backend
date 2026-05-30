@@ -10,8 +10,7 @@
     const DEV_SITE_PAGES = [
         { id: 'main', label: 'Age Portal', path: '/main.html', file: 'main.html' },
         { id: 'game', label: 'Game (progression)', path: '/game.html', file: 'game.html' },
-        { id: 'agealpha', label: 'Age Alpha (live session)', path: '/agealpha.html', file: 'agealpha.html' },
-        { id: 'how-did-you-get-here', label: 'Join Age placeholder', path: '/how-did-you-get-here.html', file: 'how-did-you-get-here.html' }
+        { id: 'agealpha', label: 'Age Alpha (live session)', path: '/agealpha.html', file: 'agealpha.html' }
     ];
 
     function isDevPageNavigatorEnabled() {
@@ -35,7 +34,7 @@
 
     function isDevPortalPersonaPage() {
         const slug = getPathSlug();
-        return slug === 'main' || slug === 'game' || slug === 'agealpha' || slug === 'how-did-you-get-here' || slug === '';
+        return slug === 'main' || slug === 'game' || slug === 'agealpha' || slug === '';
     }
 
     function resolveDevPageHref(page) {
@@ -166,7 +165,7 @@
         const achievementTestBtn = (
             typeof global.isLocalDevelopmentHost === 'function'
             && global.isLocalDevelopmentHost()
-            && getCurrentPageId() === 'how-did-you-get-here'
+            && getCurrentPageId() === 'game'
         )
             ? '<button type="button" id="dev-achievement-popup-test" class="dev-page-navigator-go dev-page-navigator-go--secondary" title="Preview the Whoa Slow Down achievement popup">Achievement</button>'
             : '';

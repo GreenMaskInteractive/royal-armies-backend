@@ -857,7 +857,10 @@
             );
 
             const serverKey = `royalArmies_${username}_ageDeploymentSelectedServerId`;
-            if (!global.localStorage.getItem(serverKey)) {
+            const serverFromQuery = params.get('server');
+            if (serverFromQuery) {
+                global.localStorage.setItem(serverKey, serverFromQuery);
+            } else if (!global.localStorage.getItem(serverKey)) {
                 global.localStorage.setItem(serverKey, 'amnek');
             }
         } catch (_err) {

@@ -256,7 +256,10 @@
     }
 
     function isAchievementPopupHostPage() {
-        return !!global.document.getElementById('how-did-you-get-here-canvas');
+        return Boolean(
+            global.document.getElementById('how-did-you-get-here-canvas')
+            || global.document.getElementById('game-page-canvas')
+        );
     }
 
     function syncAchievementToastStackPosition() {

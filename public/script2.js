@@ -448,7 +448,9 @@ function rejoinSelectedAgeServerAfterTermsCheck(clickEvent) {
         beginCommanderAgeResetSession();
     }
 
-    const destination = `/how-did-you-get-here.html?tutorial=${isTutorialModeActive}&joinAge=0&server=${encodeURIComponent(serverId)}`;
+    const destination = typeof resolveGamePageHandoffUrl === 'function'
+        ? resolveGamePageHandoffUrl({ tutorial: isTutorialModeActive, joinAge: false, server: serverId })
+        : `/game.html?tutorial=${isTutorialModeActive}&joinAge=0&server=${encodeURIComponent(serverId)}`;
 
     verifyPortalAgeJoinAllowed().then((joinAllowed) => {
         if (!joinAllowed) {
@@ -1379,7 +1381,13 @@ function launchGameRoundSectorAfterTermsCheck(isTutorialModeActive, clickEvent) 
 
     const attemptGamePageHandoff = () => {
         if (!deployPulseFinished || !selectAudioFinished) return;
-        const destination = `/how-did-you-get-here.html?tutorial=${isTutorialModeActive}&joinAge=1&server=${encodeURIComponent(readCommanderSelectedServerId())}`;
+        const destination = typeof resolveGamePageHandoffUrl === 'function'
+            ? resolveGamePageHandoffUrl({
+                tutorial: isTutorialModeActive,
+                joinAge: true,
+                server: readCommanderSelectedServerId()
+            })
+            : `/game.html?tutorial=${isTutorialModeActive}&joinAge=1&server=${encodeURIComponent(readCommanderSelectedServerId())}`;
         verifyPortalAgeJoinAllowed().then((joinAllowed) => {
             if (!joinAllowed) {
                 joinAgePortalTransitionActive = false;

@@ -29,9 +29,9 @@
         if (!username) return;
         var tutorial = localStorage.getItem('royalArmies_' + username + '_ageDeploymentTutorialMode') === 'true';
         var server = localStorage.getItem('royalArmies_' + username + '_ageDeploymentSelectedServerId') || 'amnek';
-        var destination = '/how-did-you-get-here.html?tutorial=' + tutorial + '&joinAge=0&server=' + encodeURIComponent(server);
+        var destination = '/game.html?tutorial=' + tutorial + '&joinAge=0&server=' + encodeURIComponent(server);
         var pathBase = window.location.pathname.replace(/\/$/, '').replace(/\.html$/i, '');
-        if (pathBase === '/how-did-you-get-here') return;
+        if (pathBase === '/game') return;
         window.location.replace(destination);
     } catch (_err) {
         /* ignore */
@@ -707,10 +707,10 @@
     <script src="portal-alerts.js?v=local-silent-error-popups-1"></script>
     <script src="rift-error-display.js?v=local-silent-error-popups-1"></script>
     <script src="rank-data.js"></script>
-    <script src="script.js?v=portal-inactivity-logout-1"></script>
+    <script src="script.js?v=game-handoff-routing-1"></script>
     <script src="commander-hub.js?v=royalty-badge-profile-name-1"></script>
     <script src="maintenance-alert.js?v=maintenance-always-on-1"></script>
-    <script src="script2.js?v=portal-inactivity-logout-1"></script>
+    <script src="script2.js?v=game-handoff-routing-1"></script>
     <script src="custom-cursor.js?v=scrollbar-cursor-2"></script>
 
 </body>

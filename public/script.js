@@ -3357,10 +3357,27 @@ function resolveCommanderDeploymentStorageKey(suffix) {
     return username ? `royalArmies_${username}_${suffix}` : `royalArmies_guest_${suffix}`;
 }
 
+function resolveGamePageHandoffUrl(options) {
+    const opts = options && typeof options === 'object' ? options : {};
+    const tutorial = opts.tutorial !== undefined
+        ? Boolean(opts.tutorial)
+        : localStorage.getItem(resolveCommanderDeploymentStorageKey('ageDeploymentTutorialMode')) === 'true';
+    const server = String(
+        opts.server !== undefined
+            ? opts.server
+            : (localStorage.getItem(resolveCommanderDeploymentStorageKey('ageDeploymentSelectedServerId')) || 'amnek')
+    ).trim() || 'amnek';
+    const joinAge = opts.joinAge === true || opts.joinAge === 1 || opts.joinAge === '1';
+
+    const params = new URLSearchParams();
+    params.set('tutorial', tutorial ? 'true' : 'false');
+    params.set('joinAge', joinAge ? '1' : '0');
+    params.set('server', server);
+    return `/game.html?${params.toString()}`;
+}
+
 function resolveActiveAgeHandoffUrl() {
-    const tutorial = localStorage.getItem(resolveCommanderDeploymentStorageKey('ageDeploymentTutorialMode')) === 'true';
-    const server = localStorage.getItem(resolveCommanderDeploymentStorageKey('ageDeploymentSelectedServerId')) || 'amnek';
-    return `/how-did-you-get-here.html?tutorial=${tutorial}&joinAge=0&server=${encodeURIComponent(server)}`;
+    return resolveGamePageHandoffUrl({ joinAge: false });
 }
 
 function enforceActiveAgePortalLock() {
@@ -4504,6 +4521,7 @@ window.confirmSelection = confirmSelection;
 window.selectClass = selectClass; 
 window.isCommanderEnrolledInActiveAgeRound = isCommanderEnrolledInActiveAgeRound;
 window.resolveActiveAgeHandoffUrl = resolveActiveAgeHandoffUrl;
+window.resolveGamePageHandoffUrl = resolveGamePageHandoffUrl;
 window.enforceActiveAgePortalLock = enforceActiveAgePortalLock;
 window.applyProfileRankResetButtonState = applyProfileRankResetButtonState;
 window.applyPortalMobileVisualSettingsRestrictions = applyPortalMobileVisualSettingsRestrictions;

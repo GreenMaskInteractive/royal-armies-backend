@@ -2365,7 +2365,6 @@ const PUBLIC_DIR = path.join(__dirname, 'public');
 const PORTAL_HTML_PAGES = {
     main: 'main.html',
     game: 'game.html',
-    'how-did-you-get-here': 'how-did-you-get-here.html',
     'reset-password': 'reset-password.html',
     terms: 'terms.html'
 };
@@ -2387,6 +2386,10 @@ app.get(['/ageportal', '/ageportal.html', '/index.html', '/', '/index'], (req, r
 
 app.get(['/legal', '/legal.html'], (req, res) => {
     redirectWithQuery(req, res, '/terms.html');
+});
+
+app.get(['/how-did-you-get-here', '/how-did-you-get-here.html'], (req, res) => {
+    redirectWithQuery(req, res, '/game.html');
 });
 
 Object.entries(PORTAL_HTML_PAGES).forEach(([slug, fileName]) => {
