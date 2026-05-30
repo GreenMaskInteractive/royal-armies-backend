@@ -390,16 +390,14 @@
 
     function formatPlayerMovePointsLabel(player) {
         const current = Number(player?.movePoints);
-        const max = Number(player?.movePointsMax);
-        if (!Number.isFinite(current) || !Number.isFinite(max)) return '—';
-        return `${current}/${max}`;
+        if (!Number.isFinite(current)) return '—';
+        return String(current);
     }
 
     function formatPlayerMovePointsAria(player) {
         const current = Number(player?.movePoints);
-        const max = Number(player?.movePointsMax);
-        if (!Number.isFinite(current) || !Number.isFinite(max)) return 'Move points unknown';
-        return `${current} of ${max} move points`;
+        if (!Number.isFinite(current)) return 'Move points unknown';
+        return `${current} move points`;
     }
 
     function sortCityPlayers(players) {

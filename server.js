@@ -1234,6 +1234,8 @@ function buildAgeCityPlayersPayload(catalogCityId, viewerUsername) {
         if (!commander?.username || isHiddenRegistrationUsername(commander.username)) return;
 
         const username = String(commander.username).trim();
+        if (!getAgeSessionForUsername(username)) return;
+
         const commanderCityId = resolveCommanderCatalogCityId(commander);
         if (commanderCityId !== resolvedCityId) return;
 
@@ -1249,7 +1251,6 @@ function buildAgeCityPlayersPayload(catalogCityId, viewerUsername) {
             online: Boolean(session?.isOnline),
             membershipTitle: String(commander.membershipTitle || 'Basic').trim() || 'Basic',
             movePoints: movePoints.movePoints,
-            movePointsMax: movePoints.movePointsMax,
             isSelf: Boolean(viewerLower && username.toLowerCase() === viewerLower)
         });
         seenUsernames.add(username.toLowerCase());
@@ -1257,18 +1258,17 @@ function buildAgeCityPlayersPayload(catalogCityId, viewerUsername) {
 
     if (viewerCommander && viewerLower && !seenUsernames.has(viewerLower)) {
         const viewerCityId = resolveCommanderCatalogCityId(viewerCommander);
-        if (viewerCityId === resolvedCityId) {
-            const session = getAgeSessionForUsername(viewerCommander.username);
+        const viewerSession = getAgeSessionForUsername(viewerCommander.username);
+        if (viewerCityId === resolvedCityId && viewerSession) {
             const movePoints = resolveCommanderMovePointsPayload(viewerCommander);
             players.push({
                 username: viewerCommander.username,
                 displayName: viewerCommander.username,
                 catalogCityId: viewerCityId,
                 nationId: viewerNation,
-                online: Boolean(session?.isOnline),
+                online: Boolean(viewerSession.isOnline),
                 membershipTitle: String(viewerCommander.membershipTitle || 'Basic').trim() || 'Basic',
                 movePoints: movePoints.movePoints,
-                movePointsMax: movePoints.movePointsMax,
                 isSelf: true
             });
         }

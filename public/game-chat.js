@@ -116,6 +116,10 @@
 
     function resolveComposeErrorMessage(response, payload, err) {
         if (err) {
+            if (typeof global.isServerUpdateDowntime === 'function'
+                && global.isServerUpdateDowntime(response, payload, err)) {
+                return 'An update is underway. Expect a moment of downtime.';
+            }
             const isLocal = typeof global.isLocalDevelopmentHost === 'function' && global.isLocalDevelopmentHost();
             const isLiveStatic = typeof global.isLiveStaticPreviewHost === 'function' && global.isLiveStaticPreviewHost();
             if (isLocal && isLiveStatic) {
@@ -125,6 +129,11 @@
                 return 'Could not reach the game server. Start it with node server.js.';
             }
             return 'Could not send your message. Check your connection and try again.';
+        }
+
+        if (typeof global.isServerUpdateDowntime === 'function'
+            && global.isServerUpdateDowntime(response, payload, null)) {
+            return 'An update is underway. Expect a moment of downtime.';
         }
 
         const code = String(payload?.code || payload?.errorCode || '').trim();
@@ -352,6 +361,10 @@
         applyViewerRestrictionsFromServer(payload.viewerRestrictions);
         chatSyncSince = computeChatSyncSince();
 
+        if (typeof global.markServerReachableAgain === 'function') {
+            global.markServerReachableAgain();
+        }
+
         if (payload.ui) {
             applyUiFromServer(payload.ui, { skipServerSave: true });
         }
@@ -377,7 +390,15 @@
         };
     }
 
-    async function notifyGameError(response, payload, fallbackTitle) {
+    async function notifyGameError(response, payload, fallbackTitle, err) {
+        if (typeof global.isServerUpdateDowntime === 'function'
+            && global.isServerUpdateDowntime(response, payload, err)) {
+            if (typeof global.showRiftUpdateUnderwayNotice === 'function') {
+                await global.showRiftUpdateUnderwayNotice(fallbackTitle || 'Game chat');
+                return;
+            }
+        }
+
         if (typeof global.handleRiftApiFailure === 'function') {
             await global.handleRiftApiFailure(response, payload, fallbackTitle || 'Game chat');
             return;
@@ -419,6 +440,13 @@
             return applyServerPayload(payload);
         } catch (err) {
             console.warn('Game chat sync failed:', err);
+            if (typeof global.isServerUpdateDowntime === 'function'
+                && global.isServerUpdateDowntime(null, null, err)) {
+                if (typeof global.showRiftUpdateUnderwayNotice === 'function') {
+                    await global.showRiftUpdateUnderwayNotice('Game chat');
+                }
+                return false;
+            }
             if (typeof global.showRiftNetworkError === 'function') {
                 await global.showRiftNetworkError('Game chat');
             } else if (typeof global.showRoyalArmiesNetworkError === 'function') {
@@ -461,6 +489,13 @@
             console.warn('Game chat post error:', err);
             composeErrorMessage = resolveComposeErrorMessage(null, null, err);
             updateComposeState();
+            if (typeof global.isServerUpdateDowntime === 'function'
+                && global.isServerUpdateDowntime(null, null, err)) {
+                if (typeof global.showRiftUpdateUnderwayNotice === 'function') {
+                    await global.showRiftUpdateUnderwayNotice('Game chat');
+                }
+                return false;
+            }
             if (typeof global.showRiftNetworkError === 'function') {
                 await global.showRiftNetworkError('Game chat');
             } else if (typeof global.showRoyalArmiesNetworkError === 'function') {
@@ -491,6 +526,13 @@
             return true;
         } catch (err) {
             console.warn('Game chat system event failed:', err);
+            if (typeof global.isServerUpdateDowntime === 'function'
+                && global.isServerUpdateDowntime(null, null, err)) {
+                if (typeof global.showRiftUpdateUnderwayNotice === 'function') {
+                    await global.showRiftUpdateUnderwayNotice('System event');
+                }
+                return false;
+            }
             if (typeof global.showRoyalArmiesNetworkError === 'function') {
                 await global.showRoyalArmiesNetworkError('System event');
             }
