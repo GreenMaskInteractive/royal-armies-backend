@@ -154,6 +154,15 @@
         }
     }
 
+    function resolveActiveCommanderUsernameForTerms() {
+        if (typeof global.getActiveCommanderUsername === 'function') {
+            const active = String(global.getActiveCommanderUsername() || '').trim();
+            if (active && active.toLowerCase() !== 'testaccount') return active;
+        }
+        const saved = global.localStorage.getItem('activeCommanderUser');
+        return saved && saved.trim() ? saved.trim() : '';
+    }
+
     async function submitDashboardTermsAcceptance() {
         const checkbox = global.document.getElementById('terms-dashboard-accepted');
         if (!checkbox?.checked) {
@@ -168,11 +177,13 @@
         }
 
         try {
+            const username = resolveActiveCommanderUsernameForTerms();
             const response = await fetch(resolveApiUrl('/api/portal/account/accept-terms'), {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 credentials: resolveFetchCredentials(),
                 body: JSON.stringify({
+                    username,
                     termsAccepted: true,
                     agreeToTerms: true,
                     termsVersion: resolveTermsVersion()
@@ -254,9 +265,14 @@
         const onMainHub = typeof global.isMainPortalHub === 'function' && global.isMainPortalHub();
         if (!onMainHub) return;
         if (typeof global.isPortalUserAuthenticated !== 'function' || !global.isPortalUserAuthenticated()) return;
+        if (isTermsGateBlocking()) return;
 
         const session = await fetchSessionTermsStatus();
         if (!session?.authenticated || !session?.requiresTermsAcceptance) return;
+
+        if (typeof global.prepareMainPortalPostLoginTermsGate === 'function') {
+            global.prepareMainPortalPostLoginTermsGate();
+        }
 
         promptReturningUserTermsAcceptance(() => {
             if (typeof global.refreshMainPortalAuthChrome === 'function') {

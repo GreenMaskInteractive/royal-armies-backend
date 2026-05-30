@@ -2213,6 +2213,10 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 const resend = new Resend('re_eMzwshB5_EmorLivvuzwbHk6jpAzWtpWE');
 
+if (isProduction) {
+    app.set('trust proxy', 1);
+}
+
 /* ==========================================
    NEXUS MODULE: SECURITY & MIDDLEWARE
    ========================================== */
@@ -2608,9 +2612,20 @@ app.get('/api/auth/session', (req, res) => {
 });
 
 app.post('/api/portal/account/accept-terms', (req, res) => {
-    const username = String(req.session?.username || '').trim();
+    const sessionUsername = String(req.session?.username || '').trim();
+    const bodyUsername = resolveLedgerCommanderUsername(req.body?.username || '');
+    const username = sessionUsername || resolvePortalAccountUsername(bodyUsername, req);
+
     if (!username) {
-        return sendApiError(res, 'NEXUS-AUTH-001');
+        return sendApiError(res, 'NEXUS-GEN-003');
+    }
+
+    if (sessionUsername && bodyUsername && bodyUsername.toLowerCase() !== sessionUsername.toLowerCase()) {
+        return sendApiError(res, 'NEXUS-AUTH-011');
+    }
+
+    if (!sessionUsername && username) {
+        setPortalSessionForUser(req, username, true);
     }
 
     const agreed = req.body?.termsAccepted === true

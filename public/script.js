@@ -1815,6 +1815,9 @@ const CHRONICLE_DATA = {
 
 /* --- Block 3: The Master Close Protocol (The UI Sync) --- */
 function closeAllActiveUI(e) {
+    if (typeof isTermsGateBlocking === 'function' && isTermsGateBlocking()) {
+        return;
+    }
     if (e && e.target) {
         if (e.target.classList.contains('nav-icon') || e.target.closest('.updates-hub') || e.target.id === 'roadmap-trigger') {
             return; 
@@ -1862,6 +1865,14 @@ function redirectToAgePortal() {
         return;
     }
     window.location.assign('/main.html');
+}
+
+function prepareMainPortalPostLoginTermsGate() {
+    restoreLoginAuthButtons();
+    closeMainPortalLoginModal();
+    if (typeof refreshMainPortalAuthChrome === 'function') {
+        refreshMainPortalAuthChrome();
+    }
 }
 
 async function handleLogin() {
@@ -1995,6 +2006,15 @@ async function handleLogin() {
         if (payload.requiresTermsAcceptance) {
             persistPortalAuth(ledgerUsername, payload.rememberMe !== false && rememberMe);
             if (typeof player !== 'undefined') player.name = ledgerUsername;
+            refreshProfileCommanderNameDisplay();
+            refreshLoggedUserTagDisplay();
+
+            if (isMainPortalHub()) {
+                prepareMainPortalPostLoginTermsGate();
+            } else {
+                restoreLoginAuthButtons();
+            }
+
             if (typeof promptReturningUserTermsAcceptance === 'function') {
                 promptReturningUserTermsAcceptance(() => {
                     completeLedgerLogin();
@@ -4319,7 +4339,8 @@ function revertSettings() {
    ========================================== */
 
 /* --- Section: Window-Scoped API Surface --- */ 
-window.handleLogin = handleLogin; 
+window.handleLogin = handleLogin;
+window.prepareMainPortalPostLoginTermsGate = prepareMainPortalPostLoginTermsGate; 
 window.confirmSelection = confirmSelection; 
 window.selectClass = selectClass; 
 window.isCommanderEnrolledInActiveAgeRound = isCommanderEnrolledInActiveAgeRound;
