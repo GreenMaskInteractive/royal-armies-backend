@@ -21834,7 +21834,7 @@ body.age-guild-overlay-open .age-guild-bounties-arena:not([hidden]) {
 #age-page-canvas .age-guild-commander-gear-panel {
     position: absolute;
     top: 8px;
-    right: 0;
+    right: 100px;
     width: min(400px, 44vw);
     max-height: min(62vh, 520px);
     display: flex;
