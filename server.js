@@ -83,6 +83,8 @@ const {
 const {
     resolveCommanderAgeGold,
     buildCommanderAgeGoldSeedPatch,
+    resolveCommanderAgeProvisions,
+    buildCommanderAgeProvisionsSeedPatch,
     executeAgeUnitRecruitment
 } = require('./nexus-age-recruitment');
 
@@ -1096,7 +1098,8 @@ function ensureCommanderAgeRoster(commander) {
 
     const seedPatch = {
         ...buildCommanderAgeRosterSeedPatch(commander),
-        ...buildCommanderAgeGoldSeedPatch(commander)
+        ...buildCommanderAgeGoldSeedPatch(commander),
+        ...buildCommanderAgeProvisionsSeedPatch(commander)
     };
     if (Object.keys(seedPatch).length) {
         db.get('commanders')
@@ -1132,6 +1135,7 @@ function buildAgeMovementStatePayload(username, commander) {
         alliedNationIds: mapNation ? resolveAlliedNationIds(mapNation) : [],
         rules,
         ageGold: resolveCommanderAgeGold(commander),
+        ageProvisions: resolveCommanderAgeProvisions(commander),
         unitsTotal: roster.unitsTotal,
         unitsUninjured: roster.unitsUninjured,
         ageArmy: roster.ageArmy
@@ -5003,6 +5007,7 @@ app.post('/api/portal/age/recruit-units', (req, res) => {
         .find({ username })
         .assign({
             ageGold: result.ageGold,
+            ageProvisions: result.ageProvisions,
             ageArmy: result.ageArmy,
             ageRecruitedAt: new Date().toISOString()
         })
@@ -5017,7 +5022,10 @@ app.post('/api/portal/age/recruit-units', (req, res) => {
         quantity: result.quantity,
         unitCost: result.unitCost,
         goldSpent: result.goldSpent,
+        provisionsSpent: result.provisionsSpent,
+        upcPerUnit: result.upcPerUnit,
         ageGold: result.ageGold,
+        ageProvisions: result.ageProvisions,
         ageArmy: result.ageArmy,
         unitsTotal: result.unitsTotal,
         unitsUninjured: result.unitsUninjured,

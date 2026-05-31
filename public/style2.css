@@ -21011,6 +21011,13 @@ body.age-barracks-open {
     color: rgba(236, 220, 180, 0.58);
 }
 
+.age-barracks-detail-limit {
+    margin: 0;
+    font-size: 0.76rem;
+    line-height: 1.4;
+    color: rgba(255, 200, 140, 0.88);
+}
+
 /* ==========================================================================
    CANONICAL TITLE / HEADER TYPOGRAPHY — Royal Family (Metamorphous)
    Overrides scattered Cinzel title rules above.

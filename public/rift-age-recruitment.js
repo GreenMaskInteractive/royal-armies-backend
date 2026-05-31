@@ -35,6 +35,13 @@
             );
         }
 
+        if (payload.ageProvisions !== undefined && global.RoyalArmiesAgeProvisions?.setAgeCommanderProvisions) {
+            global.RoyalArmiesAgeProvisions.setAgeCommanderProvisions(
+                Math.max(0, Math.floor(Number(payload.ageProvisions) || 0)),
+                { source: 'barracks-recruit' }
+            );
+        }
+
         if (global.RoyalArmiesAgeMovement?.applyStatePayload) {
             global.RoyalArmiesAgeMovement.applyStatePayload(payload);
         } else {

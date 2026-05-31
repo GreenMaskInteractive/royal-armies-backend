@@ -225,6 +225,14 @@
         return unit.portraitSrc || DEFAULT_PLACEHOLDER;
     }
 
+    function resolveRecruitUnitUpc(unit) {
+        const firstPromotion = Array.isArray(unit?.promotions) && unit.promotions.length
+            ? unit.promotions[0]
+            : 'app';
+        const upc = Number(unit?.stats?.[firstPromotion]?.upc);
+        return Number.isFinite(upc) && upc > 0 ? Math.floor(upc) : 0;
+    }
+
     function formatGold(value) {
         const numeric = Number(value);
         if (!Number.isFinite(numeric)) return '—';
@@ -249,6 +257,7 @@
         resolveUnlockRankForTier,
         evaluateUnitPurchaseAccess,
         formatUnitRoleLabel,
+        resolveRecruitUnitUpc,
         resolveUnitPortraitUrl,
         formatGold,
         formatPromotionLabel,

@@ -252,6 +252,12 @@
                 { source: 'server-sync', silent: true }
             );
         }
+        if (payload.ageProvisions !== undefined && global.RoyalArmiesAgeProvisions?.setAgeCommanderProvisions) {
+            global.RoyalArmiesAgeProvisions.setAgeCommanderProvisions(
+                Math.max(0, Math.floor(Number(payload.ageProvisions) || 0)),
+                { source: 'server-sync', silent: true }
+            );
+        }
 
         global.dispatchEvent(new CustomEvent('royalarmies:age-movement-updated', {
             detail: { ...state }

@@ -14,6 +14,7 @@ const {
 
 const CATALOG_PATH = path.join(__dirname, 'public', 'data', 'unit-purchase-catalog.json');
 const AGE_COMMANDER_GOLD_DEFAULT = 20000;
+const AGE_COMMANDER_PROVISIONS_DEFAULT = 132;
 const MAX_RECRUIT_QUANTITY = 999;
 const FOUR_TIER_UNLOCK_RANKS = [1, 7, 14, 18];
 const EXTENDED_UNLOCK_RANKS = [1, 7, 14, 18, 20, 21, 22];
@@ -61,6 +62,47 @@ function buildCommanderAgeGoldSeedPatch(commander) {
     const value = Number(commander?.ageGold);
     if (Number.isFinite(value) && value >= 0) return {};
     return { ageGold: AGE_COMMANDER_GOLD_DEFAULT };
+}
+
+function resolveCommanderAgeProvisions(commander) {
+    const value = Number(commander?.ageProvisions);
+    if (Number.isFinite(value) && value >= 0) {
+        return Math.floor(value);
+    }
+    return AGE_COMMANDER_PROVISIONS_DEFAULT;
+}
+
+function buildCommanderAgeProvisionsSeedPatch(commander) {
+    const value = Number(commander?.ageProvisions);
+    if (Number.isFinite(value) && value >= 0) return {};
+    return { ageProvisions: AGE_COMMANDER_PROVISIONS_DEFAULT };
+}
+
+function resolveRecruitUnitUpc(unit) {
+    const firstPromotion = Array.isArray(unit?.promotions) && unit.promotions.length
+        ? unit.promotions[0]
+        : 'app';
+    const upc = Number(unit?.stats?.[firstPromotion]?.upc);
+    return Number.isFinite(upc) && upc > 0 ? Math.floor(upc) : 0;
+}
+
+function computeMaxRecruitQuantityByGold(gold, unitCost) {
+    const cost = Math.max(0, Math.floor(Number(unitCost) || 0));
+    if (!cost) return 0;
+    return Math.floor(Math.max(0, Number(gold) || 0) / cost);
+}
+
+function computeMaxRecruitQuantityByProvisions(provisions, upcPerUnit) {
+    const upc = Math.max(0, Math.floor(Number(upcPerUnit) || 0));
+    if (!upc) return 0;
+    return Math.floor(Math.max(0, Number(provisions) || 0) / upc);
+}
+
+function computeMaxRecruitQuantity(gold, provisions, unitCost, upcPerUnit) {
+    const byGold = computeMaxRecruitQuantityByGold(gold, unitCost);
+    const byProvisions = computeMaxRecruitQuantityByProvisions(provisions, upcPerUnit);
+    if (!byGold || !byProvisions) return 0;
+    return Math.min(MAX_RECRUIT_QUANTITY, byGold, byProvisions);
 }
 
 function getCategoryMaxTier(catalog, categoryId) {
@@ -193,19 +235,36 @@ function executeAgeUnitRecruitment({ commander, unitId, quantity }) {
     }
 
     const unitCost = Math.max(0, Math.floor(Number(unit.goldCost) || 0));
-    if (!unitCost) {
+    const upcPerUnit = resolveRecruitUnitUpc(unit);
+    if (!unitCost || !upcPerUnit) {
         return { ok: false, errorCode: 'NEXUS-AGE-012' };
     }
 
     const currentGold = resolveCommanderAgeGold(commander);
-    const totalCost = unitCost * normalizedQuantity;
-    if (currentGold < totalCost) {
+    const currentProvisions = resolveCommanderAgeProvisions(commander);
+    const maxAllowed = computeMaxRecruitQuantity(currentGold, currentProvisions, unitCost, upcPerUnit);
+    if (normalizedQuantity > maxAllowed) {
+        const maxByGold = computeMaxRecruitQuantityByGold(currentGold, unitCost);
+        const maxByProvisions = computeMaxRecruitQuantityByProvisions(currentProvisions, upcPerUnit);
+        if (maxByProvisions < maxByGold) {
+            return { ok: false, errorCode: 'NEXUS-AGE-016' };
+        }
         return { ok: false, errorCode: 'NEXUS-AGE-011' };
+    }
+
+    const totalGoldCost = unitCost * normalizedQuantity;
+    const totalProvisionsCost = upcPerUnit * normalizedQuantity;
+    if (currentGold < totalGoldCost) {
+        return { ok: false, errorCode: 'NEXUS-AGE-011' };
+    }
+    if (currentProvisions < totalProvisionsCost) {
+        return { ok: false, errorCode: 'NEXUS-AGE-016' };
     }
 
     const recruitStack = buildRecruitStack(unit, normalizedQuantity);
     const nextArmy = mergeRecruitStackIntoArmy(resolveCommanderAgeArmy(commander), recruitStack);
-    const nextGold = currentGold - totalCost;
+    const nextGold = currentGold - totalGoldCost;
+    const nextProvisions = currentProvisions - totalProvisionsCost;
     const roster = buildAgeRosterHudPayload({ ...commander, ageArmy: nextArmy });
 
     return {
@@ -213,20 +272,32 @@ function executeAgeUnitRecruitment({ commander, unitId, quantity }) {
         unitId: unit.id,
         quantity: normalizedQuantity,
         unitCost,
-        goldSpent: totalCost,
+        upcPerUnit,
+        goldSpent: totalGoldCost,
+        provisionsSpent: totalProvisionsCost,
         ageGold: nextGold,
+        ageProvisions: nextProvisions,
         ageArmy: nextArmy,
         unitsTotal: roster.unitsTotal,
-        unitsUninjured: roster.unitsUninjured
+        unitsUninjured: roster.unitsUninjured,
+        maxByGold: computeMaxRecruitQuantityByGold(currentGold, unitCost),
+        maxByProvisions: computeMaxRecruitQuantityByProvisions(currentProvisions, upcPerUnit)
     };
 }
 
 module.exports = {
     AGE_COMMANDER_GOLD_DEFAULT,
+    AGE_COMMANDER_PROVISIONS_DEFAULT,
     MAX_RECRUIT_QUANTITY,
     loadUnitPurchaseCatalog,
     resolveCommanderAgeGold,
+    resolveCommanderAgeProvisions,
     buildCommanderAgeGoldSeedPatch,
+    buildCommanderAgeProvisionsSeedPatch,
+    resolveRecruitUnitUpc,
+    computeMaxRecruitQuantity,
+    computeMaxRecruitQuantityByGold,
+    computeMaxRecruitQuantityByProvisions,
     evaluateUnitPurchaseAccess,
     executeAgeUnitRecruitment,
     getCatalogUnitById

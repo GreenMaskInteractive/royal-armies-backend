@@ -620,6 +620,12 @@
             message: 'Your commander rank is too low to recruit this unit.',
             category: 'game'
         },
+        'NEXUS-AGE-016': {
+            http: 400,
+            title: 'Recruitment',
+            message: 'Insufficient Provisions for this purchase.',
+            category: 'game'
+        },
 
         /* --- Client-only network --- */
         'RIFT-NET-001': {

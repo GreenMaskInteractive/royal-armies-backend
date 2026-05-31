@@ -677,6 +677,9 @@
         if (typeof global.refreshAgeHudGold === 'function') {
             global.refreshAgeHudGold();
         }
+        if (typeof global.refreshAgeHudProvisions === 'function') {
+            global.refreshAgeHudProvisions();
+        }
 
         if (global.RoyalArmiesNationTreasury && typeof global.RoyalArmiesNationTreasury.refresh === 'function') {
             await global.RoyalArmiesNationTreasury.refresh();

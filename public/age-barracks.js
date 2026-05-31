@@ -36,9 +36,13 @@
         return { filterByClass: true, commander: getCommanderContext() };
     }
 
-    function parseDisplayGold(raw) {
+    function parseDisplayNumber(raw) {
         const parsed = Number(String(raw ?? '').replace(/[^\d]/g, ''));
         return Number.isFinite(parsed) && parsed >= 0 ? Math.floor(parsed) : null;
+    }
+
+    function parseDisplayGold(raw) {
+        return parseDisplayNumber(raw);
     }
 
     function resolveCommanderGold() {
@@ -57,19 +61,47 @@
         return 20000;
     }
 
+    function resolveCommanderProvisions() {
+        const hudEl = global.document.getElementById('age-hud-provisions');
+        if (hudEl?.textContent) {
+            const fromHud = parseDisplayNumber(hudEl.textContent);
+            if (fromHud != null) return fromHud;
+        }
+
+        if (global.RoyalArmiesAgeProvisions?.resolveAgeCommanderProvisions) {
+            return global.RoyalArmiesAgeProvisions.resolveAgeCommanderProvisions();
+        }
+        if (typeof global.resolveAgeCommanderProvisions === 'function') {
+            return global.resolveAgeCommanderProvisions();
+        }
+        return 132;
+    }
+
     function resolveMaxRecruitQuantity() {
         return global.RoyalArmiesAgeRecruitment?.MAX_RECRUIT_QUANTITY || 999;
     }
 
-    function computeMaxAffordable(gold, unitCost) {
+    function computeMaxAffordableByGold(gold, unitCost) {
         const cost = Math.max(0, Math.floor(Number(unitCost) || 0));
         if (!cost) return 0;
-        const affordable = Math.floor(Math.max(0, Number(gold) || 0) / cost);
-        return Math.min(resolveMaxRecruitQuantity(), Math.max(0, affordable));
+        return Math.floor(Math.max(0, Number(gold) || 0) / cost);
     }
 
-    function resolvePurchaseQuantity(preset, gold, unitCost) {
-        const maxAffordable = computeMaxAffordable(gold, unitCost);
+    function computeMaxAffordableByProvisions(provisions, upcPerUnit) {
+        const upc = Math.max(0, Math.floor(Number(upcPerUnit) || 0));
+        if (!upc) return 0;
+        return Math.floor(Math.max(0, Number(provisions) || 0) / upc);
+    }
+
+    function computeMaxAffordable(gold, unitCost, provisions, upcPerUnit) {
+        const byGold = computeMaxAffordableByGold(gold, unitCost);
+        const byProvisions = computeMaxAffordableByProvisions(provisions, upcPerUnit);
+        if (!byGold || !byProvisions) return 0;
+        return Math.min(resolveMaxRecruitQuantity(), byGold, byProvisions);
+    }
+
+    function resolvePurchaseQuantity(preset, gold, unitCost, provisions, upcPerUnit) {
+        const maxAffordable = computeMaxAffordable(gold, unitCost, provisions, upcPerUnit);
         if (!maxAffordable) return 0;
 
         const normalizedPreset = String(preset || '').trim().toLowerCase();
@@ -124,19 +156,39 @@
     function buildPurchaseQuote(unit) {
         const api = catalogApi();
         const gold = resolveCommanderGold();
+        const provisions = resolveCommanderProvisions();
         const unitCost = Math.max(0, Math.floor(Number(unit?.goldCost) || 0));
-        const maxAffordable = computeMaxAffordable(gold, unitCost);
-        const quantity = resolvePurchaseQuantity(selectedPurchasePreset, gold, unitCost);
-        const totalCost = unitCost * quantity;
+        const upcPerUnit = api?.resolveRecruitUnitUpc ? api.resolveRecruitUnitUpc(unit) : 0;
+        const maxByGold = computeMaxAffordableByGold(gold, unitCost);
+        const maxByProvisions = computeMaxAffordableByProvisions(provisions, upcPerUnit);
+        const maxAffordable = computeMaxAffordable(gold, unitCost, provisions, upcPerUnit);
+        const quantity = resolvePurchaseQuantity(
+            selectedPurchasePreset,
+            gold,
+            unitCost,
+            provisions,
+            upcPerUnit
+        );
+        const totalGoldCost = unitCost * quantity;
+        const totalProvisionsCost = upcPerUnit * quantity;
+        const limitedByProvisions = maxByProvisions > 0 && maxByProvisions <= maxByGold;
 
         return {
             gold,
+            provisions,
             unitCost,
+            upcPerUnit,
+            maxByGold,
+            maxByProvisions,
             maxAffordable,
+            limitedByProvisions,
             quantity,
-            totalCost,
+            totalGoldCost,
+            totalProvisionsCost,
             canAffordAny: maxAffordable > 0,
-            canAffordSelection: quantity > 0 && totalCost <= gold,
+            canAffordSelection: quantity > 0
+                && totalGoldCost <= gold
+                && totalProvisionsCost <= provisions,
             formatGold: (value) => (api?.formatGold ? api.formatGold(value) : String(value))
         };
     }
@@ -157,7 +209,13 @@
             const isActive = selectedPurchasePreset === preset;
             const disabled = preset === 'max'
                 ? !quote.canAffordAny
-                : resolvePurchaseQuantity(preset, quote.gold, quote.unitCost) < 1;
+                : resolvePurchaseQuantity(
+                    preset,
+                    quote.gold,
+                    quote.unitCost,
+                    quote.provisions,
+                    quote.upcPerUnit
+                ) < 1;
             const label = preset === 'max'
                 ? `Max (${quote.maxAffordable})`
                 : preset;
@@ -174,10 +232,17 @@
         const buyDisabled = purchaseInFlight || !quote.canAffordSelection;
         const buyLabel = purchaseInFlight
             ? 'Purchasing…'
-            : `Buy — ${quote.formatGold(quote.totalCost)}`;
+            : `Buy — ${quote.formatGold(quote.totalGoldCost)}`;
         const summaryLine = quote.quantity
-            ? `${quote.quantity} ${quote.quantity === 1 ? 'unit' : 'units'} · ${quote.formatGold(quote.totalCost)}`
-            : 'Not enough gold for this unit.';
+            ? `${quote.quantity} ${quote.quantity === 1 ? 'unit' : 'units'} · ${quote.formatGold(quote.totalGoldCost)} · ${quote.totalProvisionsCost} Provisions`
+            : (quote.upcPerUnit
+                ? 'Not enough gold or Provisions for this unit.'
+                : 'Unit provision cost unavailable.');
+        const limitLine = quote.canAffordAny
+            ? (quote.limitedByProvisions
+                ? `Limited by Provisions (${quote.maxByProvisions} max · ${quote.upcPerUnit} UPC each)`
+                : `Limited by gold (${quote.maxByGold} max · ${quote.formatGold(quote.unitCost)} each)`)
+            : '';
         const messageLine = purchaseMessage
             ? `<p class="age-barracks-detail-message${purchaseMessage.startsWith('Recruited') ? ' is-success' : ' is-error'}">${escapeHtml(purchaseMessage)}</p>`
             : '';
@@ -194,10 +259,13 @@
             + `<button type="button" id="age-barracks-purchase-btn"`
             + ` class="age-barracks-purchase-btn${buyDisabled ? '' : ' is-ready'}"`
             + `${buyDisabled ? ' disabled' : ''}`
-            + ` title="${escapeHtml(buyDisabled && !purchaseInFlight ? 'Insufficient gold for this quantity.' : `Purchase ${quote.quantity} unit(s)`)}">`
+            + ` title="${escapeHtml(buyDisabled && !purchaseInFlight
+                ? (quote.limitedByProvisions ? 'Insufficient Provisions for this quantity.' : 'Insufficient gold for this quantity.')
+                : `Purchase ${quote.quantity} unit(s)`)}">`
             + `${escapeHtml(buyLabel)}`
             + '</button>'
-            + `<p class="age-barracks-detail-footnote">${escapeHtml(quote.formatGold(unit.goldCost))} per unit · ${quote.maxAffordable} max with current gold</p>`
+            + `<p class="age-barracks-detail-footnote">${escapeHtml(quote.formatGold(quote.unitCost))} · ${escapeHtml(quote.upcPerUnit)} UPC per unit · ${quote.maxByGold} max by gold · ${quote.maxByProvisions} max by Provisions</p>`
+            + (limitLine ? `<p class="age-barracks-detail-limit">${escapeHtml(limitLine)}</p>` : '')
             + '</div>'
             + '</div>'
         );
@@ -316,7 +384,9 @@
 
         const quote = buildPurchaseQuote(unit);
         if (!quote.canAffordSelection || !quote.quantity) {
-            purchaseMessage = 'Not enough gold for this purchase.';
+            purchaseMessage = quote.limitedByProvisions
+                ? 'Not enough Provisions for this purchase.'
+                : 'Not enough gold for this purchase.';
             refreshSelectedUnitDetail();
             return;
         }
@@ -337,7 +407,7 @@
                 unitId: unit.id,
                 quantity: quote.quantity
             });
-            purchaseMessage = `Recruited ${result.quantity} ${result.quantity === 1 ? 'unit' : 'units'} for ${api.formatGold(result.goldSpent)}.`;
+            purchaseMessage = `Recruited ${result.quantity} ${result.quantity === 1 ? 'unit' : 'units'} for ${api.formatGold(result.goldSpent)} and ${result.provisionsSpent} Provisions.`;
             selectedPurchasePreset = '1';
         } catch (error) {
             purchaseMessage = error?.message || 'Recruitment failed. Try again shortly.';
@@ -541,6 +611,12 @@
         }
     }
 
+    function onAgeProvisionsUpdated() {
+        if (isOpen() && selectedUnitId) {
+            refreshSelectedUnitDetail();
+        }
+    }
+
     function onAgeMovementUpdated() {
         syncCommanderGold();
         if (isOpen() && selectedUnitId) {
@@ -565,6 +641,10 @@
         global.addEventListener(
             global.RoyalArmiesAgeGold?.AGE_GOLD_UPDATED_EVENT || 'royalarmies:age-gold-updated',
             onAgeGoldUpdated
+        );
+        global.addEventListener(
+            global.RoyalArmiesAgeProvisions?.AGE_PROVISIONS_UPDATED_EVENT || 'royalarmies:age-provisions-updated',
+            onAgeProvisionsUpdated
         );
         global.addEventListener('royalarmies:age-movement-updated', onAgeMovementUpdated);
         global.addEventListener('royalarmies:age-recruitment-updated', onAgeMovementUpdated);
