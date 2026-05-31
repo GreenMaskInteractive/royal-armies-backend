@@ -2491,6 +2491,59 @@ body:not(.portal-guest-mode) #portal-deployment-guest-cta {
     text-shadow: 0 1px 3px rgba(0, 0, 0, 0.85) !important;
 }
 
+/* Block 15b: MAIN PORTAL LEGAL FOOTER (publisher + legal links) */
+.main-portal-legal-footer {
+    width: 100% !important;
+    margin-top: auto !important;
+    padding: 22px 16px 30px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 8px !important;
+    text-align: center !important;
+    box-sizing: border-box !important;
+    border-top: 1px solid rgba(184, 144, 48, 0.24) !important;
+    background: linear-gradient(180deg, rgba(10, 8, 6, 0.72) 0%, rgba(6, 5, 4, 0.92) 100%) !important;
+    box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.35) !important;
+}
+
+.main-portal-legal-footer-brand {
+    margin: 0 !important;
+    font-family: 'Segoe UI', sans-serif !important;
+    font-size: 0.74rem !important;
+    letter-spacing: 0.02em !important;
+    color: rgba(244, 232, 200, 0.62) !important;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.85) !important;
+}
+
+.main-portal-legal-footer-nav {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 6px 10px !important;
+}
+
+.main-portal-legal-footer-nav a {
+    font-family: 'Segoe UI', sans-serif !important;
+    font-size: 0.72rem !important;
+    color: rgba(244, 232, 200, 0.84) !important;
+    text-decoration: none !important;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.85) !important;
+    transition: color 0.2s ease !important;
+}
+
+.main-portal-legal-footer-nav a:hover {
+    color: #ffd700 !important;
+}
+
+.main-portal-legal-footer-separator {
+    color: rgba(244, 232, 200, 0.35) !important;
+    font-size: 0.72rem !important;
+    user-select: none !important;
+}
+
 
 /* ==========================================================================
    SECTION 8: DISSOLVE INTERFACE CONFIRMATION MODALS
@@ -21023,6 +21076,361 @@ body.age-barracks-open {
     font-size: 0.76rem;
     line-height: 1.4;
     color: rgba(255, 200, 140, 0.88);
+}
+
+/* ==========================================================================
+   Age Adventurer's Guild — hold-to-battle training simulator
+   ========================================================================== */
+
+body.age-guild-open {
+    overflow: hidden;
+}
+
+.age-guild-workspace {
+    position: fixed;
+    top: var(--age-map-slot-top, calc(12px + 78px + 12px));
+    right: max(16px, env(safe-area-inset-right));
+    bottom: var(--age-map-slot-bottom, calc(12px + 58px + 12px));
+    left: max(16px, env(safe-area-inset-left));
+    z-index: 12035;
+    display: flex;
+    align-items: stretch;
+    justify-content: stretch;
+    box-sizing: border-box;
+    pointer-events: none;
+}
+
+.age-guild-workspace[hidden] {
+    display: none !important;
+}
+
+.age-guild-shell {
+    width: 100%;
+    height: 100%;
+    pointer-events: auto;
+}
+
+.age-guild-shell-bezel {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    min-height: 0;
+    padding: 14px 18px 18px;
+    box-sizing: border-box;
+}
+
+.age-guild-progress-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 12px;
+    padding-right: 88px;
+}
+
+.age-guild-xp-row,
+.age-guild-units-row {
+    display: grid;
+    grid-template-columns: 92px minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 12px;
+}
+
+.age-guild-bar-label {
+    font-size: 0.78rem;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: rgba(236, 220, 180, 0.72);
+}
+
+.age-guild-bar-label strong {
+    color: #ffd978;
+    font-size: 0.92rem;
+}
+
+.age-guild-bar-meta {
+    min-width: 96px;
+    font-size: 0.74rem;
+    text-align: right;
+    color: rgba(236, 220, 180, 0.62);
+    white-space: nowrap;
+}
+
+.age-guild-xp-bar-track,
+.age-guild-units-bar-track {
+    position: relative;
+    height: 16px;
+    border: 1px solid rgba(184, 144, 48, 0.38);
+    border-radius: 999px;
+    overflow: hidden;
+    background: rgba(4, 3, 2, 0.72);
+    box-shadow: inset 0 1px 4px rgba(0, 0, 0, 0.45);
+}
+
+.age-guild-xp-bar-track {
+    height: 18px;
+}
+
+.age-guild-xp-bar-fill {
+    height: 100%;
+    width: 0%;
+    border-radius: inherit;
+    background: linear-gradient(90deg, #8f6f1f 0%, #e8c56a 45%, #ffd978 100%);
+    box-shadow: 0 0 12px rgba(255, 215, 120, 0.35);
+    transition: width 0.35s ease;
+}
+
+.age-guild-units-bar-track {
+    height: 12px;
+}
+
+.age-guild-units-bar-fill {
+    height: 100%;
+    width: 100%;
+    border-radius: inherit;
+    background: linear-gradient(90deg, #2f6b3a 0%, #6fcf7a 55%, #9fd88d 100%);
+    box-shadow: 0 0 10px rgba(111, 207, 122, 0.28);
+    transition: width 0.35s ease;
+}
+
+.age-guild-close {
+    position: absolute;
+    top: 12px;
+    right: 14px;
+    border: 1px solid rgba(184, 144, 48, 0.45);
+    border-radius: 6px;
+    padding: 7px 12px;
+    background: rgba(12, 10, 8, 0.88);
+    color: #f4e8c8;
+    cursor: pointer;
+    z-index: 2;
+}
+
+.age-guild-close:hover,
+.age-guild-close:focus-visible {
+    border-color: rgba(255, 215, 120, 0.75);
+    color: #ffd700;
+}
+
+.age-guild-log {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: auto;
+    margin-bottom: 16px;
+    padding: 12px 14px;
+    border: 1px solid rgba(184, 144, 48, 0.22);
+    border-radius: 8px;
+    background: rgba(4, 3, 2, 0.55);
+}
+
+.age-guild-log-idle,
+.age-guild-log-entry {
+    color: rgba(236, 220, 180, 0.78);
+}
+
+.age-guild-log-title {
+    margin: 0 0 8px;
+    font-size: 1.05rem;
+    color: #f4e8c8;
+}
+
+.age-guild-log-idle p {
+    margin: 0 0 10px;
+    font-size: 0.84rem;
+    line-height: 1.45;
+}
+
+.age-guild-log-head {
+    margin-bottom: 10px;
+}
+
+.age-guild-log-outcome {
+    margin: 0 0 4px;
+    font-size: 1.08rem;
+    color: #f4e8c8;
+}
+
+.age-guild-log-entry.is-victory .age-guild-log-outcome {
+    color: #9fd88d;
+}
+
+.age-guild-log-entry.is-defeat .age-guild-log-outcome {
+    color: #e59a9a;
+}
+
+.age-guild-log-meta,
+.age-guild-log-promotion {
+    margin: 0;
+    font-size: 0.78rem;
+    color: rgba(236, 220, 180, 0.68);
+}
+
+.age-guild-log-promotion {
+    margin-top: 4px;
+    color: #ffd978;
+}
+
+.age-guild-battle-log {
+    margin: 0;
+    padding-left: 1.2rem;
+    display: grid;
+    gap: 6px;
+    font-size: 0.78rem;
+    line-height: 1.4;
+    color: rgba(244, 232, 200, 0.82);
+}
+
+.age-guild-battle-deck {
+    position: relative;
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 220px;
+    padding-bottom: 8px;
+}
+
+.age-guild-battle-btn-wrap {
+    position: relative;
+    width: 132px;
+    height: 132px;
+    display: grid;
+    place-items: center;
+}
+
+.age-guild-charge-ring {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    transform: rotate(-90deg);
+    pointer-events: none;
+}
+
+.age-guild-charge-ring-track {
+    fill: none;
+    stroke: rgba(184, 144, 48, 0.22);
+    stroke-width: 5;
+}
+
+.age-guild-charge-ring-progress {
+    fill: none;
+    stroke: #ffd978;
+    stroke-width: 6;
+    stroke-linecap: round;
+    opacity: 0;
+    transition: opacity 0.12s ease;
+}
+
+.age-guild-battle-btn-wrap.is-charging .age-guild-charge-ring-progress {
+    opacity: 1;
+    animation: age-guild-charge-ring 2s linear forwards;
+}
+
+@keyframes age-guild-charge-ring {
+    from {
+        stroke-dashoffset: var(--age-guild-charge-circumference, 289);
+    }
+    to {
+        stroke-dashoffset: 0;
+    }
+}
+
+.age-guild-battle-circle {
+    position: relative;
+    z-index: 1;
+    width: 104px;
+    height: 104px;
+    border: 5px solid rgba(255, 215, 120, 0.82);
+    border-radius: 50%;
+    background:
+        radial-gradient(circle at 50% 28%, rgba(255, 235, 160, 0.28), transparent 52%),
+        linear-gradient(180deg, rgba(36, 28, 16, 0.98) 0%, rgba(12, 10, 8, 0.98) 100%);
+    color: #ffd978;
+    font-size: 1.05rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    cursor: not-allowed;
+    box-shadow:
+        inset 0 1px 0 rgba(255, 215, 120, 0.18),
+        0 10px 24px rgba(0, 0, 0, 0.45);
+    touch-action: none;
+    user-select: none;
+}
+
+.age-guild-battle-circle.is-ready:not(:disabled) {
+    cursor: pointer;
+    color: #1a1208;
+    border-color: rgba(255, 220, 140, 0.95);
+    background:
+        radial-gradient(circle at 50% 28%, rgba(255, 248, 220, 0.55), transparent 52%),
+        linear-gradient(180deg, #e8c56a 0%, #c9982f 100%);
+}
+
+.age-guild-battle-circle.is-ready:not(:disabled):hover,
+.age-guild-battle-circle.is-ready:not(:disabled):focus-visible {
+    filter: brightness(1.05);
+}
+
+.age-guild-battle-circle.is-busy {
+    opacity: 0.82;
+}
+
+.age-guild-battle-btn-wrap.is-charging .age-guild-battle-circle.is-ready:not(:disabled) {
+    box-shadow:
+        inset 0 1px 0 rgba(255, 215, 120, 0.28),
+        0 0 0 4px rgba(255, 215, 120, 0.12),
+        0 10px 24px rgba(0, 0, 0, 0.45);
+}
+
+.age-guild-satellite-btn {
+    position: absolute;
+    min-width: 92px;
+    border: 1px solid rgba(184, 144, 48, 0.45);
+    border-radius: 999px;
+    padding: 9px 14px;
+    background: rgba(12, 10, 8, 0.92);
+    color: #f4e8c8;
+    font-size: 0.78rem;
+    letter-spacing: 0.03em;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.age-guild-satellite-btn:hover:not(:disabled),
+.age-guild-satellite-btn:focus-visible:not(:disabled) {
+    border-color: rgba(255, 215, 120, 0.75);
+    color: #ffd978;
+}
+
+.age-guild-satellite-btn:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+
+.age-guild-satellite-btn.is-active {
+    color: #1a1208;
+    border-color: rgba(255, 220, 140, 0.85);
+    background: linear-gradient(180deg, #e8c56a 0%, #c9982f 100%);
+}
+
+.age-guild-satellite-btn--heal {
+    left: calc(50% - 210px);
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+.age-guild-satellite-btn--heal-all {
+    right: calc(50% - 210px);
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+.age-guild-satellite-btn--auto-heal {
+    left: 50%;
+    bottom: 0;
+    transform: translateX(-50%);
 }
 
 /* ==========================================================================

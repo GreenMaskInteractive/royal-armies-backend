@@ -513,6 +513,24 @@
             message: 'You already hold that city.',
             category: 'game'
         },
+        'NEXUS-AGE-017': {
+            http: 400,
+            title: 'Training battle',
+            message: 'Recruit units at the Barracks before starting guild training.',
+            category: 'game'
+        },
+        'NEXUS-AGE-018': {
+            http: 403,
+            title: 'Admin only',
+            message: 'This ledger action requires administrator access.',
+            category: 'auth'
+        },
+        'NEXUS-AGE-019': {
+            http: 400,
+            title: 'Healing',
+            message: 'No injured units are available to heal.',
+            category: 'game'
+        },
 
         /* --- Client-only network --- */
         'RIFT-NET-001': {

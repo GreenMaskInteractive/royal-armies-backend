@@ -1,0 +1,140 @@
+/**
+ * RIFT — Adventurer's Guild training battle (server-backed simulator).
+ */
+(function initRoyalArmiesAgeGuildTraining(global) {
+    'use strict';
+
+    function resolveApiUrl(path) {
+        if (typeof global.resolveRoyalArmiesApiUrl === 'function') {
+            return global.resolveRoyalArmiesApiUrl(path);
+        }
+        if (typeof global.resolveApiUrl === 'function') {
+            return global.resolveApiUrl(path);
+        }
+        return path;
+    }
+
+    function resolveUsername() {
+        if (typeof global.getActiveCommanderUsername === 'function') {
+            return global.getActiveCommanderUsername();
+        }
+        const saved = global.localStorage?.getItem('activeCommanderUser');
+        return saved && saved.trim() ? saved.trim() : '';
+    }
+
+    function applyGuildPayload(payload) {
+        if (!payload || typeof payload !== 'object') return;
+
+        if (payload.rank !== undefined && typeof global.player !== 'undefined') {
+            global.player.rank = Math.max(1, Math.floor(Number(payload.rank) || 1));
+        }
+        if (payload.ageGuildXp !== undefined && typeof global.player !== 'undefined') {
+            global.player.ageGuildXp = Math.max(0, Math.floor(Number(payload.ageGuildXp) || 0));
+        }
+
+        if (global.RoyalArmiesAgeMovement?.applyStatePayload) {
+            global.RoyalArmiesAgeMovement.applyStatePayload(payload);
+        } else if (Array.isArray(payload.ageArmy) && typeof global.player !== 'undefined') {
+            global.player.ageArmy = payload.ageArmy.slice();
+        }
+
+        if (payload.ageGold !== undefined && global.RoyalArmiesAgeGold?.setAgeCommanderGold) {
+            global.RoyalArmiesAgeGold.setAgeCommanderGold(
+                Math.max(0, Math.floor(Number(payload.ageGold) || 0)),
+                { source: 'guild-sync' }
+            );
+        }
+
+        if (payload.ageProvisions !== undefined && global.RoyalArmiesAgeProvisions?.setAgeCommanderProvisions) {
+            global.RoyalArmiesAgeProvisions.setAgeCommanderProvisions(
+                Math.max(0, Math.floor(Number(payload.ageProvisions) || 0)),
+                { source: 'guild-sync' }
+            );
+        }
+
+        if (typeof global.refreshAgeHudUnits === 'function') {
+            global.refreshAgeHudUnits();
+        }
+
+        global.dispatchEvent(new CustomEvent('royalarmies:age-guild-updated', {
+            detail: { ...payload }
+        }));
+    }
+
+    async function fetchGuildState(options = {}) {
+        const username = String(options.username || resolveUsername() || '').trim();
+        if (!username) {
+            throw new Error('Commander session required.');
+        }
+
+        const response = await global.fetch(
+            resolveApiUrl(`/api/portal/age/guild/state?username=${encodeURIComponent(username)}`),
+            { credentials: 'same-origin', cache: 'no-store' }
+        );
+        const payload = await response.json().catch(() => ({}));
+        if (!response.ok || payload.status !== 'ok') {
+            const err = new Error(payload.message || 'Guild state unavailable.');
+            err.code = payload.code || payload.errorCode || '';
+            throw err;
+        }
+
+        applyGuildPayload(payload);
+        return payload;
+    }
+
+    async function runTrainingBattle(options = {}) {
+        const username = String(options.username || resolveUsername() || '').trim();
+        if (!username) {
+            throw new Error('Commander session required.');
+        }
+
+        const response = await global.fetch(resolveApiUrl('/api/portal/age/guild/training-battle'), {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'same-origin',
+            body: JSON.stringify({ username })
+        });
+
+        const payload = await response.json().catch(() => ({}));
+        if (!response.ok || payload.status !== 'ok') {
+            const err = new Error(payload.message || 'Training battle failed.');
+            err.code = payload.code || payload.errorCode || '';
+            throw err;
+        }
+
+        applyGuildPayload(payload);
+        return payload;
+    }
+
+    async function healUnits(options = {}) {
+        const username = String(options.username || resolveUsername() || '').trim();
+        const mode = String(options.mode || 'one').trim().toLowerCase();
+        if (!username) {
+            throw new Error('Commander session required.');
+        }
+
+        const response = await global.fetch(resolveApiUrl('/api/portal/age/guild/heal'), {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'same-origin',
+            body: JSON.stringify({ username, mode })
+        });
+
+        const payload = await response.json().catch(() => ({}));
+        if (!response.ok || payload.status !== 'ok') {
+            const err = new Error(payload.message || 'Healing failed.');
+            err.code = payload.code || payload.errorCode || '';
+            throw err;
+        }
+
+        applyGuildPayload(payload);
+        return payload;
+    }
+
+    global.RoyalArmiesAgeGuildTraining = {
+        fetchGuildState,
+        runTrainingBattle,
+        healUnits,
+        applyGuildPayload
+    };
+})(window);

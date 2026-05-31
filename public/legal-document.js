@@ -30,6 +30,14 @@
         return html;
     }
 
+    function slugifyLegalHeading(title) {
+        return String(title || '')
+            .toLowerCase()
+            .replace(/&amp;/g, 'and')
+            .replace(/[^a-z0-9]+/g, '-')
+            .replace(/^-+|-+$/g, '');
+    }
+
     function flushParagraph(buffer, output) {
         const text = buffer.join(' ').trim();
         if (!text) return;
@@ -64,7 +72,10 @@
                 closeList();
                 const level = Math.min(6, trimmed.match(/^#+/)[0].length);
                 const title = trimmed.replace(/^#{1,6}\s+/, '');
-                output.push(`<h${level}>${renderInlineMarkdown(title)}</h${level}>`);
+                const headingId = slugifyLegalHeading(title);
+                output.push(
+                    `<h${level}${headingId ? ` id="${escapeLegalHtml(headingId)}"` : ''}>${renderInlineMarkdown(title)}</h${level}>`
+                );
                 return;
             }
 

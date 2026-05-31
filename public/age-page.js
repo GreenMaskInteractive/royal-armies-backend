@@ -1058,6 +1058,10 @@
             global.enableAgeBarracks();
         }
 
+        if (typeof global.enableAgeAdventurersGuild === 'function') {
+            global.enableAgeAdventurersGuild();
+        }
+
         bindCouncilBoardLayoutSync();
 
         if (typeof global.bindPortalNewMessagesBarNavigation === 'function') {

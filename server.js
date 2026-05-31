@@ -87,6 +87,16 @@ const {
     buildCommanderAgeProvisionsSeedPatch,
     executeAgeUnitRecruitment
 } = require('./nexus-age-recruitment');
+const {
+    isAgeLedgerAdminUsername,
+    resetAllCommanderAgeArmies,
+    buildAdminGoldRestorePatch
+} = require('./nexus-age-ledger-admin');
+const {
+    buildGuildStatePayload,
+    executeGuildTrainingBattleWithLedger,
+    executeGuildHeal
+} = require('./nexus-age-guild');
 
 /* Block 2: Environment Path Resolution */
 const isProduction = process.env.RENDER === 'true';
@@ -5033,6 +5043,187 @@ app.post('/api/portal/age/recruit-units', (req, res) => {
     });
 });
 
+app.post('/api/portal/age/admin/reset-age-rosters', (req, res) => {
+    const username = resolveLedgerCommanderUsername(req.body?.username || '');
+    if (!username) {
+        return sendApiError(res, 'NEXUS-GEN-002');
+    }
+    if (!isAgeLedgerAdminUsername(username)) {
+        return sendApiError(res, 'NEXUS-AGE-018');
+    }
+
+    const commanders = db.get('commanders').value() || [];
+    const resetCount = resetAllCommanderAgeArmies(commanders);
+
+    commanders.forEach((commander, index) => {
+        if (!isAgeLedgerAdminUsername(commander?.username)) return;
+        commanders[index] = {
+            ...commander,
+            ...buildAdminGoldRestorePatch(),
+            ageArmy: []
+        };
+    });
+
+    db.set('commanders', commanders).write();
+    db.get('portal').assign({ ageRosterResetAt: new Date().toISOString() }).write();
+
+    const adminCommander = commanders.find((entry) => isAgeLedgerAdminUsername(entry?.username));
+    const roster = buildAgeRosterHudPayload(adminCommander);
+
+    res.json({
+        status: 'ok',
+        action: 'reset-age-rosters',
+        resetCount,
+        ageGold: adminCommander ? resolveCommanderAgeGold(adminCommander) : null,
+        ageProvisions: adminCommander ? resolveCommanderAgeProvisions(adminCommander) : null,
+        ageArmy: [],
+        unitsTotal: roster.unitsTotal,
+        unitsUninjured: roster.unitsUninjured
+    });
+});
+
+function persistCommanderGuildLedger(username, patch) {
+    if (!username || !patch || typeof patch !== 'object') return;
+    const assign = {};
+    if (patch.ageArmy !== undefined) assign.ageArmy = patch.ageArmy;
+    if (patch.ageGold !== undefined) assign.ageGold = patch.ageGold;
+    if (patch.ageProvisions !== undefined) assign.ageProvisions = patch.ageProvisions;
+    if (patch.rank !== undefined) assign.rank = patch.rank;
+    if (patch.ageGuildXp !== undefined) assign.ageGuildXp = patch.ageGuildXp;
+    if (Object.keys(assign).length) {
+        db.get('commanders').find({ username }).assign(assign).write();
+    }
+}
+
+app.get('/api/portal/age/guild/state', (req, res) => {
+    const username = resolveLedgerCommanderUsername(req.query?.username || '');
+    if (!username) {
+        return sendApiError(res, 'NEXUS-GEN-002');
+    }
+
+    let commander = db.get('commanders').find({ username }).value();
+    if (!commander) {
+        return sendApiError(res, 'NEXUS-GEN-004');
+    }
+
+    ensureCommanderAgeRoster(commander);
+    commander = db.get('commanders').find({ username }).value();
+
+    res.json({
+        status: 'ok',
+        action: 'guild-state',
+        ...buildGuildStatePayload(commander),
+        ...buildAgeMovementStatePayload(username, commander)
+    });
+});
+
+app.post('/api/portal/age/guild/training-battle', (req, res) => {
+    const username = resolveLedgerCommanderUsername(req.body?.username || '');
+    if (!username) {
+        return sendApiError(res, 'NEXUS-GEN-002');
+    }
+
+    let commander = db.get('commanders').find({ username }).value();
+    if (!commander) {
+        return sendApiError(res, 'NEXUS-GEN-004');
+    }
+
+    ensureCommanderAgeRoster(commander);
+    commander = db.get('commanders').find({ username }).value();
+
+    const result = executeGuildTrainingBattleWithLedger(commander);
+    if (!result.ok) {
+        return sendApiError(res, result.errorCode || 'NEXUS-AGE-017');
+    }
+
+    persistCommanderGuildLedger(username, {
+        ageArmy: result.ageArmy,
+        rank: result.rank,
+        ageGuildXp: result.ageGuildXp,
+        ageProvisions: result.ageProvisions
+    });
+
+    commander = db.get('commanders').find({ username }).value();
+
+    res.json({
+        status: 'ok',
+        action: 'guild-training-battle',
+        winner: result.winner,
+        endReason: result.endReason,
+        roundsPlayed: result.roundsPlayed,
+        infantryRounds: result.infantryRounds,
+        commanderHpRemaining: result.commanderHpRemaining,
+        npcHpRemaining: result.npcHpRemaining,
+        commanderMorale: result.commanderMorale,
+        npcMorale: result.npcMorale,
+        commanderUnits: result.commanderUnits,
+        npcUnits: result.npcUnits,
+        commanderForce: result.commanderForce,
+        npcForce: result.npcForce,
+        log: result.log,
+        xpGain: result.xpGain,
+        injuriesApplied: result.injuriesApplied,
+        rankPromoted: result.rankPromoted,
+        rankPromotions: result.rankPromotions,
+        provisionsGranted: result.provisionsGranted,
+        ageGuildXp: result.ageGuildXp,
+        ageGuildXpRequired: result.ageGuildXpRequired,
+        ageGuildXpProgress: result.ageGuildXpProgress,
+        rank: result.rank,
+        unitsTotal: result.unitsTotal,
+        unitsUninjured: result.unitsUninjured,
+        unitsInjured: result.unitsInjured,
+        unitsHealthProgress: result.unitsHealthProgress,
+        ageGold: resolveCommanderAgeGold(commander),
+        ageProvisions: result.ageProvisions,
+        ageArmy: result.ageArmy,
+        ...buildAgeMovementStatePayload(username, commander)
+    });
+});
+
+app.post('/api/portal/age/guild/heal', (req, res) => {
+    const username = resolveLedgerCommanderUsername(req.body?.username || '');
+    if (!username) {
+        return sendApiError(res, 'NEXUS-GEN-002');
+    }
+
+    let commander = db.get('commanders').find({ username }).value();
+    if (!commander) {
+        return sendApiError(res, 'NEXUS-GEN-004');
+    }
+
+    ensureCommanderAgeRoster(commander);
+    commander = db.get('commanders').find({ username }).value();
+
+    const result = executeGuildHeal(commander, req.body?.mode);
+    if (!result.ok) {
+        return sendApiError(res, result.errorCode || 'NEXUS-AGE-019');
+    }
+
+    persistCommanderGuildLedger(username, {
+        ageArmy: result.ageArmy,
+        ageGold: result.ageGold
+    });
+
+    commander = db.get('commanders').find({ username }).value();
+
+    res.json({
+        status: 'ok',
+        action: 'guild-heal',
+        mode: result.mode,
+        goldSpent: result.goldSpent,
+        healedCount: result.healedCount,
+        ageGold: result.ageGold,
+        ageArmy: result.ageArmy,
+        unitsTotal: result.unitsTotal,
+        unitsUninjured: result.unitsUninjured,
+        unitsInjured: result.unitsInjured,
+        unitsHealthProgress: result.unitsHealthProgress,
+        ...buildGuildStatePayload(commander),
+        ...buildAgeMovementStatePayload(username, commander)
+    });
+});
+
 app.post('/api/portal/age/travel', (req, res) => {
     const username = resolveLedgerCommanderUsername(req.body?.username || '');
     if (!username) {
@@ -5412,7 +5603,30 @@ app.post('/api/portal/age/leave', (req, res) => {
 /* --- Section: Server Boot --- */
 
 /* Block 15: Nexus Engine Ignition */
+function runAgeRosterResetMigrationOnce() {
+    const MIGRATION_KEY = 'age-roster-gold-reset-v1';
+    const portal = db.get('portal').value() || {};
+    if (portal[MIGRATION_KEY]) return;
+
+    const commanders = db.get('commanders').value() || [];
+    const resetCount = resetAllCommanderAgeArmies(commanders);
+
+    commanders.forEach((commander, index) => {
+        if (!isAgeLedgerAdminUsername(commander?.username)) return;
+        commanders[index] = {
+            ...commander,
+            ...buildAdminGoldRestorePatch(),
+            ageArmy: []
+        };
+    });
+
+    db.set('commanders', commanders).write();
+    db.get('portal').assign({ [MIGRATION_KEY]: new Date().toISOString() }).write();
+    console.log(`[NEXUS] Age roster reset migration applied (${resetCount} commanders).`);
+}
+
 app.listen(PORT, () => {
+    runAgeRosterResetMigrationOnce();
     backfillWelcomeSystemMessagesForAllCommanders();
     backfillFirstTimerAchievementForAllCommanders();
     console.log(`========================================`);
