@@ -89,6 +89,7 @@
     }
 
     global.RoyalArmiesAgeRecruitment = {
+        MAX_RECRUIT_QUANTITY: 999,
         recruitUnits,
         applyRecruitmentPayload
     };

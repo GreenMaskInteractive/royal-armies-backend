@@ -36,7 +36,18 @@
         return { filterByClass: true, commander: getCommanderContext() };
     }
 
+    function parseDisplayGold(raw) {
+        const parsed = Number(String(raw ?? '').replace(/[^\d]/g, ''));
+        return Number.isFinite(parsed) && parsed >= 0 ? Math.floor(parsed) : null;
+    }
+
     function resolveCommanderGold() {
+        const hudEl = global.document.getElementById('age-hud-gold');
+        if (hudEl?.textContent) {
+            const fromHud = parseDisplayGold(hudEl.textContent);
+            if (fromHud != null) return fromHud;
+        }
+
         if (global.RoyalArmiesAgeGold?.resolveAgeCommanderGold) {
             return global.RoyalArmiesAgeGold.resolveAgeCommanderGold();
         }
@@ -44,6 +55,31 @@
             return global.resolveAgeCommanderGold();
         }
         return 20000;
+    }
+
+    function resolveMaxRecruitQuantity() {
+        return global.RoyalArmiesAgeRecruitment?.MAX_RECRUIT_QUANTITY || 999;
+    }
+
+    function computeMaxAffordable(gold, unitCost) {
+        const cost = Math.max(0, Math.floor(Number(unitCost) || 0));
+        if (!cost) return 0;
+        const affordable = Math.floor(Math.max(0, Number(gold) || 0) / cost);
+        return Math.min(resolveMaxRecruitQuantity(), Math.max(0, affordable));
+    }
+
+    function resolvePurchaseQuantity(preset, gold, unitCost) {
+        const maxAffordable = computeMaxAffordable(gold, unitCost);
+        if (!maxAffordable) return 0;
+
+        const normalizedPreset = String(preset || '').trim().toLowerCase();
+        if (normalizedPreset === 'max') {
+            return maxAffordable;
+        }
+
+        const requested = Math.max(1, Math.floor(Number(normalizedPreset) || 0));
+        if (!requested) return 0;
+        return Math.min(requested, maxAffordable);
     }
 
     function syncCommanderStatus() {
@@ -85,24 +121,6 @@
         return Boolean(workspace && !workspace.hidden);
     }
 
-    function computeMaxAffordable(gold, unitCost) {
-        const cost = Math.max(0, Math.floor(Number(unitCost) || 0));
-        if (!cost) return 0;
-        return Math.max(0, Math.floor(Number(gold) || 0) / cost);
-    }
-
-    function resolvePurchaseQuantity(preset, gold, unitCost) {
-        const maxAffordable = computeMaxAffordable(gold, unitCost);
-        if (!maxAffordable) return 0;
-
-        if (String(preset || '').toLowerCase() === 'max') {
-            return maxAffordable;
-        }
-
-        const requested = Math.max(1, Math.floor(Number(preset) || 1));
-        return Math.min(requested, maxAffordable);
-    }
-
     function buildPurchaseQuote(unit) {
         const api = catalogApi();
         const gold = resolveCommanderGold();
@@ -135,18 +153,20 @@
 
         const quote = buildPurchaseQuote(unit);
         const presets = ['1', '5', '10', 'max'];
-        const presetLabels = { max: 'Max' };
         const qtyButtons = presets.map((preset) => {
             const isActive = selectedPurchasePreset === preset;
             const disabled = preset === 'max'
                 ? !quote.canAffordAny
                 : resolvePurchaseQuantity(preset, quote.gold, quote.unitCost) < 1;
-            const label = presetLabels[preset] || preset;
+            const label = preset === 'max'
+                ? `Max (${quote.maxAffordable})`
+                : preset;
             return (
                 `<button type="button"`
                 + ` class="age-barracks-qty-btn${isActive ? ' is-active' : ''}"`
                 + ` data-barracks-qty="${escapeHtml(preset)}"`
                 + ` aria-pressed="${isActive ? 'true' : 'false'}"`
+                + ` aria-label="${escapeHtml(preset === 'max' ? `Buy maximum affordable units (${quote.maxAffordable})` : `Buy ${preset} units`)}"`
                 + `${disabled ? ' disabled' : ''}>${escapeHtml(label)}</button>`
             );
         }).join('');
@@ -177,7 +197,7 @@
             + ` title="${escapeHtml(buyDisabled && !purchaseInFlight ? 'Insufficient gold for this quantity.' : `Purchase ${quote.quantity} unit(s)`)}">`
             + `${escapeHtml(buyLabel)}`
             + '</button>'
-            + `<p class="age-barracks-detail-footnote">${escapeHtml(quote.formatGold(unit.goldCost))} per unit · ${quote.maxAffordable} max affordable</p>`
+            + `<p class="age-barracks-detail-footnote">${escapeHtml(quote.formatGold(unit.goldCost))} per unit · ${quote.maxAffordable} max with current gold</p>`
             + '</div>'
             + '</div>'
         );
