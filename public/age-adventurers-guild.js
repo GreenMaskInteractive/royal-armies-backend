@@ -25,7 +25,8 @@
     let guildJobsExpanded = false;
     let guildStateLoadInFlight = null;
     let lootLog = [];
-    let activeBattleTab = 'loot';
+    let activeBattleTab = 'details';
+    let lootTabAlert = false;
     let trainingViewActive = false;
     let overlayJobActive = false;
 
@@ -234,7 +235,7 @@
     }
 
     function setBattleTab(tabId) {
-        activeBattleTab = tabId === 'details' ? 'details' : 'loot';
+        activeBattleTab = tabId === 'loot' ? 'loot' : 'details';
         const tabs = global.document.querySelectorAll('[data-guild-battle-tab]');
         tabs.forEach((tab) => {
             const isActive = tab.getAttribute('data-guild-battle-tab') === activeBattleTab;
@@ -253,6 +254,20 @@
             detailsPanel.hidden = activeBattleTab !== 'details';
             detailsPanel.classList.toggle('is-active', activeBattleTab === 'details');
         }
+
+        if (activeBattleTab === 'loot') {
+            lootTabAlert = false;
+        }
+        updateLootTabAlert();
+    }
+
+    function updateLootTabAlert() {
+        const lootTab = global.document.getElementById('age-guild-battle-tab-btn-loot');
+        if (!lootTab) return;
+        lootTab.classList.toggle('is-loot-found', lootTabAlert && activeBattleTab !== 'loot');
+        lootTab.setAttribute('aria-label', lootTabAlert && activeBattleTab !== 'loot'
+            ? 'Loot — new findings available'
+            : 'Loot');
     }
 
     function renderLootLog() {
@@ -287,6 +302,9 @@
         if (lootLog.length > 40) {
             lootLog.length = 40;
         }
+        if (entries.length) {
+            lootTabAlert = true;
+        }
     }
 
     function showXpFloat(xpGain) {
@@ -314,6 +332,7 @@
         renderLootLog();
         renderBattleLog();
         setBattleTab(activeBattleTab);
+        updateLootTabAlert();
         renderTradeView();
         renderBountiesView();
         updateControlStates();
@@ -495,7 +514,8 @@
         activeTrainingMode = job.id;
         activeTrainingLabel = job.label;
         lastBattleResult = null;
-        activeBattleTab = 'loot';
+        activeBattleTab = 'details';
+        lootTabAlert = false;
 
         void loadGuildState().then(() => {
             if (global.RoyalArmiesAgeViewTabs?.setActiveView) {
@@ -624,10 +644,9 @@
             appendLootEntries(lastBattleResult.lootEntries);
             showXpFloat(lastBattleResult.xpGain);
             if (Array.isArray(lastBattleResult.lootEntries) && lastBattleResult.lootEntries.length) {
-                setBattleTab('loot');
-            } else if (lastBattleResult.log?.length) {
-                setBattleTab('details');
+                lootTabAlert = true;
             }
+            setBattleTab('details');
             renderGuildPanel();
             await runAutoHealAfterBattle();
         } catch (error) {
