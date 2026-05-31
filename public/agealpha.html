@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Royal Armies — Age Alpha</title>
     <link rel="stylesheet" href="style.css?v=royal-family-titles-1">
-    <link rel="stylesheet" href="style2.css?v=unit-catalog-3">
+    <link rel="stylesheet" href="style2.css?v=unit-catalog-4">
     <link rel="stylesheet" href="mobile-responsive.css?v=records-compact-tabs-1">
     <link rel="stylesheet" href="dev-page-navigator.css">
     <link rel="stylesheet" href="custom-cursor.css?v=scrollbar-cursor-3">
@@ -961,13 +961,19 @@
                             <p class="age-barracks-subtitle">Recruit units, review promotion paths, and prepare your standing army.</p>
                             <p id="age-barracks-commander-status" class="age-barracks-commander-status" aria-live="polite"></p>
                         </div>
-                        <button
-                            type="button"
-                            id="age-barracks-close"
-                            class="age-barracks-close"
-                            aria-label="Close barracks">
-                            Close
-                        </button>
+                        <div class="age-barracks-header-actions">
+                            <div class="age-barracks-wallet" aria-label="Commander gold">
+                                <span class="age-barracks-wallet-label">Gold</span>
+                                <span id="age-barracks-commander-gold" class="age-barracks-wallet-value" aria-live="polite">—</span>
+                            </div>
+                            <button
+                                type="button"
+                                id="age-barracks-close"
+                                class="age-barracks-close"
+                                aria-label="Close barracks">
+                                Close
+                            </button>
+                        </div>
                     </header>
                     <div class="age-barracks-layout">
                         <nav
@@ -1302,7 +1308,7 @@
     <script src="age-page.js?v=unit-catalog-3"></script>
     <script src="age-war-ledger.js?v=war-ledger-bottom-bar-1"></script>
     <script src="rift-unit-purchase-catalog.js?v=unit-catalog-3"></script>
-    <script src="age-barracks.js?v=unit-catalog-3"></script>
+    <script src="age-barracks.js?v=unit-catalog-4"></script>
     <script src="age-records.js?v=records-nation-defaults-1"></script>
     <script src="dev-page-navigator.js?v=dev-nav-drag-fix-1"></script>
     <script src="custom-cursor.js?v=scrollbar-cursor-3"></script>

@@ -33,12 +33,27 @@
         return { filterByClass: true, commander: getCommanderContext() };
     }
 
+    function resolveCommanderGold() {
+        const player = typeof global.player !== 'undefined' ? global.player : null;
+        const gold = Number(player?.gold);
+        return Number.isFinite(gold) ? Math.max(0, Math.floor(gold)) : 0;
+    }
+
     function syncCommanderStatus() {
         const statusEl = global.document.getElementById('age-barracks-commander-status');
         if (!statusEl) return;
 
         const commander = getCommanderContext();
         statusEl.textContent = `${commander.classLabel} · Commander Rank ${commander.rank}`;
+    }
+
+    function syncCommanderGold() {
+        const goldEl = global.document.getElementById('age-barracks-commander-gold');
+        if (!goldEl) return;
+
+        const api = catalogApi();
+        const gold = resolveCommanderGold();
+        goldEl.textContent = api?.formatGold ? api.formatGold(gold) : gold.toLocaleString('en-US');
     }
 
     function ensureValidActiveCategory() {
@@ -244,6 +259,7 @@
     function renderBarracks() {
         ensureValidActiveCategory();
         syncCommanderStatus();
+        syncCommanderGold();
         renderCategoryNav();
         syncCategoryLabel();
         renderUnitGrid();
