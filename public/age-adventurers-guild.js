@@ -19,10 +19,9 @@
     let settlementTier = 'village';
     let battleInFlight = false;
     let battleHeld = false;
+    let battleHoldPointerId = null;
     let chargeTimerId = null;
-    let chargeSessionId = 0;
-    let chargeArmed = false;
-    let battleHoldReleaseBound = false;
+    let chargePending = false;
     let autoHealEnabled = false;
     let lastBattleResult = null;
     let guildJobsExpanded = false;
@@ -167,6 +166,7 @@
 
     function onTrainingViewOpen() {
         setTrainingViewOpen(true);
+        bindBattleControls();
         renderGuildPanel();
     }
 
@@ -649,9 +649,13 @@
         const canHoldBattle = unitsUninjured > 0;
 
         if (battleBtn) {
-            // Keep the button enabled while held so the browser does not cancel the pointer stream.
-            battleBtn.disabled = battleHeld ? !canHoldBattle : !canBattle;
-            battleBtn.classList.toggle('is-ready', battleHeld ? canHoldBattle : canBattle);
+            const canBattle = unitsUninjured > 0 && !battleInFlight;
+            const canHoldBattle = unitsUninjured > 0;
+            const interactive = battleHeld ? canHoldBattle : canBattle;
+            battleBtn.disabled = false;
+            battleBtn.setAttribute('aria-disabled', interactive ? 'false' : 'true');
+            battleBtn.classList.toggle('is-ready', interactive);
+            battleBtn.classList.toggle('is-disabled', !interactive);
             battleBtn.classList.toggle('is-busy', battleInFlight);
             battleBtn.setAttribute('aria-busy', battleInFlight ? 'true' : 'false');
         }
@@ -679,6 +683,7 @@
                 setTrainingViewOpen(true);
             }
             renderGuildPanel();
+            bindBattleControls();
         });
     }
 
@@ -715,6 +720,10 @@
         }
     }
 
+    function getUnitsUninjuredCount() {
+        return Math.max(0, Math.floor(Number(guildState?.unitsUninjured) || 0));
+    }
+
     function clearChargeTimer() {
         if (chargeTimerId) {
             global.clearTimeout(chargeTimerId);
@@ -733,68 +742,46 @@
         }
     }
 
-    function invalidateBattleCharge() {
-        chargeSessionId += 1;
-        chargeArmed = false;
-        clearChargeTimer();
-        resetChargeRing();
-    }
-
-    function startChargeRing(sessionId) {
-        const wrap = global.document.getElementById('age-guild-battle-wrap');
-        const progress = wrap?.querySelector('.age-guild-charge-ring-progress');
-        wrap?.classList.add('is-charging');
-        if (!progress) return;
-
-        const onAnimationEnd = (event) => {
-            if (event.animationName !== 'age-guild-charge-ring') return;
-            progress.removeEventListener('animationend', onAnimationEnd);
-            completeBattleCharge(sessionId);
-        };
-        progress.addEventListener('animationend', onAnimationEnd);
-    }
-
-    function completeBattleCharge(sessionId) {
-        if (sessionId !== chargeSessionId || !chargeArmed || battleInFlight) return;
-        chargeArmed = false;
-        clearChargeTimer();
-        void fireTrainingBattle();
+    function startChargeRing() {
+        global.document.getElementById('age-guild-battle-wrap')?.classList.add('is-charging');
     }
 
     function stopBattleHold() {
         battleHeld = false;
-        invalidateBattleCharge();
-        unbindBattleHoldReleaseListeners();
+        battleHoldPointerId = null;
+        chargePending = false;
+        clearChargeTimer();
+        resetChargeRing();
         global.document.getElementById('age-guild-battle-wrap')?.classList.remove('is-hold-active');
-    }
-
-    function bindBattleHoldReleaseListeners() {
-        if (battleHoldReleaseBound) return;
-        battleHoldReleaseBound = true;
-        global.document.addEventListener('mouseup', onBattleMouseUp, true);
-        global.window.addEventListener('blur', onBattleHoldBlur, true);
-    }
-
-    function unbindBattleHoldReleaseListeners() {
-        if (!battleHoldReleaseBound) return;
-        battleHoldReleaseBound = false;
-        global.document.removeEventListener('mouseup', onBattleMouseUp, true);
-        global.window.removeEventListener('blur', onBattleHoldBlur, true);
-    }
-
-    function finishBattleHold() {
-        unbindBattleHoldReleaseListeners();
-        stopBattleHold();
         updateControlStates();
+    }
+
+    function scheduleBattleCharge() {
+        clearChargeTimer();
+        if (!battleHeld || battleInFlight) return;
+
+        if (!getUnitsUninjuredCount()) {
+            stopBattleHold();
+            return;
+        }
+
+        chargePending = true;
+        startChargeRing();
+        chargeTimerId = global.setTimeout(() => {
+            chargeTimerId = null;
+            if (!chargePending || battleInFlight) return;
+            chargePending = false;
+            void fireTrainingBattle();
+        }, BATTLE_CHARGE_MS);
     }
 
     async function resumeBattleHoldIfNeeded() {
         if (!battleHeld) return;
 
-        let unitsUninjured = Math.max(0, Math.floor(Number(guildState?.unitsUninjured) || 0));
+        let unitsUninjured = getUnitsUninjuredCount();
         if (!unitsUninjured && autoHealEnabled) {
             await runAutoHealAfterBattle();
-            unitsUninjured = Math.max(0, Math.floor(Number(guildState?.unitsUninjured) || 0));
+            unitsUninjured = getUnitsUninjuredCount();
         }
 
         if (!battleHeld) return;
@@ -804,25 +791,6 @@
         }
 
         scheduleBattleCharge();
-    }
-
-    function scheduleBattleCharge() {
-        if (!battleHeld || battleInFlight) return;
-
-        const unitsUninjured = Math.max(0, Math.floor(Number(guildState?.unitsUninjured) || 0));
-        if (!unitsUninjured) {
-            stopBattleHold();
-            return;
-        }
-
-        invalidateBattleCharge();
-        const sessionId = chargeSessionId;
-        chargeArmed = true;
-        startChargeRing(sessionId);
-        chargeTimerId = global.setTimeout(() => {
-            chargeTimerId = null;
-            completeBattleCharge(sessionId);
-        }, BATTLE_CHARGE_MS);
     }
 
     async function runAutoHealAfterBattle() {
@@ -857,7 +825,9 @@
         }
 
         battleInFlight = true;
-        invalidateBattleCharge();
+        chargePending = false;
+        clearChargeTimer();
+        resetChargeRing();
         updateControlStates();
 
         try {
@@ -949,29 +919,64 @@
         return guildStateLoadInFlight;
     }
 
-    function onBattleMouseDown(event) {
-        if (event.button !== 0 || battleInFlight || battleHeld) return;
+    function onBattlePointerDown(event) {
+        if (event.button !== 0 || battleInFlight) return;
         if (!event.target.closest('#age-guild-battle-wrap')) return;
-        if (!Math.max(0, Math.floor(Number(guildState?.unitsUninjured) || 0))) return;
+        if (!getUnitsUninjuredCount()) return;
 
         event.preventDefault();
-        event.stopPropagation();
 
         battleHeld = true;
+        battleHoldPointerId = event.pointerId;
         global.document.getElementById('age-guild-battle-wrap')?.classList.add('is-hold-active');
-        bindBattleHoldReleaseListeners();
         updateControlStates();
         scheduleBattleCharge();
     }
 
-    function onBattleMouseUp(event) {
-        if (event.button !== 0 || !battleHeld) return;
-        finishBattleHold();
+    function onBattlePointerUp(event) {
+        if (event.type === 'pointerup' && event.button !== 0) return;
+        if (battleHoldPointerId != null && event.pointerId !== battleHoldPointerId) return;
+
+        if (chargeTimerId) {
+            stopBattleHold();
+            return;
+        }
+
+        if (battleHeld) {
+            battleHeld = false;
+            battleHoldPointerId = null;
+            chargePending = false;
+            global.document.getElementById('age-guild-battle-wrap')?.classList.remove('is-hold-active');
+            updateControlStates();
+        }
     }
 
-    function onBattleHoldBlur() {
-        if (!battleHeld) return;
-        finishBattleHold();
+    function onBattleWindowBlur() {
+        if (battleHeld || chargePending) {
+            stopBattleHold();
+        }
+    }
+
+    function bindBattleControls() {
+        const arena = global.document.getElementById('age-guild-training-arena');
+        const wrap = global.document.getElementById('age-guild-battle-wrap');
+        const progressRing = arena?.querySelector('.age-guild-charge-ring-progress');
+
+        if (wrap) {
+            wrap.style.setProperty('--age-guild-charge-circumference', String(CHARGE_RING_CIRCUMFERENCE));
+        }
+        if (progressRing) {
+            progressRing.style.strokeDasharray = `${CHARGE_RING_CIRCUMFERENCE}`;
+            progressRing.style.strokeDashoffset = `${CHARGE_RING_CIRCUMFERENCE}`;
+        }
+
+        if (!arena || arena.dataset.riftBattleBound === '1') return;
+        arena.dataset.riftBattleBound = '1';
+
+        arena.addEventListener('pointerdown', onBattlePointerDown);
+        global.addEventListener('pointerup', onBattlePointerUp);
+        global.addEventListener('pointercancel', onBattlePointerUp);
+        global.window.addEventListener('blur', onBattleWindowBlur);
     }
 
     function onWorkspaceClick(event) {
@@ -1061,18 +1066,14 @@
         bound = true;
 
         const workspace = resolveWorkspace();
-        const battleDeck = global.document.getElementById('age-guild-battle-deck');
-        const battleBtn = global.document.getElementById('age-guild-battle-btn');
-        const wrap = global.document.getElementById('age-guild-battle-wrap');
         const progressRing = global.document.getElementById('age-guild-training-arena')?.querySelector('.age-guild-charge-ring-progress');
 
-        if (wrap) {
-            wrap.style.setProperty('--age-guild-charge-circumference', String(CHARGE_RING_CIRCUMFERENCE));
-        }
         if (progressRing) {
             progressRing.style.strokeDasharray = `${CHARGE_RING_CIRCUMFERENCE}`;
             progressRing.style.strokeDashoffset = `${CHARGE_RING_CIRCUMFERENCE}`;
         }
+
+        bindBattleControls();
 
         workspace?.addEventListener('click', onWorkspaceClick);
         global.document.addEventListener('keydown', onWorkspaceKeydown);
@@ -1090,10 +1091,6 @@
         });
 
         global.document.getElementById('age-settlement-menu-list')?.addEventListener('click', onSettlementMenuClick, true);
-
-        battleDeck?.addEventListener('mousedown', onBattleMouseDown);
-        wrap?.addEventListener('mousedown', onBattleMouseDown);
-        battleBtn?.addEventListener('mousedown', onBattleMouseDown);
     }
 
     function enableAgeAdventurersGuild() {

@@ -22744,6 +22744,12 @@ button.age-guild-gear-slot {
     filter: brightness(1.05);
 }
 
+.age-guild-battle-circle.is-disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+    filter: grayscale(0.35);
+}
+
 .age-guild-battle-circle.is-busy:not(:disabled) {
     opacity: 0.82;
     cursor: pointer;
