@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Royal Armies — Age Alpha</title>
     <link rel="stylesheet" href="style.css?v=royal-family-titles-1">
-    <link rel="stylesheet" href="style2.css?v=water-routes-1">
+    <link rel="stylesheet" href="style2.css?v=hq-arrow-markers-1">
     <link rel="stylesheet" href="mobile-responsive.css?v=headquarters-players-rail-1">
     <link rel="stylesheet" href="dev-page-navigator.css">
     <link rel="stylesheet" href="custom-cursor.css?v=scrollbar-cursor-3">
@@ -560,7 +560,7 @@
                                             <span class="age-hq-marker-btn-title">Hold</span>
                                         </span>
                                     </button>
-                                    <button type="button" class="age-hq-marker-btn age-hq-marker-btn--sf" data-hq-marker="sf" disabled>
+                                    <button type="button" class="age-hq-marker-btn age-hq-marker-btn--sf" data-hq-marker="sf">
                                         <span class="age-hq-marker-btn-glyph" aria-hidden="true">SF</span>
                                         <span class="age-hq-marker-btn-copy">
                                             <span class="age-hq-marker-btn-kicker">Deploy</span>
@@ -574,11 +574,18 @@
                                             <span class="age-hq-marker-btn-title">Taxi</span>
                                         </span>
                                     </button>
-                                    <button type="button" class="age-hq-marker-btn age-hq-marker-btn--mf" data-hq-marker="mf" disabled>
+                                    <button type="button" class="age-hq-marker-btn age-hq-marker-btn--mf" data-hq-marker="mf">
                                         <span class="age-hq-marker-btn-glyph" aria-hidden="true">MF</span>
                                         <span class="age-hq-marker-btn-copy">
                                             <span class="age-hq-marker-btn-kicker">Flag</span>
                                             <span class="age-hq-marker-btn-title">Main Force</span>
+                                        </span>
+                                    </button>
+                                    <button type="button" class="age-hq-marker-btn age-hq-marker-btn--move" data-hq-marker="move">
+                                        <span class="age-hq-marker-btn-glyph" aria-hidden="true">MV</span>
+                                        <span class="age-hq-marker-btn-copy">
+                                            <span class="age-hq-marker-btn-kicker">March</span>
+                                            <span class="age-hq-marker-btn-title">Move</span>
                                         </span>
                                     </button>
                                 </div>
@@ -592,7 +599,7 @@
                                 </button>
                             </div>
                         </div>
-                        <p id="age-hq-planning-hint" class="age-hq-planning-hint">Select a bordering city on the map to enable markers.</p>
+                        <p id="age-hq-planning-hint" class="age-hq-planning-hint">Arm SF, MF, or Move, or select a bordering city first for Hold/Taxi.</p>
                     </section>
 
                     <aside class="age-headquarters-ops-rail" aria-label="Nation leadership operations">
@@ -920,8 +927,8 @@
     <script src="rift-player-loc-pins.js?v=player-loc-pins-1"></script>
     <script src="age-world-map.js?v=water-routes-1"></script>
     <script src="age-view-tabs.js?v=headquarters-players-rail-1"></script>
-    <script src="age-headquarters-planning-map.js?v=hq-marker-chain-1"></script>
-    <script src="age-headquarters.js?v=hq-marker-chain-1"></script>
+    <script src="age-headquarters-planning-map.js?v=hq-arrow-markers-1"></script>
+    <script src="age-headquarters.js?v=hq-arrow-markers-1"></script>
     <script src="age-chronicles-battle-pass.js?v=bp-premium-badge-1"></script>
     <script src="age-left-reports-panel.js?v=intelligence-peace-state-1"></script>
     <script src="age-page.js?v=headquarters-planning-1"></script>

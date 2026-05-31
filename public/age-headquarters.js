@@ -25,6 +25,25 @@
     let activeDiploTab = 'incoming';
     let activeMarkerType = '';
     let leaderVote = '';
+    const PILL_MARKER_TYPES = new Set(['hold', 'taxi']);
+    const ARROW_MARKER_TYPES = new Set(['sf', 'mf', 'move']);
+
+    function isArrowMarkerType(type) {
+        return ARROW_MARKER_TYPES.has(type);
+    }
+
+    function isPillMarkerType(type) {
+        return PILL_MARKER_TYPES.has(type);
+    }
+
+    function markerTypeLabel(type) {
+        if (type === 'sf') return 'Strike Force';
+        if (type === 'mf') return 'Main Force';
+        if (type === 'move') return 'Move';
+        if (type === 'hold') return 'Hold';
+        if (type === 'taxi') return 'Taxi';
+        return String(type || '').toUpperCase();
+    }
     let viceVote = '';
     let councilAccess = false;
 
@@ -133,14 +152,18 @@
         if (!toolbar) return;
 
         const planningMap = global.RoyalArmiesAgeHeadquartersPlanningMap;
-        const hasPills = (planningMap?.getPills?.() || []).length > 0;
+        const steps = planningMap?.getPlanningSteps?.() || [];
+        const hasSteps = steps.length > 0;
         const hasSelection = Boolean(planningMap?.getSelectedBorderCityId?.());
-        const canPlaceMarker = Boolean(planningMap?.isSelectedCityPlannable?.());
-        const canReset = councilAccess && (hasPills || hasSelection || activeMarkerType);
+        const canPlacePill = Boolean(planningMap?.isSelectedCityPlannable?.());
+        const canReset = councilAccess && (hasSteps || hasSelection || activeMarkerType);
 
         toolbar.querySelectorAll('[data-hq-marker]').forEach((button) => {
-            button.disabled = !canPlaceMarker || !councilAccess;
-            button.classList.toggle('is-active', canPlaceMarker && button.getAttribute('data-hq-marker') === activeMarkerType);
+            const type = button.getAttribute('data-hq-marker') || '';
+            const isArrowTool = isArrowMarkerType(type);
+            const enabled = councilAccess && (isArrowTool || canPlacePill);
+            button.disabled = !enabled;
+            button.classList.toggle('is-active', enabled && type === activeMarkerType);
         });
 
         const resetBtn = global.document.getElementById('age-hq-planning-reset-btn');
@@ -150,11 +173,13 @@
         if (statusEl) {
             if (!councilAccess) {
                 statusEl.textContent = 'Council access required';
+            } else if (activeMarkerType && isArrowMarkerType(activeMarkerType)) {
+                statusEl.textContent = `Place ${markerTypeLabel(activeMarkerType)} on map`;
             } else if (activeMarkerType) {
-                statusEl.textContent = `Active · ${activeMarkerType.toUpperCase()}`;
-            } else if (hasPills) {
-                statusEl.textContent = `${(planningMap?.getPills?.() || []).length} markers placed`;
-            } else if (canPlaceMarker) {
+                statusEl.textContent = `Active · ${markerTypeLabel(activeMarkerType)}`;
+            } else if (hasSteps) {
+                statusEl.textContent = `${steps.length} orders placed`;
+            } else if (canPlacePill) {
                 statusEl.textContent = 'Target city selected';
             } else if (hasSelection) {
                 statusEl.textContent = 'Invalid chain target';
@@ -167,16 +192,26 @@
         if (hint) {
             if (!councilAccess) {
                 hint.textContent = 'SF Planning markers require Council or Leader access.';
-            } else if (!canPlaceMarker && !hasPills) {
-                hint.textContent = 'Select a city bordering your current location to start the plan.';
-            } else if (!canPlaceMarker && hasPills) {
-                hint.textContent = 'Select the next city bordering your previous marker to extend the plan.';
-            } else if (activeMarkerType) {
-                hint.textContent = `Active marker: ${activeMarkerType.toUpperCase()}. Click the map city again or use Set SF to stack multiple SFs. Hover a pill and click to replace it.`;
-            } else if (hasPills) {
-                hint.textContent = 'Extend the chain: select a city bordering your last marker, then choose a tool.';
+            } else if (activeMarkerType && isArrowMarkerType(activeMarkerType)) {
+                if (activeMarkerType === 'move') {
+                    hint.textContent = 'Click a bordering city you already own to draw a Move arrow along the route.';
+                } else if (activeMarkerType === 'sf') {
+                    hint.textContent = 'Click a bordering neutral or enemy city to place a numbered SF arrow. Own and ally cities are blocked.';
+                } else if (activeMarkerType === 'mf') {
+                    hint.textContent = 'Click a bordering neutral or enemy city to place an MF arrow. Own and ally cities are blocked.';
+                } else {
+                    hint.textContent = `Click a valid bordering city to place ${markerTypeLabel(activeMarkerType)}.`;
+                }
+            } else if (!canPlacePill && !hasSteps) {
+                hint.textContent = 'Select a bordering city for Hold or Taxi. SF, MF, and Move can be armed immediately.';
+            } else if (!canPlacePill && hasSteps) {
+                hint.textContent = 'Select the next city bordering your last order to place Hold or Taxi pills.';
+            } else if (activeMarkerType && isPillMarkerType(activeMarkerType)) {
+                hint.textContent = `${markerTypeLabel(activeMarkerType)} armed — click the selected city again or pick Hold/Taxi to replace an existing pill.`;
+            } else if (hasSteps) {
+                hint.textContent = 'Arm SF, MF, or Move to draw labeled arrows, or select a city for Hold/Taxi pills.';
             } else {
-                hint.textContent = 'Choose a marker tool, then place it on the selected border city.';
+                hint.textContent = 'Arm SF, MF, or Move, or select a bordering city first for Hold/Taxi.';
             }
         }
     }
@@ -251,9 +286,7 @@
             const type = button.getAttribute('data-hq-marker');
             setActiveMarkerType(type);
 
-            if (type === 'sf') {
-                global.RoyalArmiesAgeHeadquartersPlanningMap?.placeMarkerOnSelectedCity?.(type);
-            } else {
+            if (isPillMarkerType(type)) {
                 global.RoyalArmiesAgeHeadquartersPlanningMap?.placeMarkerOnSelectedCity?.(type);
             }
         });

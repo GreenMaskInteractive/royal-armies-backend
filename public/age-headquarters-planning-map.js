@@ -236,6 +236,11 @@
         return pills.reduce((latest, pill) => (pill.order > latest.order ? pill : latest));
     }
 
+    function resolveStepCityId(step, edge) {
+        if (step.kind === 'pill') return step.cityId;
+        return edge === 'from' ? step.fromCityId : step.toCityId;
+    }
+
     function canPlacePillAtCity(city) {
         if (!city || city.id === playerMapCityId) return false;
 
@@ -266,7 +271,9 @@
         const fromOwnership = resolveCityOwnershipKind(fromCity);
 
         if (type === 'move') {
-            return ownership === 'own' && (fromOwnership === 'own' || fromOwnership === 'current');
+            const destOk = ownership === 'own' || ownership === 'current';
+            const fromOk = fromOwnership === 'own' || fromOwnership === 'current';
+            return destOk && fromOk;
         }
 
         if (type === 'sf' || type === 'mf') {
@@ -732,7 +739,7 @@
 
             const needsHitBoost = city.centroid && (
                 pathSpan(outlineD) < SMALL_CITY_SPAN
-                || canSelectPlanningCity(city)
+                || canHighlightCityForActiveTool(city)
             );
             if (needsHitBoost) {
                 const hitCircle = global.document.createElementNS('http://www.w3.org/2000/svg', 'circle');
@@ -742,7 +749,7 @@
                 hitCircle.setAttribute('cy', String(city.centroid.y));
                 hitCircle.setAttribute(
                     'r',
-                    String(canSelectPlanningCity(city) ? BORDER_CITY_HIT_RADIUS : SMALL_CITY_HIT_RADIUS)
+                    String(canHighlightCityForActiveTool(city) ? BORDER_CITY_HIT_RADIUS : SMALL_CITY_HIT_RADIUS)
                 );
                 hitFrag.appendChild(hitCircle);
             }
@@ -986,11 +993,10 @@
         for (let i = 0; i < steps.length - 1; i += 1) {
             const current = steps[i];
             const next = steps[i + 1];
-            const fromId = current.kind === 'pill' ? current.cityId : current.toCityId;
-            const toId = next.kind === 'pill' ? next.cityId : next.fromCityId;
-
             if (next.kind === 'arrow') continue;
-            if (current.kind === 'arrow' && current.toCityId === toId) continue;
+
+            const fromId = resolveStepCityId(current, 'to');
+            const toId = resolveStepCityId(next, 'from');
             if (fromId && toId && fromId !== toId) {
                 appendPlainConnector(fromId, toId, frag, defsFrag);
             }
@@ -1112,7 +1118,7 @@
             const cityId = resolveCityHitTarget(event.target);
             if (!cityId) return;
             const city = cityById.get(cityId);
-            if (!canSelectPlanningCity(city)) return;
+            if (!canHighlightCityForActiveTool(city)) return;
             hitLayer.querySelectorAll('.age-hq-city-hit-path.is-hover').forEach((node) => {
                 node.classList.remove('is-hover');
             });
@@ -1146,7 +1152,9 @@
             playerMapCityId = resolvePlayerMapCityId();
             buildCityLayers();
             syncOwnershipVisuals();
-            if (previousSelection && canSelectPlanningCity(cityById.get(previousSelection))) {
+            if (previousSelection && canHighlightCityForActiveTool(cityById.get(previousSelection))) {
+                setSelectedBorderCity(previousSelection);
+            } else if (previousSelection && canPlacePillAtCity(cityById.get(previousSelection))) {
                 setSelectedBorderCity(previousSelection);
             } else if (previousSelection) {
                 setSelectedBorderCity('');
@@ -1175,6 +1183,7 @@
                         <marker id="age-hq-arrowhead" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto">
                             <path d="M0,0 L8,4 L0,8 Z" class="age-hq-planning-arrow-head"></path>
                         </marker>
+                        <g class="age-hq-planning-arrows-defs"></g>
                     </defs>
                     <g class="age-hq-planning-arrows-layer"></g>
                 </svg>
@@ -1292,16 +1301,29 @@
 
     function setActiveMarkerType(type) {
         activeMarkerType = type || '';
+        buildCityLayers();
+        if (selectedBorderCityId) {
+            setSelectedBorderCity(selectedBorderCityId);
+        }
     }
 
     function getPills() {
         return pills.slice();
     }
 
+    function getArrowMarkers() {
+        return arrowMarkers.slice();
+    }
+
+    function getPlanningSteps() {
+        return getAllPlanningSteps();
+    }
+
     function clearPlanningMarkers() {
         pills = [];
-        sfCountByCity = new Map();
-        renderPills();
+        arrowMarkers = [];
+        sfArrowCounter = 0;
+        renderPlanningMarkers();
     }
 
     function resetPlanningMap() {
@@ -1317,8 +1339,11 @@
         placeMarkerOnSelectedCity,
         getSelectedBorderCityId: () => selectedBorderCityId,
         isSelectedCityPlannable,
-        canSelectPlanningCityById: (cityId) => canSelectPlanningCity(cityById.get(cityId)),
+        canSelectPlanningCityById: (cityId) => canPlacePillAtCity(cityById.get(cityId)),
+        canHighlightCityForActiveToolById: (cityId) => canHighlightCityForActiveTool(cityById.get(cityId)),
         getPills,
+        getArrowMarkers,
+        getPlanningSteps,
         clearPlanningMarkers,
         resetPlanningMap,
         set onBorderCitySelected(fn) { onBorderCitySelected = fn; },

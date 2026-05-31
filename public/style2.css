@@ -17217,10 +17217,6 @@ body.is-age-chronicles-battle-pass-open {
     z-index: 6;
 }
 
-.age-hq-planning-pill--sf {
-    background: linear-gradient(180deg, #ffd27a 0%, #c8841d 100%);
-}
-
 .age-hq-planning-pill--hold {
     background: linear-gradient(180deg, #d8d8d8 0%, #8d8d8d 100%);
 }
@@ -17228,11 +17224,6 @@ body.is-age-chronicles-battle-pass-open {
 .age-hq-planning-pill--taxi {
     background: linear-gradient(180deg, #9fd0ff 0%, #3f7ec0 100%);
     color: #071018;
-}
-
-.age-hq-planning-pill--mf {
-    background: linear-gradient(180deg, #ffb0b0 0%, #b53a3a 100%);
-    color: #1a0606;
 }
 
 .age-hq-planning-pill:hover,
@@ -17256,6 +17247,48 @@ body.is-age-chronicles-battle-pass-open {
     stroke: rgba(255, 210, 96, 0.82);
     stroke-width: 2.2px;
     stroke-linecap: round;
+}
+
+.age-hq-planning-arrow--link {
+    stroke: rgba(255, 210, 96, 0.55);
+    stroke-width: 1.8px;
+}
+
+.age-hq-planning-arrow--sf {
+    stroke: rgba(255, 196, 72, 0.92);
+}
+
+.age-hq-planning-arrow--mf {
+    stroke: rgba(255, 120, 120, 0.92);
+}
+
+.age-hq-planning-arrow--move {
+    stroke: rgba(120, 220, 160, 0.92);
+}
+
+.age-hq-planning-arrow-label {
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    paint-order: stroke fill;
+    stroke-width: 3px;
+    stroke-linejoin: round;
+}
+
+.age-hq-planning-arrow-label--sf {
+    fill: #ffe7a8;
+    stroke: rgba(24, 16, 4, 0.92);
+}
+
+.age-hq-planning-arrow-label--mf {
+    fill: #ffd0d0;
+    stroke: rgba(32, 8, 8, 0.92);
+}
+
+.age-hq-planning-arrow-label--move {
+    fill: #c8f5dc;
+    stroke: rgba(8, 24, 16, 0.92);
 }
 
 .age-hq-planning-arrow-head {
@@ -17443,6 +17476,13 @@ body.is-age-chronicles-battle-pass-open {
     --hq-marker-accent-soft: rgba(255, 120, 120, 0.16);
     --hq-marker-glyph-bg: rgba(255, 120, 120, 0.14);
     --hq-marker-glyph-fg: #ffb8b8;
+}
+
+.age-hq-marker-btn--move {
+    --hq-marker-accent: rgba(120, 220, 160, 0.95);
+    --hq-marker-accent-soft: rgba(120, 220, 160, 0.16);
+    --hq-marker-glyph-bg: rgba(120, 220, 160, 0.14);
+    --hq-marker-glyph-fg: #b8f5d0;
 }
 
 .age-hq-marker-btn--reset {
