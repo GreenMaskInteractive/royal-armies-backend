@@ -4,7 +4,7 @@
 (function initRoyalArmiesAdventurersGuild(global) {
     'use strict';
 
-    const BATTLE_CHARGE_MS = 2000;
+    const BATTLE_CHARGE_MS = 1000;
     const CHARGE_RING_RADIUS = 46;
     const CHARGE_RING_CIRCUMFERENCE = 2 * Math.PI * CHARGE_RING_RADIUS;
 

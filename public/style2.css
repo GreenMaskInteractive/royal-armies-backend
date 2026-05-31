@@ -22659,7 +22659,7 @@ button.age-guild-gear-slot {
 
 .age-guild-battle-btn-wrap.is-charging .age-guild-charge-ring-progress {
     opacity: 1;
-    animation: age-guild-charge-ring 2s linear forwards;
+    animation: age-guild-charge-ring 1s linear forwards;
 }
 
 @keyframes age-guild-charge-ring {
