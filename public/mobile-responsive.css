@@ -2754,7 +2754,8 @@ body {
     }
 
     #age-page-canvas[data-age-view="city"] [data-age-mobile-toggle="city-info"],
-    #age-page-canvas[data-age-view="realm"] [data-age-mobile-toggle="city-info"] {
+    #age-page-canvas[data-age-view="headquarters"] [data-age-mobile-toggle="city-info"],
+    #age-page-canvas[data-age-view="headquarters"] [data-age-mobile-toggle="reports"] {
         display: none !important;
     }
 
@@ -2784,8 +2785,7 @@ body {
         box-shadow: none !important;
     }
 
-    #age-page-canvas[data-age-view="city"] #age-map-hud-right,
-    #age-page-canvas[data-age-view="realm"] #age-map-hud-right {
+    #age-page-canvas[data-age-view="city"] #age-map-hud-right {
         display: flex !important;
         position: fixed !important;
         top: calc(max(8px, env(safe-area-inset-top)) + 88px) !important;
@@ -2802,8 +2802,13 @@ body {
         -webkit-overflow-scrolling: touch !important;
     }
 
+    #age-page-canvas[data-age-view="headquarters"] #age-map-hud-left,
+    #age-page-canvas[data-age-view="headquarters"] #age-map-hud-right {
+        display: none !important;
+    }
+
     #age-page-canvas[data-age-view="city"] #age-map-hud-left,
-    #age-page-canvas[data-age-view="realm"] #age-map-hud-left {
+    #age-page-canvas[data-age-view="headquarters"] #age-map-hud-left {
         display: none !important;
     }
 
@@ -2938,8 +2943,7 @@ body {
 
     #age-page-canvas.is-age-mobile-reports-open #age-map-hud-left,
     #age-page-canvas.is-age-mobile-city-info-open #age-map-hud-right,
-    #age-page-canvas[data-age-view="city"] #age-map-hud-right,
-    #age-page-canvas[data-age-view="realm"] #age-map-hud-right {
+    #age-page-canvas[data-age-view="city"] #age-map-hud-right {
         top: calc(max(8px, env(safe-area-inset-top)) + 112px) !important;
     }
 }

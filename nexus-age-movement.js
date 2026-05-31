@@ -14,9 +14,12 @@ const TRANSFER_OWNERSHIP_RSD_COST = 250;
 const AGE_ALPHA_DEFAULT_MAP_NATION = 'aesthene';
 
 const CATALOG_PATH = path.join(__dirname, 'public', 'data', 'age-world-cities.json');
+const WATER_ROUTES_PATH = path.join(__dirname, 'public', 'data', 'age-world-water-routes.json');
 
 let cityCatalogCache = null;
 let cityByIdCache = null;
+let waterRoutesCache = null;
+let waterRoutePairIndex = null;
 
 function loadCityCatalog() {
     if (cityCatalogCache) return cityCatalogCache;
@@ -38,6 +41,38 @@ function getCityByIdMap() {
 
 function getCatalogCity(cityId) {
     return getCityByIdMap().get(String(cityId || '').trim()) || null;
+}
+
+function loadWaterRoutes() {
+    if (waterRoutesCache) return waterRoutesCache;
+    const raw = fs.readFileSync(WATER_ROUTES_PATH, 'utf8');
+    waterRoutesCache = JSON.parse(raw);
+    waterRoutePairIndex = null;
+    return waterRoutesCache;
+}
+
+function waterRoutePairKey(cityAId, cityBId) {
+    return [String(cityAId || ''), String(cityBId || '')].sort().join('::');
+}
+
+function getWaterRoutePairIndex() {
+    if (waterRoutePairIndex) return waterRoutePairIndex;
+    const payload = loadWaterRoutes();
+    waterRoutePairIndex = new Map();
+    (payload.routes || []).forEach((route) => {
+        const fromId = String(route.fromCityId || '').trim();
+        const toId = String(route.toCityId || '').trim();
+        if (!fromId || !toId) return;
+        waterRoutePairIndex.set(waterRoutePairKey(fromId, toId), route);
+        if (route.bidirectional !== false) {
+            waterRoutePairIndex.set(waterRoutePairKey(toId, fromId), route);
+        }
+    });
+    return waterRoutePairIndex;
+}
+
+function findWaterRoute(cityAId, cityBId) {
+    return getWaterRoutePairIndex().get(waterRoutePairKey(cityAId, cityBId)) || null;
 }
 
 const MAP_NATION_ID_ALIASES = {
@@ -191,14 +226,19 @@ function applyMovePointRegen(record, nowMs = Date.now()) {
 }
 
 function spendMovePoint(record, nowMs = Date.now()) {
+    return spendMovePoints(record, 1, nowMs);
+}
+
+function spendMovePoints(record, cost = 1, nowMs = Date.now()) {
+    const moveCost = Math.max(1, Math.min(MOVE_POINTS_MAX, Math.floor(Number(cost) || 1)));
     const regen = applyMovePointRegen(record, nowMs);
-    if (regen.movePoints <= 0) {
+    if (regen.movePoints < moveCost) {
         return { errorCode: 'NEXUS-AGE-001' };
     }
 
     const wasAtMax = regen.movePoints >= MOVE_POINTS_MAX;
     return {
-        movePoints: regen.movePoints - 1,
+        movePoints: regen.movePoints - moveCost,
         lastMovePointRegenAt: wasAtMax
             ? new Date(getMovePointTickBoundaryMs(nowMs)).toISOString()
             : regen.lastMovePointRegenAt
@@ -229,6 +269,22 @@ function areCitiesAdjacent(cityAId, cityBId) {
     return aToB || bToA;
 }
 
+function resolveCityConnection(cityAId, cityBId) {
+    const cityA = getCatalogCity(cityAId);
+    const cityB = getCatalogCity(cityBId);
+    if (!cityA || !cityB || cityA.id === cityB.id) return null;
+    if (areCitiesAdjacent(cityA.id, cityB.id)) {
+        return { type: 'land', movePointCost: 1 };
+    }
+    const route = findWaterRoute(cityA.id, cityB.id);
+    if (!route) return null;
+    return {
+        type: 'water',
+        movePointCost: Math.max(1, Math.min(3, Math.floor(Number(route.movePointCost) || 1))),
+        routeId: route.id
+    };
+}
+
 function classifyBorderRelationship(playerNation, targetCity, cityHolders, isAlliedFn) {
     const nation = resolveCatalogNationKey(playerNation) || String(playerNation || '').trim().toLowerCase();
     const holder = resolveCityHolder(targetCity, cityHolders);
@@ -249,10 +305,11 @@ function validateBorderTarget(playerCityId, targetCityId) {
     if (playerCity.id === targetCity.id) {
         return { errorCode: 'NEXUS-AGE-009' };
     }
-    if (!areCitiesAdjacent(playerCity.id, targetCity.id)) {
+    const connection = resolveCityConnection(playerCity.id, targetCity.id);
+    if (!connection) {
         return { errorCode: 'NEXUS-AGE-002' };
     }
-    return { playerCity, targetCity };
+    return { playerCity, targetCity, connection };
 }
 
 function validateTravel(playerNation, playerCityId, targetCityId, cityHolders) {
@@ -325,7 +382,7 @@ function getMovePointRules() {
 function buildBorderActionHints(playerNation, playerCityId, targetCityId, cityHolders, isAlliedFn) {
     const border = validateBorderTarget(playerCityId, targetCityId);
     if (border.errorCode) {
-        return { canTravel: false, canAssault: false, canTransfer: false };
+        return { canTravel: false, canAssault: false, canTransfer: false, canScout: false };
     }
 
     const relationship = classifyBorderRelationship(
@@ -334,14 +391,18 @@ function buildBorderActionHints(playerNation, playerCityId, targetCityId, cityHo
         cityHolders,
         isAlliedFn
     );
+    const movePointCost = border.connection?.movePointCost || 1;
+    const isForeignBorder = relationship !== 'own';
 
     return {
         relationship,
+        connectionType: border.connection?.type || 'land',
         canTravel: relationship === 'own',
         canAssault: relationship === 'hostile',
         canTransfer: relationship === 'ally',
+        canScout: isForeignBorder,
         transferRsdCost: TRANSFER_OWNERSHIP_RSD_COST,
-        movePointCost: 1
+        movePointCost
     };
 }
 
@@ -363,6 +424,9 @@ module.exports = {
     getNextMovePointTickBoundaryMs,
     applyMovePointRegen,
     spendMovePoint,
+    spendMovePoints,
+    resolveCityConnection,
+    findWaterRoute,
     resolveCityHolder,
     resolveCityLoser,
     areCitiesAdjacent,

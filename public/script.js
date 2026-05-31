@@ -2222,6 +2222,10 @@ function finishMainPortalLoginSession(isAdmin) {
         if (typeof syncCommanderLocaleAfterAuth === 'function') {
             syncCommanderLocaleAfterAuth();
         }
+        if (isCommanderEnrolledInActiveAgeRound() && isCommanderGameSessionStarted()) {
+            window.location.replace(resolveActiveAgeHandoffUrl());
+            return;
+        }
     }
 }
 
@@ -3352,6 +3356,26 @@ function isCommanderEnrolledInActiveAgeRound() {
     return localStorage.getItem('savedCommanderInActiveAge') === 'true';
 }
 
+function resolveCommanderGameSessionStartedStorageKey(username) {
+    const userKey = String(
+        username !== undefined ? username : (localStorage.getItem('activeCommanderUser') || '')
+    ).trim().toLowerCase();
+    return userKey ? `royalArmies_${userKey}_gameSessionStarted` : '';
+}
+
+function isCommanderGameSessionStarted(username) {
+    const storageKey = resolveCommanderGameSessionStartedStorageKey(username);
+    if (!storageKey) return false;
+    return localStorage.getItem(storageKey) === 'true';
+}
+
+function resolveOfficialAgeResumePath() {
+    if (typeof getOfficialAgePagePath === 'function') {
+        return getOfficialAgePagePath();
+    }
+    return '/agealpha.html';
+}
+
 function resolveCommanderDeploymentStorageKey(suffix) {
     const username = String(localStorage.getItem('activeCommanderUser') || '').trim().toLowerCase();
     return username ? `royalArmies_${username}_${suffix}` : `royalArmies_guest_${suffix}`;
@@ -3377,6 +3401,9 @@ function resolveGamePageHandoffUrl(options) {
 }
 
 function resolveActiveAgeHandoffUrl() {
+    if (isCommanderGameSessionStarted()) {
+        return resolveOfficialAgeResumePath();
+    }
     return resolveGamePageHandoffUrl({ joinAge: false });
 }
 
@@ -4520,6 +4547,8 @@ window.prepareMainPortalPostLoginTermsGate = prepareMainPortalPostLoginTermsGate
 window.confirmSelection = confirmSelection; 
 window.selectClass = selectClass; 
 window.isCommanderEnrolledInActiveAgeRound = isCommanderEnrolledInActiveAgeRound;
+window.isCommanderGameSessionStarted = isCommanderGameSessionStarted;
+window.resolveOfficialAgeResumePath = resolveOfficialAgeResumePath;
 window.resolveActiveAgeHandoffUrl = resolveActiveAgeHandoffUrl;
 window.resolveGamePageHandoffUrl = resolveGamePageHandoffUrl;
 window.enforceActiveAgePortalLock = enforceActiveAgePortalLock;

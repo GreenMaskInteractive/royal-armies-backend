@@ -8,6 +8,7 @@ import numpy as np
 from PIL import Image, ImageDraw
 
 TERRAIN_REFS: dict[str, tuple[int, int, int]] = {
+    # Snow ref exists for palette parity; no Snow is painted on amnekmap / assigned to settlements.
     "Snow": (252, 253, 255),
     "Desert": (128, 121, 86),
     "Plains": (89, 94, 55),
@@ -23,6 +24,7 @@ TERRAIN_OVERLAY_COLORS: dict[str, tuple[int, int, int, int]] = {
     "Desert": (210, 165, 90, 168),
     "Mountains": (136, 118, 96, 168),
     "Marshlands": (48, 138, 158, 168),
+    # Not used on the live Amnek map — kept for build parity only.
     "Snow": (236, 244, 252, 184),
 }
 

@@ -72,6 +72,11 @@
                     global.openCommanderHubModal('settings', event);
                 }
                 break;
+            case 'chronicles-battle-pass':
+                if (typeof global.openAgeChroniclesBattlePassModal === 'function') {
+                    global.openAgeChroniclesBattlePassModal(event);
+                }
+                break;
             case 'return-to-portal':
                 if (typeof global.returnToGameAgePortal === 'function') {
                     global.returnToGameAgePortal();

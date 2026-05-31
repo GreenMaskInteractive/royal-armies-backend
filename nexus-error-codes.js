@@ -442,6 +442,12 @@
             message: 'You have already pledged to a nation for this Age.',
             category: 'game'
         },
+        'NEXUS-GAME-015': {
+            http: 403,
+            title: 'Battle Pass',
+            message: 'The Chronicles Battle Pass is not available on the server yet.',
+            category: 'game'
+        },
 
         /* --- Age map movement --- */
         'NEXUS-AGE-001': {

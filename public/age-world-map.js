@@ -1,20 +1,24 @@
 /**
  * RIFT — Amnek world map: city SVG overlay, smooth zoom/pan, semantic labels, city intel drawer.
+ *
+ * Settlement terrain tags: Forest, Plains, Desert, Mountains only. Snow is not on this map.
  */
 (function initAgeWorldMap(global) {
     'use strict';
 
-    const DATA_URL = 'data/age-world-cities.json?v=age-world-cities-mountains-25-1';
-    const REGION_PATHS_URL = 'data/age-world-region-paths.json?v=age-world-region-paths-1';
+    const DATA_URL = 'data/age-world-cities.json?v=no-snow-terrain-note-1';
+    const REGION_PATHS_URL = 'data/age-world-region-paths.json?v=glifora-border-fix-2';
     const NATION_PATHS_URL = 'data/game-nation-paths.json?v=game-nation-paths-3';
     const NATIVE_SIZE = 1642;
     const LERP = 0.08;
     const WHEEL_ZOOM_FACTOR = 0.00135;
     const MAX_ZOOM_MULT = 3.35;
-    const NATION_FADE_START = 1.15;
-    const NATION_FADE_PEAK = 2.05;
-    const CITY_FADE_START = 2.35;
-    const CITY_FADE_FULL = MAX_ZOOM_MULT;
+    const NATION_FADE_START = 1;
+    const NATION_FADE_PEAK = 1.35;
+    const CITY_FADE_START = 1.85;
+    const CITY_FADE_FULL = 2.75;
+    const REGION_BORDER_FADE_IN_END = NATION_FADE_START + 0.08;
+    const REGION_BORDER_FADE_OUT_END = CITY_FADE_START + 0.18;
     const SMALL_CITY_SPAN = 26;
     const SMALL_CITY_HIT_RADIUS = 14;
     const PLAYER_PIN_HIT_PAD_PX = 6;
@@ -63,6 +67,7 @@
         visualLayer: null,
         hitLayer: null,
         highlightLayer: null,
+        waterRoutesLayer: null,
         highlightCanvas: null,
         highlightStage: null,
         highlightMapSvg: null,
@@ -542,10 +547,16 @@
         return centroids;
     }
 
+    function resolveRegionBorderOpacity(ratio) {
+        const fadeIn = fadeRange(ratio, NATION_FADE_START, REGION_BORDER_FADE_IN_END);
+        const fadeOut = 1 - fadeRange(ratio, CITY_FADE_START, REGION_BORDER_FADE_OUT_END);
+        return fadeIn * fadeOut;
+    }
+
     function resolveBorderOpacities(ratio) {
         const opacities = resolveLabelOpacities(ratio);
         return {
-            region: opacities.nation,
+            region: resolveRegionBorderOpacity(ratio),
             nation: 0,
             city: opacities.city
         };
@@ -593,16 +604,23 @@
         });
     }
 
+    function resolveWaterRouteOpacity(ratio) {
+        const fadeIn = fadeRange(ratio, NATION_FADE_PEAK, CITY_FADE_START);
+        return fadeIn;
+    }
+
     function syncBorderVisuals() {
         if (!els.frame) return;
         const hostRect = mapOverlayHostRect();
         const hostW = hostRect.width || mapOverlayHostEl()?.clientWidth || els.frame.clientWidth;
         const hostH = hostRect.height || mapOverlayHostEl()?.clientHeight || els.frame.clientHeight;
         const borderOpacities = resolveBorderOpacities(scaleRatio());
+        const waterRouteOpacity = resolveWaterRouteOpacity(scaleRatio());
 
         syncBorderLayer(els.regionLayer, borderOpacities.region, hostW, hostH);
         syncBorderLayer(els.nationLayer, borderOpacities.nation, hostW, hostH);
         syncBorderLayer(els.visualLayer, borderOpacities.city, hostW, hostH);
+        syncBorderLayer(els.waterRoutesLayer, waterRouteOpacity, hostW, hostH);
         syncOwnershipVisuals();
     }
 
@@ -988,16 +1006,6 @@
         hitCircle.setAttribute('r', String(SMALL_CITY_HIT_RADIUS));
         hitFrag.appendChild(hitCircle);
 
-        if (ownershipFrag) {
-            const ownershipCircle = global.document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-            ownershipCircle.setAttribute('class', 'age-world-city-ownership-path age-world-city-ownership-boost');
-            ownershipCircle.setAttribute('data-city-id', city.id);
-            ownershipCircle.setAttribute('cx', String(cx));
-            ownershipCircle.setAttribute('cy', String(cy));
-            ownershipCircle.setAttribute('r', String(SMALL_CITY_HIT_RADIUS + 2));
-            ownershipFrag.appendChild(ownershipCircle);
-        }
-
         if (highlightFrag) {
             const highlightCircle = global.document.createElementNS('http://www.w3.org/2000/svg', 'circle');
             highlightCircle.setAttribute('class', 'age-world-city-highlight-path age-world-city-highlight-boost');
@@ -1038,6 +1046,84 @@
         }
 
         els.ownershipLayer = layer;
+    }
+
+    function ensureWaterRoutesLayer() {
+        if (els.waterRoutesLayer) return;
+        if (!els.svg) return;
+
+        const layer = global.document.createElementNS('http://www.w3.org/2000/svg', 'g');
+        layer.setAttribute('id', 'age-world-map-water-routes-layer');
+        layer.setAttribute('class', 'age-world-map-layer--water-routes');
+
+        if (els.hitLayer && els.hitLayer.parentNode === els.svg) {
+            els.svg.insertBefore(layer, els.hitLayer);
+        } else if (els.ownershipLayer && els.ownershipLayer.parentNode === els.svg) {
+            els.ownershipLayer.insertAdjacentElement('afterend', layer);
+        } else {
+            els.svg.appendChild(layer);
+        }
+
+        els.waterRoutesLayer = layer;
+    }
+
+    function buildWaterRoutesLayer() {
+        ensureWaterRoutesLayer();
+        if (!els.waterRoutesLayer || !global.RoyalArmiesAgeWaterRoutes) return;
+
+        els.waterRoutesLayer.innerHTML = '';
+        const routes = global.RoyalArmiesAgeWaterRoutes.getRoutes();
+        if (!routes.length) return;
+
+        const frag = global.document.createDocumentFragment();
+        routes.forEach((route) => {
+            const geom = global.RoyalArmiesAgeWaterRoutes.resolveRouteGeometry(route, cityById);
+            if (!geom) return;
+
+            const group = global.document.createElementNS('http://www.w3.org/2000/svg', 'g');
+            group.setAttribute('class', 'age-world-water-route');
+            group.setAttribute('data-route-id', route.id);
+            group.dataset.centroidX = String(geom.labelX);
+            group.dataset.centroidY = String(geom.labelY);
+
+            const track = global.document.createElementNS('http://www.w3.org/2000/svg', 'path');
+            track.setAttribute('class', 'age-world-water-route-path age-world-water-route-path--track');
+            track.setAttribute('d', geom.pathD);
+            track.setAttribute('vector-effect', 'non-scaling-stroke');
+
+            const march = global.document.createElementNS('http://www.w3.org/2000/svg', 'path');
+            march.setAttribute('class', 'age-world-water-route-path age-world-water-route-path--march');
+            march.setAttribute('d', geom.pathD);
+            march.setAttribute('vector-effect', 'non-scaling-stroke');
+
+            const badge = global.document.createElementNS('http://www.w3.org/2000/svg', 'g');
+            badge.setAttribute('class', 'age-world-water-route-cost');
+            badge.setAttribute('transform', `translate(${geom.labelX.toFixed(2)} ${geom.labelY.toFixed(2)})`);
+
+            const badgeRect = global.document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+            badgeRect.setAttribute('class', 'age-world-water-route-cost-bg');
+            badgeRect.setAttribute('x', '-16');
+            badgeRect.setAttribute('y', '-9');
+            badgeRect.setAttribute('width', '32');
+            badgeRect.setAttribute('height', '18');
+            badgeRect.setAttribute('rx', '9');
+
+            const badgeText = global.document.createElementNS('http://www.w3.org/2000/svg', 'text');
+            badgeText.setAttribute('class', 'age-world-water-route-cost-label');
+            badgeText.setAttribute('text-anchor', 'middle');
+            badgeText.setAttribute('dominant-baseline', 'middle');
+            badgeText.setAttribute('y', '0');
+            badgeText.textContent = `${geom.movePointCost} MP`;
+
+            badge.appendChild(badgeRect);
+            badge.appendChild(badgeText);
+            group.appendChild(track);
+            group.appendChild(march);
+            group.appendChild(badge);
+            frag.appendChild(group);
+        });
+
+        els.waterRoutesLayer.appendChild(frag);
     }
 
     function buildSvgLayers() {
@@ -1247,8 +1333,11 @@
 
         const hints = global.RoyalArmiesAgeMovement?.getBorderActionHints?.(city, playerMapCityId) || {};
         const movePoints = global.RoyalArmiesAgeMovement?.getMovePoints?.() ?? 0;
-        const hasMovePoint = movePoints > 0;
-        const showAny = hints.canTravel || hints.canAssault || hints.canTransfer;
+        const movePointCost = Math.max(1, Math.floor(Number(hints.movePointCost) || 1));
+        const hasMovePoint = movePoints >= movePointCost;
+        const moveCostLabel = movePointCost === 1 ? '1 Move' : `${movePointCost} Moves`;
+        const waterNote = hints.connectionType === 'water' ? ' via water crossing' : '';
+        const showAny = hints.canTravel || hints.canAssault || hints.canTransfer || hints.canScout;
 
         actionsHost.hidden = !showAny;
         if (!showAny) {
@@ -1266,8 +1355,8 @@
                     class="age-world-city-action-btn age-world-city-action-btn--travel"
                     data-age-city-action="travel"
                     ${hasMovePoint ? '' : 'disabled aria-disabled="true"'}
-                    title="${hasMovePoint ? 'Spend 1 move point to travel here.' : 'No move points remaining.'}">
-                    Travel <span class="age-world-city-action-cost">(1 Move)</span>
+                    title="${hasMovePoint ? `Spend ${movePointCost} move point${movePointCost > 1 ? 's' : ''} to travel here${waterNote}.` : 'Not enough move points remaining.'}">
+                    Travel <span class="age-world-city-action-cost">(${moveCostLabel})</span>
                 </button>
             `);
         }
@@ -1279,8 +1368,8 @@
                     class="age-world-city-action-btn age-world-city-action-btn--assault"
                     data-age-city-action="assault"
                     ${hasMovePoint ? '' : 'disabled aria-disabled="true"'}
-                    title="${hasMovePoint ? 'Spend 1 move point to begin assault.' : 'No move points remaining.'}">
-                    Begin Assault <span class="age-world-city-action-cost">(1 Move)</span>
+                    title="${hasMovePoint ? `Spend ${movePointCost} move point${movePointCost > 1 ? 's' : ''} to begin assault${waterNote}.` : 'Not enough move points remaining.'}">
+                    Begin Assault <span class="age-world-city-action-cost">(${moveCostLabel})</span>
                 </button>
             `);
         }
@@ -1297,7 +1386,82 @@
             `);
         }
 
+        if (hints.canScout) {
+            const scoutTitle = hints.relationship === 'ally'
+                ? 'Send a scout to survey allied commanders and armies in this bordering city.'
+                : 'Send a scout to attempt intel on all commanders and armies in this bordering city.';
+            buttons.push(`
+                <button
+                    type="button"
+                    class="age-world-city-action-btn age-world-city-action-btn--scout"
+                    data-age-city-action="scout"
+                    title="${scoutTitle}">
+                    Send Scout <span class="age-world-city-action-cost">(Border Intel)</span>
+                </button>
+            `);
+        }
+
         actionsHost.innerHTML = buttons.join('');
+    }
+
+    const scoutedCityReports = new Map();
+
+    function buildScoutIntelMarkup(city) {
+        const nationName = resolveNationName(city.nationId);
+        return (
+            `<p class="age-world-city-drawer-scout-intel-title">Border Scout Report — ${city.name}</p>`
+            + `<p class="age-world-city-drawer-scout-intel-copy">`
+            + `Scout dispatched to ${nationName} holdings at ${city.name}. `
+            + `Commander roster and army strength for this bordering city will appear here when the report returns.`
+            + `</p>`
+        );
+    }
+
+    function refreshDrawerScoutIntel(city, hints) {
+        if (!els.drawerScoutIntel || !city) return;
+
+        if (!hints?.canScout) {
+            els.drawerScoutIntel.hidden = true;
+            els.drawerScoutIntel.innerHTML = '';
+            return;
+        }
+
+        const reportHtml = scoutedCityReports.get(city.id);
+        if (!reportHtml) {
+            els.drawerScoutIntel.hidden = true;
+            els.drawerScoutIntel.innerHTML = '';
+            return;
+        }
+
+        els.drawerScoutIntel.hidden = false;
+        els.drawerScoutIntel.innerHTML = reportHtml;
+    }
+
+    function handleDrawerScoutAction() {
+        const city = cityById.get(selectedCityId);
+        const movement = global.RoyalArmiesAgeMovement;
+        if (!city || !movement) return;
+
+        const hints = movement.getBorderActionHints?.(city, playerMapCityId) || {};
+        if (!hints.canScout) return;
+
+        const reportHtml = buildScoutIntelMarkup(city);
+        scoutedCityReports.set(city.id, reportHtml);
+
+        if (els.drawerScoutIntel) {
+            els.drawerScoutIntel.hidden = false;
+            els.drawerScoutIntel.innerHTML = reportHtml;
+        }
+
+        global.dispatchEvent(new CustomEvent('royal-armies-city-scout-request', {
+            detail: {
+                cityId: city.id,
+                cityName: city.name,
+                nationId: city.nationId,
+                relationship: hints.relationship,
+                playerCityId: playerMapCityId
+            }
+        }));
     }
 
     let drawerMovementBusy = false;
@@ -1406,6 +1570,8 @@
         }
 
         refreshDrawerMovementActions(city);
+        const borderHints = global.RoyalArmiesAgeMovement?.getBorderActionHints?.(city, playerMapCityId) || {};
+        refreshDrawerScoutIntel(city, borderHints);
         setCityDrawerTab('info');
 
         const canScout = playerBordersCity(city);
@@ -1646,7 +1812,12 @@
             const button = event.target.closest('[data-age-city-action]');
             if (!button || button.disabled) return;
             event.preventDefault();
-            handleDrawerMovementAction(button.getAttribute('data-age-city-action'));
+            const action = button.getAttribute('data-age-city-action');
+            if (action === 'scout') {
+                handleDrawerScoutAction();
+                return;
+            }
+            handleDrawerMovementAction(action);
         });
         global.document.getElementById('age-world-battle-report-close')?.addEventListener('click', closeBattleReportModal);
         global.document.getElementById('age-world-battle-report-backdrop')?.addEventListener('click', closeBattleReportModal);
@@ -1672,6 +1843,8 @@
                 const city = cityById.get(selectedCityId);
                 if (city) {
                     refreshDrawerMovementActions(city);
+                    const borderHints = global.RoyalArmiesAgeMovement?.getBorderActionHints?.(city, playerMapCityId) || {};
+                    refreshDrawerScoutIntel(city, borderHints);
                 }
             }
         });
@@ -1712,6 +1885,7 @@
         els.drawerTierBadge = global.document.getElementById('age-world-city-drawer-tier-badge');
         els.drawerCapitalBadge = global.document.getElementById('age-world-city-drawer-capital-badge');
         els.drawerMovementActions = global.document.getElementById('age-world-city-drawer-movement-actions');
+        els.drawerScoutIntel = global.document.getElementById('age-world-city-drawer-scout-intel');
         els.drawerSideTabs = global.document.getElementById('age-world-city-drawer-side-tabs');
         els.drawerPanelInfo = global.document.getElementById('age-world-city-drawer-panel-info');
         els.drawerPanelDefenses = global.document.getElementById('age-world-city-drawer-panel-defenses');
@@ -1768,7 +1942,11 @@
         }
 
         await loadCatalog();
+        if (global.RoyalArmiesAgeWaterRoutes?.loadRoutes) {
+            await global.RoyalArmiesAgeWaterRoutes.loadRoutes();
+        }
         buildSvgLayers();
+        buildWaterRoutesLayer();
         ensureLabelLayersMounted();
         bindTerrainOverlayControls();
         enablePlayerLocPins();

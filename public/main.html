@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
 
@@ -15,7 +15,7 @@
     <!-- Block 2: Page Title & Stylesheet Bridge -->
     <title>Royal Armies - An MMOHFT Medieval-Fantasy Strategy Game</title>
     <link rel="stylesheet" href="style.css?v=royal-family-titles-1">
-    <link rel="stylesheet" href="style2.css?v=login-terms-flow-1">
+    <link rel="stylesheet" href="style2.css?v=intelligence-peace-state-1">
     <link rel="stylesheet" href="mobile-responsive.css?v=age-mobile-hud-1">
     <link rel="stylesheet" href="dev-page-navigator.css">
     <link rel="stylesheet" href="custom-cursor.css?v=scrollbar-cursor-2">
@@ -27,11 +27,14 @@
         if (localStorage.getItem('savedCommanderInActiveAge') !== 'true') return;
         var username = String(localStorage.getItem('activeCommanderUser') || '').trim().toLowerCase();
         if (!username) return;
+        var sessionStarted = localStorage.getItem('royalArmies_' + username + '_gameSessionStarted') === 'true';
         var tutorial = localStorage.getItem('royalArmies_' + username + '_ageDeploymentTutorialMode') === 'true';
         var server = localStorage.getItem('royalArmies_' + username + '_ageDeploymentSelectedServerId') || 'amnek';
-        var destination = '/game.html?tutorial=' + tutorial + '&joinAge=0&server=' + encodeURIComponent(server);
+        var destination = sessionStarted
+            ? '/agealpha.html'
+            : '/game.html?tutorial=' + tutorial + '&joinAge=0&server=' + encodeURIComponent(server);
         var pathBase = window.location.pathname.replace(/\/$/, '').replace(/\.html$/i, '');
-        if (pathBase === '/game') return;
+        if (pathBase === '/game' || pathBase === '/agealpha' || pathBase === '/age') return;
         window.location.replace(destination);
     } catch (_err) {
         /* ignore */
@@ -707,10 +710,10 @@
     <script src="portal-alerts.js?v=local-silent-error-popups-1"></script>
     <script src="rift-error-display.js?v=update-underway-notice-1"></script>
     <script src="rank-data.js"></script>
-    <script src="script.js?v=game-handoff-routing-1"></script>
+    <script src="script.js?v=active-age-resume-routing-1"></script>
     <script src="commander-hub.js?v=royalty-badge-profile-name-1"></script>
     <script src="maintenance-alert.js?v=maintenance-always-on-1"></script>
-    <script src="script2.js?v=join-age-first-timers-1"></script>
+    <script src="script2.js?v=active-age-resume-routing-1"></script>
     <script src="custom-cursor.js?v=scrollbar-cursor-2"></script>
 
 </body>

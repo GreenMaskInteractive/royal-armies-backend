@@ -548,6 +548,11 @@
                     global.openCommanderHubModal('settings', event);
                 }
                 break;
+            case 'chronicles-battle-pass':
+                if (typeof global.openAgeChroniclesBattlePassModal === 'function') {
+                    global.openAgeChroniclesBattlePassModal(event);
+                }
+                break;
             case 'return-to-portal':
                 returnToAgePortal();
                 break;
@@ -840,6 +845,10 @@
 
         if (typeof global.enableAgeViewTabs === 'function') {
             global.enableAgeViewTabs();
+        }
+
+        if (typeof global.enableAgeHeadquarters === 'function') {
+            global.enableAgeHeadquarters();
         }
 
         if (typeof global.requestAnimationFrame === 'function') {

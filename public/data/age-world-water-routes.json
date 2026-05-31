@@ -1,0 +1,15 @@
+{
+  "routes": [
+    {
+      "id": "water-aesthene-phariis-celestrix",
+      "fromCityId": "aesthene-phariis",
+      "toCityId": "aesthene-celestrix",
+      "movePointCost": 1,
+      "bend": 0.22,
+      "bidirectional": true,
+      "anchors": {
+        "aesthene-phariis": { "x": 1050.9, "y": 1105.4 }
+      }
+    }
+  ]
+}

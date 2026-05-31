@@ -1,4 +1,8 @@
 {
+  "_meta": {
+    "settlementTerrains": ["Forest", "Plains", "Desert", "Mountains"],
+    "note": "Settlement terrain on the Amnek world map is limited to Forest, Plains, Desert, and Mountains. Snow does not exist on this map."
+  },
   "viewBox": "0 0 1642 1642",
   "nativeWidth": 1642,
   "nativeHeight": 1642,

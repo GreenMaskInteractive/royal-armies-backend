@@ -68,6 +68,14 @@
     const DEFAULT_CITY_ID = 'phariis';
     const DEFAULT_NATION_ID = 'aesthene';
 
+    const SETTLEMENT_TIER_LABELS = {
+        village: 'Village',
+        town: 'Town',
+        city: 'City',
+        kingdom: 'Kingdom',
+        citadel: 'Citadel'
+    };
+
     let currentCityId = '';
     let playersOnlineOnly = false;
     let cityPlayersCache = [];
@@ -156,6 +164,60 @@
         global.localStorage.setItem(key, id);
     }
 
+    function formatSettlementTier(tier) {
+        const key = String(tier || 'city').trim().toLowerCase();
+        return SETTLEMENT_TIER_LABELS[key] || key.charAt(0).toUpperCase() + key.slice(1);
+    }
+
+    function resolveDisplayedCity() {
+        const catalogId = global.RoyalArmiesAgeMovement?.getCatalogCityId?.();
+        const catalog = global.RoyalArmiesAgeWorldMap?.getCatalog?.();
+        if (catalogId && catalog?.cities) {
+            const catalogCity = catalog.cities.find((entry) => entry.id === catalogId);
+            if (catalogCity) return catalogCity;
+        }
+        return getCurrentCity();
+    }
+
+    function syncCityInfoPanelHeader(city) {
+        const tier = formatSettlementTier(city?.settlementTier);
+        const infoTabLabel = `${tier} Info`;
+
+        const tabBtn = global.document.getElementById('age-city-info-tab-btn-city');
+        if (tabBtn) {
+            tabBtn.textContent = infoTabLabel;
+        }
+
+        const kindLabel = global.document.getElementById('age-movement-settlement-kind-label');
+        if (kindLabel) {
+            kindLabel.textContent = `Current ${tier}`;
+        }
+
+        const cityInfoPanel = global.document.querySelector('#age-page-canvas .age-city-info-panel');
+        if (cityInfoPanel) {
+            cityInfoPanel.setAttribute('aria-label', `${tier} and players`);
+        }
+
+        const tablist = global.document.querySelector('.age-city-info-tabs');
+        if (tablist) {
+            tablist.setAttribute('aria-label', `${tier} info views`);
+        }
+
+        const hudRight = global.document.getElementById('age-map-hud-right');
+        if (hudRight && !hudRight.classList.contains('is-settlement-view-open')) {
+            hudRight.setAttribute('aria-label', `${tier} info`);
+        }
+
+        const viewTabCity = global.document.getElementById('age-map-view-tab-city');
+        if (viewTabCity) {
+            viewTabCity.textContent = tier;
+        }
+    }
+
+    function refreshCityInfoPanelHeader() {
+        syncCityInfoPanelHeader(resolveDisplayedCity());
+    }
+
     function syncCatalogCity(catalogCityId) {
         const catalog = global.RoyalArmiesAgeWorldMap?.getCatalog?.();
         const match = catalog?.cities?.find((city) => city.id === String(catalogCityId || '').trim());
@@ -170,6 +232,9 @@
         renderMovementPanel();
         refreshCityPlayersFromServer();
         global.RoyalArmiesPlayerLocPins?.refreshLocalPlayerPin?.();
+        if (typeof global.refreshAgeViewTabs === 'function') {
+            global.refreshAgeViewTabs();
+        }
     }
 
     function resolveDefaultCity() {
@@ -212,13 +277,10 @@
         const terrainEl = global.document.getElementById('age-movement-terrain-copy');
         const capitalHud = global.document.getElementById('age-hud-capital');
 
-        const catalogId = global.RoyalArmiesAgeMovement?.getCatalogCityId?.();
-        const catalog = global.RoyalArmiesAgeWorldMap?.getCatalog?.();
-        const catalogCity = catalogId
-            ? catalog?.cities?.find((entry) => entry.id === catalogId)
-            : null;
-        const city = catalogCity || getCurrentCity();
+        const city = resolveDisplayedCity();
         const region = city ? findRegionById(city.regionId) : null;
+
+        syncCityInfoPanelHeader(city);
 
         if (cityEl) {
             cityEl.textContent = city?.name || '—';
@@ -416,28 +478,17 @@
 
     function setPlayersFilterMode(onlineOnly) {
         playersOnlineOnly = Boolean(onlineOnly);
-        const allBtn = global.document.getElementById('age-city-info-players-filter-all');
-        const onlineBtn = global.document.getElementById('age-city-info-players-filter-online');
-
-        if (allBtn) {
-            const isAll = !playersOnlineOnly;
-            allBtn.classList.toggle('is-active', isAll);
-            allBtn.setAttribute('aria-pressed', isAll ? 'true' : 'false');
-        }
-
-        if (onlineBtn) {
-            const isOnline = playersOnlineOnly;
-            onlineBtn.classList.toggle('is-active', isOnline);
-            onlineBtn.setAttribute('aria-pressed', isOnline ? 'true' : 'false');
-        }
+        global.document.querySelectorAll('[data-age-players-filter]').forEach((button) => {
+            const mode = String(button.getAttribute('data-age-players-filter') || 'all').trim().toLowerCase();
+            const isActive = mode === 'online' ? playersOnlineOnly : !playersOnlineOnly;
+            button.classList.toggle('is-active', isActive);
+            button.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+        });
     }
 
-    function bindPlayersTabControls() {
-        const toggle = global.document.querySelector('.age-city-info-players-filter-toggle');
+    function bindPlayersFilterToggle(toggle) {
         if (!toggle || toggle.dataset.playersFilterBound === 'true') return;
-
         toggle.dataset.playersFilterBound = 'true';
-        setPlayersFilterMode(false);
 
         toggle.addEventListener('click', (event) => {
             const button = event.target.closest('[data-age-players-filter]');
@@ -447,6 +498,13 @@
             setPlayersFilterMode(mode === 'online');
             renderPlayersTab();
         });
+    }
+
+    function bindPlayersTabControls() {
+        global.document.querySelectorAll('.age-city-info-players-filter-toggle, .age-hq-players-filter-toggle').forEach((toggle) => {
+            bindPlayersFilterToggle(toggle);
+        });
+        setPlayersFilterMode(false);
     }
 
     function bindCityInfoTabs() {
@@ -482,66 +540,81 @@
         });
     }
 
-    function renderPlayersTab() {
-        const cityLabel = global.document.getElementById('age-city-info-players-city');
-        const summary = global.document.getElementById('age-city-info-players-summary');
-        const list = global.document.getElementById('age-city-info-players-list');
-        const empty = global.document.getElementById('age-city-info-players-empty');
+    function resolvePlayersRenderHosts() {
+        const hosts = [
+            {
+                cityLabel: global.document.getElementById('age-city-info-players-city'),
+                summary: global.document.getElementById('age-city-info-players-summary'),
+                list: global.document.getElementById('age-city-info-players-list'),
+                empty: global.document.getElementById('age-city-info-players-empty')
+            },
+            {
+                cityLabel: global.document.getElementById('age-hq-players-city'),
+                summary: global.document.getElementById('age-hq-players-summary'),
+                list: global.document.getElementById('age-hq-players-list'),
+                empty: global.document.getElementById('age-hq-players-empty')
+            }
+        ];
+        return hosts.filter((host) => host.list || host.empty || host.summary || host.cityLabel);
+    }
 
-        setPlayersFilterMode(playersOnlineOnly);
+    function renderPlayersIntoHost(host, state) {
+        const {
+            cityName,
+            loading,
+            allPlayers,
+            visiblePlayers,
+            onlineOnly
+        } = state;
 
-        const cityName = resolveCityDisplayName();
-
-        if (cityLabel) {
+        if (host.cityLabel) {
             if (cityName) {
-                cityLabel.textContent = `Commanders in ${cityName}`;
-                cityLabel.hidden = false;
+                host.cityLabel.textContent = `Commanders in ${cityName}`;
+                host.cityLabel.hidden = false;
             } else {
-                cityLabel.textContent = '';
-                cityLabel.hidden = true;
+                host.cityLabel.textContent = '';
+                host.cityLabel.hidden = true;
             }
         }
 
-        if (cityPlayersMeta.loading && !cityPlayersCache.length) {
-            if (summary) {
-                summary.textContent = '';
-                summary.hidden = true;
+        if (loading && !allPlayers.length) {
+            if (host.summary) {
+                host.summary.textContent = '';
+                host.summary.hidden = true;
             }
-            if (list) {
-                list.innerHTML = '';
-                list.hidden = true;
+            if (host.list) {
+                host.list.innerHTML = '';
+                host.list.hidden = true;
             }
-            if (empty) {
-                empty.textContent = 'Loading commanders…';
-                empty.hidden = false;
+            if (host.empty) {
+                host.empty.textContent = 'Loading commanders…';
+                host.empty.hidden = false;
             }
             return;
         }
 
-        const allPlayers = getCityPlayers();
         const onlineCount = allPlayers.filter((player) => player.online).length;
-        const visiblePlayers = sortCityPlayers(filterCityPlayers(allPlayers, playersOnlineOnly));
 
-        if (summary) {
+        if (host.summary) {
             if (!allPlayers.length) {
-                summary.textContent = '';
-                summary.hidden = true;
-            } else if (playersOnlineOnly) {
-                summary.textContent = `Showing ${visiblePlayers.length} online of ${allPlayers.length} commanders`;
-                summary.hidden = false;
+                host.summary.textContent = '';
+                host.summary.hidden = true;
+            } else if (onlineOnly) {
+                host.summary.textContent = `Showing ${visiblePlayers.length} online of ${allPlayers.length} commanders`;
+                host.summary.hidden = false;
             } else {
-                summary.textContent = `${allPlayers.length} commanders · ${onlineCount} online`;
-                summary.hidden = false;
+                host.summary.textContent = `${allPlayers.length} commanders · ${onlineCount} online`;
+                host.summary.hidden = false;
             }
         }
 
-        if (list) {
+        if (host.list) {
             if (!visiblePlayers.length) {
-                list.innerHTML = '';
-                list.hidden = true;
+                host.list.innerHTML = '';
+                host.list.hidden = true;
             } else {
-                list.hidden = false;
-                list.innerHTML = visiblePlayers.map((player) => {
+                host.list.hidden = false;
+                host.list.innerHTML = visiblePlayers.map((player) => {
                     const displayName = player.isSelf
                         ? `${player.displayName} (you)`
                         : player.displayName;
@@ -561,21 +634,40 @@
             }
         }
 
-        if (empty) {
+        if (host.empty) {
             if (!allPlayers.length) {
-                empty.textContent = cityName
+                host.empty.textContent = cityName
                     ? `No commanders in ${cityName} yet.`
                     : 'No commanders in this city yet.';
-                empty.hidden = false;
+                host.empty.hidden = false;
             } else if (!visiblePlayers.length) {
-                empty.textContent = playersOnlineOnly
+                host.empty.textContent = onlineOnly
                     ? `No commanders online in ${cityName || 'this city'}.`
                     : (cityName ? `No commanders in ${cityName} yet.` : 'No commanders in this city yet.');
-                empty.hidden = false;
+                host.empty.hidden = false;
             } else {
-                empty.hidden = true;
+                host.empty.hidden = true;
             }
         }
+    }
+
+    function renderPlayersTab() {
+        setPlayersFilterMode(playersOnlineOnly);
+
+        const cityName = resolveCityDisplayName();
+        const allPlayers = getCityPlayers();
+        const visiblePlayers = sortCityPlayers(filterCityPlayers(allPlayers, playersOnlineOnly));
+        const state = {
+            cityName,
+            loading: cityPlayersMeta.loading,
+            allPlayers,
+            visiblePlayers,
+            onlineOnly: playersOnlineOnly
+        };
+
+        resolvePlayersRenderHosts().forEach((host) => {
+            renderPlayersIntoHost(host, state);
+        });
     }
 
     function enableMovementPanel() {
@@ -619,8 +711,12 @@
         setCurrentCity,
         setCurrentCityByNationId,
         getCurrentCity,
+        getDisplayedCity: resolveDisplayedCity,
+        formatSettlementTier,
+        refreshCityInfoPanelHeader,
         getCommanderNationId: resolveCommanderNationId,
         syncCatalogCity,
+        refreshCityPlayers: refreshCityPlayersFromServer,
         getCities: () => AMNEK_CITIES.map((city) => ({ ...city })),
         getRegions: () => Object.values(AMNEK_REGIONS).map((region) => ({ ...region }))
     };

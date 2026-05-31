@@ -374,16 +374,19 @@
     function getBorderActionHints(targetCity, playerCityId) {
         const playerCatalogCityId = resolveCatalogCityId(playerCityId || getCatalogCityId());
         if (!targetCity || !playerCatalogCityId) {
-            return { canTravel: false, canAssault: false, canTransfer: false };
+            return { canTravel: false, canAssault: false, canTransfer: false, canScout: false };
         }
 
         if (targetCity.id === playerCatalogCityId) {
-            return { canTravel: false, canAssault: false, canTransfer: false, relationship: 'current' };
+            return { canTravel: false, canAssault: false, canTransfer: false, canScout: false, relationship: 'current' };
         }
 
         const catalog = global.RoyalArmiesAgeWorldMap?.getCatalog?.();
         const playerCity = catalog?.cities?.find((city) => city.id === playerCatalogCityId);
-        const borders = areCatalogCitiesAdjacent(playerCity, targetCity);
+        const waterRoutes = global.RoyalArmiesAgeWaterRoutes;
+        const connection = waterRoutes?.resolveCityConnection
+            ? waterRoutes.resolveCityConnection(playerCity, targetCity)
+            : (areCatalogCitiesAdjacent(playerCity, targetCity) ? { type: 'land', movePointCost: 1 } : null);
 
         const playerNation = resolvePlayerNationId();
         const holder = resolveCityHolder(targetCity);
@@ -394,17 +397,22 @@
             relationship = 'ally';
         }
 
-        if (!borders) {
-            return { canTravel: false, canAssault: false, canTransfer: false, relationship: 'remote' };
+        if (!connection) {
+            return { canTravel: false, canAssault: false, canTransfer: false, canScout: false, relationship: 'remote' };
         }
+
+        const movePointCost = connection.movePointCost || 1;
+        const isForeignBorder = relationship !== 'own';
 
         return {
             relationship,
+            connectionType: connection.type || 'land',
             canTravel: relationship === 'own',
             canAssault: relationship === 'hostile',
             canTransfer: relationship === 'ally',
+            canScout: isForeignBorder,
             transferRsdCost: state.rules.transferOwnershipRsdCost || 250,
-            movePointCost: 1
+            movePointCost
         };
     }
 
@@ -436,6 +444,10 @@
         return [...state.alliedNationIds];
     }
 
+    function getWarNationIds() {
+        return Array.isArray(state.warNationIds) ? [...state.warNationIds] : [];
+    }
+
     global.RoyalArmiesAgeMovement = {
         refresh,
         travel,
@@ -453,6 +465,11 @@
         getCityLosers,
         getRules,
         resolvePlayerNationId,
-        getAlliedNationIds
+        getAlliedNationIds,
+        getWarNationIds
     };
+
+    if (global.RoyalArmiesAgeWaterRoutes?.loadRoutes) {
+        global.RoyalArmiesAgeWaterRoutes.loadRoutes();
+    }
 })(window);

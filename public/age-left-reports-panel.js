@@ -6,8 +6,25 @@
 
     const TAB_ORDER = ['nation', 'intelligence', 'events'];
     const WEEKLY_MISSION_DIFFICULTY_TITLES = ['Novice', 'Intermediate', 'Hard', 'Extreme'];
-    const TERRAIN_TYPES = ['Mountains', 'Marshlands', 'Forest', 'Plains', 'Desert', 'Snow'];
-    const MOCK_ACTIVE_ENEMY_COUNT = 3;
+    const MAP_TERRAIN_TYPES = ['Mountains', 'Marshlands', 'Forest', 'Plains', 'Desert'];
+    const COMPACT_NATION_STATUS_TERRAIN_NATIONS = Object.freeze(['aesthene']);
+    const TERRAIN_SWATCH_CLASS = {
+        Mountains: 'mountains',
+        Marshlands: 'marshlands',
+        Forest: 'forest',
+        Plains: 'plains',
+        Desert: 'desert'
+    };
+    const NATION_TERRAIN_BONUS_OVERRIDES = {
+        aesthene: {
+            Forest: 3,
+            Mountains: -2,
+            Marshlands: -3,
+            Plains: 2,
+            Desert: 0
+        }
+    };
+    const INTELLIGENCE_PEACE_COPY = 'Your nation is not currently at war. There is no intelligence detail to provide.';
     const NATION_CATALOG = [
         { id: 'dravic', name: 'Dravic', crestUrl: 'images/draviccrest.png' },
         { id: 'aesthene', name: 'Aesthene', crestUrl: 'images/aesthenecrest.png' },
@@ -154,22 +171,107 @@
     }
 
     function generateNationTerrainBonuses(nationId) {
+        const normalizedId = normalizeNationId(nationId);
+        const override = NATION_TERRAIN_BONUS_OVERRIDES[normalizedId];
+        if (override) {
+            return { ...override };
+        }
+
         const bonuses = {};
-        TERRAIN_TYPES.forEach((terrain) => {
-            bonuses[terrain] = randomIntFromSeed(`${nationId}|${terrain}|bonus`, -2, 2);
+        MAP_TERRAIN_TYPES.forEach((terrain) => {
+            bonuses[terrain] = randomIntFromSeed(`${normalizedId}|${terrain}|bonus`, -2, 2);
         });
         return bonuses;
     }
 
-    function buildMockActiveEnemies(playerNationId) {
-        const pool = NATION_CATALOG
-            .filter((nation) => nation.id !== playerNationId)
-            .map((nation) => ({ ...nation, sortKey: hashString(`${playerNationId}|${nation.id}|enemy`) }))
-            .sort((a, b) => a.sortKey - b.sortKey);
-        return pool.slice(0, MOCK_ACTIVE_ENEMY_COUNT).map((nation) => ({
-            ...nation,
-            conflictType: randomIntFromSeed(`${playerNationId}|${nation.id}|conflict`, 0, 1) === 0 ? 'Defending' : 'Attacking'
-        }));
+    function resolvePlayerNationMeta() {
+        const playerNationId = resolvePlayerNationId();
+        return resolveNationMeta(playerNationId) || NATION_CATALOG[0];
+    }
+
+    function resolvePlayerTerrainBonuses() {
+        return generateNationTerrainBonuses(resolvePlayerNationMeta().id);
+    }
+
+    function terrainBonusStateClass(value) {
+        const amount = Number(value) || 0;
+        if (amount > 0) return 'is-positive';
+        if (amount < 0) return 'is-negative';
+        return 'is-neutral';
+    }
+
+    function buildNationStatusTerrainRows(bonuses, nationId) {
+        const compact = COMPACT_NATION_STATUS_TERRAIN_NATIONS.includes(normalizeNationId(nationId));
+        const terrains = MAP_TERRAIN_TYPES;
+
+        if (compact) {
+            return terrains.map((terrain) => {
+                const value = Number(bonuses[terrain] || 0);
+                const stateClass = terrainBonusStateClass(value);
+                const swatchClass = TERRAIN_SWATCH_CLASS[terrain] || 'plains';
+                return `
+                    <li class="age-nation-status-terrain-tile ${stateClass}">
+                        <span class="age-nation-status-terrain-tile-swatch age-nation-status-terrain-tile-swatch--${swatchClass}" aria-hidden="true"></span>
+                        <span class="age-nation-status-terrain-tile-label">${terrain}</span>
+                        <span class="age-nation-status-terrain-tile-value">${formatSignedBonus(value)}</span>
+                    </li>
+                `;
+            }).join('');
+        }
+
+        return terrains.map((terrain) => {
+            const value = Number(bonuses[terrain] || 0);
+            const stateClass = terrainBonusStateClass(value);
+            return `
+                <li class="age-nation-status-terrain-row ${stateClass}">
+                    <span class="age-nation-status-terrain-name">${terrain}</span>
+                    <span class="age-nation-status-terrain-value">${formatSignedBonus(value)}</span>
+                </li>
+            `;
+        }).join('');
+    }
+
+    function refreshNationStatusPanel() {
+        const list = global.document.getElementById('age-nation-status-terrain-list');
+        if (!list) return;
+
+        const nationMeta = resolvePlayerNationMeta();
+        const bonuses = resolvePlayerTerrainBonuses();
+        const compact = COMPACT_NATION_STATUS_TERRAIN_NATIONS.includes(nationMeta.id);
+        list.classList.toggle('age-nation-status-terrain-list--compact', compact);
+        list.innerHTML = buildNationStatusTerrainRows(bonuses, nationMeta.id);
+    }
+
+    function resolveActiveWarMatchups(playerNationId) {
+        // Returns nations actively at war with the player's nation once NEXUS war state is wired.
+        void playerNationId;
+        return [];
+    }
+
+    function renderIntelligencePeaceState() {
+        const shell = global.document.querySelector('#age-left-reports-tab-intelligence .age-intelligence-matchups-shell');
+        const tabsHost = global.document.getElementById('age-intelligence-enemy-tabs');
+        const contentHost = global.document.getElementById('age-intelligence-matchup-content');
+
+        if (shell) {
+            shell.classList.add('is-at-peace');
+        }
+
+        if (tabsHost) {
+            tabsHost.innerHTML = '';
+            tabsHost.hidden = true;
+        }
+
+        if (contentHost) {
+            contentHost.innerHTML = `
+                <div class="age-intelligence-peace-state">
+                    <p class="age-intelligence-peace-title">No Active War</p>
+                    <p class="age-intelligence-peace-copy">${INTELLIGENCE_PEACE_COPY}</p>
+                </div>
+            `;
+        }
+
+        activeEnemyNationId = '';
     }
 
     function resolveNationMeta(nationId) {
@@ -184,7 +286,7 @@
     }
 
     function buildIntelligenceTerrainRows(playerBonuses, enemyBonuses) {
-        return TERRAIN_TYPES.map((terrain) => {
+        return MAP_TERRAIN_TYPES.map((terrain) => {
             const own = Number(playerBonuses[terrain] || 0);
             const enemy = Number(enemyBonuses[terrain] || 0);
             const combined = own - enemy;
@@ -208,10 +310,7 @@
     function renderIntelligenceEnemyTabs(matchups) {
         const tabsHost = global.document.getElementById('age-intelligence-enemy-tabs');
         if (!tabsHost) return;
-        if (!matchups.length) {
-            tabsHost.innerHTML = '<p class="age-intelligence-empty-note">No active enemy engagements.</p>';
-            return;
-        }
+        tabsHost.hidden = false;
 
         tabsHost.innerHTML = matchups.map((entry) => {
             const isActive = entry.id === activeEnemyNationId;
@@ -250,19 +349,30 @@
     }
 
     function refreshIntelligencePanel() {
-        const playerNationId = resolvePlayerNationId();
-        const playerNationMeta = resolveNationMeta(playerNationId) || NATION_CATALOG[0];
+        const shell = global.document.querySelector('#age-left-reports-tab-intelligence .age-intelligence-matchups-shell');
+        const playerNationMeta = resolvePlayerNationMeta();
         const effectivePlayerId = playerNationMeta.id;
-        const matchups = buildMockActiveEnemies(effectivePlayerId).map((enemy) => ({
+        const playerBonuses = resolvePlayerTerrainBonuses();
+        const warNations = resolveActiveWarMatchups(effectivePlayerId);
+        const matchups = warNations.map((enemy) => ({
             ...enemy,
             bonuses: generateNationTerrainBonuses(enemy.id)
         }));
 
         intelligenceMockData = {
             playerNationId: effectivePlayerId,
-            playerBonuses: generateNationTerrainBonuses(effectivePlayerId),
+            playerBonuses,
             matchups
         };
+
+        if (!matchups.length) {
+            renderIntelligencePeaceState();
+            return;
+        }
+
+        if (shell) {
+            shell.classList.remove('is-at-peace');
+        }
 
         if (!activeEnemyNationId || !matchups.some((entry) => entry.id === activeEnemyNationId)) {
             activeEnemyNationId = matchups[0]?.id || '';
@@ -312,6 +422,8 @@
             refreshIntelligencePanel();
         } else if (target === 'events') {
             refreshWeeklyMissionsPanel();
+        } else if (target === 'nation') {
+            refreshNationStatusPanel();
         }
     }
 
@@ -354,6 +466,7 @@
     function enableLeftReportsPanel() {
         bindLeftReportsTabs();
         bindIntelligenceEnemyTabs();
+        refreshNationStatusPanel();
         refreshIntelligencePanel();
         refreshWeeklyMissionsPanel();
         activateLeftReportsTab('nation');
@@ -361,7 +474,9 @@
 
     global.RoyalArmiesAgeLeftReportsPanel = {
         enable: enableLeftReportsPanel,
-        activateTab: activateLeftReportsTab
+        activateTab: activateLeftReportsTab,
+        refreshNationStatus: refreshNationStatusPanel,
+        refreshIntelligence: refreshIntelligencePanel
     };
 
     global.enableAgeLeftReportsPanel = enableLeftReportsPanel;

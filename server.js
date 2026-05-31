@@ -29,6 +29,7 @@ const {
 const {
     applyMovePointRegen,
     spendMovePoint,
+    spendMovePoints,
     validateTravel,
     validateAssault,
     validateTransfer,
@@ -56,6 +57,9 @@ const {
 /* Block 2: Environment Path Resolution */
 const isProduction = process.env.RENDER === 'true';
 const dbPath = isProduction ? '/data/db.json' : path.join(__dirname, 'db.json');
+
+/** Chronicles Battle Pass — dossier read/write gated until server rollout. */
+const BATTLE_PASS_SERVER_ENABLED = false;
 
 /* Block 3: Ledger Database Initialization */
 const adapter = new FileSync(dbPath);
@@ -2114,6 +2118,14 @@ function normalizeCommanderPreferences(raw) {
     };
 }
 
+function isBattlePassServerEnabled() {
+    return BATTLE_PASS_SERVER_ENABLED === true;
+}
+
+function dossierPatchIncludesBattlePassFields(body) {
+    return !!(body && typeof body === 'object' && 'chronicleXp' in body);
+}
+
 function normalizeCommanderChronicleXp(raw) {
     const defaults = getDefaultCommanderChronicleXp();
     if (!raw || typeof raw !== 'object') return defaults;
@@ -2332,7 +2344,7 @@ function serializeCommanderDossierForClient(commander) {
     if (!commander) return null;
     const legacyBio = commander.description != null ? String(commander.description) : '';
     const bioSource = commander.bio != null ? String(commander.bio) : legacyBio;
-    return {
+    const dossier = {
         status: 'ok',
         username: commander.username,
         bio: bioSource.trim().slice(0, COMMANDER_PROFILE_BIO_MAX),
@@ -2347,12 +2359,16 @@ function serializeCommanderDossierForClient(commander) {
         medals: normalizeCommanderDossierArray(commander.medals, 100),
         membershipTitle: String(commander.membershipTitle || 'Basic').slice(0, 64),
         premiumMember: !!commander.premiumMember,
-        chronicleXp: normalizeCommanderChronicleXp(commander.chronicleXp),
+        battlePassServerEnabled: isBattlePassServerEnabled(),
         ageResetUsage: normalizeCommanderAgeResetUsage(commander.ageResetUsage),
         preferences: normalizeCommanderPreferences(commander.preferences),
         profileUpdatedAt: commander.profileUpdatedAt || null,
         dossierUpdatedAt: commander.dossierUpdatedAt || null
     };
+    if (isBattlePassServerEnabled()) {
+        dossier.chronicleXp = normalizeCommanderChronicleXp(commander.chronicleXp);
+    }
+    return dossier;
 }
 
 function buildCommanderDossierPatch(body) {
@@ -2389,7 +2405,7 @@ function buildCommanderDossierPatch(body) {
     if ('premiumMember' in body) {
         patch.premiumMember = !!body.premiumMember;
     }
-    if ('chronicleXp' in body) {
+    if ('chronicleXp' in body && isBattlePassServerEnabled()) {
         patch.chronicleXp = normalizeCommanderChronicleXp(body.chronicleXp);
     }
     if ('ageResetUsage' in body) {
@@ -3238,7 +3254,12 @@ app.patch('/api/portal/account/dossier', (req, res) => {
         return sendApiError(res, 'NEXUS-GEN-004');
     }
 
-    const patch = buildCommanderDossierPatch(req.body?.patch || req.body);
+    const rawPatch = req.body?.patch || req.body;
+    if (!isBattlePassServerEnabled() && dossierPatchIncludesBattlePassFields(rawPatch)) {
+        return sendApiError(res, 'NEXUS-GAME-015');
+    }
+
+    const patch = buildCommanderDossierPatch(rawPatch);
     if (!Object.keys(patch).length) {
         return sendApiError(res, 'NEXUS-ACCT-009');
     }
@@ -4359,7 +4380,7 @@ app.post('/api/portal/age/travel', (req, res) => {
         return sendApiError(res, validation.errorCode);
     }
 
-    const spend = spendMovePoint(movement);
+    const spend = spendMovePoints(movement, validation.connection?.movePointCost || 1);
     if (spend.errorCode) {
         return sendApiError(res, spend.errorCode);
     }
@@ -4412,7 +4433,7 @@ app.post('/api/portal/age/assault', (req, res) => {
         return sendApiError(res, validation.errorCode);
     }
 
-    const spend = spendMovePoint(movement);
+    const spend = spendMovePoints(movement, validation.connection?.movePointCost || 1);
     if (spend.errorCode) {
         return sendApiError(res, spend.errorCode);
     }

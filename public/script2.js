@@ -448,9 +448,11 @@ function rejoinSelectedAgeServerAfterTermsCheck(clickEvent) {
         beginCommanderAgeResetSession();
     }
 
-    const destination = typeof resolveGamePageHandoffUrl === 'function'
-        ? resolveGamePageHandoffUrl({ tutorial: isTutorialModeActive, joinAge: false, server: serverId })
-        : `/game.html?tutorial=${isTutorialModeActive}&joinAge=0&server=${encodeURIComponent(serverId)}`;
+    const destination = typeof resolveActiveAgeHandoffUrl === 'function'
+        ? resolveActiveAgeHandoffUrl()
+        : (typeof resolveGamePageHandoffUrl === 'function'
+            ? resolveGamePageHandoffUrl({ tutorial: isTutorialModeActive, joinAge: false, server: serverId })
+            : `/game.html?tutorial=${isTutorialModeActive}&joinAge=0&server=${encodeURIComponent(serverId)}`);
 
     verifyPortalAgeJoinAllowed().then((joinAllowed) => {
         if (!joinAllowed) {

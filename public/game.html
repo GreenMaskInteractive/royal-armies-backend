@@ -4,8 +4,28 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Royal Armies - Age Session (In Development)</title>
+    <script>
+    (function enforceEarlyActiveAgeSessionResume() {
+        try {
+            var username = String(localStorage.getItem('activeCommanderUser') || '').trim().toLowerCase();
+            if (!username) return;
+            if (localStorage.getItem('royalArmies_' + username + '_gameSessionStarted') !== 'true') return;
+            document.documentElement.classList.add('game-session-resume-redirect');
+            var pathBase = window.location.pathname.replace(/\/$/, '').replace(/\.html$/i, '');
+            if (pathBase === '/agealpha' || pathBase === '/age') return;
+            window.location.replace('/agealpha.html');
+        } catch (_err) {
+            /* ignore */
+        }
+    })();
+    </script>
+    <style>
+    html.game-session-resume-redirect body {
+        visibility: hidden !important;
+    }
+    </style>
     <link rel="stylesheet" href="style.css?v=royal-family-titles-1">
-    <link rel="stylesheet" href="style2.css?v=game-class-picker-zoom-lock-1">
+    <link rel="stylesheet" href="style2.css?v=intelligence-peace-state-1">
     <link rel="stylesheet" href="mobile-responsive.css?v=age-mobile-hud-1">
     <link rel="stylesheet" href="dev-page-navigator.css">
     <link rel="stylesheet" href="custom-cursor.css?v=scrollbar-cursor-3">
@@ -11482,7 +11502,7 @@
     <script src="portal-alerts.js?v=local-silent-error-popups-1"></script>
     <script src="rift-error-display.js?v=local-silent-error-popups-1"></script>
     <script src="commander-dossier-sync.js?v=onboarding-game-nation-1"></script>
-    <script src="script.js?v=game-handoff-routing-1"></script>
+    <script src="script.js?v=active-age-resume-routing-1"></script>
     <script src="portal-commander-identity-menu.js?v=avatar-name-menu-trigger-1"></script>
     <script src="game-class-picker.js?v=game-class-archmage-match-bm-h-1"></script>
     <script src="game-regions-map.js?v=onboarding-aesthene-only-1"></script>

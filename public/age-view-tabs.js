@@ -1,108 +1,214 @@
 /**
- * RIFT — Age map view tabs (world map / settlement / realm).
+ * RIFT — Age map view tabs (world map / settlement / headquarters).
  */
 (function initAgeViewTabs(global) {
     'use strict';
 
     const VIEW_MAP = 'map';
     const VIEW_CITY = 'city';
-    const VIEW_REALM = 'realm';
+    const VIEW_HEADQUARTERS = 'headquarters';
 
     const WORLD_MAP_SRC = 'images/amnekmap.png';
     const SETTLEMENT_MAP_SRC = {
         village: 'images/village.png',
-        city: 'images/village.png',
-        kingdom: 'images/village.png'
+        town: 'images/town.png',
+        city: 'images/city.png',
+        kingdom: 'images/kingdom.png',
+        citadel: 'images/citadel.png'
     };
 
     const SETTLEMENT_TIER_LABEL = {
         village: 'Village',
+        town: 'Town',
         city: 'City',
-        kingdom: 'Kingdom'
+        kingdom: 'Kingdom',
+        citadel: 'Citadel'
+    };
+
+    const ADVENTURERS_GUILD_JOBS = {
+        village: 'NPC Battle Simulation Training, Street Patrol, Civilian Transport, Trade Convoy',
+        town: 'NPC Battle Simulation Training, Street Patrol, Civilian Transport, Trade Convoy, Border Patrol',
+        city: 'NPC Battle Simulation Training, Street Patrol, Civilian Transport, Border Patrol',
+        citadel: 'NPC Battle Simulation Training, Street Patrol, Civilian Transport, Trade Convoy, Border Patrol, Player Bounties (PvP Quests)',
+        kingdom: 'NPC Battle Simulation Training, Street Patrol, Civilian Transport, Trade Convoy, Border Patrol, Player Bounties (PvP Quests)'
+    };
+
+    const BORDER_VENUE_COPY = {
+        village: 'View ally, neutral, or enemy armies bordering your current city, if any.',
+        town: 'View bordering armies; engage in PvP when at war with a bordering nation; spy on individual player armies to gauge strength before attacking.',
+        city: 'View ally, neutral, or enemy armies bordering your current city, if any.',
+        citadel: 'View ally, neutral, or enemy armies bordering your current city, if any.',
+        kingdom: 'View ally, neutral, or enemy armies bordering your current city, if any.'
     };
 
     const SETTLEMENT_VENUES = {
         village: [
             {
-                id: 'town-hall',
-                label: 'Town Hall',
-                description: 'Improve your village.'
-            },
-            {
-                id: 'marketplace',
-                label: 'Marketplace',
-                description: 'Buy supplies.'
+                id: 'village-center',
+                label: 'Village Center',
+                description: 'Purchase defense improvements.'
             },
             {
                 id: 'adventurers-guild',
                 label: "Adventurer's Guild",
-                description: 'First come, first serve quests.'
+                description: `Accept jobs: ${ADVENTURERS_GUILD_JOBS.village}.`
             },
             {
                 id: 'blacksmith',
                 label: 'Blacksmith',
-                description: 'Improve your commander.'
+                description: 'Purchase weapons, armor, and other battle-useful tools.'
             },
             {
                 id: 'border',
                 label: 'Border',
-                description: 'Battle training grounds.',
+                description: BORDER_VENUE_COPY.village,
+                placement: 'bottom'
+            }
+        ],
+        town: [
+            {
+                id: 'town-square',
+                label: 'Town Square',
+                description: 'Purchase defense improvements.'
+            },
+            {
+                id: 'adventurers-guild',
+                label: "Adventurer's Guild",
+                description: `Accept jobs: ${ADVENTURERS_GUILD_JOBS.town}.`
+            },
+            {
+                id: 'infirmary',
+                label: 'Infirmary',
+                description: 'Heal units. Towns can restore up to 50% of your entire army each tick.'
+            },
+            {
+                id: 'blacksmith',
+                label: 'Blacksmith',
+                description: 'Purchase weapons, armor, and other battle-useful tools.'
+            },
+            {
+                id: 'border',
+                label: 'Border',
+                description: BORDER_VENUE_COPY.town,
                 placement: 'bottom'
             }
         ],
         city: [
             {
-                id: 'town-hall',
-                label: 'Town Hall',
-                description: 'City improvements and governance.'
-            },
-            {
-                id: 'marketplace',
-                label: 'Marketplace',
-                description: 'Trade supplies and goods.'
+                id: 'city-hall',
+                label: 'City Hall',
+                description: 'Purchase defense improvements.'
             },
             {
                 id: 'adventurers-guild',
                 label: "Adventurer's Guild",
-                description: 'City quests and contracts.'
+                description: `Accept jobs: ${ADVENTURERS_GUILD_JOBS.city}.`
             },
             {
-                id: 'barracks',
-                label: 'Barracks',
-                description: 'Train and muster armies.'
+                id: 'infirmary',
+                label: 'Infirmary',
+                description: 'Heal units.'
+            },
+            {
+                id: 'church',
+                label: 'Church',
+                description: 'Obtain a blessed banner and manage its perk tree.'
+            },
+            {
+                id: 'blacksmith',
+                label: 'Blacksmith',
+                description: 'Purchase weapons, armor, and other battle-useful tools.'
+            },
+            {
+                id: 'armory',
+                label: 'Armory',
+                description: 'Upgrade weapons, armor, and effects for battle-useful tools.'
             },
             {
                 id: 'border',
                 label: 'Border',
-                description: 'Battle training grounds.',
+                description: BORDER_VENUE_COPY.city,
+                placement: 'bottom'
+            }
+        ],
+        citadel: [
+            {
+                id: 'citadel-court',
+                label: 'Citadel Court',
+                description: 'Purchase defense improvements.'
+            },
+            {
+                id: 'arenas',
+                label: 'Arenas',
+                description: 'Continent-wide commander tournaments and spectator betting — citadel cities only.'
+            },
+            {
+                id: 'adventurers-guild',
+                label: "Adventurer's Guild",
+                description: `Accept jobs: ${ADVENTURERS_GUILD_JOBS.citadel}.`
+            },
+            {
+                id: 'infirmary',
+                label: 'Infirmary',
+                description: 'Heal units.'
+            },
+            {
+                id: 'church',
+                label: 'Church',
+                description: 'Obtain a blessed banner and manage its perk tree.'
+            },
+            {
+                id: 'blacksmith',
+                label: 'Blacksmith',
+                description: 'Purchase weapons, armor, and other battle-useful tools.'
+            },
+            {
+                id: 'armory',
+                label: 'Armory',
+                description: 'Upgrade weapons, armor, and effects for battle-useful tools.'
+            },
+            {
+                id: 'border',
+                label: 'Border',
+                description: BORDER_VENUE_COPY.citadel,
                 placement: 'bottom'
             }
         ],
         kingdom: [
             {
-                id: 'royal-court',
-                label: 'Royal Court',
-                description: 'Kingdom decrees and diplomacy.'
-            },
-            {
-                id: 'grand-market',
-                label: 'Grand Market',
-                description: 'Kingdom trade and provisions.'
-            },
-            {
-                id: 'war-council',
-                label: 'War Council',
-                description: 'Kingdom military planning.'
+                id: 'grand-embassy',
+                label: 'Grand Embassy',
+                description: 'Purchase defense improvements.'
             },
             {
                 id: 'adventurers-guild',
                 label: "Adventurer's Guild",
-                description: 'Kingdom-wide quest board.'
+                description: `Accept jobs: ${ADVENTURERS_GUILD_JOBS.kingdom}.`
+            },
+            {
+                id: 'infirmary',
+                label: 'Infirmary',
+                description: 'Heal units.'
+            },
+            {
+                id: 'church',
+                label: 'Church',
+                description: 'Obtain a blessed banner and manage its perk tree.'
+            },
+            {
+                id: 'blacksmith',
+                label: 'Blacksmith',
+                description: 'Purchase weapons, armor, and other battle-useful tools.'
+            },
+            {
+                id: 'armory',
+                label: 'Armory',
+                description: 'Upgrade weapons, armor, and effects for battle-useful tools.'
             },
             {
                 id: 'border',
                 label: 'Border',
-                description: 'Battle training grounds.',
+                description: BORDER_VENUE_COPY.kingdom,
                 placement: 'bottom'
             }
         ]
@@ -122,10 +228,26 @@
         return null;
     }
 
-    function resolveSettlementTier() {
-        const city = resolveCurrentCity();
+    function resolveDisplayedCity() {
+        if (typeof global.RoyalArmiesAgeMovementPanel?.getDisplayedCity === 'function') {
+            return global.RoyalArmiesAgeMovementPanel.getDisplayedCity();
+        }
+        return resolveCurrentCity();
+    }
+
+    function resolveSettlementTierDisplayLabel() {
+        const city = resolveDisplayedCity();
         const tier = String(city?.settlementTier || 'village').trim().toLowerCase();
-        if (tier === 'city' || tier === 'kingdom') return tier;
+        if (typeof global.RoyalArmiesAgeMovementPanel?.formatSettlementTier === 'function') {
+            return global.RoyalArmiesAgeMovementPanel.formatSettlementTier(tier);
+        }
+        return SETTLEMENT_TIER_LABEL[tier] || 'Village';
+    }
+
+    function resolveSettlementTier() {
+        const city = resolveDisplayedCity();
+        const tier = String(city?.settlementTier || 'village').trim().toLowerCase();
+        if (SETTLEMENT_MAP_SRC[tier]) return tier;
         return 'village';
     }
 
@@ -158,6 +280,7 @@
         const rightHud = global.document.querySelector('#age-page-canvas .age-map-hud--right');
 
         const inSettlementView = activeView === VIEW_CITY;
+        const inHeadquartersView = activeView === VIEW_HEADQUARTERS;
 
         if (canvas) {
             canvas.dataset.ageView = activeView;
@@ -165,17 +288,27 @@
 
         if (rightHud) {
             rightHud.classList.toggle('is-settlement-view-open', inSettlementView);
+            rightHud.classList.toggle('is-headquarters-view-open', inHeadquartersView);
             if (inSettlementView) {
                 rightHud.classList.remove('is-city-info-players-open');
+                rightHud.setAttribute('aria-label', `${resolveSettlementTierDisplayLabel()} venues`);
+            } else if (!inHeadquartersView) {
+                global.RoyalArmiesAgeMovementPanel?.refreshCityInfoPanelHeader?.();
             }
         }
 
         if (cityInfoPanel) {
-            cityInfoPanel.hidden = inSettlementView;
+            cityInfoPanel.hidden = inSettlementView || inHeadquartersView;
         }
 
         if (settlementPanel) {
             settlementPanel.hidden = !inSettlementView;
+        }
+
+        const hqWorkspace = global.document.getElementById('age-headquarters-workspace');
+        if (hqWorkspace) {
+            hqWorkspace.hidden = !inHeadquartersView;
+            hqWorkspace.setAttribute('aria-hidden', inHeadquartersView ? 'false' : 'true');
         }
     }
 
@@ -187,24 +320,25 @@
         const highlightCanvas = global.document.getElementById('age-world-map-highlight-canvas');
         const mapStage = global.document.getElementById('age-world-map');
         const mapFrame = global.document.querySelector('#age-page-canvas .age-map-frame');
-        const city = resolveCurrentCity();
+        const city = resolveDisplayedCity();
         const tier = resolveSettlementTier();
         const inSettlementView = activeView === VIEW_CITY;
+        const inHeadquartersView = activeView === VIEW_HEADQUARTERS;
 
         if (mapFrame) {
             mapFrame.classList.toggle('is-settlement-map-frame', inSettlementView);
         }
 
         if (mapSvg) {
-            mapSvg.hidden = inSettlementView;
+            mapSvg.hidden = inSettlementView || inHeadquartersView;
         }
 
         if (mapCanvas) {
-            mapCanvas.hidden = inSettlementView;
+            mapCanvas.hidden = inSettlementView || inHeadquartersView;
         }
 
         if (highlightCanvas) {
-            highlightCanvas.hidden = inSettlementView;
+            highlightCanvas.hidden = inSettlementView || inHeadquartersView;
         }
 
         if (settlementBg) {
@@ -223,7 +357,13 @@
             global.RoyalArmiesAgeWorldMap.onViewModeChange(activeView);
         }
 
-        if (mapImage && !inSettlementView) {
+        if (inHeadquartersView) {
+            global.RoyalArmiesAgeHeadquarters?.onViewOpen?.();
+        } else {
+            global.RoyalArmiesAgeHeadquarters?.onViewClose?.();
+        }
+
+        if (mapImage && !inSettlementView && !inHeadquartersView) {
             const worldHref = mapImage.dataset.worldHref || WORLD_MAP_SRC;
             mapImage.setAttribute('href', worldHref);
             mapImage.setAttributeNS('http://www.w3.org/1999/xlink', 'href', worldHref);
@@ -234,7 +374,9 @@
                 'aria-label',
                 activeView === VIEW_CITY
                     ? `${city?.name || 'Settlement'} local map`
-                    : 'Amnek world map'
+                    : activeView === VIEW_HEADQUARTERS
+                        ? 'Nation headquarters'
+                        : 'Amnek world map'
             );
         }
     }
@@ -244,7 +386,7 @@
         const tierEl = global.document.getElementById('age-settlement-menu-tier-label');
         const listEl = global.document.getElementById('age-settlement-menu-list');
 
-        const city = resolveCurrentCity();
+        const city = resolveDisplayedCity();
         const tier = resolveSettlementTier();
         const venues = resolveVenuesForTier(tier);
 
@@ -253,7 +395,7 @@
         }
 
         if (tierEl) {
-            tierEl.textContent = SETTLEMENT_TIER_LABEL[tier] || 'Village';
+            tierEl.textContent = resolveSettlementTierDisplayLabel();
         }
 
         if (!listEl) return;
@@ -291,7 +433,7 @@
     }
 
     function setActiveView(view, options = {}) {
-        const nextView = view === VIEW_CITY || view === VIEW_REALM ? view : VIEW_MAP;
+        const nextView = view === VIEW_CITY || view === VIEW_HEADQUARTERS ? view : VIEW_MAP;
         if (!options.force && nextView === activeView) {
             syncViewTabButtons();
             return;
