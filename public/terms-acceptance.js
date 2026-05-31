@@ -12,7 +12,7 @@
     let termsGateControlsBound = false;
 
     function resolveTermsVersion() {
-        return global.RoyalArmiesLegalTermsVersion || '2026-05-28';
+        return global.RoyalArmiesLegalTermsVersion || '2026-06-01';
     }
 
     function resolveApiUrl(path) {

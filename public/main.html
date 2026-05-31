@@ -15,7 +15,7 @@
     <!-- Block 2: Page Title & Stylesheet Bridge -->
     <title>Royal Armies - An MMOHFT Medieval-Fantasy Strategy Game</title>
     <link rel="stylesheet" href="style.css?v=royal-family-titles-1">
-    <link rel="stylesheet" href="style2.css?v=main-legal-footer-1">
+    <link rel="stylesheet" href="style2.css?v=player-report-modal-1">
     <link rel="stylesheet" href="mobile-responsive.css?v=age-mobile-hud-1">
     <link rel="stylesheet" href="dev-page-navigator.css">
     <link rel="stylesheet" href="custom-cursor.css?v=scrollbar-cursor-2">
@@ -205,7 +205,6 @@
             </div>
 
         </nav>
-        </div>
         </div>
 
         <!-- Developer maintenance notice — in document flow directly under nav (not fixed over header) -->
@@ -477,16 +476,16 @@
         <audio id="join-age-hover-sound" src="audio/joinagesfxhover.wav" preload="auto" loop volume="1"></audio>
         <audio id="join-age-select-sound" src="audio/joinagesfxselect.wav" preload="auto" volume="1"></audio>
 
-        <footer class="main-portal-legal-footer" aria-label="Publisher and legal">
-            <p class="main-portal-legal-footer-brand">© 2026 Green Mask Interactive</p>
-            <nav class="main-portal-legal-footer-nav" aria-label="Legal documents">
-                <a href="/terms#terms-of-service" target="_blank" rel="noopener noreferrer">Terms of Service</a>
-                <span class="main-portal-legal-footer-separator" aria-hidden="true">·</span>
-                <a href="/terms#privacy-policy" target="_blank" rel="noopener noreferrer">Privacy Policy</a>
-            </nav>
-        </footer>
-
     </main>
+
+    <footer class="main-portal-legal-footer" aria-label="Publisher and legal">
+        <p class="main-portal-legal-footer-brand">© 2026 Green Mask Interactive</p>
+        <nav class="main-portal-legal-footer-nav" aria-label="Legal documents">
+            <a href="/terms#terms-of-service" target="_blank" rel="noopener noreferrer">Terms of Service</a>
+            <span class="main-portal-legal-footer-separator" aria-hidden="true">·</span>
+            <a href="/terms#privacy-policy" target="_blank" rel="noopener noreferrer">Privacy Policy</a>
+        </nav>
+    </footer>
 
     <!-- ==========================================
          PORTAL MODULE: COMMANDER HUB MODAL
@@ -683,6 +682,47 @@
         </div>
     </div>
 
+    <div id="player-report-modal" class="player-report-modal" hidden aria-modal="true" aria-labelledby="player-report-modal-title" aria-hidden="true">
+        <div class="player-report-modal-scrim" aria-hidden="true"></div>
+        <div class="player-report-modal-panel portal-deployment-server-panel bordered-modal-panel" role="document">
+            <header class="player-report-modal-header">
+                <p class="player-report-modal-eyebrow">Community safety</p>
+                <h3 id="player-report-modal-title" class="player-report-modal-title">Report a Commander</h3>
+                <button type="button" id="player-report-close-btn" class="player-report-modal-close-btn" aria-label="Close report dialog">×</button>
+            </header>
+            <div class="player-report-modal-body">
+                <p class="player-report-modal-lead">
+                    Reports go to the moderation team. False or abusive reports may result in account action under the
+                    <a href="/terms" target="_blank" rel="noopener noreferrer">Terms of Service</a>.
+                </p>
+                <label class="player-report-field" for="player-report-target">
+                    <span class="player-report-field-label">Commander</span>
+                    <input type="text" id="player-report-target" class="player-report-field-input" readonly tabindex="-1">
+                </label>
+                <div id="player-report-context-block" class="player-report-context-block" hidden>
+                    <span class="player-report-field-label">Context</span>
+                    <p id="player-report-context-text" class="player-report-context-text"></p>
+                </div>
+                <label class="player-report-field" for="player-report-category">
+                    <span class="player-report-field-label">Category</span>
+                    <select id="player-report-category" class="player-report-field-select" required>
+                        <option value="">Select a category…</option>
+                    </select>
+                </label>
+                <label class="player-report-field" for="player-report-details">
+                    <span class="player-report-field-label">What happened?</span>
+                    <textarea id="player-report-details" class="player-report-field-textarea" rows="5" maxlength="2000" placeholder="Describe the incident with enough detail for moderators to investigate (dates, channels, quotes, etc.)." required></textarea>
+                </label>
+                <p id="player-report-details-counter" class="player-report-details-counter">0 / 2000 (minimum 20)</p>
+                <p id="player-report-feedback" class="player-report-feedback" hidden role="alert"></p>
+                <div class="player-report-modal-actions modal-action-btn-row">
+                    <button type="button" id="player-report-submit-btn" class="portal-rejoin-age-btn confirm-btn" disabled aria-disabled="true">Submit report</button>
+                    <button type="button" id="player-report-cancel-btn" class="modal-action-btn cancel main-portal-auth-secondary-btn">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div id="main-logout-confirmation-modal" class="main-portal-modal-hidden" style="display: none !important;" role="dialog" aria-modal="true" aria-labelledby="logout-modal-title">
         <div class="portal-overlay-modal-bezel logout-confirmation-bezel bordered-modal-panel">
             <h3 id="logout-modal-title" class="modal-alert-header">Log out?</h3>
@@ -713,16 +753,17 @@
     <script src="achievement-system.js?v=first-timer-icon-png-1"></script>
     <script src="dev-page-navigator.js?v=dev-nav-drag-fix-1"></script>
     <script src="nexus-account-validation.js?v=registration-username-rules-1"></script>
-    <script src="rift-error-codes.js?v=update-underway-notice-1"></script>
-    <script src="terms-acceptance.js?v=login-terms-flow-1"></script>
+    <script src="rift-error-codes.js?v=player-report-modal-1"></script>
+    <script src="terms-acceptance.js?v=legal-terms-2026-06-01"></script>
     <script src="royalty-billing.js?v=legal-terms-compliance-1"></script>
     <script src="portal-alerts.js?v=local-silent-error-popups-1"></script>
     <script src="rift-error-display.js?v=update-underway-notice-1"></script>
     <script src="rank-data.js"></script>
     <script src="script.js?v=active-age-resume-routing-1"></script>
-    <script src="commander-hub.js?v=royalty-badge-profile-name-1"></script>
+    <script src="commander-hub.js?v=player-report-modal-1"></script>
     <script src="maintenance-alert.js?v=maintenance-always-on-1"></script>
-    <script src="script2.js?v=active-age-resume-routing-1"></script>
+    <script src="rift-player-report.js?v=player-report-modal-1"></script>
+    <script src="script2.js?v=player-report-modal-1"></script>
     <script src="custom-cursor.js?v=scrollbar-cursor-2"></script>
 
 </body>

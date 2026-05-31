@@ -16,6 +16,18 @@ const low = require('lowdb');
 const FileSync = require('lowdb/adapters/FileSync');
 const { sendApiError, sendStoreError, storeErrorHttpStatus } = require('./nexus-response-errors');
 const { validateRegistrationUsername } = require('./public/nexus-account-validation');
+const {
+    buildCommanderRegistrationAuditPatch,
+    buildCommanderLoginAuditPatch,
+    resolveClientIp,
+    resolveClientUserAgent
+} = require('./nexus-request-audit');
+const {
+    REPORT_CONTEXT_MAX,
+    buildPlayerReportRecord,
+    validatePlayerReportSubmission,
+    buildPlayerReportAdminMailBody
+} = require('./nexus-player-reports');
 const { listErrorCodes } = require('./nexus-error-codes');
 const {
     calculateNationTreasuryCaptureReward,
@@ -168,7 +180,8 @@ db.defaults({
         nationCouncilBoards: {},
         nationTreasuries: {},
         nationLeadership: {},
-        nationHeadquarters: {}
+        nationHeadquarters: {},
+        playerReports: []
     },
     mailbox: {
         messages: [],
@@ -1877,6 +1890,52 @@ function writeMailboxDraftStore(rows) {
     db.set('mailbox.drafts', rows).write();
 }
 
+const PLAYER_REPORT_ADMIN_RECIPIENT = 'caleb_admin';
+const PLAYER_REPORT_MAIL_FROM = 'Moderation Desk';
+
+function getPlayerReportStore() {
+    const rows = db.get('portal.playerReports').value();
+    return Array.isArray(rows) ? rows : [];
+}
+
+function writePlayerReportStore(rows) {
+    db.set('portal.playerReports', Array.isArray(rows) ? rows : []).write();
+}
+
+function deliverPlayerReportAdminNotice(report) {
+    if (!report || !isMailboxRecipientRosterAdmin(PLAYER_REPORT_ADMIN_RECIPIENT)) return;
+
+    const categoryLabel = String(report.category || 'other').replace(/_/g, ' ');
+    const topic = `[Report] ${report.targetUsername} — ${categoryLabel}`.slice(0, MAILBOX_TOPIC_MAX);
+    const body = buildPlayerReportAdminMailBody(report).slice(0, MAILBOX_BODY_MAX);
+    const messages = getMailboxMessageStore();
+    const sentAt = new Date().toISOString();
+
+    messages.push({
+        id: createMailboxRecordId(),
+        channel: 'inbox',
+        from: PLAYER_REPORT_MAIL_FROM,
+        to: PLAYER_REPORT_ADMIN_RECIPIENT,
+        topic,
+        body,
+        read: false,
+        sentAt
+    });
+    writeMailboxMessageStore(messages);
+}
+
+function serializePlayerReportForClient(report) {
+    if (!report) return null;
+    return {
+        id: report.id,
+        targetUsername: report.targetUsername,
+        category: report.category,
+        source: report.source,
+        status: report.status || 'open',
+        createdAt: report.createdAt
+    };
+}
+
 function serializeMailboxMessageForClient(row) {
     if (!row) return null;
     return {
@@ -2271,7 +2330,12 @@ function findCommanderByUsernameOrEmail(identifier) {
     }) || null;
 }
 
-const LEGAL_TERMS_VERSION = '2026-05-28';
+const LEGAL_TERMS_VERSION = '2026-06-01';
+
+function getCommanderAcceptedTermsVersion(commander) {
+    if (!commander) return '';
+    return String(commander.termsVersion || commander.terms_version || '').trim();
+}
 
 function getCommanderTermsAcceptedAt(commander) {
     if (!commander) return null;
@@ -2280,7 +2344,8 @@ function getCommanderTermsAcceptedAt(commander) {
 }
 
 function commanderHasAcceptedTerms(commander) {
-    return Boolean(getCommanderTermsAcceptedAt(commander));
+    if (!getCommanderTermsAcceptedAt(commander)) return false;
+    return getCommanderAcceptedTermsVersion(commander) === LEGAL_TERMS_VERSION;
 }
 
 function applyTermsAcceptanceToCommander(username, termsVersion) {
@@ -3187,7 +3252,8 @@ app.post('/register', async (req, res) => {
             premiumMember: false,
             chronicleXp: getDefaultCommanderChronicleXp(),
             ageResetUsage: {},
-            preferences: getDefaultCommanderPreferences()
+            preferences: getDefaultCommanderPreferences(),
+            ...buildCommanderRegistrationAuditPatch(req)
         }).write();
 
         console.log(`[NEXUS] Success: ${username} added to the Ledger.`);
@@ -3255,6 +3321,11 @@ app.post('/api/login', async (req, res) => {
                 .assign(localePatch)
                 .write();
         }
+
+        db.get('commanders')
+            .find({ username: commander.username })
+            .assign(buildCommanderLoginAuditPatch(req))
+            .write();
 
         const requiresTermsAcceptance = !commanderHasAcceptedTerms(commander);
 
@@ -4228,6 +4299,74 @@ app.post('/api/portal/community-chat/restrictions', (req, res) => {
         status: 'ok',
         targetUsername: result.targetUsername,
         restrictions: result.restrictions
+    });
+});
+
+app.post('/api/portal/player-reports', (req, res) => {
+    const reporterUsername = resolveLedgerCommanderUsername(req.body?.username || '');
+    if (!reporterUsername) {
+        return sendApiError(res, 'NEXUS-GEN-002');
+    }
+
+    const reporter = db.get('commanders').find({ username: reporterUsername }).value();
+    if (!reporter) {
+        return sendApiError(res, 'NEXUS-GEN-004');
+    }
+    if (!commanderHasAcceptedTerms(reporter)) {
+        return sendApiError(res, 'NEXUS-GAME-011');
+    }
+
+    const targetUsername = resolveLedgerCommanderUsername(req.body?.targetUsername || '');
+    if (!targetUsername) {
+        return sendApiError(res, 'NEXUS-REPORT-001');
+    }
+
+    const targetCommander = db.get('commanders').find({ username: targetUsername }).value();
+    if (!targetCommander || isHiddenRegistrationUsername(targetUsername)) {
+        return sendApiError(res, 'NEXUS-REPORT-005');
+    }
+
+    const reports = getPlayerReportStore();
+    const validation = validatePlayerReportSubmission({
+        reports,
+        reporterUsername,
+        targetUsername,
+        category: req.body?.category,
+        details: req.body?.details,
+        source: req.body?.source
+    });
+
+    if (!validation.ok) {
+        if (validation.message) {
+            return sendApiError(res, validation.errorCode || 'NEXUS-REPORT-001', { message: validation.message });
+        }
+        return sendApiError(res, validation.errorCode || 'NEXUS-REPORT-001');
+    }
+
+    const contextLabel = String(req.body?.contextLabel || '').trim().slice(0, REPORT_CONTEXT_MAX);
+    const contextMeta = req.body?.contextMeta && typeof req.body.contextMeta === 'object'
+        ? req.body.contextMeta
+        : {};
+
+    const report = buildPlayerReportRecord({
+        reporterUsername: validation.reporterUsername,
+        targetUsername: validation.targetUsername,
+        category: validation.category,
+        details: validation.details,
+        source: validation.source,
+        contextLabel,
+        contextMeta,
+        clientIp: resolveClientIp(req),
+        userAgent: resolveClientUserAgent(req)
+    });
+
+    reports.push(report);
+    writePlayerReportStore(reports);
+    deliverPlayerReportAdminNotice(report);
+
+    res.status(201).json({
+        status: 'ok',
+        report: serializePlayerReportForClient(report)
     });
 });
 

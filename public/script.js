@@ -2426,7 +2426,7 @@ async function submitRegistration() {
                 email: email.trim(),
                 password: pass,
                 termsAccepted: true,
-                termsVersion: window.RoyalArmiesLegalTermsVersion || '2026-05-28'
+                termsVersion: window.RoyalArmiesLegalTermsVersion || '2026-06-01'
             })
         });
         const payload = await response.json().catch(() => ({}));

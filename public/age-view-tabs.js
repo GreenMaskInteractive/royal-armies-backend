@@ -462,26 +462,10 @@
         }
     }
 
-    function renderSettlementMenu() {
-        const titleEl = global.document.getElementById('age-settlement-menu-title');
-        const tierEl = global.document.getElementById('age-settlement-menu-tier-label');
-        const listEl = global.document.getElementById('age-settlement-menu-list');
-
-        const city = resolveDisplayedCity();
-        const tier = resolveSettlementTier();
+    function buildSettlementMenuHtml(tier) {
         const venues = resolveVenuesForTier(tier);
 
-        if (titleEl) {
-            titleEl.textContent = city?.name || 'Settlement';
-        }
-
-        if (tierEl) {
-            tierEl.textContent = resolveSettlementTierDisplayLabel();
-        }
-
-        if (!listEl) return;
-
-        listEl.innerHTML = venues.map((venue) => {
+        return venues.map((venue) => {
             const placementClass = venue.placement === 'bottom'
                 ? ' age-settlement-menu-item--bottom'
                 : '';
@@ -517,6 +501,30 @@
 
             return itemHtml;
         }).join('');
+    }
+
+    function renderSettlementMenu() {
+        const titleEl = global.document.getElementById('age-settlement-menu-title');
+        const tierEl = global.document.getElementById('age-settlement-menu-tier-label');
+        const listEl = global.document.getElementById('age-settlement-menu-list');
+
+        const city = resolveDisplayedCity();
+        const tier = resolveSettlementTier();
+
+        if (titleEl) {
+            titleEl.textContent = city?.name || 'Settlement';
+        }
+
+        if (tierEl) {
+            tierEl.textContent = resolveSettlementTierDisplayLabel();
+        }
+
+        if (!listEl) return;
+
+        const nextHtml = buildSettlementMenuHtml(tier);
+        if (listEl.innerHTML !== nextHtml) {
+            listEl.innerHTML = nextHtml;
+        }
 
         if (typeof global.RoyalArmiesAdventurersGuild?.syncSettlementMenuGuild === 'function') {
             global.RoyalArmiesAdventurersGuild.syncSettlementMenuGuild();

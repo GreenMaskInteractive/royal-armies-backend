@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Royal Armies — Age Alpha</title>
     <link rel="stylesheet" href="style.css?v=royal-family-titles-1">
-    <link rel="stylesheet" href="style2.css?v=guild-settlement-jobs-2">
+    <link rel="stylesheet" href="style2.css?v=player-report-modal-1">
     <link rel="stylesheet" href="mobile-responsive.css?v=records-compact-tabs-1">
     <link rel="stylesheet" href="dev-page-navigator.css">
     <link rel="stylesheet" href="custom-cursor.css?v=scrollbar-cursor-3">
@@ -1369,28 +1369,70 @@
         </div>
     </div>
 
+    <div id="player-report-modal" class="player-report-modal" hidden aria-modal="true" aria-labelledby="player-report-modal-title" aria-hidden="true">
+        <div class="player-report-modal-scrim" aria-hidden="true"></div>
+        <div class="player-report-modal-panel portal-deployment-server-panel bordered-modal-panel" role="document">
+            <header class="player-report-modal-header">
+                <p class="player-report-modal-eyebrow">Community safety</p>
+                <h3 id="player-report-modal-title" class="player-report-modal-title">Report a Commander</h3>
+                <button type="button" id="player-report-close-btn" class="player-report-modal-close-btn" aria-label="Close report dialog">×</button>
+            </header>
+            <div class="player-report-modal-body">
+                <p class="player-report-modal-lead">
+                    Reports go to the moderation team. False or abusive reports may result in account action under the
+                    <a href="/terms" target="_blank" rel="noopener noreferrer">Terms of Service</a>.
+                </p>
+                <label class="player-report-field" for="player-report-target">
+                    <span class="player-report-field-label">Commander</span>
+                    <input type="text" id="player-report-target" class="player-report-field-input" readonly tabindex="-1">
+                </label>
+                <div id="player-report-context-block" class="player-report-context-block" hidden>
+                    <span class="player-report-field-label">Context</span>
+                    <p id="player-report-context-text" class="player-report-context-text"></p>
+                </div>
+                <label class="player-report-field" for="player-report-category">
+                    <span class="player-report-field-label">Category</span>
+                    <select id="player-report-category" class="player-report-field-select" required>
+                        <option value="">Select a category…</option>
+                    </select>
+                </label>
+                <label class="player-report-field" for="player-report-details">
+                    <span class="player-report-field-label">What happened?</span>
+                    <textarea id="player-report-details" class="player-report-field-textarea" rows="5" maxlength="2000" placeholder="Describe the incident with enough detail for moderators to investigate (dates, channels, quotes, etc.)." required></textarea>
+                </label>
+                <p id="player-report-details-counter" class="player-report-details-counter">0 / 2000 (minimum 20)</p>
+                <p id="player-report-feedback" class="player-report-feedback" hidden role="alert"></p>
+                <div class="player-report-modal-actions modal-action-btn-row">
+                    <button type="button" id="player-report-submit-btn" class="portal-rejoin-age-btn confirm-btn" disabled aria-disabled="true">Submit report</button>
+                    <button type="button" id="player-report-cancel-btn" class="modal-action-btn cancel main-portal-auth-secondary-btn">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script src="dev-environment.js"></script>
-    <script src="rift-error-codes.js?v=update-underway-notice-1"></script>
+    <script src="rift-error-codes.js?v=player-report-modal-1"></script>
     <script src="portal-alerts.js?v=local-silent-error-popups-1"></script>
     <script src="rift-error-display.js?v=update-underway-notice-1"></script>
     <script src="commander-dossier-sync.js?v=dossier-sync-1"></script>
     <script src="script.js?v=mailbox-system-unread-bar-1"></script>
-    <script src="commander-hub.js?v=royalty-badge-profile-name-1"></script>
+    <script src="commander-hub.js?v=player-report-modal-1"></script>
     <script src="portal-commander-identity-menu.js?v=headquarters-chronicles-bp-1"></script>
     <script src="rift-official-age.js?v=official-age-page-1"></script>
     <script src="game-chat.js?v=update-underway-notice-1"></script>
     <script src="age-council-board.js?v=council-editor-preview-1"></script>
-    <script src="age-movement-panel.js?v=right-reports-panel-1"></script>
+    <script src="rift-player-report.js?v=player-report-modal-1"></script>
+    <script src="age-movement-panel.js?v=player-report-modal-1"></script>
     <script src="rift-nation-treasury.js?v=nation-treasury-tip-1"></script>
     <script src="age-world-water-routes.js?v=cross-border-neighbors-2"></script>
-    <script src="rift-age-movement.js?v=barracks-provisions-1"></script>
+    <script src="rift-age-movement.js?v=guild-settlement-jobs-3"></script>
     <script src="rift-age-gold.js?v=age-gold-sync-1"></script>
     <script src="rift-age-provisions.js?v=provisions-deplete-1"></script>
     <script src="rift-age-recruitment.js?v=swarm-recruit-1"></script>
     <script src="rift-player-loc-pins.js?v=player-loc-pins-1"></script>
-    <script src="age-world-map.js?v=cross-border-neighbors-2"></script>
+    <script src="age-world-map.js?v=guild-settlement-jobs-3"></script>
     <script src="age-world-plan-overlay.js?v=hq-clear-plan-fix-1"></script>
-    <script src="age-view-tabs.js?v=guild-settlement-jobs-2"></script>
+    <script src="age-view-tabs.js?v=guild-settlement-jobs-3"></script>
     <script src="age-headquarters-planning-map.js?v=hold-sf-mf-staging-1"></script>
     <script src="age-headquarters.js?v=fortifications-collapse-1"></script>
     <script src="age-dispatch-alert.js?v=hq-dispatch-dismiss-1"></script>
@@ -1400,8 +1442,8 @@
     <script src="age-page.js?v=guild-battle-sim-1"></script>
     <script src="age-war-ledger.js?v=war-ledger-bottom-bar-1"></script>
     <script src="rift-unit-purchase-catalog.js?v=swarm-recruit-1"></script>
-    <script src="rift-age-guild-training.js?v=guild-hub-1"></script>
-    <script src="age-adventurers-guild.js?v=guild-settlement-jobs-2"></script>
+    <script src="rift-age-guild-training.js?v=guild-settlement-jobs-3"></script>
+    <script src="age-adventurers-guild.js?v=guild-settlement-jobs-3"></script>
     <script src="age-barracks.js?v=swarm-recruit-1"></script>
     <script src="age-records.js?v=records-nation-defaults-1"></script>
     <script src="dev-page-navigator.js?v=dev-nav-drag-fix-1"></script>

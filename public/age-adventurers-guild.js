@@ -23,6 +23,7 @@
     let autoHealEnabled = false;
     let lastBattleResult = null;
     let guildJobsExpanded = false;
+    let guildStateLoadInFlight = null;
 
     function escapeHtml(value) {
         return String(value ?? '')
@@ -190,10 +191,11 @@
         resolveApi()?.setSettlementTier?.(settlementTier);
 
         guildJobsExpanded = !guildJobsExpanded;
+        syncSettlementMenuGuild();
         if (guildJobsExpanded) {
             await loadGuildState();
+            renderSettlementGuildJobs();
         }
-        syncSettlementMenuGuild();
     }
 
     function formatWinnerLabel(winner) {
@@ -548,16 +550,27 @@
     }
 
     async function loadGuildState() {
-        const api = resolveApi();
-        if (!api?.fetchGuildState) return;
-        api.setSettlementTier?.(settlementTier);
-        try {
-            mergeGuildState(await api.fetchGuildState({ settlementTier }));
-        } catch (error) {
-            if (typeof global.showRiftError === 'function' && error?.code) {
-                global.showRiftError(error.code, error.message);
-            }
+        if (guildStateLoadInFlight) {
+            return guildStateLoadInFlight;
         }
+
+        const api = resolveApi();
+        if (!api?.fetchGuildState) return null;
+
+        guildStateLoadInFlight = (async () => {
+            api.setSettlementTier?.(settlementTier);
+            try {
+                mergeGuildState(await api.fetchGuildState({ settlementTier }));
+            } catch (error) {
+                if (typeof global.showRiftError === 'function' && error?.code) {
+                    global.showRiftError(error.code, error.message);
+                }
+            } finally {
+                guildStateLoadInFlight = null;
+            }
+        })();
+
+        return guildStateLoadInFlight;
     }
 
     function onBattlePointerDown(event) {
@@ -661,14 +674,11 @@
             if (isOpen()) renderGuildPanel();
         });
         global.addEventListener('royalarmies:age-recruitment-updated', () => {
-            if (guildJobsExpanded || isOpen()) {
-                void loadGuildState().then(() => renderGuildPanel());
-            }
-        });
-        global.addEventListener('royalarmies:age-movement-updated', () => {
-            if (guildJobsExpanded || isOpen()) {
-                void loadGuildState().then(() => renderGuildPanel());
-            }
+            if (!guildJobsExpanded && !isOpen()) return;
+            void loadGuildState().then(() => {
+                if (guildJobsExpanded) renderSettlementGuildJobs();
+                if (isOpen()) renderGuildPanel();
+            });
         });
 
         global.document.getElementById('age-settlement-menu-list')?.addEventListener('click', onSettlementMenuClick, true);

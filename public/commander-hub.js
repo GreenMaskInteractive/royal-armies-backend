@@ -761,6 +761,9 @@ function renderPublicProfileCardContent(snapshot, options) {
     const footerMarkup = context === 'hub'
         ? ''
         : `<footer class="public-profile-card-actions">
+            ${!viewingSelf
+                ? `<button type="button" class="public-profile-report-btn" data-player-report-open data-player-report-target="${escapePublicProfileHtml(snapshot.name)}" data-player-report-source="profile">Report Commander</button>`
+                : ''}
             <button type="button" class="public-profile-dismiss-btn" onclick="closePublicCommanderProfileCard(event)">Close</button>
         </footer>`;
 

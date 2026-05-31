@@ -43,7 +43,7 @@
         }
 
         if (global.RoyalArmiesAgeMovement?.applyStatePayload) {
-            global.RoyalArmiesAgeMovement.applyStatePayload(payload);
+            global.RoyalArmiesAgeMovement.applyStatePayload(payload, { eventSource: 'guild-sync' });
         } else if (Array.isArray(payload.ageArmy) && typeof global.player !== 'undefined') {
             global.player.ageArmy = payload.ageArmy.slice();
         }

@@ -669,6 +669,38 @@
             category: 'game'
         },
 
+        /* --- Player conduct reports --- */
+        'NEXUS-REPORT-001': {
+            http: 400,
+            title: 'Report a commander',
+            message: 'Complete all required report fields before submitting.',
+            category: 'moderation'
+        },
+        'NEXUS-REPORT-002': {
+            http: 400,
+            title: 'Report a commander',
+            message: 'You cannot report your own account.',
+            category: 'moderation'
+        },
+        'NEXUS-REPORT-003': {
+            http: 400,
+            title: 'Report a commander',
+            message: 'Choose a valid report category.',
+            category: 'moderation'
+        },
+        'NEXUS-REPORT-004': {
+            http: 429,
+            title: 'Report a commander',
+            message: 'You have reached the report limit. Try again later or contact support if urgent.',
+            category: 'moderation'
+        },
+        'NEXUS-REPORT-005': {
+            http: 404,
+            title: 'Report a commander',
+            message: 'That commander could not be found.',
+            category: 'moderation'
+        },
+
         /* --- Client-only network --- */
         'RIFT-NET-001': {
             http: 0,

@@ -1836,7 +1836,10 @@
             }
         });
 
-        global.addEventListener('royalarmies:age-movement-updated', () => {
+        global.addEventListener('royalarmies:age-movement-updated', (event) => {
+            if (event?.detail?.eventSource === 'guild-sync') {
+                return;
+            }
             playerMapCityId = global.RoyalArmiesAgeMovement?.getCatalogCityId?.() || resolvePlayerMapCityId();
             global.RoyalArmiesAgeMovementPanel?.syncCatalogCity?.(playerMapCityId);
             global.RoyalArmiesPlayerLocPins?.refreshLocalPlayerPin?.();

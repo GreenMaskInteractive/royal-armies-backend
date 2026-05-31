@@ -222,6 +222,7 @@
     }
 
     function syncCatalogCity(catalogCityId) {
+        const previousCityId = currentCityId;
         const catalog = global.RoyalArmiesAgeWorldMap?.getCatalog?.();
         const match = catalog?.cities?.find((city) => city.id === String(catalogCityId || '').trim());
         if (match) {
@@ -235,7 +236,7 @@
         renderMovementPanel();
         refreshCityPlayersFromServer();
         global.RoyalArmiesPlayerLocPins?.refreshLocalPlayerPin?.();
-        if (typeof global.refreshAgeViewTabs === 'function') {
+        if (previousCityId !== currentCityId && typeof global.refreshAgeViewTabs === 'function') {
             global.refreshAgeViewTabs();
         }
     }
@@ -837,6 +838,16 @@
                         : player.displayName;
                     const movePointsLabel = formatPlayerMovePointsLabel(player);
                     const movePointsAria = formatPlayerMovePointsAria(player);
+                    const reportButtonMarkup = !player.isSelf
+                        ? (
+                            `<button type="button" class="age-city-info-player-report-btn" data-player-report-open`
+                            + ` data-age-player-report="${escapePlayerHtml(player.username)}"`
+                            + ` data-player-report-target="${escapePlayerHtml(player.username)}"`
+                            + ` data-player-report-source="age_city_roster"`
+                            + ` data-player-report-context="${escapePlayerHtml(`City roster — ${cityName || 'current city'}`)}"`
+                            + ` title="Report commander" aria-label="Report ${escapePlayerHtml(player.displayName)}">Report</button>`
+                        )
+                        : '';
                     return (
                         `<li class="age-city-info-player-row${player.online ? ' is-online' : ''}${player.isSelf ? ' is-self' : ''}">`
                         + (isRoyaltyMembershipTitle(player.membershipTitle)
@@ -846,6 +857,7 @@
                         + (showArmyBadge ? formatArmyFocusBadgeHtml(player) : '')
                         + `<span class="age-city-info-player-move-points" title="Move points" aria-label="${escapePlayerHtml(movePointsAria)}">${escapePlayerHtml(movePointsLabel)}</span>`
                         + `<span class="age-city-info-player-presence">${player.online ? 'Online' : 'Offline'}</span>`
+                        + reportButtonMarkup
                         + '</li>'
                     );
                 }).join('');

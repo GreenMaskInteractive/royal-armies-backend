@@ -193,7 +193,7 @@
         global.localStorage.setItem(key, id);
     }
 
-    function applyStatePayload(payload) {
+    function applyStatePayload(payload, options = {}) {
         if (!payload || typeof payload !== 'object') return;
 
         if (payload.gameNation) {
@@ -260,7 +260,10 @@
         }
 
         global.dispatchEvent(new CustomEvent('royalarmies:age-movement-updated', {
-            detail: { ...state }
+            detail: {
+                ...state,
+                eventSource: String(options.eventSource || 'movement-sync').trim() || 'movement-sync'
+            }
         }));
     }
 

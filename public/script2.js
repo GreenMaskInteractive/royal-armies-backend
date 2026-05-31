@@ -3386,6 +3386,7 @@ function buildCommunityChatMessageHoverActionsMarkup(log, loggedUser) {
     return `
         <div class="chat-message-hover-actions" aria-label="Message actions">
             ${canReply ? `<button type="button" class="chat-message-action-btn" onclick="beginReplyToCommunityChatMessage(${log.id}, event)">Reply</button>` : ''}
+            ${canReply ? `<button type="button" class="chat-message-action-btn chat-message-action-btn--report" onclick="beginReportCommunityChatMessage(${log.id}, event)">Report</button>` : ''}
             ${canEdit ? `<button type="button" class="chat-message-action-btn" onclick="beginEditCommunityChatMessage(${log.id}, event)">Edit</button>` : ''}
         </div>
     `;
@@ -3422,6 +3423,33 @@ function beginReplyToCommunityChatMessage(messageId, clickEvent) {
     if (field) {
         field.focus();
         field.placeholder = `Reply to ${target.sender}…`;
+    }
+}
+
+function beginReportCommunityChatMessage(messageId, clickEvent) {
+    if (clickEvent) clickEvent.stopPropagation();
+    const target = findCommunityChatMessageById(messageId);
+    if (!target || !isCommunityChatMessageActionable(target)) return;
+
+    const loggedUser = getLoggedCommunityChatUsername();
+    if (normalizeCommunityChatUsername(target.sender) === normalizeCommunityChatUsername(loggedUser)) {
+        return;
+    }
+
+    const channel = String(target.channel || 'general').trim() || 'general';
+    const snippet = buildChatMentionPreviewSnippet(target.text);
+    const contextLabel = `#${channel}${target.time ? ` — ${target.time}` : ''}: ${snippet}`;
+
+    if (typeof RoyalArmiesPlayerReport !== 'undefined' && typeof RoyalArmiesPlayerReport.open === 'function') {
+        RoyalArmiesPlayerReport.open({
+            targetUsername: target.sender,
+            source: 'community_chat',
+            contextLabel,
+            contextMeta: {
+                messageId: target.id,
+                channel
+            }
+        }, clickEvent);
     }
 }
 

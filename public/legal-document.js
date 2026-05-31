@@ -112,6 +112,15 @@
         return output.join('\n');
     }
 
+    function scrollToLegalHashTarget() {
+        const hash = String(global.location.hash || '').trim();
+        if (!hash || hash.length < 2) return;
+        const target = global.document.querySelector(hash);
+        if (target) {
+            target.scrollIntoView({ block: 'start', behavior: 'smooth' });
+        }
+    }
+
     async function loadLegalDocumentInto(rootEl, markdownPath) {
         if (!rootEl) return;
 
@@ -126,6 +135,7 @@
             }
             const markdown = await response.text();
             rootEl.innerHTML = renderLegalMarkdown(markdown);
+            scrollToLegalHashTarget();
         } catch (error) {
             console.error('[RIFT] Legal document load failed:', error);
             rootEl.innerHTML = (
