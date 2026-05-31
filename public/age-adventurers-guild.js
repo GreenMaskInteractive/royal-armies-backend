@@ -157,12 +157,13 @@
         if (!optionsEl) return;
 
         const jobs = Array.isArray(hub.jobs) ? hub.jobs : [];
-        if (!jobs.length) {
-            optionsEl.innerHTML = '<p class="age-settlement-guild-jobs-empty">No guild jobs are configured for this settlement.</p>';
-            return;
-        }
+        const nextHtml = !jobs.length
+            ? '<p class="age-settlement-guild-jobs-empty">No guild jobs are configured for this settlement.</p>'
+            : jobs.map((job) => renderSettlementGuildJobOption(job)).join('');
 
-        optionsEl.innerHTML = jobs.map((job) => renderSettlementGuildJobOption(job)).join('');
+        if (optionsEl.innerHTML !== nextHtml) {
+            optionsEl.innerHTML = nextHtml;
+        }
     }
 
     function syncSettlementMenuGuild() {
@@ -623,6 +624,7 @@
         const jobBtn = event.target.closest('[data-guild-job]');
         if (!jobBtn) return;
         event.preventDefault();
+        event.stopPropagation();
         openJob(jobBtn.getAttribute('data-guild-job'));
     }
 
@@ -669,7 +671,7 @@
             }
         });
 
-        global.document.getElementById('age-settlement-menu-list')?.addEventListener('click', onSettlementMenuClick);
+        global.document.getElementById('age-settlement-menu-list')?.addEventListener('click', onSettlementMenuClick, true);
 
         battleBtn?.addEventListener('pointerdown', onBattlePointerDown);
         battleBtn?.addEventListener('pointerup', onBattlePointerUp);

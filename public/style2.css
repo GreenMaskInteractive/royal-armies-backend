@@ -15411,6 +15411,7 @@ body.developer-maintenance-alert-active #page-landing {
     display: none;
     flex-direction: column;
     gap: 10px;
+    flex: 0 0 auto;
     min-height: 0;
     padding: 2px 0 4px;
     box-sizing: border-box;
@@ -15428,8 +15429,8 @@ body.developer-maintenance-alert-active #page-landing {
 #age-page-canvas .age-map-hud--right.is-settlement-view-open {
     bottom: auto;
     height: auto;
-    max-height: calc(100dvh - var(--age-map-slot-top) - var(--age-map-slot-bottom));
-    overflow: auto;
+    max-height: none;
+    overflow: visible;
 }
 
 #age-page-canvas .age-map-frame.is-settlement-map-frame .game-region-map-bg {
@@ -15485,16 +15486,18 @@ body.developer-maintenance-alert-active #page-landing {
 
 .age-settlement-menu-list {
     display: flex;
-    flex: 1 1 auto;
+    flex: 0 0 auto;
     flex-direction: column;
     gap: 5px;
     min-height: 0;
-    max-height: min(52vh, 520px);
-    overflow-y: auto;
-    overflow-x: hidden;
-    padding-right: 2px;
-    scrollbar-width: thin;
-    scrollbar-color: rgba(255, 217, 120, 0.35) transparent;
+    overflow: visible;
+    padding-right: 0;
+}
+
+#age-page-canvas[data-age-view="city"] .age-settlement-menu-list {
+    max-height: none;
+    overflow: visible;
+    scrollbar-width: auto;
 }
 
 .age-settlement-menu-list::-webkit-scrollbar {
@@ -21101,6 +21104,7 @@ body.age-guild-open {
     display: flex;
     flex-direction: column;
     gap: 4px;
+    flex: 0 0 auto;
 }
 
 .age-settlement-menu-guild-wrap.is-expanded .age-settlement-menu-item--expandable .age-settlement-menu-item-chevron {
@@ -21116,7 +21120,11 @@ body.age-guild-open {
     display: flex;
     flex-direction: column;
     gap: 4px;
+    flex: 0 0 auto;
     padding: 0 0 2px 14px;
+    position: relative;
+    z-index: 2;
+    pointer-events: auto;
 }
 
 .age-settlement-guild-jobs[hidden] {
@@ -21138,10 +21146,16 @@ body.age-guild-open {
     font-family: 'Cinzel', serif;
     text-align: left;
     cursor: pointer;
+    position: relative;
+    z-index: 1;
+    flex: 0 0 auto;
+    box-sizing: border-box;
+    pointer-events: auto;
 }
 
 .age-settlement-guild-job.is-featured:not(.is-locked) {
     border-color: rgba(255, 215, 120, 0.55);
+    box-shadow: inset 0 0 0 1px rgba(255, 215, 120, 0.14);
 }
 
 .age-settlement-guild-job.is-locked,
@@ -21154,6 +21168,12 @@ body.age-guild-open {
 .age-settlement-guild-job:not(.is-locked):not(:disabled):focus-visible {
     border-color: rgba(255, 215, 120, 0.72);
     color: #ffd978;
+    box-shadow: inset 0 0 0 1px rgba(255, 215, 120, 0.22);
+}
+
+.age-settlement-menu-guild-wrap.is-expanded .age-settlement-menu-item--expandable:hover,
+.age-settlement-menu-guild-wrap.is-expanded .age-settlement-menu-item--expandable:focus-visible {
+    transform: none;
 }
 
 .age-settlement-guild-job-label {

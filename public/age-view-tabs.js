@@ -599,6 +599,9 @@
     }
 
     function onSettlementMenuClick(event) {
+        if (event.target.closest('[data-guild-job]')) {
+            return;
+        }
         const button = event.target.closest('[data-settlement-venue]');
         if (!button) return;
         handleVenueClick(button.getAttribute('data-settlement-venue'));
