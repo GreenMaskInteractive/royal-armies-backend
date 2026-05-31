@@ -462,6 +462,16 @@ def main() -> None:
             }
         )
 
+    for i, a in enumerate(cities_out):
+        for j, b in enumerate(cities_out):
+            if i >= j or a["nationId"] == b["nationId"]:
+                continue
+            if boxes_touch(a["bbox"], b["bbox"]):
+                if b["id"] not in a["neighbors"]:
+                    a["neighbors"].append(b["id"])
+                if a["id"] not in b["neighbors"]:
+                    b["neighbors"].append(a["id"])
+
     payload = {
         "viewBox": "0 0 1642 1642",
         "nativeWidth": 1642,

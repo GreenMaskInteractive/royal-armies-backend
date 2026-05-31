@@ -2880,6 +2880,19 @@ body {
         padding: 0 6px !important;
     }
 
+    #age-page-canvas .age-map-bottom-dock-shell > .age-map-bottom-dock-nav {
+        position: relative !important;
+        left: auto !important;
+        top: auto !important;
+        transform: none !important;
+        order: 2 !important;
+        justify-content: center !important;
+        flex-wrap: wrap !important;
+        width: 100% !important;
+        margin: 0 !important;
+        gap: 8px !important;
+    }
+
     #age-page-canvas .age-map-bottom-dock-shell > .age-map-view-tabs {
         position: relative !important;
         left: auto !important;
@@ -2891,7 +2904,8 @@ body {
         margin: 0 !important;
     }
 
-    #age-page-canvas .age-map-view-tab {
+    #age-page-canvas .age-map-view-tab,
+    #age-page-canvas .age-map-bottom-war-ledger-btn {
         min-height: 44px !important;
         padding: 10px 14px !important;
         touch-action: manipulation !important;

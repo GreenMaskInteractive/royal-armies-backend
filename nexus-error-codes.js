@@ -486,6 +486,48 @@
             message: 'Council or Leader access is required for this action.',
             category: 'game'
         },
+        'NEXUS-HQ-007': {
+            http: 403,
+            title: 'Leadership vote',
+            message: 'Leadership voting is closed until the next election window opens.',
+            category: 'game'
+        },
+        'NEXUS-HQ-008': {
+            http: 403,
+            title: 'SF Planning',
+            message: 'The plan is confirmed. Click Edit Plan before making changes.',
+            category: 'game'
+        },
+        'NEXUS-HQ-009': {
+            http: 400,
+            title: 'SF Planning',
+            message: 'Place at least one order on the map before confirming the plan.',
+            category: 'game'
+        },
+        'NEXUS-HQ-010': {
+            http: 400,
+            title: 'SF Planning',
+            message: 'The plan is not confirmed yet.',
+            category: 'game'
+        },
+        'NEXUS-HQ-011': {
+            http: 400,
+            title: 'Emergency Dispatch',
+            message: 'That dispatch alert type is not recognized.',
+            category: 'game'
+        },
+        'NEXUS-HQ-012': {
+            http: 409,
+            title: 'Emergency Dispatch',
+            message: 'A dispatch alert is already active for your nation. Wait for it to finish before sending another.',
+            category: 'game'
+        },
+        'NEXUS-HQ-013': {
+            http: 400,
+            title: 'SF Planning',
+            message: 'There is no confirmed plan on the world map to clear.',
+            category: 'game'
+        },
 
         /* --- Age map movement --- */
         'NEXUS-AGE-001': {
@@ -603,7 +645,14 @@
         HQ_VOTE_CANDIDATE_INVALID: 'NEXUS-HQ-003',
         HQ_VOTE_DUPLICATE_CANDIDATE: 'NEXUS-HQ-004',
         HQ_WAR_TARGET_REQUIRED: 'NEXUS-HQ-005',
-        HQ_COUNCIL_REQUIRED: 'NEXUS-HQ-006'
+        HQ_COUNCIL_REQUIRED: 'NEXUS-HQ-006',
+        HQ_VOTING_CLOSED: 'NEXUS-HQ-007',
+        HQ_PLANNING_LOCKED: 'NEXUS-HQ-008',
+        HQ_PLANNING_PUBLISH_EMPTY: 'NEXUS-HQ-009',
+        HQ_PLANNING_NOT_CONFIRMED: 'NEXUS-HQ-010',
+        HQ_PLANNING_NO_PUBLISHED: 'NEXUS-HQ-013',
+        HQ_DISPATCH_TYPE_INVALID: 'NEXUS-HQ-011',
+        HQ_DISPATCH_ACTIVE: 'NEXUS-HQ-012'
     };
 
     function getErrorDefinition(code) {

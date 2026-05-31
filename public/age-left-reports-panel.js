@@ -46,6 +46,106 @@
     let intelligenceMockData = null;
     let activeEnemyNationId = '';
     let weeklyMissionsMockData = null;
+    let nationLeadershipRefreshPromise = null;
+
+    function resolveApiUrl(path) {
+        if (typeof global.resolveApiUrl === 'function') {
+            return global.resolveApiUrl(path);
+        }
+        const origin = global.location?.origin || '';
+        if (String(path || '').startsWith('http')) return path;
+        if (String(path || '').startsWith('/')) return `${origin}${path}`;
+        return `${origin}/${path}`;
+    }
+
+    function isLocalDevLeadershipPreviewHost() {
+        const host = String(global.location?.hostname || '').toLowerCase();
+        const port = String(global.location?.port || '');
+        const isLocalHost = host === 'localhost' || host === '127.0.0.1' || host === '[::1]';
+        return isLocalHost && ['3000', '5500'].includes(port);
+    }
+
+    function resolveLeadershipPlaceholderLabel() {
+        return '--';
+    }
+
+    function resolveLocalDevLeadershipPreviewName() {
+        return resolveActiveCommanderUsername() || resolveLeadershipPlaceholderLabel();
+    }
+
+    function applyNationLeadershipDisplay(leaderName, viceLeaderName) {
+        const leaderEl = global.document.getElementById('age-nation-status-leader-name');
+        const viceEl = global.document.getElementById('age-nation-status-vice-leader-name');
+
+        if (leaderEl) {
+            leaderEl.textContent = leaderName || resolveLeadershipPlaceholderLabel();
+            leaderEl.classList.toggle('is-empty', !leaderName || leaderName === resolveLeadershipPlaceholderLabel());
+        }
+
+        if (viceEl) {
+            viceEl.textContent = viceLeaderName || resolveLeadershipPlaceholderLabel();
+            viceEl.classList.toggle('is-empty', !viceLeaderName || viceLeaderName === resolveLeadershipPlaceholderLabel());
+        }
+    }
+
+    function resolveLeadershipNameFromPayload(entry) {
+        const name = String(entry?.name || entry?.username || '').trim();
+        return name || '';
+    }
+
+    function scheduleAgeMapHudLayoutSync() {
+        if (typeof global.syncAgeMapHudLayout !== 'function') return;
+        global.requestAnimationFrame(() => {
+            global.requestAnimationFrame(global.syncAgeMapHudLayout);
+        });
+    }
+
+    async function refreshNationLeadershipRoster() {
+        const leaderEl = global.document.getElementById('age-nation-status-leader-name');
+        const viceEl = global.document.getElementById('age-nation-status-vice-leader-name');
+        if (!leaderEl && !viceEl) return;
+
+        const username = resolveActiveCommanderUsername();
+        if (!username) {
+            applyNationLeadershipDisplay('', '');
+            return;
+        }
+
+        if (nationLeadershipRefreshPromise) {
+            return nationLeadershipRefreshPromise;
+        }
+
+        nationLeadershipRefreshPromise = (async () => {
+            let leaderName = '';
+            let viceLeaderName = '';
+
+            try {
+                const url = resolveApiUrl(`/api/portal/age/nation-leadership?username=${encodeURIComponent(username)}`);
+                const response = await global.fetch(url, { credentials: 'same-origin', cache: 'no-store' });
+                const data = await response.json();
+
+                if (data?.status === 'ok') {
+                    leaderName = resolveLeadershipNameFromPayload(data.leader);
+                    viceLeaderName = resolveLeadershipNameFromPayload(data.viceLeader);
+                }
+            } catch (error) {
+                // Fall through to local preview / placeholders.
+            }
+
+            if (!leaderName && !viceLeaderName && isLocalDevLeadershipPreviewHost()) {
+                const previewName = resolveLocalDevLeadershipPreviewName();
+                leaderName = previewName;
+                viceLeaderName = previewName;
+            }
+
+            applyNationLeadershipDisplay(leaderName, viceLeaderName);
+            scheduleAgeMapHudLayoutSync();
+        })().finally(() => {
+            nationLeadershipRefreshPromise = null;
+        });
+
+        return nationLeadershipRefreshPromise;
+    }
 
     function resolveMissionStatus(progress, goal) {
         const current = Math.max(0, Number(progress) || 0);
@@ -233,13 +333,15 @@
 
     function refreshNationStatusPanel() {
         const list = global.document.getElementById('age-nation-status-terrain-list');
-        if (!list) return;
+        if (list) {
+            const nationMeta = resolvePlayerNationMeta();
+            const bonuses = resolvePlayerTerrainBonuses();
+            const compact = COMPACT_NATION_STATUS_TERRAIN_NATIONS.includes(nationMeta.id);
+            list.classList.toggle('age-nation-status-terrain-list--compact', compact);
+            list.innerHTML = buildNationStatusTerrainRows(bonuses, nationMeta.id);
+        }
 
-        const nationMeta = resolvePlayerNationMeta();
-        const bonuses = resolvePlayerTerrainBonuses();
-        const compact = COMPACT_NATION_STATUS_TERRAIN_NATIONS.includes(nationMeta.id);
-        list.classList.toggle('age-nation-status-terrain-list--compact', compact);
-        list.innerHTML = buildNationStatusTerrainRows(bonuses, nationMeta.id);
+        refreshNationLeadershipRoster();
     }
 
     function resolveActiveWarMatchups(playerNationId) {
@@ -396,6 +498,7 @@
             activeEnemyNationId = enemyId;
             renderIntelligenceEnemyTabs(intelligenceMockData?.matchups || []);
             renderIntelligenceEnemyContent();
+            scheduleAgeMapHudLayoutSync();
         });
     }
 
@@ -425,6 +528,8 @@
         } else if (target === 'nation') {
             refreshNationStatusPanel();
         }
+
+        scheduleAgeMapHudLayoutSync();
     }
 
     function bindLeftReportsTabs() {
@@ -470,12 +575,14 @@
         refreshIntelligencePanel();
         refreshWeeklyMissionsPanel();
         activateLeftReportsTab('nation');
+        scheduleAgeMapHudLayoutSync();
     }
 
     global.RoyalArmiesAgeLeftReportsPanel = {
         enable: enableLeftReportsPanel,
         activateTab: activateLeftReportsTab,
         refreshNationStatus: refreshNationStatusPanel,
+        refreshNationLeadership: refreshNationLeadershipRoster,
         refreshIntelligence: refreshIntelligencePanel
     };
 

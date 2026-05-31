@@ -6,6 +6,7 @@
 
     const ROUTES_URL = 'data/age-world-water-routes.json?v=water-routes-phariis-anchor-1';
     const BORDER_PAD = 10;
+    const CROSS_BORDER_ADJACENCY_PAD = 4;
 
     let routes = [];
     let routePairIndex = new Map();
@@ -59,12 +60,59 @@
         return routePairIndex.get(routePairKey(cityAId, cityBId)) || null;
     }
 
+    function cityBoxesTouch(bboxA, bboxB, pad) {
+        const edgePad = Number.isFinite(pad) ? pad : CROSS_BORDER_ADJACENCY_PAD;
+        if (!bboxA || !bboxB) return false;
+        return !(
+            bboxA.maxX + edgePad < bboxB.minX - edgePad
+            || bboxB.maxX + edgePad < bboxA.minX - edgePad
+            || bboxA.maxY + edgePad < bboxB.minY - edgePad
+            || bboxB.maxY + edgePad < bboxA.minY - edgePad
+        );
+    }
+
+    function catalogHasCrossBorderNeighbors(cities) {
+        if (!Array.isArray(cities) || !cities.length) return false;
+        const byId = new Map(cities.map((city) => [city.id, city]));
+        for (const city of cities) {
+            for (const neighborId of city.neighbors || []) {
+                const neighbor = byId.get(neighborId);
+                if (neighbor && neighbor.nationId !== city.nationId) return true;
+            }
+        }
+        return false;
+    }
+
+    /** Land borders across nations are omitted when city SVGs are extracted per nation. */
+    function augmentCrossBorderNeighbors(cities) {
+        if (!Array.isArray(cities) || !cities.length) return cities;
+        if (catalogHasCrossBorderNeighbors(cities)) return cities;
+
+        for (let i = 0; i < cities.length; i += 1) {
+            for (let j = i + 1; j < cities.length; j += 1) {
+                const cityA = cities[i];
+                const cityB = cities[j];
+                if (!cityA || !cityB || cityA.nationId === cityB.nationId) continue;
+                if (!cityBoxesTouch(cityA.bbox, cityB.bbox)) continue;
+
+                if (!Array.isArray(cityA.neighbors)) cityA.neighbors = [];
+                if (!Array.isArray(cityB.neighbors)) cityB.neighbors = [];
+                if (!cityA.neighbors.includes(cityB.id)) cityA.neighbors.push(cityB.id);
+                if (!cityB.neighbors.includes(cityA.id)) cityB.neighbors.push(cityA.id);
+            }
+        }
+
+        return cities;
+    }
+
     function areCatalogCitiesAdjacent(cityA, cityB) {
         if (!cityA || !cityB) return false;
         if (cityA.id === cityB.id) return true;
         const aToB = Array.isArray(cityA.neighbors) && cityA.neighbors.includes(cityB.id);
         const bToA = Array.isArray(cityB.neighbors) && cityB.neighbors.includes(cityA.id);
-        return aToB || bToA;
+        if (aToB || bToA) return true;
+        if (cityA.nationId !== cityB.nationId && cityBoxesTouch(cityA.bbox, cityB.bbox)) return true;
+        return false;
     }
 
     function resolveCityConnection(cityA, cityB) {
@@ -262,6 +310,8 @@
         loadRoutes,
         getRoutes,
         findRoute,
+        catalogHasCrossBorderNeighbors,
+        augmentCrossBorderNeighbors,
         areCatalogCitiesAdjacent,
         resolveCityConnection,
         parseOutlinePoints,

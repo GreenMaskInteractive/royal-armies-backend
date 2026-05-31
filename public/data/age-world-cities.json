@@ -1,6 +1,11 @@
 {
   "_meta": {
-    "settlementTerrains": ["Forest", "Plains", "Desert", "Mountains"],
+    "settlementTerrains": [
+      "Forest",
+      "Plains",
+      "Desert",
+      "Mountains"
+    ],
     "note": "Settlement terrain on the Amnek world map is limited to Forest, Plains, Desert, and Mountains. Snow does not exist on this map."
   },
   "viewBox": "0 0 1642 1642",
@@ -499,7 +504,11 @@
         "dravic-c02",
         "dravic-c04",
         "dravic-c05",
-        "dravic-c09"
+        "dravic-c09",
+        "aethelgard-c08",
+        "aethelgard-c11",
+        "aethelgard-c12",
+        "aethelgard-c13"
       ],
       "holderNationId": "dravic",
       "loserNationId": "",
@@ -539,7 +548,9 @@
         "dravic-c06",
         "dravic-c09",
         "dravic-c13",
-        "dravic-c15"
+        "dravic-c15",
+        "aethelgard-c08",
+        "aethelgard-c11"
       ],
       "holderNationId": "dravic",
       "loserNationId": "",
@@ -585,7 +596,9 @@
         "dravic-c09",
         "dravic-c10",
         "dravic-c13",
-        "dravic-c15"
+        "dravic-c15",
+        "thruun-c02",
+        "aethelgard-c11"
       ],
       "holderNationId": "dravic",
       "loserNationId": "",
@@ -633,7 +646,12 @@
         "dravic-c09",
         "dravic-c11",
         "dravic-c12",
-        "dravic-c14"
+        "dravic-c14",
+        "aethelgard-c11",
+        "aethelgard-c12",
+        "aethelgard-c13",
+        "aethelgard-c14",
+        "aethelgard-c15"
       ],
       "holderNationId": "dravic",
       "loserNationId": "",
@@ -673,7 +691,12 @@
         "dravic-c09",
         "dravic-c11",
         "dravic-c12",
-        "dravic-c14"
+        "dravic-c14",
+        "aethelgard-c11",
+        "aethelgard-c12",
+        "aethelgard-c13",
+        "aethelgard-c14",
+        "aethelgard-c15"
       ],
       "holderNationId": "dravic",
       "loserNationId": "",
@@ -719,7 +742,8 @@
         "dravic-c09",
         "dravic-c10",
         "dravic-c13",
-        "dravic-c15"
+        "dravic-c15",
+        "aethelgard-c11"
       ],
       "holderNationId": "dravic",
       "loserNationId": "",
@@ -765,7 +789,11 @@
         "dravic-c03",
         "dravic-c06",
         "dravic-c08",
-        "dravic-c10"
+        "dravic-c10",
+        "thruun-c09",
+        "thruun-c10",
+        "thruun-c13",
+        "aethelgard-c11"
       ],
       "holderNationId": "dravic",
       "loserNationId": "",
@@ -803,7 +831,11 @@
         "dravic-c03",
         "dravic-c06",
         "dravic-c07",
-        "dravic-c10"
+        "dravic-c10",
+        "thruun-c09",
+        "thruun-c10",
+        "thruun-c13",
+        "aethelgard-c11"
       ],
       "holderNationId": "dravic",
       "loserNationId": "",
@@ -850,7 +882,11 @@
         "dravic-c06",
         "dravic-c13",
         "dravic-c14",
-        "dravic-c15"
+        "dravic-c15",
+        "vaerenth-c01",
+        "vaerenth-c02",
+        "aethelgard-c14",
+        "aethelgard-c15"
       ],
       "holderNationId": "dravic",
       "loserNationId": "",
@@ -898,7 +934,11 @@
         "dravic-c07",
         "dravic-c08",
         "dravic-c13",
-        "dravic-c15"
+        "dravic-c15",
+        "vaerenth-c02",
+        "thruun-c09",
+        "thruun-c10",
+        "thruun-c13"
       ],
       "holderNationId": "dravic",
       "loserNationId": "",
@@ -936,7 +976,9 @@
         "dravic-c04",
         "dravic-c05",
         "dravic-c12",
-        "dravic-c14"
+        "dravic-c14",
+        "aethelgard-c14",
+        "aethelgard-c15"
       ],
       "holderNationId": "dravic",
       "loserNationId": "",
@@ -978,7 +1020,9 @@
         "dravic-c04",
         "dravic-c05",
         "dravic-c11",
-        "dravic-c14"
+        "dravic-c14",
+        "aethelgard-c14",
+        "aethelgard-c15"
       ],
       "holderNationId": "dravic",
       "loserNationId": "",
@@ -1026,7 +1070,9 @@
         "dravic-c06",
         "dravic-c09",
         "dravic-c10",
-        "dravic-c15"
+        "dravic-c15",
+        "vaerenth-c01",
+        "vaerenth-c02"
       ],
       "holderNationId": "dravic",
       "loserNationId": "",
@@ -1109,7 +1155,12 @@
         "dravic-c06",
         "dravic-c09",
         "dravic-c10",
-        "dravic-c13"
+        "dravic-c13",
+        "vaerenth-c01",
+        "vaerenth-c02",
+        "vaerenth-c05",
+        "vaerenth-c07",
+        "vaerenth-c08"
       ],
       "holderNationId": "dravic",
       "loserNationId": "",
@@ -1153,7 +1204,8 @@
       "isCapital": false,
       "neighbors": [
         "khaerant-c02",
-        "khaerant-c03"
+        "khaerant-c03",
+        "aesthene-manariis"
       ],
       "holderNationId": "khaerant",
       "loserNationId": "",
@@ -1189,7 +1241,8 @@
       "isCapital": false,
       "neighbors": [
         "khaerant-c01",
-        "khaerant-c03"
+        "khaerant-c03",
+        "aesthene-manariis"
       ],
       "holderNationId": "khaerant",
       "loserNationId": "",
@@ -1229,7 +1282,9 @@
       "isCapital": false,
       "neighbors": [
         "khaerant-c01",
-        "khaerant-c02"
+        "khaerant-c02",
+        "vaelior-c13",
+        "vaelior-c14"
       ],
       "holderNationId": "khaerant",
       "loserNationId": "",
@@ -1359,7 +1414,9 @@
         "khaerant-c07",
         "khaerant-c11",
         "khaerant-c12",
-        "khaerant-c13"
+        "khaerant-c13",
+        "mynor-c12",
+        "mynor-c13"
       ],
       "holderNationId": "khaerant",
       "loserNationId": "",
@@ -1408,7 +1465,8 @@
         "khaerant-c08",
         "khaerant-c11",
         "khaerant-c12",
-        "khaerant-c13"
+        "khaerant-c13",
+        "mynor-c10"
       ],
       "holderNationId": "khaerant",
       "loserNationId": "",
@@ -1450,7 +1508,9 @@
         "khaerant-c10",
         "khaerant-c11",
         "khaerant-c14",
-        "khaerant-c15"
+        "khaerant-c15",
+        "vaelior-c13",
+        "vaelior-c14"
       ],
       "holderNationId": "khaerant",
       "loserNationId": "",
@@ -1493,7 +1553,9 @@
         "khaerant-c10",
         "khaerant-c11",
         "khaerant-c14",
-        "khaerant-c15"
+        "khaerant-c15",
+        "skaros-c08",
+        "skaros-c14"
       ],
       "holderNationId": "khaerant",
       "loserNationId": "",
@@ -1542,7 +1604,9 @@
         "khaerant-c09",
         "khaerant-c11",
         "khaerant-c14",
-        "khaerant-c15"
+        "khaerant-c15",
+        "skaros-c08",
+        "skaros-c14"
       ],
       "holderNationId": "khaerant",
       "loserNationId": "",
@@ -1627,7 +1691,9 @@
         "khaerant-c06",
         "khaerant-c07",
         "khaerant-c11",
-        "khaerant-c13"
+        "khaerant-c13",
+        "mynor-c14",
+        "mynor-c15"
       ],
       "holderNationId": "khaerant",
       "loserNationId": "",
@@ -1802,7 +1868,9 @@
         "mynor-c03",
         "mynor-c04",
         "mynor-c06",
-        "mynor-c08"
+        "mynor-c08",
+        "aesthene-myrion",
+        "aesthene-zephyris"
       ],
       "holderNationId": "mynor",
       "loserNationId": "",
@@ -1841,7 +1909,9 @@
         "mynor-c03",
         "mynor-c04",
         "mynor-c06",
-        "mynor-c08"
+        "mynor-c08",
+        "aesthene-myrion",
+        "aesthene-zephyris"
       ],
       "holderNationId": "mynor",
       "loserNationId": "",
@@ -1885,7 +1955,13 @@
         "mynor-c04",
         "mynor-c05",
         "mynor-c06",
-        "mynor-c08"
+        "mynor-c08",
+        "aesthene-myrion",
+        "aesthene-vaelithon",
+        "aesthene-solgwyn",
+        "aesthene-zephyris",
+        "aesthene-xeraphin",
+        "aesthene-divariis"
       ],
       "holderNationId": "mynor",
       "loserNationId": "",
@@ -1933,7 +2009,13 @@
         "mynor-c03",
         "mynor-c05",
         "mynor-c06",
-        "mynor-c08"
+        "mynor-c08",
+        "aesthene-myrion",
+        "aesthene-vaelithon",
+        "aesthene-solgwyn",
+        "aesthene-zephyris",
+        "aesthene-xeraphin",
+        "aesthene-divariis"
       ],
       "holderNationId": "mynor",
       "loserNationId": "",
@@ -1976,7 +2058,9 @@
         "mynor-c09",
         "mynor-c10",
         "mynor-c11",
-        "mynor-c12"
+        "mynor-c12",
+        "aesthene-divariis",
+        "aesthene-phariis"
       ],
       "holderNationId": "mynor",
       "loserNationId": "",
@@ -2022,7 +2106,8 @@
         "mynor-c05",
         "mynor-c08",
         "mynor-c10",
-        "mynor-c12"
+        "mynor-c12",
+        "aesthene-divariis"
       ],
       "holderNationId": "mynor",
       "loserNationId": "",
@@ -2109,7 +2194,8 @@
         "mynor-c06",
         "mynor-c10",
         "mynor-c12",
-        "mynor-c13"
+        "mynor-c13",
+        "aesthene-divariis"
       ],
       "holderNationId": "mynor",
       "loserNationId": "",
@@ -2203,7 +2289,8 @@
         "mynor-c12",
         "mynor-c13",
         "mynor-c14",
-        "mynor-c15"
+        "mynor-c15",
+        "khaerant-c07"
       ],
       "holderNationId": "mynor",
       "loserNationId": "",
@@ -2290,7 +2377,8 @@
         "mynor-c11",
         "mynor-c13",
         "mynor-c14",
-        "mynor-c15"
+        "mynor-c15",
+        "khaerant-c06"
       ],
       "holderNationId": "mynor",
       "loserNationId": "",
@@ -2339,7 +2427,8 @@
         "mynor-c11",
         "mynor-c12",
         "mynor-c14",
-        "mynor-c15"
+        "mynor-c15",
+        "khaerant-c06"
       ],
       "holderNationId": "mynor",
       "loserNationId": "",
@@ -2378,7 +2467,8 @@
         "mynor-c11",
         "mynor-c12",
         "mynor-c13",
-        "mynor-c15"
+        "mynor-c15",
+        "khaerant-c12"
       ],
       "holderNationId": "mynor",
       "loserNationId": "",
@@ -2421,7 +2511,8 @@
         "mynor-c11",
         "mynor-c12",
         "mynor-c13",
-        "mynor-c14"
+        "mynor-c14",
+        "khaerant-c12"
       ],
       "holderNationId": "mynor",
       "loserNationId": "",
@@ -2469,7 +2560,12 @@
         "trex-c04",
         "trex-c05",
         "trex-c06",
-        "trex-c08"
+        "trex-c08",
+        "krall-c05",
+        "krall-c15",
+        "saelthine-c07",
+        "lyllis-c05",
+        "lyllis-c07"
       ],
       "holderNationId": "trex",
       "loserNationId": "",
@@ -2509,7 +2605,12 @@
         "trex-c04",
         "trex-c05",
         "trex-c06",
-        "trex-c08"
+        "trex-c08",
+        "krall-c05",
+        "krall-c15",
+        "saelthine-c07",
+        "lyllis-c05",
+        "lyllis-c07"
       ],
       "holderNationId": "trex",
       "loserNationId": "",
@@ -2554,7 +2655,12 @@
         "trex-c05",
         "trex-c06",
         "trex-c07",
-        "trex-c08"
+        "trex-c08",
+        "lyllis-c05",
+        "lyllis-c07",
+        "lyllis-c09",
+        "lyllis-c10",
+        "lyllis-c11"
       ],
       "holderNationId": "trex",
       "loserNationId": "",
@@ -2603,7 +2709,12 @@
         "trex-c05",
         "trex-c06",
         "trex-c07",
-        "trex-c08"
+        "trex-c08",
+        "lyllis-c05",
+        "lyllis-c07",
+        "lyllis-c09",
+        "lyllis-c10",
+        "lyllis-c11"
       ],
       "holderNationId": "trex",
       "loserNationId": "",
@@ -2645,7 +2756,8 @@
         "trex-c06",
         "trex-c07",
         "trex-c08",
-        "trex-c09"
+        "trex-c09",
+        "lyllis-c11"
       ],
       "holderNationId": "trex",
       "loserNationId": "",
@@ -2691,7 +2803,8 @@
         "trex-c05",
         "trex-c07",
         "trex-c08",
-        "trex-c09"
+        "trex-c09",
+        "lyllis-c11"
       ],
       "holderNationId": "trex",
       "loserNationId": "",
@@ -2741,7 +2854,18 @@
         "trex-c08",
         "trex-c09",
         "trex-c11",
-        "trex-c12"
+        "trex-c12",
+        "thruun-c01",
+        "thruun-c02",
+        "thruun-c03",
+        "thruun-c04",
+        "thruun-c05",
+        "thruun-c06",
+        "lyllis-c11",
+        "lyllis-c12",
+        "lyllis-c13",
+        "lyllis-c14",
+        "lyllis-c15"
       ],
       "holderNationId": "trex",
       "loserNationId": "",
@@ -2783,7 +2907,12 @@
         "trex-c05",
         "trex-c06",
         "trex-c07",
-        "trex-c09"
+        "trex-c09",
+        "thruun-c01",
+        "thruun-c02",
+        "saelthine-c07",
+        "saelthine-c15",
+        "aethelgard-c11"
       ],
       "holderNationId": "trex",
       "loserNationId": "",
@@ -2827,7 +2956,13 @@
         "trex-c07",
         "trex-c08",
         "trex-c11",
-        "trex-c12"
+        "trex-c12",
+        "thruun-c01",
+        "thruun-c02",
+        "thruun-c03",
+        "thruun-c04",
+        "thruun-c05",
+        "thruun-c06"
       ],
       "holderNationId": "trex",
       "loserNationId": "",
@@ -2874,7 +3009,11 @@
         "trex-c12",
         "trex-c13",
         "trex-c14",
-        "trex-c15"
+        "trex-c15",
+        "gorz-c12",
+        "gorz-c13",
+        "gorz-c14",
+        "gorz-c15"
       ],
       "holderNationId": "trex",
       "loserNationId": "",
@@ -2914,7 +3053,20 @@
         "trex-c10",
         "trex-c12",
         "trex-c14",
-        "trex-c15"
+        "trex-c15",
+        "zevros-c05",
+        "gorz-c06",
+        "gorz-c09",
+        "gorz-c10",
+        "gorz-c11",
+        "gorz-c12",
+        "gorz-c13",
+        "thruun-c03",
+        "thruun-c04",
+        "thruun-c05",
+        "thruun-c06",
+        "lyllis-c14",
+        "lyllis-c15"
       ],
       "holderNationId": "trex",
       "loserNationId": "",
@@ -2958,7 +3110,19 @@
         "trex-c10",
         "trex-c11",
         "trex-c14",
-        "trex-c15"
+        "trex-c15",
+        "zevros-c03",
+        "zevros-c05",
+        "gorz-c06",
+        "gorz-c09",
+        "gorz-c10",
+        "gorz-c11",
+        "gorz-c12",
+        "gorz-c13",
+        "thruun-c05",
+        "thruun-c06",
+        "lyllis-c14",
+        "lyllis-c15"
       ],
       "holderNationId": "trex",
       "loserNationId": "",
@@ -3003,7 +3167,13 @@
       "neighbors": [
         "trex-c10",
         "trex-c14",
-        "trex-c15"
+        "trex-c15",
+        "zevros-c01",
+        "zevros-c02",
+        "zevros-c04",
+        "zevros-c06",
+        "gorz-c14",
+        "gorz-c15"
       ],
       "holderNationId": "trex",
       "loserNationId": "",
@@ -3042,7 +3212,13 @@
         "trex-c11",
         "trex-c12",
         "trex-c13",
-        "trex-c15"
+        "trex-c15",
+        "zevros-c01",
+        "zevros-c02",
+        "zevros-c03",
+        "zevros-c04",
+        "zevros-c05",
+        "zevros-c06"
       ],
       "holderNationId": "trex",
       "loserNationId": "",
@@ -3085,7 +3261,15 @@
         "trex-c11",
         "trex-c12",
         "trex-c13",
-        "trex-c14"
+        "trex-c14",
+        "zevros-c01",
+        "zevros-c02",
+        "zevros-c03",
+        "zevros-c04",
+        "zevros-c05",
+        "zevros-c06",
+        "thruun-c05",
+        "thruun-c06"
       ],
       "holderNationId": "trex",
       "loserNationId": "",
@@ -3132,7 +3316,10 @@
         "vaerenth-c07",
         "vaerenth-c08",
         "vaerenth-c09",
-        "vaerenth-c10"
+        "vaerenth-c10",
+        "dravic-c09",
+        "dravic-c13",
+        "dravic-c15"
       ],
       "holderNationId": "vaerenth",
       "loserNationId": "",
@@ -3171,7 +3358,11 @@
         "vaerenth-c07",
         "vaerenth-c08",
         "vaerenth-c09",
-        "vaerenth-c10"
+        "vaerenth-c10",
+        "dravic-c09",
+        "dravic-c10",
+        "dravic-c13",
+        "dravic-c15"
       ],
       "holderNationId": "vaerenth",
       "loserNationId": "",
@@ -3295,7 +3486,10 @@
         "vaerenth-c03",
         "vaerenth-c04",
         "vaerenth-c06",
-        "vaerenth-c08"
+        "vaerenth-c08",
+        "dravic-c15",
+        "aesthene-auranis",
+        "aesthene-glypham"
       ],
       "holderNationId": "vaerenth",
       "loserNationId": "",
@@ -3337,7 +3531,9 @@
         "vaerenth-c03",
         "vaerenth-c04",
         "vaerenth-c05",
-        "vaerenth-c08"
+        "vaerenth-c08",
+        "aesthene-auranis",
+        "aesthene-glypham"
       ],
       "holderNationId": "vaerenth",
       "loserNationId": "",
@@ -3384,7 +3580,8 @@
         "vaerenth-c02",
         "vaerenth-c08",
         "vaerenth-c09",
-        "vaerenth-c10"
+        "vaerenth-c10",
+        "dravic-c15"
       ],
       "holderNationId": "vaerenth",
       "loserNationId": "",
@@ -3425,7 +3622,9 @@
         "vaerenth-c06",
         "vaerenth-c07",
         "vaerenth-c09",
-        "vaerenth-c10"
+        "vaerenth-c10",
+        "dravic-c15",
+        "aesthene-glypham"
       ],
       "holderNationId": "vaerenth",
       "loserNationId": "",
@@ -3555,7 +3754,9 @@
       "isCapital": true,
       "neighbors": [
         "vaerenth-c14",
-        "vaerenth-c15"
+        "vaerenth-c15",
+        "thruun-c13",
+        "thruun-c14"
       ],
       "holderNationId": "vaerenth",
       "loserNationId": "",
@@ -3596,7 +3797,8 @@
       "neighbors": [
         "vaerenth-c09",
         "vaerenth-c10",
-        "vaerenth-c13"
+        "vaerenth-c13",
+        "aesthene-glifora"
       ],
       "holderNationId": "vaerenth",
       "loserNationId": "",
@@ -3641,7 +3843,8 @@
       "neighbors": [
         "vaerenth-c09",
         "vaerenth-c10",
-        "vaerenth-c12"
+        "vaerenth-c12",
+        "aesthene-glifora"
       ],
       "holderNationId": "vaerenth",
       "loserNationId": "",
@@ -3762,7 +3965,9 @@
       "neighbors": [
         "skaros-c02",
         "skaros-c04",
-        "skaros-c06"
+        "skaros-c06",
+        "vaelior-c12",
+        "vaelior-c15"
       ],
       "holderNationId": "skaros",
       "loserNationId": "",
@@ -3799,7 +4004,8 @@
       "neighbors": [
         "skaros-c01",
         "skaros-c04",
-        "skaros-c06"
+        "skaros-c06",
+        "vaelior-c15"
       ],
       "holderNationId": "skaros",
       "loserNationId": "",
@@ -3840,7 +4046,9 @@
       "neighbors": [
         "skaros-c05",
         "skaros-c07",
-        "skaros-c08"
+        "skaros-c08",
+        "vaelior-c13",
+        "vaelior-c14"
       ],
       "holderNationId": "skaros",
       "loserNationId": "",
@@ -3887,7 +4095,8 @@
         "skaros-c02",
         "skaros-c06",
         "skaros-c09",
-        "skaros-c10"
+        "skaros-c10",
+        "vaelior-c15"
       ],
       "holderNationId": "skaros",
       "loserNationId": "",
@@ -3971,7 +4180,8 @@
         "skaros-c07",
         "skaros-c10",
         "skaros-c11",
-        "skaros-c13"
+        "skaros-c13",
+        "vaelior-c15"
       ],
       "holderNationId": "skaros",
       "loserNationId": "",
@@ -4056,7 +4266,9 @@
         "skaros-c03",
         "skaros-c05",
         "skaros-c12",
-        "skaros-c14"
+        "skaros-c14",
+        "khaerant-c09",
+        "khaerant-c10"
       ],
       "holderNationId": "skaros",
       "loserNationId": "",
@@ -4308,7 +4520,9 @@
       "isCapital": false,
       "neighbors": [
         "skaros-c08",
-        "skaros-c12"
+        "skaros-c12",
+        "khaerant-c09",
+        "khaerant-c10"
       ],
       "holderNationId": "skaros",
       "loserNationId": "",
@@ -4392,7 +4606,10 @@
       "settlementTier": "city",
       "isCapital": false,
       "neighbors": [
-        "vaelior-c02"
+        "vaelior-c02",
+        "zevros-c15",
+        "thruun-c14",
+        "thruun-c15"
       ],
       "holderNationId": "vaelior",
       "loserNationId": "",
@@ -4427,7 +4644,10 @@
       "settlementTier": "town",
       "isCapital": false,
       "neighbors": [
-        "vaelior-c01"
+        "vaelior-c01",
+        "zevros-c15",
+        "thruun-c14",
+        "thruun-c15"
       ],
       "holderNationId": "vaelior",
       "loserNationId": "",
@@ -4866,7 +5086,8 @@
         "vaelior-c09",
         "vaelior-c10",
         "vaelior-c11",
-        "vaelior-c15"
+        "vaelior-c15",
+        "skaros-c01"
       ],
       "holderNationId": "vaelior",
       "loserNationId": "",
@@ -4911,7 +5132,10 @@
       "neighbors": [
         "vaelior-c06",
         "vaelior-c07",
-        "vaelior-c14"
+        "vaelior-c14",
+        "khaerant-c03",
+        "khaerant-c08",
+        "skaros-c03"
       ],
       "holderNationId": "vaelior",
       "loserNationId": "",
@@ -4946,7 +5170,10 @@
       "settlementTier": "kingdom",
       "isCapital": true,
       "neighbors": [
-        "vaelior-c13"
+        "vaelior-c13",
+        "khaerant-c03",
+        "khaerant-c08",
+        "skaros-c03"
       ],
       "holderNationId": "vaelior",
       "loserNationId": "",
@@ -4989,7 +5216,11 @@
         "vaelior-c09",
         "vaelior-c10",
         "vaelior-c11",
-        "vaelior-c12"
+        "vaelior-c12",
+        "skaros-c01",
+        "skaros-c02",
+        "skaros-c04",
+        "skaros-c06"
       ],
       "holderNationId": "vaelior",
       "loserNationId": "",
@@ -5038,7 +5269,10 @@
         "zevros-c05",
         "zevros-c06",
         "zevros-c07",
-        "zevros-c10"
+        "zevros-c10",
+        "trex-c13",
+        "trex-c14",
+        "trex-c15"
       ],
       "holderNationId": "zevros",
       "loserNationId": "",
@@ -5080,7 +5314,10 @@
         "zevros-c06",
         "zevros-c07",
         "zevros-c10",
-        "zevros-c11"
+        "zevros-c11",
+        "trex-c13",
+        "trex-c14",
+        "trex-c15"
       ],
       "holderNationId": "zevros",
       "loserNationId": "",
@@ -5125,7 +5362,14 @@
         "zevros-c07",
         "zevros-c08",
         "zevros-c09",
-        "zevros-c10"
+        "zevros-c10",
+        "trex-c12",
+        "trex-c14",
+        "trex-c15",
+        "thruun-c05",
+        "thruun-c06",
+        "thruun-c11",
+        "thruun-c12"
       ],
       "holderNationId": "zevros",
       "loserNationId": "",
@@ -5173,7 +5417,10 @@
         "zevros-c06",
         "zevros-c07",
         "zevros-c10",
-        "zevros-c11"
+        "zevros-c11",
+        "trex-c13",
+        "trex-c14",
+        "trex-c15"
       ],
       "holderNationId": "zevros",
       "loserNationId": "",
@@ -5214,7 +5461,15 @@
         "zevros-c07",
         "zevros-c08",
         "zevros-c09",
-        "zevros-c10"
+        "zevros-c10",
+        "trex-c11",
+        "trex-c12",
+        "trex-c14",
+        "trex-c15",
+        "thruun-c05",
+        "thruun-c06",
+        "thruun-c11",
+        "thruun-c12"
       ],
       "holderNationId": "zevros",
       "loserNationId": "",
@@ -5258,7 +5513,10 @@
         "zevros-c04",
         "zevros-c07",
         "zevros-c10",
-        "zevros-c11"
+        "zevros-c11",
+        "trex-c13",
+        "trex-c14",
+        "trex-c15"
       ],
       "holderNationId": "zevros",
       "loserNationId": "",
@@ -5353,7 +5611,11 @@
         "zevros-c09",
         "zevros-c10",
         "zevros-c12",
-        "zevros-c13"
+        "zevros-c13",
+        "thruun-c11",
+        "thruun-c12",
+        "thruun-c14",
+        "thruun-c15"
       ],
       "holderNationId": "zevros",
       "loserNationId": "",
@@ -5398,7 +5660,11 @@
         "zevros-c08",
         "zevros-c10",
         "zevros-c12",
-        "zevros-c13"
+        "zevros-c13",
+        "thruun-c11",
+        "thruun-c12",
+        "thruun-c14",
+        "thruun-c15"
       ],
       "holderNationId": "zevros",
       "loserNationId": "",
@@ -5538,7 +5804,9 @@
         "zevros-c10",
         "zevros-c13",
         "zevros-c14",
-        "zevros-c15"
+        "zevros-c15",
+        "thruun-c14",
+        "thruun-c15"
       ],
       "holderNationId": "zevros",
       "loserNationId": "",
@@ -5588,7 +5856,9 @@
         "zevros-c11",
         "zevros-c12",
         "zevros-c14",
-        "zevros-c15"
+        "zevros-c15",
+        "thruun-c14",
+        "thruun-c15"
       ],
       "holderNationId": "zevros",
       "loserNationId": "",
@@ -5625,7 +5895,9 @@
       "neighbors": [
         "zevros-c12",
         "zevros-c13",
-        "zevros-c15"
+        "zevros-c15",
+        "thruun-c14",
+        "thruun-c15"
       ],
       "holderNationId": "zevros",
       "loserNationId": "",
@@ -5667,7 +5939,10 @@
         "zevros-c11",
         "zevros-c12",
         "zevros-c13",
-        "zevros-c14"
+        "zevros-c14",
+        "vaelior-c01",
+        "vaelior-c02",
+        "thruun-c14"
       ],
       "holderNationId": "zevros",
       "loserNationId": "",
@@ -5797,7 +6072,13 @@
         "gorz-c06",
         "gorz-c09",
         "gorz-c10",
-        "gorz-c11"
+        "gorz-c11",
+        "lyllis-c01",
+        "lyllis-c02",
+        "lyllis-c06",
+        "lyllis-c08",
+        "lyllis-c12",
+        "lyllis-c13"
       ],
       "holderNationId": "gorz",
       "loserNationId": "",
@@ -5939,7 +6220,15 @@
         "gorz-c10",
         "gorz-c11",
         "gorz-c12",
-        "gorz-c13"
+        "gorz-c13",
+        "trex-c11",
+        "trex-c12",
+        "lyllis-c06",
+        "lyllis-c08",
+        "lyllis-c12",
+        "lyllis-c13",
+        "lyllis-c14",
+        "lyllis-c15"
       ],
       "holderNationId": "gorz",
       "loserNationId": "",
@@ -6083,7 +6372,9 @@
         "gorz-c12",
         "gorz-c13",
         "gorz-c14",
-        "gorz-c15"
+        "gorz-c15",
+        "trex-c11",
+        "trex-c12"
       ],
       "holderNationId": "gorz",
       "loserNationId": "",
@@ -6137,7 +6428,9 @@
         "gorz-c12",
         "gorz-c13",
         "gorz-c14",
-        "gorz-c15"
+        "gorz-c15",
+        "trex-c11",
+        "trex-c12"
       ],
       "holderNationId": "gorz",
       "loserNationId": "",
@@ -6179,7 +6472,13 @@
         "gorz-c09",
         "gorz-c10",
         "gorz-c12",
-        "gorz-c13"
+        "gorz-c13",
+        "trex-c11",
+        "trex-c12",
+        "lyllis-c12",
+        "lyllis-c13",
+        "lyllis-c14",
+        "lyllis-c15"
       ],
       "holderNationId": "gorz",
       "loserNationId": "",
@@ -6226,7 +6525,10 @@
         "gorz-c11",
         "gorz-c13",
         "gorz-c14",
-        "gorz-c15"
+        "gorz-c15",
+        "trex-c10",
+        "trex-c11",
+        "trex-c12"
       ],
       "holderNationId": "gorz",
       "loserNationId": "",
@@ -6277,7 +6579,10 @@
         "gorz-c11",
         "gorz-c12",
         "gorz-c14",
-        "gorz-c15"
+        "gorz-c15",
+        "trex-c10",
+        "trex-c11",
+        "trex-c12"
       ],
       "holderNationId": "gorz",
       "loserNationId": "",
@@ -6318,7 +6623,9 @@
         "gorz-c10",
         "gorz-c12",
         "gorz-c13",
-        "gorz-c15"
+        "gorz-c15",
+        "trex-c10",
+        "trex-c13"
       ],
       "holderNationId": "gorz",
       "loserNationId": "",
@@ -6363,7 +6670,9 @@
         "gorz-c10",
         "gorz-c12",
         "gorz-c13",
-        "gorz-c14"
+        "gorz-c14",
+        "trex-c10",
+        "trex-c13"
       ],
       "holderNationId": "gorz",
       "loserNationId": "",
@@ -6590,7 +6899,11 @@
         "krall-c04",
         "krall-c09",
         "krall-c10",
-        "krall-c15"
+        "krall-c15",
+        "trex-c01",
+        "trex-c02",
+        "saelthine-c02",
+        "lyllis-c05"
       ],
       "holderNationId": "krall",
       "loserNationId": "",
@@ -6781,7 +7094,12 @@
         "krall-c10",
         "krall-c12",
         "krall-c14",
-        "krall-c15"
+        "krall-c15",
+        "saelthine-c01",
+        "saelthine-c02",
+        "saelthine-c03",
+        "saelthine-c04",
+        "saelthine-c05"
       ],
       "holderNationId": "krall",
       "loserNationId": "",
@@ -6832,7 +7150,12 @@
         "krall-c09",
         "krall-c12",
         "krall-c14",
-        "krall-c15"
+        "krall-c15",
+        "saelthine-c01",
+        "saelthine-c02",
+        "saelthine-c03",
+        "saelthine-c04",
+        "saelthine-c05"
       ],
       "holderNationId": "krall",
       "loserNationId": "",
@@ -6872,7 +7195,9 @@
         "krall-c08",
         "krall-c12",
         "krall-c13",
-        "krall-c14"
+        "krall-c14",
+        "saelthine-c01",
+        "saelthine-c03"
       ],
       "holderNationId": "krall",
       "loserNationId": "",
@@ -6920,7 +7245,9 @@
         "krall-c10",
         "krall-c11",
         "krall-c13",
-        "krall-c14"
+        "krall-c14",
+        "saelthine-c01",
+        "saelthine-c03"
       ],
       "holderNationId": "krall",
       "loserNationId": "",
@@ -6968,7 +7295,9 @@
         "krall-c08",
         "krall-c11",
         "krall-c12",
-        "krall-c14"
+        "krall-c14",
+        "saelthine-c01",
+        "saelthine-c03"
       ],
       "holderNationId": "krall",
       "loserNationId": "",
@@ -7012,7 +7341,9 @@
         "krall-c10",
         "krall-c11",
         "krall-c12",
-        "krall-c13"
+        "krall-c13",
+        "saelthine-c01",
+        "saelthine-c03"
       ],
       "holderNationId": "krall",
       "loserNationId": "",
@@ -7055,7 +7386,12 @@
         "krall-c04",
         "krall-c05",
         "krall-c09",
-        "krall-c10"
+        "krall-c10",
+        "trex-c01",
+        "trex-c02",
+        "saelthine-c02",
+        "saelthine-c07",
+        "lyllis-c05"
       ],
       "holderNationId": "krall",
       "loserNationId": "",
@@ -7104,7 +7440,12 @@
         "thruun-c07",
         "thruun-c08",
         "thruun-c09",
-        "thruun-c10"
+        "thruun-c10",
+        "trex-c07",
+        "trex-c08",
+        "trex-c09",
+        "saelthine-c15",
+        "aethelgard-c11"
       ],
       "holderNationId": "thruun",
       "loserNationId": "",
@@ -7145,7 +7486,14 @@
         "thruun-c07",
         "thruun-c08",
         "thruun-c09",
-        "thruun-c10"
+        "thruun-c10",
+        "dravic-c03",
+        "trex-c07",
+        "trex-c08",
+        "trex-c09",
+        "saelthine-c14",
+        "saelthine-c15",
+        "aethelgard-c11"
       ],
       "holderNationId": "thruun",
       "loserNationId": "",
@@ -7194,7 +7542,10 @@
         "thruun-c09",
         "thruun-c10",
         "thruun-c11",
-        "thruun-c12"
+        "thruun-c12",
+        "trex-c07",
+        "trex-c09",
+        "trex-c11"
       ],
       "holderNationId": "thruun",
       "loserNationId": "",
@@ -7247,7 +7598,10 @@
         "thruun-c09",
         "thruun-c10",
         "thruun-c11",
-        "thruun-c12"
+        "thruun-c12",
+        "trex-c07",
+        "trex-c09",
+        "trex-c11"
       ],
       "holderNationId": "thruun",
       "loserNationId": "",
@@ -7288,7 +7642,14 @@
         "thruun-c07",
         "thruun-c08",
         "thruun-c11",
-        "thruun-c12"
+        "thruun-c12",
+        "trex-c07",
+        "trex-c09",
+        "trex-c11",
+        "trex-c12",
+        "trex-c15",
+        "zevros-c03",
+        "zevros-c05"
       ],
       "holderNationId": "thruun",
       "loserNationId": "",
@@ -7333,7 +7694,14 @@
         "thruun-c07",
         "thruun-c08",
         "thruun-c11",
-        "thruun-c12"
+        "thruun-c12",
+        "trex-c07",
+        "trex-c09",
+        "trex-c11",
+        "trex-c12",
+        "trex-c15",
+        "zevros-c03",
+        "zevros-c05"
       ],
       "holderNationId": "thruun",
       "loserNationId": "",
@@ -7480,7 +7848,11 @@
         "thruun-c08",
         "thruun-c10",
         "thruun-c13",
-        "thruun-c14"
+        "thruun-c14",
+        "dravic-c07",
+        "dravic-c08",
+        "dravic-c10",
+        "aethelgard-c11"
       ],
       "holderNationId": "thruun",
       "loserNationId": "",
@@ -7531,7 +7903,11 @@
         "thruun-c08",
         "thruun-c09",
         "thruun-c13",
-        "thruun-c14"
+        "thruun-c14",
+        "dravic-c07",
+        "dravic-c08",
+        "dravic-c10",
+        "aethelgard-c11"
       ],
       "holderNationId": "thruun",
       "loserNationId": "",
@@ -7575,7 +7951,11 @@
         "thruun-c12",
         "thruun-c13",
         "thruun-c14",
-        "thruun-c15"
+        "thruun-c15",
+        "zevros-c03",
+        "zevros-c05",
+        "zevros-c08",
+        "zevros-c09"
       ],
       "holderNationId": "thruun",
       "loserNationId": "",
@@ -7623,7 +8003,11 @@
         "thruun-c11",
         "thruun-c13",
         "thruun-c14",
-        "thruun-c15"
+        "thruun-c15",
+        "zevros-c03",
+        "zevros-c05",
+        "zevros-c08",
+        "zevros-c09"
       ],
       "holderNationId": "thruun",
       "loserNationId": "",
@@ -7673,7 +8057,11 @@
         "thruun-c11",
         "thruun-c12",
         "thruun-c14",
-        "thruun-c15"
+        "thruun-c15",
+        "dravic-c07",
+        "dravic-c08",
+        "dravic-c10",
+        "vaerenth-c11"
       ],
       "holderNationId": "thruun",
       "loserNationId": "",
@@ -7713,7 +8101,16 @@
         "thruun-c11",
         "thruun-c12",
         "thruun-c13",
-        "thruun-c15"
+        "thruun-c15",
+        "vaerenth-c11",
+        "vaelior-c01",
+        "vaelior-c02",
+        "zevros-c08",
+        "zevros-c09",
+        "zevros-c12",
+        "zevros-c13",
+        "zevros-c14",
+        "zevros-c15"
       ],
       "holderNationId": "thruun",
       "loserNationId": "",
@@ -7755,7 +8152,14 @@
         "thruun-c11",
         "thruun-c12",
         "thruun-c13",
-        "thruun-c14"
+        "thruun-c14",
+        "vaelior-c01",
+        "vaelior-c02",
+        "zevros-c08",
+        "zevros-c09",
+        "zevros-c12",
+        "zevros-c13",
+        "zevros-c14"
       ],
       "holderNationId": "thruun",
       "loserNationId": "",
@@ -7807,7 +8211,13 @@
         "saelthine-c10",
         "saelthine-c11",
         "saelthine-c12",
-        "saelthine-c13"
+        "saelthine-c13",
+        "krall-c09",
+        "krall-c10",
+        "krall-c11",
+        "krall-c12",
+        "krall-c13",
+        "krall-c14"
       ],
       "holderNationId": "saelthine",
       "loserNationId": "",
@@ -7846,7 +8256,11 @@
         "saelthine-c05",
         "saelthine-c07",
         "saelthine-c12",
-        "saelthine-c13"
+        "saelthine-c13",
+        "krall-c05",
+        "krall-c09",
+        "krall-c10",
+        "krall-c15"
       ],
       "holderNationId": "saelthine",
       "loserNationId": "",
@@ -7894,7 +8308,13 @@
         "saelthine-c10",
         "saelthine-c11",
         "saelthine-c12",
-        "saelthine-c13"
+        "saelthine-c13",
+        "krall-c09",
+        "krall-c10",
+        "krall-c11",
+        "krall-c12",
+        "krall-c13",
+        "krall-c14"
       ],
       "holderNationId": "saelthine",
       "loserNationId": "",
@@ -7944,7 +8364,9 @@
         "saelthine-c10",
         "saelthine-c11",
         "saelthine-c12",
-        "saelthine-c13"
+        "saelthine-c13",
+        "krall-c09",
+        "krall-c10"
       ],
       "holderNationId": "saelthine",
       "loserNationId": "",
@@ -7986,7 +8408,9 @@
         "saelthine-c10",
         "saelthine-c11",
         "saelthine-c12",
-        "saelthine-c13"
+        "saelthine-c13",
+        "krall-c09",
+        "krall-c10"
       ],
       "holderNationId": "saelthine",
       "loserNationId": "",
@@ -8028,7 +8452,10 @@
         "saelthine-c01",
         "saelthine-c03",
         "saelthine-c08",
-        "saelthine-c09"
+        "saelthine-c09",
+        "aethelgard-c01",
+        "aethelgard-c02",
+        "aethelgard-c04"
       ],
       "holderNationId": "saelthine",
       "loserNationId": "",
@@ -8075,7 +8502,12 @@
         "saelthine-c12",
         "saelthine-c13",
         "saelthine-c14",
-        "saelthine-c15"
+        "saelthine-c15",
+        "trex-c01",
+        "trex-c02",
+        "trex-c08",
+        "krall-c15",
+        "aethelgard-c11"
       ],
       "holderNationId": "saelthine",
       "loserNationId": "",
@@ -8115,7 +8547,11 @@
         "saelthine-c06",
         "saelthine-c09",
         "saelthine-c10",
-        "saelthine-c11"
+        "saelthine-c11",
+        "aethelgard-c01",
+        "aethelgard-c02",
+        "aethelgard-c03",
+        "aethelgard-c04"
       ],
       "holderNationId": "saelthine",
       "loserNationId": "",
@@ -8159,7 +8595,11 @@
         "saelthine-c06",
         "saelthine-c08",
         "saelthine-c10",
-        "saelthine-c11"
+        "saelthine-c11",
+        "aethelgard-c01",
+        "aethelgard-c02",
+        "aethelgard-c03",
+        "aethelgard-c04"
       ],
       "holderNationId": "saelthine",
       "loserNationId": "",
@@ -8210,7 +8650,9 @@
         "saelthine-c09",
         "saelthine-c11",
         "saelthine-c12",
-        "saelthine-c13"
+        "saelthine-c13",
+        "aethelgard-c03",
+        "aethelgard-c04"
       ],
       "holderNationId": "saelthine",
       "loserNationId": "",
@@ -8253,7 +8695,9 @@
         "saelthine-c09",
         "saelthine-c10",
         "saelthine-c12",
-        "saelthine-c13"
+        "saelthine-c13",
+        "aethelgard-c03",
+        "aethelgard-c04"
       ],
       "holderNationId": "saelthine",
       "loserNationId": "",
@@ -8302,7 +8746,9 @@
         "saelthine-c11",
         "saelthine-c13",
         "saelthine-c14",
-        "saelthine-c15"
+        "saelthine-c15",
+        "aethelgard-c03",
+        "aethelgard-c04"
       ],
       "holderNationId": "saelthine",
       "loserNationId": "",
@@ -8355,7 +8801,11 @@
         "saelthine-c11",
         "saelthine-c12",
         "saelthine-c14",
-        "saelthine-c15"
+        "saelthine-c15",
+        "aethelgard-c03",
+        "aethelgard-c04",
+        "aethelgard-c08",
+        "aethelgard-c11"
       ],
       "holderNationId": "saelthine",
       "loserNationId": "",
@@ -8393,7 +8843,9 @@
         "saelthine-c07",
         "saelthine-c12",
         "saelthine-c13",
-        "saelthine-c15"
+        "saelthine-c15",
+        "thruun-c02",
+        "aethelgard-c11"
       ],
       "holderNationId": "saelthine",
       "loserNationId": "",
@@ -8435,7 +8887,11 @@
         "saelthine-c07",
         "saelthine-c12",
         "saelthine-c13",
-        "saelthine-c14"
+        "saelthine-c14",
+        "trex-c08",
+        "thruun-c01",
+        "thruun-c02",
+        "aethelgard-c11"
       ],
       "holderNationId": "saelthine",
       "loserNationId": "",
@@ -8483,7 +8939,10 @@
         "aethelgard-c04",
         "aethelgard-c05",
         "aethelgard-c06",
-        "aethelgard-c07"
+        "aethelgard-c07",
+        "saelthine-c06",
+        "saelthine-c08",
+        "saelthine-c09"
       ],
       "holderNationId": "aethelgard",
       "loserNationId": "",
@@ -8523,7 +8982,10 @@
         "aethelgard-c04",
         "aethelgard-c05",
         "aethelgard-c06",
-        "aethelgard-c07"
+        "aethelgard-c07",
+        "saelthine-c06",
+        "saelthine-c08",
+        "saelthine-c09"
       ],
       "holderNationId": "aethelgard",
       "loserNationId": "",
@@ -8568,7 +9030,13 @@
         "aethelgard-c06",
         "aethelgard-c07",
         "aethelgard-c08",
-        "aethelgard-c11"
+        "aethelgard-c11",
+        "saelthine-c08",
+        "saelthine-c09",
+        "saelthine-c10",
+        "saelthine-c11",
+        "saelthine-c12",
+        "saelthine-c13"
       ],
       "holderNationId": "aethelgard",
       "loserNationId": "",
@@ -8617,7 +9085,14 @@
         "aethelgard-c06",
         "aethelgard-c07",
         "aethelgard-c08",
-        "aethelgard-c11"
+        "aethelgard-c11",
+        "saelthine-c06",
+        "saelthine-c08",
+        "saelthine-c09",
+        "saelthine-c10",
+        "saelthine-c11",
+        "saelthine-c12",
+        "saelthine-c13"
       ],
       "holderNationId": "aethelgard",
       "loserNationId": "",
@@ -8804,7 +9279,10 @@
         "aethelgard-c07",
         "aethelgard-c11",
         "aethelgard-c12",
-        "aethelgard-c13"
+        "aethelgard-c13",
+        "dravic-c01",
+        "dravic-c02",
+        "saelthine-c13"
       ],
       "holderNationId": "aethelgard",
       "loserNationId": "",
@@ -8941,7 +9419,24 @@
         "aethelgard-c07",
         "aethelgard-c08",
         "aethelgard-c12",
-        "aethelgard-c13"
+        "aethelgard-c13",
+        "dravic-c01",
+        "dravic-c02",
+        "dravic-c03",
+        "dravic-c04",
+        "dravic-c05",
+        "dravic-c06",
+        "dravic-c07",
+        "dravic-c08",
+        "trex-c08",
+        "thruun-c01",
+        "thruun-c02",
+        "thruun-c09",
+        "thruun-c10",
+        "saelthine-c07",
+        "saelthine-c13",
+        "saelthine-c14",
+        "saelthine-c15"
       ],
       "holderNationId": "aethelgard",
       "loserNationId": "",
@@ -8989,7 +9484,10 @@
         "aethelgard-c11",
         "aethelgard-c13",
         "aethelgard-c14",
-        "aethelgard-c15"
+        "aethelgard-c15",
+        "dravic-c01",
+        "dravic-c04",
+        "dravic-c05"
       ],
       "holderNationId": "aethelgard",
       "loserNationId": "",
@@ -9041,7 +9539,10 @@
         "aethelgard-c11",
         "aethelgard-c12",
         "aethelgard-c14",
-        "aethelgard-c15"
+        "aethelgard-c15",
+        "dravic-c01",
+        "dravic-c04",
+        "dravic-c05"
       ],
       "holderNationId": "aethelgard",
       "loserNationId": "",
@@ -9080,7 +9581,12 @@
         "aethelgard-c10",
         "aethelgard-c12",
         "aethelgard-c13",
-        "aethelgard-c15"
+        "aethelgard-c15",
+        "dravic-c04",
+        "dravic-c05",
+        "dravic-c09",
+        "dravic-c11",
+        "dravic-c12"
       ],
       "holderNationId": "aethelgard",
       "loserNationId": "",
@@ -9123,7 +9629,12 @@
         "aethelgard-c10",
         "aethelgard-c12",
         "aethelgard-c13",
-        "aethelgard-c14"
+        "aethelgard-c14",
+        "dravic-c04",
+        "dravic-c05",
+        "dravic-c09",
+        "dravic-c11",
+        "dravic-c12"
       ],
       "holderNationId": "aethelgard",
       "loserNationId": "",
@@ -9171,7 +9682,8 @@
         "lyllis-c06",
         "lyllis-c07",
         "lyllis-c08",
-        "lyllis-c09"
+        "lyllis-c09",
+        "gorz-c03"
       ],
       "holderNationId": "lyllis",
       "loserNationId": "",
@@ -9212,7 +9724,8 @@
         "lyllis-c07",
         "lyllis-c08",
         "lyllis-c09",
-        "lyllis-c10"
+        "lyllis-c10",
+        "gorz-c03"
       ],
       "holderNationId": "lyllis",
       "loserNationId": "",
@@ -9339,7 +9852,13 @@
       "neighbors": [
         "lyllis-c03",
         "lyllis-c04",
-        "lyllis-c07"
+        "lyllis-c07",
+        "trex-c01",
+        "trex-c02",
+        "trex-c03",
+        "trex-c04",
+        "krall-c05",
+        "krall-c15"
       ],
       "holderNationId": "lyllis",
       "loserNationId": "",
@@ -9385,7 +9904,9 @@
         "lyllis-c10",
         "lyllis-c11",
         "lyllis-c12",
-        "lyllis-c13"
+        "lyllis-c13",
+        "gorz-c03",
+        "gorz-c06"
       ],
       "holderNationId": "lyllis",
       "loserNationId": "",
@@ -9435,7 +9956,11 @@
         "lyllis-c05",
         "lyllis-c09",
         "lyllis-c10",
-        "lyllis-c11"
+        "lyllis-c11",
+        "trex-c01",
+        "trex-c02",
+        "trex-c03",
+        "trex-c04"
       ],
       "holderNationId": "lyllis",
       "loserNationId": "",
@@ -9477,7 +10002,9 @@
         "lyllis-c10",
         "lyllis-c11",
         "lyllis-c12",
-        "lyllis-c13"
+        "lyllis-c13",
+        "gorz-c03",
+        "gorz-c06"
       ],
       "holderNationId": "lyllis",
       "loserNationId": "",
@@ -9523,7 +10050,9 @@
         "lyllis-c07",
         "lyllis-c08",
         "lyllis-c10",
-        "lyllis-c11"
+        "lyllis-c11",
+        "trex-c03",
+        "trex-c04"
       ],
       "holderNationId": "lyllis",
       "loserNationId": "",
@@ -9572,7 +10101,9 @@
         "lyllis-c07",
         "lyllis-c08",
         "lyllis-c09",
-        "lyllis-c11"
+        "lyllis-c11",
+        "trex-c03",
+        "trex-c04"
       ],
       "holderNationId": "lyllis",
       "loserNationId": "",
@@ -9615,7 +10146,12 @@
         "lyllis-c12",
         "lyllis-c13",
         "lyllis-c14",
-        "lyllis-c15"
+        "lyllis-c15",
+        "trex-c03",
+        "trex-c04",
+        "trex-c05",
+        "trex-c06",
+        "trex-c07"
       ],
       "holderNationId": "lyllis",
       "loserNationId": "",
@@ -9659,7 +10195,11 @@
         "lyllis-c11",
         "lyllis-c13",
         "lyllis-c14",
-        "lyllis-c15"
+        "lyllis-c15",
+        "trex-c07",
+        "gorz-c03",
+        "gorz-c06",
+        "gorz-c11"
       ],
       "holderNationId": "lyllis",
       "loserNationId": "",
@@ -9707,7 +10247,11 @@
         "lyllis-c11",
         "lyllis-c12",
         "lyllis-c14",
-        "lyllis-c15"
+        "lyllis-c15",
+        "trex-c07",
+        "gorz-c03",
+        "gorz-c06",
+        "gorz-c11"
       ],
       "holderNationId": "lyllis",
       "loserNationId": "",
@@ -9745,7 +10289,12 @@
         "lyllis-c11",
         "lyllis-c12",
         "lyllis-c13",
-        "lyllis-c15"
+        "lyllis-c15",
+        "trex-c07",
+        "trex-c11",
+        "trex-c12",
+        "gorz-c06",
+        "gorz-c11"
       ],
       "holderNationId": "lyllis",
       "loserNationId": "",
@@ -9787,7 +10336,12 @@
         "lyllis-c11",
         "lyllis-c12",
         "lyllis-c13",
-        "lyllis-c14"
+        "lyllis-c14",
+        "trex-c07",
+        "trex-c11",
+        "trex-c12",
+        "gorz-c06",
+        "gorz-c11"
       ],
       "holderNationId": "lyllis",
       "loserNationId": "",
@@ -9872,7 +10426,9 @@
         "aesthene-myrion",
         "aesthene-vaelithon",
         "aesthene-solgwyn",
-        "aesthene-zephyris"
+        "aesthene-zephyris",
+        "vaerenth-c05",
+        "vaerenth-c06"
       ],
       "holderNationId": "aesthene",
       "loserNationId": "",
@@ -9914,7 +10470,10 @@
         "aesthene-bastyron",
         "aesthene-auranis",
         "aesthene-vaelithon",
-        "aesthene-apotryph"
+        "aesthene-apotryph",
+        "vaerenth-c05",
+        "vaerenth-c06",
+        "vaerenth-c08"
       ],
       "holderNationId": "aesthene",
       "loserNationId": "",
@@ -9959,7 +10518,11 @@
       "neighbors": [
         "aesthene-bastyron",
         "aesthene-auranis",
-        "aesthene-zephyris"
+        "aesthene-zephyris",
+        "mynor-c01",
+        "mynor-c02",
+        "mynor-c03",
+        "mynor-c04"
       ],
       "holderNationId": "aesthene",
       "loserNationId": "",
@@ -9993,7 +10556,10 @@
       "terrain": "Forest",
       "settlementTier": "town",
       "isCapital": false,
-      "neighbors": [],
+      "neighbors": [
+        "vaerenth-c12",
+        "vaerenth-c13"
+      ],
       "holderNationId": "aesthene",
       "loserNationId": "",
       "defensiveStructures": [
@@ -10036,7 +10602,9 @@
         "aesthene-apotryph",
         "aesthene-solgwyn",
         "aesthene-xeraphin",
-        "aesthene-divariis"
+        "aesthene-divariis",
+        "mynor-c03",
+        "mynor-c04"
       ],
       "holderNationId": "aesthene",
       "loserNationId": "",
@@ -10121,7 +10689,9 @@
         "aesthene-vaelithon",
         "aesthene-zephyris",
         "aesthene-xeraphin",
-        "aesthene-divariis"
+        "aesthene-divariis",
+        "mynor-c03",
+        "mynor-c04"
       ],
       "holderNationId": "aesthene",
       "loserNationId": "",
@@ -10163,7 +10733,11 @@
         "aesthene-auranis",
         "aesthene-myrion",
         "aesthene-solgwyn",
-        "aesthene-xeraphin"
+        "aesthene-xeraphin",
+        "mynor-c01",
+        "mynor-c02",
+        "mynor-c03",
+        "mynor-c04"
       ],
       "holderNationId": "aesthene",
       "loserNationId": "",
@@ -10243,7 +10817,9 @@
         "aesthene-apotryph",
         "aesthene-solgwyn",
         "aesthene-zephyris",
-        "aesthene-divariis"
+        "aesthene-divariis",
+        "mynor-c03",
+        "mynor-c04"
       ],
       "holderNationId": "aesthene",
       "loserNationId": "",
@@ -10281,7 +10857,10 @@
       "terrain": "Forest",
       "settlementTier": "city",
       "isCapital": false,
-      "neighbors": [],
+      "neighbors": [
+        "khaerant-c01",
+        "khaerant-c02"
+      ],
       "holderNationId": "aesthene",
       "loserNationId": "",
       "defensiveStructures": [
@@ -10327,7 +10906,12 @@
         "aesthene-apotryph",
         "aesthene-solgwyn",
         "aesthene-xeraphin",
-        "aesthene-phariis"
+        "aesthene-phariis",
+        "mynor-c03",
+        "mynor-c04",
+        "mynor-c05",
+        "mynor-c06",
+        "mynor-c08"
       ],
       "holderNationId": "aesthene",
       "loserNationId": "",
@@ -10399,7 +10983,8 @@
       "settlementTier": "kingdom",
       "isCapital": true,
       "neighbors": [
-        "aesthene-divariis"
+        "aesthene-divariis",
+        "mynor-c05"
       ],
       "holderNationId": "aesthene",
       "loserNationId": "",

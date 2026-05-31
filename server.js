@@ -37,6 +37,8 @@ const {
     resolveCityLoser,
     resolveDefaultCapitalCityId,
     normalizeCommanderMovementRecord,
+    normalizeArmyFocusValue,
+    resolveCommanderArmyFocus,
     getDefaultCommanderMovementRecord,
     getMovePointRules,
     buildBorderActionHints,
@@ -58,11 +60,26 @@ const {
     normalizeNationHeadquartersState,
     buildHeadquartersWorkspacePayload,
     applyPlanningPatch,
+    applyConfirmPlanningPatch,
+    applyEditPlanningPatch,
+    applyClearPublishedPlanPatch,
     applyResetPlanningPatch,
+    buildNationPlanPayload,
     applyVotePatch,
     listWarTargetNations,
-    listNationVoteCandidates
+    listNationVoteCandidates,
+    reconcileHeadquartersElection,
+    tryFinalizeElectionFromVotes
 } = require('./nexus-age-headquarters');
+const {
+    applyDispatchAlertPatch,
+    getActiveDispatchAlert
+} = require('./nexus-age-dispatch-alert');
+const { buildAgeRecordsPayload } = require('./nexus-age-records');
+const {
+    buildAgeRosterHudPayload,
+    buildCommanderAgeRosterSeedPatch
+} = require('./nexus-age-roster');
 
 /* Block 2: Environment Path Resolution */
 const isProduction = process.env.RENDER === 'true';
@@ -887,6 +904,11 @@ function readNationTreasuryForNation(nationKey) {
     return normalizeNationTreasuryRecord(treasuries[storageKey] || getDefaultNationTreasuryRecord());
 }
 
+function readNationAgeRecordsMap() {
+    const stored = db.get('portal.ageNationRecords').value();
+    return stored && typeof stored === 'object' && !Array.isArray(stored) ? stored : {};
+}
+
 function awardNationTreasuryRsd(nationKey, amount, meta = {}) {
     const storageKey = getCouncilBoardStorageKey(nationKey);
     if (!storageKey) {
@@ -1062,12 +1084,33 @@ function resolveCommanderMapNationKey(commander) {
     return AGE_ALPHA_DEFAULT_MAP_NATION;
 }
 
+function ensureCommanderAgeRoster(commander) {
+    if (!commander?.username) {
+        return buildAgeRosterHudPayload(null);
+    }
+
+    const seedPatch = buildCommanderAgeRosterSeedPatch(commander);
+    if (Object.keys(seedPatch).length) {
+        db.get('commanders')
+            .find({ username: commander.username })
+            .assign({
+                ...seedPatch,
+                ageRosterSeededAt: new Date().toISOString()
+            })
+            .write();
+        commander = db.get('commanders').find({ username: commander.username }).value();
+    }
+
+    return buildAgeRosterHudPayload(commander);
+}
+
 function buildAgeMovementStatePayload(username, commander) {
     const councilNation = resolveCouncilBoardNationKey(commander);
     const mapNation = resolveCommanderMapNationKey(commander);
     const movement = readCommanderMovementRecord(username, mapNation || councilNation);
     const store = readAgeMovementStore();
     const rules = getMovePointRules();
+    const roster = buildAgeRosterHudPayload(commander);
 
     return {
         gameNation: councilNation,
@@ -1079,7 +1122,10 @@ function buildAgeMovementStatePayload(username, commander) {
         cityHolders: store.cityHolders,
         cityLosers: store.cityLosers,
         alliedNationIds: mapNation ? resolveAlliedNationIds(mapNation) : [],
-        rules
+        rules,
+        unitsTotal: roster.unitsTotal,
+        unitsUninjured: roster.unitsUninjured,
+        ageArmy: roster.ageArmy
     };
 }
 
@@ -1258,6 +1304,8 @@ function buildAgeCityPlayersPayload(catalogCityId, viewerUsername) {
         const session = getAgeSessionForUsername(username);
         const mapNation = resolveCommanderMapNationKey(commander);
         const movePoints = resolveCommanderMovePointsPayload(commander);
+        const movement = readCommanderMovementRecord(username, mapNation);
+        const armyFocus = resolveCommanderArmyFocus(commander, movement);
 
         players.push({
             username,
@@ -1267,6 +1315,7 @@ function buildAgeCityPlayersPayload(catalogCityId, viewerUsername) {
             online: Boolean(session?.isOnline),
             membershipTitle: String(commander.membershipTitle || 'Basic').trim() || 'Basic',
             movePoints: movePoints.movePoints,
+            armyFocus: armyFocus || null,
             isSelf: Boolean(viewerLower && username.toLowerCase() === viewerLower)
         });
         seenUsernames.add(username.toLowerCase());
@@ -1277,6 +1326,8 @@ function buildAgeCityPlayersPayload(catalogCityId, viewerUsername) {
         const viewerSession = getAgeSessionForUsername(viewerCommander.username);
         if (viewerCityId === resolvedCityId && viewerSession) {
             const movePoints = resolveCommanderMovePointsPayload(viewerCommander);
+            const movement = readCommanderMovementRecord(viewerCommander.username, viewerNation);
+            const armyFocus = resolveCommanderArmyFocus(viewerCommander, movement);
             players.push({
                 username: viewerCommander.username,
                 displayName: viewerCommander.username,
@@ -1285,6 +1336,7 @@ function buildAgeCityPlayersPayload(catalogCityId, viewerUsername) {
                 online: Boolean(viewerSession.isOnline),
                 membershipTitle: String(viewerCommander.membershipTitle || 'Basic').trim() || 'Basic',
                 movePoints: movePoints.movePoints,
+                armyFocus: armyFocus || null,
                 isSelf: true
             });
         }
@@ -1363,21 +1415,30 @@ function readNationLeadershipForNation(nationKey) {
     const councilUsernames = Array.isArray(record.councilUsernames)
         ? record.councilUsernames.map(normalizeHeadquartersUsername).filter(Boolean)
         : [];
+    const plannerUsernames = Array.isArray(record.plannerUsernames)
+        ? record.plannerUsernames.map(normalizeHeadquartersUsername).filter(Boolean)
+        : [];
 
     return {
         leaderUsername: normalizeHeadquartersUsername(record.leaderUsername),
         viceLeaderUsername: normalizeHeadquartersUsername(record.viceLeaderUsername),
-        councilUsernames: [...new Set(councilUsernames)]
+        councilUsernames: [...new Set(councilUsernames)],
+        plannerUsernames: [...new Set(plannerUsernames)]
     };
 }
 
 function resolveHeadquartersAdminAccess(username, storageKey) {
-    if (!username || !storageKey || !isMailboxRecipientRosterAdmin(username)) {
+    if (!username || !isMailboxRecipientRosterAdmin(username)) {
+        return null;
+    }
+
+    const resolvedStorageKey = storageKey || getCouncilBoardStorageKey(`staging:${username}`);
+    if (!resolvedStorageKey) {
         return null;
     }
 
     return {
-        gameNation: storageKey,
+        gameNation: resolvedStorageKey,
         council: true,
         leader: true,
         viceLeader: true
@@ -1389,7 +1450,7 @@ function resolveHeadquartersAccessForCommander(commander) {
     const gameNation = resolveCouncilBoardNationKey(commander);
     const storageKey = getCouncilBoardStorageKey(gameNation);
 
-    if (!username || !storageKey) {
+    if (!username) {
         return {
             gameNation: storageKey || '',
             council: false,
@@ -1401,6 +1462,15 @@ function resolveHeadquartersAccessForCommander(commander) {
     const adminAccess = resolveHeadquartersAdminAccess(username, storageKey);
     if (adminAccess) {
         return adminAccess;
+    }
+
+    if (!storageKey) {
+        return {
+            gameNation: '',
+            council: false,
+            leader: false,
+            viceLeader: false
+        };
     }
 
     const leadership = readNationLeadershipForNation(storageKey);
@@ -1416,10 +1486,11 @@ function resolveHeadquartersAccessForCommander(commander) {
     const isLeader = leadership.leaderUsername === username;
     const isViceLeader = leadership.viceLeaderUsername === username;
     const isCouncilMember = leadership.councilUsernames.includes(username);
+    const isPlanner = leadership.plannerUsernames.includes(username);
 
     return {
         gameNation: storageKey,
-        council: isLeader || isViceLeader || isCouncilMember,
+        council: isLeader || isViceLeader || isCouncilMember || isPlanner,
         leader: isLeader,
         viceLeader: isViceLeader
     };
@@ -1453,13 +1524,68 @@ function writeNationHeadquartersForNation(nationKey, nextState) {
         ...nextState,
         updatedAt: new Date().toISOString()
     });
+    if (!boards[storageKey].publishedPlanning) {
+        delete boards[storageKey].publishedPlanning;
+    }
     writeNationHeadquartersMap(boards);
     return { state: boards[storageKey] };
 }
 
+function writeNationLeadershipForNation(nationKey, leadership) {
+    const storageKey = getCouncilBoardStorageKey(nationKey);
+    if (!storageKey) {
+        return { errorCode: 'GAME_NATION_REQUIRED' };
+    }
+
+    const map = readNationLeadershipMap();
+    const existing = map[storageKey] && typeof map[storageKey] === 'object' ? map[storageKey] : {};
+    map[storageKey] = {
+        ...existing,
+        leaderUsername: normalizeHeadquartersUsername(leadership?.leaderUsername),
+        viceLeaderUsername: normalizeHeadquartersUsername(leadership?.viceLeaderUsername),
+        councilUsernames: Array.isArray(leadership?.councilUsernames)
+            ? leadership.councilUsernames.map(normalizeHeadquartersUsername).filter(Boolean)
+            : (Array.isArray(existing.councilUsernames) ? existing.councilUsernames : []),
+        plannerUsernames: Array.isArray(leadership?.plannerUsernames)
+            ? leadership.plannerUsernames.map(normalizeHeadquartersUsername).filter(Boolean)
+            : (Array.isArray(existing.plannerUsernames) ? existing.plannerUsernames : []),
+        updatedAt: new Date().toISOString()
+    };
+    db.set('portal.nationLeadership', map).write();
+    return { leadership: readNationLeadershipForNation(storageKey) };
+}
+
+function resolveHeadquartersNationElectionState(nationKey) {
+    const storageKey = getCouncilBoardStorageKey(nationKey);
+    if (!storageKey) {
+        return {
+            nationState: getDefaultNationHeadquartersState(),
+            leadership: null,
+            isOpen: false,
+            changed: false
+        };
+    }
+
+    const nationState = readNationHeadquartersForNation(storageKey);
+    const leadership = readNationLeadershipForNation(storageKey);
+    const reconciled = reconcileHeadquartersElection(nationState, leadership);
+
+    if (reconciled.changed) {
+        writeNationHeadquartersForNation(storageKey, reconciled.nationState);
+    }
+
+    return {
+        nationState: reconciled.nationState,
+        leadership: reconciled.leadership,
+        isOpen: reconciled.isOpen,
+        changed: reconciled.changed
+    };
+}
+
 function buildHeadquartersWorkspaceForCommander(commander) {
     const access = resolveHeadquartersAccessForCommander(commander);
-    const nationState = readNationHeadquartersForNation(access.gameNation);
+    const electionState = resolveHeadquartersNationElectionState(access.gameNation);
+    const refreshedAccess = resolveHeadquartersAccessForCommander(commander);
     const voteCandidates = listNationVoteCandidates(
         db.get('commanders').value() || [],
         access.gameNation,
@@ -1468,12 +1594,46 @@ function buildHeadquartersWorkspaceForCommander(commander) {
     const warTargets = listWarTargetNations(access.gameNation);
 
     return buildHeadquartersWorkspacePayload({
-        access,
-        nationState,
+        access: refreshedAccess,
+        nationState: electionState.nationState,
         voteCandidates,
         warTargets,
-        username: commander?.username || ''
+        username: commander?.username || '',
+        leadership: electionState.leadership,
+        votingOpen: electionState.isOpen
     });
+}
+
+function resolveNationLeadershipDisplayName(username) {
+    const normalized = normalizeHeadquartersUsername(username);
+    if (!normalized) return '';
+
+    const commander = findCommanderByUsername(normalized);
+    return String(commander?.username || normalized).trim();
+}
+
+function buildNationLeadershipPayloadForCommander(commander) {
+    const gameNation = getCouncilBoardStorageKey(resolveCouncilBoardNationKey(commander));
+    const leadership = gameNation ? readNationLeadershipForNation(gameNation) : null;
+
+    const leaderUsername = leadership?.leaderUsername || '';
+    const viceLeaderUsername = leadership?.viceLeaderUsername || '';
+
+    return {
+        gameNation,
+        leader: leaderUsername
+            ? {
+                username: leaderUsername,
+                name: resolveNationLeadershipDisplayName(leaderUsername)
+            }
+            : null,
+        viceLeader: viceLeaderUsername
+            ? {
+                username: viceLeaderUsername,
+                name: resolveNationLeadershipDisplayName(viceLeaderUsername)
+            }
+            : null
+    };
 }
 
 function ensureGameChatSeedMessages(store) {
@@ -4190,13 +4350,57 @@ app.post('/api/portal/game-chat/messages', (req, res) => {
     });
 });
 
+app.get('/api/portal/age/nation-leadership', (req, res) => {
+    const username = resolveLedgerCommanderUsername(req.query?.username || '');
+    if (!username) {
+        return sendApiError(res, 'NEXUS-GEN-002');
+    }
+
+    const commander = findCommanderByUsername(username);
+    if (!commander) {
+        return sendApiError(res, 'NEXUS-GEN-004');
+    }
+
+    res.json({
+        status: 'ok',
+        ...buildNationLeadershipPayloadForCommander(commander)
+    });
+});
+
+app.get('/api/portal/age/records', (req, res) => {
+    const username = resolveLedgerCommanderUsername(req.query?.username || '');
+    if (!username) {
+        return sendApiError(res, 'NEXUS-GEN-002');
+    }
+
+    const commander = findCommanderByUsername(username);
+    if (!commander) {
+        return sendApiError(res, 'NEXUS-GEN-004');
+    }
+
+    res.json({
+        status: 'ok',
+        ...buildAgeRecordsPayload({
+            commanders: db.get('commanders').value() || [],
+            nationRecordsMap: readNationAgeRecordsMap(),
+            cityHolders: readAgeMovementStore().cityHolders,
+            isHiddenUsername: isHiddenRegistrationUsername,
+            resolveCommanderMapNationKey,
+            readNationTreasuryForNation,
+            readNationLeadershipForNation,
+            resolveNationLeadershipDisplayName,
+            resolveCatalogNationDisplayName
+        })
+    });
+});
+
 app.get('/api/portal/age/headquarters', (req, res) => {
     const username = resolveLedgerCommanderUsername(req.query?.username || '');
     if (!username) {
         return sendApiError(res, 'NEXUS-GEN-002');
     }
 
-    const commander = db.get('commanders').find({ username }).value();
+    const commander = findCommanderByUsername(username);
     if (!commander) {
         return sendApiError(res, 'NEXUS-GEN-004');
     }
@@ -4225,11 +4429,39 @@ app.patch('/api/portal/age/headquarters', (req, res) => {
     }
 
     const body = req.body || {};
-    const currentState = readNationHeadquartersForNation(gameNation);
+    let currentState = readNationHeadquartersForNation(gameNation);
+    let currentLeadership = readNationLeadershipForNation(gameNation);
+    const electionSnapshot = reconcileHeadquartersElection(currentState, currentLeadership);
+    currentState = electionSnapshot.nationState;
+    currentLeadership = electionSnapshot.leadership;
+    let votingOpen = electionSnapshot.isOpen;
+
+    if (electionSnapshot.changed) {
+        writeNationHeadquartersForNation(gameNation, currentState);
+    }
+
     let nextState = { ...currentState };
     let responseExtra = {};
 
-    if (body.resetPlanning === true) {
+    if (body.confirmPlanning === true) {
+        const confirmPatch = applyConfirmPlanningPatch(currentState, username, access);
+        if (confirmPatch.errorCode) {
+            return sendApiError(res, confirmPatch.errorCode);
+        }
+        nextState = { ...nextState, ...confirmPatch };
+    } else if (body.editPlanning === true) {
+        const editPatch = applyEditPlanningPatch(currentState, username, access);
+        if (editPatch.errorCode) {
+            return sendApiError(res, editPatch.errorCode);
+        }
+        nextState = { ...nextState, ...editPatch };
+    } else if (body.clearPublishedPlan === true) {
+        const clearPatch = applyClearPublishedPlanPatch(currentState, username, access);
+        if (clearPatch.errorCode) {
+            return sendApiError(res, clearPatch.errorCode);
+        }
+        nextState = { ...nextState, ...clearPatch };
+    } else if (body.resetPlanning === true) {
         const resetPatch = applyResetPlanningPatch(currentState, username, access);
         if (resetPatch.errorCode) {
             return sendApiError(res, resetPatch.errorCode);
@@ -4249,11 +4481,20 @@ app.patch('/api/portal/age/headquarters', (req, res) => {
             gameNation,
             (entry) => getCouncilBoardStorageKey(resolveCouncilBoardNationKey(entry))
         );
-        const votePatch = applyVotePatch(nextState, body.vote, username, voteCandidates);
+        const votePatch = applyVotePatch(nextState, body.vote, username, voteCandidates, {
+            votingOpen
+        });
         if (votePatch.errorCode) {
             return sendApiError(res, votePatch.errorCode);
         }
         nextState = { ...nextState, ...votePatch };
+
+        const finalizeResult = tryFinalizeElectionFromVotes(nextState, currentLeadership, voteCandidates);
+        if (finalizeResult) {
+            nextState = finalizeResult.nationState;
+            votingOpen = false;
+            writeNationLeadershipForNation(gameNation, finalizeResult.leadership);
+        }
     }
 
     if (body.warDeclarationDraft && typeof body.warDeclarationDraft === 'object') {
@@ -4282,6 +4523,119 @@ app.patch('/api/portal/age/headquarters', (req, res) => {
         status: 'ok',
         workspace: buildHeadquartersWorkspaceForCommander(commander),
         ...responseExtra
+    });
+});
+
+app.get('/api/portal/age/nation-plan', (req, res) => {
+    const username = resolveLedgerCommanderUsername(req.query?.username || '');
+    if (!username) {
+        return sendApiError(res, 'NEXUS-GEN-002');
+    }
+
+    const commander = findCommanderByUsername(username);
+    if (!commander) {
+        return sendApiError(res, 'NEXUS-GEN-004');
+    }
+
+    const access = resolveHeadquartersAccessForCommander(commander);
+    const gameNation = access.gameNation;
+    if (!gameNation) {
+        return sendApiError(res, 'GAME_NATION_REQUIRED');
+    }
+
+    const nationState = readNationHeadquartersForNation(gameNation);
+    res.set('Cache-Control', 'no-store');
+    res.json({
+        status: 'ok',
+        gameNation,
+        canClearPlan: Boolean(access.council),
+        ...buildNationPlanPayload(nationState)
+    });
+});
+
+app.get('/api/portal/age/dispatch-alert', (req, res) => {
+    const username = resolveLedgerCommanderUsername(req.query?.username || '');
+    if (!username) {
+        return sendApiError(res, 'NEXUS-GEN-002');
+    }
+
+    const commander = findCommanderByUsername(username);
+    if (!commander) {
+        return sendApiError(res, 'NEXUS-GEN-004');
+    }
+
+    const access = resolveHeadquartersAccessForCommander(commander);
+    const gameNation = access.gameNation;
+    if (!gameNation) {
+        return sendApiError(res, 'GAME_NATION_REQUIRED');
+    }
+
+    const nationState = readNationHeadquartersForNation(gameNation);
+    const alert = getActiveDispatchAlert(nationState);
+
+    res.json({
+        status: 'ok',
+        gameNation,
+        alert
+    });
+});
+
+app.post('/api/portal/age/dispatch-alert', (req, res) => {
+    const username = resolveLedgerCommanderUsername(req.body?.username || '');
+    if (!username) {
+        return sendApiError(res, 'NEXUS-GEN-002');
+    }
+
+    const commander = findCommanderByUsername(username);
+    if (!commander) {
+        return sendApiError(res, 'NEXUS-GEN-004');
+    }
+
+    const access = resolveHeadquartersAccessForCommander(commander);
+    const gameNation = access.gameNation;
+    if (!gameNation) {
+        return sendApiError(res, 'GAME_NATION_REQUIRED');
+    }
+
+    const alertType = String(req.body?.alertType || req.body?.type || '').trim();
+    const currentState = readNationHeadquartersForNation(gameNation);
+    const patch = applyDispatchAlertPatch(currentState, alertType, username, access);
+
+    if (patch.errorCode) {
+        if (patch.errorCode === 'HQ_DISPATCH_ACTIVE' && patch.activeAlert) {
+            return res.status(409).json({
+                status: 'error',
+                code: 'NEXUS-HQ-012',
+                alert: patch.activeAlert
+            });
+        }
+        return sendApiError(res, patch.errorCode);
+    }
+
+    const nextState = {
+        ...currentState,
+        dispatchAlert: patch.dispatchAlert
+    };
+    const writeResult = writeNationHeadquartersForNation(gameNation, nextState);
+    if (writeResult.errorCode) {
+        return sendStoreError(res, writeResult);
+    }
+
+    let systemMessage = null;
+    if (patch.systemMessageText) {
+        let store = readGameChatStore();
+        const eventResult = appendGameChatNationSystemEventToStore(store, gameNation, patch.systemMessageText);
+        if (!eventResult.errorCode && !eventResult.error) {
+            store = writeGameChatStore(store);
+            systemMessage = eventResult.entry;
+        }
+    }
+
+    res.json({
+        status: 'ok',
+        gameNation,
+        alert: patch.dispatchAlert,
+        systemMessage
     });
 });
 
@@ -4527,7 +4881,9 @@ app.post('/api/portal/game/onboarding-nation', (req, res) => {
     }
 
     const updated = db.get('commanders').find({ username }).value();
-    const movementNation = resolveCommanderMapNationKey(updated);
+    ensureCommanderAgeRoster(updated);
+    const rosterCommander = db.get('commanders').find({ username }).value();
+    const movementNation = resolveCommanderMapNationKey(rosterCommander);
     const defaultMovement = getDefaultCommanderMovementRecord(movementNation);
     const existingMovement = readCommanderMovementRecord(username, movementNation);
     if (!existingMovement.catalogCityId) {
@@ -4541,7 +4897,7 @@ app.post('/api/portal/game/onboarding-nation', (req, res) => {
         gameNation: nationId,
         regionId,
         dossier,
-        movement: buildAgeMovementStatePayload(username, updated)
+        movement: buildAgeMovementStatePayload(username, rosterCommander)
     });
 });
 
@@ -4556,14 +4912,17 @@ app.get('/api/portal/age/movement-state', (req, res) => {
         return sendApiError(res, 'NEXUS-GEN-004');
     }
 
-    const mapNation = resolveCommanderMapNationKey(commander);
-    const councilNation = resolveCouncilBoardNationKey(commander);
+    ensureCommanderAgeRoster(commander);
+    const refreshedCommander = db.get('commanders').find({ username }).value();
+
+    const mapNation = resolveCommanderMapNationKey(refreshedCommander);
+    const councilNation = resolveCouncilBoardNationKey(refreshedCommander);
     const movement = readCommanderMovementRecord(username, mapNation || councilNation);
     writeCommanderMovementRecord(username, movement);
 
     res.json({
         status: 'ok',
-        ...buildAgeMovementStatePayload(username, commander)
+        ...buildAgeMovementStatePayload(username, refreshedCommander)
     });
 });
 
@@ -4945,6 +5304,19 @@ app.post('/api/portal/age/join', (req, res) => {
 
     touchPortalBrowseSession(username);
     touchAgeSession(username, { markOnline: true });
+
+    ensureCommanderAgeRoster(commander);
+
+    const mapNation = resolveCommanderMapNationKey(commander);
+    const armyFocus = normalizeArmyFocusValue(req.body?.armyFocus);
+    if (armyFocus) {
+        const movement = readCommanderMovementRecord(username, mapNation);
+        writeCommanderMovementRecord(username, {
+            ...movement,
+            armyFocus
+        });
+    }
+
     res.json({
         status: 'ok',
         ageSlug,

@@ -150,7 +150,9 @@
             movePointRegenPerTick: 1,
             movePointTickMinutes: 30,
             transferOwnershipRsdCost: 250
-        }
+        },
+        unitsTotal: 0,
+        unitsUninjured: 0
     };
 
     function resolveApiUrl(path) {
@@ -234,6 +236,15 @@
         }
         if (payload.rules && typeof payload.rules === 'object') {
             state.rules = { ...state.rules, ...payload.rules };
+        }
+        if (payload.unitsTotal !== undefined) {
+            state.unitsTotal = Math.max(0, Math.floor(Number(payload.unitsTotal) || 0));
+        }
+        if (payload.unitsUninjured !== undefined) {
+            state.unitsUninjured = Math.max(0, Math.floor(Number(payload.unitsUninjured) || 0));
+        }
+        if (Array.isArray(payload.ageArmy) && typeof global.player !== 'undefined') {
+            global.player.ageArmy = payload.ageArmy.slice();
         }
 
         global.dispatchEvent(new CustomEvent('royalarmies:age-movement-updated', {
@@ -448,6 +459,16 @@
         return Array.isArray(state.warNationIds) ? [...state.warNationIds] : [];
     }
 
+    function getUnitsTotal() {
+        return Math.max(0, Math.floor(Number(state.unitsTotal) || 0));
+    }
+
+    function getUnitsUninjured() {
+        const total = getUnitsTotal();
+        const uninjured = Math.max(0, Math.floor(Number(state.unitsUninjured) || 0));
+        return Math.min(total, uninjured);
+    }
+
     global.RoyalArmiesAgeMovement = {
         refresh,
         travel,
@@ -466,7 +487,9 @@
         getRules,
         resolvePlayerNationId,
         getAlliedNationIds,
-        getWarNationIds
+        getWarNationIds,
+        getUnitsTotal,
+        getUnitsUninjured
     };
 
     if (global.RoyalArmiesAgeWaterRoutes?.loadRoutes) {

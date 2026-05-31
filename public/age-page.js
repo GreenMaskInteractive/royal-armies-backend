@@ -12,9 +12,17 @@
     const COUNCIL_BOARD_MIN_WIDTH_PX = 220;
     const COUNCIL_BOARD_MIN_HEIGHT_PX = 160;
     const LEFT_HUD_STACK_GAP_PX = 10;
-    const LEFT_REPORTS_MIN_HEIGHT_PX = 150;
+    const LEFT_REPORTS_MIN_HEIGHT_PX = 300;
+    const RIGHT_REPORTS_MIN_HEIGHT_PX = 150;
     const LEFT_COLUMN_CHAT_CLEARANCE_PX = 10;
     const AGE_MOBILE_LAYOUT_MQ = '(max-width: 1024px)';
+    const HQ_PLANNING_BASE_MAP_PX = 480;
+    const HQ_PLANNING_BASE_RAIL_PX = 168;
+    const HQ_PLANNING_BASE_TOOLBAR_PX = 148;
+    const HQ_PLANNING_BASE_COMMAND_RAIL_PX = 292;
+    const HQ_PLANNING_BASE_GAP_PX = 12;
+    const HQ_PLANNING_LAYOUT_CLEARANCE_PX = 16;
+    const HQ_PLANNING_EDGE_BLEED_PX = 16;
 
     let councilBoardLayoutObserver = null;
 
@@ -175,7 +183,8 @@
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     username,
-                    ageSlug: global.document.body?.dataset?.ageSlug || 'alpha'
+                    ageSlug: global.document.body?.dataset?.ageSlug || 'alpha',
+                    armyFocus: global.RoyalArmiesAgeMovementPanel?.computeLocalArmyFocus?.() || ''
                 }),
                 cache: 'no-store',
                 credentials: 'include'
@@ -309,8 +318,45 @@
         root.classList.toggle('is-units-critical-health', criticalHealth);
     }
 
+    function countLocalArmyUnits(army) {
+        let total = 0;
+        let injured = 0;
+
+        (Array.isArray(army) ? army : []).forEach((stack) => {
+            if (!stack || typeof stack !== 'object') return;
+            const qty = Math.max(0, Math.floor(Number(stack.qty) || 0));
+            if (!qty) return;
+            const stackInjured = Math.max(
+                0,
+                Math.min(qty, Math.floor(Number(stack.injuredQty ?? stack.injured) || 0))
+            );
+            total += qty;
+            injured += stackInjured;
+        });
+
+        return {
+            total,
+            uninjured: Math.max(0, total - injured)
+        };
+    }
+
+    function resolveAgeHudUnitsCounts() {
+        const movement = global.RoyalArmiesAgeMovement;
+        if (movement && typeof movement.getUnitsTotal === 'function') {
+            return {
+                total: movement.getUnitsTotal(),
+                uninjured: movement.getUnitsUninjured()
+            };
+        }
+
+        const army = global.player?.ageArmy || global.player?.army;
+        const localCounts = countLocalArmyUnits(army);
+        return { uninjured: localCounts.uninjured, total: localCounts.total };
+    }
+
     function refreshAgeHudUnits() {
-        setAgeHudUnitsDisplay(2, 12);
+        const { uninjured, total } = resolveAgeHudUnitsCounts();
+        setAgeHudUnitsDisplay(uninjured, total);
     }
 
     const AGE_HUD_MOVE_POINTS_MAX = 3;
@@ -335,12 +381,14 @@
         ageMovePointTickRefreshTimer = global.setTimeout(() => {
             ageMovePointTickRefreshTimer = null;
             refreshAgeHudMovePoints();
+            refreshAgeHudUnits();
             global.dispatchEvent(new CustomEvent('royalarmies:age-movement-updated'));
 
             if (movement && typeof movement.refresh === 'function') {
                 movement.refresh()
                     .then(() => {
                         refreshAgeHudMovePoints();
+                        refreshAgeHudUnits();
                         scheduleAgeMovePointHalfHourRefresh();
                     })
                     .catch(() => scheduleAgeMovePointHalfHourRefresh());
@@ -638,6 +686,7 @@
                 /* movement sync is optional during boot */
             }
             refreshAgeHudMovePoints();
+            refreshAgeHudUnits();
         }
 
         scheduleAgeMovePointHalfHourRefresh();
@@ -645,7 +694,10 @@
         global.setInterval(() => {
             if (global.RoyalArmiesAgeMovement && typeof global.RoyalArmiesAgeMovement.refresh === 'function') {
                 global.RoyalArmiesAgeMovement.refresh()
-                    .then(() => refreshAgeHudMovePoints())
+                    .then(() => {
+                        refreshAgeHudMovePoints();
+                        refreshAgeHudUnits();
+                    })
                     .catch(() => {});
             }
         }, 5 * 60 * 1000);
@@ -691,6 +743,24 @@
         return global.window.innerHeight;
     }
 
+    function measureReportsPanelHeightPx(reportsPanel) {
+        if (!reportsPanel) return RIGHT_REPORTS_MIN_HEIGHT_PX;
+
+        const tabs = reportsPanel.querySelector('.age-left-reports-tabs');
+        const activePanel = reportsPanel.querySelector('.age-left-reports-tabpanel:not([hidden])')
+            || reportsPanel.querySelector('.age-left-reports-tabpanel.is-active');
+        const styles = global.getComputedStyle(reportsPanel);
+        const paddingY = (parseFloat(styles.paddingTop) || 0) + (parseFloat(styles.paddingBottom) || 0);
+        const gap = parseFloat(styles.rowGap || styles.gap) || 0;
+        const tabsHeight = tabs ? Math.ceil(tabs.getBoundingClientRect().height) : 0;
+        const panelContentHeight = activePanel ? Math.ceil(activePanel.scrollHeight) : 0;
+
+        return Math.max(
+            RIGHT_REPORTS_MIN_HEIGHT_PX,
+            Math.ceil(paddingY + tabsHeight + (tabsHeight > 0 ? gap : 0) + panelContentHeight)
+        );
+    }
+
     function syncCouncilBoardLayoutToMap() {
         const canvas = global.document.getElementById('age-page-canvas');
         const mapFrame = global.document.querySelector('#age-page-canvas .age-map-frame');
@@ -703,16 +773,20 @@
                 '--age-council-board-width',
                 '--age-council-board-height',
                 '--age-left-column-height',
-                '--age-left-reports-height'
+                '--age-left-reports-height',
+                '--age-right-hud-height',
+                '--age-right-reports-height'
             ].forEach((prop) => canvas.style.removeProperty(prop));
             return;
         }
 
+        const gap = COUNCIL_BOARD_MAP_GAP_PX;
+        const leftPosition = COUNCIL_BOARD_LEFT_POSITION_PX;
+        canvas.style.setProperty('--age-council-board-left', `${leftPosition}px`);
+
         const mapRect = mapFrame.getBoundingClientRect();
         if (mapRect.width < 8 || mapRect.height < 8) return;
 
-        const gap = COUNCIL_BOARD_MAP_GAP_PX;
-        const leftPosition = COUNCIL_BOARD_LEFT_POSITION_PX;
         const width = Math.max(
             COUNCIL_BOARD_MIN_WIDTH_PX,
             mapRect.left - gap - COUNCIL_BOARD_RIGHT_INSET_EXTRA_PX - leftPosition
@@ -725,28 +799,191 @@
         );
         const councilHeight = Math.max(
             COUNCIL_BOARD_MIN_HEIGHT_PX,
-            Math.min(availableHeight - LEFT_HUD_STACK_GAP_PX - LEFT_REPORTS_MIN_HEIGHT_PX, availableHeight * 0.5)
+            Math.min(
+                availableHeight - LEFT_HUD_STACK_GAP_PX - LEFT_REPORTS_MIN_HEIGHT_PX,
+                availableHeight * 0.5
+            )
         );
         const reportsHeight = Math.max(
             LEFT_REPORTS_MIN_HEIGHT_PX,
             availableHeight - councilHeight - LEFT_HUD_STACK_GAP_PX
         );
-        const leftColumnHeight = councilHeight + LEFT_HUD_STACK_GAP_PX + reportsHeight;
 
         canvas.style.setProperty('--age-council-board-top', `${top}px`);
-        canvas.style.setProperty('--age-council-board-left', `${leftPosition}px`);
         canvas.style.setProperty('--age-council-board-width', `${width}px`);
         canvas.style.setProperty('--age-council-board-height', `${councilHeight}px`);
-        canvas.style.setProperty('--age-left-column-height', `${leftColumnHeight}px`);
         canvas.style.setProperty('--age-left-reports-height', `${reportsHeight}px`);
+        canvas.style.setProperty(
+            '--age-left-column-height',
+            `${councilHeight + LEFT_HUD_STACK_GAP_PX + reportsHeight}px`
+        );
+
+        const rightHud = global.document.getElementById('age-map-hud-right');
+        const reportsPanel = rightHud?.querySelector('.age-left-reports-panel');
+        const playersOpen = Boolean(rightHud?.classList.contains('is-city-info-players-open'));
+        const settlementOpen = Boolean(rightHud?.classList.contains('is-settlement-view-open'));
+
+        if (rightHud && reportsPanel && !playersOpen && !settlementOpen) {
+            const reportsContentHeight = measureReportsPanelHeightPx(reportsPanel);
+            const finalReportsHeight = Math.max(reportsHeight, reportsContentHeight);
+
+            canvas.style.setProperty('--age-right-reports-height', `${finalReportsHeight}px`);
+        } else {
+            canvas.style.removeProperty('--age-right-reports-height');
+        }
+
+        canvas.style.removeProperty('--age-right-hud-height');
+        syncHeadquartersPlanningLayout();
     }
+
+    function clearHeadquartersPlanningLayoutVars(canvas) {
+        if (!canvas) return;
+        [
+            '--age-hq-planning-scale',
+            '--age-hq-planning-map-size',
+            '--age-hq-planning-stage-height',
+            '--age-hq-planning-hint-block',
+            '--age-hq-command-rail-translate-x',
+            '--age-hq-command-rail-translate-y'
+        ].forEach((prop) => canvas.style.removeProperty(prop));
+    }
+
+    function syncHeadquartersPlanningLayout() {
+        const canvas = global.document.getElementById('age-page-canvas');
+        if (!canvas || canvas.dataset.ageView !== 'headquarters') {
+            clearHeadquartersPlanningLayoutVars(canvas);
+            return;
+        }
+
+        if (isAgeMobileLayout()) {
+            clearHeadquartersPlanningLayoutVars(canvas);
+            return;
+        }
+
+        const workspace = global.document.getElementById('age-headquarters-workspace');
+        const planningColumn = workspace?.querySelector('.age-headquarters-planning-column:not([hidden])');
+        if (!workspace || !planningColumn) {
+            clearHeadquartersPlanningLayoutVars(canvas);
+            return;
+        }
+
+        const hint = planningColumn.querySelector('.age-hq-planning-hint');
+        const columnRect = planningColumn.getBoundingClientRect();
+        const columnStyles = global.getComputedStyle(planningColumn);
+        const padTop = parseFloat(columnStyles.paddingTop) || 0;
+        const padBottom = parseFloat(columnStyles.paddingBottom) || 0;
+        const columnGap = parseFloat(columnStyles.gap) || 0;
+        const hintHeight = hint ? Math.ceil(hint.getBoundingClientRect().height) : 0;
+        const hintBlock = hintHeight > 0 ? hintHeight + columnGap : 0;
+
+        const workspaceRect = workspace.getBoundingClientRect();
+        const bottomLimit = Math.min(
+            resolveLeftColumnBottomLimitPx(),
+            workspaceRect.bottom
+        );
+        const availableHeight = Math.max(
+            HQ_PLANNING_BASE_MAP_PX,
+            bottomLimit - columnRect.top - padTop - padBottom - hintBlock
+                - HQ_PLANNING_LAYOUT_CLEARANCE_PX - HQ_PLANNING_EDGE_BLEED_PX
+        );
+
+        const chromeBase = HQ_PLANNING_BASE_RAIL_PX
+            + HQ_PLANNING_BASE_TOOLBAR_PX
+            + HQ_PLANNING_BASE_COMMAND_RAIL_PX
+            + (HQ_PLANNING_BASE_GAP_PX * 3);
+        const widthDenominator = chromeBase + HQ_PLANNING_BASE_MAP_PX;
+        const availableWidth = Math.max(widthDenominator, planningColumn.clientWidth);
+
+        const scaleFromHeight = availableHeight / HQ_PLANNING_BASE_MAP_PX;
+        const scaleFromWidth = availableWidth / widthDenominator;
+        const scale = Math.max(1, Math.min(scaleFromHeight, scaleFromWidth));
+        const mapSize = Math.floor(HQ_PLANNING_BASE_MAP_PX * scale);
+
+        canvas.style.setProperty('--age-hq-planning-scale', scale.toFixed(4));
+        canvas.style.setProperty('--age-hq-planning-map-size', `${mapSize}px`);
+        canvas.style.setProperty('--age-hq-planning-stage-height', `${mapSize}px`);
+        canvas.style.setProperty('--age-hq-planning-hint-block', `${hintBlock + padBottom}px`);
+        global.requestAnimationFrame(syncHeadquartersCommandRailLayout);
+    }
+
+    function readHeadquartersLayoutVar(canvas, name) {
+        const raw = canvas.style.getPropertyValue(name);
+        const parsed = parseFloat(raw);
+        return Number.isFinite(parsed) ? parsed : 0;
+    }
+
+    function syncHeadquartersCommandRailLayout() {
+        const canvas = global.document.getElementById('age-page-canvas');
+        if (!canvas || canvas.dataset.ageView !== 'headquarters') {
+            return;
+        }
+
+        const commandRail = global.document.querySelector('.age-hq-command-rail:not([hidden])');
+        const toolbar = global.document.getElementById('age-hq-planning-toolbar');
+        const treasuryRail = global.document.querySelector('.age-headquarters-treasury-rail');
+        if (!commandRail || !toolbar || !treasuryRail) {
+            canvas.style.removeProperty('--age-hq-command-rail-translate-x');
+            canvas.style.removeProperty('--age-hq-command-rail-translate-y');
+            return;
+        }
+
+        const toolbarRect = toolbar.getBoundingClientRect();
+        const treasuryRect = treasuryRail.getBoundingClientRect();
+        const commandRect = commandRail.getBoundingClientRect();
+        const commandWidth = commandRect.width;
+        const commandHeight = commandRect.height;
+        if (commandWidth < 8 || commandHeight < 8 || toolbarRect.width < 8 || treasuryRect.width < 8) {
+            return;
+        }
+
+        const prevTranslateX = readHeadquartersLayoutVar(canvas, '--age-hq-command-rail-translate-x');
+        const prevTranslateY = readHeadquartersLayoutVar(canvas, '--age-hq-command-rail-translate-y');
+        const naturalLeft = commandRect.left - prevTranslateX;
+        const naturalTop = commandRect.top - prevTranslateY;
+
+        const stage = commandRail.closest('.age-hq-planning-stage');
+        const stageGap = stage
+            ? (parseFloat(global.getComputedStyle(stage).columnGap || global.getComputedStyle(stage).gap) || 0)
+            : 0;
+        const gapLeft = toolbarRect.right + stageGap;
+        const gapRight = treasuryRect.left;
+        const gapWidth = gapRight - gapLeft;
+        const gapTop = Math.min(toolbarRect.top, treasuryRect.top);
+        const gapBottom = Math.max(toolbarRect.bottom, treasuryRect.bottom);
+        const gapHeight = gapBottom - gapTop;
+
+        let translateX = 0;
+        if (gapWidth > commandWidth) {
+            const targetLeft = gapLeft + ((gapWidth - commandWidth) / 2);
+            translateX = targetLeft - naturalLeft;
+        }
+
+        let translateY = 0;
+        if (gapHeight > commandHeight) {
+            const targetTop = gapTop + ((gapHeight - commandHeight) / 2);
+            translateY = targetTop - naturalTop;
+        }
+
+        canvas.style.setProperty('--age-hq-command-rail-translate-x', `${translateX.toFixed(2)}px`);
+        canvas.style.setProperty('--age-hq-command-rail-translate-y', `${translateY.toFixed(2)}px`);
+    }
+
+    global.syncAgeHeadquartersCommandRailLayout = syncHeadquartersCommandRailLayout;
+
+    global.syncAgeMapHudLayout = syncCouncilBoardLayoutToMap;
+    global.syncAgeHeadquartersPlanningLayout = syncHeadquartersPlanningLayout;
 
     function bindCouncilBoardLayoutSync() {
         const mapFrame = global.document.querySelector('#age-page-canvas .age-map-frame');
         if (!mapFrame) return;
 
         const runSync = () => {
-            global.requestAnimationFrame(syncCouncilBoardLayoutToMap);
+            global.requestAnimationFrame(() => {
+                syncCouncilBoardLayoutToMap();
+                syncHeadquartersPlanningLayout();
+                syncHeadquartersCommandRailLayout();
+                global.RoyalArmiesAgeHeadquartersPlanningMap?.refreshLayout?.();
+            });
         };
 
         runSync();
@@ -765,9 +1002,28 @@
             const chatMessages = global.document.getElementById('age-map-bottom-chat-messages-host');
             const chatCompose = global.document.getElementById('age-map-bottom-chat-compose-host');
             const bottomDock = global.document.querySelector('#age-page-canvas .age-map-hud--bottom');
+            const rightHud = global.document.getElementById('age-map-hud-right');
+            const reportsPanel = rightHud?.querySelector('.age-left-reports-panel');
+            const cityInfoPanel = rightHud?.querySelector('.age-city-info-panel');
             if (chatMessages) councilBoardLayoutObserver.observe(chatMessages);
             if (chatCompose) councilBoardLayoutObserver.observe(chatCompose);
             if (bottomDock) councilBoardLayoutObserver.observe(bottomDock);
+            if (rightHud) councilBoardLayoutObserver.observe(rightHud);
+            if (reportsPanel) councilBoardLayoutObserver.observe(reportsPanel);
+            if (cityInfoPanel) councilBoardLayoutObserver.observe(cityInfoPanel);
+
+            const hqWorkspace = global.document.getElementById('age-headquarters-workspace');
+            const hqPlanningColumn = hqWorkspace?.querySelector('.age-headquarters-planning-column');
+            const hqPlanningStage = hqWorkspace?.querySelector('.age-hq-planning-stage');
+            const hqCommandRail = hqWorkspace?.querySelector('.age-hq-command-rail');
+            const hqTreasuryRail = hqWorkspace?.querySelector('.age-headquarters-treasury-rail');
+            const hqToolbar = global.document.getElementById('age-hq-planning-toolbar');
+            if (hqWorkspace) councilBoardLayoutObserver.observe(hqWorkspace);
+            if (hqPlanningColumn) councilBoardLayoutObserver.observe(hqPlanningColumn);
+            if (hqPlanningStage) councilBoardLayoutObserver.observe(hqPlanningStage);
+            if (hqCommandRail) councilBoardLayoutObserver.observe(hqCommandRail);
+            if (hqTreasuryRail) councilBoardLayoutObserver.observe(hqTreasuryRail);
+            if (hqToolbar) councilBoardLayoutObserver.observe(hqToolbar);
         }
     }
 
@@ -778,6 +1034,18 @@
 
         if (typeof global.enableAgeLeftReportsPanel === 'function') {
             global.enableAgeLeftReportsPanel();
+        }
+
+        if (typeof global.enableAgeQuickTipsPanel === 'function') {
+            global.enableAgeQuickTipsPanel();
+        }
+
+        if (typeof global.enableAgeWarLedger === 'function') {
+            global.enableAgeWarLedger();
+        }
+
+        if (typeof global.enableAgeRecords === 'function') {
+            global.enableAgeRecords();
         }
 
         bindCouncilBoardLayoutSync();
@@ -803,7 +1071,6 @@
         }
 
         applyAgeMapShellLabels();
-        refreshAgeHudUnits();
         refreshAgeHudMovePoints();
 
         bindPageNavigation();
@@ -831,6 +1098,18 @@
         }
 
         await Promise.all(criticalBoot);
+
+        if (typeof global.enableAgeWorldPlanOverlay === 'function') {
+            global.enableAgeWorldPlanOverlay().catch((err) => {
+                console.warn('[RIFT] Age world plan overlay failed to initialize:', err);
+            });
+        }
+
+        if (typeof global.enableAgeDispatchAlert === 'function') {
+            global.enableAgeDispatchAlert().catch((err) => {
+                console.warn('[RIFT] Age dispatch alert failed to initialize:', err);
+            });
+        }
 
         if (typeof global.enableAgeMovementPanel === 'function') {
             global.enableAgeMovementPanel();
@@ -868,6 +1147,7 @@
     global.toggleGameMobileCommanderSubmenu = toggleMobileCommanderSubmenu;
     global.gameMobileNavCommanderAction = gameMobileNavCommanderAction;
     global.setAgeHudUnitsDisplay = setAgeHudUnitsDisplay;
+    global.refreshAgeHudUnits = refreshAgeHudUnits;
     global.formatAgeHudUnitsDisplay = formatAgeHudUnitsDisplay;
     global.isAgeHudUnitsLowHealth = isAgeHudUnitsLowHealth;
     global.isAgeHudUnitsCriticalHealth = isAgeHudUnitsCriticalHealth;
@@ -878,6 +1158,7 @@
 
     global.addEventListener('royalarmies:age-movement-updated', () => {
         refreshAgeHudMovePoints();
+        refreshAgeHudUnits();
     });
 
     global.document.addEventListener('visibilitychange', () => {
@@ -886,7 +1167,10 @@
         scheduleAgeMovePointHalfHourRefresh();
         if (global.RoyalArmiesAgeMovement && typeof global.RoyalArmiesAgeMovement.refresh === 'function') {
             global.RoyalArmiesAgeMovement.refresh()
-                .then(() => refreshAgeHudMovePoints())
+                .then(() => {
+                    refreshAgeHudMovePoints();
+                    refreshAgeHudUnits();
+                })
                 .catch(() => {});
         }
     });

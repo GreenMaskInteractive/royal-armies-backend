@@ -1,5 +1,5 @@
 /**
- * RIFT — Age map view tabs (world map / settlement / headquarters).
+ * RIFT — Age map view tabs (world map / settlement / headquarters / records).
  */
 (function initAgeViewTabs(global) {
     'use strict';
@@ -7,6 +7,7 @@
     const VIEW_MAP = 'map';
     const VIEW_CITY = 'city';
     const VIEW_HEADQUARTERS = 'headquarters';
+    const VIEW_RECORDS = 'records';
 
     const WORLD_MAP_SRC = 'images/amnekmap.png';
     const SETTLEMENT_MAP_SRC = {
@@ -40,6 +41,34 @@
         citadel: 'View ally, neutral, or enemy armies bordering your current city, if any.',
         kingdom: 'View ally, neutral, or enemy armies bordering your current city, if any.'
     };
+
+    const VENUE_MARKS = {
+        'village-center': '◆',
+        'town-square': '◆',
+        'city-hall': '◆',
+        'citadel-court': '◆',
+        'grand-embassy': '◆',
+        'adventurers-guild': '⚑',
+        'infirmary': '✚',
+        church: '✦',
+        barracks: '⚔',
+        blacksmith: '⚒',
+        armory: '⧉',
+        arenas: '⚜',
+        border: '⌁'
+    };
+
+    function resolveVenueMark(venueId) {
+        return VENUE_MARKS[venueId] || '•';
+    }
+
+    function escapeSettlementMenuHtml(value) {
+        return String(value ?? '')
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;');
+    }
 
     const SETTLEMENT_VENUES = {
         village: [
@@ -115,6 +144,11 @@
                 description: 'Obtain a blessed banner and manage its perk tree.'
             },
             {
+                id: 'barracks',
+                label: 'Barracks',
+                description: 'Recruit units and manage your standing army garrison.'
+            },
+            {
                 id: 'blacksmith',
                 label: 'Blacksmith',
                 description: 'Purchase weapons, armor, and other battle-useful tools.'
@@ -158,6 +192,11 @@
                 description: 'Obtain a blessed banner and manage its perk tree.'
             },
             {
+                id: 'barracks',
+                label: 'Barracks',
+                description: 'Recruit units and manage your standing army garrison.'
+            },
+            {
                 id: 'blacksmith',
                 label: 'Blacksmith',
                 description: 'Purchase weapons, armor, and other battle-useful tools.'
@@ -194,6 +233,11 @@
                 id: 'church',
                 label: 'Church',
                 description: 'Obtain a blessed banner and manage its perk tree.'
+            },
+            {
+                id: 'barracks',
+                label: 'Barracks',
+                description: 'Recruit units and manage your standing army garrison.'
             },
             {
                 id: 'blacksmith',
@@ -263,6 +307,17 @@
         return Array.from(global.document.querySelectorAll('[data-age-view-tab]'));
     }
 
+    function isWorkspaceOverlayView(view) {
+        return view === VIEW_HEADQUARTERS || view === VIEW_RECORDS;
+    }
+
+    function normalizeView(view) {
+        if (view === VIEW_CITY || view === VIEW_HEADQUARTERS || view === VIEW_RECORDS) {
+            return view;
+        }
+        return VIEW_MAP;
+    }
+
     function syncViewTabButtons() {
         getViewTabs().forEach((tab) => {
             const view = tab.getAttribute('data-age-view-tab');
@@ -281,6 +336,8 @@
 
         const inSettlementView = activeView === VIEW_CITY;
         const inHeadquartersView = activeView === VIEW_HEADQUARTERS;
+        const inRecordsView = activeView === VIEW_RECORDS;
+        const inWorkspaceOverlay = isWorkspaceOverlayView(activeView);
 
         if (canvas) {
             canvas.dataset.ageView = activeView;
@@ -288,17 +345,17 @@
 
         if (rightHud) {
             rightHud.classList.toggle('is-settlement-view-open', inSettlementView);
-            rightHud.classList.toggle('is-headquarters-view-open', inHeadquartersView);
+            rightHud.classList.toggle('is-headquarters-view-open', inHeadquartersView || inRecordsView);
             if (inSettlementView) {
                 rightHud.classList.remove('is-city-info-players-open');
                 rightHud.setAttribute('aria-label', `${resolveSettlementTierDisplayLabel()} venues`);
-            } else if (!inHeadquartersView) {
+            } else if (!inWorkspaceOverlay) {
                 global.RoyalArmiesAgeMovementPanel?.refreshCityInfoPanelHeader?.();
             }
         }
 
         if (cityInfoPanel) {
-            cityInfoPanel.hidden = inSettlementView || inHeadquartersView;
+            cityInfoPanel.hidden = inSettlementView || inWorkspaceOverlay;
         }
 
         if (settlementPanel) {
@@ -309,6 +366,12 @@
         if (hqWorkspace) {
             hqWorkspace.hidden = !inHeadquartersView;
             hqWorkspace.setAttribute('aria-hidden', inHeadquartersView ? 'false' : 'true');
+        }
+
+        const recordsWorkspace = global.document.getElementById('age-records-workspace');
+        if (recordsWorkspace) {
+            recordsWorkspace.hidden = !inRecordsView;
+            recordsWorkspace.setAttribute('aria-hidden', inRecordsView ? 'false' : 'true');
         }
     }
 
@@ -324,21 +387,23 @@
         const tier = resolveSettlementTier();
         const inSettlementView = activeView === VIEW_CITY;
         const inHeadquartersView = activeView === VIEW_HEADQUARTERS;
+        const inRecordsView = activeView === VIEW_RECORDS;
+        const hideWorldMapLayers = isWorkspaceOverlayView(activeView);
 
         if (mapFrame) {
             mapFrame.classList.toggle('is-settlement-map-frame', inSettlementView);
         }
 
         if (mapSvg) {
-            mapSvg.hidden = inSettlementView || inHeadquartersView;
+            mapSvg.hidden = inSettlementView || hideWorldMapLayers;
         }
 
         if (mapCanvas) {
-            mapCanvas.hidden = inSettlementView || inHeadquartersView;
+            mapCanvas.hidden = inSettlementView || hideWorldMapLayers;
         }
 
         if (highlightCanvas) {
-            highlightCanvas.hidden = inSettlementView || inHeadquartersView;
+            highlightCanvas.hidden = inSettlementView || hideWorldMapLayers;
         }
 
         if (settlementBg) {
@@ -357,13 +422,27 @@
             global.RoyalArmiesAgeWorldMap.onViewModeChange(activeView);
         }
 
+        if (global.RoyalArmiesAgeWorldPlanOverlay?.onViewModeChange) {
+            global.RoyalArmiesAgeWorldPlanOverlay.onViewModeChange(activeView);
+        }
+
+        if (activeView === 'map' && typeof global.RoyalArmiesAgeWorldPlanOverlay?.refreshNationPlan === 'function') {
+            void global.RoyalArmiesAgeWorldPlanOverlay.refreshNationPlan();
+        }
+
         if (inHeadquartersView) {
             global.RoyalArmiesAgeHeadquarters?.onViewOpen?.();
         } else {
             global.RoyalArmiesAgeHeadquarters?.onViewClose?.();
         }
 
-        if (mapImage && !inSettlementView && !inHeadquartersView) {
+        if (inRecordsView) {
+            global.RoyalArmiesAgeRecords?.onViewOpen?.();
+        } else {
+            global.RoyalArmiesAgeRecords?.onViewClose?.();
+        }
+
+        if (mapImage && !inSettlementView && !hideWorldMapLayers) {
             const worldHref = mapImage.dataset.worldHref || WORLD_MAP_SRC;
             mapImage.setAttribute('href', worldHref);
             mapImage.setAttributeNS('http://www.w3.org/1999/xlink', 'href', worldHref);
@@ -376,7 +455,9 @@
                     ? `${city?.name || 'Settlement'} local map`
                     : activeView === VIEW_HEADQUARTERS
                         ? 'Nation headquarters'
-                        : 'Amnek world map'
+                        : activeView === VIEW_RECORDS
+                            ? 'Age records'
+                            : 'Amnek world map'
             );
         }
     }
@@ -404,14 +485,23 @@
             const placementClass = venue.placement === 'bottom'
                 ? ' age-settlement-menu-item--bottom'
                 : '';
-            const description = venue.description
-                ? `<span class="age-settlement-menu-item-desc">${venue.description}</span>`
+            const borderClass = venue.id === 'border'
+                ? ' age-settlement-menu-item--border'
                 : '';
+            const description = venue.description
+                ? `<span class="age-settlement-menu-item-desc">${escapeSettlementMenuHtml(venue.description)}</span>`
+                : '';
+            const mark = escapeSettlementMenuHtml(resolveVenueMark(venue.id));
+            const label = escapeSettlementMenuHtml(venue.label);
             return (
-                `<button type="button" class="age-settlement-menu-item${placementClass}"`
-                + ` data-settlement-venue="${venue.id}">`
-                + `<span class="age-settlement-menu-item-label">${venue.label}</span>`
+                `<button type="button" class="age-settlement-menu-item${placementClass}${borderClass}"`
+                + ` data-settlement-venue="${escapeSettlementMenuHtml(venue.id)}">`
+                + `<span class="age-settlement-menu-item-mark" aria-hidden="true">${mark}</span>`
+                + `<span class="age-settlement-menu-item-body">`
+                + `<span class="age-settlement-menu-item-label">${label}</span>`
                 + description
+                + '</span>'
+                + `<span class="age-settlement-menu-item-chevron" aria-hidden="true">›</span>`
                 + '</button>'
             );
         }).join('');
@@ -429,11 +519,13 @@
 
         if (venueId === 'border') {
             global.console.info('[RIFT] Border selected — battle training (coming soon).');
+        } else if (venueId === 'barracks') {
+            global.console.info('[RIFT] Barracks selected — recruitment (coming soon).');
         }
     }
 
     function setActiveView(view, options = {}) {
-        const nextView = view === VIEW_CITY || view === VIEW_HEADQUARTERS ? view : VIEW_MAP;
+        const nextView = normalizeView(view);
         if (!options.force && nextView === activeView) {
             syncViewTabButtons();
             return;
@@ -443,6 +535,13 @@
         syncViewTabButtons();
         syncRightHudPanels();
         syncMapStage();
+
+        if (activeView === VIEW_HEADQUARTERS && typeof global.syncAgeHeadquartersPlanningLayout === 'function') {
+            global.requestAnimationFrame(() => {
+                global.syncAgeHeadquartersPlanningLayout();
+                global.RoyalArmiesAgeHeadquartersPlanningMap?.refreshLayout?.();
+            });
+        }
 
         if (activeView === VIEW_CITY) {
             renderSettlementMenu();

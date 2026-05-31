@@ -15,16 +15,60 @@ const AGE_ALPHA_DEFAULT_MAP_NATION = 'aesthene';
 
 const CATALOG_PATH = path.join(__dirname, 'public', 'data', 'age-world-cities.json');
 const WATER_ROUTES_PATH = path.join(__dirname, 'public', 'data', 'age-world-water-routes.json');
+const CROSS_BORDER_ADJACENCY_PAD = 4;
 
 let cityCatalogCache = null;
 let cityByIdCache = null;
 let waterRoutesCache = null;
 let waterRoutePairIndex = null;
 
+function cityBoxesTouch(bboxA, bboxB, pad = CROSS_BORDER_ADJACENCY_PAD) {
+    if (!bboxA || !bboxB) return false;
+    return !(
+        bboxA.maxX + pad < bboxB.minX - pad
+        || bboxB.maxX + pad < bboxA.minX - pad
+        || bboxA.maxY + pad < bboxB.minY - pad
+        || bboxB.maxY + pad < bboxA.minY - pad
+    );
+}
+
+function catalogHasCrossBorderNeighbors(cities) {
+    if (!Array.isArray(cities) || !cities.length) return false;
+    const byId = new Map(cities.map((city) => [city.id, city]));
+    for (const city of cities) {
+        for (const neighborId of city.neighbors || []) {
+            const neighbor = byId.get(neighborId);
+            if (neighbor && neighbor.nationId !== city.nationId) return true;
+        }
+    }
+    return false;
+}
+
+function augmentCrossBorderNeighbors(cities) {
+    if (!Array.isArray(cities) || !cities.length || catalogHasCrossBorderNeighbors(cities)) {
+        return;
+    }
+
+    for (let i = 0; i < cities.length; i += 1) {
+        for (let j = i + 1; j < cities.length; j += 1) {
+            const cityA = cities[i];
+            const cityB = cities[j];
+            if (!cityA || !cityB || cityA.nationId === cityB.nationId) continue;
+            if (!cityBoxesTouch(cityA.bbox, cityB.bbox)) continue;
+
+            if (!Array.isArray(cityA.neighbors)) cityA.neighbors = [];
+            if (!Array.isArray(cityB.neighbors)) cityB.neighbors = [];
+            if (!cityA.neighbors.includes(cityB.id)) cityA.neighbors.push(cityB.id);
+            if (!cityB.neighbors.includes(cityA.id)) cityB.neighbors.push(cityA.id);
+        }
+    }
+}
+
 function loadCityCatalog() {
     if (cityCatalogCache) return cityCatalogCache;
     const raw = fs.readFileSync(CATALOG_PATH, 'utf8');
     cityCatalogCache = JSON.parse(raw);
+    augmentCrossBorderNeighbors(cityCatalogCache.cities || []);
     cityByIdCache = null;
     return cityCatalogCache;
 }
@@ -169,6 +213,49 @@ function getNextMovePointTickBoundaryMs(timestampMs) {
     return getMovePointTickBoundaryMs(timestampMs) + MOVE_POINT_TICK_MS;
 }
 
+function normalizeArmyFocusValue(value) {
+    const normalized = String(value || '').trim().toLowerCase();
+    if (normalized === 'ranking' || normalized === 'rank' || normalized === 'rankdrop' || normalized === 'rank_drop') {
+        return 'ranking';
+    }
+    if (normalized === 'pvp') return 'pvp';
+    return '';
+}
+
+function computeArmyFocusFromStacks(stacks) {
+    if (!Array.isArray(stacks) || !stacks.length) return '';
+
+    let rankingWeight = 0;
+    let pvpWeight = 0;
+
+    stacks.forEach((stack) => {
+        if (!stack || typeof stack !== 'object') return;
+        const qty = Math.max(0, Math.floor(Number(stack.qty) || 0));
+        if (!qty) return;
+
+        const purpose = normalizeArmyFocusValue(stack.purpose || stack.role || stack.armyRole || '');
+        if (purpose === 'ranking') rankingWeight += qty;
+        else if (purpose === 'pvp') pvpWeight += qty;
+    });
+
+    if (!rankingWeight && !pvpWeight) return '';
+    if (rankingWeight === pvpWeight) return '';
+    return rankingWeight > pvpWeight ? 'ranking' : 'pvp';
+}
+
+function resolveCommanderArmyFocus(commander, movementRecord) {
+    const fromMovement = normalizeArmyFocusValue(movementRecord?.armyFocus);
+    if (fromMovement) return fromMovement;
+
+    const explicit = normalizeArmyFocusValue(commander?.armyFocus);
+    if (explicit) return explicit;
+
+    const army = Array.isArray(commander?.ageArmy)
+        ? commander.ageArmy
+        : (Array.isArray(commander?.army) ? commander.army : []);
+    return computeArmyFocusFromStacks(army);
+}
+
 function normalizeCommanderMovementRecord(raw, nationKey) {
     const record = raw && typeof raw === 'object' ? raw : {};
     const catalogCityId = resolveCatalogCityId(record.catalogCityId, nationKey);
@@ -179,7 +266,13 @@ function normalizeCommanderMovementRecord(raw, nationKey) {
     const lastMovePointRegenAt = record.lastMovePointRegenAt
         ? String(record.lastMovePointRegenAt)
         : new Date(getMovePointTickBoundaryMs(Date.now())).toISOString();
-    return { catalogCityId, movePoints, lastMovePointRegenAt };
+    const armyFocus = normalizeArmyFocusValue(record.armyFocus);
+    return {
+        catalogCityId,
+        movePoints,
+        lastMovePointRegenAt,
+        armyFocus
+    };
 }
 
 function getDefaultCommanderMovementRecord(nationKey) {
@@ -266,7 +359,9 @@ function areCitiesAdjacent(cityAId, cityBId) {
     if (cityA.id === cityB.id) return true;
     const aToB = Array.isArray(cityA.neighbors) && cityA.neighbors.includes(cityB.id);
     const bToA = Array.isArray(cityB.neighbors) && cityB.neighbors.includes(cityA.id);
-    return aToB || bToA;
+    if (aToB || bToA) return true;
+    if (cityA.nationId !== cityB.nationId && cityBoxesTouch(cityA.bbox, cityB.bbox)) return true;
+    return false;
 }
 
 function resolveCityConnection(cityAId, cityBId) {
@@ -419,6 +514,9 @@ module.exports = {
     resolveCatalogCityId,
     resolveDefaultCapitalCityId,
     normalizeCommanderMovementRecord,
+    normalizeArmyFocusValue,
+    computeArmyFocusFromStacks,
+    resolveCommanderArmyFocus,
     getDefaultCommanderMovementRecord,
     getMovePointTickBoundaryMs,
     getNextMovePointTickBoundaryMs,

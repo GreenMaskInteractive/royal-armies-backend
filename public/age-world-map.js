@@ -6,7 +6,7 @@
 (function initAgeWorldMap(global) {
     'use strict';
 
-    const DATA_URL = 'data/age-world-cities.json?v=no-snow-terrain-note-1';
+    const DATA_URL = 'data/age-world-cities.json?v=cross-border-neighbors-2';
     const REGION_PATHS_URL = 'data/age-world-region-paths.json?v=glifora-border-fix-2';
     const NATION_PATHS_URL = 'data/game-nation-paths.json?v=game-nation-paths-3';
     const NATIVE_SIZE = 1642;
@@ -304,6 +304,9 @@
         syncMapViewBox();
         syncLabelScreenPositions();
         syncBorderVisuals();
+        if (typeof global.RoyalArmiesAgeWorldPlanOverlay?.syncLayout === 'function') {
+            global.RoyalArmiesAgeWorldPlanOverlay.syncLayout();
+        }
     }
 
     function syncMapViewBox() {
@@ -1913,6 +1916,7 @@
         }
 
         catalog = await citiesRes.json();
+        global.RoyalArmiesAgeWaterRoutes?.augmentCrossBorderNeighbors?.(catalog.cities);
         const regionPayload = await regionsRes.json();
         const nationPayload = await nationsRes.json();
 
@@ -1983,7 +1987,8 @@
             syncPlayerCityPinHitTarget();
         },
         refreshNationCityHighlights,
-        getCatalog: () => catalog
+        getCatalog: () => catalog,
+        mapPointToFramePixels
     };
     global.enableAgeWorldMap = enableAgeWorldMap;
 })(window);

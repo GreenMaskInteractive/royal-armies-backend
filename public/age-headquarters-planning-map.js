@@ -4,7 +4,7 @@
 (function initAgeHeadquartersPlanningMap(global) {
     'use strict';
 
-    const DATA_URL = 'data/age-world-cities.json?v=no-snow-terrain-note-1';
+    const DATA_URL = 'data/age-world-cities.json?v=cross-border-neighbors-2';
     const REGION_PATHS_URL = 'data/age-world-region-paths.json?v=glifora-border-fix-2';
     const NATION_PATHS_URL = 'data/game-nation-paths.json?v=game-nation-paths-3';
     const MAP_BG_SRC = 'images/amnekmap.png';
@@ -27,11 +27,11 @@
     const PILL_STACK_OFFSET_PX = 22;
     const PILL_LABEL_CLEARANCE_PX = 28;
 
-    const PILL_MARKER_TYPES = new Set(['hold', 'taxi']);
-    const ARROW_MARKER_TYPES = new Set(['sf', 'mf', 'move']);
+    const PILL_MARKER_TYPES = new Set(['hold']);
+    const ARROW_MARKER_TYPES = new Set(['sf', 'mf', 'move', 'taxi', 'temp-main']);
     const MP_LIMITED_ARROW_TYPES = new Set(['move', 'mf']);
+    const IN_CITY_HOLD_ARROW_TYPES = new Set(['move', 'taxi']);
     const MAX_PLANNING_MOVE_MP = 3;
-    const TEMP_MAIN_MARKER_TYPE = 'temp-main';
 
     const HQ_TINT = {
         own: { fill: 'rgba(255, 196, 48, 0.46)', stroke: 'rgba(255, 228, 120, 1)' },
@@ -89,14 +89,14 @@
     let arrowMarkers = [];
     let pillIdCounter = 0;
     let arrowIdCounter = 0;
-    let sfArrowCounter = 0;
-    let tempMainCityId = '';
 
     let onBorderCitySelected = null;
     let onPillsChanged = null;
     let onMoveMfMpChanged = null;
     let onPlanningSyncRequested = null;
+    let onPlanningPlacementBlocked = null;
     let planningSyncSuppressed = false;
+    let planningLocked = false;
 
     function clamp(value, min, max) {
         return Math.min(max, Math.max(min, value));
@@ -203,12 +203,27 @@
         return PILL_MARKER_TYPES.has(type);
     }
 
-    function isTempMainMarkerType(type) {
-        return type === TEMP_MAIN_MARKER_TYPE;
+    function cityHasHoldPill(cityId) {
+        if (!cityId) return false;
+        return pills.some((pill) => pill.cityId === cityId && pill.type === 'hold');
+    }
+
+    function canPlaceInCityHoldArrow(city, type) {
+        if (!city || !cityHasHoldPill(city.id)) return false;
+        return IN_CITY_HOLD_ARROW_TYPES.has(type);
+    }
+
+    function getTempMainArrow() {
+        return arrowMarkers.find((arrow) => arrow.type === 'temp-main') || null;
+    }
+
+    function getTempMainCityId() {
+        return getTempMainArrow()?.toCityId || '';
     }
 
     function resolveLegMovePointCost(fromCity, toCity) {
         if (!fromCity || !toCity) return Infinity;
+        if (fromCity.id === toCity.id) return 0;
 
         if (global.RoyalArmiesAgeWaterRoutes?.resolveCityConnection) {
             const connection = global.RoyalArmiesAgeWaterRoutes.resolveCityConnection(fromCity, toCity);
@@ -231,7 +246,9 @@
 
             const fromCity = cityById.get(step.fromCityId);
             const toCity = cityById.get(step.toCityId);
-            mpUsed += resolveLegMovePointCost(fromCity, toCity);
+            const legCost = resolveLegMovePointCost(fromCity, toCity);
+            if (!Number.isFinite(legCost) || legCost <= 0) continue;
+            mpUsed += legCost;
         }
 
         return mpUsed;
@@ -246,19 +263,10 @@
         };
     }
 
-    function wouldExceedMoveMfMpCap(fromCity, toCity, type) {
-        if (!MP_LIMITED_ARROW_TYPES.has(type)) return false;
-
-        const legCost = resolveLegMovePointCost(fromCity, toCity);
-        if (!Number.isFinite(legCost) || legCost <= 0) return true;
-
-        return countTrailingMoveMfMpUsed() + legCost > MAX_PLANNING_MOVE_MP;
-    }
-
     function notifyPlanningChanged() {
         if (typeof onPillsChanged === 'function') onPillsChanged(getAllPlanningSteps());
         if (typeof onMoveMfMpChanged === 'function') onMoveMfMpChanged(getMoveMfMpBudget());
-        if (!planningSyncSuppressed && typeof onPlanningSyncRequested === 'function') {
+        if (!planningLocked && !planningSyncSuppressed && typeof onPlanningSyncRequested === 'function') {
             onPlanningSyncRequested(getPlanningSnapshot());
         }
     }
@@ -276,16 +284,100 @@
         return last.kind === 'pill' ? last.cityId : last.toCityId;
     }
 
+    /** Owned/current staging cities in chain order — anchor first, then earlier endpoints. */
+    function buildSfMfStagingSearchOrder() {
+        const ordered = [];
+        const seen = new Set();
+        const push = (id) => {
+            if (!id || seen.has(id)) return;
+            seen.add(id);
+            ordered.push(id);
+        };
+
+        const steps = getAllPlanningSteps();
+        if (!steps.length) {
+            push(playerMapCityId);
+            return ordered;
+        }
+
+        const last = steps[steps.length - 1];
+        push(last.kind === 'pill' ? last.cityId : last.toCityId);
+
+        if (selectedBorderCityId) push(selectedBorderCityId);
+
+        for (let i = steps.length - 1; i >= 0; i -= 1) {
+            const step = steps[i];
+            if (step.kind === 'pill') {
+                push(step.cityId);
+            } else {
+                push(step.toCityId);
+                push(step.fromCityId);
+            }
+        }
+        push(playerMapCityId);
+        return ordered;
+    }
+
+    function isMoveChainStagingCity(cityId) {
+        if (!cityId) return false;
+        if (cityId === playerMapCityId) return true;
+        for (const step of getAllPlanningSteps()) {
+            if (step.kind !== 'arrow' || step.type !== 'move') continue;
+            if (step.toCityId === cityId || step.fromCityId === cityId) return true;
+        }
+        return false;
+    }
+
+    function isOwnedOrCurrentStagingCity(city) {
+        if (!city) return false;
+        const kind = resolveCityOwnershipKind(city);
+        if (kind === 'own' || kind === 'current') return true;
+        if (isMoveChainStagingCity(city.id)) return true;
+        return cityHasHoldPill(city.id);
+    }
+
+    /** SF/MF may launch from owned cities, move-chain endpoints, or Hold cities that border the target. */
+    function resolveSfMfOriginCityId(targetCity) {
+        if (!targetCity) return '';
+        for (const cityId of buildSfMfStagingSearchOrder()) {
+            const stagingCity = cityById.get(cityId);
+            if (!stagingCity || stagingCity.id === targetCity.id) continue;
+            if (!isOwnedOrCurrentStagingCity(stagingCity)) continue;
+            if (!citiesAreConnected(stagingCity, targetCity)) continue;
+            return cityId;
+        }
+        return '';
+    }
+
+    function resolveArrowFromCityId(targetCity, type) {
+        if (type === 'sf' || type === 'mf') {
+            return resolveSfMfOriginCityId(targetCity);
+        }
+        if (type === 'temp-main') {
+            return playerMapCityId || '';
+        }
+        if (targetCity && canPlaceInCityHoldArrow(targetCity, type) && getChainAnchorCityId() === targetCity.id) {
+            return targetCity.id;
+        }
+        return getChainAnchorCityId();
+    }
+
     function citiesAreConnected(cityA, cityB) {
         if (!cityA || !cityB || cityA.id === cityB.id) return false;
+
+        const aToB = Array.isArray(cityA.neighbors) && cityA.neighbors.includes(cityB.id);
+        const bToA = Array.isArray(cityB.neighbors) && cityB.neighbors.includes(cityA.id);
+        if (aToB || bToA) return true;
+
+        if (global.RoyalArmiesAgeWaterRoutes?.areCatalogCitiesAdjacent) {
+            return global.RoyalArmiesAgeWaterRoutes.areCatalogCitiesAdjacent(cityA, cityB);
+        }
 
         if (global.RoyalArmiesAgeWaterRoutes?.resolveCityConnection) {
             return Boolean(global.RoyalArmiesAgeWaterRoutes.resolveCityConnection(cityA, cityB));
         }
 
-        const aToB = Array.isArray(cityA.neighbors) && cityA.neighbors.includes(cityB.id);
-        const bToA = Array.isArray(cityB.neighbors) && cityB.neighbors.includes(cityA.id);
-        return aToB || bToA;
+        return false;
     }
 
     function cityBordersPlayer(city) {
@@ -308,113 +400,21 @@
         return edge === 'from' ? step.fromCityId : step.toCityId;
     }
 
-    function resolveCurveHintCity(fromCityId, toCityId) {
-        const steps = getAllPlanningSteps();
-        if (!steps.length) return null;
-
-        for (let i = 0; i < steps.length; i += 1) {
-            const step = steps[i];
-            const stepFrom = resolveStepCityId(step, 'from');
-            const stepTo = resolveStepCityId(step, 'to');
-            const isMatchingArrow = step.kind === 'arrow'
-                && step.fromCityId === fromCityId
-                && step.toCityId === toCityId;
-            const isMatchingSegmentEnd = stepTo === toCityId
-                && (stepFrom === fromCityId || (i > 0 && resolveStepCityId(steps[i - 1], 'to') === fromCityId));
-
-            if (!isMatchingArrow && !isMatchingSegmentEnd) continue;
-
-            for (let j = i + 1; j < steps.length; j += 1) {
-                const hintId = resolveStepCityId(steps[j], 'to');
-                if (hintId && hintId !== toCityId) {
-                    return cityById.get(hintId) || null;
-                }
-            }
-            break;
-        }
-
-        return null;
-    }
-
-    function resolveIncomingChainCity(fromCityId, toCityId) {
-        const steps = getAllPlanningSteps();
-        if (!steps.length) return null;
-
-        for (let i = 0; i < steps.length; i += 1) {
-            const step = steps[i];
-            const stepFrom = resolveStepCityId(step, 'from');
-            const stepTo = resolveStepCityId(step, 'to');
-            const isMatchingArrow = step.kind === 'arrow'
-                && step.fromCityId === fromCityId
-                && step.toCityId === toCityId;
-            const isMatchingSegmentEnd = stepTo === toCityId
-                && (stepFrom === fromCityId || (i > 0 && resolveStepCityId(steps[i - 1], 'to') === fromCityId));
-
-            if (!isMatchingArrow && !isMatchingSegmentEnd) continue;
-
-            if (i === 0) {
-                return cityById.get(playerMapCityId) || null;
-            }
-
-            const prev = steps[i - 1];
-            if (prev.kind === 'arrow') {
-                return cityById.get(prev.fromCityId) || null;
-            }
-
-            if (prev.kind === 'pill' && prev.cityId === fromCityId && i >= 2) {
-                return cityById.get(resolveStepCityId(steps[i - 2], 'from')) || null;
-            }
-
-            return cityById.get(resolveStepCityId(prev, 'from')) || null;
-        }
-
-        return null;
-    }
-
-    function resolveCurveSide(fromCity, toCity, forwardHintCity, incomingCity) {
-        const outX = toCity.centroid.x - fromCity.centroid.x;
-        const outY = toCity.centroid.y - fromCity.centroid.y;
-
-        if (forwardHintCity?.centroid) {
-            const hintX = forwardHintCity.centroid.x - toCity.centroid.x;
-            const hintY = forwardHintCity.centroid.y - toCity.centroid.y;
-            const cross = outX * hintY - outY * hintX;
-            if (Math.abs(cross) > 0.01) {
-                return cross >= 0 ? 1 : -1;
-            }
-        }
-
-        if (incomingCity?.centroid) {
-            const inX = fromCity.centroid.x - incomingCity.centroid.x;
-            const inY = fromCity.centroid.y - incomingCity.centroid.y;
-            const cross = inX * outY - inY * outX;
-            if (Math.abs(cross) > 0.01) {
-                return cross >= 0 ? 1 : -1;
-            }
-        }
-
-        return 1;
-    }
-
-    function buildArrowGeometry(fromCity, toCity, forwardHintCity, incomingCity) {
+    function buildArrowGeometry(fromCity, toCity) {
         if (!fromCity?.centroid || !toCity?.centroid) return null;
 
         const start = mapPointToFramePixels(fromCity.centroid.x, fromCity.centroid.y);
         const end = mapPointToFramePixels(toCity.centroid.x, toCity.centroid.y);
-        const midX = (start.x + end.x) / 2;
-        const midY = (start.y + end.y) / 2;
-        const dx = end.x - start.x;
-        const dy = end.y - start.y;
-        const dist = Math.hypot(dx, dy) || 1;
-        const perpX = -dy / dist;
-        const perpY = dx / dist;
-        const curve = Math.min(80, dist * 0.28);
-        const side = resolveCurveSide(fromCity, toCity, forwardHintCity, incomingCity);
-        const cx = midX + perpX * curve * side;
-        const cy = midY + perpY * curve * side;
+
+        if (fromCity.id === toCity.id) {
+            const offset = 16;
+            return {
+                d: `M ${(start.x - offset).toFixed(2)} ${start.y.toFixed(2)} L ${(start.x + offset).toFixed(2)} ${start.y.toFixed(2)}`
+            };
+        }
 
         return {
-            d: `M ${start.x.toFixed(2)} ${start.y.toFixed(2)} Q ${cx.toFixed(2)} ${cy.toFixed(2)} ${end.x.toFixed(2)} ${end.y.toFixed(2)}`
+            d: `M ${start.x.toFixed(2)} ${start.y.toFixed(2)} L ${end.x.toFixed(2)} ${end.y.toFixed(2)}`
         };
     }
 
@@ -437,31 +437,90 @@
     }
 
     function canPlaceArrowAtCity(city, type) {
-        if (!city || !isArrowMarkerType(type)) return false;
+        return !describeArrowPlacementBlock(city, type);
+    }
+
+    function describeArrowPlacementBlock(city, type) {
+        if (!city || !isArrowMarkerType(type)) return 'Invalid arrow placement.';
+
+        if (type === 'sf' || type === 'mf') {
+            const ownership = resolveCityOwnershipKind(city);
+            if (ownership === 'own' || ownership === 'ally' || ownership === 'current') {
+                return 'SF and MF arrows must target neutral or enemy cities.';
+            }
+
+            const fromId = resolveSfMfOriginCityId(city);
+            const fromCity = cityById.get(fromId);
+            if (!fromCity) {
+                return 'No staging city borders that target — move or Hold on a city adjacent to it first.';
+            }
+
+            if (type === 'mf') {
+                const legCost = resolveLegMovePointCost(fromCity, city);
+                if (!Number.isFinite(legCost) || legCost <= 0) {
+                    return 'No valid route to that city for Main Force.';
+                }
+                const budget = getMoveMfMpBudget();
+                if (budget.used + legCost > MAX_PLANNING_MOVE_MP) {
+                    return `Move chain is out of MP (${budget.used}/${MAX_PLANNING_MOVE_MP} used; this leg costs ${legCost}). Place SF or a Hold pill to start a new chain.`;
+                }
+            }
+            return '';
+        }
+
+        if (type === 'temp-main') {
+            if (!canPlaceTempMainAtCity(city)) {
+                return 'Temp Main must be placed on an owned city other than your Main army city.';
+            }
+            return '';
+        }
 
         const fromId = getChainAnchorCityId();
         const fromCity = cityById.get(fromId);
-        if (!fromCity || fromCity.id === city.id) return false;
-        if (!citiesAreConnected(fromCity, city)) return false;
+        if (!fromCity) return 'Place your first order from your Main army city or an existing chain step.';
+
+        if (fromCity.id === city.id) {
+            if (canPlaceInCityHoldArrow(city, type)) return '';
+            return 'Pick a different city than your current chain endpoint, or place Hold here first for an in-city order.';
+        }
+
+        if (!citiesAreConnected(fromCity, city)) {
+            const anchorName = fromCity.name || 'your chain endpoint';
+            return `That city must border ${anchorName} — not only your Main army.`;
+        }
 
         const ownership = resolveCityOwnershipKind(city);
         const fromOwnership = resolveCityOwnershipKind(fromCity);
 
-        if (type === 'move') {
-            const destOk = ownership === 'own' || ownership === 'current';
-            const fromOk = fromOwnership === 'own' || fromOwnership === 'current';
-            if (!destOk || !fromOk) return false;
-            return !wouldExceedMoveMfMpCap(fromCity, city, type);
-        }
-
-        if (type === 'sf' || type === 'mf') {
-            if (type === 'mf' && wouldExceedMoveMfMpCap(fromCity, city, type)) {
-                return false;
+        if (type === 'move' || type === 'taxi') {
+            if (fromOwnership !== 'own' && fromOwnership !== 'current') {
+                return 'Move and Taxi must continue from owned or current territory.';
             }
-            return ownership !== 'own' && ownership !== 'ally' && ownership !== 'current';
+            if (ownership !== 'own' && ownership !== 'current') {
+                return 'Move and Taxi arrows must end on owned or current territory.';
+            }
+            if (type === 'move') {
+                const legCost = resolveLegMovePointCost(fromCity, city);
+                if (!Number.isFinite(legCost) || legCost <= 0) {
+                    return 'No valid route to that city for this move.';
+                }
+                const budget = getMoveMfMpBudget();
+                if (budget.used + legCost > MAX_PLANNING_MOVE_MP) {
+                    return `Move chain is out of MP (${budget.used}/${MAX_PLANNING_MOVE_MP} used; this leg costs ${legCost}). Place SF/MF or a Hold pill to start a new chain.`;
+                }
+            }
+            return '';
         }
 
-        return false;
+        return 'Invalid arrow placement.';
+    }
+
+    function notifyArrowPlacementBlocked(city, type) {
+        const reason = describeArrowPlacementBlock(city, type);
+        if (!reason) return;
+        if (typeof onPlanningPlacementBlocked === 'function') {
+            onPlanningPlacementBlocked(reason, type, city);
+        }
     }
 
     function canPlaceTempMainAtCity(city) {
@@ -473,9 +532,6 @@
 
     function canHighlightCityForActiveTool(city) {
         if (!city) return false;
-        if (activeMarkerType && isTempMainMarkerType(activeMarkerType)) {
-            return canPlaceTempMainAtCity(city);
-        }
         if (activeMarkerType && isArrowMarkerType(activeMarkerType)) {
             return canPlaceArrowAtCity(city, activeMarkerType);
         }
@@ -508,21 +564,24 @@
     }
 
     function handleMapCityClick(event, didPan) {
-        if (!enabled || didPan || event?.button !== 0) return;
-        const cityId = resolveCityHitTarget(event.target);
+        if (!enabled || planningLocked || didPan || event?.button !== 0) return;
+        let cityId = resolveCityHitTarget(event.target);
+        if (!cityId) {
+            const pillNode = event.target.closest?.('.age-hq-planning-pill[data-city-id]');
+            if (pillNode && activeMarkerType && isArrowMarkerType(activeMarkerType)) {
+                cityId = pillNode.dataset.cityId || '';
+            }
+        }
         if (!cityId) return;
         const city = cityById.get(cityId);
         if (!city) return;
 
-        if (activeMarkerType && isTempMainMarkerType(activeMarkerType)) {
-            if (!canPlaceTempMainAtCity(city)) return;
-            setTempMainAtCity(cityId);
-            return;
-        }
-
         if (activeMarkerType && isArrowMarkerType(activeMarkerType)) {
-            if (!canPlaceArrowAtCity(city, activeMarkerType)) return;
-            addArrowMarker(getChainAnchorCityId(), cityId, activeMarkerType);
+            if (!canPlaceArrowAtCity(city, activeMarkerType)) {
+                notifyArrowPlacementBlocked(city, activeMarkerType);
+                return;
+            }
+            addArrowMarker(resolveArrowFromCityId(city, activeMarkerType), cityId, activeMarkerType);
             return;
         }
 
@@ -1011,19 +1070,30 @@
 
     function pillLabelFor(type) {
         if (type === 'hold') return 'Hold';
-        if (type === 'taxi') return 'Taxi';
         return type;
     }
 
-    function arrowLabelFor(type, sfIndex) {
-        if (type === 'sf') return `${sfIndex} SF`;
+    function arrowLabelFor(type) {
+        if (type === 'sf') return 'SF';
         if (type === 'mf') return 'MF';
         if (type === 'move') return 'Move';
+        if (type === 'taxi') return 'Taxi';
+        if (type === 'temp-main') return 'Temp Main';
         return type;
+    }
+
+    function normalizeStoredArrow(arrow) {
+        if (!arrow || typeof arrow !== 'object') return arrow;
+        if (arrow.type === 'sf') {
+            return { ...arrow, label: 'SF' };
+        }
+        return arrow;
     }
 
     function nextPlanningOrder() {
-        return pills.length + arrowMarkers.length;
+        const orders = getAllPlanningSteps().map((step) => Math.max(0, Math.floor(Number(step.order) || 0)));
+        if (!orders.length) return 0;
+        return Math.max(...orders) + 1;
     }
 
     function pillsAtCity(cityId) {
@@ -1072,7 +1142,7 @@
             button.className = `age-hq-planning-pill age-hq-planning-pill--${pill.type}`;
             button.dataset.pillId = pill.id;
             button.dataset.cityId = pill.cityId;
-            button.title = 'Click to replace with Hold or Taxi';
+            button.title = 'Click to replace Hold marker';
             button.textContent = pillLabelFor(pill.type);
             pillsLayer.appendChild(button);
         });
@@ -1085,7 +1155,6 @@
         if (selectedBorderCityId) {
             setSelectedBorderCity(selectedBorderCityId);
         }
-        notifyPlanningChanged();
     }
 
     function renderArmyLocationMarker(cityId, type, label, title) {
@@ -1104,33 +1173,14 @@
     }
 
     function renderArmyLocationMarkers() {
-        if (!tempMainCityId) return;
-
-        if (playerMapCityId) {
-            renderArmyLocationMarker(
-                playerMapCityId,
-                'main',
-                'Main',
-                'Primary main army location'
-            );
-        }
+        if (!playerMapCityId) return;
 
         renderArmyLocationMarker(
-            tempMainCityId,
-            'temp-main',
-            'Temp Main',
-            'Temporary main army decoy location (Vice Leader separation tactic)'
+            playerMapCityId,
+            'main',
+            'Main',
+            'Primary main army location'
         );
-    }
-
-    function setTempMainAtCity(cityId) {
-        if (!canPlaceTempMainAtCity(cityById.get(cityId))) return;
-        tempMainCityId = cityId;
-        renderPlanningMarkers();
-    }
-
-    function getTempMainCityId() {
-        return tempMainCityId || '';
     }
 
     function renderPlanningMarkers() {
@@ -1184,9 +1234,7 @@
     function appendPlainConnector(fromCityId, toCityId, frag) {
         const fromCity = cityById.get(fromCityId);
         const toCity = cityById.get(toCityId);
-        const forwardHintCity = resolveCurveHintCity(fromCityId, toCityId);
-        const incomingCity = resolveIncomingChainCity(fromCityId, toCityId);
-        const geom = buildArrowGeometry(fromCity, toCity, forwardHintCity, incomingCity);
+        const geom = buildArrowGeometry(fromCity, toCity);
         if (!geom) return;
 
         appendArrowStrokes(geom.d, 'link', frag, true);
@@ -1195,9 +1243,7 @@
     function appendLabeledArrow(arrow, frag, defsFrag) {
         const fromCity = cityById.get(arrow.fromCityId);
         const toCity = cityById.get(arrow.toCityId);
-        const forwardHintCity = resolveCurveHintCity(arrow.fromCityId, arrow.toCityId);
-        const incomingCity = resolveIncomingChainCity(arrow.fromCityId, arrow.toCityId);
-        const geom = buildArrowGeometry(fromCity, toCity, forwardHintCity, incomingCity);
+        const geom = buildArrowGeometry(fromCity, toCity);
         if (!geom) return;
 
         const pathId = `age-hq-arrow-path-${arrow.id}`;
@@ -1207,7 +1253,7 @@
         defsFrag.appendChild(pathDef);
 
         const group = global.document.createElementNS('http://www.w3.org/2000/svg', 'g');
-        group.setAttribute('class', 'age-hq-planning-arrow-group');
+        group.setAttribute('class', `age-hq-planning-arrow-group age-hq-planning-arrow-group--${arrow.type}`);
         group.dataset.arrowId = arrow.id;
 
         appendArrowStrokes(geom.d, 'order', group, true);
@@ -1263,6 +1309,7 @@
         if (!pill) return;
         pill.type = type;
         renderPlanningMarkers();
+        notifyPlanningChanged();
     }
 
     function addPillAtCity(cityId, type) {
@@ -1282,17 +1329,25 @@
             order: nextPlanningOrder()
         });
         renderPlanningMarkers();
+        notifyPlanningChanged();
     }
 
     function addArrowMarker(fromCityId, toCityId, type) {
-        if (!fromCityId || !toCityId || !isArrowMarkerType(type)) return;
+        if (!toCityId || !isArrowMarkerType(type)) return false;
         const toCity = cityById.get(toCityId);
-        if (!canPlaceArrowAtCity(toCity, type)) return;
+        if (!canPlaceArrowAtCity(toCity, type)) {
+            notifyArrowPlacementBlocked(toCity, type);
+            return false;
+        }
 
-        let sfIndex = 0;
-        if (type === 'sf') {
-            sfArrowCounter += 1;
-            sfIndex = sfArrowCounter;
+        fromCityId = resolveArrowFromCityId(toCity, type);
+        if (!fromCityId) {
+            notifyArrowPlacementBlocked(toCity, type);
+            return false;
+        }
+
+        if (type === 'temp-main') {
+            arrowMarkers = arrowMarkers.filter((arrow) => arrow.type !== 'temp-main');
         }
 
         arrowMarkers.push({
@@ -1300,27 +1355,30 @@
             fromCityId,
             toCityId,
             type,
-            sfIndex,
-            label: arrowLabelFor(type, sfIndex),
+            label: arrowLabelFor(type),
             order: nextPlanningOrder()
         });
+        setSelectedBorderCity('');
         renderPlanningMarkers();
+        notifyPlanningChanged();
+        return true;
     }
 
     function placeMarkerOnSelectedCity(type) {
-        if (!selectedBorderCityId || !type) return;
+        if (planningLocked || !selectedBorderCityId || !type) return false;
         if (isPillMarkerType(type)) {
-            if (!isSelectedCityPlannable()) return;
+            if (!isSelectedCityPlannable()) return false;
             addPillAtCity(selectedBorderCityId, type);
-            return;
+            return true;
         }
         if (isArrowMarkerType(type)) {
-            addArrowMarker(getChainAnchorCityId(), selectedBorderCityId, type);
+            return addArrowMarker(getChainAnchorCityId(), selectedBorderCityId, type);
         }
+        return false;
     }
 
     function handlePillClick(pillId) {
-        if (!activeMarkerType || !isPillMarkerType(activeMarkerType)) return;
+        if (planningLocked || !activeMarkerType || !isPillMarkerType(activeMarkerType)) return;
         replacePill(pillId, activeMarkerType);
     }
 
@@ -1391,6 +1449,19 @@
             if (!pillNode) return;
             event.preventDefault();
             event.stopPropagation();
+
+            if (activeMarkerType && isArrowMarkerType(activeMarkerType)) {
+                const cityId = pillNode.dataset.cityId || '';
+                const city = cityById.get(cityId);
+                if (!city) return;
+                if (!canPlaceArrowAtCity(city, activeMarkerType)) {
+                    notifyArrowPlacementBlocked(city, activeMarkerType);
+                    return;
+                }
+                addArrowMarker(resolveArrowFromCityId(city, activeMarkerType), cityId, activeMarkerType);
+                return;
+            }
+
             handlePillClick(pillNode.dataset.pillId);
         });
 
@@ -1411,6 +1482,21 @@
                 setSelectedBorderCity('');
             }
         });
+    }
+
+    function buildMapEdgeFogMarkup(variant) {
+        const variantClass = variant === 'hq' ? 'age-map-edge-fog--hq' : 'age-map-edge-fog--world';
+        return `
+            <div class="age-map-edge-fog ${variantClass}" aria-hidden="true">
+                <span class="age-map-edge-fog__vignette"></span>
+                <span class="age-map-edge-fog__mist age-map-edge-fog__mist--north"></span>
+                <span class="age-map-edge-fog__mist age-map-edge-fog__mist--south"></span>
+                <span class="age-map-edge-fog__mist age-map-edge-fog__mist--east"></span>
+                <span class="age-map-edge-fog__mist age-map-edge-fog__mist--west"></span>
+                <span class="age-map-edge-fog__mist age-map-edge-fog__mist--drift-a"></span>
+                <span class="age-map-edge-fog__mist age-map-edge-fog__mist--drift-b"></span>
+            </div>
+        `.trim();
     }
 
     function buildDom() {
@@ -1445,6 +1531,7 @@
                 <div class="age-hq-planning-labels age-hq-planning-labels--region"></div>
                 <div class="age-hq-planning-labels age-hq-planning-labels--city"></div>
                 <div class="age-hq-planning-pills"></div>
+                ${buildMapEdgeFogMarkup('hq')}
             </div>
         `;
 
@@ -1464,10 +1551,16 @@
         arrowsLayer = frameEl.querySelector('.age-hq-planning-arrows-layer');
     }
 
+    function ensureCatalogCrossBorderNeighbors() {
+        if (!catalog?.cities?.length) return;
+        global.RoyalArmiesAgeWaterRoutes?.augmentCrossBorderNeighbors?.(catalog.cities);
+    }
+
     async function loadCatalogData() {
         const existing = global.RoyalArmiesAgeWorldMap?.getCatalog?.();
         if (existing?.cities?.length) {
             catalog = existing;
+            ensureCatalogCrossBorderNeighbors();
             return;
         }
 
@@ -1482,6 +1575,7 @@
         }
 
         catalog = await citiesRes.json();
+        ensureCatalogCrossBorderNeighbors();
         const regionPayload = await regionsRes.json();
         const nationPayload = await nationsRes.json();
         regionPaths = regionPayload.regions || regionPayload || [];
@@ -1513,7 +1607,15 @@
         buildCityLayers();
         buildWaterRoutesLayer();
         syncOwnershipVisuals();
+        global.requestAnimationFrame(() => {
+            recomputeBaseScale();
+            renderPlanningMarkers();
+        });
+    }
+
+    function refreshLayout() {
         recomputeBaseScale();
+        renderPlanningMarkers();
     }
 
     async function mount(host) {
@@ -1545,6 +1647,16 @@
         }
     }
 
+    function setPlanningLocked(locked) {
+        planningLocked = Boolean(locked);
+        if (planningLocked) {
+            activeMarkerType = '';
+            selectedBorderCityId = '';
+        }
+        frameEl?.classList.toggle('is-planning-locked', planningLocked);
+        buildCityLayers();
+    }
+
     function setEnabled(next) {
         enabled = !!next;
         if (enabled) {
@@ -1574,6 +1686,66 @@
         return getAllPlanningSteps();
     }
 
+    function migratePlanningSnapshot(snapshot) {
+        const combined = [];
+        (Array.isArray(snapshot?.pills) ? snapshot.pills : []).forEach((pill) => {
+            combined.push({ ...pill, kind: 'pill' });
+        });
+        (Array.isArray(snapshot?.arrows) ? snapshot.arrows : []).forEach((arrow) => {
+            combined.push({ ...arrow, kind: 'arrow' });
+        });
+        combined.sort((a, b) => (a.order || 0) - (b.order || 0));
+
+        const pills = [];
+        const arrows = [];
+        let anchorId = playerMapCityId || '';
+
+        combined.forEach((step) => {
+            if (step.kind === 'pill' || (!step.fromCityId && step.cityId)) {
+                if (step.type === 'hold') {
+                    pills.push({
+                        id: step.id,
+                        cityId: step.cityId,
+                        type: 'hold',
+                        order: step.order
+                    });
+                    anchorId = step.cityId;
+                    return;
+                }
+                if (step.type === 'taxi') {
+                    arrows.push(normalizeStoredArrow({
+                        id: step.id,
+                        fromCityId: anchorId,
+                        toCityId: step.cityId,
+                        type: 'taxi',
+                        label: 'Taxi',
+                        order: step.order
+                    }));
+                    anchorId = step.cityId;
+                }
+                return;
+            }
+
+            arrows.push(normalizeStoredArrow({ ...step }));
+            anchorId = step.toCityId || anchorId;
+        });
+
+        const legacyTempMainCityId = String(snapshot?.tempMainCityId || '').trim();
+        if (legacyTempMainCityId && !arrows.some((arrow) => arrow.type === 'temp-main')) {
+            const maxOrder = combined.reduce((max, step) => Math.max(max, Math.floor(Number(step.order) || 0)), -1);
+            arrows.push(normalizeStoredArrow({
+                id: `hq-arrow-temp-main-legacy`,
+                fromCityId: playerMapCityId || legacyTempMainCityId,
+                toCityId: legacyTempMainCityId,
+                type: 'temp-main',
+                label: 'Temp Main',
+                order: maxOrder + 1
+            }));
+        }
+
+        return { pills, arrows };
+    }
+
     function getPlanningSnapshot() {
         return {
             pills: pills.map((pill) => ({
@@ -1587,21 +1759,18 @@
                 fromCityId: arrow.fromCityId,
                 toCityId: arrow.toCityId,
                 type: arrow.type,
-                sfIndex: arrow.sfIndex,
                 label: arrow.label,
                 order: arrow.order
             })),
-            tempMainCityId: tempMainCityId || '',
-            sfArrowCounter
+            tempMainCityId: getTempMainCityId()
         };
     }
 
     function applyPlanningSnapshot(snapshot) {
         planningSyncSuppressed = true;
-        pills = Array.isArray(snapshot?.pills) ? snapshot.pills.map((pill) => ({ ...pill })) : [];
-        arrowMarkers = Array.isArray(snapshot?.arrows) ? snapshot.arrows.map((arrow) => ({ ...arrow })) : [];
-        tempMainCityId = String(snapshot?.tempMainCityId || '');
-        sfArrowCounter = Math.max(0, Math.floor(Number(snapshot?.sfArrowCounter) || 0));
+        const migrated = migratePlanningSnapshot(snapshot || {});
+        pills = migrated.pills;
+        arrowMarkers = migrated.arrows;
         selectedBorderCityId = '';
         renderPlanningMarkers();
         planningSyncSuppressed = false;
@@ -1610,23 +1779,31 @@
     function clearPlanningMarkers() {
         pills = [];
         arrowMarkers = [];
-        sfArrowCounter = 0;
-        tempMainCityId = '';
         renderPlanningMarkers();
+        notifyPlanningChanged();
     }
 
     function resetPlanningMap() {
-        clearPlanningMarkers();
+        planningSyncSuppressed = true;
+        pills = [];
+        arrowMarkers = [];
+        selectedBorderCityId = '';
         activeMarkerType = '';
-        setSelectedBorderCity('');
+        renderPlanningMarkers();
+        planningSyncSuppressed = false;
+        if (typeof onPillsChanged === 'function') onPillsChanged(getAllPlanningSteps());
+        if (typeof onMoveMfMpChanged === 'function') onMoveMfMpChanged(getMoveMfMpBudget());
     }
 
     global.RoyalArmiesAgeHeadquartersPlanningMap = {
         mount,
         setEnabled,
+        setPlanningLocked,
         setActiveMarkerType,
         placeMarkerOnSelectedCity,
         getSelectedBorderCityId: () => selectedBorderCityId,
+        getChainAnchorCityId,
+        describeArrowPlacementBlock,
         isSelectedCityPlannable,
         canSelectPlanningCityById: (cityId) => canPlacePillAtCity(cityById.get(cityId)),
         canHighlightCityForActiveToolById: (cityId) => canHighlightCityForActiveTool(cityById.get(cityId)),
@@ -1639,9 +1816,11 @@
         getTempMainCityId,
         clearPlanningMarkers,
         resetPlanningMap,
+        refreshLayout,
         set onBorderCitySelected(fn) { onBorderCitySelected = fn; },
         set onPillsChanged(fn) { onPillsChanged = fn; },
         set onMoveMfMpChanged(fn) { onMoveMfMpChanged = fn; },
-        set onPlanningSyncRequested(fn) { onPlanningSyncRequested = fn; }
+        set onPlanningSyncRequested(fn) { onPlanningSyncRequested = fn; },
+        set onPlanningPlacementBlocked(fn) { onPlanningPlacementBlocked = fn; }
     };
 })(window);

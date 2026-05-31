@@ -77,7 +77,10 @@
     };
 
     let currentCityId = '';
-    let playersOnlineOnly = false;
+    let mapPlayersOnlineOnly = false;
+    let hqPlayersOnlineOnly = false;
+    let hqPlayersSortByMovePointsDesc = false;
+    let hqPlayersArmyFocusFilter = 'all';
     let cityPlayersCache = [];
     let cityPlayersMeta = {
         catalogCityId: '',
@@ -329,6 +332,9 @@
         if (!hud) return;
         const target = String(tabId || 'city').trim().toLowerCase();
         hud.classList.toggle('is-city-info-players-open', target === 'players');
+        if (typeof global.syncAgeMapHudLayout === 'function') {
+            global.requestAnimationFrame(global.syncAgeMapHudLayout);
+        }
     }
 
     function activateCityInfoTab(tabId) {
@@ -456,55 +462,267 @@
         return String(current);
     }
 
+    function computeLocalArmyFocus() {
+        const army = global.player?.ageArmy || global.player?.army;
+        if (!Array.isArray(army) || !army.length) return '';
+
+        let rankingWeight = 0;
+        let pvpWeight = 0;
+
+        army.forEach((stack) => {
+            if (!stack || typeof stack !== 'object') return;
+            const qty = Math.max(0, Math.floor(Number(stack.qty) || 0));
+            if (!qty) return;
+
+            const purpose = String(stack.purpose || stack.role || stack.armyRole || '')
+                .trim()
+                .toLowerCase();
+            if (purpose === 'ranking' || purpose === 'rank' || purpose === 'rankdrop' || purpose === 'rank_drop') {
+                rankingWeight += qty;
+            } else if (purpose === 'pvp') {
+                pvpWeight += qty;
+            }
+        });
+
+        if (!rankingWeight && !pvpWeight) return '';
+        if (rankingWeight === pvpWeight) return '';
+        return rankingWeight > pvpWeight ? 'ranking' : 'pvp';
+    }
+
+    function formatArmyFocusLabel(armyFocus) {
+        const focus = String(armyFocus || '').trim().toLowerCase();
+        if (focus === 'ranking') return 'Ranking';
+        if (focus === 'pvp') return 'PvP';
+        return '';
+    }
+
+    function formatArmyFocusBadgeHtml(player) {
+        const label = formatArmyFocusLabel(player?.armyFocus);
+        if (!label) return '';
+        const modifier = label === 'Ranking' ? 'ranking' : 'pvp';
+        return (
+            `<span class="age-city-info-player-army-focus age-city-info-player-army-focus--${modifier}" `
+            + `title="${escapePlayerHtml(label)} army" aria-label="${escapePlayerHtml(label)} army">${escapePlayerHtml(label)}</span>`
+        );
+    }
+
     function formatPlayerMovePointsAria(player) {
         const current = Number(player?.movePoints);
         if (!Number.isFinite(current)) return 'Move points unknown';
         return `${current} move points`;
     }
 
-    function sortCityPlayers(players) {
+    function buildPlayersFilterSummary(allPlayers, visiblePlayers, filters, variant) {
+        if (!allPlayers.length) return '';
+
+        if (variant === 'map') {
+            const onlineCount = allPlayers.filter((player) => player.online).length;
+            if (filters.onlineOnly) {
+                return `Showing ${visiblePlayers.length} online of ${allPlayers.length} commanders`;
+            }
+            return `${allPlayers.length} commanders · ${onlineCount} online`;
+        }
+
+        const parts = [`Showing ${visiblePlayers.length} of ${allPlayers.length}`];
+        const activeFilters = [];
+
+        if (filters.onlineOnly) activeFilters.push('online');
+        if (filters.armyFocus === 'ranking') activeFilters.push('ranking army');
+        else if (filters.armyFocus === 'pvp') activeFilters.push('PvP army');
+
+        if (activeFilters.length) {
+            parts.push(`filtered by ${activeFilters.join(', ')}`);
+        }
+
+        if (filters.sortByMovePointsDesc) {
+            parts.push('sorted by MP high→low');
+        } else if (!activeFilters.length) {
+            const onlineCount = allPlayers.filter((player) => player.online).length;
+            parts.push(`${onlineCount} online`);
+        }
+
+        return parts.join(' · ');
+    }
+
+    function buildPlayersEmptyMessage(cityName, allPlayers, filters, variant) {
+        const place = cityName || 'this city';
+        if (!allPlayers.length) {
+            return cityName ? `No commanders in ${cityName} yet.` : 'No commanders in this city yet.';
+        }
+
+        if (variant === 'map') {
+            if (!filters.onlineOnly) {
+                return cityName ? `No commanders in ${cityName} yet.` : 'No commanders in this city yet.';
+            }
+            return `No commanders online in ${place}.`;
+        }
+
+        const activeFilters = [];
+        if (filters.onlineOnly) activeFilters.push('online');
+        if (filters.armyFocus === 'ranking') activeFilters.push('with a ranking army');
+        else if (filters.armyFocus === 'pvp') activeFilters.push('with a PvP army');
+
+        if (activeFilters.length) {
+            return `No commanders in ${place} match ${activeFilters.join(' and ')}.`;
+        }
+
+        return cityName ? `No commanders in ${cityName} yet.` : 'No commanders in this city yet.';
+    }
+
+    function resolvePlayerMovePointsValue(player) {
+        const movePoints = Number(player?.movePoints);
+        return Number.isFinite(movePoints) ? movePoints : null;
+    }
+
+    function sortCityPlayers(players, filters) {
         return players.slice().sort((left, right) => {
+            if (filters?.sortByMovePointsDesc) {
+                const leftMp = resolvePlayerMovePointsValue(left);
+                const rightMp = resolvePlayerMovePointsValue(right);
+
+                if (leftMp !== null && rightMp !== null && leftMp !== rightMp) {
+                    return rightMp - leftMp;
+                }
+                if (leftMp !== null && rightMp === null) return -1;
+                if (leftMp === null && rightMp !== null) return 1;
+            }
+
             if (left.online !== right.online) {
                 return left.online ? -1 : 1;
             }
+
             return left.displayName.localeCompare(right.displayName, undefined, { sensitivity: 'base' });
         });
     }
 
-    function filterCityPlayers(players, onlineOnly) {
-        if (!onlineOnly) return players;
-        return players.filter((player) => player.online);
+    function getPlayersFilterState(variant) {
+        if (variant === 'map') {
+            return {
+                onlineOnly: mapPlayersOnlineOnly,
+                sortByMovePointsDesc: false,
+                armyFocus: 'all'
+            };
+        }
+
+        return {
+            onlineOnly: hqPlayersOnlineOnly,
+            sortByMovePointsDesc: hqPlayersSortByMovePointsDesc,
+            armyFocus: hqPlayersArmyFocusFilter
+        };
     }
 
-    function setPlayersFilterMode(onlineOnly) {
-        playersOnlineOnly = Boolean(onlineOnly);
-        global.document.querySelectorAll('[data-age-players-filter]').forEach((button) => {
+    function filterCityPlayers(players, filters) {
+        let result = players.slice();
+
+        if (filters?.onlineOnly) {
+            result = result.filter((player) => player.online);
+        }
+
+        const armyFocus = String(filters?.armyFocus || 'all').trim().toLowerCase();
+        if (armyFocus === 'ranking' || armyFocus === 'pvp') {
+            result = result.filter((player) => String(player?.armyFocus || '').toLowerCase() === armyFocus);
+        }
+
+        return result;
+    }
+
+    function syncMapPlayersFilterControls(root) {
+        if (!root) return;
+
+        root.querySelectorAll('[data-age-players-filter]').forEach((button) => {
             const mode = String(button.getAttribute('data-age-players-filter') || 'all').trim().toLowerCase();
-            const isActive = mode === 'online' ? playersOnlineOnly : !playersOnlineOnly;
+            const isActive = mode === 'online' ? mapPlayersOnlineOnly : !mapPlayersOnlineOnly;
             button.classList.toggle('is-active', isActive);
             button.setAttribute('aria-pressed', isActive ? 'true' : 'false');
         });
     }
 
-    function bindPlayersFilterToggle(toggle) {
-        if (!toggle || toggle.dataset.playersFilterBound === 'true') return;
-        toggle.dataset.playersFilterBound = 'true';
+    function syncHqPlayersFilterControls(root) {
+        if (!root) return;
 
-        toggle.addEventListener('click', (event) => {
+        root.querySelectorAll('[data-age-players-filter]').forEach((button) => {
+            const mode = String(button.getAttribute('data-age-players-filter') || 'all').trim().toLowerCase();
+            const isActive = mode === 'online' ? hqPlayersOnlineOnly : !hqPlayersOnlineOnly;
+            button.classList.toggle('is-active', isActive);
+            button.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+        });
+
+        root.querySelectorAll('[data-age-players-mp-sort]').forEach((button) => {
+            const mode = String(button.getAttribute('data-age-players-mp-sort') || 'default').trim().toLowerCase();
+            const isActive = mode === 'desc' ? hqPlayersSortByMovePointsDesc : !hqPlayersSortByMovePointsDesc;
+            button.classList.toggle('is-active', isActive);
+            button.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+        });
+
+        root.querySelectorAll('[data-age-players-army-filter]').forEach((button) => {
+            const mode = String(button.getAttribute('data-age-players-army-filter') || 'all').trim().toLowerCase();
+            const isActive = mode === hqPlayersArmyFocusFilter;
+            button.classList.toggle('is-active', isActive);
+            button.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+        });
+    }
+
+    function syncPlayersFilterControls() {
+        syncMapPlayersFilterControls(global.document.querySelector('#age-city-info-tab-players .age-city-info-players-body'));
+        syncHqPlayersFilterControls(global.document.querySelector('.age-headquarters-players-body'));
+    }
+
+    function bindMapPlayersFilterControls(root) {
+        if (!root || root.dataset.mapPlayersFilterBound === 'true') return;
+        root.dataset.mapPlayersFilterBound = 'true';
+
+        root.addEventListener('click', (event) => {
             const button = event.target.closest('[data-age-players-filter]');
-            if (!button) return;
+            if (!button || !root.contains(button)) return;
+
             event.preventDefault();
             const mode = String(button.getAttribute('data-age-players-filter') || 'all').trim().toLowerCase();
-            setPlayersFilterMode(mode === 'online');
+            mapPlayersOnlineOnly = mode === 'online';
+            syncMapPlayersFilterControls(root);
             renderPlayersTab();
         });
     }
 
-    function bindPlayersTabControls() {
-        global.document.querySelectorAll('.age-city-info-players-filter-toggle, .age-hq-players-filter-toggle').forEach((toggle) => {
-            bindPlayersFilterToggle(toggle);
+    function bindHqPlayersFilterControls(root) {
+        if (!root || root.dataset.hqPlayersFilterBound === 'true') return;
+        root.dataset.hqPlayersFilterBound = 'true';
+
+        root.addEventListener('click', (event) => {
+            const presenceButton = event.target.closest('[data-age-players-filter]');
+            if (presenceButton && root.contains(presenceButton)) {
+                event.preventDefault();
+                const mode = String(presenceButton.getAttribute('data-age-players-filter') || 'all').trim().toLowerCase();
+                hqPlayersOnlineOnly = mode === 'online';
+                syncHqPlayersFilterControls(root);
+                renderPlayersTab();
+                return;
+            }
+
+            const movePointsButton = event.target.closest('[data-age-players-mp-sort]');
+            if (movePointsButton && root.contains(movePointsButton)) {
+                event.preventDefault();
+                const mode = String(movePointsButton.getAttribute('data-age-players-mp-sort') || 'default').trim().toLowerCase();
+                hqPlayersSortByMovePointsDesc = mode === 'desc';
+                syncHqPlayersFilterControls(root);
+                renderPlayersTab();
+                return;
+            }
+
+            const armyButton = event.target.closest('[data-age-players-army-filter]');
+            if (armyButton && root.contains(armyButton)) {
+                event.preventDefault();
+                const mode = String(armyButton.getAttribute('data-age-players-army-filter') || 'all').trim().toLowerCase();
+                hqPlayersArmyFocusFilter = (mode === 'ranking' || mode === 'pvp') ? mode : 'all';
+                syncHqPlayersFilterControls(root);
+                renderPlayersTab();
+            }
         });
-        setPlayersFilterMode(false);
+    }
+
+    function bindPlayersTabControls() {
+        bindMapPlayersFilterControls(global.document.querySelector('#age-city-info-tab-players .age-city-info-players-body'));
+        bindHqPlayersFilterControls(global.document.querySelector('.age-headquarters-players-body'));
+        syncPlayersFilterControls();
     }
 
     function bindCityInfoTabs() {
@@ -543,12 +761,14 @@
     function resolvePlayersRenderHosts() {
         const hosts = [
             {
+                variant: 'map',
                 cityLabel: global.document.getElementById('age-city-info-players-city'),
                 summary: global.document.getElementById('age-city-info-players-summary'),
                 list: global.document.getElementById('age-city-info-players-list'),
                 empty: global.document.getElementById('age-city-info-players-empty')
             },
             {
+                variant: 'hq',
                 cityLabel: global.document.getElementById('age-hq-players-city'),
                 summary: global.document.getElementById('age-hq-players-summary'),
                 list: global.document.getElementById('age-hq-players-list'),
@@ -564,8 +784,10 @@
             loading,
             allPlayers,
             visiblePlayers,
-            onlineOnly
+            filters,
+            variant
         } = state;
+        const showArmyBadge = variant === 'hq';
 
         if (host.cityLabel) {
             if (cityName) {
@@ -593,17 +815,12 @@
             return;
         }
 
-        const onlineCount = allPlayers.filter((player) => player.online).length;
-
         if (host.summary) {
             if (!allPlayers.length) {
                 host.summary.textContent = '';
                 host.summary.hidden = true;
-            } else if (onlineOnly) {
-                host.summary.textContent = `Showing ${visiblePlayers.length} online of ${allPlayers.length} commanders`;
-                host.summary.hidden = false;
             } else {
-                host.summary.textContent = `${allPlayers.length} commanders · ${onlineCount} online`;
+                host.summary.textContent = buildPlayersFilterSummary(allPlayers, visiblePlayers, filters, variant);
                 host.summary.hidden = false;
             }
         }
@@ -626,6 +843,7 @@
                             ? '<img class="age-city-info-player-royalty-badge" src="images/royaltybadge.png" alt="Royalty premium member" loading="lazy" decoding="async">'
                             : '')
                         + `<span class="age-city-info-player-name">${escapePlayerHtml(displayName)}</span>`
+                        + (showArmyBadge ? formatArmyFocusBadgeHtml(player) : '')
                         + `<span class="age-city-info-player-move-points" title="Move points" aria-label="${escapePlayerHtml(movePointsAria)}">${escapePlayerHtml(movePointsLabel)}</span>`
                         + `<span class="age-city-info-player-presence">${player.online ? 'Online' : 'Offline'}</span>`
                         + '</li>'
@@ -641,9 +859,7 @@
                     : 'No commanders in this city yet.';
                 host.empty.hidden = false;
             } else if (!visiblePlayers.length) {
-                host.empty.textContent = onlineOnly
-                    ? `No commanders online in ${cityName || 'this city'}.`
-                    : (cityName ? `No commanders in ${cityName} yet.` : 'No commanders in this city yet.');
+                host.empty.textContent = buildPlayersEmptyMessage(cityName, allPlayers, filters, variant);
                 host.empty.hidden = false;
             } else {
                 host.empty.hidden = true;
@@ -652,21 +868,23 @@
     }
 
     function renderPlayersTab() {
-        setPlayersFilterMode(playersOnlineOnly);
+        syncPlayersFilterControls();
 
         const cityName = resolveCityDisplayName();
         const allPlayers = getCityPlayers();
-        const visiblePlayers = sortCityPlayers(filterCityPlayers(allPlayers, playersOnlineOnly));
-        const state = {
-            cityName,
-            loading: cityPlayersMeta.loading,
-            allPlayers,
-            visiblePlayers,
-            onlineOnly: playersOnlineOnly
-        };
 
         resolvePlayersRenderHosts().forEach((host) => {
-            renderPlayersIntoHost(host, state);
+            const variant = host.variant === 'hq' ? 'hq' : 'map';
+            const filters = getPlayersFilterState(variant);
+            const visiblePlayers = sortCityPlayers(filterCityPlayers(allPlayers, filters), filters);
+            renderPlayersIntoHost(host, {
+                cityName,
+                loading: cityPlayersMeta.loading,
+                allPlayers,
+                visiblePlayers,
+                filters,
+                variant
+            });
         });
     }
 
@@ -717,6 +935,7 @@
         getCommanderNationId: resolveCommanderNationId,
         syncCatalogCity,
         refreshCityPlayers: refreshCityPlayersFromServer,
+        computeLocalArmyFocus,
         getCities: () => AMNEK_CITIES.map((city) => ({ ...city })),
         getRegions: () => Object.values(AMNEK_REGIONS).map((region) => ({ ...region }))
     };
