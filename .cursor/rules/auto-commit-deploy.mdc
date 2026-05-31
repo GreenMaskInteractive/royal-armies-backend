@@ -1,16 +1,18 @@
 ---
-description: After code changes, commit and push to main to deploy on Render (unless opted out)
+description: Auto commit and push to main after implementation (deploy without asking) unless user opts out
 alwaysApply: true
 ---
 
 # Auto commit and deploy
 
-After completing requested code changes or fixes in this repo, **commit and push to `main`** unless the user explicitly says not to (e.g. "don't commit", "no push", "local only").
+**Default policy (confirmed by product owner):** After completing requested code changes or fixes in this repo, **commit and push to `main` automatically** — do **not** wait for a separate "deploy" or "commit" message unless the user has opted out for that task or session.
+
+Pushing to `main` deploys [royalarmies.com](https://royalarmies.com) via Render.
 
 ## When to skip
 
 - User asked for review, planning, or questions only (no implementation)
-- User said not to commit or deploy
+- User explicitly opted out for that task, e.g. "don't commit", "don't deploy", "no push", "local only", "stop auto deploy", "don't auto deploy"
 - There are no changes to commit
 - Changes likely contain secrets (`.env`, credentials) — warn instead of committing
 
@@ -30,16 +32,20 @@ After completing requested code changes or fixes in this repo, **commit and push
 - Never skip hooks unless the user explicitly requests it
 - Do not push if the user opted out for that task
 
-## Deploy
+## Deploy confirmation
 
-Pushing to `main` triggers Render to redeploy [royalarmies.com](https://royalarmies.com). After push, optionally verify a key endpoint (e.g. `/api/portal/metrics`) if the change affects production behavior.
+After push, briefly confirm deploy (commit hash + that production was checked if behavior changed). Optionally verify a key endpoint (e.g. `/api/portal/metrics`).
 
-## Example
+## Examples
 
 User: "Fix the mailbox reply bug."
 
-→ Implement fix → commit → push to `main` → briefly confirm deploy unless the user said not to.
+→ Implement fix → commit → push to `main` → confirm deploy.
 
 User: "Fix the mailbox reply bug but don't deploy yet."
 
 → Implement fix → stop before commit/push.
+
+User: "Stop auto deploying from now on."
+
+→ Do not commit/push after future tasks until they ask again or revoke the opt-out.

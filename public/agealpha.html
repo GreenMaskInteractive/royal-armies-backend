@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Royal Armies — Age Alpha</title>
     <link rel="stylesheet" href="style.css?v=site-viewport-stable-1">
-    <link rel="stylesheet" href="style2.css?v=street-patrol-battle-1">
+    <link rel="stylesheet" href="style2.css?v=street-patrol-command-rail-1">
     <link rel="stylesheet" href="mobile-responsive.css?v=records-compact-tabs-1">
     <link rel="stylesheet" href="dev-page-navigator.css">
     <link rel="stylesheet" href="custom-cursor.css?v=scrollbar-cursor-3">
@@ -1040,19 +1040,20 @@
                             </div>
                         </aside>
 
-                        <div class="age-guild-battle-controls-corner" aria-label="Battle controls">
+                        <div class="age-guild-battle-controls-dock" aria-label="Battle controls">
                             <div id="age-guild-xp-float-host" class="age-guild-xp-float-host" aria-live="polite" aria-atomic="true"></div>
-                            <div id="age-guild-battle-deck" class="age-guild-battle-deck">
-                                <button type="button" id="age-guild-heal-one" class="age-guild-satellite-btn age-guild-satellite-btn--heal">Heal</button>
-                                <button type="button" id="age-guild-heal-all" class="age-guild-satellite-btn age-guild-satellite-btn--heal-all">Heal All</button>
-                                <button type="button" id="age-guild-auto-heal" class="age-guild-satellite-btn age-guild-satellite-btn--auto-heal" aria-pressed="false">Auto-heal</button>
-                                <div id="age-guild-battle-wrap" class="age-guild-battle-btn-wrap">
+                            <div id="age-guild-battle-deck" class="age-guild-battle-deck age-guild-battle-command-rail">
+                                <div class="age-guild-battle-command-rail-glow" aria-hidden="true"></div>
+                                <button type="button" id="age-guild-heal-one" class="age-guild-satellite-btn age-guild-command-segment age-guild-satellite-btn--heal">Heal</button>
+                                <button type="button" id="age-guild-heal-all" class="age-guild-satellite-btn age-guild-command-segment age-guild-satellite-btn--heal-all">Heal All</button>
+                                <div id="age-guild-battle-wrap" class="age-guild-battle-btn-wrap age-guild-command-battle-hub">
                                     <svg class="age-guild-charge-ring" viewBox="0 0 100 100" aria-hidden="true">
                                         <circle class="age-guild-charge-ring-track" cx="50" cy="50" r="46" />
                                         <circle class="age-guild-charge-ring-progress" cx="50" cy="50" r="46" />
                                     </svg>
                                     <button type="button" id="age-guild-battle-btn" class="age-guild-battle-circle" aria-label="Hold to battle">Battle</button>
                                 </div>
+                                <button type="button" id="age-guild-auto-heal" class="age-guild-satellite-btn age-guild-command-segment age-guild-satellite-btn--auto-heal" aria-pressed="false">Auto-heal</button>
                             </div>
                         </div>
                     </div>
