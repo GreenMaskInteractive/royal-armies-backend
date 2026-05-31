@@ -519,8 +519,6 @@
 
         if (venueId === 'border') {
             global.console.info('[RIFT] Border selected — battle training (coming soon).');
-        } else if (venueId === 'barracks') {
-            global.console.info('[RIFT] Barracks selected — recruitment (coming soon).');
         }
     }
 

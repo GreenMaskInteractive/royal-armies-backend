@@ -19972,12 +19972,35 @@ body.is-age-chronicles-battle-pass-open {
 .age-hq-treasury-fort-item {
     border: 1px solid rgba(184, 144, 48, 0.24);
     border-radius: 6px;
-    padding: 10px 12px;
     background: rgba(0, 0, 0, 0.22);
+    overflow: hidden;
+}
+
+.age-hq-treasury-fort-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    width: 100%;
+    padding: 10px 12px;
+    border: 0;
+    background: transparent;
+    color: inherit;
+    text-align: left;
+    cursor: pointer;
+}
+
+.age-hq-treasury-fort-toggle:hover,
+.age-hq-treasury-fort-toggle:focus-visible {
+    background: rgba(255, 215, 0, 0.06);
+}
+
+.age-hq-treasury-fort-item.is-expanded {
+    border-color: rgba(184, 144, 48, 0.38);
 }
 
 .age-hq-treasury-fort-city {
-    margin: 0 0 8px;
+    margin: 0;
     font-family: 'Cinzel', serif;
     font-size: 0.82rem;
     font-weight: 700;
@@ -19985,6 +20008,26 @@ body.is-age-chronicles-battle-pass-open {
     color: #ffe7b0;
     line-height: 1.35;
     word-break: break-word;
+}
+
+.age-hq-treasury-fort-chevron {
+    flex: 0 0 auto;
+    font-size: 1rem;
+    line-height: 1;
+    color: rgba(255, 215, 128, 0.72);
+    transition: transform 0.18s ease;
+}
+
+.age-hq-treasury-fort-item.is-expanded .age-hq-treasury-fort-chevron {
+    transform: rotate(90deg);
+}
+
+.age-hq-treasury-fort-panel {
+    padding: 0 12px 10px;
+}
+
+.age-hq-treasury-fort-panel[hidden] {
+    display: none !important;
 }
 
 .age-hq-treasury-structure-list {
@@ -20012,6 +20055,16 @@ body.is-age-chronicles-battle-pass-open {
     top: 0;
     font-size: 0.68rem;
     color: rgba(255, 215, 128, 0.72);
+}
+
+.age-hq-treasury-structure-item--empty {
+    padding-left: 0;
+    color: rgba(236, 220, 180, 0.52);
+    font-style: italic;
+}
+
+.age-hq-treasury-structure-item--empty::before {
+    content: none;
 }
 
 .age-hq-treasury-empty {
@@ -20395,6 +20448,449 @@ body.is-age-chronicles-battle-pass-open {
 #age-page-canvas[data-age-view="headquarters"] #age-world-map-terrain-controls,
 #age-page-canvas[data-age-view="headquarters"] #age-world-map-continent-label {
     display: none;
+}
+
+/* ==========================================================================
+   Age Barracks — unit purchase catalog
+   ========================================================================== */
+
+body.age-barracks-open {
+    overflow: hidden;
+}
+
+.age-barracks-workspace {
+    position: fixed;
+    inset: 0;
+    z-index: 12040;
+    display: flex;
+    align-items: stretch;
+    justify-content: center;
+    padding: 72px 48px 48px;
+    background:
+        radial-gradient(circle at 50% 0%, rgba(255, 215, 0, 0.08), transparent 42%),
+        rgba(4, 3, 2, 0.88);
+    backdrop-filter: blur(4px);
+}
+
+.age-barracks-workspace[hidden] {
+    display: none !important;
+}
+
+.age-barracks-shell {
+    display: flex;
+    flex-direction: column;
+    width: min(1480px, 100%);
+    max-height: 100%;
+    border: 1px solid rgba(184, 144, 48, 0.42);
+    border-radius: 14px;
+    background:
+        linear-gradient(180deg, rgba(255, 215, 0, 0.06) 0%, transparent 18%),
+        linear-gradient(165deg, rgba(34, 28, 20, 0.98) 0%, rgba(12, 10, 8, 0.99) 100%);
+    box-shadow:
+        inset 0 1px 0 rgba(255, 215, 0, 0.12),
+        0 18px 48px rgba(0, 0, 0, 0.58);
+    overflow: hidden;
+}
+
+.age-barracks-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 20px;
+    padding: 22px 26px 18px;
+    border-bottom: 1px solid rgba(184, 144, 48, 0.28);
+}
+
+.age-barracks-eyebrow {
+    display: block;
+    margin: 0 0 6px;
+    font-size: 0.68rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: rgba(201, 168, 76, 0.82);
+}
+
+.age-barracks-title {
+    margin: 0;
+    font-size: 1.55rem;
+    letter-spacing: 0.06em;
+    color: #ffe7b0;
+}
+
+.age-barracks-subtitle {
+    margin: 8px 0 0;
+    max-width: 52ch;
+    font-size: 0.88rem;
+    line-height: 1.45;
+    color: rgba(236, 220, 180, 0.72);
+}
+
+.age-barracks-commander-status {
+    margin: 6px 0 0;
+    font-size: 0.78rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: rgba(255, 217, 120, 0.82);
+}
+
+.age-barracks-close {
+    flex: 0 0 auto;
+    min-width: 92px;
+    padding: 10px 16px;
+    border: 1px solid rgba(184, 144, 48, 0.38);
+    border-radius: 8px;
+    background: rgba(0, 0, 0, 0.34);
+    color: #ffd978;
+    font-size: 0.82rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    cursor: pointer;
+}
+
+.age-barracks-close:hover,
+.age-barracks-close:focus-visible {
+    border-color: rgba(255, 215, 0, 0.62);
+    background: rgba(255, 215, 0, 0.08);
+}
+
+.age-barracks-layout {
+    display: grid;
+    grid-template-columns: 220px minmax(0, 1fr);
+    min-height: 0;
+    flex: 1 1 auto;
+}
+
+.age-barracks-category-nav {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 18px 14px;
+    border-right: 1px solid rgba(184, 144, 48, 0.24);
+    overflow: auto;
+}
+
+.age-barracks-category-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+    width: 100%;
+    padding: 11px 12px;
+    border: 1px solid rgba(184, 144, 48, 0.22);
+    border-radius: 8px;
+    background: rgba(0, 0, 0, 0.28);
+    color: #ecdcb4;
+    text-align: left;
+    cursor: pointer;
+}
+
+.age-barracks-category-btn.is-active,
+.age-barracks-category-btn:hover,
+.age-barracks-category-btn:focus-visible {
+    border-color: rgba(255, 215, 0, 0.48);
+    background: rgba(255, 215, 0, 0.08);
+}
+
+.age-barracks-category-label {
+    font-size: 0.86rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    color: #ffd978;
+}
+
+.age-barracks-category-path {
+    font-size: 0.72rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: rgba(236, 220, 180, 0.52);
+}
+
+.age-barracks-main {
+    display: grid;
+    grid-template-columns: minmax(280px, 360px) minmax(0, 1fr);
+    gap: 18px;
+    min-height: 0;
+    padding: 18px 22px 22px;
+    overflow: hidden;
+}
+
+.age-barracks-main-head {
+    grid-column: 1 / -1;
+}
+
+.age-barracks-active-category-label {
+    margin: 0;
+    font-size: 1.08rem;
+    letter-spacing: 0.05em;
+    color: #ffe7b0;
+}
+
+.age-barracks-main-hint {
+    margin: 6px 0 0;
+    font-size: 0.8rem;
+    color: rgba(236, 220, 180, 0.58);
+}
+
+.age-barracks-unit-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    min-height: 0;
+    max-height: calc(100vh - 260px);
+    overflow: auto;
+    padding-right: 4px;
+}
+
+.age-barracks-unit-card {
+    display: grid;
+    grid-template-columns: 72px minmax(0, 1fr);
+    gap: 12px;
+    align-items: center;
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid rgba(184, 144, 48, 0.24);
+    border-radius: 10px;
+    background: rgba(0, 0, 0, 0.28);
+    color: inherit;
+    text-align: left;
+    cursor: pointer;
+}
+
+.age-barracks-unit-card.is-active,
+.age-barracks-unit-card:hover,
+.age-barracks-unit-card:focus-visible {
+    border-color: rgba(255, 215, 0, 0.52);
+    background: rgba(255, 215, 0, 0.07);
+}
+
+.age-barracks-unit-card.is-locked {
+    opacity: 0.76;
+}
+
+.age-barracks-unit-card.is-locked .age-barracks-unit-card-portrait {
+    filter: grayscale(0.55);
+}
+
+.age-barracks-unit-card-portrait-wrap {
+    display: block;
+    width: 72px;
+    height: 96px;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid rgba(184, 144, 48, 0.28);
+    background: rgba(0, 0, 0, 0.4);
+}
+
+.age-barracks-unit-card-portrait,
+.age-barracks-detail-portrait {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.age-barracks-unit-card-portrait.is-placeholder,
+.age-barracks-detail-portrait.is-placeholder {
+    object-fit: contain;
+    padding: 8px;
+    opacity: 0.88;
+}
+
+.age-barracks-unit-card-body {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+}
+
+.age-barracks-unit-card-name {
+    font-size: 0.92rem;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    color: #ffd978;
+}
+
+.age-barracks-unit-card-meta,
+.age-barracks-unit-card-promos {
+    font-size: 0.76rem;
+    line-height: 1.35;
+    color: rgba(236, 220, 180, 0.68);
+}
+
+.age-barracks-unit-card-lock {
+    display: block;
+    margin-top: 2px;
+    font-size: 0.72rem;
+    line-height: 1.35;
+    color: rgba(255, 160, 120, 0.9);
+}
+
+.age-barracks-unit-detail {
+    min-height: 0;
+    max-height: calc(100vh - 260px);
+    overflow: auto;
+}
+
+.age-barracks-detail-card {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    padding: 16px;
+    border: 1px solid rgba(184, 144, 48, 0.28);
+    border-radius: 12px;
+    background: rgba(0, 0, 0, 0.24);
+}
+
+.age-barracks-detail-portrait-wrap {
+    position: relative;
+    width: 100%;
+    max-width: 220px;
+    aspect-ratio: 3 / 4;
+    margin: 0 auto;
+    border-radius: 10px;
+    overflow: hidden;
+    border: 1px solid rgba(184, 144, 48, 0.32);
+    background: rgba(0, 0, 0, 0.42);
+}
+
+.age-barracks-detail-portrait-badge {
+    position: absolute;
+    left: 8px;
+    right: 8px;
+    bottom: 8px;
+    padding: 4px 8px;
+    border-radius: 999px;
+    background: rgba(8, 6, 4, 0.82);
+    border: 1px solid rgba(184, 144, 48, 0.34);
+    font-size: 0.62rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    text-align: center;
+    color: rgba(236, 220, 180, 0.78);
+}
+
+.age-barracks-detail-title {
+    margin: 0;
+    font-size: 1.18rem;
+    letter-spacing: 0.05em;
+    color: #ffe7b0;
+}
+
+.age-barracks-detail-branch,
+.age-barracks-detail-special {
+    margin: 0;
+    font-size: 0.8rem;
+    color: rgba(236, 220, 180, 0.72);
+}
+
+.age-barracks-detail-special {
+    color: #ffb86b;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
+
+.age-barracks-detail-lock {
+    margin: 0;
+    padding: 8px 10px;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 120, 90, 0.28);
+    background: rgba(120, 40, 30, 0.22);
+    font-size: 0.78rem;
+    line-height: 1.45;
+    color: rgba(255, 180, 150, 0.92);
+}
+
+.age-barracks-detail-costs {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+    margin: 0;
+}
+
+.age-barracks-detail-costs div {
+    padding: 10px;
+    border: 1px solid rgba(184, 144, 48, 0.22);
+    border-radius: 8px;
+    background: rgba(0, 0, 0, 0.22);
+}
+
+.age-barracks-detail-costs dt {
+    margin: 0 0 4px;
+    font-size: 0.66rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: rgba(201, 168, 76, 0.72);
+}
+
+.age-barracks-detail-costs dd {
+    margin: 0;
+    font-size: 0.92rem;
+    color: #fff3c4;
+}
+
+.age-barracks-detail-cap-notes {
+    margin: 0;
+    padding: 10px 12px;
+    border-left: 3px solid rgba(255, 184, 108, 0.72);
+    background: rgba(255, 184, 108, 0.06);
+    font-size: 0.78rem;
+    line-height: 1.45;
+    color: rgba(255, 220, 180, 0.82);
+}
+
+.age-barracks-promo-table-wrap {
+    overflow: auto;
+}
+
+.age-barracks-promo-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.78rem;
+}
+
+.age-barracks-promo-table th,
+.age-barracks-promo-table td {
+    padding: 8px 10px;
+    border-bottom: 1px solid rgba(184, 144, 48, 0.18);
+    text-align: left;
+}
+
+.age-barracks-promo-table th {
+    font-size: 0.66rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: rgba(201, 168, 76, 0.78);
+}
+
+.age-barracks-promo-table td {
+    color: #ecdcb4;
+}
+
+.age-barracks-detail-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.age-barracks-purchase-btn {
+    padding: 12px 16px;
+    border: 1px solid rgba(184, 144, 48, 0.42);
+    border-radius: 8px;
+    background: linear-gradient(180deg, rgba(255, 215, 0, 0.16), rgba(255, 215, 0, 0.05));
+    color: #ffd978;
+    font-size: 0.86rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    cursor: not-allowed;
+    opacity: 0.72;
+}
+
+.age-barracks-detail-footnote,
+.age-barracks-empty {
+    margin: 0;
+    font-size: 0.78rem;
+    line-height: 1.45;
+    color: rgba(236, 220, 180, 0.58);
 }
 
 /* ==========================================================================

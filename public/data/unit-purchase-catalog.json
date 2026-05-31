@@ -1,0 +1,1632 @@
+{
+  "meta": {
+    "title": "Royal Armies Unit Purchase Catalog",
+    "version": 3,
+    "promotionLabels": {
+      "app": "Apprentice",
+      "std": "Standard",
+      "vet": "Veteran",
+      "mst": "Master",
+      "leg": "Legendary",
+      "elite": "Elite"
+    },
+    "placeholderPortrait": "images/units/unit-portrait-placeholder.svg",
+    "tierUnlockRules": {
+      "description": "Four-tier unlock ladder: tier 1 at rank 1, tier 2 at 7, tier 3 at 14, tier 4 at 18. Lines beyond tier 4 extend toward rank 22.",
+      "fourTierUnlockRanks": [
+        1,
+        7,
+        14,
+        18
+      ],
+      "extendedUnlockRanks": [
+        1,
+        7,
+        14,
+        18,
+        20,
+        21,
+        22
+      ],
+      "classByPath": {
+        "Physical": "battlemaster",
+        "Magic": "archmage"
+      },
+      "branchRoles": {
+        "A": "Rank",
+        "B": "PvP",
+        "A/B": "Rank / PvP",
+        "A-1": "Rank",
+        "A-2": "PvP"
+      }
+    }
+  },
+  "categories": [
+    {
+      "id": "infantry",
+      "label": "Infantry",
+      "path": "Physical",
+      "sortOrder": 1
+    },
+    {
+      "id": "cavalry",
+      "label": "Cavalry",
+      "path": "Physical",
+      "sortOrder": 2
+    },
+    {
+      "id": "artillery",
+      "label": "Artillery",
+      "path": "Physical",
+      "sortOrder": 3
+    },
+    {
+      "id": "beasts",
+      "label": "Beasts",
+      "path": "Physical",
+      "sortOrder": 4
+    },
+    {
+      "id": "magic-infantry",
+      "label": "Magic Infantry",
+      "path": "Magic",
+      "sortOrder": 5
+    },
+    {
+      "id": "magic-cavalry",
+      "label": "Magic Cavalry",
+      "path": "Magic",
+      "sortOrder": 6
+    },
+    {
+      "id": "magic-artillery",
+      "label": "Magic Artillery",
+      "path": "Magic",
+      "sortOrder": 7
+    },
+    {
+      "id": "magic-beasts",
+      "label": "Magic Beasts",
+      "path": "Magic",
+      "sortOrder": 8
+    }
+  ],
+  "units": [
+    {
+      "id": "recruit-shieldman-a",
+      "categoryId": "infantry",
+      "name": "Recruit Shieldman",
+      "branch": "A",
+      "tier": 1,
+      "goldCost": 350,
+      "tierEvolutionCost": 15,
+      "promotions": [
+        "app",
+        "std",
+        "vet"
+      ],
+      "stats": {
+        "app": {
+          "hp": 114,
+          "str": 11,
+          "upc": 3
+        },
+        "std": {
+          "hp": 132,
+          "str": 11,
+          "upc": 5
+        },
+        "vet": {
+          "hp": 150,
+          "str": 12,
+          "upc": 8
+        }
+      },
+      "combatType": "PHYS_INF",
+      "portraitSrc": "images/units/portraits/recruit-shieldman-a.png",
+      "portraitPlaceholder": true,
+      "displayName": "Recruit Shieldman (A)",
+      "unitRole": "rank",
+      "requiredClass": "battlemaster",
+      "unlockRank": 1,
+      "roleLabel": "Rank"
+    },
+    {
+      "id": "shield-sergeant-a",
+      "categoryId": "infantry",
+      "name": "Shield Sergeant",
+      "branch": "A",
+      "tier": 2,
+      "goldCost": 2100,
+      "tierEvolutionCost": 25,
+      "promotions": [
+        "std",
+        "vet",
+        "mst"
+      ],
+      "stats": {
+        "std": {
+          "hp": 141,
+          "str": 13,
+          "upc": 5
+        },
+        "vet": {
+          "hp": 161,
+          "str": 14,
+          "upc": 9
+        },
+        "mst": {
+          "hp": 181,
+          "str": 15,
+          "upc": 13
+        }
+      },
+      "combatType": "PHYS_INF",
+      "portraitSrc": "images/units/portraits/shield-sergeant-a.png",
+      "portraitPlaceholder": true,
+      "displayName": "Shield Sergeant (A)",
+      "unitRole": "rank",
+      "requiredClass": "battlemaster",
+      "unlockRank": 7,
+      "roleLabel": "Rank"
+    },
+    {
+      "id": "vanguard-axeman-b",
+      "categoryId": "infantry",
+      "name": "Vanguard Axeman",
+      "branch": "B",
+      "tier": 3,
+      "goldCost": 1350,
+      "tierEvolutionCost": 22,
+      "promotions": [
+        "std",
+        "vet",
+        "mst"
+      ],
+      "stats": {
+        "std": {
+          "hp": 118,
+          "str": 22,
+          "upc": 8
+        },
+        "vet": {
+          "hp": 127,
+          "str": 25,
+          "upc": 13
+        },
+        "mst": {
+          "hp": 135,
+          "str": 27,
+          "upc": 18
+        }
+      },
+      "combatType": "PHYS_INF",
+      "portraitSrc": "images/units/portraits/vanguard-axeman-b.png",
+      "portraitPlaceholder": true,
+      "displayName": "Vanguard Axeman (B)",
+      "unitRole": "pvp",
+      "requiredClass": "battlemaster",
+      "unlockRank": 14,
+      "roleLabel": "PvP"
+    },
+    {
+      "id": "bulwark-guard-a",
+      "categoryId": "infantry",
+      "name": "Bulwark Guard",
+      "branch": "A",
+      "tier": 4,
+      "goldCost": 13120,
+      "tierEvolutionCost": 45,
+      "promotions": [
+        "std",
+        "vet",
+        "mst",
+        "leg"
+      ],
+      "stats": {
+        "std": {
+          "hp": 208,
+          "str": 22,
+          "upc": 12
+        },
+        "vet": {
+          "hp": 225,
+          "str": 23,
+          "upc": 18
+        },
+        "mst": {
+          "hp": 244,
+          "str": 24,
+          "upc": 24
+        },
+        "leg": {
+          "hp": 262,
+          "str": 25,
+          "upc": 30
+        }
+      },
+      "combatType": "PHYS_INF",
+      "portraitSrc": "images/units/portraits/bulwark-guard-a.png",
+      "portraitPlaceholder": true,
+      "displayName": "Bulwark Guard (A)",
+      "unitRole": "rank",
+      "requiredClass": "battlemaster",
+      "unlockRank": 18,
+      "roleLabel": "Rank"
+    },
+    {
+      "id": "breach-soldier-b",
+      "categoryId": "infantry",
+      "name": "Breach Soldier",
+      "branch": "B",
+      "tier": 5,
+      "goldCost": 11200,
+      "tierEvolutionCost": 38,
+      "promotions": [
+        "std",
+        "vet",
+        "mst",
+        "leg"
+      ],
+      "stats": {
+        "std": {
+          "hp": 164,
+          "str": 38,
+          "upc": 17
+        },
+        "vet": {
+          "hp": 177,
+          "str": 41,
+          "upc": 24
+        },
+        "mst": {
+          "hp": 189,
+          "str": 43,
+          "upc": 31
+        },
+        "leg": {
+          "hp": 202,
+          "str": 44,
+          "upc": 38
+        }
+      },
+      "combatType": "PHYS_INF",
+      "portraitSrc": "images/units/portraits/breach-soldier-b.png",
+      "portraitPlaceholder": true,
+      "displayName": "Breach Soldier (B)",
+      "unitRole": "pvp",
+      "requiredClass": "battlemaster",
+      "unlockRank": 20,
+      "roleLabel": "PvP"
+    },
+    {
+      "id": "citadel-guardian-a",
+      "categoryId": "infantry",
+      "name": "Citadel Guardian",
+      "branch": "A",
+      "tier": 6,
+      "goldCost": 66210,
+      "tierEvolutionCost": 75,
+      "promotions": [
+        "std",
+        "vet",
+        "mst",
+        "leg",
+        "elite"
+      ],
+      "promotionCapNotes": "42 units (Marshal Commander) or 34 (Lord-High Commander) for promotion cap.",
+      "stats": {
+        "std": {
+          "hp": 268,
+          "str": 52,
+          "upc": 23
+        },
+        "vet": {
+          "hp": 283,
+          "str": 53,
+          "upc": 31
+        },
+        "mst": {
+          "hp": 291,
+          "str": 53,
+          "upc": 39
+        },
+        "leg": {
+          "hp": 306,
+          "str": 54,
+          "upc": 47
+        },
+        "elite": {
+          "hp": 315,
+          "str": 54,
+          "upc": 55
+        }
+      },
+      "combatType": "PHYS_INF",
+      "portraitSrc": "images/units/portraits/citadel-guardian-a.png",
+      "portraitPlaceholder": true,
+      "displayName": "Citadel Guardian (A)",
+      "unitRole": "rank",
+      "requiredClass": "battlemaster",
+      "unlockRank": 21,
+      "roleLabel": "Rank"
+    },
+    {
+      "id": "frontline-breaker-b",
+      "categoryId": "infantry",
+      "name": "Frontline Breaker",
+      "branch": "B",
+      "tier": 7,
+      "goldCost": 44300,
+      "tierEvolutionCost": 65,
+      "promotions": [
+        "std",
+        "vet",
+        "mst",
+        "leg",
+        "elite"
+      ],
+      "promotionCapNotes": "52 units (Marshal Commander) or 41 (Lord-High Commander) for promotion cap.",
+      "stats": {
+        "std": {
+          "hp": 212,
+          "str": 58,
+          "upc": 30
+        },
+        "vet": {
+          "hp": 226,
+          "str": 60,
+          "upc": 37
+        },
+        "mst": {
+          "hp": 238,
+          "str": 62,
+          "upc": 44
+        },
+        "leg": {
+          "hp": 254,
+          "str": 63,
+          "upc": 51
+        },
+        "elite": {
+          "hp": 265,
+          "str": 64,
+          "upc": 58
+        }
+      },
+      "combatType": "PHYS_INF",
+      "portraitSrc": "images/units/portraits/frontline-breaker-b.png",
+      "portraitPlaceholder": true,
+      "displayName": "Frontline Breaker (B)",
+      "unitRole": "pvp",
+      "requiredClass": "battlemaster",
+      "unlockRank": 22,
+      "roleLabel": "PvP"
+    },
+    {
+      "id": "squire-rider",
+      "categoryId": "cavalry",
+      "name": "Squire Rider",
+      "branch": "A/B",
+      "tier": 1,
+      "goldCost": 315,
+      "tierEvolutionCost": 15,
+      "promotions": [
+        "app",
+        "std",
+        "vet"
+      ],
+      "special": "DOUBLE_STRIKE",
+      "stats": {
+        "app": {
+          "hp": 92,
+          "str": 12,
+          "upc": 3
+        },
+        "std": {
+          "hp": 110,
+          "str": 12,
+          "upc": 6
+        },
+        "vet": {
+          "hp": 128,
+          "str": 13,
+          "upc": 9
+        }
+      },
+      "combatType": "PHYS_CAV",
+      "portraitSrc": "images/units/portraits/squire-rider.png",
+      "portraitPlaceholder": true,
+      "displayName": "Squire Rider (A/B)",
+      "unitRole": "both",
+      "requiredClass": "battlemaster",
+      "unlockRank": 1,
+      "roleLabel": "Rank / PvP"
+    },
+    {
+      "id": "dread-knight",
+      "categoryId": "cavalry",
+      "name": "Dread Knight",
+      "branch": "A/B",
+      "tier": 2,
+      "goldCost": 4350,
+      "tierEvolutionCost": 25,
+      "promotions": [
+        "std",
+        "vet",
+        "mst"
+      ],
+      "special": "DOUBLE_STRIKE",
+      "stats": {
+        "std": {
+          "hp": 119,
+          "str": 21,
+          "upc": 10
+        },
+        "vet": {
+          "hp": 132,
+          "str": 24,
+          "upc": 14
+        },
+        "mst": {
+          "hp": 144,
+          "str": 27,
+          "upc": 18
+        }
+      },
+      "combatType": "PHYS_CAV",
+      "portraitSrc": "images/units/portraits/dread-knight.png",
+      "portraitPlaceholder": true,
+      "displayName": "Dread Knight (A/B)",
+      "unitRole": "both",
+      "requiredClass": "battlemaster",
+      "unlockRank": 7,
+      "roleLabel": "Rank / PvP"
+    },
+    {
+      "id": "royal-lancer",
+      "categoryId": "cavalry",
+      "name": "Royal Lancer",
+      "branch": "A/B",
+      "tier": 3,
+      "goldCost": 26800,
+      "tierEvolutionCost": 32,
+      "promotions": [
+        "std",
+        "vet",
+        "mst"
+      ],
+      "special": "DOUBLE_STRIKE",
+      "promotionCapNotes": "58 units (Marshal Commander) or 52 (Lord-High Commander) for promotion cap.",
+      "stats": {
+        "std": {
+          "hp": 184,
+          "str": 35,
+          "upc": 20
+        },
+        "vet": {
+          "hp": 198,
+          "str": 39,
+          "upc": 25
+        },
+        "mst": {
+          "hp": 214,
+          "str": 43,
+          "upc": 30
+        }
+      },
+      "combatType": "PHYS_CAV",
+      "portraitSrc": "images/units/portraits/royal-lancer.png",
+      "portraitPlaceholder": true,
+      "displayName": "Royal Lancer (A/B)",
+      "unitRole": "both",
+      "requiredClass": "battlemaster",
+      "unlockRank": 14,
+      "roleLabel": "Rank / PvP"
+    },
+    {
+      "id": "levy-archer-b",
+      "categoryId": "artillery",
+      "name": "Levy Archer",
+      "branch": "B",
+      "tier": 1,
+      "goldCost": 240,
+      "tierEvolutionCost": 12,
+      "promotions": [
+        "app",
+        "std",
+        "vet"
+      ],
+      "stats": {
+        "app": {
+          "hp": 75,
+          "str": 6,
+          "rng": 7,
+          "upc": 3
+        },
+        "std": {
+          "hp": 82,
+          "str": 7,
+          "rng": 8,
+          "upc": 7
+        },
+        "vet": {
+          "hp": 90,
+          "str": 8,
+          "rng": 9,
+          "upc": 11
+        }
+      },
+      "combatType": "PHYS_ART",
+      "portraitSrc": "images/units/portraits/levy-archer-b.png",
+      "portraitPlaceholder": true,
+      "displayName": "Levy Archer (B)",
+      "unitRole": "pvp",
+      "requiredClass": "battlemaster",
+      "unlockRank": 1,
+      "roleLabel": "PvP"
+    },
+    {
+      "id": "longbowman-b",
+      "categoryId": "artillery",
+      "name": "Longbowman",
+      "branch": "B",
+      "tier": 2,
+      "goldCost": 1220,
+      "tierEvolutionCost": 18,
+      "promotions": [
+        "std",
+        "vet",
+        "mst"
+      ],
+      "stats": {
+        "std": {
+          "hp": 110,
+          "str": 8,
+          "rng": 12,
+          "upc": 9
+        },
+        "vet": {
+          "hp": 135,
+          "str": 10,
+          "rng": 15,
+          "upc": 13
+        },
+        "mst": {
+          "hp": 160,
+          "str": 12,
+          "rng": 18,
+          "upc": 17
+        }
+      },
+      "combatType": "PHYS_ART",
+      "portraitSrc": "images/units/portraits/longbowman-b.png",
+      "portraitPlaceholder": true,
+      "displayName": "Longbowman (B)",
+      "unitRole": "pvp",
+      "requiredClass": "battlemaster",
+      "unlockRank": 7,
+      "roleLabel": "PvP"
+    },
+    {
+      "id": "sylvan-sniper-b",
+      "categoryId": "artillery",
+      "name": "Sylvan Sniper",
+      "branch": "B",
+      "tier": 3,
+      "goldCost": 18800,
+      "tierEvolutionCost": 32,
+      "promotions": [
+        "std",
+        "vet",
+        "mst"
+      ],
+      "promotionCapNotes": "78 units (Marshal Commander) or 70 (Lord-High Commander) for promotion cap.",
+      "stats": {
+        "std": {
+          "hp": 200,
+          "str": 15,
+          "rng": 30,
+          "upc": 16
+        },
+        "vet": {
+          "hp": 240,
+          "str": 18,
+          "rng": 38,
+          "upc": 21
+        },
+        "mst": {
+          "hp": 280,
+          "str": 22,
+          "rng": 55,
+          "upc": 26
+        }
+      },
+      "combatType": "PHYS_ART",
+      "portraitSrc": "images/units/portraits/sylvan-sniper-b.png",
+      "portraitPlaceholder": true,
+      "displayName": "Sylvan Sniper (B)",
+      "unitRole": "pvp",
+      "requiredClass": "battlemaster",
+      "unlockRank": 14,
+      "roleLabel": "PvP"
+    },
+    {
+      "id": "wild-wolf-a",
+      "categoryId": "beasts",
+      "name": "Wild Wolf",
+      "branch": "A",
+      "tier": 1,
+      "goldCost": 290,
+      "tierEvolutionCost": 15,
+      "promotions": [
+        "app",
+        "std",
+        "vet"
+      ],
+      "stats": {
+        "app": {
+          "hp": 78,
+          "str": 7,
+          "upc": 3
+        },
+        "std": {
+          "hp": 93,
+          "str": 7,
+          "upc": 7
+        },
+        "vet": {
+          "hp": 108,
+          "str": 8,
+          "upc": 9
+        }
+      },
+      "combatType": "PHYS_BST",
+      "portraitSrc": "images/units/portraits/wild-wolf-a.png",
+      "portraitPlaceholder": true,
+      "displayName": "Wild Wolf (A)",
+      "unitRole": "rank",
+      "requiredClass": "battlemaster",
+      "unlockRank": 1,
+      "roleLabel": "Rank"
+    },
+    {
+      "id": "trained-wolf-a1",
+      "categoryId": "beasts",
+      "name": "Trained Wolf",
+      "branch": "A-1",
+      "tier": 2,
+      "goldCost": 1840,
+      "tierEvolutionCost": 18,
+      "promotions": [
+        "std",
+        "vet",
+        "mst"
+      ],
+      "stats": {
+        "std": {
+          "hp": 114,
+          "str": 9,
+          "upc": 9
+        },
+        "vet": {
+          "hp": 122,
+          "str": 10,
+          "upc": 13
+        },
+        "mst": {
+          "hp": 131,
+          "str": 11,
+          "upc": 17
+        }
+      },
+      "combatType": "PHYS_BST",
+      "portraitSrc": "images/units/portraits/trained-wolf-a1.png",
+      "portraitPlaceholder": true,
+      "displayName": "Trained Wolf (A-1)",
+      "unitRole": "rank",
+      "requiredClass": "battlemaster",
+      "unlockRank": 7,
+      "roleLabel": "Rank"
+    },
+    {
+      "id": "war-howler-a2",
+      "categoryId": "beasts",
+      "name": "War-Howler",
+      "branch": "A-2",
+      "tier": 3,
+      "goldCost": 1300,
+      "tierEvolutionCost": 22,
+      "promotions": [
+        "std",
+        "vet",
+        "mst"
+      ],
+      "stats": {
+        "std": {
+          "hp": 108,
+          "str": 18,
+          "upc": 13
+        },
+        "vet": {
+          "hp": 117,
+          "str": 21,
+          "upc": 17
+        },
+        "mst": {
+          "hp": 126,
+          "str": 23,
+          "upc": 22
+        }
+      },
+      "combatType": "PHYS_BST",
+      "portraitSrc": "images/units/portraits/war-howler-a2.png",
+      "portraitPlaceholder": true,
+      "displayName": "War-Howler (A-2)",
+      "unitRole": "pvp",
+      "requiredClass": "battlemaster",
+      "unlockRank": 14,
+      "roleLabel": "PvP"
+    },
+    {
+      "id": "steeljaw-a1",
+      "categoryId": "beasts",
+      "name": "Steeljaw",
+      "branch": "A-1",
+      "tier": 4,
+      "goldCost": 11500,
+      "tierEvolutionCost": 32,
+      "promotions": [
+        "std",
+        "vet",
+        "mst",
+        "leg"
+      ],
+      "promotionCapNotes": "86 units (Marshal Commander) or 83 (Lord-High Commander) for promotion cap.",
+      "stats": {
+        "std": {
+          "hp": 140,
+          "str": 14,
+          "upc": 16
+        },
+        "vet": {
+          "hp": 146,
+          "str": 15,
+          "upc": 20
+        },
+        "mst": {
+          "hp": 152,
+          "str": 16,
+          "upc": 24
+        },
+        "leg": {
+          "hp": 159,
+          "str": 18,
+          "upc": 28
+        }
+      },
+      "combatType": "PHYS_BST",
+      "portraitSrc": "images/units/portraits/steeljaw-a1.png",
+      "portraitPlaceholder": true,
+      "displayName": "Steeljaw (A-1)",
+      "unitRole": "rank",
+      "requiredClass": "battlemaster",
+      "unlockRank": 18,
+      "roleLabel": "Rank"
+    },
+    {
+      "id": "voltgrime-a2",
+      "categoryId": "beasts",
+      "name": "Voltgrime",
+      "branch": "A-2",
+      "tier": 5,
+      "goldCost": 10200,
+      "tierEvolutionCost": 35,
+      "promotions": [
+        "std",
+        "vet",
+        "mst",
+        "leg"
+      ],
+      "promotionCapNotes": "74 units (Marshal Commander) or 69 (Lord-High Commander) for promotion cap.",
+      "stats": {
+        "std": {
+          "hp": 124,
+          "str": 24,
+          "upc": 22
+        },
+        "vet": {
+          "hp": 131,
+          "str": 26,
+          "upc": 27
+        },
+        "mst": {
+          "hp": 139,
+          "str": 29,
+          "upc": 31
+        },
+        "leg": {
+          "hp": 146,
+          "str": 31,
+          "upc": 36
+        }
+      },
+      "combatType": "PHYS_BST",
+      "portraitSrc": "images/units/portraits/voltgrime-a2.png",
+      "portraitPlaceholder": true,
+      "displayName": "Voltgrime (A-2)",
+      "unitRole": "pvp",
+      "requiredClass": "battlemaster",
+      "unlockRank": 20,
+      "roleLabel": "PvP"
+    },
+    {
+      "id": "acolyte",
+      "categoryId": "magic-infantry",
+      "name": "Acolyte",
+      "branch": "A",
+      "tier": 1,
+      "goldCost": 460,
+      "tierEvolutionCost": 15,
+      "promotions": [
+        "app",
+        "std",
+        "vet"
+      ],
+      "stats": {
+        "app": {
+          "hp": 98,
+          "str": 13,
+          "upc": 5
+        },
+        "std": {
+          "hp": 115,
+          "str": 13,
+          "upc": 8
+        },
+        "vet": {
+          "hp": 132,
+          "str": 14,
+          "upc": 11
+        }
+      },
+      "combatType": "MAG_INF",
+      "portraitSrc": "images/units/portraits/acolyte.png",
+      "portraitPlaceholder": true,
+      "displayName": "Acolyte",
+      "unitRole": "rank",
+      "requiredClass": "archmage",
+      "unlockRank": 1,
+      "roleLabel": "Rank"
+    },
+    {
+      "id": "warder-a",
+      "categoryId": "magic-infantry",
+      "name": "Warder",
+      "branch": "A",
+      "tier": 2,
+      "goldCost": 2800,
+      "tierEvolutionCost": 25,
+      "promotions": [
+        "std",
+        "vet",
+        "mst"
+      ],
+      "stats": {
+        "std": {
+          "hp": 123,
+          "str": 16,
+          "upc": 8
+        },
+        "vet": {
+          "hp": 142,
+          "str": 17,
+          "upc": 14
+        },
+        "mst": {
+          "hp": 161,
+          "str": 18,
+          "upc": 20
+        }
+      },
+      "combatType": "MAG_INF",
+      "portraitSrc": "images/units/portraits/warder-a.png",
+      "portraitPlaceholder": true,
+      "displayName": "Warder (A)",
+      "unitRole": "rank",
+      "requiredClass": "archmage",
+      "unlockRank": 7,
+      "roleLabel": "Rank"
+    },
+    {
+      "id": "spellblade-b",
+      "categoryId": "magic-infantry",
+      "name": "Spellblade",
+      "branch": "B",
+      "tier": 3,
+      "goldCost": 1860,
+      "tierEvolutionCost": 22,
+      "promotions": [
+        "std",
+        "vet",
+        "mst"
+      ],
+      "stats": {
+        "std": {
+          "hp": 124,
+          "str": 32,
+          "upc": 12
+        },
+        "vet": {
+          "hp": 140,
+          "str": 33,
+          "upc": 21
+        },
+        "mst": {
+          "hp": 156,
+          "str": 35,
+          "upc": 30
+        }
+      },
+      "combatType": "MAG_INF",
+      "portraitSrc": "images/units/portraits/spellblade-b.png",
+      "portraitPlaceholder": true,
+      "displayName": "Spellblade (B)",
+      "unitRole": "pvp",
+      "requiredClass": "archmage",
+      "unlockRank": 14,
+      "roleLabel": "PvP"
+    },
+    {
+      "id": "arcane-sentinel-a",
+      "categoryId": "magic-infantry",
+      "name": "Arcane Sentinel",
+      "branch": "A",
+      "tier": 4,
+      "goldCost": 18400,
+      "tierEvolutionCost": 45,
+      "promotions": [
+        "std",
+        "vet",
+        "mst",
+        "leg"
+      ],
+      "stats": {
+        "std": {
+          "hp": 188,
+          "str": 26,
+          "upc": 18
+        },
+        "vet": {
+          "hp": 205,
+          "str": 27,
+          "upc": 24
+        },
+        "mst": {
+          "hp": 222,
+          "str": 28,
+          "upc": 30
+        },
+        "leg": {
+          "hp": 238,
+          "str": 30,
+          "upc": 36
+        }
+      },
+      "combatType": "MAG_INF",
+      "portraitSrc": "images/units/portraits/arcane-sentinel-a.png",
+      "portraitPlaceholder": true,
+      "displayName": "Arcane Sentinel (A)",
+      "unitRole": "rank",
+      "requiredClass": "archmage",
+      "unlockRank": 18,
+      "roleLabel": "Rank"
+    },
+    {
+      "id": "void-reaver-b",
+      "categoryId": "magic-infantry",
+      "name": "Void Reaver",
+      "branch": "B",
+      "tier": 5,
+      "goldCost": 14200,
+      "tierEvolutionCost": 38,
+      "promotions": [
+        "std",
+        "vet",
+        "mst",
+        "leg"
+      ],
+      "stats": {
+        "std": {
+          "hp": 172,
+          "str": 42,
+          "upc": 25
+        },
+        "vet": {
+          "hp": 187,
+          "str": 44,
+          "upc": 34
+        },
+        "mst": {
+          "hp": 201,
+          "str": 46,
+          "upc": 43
+        },
+        "leg": {
+          "hp": 216,
+          "str": 48,
+          "upc": 52
+        }
+      },
+      "combatType": "MAG_INF",
+      "portraitSrc": "images/units/portraits/void-reaver-b.png",
+      "portraitPlaceholder": true,
+      "displayName": "Void Reaver (B)",
+      "unitRole": "pvp",
+      "requiredClass": "archmage",
+      "unlockRank": 20,
+      "roleLabel": "PvP"
+    },
+    {
+      "id": "eldritch-bulwark-a",
+      "categoryId": "magic-infantry",
+      "name": "Eldritch Bulwark",
+      "branch": "A",
+      "tier": 6,
+      "goldCost": 82400,
+      "tierEvolutionCost": 75,
+      "promotions": [
+        "std",
+        "vet",
+        "mst",
+        "leg",
+        "elite"
+      ],
+      "promotionCapNotes": "56 units (Marshal Commander) or 43 (Lord-High Commander) for promotion cap.",
+      "stats": {
+        "std": {
+          "hp": 254,
+          "str": 49,
+          "upc": 32
+        },
+        "vet": {
+          "hp": 266,
+          "str": 51,
+          "upc": 42
+        },
+        "mst": {
+          "hp": 277,
+          "str": 53,
+          "upc": 52
+        },
+        "leg": {
+          "hp": 288,
+          "str": 54,
+          "upc": 62
+        },
+        "elite": {
+          "hp": 299,
+          "str": 56,
+          "upc": 72
+        }
+      },
+      "combatType": "MAG_INF",
+      "portraitSrc": "images/units/portraits/eldritch-bulwark-a.png",
+      "portraitPlaceholder": true,
+      "displayName": "Eldritch Bulwark (A)",
+      "unitRole": "rank",
+      "requiredClass": "archmage",
+      "unlockRank": 21,
+      "roleLabel": "Rank"
+    },
+    {
+      "id": "arcane-executioner-b",
+      "categoryId": "magic-infantry",
+      "name": "Arcane Executioner",
+      "branch": "B",
+      "tier": 7,
+      "goldCost": 68400,
+      "tierEvolutionCost": 65,
+      "promotions": [
+        "std",
+        "vet",
+        "mst",
+        "leg",
+        "elite"
+      ],
+      "promotionCapNotes": "68 units (Marshal Commander) or 55 (Lord-High Commander) for promotion cap.",
+      "stats": {
+        "std": {
+          "hp": 224,
+          "str": 50,
+          "upc": 40
+        },
+        "vet": {
+          "hp": 235,
+          "str": 51,
+          "upc": 50
+        },
+        "mst": {
+          "hp": 246,
+          "str": 52,
+          "upc": 60
+        },
+        "leg": {
+          "hp": 255,
+          "str": 52,
+          "upc": 70
+        },
+        "elite": {
+          "hp": 265,
+          "str": 53,
+          "upc": 80
+        }
+      },
+      "combatType": "MAG_INF",
+      "portraitSrc": "images/units/portraits/arcane-executioner-b.png",
+      "portraitPlaceholder": true,
+      "displayName": "Arcane Executioner (B)",
+      "unitRole": "pvp",
+      "requiredClass": "archmage",
+      "unlockRank": 22,
+      "roleLabel": "PvP"
+    },
+    {
+      "id": "neophyte",
+      "categoryId": "magic-cavalry",
+      "name": "Neophyte",
+      "branch": "A",
+      "tier": 1,
+      "goldCost": 620,
+      "tierEvolutionCost": 18,
+      "promotions": [
+        "app",
+        "std",
+        "vet"
+      ],
+      "special": "DOUBLE_STRIKE",
+      "stats": {
+        "app": {
+          "hp": 92,
+          "str": 13,
+          "upc": 4
+        },
+        "std": {
+          "hp": 110,
+          "str": 14,
+          "upc": 7
+        },
+        "vet": {
+          "hp": 128,
+          "str": 15,
+          "upc": 11
+        }
+      },
+      "combatType": "MAG_CAV",
+      "portraitSrc": "images/units/portraits/neophyte.png",
+      "portraitPlaceholder": true,
+      "displayName": "Neophyte",
+      "unitRole": "rank",
+      "requiredClass": "archmage",
+      "unlockRank": 1,
+      "roleLabel": "Rank"
+    },
+    {
+      "id": "aether-lancer",
+      "categoryId": "magic-cavalry",
+      "name": "Aether Lancer",
+      "branch": "B",
+      "tier": 3,
+      "goldCost": 6400,
+      "tierEvolutionCost": 25,
+      "promotions": [
+        "std",
+        "vet",
+        "mst"
+      ],
+      "special": "DOUBLE_STRIKE",
+      "stats": {
+        "std": {
+          "hp": 119,
+          "str": 24,
+          "upc": 12
+        },
+        "vet": {
+          "hp": 134,
+          "str": 28,
+          "upc": 21
+        },
+        "mst": {
+          "hp": 144,
+          "str": 32,
+          "upc": 30
+        }
+      },
+      "combatType": "MAG_CAV",
+      "portraitSrc": "images/units/portraits/aether-lancer.png",
+      "portraitPlaceholder": true,
+      "displayName": "Aether Lancer",
+      "unitRole": "pvp",
+      "requiredClass": "archmage",
+      "unlockRank": 14,
+      "roleLabel": "PvP"
+    },
+    {
+      "id": "celestial-harbinger",
+      "categoryId": "magic-cavalry",
+      "name": "Celestial Harbinger",
+      "branch": "B",
+      "tier": 7,
+      "goldCost": 42800,
+      "tierEvolutionCost": 48,
+      "promotions": [
+        "std",
+        "vet",
+        "mst"
+      ],
+      "special": "DOUBLE_STRIKE",
+      "promotionCapNotes": "47 units (Marshal Commander) or 37 (Lord-High Commander) for promotion cap.",
+      "stats": {
+        "std": {
+          "hp": 182,
+          "str": 42,
+          "upc": 30
+        },
+        "vet": {
+          "hp": 198,
+          "str": 47,
+          "upc": 45
+        },
+        "mst": {
+          "hp": 214,
+          "str": 52,
+          "upc": 60
+        }
+      },
+      "combatType": "MAG_CAV",
+      "portraitSrc": "images/units/portraits/celestial-harbinger.png",
+      "portraitPlaceholder": true,
+      "displayName": "Celestial Harbinger",
+      "unitRole": "pvp",
+      "requiredClass": "archmage",
+      "unlockRank": 22,
+      "roleLabel": "PvP"
+    },
+    {
+      "id": "holder",
+      "categoryId": "magic-artillery",
+      "name": "Holder",
+      "branch": "B",
+      "tier": 1,
+      "goldCost": 280,
+      "tierEvolutionCost": 15,
+      "promotions": [
+        "app",
+        "std",
+        "vet"
+      ],
+      "stats": {
+        "app": {
+          "hp": 75,
+          "str": 7,
+          "rng": 24,
+          "upc": 4
+        },
+        "std": {
+          "hp": 88,
+          "str": 8,
+          "rng": 25,
+          "upc": 8
+        },
+        "vet": {
+          "hp": 104,
+          "str": 9,
+          "rng": 26,
+          "upc": 12
+        }
+      },
+      "combatType": "MAG_ART",
+      "portraitSrc": "images/units/portraits/holder.png",
+      "portraitPlaceholder": true,
+      "displayName": "Holder",
+      "unitRole": "pvp",
+      "requiredClass": "archmage",
+      "unlockRank": 1,
+      "roleLabel": "PvP"
+    },
+    {
+      "id": "vessel",
+      "categoryId": "magic-artillery",
+      "name": "Vessel",
+      "branch": "B",
+      "tier": 3,
+      "goldCost": 1660,
+      "tierEvolutionCost": 22,
+      "promotions": [
+        "std",
+        "vet",
+        "mst"
+      ],
+      "stats": {
+        "std": {
+          "hp": 111,
+          "str": 10,
+          "rng": 30,
+          "upc": 10
+        },
+        "vet": {
+          "hp": 130,
+          "str": 11,
+          "rng": 33,
+          "upc": 16
+        },
+        "mst": {
+          "hp": 148,
+          "str": 12,
+          "rng": 36,
+          "upc": 22
+        }
+      },
+      "combatType": "MAG_ART",
+      "portraitSrc": "images/units/portraits/vessel.png",
+      "portraitPlaceholder": true,
+      "displayName": "Vessel",
+      "unitRole": "pvp",
+      "requiredClass": "archmage",
+      "unlockRank": 14,
+      "roleLabel": "PvP"
+    },
+    {
+      "id": "archon",
+      "categoryId": "magic-artillery",
+      "name": "Archon",
+      "branch": "B",
+      "tier": 7,
+      "goldCost": 22400,
+      "tierEvolutionCost": 35,
+      "promotions": [
+        "std",
+        "vet",
+        "mst"
+      ],
+      "promotionCapNotes": "68 units (Marshal Commander) or 54 (Lord-High Commander) for promotion cap.",
+      "stats": {
+        "std": {
+          "hp": 172,
+          "str": 14,
+          "rng": 38,
+          "upc": 18
+        },
+        "vet": {
+          "hp": 192,
+          "str": 16,
+          "rng": 42,
+          "upc": 25
+        },
+        "mst": {
+          "hp": 211,
+          "str": 18,
+          "rng": 45,
+          "upc": 32
+        }
+      },
+      "combatType": "MAG_ART",
+      "portraitSrc": "images/units/portraits/archon.png",
+      "portraitPlaceholder": true,
+      "displayName": "Archon",
+      "unitRole": "pvp",
+      "requiredClass": "archmage",
+      "unlockRank": 22,
+      "roleLabel": "PvP"
+    },
+    {
+      "id": "wyrmling",
+      "categoryId": "magic-beasts",
+      "name": "Wyrmling",
+      "branch": "A",
+      "tier": 1,
+      "goldCost": 310,
+      "tierEvolutionCost": 15,
+      "promotions": [
+        "app",
+        "std",
+        "vet"
+      ],
+      "stats": {
+        "app": {
+          "hp": 88,
+          "str": 9,
+          "upc": 4
+        },
+        "std": {
+          "hp": 104,
+          "str": 10,
+          "upc": 8
+        },
+        "vet": {
+          "hp": 120,
+          "str": 11,
+          "upc": 12
+        }
+      },
+      "combatType": "MAG_BST",
+      "portraitSrc": "images/units/portraits/wyrmling.png",
+      "portraitPlaceholder": true,
+      "displayName": "Wyrmling",
+      "unitRole": "rank",
+      "requiredClass": "archmage",
+      "unlockRank": 1,
+      "roleLabel": "Rank"
+    },
+    {
+      "id": "blood-drake",
+      "categoryId": "magic-beasts",
+      "name": "Blood-Drake",
+      "branch": "A",
+      "tier": 3,
+      "goldCost": 1720,
+      "tierEvolutionCost": 25,
+      "promotions": [
+        "std",
+        "vet",
+        "mst"
+      ],
+      "stats": {
+        "std": {
+          "hp": 111,
+          "str": 13,
+          "upc": 10
+        },
+        "vet": {
+          "hp": 130,
+          "str": 14,
+          "upc": 16
+        },
+        "mst": {
+          "hp": 148,
+          "str": 15,
+          "upc": 22
+        }
+      },
+      "combatType": "MAG_BST",
+      "portraitSrc": "images/units/portraits/blood-drake.png",
+      "portraitPlaceholder": true,
+      "displayName": "Blood-Drake",
+      "unitRole": "rank",
+      "requiredClass": "archmage",
+      "unlockRank": 14,
+      "roleLabel": "Rank"
+    },
+    {
+      "id": "iron-hide-drake",
+      "categoryId": "magic-beasts",
+      "name": "Iron-Hide Drake",
+      "branch": "A",
+      "tier": 4,
+      "goldCost": 4360,
+      "tierEvolutionCost": 32,
+      "promotions": [
+        "std",
+        "vet",
+        "mst"
+      ],
+      "stats": {
+        "std": {
+          "hp": 155,
+          "str": 16,
+          "upc": 16
+        },
+        "vet": {
+          "hp": 170,
+          "str": 17,
+          "upc": 24
+        },
+        "mst": {
+          "hp": 184,
+          "str": 19,
+          "upc": 32
+        }
+      },
+      "combatType": "MAG_BST",
+      "portraitSrc": "images/units/portraits/iron-hide-drake.png",
+      "portraitPlaceholder": true,
+      "displayName": "Iron-Hide Drake",
+      "unitRole": "rank",
+      "requiredClass": "archmage",
+      "unlockRank": 18,
+      "roleLabel": "Rank"
+    },
+    {
+      "id": "calamity-dragon-a",
+      "categoryId": "magic-beasts",
+      "name": "Calamity Dragon",
+      "branch": "A",
+      "tier": 5,
+      "goldCost": 22400,
+      "tierEvolutionCost": 48,
+      "promotions": [
+        "std",
+        "vet",
+        "mst",
+        "leg"
+      ],
+      "promotionCapNotes": "74 units (Marshal Commander) or 69 (Lord-High Commander) for promotion cap.",
+      "stats": {
+        "std": {
+          "hp": 196,
+          "str": 22,
+          "upc": 22
+        },
+        "vet": {
+          "hp": 211,
+          "str": 24,
+          "upc": 27
+        },
+        "mst": {
+          "hp": 227,
+          "str": 26,
+          "upc": 32
+        },
+        "leg": {
+          "hp": 242,
+          "str": 28,
+          "upc": 36
+        }
+      },
+      "combatType": "MAG_BST",
+      "portraitSrc": "images/units/portraits/calamity-dragon-a.png",
+      "portraitPlaceholder": true,
+      "displayName": "Calamity Dragon (A)",
+      "unitRole": "rank",
+      "requiredClass": "archmage",
+      "unlockRank": 20,
+      "roleLabel": "Rank"
+    },
+    {
+      "id": "shadow-talon-b",
+      "categoryId": "magic-beasts",
+      "name": "Shadow Talon",
+      "branch": "B",
+      "tier": 6,
+      "goldCost": 13800,
+      "tierEvolutionCost": 38,
+      "promotions": [
+        "std",
+        "vet",
+        "mst",
+        "leg"
+      ],
+      "promotionCapNotes": "55 units (Marshal Commander) or 52 (Lord-High Commander) for promotion cap.",
+      "stats": {
+        "std": {
+          "hp": 172,
+          "str": 38,
+          "upc": 28
+        },
+        "vet": {
+          "hp": 185,
+          "str": 41,
+          "upc": 34
+        },
+        "mst": {
+          "hp": 198,
+          "str": 44,
+          "upc": 39
+        },
+        "leg": {
+          "hp": 211,
+          "str": 48,
+          "upc": 44
+        }
+      },
+      "combatType": "MAG_BST",
+      "portraitSrc": "images/units/portraits/shadow-talon-b.png",
+      "portraitPlaceholder": true,
+      "displayName": "Shadow Talon (B)",
+      "unitRole": "pvp",
+      "requiredClass": "archmage",
+      "unlockRank": 21,
+      "roleLabel": "PvP"
+    }
+  ]
+}

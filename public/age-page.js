@@ -1048,6 +1048,10 @@
             global.enableAgeRecords();
         }
 
+        if (typeof global.enableAgeBarracks === 'function') {
+            global.enableAgeBarracks();
+        }
+
         bindCouncilBoardLayoutSync();
 
         if (typeof global.bindPortalNewMessagesBarNavigation === 'function') {

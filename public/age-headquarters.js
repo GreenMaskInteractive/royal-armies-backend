@@ -373,26 +373,73 @@
 
         if (emptyEl) emptyEl.hidden = true;
 
-        rows.forEach((city) => {
+        rows.forEach((city, index) => {
+            const cityId = String(city?.id || `city-${index}`).trim();
+            const panelId = `age-hq-fort-panel-${cityId.replace(/[^a-z0-9_-]/gi, '-')}`;
+            const cityLabel = city?.name || cityId || 'Unknown city';
+            const fortifications = Array.isArray(city?.fortifications) ? city.fortifications : [];
+
             const item = global.document.createElement('li');
             item.className = 'age-hq-treasury-fort-item';
 
-            const cityHead = global.document.createElement('div');
+            const toggle = global.document.createElement('button');
+            toggle.type = 'button';
+            toggle.className = 'age-hq-treasury-fort-toggle';
+            toggle.setAttribute('aria-expanded', 'false');
+            toggle.setAttribute('aria-controls', panelId);
+
+            const cityHead = global.document.createElement('span');
             cityHead.className = 'age-hq-treasury-fort-city';
-            cityHead.textContent = city?.name || city?.id || 'Unknown city';
-            item.appendChild(cityHead);
+            cityHead.textContent = cityLabel;
+
+            const chevron = global.document.createElement('span');
+            chevron.className = 'age-hq-treasury-fort-chevron';
+            chevron.setAttribute('aria-hidden', 'true');
+            chevron.textContent = '›';
+
+            toggle.append(cityHead, chevron);
+
+            const panel = global.document.createElement('div');
+            panel.id = panelId;
+            panel.className = 'age-hq-treasury-fort-panel';
+            panel.hidden = true;
 
             const structureList = global.document.createElement('ul');
             structureList.className = 'age-hq-treasury-structure-list';
-            (city?.fortifications || []).forEach((structure) => {
+
+            if (fortifications.length) {
+                fortifications.forEach((structure) => {
+                    const structureItem = global.document.createElement('li');
+                    structureItem.className = 'age-hq-treasury-structure-item';
+                    structureItem.textContent = structure?.label || 'Unknown fortification';
+                    structureList.appendChild(structureItem);
+                });
+            } else {
                 const structureItem = global.document.createElement('li');
-                structureItem.className = 'age-hq-treasury-structure-item';
-                structureItem.textContent = structure?.label || 'Unknown fortification';
+                structureItem.className = 'age-hq-treasury-structure-item age-hq-treasury-structure-item--empty';
+                structureItem.textContent = 'No fortifications listed.';
                 structureList.appendChild(structureItem);
-            });
-            item.appendChild(structureList);
+            }
+
+            panel.appendChild(structureList);
+            item.append(toggle, panel);
             listEl.appendChild(item);
         });
+    }
+
+    function onTreasuryFortListClick(event) {
+        const toggle = event.target.closest('.age-hq-treasury-fort-toggle');
+        if (!toggle) return;
+
+        const item = toggle.closest('.age-hq-treasury-fort-item');
+        const panelId = toggle.getAttribute('aria-controls');
+        const panel = panelId ? global.document.getElementById(panelId) : null;
+        if (!panel) return;
+
+        const expanded = toggle.getAttribute('aria-expanded') === 'true';
+        toggle.setAttribute('aria-expanded', expanded ? 'false' : 'true');
+        panel.hidden = expanded;
+        item?.classList.toggle('is-expanded', !expanded);
     }
 
     function applyWorkspace(workspace) {
@@ -912,6 +959,8 @@
         mounted = true;
 
         workspaceEl = global.document.getElementById('age-headquarters-workspace');
+
+        global.document.getElementById('age-hq-treasury-fort-list')?.addEventListener('click', onTreasuryFortListClick);
 
         global.addEventListener('royalarmies:nation-plan-cleared', () => {
             fetchHeadquartersWorkspace();

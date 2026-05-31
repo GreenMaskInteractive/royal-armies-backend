@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 160" role="img" aria-label="Unit portrait placeholder">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#2a2318"/>
+      <stop offset="100%" stop-color="#120f0b"/>
+    </linearGradient>
+  </defs>
+  <rect width="120" height="160" rx="8" fill="url(#bg)" stroke="#b89030" stroke-width="2"/>
+  <path d="M60 36 L78 72 L60 64 L42 72 Z" fill="#8a7030" opacity="0.85"/>
+  <rect x="46" y="78" width="28" height="44" rx="4" fill="#6a5830" opacity="0.9"/>
+  <text x="60" y="142" text-anchor="middle" fill="#c9a84c" font-family="Georgia, serif" font-size="11" letter-spacing="0.12em">PORTRAIT</text>
+</svg>

@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Royal Armies — Age Alpha</title>
     <link rel="stylesheet" href="style.css?v=royal-family-titles-1">
-    <link rel="stylesheet" href="style2.css?v=records-nation-defaults-1">
+    <link rel="stylesheet" href="style2.css?v=unit-catalog-3">
     <link rel="stylesheet" href="mobile-responsive.css?v=records-compact-tabs-1">
     <link rel="stylesheet" href="dev-page-navigator.css">
     <link rel="stylesheet" href="custom-cursor.css?v=scrollbar-cursor-3">
@@ -952,6 +952,40 @@
                 </div>
             </div>
 
+            <div id="age-barracks-workspace" class="age-barracks-workspace" hidden aria-hidden="true" aria-label="Barracks recruitment">
+                <div class="age-barracks-shell">
+                    <header class="age-barracks-header">
+                        <div class="age-barracks-header-copy">
+                            <p class="age-barracks-eyebrow">Settlement Venue</p>
+                            <h2 class="age-barracks-title">Barracks</h2>
+                            <p class="age-barracks-subtitle">Recruit units, review promotion paths, and prepare your standing army.</p>
+                            <p id="age-barracks-commander-status" class="age-barracks-commander-status" aria-live="polite"></p>
+                        </div>
+                        <button
+                            type="button"
+                            id="age-barracks-close"
+                            class="age-barracks-close"
+                            aria-label="Close barracks">
+                            Close
+                        </button>
+                    </header>
+                    <div class="age-barracks-layout">
+                        <nav
+                            id="age-barracks-category-nav"
+                            class="age-barracks-category-nav"
+                            aria-label="Unit classes"></nav>
+                        <div class="age-barracks-main">
+                            <div class="age-barracks-main-head">
+                                <h3 id="age-barracks-active-category-label" class="age-barracks-active-category-label">Infantry</h3>
+                                <p class="age-barracks-main-hint">Select a unit to view stats, promotion costs, and purchase price.</p>
+                            </div>
+                            <div id="age-barracks-unit-grid" class="age-barracks-unit-grid" aria-live="polite"></div>
+                            <aside id="age-barracks-unit-detail" class="age-barracks-unit-detail" hidden aria-live="polite"></aside>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <div id="age-records-workspace" class="age-records-workspace" hidden aria-hidden="true">
                 <header class="age-records-page-header" aria-label="Records view">
                     <h1 class="age-records-page-title">Records</h1>
@@ -1258,15 +1292,17 @@
     <script src="rift-player-loc-pins.js?v=player-loc-pins-1"></script>
     <script src="age-world-map.js?v=cross-border-neighbors-2"></script>
     <script src="age-world-plan-overlay.js?v=hq-clear-plan-fix-1"></script>
-    <script src="age-view-tabs.js?v=records-page-view-1"></script>
+    <script src="age-view-tabs.js?v=unit-catalog-3"></script>
     <script src="age-headquarters-planning-map.js?v=hold-sf-mf-staging-1"></script>
-    <script src="age-headquarters.js?v=barracks-venue-clear-plan-popup-1"></script>
+    <script src="age-headquarters.js?v=fortifications-collapse-1"></script>
     <script src="age-dispatch-alert.js?v=hq-dispatch-dismiss-1"></script>
     <script src="age-chronicles-battle-pass.js?v=bp-premium-badge-1"></script>
     <script src="age-left-reports-panel.js?v=quick-tips-panel-1"></script>
     <script src="age-quick-tips-panel.js?v=quick-tips-panel-1"></script>
-    <script src="age-page.js?v=age-roster-units-1"></script>
+    <script src="age-page.js?v=unit-catalog-3"></script>
     <script src="age-war-ledger.js?v=war-ledger-bottom-bar-1"></script>
+    <script src="rift-unit-purchase-catalog.js?v=unit-catalog-3"></script>
+    <script src="age-barracks.js?v=unit-catalog-3"></script>
     <script src="age-records.js?v=records-nation-defaults-1"></script>
     <script src="dev-page-navigator.js?v=dev-nav-drag-fix-1"></script>
     <script src="custom-cursor.js?v=scrollbar-cursor-3"></script>
