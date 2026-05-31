@@ -6,6 +6,28 @@
 
     const BATTLE_CHARGE_MS = 1000;
     const BATTLE_RING_CIRCUMFERENCE = 2 * Math.PI * 46;
+    const BATTLE_DEBUG = (
+        new URLSearchParams(global.location?.search || '').has('guildBattleDebug')
+        || global.localStorage?.getItem('rift-guild-battle-debug') === '1'
+    );
+    let battleChargeGen = 0;
+
+    function battleLog(label, extra) {
+        if (!BATTLE_DEBUG) return;
+        const api = resolveApi();
+        console.log('[RIFT][guild-battle]', label, {
+            holdActive: battle.holdActive,
+            fighting: battle.fighting,
+            chargeTimerActive: battle.chargeTimer != null,
+            battleChargeGen,
+            pointerId: battle.pointerId,
+            unitsUninjured: getUnitsUninjuredCount?.() ?? guildState?.unitsUninjured,
+            apiPresent: Boolean(api),
+            runTrainingBattle: typeof api?.runTrainingBattle,
+            activeTrainingMode,
+            ...(extra && typeof extra === 'object' ? extra : { detail: extra })
+        });
+    }
 
     let bound = false;
     let guildState = null;
@@ -673,6 +695,8 @@
         if (battle.chargeTimer) {
             global.clearTimeout(battle.chargeTimer);
             battle.chargeTimer = null;
+            battleChargeGen += 1;
+            battleLog('charge timer cleared');
         }
     }
 
@@ -692,6 +716,7 @@
     }
 
     function battleEndHold(cancelCharge) {
+        battleLog('battleEndHold', { cancelCharge, stack: BATTLE_DEBUG ? new Error().stack : undefined });
         battleDetachHoldListeners();
         battle.holdActive = false;
         battle.pointerId = null;
@@ -705,18 +730,32 @@
     }
 
     function battleStartCharge() {
+        battleLog('battleStartCharge enter');
         battleClearChargeTimer();
         if (!battle.holdActive || battle.fighting || !battleCanFight()) {
+            battleLog('battleStartCharge aborted', {
+                reason: !battle.holdActive ? 'holdInactive' : (battle.fighting ? 'fighting' : 'cannotFight')
+            });
             if (!battleCanFight()) battleEndHold(true);
             return;
         }
 
         const wrap = battleGetWrap();
-        if (!wrap) return;
+        if (!wrap) {
+            battleLog('battleStartCharge aborted', { reason: 'noWrap' });
+            return;
+        }
 
+        const chargeGen = battleChargeGen;
         wrap.classList.add('is-charging');
+        battleLog('battleStartCharge scheduled', { chargeGen, delayMs: BATTLE_CHARGE_MS });
         battle.chargeTimer = global.setTimeout(() => {
             battle.chargeTimer = null;
+            if (chargeGen !== battleChargeGen) {
+                battleLog('charge callback aborted (superseded)', { chargeGen, battleChargeGen });
+                return;
+            }
+            battleLog('charge callback firing → battleExecute');
             wrap.classList.remove('is-charging');
             void battleExecute();
         }, BATTLE_CHARGE_MS);
@@ -745,11 +784,21 @@
     }
 
     async function battleExecute() {
-        if (battle.fighting) return;
+        battleLog('battleExecute enter');
+        if (battle.fighting) {
+            battleLog('battleExecute early return', { reason: 'alreadyFighting' });
+            return;
+        }
 
         const api = resolveApi();
+        battleLog('battleExecute api check', {
+            apiKeys: api ? Object.keys(api) : null,
+            hasRunTrainingBattle: Boolean(api?.runTrainingBattle)
+        });
         if (!api?.runTrainingBattle) {
-            console.error('[RIFT] RoyalArmiesAgeGuildTraining.runTrainingBattle is unavailable');
+            console.error('[RIFT][guild-battle] RoyalArmiesAgeGuildTraining.runTrainingBattle is unavailable', {
+                RoyalArmiesAgeGuildTraining: global.RoyalArmiesAgeGuildTraining
+            });
             battleEndHold(true);
             return;
         }
@@ -758,9 +807,14 @@
         battleClearChargeTimer();
         battleClearChargeVisual();
         battleSyncUi();
+        battleLog('battleExecute calling runTrainingBattle', { trainingMode: activeTrainingMode });
 
         try {
             lastBattleResult = await api.runTrainingBattle({ trainingMode: activeTrainingMode });
+            battleLog('battleExecute success', {
+                winner: lastBattleResult?.winner,
+                xpGain: lastBattleResult?.xpGain
+            });
             mergeGuildState(lastBattleResult);
             appendLootEntries(lastBattleResult.lootEntries);
             showXpFloat(lastBattleResult.xpGain);
@@ -773,13 +827,17 @@
                 await battleRunAutoHealLoop();
             }
         } catch (error) {
+            console.error('[RIFT][guild-battle] runTrainingBattle failed', error);
             if (typeof global.showRiftError === 'function' && error?.code) {
                 global.showRiftError(error.code, error.message);
+            } else if (error?.message) {
+                console.warn('[RIFT][guild-battle]', error.message);
             }
             battleEndHold(true);
         } finally {
             battle.fighting = false;
             renderGuildPanel();
+            battleLog('battleExecute finally', { holdActive: battle.holdActive });
 
             if (!battle.holdActive) {
                 battleSyncUi();
@@ -823,22 +881,40 @@
             try {
                 wrap.setPointerCapture(event.pointerId);
             } catch (err) {
-                // Continue without capture; wrap-level pointerup still ends the hold.
+                battleLog('setPointerCapture failed', { message: err?.message });
             }
         }
 
+        battleLog('pointerdown hold started', {
+            pointerId: event.pointerId,
+            pointerType: event.pointerType,
+            target: event.target?.id || event.target?.className
+        });
         battleSyncUi();
         battleStartCharge();
     }
 
     function battleOnWrapPointerUp(event) {
         if (battle.pointerId == null || event.pointerId !== battle.pointerId) return;
-        battleEndHold(Boolean(battle.chargeTimer));
+        const cancelCharge = Boolean(battle.chargeTimer);
+        battleLog('pointerup/cancel', {
+            type: event.type,
+            cancelCharge,
+            buttons: event.buttons
+        });
+        battleEndHold(cancelCharge);
     }
 
     function battleOnWrapPointerLost(event) {
         if (battle.pointerId == null || event.pointerId !== battle.pointerId) return;
-        battleEndHold(Boolean(battle.chargeTimer));
+        // lostpointercapture often fires before pointerup while the button is still held.
+        // Cancelling here clears the charge timer while the CSS ring keeps animating.
+        if (battle.chargeTimer != null) {
+            battleLog('lostpointercapture ignored (charge pending)', { type: event.type });
+            return;
+        }
+        battleLog('lostpointercapture end hold', { type: event.type });
+        battleEndHold(false);
     }
 
     function battleSyncUi() {
@@ -893,10 +969,17 @@
 
         wrap.addEventListener('pointerdown', battleOnWrapPointerDown);
         global.window.addEventListener('blur', battleOnWindowBlur);
+
+        battleLog('battleControlsBind', {
+            wrapId: wrap.id,
+            api: global.RoyalArmiesAgeGuildTraining,
+            debugHint: 'Add ?guildBattleDebug=1 or localStorage rift-guild-battle-debug=1'
+        });
     }
 
     function battleOnWindowBlur() {
         if (battle.holdActive || battle.chargeTimer) {
+            battleLog('window blur → end hold');
             battleEndHold(true);
         }
     }

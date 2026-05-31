@@ -24,6 +24,18 @@
         return saved && saved.trim() ? saved.trim() : '';
     }
 
+    function guildTrainingDebugEnabled() {
+        return (
+            new URLSearchParams(global.location?.search || '').has('guildBattleDebug')
+            || global.localStorage?.getItem('rift-guild-battle-debug') === '1'
+        );
+    }
+
+    function guildTrainingLog(label, extra) {
+        if (!guildTrainingDebugEnabled()) return;
+        console.log('[RIFT][guild-training-api]', label, extra ?? '');
+    }
+
     function setSettlementTier(tier) {
         settlementTier = String(tier || 'village').trim().toLowerCase() || 'village';
     }
@@ -104,11 +116,17 @@
     async function runTrainingBattle(options = {}) {
         const username = String(options.username || resolveUsername() || '').trim();
         const trainingMode = String(options.trainingMode || 'street-patrol').trim().toLowerCase();
+        guildTrainingLog('runTrainingBattle called', { username: username || '(empty)', trainingMode, settlementTier: getSettlementTier() });
         if (!username) {
-            throw new Error('Commander session required.');
+            const err = new Error('Commander session required.');
+            guildTrainingLog('runTrainingBattle rejected', { reason: err.message });
+            throw err;
         }
 
-        const response = await global.fetch(resolveApiUrl('/api/portal/age/guild/training-battle'), {
+        const url = resolveApiUrl('/api/portal/age/guild/training-battle');
+        guildTrainingLog('runTrainingBattle fetch start', { url });
+
+        const response = await global.fetch(url, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             credentials: 'same-origin',
@@ -120,6 +138,12 @@
         });
 
         const payload = await response.json().catch(() => ({}));
+        guildTrainingLog('runTrainingBattle fetch done', {
+            ok: response.ok,
+            status: response.status,
+            payloadStatus: payload.status,
+            code: payload.code || payload.errorCode
+        });
         if (!response.ok || payload.status !== 'ok') {
             const err = new Error(payload.message || 'Training battle failed.');
             err.code = payload.code || payload.errorCode || '';
