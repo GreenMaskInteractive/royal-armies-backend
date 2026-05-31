@@ -3043,7 +3043,12 @@ const OFFICIAL_AGE_HTML_PAGES = {
     agealpha: 'agealpha.html'
 };
 
-/* Canonical .html portal URLs (before static so routes are not shadowed) */
+const ALL_HTML_PAGE_ROUTES = {
+    ...PORTAL_HTML_PAGES,
+    ...OFFICIAL_AGE_HTML_PAGES
+};
+
+/* Extensionless canonical URLs — serve at /slug, redirect legacy /slug.html (before static). */
 function redirectWithQuery(req, res, targetPath) {
     const queryIndex = req.url.indexOf('?');
     const query = queryIndex >= 0 ? req.url.slice(queryIndex) : '';
@@ -3051,34 +3056,24 @@ function redirectWithQuery(req, res, targetPath) {
 }
 
 app.get(['/ageportal', '/ageportal.html', '/index.html', '/', '/index'], (req, res) => {
-    redirectWithQuery(req, res, '/main.html');
+    redirectWithQuery(req, res, '/main');
 });
 
 app.get(['/legal', '/legal.html'], (req, res) => {
-    redirectWithQuery(req, res, '/terms.html');
+    redirectWithQuery(req, res, '/terms');
 });
 
 app.get(['/how-did-you-get-here', '/how-did-you-get-here.html'], (req, res) => {
-    redirectWithQuery(req, res, '/game.html');
+    redirectWithQuery(req, res, '/game');
 });
 
-Object.entries(PORTAL_HTML_PAGES).forEach(([slug, fileName]) => {
-    app.get(`/${fileName}`, (req, res) => {
+Object.entries(ALL_HTML_PAGE_ROUTES).forEach(([slug, fileName]) => {
+    app.get(`/${slug}`, (req, res) => {
         res.sendFile(path.join(PUBLIC_DIR, fileName));
     });
 
-    app.get(`/${slug}`, (req, res) => {
-        redirectWithQuery(req, res, `/${fileName}`);
-    });
-});
-
-Object.entries(OFFICIAL_AGE_HTML_PAGES).forEach(([slug, fileName]) => {
     app.get(`/${fileName}`, (req, res) => {
-        res.sendFile(path.join(PUBLIC_DIR, fileName));
-    });
-
-    app.get(`/${slug}`, (req, res) => {
-        redirectWithQuery(req, res, `/${fileName}`);
+        redirectWithQuery(req, res, `/${slug}`);
     });
 });
 
@@ -3811,7 +3806,7 @@ app.get('/verify-email-change', (req, res) => {
             <body style="background:#000;color:#d4af37;font-family:Georgia,serif;text-align:center;padding:80px 20px;">
                 <h1>INVALID OR EXPIRED LINK</h1>
                 <p>This email change link is no longer valid.</p>
-                <a href="/main.html" style="color:#fff;">Return to portal</a>
+                <a href="/main" style="color:#fff;">Return to portal</a>
             </body>`);
     }
 
@@ -3839,7 +3834,7 @@ app.get('/verify-email-change', (req, res) => {
             <body style="background:#000;color:#d4af37;font-family:Georgia,serif;text-align:center;padding:80px 20px;">
                 <h1>EMAIL UNAVAILABLE</h1>
                 <p>That address is already registered to another commander. Request a new change from your profile.</p>
-                <a href="/main.html" style="color:#fff;">Return to portal</a>
+                <a href="/main" style="color:#fff;">Return to portal</a>
             </body>`);
     }
 
@@ -3858,7 +3853,7 @@ app.get('/verify-email-change', (req, res) => {
         <body style="background:#000;color:#d4af37;font-family:Georgia,serif;text-align:center;padding:80px 20px;">
             <h1>EMAIL UPDATED</h1>
             <p>Your account email for <strong>${commander.username}</strong> is now <strong>${newEmail}</strong>.</p>
-            <a href="/main.html" style="color:#fff;">Return to portal</a>
+            <a href="/main" style="color:#fff;">Return to portal</a>
         </body>`);
 });
 

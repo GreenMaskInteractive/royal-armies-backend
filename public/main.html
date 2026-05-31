@@ -32,8 +32,8 @@
         var tutorial = localStorage.getItem('royalArmies_' + username + '_ageDeploymentTutorialMode') === 'true';
         var server = localStorage.getItem('royalArmies_' + username + '_ageDeploymentSelectedServerId') || 'amnek';
         var destination = sessionStarted
-            ? '/agealpha.html'
-            : '/game.html?tutorial=' + tutorial + '&joinAge=0&server=' + encodeURIComponent(server);
+            ? '/agealpha'
+            : '/game?tutorial=' + tutorial + '&joinAge=0&server=' + encodeURIComponent(server);
         var pathBase = window.location.pathname.replace(/\/$/, '').replace(/\.html$/i, '');
         if (pathBase === '/game' || pathBase === '/agealpha' || pathBase === '/age') return;
         window.location.replace(destination);

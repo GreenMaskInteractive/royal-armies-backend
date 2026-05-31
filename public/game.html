@@ -21,7 +21,7 @@
             document.documentElement.classList.add('game-session-resume-redirect');
             var pathBase = window.location.pathname.replace(/\/$/, '').replace(/\.html$/i, '');
             if (pathBase === '/agealpha' || pathBase === '/age') return;
-            window.location.replace('/agealpha.html');
+            window.location.replace('/agealpha');
         } catch (_err) {
             /* ignore */
         }

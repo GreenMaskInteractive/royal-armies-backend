@@ -8,9 +8,9 @@
     const DEV_NAV_POSITION_STORAGE_KEY = 'royalArmies_devPageNavigatorPosition';
 
     const DEV_SITE_PAGES = [
-        { id: 'main', label: 'Age Portal', path: '/main.html', file: 'main.html' },
-        { id: 'game', label: 'Game (progression)', path: '/game.html', file: 'game.html' },
-        { id: 'agealpha', label: 'Age Alpha (live session)', path: '/agealpha.html', file: 'agealpha.html' }
+        { id: 'main', label: 'Age Portal', path: '/main', file: 'main.html' },
+        { id: 'game', label: 'Game (progression)', path: '/game', file: 'game.html' },
+        { id: 'agealpha', label: 'Age Alpha (live session)', path: '/agealpha', file: 'agealpha.html' }
     ];
 
     function isDevPageNavigatorEnabled() {
@@ -18,7 +18,7 @@
     }
 
     function usesExtensionlessDevUrls() {
-        return false;
+        return true;
     }
 
     function getPageDirectoryBase() {
@@ -38,7 +38,7 @@
     }
 
     function resolveDevPageHref(page) {
-        if (!page) return '/main.html';
+        if (!page) return '/main';
 
         const fileName = page.file || 'main.html';
         let href = page.path && page.path.startsWith('/')
@@ -144,7 +144,7 @@
         const currentId = getCurrentPageId();
         const pageOptions = DEV_SITE_PAGES.map((page) => {
             const selected = page.id === currentId ? ' selected' : '';
-            const value = usesExtensionlessDevUrls() ? (page.path || '/main.html') : (page.path || page.file || 'main.html');
+            const value = page.path || '/main';
             return `<option value="${value}" data-dev-page-id="${page.id}"${selected}>${page.label}</option>`;
         }).join('');
 

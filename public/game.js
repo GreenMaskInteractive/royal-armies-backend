@@ -418,10 +418,10 @@
         stopGamePresenceLoop();
         await postAgeLeave(false);
         if (global.RoyalArmiesPageRouteTransition && typeof global.RoyalArmiesPageRouteTransition.navigateTo === 'function') {
-            await global.RoyalArmiesPageRouteTransition.navigateTo('/main.html');
+            await global.RoyalArmiesPageRouteTransition.navigateTo('/main');
             return;
         }
-        global.location.href = '/main.html';
+        global.location.href = '/main';
     }
 
     function refreshGamePageNavChrome() {
@@ -676,7 +676,7 @@
         if (typeof global.getOfficialAgePagePath === 'function') {
             return global.getOfficialAgePagePath();
         }
-        return '/agealpha.html';
+        return '/agealpha';
     }
 
     async function enterGameSessionFromOnboarding() {
@@ -892,7 +892,7 @@
 
         const username = resolveGamePageUsername();
         if (!username) {
-            global.location.replace('/main.html');
+            global.location.replace('/main');
             return;
         }
 

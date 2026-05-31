@@ -1,5 +1,5 @@
 /**
- * RIFT — Official live-age page slug/path (age[slug].html).
+ * RIFT — Official live-age page slug/path (extensionless /age[slug] URLs).
  * Pre-age production uses agealpha.html; later slugs mirror the active round number.
  */
 (function initRiftOfficialAge(global) {
@@ -16,7 +16,7 @@
     }
 
     function getOfficialAgePagePath() {
-        return `/${getOfficialAgePageFileName()}`;
+        return `/age${getOfficialAgeSlug()}`;
     }
 
     function isOfficialAgePageActive() {

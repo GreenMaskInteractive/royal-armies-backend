@@ -1661,10 +1661,10 @@ function openMailboxFromNewMessagesBar(clickEvent) {
     }
 
     if (window.RoyalArmiesPageRouteTransition && typeof window.RoyalArmiesPageRouteTransition.navigateTo === 'function') {
-        window.RoyalArmiesPageRouteTransition.navigateTo('/main.html');
+        window.RoyalArmiesPageRouteTransition.navigateTo('/main');
         return;
     }
-    window.location.href = '/main.html';
+    window.location.href = '/main';
 }
 
 function consumePendingMailboxNavigation() {
@@ -2020,7 +2020,7 @@ function redirectToAgePortal() {
         window.location.assign(resolveActiveAgeHandoffUrl());
         return;
     }
-    window.location.assign('/main.html');
+    window.location.assign('/main');
 }
 
 function prepareMainPortalPostLoginTermsGate() {
@@ -3373,7 +3373,7 @@ function resolveOfficialAgeResumePath() {
     if (typeof getOfficialAgePagePath === 'function') {
         return getOfficialAgePagePath();
     }
-    return '/agealpha.html';
+    return '/agealpha';
 }
 
 function resolveCommanderDeploymentStorageKey(suffix) {
@@ -3397,7 +3397,7 @@ function resolveGamePageHandoffUrl(options) {
     params.set('tutorial', tutorial ? 'true' : 'false');
     params.set('joinAge', joinAge ? '1' : '0');
     params.set('server', server);
-    return `/game.html?${params.toString()}`;
+    return `/game?${params.toString()}`;
 }
 
 function resolveActiveAgeHandoffUrl() {
@@ -5003,7 +5003,7 @@ function finalizeCommanderAgeReset(mode) {
             applyPortalDeploymentDeckPresentation();
         }
         if (typeof isMainPortalHub === 'function' && !isMainPortalHub()) {
-            const destination = '/main.html';
+            const destination = '/main';
             if (window.RoyalArmiesPageRouteTransition && typeof window.RoyalArmiesPageRouteTransition.navigateTo === 'function') {
                 window.RoyalArmiesPageRouteTransition.navigateTo(destination);
             } else {

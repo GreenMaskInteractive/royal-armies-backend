@@ -452,7 +452,7 @@ function rejoinSelectedAgeServerAfterTermsCheck(clickEvent) {
         ? resolveActiveAgeHandoffUrl()
         : (typeof resolveGamePageHandoffUrl === 'function'
             ? resolveGamePageHandoffUrl({ tutorial: isTutorialModeActive, joinAge: false, server: serverId })
-            : `/game.html?tutorial=${isTutorialModeActive}&joinAge=0&server=${encodeURIComponent(serverId)}`);
+            : `/game?tutorial=${isTutorialModeActive}&joinAge=0&server=${encodeURIComponent(serverId)}`);
 
     verifyPortalAgeJoinAllowed().then((joinAllowed) => {
         if (!joinAllowed) {
@@ -1393,7 +1393,7 @@ function launchGameRoundSectorAfterTermsCheck(isTutorialModeActive, clickEvent) 
                 joinAge: true,
                 server: readCommanderSelectedServerId()
             })
-            : `/game.html?tutorial=${isTutorialModeActive}&joinAge=1&server=${encodeURIComponent(readCommanderSelectedServerId())}`;
+            : `/game?tutorial=${isTutorialModeActive}&joinAge=1&server=${encodeURIComponent(readCommanderSelectedServerId())}`;
         verifyPortalAgeJoinAllowed().then((joinAllowed) => {
             if (!joinAllowed) {
                 joinAgePortalTransitionActive = false;
@@ -1513,7 +1513,7 @@ function executeLogoutRedirect() {
         if (typeof refreshMainPortalAuthChrome === 'function') {
             refreshMainPortalAuthChrome();
         }
-        window.location.replace('/main.html');
+        window.location.replace('/main');
     };
 
     const logoutApi = (typeof resolveRoyalArmiesApiUrl === 'function')
