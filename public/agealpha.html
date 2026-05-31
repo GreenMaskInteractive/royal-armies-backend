@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Royal Armies — Age Alpha</title>
     <link rel="stylesheet" href="style.css?v=site-viewport-stable-1">
-    <link rel="stylesheet" href="style2.css?v=site-viewport-stable-1">
+    <link rel="stylesheet" href="style2.css?v=street-patrol-battle-1">
     <link rel="stylesheet" href="mobile-responsive.css?v=records-compact-tabs-1">
     <link rel="stylesheet" href="dev-page-navigator.css">
     <link rel="stylesheet" href="custom-cursor.css?v=scrollbar-cursor-3">
@@ -1001,8 +1001,8 @@
 
             <div id="age-guild-workspace" class="age-guild-workspace" hidden aria-hidden="true" aria-label="Adventurer's Guild job">
                 <div id="age-guild-training-arena" class="age-guild-job-arena age-guild-training-arena" hidden aria-hidden="true" aria-label="Guild training">
-                    <button type="button" id="age-guild-back" class="age-guild-back age-guild-job-back">← Jobs</button>
-                    <button type="button" id="age-guild-training-close" class="age-guild-close age-guild-job-close" aria-label="Close job">Close</button>
+                    <button type="button" id="age-guild-back" class="age-guild-back age-guild-job-back">← City</button>
+                    <button type="button" id="age-guild-training-close" class="age-guild-close age-guild-job-close" aria-label="Close training">Close</button>
 
                     <header class="age-guild-top-band" aria-label="Training header">
                         <div class="age-guild-job-top-panel">
@@ -1026,22 +1026,36 @@
                         </div>
                     </header>
 
-                    <div id="age-guild-battle-deck" class="age-guild-battle-deck" aria-label="Training battle controls">
-                        <button type="button" id="age-guild-heal-one" class="age-guild-satellite-btn age-guild-satellite-btn--heal">Heal</button>
-                        <button type="button" id="age-guild-heal-all" class="age-guild-satellite-btn age-guild-satellite-btn--heal-all">Heal All</button>
-                        <button type="button" id="age-guild-auto-heal" class="age-guild-satellite-btn age-guild-satellite-btn--auto-heal" aria-pressed="false">Auto-heal</button>
-                        <div id="age-guild-battle-wrap" class="age-guild-battle-btn-wrap">
-                            <svg class="age-guild-charge-ring" viewBox="0 0 100 100" aria-hidden="true">
-                                <circle class="age-guild-charge-ring-track" cx="50" cy="50" r="46" />
-                                <circle class="age-guild-charge-ring-progress" cx="50" cy="50" r="46" />
-                            </svg>
-                            <button type="button" id="age-guild-battle-btn" class="age-guild-battle-circle" aria-label="Hold to battle">Battle</button>
+                    <div class="age-guild-training-center" aria-label="Battle simulation">
+                        <aside class="age-guild-battle-panel bordered-modal-panel" aria-label="Battle results">
+                            <div class="age-guild-battle-tabs" role="tablist" aria-label="Battle report tabs">
+                                <button type="button" class="age-guild-battle-tab is-active" data-guild-battle-tab="loot" role="tab" aria-selected="true" aria-controls="age-guild-battle-tab-loot" id="age-guild-battle-tab-btn-loot">Loot</button>
+                                <button type="button" class="age-guild-battle-tab" data-guild-battle-tab="details" role="tab" aria-selected="false" aria-controls="age-guild-battle-tab-details" id="age-guild-battle-tab-btn-details" tabindex="-1">Battle Report</button>
+                            </div>
+                            <div id="age-guild-battle-tab-loot" class="age-guild-battle-tabpanel is-active" role="tabpanel" aria-labelledby="age-guild-battle-tab-btn-loot" aria-live="polite">
+                                <div id="age-guild-loot-log" class="age-guild-loot-log"></div>
+                            </div>
+                            <div id="age-guild-battle-tab-details" class="age-guild-battle-tabpanel" role="tabpanel" aria-labelledby="age-guild-battle-tab-btn-details" hidden aria-live="polite">
+                                <div id="age-guild-log" class="age-guild-log"></div>
+                            </div>
+                        </aside>
+
+                        <div class="age-guild-battle-controls-corner" aria-label="Battle controls">
+                            <div id="age-guild-xp-float-host" class="age-guild-xp-float-host" aria-live="polite" aria-atomic="true"></div>
+                            <div id="age-guild-battle-deck" class="age-guild-battle-deck">
+                                <button type="button" id="age-guild-heal-one" class="age-guild-satellite-btn age-guild-satellite-btn--heal">Heal</button>
+                                <button type="button" id="age-guild-heal-all" class="age-guild-satellite-btn age-guild-satellite-btn--heal-all">Heal All</button>
+                                <button type="button" id="age-guild-auto-heal" class="age-guild-satellite-btn age-guild-satellite-btn--auto-heal" aria-pressed="false">Auto-heal</button>
+                                <div id="age-guild-battle-wrap" class="age-guild-battle-btn-wrap">
+                                    <svg class="age-guild-charge-ring" viewBox="0 0 100 100" aria-hidden="true">
+                                        <circle class="age-guild-charge-ring-track" cx="50" cy="50" r="46" />
+                                        <circle class="age-guild-charge-ring-progress" cx="50" cy="50" r="46" />
+                                    </svg>
+                                    <button type="button" id="age-guild-battle-btn" class="age-guild-battle-circle" aria-label="Hold to battle">Battle</button>
+                                </div>
+                            </div>
                         </div>
                     </div>
-
-                    <footer class="age-guild-bottom-band" aria-label="Battle log">
-                        <div id="age-guild-log" class="age-guild-log" aria-live="polite"></div>
-                    </footer>
                 </div>
 
                 <div id="age-guild-trade-arena" class="age-guild-job-arena age-guild-trade-arena" hidden aria-hidden="true" aria-label="Trade convoy">
@@ -1434,7 +1448,7 @@
     <script src="rift-player-loc-pins.js?v=player-loc-pins-1"></script>
     <script src="age-world-map.js?v=nation-centroid-labels-1"></script>
     <script src="age-world-plan-overlay.js?v=hq-clear-plan-fix-1"></script>
-    <script src="age-view-tabs.js?v=guild-settlement-jobs-3"></script>
+    <script src="age-view-tabs.js?v=street-patrol-battle-1"></script>
     <script src="age-headquarters-planning-map.js?v=hold-sf-mf-staging-1"></script>
     <script src="age-headquarters.js?v=fortifications-collapse-1"></script>
     <script src="age-dispatch-alert.js?v=hq-dispatch-dismiss-1"></script>
@@ -1445,7 +1459,7 @@
     <script src="age-war-ledger.js?v=war-ledger-bottom-bar-1"></script>
     <script src="rift-unit-purchase-catalog.js?v=swarm-recruit-1"></script>
     <script src="rift-age-guild-training.js?v=guild-settlement-jobs-3"></script>
-    <script src="age-adventurers-guild.js?v=guild-settlement-jobs-3"></script>
+    <script src="age-adventurers-guild.js?v=street-patrol-battle-1"></script>
     <script src="age-barracks.js?v=swarm-recruit-1"></script>
     <script src="age-records.js?v=records-nation-defaults-1"></script>
     <script src="dev-page-navigator.js?v=dev-nav-drag-fix-1"></script>

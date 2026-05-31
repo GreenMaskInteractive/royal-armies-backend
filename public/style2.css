@@ -15886,21 +15886,26 @@ body.developer-maintenance-alert-active #page-landing {
 }
 
 #age-page-canvas[data-age-view="records"] .age-map-anchor,
-#age-page-canvas[data-age-view="headquarters"] .age-map-anchor {
+#age-page-canvas[data-age-view="headquarters"] .age-map-anchor,
+#age-page-canvas[data-age-view="guild-training"] .age-map-anchor {
     display: none;
 }
 
 #age-page-canvas[data-age-view="records"] .age-map-hud--left,
 #age-page-canvas[data-age-view="records"] .age-map-hud--right,
 #age-page-canvas[data-age-view="headquarters"] .age-map-hud--left,
-#age-page-canvas[data-age-view="headquarters"] .age-map-hud--right {
+#age-page-canvas[data-age-view="headquarters"] .age-map-hud--right,
+#age-page-canvas[data-age-view="guild-training"] .age-map-hud--left,
+#age-page-canvas[data-age-view="guild-training"] .age-map-hud--right {
     display: none !important;
 }
 
 #age-page-canvas[data-age-view="records"] [data-age-mobile-toggle="reports"],
 #age-page-canvas[data-age-view="records"] [data-age-mobile-toggle="city-info"],
 #age-page-canvas[data-age-view="headquarters"] [data-age-mobile-toggle="reports"],
-#age-page-canvas[data-age-view="headquarters"] [data-age-mobile-toggle="city-info"] {
+#age-page-canvas[data-age-view="headquarters"] [data-age-mobile-toggle="city-info"],
+#age-page-canvas[data-age-view="guild-training"] [data-age-mobile-toggle="reports"],
+#age-page-canvas[data-age-view="guild-training"] [data-age-mobile-toggle="city-info"] {
     display: none !important;
 }
 
@@ -15909,7 +15914,10 @@ body.developer-maintenance-alert-active #page-landing {
 #age-page-canvas[data-age-view="records"] #age-world-map-continent-label,
 #age-page-canvas[data-age-view="headquarters"] #age-world-map-player-pins,
 #age-page-canvas[data-age-view="headquarters"] #age-world-map-terrain-controls,
-#age-page-canvas[data-age-view="headquarters"] #age-world-map-continent-label {
+#age-page-canvas[data-age-view="headquarters"] #age-world-map-continent-label,
+#age-page-canvas[data-age-view="guild-training"] #age-world-map-player-pins,
+#age-page-canvas[data-age-view="guild-training"] #age-world-map-terrain-controls,
+#age-page-canvas[data-age-view="guild-training"] #age-world-map-continent-label {
     display: none !important;
 }
 
@@ -21567,15 +21575,23 @@ body.age-barracks-open {
    Age Adventurer's Guild — settlement menu jobs + job-page overlays
    ========================================================================== */
 
-body.age-guild-open {
-    overflow: hidden;
-}
-
 .age-guild-workspace {
     position: fixed;
-    inset: 0;
-    z-index: 12035;
+    left: 0;
+    right: 0;
+    top: var(--age-map-slot-top);
+    bottom: var(--age-map-slot-bottom);
+    z-index: 4;
     pointer-events: none;
+    box-sizing: border-box;
+}
+
+#age-page-canvas[data-age-view="guild-training"] .age-guild-workspace:not([hidden]) {
+    pointer-events: auto;
+}
+
+#age-page-canvas[data-age-view="guild-training"] .age-guild-workspace {
+    display: block;
 }
 
 .age-guild-workspace[hidden] {
@@ -21687,16 +21703,46 @@ body.age-guild-open {
 }
 
 .age-guild-job-arena {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    display: grid;
+    box-sizing: border-box;
+    pointer-events: none;
+    background: transparent;
+}
+
+#age-page-canvas[data-age-view="guild-training"] .age-guild-training-arena:not([hidden]) {
+    display: grid;
+    pointer-events: auto;
+}
+
+body.age-guild-overlay-open {
+    overflow: hidden;
+}
+
+body.age-guild-overlay-open .age-guild-workspace {
+    position: fixed;
+    inset: 0;
+    z-index: 12035;
+    top: 0;
+    bottom: 0;
+    pointer-events: auto;
+}
+
+.age-guild-trade-arena,
+.age-guild-bounties-arena {
     position: fixed;
     left: 0;
     right: 0;
     top: var(--age-map-slot-top);
     bottom: var(--age-map-slot-bottom);
     z-index: 12036;
-    display: grid;
-    box-sizing: border-box;
-    pointer-events: none;
-    background: transparent;
+}
+
+body.age-guild-overlay-open .age-guild-trade-arena:not([hidden]),
+body.age-guild-overlay-open .age-guild-bounties-arena:not([hidden]) {
+    pointer-events: auto;
 }
 
 .age-guild-job-arena[hidden] {
@@ -21704,7 +21750,149 @@ body.age-guild-open {
 }
 
 .age-guild-training-arena {
-    grid-template-rows: auto minmax(0, 1fr) auto;
+    grid-template-rows: auto minmax(0, 1fr);
+}
+
+.age-guild-training-center {
+    position: relative;
+    min-height: 0;
+    overflow: hidden;
+    box-sizing: border-box;
+    padding: 8px max(16px, env(safe-area-inset-right)) 12px max(16px, env(safe-area-inset-left));
+}
+
+.age-guild-battle-panel {
+    position: absolute;
+    top: 8px;
+    left: 0;
+    width: min(400px, 44vw);
+    max-height: min(56vh, 440px);
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    padding: 12px 14px 14px;
+    box-sizing: border-box;
+    overflow: hidden;
+    pointer-events: auto;
+    z-index: 2;
+}
+
+.age-guild-battle-tabs {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 10px;
+    flex: 0 0 auto;
+}
+
+.age-guild-battle-tab {
+    flex: 1 1 0;
+    margin: 0;
+    padding: 7px 10px;
+    border: 1px solid rgba(184, 144, 48, 0.35);
+    border-radius: 4px;
+    background: rgba(0, 0, 0, 0.34);
+    color: rgba(244, 232, 200, 0.78);
+    font-family: 'Cinzel', serif;
+    font-size: 0.78rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    cursor: pointer;
+}
+
+.age-guild-battle-tab.is-active {
+    border-color: rgba(255, 215, 120, 0.72);
+    color: #ffd978;
+    background: rgba(255, 215, 120, 0.12);
+    box-shadow: inset 0 0 0 1px rgba(255, 215, 120, 0.18);
+}
+
+.age-guild-battle-tabpanel {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: auto;
+}
+
+.age-guild-battle-tabpanel[hidden] {
+    display: none !important;
+}
+
+.age-guild-loot-log {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.age-guild-loot-idle,
+.age-guild-loot-entry {
+    margin: 0;
+    font-size: 0.82rem;
+    line-height: 1.45;
+    color: rgba(244, 232, 200, 0.84);
+}
+
+.age-guild-loot-entry {
+    padding: 8px 10px;
+    border-left: 2px solid rgba(255, 215, 120, 0.55);
+    background: rgba(0, 0, 0, 0.22);
+}
+
+.age-guild-loot-entry-gold {
+    color: #ffd978;
+    font-weight: 700;
+}
+
+.age-guild-battle-controls-corner {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 10px;
+    pointer-events: none;
+    z-index: 3;
+}
+
+.age-guild-xp-float-host {
+    position: relative;
+    min-height: 0;
+    width: 100%;
+    display: flex;
+    justify-content: flex-end;
+    pointer-events: none;
+}
+
+.age-guild-xp-float {
+    font-family: 'Cinzel', serif;
+    font-size: clamp(1.45rem, 2.5vw, 2.15rem);
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    color: #ffe7a8;
+    text-shadow:
+        0 2px 12px rgba(0, 0, 0, 0.72),
+        0 0 24px rgba(255, 196, 88, 0.42);
+    animation: age-guild-xp-float-rise 2.6s ease-out forwards;
+    pointer-events: none;
+}
+
+@keyframes age-guild-xp-float-rise {
+    0% {
+        opacity: 0;
+        transform: translateY(16px);
+    }
+    12% {
+        opacity: 1;
+        transform: translateY(0);
+    }
+    72% {
+        opacity: 1;
+        transform: translateY(-32px);
+    }
+    100% {
+        opacity: 0;
+        transform: translateY(-56px);
+    }
 }
 
 .age-guild-trade-arena,
@@ -21712,8 +21900,8 @@ body.age-guild-open {
     grid-template-rows: auto minmax(0, 1fr);
 }
 
-#age-page-canvas.age-guild-training-open .age-settlement-menu-panel,
-#age-page-canvas.age-guild-training-open .age-city-info-panel {
+#age-page-canvas.age-guild-overlay-open .age-settlement-menu-panel,
+#age-page-canvas.age-guild-overlay-open .age-city-info-panel {
     visibility: hidden;
     pointer-events: none;
 }
@@ -21930,14 +22118,15 @@ body.age-guild-open {
 .age-guild-battle-deck {
     position: relative;
     pointer-events: auto;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    align-self: center;
-    justify-self: center;
-    width: min(520px, 92vw);
+    display: grid;
+    grid-template-columns: auto auto auto 132px;
+    grid-template-rows: auto;
+    align-items: end;
+    justify-items: center;
+    gap: 10px 12px;
+    width: auto;
     min-height: 0;
-    padding-bottom: 8px;
+    padding-bottom: 0;
 }
 
 .age-guild-battle-btn-wrap {

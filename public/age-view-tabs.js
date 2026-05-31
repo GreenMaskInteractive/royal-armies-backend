@@ -8,6 +8,7 @@
     const VIEW_CITY = 'city';
     const VIEW_HEADQUARTERS = 'headquarters';
     const VIEW_RECORDS = 'records';
+    const VIEW_GUILD_TRAINING = 'guild-training';
 
     const WORLD_MAP_SRC = 'images/amnekmap.png';
     const SETTLEMENT_MAP_SRC = {
@@ -308,11 +309,11 @@
     }
 
     function isWorkspaceOverlayView(view) {
-        return view === VIEW_HEADQUARTERS || view === VIEW_RECORDS;
+        return view === VIEW_HEADQUARTERS || view === VIEW_RECORDS || view === VIEW_GUILD_TRAINING;
     }
 
     function normalizeView(view) {
-        if (view === VIEW_CITY || view === VIEW_HEADQUARTERS || view === VIEW_RECORDS) {
+        if (view === VIEW_CITY || view === VIEW_HEADQUARTERS || view === VIEW_RECORDS || view === VIEW_GUILD_TRAINING) {
             return view;
         }
         return VIEW_MAP;
@@ -321,7 +322,8 @@
     function syncViewTabButtons() {
         getViewTabs().forEach((tab) => {
             const view = tab.getAttribute('data-age-view-tab');
-            const isActive = view === activeView;
+            const isActive = view === activeView
+                || (activeView === VIEW_GUILD_TRAINING && view === VIEW_CITY);
             tab.classList.toggle('is-active', isActive);
             tab.setAttribute('aria-selected', isActive ? 'true' : 'false');
             tab.tabIndex = isActive ? 0 : -1;
@@ -337,6 +339,7 @@
         const inSettlementView = activeView === VIEW_CITY;
         const inHeadquartersView = activeView === VIEW_HEADQUARTERS;
         const inRecordsView = activeView === VIEW_RECORDS;
+        const inGuildTrainingView = activeView === VIEW_GUILD_TRAINING;
         const inWorkspaceOverlay = isWorkspaceOverlayView(activeView);
 
         if (canvas) {
@@ -373,6 +376,20 @@
             recordsWorkspace.hidden = !inRecordsView;
             recordsWorkspace.setAttribute('aria-hidden', inRecordsView ? 'false' : 'true');
         }
+
+        const guildWorkspace = global.document.getElementById('age-guild-workspace');
+        const guildTrainingArena = global.document.getElementById('age-guild-training-arena');
+        const guildOverlayOpen = typeof global.RoyalArmiesAdventurersGuild?.isOverlayOpen === 'function'
+            && global.RoyalArmiesAdventurersGuild.isOverlayOpen();
+        const showGuildWorkspace = inGuildTrainingView || guildOverlayOpen;
+        if (guildWorkspace) {
+            guildWorkspace.hidden = !showGuildWorkspace;
+            guildWorkspace.setAttribute('aria-hidden', showGuildWorkspace ? 'false' : 'true');
+        }
+        if (guildTrainingArena) {
+            guildTrainingArena.hidden = !inGuildTrainingView;
+            guildTrainingArena.setAttribute('aria-hidden', inGuildTrainingView ? 'false' : 'true');
+        }
     }
 
     function syncMapStage() {
@@ -388,6 +405,7 @@
         const inSettlementView = activeView === VIEW_CITY;
         const inHeadquartersView = activeView === VIEW_HEADQUARTERS;
         const inRecordsView = activeView === VIEW_RECORDS;
+        const inGuildTrainingView = activeView === VIEW_GUILD_TRAINING;
         const hideWorldMapLayers = isWorkspaceOverlayView(activeView);
 
         if (mapFrame) {
@@ -442,6 +460,12 @@
             global.RoyalArmiesAgeRecords?.onViewClose?.();
         }
 
+        if (inGuildTrainingView) {
+            global.RoyalArmiesAdventurersGuild?.onTrainingViewOpen?.();
+        } else {
+            global.RoyalArmiesAdventurersGuild?.onTrainingViewClose?.();
+        }
+
         if (mapImage && !inSettlementView && !hideWorldMapLayers) {
             const worldHref = mapImage.dataset.worldHref || WORLD_MAP_SRC;
             mapImage.setAttribute('href', worldHref);
@@ -457,7 +481,9 @@
                         ? 'Nation headquarters'
                         : activeView === VIEW_RECORDS
                             ? 'Age records'
-                            : 'Amnek world map'
+                            : activeView === VIEW_GUILD_TRAINING
+                                ? 'Guild training battle'
+                                : 'Amnek world map'
             );
         }
     }
@@ -564,6 +590,10 @@
             return;
         }
 
+        if (activeView === VIEW_GUILD_TRAINING && nextView !== VIEW_GUILD_TRAINING) {
+            global.RoyalArmiesAdventurersGuild?.closeTrainingView?.({ skipViewRestore: true });
+        }
+
         activeView = nextView;
         syncViewTabButtons();
         syncRightHudPanels();
@@ -655,7 +685,8 @@
         refresh: refreshAgeViewTabs,
         setActiveView,
         getActiveView: () => activeView,
-        getSettlementVenues: resolveVenuesForTier
+        getSettlementVenues: resolveVenuesForTier,
+        VIEW_GUILD_TRAINING
     };
 
     global.enableAgeViewTabs = enableAgeViewTabs;

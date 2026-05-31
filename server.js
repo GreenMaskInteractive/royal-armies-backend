@@ -5431,7 +5431,8 @@ app.post('/api/portal/age/guild/training-battle', (req, res) => {
         ageArmy: result.ageArmy,
         rank: result.rank,
         ageGuildXp: result.ageGuildXp,
-        ageProvisions: result.ageProvisions
+        ageProvisions: result.ageProvisions,
+        ageGold: result.ageGold
     });
 
     commander = db.get('commanders').find({ username }).value();
@@ -5455,6 +5456,8 @@ app.post('/api/portal/age/guild/training-battle', (req, res) => {
         npcForce: result.npcForce,
         log: result.log,
         xpGain: result.xpGain,
+        lootEntries: result.lootEntries || [],
+        lootGoldTotal: result.lootGoldTotal || 0,
         injuriesApplied: result.injuriesApplied,
         rankPromoted: result.rankPromoted,
         rankPromotions: result.rankPromotions,

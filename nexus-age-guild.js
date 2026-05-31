@@ -63,6 +63,43 @@ const GUILD_XP_BY_OUTCOME = {
     npc: 10
 };
 
+const STREET_PATROL_LOOT_TABLE = Object.freeze([
+    { label: 'You found a silver bracelet', goldMin: 85, goldMax: 120 },
+    { label: 'You recovered a dropped coin pouch', goldMin: 42, goldMax: 78 },
+    { label: 'You seized contraband from a pickpocket', goldMin: 65, goldMax: 110 },
+    { label: 'You collected a guild reward stipend', goldMin: 55, goldMax: 95 },
+    { label: 'You found a bent gold signet ring', goldMin: 96, goldMax: 145 }
+]);
+
+function rollInteger(minValue, maxValue) {
+    const min = Math.floor(Number(minValue) || 0);
+    const max = Math.floor(Number(maxValue) || min);
+    if (max <= min) return min;
+    return min + Math.floor(Math.random() * (max - min + 1));
+}
+
+function resolveTrainingBattleLoot(trainingMode, winner) {
+    if (winner !== 'commander') {
+        return { lootEntries: [], lootGoldTotal: 0 };
+    }
+
+    const mode = String(trainingMode || 'street-patrol').trim().toLowerCase();
+    if (mode !== 'street-patrol') {
+        return { lootEntries: [], lootGoldTotal: 0 };
+    }
+
+    if (Math.random() > 0.58) {
+        return { lootEntries: [], lootGoldTotal: 0 };
+    }
+
+    const template = STREET_PATROL_LOOT_TABLE[Math.floor(Math.random() * STREET_PATROL_LOOT_TABLE.length)];
+    const gold = rollInteger(template.goldMin, template.goldMax);
+    return {
+        lootEntries: [{ label: template.label, gold }],
+        lootGoldTotal: gold
+    };
+}
+
 const PVP_STACK_INJURY_WEIGHT = 2.25;
 
 /**
@@ -532,10 +569,19 @@ function executeGuildTrainingBattleWithLedger(commander, trainingMode = 'street-
         ageArmy: nextArmy
     });
 
+    const lootResult = resolveTrainingBattleLoot(trainingMode, battle.winner);
+    const nextGold = Math.max(
+        0,
+        Math.floor(Number(resolveCommanderAgeGold(commander)) || 0) + lootResult.lootGoldTotal
+    );
+
     return {
         ok: true,
         ...battle,
         xpGain,
+        lootEntries: lootResult.lootEntries,
+        lootGoldTotal: lootResult.lootGoldTotal,
+        ageGold: nextGold,
         injuriesApplied: injuryCount,
         injuryMitigation,
         ageArmy: nextArmy,
