@@ -493,22 +493,49 @@
                 : '';
             const mark = escapeSettlementMenuHtml(resolveVenueMark(venue.id));
             const label = escapeSettlementMenuHtml(venue.label);
-            return (
-                `<button type="button" class="age-settlement-menu-item${placementClass}${borderClass}"`
-                + ` data-settlement-venue="${escapeSettlementMenuHtml(venue.id)}">`
+            const itemHtml = (
+                `<button type="button" class="age-settlement-menu-item${placementClass}${borderClass}${venue.id === 'adventurers-guild' ? ' age-settlement-menu-item--expandable' : ''}"`
+                + ` data-settlement-venue="${escapeSettlementMenuHtml(venue.id)}"`
+                + `${venue.id === 'adventurers-guild' ? ' aria-expanded="false" aria-controls="age-settlement-guild-jobs"' : ''}>`
                 + `<span class="age-settlement-menu-item-mark" aria-hidden="true">${mark}</span>`
                 + `<span class="age-settlement-menu-item-body">`
                 + `<span class="age-settlement-menu-item-label">${label}</span>`
                 + description
                 + '</span>'
-                + `<span class="age-settlement-menu-item-chevron" aria-hidden="true">›</span>`
+                + `<span class="age-settlement-menu-item-chevron" aria-hidden="true">${venue.id === 'adventurers-guild' ? '▾' : '›'}</span>`
                 + '</button>'
             );
+
+            if (venue.id === 'adventurers-guild') {
+                return (
+                    `<div class="age-settlement-menu-guild-wrap">`
+                    + itemHtml
+                    + '<div id="age-settlement-guild-jobs" class="age-settlement-guild-jobs" hidden></div>'
+                    + '</div>'
+                );
+            }
+
+            return itemHtml;
         }).join('');
+
+        if (typeof global.RoyalArmiesAdventurersGuild?.syncSettlementMenuGuild === 'function') {
+            global.RoyalArmiesAdventurersGuild.syncSettlementMenuGuild();
+        }
     }
 
     function handleVenueClick(venueId) {
         const tier = resolveSettlementTier();
+
+        if (venueId === 'adventurers-guild') {
+            if (typeof global.RoyalArmiesAdventurersGuild?.toggleSettlementJobs === 'function') {
+                void global.RoyalArmiesAdventurersGuild.toggleSettlementJobs({
+                    settlementTier: tier,
+                    city: resolveCurrentCity()
+                });
+            }
+            return;
+        }
+
         global.dispatchEvent(new CustomEvent('royal-armies-settlement-venue-open', {
             detail: {
                 venueId,

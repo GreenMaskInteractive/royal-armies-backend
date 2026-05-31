@@ -13,7 +13,7 @@
     let hubManifest = null;
     let bountyList = [];
     let bountyRewards = null;
-    let activeView = 'hub';
+    let activeView = null;
     let activeTrainingMode = 'street-patrol';
     let activeTrainingLabel = 'Street Patrol';
     let settlementTier = 'village';
@@ -22,6 +22,7 @@
     let chargeTimerId = null;
     let autoHealEnabled = false;
     let lastBattleResult = null;
+    let guildJobsExpanded = false;
 
     function escapeHtml(value) {
         return String(value ?? '')
@@ -71,78 +72,127 @@
         return guildState;
     }
 
-    function resolvePanelRoot() {
-        return global.document.getElementById('age-guild-panel-root');
+    function resolveGuildJobsContainer() {
+        return global.document.getElementById('age-settlement-guild-jobs');
     }
 
-    function resolveTrainingArena() {
-        return global.document.getElementById('age-guild-training-arena');
+    function resolveGuildMenuWrap() {
+        return global.document.querySelector('.age-settlement-menu-guild-wrap');
     }
 
-    function setTrainingArenaOpen(isOpen) {
+    function resolveJobArena(viewId) {
+        if (viewId === 'training') return global.document.getElementById('age-guild-training-arena');
+        if (viewId === 'trade') return global.document.getElementById('age-guild-trade-arena');
+        if (viewId === 'bounties') return global.document.getElementById('age-guild-bounties-arena');
+        return null;
+    }
+
+    function setJobPageOpen(isOpen) {
         global.document.getElementById('age-page-canvas')?.classList.toggle('age-guild-training-open', isOpen);
     }
 
-    function showPanelView(viewId) {
-        activeView = viewId;
-        const panelRoot = resolvePanelRoot();
-        const trainingArena = resolveTrainingArena();
-
-        if (panelRoot) panelRoot.hidden = false;
-        if (trainingArena) {
-            trainingArena.hidden = true;
-            trainingArena.setAttribute('aria-hidden', 'true');
-        }
-        setTrainingArenaOpen(false);
-
-        panelRoot?.querySelectorAll('.age-guild-view').forEach((node) => {
-            const isActive = node.id === `age-guild-${viewId}-view`;
-            node.hidden = !isActive;
-            node.classList.toggle('is-active', isActive);
+    function hideAllJobArenas() {
+        ['training', 'trade', 'bounties'].forEach((viewId) => {
+            const arena = resolveJobArena(viewId);
+            if (!arena) return;
+            arena.hidden = true;
+            arena.setAttribute('aria-hidden', 'true');
         });
     }
 
-    function showTrainingArena() {
-        activeView = 'training';
-        const panelRoot = resolvePanelRoot();
-        const trainingArena = resolveTrainingArena();
-
-        if (panelRoot) panelRoot.hidden = true;
-        if (trainingArena) {
-            trainingArena.hidden = false;
-            trainingArena.setAttribute('aria-hidden', 'false');
+    function showJobArena(viewId) {
+        activeView = viewId;
+        hideAllJobArenas();
+        const arena = resolveJobArena(viewId);
+        if (arena) {
+            arena.hidden = false;
+            arena.setAttribute('aria-hidden', 'false');
         }
-        setTrainingArenaOpen(true);
     }
 
-    function showView(viewId) {
-        if (viewId === 'training') {
-            showTrainingArena();
-            return;
-        }
-        showPanelView(viewId);
+    function openJobWorkspace() {
+        const workspace = resolveWorkspace();
+        if (!workspace) return;
+        workspace.hidden = false;
+        workspace.setAttribute('aria-hidden', 'false');
+        global.document.body.classList.add('age-guild-open');
+        setJobPageOpen(true);
     }
 
-    function renderHubJobOption(job) {
+    function closeJobWorkspace() {
+        stopBattleHold();
+        const workspace = resolveWorkspace();
+        if (!workspace) return;
+        workspace.hidden = true;
+        workspace.setAttribute('aria-hidden', 'true');
+        global.document.body.classList.remove('age-guild-open');
+        setJobPageOpen(false);
+        hideAllJobArenas();
+        activeView = null;
+    }
+
+    function renderSettlementGuildJobOption(job) {
         const lockedClass = job.available ? '' : ' is-locked';
         const featuredClass = job.featured ? ' is-featured' : '';
         const lockLine = job.available
             ? ''
-            : `<p class="age-guild-hub-option-lock">${escapeHtml(job.lockReason || 'Unavailable')}</p>`;
-        const featuredTag = job.featured ? '<span class="age-guild-hub-option-tag">Primary Training</span>' : '';
+            : `<span class="age-settlement-guild-job-lock">${escapeHtml(job.lockReason || 'Unavailable')}</span>`;
+        const featuredTag = job.featured ? '<span class="age-settlement-guild-job-tag">Primary</span>' : '';
 
         return (
-            `<button type="button" class="age-guild-hub-option${lockedClass}${featuredClass}"`
+            `<button type="button" class="age-settlement-guild-job${lockedClass}${featuredClass}"`
             + ` data-guild-job="${escapeHtml(job.id)}"`
             + `${job.available ? '' : ' disabled'}>`
-            + `<span class="age-guild-hub-option-head">`
-            + `<span class="age-guild-hub-option-label">${escapeHtml(job.label)}</span>`
+            + `<span class="age-settlement-guild-job-label">${escapeHtml(job.label)}</span>`
             + featuredTag
-            + '</span>'
-            + `<span class="age-guild-hub-option-desc">${escapeHtml(job.description)}</span>`
+            + `<span class="age-settlement-guild-job-desc">${escapeHtml(job.description)}</span>`
             + lockLine
             + '</button>'
         );
+    }
+
+    function renderSettlementGuildJobs() {
+        const optionsEl = resolveGuildJobsContainer();
+        const hub = hubManifest || { jobs: [], settlementTierLabel: 'Settlement', rank: 1 };
+        if (!optionsEl) return;
+
+        const jobs = Array.isArray(hub.jobs) ? hub.jobs : [];
+        if (!jobs.length) {
+            optionsEl.innerHTML = '<p class="age-settlement-guild-jobs-empty">No guild jobs are configured for this settlement.</p>';
+            return;
+        }
+
+        optionsEl.innerHTML = jobs.map((job) => renderSettlementGuildJobOption(job)).join('');
+    }
+
+    function syncSettlementMenuGuild() {
+        const wrap = resolveGuildMenuWrap();
+        const jobsEl = resolveGuildJobsContainer();
+        const toggleBtn = wrap?.querySelector('[data-settlement-venue="adventurers-guild"]');
+        if (!wrap || !jobsEl) return;
+
+        if (guildJobsExpanded) {
+            wrap.classList.add('is-expanded');
+            jobsEl.hidden = false;
+            toggleBtn?.setAttribute('aria-expanded', 'true');
+            renderSettlementGuildJobs();
+            return;
+        }
+
+        wrap.classList.remove('is-expanded');
+        jobsEl.hidden = true;
+        toggleBtn?.setAttribute('aria-expanded', 'false');
+    }
+
+    async function toggleSettlementJobs(detail) {
+        settlementTier = String(detail?.settlementTier || settlementTier || 'village').trim().toLowerCase();
+        resolveApi()?.setSettlementTier?.(settlementTier);
+
+        guildJobsExpanded = !guildJobsExpanded;
+        if (guildJobsExpanded) {
+            await loadGuildState();
+        }
+        syncSettlementMenuGuild();
     }
 
     function formatWinnerLabel(winner) {
@@ -159,50 +209,13 @@
         return 'Concluded';
     }
 
-    function renderHub() {
-        const tierLabelEl = global.document.getElementById('age-guild-hub-tier-label');
-        const rankEl = global.document.getElementById('age-guild-hub-rank');
-        const optionsEl = global.document.getElementById('age-guild-hub-options');
-        const hub = hubManifest || { jobs: [], settlementTierLabel: 'Settlement', rank: 1 };
-
-        if (tierLabelEl) tierLabelEl.textContent = hub.settlementTierLabel || 'Settlement';
-        if (rankEl) rankEl.textContent = String(hub.rank || guildState?.rank || 1);
-
-        if (!optionsEl) return;
-
-        const jobs = Array.isArray(hub.jobs) ? hub.jobs : [];
-        if (!jobs.length) {
-            optionsEl.innerHTML = '<p class="age-guild-hub-empty">No guild jobs are configured for this settlement.</p>';
-            return;
-        }
-
-        const trainingJobs = jobs.filter((job) => job.kind === 'training');
-        const otherJobs = jobs.filter((job) => job.kind !== 'training');
-        const hasAvailableTraining = trainingJobs.some((job) => job.available);
-        const trainingExpanded = trainingJobs.some((job) => job.featured && job.available);
-
-        const trainingModesHtml = trainingJobs.map((job) => (
-            `<div class="age-guild-hub-training-mode">`
-            + renderHubJobOption(job)
-            + '</div>'
-        )).join('');
-
-        const trainingGroupHtml = trainingJobs.length
-            ? (
-                `<section class="age-guild-hub-training-group${trainingExpanded ? ' is-expanded' : ''}">`
-                + `<button type="button" class="age-guild-hub-training-toggle" aria-expanded="${trainingExpanded ? 'true' : 'false'}" aria-controls="age-guild-hub-training-modes">`
-                + '<span class="age-guild-hub-training-toggle-label">NPC Battle Training</span>'
-                + '<span class="age-guild-hub-training-toggle-meta">Street patrol, convoy escort, border duty</span>'
-                + '</button>'
-                + `<div id="age-guild-hub-training-modes" class="age-guild-hub-training-modes"${trainingExpanded ? '' : ' hidden'}>`
-                + trainingModesHtml
-                + '</div>'
-                + `${hasAvailableTraining ? '' : '<p class="age-guild-hub-option-lock">No training contracts are available at your current rank.</p>'}`
-                + '</section>'
-            )
-            : '';
-
-        optionsEl.innerHTML = trainingGroupHtml + otherJobs.map((job) => renderHubJobOption(job)).join('');
+    function renderGuildPanel() {
+        if (guildJobsExpanded) renderSettlementGuildJobs();
+        updateProgressBars();
+        renderBattleLog();
+        renderTradeView();
+        renderBountiesView();
+        updateControlStates();
     }
 
     function updateProgressBars() {
@@ -369,20 +382,12 @@
         }
     }
 
-    function renderGuildPanel() {
-        renderHub();
-        updateProgressBars();
-        renderBattleLog();
-        renderTradeView();
-        renderBountiesView();
-        updateControlStates();
-    }
-
     function openTrainingJob(job) {
         activeTrainingMode = job.id;
         activeTrainingLabel = job.label;
         lastBattleResult = null;
-        showTrainingArena();
+        openJobWorkspace();
+        showJobArena('training');
         renderGuildPanel();
     }
 
@@ -396,12 +401,14 @@
             return;
         }
         if (job.kind === 'trade') {
-            showView('trade');
+            openJobWorkspace();
+            showJobArena('trade');
             renderGuildPanel();
             return;
         }
         if (job.kind === 'bounties') {
-            showView('bounties');
+            openJobWorkspace();
+            showJobArena('bounties');
             renderGuildPanel();
         }
     }
@@ -566,26 +573,15 @@
     }
 
     function onWorkspaceClick(event) {
-        if (event.target.closest('#age-guild-close') || event.target.closest('#age-guild-training-close')) {
+        if (event.target.closest('[data-age-guild-close]') || event.target.closest('#age-guild-training-close')) {
             event.preventDefault();
-            close();
+            closeJobWorkspace();
             return;
         }
         if (event.target.closest('#age-guild-back') || event.target.closest('[data-age-guild-back]')) {
             event.preventDefault();
             stopBattleHold();
-            showPanelView('hub');
-            return;
-        }
-        const trainingToggle = event.target.closest('.age-guild-hub-training-toggle');
-        if (trainingToggle) {
-            event.preventDefault();
-            const group = trainingToggle.closest('.age-guild-hub-training-group');
-            const modes = group?.querySelector('.age-guild-hub-training-modes');
-            if (!group || !modes) return;
-            const expanded = group.classList.toggle('is-expanded');
-            modes.hidden = !expanded;
-            trainingToggle.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+            closeJobWorkspace();
             return;
         }
         const jobBtn = event.target.closest('[data-guild-job]');
@@ -623,57 +619,19 @@
         }
     }
 
+    function onSettlementMenuClick(event) {
+        const jobBtn = event.target.closest('[data-guild-job]');
+        if (!jobBtn) return;
+        event.preventDefault();
+        openJob(jobBtn.getAttribute('data-guild-job'));
+    }
+
     function onWorkspaceKeydown(event) {
         if (event.key === 'Escape' && isOpen()) {
             event.preventDefault();
-            if (activeView !== 'hub') {
-                stopBattleHold();
-                showPanelView('hub');
-                return;
-            }
-            close();
+            stopBattleHold();
+            closeJobWorkspace();
         }
-    }
-
-    async function open(event) {
-        const workspace = resolveWorkspace();
-        if (!workspace) return;
-
-        settlementTier = resolveSettlementTierFromEvent(event);
-        resolveApi()?.setSettlementTier?.(settlementTier);
-
-        workspace.hidden = false;
-        workspace.setAttribute('aria-hidden', 'false');
-        global.document.body.classList.add('age-guild-open');
-
-        activeView = 'hub';
-        lastBattleResult = null;
-        showPanelView('hub');
-
-        await loadGuildState();
-        renderGuildPanel();
-    }
-
-    function close() {
-        stopBattleHold();
-        const workspace = resolveWorkspace();
-        if (!workspace) return;
-        workspace.hidden = true;
-        workspace.setAttribute('aria-hidden', 'true');
-        global.document.body.classList.remove('age-guild-open');
-        setTrainingArenaOpen(false);
-        const panelRoot = resolvePanelRoot();
-        const trainingArena = resolveTrainingArena();
-        if (panelRoot) panelRoot.hidden = false;
-        if (trainingArena) {
-            trainingArena.hidden = true;
-            trainingArena.setAttribute('aria-hidden', 'true');
-        }
-    }
-
-    function onSettlementVenueOpen(event) {
-        if (event?.detail?.venueId !== 'adventurers-guild') return;
-        void open(event);
     }
 
     function bindGuild() {
@@ -683,7 +641,7 @@
         const workspace = resolveWorkspace();
         const battleBtn = global.document.getElementById('age-guild-battle-btn');
         const wrap = global.document.getElementById('age-guild-battle-wrap');
-        const progressRing = resolveTrainingArena()?.querySelector('.age-guild-charge-ring-progress');
+        const progressRing = global.document.getElementById('age-guild-training-arena')?.querySelector('.age-guild-charge-ring-progress');
 
         if (wrap) {
             wrap.style.setProperty('--age-guild-charge-circumference', String(CHARGE_RING_CIRCUMFERENCE));
@@ -695,17 +653,23 @@
 
         workspace?.addEventListener('click', onWorkspaceClick);
         global.document.addEventListener('keydown', onWorkspaceKeydown);
-        global.addEventListener('royal-armies-settlement-venue-open', onSettlementVenueOpen);
         global.addEventListener('royalarmies:age-guild-updated', (event) => {
             mergeGuildState(event?.detail || {});
+            if (guildJobsExpanded) renderSettlementGuildJobs();
             if (isOpen()) renderGuildPanel();
         });
         global.addEventListener('royalarmies:age-recruitment-updated', () => {
-            if (isOpen()) void loadGuildState().then(() => renderGuildPanel());
+            if (guildJobsExpanded || isOpen()) {
+                void loadGuildState().then(() => renderGuildPanel());
+            }
         });
         global.addEventListener('royalarmies:age-movement-updated', () => {
-            if (isOpen()) void loadGuildState().then(() => renderGuildPanel());
+            if (guildJobsExpanded || isOpen()) {
+                void loadGuildState().then(() => renderGuildPanel());
+            }
         });
+
+        global.document.getElementById('age-settlement-menu-list')?.addEventListener('click', onSettlementMenuClick);
 
         battleBtn?.addEventListener('pointerdown', onBattlePointerDown);
         battleBtn?.addEventListener('pointerup', onBattlePointerUp);
@@ -719,8 +683,10 @@
     }
 
     global.RoyalArmiesAdventurersGuild = {
-        open,
-        close,
+        toggleSettlementJobs,
+        syncSettlementMenuGuild,
+        openJob,
+        closeJobWorkspace,
         isOpen,
         enableAgeAdventurersGuild
     };

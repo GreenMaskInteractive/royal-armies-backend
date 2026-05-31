@@ -21079,7 +21079,7 @@ body.age-barracks-open {
 }
 
 /* ==========================================================================
-   Age Adventurer's Guild — job board panel + training arena overlay
+   Age Adventurer's Guild — settlement menu jobs + job-page overlays
    ========================================================================== */
 
 body.age-guild-open {
@@ -21088,15 +21088,8 @@ body.age-guild-open {
 
 .age-guild-workspace {
     position: fixed;
-    top: var(--age-map-slot-top, calc(12px + 78px + 12px));
-    right: max(16px, env(safe-area-inset-right));
-    bottom: var(--age-map-slot-bottom, calc(12px + 58px + 12px));
-    left: max(16px, env(safe-area-inset-left));
+    inset: 0;
     z-index: 12035;
-    display: flex;
-    align-items: stretch;
-    justify-content: stretch;
-    box-sizing: border-box;
     pointer-events: none;
 }
 
@@ -21104,28 +21097,90 @@ body.age-guild-open {
     display: none !important;
 }
 
-#age-guild-panel-root[hidden] {
+.age-settlement-menu-guild-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.age-settlement-menu-guild-wrap.is-expanded .age-settlement-menu-item--expandable .age-settlement-menu-item-chevron {
+    transform: rotate(180deg);
+}
+
+.age-settlement-menu-item--expandable.is-active,
+.age-settlement-menu-guild-wrap.is-expanded .age-settlement-menu-item--expandable {
+    border-color: rgba(255, 215, 120, 0.62);
+}
+
+.age-settlement-guild-jobs {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 0 0 2px 14px;
+}
+
+.age-settlement-guild-jobs[hidden] {
     display: none !important;
 }
 
-.age-guild-shell {
-    width: 100%;
-    height: 100%;
-    pointer-events: auto;
-}
-
-.age-guild-shell-bezel {
-    position: relative;
+.age-settlement-guild-job {
     display: flex;
     flex-direction: column;
-    height: 100%;
-    min-height: 0;
-    padding: 14px 18px 18px;
-    box-sizing: border-box;
-    overflow: auto;
+    align-items: flex-start;
+    gap: 3px;
+    width: 100%;
+    margin: 0;
+    padding: 8px 10px 8px 12px;
+    border: 1px solid rgba(184, 144, 48, 0.2);
+    border-radius: 3px;
+    background: rgba(0, 0, 0, 0.28);
+    color: #f4e8c8;
+    font-family: 'Cinzel', serif;
+    text-align: left;
+    cursor: pointer;
 }
 
-.age-guild-training-arena {
+.age-settlement-guild-job.is-featured:not(.is-locked) {
+    border-color: rgba(255, 215, 120, 0.55);
+}
+
+.age-settlement-guild-job.is-locked,
+.age-settlement-guild-job:disabled {
+    opacity: 0.48;
+    cursor: not-allowed;
+}
+
+.age-settlement-guild-job:not(.is-locked):not(:disabled):hover,
+.age-settlement-guild-job:not(.is-locked):not(:disabled):focus-visible {
+    border-color: rgba(255, 215, 120, 0.72);
+    color: #ffd978;
+}
+
+.age-settlement-guild-job-label {
+    font-size: 0.86rem;
+    font-weight: 600;
+}
+
+.age-settlement-guild-job-tag {
+    font-size: 0.62rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: rgba(255, 215, 120, 0.82);
+}
+
+.age-settlement-guild-job-desc,
+.age-settlement-guild-job-lock,
+.age-settlement-guild-jobs-empty {
+    font-size: 0.72rem;
+    line-height: 1.35;
+    color: rgba(236, 220, 180, 0.66);
+}
+
+.age-settlement-guild-job-lock {
+    color: rgba(255, 200, 140, 0.82);
+}
+
+.age-guild-job-arena {
     position: fixed;
     left: 0;
     right: 0;
@@ -21133,14 +21188,22 @@ body.age-guild-open {
     bottom: var(--age-map-slot-bottom);
     z-index: 12036;
     display: grid;
-    grid-template-rows: auto minmax(0, 1fr) auto;
     box-sizing: border-box;
     pointer-events: none;
     background: transparent;
 }
 
-.age-guild-training-arena[hidden] {
+.age-guild-job-arena[hidden] {
     display: none !important;
+}
+
+.age-guild-training-arena {
+    grid-template-rows: auto minmax(0, 1fr) auto;
+}
+
+.age-guild-trade-arena,
+.age-guild-bounties-arena {
+    grid-template-rows: auto minmax(0, 1fr);
 }
 
 #age-page-canvas.age-guild-training-open .age-settlement-menu-panel,
@@ -21150,8 +21213,16 @@ body.age-guild-open {
 }
 
 .age-guild-top-band,
-.age-guild-bottom-band {
+.age-guild-bottom-band,
+.age-guild-battle-deck,
+.age-guild-job-body,
+.age-guild-job-back,
+.age-guild-job-close {
     pointer-events: auto;
+}
+
+.age-guild-top-band,
+.age-guild-bottom-band {
     padding: 0 max(16px, env(safe-area-inset-right)) 0 max(16px, env(safe-area-inset-left));
     box-sizing: border-box;
 }
@@ -21166,15 +21237,13 @@ body.age-guild-open {
     max-height: min(42vh, 360px);
 }
 
-.age-guild-center-stage {
-    pointer-events: none;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+.age-guild-job-body {
     min-height: 0;
+    overflow: auto;
+    padding: 0 max(16px, env(safe-area-inset-right)) 12px max(16px, env(safe-area-inset-left));
 }
 
-.age-guild-training-top-panel {
+.age-guild-job-top-panel {
     border: 1px solid rgba(184, 144, 48, 0.38);
     border-radius: 8px;
     padding: 12px 16px;
@@ -21186,20 +21255,30 @@ body.age-guild-open {
         0 10px 28px rgba(0, 0, 0, 0.42);
 }
 
-.age-guild-training-back {
+.age-guild-job-back {
     position: fixed;
     top: calc(var(--age-map-slot-top) + 8px);
     left: max(16px, env(safe-area-inset-left));
     z-index: 12040;
-    pointer-events: auto;
 }
 
-.age-guild-training-close {
+.age-guild-job-close {
     position: fixed;
     top: calc(var(--age-map-slot-top) + 8px);
     right: max(16px, env(safe-area-inset-right));
     z-index: 12040;
-    pointer-events: auto;
+    border: 1px solid rgba(184, 144, 48, 0.45);
+    border-radius: 6px;
+    padding: 7px 12px;
+    background: rgba(12, 10, 8, 0.88);
+    color: #f4e8c8;
+    cursor: pointer;
+}
+
+.age-guild-job-close:hover,
+.age-guild-job-close:focus-visible {
+    border-color: rgba(255, 215, 120, 0.75);
+    color: #ffd700;
 }
 
 .age-guild-progress-stack {
@@ -21276,25 +21355,6 @@ body.age-guild-open {
     transition: width 0.35s ease;
 }
 
-.age-guild-close {
-    position: absolute;
-    top: 10px;
-    right: 12px;
-    border: 1px solid rgba(184, 144, 48, 0.45);
-    border-radius: 6px;
-    padding: 7px 12px;
-    background: rgba(12, 10, 8, 0.88);
-    color: #f4e8c8;
-    cursor: pointer;
-    z-index: 2;
-}
-
-.age-guild-close:hover,
-.age-guild-close:focus-visible {
-    border-color: rgba(255, 215, 120, 0.75);
-    color: #ffd700;
-}
-
 .age-guild-log {
     max-height: min(36vh, 280px);
     overflow: auto;
@@ -21367,8 +21427,10 @@ body.age-guild-open {
     display: flex;
     align-items: center;
     justify-content: center;
+    align-self: center;
+    justify-self: center;
     width: min(520px, 92vw);
-    min-height: 240px;
+    min-height: 0;
     padding-bottom: 8px;
 }
 
@@ -21541,6 +21603,15 @@ body.age-guild-open {
 .age-guild-back:hover,
 .age-guild-back:focus-visible {
     color: #ffd978;
+}
+
+.age-guild-job-back {
+    margin: 0;
+    border: 1px solid rgba(184, 144, 48, 0.38);
+    border-radius: 6px;
+    padding: 7px 12px;
+    background: rgba(12, 10, 8, 0.88);
+    color: #f4e8c8;
 }
 
 .age-guild-training-title {

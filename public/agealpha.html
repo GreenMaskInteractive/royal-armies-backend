@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Royal Armies — Age Alpha</title>
     <link rel="stylesheet" href="style.css?v=royal-family-titles-1">
-    <link rel="stylesheet" href="style2.css?v=guild-training-arena-1">
+    <link rel="stylesheet" href="style2.css?v=guild-settlement-jobs-1">
     <link rel="stylesheet" href="mobile-responsive.css?v=records-compact-tabs-1">
     <link rel="stylesheet" href="dev-page-navigator.css">
     <link rel="stylesheet" href="custom-cursor.css?v=scrollbar-cursor-3">
@@ -998,51 +998,13 @@
                 </div>
             </div>
 
-            <div id="age-guild-workspace" class="age-guild-workspace" hidden aria-hidden="true" aria-label="Adventurer's Guild">
-                <div id="age-guild-panel-root" class="age-guild-shell portal-deployment-server-panel">
-                    <div class="age-guild-shell-bezel portal-server-panel-controls game-page-panel-bezel">
-                        <button type="button" id="age-guild-close" class="age-guild-close" aria-label="Close Adventurer's Guild">Close</button>
-
-                        <div id="age-guild-hub-view" class="age-guild-view is-active" aria-label="Guild job board">
-                            <header class="age-guild-hub-header">
-                                <p class="age-guild-hub-eyebrow">Adventurer's Guild</p>
-                                <h2 class="age-guild-hub-title"><span id="age-guild-hub-tier-label">Kingdom</span> Job Board</h2>
-                                <p class="age-guild-hub-subtitle">Commander rank <strong id="age-guild-hub-rank">1</strong> — choose a contract to begin.</p>
-                            </header>
-                            <div id="age-guild-hub-options" class="age-guild-hub-options" role="list"></div>
-                        </div>
-
-                        <div id="age-guild-trade-view" class="age-guild-view" hidden aria-label="Trade convoy">
-                            <button type="button" class="age-guild-back" data-age-guild-back>← Job Board</button>
-                            <header class="age-guild-hub-header">
-                                <h2 class="age-guild-hub-title">Trade Convoy</h2>
-                                <p class="age-guild-hub-subtitle">Purchase merchant goods on guild contracts. Resell at markets for profit.</p>
-                            </header>
-                            <div id="age-guild-trade-lots" class="age-guild-trade-lots"></div>
-                            <section class="age-guild-trade-inventory">
-                                <h3 class="age-guild-section-title">Your Merchandise</h3>
-                                <div id="age-guild-trade-inventory" class="age-guild-trade-inventory-list" aria-live="polite"></div>
-                            </section>
-                        </div>
-
-                        <div id="age-guild-bounties-view" class="age-guild-view" hidden aria-label="Player bounties">
-                            <button type="button" class="age-guild-back" data-age-guild-back>← Job Board</button>
-                            <header class="age-guild-hub-header">
-                                <h2 class="age-guild-hub-title">Player Bounties</h2>
-                                <p class="age-guild-hub-subtitle">Seven marked contracts rotate every 24 hours. Accept one bounty at a time.</p>
-                            </header>
-                            <p id="age-guild-bounty-active-note" class="age-guild-bounty-active-note" hidden></p>
-                            <div id="age-guild-bounty-list" class="age-guild-bounty-list" aria-live="polite"></div>
-                        </div>
-                    </div>
-                </div>
-
-                <div id="age-guild-training-arena" class="age-guild-training-arena" hidden aria-hidden="true" aria-label="Guild training arena">
-                    <button type="button" id="age-guild-back" class="age-guild-back age-guild-training-back">← Job Board</button>
-                    <button type="button" id="age-guild-training-close" class="age-guild-close age-guild-training-close" aria-label="Close Adventurer's Guild">Close</button>
+            <div id="age-guild-workspace" class="age-guild-workspace" hidden aria-hidden="true" aria-label="Adventurer's Guild job">
+                <div id="age-guild-training-arena" class="age-guild-job-arena age-guild-training-arena" hidden aria-hidden="true" aria-label="Guild training">
+                    <button type="button" id="age-guild-back" class="age-guild-back age-guild-job-back">← Jobs</button>
+                    <button type="button" id="age-guild-training-close" class="age-guild-close age-guild-job-close" aria-label="Close job">Close</button>
 
                     <header class="age-guild-top-band" aria-label="Training header">
-                        <div class="age-guild-training-top-panel">
+                        <div class="age-guild-job-top-panel">
                             <h2 id="age-guild-training-title" class="age-guild-training-title">Street Patrol</h2>
                             <div class="age-guild-progress-stack" aria-label="Guild progression">
                                 <div class="age-guild-xp-row">
@@ -1063,24 +1025,59 @@
                         </div>
                     </header>
 
-                    <div class="age-guild-center-stage" aria-label="Training battle controls">
-                        <div id="age-guild-battle-deck" class="age-guild-battle-deck">
-                            <button type="button" id="age-guild-heal-one" class="age-guild-satellite-btn age-guild-satellite-btn--heal">Heal</button>
-                            <button type="button" id="age-guild-heal-all" class="age-guild-satellite-btn age-guild-satellite-btn--heal-all">Heal All</button>
-                            <button type="button" id="age-guild-auto-heal" class="age-guild-satellite-btn age-guild-satellite-btn--auto-heal" aria-pressed="false">Auto-heal</button>
-                            <div id="age-guild-battle-wrap" class="age-guild-battle-btn-wrap">
-                                <svg class="age-guild-charge-ring" viewBox="0 0 100 100" aria-hidden="true">
-                                    <circle class="age-guild-charge-ring-track" cx="50" cy="50" r="46" />
-                                    <circle class="age-guild-charge-ring-progress" cx="50" cy="50" r="46" />
-                                </svg>
-                                <button type="button" id="age-guild-battle-btn" class="age-guild-battle-circle" aria-label="Hold to battle">Battle</button>
-                            </div>
+                    <div id="age-guild-battle-deck" class="age-guild-battle-deck" aria-label="Training battle controls">
+                        <button type="button" id="age-guild-heal-one" class="age-guild-satellite-btn age-guild-satellite-btn--heal">Heal</button>
+                        <button type="button" id="age-guild-heal-all" class="age-guild-satellite-btn age-guild-satellite-btn--heal-all">Heal All</button>
+                        <button type="button" id="age-guild-auto-heal" class="age-guild-satellite-btn age-guild-satellite-btn--auto-heal" aria-pressed="false">Auto-heal</button>
+                        <div id="age-guild-battle-wrap" class="age-guild-battle-btn-wrap">
+                            <svg class="age-guild-charge-ring" viewBox="0 0 100 100" aria-hidden="true">
+                                <circle class="age-guild-charge-ring-track" cx="50" cy="50" r="46" />
+                                <circle class="age-guild-charge-ring-progress" cx="50" cy="50" r="46" />
+                            </svg>
+                            <button type="button" id="age-guild-battle-btn" class="age-guild-battle-circle" aria-label="Hold to battle">Battle</button>
                         </div>
                     </div>
 
                     <footer class="age-guild-bottom-band" aria-label="Battle log">
                         <div id="age-guild-log" class="age-guild-log" aria-live="polite"></div>
                     </footer>
+                </div>
+
+                <div id="age-guild-trade-arena" class="age-guild-job-arena age-guild-trade-arena" hidden aria-hidden="true" aria-label="Trade convoy">
+                    <button type="button" class="age-guild-back age-guild-job-back" data-age-guild-back>← Jobs</button>
+                    <button type="button" class="age-guild-close age-guild-job-close" data-age-guild-close aria-label="Close job">Close</button>
+
+                    <header class="age-guild-top-band" aria-label="Trade convoy header">
+                        <div class="age-guild-job-top-panel">
+                            <h2 class="age-guild-hub-title">Trade Convoy</h2>
+                            <p class="age-guild-hub-subtitle">Purchase merchant goods on guild contracts. Resell at markets for profit.</p>
+                        </div>
+                    </header>
+
+                    <div class="age-guild-job-body">
+                        <div id="age-guild-trade-lots" class="age-guild-trade-lots"></div>
+                        <section class="age-guild-trade-inventory">
+                            <h3 class="age-guild-section-title">Your Merchandise</h3>
+                            <div id="age-guild-trade-inventory" class="age-guild-trade-inventory-list" aria-live="polite"></div>
+                        </section>
+                    </div>
+                </div>
+
+                <div id="age-guild-bounties-arena" class="age-guild-job-arena age-guild-bounties-arena" hidden aria-hidden="true" aria-label="Player bounties">
+                    <button type="button" class="age-guild-back age-guild-job-back" data-age-guild-back>← Jobs</button>
+                    <button type="button" class="age-guild-close age-guild-job-close" data-age-guild-close aria-label="Close job">Close</button>
+
+                    <header class="age-guild-top-band" aria-label="Player bounties header">
+                        <div class="age-guild-job-top-panel">
+                            <h2 class="age-guild-hub-title">Player Bounties</h2>
+                            <p class="age-guild-hub-subtitle">Seven marked contracts rotate every 24 hours. Accept one bounty at a time.</p>
+                        </div>
+                    </header>
+
+                    <div class="age-guild-job-body">
+                        <p id="age-guild-bounty-active-note" class="age-guild-bounty-active-note" hidden></p>
+                        <div id="age-guild-bounty-list" class="age-guild-bounty-list" aria-live="polite"></div>
+                    </div>
                 </div>
             </div>
 
@@ -1393,7 +1390,7 @@
     <script src="rift-player-loc-pins.js?v=player-loc-pins-1"></script>
     <script src="age-world-map.js?v=cross-border-neighbors-2"></script>
     <script src="age-world-plan-overlay.js?v=hq-clear-plan-fix-1"></script>
-    <script src="age-view-tabs.js?v=unit-catalog-3"></script>
+    <script src="age-view-tabs.js?v=guild-settlement-jobs-1"></script>
     <script src="age-headquarters-planning-map.js?v=hold-sf-mf-staging-1"></script>
     <script src="age-headquarters.js?v=fortifications-collapse-1"></script>
     <script src="age-dispatch-alert.js?v=hq-dispatch-dismiss-1"></script>
@@ -1404,7 +1401,7 @@
     <script src="age-war-ledger.js?v=war-ledger-bottom-bar-1"></script>
     <script src="rift-unit-purchase-catalog.js?v=swarm-recruit-1"></script>
     <script src="rift-age-guild-training.js?v=guild-hub-1"></script>
-    <script src="age-adventurers-guild.js?v=guild-training-arena-1"></script>
+    <script src="age-adventurers-guild.js?v=guild-settlement-jobs-1"></script>
     <script src="age-barracks.js?v=swarm-recruit-1"></script>
     <script src="age-records.js?v=records-nation-defaults-1"></script>
     <script src="dev-page-navigator.js?v=dev-nav-drag-fix-1"></script>
