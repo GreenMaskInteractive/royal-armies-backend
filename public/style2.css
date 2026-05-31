@@ -21834,15 +21834,15 @@ body.age-guild-overlay-open .age-guild-bounties-arena:not([hidden]) {
 #age-page-canvas .age-guild-commander-gear-panel {
     position: absolute;
     top: 8px;
-    right: 100px;
+    right: 220px;
     width: min(400px, 44vw);
-    max-height: min(62vh, 520px);
+    max-height: min(85vh, 720px);
     display: flex;
     flex-direction: column;
     gap: 0;
     padding: 10px 12px 12px;
     box-sizing: border-box;
-    overflow: hidden;
+    overflow: visible;
     pointer-events: auto;
     z-index: 2;
     border-radius: 6px;
@@ -21858,8 +21858,7 @@ body.age-guild-overlay-open .age-guild-bounties-arena:not([hidden]) {
     display: flex;
     flex-direction: column;
     gap: 10px;
-    min-height: 0;
-    flex: 1 1 auto;
+    flex: 0 0 auto;
 }
 
 .age-guild-commander-gear-head {
@@ -21892,9 +21891,8 @@ body.age-guild-overlay-open .age-guild-bounties-arena:not([hidden]) {
 }
 
 .age-guild-gear-sheet {
-    flex: 1 1 auto;
-    min-height: 0;
-    overflow: auto;
+    flex: 0 0 auto;
+    overflow: visible;
 }
 
 .age-guild-gear-layout {

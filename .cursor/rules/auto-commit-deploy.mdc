@@ -1,11 +1,13 @@
 ---
-description: Auto commit and push to main after implementation (deploy without asking) unless user opts out
+description: ALWAYS COMMIT and push to main after implementation unless user opts out
 alwaysApply: true
 ---
 
-# Auto commit and deploy
+# ALWAYS COMMIT (auto deploy)
 
-**Default policy (confirmed by product owner):** After completing requested code changes or fixes in this repo, **commit and push to `main` automatically** — do **not** wait for a separate "deploy" or "commit" message unless the user has opted out for that task or session.
+**ALWAYS COMMIT** after completing requested code changes or fixes in this repo. Do **not** wait for a separate "commit", "deploy", or "push" message. Immediately commit and push to `main` when implementation is done.
+
+This overrides generic "only commit when asked" guidance unless the user opts out for that task or session.
 
 Pushing to `main` deploys [royalarmies.com](https://royalarmies.com) via Render.
 
@@ -40,7 +42,7 @@ After push, briefly confirm deploy (commit hash + that production was checked if
 
 User: "Fix the mailbox reply bug."
 
-→ Implement fix → commit → push to `main` → confirm deploy.
+→ Implement fix → **ALWAYS COMMIT** → push to `main` → confirm deploy.
 
 User: "Fix the mailbox reply bug but don't deploy yet."
 
