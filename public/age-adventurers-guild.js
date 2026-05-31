@@ -73,7 +73,8 @@
             ageGold: payload.ageGold ?? guildState?.ageGold ?? 0,
             ageGuildMerch: payload.ageGuildMerch ?? guildState?.ageGuildMerch ?? [],
             tradeConvoyLots: payload.tradeConvoyLots ?? guildState?.tradeConvoyLots ?? [],
-            ageGuildAcceptedBountyId: payload.ageGuildAcceptedBountyId ?? guildState?.ageGuildAcceptedBountyId ?? null
+            ageGuildAcceptedBountyId: payload.ageGuildAcceptedBountyId ?? guildState?.ageGuildAcceptedBountyId ?? null,
+            commanderGear: payload.commanderGear ?? guildState?.commanderGear ?? null
         };
         if (payload.hub) hubManifest = payload.hub;
         if (Array.isArray(payload.bounties)) bountyList = payload.bounties;
@@ -326,9 +327,106 @@
         return 'Draw';
     }
 
+    function formatGearSlotStats(stats) {
+        if (!stats || typeof stats !== 'object') return '';
+        return Object.entries(stats)
+            .map(([key, value]) => {
+                const numeric = Number(value) || 0;
+                if (!numeric) return '';
+                if (key === 'injuryMitigation' || key === 'guildXp') {
+                    return `+${Math.round(numeric * 1000) / 10}% ${key === 'guildXp' ? 'Guild XP' : 'Injury Mitigation'}`;
+                }
+                const label = key.charAt(0).toUpperCase() + key.slice(1);
+                return `+${Math.round(numeric * 10) / 10} ${label}`;
+            })
+            .filter(Boolean)
+            .join(' · ');
+    }
+
+    function renderGearSlotMarkup(slot) {
+        const slotLabel = escapeHtml(slot?.label || 'Slot');
+        const equipped = slot?.equipped;
+        if (!equipped) {
+            return (
+                `<div class="age-guild-gear-slot is-empty" data-gear-slot="${escapeHtml(slot?.id || '')}">`
+                + `<span class="age-guild-gear-slot-label">${slotLabel}</span>`
+                + '<span class="age-guild-gear-slot-empty">Empty</span>'
+                + '</div>'
+            );
+        }
+
+        const rarity = escapeHtml(equipped.rarity || 'common');
+        const statSummary = formatGearSlotStats(equipped.stats);
+        const title = statSummary
+            ? `${equipped.name} — ${statSummary}`
+            : String(equipped.name || 'Equipped item');
+
+        return (
+            `<button type="button" class="age-guild-gear-slot is-equipped is-rarity-${rarity}"`
+            + ` data-gear-slot="${escapeHtml(slot?.id || '')}"`
+            + ` title="${escapeHtml(title)}"`
+            + ` aria-label="${escapeHtml(`${slotLabel}: ${equipped.name}`)}">`
+            + `<span class="age-guild-gear-slot-label">${slotLabel}</span>`
+            + `<span class="age-guild-gear-slot-item">${escapeHtml(equipped.name || 'Equipped')}</span>`
+            + '</button>'
+        );
+    }
+
+    function renderCommanderGearPanel() {
+        const gear = guildState?.commanderGear;
+        const nameEl = global.document.getElementById('age-guild-commander-name');
+        const classEl = global.document.getElementById('age-guild-commander-class');
+        const sheetEl = global.document.getElementById('age-guild-gear-sheet');
+        const statsEl = global.document.getElementById('age-guild-gear-stat-lines');
+
+        if (!sheetEl) return;
+
+        if (!gear) {
+            if (nameEl) nameEl.textContent = 'Commander';
+            if (classEl) classEl.textContent = 'Equipment unavailable';
+            sheetEl.innerHTML = '<p class="age-guild-gear-stat-lines is-neutral">Load guild state to view equipment.</p>';
+            if (statsEl) statsEl.innerHTML = '';
+            return;
+        }
+
+        if (nameEl) nameEl.textContent = gear.commanderName || 'Commander';
+        if (classEl) {
+            classEl.textContent = `${gear.classLabel || 'Commander'} · Rank ${Math.max(1, Math.floor(Number(gear.rank) || 1))}`;
+        }
+
+        const slots = Array.isArray(gear.slots) ? gear.slots : [];
+        const slotById = Object.fromEntries(slots.map((slot) => [slot.id, slot]));
+        const renderColumn = (slotIds) => slotIds
+            .map((slotId) => renderGearSlotMarkup(slotById[slotId]))
+            .join('');
+
+        const portraitSrc = escapeHtml(gear.portraitSrc || gear.classPortraitSrc || 'images/battlemasterclass.png');
+        sheetEl.innerHTML = (
+            '<div class="age-guild-gear-layout">'
+            + `<div class="age-guild-gear-col age-guild-gear-col--left">${renderColumn(['mainHand', 'hands', 'cloak'])}</div>`
+            + '<div class="age-guild-gear-col age-guild-gear-col--center">'
+            + renderGearSlotMarkup(slotById.head)
+            + `<div class="age-guild-gear-portrait-wrap"><img class="age-guild-gear-portrait" src="${portraitSrc}" alt="" decoding="async"></div>`
+            + renderGearSlotMarkup(slotById.chest)
+            + renderGearSlotMarkup(slotById.legs)
+            + renderGearSlotMarkup(slotById.feet)
+            + '</div>'
+            + `<div class="age-guild-gear-col age-guild-gear-col--right">${renderColumn(['offHand', 'ring', 'amulet'])}</div>`
+            + '</div>'
+        );
+
+        if (statsEl) {
+            const statLines = Array.isArray(gear.statLines) ? gear.statLines : [];
+            statsEl.innerHTML = statLines.length
+                ? statLines.map((line) => `<li>${escapeHtml(line.formatted || line.label || '')}</li>`).join('')
+                : '<li class="is-neutral">No equipment bonuses equipped.</li>';
+        }
+    }
+
     function renderGuildPanel() {
         if (guildJobsExpanded) renderSettlementGuildJobs();
         updateProgressBars();
+        renderCommanderGearPanel();
         renderLootLog();
         renderBattleLog();
         setBattleTab(activeBattleTab);

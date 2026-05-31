@@ -21831,6 +21831,229 @@ body.age-guild-overlay-open .age-guild-bounties-arena:not([hidden]) {
     display: none !important;
 }
 
+#age-page-canvas .age-guild-commander-gear-panel {
+    position: absolute;
+    top: 8px;
+    right: 0;
+    width: min(400px, 44vw);
+    max-height: min(62vh, 520px);
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    padding: 10px 12px 12px;
+    box-sizing: border-box;
+    overflow: hidden;
+    pointer-events: auto;
+    z-index: 2;
+    border-radius: 6px;
+    border: 1px solid var(--age-hud-rail-border);
+    background:
+        var(--age-hud-rail-sheen),
+        var(--age-hud-rail-bg);
+    box-shadow: var(--age-hud-rail-inset), var(--age-hud-rail-shadow);
+    color: #f1e0ac;
+}
+
+.age-guild-commander-gear-inner {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    min-height: 0;
+    flex: 1 1 auto;
+}
+
+.age-guild-commander-gear-head {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid rgba(184, 144, 48, 0.22);
+}
+
+.age-guild-commander-gear-eyebrow {
+    margin: 0;
+    font-size: 0.68rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: rgba(236, 220, 180, 0.58);
+}
+
+.age-guild-commander-gear-name {
+    margin: 0;
+    font-size: 1.02rem;
+    line-height: 1.2;
+    color: #ffe7a8;
+}
+
+.age-guild-commander-gear-class {
+    margin: 0;
+    font-size: 0.76rem;
+    color: rgba(236, 220, 180, 0.72);
+}
+
+.age-guild-gear-sheet {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: auto;
+}
+
+.age-guild-gear-layout {
+    display: grid;
+    grid-template-columns: 74px minmax(0, 1fr) 74px;
+    gap: 8px;
+    align-items: start;
+}
+
+.age-guild-gear-col {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.age-guild-gear-col--center {
+    align-items: stretch;
+}
+
+.age-guild-gear-portrait-wrap {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 148px;
+    padding: 10px 8px;
+    border-radius: 8px;
+    border: 1px solid rgba(184, 144, 48, 0.42);
+    background:
+        radial-gradient(circle at 50% 18%, rgba(255, 215, 120, 0.16) 0%, transparent 58%),
+        linear-gradient(180deg, rgba(12, 10, 8, 0.92) 0%, rgba(4, 3, 2, 0.96) 100%);
+    box-shadow:
+        inset 0 1px 0 rgba(255, 215, 120, 0.12),
+        inset 0 -16px 28px rgba(0, 0, 0, 0.42);
+}
+
+.age-guild-gear-portrait-wrap::before {
+    content: '';
+    position: absolute;
+    inset: 8px;
+    border-radius: 6px;
+    border: 1px solid rgba(255, 215, 120, 0.08);
+    pointer-events: none;
+}
+
+.age-guild-gear-portrait {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    max-width: 132px;
+    max-height: 132px;
+    object-fit: contain;
+    filter: drop-shadow(0 8px 16px rgba(0, 0, 0, 0.45));
+}
+
+.age-guild-gear-slot {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 2px;
+    width: 100%;
+    min-height: 52px;
+    padding: 6px 6px 5px;
+    box-sizing: border-box;
+    border-radius: 6px;
+    border: 1px solid rgba(184, 144, 48, 0.34);
+    background:
+        linear-gradient(180deg, rgba(255, 215, 128, 0.06) 0%, transparent 42%),
+        rgba(0, 0, 0, 0.34);
+    box-shadow: inset 0 1px 0 rgba(255, 215, 120, 0.08);
+    color: #f1e0ac;
+    text-align: center;
+    cursor: default;
+}
+
+button.age-guild-gear-slot {
+    cursor: help;
+    font: inherit;
+}
+
+.age-guild-gear-slot.is-empty {
+    opacity: 0.72;
+}
+
+.age-guild-gear-slot.is-equipped {
+    border-color: rgba(255, 215, 120, 0.52);
+    background:
+        linear-gradient(180deg, rgba(255, 215, 128, 0.12) 0%, transparent 48%),
+        rgba(18, 14, 10, 0.72);
+}
+
+.age-guild-gear-slot.is-rarity-uncommon {
+    box-shadow:
+        inset 0 1px 0 rgba(255, 235, 180, 0.16),
+        0 0 10px rgba(120, 196, 120, 0.18);
+}
+
+.age-guild-gear-slot-label {
+    font-size: 0.58rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: rgba(236, 220, 180, 0.58);
+}
+
+.age-guild-gear-slot-item {
+    font-size: 0.64rem;
+    line-height: 1.25;
+    color: #ffe7a8;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+}
+
+.age-guild-gear-slot-empty {
+    font-size: 0.64rem;
+    color: rgba(236, 220, 180, 0.42);
+    font-style: italic;
+}
+
+.age-guild-gear-stats {
+    padding-top: 8px;
+    border-top: 1px solid rgba(184, 144, 48, 0.22);
+}
+
+.age-guild-gear-stats-title {
+    margin: 0 0 6px;
+    font-size: 0.72rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: rgba(236, 220, 180, 0.68);
+}
+
+.age-guild-gear-stat-lines {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.age-guild-gear-stat-lines li {
+    margin: 0;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.74rem;
+    color: #d8f0c2;
+    background: rgba(44, 68, 36, 0.34);
+    border-left: 2px solid rgba(143, 208, 118, 0.55);
+}
+
+.age-guild-gear-stat-lines li.is-neutral {
+    color: rgba(236, 220, 180, 0.62);
+    background: rgba(0, 0, 0, 0.22);
+    border-left-color: rgba(184, 144, 48, 0.38);
+}
+
 #age-page-canvas[data-age-view="guild-training"] .age-guild-job-top-panel {
     border: 1px solid var(--age-hud-rail-border);
     border-radius: 6px;

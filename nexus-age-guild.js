@@ -22,6 +22,10 @@ const {
     calculateGuildTrainingBattleXp,
     appendGuildTrainingXpLogLines
 } = require('./nexus-age-guild-xp');
+const {
+    buildCommanderGearPanelPayload,
+    buildCommanderEquipmentBonuses
+} = require('./nexus-age-commander-gear');
 
 const TRADE_CONVOY_LOTS = Object.freeze([
     { id: 'guild-spice-crate', label: 'Spice Crate', costGold: 2400, resaleGold: 3120 },
@@ -252,11 +256,13 @@ function buildGuildStatePayload(commander) {
     const roster = buildGuildRosterPayload(commander);
     const progress = buildGuildProgressPayload(commander);
     const merch = buildGuildMerchPayload(commander);
+    const commanderGear = buildCommanderGearPanelPayload(commander);
 
     return {
         ...progress,
         ...roster,
         ...merch,
+        commanderGear,
         ageGold: resolveCommanderAgeGold(commander),
         ageProvisions: resolveCommanderAgeProvisions(commander),
         ageGuildAcceptedBountyId: String(commander?.ageGuildAcceptedBountyId || '').trim() || null
@@ -363,9 +369,14 @@ function resolveCommanderInjuryMitigation(commander, catalog) {
         mitigation += Math.max(0, Number(bonuses.injuryMitigation) || 0);
     }
 
-    const equipment = commander?.ageEquipment;
+    const equipment = buildCommanderEquipmentBonuses(commander);
     if (equipment && typeof equipment === 'object') {
         mitigation += Math.max(0, Number(equipment.injuryMitigation) || 0);
+    }
+
+    const legacyEquipment = commander?.ageEquipment;
+    if (legacyEquipment && typeof legacyEquipment === 'object') {
+        mitigation += Math.max(0, Number(legacyEquipment.injuryMitigation) || 0);
     }
 
     const banner = commander?.ageBannerPerks;
@@ -585,11 +596,18 @@ function executeGuildTrainingBattleWithLedger(commander, trainingMode = 'street-
         Math.floor(Number(resolveCommanderAgeGold(commander)) || 0) + lootResult.lootGoldTotal
     );
 
+    const commanderGear = buildCommanderGearPanelPayload({
+        ...commander,
+        rank: xpResult.rank,
+        ageArmy: nextArmy
+    });
+
     return {
         ok: true,
         ...battle,
         xpGain,
         xpBreakdown: xpCalc.xpBreakdown,
+        commanderGear,
         lootEntries: lootResult.lootEntries,
         lootGoldTotal: lootResult.lootGoldTotal,
         ageGold: nextGold,

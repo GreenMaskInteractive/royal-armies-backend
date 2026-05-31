@@ -110,6 +110,7 @@ const {
     canApplyCommanderAgeReset,
     incrementAgeResetUsage
 } = require('./nexus-age-commander-reset');
+const { buildCommanderAgeGearSeedPatch } = require('./nexus-age-commander-gear');
 const {
     buildGuildStatePayload,
     executeGuildTrainingBattleWithLedger,
@@ -1152,7 +1153,8 @@ function ensureCommanderAgeRoster(commander) {
     const seedPatch = {
         ...buildCommanderAgeRosterSeedPatch(commander),
         ...buildCommanderAgeGoldSeedPatch(commander),
-        ...buildCommanderAgeProvisionsSeedPatch(commander)
+        ...buildCommanderAgeProvisionsSeedPatch(commander),
+        ...buildCommanderAgeGearSeedPatch(commander)
     };
     if (Object.keys(seedPatch).length) {
         db.get('commanders')
@@ -5436,6 +5438,7 @@ app.post('/api/portal/age/guild/training-battle', (req, res) => {
     });
 
     commander = db.get('commanders').find({ username }).value();
+    const gearPayload = buildCommanderGearPanelPayload(commander);
 
     res.json({
         status: 'ok',
