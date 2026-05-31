@@ -394,6 +394,10 @@
 
         const result = lastBattleResult;
         const winnerClass = result.winner === 'commander' ? 'is-victory' : (result.winner === 'npc' ? 'is-defeat' : 'is-draw');
+        const xpBreakdown = result.xpBreakdown && typeof result.xpBreakdown === 'object' ? result.xpBreakdown : null;
+        const survivorMeta = xpBreakdown && Number.isFinite(xpBreakdown.totalSurviving)
+            ? ` · ${xpBreakdown.totalSurviving} survivor(s)`
+            : '';
         const logLines = (Array.isArray(result.log) ? result.log : [])
             .map((line) => `<li>${escapeHtml(line)}</li>`)
             .join('');
@@ -406,7 +410,7 @@
             `<article class="age-guild-log-entry ${winnerClass}">`
             + '<header class="age-guild-log-head">'
             + `<p class="age-guild-log-outcome">${escapeHtml(formatWinnerLabel(result.winner))}</p>`
-            + `<p class="age-guild-log-meta">${escapeHtml(formatEndReason(result))} · +${escapeHtml(result.xpGain ?? 0)} XP`
+            + `<p class="age-guild-log-meta">${escapeHtml(formatEndReason(result))} · +${escapeHtml(result.xpGain ?? 0)} XP${escapeHtml(survivorMeta)}`
             + `${result.injuriesApplied ? ` · ${escapeHtml(result.injuriesApplied)} injured` : ''}</p>`
             + rankLine
             + '</header>'

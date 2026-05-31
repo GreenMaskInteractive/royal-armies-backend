@@ -18,6 +18,10 @@ const {
 } = require('./nexus-age-roster');
 const { executeGuildTrainingBattle } = require('./nexus-age-battle-sim');
 const { resolveTrainingModeAvailability } = require('./nexus-age-guild-hub');
+const {
+    calculateGuildTrainingBattleXp,
+    appendGuildTrainingXpLogLines
+} = require('./nexus-age-guild-xp');
 
 const TRADE_CONVOY_LOTS = Object.freeze([
     { id: 'guild-spice-crate', label: 'Spice Crate', costGold: 2400, resaleGold: 3120 },
@@ -57,11 +61,13 @@ const HEAL_COST_MULTIPLIER_BY_RANK = {
 const RANK_UP_PROVISIONS = 110;
 const MAX_COMMANDER_RANK = 22;
 
-const GUILD_XP_BY_OUTCOME = {
+const GUILD_XP_BY_OUTCOME = Object.freeze({
     commander: 36,
     draw: 18,
     npc: 10
-};
+});
+
+/** @deprecated Training battles use calculateGuildTrainingBattleXp instead. */
 
 const STREET_PATROL_LOOT_TABLE = Object.freeze([
     { label: 'You found a silver bracelet', goldMin: 85, goldMax: 120 },
@@ -555,7 +561,11 @@ function executeGuildTrainingBattleWithLedger(commander, trainingMode = 'street-
         injuryCount,
         catalog
     );
-    const xpGain = GUILD_XP_BY_OUTCOME[battle.winner] || GUILD_XP_BY_OUTCOME.draw;
+    const xpCalc = calculateGuildTrainingBattleXp(battle, trainingMode);
+    const xpGain = xpCalc.xpGain;
+    if (Array.isArray(battle.log)) {
+        appendGuildTrainingXpLogLines(battle.log, xpCalc);
+    }
     const xpResult = applyGuildRankXp(commander, xpGain);
 
     const nextProvisions = Math.max(
@@ -579,6 +589,7 @@ function executeGuildTrainingBattleWithLedger(commander, trainingMode = 'street-
         ok: true,
         ...battle,
         xpGain,
+        xpBreakdown: xpCalc.xpBreakdown,
         lootEntries: lootResult.lootEntries,
         lootGoldTotal: lootResult.lootGoldTotal,
         ageGold: nextGold,

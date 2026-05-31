@@ -498,9 +498,17 @@ function simulateTrainingBattle(attackerStacks, defenderStacks, catalog, trainin
     log.push(`Your force: ${formatArmyStatus(commander)} · ${commander.stacks.length} stack(s).`);
     log.push(`NPC host: ${formatArmyStatus(npc)} · ${npc.stacks.length} stack(s).`);
 
+    const phaseParticipation = {
+        ranged: false,
+        beasts: false,
+        cavalry: false,
+        infantryRounds: 0
+    };
+
     let battleEndedEarly = false;
 
     for (const phase of BATTLE_PHASES) {
+        phaseParticipation[phase.id] = true;
         battleEndedEarly = runBattlePhaseExchange(commander, npc, phase.id, phase.label, log);
         if (battleEndedEarly) break;
     }
@@ -508,6 +516,7 @@ function simulateTrainingBattle(attackerStacks, defenderStacks, catalog, trainin
     let infantryRounds = 0;
     if (!battleEndedEarly && !commander.outcome && !npc.outcome) {
         infantryRounds = runInfantryPhase(commander, npc, log);
+        phaseParticipation.infantryRounds = infantryRounds;
     }
 
     evaluateArmyOutcome(commander);
@@ -542,7 +551,8 @@ function simulateTrainingBattle(attackerStacks, defenderStacks, catalog, trainin
         endReason,
         phasesCompleted,
         infantryRounds,
-        roundsPlayed: BATTLE_PHASES.length + infantryRounds,
+        roundsPlayed: BATTLE_PHASES.filter((phase) => phaseParticipation[phase.id]).length + infantryRounds,
+        phaseParticipation,
         commanderHpRemaining: Math.max(0, Math.floor(commander.currentHp)),
         npcHpRemaining: Math.max(0, Math.floor(npc.currentHp)),
         commanderMorale: Math.max(0, commander.morale),

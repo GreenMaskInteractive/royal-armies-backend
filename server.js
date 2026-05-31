@@ -5456,6 +5456,7 @@ app.post('/api/portal/age/guild/training-battle', (req, res) => {
         npcForce: result.npcForce,
         log: result.log,
         xpGain: result.xpGain,
+        xpBreakdown: result.xpBreakdown || null,
         lootEntries: result.lootEntries || [],
         lootGoldTotal: result.lootGoldTotal || 0,
         injuriesApplied: result.injuriesApplied,
