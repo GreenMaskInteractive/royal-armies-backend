@@ -34,9 +34,13 @@
     }
 
     function resolveCommanderGold() {
-        const player = typeof global.player !== 'undefined' ? global.player : null;
-        const gold = Number(player?.gold);
-        return Number.isFinite(gold) ? Math.max(0, Math.floor(gold)) : 0;
+        if (global.RoyalArmiesAgeGold?.resolveAgeCommanderGold) {
+            return global.RoyalArmiesAgeGold.resolveAgeCommanderGold();
+        }
+        if (typeof global.resolveAgeCommanderGold === 'function') {
+            return global.resolveAgeCommanderGold();
+        }
+        return 20000;
     }
 
     function syncCommanderStatus() {
@@ -345,6 +349,10 @@
         }
     }
 
+    function onAgeGoldUpdated() {
+        syncCommanderGold();
+    }
+
     function onSettlementVenueOpen(event) {
         const venueId = event?.detail?.venueId;
         if (venueId !== 'barracks') return;
@@ -359,6 +367,10 @@
         workspace?.addEventListener('click', onWorkspaceClick);
         global.document.addEventListener('keydown', onWorkspaceKeydown);
         global.addEventListener('royal-armies-settlement-venue-open', onSettlementVenueOpen);
+        global.addEventListener(
+            global.RoyalArmiesAgeGold?.AGE_GOLD_UPDATED_EVENT || 'royalarmies:age-gold-updated',
+            onAgeGoldUpdated
+        );
     }
 
     function enableAgeBarracks() {
