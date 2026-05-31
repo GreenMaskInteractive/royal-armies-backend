@@ -71,14 +71,78 @@
         return guildState;
     }
 
-    function showView(viewId) {
+    function resolvePanelRoot() {
+        return global.document.getElementById('age-guild-panel-root');
+    }
+
+    function resolveTrainingArena() {
+        return global.document.getElementById('age-guild-training-arena');
+    }
+
+    function setTrainingArenaOpen(isOpen) {
+        global.document.getElementById('age-page-canvas')?.classList.toggle('age-guild-training-open', isOpen);
+    }
+
+    function showPanelView(viewId) {
         activeView = viewId;
-        const views = global.document.querySelectorAll('.age-guild-view');
-        views.forEach((node) => {
+        const panelRoot = resolvePanelRoot();
+        const trainingArena = resolveTrainingArena();
+
+        if (panelRoot) panelRoot.hidden = false;
+        if (trainingArena) {
+            trainingArena.hidden = true;
+            trainingArena.setAttribute('aria-hidden', 'true');
+        }
+        setTrainingArenaOpen(false);
+
+        panelRoot?.querySelectorAll('.age-guild-view').forEach((node) => {
             const isActive = node.id === `age-guild-${viewId}-view`;
             node.hidden = !isActive;
             node.classList.toggle('is-active', isActive);
         });
+    }
+
+    function showTrainingArena() {
+        activeView = 'training';
+        const panelRoot = resolvePanelRoot();
+        const trainingArena = resolveTrainingArena();
+
+        if (panelRoot) panelRoot.hidden = true;
+        if (trainingArena) {
+            trainingArena.hidden = false;
+            trainingArena.setAttribute('aria-hidden', 'false');
+        }
+        setTrainingArenaOpen(true);
+    }
+
+    function showView(viewId) {
+        if (viewId === 'training') {
+            showTrainingArena();
+            return;
+        }
+        showPanelView(viewId);
+    }
+
+    function renderHubJobOption(job) {
+        const lockedClass = job.available ? '' : ' is-locked';
+        const featuredClass = job.featured ? ' is-featured' : '';
+        const lockLine = job.available
+            ? ''
+            : `<p class="age-guild-hub-option-lock">${escapeHtml(job.lockReason || 'Unavailable')}</p>`;
+        const featuredTag = job.featured ? '<span class="age-guild-hub-option-tag">Primary Training</span>' : '';
+
+        return (
+            `<button type="button" class="age-guild-hub-option${lockedClass}${featuredClass}"`
+            + ` data-guild-job="${escapeHtml(job.id)}"`
+            + `${job.available ? '' : ' disabled'}>`
+            + `<span class="age-guild-hub-option-head">`
+            + `<span class="age-guild-hub-option-label">${escapeHtml(job.label)}</span>`
+            + featuredTag
+            + '</span>'
+            + `<span class="age-guild-hub-option-desc">${escapeHtml(job.description)}</span>`
+            + lockLine
+            + '</button>'
+        );
     }
 
     function formatWinnerLabel(winner) {
@@ -112,27 +176,33 @@
             return;
         }
 
-        optionsEl.innerHTML = jobs.map((job) => {
-            const lockedClass = job.available ? '' : ' is-locked';
-            const featuredClass = job.featured ? ' is-featured' : '';
-            const lockLine = job.available
-                ? ''
-                : `<p class="age-guild-hub-option-lock">${escapeHtml(job.lockReason || 'Unavailable')}</p>`;
-            const featuredTag = job.featured ? '<span class="age-guild-hub-option-tag">Primary Training</span>' : '';
+        const trainingJobs = jobs.filter((job) => job.kind === 'training');
+        const otherJobs = jobs.filter((job) => job.kind !== 'training');
+        const hasAvailableTraining = trainingJobs.some((job) => job.available);
+        const trainingExpanded = trainingJobs.some((job) => job.featured && job.available);
 
-            return (
-                `<button type="button" class="age-guild-hub-option${lockedClass}${featuredClass}"`
-                + ` data-guild-job="${escapeHtml(job.id)}"`
-                + `${job.available ? '' : ' disabled'}>`
-                + `<span class="age-guild-hub-option-head">`
-                + `<span class="age-guild-hub-option-label">${escapeHtml(job.label)}</span>`
-                + featuredTag
-                + '</span>'
-                + `<span class="age-guild-hub-option-desc">${escapeHtml(job.description)}</span>`
-                + lockLine
+        const trainingModesHtml = trainingJobs.map((job) => (
+            `<div class="age-guild-hub-training-mode">`
+            + renderHubJobOption(job)
+            + '</div>'
+        )).join('');
+
+        const trainingGroupHtml = trainingJobs.length
+            ? (
+                `<section class="age-guild-hub-training-group${trainingExpanded ? ' is-expanded' : ''}">`
+                + `<button type="button" class="age-guild-hub-training-toggle" aria-expanded="${trainingExpanded ? 'true' : 'false'}" aria-controls="age-guild-hub-training-modes">`
+                + '<span class="age-guild-hub-training-toggle-label">NPC Battle Training</span>'
+                + '<span class="age-guild-hub-training-toggle-meta">Street patrol, convoy escort, border duty</span>'
                 + '</button>'
-            );
-        }).join('');
+                + `<div id="age-guild-hub-training-modes" class="age-guild-hub-training-modes"${trainingExpanded ? '' : ' hidden'}>`
+                + trainingModesHtml
+                + '</div>'
+                + `${hasAvailableTraining ? '' : '<p class="age-guild-hub-option-lock">No training contracts are available at your current rank.</p>'}`
+                + '</section>'
+            )
+            : '';
+
+        optionsEl.innerHTML = trainingGroupHtml + otherJobs.map((job) => renderHubJobOption(job)).join('');
     }
 
     function updateProgressBars() {
@@ -312,7 +382,7 @@
         activeTrainingMode = job.id;
         activeTrainingLabel = job.label;
         lastBattleResult = null;
-        showView('training');
+        showTrainingArena();
         renderGuildPanel();
     }
 
@@ -496,7 +566,7 @@
     }
 
     function onWorkspaceClick(event) {
-        if (event.target.closest('#age-guild-close')) {
+        if (event.target.closest('#age-guild-close') || event.target.closest('#age-guild-training-close')) {
             event.preventDefault();
             close();
             return;
@@ -504,7 +574,18 @@
         if (event.target.closest('#age-guild-back') || event.target.closest('[data-age-guild-back]')) {
             event.preventDefault();
             stopBattleHold();
-            showView('hub');
+            showPanelView('hub');
+            return;
+        }
+        const trainingToggle = event.target.closest('.age-guild-hub-training-toggle');
+        if (trainingToggle) {
+            event.preventDefault();
+            const group = trainingToggle.closest('.age-guild-hub-training-group');
+            const modes = group?.querySelector('.age-guild-hub-training-modes');
+            if (!group || !modes) return;
+            const expanded = group.classList.toggle('is-expanded');
+            modes.hidden = !expanded;
+            trainingToggle.setAttribute('aria-expanded', expanded ? 'true' : 'false');
             return;
         }
         const jobBtn = event.target.closest('[data-guild-job]');
@@ -547,7 +628,7 @@
             event.preventDefault();
             if (activeView !== 'hub') {
                 stopBattleHold();
-                showView('hub');
+                showPanelView('hub');
                 return;
             }
             close();
@@ -567,7 +648,7 @@
 
         activeView = 'hub';
         lastBattleResult = null;
-        showView('hub');
+        showPanelView('hub');
 
         await loadGuildState();
         renderGuildPanel();
@@ -580,6 +661,14 @@
         workspace.hidden = true;
         workspace.setAttribute('aria-hidden', 'true');
         global.document.body.classList.remove('age-guild-open');
+        setTrainingArenaOpen(false);
+        const panelRoot = resolvePanelRoot();
+        const trainingArena = resolveTrainingArena();
+        if (panelRoot) panelRoot.hidden = false;
+        if (trainingArena) {
+            trainingArena.hidden = true;
+            trainingArena.setAttribute('aria-hidden', 'true');
+        }
     }
 
     function onSettlementVenueOpen(event) {
@@ -594,7 +683,7 @@
         const workspace = resolveWorkspace();
         const battleBtn = global.document.getElementById('age-guild-battle-btn');
         const wrap = global.document.getElementById('age-guild-battle-wrap');
-        const progressRing = workspace?.querySelector('.age-guild-charge-ring-progress');
+        const progressRing = resolveTrainingArena()?.querySelector('.age-guild-charge-ring-progress');
 
         if (wrap) {
             wrap.style.setProperty('--age-guild-charge-circumference', String(CHARGE_RING_CIRCUMFERENCE));

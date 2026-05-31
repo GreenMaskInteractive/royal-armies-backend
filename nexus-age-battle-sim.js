@@ -50,12 +50,90 @@ const MORALE_ROUTE_THRESHOLD = 22;
 const CASUALTY_ROUTE_RATIO = 0.68;
 
 const DEFAULT_TRAINING_NPC_STACKS = [
-    { catalogUnitId: 'recruit-shieldman-a', qty: 10 },
-    { catalogUnitId: 'levy-archer-b', qty: 10 },
-    { catalogUnitId: 'squire-rider', qty: 8 },
-    { catalogUnitId: 'wild-wolf-a', qty: 8 },
-    { catalogUnitId: 'acolyte', qty: 8 },
-    { catalogUnitId: 'holder', qty: 8 }
+    { catalogUnitId: 'recruit-shieldman-a', qty: 3, rank: 1 },
+    { catalogUnitId: 'levy-archer-b', qty: 2, rank: 1 },
+    { catalogUnitId: 'squire-rider', qty: 2, rank: 1 },
+    { catalogUnitId: 'wild-wolf-a', qty: 2, rank: 1 },
+    { catalogUnitId: 'acolyte', qty: 2, rank: 1 }
+];
+
+/** Hard cap — training spars use a small squad, not a garrison. */
+const TRAINING_NPC_MAX_UNITS = 35;
+
+/** Target NPC headcount by commander rank (interpolated). Quality scales via tier + stack rank. */
+const TRAINING_NPC_TOTAL_ANCHORS = [
+    { rank: 1, total: 11 },
+    { rank: 7, total: 20 },
+    { rank: 10, total: 24 },
+    { rank: 14, total: 29 },
+    { rank: 18, total: 33 },
+    { rank: 22, total: 35 }
+];
+
+/**
+ * Gradual NPC escalation keyed to commander rank (1–22).
+ * `weight` controls composition mix; qty is derived from target total (never above TRAINING_NPC_MAX_UNITS).
+ */
+const TRAINING_NPC_RANK_BANDS = [
+    {
+        minCommanderRank: 1,
+        maxCommanderRank: 6,
+        stacks: [
+            { catalogUnitId: 'recruit-shieldman-a', weight: 3, rank: 1, peakRank: 2 },
+            { catalogUnitId: 'levy-archer-b', weight: 2, rank: 1, peakRank: 2 },
+            { catalogUnitId: 'squire-rider', weight: 2, rank: 1, peakRank: 2 },
+            { catalogUnitId: 'wild-wolf-a', weight: 2, rank: 1, peakRank: 2 },
+            { catalogUnitId: 'acolyte', weight: 2, rank: 1, peakRank: 2 }
+        ]
+    },
+    {
+        minCommanderRank: 7,
+        maxCommanderRank: 9,
+        stacks: [
+            { catalogUnitId: 'shield-sergeant-a', weight: 4, rank: 2, peakRank: 3 },
+            { catalogUnitId: 'longbowman-b', weight: 3, rank: 2, peakRank: 3 },
+            { catalogUnitId: 'royal-lancer', weight: 3, rank: 2, peakRank: 3 },
+            { catalogUnitId: 'trained-wolf-a1', weight: 3, rank: 2, peakRank: 3 },
+            { catalogUnitId: 'spellblade-b', weight: 3, rank: 2, peakRank: 3 },
+            { catalogUnitId: 'holder', weight: 2, rank: 2, peakRank: 3 }
+        ]
+    },
+    {
+        minCommanderRank: 10,
+        maxCommanderRank: 13,
+        stacks: [
+            { catalogUnitId: 'vanguard-axeman-b', weight: 4, rank: 3, peakRank: 4 },
+            { catalogUnitId: 'sylvan-sniper-b', weight: 3, rank: 3, peakRank: 4 },
+            { catalogUnitId: 'dread-knight', weight: 3, rank: 3, peakRank: 4 },
+            { catalogUnitId: 'war-howler-a2', weight: 3, rank: 3, peakRank: 4 },
+            { catalogUnitId: 'warder-a', weight: 3, rank: 3, peakRank: 4 },
+            { catalogUnitId: 'holder', weight: 2, rank: 3, peakRank: 4 }
+        ]
+    },
+    {
+        minCommanderRank: 14,
+        maxCommanderRank: 17,
+        stacks: [
+            { catalogUnitId: 'bulwark-guard-a', weight: 4, rank: 4, peakRank: 5 },
+            { catalogUnitId: 'sylvan-sniper-b', weight: 3, rank: 4, peakRank: 5 },
+            { catalogUnitId: 'dread-knight', weight: 3, rank: 4, peakRank: 5 },
+            { catalogUnitId: 'steeljaw-a1', weight: 3, rank: 4, peakRank: 5 },
+            { catalogUnitId: 'arcane-sentinel-a', weight: 3, rank: 4, peakRank: 5 },
+            { catalogUnitId: 'citadel-guardian-a', weight: 2, rank: 5, peakRank: 6 }
+        ]
+    },
+    {
+        minCommanderRank: 18,
+        maxCommanderRank: 22,
+        stacks: [
+            { catalogUnitId: 'citadel-guardian-a', weight: 4, rank: 5, peakRank: 6 },
+            { catalogUnitId: 'frontline-breaker-b', weight: 3, rank: 5, peakRank: 6 },
+            { catalogUnitId: 'dread-knight', weight: 3, rank: 5, peakRank: 6 },
+            { catalogUnitId: 'voltgrime-a2', weight: 3, rank: 5, peakRank: 6 },
+            { catalogUnitId: 'arcane-sentinel-a', weight: 3, rank: 5, peakRank: 6 },
+            { catalogUnitId: 'holder', weight: 2, rank: 5, peakRank: 6 }
+        ]
+    }
 ];
 
 let advantageLookupCache = null;
@@ -480,9 +558,9 @@ function simulateTrainingBattle(attackerStacks, defenderStacks, catalog, trainin
 }
 
 const TRAINING_MODE_NPC_SCALE = Object.freeze({
-    'street-patrol': 0.85,
+    'street-patrol': 0.78,
     'civilian-transport': 1,
-    'border-patrol': 1.2
+    'border-patrol': 1.18
 });
 
 const TRAINING_MODE_LABELS = Object.freeze({
@@ -491,27 +569,123 @@ const TRAINING_MODE_LABELS = Object.freeze({
     'border-patrol': 'Border Patrol'
 });
 
-function buildTrainingNpcArmy(catalog, templateStacks, trainingMode = 'street-patrol') {
-    const scale = TRAINING_MODE_NPC_SCALE[trainingMode] || TRAINING_MODE_NPC_SCALE['street-patrol'];
-    const catalogRef = catalog || loadUnitPurchaseCatalog();
-    const template = Array.isArray(templateStacks) && templateStacks.length
-        ? templateStacks
-        : DEFAULT_TRAINING_NPC_STACKS;
+function resolveCommanderTrainingRank(commanderRank) {
+    return Math.max(1, Math.min(22, Math.floor(Number(commanderRank) || 1)));
+}
 
-    return template.map((entry) => {
+function lerpTrainingNumber(from, to, t) {
+    return from + ((to - from) * t);
+}
+
+function resolveTrainingNpcTargetTotal(commanderRank) {
+    const rank = resolveCommanderTrainingRank(commanderRank);
+    if (rank <= TRAINING_NPC_TOTAL_ANCHORS[0].rank) {
+        return TRAINING_NPC_TOTAL_ANCHORS[0].total;
+    }
+    for (let index = 0; index < TRAINING_NPC_TOTAL_ANCHORS.length - 1; index += 1) {
+        const lo = TRAINING_NPC_TOTAL_ANCHORS[index];
+        const hi = TRAINING_NPC_TOTAL_ANCHORS[index + 1];
+        if (rank <= hi.rank) {
+            const span = hi.rank - lo.rank;
+            const t = span > 0 ? (rank - lo.rank) / span : 0;
+            return Math.round(lerpTrainingNumber(lo.total, hi.total, t));
+        }
+    }
+    return TRAINING_NPC_TOTAL_ANCHORS[TRAINING_NPC_TOTAL_ANCHORS.length - 1].total;
+}
+
+function resolveTrainingNpcRankBand(commanderRank) {
+    const rank = resolveCommanderTrainingRank(commanderRank);
+    let band = TRAINING_NPC_RANK_BANDS[0];
+    TRAINING_NPC_RANK_BANDS.forEach((entry) => {
+        if (rank >= entry.minCommanderRank) band = entry;
+    });
+    return band;
+}
+
+function resolveTrainingStackRank(entry, commanderRank, band) {
+    const rank = resolveCommanderTrainingRank(commanderRank);
+    const baseRank = Math.max(1, Math.min(6, Math.floor(Number(entry.rank) || 1)));
+    const peakRank = Math.max(baseRank, Math.min(6, Math.floor(Number(entry.peakRank) || baseRank)));
+    const bandMin = band.minCommanderRank;
+    const bandMax = band.maxCommanderRank || bandMin;
+    const span = Math.max(1, bandMax - bandMin);
+    const t = Math.max(0, Math.min(1, (rank - bandMin) / span));
+    return Math.max(1, Math.min(6, Math.round(lerpTrainingNumber(baseRank, peakRank, t))));
+}
+
+function distributeTrainingNpcQuantities(stacks, targetTotal) {
+    const total = Math.max(1, Math.min(TRAINING_NPC_MAX_UNITS, Math.floor(Number(targetTotal) || 1)));
+    if (!stacks.length) return [];
+
+    const weights = stacks.map((entry) => Math.max(1, Math.floor(Number(entry.weight ?? entry.qty) || 1)));
+    const weightSum = weights.reduce((sum, weight) => sum + weight, 0);
+    const exact = weights.map((weight) => (total * weight) / weightSum);
+    const quantities = exact.map((value) => Math.floor(value));
+    let remainder = total - quantities.reduce((sum, qty) => sum + qty, 0);
+
+    const fractionalOrder = exact
+        .map((value, index) => ({ index, fractional: value - Math.floor(value) }))
+        .sort((left, right) => right.fractional - left.fractional);
+
+    for (let step = 0; step < remainder; step += 1) {
+        quantities[fractionalOrder[step % fractionalOrder.length].index] += 1;
+    }
+
+    return stacks
+        .map((entry, index) => ({ entry, qty: quantities[index] }))
+        .filter((row) => row.qty > 0);
+}
+
+function buildTrainingNpcArmy(catalog, templateStacks, trainingMode = 'street-patrol', commanderRank = 1) {
+    const modeScale = TRAINING_MODE_NPC_SCALE[trainingMode] || TRAINING_MODE_NPC_SCALE['street-patrol'];
+    const catalogRef = catalog || loadUnitPurchaseCatalog();
+    const rank = resolveCommanderTrainingRank(commanderRank);
+
+    if (Array.isArray(templateStacks) && templateStacks.length) {
+        const explicitTotal = templateStacks.reduce(
+            (sum, entry) => sum + Math.max(1, Math.floor(Number(entry.qty) || 1)),
+            0
+        );
+        const cappedTotal = Math.min(TRAINING_NPC_MAX_UNITS, explicitTotal);
+        const scale = explicitTotal > cappedTotal ? cappedTotal / explicitTotal : 1;
+
+        return templateStacks.map((entry) => {
+            const catalogUnit = getCatalogUnitById(catalogRef, entry.catalogUnitId);
+            const stackRank = Math.max(1, Math.min(6, Math.floor(Number(entry.rank) || 1)));
+            const qty = Math.max(1, Math.floor((Number(entry.qty) || 1) * scale));
+
+            return {
+                catalogUnitId: entry.catalogUnitId,
+                class: catalogUnit?.combatType || 'PHYS_INF',
+                name: catalogUnit?.name || entry.catalogUnitId,
+                tier: catalogUnit?.tier || 1,
+                rank: stackRank,
+                qty,
+                injuredQty: 0,
+                purpose: 'training'
+            };
+        });
+    }
+
+    const band = resolveTrainingNpcRankBand(rank);
+    const targetTotal = Math.min(
+        TRAINING_NPC_MAX_UNITS,
+        Math.max(1, Math.round(resolveTrainingNpcTargetTotal(rank) * modeScale))
+    );
+    const distributed = distributeTrainingNpcQuantities(band.stacks, targetTotal);
+
+    return distributed.map(({ entry, qty }) => {
         const catalogUnit = getCatalogUnitById(catalogRef, entry.catalogUnitId);
-        const firstPromotion = Array.isArray(catalogUnit?.promotions) && catalogUnit.promotions.length
-            ? catalogUnit.promotions[0]
-            : 'app';
-        const rankMap = { app: 1, std: 2, vet: 3, mst: 4, leg: 5, elite: 6 };
+        const stackRank = resolveTrainingStackRank(entry, rank, band);
 
         return {
             catalogUnitId: entry.catalogUnitId,
             class: catalogUnit?.combatType || 'PHYS_INF',
             name: catalogUnit?.name || entry.catalogUnitId,
             tier: catalogUnit?.tier || 1,
-            rank: rankMap[firstPromotion] || 1,
-            qty: Math.max(1, Math.floor(Math.max(1, Math.floor(Number(entry.qty) || 1)) * scale)),
+            rank: stackRank,
+            qty,
             injuredQty: 0,
             purpose: 'training'
         };
@@ -539,7 +713,8 @@ function executeGuildTrainingBattle(commander, trainingMode = 'street-patrol') {
     }
 
     const mode = TRAINING_MODE_LABELS[trainingMode] ? trainingMode : 'street-patrol';
-    const npcArmy = buildTrainingNpcArmy(catalog, undefined, mode);
+    const commanderRank = Math.max(1, Math.min(22, Math.floor(Number(commander?.rank) || 1)));
+    const npcArmy = buildTrainingNpcArmy(catalog, undefined, mode, commanderRank);
     const battle = simulateTrainingBattle(battleStacks, npcArmy, catalog, mode);
     if (!battle.ok) return battle;
 
@@ -547,6 +722,7 @@ function executeGuildTrainingBattle(commander, trainingMode = 'street-patrol') {
         ok: true,
         trainingMode: mode,
         trainingModeLabel: TRAINING_MODE_LABELS[mode] || 'Training',
+        commanderRank,
         ...battle,
         commanderUnits: totalUnits,
         npcUnits: npcArmy.reduce((sum, stack) => sum + stack.qty, 0)
@@ -557,8 +733,11 @@ module.exports = {
     BATTLE_PHASES,
     INFANTRY_MAX_ROUNDS,
     DEFAULT_TRAINING_NPC_STACKS,
+    TRAINING_NPC_MAX_UNITS,
     TRAINING_MODE_NPC_SCALE,
     TRAINING_MODE_LABELS,
+    TRAINING_NPC_RANK_BANDS,
+    resolveTrainingNpcTargetTotal,
     buildBattleArmy,
     buildTrainingNpcArmy,
     simulateTrainingBattle,

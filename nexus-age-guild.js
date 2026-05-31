@@ -63,6 +63,101 @@ const GUILD_XP_BY_OUTCOME = {
     npc: 10
 };
 
+const PVP_STACK_INJURY_WEIGHT = 2.25;
+
+/**
+ * Cumulative injury roll thresholds [p0, p1, p2, p3, p4] at anchor ranks.
+ * Rank 1 ≈ 94% none / 5% one / 0.5% two; each promotion nudges toward rank-22 values.
+ */
+const TRAINING_INJURY_RANK_ANCHORS = [
+    { rank: 1, thresholds: [0.940, 0.995, 1.000, 1.000, 1.000] },
+    { rank: 6, thresholds: [0.915, 0.988, 0.998, 1.000, 1.000] },
+    { rank: 10, thresholds: [0.875, 0.968, 0.990, 0.998, 1.000] },
+    { rank: 14, thresholds: [0.700, 0.900, 0.975, 0.992, 1.000] },
+    { rank: 18, thresholds: [0.480, 0.760, 0.915, 0.970, 1.000] },
+    { rank: 22, thresholds: [0.300, 0.650, 0.870, 0.970, 1.000] }
+];
+
+/** Defeat with zero rolled injuries → chance of forcing one injury (rank 1 ≈ 38%). */
+const DEFEAT_ZERO_TO_ONE_ANCHORS = [
+    { rank: 1, value: 0.38 },
+    { rank: 6, value: 0.42 },
+    { rank: 10, value: 0.50 },
+    { rank: 14, value: 0.62 },
+    { rank: 18, value: 0.76 },
+    { rank: 22, value: 0.90 }
+];
+
+/** Expected extra injuries on defeat when the base roll already injured someone. */
+const DEFEAT_EXTRA_WHEN_HIT_ANCHORS = [
+    { rank: 1, value: 0 },
+    { rank: 6, value: 0 },
+    { rank: 10, value: 0.35 },
+    { rank: 14, value: 1.0 },
+    { rank: 18, value: 1.45 },
+    { rank: 22, value: 2.0 }
+];
+
+/** Draw outcome: chance of +1 injury (scales gently with rank). */
+const DRAW_EXTRA_INJURY_ANCHORS = [
+    { rank: 1, value: 0.28 },
+    { rank: 10, value: 0.32 },
+    { rank: 22, value: 0.40 }
+];
+
+/** Border patrol: chance of +1 injury when any injuries rolled (scales with rank). */
+const BORDER_PATROL_EXTRA_INJURY_ANCHORS = [
+    { rank: 1, value: 0.32 },
+    { rank: 14, value: 0.38 },
+    { rank: 22, value: 0.46 }
+];
+
+function lerpNumber(from, to, t) {
+    return from + ((to - from) * t);
+}
+
+function resolveAnchoredScalar(anchors, rank) {
+    const commanderRank = Math.max(1, Math.min(MAX_COMMANDER_RANK, Math.floor(Number(rank) || 1)));
+    if (!anchors.length) return 0;
+    if (commanderRank <= anchors[0].rank) return anchors[0].value;
+    for (let index = 0; index < anchors.length - 1; index += 1) {
+        const lo = anchors[index];
+        const hi = anchors[index + 1];
+        if (commanderRank <= hi.rank) {
+            const span = hi.rank - lo.rank;
+            const t = span > 0 ? (commanderRank - lo.rank) / span : 0;
+            return lerpNumber(lo.value, hi.value, t);
+        }
+    }
+    return anchors[anchors.length - 1].value;
+}
+
+function resolveTrainingInjuryThresholds(rank) {
+    const commanderRank = Math.max(1, Math.min(MAX_COMMANDER_RANK, Math.floor(Number(rank) || 1)));
+    if (commanderRank <= TRAINING_INJURY_RANK_ANCHORS[0].rank) {
+        return [...TRAINING_INJURY_RANK_ANCHORS[0].thresholds];
+    }
+    for (let index = 0; index < TRAINING_INJURY_RANK_ANCHORS.length - 1; index += 1) {
+        const lo = TRAINING_INJURY_RANK_ANCHORS[index];
+        const hi = TRAINING_INJURY_RANK_ANCHORS[index + 1];
+        if (commanderRank <= hi.rank) {
+            const span = hi.rank - lo.rank;
+            const t = span > 0 ? (commanderRank - lo.rank) / span : 0;
+            return lo.thresholds.map((value, thresholdIndex) => (
+                lerpNumber(value, hi.thresholds[thresholdIndex], t)
+            ));
+        }
+    }
+    return [...TRAINING_INJURY_RANK_ANCHORS[TRAINING_INJURY_RANK_ANCHORS.length - 1].thresholds];
+}
+
+function sampleExpectedExtra(expectedExtra) {
+    const extra = Math.max(0, Number(expectedExtra) || 0);
+    const base = Math.floor(extra);
+    const fractional = extra - base;
+    return base + (Math.random() < fractional ? 1 : 0);
+}
+
 function resolveCommanderRank(commander) {
     return Math.max(1, Math.min(MAX_COMMANDER_RANK, Math.floor(Number(commander?.rank) || 1)));
 }
@@ -142,6 +237,149 @@ function distributeInjuries(army, injuryCount) {
     });
 
     return normalizeAgeArmy(next);
+}
+
+function isStackPvpUnit(catalog, stack) {
+    const unit = getCatalogUnitById(catalog, stack?.catalogUnitId);
+    if (!unit) return false;
+    return String(unit.unitRole || '').trim().toLowerCase() === 'pvp';
+}
+
+function distributeInjuriesWeighted(army, injuryCount, catalog) {
+    const next = normalizeAgeArmy(army);
+    let remaining = Math.max(0, Math.floor(Number(injuryCount) || 0));
+    if (!remaining) return next;
+
+    const catalogRef = catalog || loadUnitPurchaseCatalog();
+
+    while (remaining > 0) {
+        const weighted = [];
+        let totalWeight = 0;
+
+        next.forEach((stack, index) => {
+            const qty = Math.max(0, Math.floor(Number(stack.qty) || 0));
+            const injured = Math.min(qty, Math.max(0, Math.floor(Number(stack.injuredQty) || 0)));
+            const healthy = Math.max(0, qty - injured);
+            if (!healthy) return;
+
+            const weight = healthy * (isStackPvpUnit(catalogRef, stack) ? PVP_STACK_INJURY_WEIGHT : 1);
+            weighted.push({ index, weight });
+            totalWeight += weight;
+        });
+
+        if (!totalWeight) break;
+
+        let roll = Math.random() * totalWeight;
+        let picked = weighted[weighted.length - 1];
+        for (let i = 0; i < weighted.length; i += 1) {
+            roll -= weighted[i].weight;
+            if (roll <= 0) {
+                picked = weighted[i];
+                break;
+            }
+        }
+
+        const stack = next[picked.index];
+        stack.injuredQty = Math.max(0, Math.floor(Number(stack.injuredQty) || 0) + 1);
+        remaining -= 1;
+    }
+
+    return normalizeAgeArmy(next);
+}
+
+function resolveArmyQualityMitigation(army, catalog) {
+    const stacks = normalizeAgeArmy(army);
+    let qtySum = 0;
+    let tierSum = 0;
+    let rankSum = 0;
+
+    stacks.forEach((stack) => {
+        const qty = Math.max(0, Math.floor(Number(stack.qty) || 0));
+        if (!qty) return;
+        const unit = getCatalogUnitById(catalog, stack.catalogUnitId);
+        const tier = Math.max(1, Math.floor(Number(unit?.tier ?? stack.tier) || 1));
+        const rank = Math.max(1, Math.min(6, Math.floor(Number(stack.rank) || 1)));
+        qtySum += qty;
+        tierSum += tier * qty;
+        rankSum += rank * qty;
+    });
+
+    if (!qtySum) return 0;
+
+    const avgTier = tierSum / qtySum;
+    const avgRank = rankSum / qtySum;
+    return Math.min(0.22, ((avgRank - 1) / 5) * 0.14 + ((avgTier - 1) / 2) * 0.10);
+}
+
+function resolveCommanderInjuryMitigation(commander, catalog) {
+    const army = resolveCommanderAgeArmy(commander);
+    let mitigation = resolveArmyQualityMitigation(army, catalog);
+
+    const bonuses = commander?.ageGuildBonuses;
+    if (bonuses && typeof bonuses === 'object') {
+        mitigation += Math.max(0, Number(bonuses.injuryMitigation) || 0);
+    }
+
+    const equipment = commander?.ageEquipment;
+    if (equipment && typeof equipment === 'object') {
+        mitigation += Math.max(0, Number(equipment.injuryMitigation) || 0);
+    }
+
+    const banner = commander?.ageBannerPerks;
+    if (banner && typeof banner === 'object') {
+        mitigation += Math.max(0, Number(banner.injuryMitigation) || 0);
+    }
+
+    return Math.min(0.48, Math.max(0, mitigation));
+}
+
+function rollInjuryCountFromBand(thresholds, mitigation) {
+    const shift = Math.min(0.18, mitigation * 0.35);
+    const r = Math.random();
+    if (r < thresholds[0] + shift) return 0;
+    if (r < thresholds[1] + shift) return 1;
+    if (r < thresholds[2] + shift) return 2;
+    if (r < thresholds[3] + shift) return 3;
+    return 4;
+}
+
+function resolveBattleInjuryCount(commander, battleResult, trainingMode = 'street-patrol', catalog) {
+    const catalogRef = catalog || loadUnitPurchaseCatalog();
+    const rosterBefore = countAgeArmyUnits(resolveCommanderAgeArmy(commander));
+    const healthyBefore = rosterBefore.uninjured;
+    if (!healthyBefore) return 0;
+
+    const rank = resolveCommanderRank(commander);
+    const mitigation = resolveCommanderInjuryMitigation(commander, catalogRef);
+    const thresholds = resolveTrainingInjuryThresholds(rank);
+    let injuryCount = rollInjuryCountFromBand(thresholds, mitigation);
+
+    if (battleResult.winner === 'npc') {
+        if (injuryCount === 0) {
+            const zeroToOneChance = resolveAnchoredScalar(DEFEAT_ZERO_TO_ONE_ANCHORS, rank);
+            injuryCount = Math.random() < zeroToOneChance ? 1 : 0;
+        } else {
+            const extra = sampleExpectedExtra(resolveAnchoredScalar(DEFEAT_EXTRA_WHEN_HIT_ANCHORS, rank));
+            injuryCount = Math.min(healthyBefore, injuryCount + extra);
+        }
+    } else if (battleResult.winner === 'draw') {
+        const drawExtraChance = resolveAnchoredScalar(DRAW_EXTRA_INJURY_ANCHORS, rank);
+        injuryCount = Math.min(healthyBefore, injuryCount + (Math.random() < drawExtraChance ? 1 : 0));
+    }
+
+    if (trainingMode === 'border-patrol' && injuryCount > 0) {
+        const borderExtraChance = resolveAnchoredScalar(BORDER_PATROL_EXTRA_INJURY_ANCHORS, rank);
+        injuryCount = Math.min(healthyBefore, injuryCount + (Math.random() < borderExtraChance ? 1 : 0));
+    }
+
+    if (injuryCount > 0 && mitigation > 0) {
+        const reductionRoll = mitigation + (resolveArmyQualityMitigation(resolveCommanderAgeArmy(commander), catalogRef) * 0.5);
+        if (Math.random() < Math.min(0.72, reductionRoll)) {
+            injuryCount = Math.max(0, injuryCount - 1);
+        }
+    }
+
+    return Math.min(healthyBefore, Math.max(0, injuryCount));
 }
 
 function resolveStackHealCost(catalog, stack) {
@@ -265,34 +503,21 @@ function applyGuildRankXp(commander, xpGain) {
     };
 }
 
-function resolveBattleInjuryCount(commander, battleResult) {
-    const rosterBefore = countAgeArmyUnits(resolveCommanderAgeArmy(commander));
-    const healthyBefore = rosterBefore.uninjured;
-    if (!healthyBefore) return 0;
-
-    const startUnits = Math.max(0, Math.floor(Number(battleResult.commanderUnits) || 0));
-    const endUnits = Math.max(0, Math.floor(Number(battleResult.commanderUnitsRemaining) || 0));
-    if (!startUnits) return 0;
-
-    const simulatedLoss = Math.max(0, startUnits - endUnits);
-    if (battleResult.winner === 'commander') {
-        return Math.min(healthyBefore, Math.max(1, Math.floor(simulatedLoss * 0.35)));
-    }
-    if (battleResult.winner === 'npc') {
-        return Math.min(healthyBefore, Math.max(1, Math.floor(simulatedLoss * 0.65)));
-    }
-    return Math.min(healthyBefore, Math.max(0, Math.floor(simulatedLoss * 0.45)));
-}
-
 function executeGuildTrainingBattleWithLedger(commander, trainingMode = 'street-patrol', settlementTier = 'village') {
     const modeCheck = resolveTrainingModeAvailability(commander, settlementTier, trainingMode);
     if (!modeCheck.ok) return modeCheck;
 
+    const catalog = loadUnitPurchaseCatalog();
     const battle = executeGuildTrainingBattle(commander, trainingMode);
     if (!battle.ok) return battle;
 
-    const injuryCount = resolveBattleInjuryCount(commander, battle);
-    const nextArmy = distributeInjuries(resolveCommanderAgeArmy(commander), injuryCount);
+    const injuryMitigation = resolveCommanderInjuryMitigation(commander, catalog);
+    const injuryCount = resolveBattleInjuryCount(commander, battle, trainingMode, catalog);
+    const nextArmy = distributeInjuriesWeighted(
+        resolveCommanderAgeArmy(commander),
+        injuryCount,
+        catalog
+    );
     const xpGain = GUILD_XP_BY_OUTCOME[battle.winner] || GUILD_XP_BY_OUTCOME.draw;
     const xpResult = applyGuildRankXp(commander, xpGain);
 
@@ -312,6 +537,7 @@ function executeGuildTrainingBattleWithLedger(commander, trainingMode = 'street-
         ...battle,
         xpGain,
         injuriesApplied: injuryCount,
+        injuryMitigation,
         ageArmy: nextArmy,
         rank: xpResult.rank,
         ageGuildXp: xpResult.ageGuildXp,
@@ -402,5 +628,8 @@ module.exports = {
     executeGuildHeal,
     executeTradeConvoyPurchase,
     resolveStackHealCost,
-    distributeInjuries
+    resolveCommanderInjuryMitigation,
+    resolveBattleInjuryCount,
+    distributeInjuries,
+    distributeInjuriesWeighted
 };
