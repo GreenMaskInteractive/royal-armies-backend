@@ -929,8 +929,8 @@ body {
     #game-page-canvas.game-page-canvas,
     #age-page-canvas,
     #age-page-canvas.age-page-canvas {
-        height: 100dvh !important;
-        max-height: 100dvh !important;
+        height: var(--game-viewport-h, 100dvh) !important;
+        max-height: var(--game-viewport-h, 100dvh) !important;
         overflow: hidden !important;
     }
 

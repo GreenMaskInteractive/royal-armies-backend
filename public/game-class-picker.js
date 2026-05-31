@@ -1,5 +1,5 @@
 /**
- * Choose-class — fixed portrait slots; side panels open on click (fixed beside each class).
+ * Choose-class — CSS grid side panels; layout resync on resize, fonts, and image load.
  */
 (function initGameClassPicker(global) {
     'use strict';
@@ -19,16 +19,19 @@
         }
     };
 
-    const PANEL_GAP_PX = 20;
-    const PANEL_TOP_OFFSET_PX = 32;
-    const PANEL_DROP_OFFSET_PX = 80;
-    const PANEL_WIDTH_PX = 340;
-    const PANEL_OUTWARD_SHIFT_PX = 150;
+    const LAYOUT_SYNC_DELAYS_MS = [0, 50, 180, 420];
+    const DESKTOP_LAYOUT_MQ = '(min-width: 900px)';
 
     let activeClassId = null;
+    let layoutObserver = null;
+    let layoutSyncToken = 0;
 
     function getPickerRoot() {
         return global.document.getElementById('game-class-picker');
+    }
+
+    function getPickerStage() {
+        return global.document.querySelector('.game-class-picker-stage');
     }
 
     function getClassOptions() {
@@ -43,19 +46,27 @@
         return Array.from(root.querySelectorAll('.game-class-side-panel'));
     }
 
-    function getClassOptionButton(classId) {
-        const root = getPickerRoot();
-        if (!root) return null;
-        return root.querySelector(`.game-class-option[data-class-id="${classId}"]`);
+    function usesDocumentFlowLayout() {
+        return global.matchMedia(DESKTOP_LAYOUT_MQ).matches;
     }
 
-    function getPortraitAnchorRect(anchorBtn) {
-        if (!anchorBtn) return null;
-        const portrait = anchorBtn.querySelector('.game-class-option-img');
-        return (portrait || anchorBtn).getBoundingClientRect();
+    function clearPanelInlineCoords(panel) {
+        if (!panel) return;
+        [
+            '--game-class-panel-x',
+            '--game-class-panel-y',
+            'position',
+            'left',
+            'top',
+            'right',
+            'bottom',
+            'margin',
+            'z-index',
+            'visibility'
+        ].forEach((prop) => panel.style.removeProperty(prop));
     }
 
-    /** Same top for both class panels (tallest portrait top edge + offset). */
+    /** Same height for Archmage panel bezel as Battlemaster (measured in grid flow). */
     function measureBattlemasterPanelHeight() {
         const bmPanel = global.document.getElementById('game-class-panel-battlemaster');
         if (!bmPanel) return 0;
@@ -63,20 +74,23 @@
         const wasHidden = bmPanel.hidden;
         const wasActive = bmPanel.classList.contains('is-active');
         const prevVisibility = bmPanel.style.visibility;
+        const prevPointerEvents = bmPanel.style.pointerEvents;
+        const prevPosition = bmPanel.style.position;
         const prevLeft = bmPanel.style.left;
-        const prevTop = bmPanel.style.top;
 
         bmPanel.hidden = false;
         bmPanel.classList.add('is-active');
         bmPanel.style.setProperty('visibility', 'hidden', 'important');
+        bmPanel.style.setProperty('pointer-events', 'none', 'important');
+        bmPanel.style.setProperty('position', 'absolute', 'important');
         bmPanel.style.setProperty('left', '-10000px', 'important');
-        bmPanel.style.setProperty('top', '0', 'important');
 
         const height = Math.ceil(bmPanel.getBoundingClientRect().height);
 
         bmPanel.style.visibility = prevVisibility;
+        bmPanel.style.pointerEvents = prevPointerEvents;
+        bmPanel.style.position = prevPosition;
         bmPanel.style.left = prevLeft;
-        bmPanel.style.top = prevTop;
         if (!wasActive) bmPanel.classList.remove('is-active');
         if (wasHidden) bmPanel.hidden = true;
 
@@ -93,62 +107,17 @@
         }
     }
 
-    function getSharedPanelTop() {
-        const viewportPadding = 12;
-        const portraitTops = Object.keys(GAME_CLASS_OPTIONS)
-            .map((classId) => {
-                const rect = getPortraitAnchorRect(getClassOptionButton(classId));
-                return rect ? rect.top : null;
-            })
-            .filter((top) => top !== null);
+    function syncStageActiveSide() {
+        const root = getPickerRoot();
+        const stage = getPickerStage();
+        if (!root || !stage) return;
 
-        if (!portraitTops.length) {
-            return viewportPadding + PANEL_TOP_OFFSET_PX + PANEL_DROP_OFFSET_PX;
+        stage.classList.remove('has-active-panel-left', 'has-active-panel-right');
+        if (activeClassId === 'battlemaster') {
+            stage.classList.add('has-active-panel-left');
+        } else if (activeClassId === 'archmage') {
+            stage.classList.add('has-active-panel-right');
         }
-
-        return Math.max(
-            viewportPadding,
-            Math.min(...portraitTops) + PANEL_TOP_OFFSET_PX + PANEL_DROP_OFFSET_PX
-        );
-    }
-
-    function applyPanelCoords(panel, left, top) {
-        panel.style.setProperty('--game-class-panel-x', `${left}px`);
-        panel.style.setProperty('--game-class-panel-y', `${top}px`);
-        panel.style.setProperty('position', 'fixed', 'important');
-        panel.style.setProperty('left', `${left}px`, 'important');
-        panel.style.setProperty('top', `${top}px`, 'important');
-        panel.style.setProperty('right', 'auto', 'important');
-        panel.style.setProperty('bottom', 'auto', 'important');
-        panel.style.setProperty('margin', '0', 'important');
-        panel.style.setProperty('z-index', '999999910', 'important');
-    }
-
-    function positionClassPanel(panel, anchorBtn, side) {
-        if (!panel || !anchorBtn) return;
-
-        const anchorRect = getPortraitAnchorRect(anchorBtn);
-        if (!anchorRect) return;
-
-        const panelWidth = panel.offsetWidth || PANEL_WIDTH_PX;
-        const top = getSharedPanelTop();
-        const viewportPadding = 12;
-        let left;
-
-        if (side === 'left') {
-            left = Math.max(
-                viewportPadding,
-                anchorRect.left - panelWidth - PANEL_GAP_PX - PANEL_OUTWARD_SHIFT_PX
-            );
-        } else {
-            left = Math.min(
-                anchorRect.right + PANEL_GAP_PX + PANEL_OUTWARD_SHIFT_PX,
-                global.innerWidth - panelWidth - viewportPadding
-            );
-            left = Math.max(viewportPadding, left);
-        }
-
-        applyPanelCoords(panel, left, top);
     }
 
     function refreshPanelState() {
@@ -157,27 +126,20 @@
 
         root.dataset.activePanel = activeClassId || '';
         root.classList.toggle('has-active-panel', Boolean(activeClassId));
+        syncStageActiveSide();
 
         getClassPanels().forEach((panel) => {
             const panelClassId = panel.dataset.classPanel;
-            const config = GAME_CLASS_OPTIONS[panelClassId];
             const isActive = panelClassId === activeClassId;
 
             panel.classList.toggle('is-active', isActive);
             panel.hidden = !isActive;
             panel.setAttribute('aria-hidden', isActive ? 'false' : 'true');
 
-            if (isActive && config) {
-                const anchorBtn = getClassOptionButton(config.id);
+            if (isActive) {
                 resetPanelPerkDetail(panel);
-                positionClassPanel(panel, anchorBtn, config.side);
-                global.requestAnimationFrame(() => {
-                    positionClassPanel(panel, anchorBtn, config.side);
-                    syncArchmagePanelHeight();
-                });
             } else {
-                panel.style.removeProperty('--game-class-panel-x');
-                panel.style.removeProperty('--game-class-panel-y');
+                clearPanelInlineCoords(panel);
             }
         });
 
@@ -199,6 +161,7 @@
         });
 
         refreshPanelState();
+        scheduleLayoutSync();
     }
 
     function selectClass(classId) {
@@ -221,6 +184,8 @@
             btn.classList.toggle('is-active', isActive);
             btn.setAttribute('aria-pressed', isActive ? 'true' : 'false');
         });
+
+        scheduleLayoutSync();
     }
 
     function resetPanelPerkDetail(panel) {
@@ -239,6 +204,44 @@
                 pathCode: GAME_CLASS_OPTIONS[classId].pathCode
             }
         }));
+    }
+
+    function scheduleLayoutSync() {
+        const token = ++layoutSyncToken;
+
+        if (typeof global.RoyalArmiesViewportMetrics?.schedule === 'function') {
+            global.RoyalArmiesViewportMetrics.schedule();
+        }
+
+        LAYOUT_SYNC_DELAYS_MS.forEach((delay) => {
+            global.setTimeout(() => {
+                if (token !== layoutSyncToken) return;
+                if (typeof global.RoyalArmiesViewportMetrics?.sync === 'function') {
+                    global.RoyalArmiesViewportMetrics.sync();
+                }
+                syncArchmagePanelHeight();
+            }, delay);
+        });
+
+        global.requestAnimationFrame(() => {
+            if (token !== layoutSyncToken) return;
+            syncArchmagePanelHeight();
+        });
+    }
+
+    function bindPortraitImageLoads() {
+        getClassOptions().forEach((option) => {
+            option.querySelectorAll('img').forEach((img) => {
+                if (img.complete) return;
+                img.addEventListener('load', scheduleLayoutSync, { once: true });
+                img.addEventListener('error', scheduleLayoutSync, { once: true });
+            });
+        });
+
+        const titleImg = global.document.querySelector('.game-class-picker-title');
+        if (titleImg && !titleImg.complete) {
+            titleImg.addEventListener('load', scheduleLayoutSync, { once: true });
+        }
     }
 
     function bindClassPanel(panel) {
@@ -301,11 +304,29 @@
     }
 
     function bindClassPickerLayout() {
-        global.addEventListener('resize', () => {
-            syncArchmagePanelHeight();
-            if (!activeClassId) return;
-            refreshPanelState();
-        });
+        global.addEventListener('resize', scheduleLayoutSync, { passive: true });
+        if (global.visualViewport) {
+            global.visualViewport.addEventListener('resize', scheduleLayoutSync, { passive: true });
+        }
+
+        const desktopMq = global.matchMedia(DESKTOP_LAYOUT_MQ);
+        if (typeof desktopMq.addEventListener === 'function') {
+            desktopMq.addEventListener('change', scheduleLayoutSync);
+        } else if (typeof desktopMq.addListener === 'function') {
+            desktopMq.addListener(scheduleLayoutSync);
+        }
+
+        if (global.document.fonts && typeof global.document.fonts.ready?.then === 'function') {
+            global.document.fonts.ready.then(scheduleLayoutSync).catch(() => {});
+        }
+
+        const stage = getPickerStage();
+        const root = getPickerRoot();
+        if (stage && typeof global.ResizeObserver === 'function') {
+            layoutObserver = new global.ResizeObserver(scheduleLayoutSync);
+            layoutObserver.observe(stage);
+            if (root) layoutObserver.observe(root);
+        }
     }
 
     function initGameClassPicker() {
@@ -316,11 +337,12 @@
         getClassPanels().forEach(bindClassPanel);
         bindPickerDismiss();
         bindClassPickerLayout();
+        bindPortraitImageLoads();
         refreshSelectionState();
-        syncArchmagePanelHeight();
-        global.requestAnimationFrame(syncArchmagePanelHeight);
+        scheduleLayoutSync();
 
         root.dataset.initialized = 'true';
+        root.dataset.layoutMode = usesDocumentFlowLayout() ? 'grid' : 'stack';
     }
 
     global.GAME_CLASS_OPTIONS = GAME_CLASS_OPTIONS;
@@ -342,4 +364,4 @@
     } else {
         initGameClassPicker();
     }
-})(window);
+}(typeof window !== 'undefined' ? window : globalThis));

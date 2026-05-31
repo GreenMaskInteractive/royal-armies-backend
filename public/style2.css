@@ -9378,20 +9378,35 @@ body.developer-maintenance-alert-active #page-landing {
 .game-page-canvas,
 #age-page-canvas,
 .age-page-canvas {
+    --game-viewport-h: 100vh;
+    --game-viewport-h: 100svh;
+    --game-viewport-h: var(--game-layout-vh, 100dvh);
+    --game-viewport-w: 100%;
+    --game-viewport-w: var(--game-layout-vw, 100%);
     --game-shell-chrome-top: clamp(56px, 9vh, 88px);
     --game-shell-progress-h: clamp(88px, 14vh, 118px);
     --game-shell-title-h: clamp(44px, 7vh, 72px);
     --game-class-title-gap: clamp(0.65rem, 1.8vh, 1.35rem);
-    --game-class-art-max-h: max(
-        180px,
-        calc(100dvh - var(--game-shell-chrome-top) - var(--game-shell-progress-h) - var(--game-shell-title-h) - var(--game-class-title-gap) - 36px)
+    --game-class-art-available-h: calc(
+        var(--game-viewport-h)
+        - var(--game-shell-chrome-top)
+        - var(--game-shell-progress-h)
+        - var(--game-shell-title-h)
+        - var(--game-class-title-gap)
+        - 48px
+    );
+    --game-class-art-max-h: clamp(
+        160px,
+        calc(var(--game-class-art-available-h) * 0.68),
+        480px
     );
     margin: 0 !important;
     padding: 0 !important;
-    height: 100dvh !important;
-    max-height: 100dvh !important;
+    height: var(--game-viewport-h) !important;
+    max-height: var(--game-viewport-h) !important;
     min-height: 0 !important;
-    width: 100vw !important;
+    width: 100% !important;
+    max-width: 100% !important;
     display: flex !important;
     flex-direction: column !important;
     box-sizing: border-box !important;
@@ -11254,12 +11269,12 @@ body.developer-maintenance-alert-active #page-landing {
 }
 
 .game-page-view--class .game-class-picker-stage {
-    overflow: hidden !important;
+    overflow: visible !important;
 }
 
 .game-class-picker {
     width: 100%;
-    max-width: min(1920px, 98vw);
+    max-width: min(1920px, 100%);
     height: 100%;
     max-height: 100%;
     margin: 0 auto;
@@ -11279,34 +11294,49 @@ body.developer-maintenance-alert-active #page-landing {
     z-index: 1;
     flex: 1 1 auto;
     width: 100%;
-    max-width: min(1960px, 98vw);
+    max-width: min(1400px, 100%);
     min-height: 0;
     max-height: 100%;
     margin: 0 auto;
-    display: flex;
-    align-items: flex-end;
-    justify-content: center;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto;
+    align-items: end;
+    justify-items: center;
+    gap: clamp(12px, 2vh, 20px);
     box-sizing: border-box;
-    overflow: hidden;
+    overflow: visible;
+}
+
+.game-class-picker-duo {
+    grid-column: 1;
+    grid-row: 1;
+}
+
+#game-class-panel-battlemaster,
+#game-class-panel-archmage {
+    grid-column: 1;
+    grid-row: 2;
+    width: min(340px, 94%);
+    max-width: 340px;
 }
 
 .game-class-option-column {
     flex: 0 0 auto;
     width: auto;
     min-width: 0;
-    max-width: min(42vw, 480px);
+    max-width: min(42vw, 360px);
     display: flex;
     justify-content: center;
     align-items: flex-end;
-    transform: translateX(0);
-    will-change: transform;
+    transform: none;
 }
 
 .game-class-side-panel.portal-deployment-server-panel {
-    position: fixed !important;
-    width: 340px !important;
+    position: relative !important;
+    width: min(340px, 100%) !important;
     max-width: 340px !important;
-    min-width: 340px !important;
+    min-width: 0 !important;
     height: auto !important;
     min-height: 0 !important;
     max-height: none !important;
@@ -11318,9 +11348,8 @@ body.developer-maintenance-alert-active #page-landing {
     background: transparent !important;
     box-shadow: none !important;
     box-sizing: border-box !important;
-    /* left/top set by game-class-picker.js via --game-class-panel-x/y */
-    left: var(--game-class-panel-x, -9999px) !important;
-    top: var(--game-class-panel-y, -9999px) !important;
+    left: auto !important;
+    top: auto !important;
     right: auto !important;
     bottom: auto !important;
 }
@@ -11333,7 +11362,7 @@ body.developer-maintenance-alert-active #page-landing {
 }
 
 .game-class-side-panel {
-    position: fixed !important;
+    position: relative !important;
     opacity: 0;
     visibility: hidden;
     pointer-events: none;
@@ -11566,7 +11595,7 @@ body.developer-maintenance-alert-active #page-landing {
     position: relative;
     z-index: 12;
     width: auto;
-    max-width: min(520px, 72vw);
+    max-width: min(520px, 86%);
     max-height: var(--game-shell-title-h);
     height: auto;
     margin: 0 auto;
@@ -11626,7 +11655,7 @@ body.developer-maintenance-alert-active #page-landing {
     justify-content: center;
     flex-shrink: 0;
     width: auto;
-    max-width: min(42vw, 480px);
+    max-width: min(42vw, 360px);
     height: var(--game-class-stack-h);
     max-height: var(--game-class-stack-h);
     overflow: visible;
@@ -11668,7 +11697,7 @@ body.developer-maintenance-alert-active #page-landing {
     width: auto;
     height: var(--game-class-stack-h, var(--game-class-art-max-h));
     max-height: var(--game-class-stack-h, var(--game-class-art-max-h));
-    max-width: min(42vw, 480px);
+    max-width: min(42vw, 360px);
     flex-shrink: 0;
     object-fit: contain;
     object-position: center bottom;
@@ -11723,31 +11752,32 @@ body.developer-maintenance-alert-active #page-landing {
     outline-offset: 4px;
 }
 
-/* PC / desktop — class portraits sit directly under the Choose Your Class title */
-@media (min-width: 1025px) {
+/* PC / desktop — 3-column grid keeps portraits centered; panels sit in side tracks (no translateX). */
+@media (min-width: 900px) {
     #game-page-canvas,
     .game-page-canvas {
-        --game-class-art-max-h: max(
-            135px,
-            calc((100dvh - var(--game-shell-chrome-top) - var(--game-shell-progress-h) - var(--game-shell-title-h) - var(--game-class-title-gap) - 36px) * 0.75)
+        --game-class-art-max-h: clamp(
+            160px,
+            calc(var(--game-class-art-available-h) * 0.72),
+            460px
         );
-        --game-class-duo-offset: clamp(120px, calc(var(--game-class-art-max-h) * 0.44), 240px);
     }
 
     .game-class-option-column {
         flex: 0 0 auto !important;
         flex-shrink: 0 !important;
         width: auto !important;
-        max-width: min(31.5vw, 360px);
+        max-width: min(28vw, 320px);
+        transform: none !important;
     }
 
     .game-class-option-art-stack,
     .game-class-option-img {
-        max-width: min(31.5vw, 360px);
+        max-width: min(28vw, 320px);
     }
 
     .game-class-option-column--battlemaster {
-        max-width: min(28.35vw, 324px);
+        max-width: min(25vw, 288px);
     }
 
     .game-class-option-column--battlemaster .game-class-option-art-stack,
@@ -11755,7 +11785,7 @@ body.developer-maintenance-alert-active #page-landing {
         --game-class-stack-h: calc(var(--game-class-art-max-h) * 0.9);
         height: var(--game-class-stack-h);
         max-height: var(--game-class-stack-h);
-        max-width: min(28.35vw, 324px);
+        max-width: min(25vw, 288px);
     }
 
     .game-page-main {
@@ -11789,40 +11819,63 @@ body.developer-maintenance-alert-active #page-landing {
     }
 
     .game-class-picker-stage {
+        display: grid !important;
+        grid-template-columns: minmax(0, 340px) minmax(0, max-content) minmax(0, 340px) !important;
+        grid-template-rows: minmax(0, 1fr) !important;
+        align-items: end !important;
+        justify-content: center !important;
+        justify-items: center !important;
+        column-gap: clamp(14px, 2vw, 28px) !important;
+        row-gap: 0 !important;
         flex: 0 0 auto !important;
         min-height: 0 !important;
         max-height: none !important;
-        align-items: flex-end !important;
+        width: min(1180px, 100%) !important;
+        overflow: visible !important;
     }
 
-    #game-page-canvas .game-class-picker-duo,
     .game-class-picker-duo {
+        grid-column: 2 !important;
+        grid-row: 1 !important;
         display: flex !important;
         flex-wrap: nowrap !important;
-        column-gap: 0 !important;
-        gap: 0 !important;
+        column-gap: clamp(16px, 2.4vw, 48px) !important;
+        gap: clamp(16px, 2.4vw, 48px) !important;
         width: max-content !important;
         max-width: none !important;
         flex-shrink: 0 !important;
+        transform: none !important;
     }
 
-    /* Portrait + label move apart (no image margins) */
+    #game-class-panel-battlemaster {
+        grid-column: 1 !important;
+        grid-row: 1 !important;
+        justify-self: end !important;
+        align-self: end !important;
+        width: min(340px, 100%) !important;
+    }
+
+    #game-class-panel-archmage {
+        grid-column: 3 !important;
+        grid-row: 1 !important;
+        justify-self: start !important;
+        align-self: end !important;
+        width: min(340px, 100%) !important;
+    }
+
+    .game-class-option-column--battlemaster,
+    .game-class-option-column--archmage,
+    .game-class-picker.has-selection .game-class-option-column--battlemaster,
+    .game-class-picker.has-selection .game-class-option-column--archmage,
+    .game-class-picker.has-active-panel .game-class-option-column--battlemaster,
+    .game-class-picker.has-active-panel .game-class-option-column--archmage {
+        transform: none !important;
+    }
+
     .game-class-option-column--battlemaster .game-class-option-img,
     .game-class-option-column--archmage .game-class-option-img {
         margin-left: 0 !important;
         margin-right: 0 !important;
-    }
-
-    .game-class-option-column--battlemaster,
-    .game-class-picker.has-selection .game-class-option-column--battlemaster,
-    .game-class-picker.has-active-panel .game-class-option-column--battlemaster {
-        transform: translateX(calc(-1 * var(--game-class-duo-offset))) !important;
-    }
-
-    .game-class-option-column--archmage,
-    .game-class-picker.has-selection .game-class-option-column--archmage,
-    .game-class-picker.has-active-panel .game-class-option-column--archmage {
-        transform: translateX(var(--game-class-duo-offset)) !important;
     }
 
     .game-class-option-column--battlemaster .game-class-option,
@@ -11831,7 +11884,7 @@ body.developer-maintenance-alert-active #page-landing {
     }
 }
 
-@media (max-width: 1100px) {
+@media (min-width: 900px) and (max-width: 1100px) {
     #game-page-canvas,
     .game-page-canvas {
         --game-shell-chrome-top: clamp(52px, 8vh, 72px);
@@ -11839,13 +11892,18 @@ body.developer-maintenance-alert-active #page-landing {
         --game-shell-title-h: clamp(36px, 6vh, 56px);
     }
 
+    .game-class-picker-stage {
+        grid-template-columns: minmax(0, min(300px, 30vw)) minmax(0, max-content) minmax(0, min(300px, 30vw)) !important;
+        column-gap: clamp(10px, 1.6vw, 18px) !important;
+    }
+
     .game-class-option-column {
-        max-width: min(44vw, 360px);
+        max-width: min(36vw, 280px);
     }
 
     .game-class-option-art-stack,
     .game-class-option-img {
-        max-width: min(44vw, 360px);
+        max-width: min(36vw, 280px);
     }
 }
 
