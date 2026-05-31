@@ -17,6 +17,33 @@ const {
     buildAgeRosterHudPayload
 } = require('./nexus-age-roster');
 const { executeGuildTrainingBattle } = require('./nexus-age-battle-sim');
+const { resolveTrainingModeAvailability } = require('./nexus-age-guild-hub');
+
+const TRADE_CONVOY_LOTS = Object.freeze([
+    { id: 'guild-spice-crate', label: 'Spice Crate', costGold: 2400, resaleGold: 3120 },
+    { id: 'guild-silk-bale', label: 'Silk Bale', costGold: 4200, resaleGold: 5460 },
+    { id: 'guild-iron-ingots', label: 'Iron Ingots', costGold: 1800, resaleGold: 2340 }
+]);
+
+function normalizeGuildMerch(raw) {
+    if (!Array.isArray(raw)) return [];
+    return raw.map((entry) => {
+        if (!entry || typeof entry !== 'object') return null;
+        const id = String(entry.id || '').trim().slice(0, 64);
+        const label = String(entry.label || 'Merchandise').trim().slice(0, 80);
+        const qty = Math.max(0, Math.floor(Number(entry.qty) || 0));
+        const resaleGold = Math.max(0, Math.floor(Number(entry.resaleGold) || 0));
+        if (!id || !qty) return null;
+        return { id, label, qty, resaleGold };
+    }).filter(Boolean);
+}
+
+function buildGuildMerchPayload(commander) {
+    return {
+        ageGuildMerch: normalizeGuildMerch(commander?.ageGuildMerch),
+        tradeConvoyLots: TRADE_CONVOY_LOTS.map((lot) => ({ ...lot }))
+    };
+}
 
 const HEAL_COST_MULTIPLIER_BY_RANK = {
     1: 1,
@@ -86,12 +113,15 @@ function buildGuildRosterPayload(commander) {
 function buildGuildStatePayload(commander) {
     const roster = buildGuildRosterPayload(commander);
     const progress = buildGuildProgressPayload(commander);
+    const merch = buildGuildMerchPayload(commander);
 
     return {
         ...progress,
         ...roster,
+        ...merch,
         ageGold: resolveCommanderAgeGold(commander),
-        ageProvisions: resolveCommanderAgeProvisions(commander)
+        ageProvisions: resolveCommanderAgeProvisions(commander),
+        ageGuildAcceptedBountyId: String(commander?.ageGuildAcceptedBountyId || '').trim() || null
     };
 }
 
@@ -254,8 +284,11 @@ function resolveBattleInjuryCount(commander, battleResult) {
     return Math.min(healthyBefore, Math.max(0, Math.floor(simulatedLoss * 0.45)));
 }
 
-function executeGuildTrainingBattleWithLedger(commander) {
-    const battle = executeGuildTrainingBattle(commander);
+function executeGuildTrainingBattleWithLedger(commander, trainingMode = 'street-patrol', settlementTier = 'village') {
+    const modeCheck = resolveTrainingModeAvailability(commander, settlementTier, trainingMode);
+    if (!modeCheck.ok) return modeCheck;
+
+    const battle = executeGuildTrainingBattle(commander, trainingMode);
     if (!battle.ok) return battle;
 
     const injuryCount = resolveBattleInjuryCount(commander, battle);
@@ -326,13 +359,48 @@ function executeGuildHeal(commander, mode) {
     };
 }
 
+function executeTradeConvoyPurchase(commander, lotId) {
+    const lot = TRADE_CONVOY_LOTS.find((entry) => entry.id === String(lotId || '').trim());
+    if (!lot) {
+        return { ok: false, errorCode: 'NEXUS-GEN-002' };
+    }
+
+    const gold = resolveCommanderAgeGold(commander);
+    if (gold < lot.costGold) {
+        return { ok: false, errorCode: 'NEXUS-AGE-011' };
+    }
+
+    const merch = normalizeGuildMerch(commander?.ageGuildMerch);
+    const existing = merch.find((entry) => entry.id === lot.id);
+    if (existing) {
+        existing.qty += 1;
+    } else {
+        merch.push({
+            id: lot.id,
+            label: lot.label,
+            qty: 1,
+            resaleGold: lot.resaleGold
+        });
+    }
+
+    return {
+        ok: true,
+        lot,
+        goldSpent: lot.costGold,
+        ageGold: gold - lot.costGold,
+        ageGuildMerch: merch
+    };
+}
+
 module.exports = {
     HEAL_COST_MULTIPLIER_BY_RANK,
     GUILD_XP_BY_OUTCOME,
+    TRADE_CONVOY_LOTS,
     resolveGuildXpRequired,
     buildGuildStatePayload,
     executeGuildTrainingBattleWithLedger,
     executeGuildHeal,
+    executeTradeConvoyPurchase,
     resolveStackHealCost,
     distributeInjuries
 };

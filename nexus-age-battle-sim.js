@@ -402,11 +402,12 @@ function buildForceSummary(army) {
     };
 }
 
-function simulateTrainingBattle(attackerStacks, defenderStacks, catalog) {
+function simulateTrainingBattle(attackerStacks, defenderStacks, catalog, trainingMode = 'street-patrol') {
     const catalogRef = catalog || loadUnitPurchaseCatalog();
     const commander = buildBattleArmy('You', attackerStacks, catalogRef);
     const npc = buildBattleArmy('Training Host', defenderStacks, catalogRef);
-    const log = ['Adventurer\'s Guild — mixed NPC training battle initiated.'];
+    const modeLabel = TRAINING_MODE_LABELS[trainingMode] || 'Guild Training';
+    const log = [`Adventurer's Guild — ${modeLabel} engagement initiated.`];
 
     if (!commander.startingHp || !npc.startingHp) {
         return {
@@ -478,7 +479,20 @@ function simulateTrainingBattle(attackerStacks, defenderStacks, catalog) {
     };
 }
 
-function buildTrainingNpcArmy(catalog, templateStacks) {
+const TRAINING_MODE_NPC_SCALE = Object.freeze({
+    'street-patrol': 0.85,
+    'civilian-transport': 1,
+    'border-patrol': 1.2
+});
+
+const TRAINING_MODE_LABELS = Object.freeze({
+    'street-patrol': 'Street Patrol',
+    'civilian-transport': 'Civilian Transport',
+    'border-patrol': 'Border Patrol'
+});
+
+function buildTrainingNpcArmy(catalog, templateStacks, trainingMode = 'street-patrol') {
+    const scale = TRAINING_MODE_NPC_SCALE[trainingMode] || TRAINING_MODE_NPC_SCALE['street-patrol'];
     const catalogRef = catalog || loadUnitPurchaseCatalog();
     const template = Array.isArray(templateStacks) && templateStacks.length
         ? templateStacks
@@ -497,7 +511,7 @@ function buildTrainingNpcArmy(catalog, templateStacks) {
             name: catalogUnit?.name || entry.catalogUnitId,
             tier: catalogUnit?.tier || 1,
             rank: rankMap[firstPromotion] || 1,
-            qty: Math.max(1, Math.floor(Number(entry.qty) || 1)),
+            qty: Math.max(1, Math.floor(Math.max(1, Math.floor(Number(entry.qty) || 1)) * scale)),
             injuredQty: 0,
             purpose: 'training'
         };
@@ -514,7 +528,7 @@ function buildHealthyBattleStacks(army) {
     }).filter(Boolean);
 }
 
-function executeGuildTrainingBattle(commander) {
+function executeGuildTrainingBattle(commander, trainingMode = 'street-patrol') {
     const catalog = loadUnitPurchaseCatalog();
     const army = resolveCommanderAgeArmy(commander);
     const battleStacks = buildHealthyBattleStacks(army);
@@ -524,12 +538,15 @@ function executeGuildTrainingBattle(commander) {
         return { ok: false, errorCode: 'NEXUS-AGE-017' };
     }
 
-    const npcArmy = buildTrainingNpcArmy(catalog);
-    const battle = simulateTrainingBattle(battleStacks, npcArmy, catalog);
+    const mode = TRAINING_MODE_LABELS[trainingMode] ? trainingMode : 'street-patrol';
+    const npcArmy = buildTrainingNpcArmy(catalog, undefined, mode);
+    const battle = simulateTrainingBattle(battleStacks, npcArmy, catalog, mode);
     if (!battle.ok) return battle;
 
     return {
         ok: true,
+        trainingMode: mode,
+        trainingModeLabel: TRAINING_MODE_LABELS[mode] || 'Training',
         ...battle,
         commanderUnits: totalUnits,
         npcUnits: npcArmy.reduce((sum, stack) => sum + stack.qty, 0)
@@ -540,6 +557,8 @@ module.exports = {
     BATTLE_PHASES,
     INFANTRY_MAX_ROUNDS,
     DEFAULT_TRAINING_NPC_STACKS,
+    TRAINING_MODE_NPC_SCALE,
+    TRAINING_MODE_LABELS,
     buildBattleArmy,
     buildTrainingNpcArmy,
     simulateTrainingBattle,

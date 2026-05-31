@@ -95,8 +95,23 @@ const {
 const {
     buildGuildStatePayload,
     executeGuildTrainingBattleWithLedger,
-    executeGuildHeal
+    executeGuildHeal,
+    executeTradeConvoyPurchase
 } = require('./nexus-age-guild');
+const {
+    buildGuildHubManifest,
+    normalizeSettlementTier,
+    isBountyVenueTier
+} = require('./nexus-age-guild-hub');
+const {
+    normalizeBountyState,
+    refreshBountyPool,
+    listPublicBounties,
+    acceptBounty,
+    resolveExpiredBounties,
+    claimBountyPvpVictory,
+    BOUNTY_REWARDS
+} = require('./nexus-age-guild-bounties');
 
 /* Block 2: Environment Path Resolution */
 const isProduction = process.env.RENDER === 'true';
@@ -5090,9 +5105,125 @@ function persistCommanderGuildLedger(username, patch) {
     if (patch.ageProvisions !== undefined) assign.ageProvisions = patch.ageProvisions;
     if (patch.rank !== undefined) assign.rank = patch.rank;
     if (patch.ageGuildXp !== undefined) assign.ageGuildXp = patch.ageGuildXp;
+    if (patch.ageGuildMerch !== undefined) assign.ageGuildMerch = patch.ageGuildMerch;
+    if (patch.ageGuildAcceptedBountyId !== undefined) {
+        assign.ageGuildAcceptedBountyId = patch.ageGuildAcceptedBountyId || null;
+    }
     if (Object.keys(assign).length) {
         db.get('commanders').find({ username }).assign(assign).write();
     }
+}
+
+function readGuildBountyState() {
+    return normalizeBountyState(db.get('portal.ageGuildBounties').value());
+}
+
+function writeGuildBountyState(state) {
+    db.set('portal.ageGuildBounties', normalizeBountyState(state)).write();
+}
+
+function buildGuildBountyContext(referenceNation = '') {
+    return {
+        referenceNation: String(referenceNation || '').trim().toLowerCase(),
+        isAllied: areNationsAllied
+    };
+}
+
+function deliverGuildBountyAlert(targetUsername, hunterUsername) {
+    const owner = resolveLedgerCommanderUsername(targetUsername);
+    if (!owner) return;
+
+    const messages = getMailboxMessageStore();
+    messages.push({
+        id: createMailboxRecordId(),
+        channel: 'system',
+        systemMessageKey: 'age_guild_bounty_alert_v1',
+        from: "Adventurer's Guild",
+        to: owner,
+        topic: 'Bounty placed on your head',
+        body: `<p>A guild bounty contract is active on your commander.</p><p>Hunter interest may increase while the mark remains. Evade defeat for <strong>${BOUNTY_REWARDS.targetEvadeGold.toLocaleString()} gold</strong> and <strong>${BOUNTY_REWARDS.targetEvadeNationRsd.toLocaleString()} RSD</strong> for your nation if the contract expires.</p>${hunterUsername ? `<p>Latest hunter: ${String(hunterUsername).replace(/[<>&"]/g, '')}</p>` : ''}`,
+        bodyFormat: 'html',
+        read: false,
+        sentAt: new Date().toISOString()
+    });
+    writeMailboxMessageStore(messages);
+}
+
+function grantCommanderChronicleXp(username, amount, activityKey = 'pvpAttacks') {
+    const commander = db.get('commanders').find({ username }).value();
+    if (!commander) return null;
+
+    const xpState = normalizeCommanderChronicleXp(commander.chronicleXp);
+    const grant = Math.max(0, Math.floor(Number(amount) || 0));
+    if (!grant) return xpState;
+
+    xpState.totalXp += grant;
+    if (xpState.byActivity[activityKey]) {
+        xpState.byActivity[activityKey].actions += 1;
+        xpState.byActivity[activityKey].xp += grant;
+    }
+    xpState.lastGain = {
+        amount: grant,
+        activity: activityKey,
+        at: new Date().toISOString()
+    };
+
+    db.get('commanders').find({ username }).assign({ chronicleXp: xpState }).write();
+    return xpState;
+}
+
+function grantCommanderAgeGold(username, amount) {
+    const commander = db.get('commanders').find({ username }).value();
+    if (!commander) return null;
+    const grant = Math.max(0, Math.floor(Number(amount) || 0));
+    const nextGold = resolveCommanderAgeGold(commander) + grant;
+    db.get('commanders').find({ username }).assign({ ageGold: nextGold }).write();
+    return nextGold;
+}
+
+function ensureGuildBountyPool(referenceNation = '') {
+    let state = readGuildBountyState();
+    const expired = resolveExpiredBounties(state);
+    state = expired.state;
+
+    expired.resolvedEvaded.forEach((bounty) => {
+        grantCommanderAgeGold(bounty.targetUsername, BOUNTY_REWARDS.targetEvadeGold);
+        const target = db.get('commanders').find({ username: bounty.targetUsername }).value();
+        const nationKey = resolveCouncilBoardNationKey(target);
+        if (nationKey) {
+            awardNationTreasuryRsd(nationKey, BOUNTY_REWARDS.targetEvadeNationRsd, {
+                eventType: 'main-drop',
+                awardedBy: 'guild-bounty-evade'
+            });
+        }
+        deliverGuildBountyAlert(bounty.targetUsername);
+    });
+
+    const commanders = (db.get('commanders').value() || []).filter((entry) => {
+        const name = String(entry?.username || '').trim();
+        return name && !isHiddenRegistrationUsername(name);
+    });
+
+    state = refreshBountyPool(state, commanders, buildGuildBountyContext(referenceNation));
+    writeGuildBountyState(state);
+    return state;
+}
+
+function buildGuildHubResponse(commander, settlementTier) {
+    const tier = normalizeSettlementTier(settlementTier);
+    const hub = buildGuildHubManifest(commander, tier);
+    let bounties = [];
+
+    if (isBountyVenueTier(tier)) {
+        const bountyState = ensureGuildBountyPool(commander?.gameNation || commander?.country);
+        bounties = listPublicBounties(bountyState, commander);
+    }
+
+    return {
+        hub,
+        bounties,
+        bountyRewards: BOUNTY_REWARDS
+    };
 }
 
 app.get('/api/portal/age/guild/state', (req, res) => {
@@ -5108,11 +5239,14 @@ app.get('/api/portal/age/guild/state', (req, res) => {
 
     ensureCommanderAgeRoster(commander);
     commander = db.get('commanders').find({ username }).value();
+    const settlementTier = normalizeSettlementTier(req.query?.settlementTier || 'village');
 
     res.json({
         status: 'ok',
         action: 'guild-state',
+        settlementTier,
         ...buildGuildStatePayload(commander),
+        ...buildGuildHubResponse(commander, settlementTier),
         ...buildAgeMovementStatePayload(username, commander)
     });
 });
@@ -5131,7 +5265,10 @@ app.post('/api/portal/age/guild/training-battle', (req, res) => {
     ensureCommanderAgeRoster(commander);
     commander = db.get('commanders').find({ username }).value();
 
-    const result = executeGuildTrainingBattleWithLedger(commander);
+    const settlementTier = normalizeSettlementTier(req.body?.settlementTier || 'village');
+    const trainingMode = String(req.body?.trainingMode || 'street-patrol').trim().toLowerCase();
+
+    const result = executeGuildTrainingBattleWithLedger(commander, trainingMode, settlementTier);
     if (!result.ok) {
         return sendApiError(res, result.errorCode || 'NEXUS-AGE-017');
     }
@@ -5148,6 +5285,8 @@ app.post('/api/portal/age/guild/training-battle', (req, res) => {
     res.json({
         status: 'ok',
         action: 'guild-training-battle',
+        trainingMode: result.trainingMode,
+        trainingModeLabel: result.trainingModeLabel,
         winner: result.winner,
         endReason: result.endReason,
         roundsPlayed: result.roundsPlayed,
@@ -5177,6 +5316,7 @@ app.post('/api/portal/age/guild/training-battle', (req, res) => {
         ageGold: resolveCommanderAgeGold(commander),
         ageProvisions: result.ageProvisions,
         ageArmy: result.ageArmy,
+        ...buildGuildHubResponse(commander, settlementTier),
         ...buildAgeMovementStatePayload(username, commander)
     });
 });
@@ -5219,6 +5359,158 @@ app.post('/api/portal/age/guild/heal', (req, res) => {
         unitsUninjured: result.unitsUninjured,
         unitsInjured: result.unitsInjured,
         unitsHealthProgress: result.unitsHealthProgress,
+        ...buildGuildStatePayload(commander),
+        ...buildAgeMovementStatePayload(username, commander)
+    });
+});
+
+app.post('/api/portal/age/guild/trade-convoy/purchase', (req, res) => {
+    const username = resolveLedgerCommanderUsername(req.body?.username || '');
+    if (!username) {
+        return sendApiError(res, 'NEXUS-GEN-002');
+    }
+
+    let commander = db.get('commanders').find({ username }).value();
+    if (!commander) {
+        return sendApiError(res, 'NEXUS-GEN-004');
+    }
+
+    ensureCommanderAgeRoster(commander);
+    commander = db.get('commanders').find({ username }).value();
+
+    const settlementTier = normalizeSettlementTier(req.body?.settlementTier || 'village');
+    const hub = buildGuildHubManifest(commander, settlementTier);
+    const tradeJob = hub.jobs.find((job) => job.id === 'trade-convoy');
+    if (!tradeJob?.available) {
+        return sendApiError(res, 'NEXUS-AGE-020');
+    }
+
+    const result = executeTradeConvoyPurchase(commander, req.body?.lotId);
+    if (!result.ok) {
+        return sendApiError(res, result.errorCode || 'NEXUS-AGE-011');
+    }
+
+    persistCommanderGuildLedger(username, {
+        ageGold: result.ageGold,
+        ageGuildMerch: result.ageGuildMerch
+    });
+
+    commander = db.get('commanders').find({ username }).value();
+
+    res.json({
+        status: 'ok',
+        action: 'guild-trade-convoy-purchase',
+        lot: result.lot,
+        goldSpent: result.goldSpent,
+        ageGold: result.ageGold,
+        ageGuildMerch: result.ageGuildMerch,
+        ...buildGuildHubResponse(commander, settlementTier),
+        ...buildGuildStatePayload(commander),
+        ...buildAgeMovementStatePayload(username, commander)
+    });
+});
+
+app.post('/api/portal/age/guild/bounties/accept', (req, res) => {
+    const username = resolveLedgerCommanderUsername(req.body?.username || '');
+    if (!username) {
+        return sendApiError(res, 'NEXUS-GEN-002');
+    }
+
+    let commander = db.get('commanders').find({ username }).value();
+    if (!commander) {
+        return sendApiError(res, 'NEXUS-GEN-004');
+    }
+
+    ensureCommanderAgeRoster(commander);
+    commander = db.get('commanders').find({ username }).value();
+
+    const settlementTier = normalizeSettlementTier(req.body?.settlementTier || 'village');
+    if (!isBountyVenueTier(settlementTier)) {
+        return sendApiError(res, 'NEXUS-AGE-021');
+    }
+
+    const hub = buildGuildHubManifest(commander, settlementTier);
+    const bountyJob = hub.jobs.find((job) => job.id === 'player-bounties');
+    if (!bountyJob?.available) {
+        return sendApiError(res, 'NEXUS-AGE-020');
+    }
+
+    let state = ensureGuildBountyPool(commander?.gameNation || commander?.country);
+    const result = acceptBounty(
+        state,
+        commander,
+        req.body?.bountyId,
+        buildGuildBountyContext(commander?.gameNation || commander?.country)
+    );
+    if (!result.ok) {
+        return sendApiError(res, result.errorCode || 'NEXUS-AGE-023');
+    }
+
+    writeGuildBountyState(result.state);
+    persistCommanderGuildLedger(username, {
+        ageGuildAcceptedBountyId: result.ageGuildAcceptedBountyId
+    });
+
+    if (result.alertTargetUsername) {
+        deliverGuildBountyAlert(result.alertTargetUsername, username);
+    }
+
+    commander = db.get('commanders').find({ username }).value();
+
+    res.json({
+        status: 'ok',
+        action: 'guild-bounty-accept',
+        bounty: result.bounty,
+        ageGuildAcceptedBountyId: result.ageGuildAcceptedBountyId,
+        ...buildGuildHubResponse(commander, settlementTier),
+        ...buildGuildStatePayload(commander),
+        ...buildAgeMovementStatePayload(username, commander)
+    });
+});
+
+app.post('/api/portal/age/guild/bounties/claim-pvp', (req, res) => {
+    const username = resolveLedgerCommanderUsername(req.body?.username || '');
+    if (!username) {
+        return sendApiError(res, 'NEXUS-GEN-002');
+    }
+
+    let commander = db.get('commanders').find({ username }).value();
+    if (!commander) {
+        return sendApiError(res, 'NEXUS-GEN-004');
+    }
+
+    const targetUsername = String(req.body?.targetUsername || '').trim();
+    const state = readGuildBountyState();
+    const result = claimBountyPvpVictory(state, commander, targetUsername);
+    if (!result.ok) {
+        return sendApiError(res, result.errorCode || 'NEXUS-AGE-023');
+    }
+
+    writeGuildBountyState(result.state);
+    persistCommanderGuildLedger(username, {
+        ageGuildAcceptedBountyId: null,
+        ageGold: resolveCommanderAgeGold(commander) + result.rewards.hunterGold
+    });
+
+    grantCommanderChronicleXp(username, result.rewards.hunterChronicleXp, 'pvpAttacks');
+
+    const hunterNation = resolveCouncilBoardNationKey(commander);
+    if (hunterNation) {
+        awardNationTreasuryRsd(hunterNation, result.rewards.hunterNationRsd, {
+            eventType: 'main-drop',
+            awardedBy: 'guild-bounty-claim'
+        });
+    }
+
+    commander = db.get('commanders').find({ username }).value();
+
+    res.json({
+        status: 'ok',
+        action: 'guild-bounty-claim-pvp',
+        rewards: result.rewards,
+        bounty: result.bounty,
+        ageGold: resolveCommanderAgeGold(commander),
+        chronicleXp: normalizeCommanderChronicleXp(commander.chronicleXp),
         ...buildGuildStatePayload(commander),
         ...buildAgeMovementStatePayload(username, commander)
     });

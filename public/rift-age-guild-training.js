@@ -4,6 +4,8 @@
 (function initRoyalArmiesAgeGuildTraining(global) {
     'use strict';
 
+    let settlementTier = 'village';
+
     function resolveApiUrl(path) {
         if (typeof global.resolveRoyalArmiesApiUrl === 'function') {
             return global.resolveRoyalArmiesApiUrl(path);
@@ -20,6 +22,14 @@
         }
         const saved = global.localStorage?.getItem('activeCommanderUser');
         return saved && saved.trim() ? saved.trim() : '';
+    }
+
+    function setSettlementTier(tier) {
+        settlementTier = String(tier || 'village').trim().toLowerCase() || 'village';
+    }
+
+    function getSettlementTier() {
+        return settlementTier;
     }
 
     function applyGuildPayload(payload) {
@@ -67,8 +77,13 @@
             throw new Error('Commander session required.');
         }
 
+        if (options.settlementTier) {
+            setSettlementTier(options.settlementTier);
+        }
+
+        const tier = encodeURIComponent(getSettlementTier());
         const response = await global.fetch(
-            resolveApiUrl(`/api/portal/age/guild/state?username=${encodeURIComponent(username)}`),
+            resolveApiUrl(`/api/portal/age/guild/state?username=${encodeURIComponent(username)}&settlementTier=${tier}`),
             { credentials: 'same-origin', cache: 'no-store' }
         );
         const payload = await response.json().catch(() => ({}));
@@ -78,12 +93,17 @@
             throw err;
         }
 
+        if (payload.settlementTier) {
+            setSettlementTier(payload.settlementTier);
+        }
+
         applyGuildPayload(payload);
         return payload;
     }
 
     async function runTrainingBattle(options = {}) {
         const username = String(options.username || resolveUsername() || '').trim();
+        const trainingMode = String(options.trainingMode || 'street-patrol').trim().toLowerCase();
         if (!username) {
             throw new Error('Commander session required.');
         }
@@ -92,7 +112,11 @@
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             credentials: 'same-origin',
-            body: JSON.stringify({ username })
+            body: JSON.stringify({
+                username,
+                trainingMode,
+                settlementTier: getSettlementTier()
+            })
         });
 
         const payload = await response.json().catch(() => ({}));
@@ -131,10 +155,70 @@
         return payload;
     }
 
+    async function purchaseTradeConvoyLot(options = {}) {
+        const username = String(options.username || resolveUsername() || '').trim();
+        if (!username) {
+            throw new Error('Commander session required.');
+        }
+
+        const response = await global.fetch(resolveApiUrl('/api/portal/age/guild/trade-convoy/purchase'), {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'same-origin',
+            body: JSON.stringify({
+                username,
+                lotId: options.lotId,
+                settlementTier: getSettlementTier()
+            })
+        });
+
+        const payload = await response.json().catch(() => ({}));
+        if (!response.ok || payload.status !== 'ok') {
+            const err = new Error(payload.message || 'Trade purchase failed.');
+            err.code = payload.code || payload.errorCode || '';
+            throw err;
+        }
+
+        applyGuildPayload(payload);
+        return payload;
+    }
+
+    async function acceptBounty(options = {}) {
+        const username = String(options.username || resolveUsername() || '').trim();
+        if (!username) {
+            throw new Error('Commander session required.');
+        }
+
+        const response = await global.fetch(resolveApiUrl('/api/portal/age/guild/bounties/accept'), {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'same-origin',
+            body: JSON.stringify({
+                username,
+                bountyId: options.bountyId,
+                settlementTier: getSettlementTier()
+            })
+        });
+
+        const payload = await response.json().catch(() => ({}));
+        if (!response.ok || payload.status !== 'ok') {
+            const err = new Error(payload.message || 'Bounty acceptance failed.');
+            err.code = payload.code || payload.errorCode || '';
+            throw err;
+        }
+
+        applyGuildPayload(payload);
+        return payload;
+    }
+
     global.RoyalArmiesAgeGuildTraining = {
         fetchGuildState,
         runTrainingBattle,
         healUnits,
-        applyGuildPayload
+        purchaseTradeConvoyLot,
+        acceptBounty,
+        applyGuildPayload,
+        setSettlementTier,
+        getSettlementTier
     };
 })(window);

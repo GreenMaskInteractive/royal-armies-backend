@@ -644,6 +644,30 @@
             message: 'No injured units are available to heal.',
             category: 'game'
         },
+        'NEXUS-AGE-020': {
+            http: 403,
+            title: 'Guild job',
+            message: 'This Adventurer\'s Guild job is not available at your rank or settlement.',
+            category: 'game'
+        },
+        'NEXUS-AGE-021': {
+            http: 403,
+            title: 'Player bounties',
+            message: 'Player bounties can only be accepted at citadels and kingdoms.',
+            category: 'game'
+        },
+        'NEXUS-AGE-022': {
+            http: 400,
+            title: 'Player bounties',
+            message: 'You may only accept one guild bounty at a time.',
+            category: 'game'
+        },
+        'NEXUS-AGE-023': {
+            http: 400,
+            title: 'Player bounties',
+            message: 'That bounty contract is unavailable or has expired.',
+            category: 'game'
+        },
 
         /* --- Client-only network --- */
         'RIFT-NET-001': {

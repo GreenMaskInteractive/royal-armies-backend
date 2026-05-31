@@ -21433,6 +21433,266 @@ body.age-guild-open {
     transform: translateX(-50%);
 }
 
+.age-guild-view {
+    display: none;
+    flex: 1 1 auto;
+    flex-direction: column;
+    min-height: 0;
+}
+
+.age-guild-view.is-active {
+    display: flex;
+}
+
+.age-guild-back {
+    align-self: flex-start;
+    margin: 0 0 10px;
+    border: none;
+    background: transparent;
+    color: rgba(255, 215, 120, 0.82);
+    font-size: 0.82rem;
+    cursor: pointer;
+    padding: 0;
+}
+
+.age-guild-back:hover,
+.age-guild-back:focus-visible {
+    color: #ffd978;
+}
+
+.age-guild-training-title {
+    margin: 0 0 12px;
+    font-size: 1.2rem;
+    color: #f4e8c8;
+}
+
+.age-guild-hub-header {
+    margin-bottom: 16px;
+    padding-right: 88px;
+}
+
+.age-guild-hub-eyebrow {
+    margin: 0 0 4px;
+    font-size: 0.68rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: rgba(255, 210, 120, 0.72);
+}
+
+.age-guild-hub-title {
+    margin: 0 0 8px;
+    font-size: 1.45rem;
+    color: #f4e8c8;
+}
+
+.age-guild-hub-subtitle {
+    margin: 0;
+    max-width: 62ch;
+    font-size: 0.84rem;
+    line-height: 1.45;
+    color: rgba(236, 220, 180, 0.72);
+}
+
+.age-guild-hub-options {
+    display: grid;
+    gap: 12px;
+    overflow: auto;
+    padding-right: 4px;
+}
+
+.age-guild-hub-option {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+    text-align: left;
+    border: 1px solid rgba(184, 144, 48, 0.34);
+    border-radius: 10px;
+    padding: 14px 16px;
+    background: rgba(8, 6, 5, 0.72);
+    color: #f4e8c8;
+    cursor: pointer;
+}
+
+.age-guild-hub-option.is-featured:not(.is-locked) {
+    border-color: rgba(255, 215, 120, 0.72);
+    box-shadow: inset 0 0 0 1px rgba(255, 215, 120, 0.18);
+}
+
+.age-guild-hub-option.is-locked,
+.age-guild-hub-option:disabled {
+    opacity: 0.48;
+    cursor: not-allowed;
+}
+
+.age-guild-hub-option:not(.is-locked):not(:disabled):hover,
+.age-guild-hub-option:not(.is-locked):not(:disabled):focus-visible {
+    border-color: rgba(255, 215, 120, 0.75);
+    color: #ffd978;
+}
+
+.age-guild-hub-option-head {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+}
+
+.age-guild-hub-option-label {
+    font-size: 1rem;
+    font-weight: 600;
+}
+
+.age-guild-hub-option-tag {
+    border: 1px solid rgba(255, 215, 120, 0.55);
+    border-radius: 999px;
+    padding: 2px 8px;
+    font-size: 0.62rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: #ffd978;
+}
+
+.age-guild-hub-option-desc,
+.age-guild-hub-option-lock,
+.age-guild-hub-empty {
+    margin: 0;
+    font-size: 0.8rem;
+    line-height: 1.45;
+    color: rgba(236, 220, 180, 0.68);
+}
+
+.age-guild-hub-option-lock {
+    color: rgba(229, 154, 154, 0.82);
+}
+
+.age-guild-section-title {
+    margin: 0 0 10px;
+    font-size: 0.92rem;
+    color: #f4e8c8;
+}
+
+.age-guild-trade-lots {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 12px;
+    margin-bottom: 18px;
+}
+
+.age-guild-trade-lot {
+    border: 1px solid rgba(184, 144, 48, 0.28);
+    border-radius: 8px;
+    padding: 12px 14px;
+    background: rgba(4, 3, 2, 0.55);
+}
+
+.age-guild-trade-lot-title {
+    margin: 0 0 6px;
+    font-size: 0.92rem;
+    color: #f4e8c8;
+}
+
+.age-guild-trade-lot-meta {
+    margin: 0 0 10px;
+    font-size: 0.78rem;
+    color: rgba(236, 220, 180, 0.68);
+}
+
+.age-guild-trade-buy-btn,
+.age-guild-bounty-accept-btn {
+    border: 1px solid rgba(184, 144, 48, 0.45);
+    border-radius: 999px;
+    padding: 8px 14px;
+    background: linear-gradient(180deg, #e8c56a 0%, #c9982f 100%);
+    color: #1a1208;
+    font-size: 0.78rem;
+    cursor: pointer;
+}
+
+.age-guild-trade-inventory-list {
+    display: grid;
+    gap: 8px;
+}
+
+.age-guild-trade-inventory-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 8px 10px;
+    border: 1px solid rgba(184, 144, 48, 0.22);
+    border-radius: 6px;
+    font-size: 0.8rem;
+    color: rgba(244, 232, 200, 0.86);
+}
+
+.age-guild-trade-empty,
+.age-guild-bounty-empty {
+    margin: 0;
+    font-size: 0.82rem;
+    color: rgba(236, 220, 180, 0.68);
+}
+
+.age-guild-bounty-active-note {
+    margin: 0 0 12px;
+    padding: 10px 12px;
+    border: 1px solid rgba(255, 215, 120, 0.35);
+    border-radius: 8px;
+    background: rgba(255, 215, 120, 0.08);
+    color: #ffd978;
+    font-size: 0.8rem;
+}
+
+.age-guild-bounty-list {
+    display: grid;
+    gap: 12px;
+    overflow: auto;
+}
+
+.age-guild-bounty-card {
+    border: 1px solid rgba(184, 144, 48, 0.28);
+    border-radius: 8px;
+    padding: 12px 14px;
+    background: rgba(4, 3, 2, 0.55);
+}
+
+.age-guild-bounty-card.is-yours {
+    border-color: rgba(159, 216, 141, 0.55);
+}
+
+.age-guild-bounty-card.is-taken {
+    opacity: 0.62;
+}
+
+.age-guild-bounty-card-head {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    align-items: baseline;
+}
+
+.age-guild-bounty-target {
+    margin: 0;
+    font-size: 0.98rem;
+    color: #f4e8c8;
+}
+
+.age-guild-bounty-timer {
+    font-size: 0.72rem;
+    color: rgba(255, 210, 120, 0.72);
+}
+
+.age-guild-bounty-nation,
+.age-guild-bounty-reward,
+.age-guild-bounty-status {
+    margin: 6px 0 0;
+    font-size: 0.78rem;
+    color: rgba(236, 220, 180, 0.68);
+}
+
+.age-guild-bounty-accept-btn {
+    margin-top: 10px;
+}
+
 /* ==========================================================================
    CANONICAL TITLE / HEADER TYPOGRAPHY — Royal Family (Metamorphous)
    Overrides scattered Cinzel title rules above.

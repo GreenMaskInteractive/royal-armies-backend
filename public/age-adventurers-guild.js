@@ -1,849 +1,597 @@
 /**
-
- * RIFT — Adventurer's Guild venue (hold-to-battle training simulator).
-
+ * RIFT — Adventurer's Guild venue (job board + training / trade / bounties).
  */
-
 (function initRoyalArmiesAdventurersGuild(global) {
-
     'use strict';
 
-
-
     const BATTLE_CHARGE_MS = 2000;
-
     const CHARGE_RING_RADIUS = 46;
-
     const CHARGE_RING_CIRCUMFERENCE = 2 * Math.PI * CHARGE_RING_RADIUS;
 
-
-
     let bound = false;
-
     let guildState = null;
-
+    let hubManifest = null;
+    let bountyList = [];
+    let bountyRewards = null;
+    let activeView = 'hub';
+    let activeTrainingMode = 'street-patrol';
+    let activeTrainingLabel = 'Street Patrol';
+    let settlementTier = 'village';
     let battleInFlight = false;
-
     let battleHeld = false;
-
     let chargeTimerId = null;
-
     let autoHealEnabled = false;
-
     let lastBattleResult = null;
 
-
-
     function escapeHtml(value) {
-
         return String(value ?? '')
-
             .replace(/&/g, '&amp;')
-
             .replace(/</g, '&lt;')
-
             .replace(/>/g, '&gt;')
-
             .replace(/"/g, '&quot;');
-
     }
-
-
-
-    function resolveWorkspace() {
-
-        return global.document.getElementById('age-guild-workspace');
-
-    }
-
-
-
-    function isOpen() {
-
-        const workspace = resolveWorkspace();
-
-        return Boolean(workspace && !workspace.hidden);
-
-    }
-
-
 
     function resolveApi() {
-
         return global.RoyalArmiesAgeGuildTraining || null;
-
     }
 
-
-
-    function formatWinnerLabel(winner) {
-
-        if (winner === 'commander') return 'Victory';
-
-        if (winner === 'npc') return 'Defeat';
-
-        return 'Draw';
-
+    function resolveWorkspace() {
+        return global.document.getElementById('age-guild-workspace');
     }
 
-
-
-    function formatEndReason(result) {
-
-        if (result.endReason === 'annihilation') return 'Annihilation';
-
-        if (result.endReason === 'routing') return 'Morale rout';
-
-        if (result.endReason === 'infantry_phase') return 'Infantry phase';
-
-        if (result.endReason === 'mutual_rout') return 'Mutual rout';
-
-        return 'Concluded';
-
+    function isOpen() {
+        const workspace = resolveWorkspace();
+        return Boolean(workspace && !workspace.hidden);
     }
 
-
+    function resolveSettlementTierFromEvent(event) {
+        return String(event?.detail?.settlementTier || settlementTier || 'village').trim().toLowerCase();
+    }
 
     function mergeGuildState(payload) {
-
         if (!payload || typeof payload !== 'object') return guildState;
-
         guildState = {
-
             ...(guildState || {}),
-
             rank: payload.rank ?? guildState?.rank ?? 1,
-
             ageGuildXp: payload.ageGuildXp ?? guildState?.ageGuildXp ?? 0,
-
             ageGuildXpRequired: payload.ageGuildXpRequired ?? guildState?.ageGuildXpRequired ?? 95,
-
             ageGuildXpProgress: payload.ageGuildXpProgress ?? guildState?.ageGuildXpProgress ?? 0,
-
             unitsTotal: payload.unitsTotal ?? guildState?.unitsTotal ?? 0,
-
             unitsUninjured: payload.unitsUninjured ?? guildState?.unitsUninjured ?? 0,
-
             unitsInjured: payload.unitsInjured ?? guildState?.unitsInjured ?? 0,
-
             unitsHealthProgress: payload.unitsHealthProgress ?? guildState?.unitsHealthProgress ?? 1,
-
             ageGold: payload.ageGold ?? guildState?.ageGold ?? 0,
-
-            rankAtMax: payload.rankAtMax ?? guildState?.rankAtMax ?? false
-
+            ageGuildMerch: payload.ageGuildMerch ?? guildState?.ageGuildMerch ?? [],
+            tradeConvoyLots: payload.tradeConvoyLots ?? guildState?.tradeConvoyLots ?? [],
+            ageGuildAcceptedBountyId: payload.ageGuildAcceptedBountyId ?? guildState?.ageGuildAcceptedBountyId ?? null
         };
-
+        if (payload.hub) hubManifest = payload.hub;
+        if (Array.isArray(payload.bounties)) bountyList = payload.bounties;
+        if (payload.bountyRewards) bountyRewards = payload.bountyRewards;
         return guildState;
-
     }
 
+    function showView(viewId) {
+        activeView = viewId;
+        const views = global.document.querySelectorAll('.age-guild-view');
+        views.forEach((node) => {
+            const isActive = node.id === `age-guild-${viewId}-view`;
+            node.hidden = !isActive;
+            node.classList.toggle('is-active', isActive);
+        });
+    }
 
+    function formatWinnerLabel(winner) {
+        if (winner === 'commander') return 'Victory';
+        if (winner === 'npc') return 'Defeat';
+        return 'Draw';
+    }
+
+    function formatEndReason(result) {
+        if (result.endReason === 'annihilation') return 'Annihilation';
+        if (result.endReason === 'routing') return 'Morale rout';
+        if (result.endReason === 'infantry_phase') return 'Infantry phase';
+        if (result.endReason === 'mutual_rout') return 'Mutual rout';
+        return 'Concluded';
+    }
+
+    function renderHub() {
+        const tierLabelEl = global.document.getElementById('age-guild-hub-tier-label');
+        const rankEl = global.document.getElementById('age-guild-hub-rank');
+        const optionsEl = global.document.getElementById('age-guild-hub-options');
+        const hub = hubManifest || { jobs: [], settlementTierLabel: 'Settlement', rank: 1 };
+
+        if (tierLabelEl) tierLabelEl.textContent = hub.settlementTierLabel || 'Settlement';
+        if (rankEl) rankEl.textContent = String(hub.rank || guildState?.rank || 1);
+
+        if (!optionsEl) return;
+
+        const jobs = Array.isArray(hub.jobs) ? hub.jobs : [];
+        if (!jobs.length) {
+            optionsEl.innerHTML = '<p class="age-guild-hub-empty">No guild jobs are configured for this settlement.</p>';
+            return;
+        }
+
+        optionsEl.innerHTML = jobs.map((job) => {
+            const lockedClass = job.available ? '' : ' is-locked';
+            const featuredClass = job.featured ? ' is-featured' : '';
+            const lockLine = job.available
+                ? ''
+                : `<p class="age-guild-hub-option-lock">${escapeHtml(job.lockReason || 'Unavailable')}</p>`;
+            const featuredTag = job.featured ? '<span class="age-guild-hub-option-tag">Primary Training</span>' : '';
+
+            return (
+                `<button type="button" class="age-guild-hub-option${lockedClass}${featuredClass}"`
+                + ` data-guild-job="${escapeHtml(job.id)}"`
+                + `${job.available ? '' : ' disabled'}>`
+                + `<span class="age-guild-hub-option-head">`
+                + `<span class="age-guild-hub-option-label">${escapeHtml(job.label)}</span>`
+                + featuredTag
+                + '</span>'
+                + `<span class="age-guild-hub-option-desc">${escapeHtml(job.description)}</span>`
+                + lockLine
+                + '</button>'
+            );
+        }).join('');
+    }
 
     function updateProgressBars() {
-
         const state = guildState || {};
-
         const rankEl = global.document.getElementById('age-guild-rank');
-
         const xpFill = global.document.getElementById('age-guild-xp-fill');
-
         const xpText = global.document.getElementById('age-guild-xp-text');
-
         const xpBar = global.document.getElementById('age-guild-xp-bar');
-
         const unitsFill = global.document.getElementById('age-guild-units-fill');
-
         const unitsText = global.document.getElementById('age-guild-units-text');
-
         const unitsBar = global.document.getElementById('age-guild-units-bar');
 
-
-
         const rank = Math.max(1, Math.floor(Number(state.rank) || 1));
-
         const xp = Math.max(0, Math.floor(Number(state.ageGuildXp) || 0));
-
         const xpRequired = Math.max(0, Math.floor(Number(state.ageGuildXpRequired) || 0));
-
         const xpProgress = state.rankAtMax ? 1 : Math.min(1, Math.max(0, Number(state.ageGuildXpProgress) || 0));
-
         const unitsTotal = Math.max(0, Math.floor(Number(state.unitsTotal) || 0));
-
         const unitsUninjured = Math.max(0, Math.floor(Number(state.unitsUninjured) || 0));
-
-        const healthProgress = unitsTotal > 0
-
-            ? Math.min(1, Math.max(0, unitsUninjured / unitsTotal))
-
-            : 1;
-
-
+        const healthProgress = unitsTotal > 0 ? Math.min(1, unitsUninjured / unitsTotal) : 1;
 
         if (rankEl) rankEl.textContent = String(rank);
-
         if (xpFill) xpFill.style.width = `${(xpProgress * 100).toFixed(1)}%`;
-
         if (xpText) {
-
-            xpText.textContent = state.rankAtMax
-
-                ? `${xp} XP · Max rank`
-
-                : `${xp} / ${xpRequired} XP`;
-
+            xpText.textContent = state.rankAtMax ? `${xp} XP · Max rank` : `${xp} / ${xpRequired} XP`;
         }
-
-        if (xpBar) {
-
-            xpBar.setAttribute('aria-valuenow', String(Math.round(xpProgress * 100)));
-
-            xpBar.setAttribute('aria-valuetext', state.rankAtMax ? 'Maximum rank reached' : `${xp} of ${xpRequired} guild XP`);
-
-        }
-
-
-
+        if (xpBar) xpBar.setAttribute('aria-valuenow', String(Math.round(xpProgress * 100)));
         if (unitsFill) unitsFill.style.width = `${(healthProgress * 100).toFixed(1)}%`;
-
         if (unitsText) unitsText.textContent = `${unitsUninjured} / ${unitsTotal}`;
-
-        if (unitsBar) {
-
-            unitsBar.setAttribute('aria-valuenow', String(Math.round(healthProgress * 100)));
-
-            unitsBar.setAttribute('aria-valuetext', `${unitsUninjured} healthy of ${unitsTotal} total units`);
-
-        }
-
+        if (unitsBar) unitsBar.setAttribute('aria-valuenow', String(Math.round(healthProgress * 100)));
     }
-
-
 
     function renderBattleLog() {
-
         const logEl = global.document.getElementById('age-guild-log');
-
         if (!logEl) return;
 
-
+        const titleEl = global.document.getElementById('age-guild-training-title');
+        if (titleEl) titleEl.textContent = activeTrainingLabel;
 
         if (!lastBattleResult) {
-
             logEl.innerHTML = (
-
                 '<div class="age-guild-log-idle">'
-
-                + '<p class="age-guild-log-title">Adventurer\'s Guild</p>'
-
-                + '<p>Hold <strong>Battle</strong> to charge a training bout. Release to cancel. '
-
-                + 'Each victory earns guild XP toward your next commander rank and provisions.</p>'
-
-                + '<p>Injured units can be healed with gold — veteran ranks and above cost slightly more.</p>'
-
+                + `<p class="age-guild-log-title">${escapeHtml(activeTrainingLabel)}</p>`
+                + '<p>Hold <strong>Battle</strong> to charge a bout. Release to cancel. Injuries apply — heal with gold when needed.</p>'
                 + '</div>'
-
             );
-
             return;
-
         }
-
-
 
         const result = lastBattleResult;
-
-        const winnerClass = result.winner === 'commander'
-
-            ? 'is-victory'
-
-            : (result.winner === 'npc' ? 'is-defeat' : 'is-draw');
-
+        const winnerClass = result.winner === 'commander' ? 'is-victory' : (result.winner === 'npc' ? 'is-defeat' : 'is-draw');
         const logLines = (Array.isArray(result.log) ? result.log : [])
-
             .map((line) => `<li>${escapeHtml(line)}</li>`)
-
             .join('');
-
-
-
         const rankLine = result.rankPromoted
-
             ? `<p class="age-guild-log-promotion">Promoted to rank ${escapeHtml(result.rank)}`
-
             + `${result.provisionsGranted ? ` · +${escapeHtml(result.provisionsGranted)} provisions` : ''}</p>`
-
             : '';
 
-
-
         logEl.innerHTML = (
-
             `<article class="age-guild-log-entry ${winnerClass}">`
-
-            + `<header class="age-guild-log-head">`
-
+            + '<header class="age-guild-log-head">'
             + `<p class="age-guild-log-outcome">${escapeHtml(formatWinnerLabel(result.winner))}</p>`
-
-            + `<p class="age-guild-log-meta">`
-
-            + `${escapeHtml(formatEndReason(result))} · +${escapeHtml(result.xpGain ?? 0)} XP`
-
-            + `${result.injuriesApplied ? ` · ${escapeHtml(result.injuriesApplied)} injured` : ''}`
-
-            + '</p>'
-
+            + `<p class="age-guild-log-meta">${escapeHtml(formatEndReason(result))} · +${escapeHtml(result.xpGain ?? 0)} XP`
+            + `${result.injuriesApplied ? ` · ${escapeHtml(result.injuriesApplied)} injured` : ''}</p>`
             + rankLine
-
             + '</header>'
-
             + `<ol class="age-guild-battle-log">${logLines}</ol>`
-
             + '</article>'
-
         );
-
-
-
         logEl.scrollTop = 0;
-
     }
 
+    function renderTradeView() {
+        const lotsEl = global.document.getElementById('age-guild-trade-lots');
+        const inventoryEl = global.document.getElementById('age-guild-trade-inventory');
+        const lots = Array.isArray(guildState?.tradeConvoyLots) ? guildState.tradeConvoyLots : [];
+        const merch = Array.isArray(guildState?.ageGuildMerch) ? guildState.ageGuildMerch : [];
 
+        if (lotsEl) {
+            lotsEl.innerHTML = lots.map((lot) => (
+                `<article class="age-guild-trade-lot">`
+                + `<h4 class="age-guild-trade-lot-title">${escapeHtml(lot.label)}</h4>`
+                + `<p class="age-guild-trade-lot-meta">Cost ${escapeHtml(lot.costGold)} gold · Resale ${escapeHtml(lot.resaleGold)} gold</p>`
+                + `<button type="button" class="age-guild-trade-buy-btn" data-trade-lot="${escapeHtml(lot.id)}">Purchase</button>`
+                + '</article>'
+            )).join('');
+        }
+
+        if (inventoryEl) {
+            inventoryEl.innerHTML = merch.length
+                ? merch.map((item) => (
+                    `<div class="age-guild-trade-inventory-row">`
+                    + `<span>${escapeHtml(item.label)} × ${escapeHtml(item.qty)}</span>`
+                    + `<span>${escapeHtml(item.resaleGold)} gold each</span>`
+                    + '</div>'
+                )).join('')
+                : '<p class="age-guild-trade-empty">No merchandise yet. Purchase a convoy lot to begin.</p>';
+        }
+    }
+
+    function renderBountiesView() {
+        const listEl = global.document.getElementById('age-guild-bounty-list');
+        const noteEl = global.document.getElementById('age-guild-bounty-active-note');
+        const rewards = bountyRewards || {
+            hunterGold: 100000,
+            hunterChronicleXp: 10000,
+            hunterNationRsd: 50000
+        };
+
+        if (noteEl) {
+            if (guildState?.ageGuildAcceptedBountyId) {
+                noteEl.hidden = false;
+                noteEl.textContent = 'You are carrying one active bounty contract. Win a PvP attack against your mark before it expires.';
+            } else {
+                noteEl.hidden = true;
+                noteEl.textContent = '';
+            }
+        }
+
+        if (!listEl) return;
+
+        if (!bountyList.length) {
+            listEl.innerHTML = '<p class="age-guild-bounty-empty">No active bounty contracts. Check back shortly.</p>';
+            return;
+        }
+
+        listEl.innerHTML = bountyList.map((bounty) => {
+            const canAccept = !guildState?.ageGuildAcceptedBountyId && !bounty.taken && !bounty.expired;
+            return (
+                `<article class="age-guild-bounty-card${bounty.acceptedByYou ? ' is-yours' : ''}${bounty.taken && !bounty.acceptedByYou ? ' is-taken' : ''}">`
+                + `<header class="age-guild-bounty-card-head">`
+                + `<h4 class="age-guild-bounty-target">${escapeHtml(bounty.targetUsername)}</h4>`
+                + `<span class="age-guild-bounty-timer">${escapeHtml(bounty.hoursRemaining)}h left</span>`
+                + '</header>'
+                + `<p class="age-guild-bounty-nation">${escapeHtml(bounty.targetNation || 'Unknown nation')}</p>`
+                + `<p class="age-guild-bounty-reward">Reward: ${escapeHtml(rewards.hunterChronicleXp)} BP XP · ${escapeHtml(rewards.hunterGold)} gold · ${escapeHtml(rewards.hunterNationRsd)} RSD</p>`
+                + (canAccept
+                    ? `<button type="button" class="age-guild-bounty-accept-btn" data-bounty-id="${escapeHtml(bounty.id)}">Accept Bounty</button>`
+                    : `<p class="age-guild-bounty-status">${bounty.acceptedByYou ? 'Contract accepted' : (bounty.taken ? 'Taken by another hunter' : 'Expired')}</p>`)
+                + '</article>'
+            );
+        }).join('');
+    }
 
     function updateControlStates() {
-
         const battleBtn = global.document.getElementById('age-guild-battle-btn');
-
         const healOneBtn = global.document.getElementById('age-guild-heal-one');
-
         const healAllBtn = global.document.getElementById('age-guild-heal-all');
-
         const autoHealBtn = global.document.getElementById('age-guild-auto-heal');
-
-
-
         const unitsUninjured = Math.max(0, Math.floor(Number(guildState?.unitsUninjured) || 0));
-
         const unitsInjured = Math.max(0, Math.floor(Number(guildState?.unitsInjured) || 0));
-
         const canBattle = unitsUninjured > 0 && !battleInFlight;
 
-
-
         if (battleBtn) {
-
             battleBtn.disabled = !canBattle;
-
             battleBtn.classList.toggle('is-ready', canBattle);
-
             battleBtn.classList.toggle('is-busy', battleInFlight);
-
         }
-
         if (healOneBtn) healOneBtn.disabled = !unitsInjured || battleInFlight;
-
         if (healAllBtn) healAllBtn.disabled = !unitsInjured || battleInFlight;
-
         if (autoHealBtn) {
-
             autoHealBtn.classList.toggle('is-active', autoHealEnabled);
-
             autoHealBtn.setAttribute('aria-pressed', autoHealEnabled ? 'true' : 'false');
-
         }
-
     }
-
-
 
     function renderGuildPanel() {
-
+        renderHub();
         updateProgressBars();
-
         renderBattleLog();
-
+        renderTradeView();
+        renderBountiesView();
         updateControlStates();
-
     }
 
+    function openTrainingJob(job) {
+        activeTrainingMode = job.id;
+        activeTrainingLabel = job.label;
+        lastBattleResult = null;
+        showView('training');
+        renderGuildPanel();
+    }
 
+    function openJob(jobId) {
+        const hub = hubManifest || { jobs: [] };
+        const job = (hub.jobs || []).find((entry) => entry.id === jobId);
+        if (!job || !job.available) return;
+
+        if (job.kind === 'training') {
+            openTrainingJob(job);
+            return;
+        }
+        if (job.kind === 'trade') {
+            showView('trade');
+            renderGuildPanel();
+            return;
+        }
+        if (job.kind === 'bounties') {
+            showView('bounties');
+            renderGuildPanel();
+        }
+    }
 
     function clearChargeTimer() {
-
         if (chargeTimerId) {
-
             global.clearTimeout(chargeTimerId);
-
             chargeTimerId = null;
-
         }
-
     }
-
-
 
     function resetChargeRing() {
-
         const wrap = global.document.getElementById('age-guild-battle-wrap');
-
         const progress = wrap?.querySelector('.age-guild-charge-ring-progress');
-
         wrap?.classList.remove('is-charging');
-
         if (progress) {
-
             progress.style.animation = 'none';
-
             progress.getBoundingClientRect();
-
             progress.style.animation = '';
-
         }
-
     }
-
-
 
     function startChargeRing() {
-
-        const wrap = global.document.getElementById('age-guild-battle-wrap');
-
-        if (!wrap) return;
-
-        wrap.classList.add('is-charging');
-
+        global.document.getElementById('age-guild-battle-wrap')?.classList.add('is-charging');
     }
-
-
-
-    function scheduleBattleCharge() {
-
-        clearChargeTimer();
-
-        if (!battleHeld || battleInFlight) return;
-
-
-
-        const unitsUninjured = Math.max(0, Math.floor(Number(guildState?.unitsUninjured) || 0));
-
-        if (!unitsUninjured) {
-
-            stopBattleHold();
-
-            return;
-
-        }
-
-
-
-        startChargeRing();
-
-        chargeTimerId = global.setTimeout(() => {
-
-            chargeTimerId = null;
-
-            void fireTrainingBattle();
-
-        }, BATTLE_CHARGE_MS);
-
-    }
-
-
 
     function stopBattleHold() {
-
         battleHeld = false;
-
         clearChargeTimer();
-
         resetChargeRing();
-
     }
 
-
-
-    async function runAutoHealAfterBattle() {
-
-        if (!autoHealEnabled || battleInFlight) return;
-
-
-
-        const api = resolveApi();
-
-        if (!api?.healUnits) return;
-
-
-
-        let safety = 200;
-
-        while (safety > 0 && autoHealEnabled && isOpen()) {
-
-            safety -= 1;
-
-            const injured = Math.max(0, Math.floor(Number(guildState?.unitsInjured) || 0));
-
-            if (!injured) break;
-
-
-
-            try {
-
-                const payload = await api.healUnits({ mode: 'one' });
-
-                mergeGuildState(payload);
-
-            } catch (error) {
-
-                if (error?.code === 'NEXUS-AGE-011' || error?.code === 'NEXUS-AGE-019') break;
-
-                if (typeof global.showRiftError === 'function' && error?.code) {
-
-                    global.showRiftError(error.code, error.message);
-
-                }
-
-                break;
-
-            }
-
-        }
-
-
-
-        renderGuildPanel();
-
-    }
-
-
-
-    async function fireTrainingBattle() {
-
-        if (battleInFlight) return;
-
-
-
-        const api = resolveApi();
-
-        if (!api?.runTrainingBattle) {
-
-            if (typeof global.showRiftError === 'function') {
-
-                global.showRiftError('RIFT-NET-001', 'Training battle is unavailable right now.');
-
-            }
-
-            stopBattleHold();
-
-            return;
-
-        }
-
-
-
-        battleInFlight = true;
-
-        resetChargeRing();
-
-        updateControlStates();
-
-
-
-        try {
-
-            lastBattleResult = await api.runTrainingBattle();
-
-            mergeGuildState(lastBattleResult);
-
-            renderGuildPanel();
-
-            await runAutoHealAfterBattle();
-
-        } catch (error) {
-
-            if (typeof global.showRiftError === 'function' && error?.code) {
-
-                global.showRiftError(error.code, error.message);
-
-            }
-
-            stopBattleHold();
-
-        } finally {
-
-            battleInFlight = false;
-
-            renderGuildPanel();
-
-
-
-            if (battleHeld) {
-
-                scheduleBattleCharge();
-
-            }
-
-        }
-
-    }
-
-
-
-    async function healUnits(mode) {
-
-        if (battleInFlight) return;
-
-
-
-        const api = resolveApi();
-
-        if (!api?.healUnits) return;
-
-
-
-        try {
-
-            const payload = await api.healUnits({ mode });
-
-            mergeGuildState(payload);
-
-            renderGuildPanel();
-
-        } catch (error) {
-
-            if (typeof global.showRiftError === 'function' && error?.code) {
-
-                global.showRiftError(error.code, error.message);
-
-            }
-
-        }
-
-    }
-
-
-
-    async function loadGuildState() {
-
-        const api = resolveApi();
-
-        if (!api?.fetchGuildState) return;
-
-
-
-        try {
-
-            const payload = await api.fetchGuildState();
-
-            mergeGuildState(payload);
-
-        } catch (error) {
-
-            mergeGuildState({
-
-                rank: global.player?.rank,
-
-                ageGuildXp: global.player?.ageGuildXp,
-
-                unitsTotal: global.player?.unitsTotal,
-
-                unitsUninjured: global.player?.unitsUninjured
-
-            });
-
-            if (typeof global.showRiftError === 'function' && error?.code) {
-
-                global.showRiftError(error.code, error.message);
-
-            }
-
-        }
-
-    }
-
-
-
-    function onBattlePointerDown(event) {
-
-        if (event.button !== 0) return;
-
-        if (battleInFlight) return;
-
-
+    function scheduleBattleCharge() {
+        clearChargeTimer();
+        if (!battleHeld || battleInFlight) return;
 
         const unitsUninjured = Math.max(0, Math.floor(Number(guildState?.unitsUninjured) || 0));
+        if (!unitsUninjured) {
+            stopBattleHold();
+            return;
+        }
 
-        if (!unitsUninjured) return;
-
-
-
-        event.preventDefault();
-
-        battleHeld = true;
-
-        scheduleBattleCharge();
-
+        startChargeRing();
+        chargeTimerId = global.setTimeout(() => {
+            chargeTimerId = null;
+            void fireTrainingBattle();
+        }, BATTLE_CHARGE_MS);
     }
 
+    async function runAutoHealAfterBattle() {
+        if (!autoHealEnabled || battleInFlight) return;
+        const api = resolveApi();
+        if (!api?.healUnits) return;
 
+        let safety = 200;
+        while (safety > 0 && autoHealEnabled && isOpen()) {
+            safety -= 1;
+            if (!Math.max(0, Math.floor(Number(guildState?.unitsInjured) || 0))) break;
+            try {
+                mergeGuildState(await api.healUnits({ mode: 'one' }));
+            } catch (error) {
+                if (error?.code === 'NEXUS-AGE-011' || error?.code === 'NEXUS-AGE-019') break;
+                if (typeof global.showRiftError === 'function' && error?.code) {
+                    global.showRiftError(error.code, error.message);
+                }
+                break;
+            }
+        }
+        renderGuildPanel();
+    }
+
+    async function fireTrainingBattle() {
+        if (battleInFlight) return;
+        const api = resolveApi();
+        if (!api?.runTrainingBattle) return;
+
+        battleInFlight = true;
+        resetChargeRing();
+        updateControlStates();
+
+        try {
+            lastBattleResult = await api.runTrainingBattle({ trainingMode: activeTrainingMode });
+            mergeGuildState(lastBattleResult);
+            renderGuildPanel();
+            await runAutoHealAfterBattle();
+        } catch (error) {
+            if (typeof global.showRiftError === 'function' && error?.code) {
+                global.showRiftError(error.code, error.message);
+            }
+            stopBattleHold();
+        } finally {
+            battleInFlight = false;
+            renderGuildPanel();
+            if (battleHeld) scheduleBattleCharge();
+        }
+    }
+
+    async function healUnits(mode) {
+        if (battleInFlight) return;
+        const api = resolveApi();
+        if (!api?.healUnits) return;
+        try {
+            mergeGuildState(await api.healUnits({ mode }));
+            renderGuildPanel();
+        } catch (error) {
+            if (typeof global.showRiftError === 'function' && error?.code) {
+                global.showRiftError(error.code, error.message);
+            }
+        }
+    }
+
+    async function purchaseTradeLot(lotId) {
+        const api = resolveApi();
+        if (!api?.purchaseTradeConvoyLot) return;
+        try {
+            mergeGuildState(await api.purchaseTradeConvoyLot({ lotId }));
+            renderGuildPanel();
+        } catch (error) {
+            if (typeof global.showRiftError === 'function' && error?.code) {
+                global.showRiftError(error.code, error.message);
+            }
+        }
+    }
+
+    async function acceptBountyContract(bountyId) {
+        const api = resolveApi();
+        if (!api?.acceptBounty) return;
+        try {
+            mergeGuildState(await api.acceptBounty({ bountyId }));
+            renderGuildPanel();
+        } catch (error) {
+            if (typeof global.showRiftError === 'function' && error?.code) {
+                global.showRiftError(error.code, error.message);
+            }
+        }
+    }
+
+    async function loadGuildState() {
+        const api = resolveApi();
+        if (!api?.fetchGuildState) return;
+        api.setSettlementTier?.(settlementTier);
+        try {
+            mergeGuildState(await api.fetchGuildState({ settlementTier }));
+        } catch (error) {
+            if (typeof global.showRiftError === 'function' && error?.code) {
+                global.showRiftError(error.code, error.message);
+            }
+        }
+    }
+
+    function onBattlePointerDown(event) {
+        if (event.button !== 0 || battleInFlight) return;
+        if (!Math.max(0, Math.floor(Number(guildState?.unitsUninjured) || 0))) return;
+        event.preventDefault();
+        battleHeld = true;
+        scheduleBattleCharge();
+    }
 
     function onBattlePointerUp() {
-
         if (!battleHeld) return;
-
         stopBattleHold();
-
     }
-
-
 
     function onWorkspaceClick(event) {
-
         if (event.target.closest('#age-guild-close')) {
-
             event.preventDefault();
-
             close();
-
             return;
-
         }
-
+        if (event.target.closest('#age-guild-back') || event.target.closest('[data-age-guild-back]')) {
+            event.preventDefault();
+            stopBattleHold();
+            showView('hub');
+            return;
+        }
+        const jobBtn = event.target.closest('[data-guild-job]');
+        if (jobBtn) {
+            event.preventDefault();
+            openJob(jobBtn.getAttribute('data-guild-job'));
+            return;
+        }
         if (event.target.closest('#age-guild-heal-one')) {
-
             event.preventDefault();
-
             void healUnits('one');
-
             return;
-
         }
-
         if (event.target.closest('#age-guild-heal-all')) {
-
             event.preventDefault();
-
             void healUnits('all');
-
             return;
-
         }
-
         if (event.target.closest('#age-guild-auto-heal')) {
-
             event.preventDefault();
-
             autoHealEnabled = !autoHealEnabled;
-
             updateControlStates();
-
+            return;
         }
-
+        const tradeBtn = event.target.closest('[data-trade-lot]');
+        if (tradeBtn) {
+            event.preventDefault();
+            void purchaseTradeLot(tradeBtn.getAttribute('data-trade-lot'));
+            return;
+        }
+        const bountyBtn = event.target.closest('[data-bounty-id]');
+        if (bountyBtn) {
+            event.preventDefault();
+            void acceptBountyContract(bountyBtn.getAttribute('data-bounty-id'));
+        }
     }
-
-
 
     function onWorkspaceKeydown(event) {
-
         if (event.key === 'Escape' && isOpen()) {
-
             event.preventDefault();
-
+            if (activeView !== 'hub') {
+                stopBattleHold();
+                showView('hub');
+                return;
+            }
             close();
-
         }
-
     }
 
-
-
-    async function open() {
-
+    async function open(event) {
         const workspace = resolveWorkspace();
-
         if (!workspace) return;
 
-
+        settlementTier = resolveSettlementTierFromEvent(event);
+        resolveApi()?.setSettlementTier?.(settlementTier);
 
         workspace.hidden = false;
-
         workspace.setAttribute('aria-hidden', 'false');
-
         global.document.body.classList.add('age-guild-open');
 
-
+        activeView = 'hub';
+        lastBattleResult = null;
+        showView('hub');
 
         await loadGuildState();
-
         renderGuildPanel();
-
     }
-
-
 
     function close() {
-
         stopBattleHold();
-
-
-
         const workspace = resolveWorkspace();
-
         if (!workspace) return;
-
-
-
         workspace.hidden = true;
-
         workspace.setAttribute('aria-hidden', 'true');
-
         global.document.body.classList.remove('age-guild-open');
-
     }
-
-
 
     function onSettlementVenueOpen(event) {
-
         if (event?.detail?.venueId !== 'adventurers-guild') return;
-
-        void open();
-
+        void open(event);
     }
-
-
-
-    function onGuildUpdated(event) {
-
-        mergeGuildState(event?.detail || {});
-
-        if (isOpen()) renderGuildPanel();
-
-    }
-
-
-
-    function onArmyUpdated() {
-
-        if (!isOpen()) return;
-
-        void loadGuildState().then(() => renderGuildPanel());
-
-    }
-
-
 
     function bindGuild() {
-
         if (bound) return;
-
         bound = true;
 
-
-
         const workspace = resolveWorkspace();
-
         const battleBtn = global.document.getElementById('age-guild-battle-btn');
         const wrap = global.document.getElementById('age-guild-battle-wrap');
         const progressRing = workspace?.querySelector('.age-guild-charge-ring-progress');
@@ -852,67 +600,40 @@
             wrap.style.setProperty('--age-guild-charge-circumference', String(CHARGE_RING_CIRCUMFERENCE));
         }
         if (progressRing) {
-
             progressRing.style.strokeDasharray = `${CHARGE_RING_CIRCUMFERENCE}`;
-
             progressRing.style.strokeDashoffset = `${CHARGE_RING_CIRCUMFERENCE}`;
-
         }
 
-
-
         workspace?.addEventListener('click', onWorkspaceClick);
-
         global.document.addEventListener('keydown', onWorkspaceKeydown);
-
         global.addEventListener('royal-armies-settlement-venue-open', onSettlementVenueOpen);
-
-        global.addEventListener('royalarmies:age-guild-updated', onGuildUpdated);
-
-        global.addEventListener('royalarmies:age-recruitment-updated', onArmyUpdated);
-
-        global.addEventListener('royalarmies:age-movement-updated', onArmyUpdated);
-
-
+        global.addEventListener('royalarmies:age-guild-updated', (event) => {
+            mergeGuildState(event?.detail || {});
+            if (isOpen()) renderGuildPanel();
+        });
+        global.addEventListener('royalarmies:age-recruitment-updated', () => {
+            if (isOpen()) void loadGuildState().then(() => renderGuildPanel());
+        });
+        global.addEventListener('royalarmies:age-movement-updated', () => {
+            if (isOpen()) void loadGuildState().then(() => renderGuildPanel());
+        });
 
         battleBtn?.addEventListener('pointerdown', onBattlePointerDown);
-
         battleBtn?.addEventListener('pointerup', onBattlePointerUp);
-
         battleBtn?.addEventListener('pointerleave', onBattlePointerUp);
-
         battleBtn?.addEventListener('pointercancel', onBattlePointerUp);
-
         global.addEventListener('pointerup', onBattlePointerUp);
-
     }
-
-
 
     function enableAgeAdventurersGuild() {
-
         bindGuild();
-
     }
 
-
-
     global.RoyalArmiesAdventurersGuild = {
-
         open,
-
         close,
-
         isOpen,
-
         enableAgeAdventurersGuild
-
     };
-
-
-
     global.enableAgeAdventurersGuild = enableAgeAdventurersGuild;
-
 })(window);
-
-
