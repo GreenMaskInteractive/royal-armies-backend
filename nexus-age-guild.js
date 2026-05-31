@@ -20,8 +20,11 @@ const { executeGuildTrainingBattle } = require('./nexus-age-battle-sim');
 const { resolveTrainingModeAvailability } = require('./nexus-age-guild-hub');
 const {
     calculateGuildTrainingBattleXp,
-    appendGuildTrainingXpLogLines
+    appendGuildTrainingXpLogLines,
+    calculateCityBattleGuildXp,
+    appendBattleXpLogLines
 } = require('./nexus-age-guild-xp');
+const { executeCityAssaultBattle } = require('./nexus-age-city-battle');
 const {
     buildCommanderGearPanelPayload,
     buildCommanderEquipmentBonuses
@@ -631,6 +634,38 @@ function executeGuildTrainingBattleWithLedger(commander, trainingMode = 'street-
     };
 }
 
+function executeCityAssaultBattleWithLedger(commander, city, playersInCity = 1) {
+    const battle = executeCityAssaultBattle(commander, city, playersInCity);
+    if (!battle.ok) return battle;
+
+    const xpCalc = calculateCityBattleGuildXp(battle, {
+        battleRole: 'assault',
+        playersInCity: battle.playersInCity
+    });
+
+    if (Array.isArray(battle.log)) {
+        appendBattleXpLogLines(battle.log, xpCalc, 'city-battle');
+    }
+
+    const xpResult = applyGuildRankXp(commander, xpCalc.xpGain);
+
+    return {
+        ok: true,
+        ...battle,
+        xpGain: xpCalc.xpGain,
+        xpBreakdown: xpCalc.xpBreakdown,
+        rank: xpResult.rank,
+        ageGuildXp: xpResult.ageGuildXp,
+        ageGuildXpRequired: xpResult.ageGuildXpRequired,
+        ageGuildXpProgress: xpResult.ageGuildXpRequired > 0
+            ? Math.min(1, xpResult.ageGuildXp / xpResult.ageGuildXpRequired)
+            : 1,
+        rankPromoted: xpResult.rankPromoted,
+        rankPromotions: xpResult.promotions,
+        provisionsGranted: xpResult.provisionsGranted
+    };
+}
+
 function executeGuildHeal(commander, mode) {
     const catalog = loadUnitPurchaseCatalog();
     const army = resolveCommanderAgeArmy(commander);
@@ -700,6 +735,7 @@ module.exports = {
     resolveGuildXpRequired,
     buildGuildStatePayload,
     executeGuildTrainingBattleWithLedger,
+    executeCityAssaultBattleWithLedger,
     executeGuildHeal,
     executeTradeConvoyPurchase,
     resolveStackHealCost,

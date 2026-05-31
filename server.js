@@ -114,6 +114,7 @@ const { buildCommanderAgeGearSeedPatch } = require('./nexus-age-commander-gear')
 const {
     buildGuildStatePayload,
     executeGuildTrainingBattleWithLedger,
+    executeCityAssaultBattleWithLedger,
     executeGuildHeal,
     executeTradeConvoyPurchase
 } = require('./nexus-age-guild');
@@ -5735,7 +5736,7 @@ app.post('/api/portal/age/assault', (req, res) => {
         return sendApiError(res, 'NEXUS-GEN-002');
     }
 
-    const commander = db.get('commanders').find({ username }).value();
+    let commander = db.get('commanders').find({ username }).value();
     if (!commander) {
         return sendApiError(res, 'NEXUS-GEN-004');
     }
@@ -5767,44 +5768,93 @@ app.post('/api/portal/age/assault', (req, res) => {
 
     const targetCity = validation.targetCity;
     const previousHolder = resolveCityHolder(targetCity, store.cityHolders);
-    store.cityHolders[targetCityId] = getCouncilBoardStorageKey(gameNation);
-    store.cityLosers[targetCityId] = previousHolder;
+    const playersInCity = normalizePlayersInCityCount(req.body?.playersInCity);
 
-    const nextRecord = writeCommanderMovementRecord(username, {
-        catalogCityId: targetCityId,
+    ensureCommanderAgeRoster(commander);
+    commander = db.get('commanders').find({ username }).value();
+
+    const battleResult = executeCityAssaultBattleWithLedger(commander, targetCity, playersInCity);
+    if (!battleResult.ok) {
+        return sendApiError(res, battleResult.errorCode || 'NEXUS-AGE-017');
+    }
+
+    persistCommanderGuildLedger(username, {
+        rank: battleResult.rank,
+        ageGuildXp: battleResult.ageGuildXp,
+        ageProvisions: Math.max(
+            0,
+            Math.floor(Number(resolveCommanderAgeProvisions(commander)) || 0) + (battleResult.provisionsGranted || 0)
+        )
+    });
+
+    commander = db.get('commanders').find({ username }).value();
+
+    let nextRecord = writeCommanderMovementRecord(username, {
+        catalogCityId: movement.catalogCityId,
         movePoints: spend.movePoints,
         lastMovePointRegenAt: spend.lastMovePointRegenAt
     });
-    writeAgeMovementStore(store);
 
-    const captureReward = awardNationTreasuryForCaptureEvent(
-        gameNation,
-        'city-capture',
-        normalizePlayersInCityCount(req.body?.playersInCity),
-        {
-            cityId: targetCityId,
-            cityName: targetCity.name,
-            awardedBy: username
-        }
-    );
+    let captureReward = null;
+    const assaultVictory = battleResult.winner === 'commander';
+
+    if (assaultVictory) {
+        store.cityHolders[targetCityId] = getCouncilBoardStorageKey(gameNation);
+        store.cityLosers[targetCityId] = previousHolder;
+        writeAgeMovementStore(store);
+
+        nextRecord = writeCommanderMovementRecord(username, {
+            catalogCityId: targetCityId,
+            movePoints: spend.movePoints,
+            lastMovePointRegenAt: spend.lastMovePointRegenAt
+        });
+
+        captureReward = awardNationTreasuryForCaptureEvent(
+            gameNation,
+            'city-capture',
+            playersInCity,
+            {
+                cityId: targetCityId,
+                cityName: targetCity.name,
+                awardedBy: username
+            }
+        );
+    }
 
     res.json({
         status: 'ok',
         action: 'assault',
+        assaultVictory,
+        winner: battleResult.winner,
+        endReason: battleResult.endReason,
+        roundsPlayed: battleResult.roundsPlayed,
+        infantryRounds: battleResult.infantryRounds,
+        log: battleResult.log,
+        xpGain: battleResult.xpGain,
+        xpBreakdown: battleResult.xpBreakdown || null,
+        rank: battleResult.rank,
+        rankPromoted: battleResult.rankPromoted,
+        rankPromotions: battleResult.rankPromotions,
+        provisionsGranted: battleResult.provisionsGranted,
+        ageGuildXp: battleResult.ageGuildXp,
+        ageGuildXpRequired: battleResult.ageGuildXpRequired,
+        ageGuildXpProgress: battleResult.ageGuildXpProgress,
         catalogCityId: nextRecord.catalogCityId,
         movePoints: nextRecord.movePoints,
         movePointsMax: getMovePointRules().movePointsMax,
         lastMovePointRegenAt: nextRecord.lastMovePointRegenAt,
         targetCityId,
         previousHolderNationId: previousHolder,
-        newHolderNationId: getCouncilBoardStorageKey(gameNation),
+        newHolderNationId: assaultVictory ? getCouncilBoardStorageKey(gameNation) : previousHolder,
         cityHolders: store.cityHolders,
         cityLosers: store.cityLosers,
-        captureReward: captureReward.errorCode ? null : {
+        captureReward: captureReward && !captureReward.errorCode ? {
             grantedRsd: captureReward.grantedRsd,
             treasury: captureReward.treasury
-        },
-        rules: getMovePointRules()
+        } : null,
+        rules: getMovePointRules(),
+        ...buildGuildStatePayload(commander),
+        ...buildAgeMovementStatePayload(username, commander)
     });
 });
 

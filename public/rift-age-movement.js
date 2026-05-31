@@ -258,6 +258,9 @@
                 { source: 'server-sync', silent: true }
             );
         }
+        if (global.RoyalArmiesAgeGuildTraining?.applyGuildPayload) {
+            global.RoyalArmiesAgeGuildTraining.applyGuildPayload(payload);
+        }
 
         global.dispatchEvent(new CustomEvent('royalarmies:age-movement-updated', {
             detail: {

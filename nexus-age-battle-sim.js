@@ -483,9 +483,8 @@ function buildForceSummary(army) {
 function simulateTrainingBattle(attackerStacks, defenderStacks, catalog, trainingMode = 'street-patrol') {
     const catalogRef = catalog || loadUnitPurchaseCatalog();
     const commander = buildBattleArmy('You', attackerStacks, catalogRef);
-    const npc = buildBattleArmy('Training Host', defenderStacks, catalogRef);
-    const modeLabel = TRAINING_MODE_LABELS[trainingMode] || 'Guild Training';
-    const log = [`Adventurer's Guild — ${modeLabel} engagement initiated.`];
+    const npc = buildBattleArmy(resolveDefenderBattleLabel(trainingMode), defenderStacks, catalogRef);
+    const log = [resolveBattleModeIntro(trainingMode)];
 
     if (!commander.startingHp || !npc.startingHp) {
         return {
@@ -496,7 +495,7 @@ function simulateTrainingBattle(attackerStacks, defenderStacks, catalog, trainin
     }
 
     log.push(`Your force: ${formatArmyStatus(commander)} · ${commander.stacks.length} stack(s).`);
-    log.push(`NPC host: ${formatArmyStatus(npc)} · ${npc.stacks.length} stack(s).`);
+    log.push(`${resolveDefenderBattleLabel(trainingMode)}: ${formatArmyStatus(npc)} · ${npc.stacks.length} stack(s).`);
 
     const phaseParticipation = {
         ranged: false,
@@ -576,8 +575,29 @@ const TRAINING_MODE_NPC_SCALE = Object.freeze({
 const TRAINING_MODE_LABELS = Object.freeze({
     'street-patrol': 'Street Patrol',
     'civilian-transport': 'Civilian Transport',
-    'border-patrol': 'Border Patrol'
+    'border-patrol': 'Border Patrol',
+    'city-assault': 'City Assault',
+    'city-defense': 'City Defense'
 });
+
+const BATTLE_MODE_LABELS = Object.freeze({
+    ...TRAINING_MODE_LABELS
+});
+
+function resolveBattleModeIntro(trainingMode) {
+    const mode = String(trainingMode || '').trim().toLowerCase();
+    if (mode.startsWith('city-')) {
+        const label = BATTLE_MODE_LABELS[mode] || 'City Battle';
+        return `City battle — ${label} commenced.`;
+    }
+    const label = TRAINING_MODE_LABELS[mode] || 'Guild Training';
+    return `Adventurer's Guild — ${label} engagement initiated.`;
+}
+
+function resolveDefenderBattleLabel(trainingMode) {
+    const mode = String(trainingMode || '').trim().toLowerCase();
+    return mode.startsWith('city-') ? 'City garrison' : 'Training Host';
+}
 
 function resolveCommanderTrainingRank(commanderRank) {
     return Math.max(1, Math.min(22, Math.floor(Number(commanderRank) || 1)));
