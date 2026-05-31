@@ -19,6 +19,7 @@
     let settlementTier = 'village';
     let battleInFlight = false;
     let battleHeld = false;
+    let battleHoldPointerId = null;
     let chargeTimerId = null;
     let autoHealEnabled = false;
     let lastBattleResult = null;
@@ -616,11 +617,14 @@
         const unitsUninjured = Math.max(0, Math.floor(Number(guildState?.unitsUninjured) || 0));
         const unitsInjured = Math.max(0, Math.floor(Number(guildState?.unitsInjured) || 0));
         const canBattle = unitsUninjured > 0 && !battleInFlight;
+        const canHoldBattle = unitsUninjured > 0;
 
         if (battleBtn) {
-            battleBtn.disabled = !canBattle;
-            battleBtn.classList.toggle('is-ready', canBattle);
+            // Keep the button enabled while held so the browser does not cancel the pointer stream.
+            battleBtn.disabled = battleHeld ? !canHoldBattle : !canBattle;
+            battleBtn.classList.toggle('is-ready', battleHeld ? canHoldBattle : canBattle);
             battleBtn.classList.toggle('is-busy', battleInFlight);
+            battleBtn.setAttribute('aria-busy', battleInFlight ? 'true' : 'false');
         }
         if (healOneBtn) healOneBtn.disabled = !unitsInjured || battleInFlight;
         if (healAllBtn) healAllBtn.disabled = !unitsInjured || battleInFlight;
@@ -706,8 +710,41 @@
 
     function stopBattleHold() {
         battleHeld = false;
+        battleHoldPointerId = null;
         clearChargeTimer();
         resetChargeRing();
+        global.document.getElementById('age-guild-battle-wrap')?.classList.remove('is-hold-active');
+    }
+
+    function releaseBattleHoldPointer(event) {
+        const target = event?.currentTarget;
+        if (target?.releasePointerCapture && battleHoldPointerId != null) {
+            try {
+                if (typeof target.hasPointerCapture !== 'function' || target.hasPointerCapture(battleHoldPointerId)) {
+                    target.releasePointerCapture(battleHoldPointerId);
+                }
+            } catch (err) {
+                // Pointer may already be released if the browser cancelled the stream.
+            }
+        }
+    }
+
+    async function resumeBattleHoldIfNeeded() {
+        if (!battleHeld) return;
+
+        let unitsUninjured = Math.max(0, Math.floor(Number(guildState?.unitsUninjured) || 0));
+        if (!unitsUninjured && autoHealEnabled) {
+            await runAutoHealAfterBattle();
+            unitsUninjured = Math.max(0, Math.floor(Number(guildState?.unitsUninjured) || 0));
+        }
+
+        if (!battleHeld) return;
+        if (!unitsUninjured) {
+            stopBattleHold();
+            return;
+        }
+
+        scheduleBattleCharge();
     }
 
     function scheduleBattleCharge() {
@@ -768,7 +805,9 @@
             }
             setBattleTab('details');
             renderGuildPanel();
-            await runAutoHealAfterBattle();
+            if (!battleHeld) {
+                await runAutoHealAfterBattle();
+            }
         } catch (error) {
             if (typeof global.showRiftError === 'function' && error?.code) {
                 global.showRiftError(error.code, error.message);
@@ -777,7 +816,7 @@
         } finally {
             battleInFlight = false;
             renderGuildPanel();
-            if (battleHeld) scheduleBattleCharge();
+            void resumeBattleHoldIfNeeded();
         }
     }
 
@@ -849,13 +888,33 @@
         if (event.button !== 0 || battleInFlight) return;
         if (!Math.max(0, Math.floor(Number(guildState?.unitsUninjured) || 0))) return;
         event.preventDefault();
+
         battleHeld = true;
+        battleHoldPointerId = event.pointerId;
+        global.document.getElementById('age-guild-battle-wrap')?.classList.add('is-hold-active');
+
+        const holdTarget = event.currentTarget;
+        if (holdTarget?.setPointerCapture) {
+            try {
+                holdTarget.setPointerCapture(event.pointerId);
+            } catch (err) {
+                // Some browsers reject capture on disabled descendants; wrap-level binding avoids that.
+            }
+        }
+
+        updateControlStates();
         scheduleBattleCharge();
     }
 
-    function onBattlePointerUp() {
+    function onBattlePointerUp(event) {
         if (!battleHeld) return;
+        if (event?.pointerId != null && battleHoldPointerId != null && event.pointerId !== battleHoldPointerId) {
+            return;
+        }
+
+        releaseBattleHoldPointer(event);
         stopBattleHold();
+        updateControlStates();
     }
 
     function onWorkspaceClick(event) {
@@ -947,6 +1006,7 @@
         const workspace = resolveWorkspace();
         const battleBtn = global.document.getElementById('age-guild-battle-btn');
         const wrap = global.document.getElementById('age-guild-battle-wrap');
+        const battleHoldTarget = wrap || battleBtn;
         const progressRing = global.document.getElementById('age-guild-training-arena')?.querySelector('.age-guild-charge-ring-progress');
 
         if (wrap) {
@@ -974,10 +1034,9 @@
 
         global.document.getElementById('age-settlement-menu-list')?.addEventListener('click', onSettlementMenuClick, true);
 
-        battleBtn?.addEventListener('pointerdown', onBattlePointerDown);
-        battleBtn?.addEventListener('pointerup', onBattlePointerUp);
-        battleBtn?.addEventListener('pointerleave', onBattlePointerUp);
-        battleBtn?.addEventListener('pointercancel', onBattlePointerUp);
+        battleHoldTarget?.addEventListener('pointerdown', onBattlePointerDown);
+        battleHoldTarget?.addEventListener('pointerup', onBattlePointerUp);
+        battleHoldTarget?.addEventListener('pointercancel', onBattlePointerUp);
         global.addEventListener('pointerup', onBattlePointerUp);
     }
 

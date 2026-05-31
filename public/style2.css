@@ -22304,6 +22304,7 @@ button.age-guild-gear-slot {
     height: 112px;
     display: grid;
     place-items: center;
+    touch-action: none;
     filter: drop-shadow(0 8px 18px rgba(0, 0, 0, 0.52));
 }
 
@@ -22631,6 +22632,7 @@ button.age-guild-gear-slot {
     height: 132px;
     display: grid;
     place-items: center;
+    touch-action: none;
 }
 
 .age-guild-charge-ring {
@@ -22708,8 +22710,9 @@ button.age-guild-gear-slot {
     filter: brightness(1.05);
 }
 
-.age-guild-battle-circle.is-busy {
+.age-guild-battle-circle.is-busy:not(:disabled) {
     opacity: 0.82;
+    cursor: pointer;
 }
 
 .age-guild-battle-btn-wrap.is-charging .age-guild-battle-circle.is-ready:not(:disabled) {
