@@ -832,6 +832,9 @@
                 global.showRiftError(error.code, error.message);
             } else if (error?.message) {
                 console.warn('[RIFT][guild-battle]', error.message);
+                if (typeof global.showRiftError === 'function') {
+                    global.showRiftError('NEXUS-GEN-001', error.message);
+                }
             }
             battleEndHold(true);
         } finally {

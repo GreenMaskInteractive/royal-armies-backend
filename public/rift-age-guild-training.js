@@ -145,8 +145,14 @@
             code: payload.code || payload.errorCode
         });
         if (!response.ok || payload.status !== 'ok') {
-            const err = new Error(payload.message || 'Training battle failed.');
-            err.code = payload.code || payload.errorCode || '';
+            const err = new Error(
+                payload.message
+                || (response.status === 500
+                    ? 'Training battle failed — server error (check Render logs for [NEXUS] guild training-battle).'
+                    : `Training battle failed (HTTP ${response.status}).`)
+            );
+            err.code = payload.code || payload.errorCode || (response.status === 500 ? 'NEXUS-GEN-001' : '');
+            err.httpStatus = response.status;
             throw err;
         }
 

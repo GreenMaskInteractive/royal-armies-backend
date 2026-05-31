@@ -5404,78 +5404,83 @@ app.get('/api/portal/age/guild/state', (req, res) => {
 });
 
 app.post('/api/portal/age/guild/training-battle', (req, res) => {
-    const username = resolveLedgerCommanderUsername(req.body?.username || '');
-    if (!username) {
-        return sendApiError(res, 'NEXUS-GEN-002');
+    try {
+        const username = resolveLedgerCommanderUsername(req.body?.username || '');
+        if (!username) {
+            return sendApiError(res, 'NEXUS-GEN-002');
+        }
+
+        let commander = db.get('commanders').find({ username }).value();
+        if (!commander) {
+            return sendApiError(res, 'NEXUS-GEN-004');
+        }
+
+        ensureCommanderAgeRoster(commander);
+        commander = db.get('commanders').find({ username }).value();
+
+        const settlementTier = normalizeSettlementTier(req.body?.settlementTier || 'village');
+        const trainingMode = String(req.body?.trainingMode || 'street-patrol').trim().toLowerCase();
+
+        const result = executeGuildTrainingBattleWithLedger(commander, trainingMode, settlementTier);
+        if (!result.ok) {
+            return sendApiError(res, result.errorCode || 'NEXUS-AGE-017');
+        }
+
+        persistCommanderGuildLedger(username, {
+            ageArmy: result.ageArmy,
+            rank: result.rank,
+            ageGuildXp: result.ageGuildXp,
+            ageProvisions: result.ageProvisions,
+            ageGold: result.ageGold
+        });
+
+        commander = db.get('commanders').find({ username }).value();
+
+        res.json({
+            status: 'ok',
+            action: 'guild-training-battle',
+            trainingMode: result.trainingMode,
+            trainingModeLabel: result.trainingModeLabel,
+            winner: result.winner,
+            endReason: result.endReason,
+            roundsPlayed: result.roundsPlayed,
+            infantryRounds: result.infantryRounds,
+            commanderHpRemaining: result.commanderHpRemaining,
+            npcHpRemaining: result.npcHpRemaining,
+            commanderMorale: result.commanderMorale,
+            npcMorale: result.npcMorale,
+            commanderUnits: result.commanderUnits,
+            npcUnits: result.npcUnits,
+            commanderForce: result.commanderForce,
+            npcForce: result.npcForce,
+            log: result.log,
+            xpGain: result.xpGain,
+            xpBreakdown: result.xpBreakdown || null,
+            lootEntries: result.lootEntries || [],
+            lootGoldTotal: result.lootGoldTotal || 0,
+            injuriesApplied: result.injuriesApplied,
+            rankPromoted: result.rankPromoted,
+            rankPromotions: result.rankPromotions,
+            provisionsGranted: result.provisionsGranted,
+            ageGuildXp: result.ageGuildXp,
+            ageGuildXpRequired: result.ageGuildXpRequired,
+            ageGuildXpProgress: result.ageGuildXpProgress,
+            rank: result.rank,
+            unitsTotal: result.unitsTotal,
+            unitsUninjured: result.unitsUninjured,
+            unitsInjured: result.unitsInjured,
+            unitsHealthProgress: result.unitsHealthProgress,
+            ageGold: resolveCommanderAgeGold(commander),
+            ageProvisions: result.ageProvisions,
+            ageArmy: result.ageArmy,
+            commanderGear: result.commanderGear,
+            ...buildGuildHubResponse(commander, settlementTier),
+            ...buildAgeMovementStatePayload(username, commander)
+        });
+    } catch (err) {
+        console.error('[NEXUS] guild training-battle uncaught:', err);
+        return sendApiError(res, 'NEXUS-GEN-001');
     }
-
-    let commander = db.get('commanders').find({ username }).value();
-    if (!commander) {
-        return sendApiError(res, 'NEXUS-GEN-004');
-    }
-
-    ensureCommanderAgeRoster(commander);
-    commander = db.get('commanders').find({ username }).value();
-
-    const settlementTier = normalizeSettlementTier(req.body?.settlementTier || 'village');
-    const trainingMode = String(req.body?.trainingMode || 'street-patrol').trim().toLowerCase();
-
-    const result = executeGuildTrainingBattleWithLedger(commander, trainingMode, settlementTier);
-    if (!result.ok) {
-        return sendApiError(res, result.errorCode || 'NEXUS-AGE-017');
-    }
-
-    persistCommanderGuildLedger(username, {
-        ageArmy: result.ageArmy,
-        rank: result.rank,
-        ageGuildXp: result.ageGuildXp,
-        ageProvisions: result.ageProvisions,
-        ageGold: result.ageGold
-    });
-
-    commander = db.get('commanders').find({ username }).value();
-    const gearPayload = buildCommanderGearPanelPayload(commander);
-
-    res.json({
-        status: 'ok',
-        action: 'guild-training-battle',
-        trainingMode: result.trainingMode,
-        trainingModeLabel: result.trainingModeLabel,
-        winner: result.winner,
-        endReason: result.endReason,
-        roundsPlayed: result.roundsPlayed,
-        infantryRounds: result.infantryRounds,
-        commanderHpRemaining: result.commanderHpRemaining,
-        npcHpRemaining: result.npcHpRemaining,
-        commanderMorale: result.commanderMorale,
-        npcMorale: result.npcMorale,
-        commanderUnits: result.commanderUnits,
-        npcUnits: result.npcUnits,
-        commanderForce: result.commanderForce,
-        npcForce: result.npcForce,
-        log: result.log,
-        xpGain: result.xpGain,
-        xpBreakdown: result.xpBreakdown || null,
-        lootEntries: result.lootEntries || [],
-        lootGoldTotal: result.lootGoldTotal || 0,
-        injuriesApplied: result.injuriesApplied,
-        rankPromoted: result.rankPromoted,
-        rankPromotions: result.rankPromotions,
-        provisionsGranted: result.provisionsGranted,
-        ageGuildXp: result.ageGuildXp,
-        ageGuildXpRequired: result.ageGuildXpRequired,
-        ageGuildXpProgress: result.ageGuildXpProgress,
-        rank: result.rank,
-        unitsTotal: result.unitsTotal,
-        unitsUninjured: result.unitsUninjured,
-        unitsInjured: result.unitsInjured,
-        unitsHealthProgress: result.unitsHealthProgress,
-        ageGold: resolveCommanderAgeGold(commander),
-        ageProvisions: result.ageProvisions,
-        ageArmy: result.ageArmy,
-        ...buildGuildHubResponse(commander, settlementTier),
-        ...buildAgeMovementStatePayload(username, commander)
-    });
 });
 
 app.post('/api/portal/age/guild/heal', (req, res) => {
