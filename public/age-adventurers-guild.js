@@ -20,7 +20,9 @@
     let battleInFlight = false;
     let battleHeld = false;
     let battleHoldPointerId = null;
+    let battleHoldTargetEl = null;
     let chargeTimerId = null;
+    let battleHoldReleaseBound = false;
     let autoHealEnabled = false;
     let lastBattleResult = null;
     let guildJobsExpanded = false;
@@ -78,6 +80,9 @@
             commanderGear: payload.commanderGear ?? guildState?.commanderGear ?? null
         };
         if (payload.hub) hubManifest = payload.hub;
+        if (payload.hub?.settlementTier) {
+            settlementTier = String(payload.hub.settlementTier).trim().toLowerCase();
+        }
         if (Array.isArray(payload.bounties)) bountyList = payload.bounties;
         if (payload.bountyRewards) bountyRewards = payload.bountyRewards;
         return guildState;
@@ -442,8 +447,32 @@
         }
     }
 
+    function formatSettlementTierLabel(tier) {
+        const key = String(tier || settlementTier || 'village').trim().toLowerCase();
+        if (typeof global.RoyalArmiesAgeMovementPanel?.formatSettlementTier === 'function') {
+            return global.RoyalArmiesAgeMovementPanel.formatSettlementTier(key);
+        }
+        const labels = {
+            village: 'Village',
+            town: 'Town',
+            city: 'City',
+            kingdom: 'Kingdom',
+            citadel: 'Citadel'
+        };
+        return labels[key] || key.charAt(0).toUpperCase() + key.slice(1);
+    }
+
+    function syncTrainingReturnButton() {
+        const btn = global.document.getElementById('age-guild-training-return-btn');
+        if (!btn) return;
+        const tierLabel = formatSettlementTierLabel(settlementTier);
+        btn.textContent = `← ${tierLabel}`;
+        btn.setAttribute('aria-label', `Return to ${tierLabel.toLowerCase()}`);
+    }
+
     function renderGuildPanel() {
         if (guildJobsExpanded) renderSettlementGuildJobs();
+        syncTrainingReturnButton();
         updateProgressBars();
         renderCommanderGearPanel();
         renderLootLog();
@@ -711,22 +740,44 @@
     function stopBattleHold() {
         battleHeld = false;
         battleHoldPointerId = null;
+        battleHoldTargetEl = null;
         clearChargeTimer();
         resetChargeRing();
+        unbindBattleHoldReleaseListeners();
         global.document.getElementById('age-guild-battle-wrap')?.classList.remove('is-hold-active');
     }
 
-    function releaseBattleHoldPointer(event) {
-        const target = event?.currentTarget;
-        if (target?.releasePointerCapture && battleHoldPointerId != null) {
+    function bindBattleHoldReleaseListeners() {
+        if (battleHoldReleaseBound) return;
+        battleHoldReleaseBound = true;
+        global.document.addEventListener('pointerup', onBattlePointerUp);
+        global.document.addEventListener('pointercancel', onBattlePointerUp);
+    }
+
+    function unbindBattleHoldReleaseListeners() {
+        if (!battleHoldReleaseBound) return;
+        battleHoldReleaseBound = false;
+        global.document.removeEventListener('pointerup', onBattlePointerUp);
+        global.document.removeEventListener('pointercancel', onBattlePointerUp);
+    }
+
+    function releaseBattleHoldPointer() {
+        if (battleHoldTargetEl?.releasePointerCapture && battleHoldPointerId != null) {
             try {
-                if (typeof target.hasPointerCapture !== 'function' || target.hasPointerCapture(battleHoldPointerId)) {
-                    target.releasePointerCapture(battleHoldPointerId);
+                if (typeof battleHoldTargetEl.hasPointerCapture !== 'function'
+                    || battleHoldTargetEl.hasPointerCapture(battleHoldPointerId)) {
+                    battleHoldTargetEl.releasePointerCapture(battleHoldPointerId);
                 }
             } catch (err) {
                 // Pointer may already be released if the browser cancelled the stream.
             }
         }
+    }
+
+    function finishBattleHold() {
+        releaseBattleHoldPointer();
+        stopBattleHold();
+        updateControlStates();
     }
 
     async function resumeBattleHoldIfNeeded() {
@@ -885,36 +936,36 @@
     }
 
     function onBattlePointerDown(event) {
-        if (event.button !== 0 || battleInFlight) return;
+        if (event.button !== 0 || battleInFlight || battleHeld) return;
+        if (!event.target.closest('#age-guild-battle-wrap')) return;
         if (!Math.max(0, Math.floor(Number(guildState?.unitsUninjured) || 0))) return;
+
         event.preventDefault();
+        event.stopPropagation();
 
         battleHeld = true;
         battleHoldPointerId = event.pointerId;
+        battleHoldTargetEl = global.document.getElementById('age-guild-battle-wrap')
+            || event.currentTarget;
         global.document.getElementById('age-guild-battle-wrap')?.classList.add('is-hold-active');
 
-        const holdTarget = event.currentTarget;
-        if (holdTarget?.setPointerCapture) {
+        if (battleHoldTargetEl?.setPointerCapture) {
             try {
-                holdTarget.setPointerCapture(event.pointerId);
+                battleHoldTargetEl.setPointerCapture(event.pointerId);
             } catch (err) {
-                // Some browsers reject capture on disabled descendants; wrap-level binding avoids that.
+                // Capture can fail on some embedded browsers; document listeners still handle release.
             }
         }
 
+        bindBattleHoldReleaseListeners();
         updateControlStates();
         scheduleBattleCharge();
     }
 
     function onBattlePointerUp(event) {
-        if (!battleHeld) return;
-        if (event?.pointerId != null && battleHoldPointerId != null && event.pointerId !== battleHoldPointerId) {
-            return;
-        }
-
-        releaseBattleHoldPointer(event);
-        stopBattleHold();
-        updateControlStates();
+        if (!battleHeld || battleHoldPointerId == null) return;
+        if (event.pointerId !== battleHoldPointerId) return;
+        finishBattleHold();
     }
 
     function onWorkspaceClick(event) {
@@ -925,7 +976,7 @@
             return;
         }
 
-        if (event.target.closest('[data-age-guild-close]') || event.target.closest('#age-guild-training-close')) {
+        if (event.target.closest('[data-age-guild-close]')) {
             event.preventDefault();
             if (trainingViewActive) {
                 closeTrainingView();
@@ -934,7 +985,7 @@
             }
             return;
         }
-        if (event.target.closest('#age-guild-back') || event.target.closest('[data-age-guild-back]')) {
+        if (event.target.closest('[data-age-guild-back]') || event.target.closest('#age-guild-training-return-btn')) {
             event.preventDefault();
             stopBattleHold();
             if (trainingViewActive) {
@@ -1006,7 +1057,6 @@
         const workspace = resolveWorkspace();
         const battleBtn = global.document.getElementById('age-guild-battle-btn');
         const wrap = global.document.getElementById('age-guild-battle-wrap');
-        const battleHoldTarget = wrap || battleBtn;
         const progressRing = global.document.getElementById('age-guild-training-arena')?.querySelector('.age-guild-charge-ring-progress');
 
         if (wrap) {
@@ -1034,10 +1084,8 @@
 
         global.document.getElementById('age-settlement-menu-list')?.addEventListener('click', onSettlementMenuClick, true);
 
-        battleHoldTarget?.addEventListener('pointerdown', onBattlePointerDown);
-        battleHoldTarget?.addEventListener('pointerup', onBattlePointerUp);
-        battleHoldTarget?.addEventListener('pointercancel', onBattlePointerUp);
-        global.addEventListener('pointerup', onBattlePointerUp);
+        wrap?.addEventListener('pointerdown', onBattlePointerDown);
+        battleBtn?.addEventListener('pointerdown', onBattlePointerDown);
     }
 
     function enableAgeAdventurersGuild() {

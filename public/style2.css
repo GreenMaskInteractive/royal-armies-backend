@@ -22140,12 +22140,43 @@ button.age-guild-gear-slot {
     font-size: 0.72rem;
 }
 
+#age-page-canvas[data-age-view="guild-training"] .age-guild-top-band {
+    padding-right: max(16px, env(safe-area-inset-right));
+}
+
 #age-page-canvas[data-age-view="guild-training"] .age-guild-job-top-panel--training {
     padding: 10px 16px;
 }
 
 #age-page-canvas[data-age-view="guild-training"] .age-guild-job-top-panel--training .age-guild-training-title {
     margin: 0;
+}
+
+.age-guild-training-title-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+}
+
+.age-guild-training-return-btn {
+    flex: 0 0 auto;
+    margin-left: auto;
+    border: 1px solid rgba(184, 144, 48, 0.45);
+    border-radius: 6px;
+    padding: 6px 12px;
+    background: rgba(12, 10, 8, 0.88);
+    color: rgba(255, 215, 120, 0.88);
+    font-size: 0.78rem;
+    letter-spacing: 0.02em;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.age-guild-training-return-btn:hover,
+.age-guild-training-return-btn:focus-visible {
+    border-color: rgba(255, 215, 120, 0.75);
+    color: #ffd978;
 }
 
 /* Medieval war-table battle board */

@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Royal Armies — Age Alpha</title>
     <link rel="stylesheet" href="style.css?v=site-viewport-stable-1">
-    <link rel="stylesheet" href="style2.css?v=guild-battle-hold-cycle-1">
+    <link rel="stylesheet" href="style2.css?v=guild-training-header-1">
     <link rel="stylesheet" href="mobile-responsive.css?v=records-compact-tabs-1">
     <link rel="stylesheet" href="dev-page-navigator.css">
     <link rel="stylesheet" href="custom-cursor.css?v=scrollbar-cursor-3">
@@ -1001,12 +1001,18 @@
 
             <div id="age-guild-workspace" class="age-guild-workspace" hidden aria-hidden="true" aria-label="Adventurer's Guild job">
                 <div id="age-guild-training-arena" class="age-guild-job-arena age-guild-training-arena" hidden aria-hidden="true" aria-label="Guild training">
-                    <button type="button" id="age-guild-back" class="age-guild-back age-guild-job-back">← City</button>
-                    <button type="button" id="age-guild-training-close" class="age-guild-close age-guild-job-close" aria-label="Close training">Close</button>
-
                     <header class="age-guild-top-band" aria-label="Training header">
                         <div class="age-guild-job-top-panel age-guild-job-top-panel--training">
-                            <h2 id="age-guild-training-title" class="age-guild-training-title">Street Patrol</h2>
+                            <div class="age-guild-training-title-row">
+                                <h2 id="age-guild-training-title" class="age-guild-training-title">Street Patrol</h2>
+                                <button
+                                    type="button"
+                                    id="age-guild-training-return-btn"
+                                    class="age-guild-training-return-btn"
+                                    data-age-guild-back>
+                                    ← Village
+                                </button>
+                            </div>
                         </div>
                     </header>
 
@@ -1486,7 +1492,7 @@
     <script src="age-war-ledger.js?v=war-ledger-bottom-bar-1"></script>
     <script src="rift-unit-purchase-catalog.js?v=swarm-recruit-1"></script>
     <script src="rift-age-guild-training.js?v=guild-settlement-jobs-3"></script>
-    <script src="age-adventurers-guild.js?v=guild-battle-hold-cycle-1"></script>
+    <script src="age-adventurers-guild.js?v=guild-training-header-1"></script>
     <script src="age-barracks.js?v=swarm-recruit-1"></script>
     <script src="age-records.js?v=records-nation-defaults-1"></script>
     <script src="dev-page-navigator.js?v=dev-nav-drag-fix-1"></script>
