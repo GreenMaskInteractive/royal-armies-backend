@@ -1,0 +1,233 @@
+/**
+ * NEXUS — Age barracks unit recruitment (catalog validation + ledger updates).
+ */
+'use strict';
+
+const fs = require('fs');
+const path = require('path');
+
+const {
+    normalizeAgeArmy,
+    resolveCommanderAgeArmy,
+    buildAgeRosterHudPayload
+} = require('./nexus-age-roster');
+
+const CATALOG_PATH = path.join(__dirname, 'public', 'data', 'unit-purchase-catalog.json');
+const AGE_COMMANDER_GOLD_DEFAULT = 20000;
+const MAX_RECRUIT_QUANTITY = 999;
+const FOUR_TIER_UNLOCK_RANKS = [1, 7, 14, 18];
+const EXTENDED_UNLOCK_RANKS = [1, 7, 14, 18, 20, 21, 22];
+const CLASS_BY_PATH = {
+    Physical: 'battlemaster',
+    Magic: 'archmage'
+};
+const PROMOTION_RANK = {
+    app: 1,
+    std: 2,
+    vet: 3,
+    mst: 4,
+    leg: 5,
+    elite: 6
+};
+
+let catalogCache = null;
+
+function loadUnitPurchaseCatalog() {
+    if (catalogCache) return catalogCache;
+    const raw = fs.readFileSync(CATALOG_PATH, 'utf8');
+    catalogCache = JSON.parse(raw);
+    return catalogCache;
+}
+
+function resolveCommanderClassId(commander) {
+    const rawPath = String(commander?.path || 'PHYS').trim().toUpperCase();
+    if (rawPath === 'MAG' || rawPath === 'MAGIC') return 'archmage';
+    return 'battlemaster';
+}
+
+function resolveCommanderRank(commander) {
+    return Math.max(1, Math.floor(Number(commander?.rank) || 1));
+}
+
+function resolveCommanderAgeGold(commander) {
+    const value = Number(commander?.ageGold);
+    if (Number.isFinite(value) && value >= 0) {
+        return Math.floor(value);
+    }
+    return AGE_COMMANDER_GOLD_DEFAULT;
+}
+
+function buildCommanderAgeGoldSeedPatch(commander) {
+    const value = Number(commander?.ageGold);
+    if (Number.isFinite(value) && value >= 0) return {};
+    return { ageGold: AGE_COMMANDER_GOLD_DEFAULT };
+}
+
+function getCategoryMaxTier(catalog, categoryId) {
+    return (catalog?.units || [])
+        .filter((unit) => unit.categoryId === categoryId)
+        .reduce((max, unit) => Math.max(max, Number(unit.tier) || 0), 0);
+}
+
+function enrichCatalogUnit(catalog, unit) {
+    if (!unit || typeof unit !== 'object') return null;
+
+    const category = (catalog?.categories || []).find((entry) => entry.id === unit.categoryId);
+    const categoryPath = category?.path || 'Physical';
+    const requiredClass = unit.requiredClass || CLASS_BY_PATH[categoryPath] || 'battlemaster';
+    const unlockRank = Number.isFinite(Number(unit.unlockRank))
+        ? Number(unit.unlockRank)
+        : resolveUnlockRankForTier(catalog, unit.tier, unit.categoryId);
+
+    return {
+        ...unit,
+        requiredClass,
+        unlockRank
+    };
+}
+
+function resolveUnlockRankForTier(catalog, tier, categoryId) {
+    const rules = catalog?.meta?.tierUnlockRules;
+    const fourTier = Array.isArray(rules?.fourTierUnlockRanks)
+        ? rules.fourTierUnlockRanks
+        : FOUR_TIER_UNLOCK_RANKS;
+    const extended = Array.isArray(rules?.extendedUnlockRanks)
+        ? rules.extendedUnlockRanks
+        : EXTENDED_UNLOCK_RANKS;
+    const gameTier = Math.max(1, Math.floor(Number(tier) || 1));
+    const maxTier = getCategoryMaxTier(catalog, categoryId);
+    const table = maxTier > 4 ? extended : fourTier;
+    const index = Math.max(0, Math.min(table.length - 1, gameTier - 1));
+    return table[index];
+}
+
+function getCatalogUnitById(catalog, unitId) {
+    const id = String(unitId || '').trim();
+    const unit = (catalog?.units || []).find((entry) => entry.id === id) || null;
+    return unit ? enrichCatalogUnit(catalog, unit) : null;
+}
+
+function evaluateUnitPurchaseAccess(unit, commander) {
+    if (!unit) {
+        return { allowed: false, errorCode: 'NEXUS-AGE-012' };
+    }
+
+    const classId = resolveCommanderClassId(commander);
+    if (unit.requiredClass && unit.requiredClass !== classId) {
+        return { allowed: false, errorCode: 'NEXUS-AGE-014' };
+    }
+
+    const unlockRank = Math.max(1, Math.floor(Number(unit.unlockRank) || 1));
+    const commanderRank = resolveCommanderRank(commander);
+    if (commanderRank < unlockRank) {
+        return { allowed: false, errorCode: 'NEXUS-AGE-015', unlockRank };
+    }
+
+    return { allowed: true };
+}
+
+function normalizeRecruitQuantity(rawQuantity) {
+    const quantity = Math.floor(Number(rawQuantity) || 0);
+    if (!Number.isFinite(quantity) || quantity < 1) return 0;
+    return Math.min(MAX_RECRUIT_QUANTITY, quantity);
+}
+
+function resolveUnitPurpose(unitRole) {
+    if (unitRole === 'pvp') return 'pvp';
+    return 'rank';
+}
+
+function buildRecruitStack(unit, quantity) {
+    const firstPromotion = Array.isArray(unit.promotions) && unit.promotions.length
+        ? unit.promotions[0]
+        : 'app';
+
+    return {
+        catalogUnitId: String(unit.id || '').slice(0, 64),
+        class: String(unit.combatType || 'INFANTRY').trim().slice(0, 32) || 'INFANTRY',
+        name: String(unit.name || 'Recruit').trim().slice(0, 64) || 'Recruit',
+        tier: Math.max(1, Math.floor(Number(unit.tier) || 1)),
+        rank: PROMOTION_RANK[firstPromotion] || 1,
+        qty: quantity,
+        injuredQty: 0,
+        purpose: resolveUnitPurpose(unit.unitRole)
+    };
+}
+
+function mergeRecruitStackIntoArmy(army, recruitStack) {
+    const next = Array.isArray(army) ? army.slice() : [];
+    const matchIndex = next.findIndex((stack) => (
+        stack
+        && stack.catalogUnitId === recruitStack.catalogUnitId
+        && Math.floor(Number(stack.rank) || 0) === recruitStack.rank
+    ));
+
+    if (matchIndex >= 0) {
+        const existing = next[matchIndex];
+        next[matchIndex] = {
+            ...existing,
+            qty: Math.max(0, Math.floor(Number(existing.qty) || 0)) + recruitStack.qty
+        };
+    } else {
+        next.push(recruitStack);
+    }
+
+    return normalizeAgeArmy(next);
+}
+
+function executeAgeUnitRecruitment({ commander, unitId, quantity }) {
+    const catalog = loadUnitPurchaseCatalog();
+    const unit = getCatalogUnitById(catalog, unitId);
+    const normalizedQuantity = normalizeRecruitQuantity(quantity);
+
+    if (!unit) {
+        return { ok: false, errorCode: 'NEXUS-AGE-012' };
+    }
+    if (!normalizedQuantity) {
+        return { ok: false, errorCode: 'NEXUS-AGE-013' };
+    }
+
+    const access = evaluateUnitPurchaseAccess(unit, commander);
+    if (!access.allowed) {
+        return { ok: false, errorCode: access.errorCode, unlockRank: access.unlockRank };
+    }
+
+    const unitCost = Math.max(0, Math.floor(Number(unit.goldCost) || 0));
+    if (!unitCost) {
+        return { ok: false, errorCode: 'NEXUS-AGE-012' };
+    }
+
+    const currentGold = resolveCommanderAgeGold(commander);
+    const totalCost = unitCost * normalizedQuantity;
+    if (currentGold < totalCost) {
+        return { ok: false, errorCode: 'NEXUS-AGE-011' };
+    }
+
+    const recruitStack = buildRecruitStack(unit, normalizedQuantity);
+    const nextArmy = mergeRecruitStackIntoArmy(resolveCommanderAgeArmy(commander), recruitStack);
+    const nextGold = currentGold - totalCost;
+    const roster = buildAgeRosterHudPayload({ ...commander, ageArmy: nextArmy });
+
+    return {
+        ok: true,
+        unitId: unit.id,
+        quantity: normalizedQuantity,
+        unitCost,
+        goldSpent: totalCost,
+        ageGold: nextGold,
+        ageArmy: nextArmy,
+        unitsTotal: roster.unitsTotal,
+        unitsUninjured: roster.unitsUninjured
+    };
+}
+
+module.exports = {
+    AGE_COMMANDER_GOLD_DEFAULT,
+    MAX_RECRUIT_QUANTITY,
+    loadUnitPurchaseCatalog,
+    resolveCommanderAgeGold,
+    buildCommanderAgeGoldSeedPatch,
+    evaluateUnitPurchaseAccess,
+    executeAgeUnitRecruitment,
+    getCatalogUnitById
+};

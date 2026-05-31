@@ -10,6 +10,9 @@
     let catalog = null;
     let activeCategoryId = 'infantry';
     let selectedUnitId = '';
+    let selectedPurchasePreset = '1';
+    let purchaseInFlight = false;
+    let purchaseMessage = '';
 
     function escapeHtml(value) {
         return String(value ?? '')
@@ -80,6 +83,110 @@
     function isOpen() {
         const workspace = resolveWorkspace();
         return Boolean(workspace && !workspace.hidden);
+    }
+
+    function computeMaxAffordable(gold, unitCost) {
+        const cost = Math.max(0, Math.floor(Number(unitCost) || 0));
+        if (!cost) return 0;
+        return Math.max(0, Math.floor(Number(gold) || 0) / cost);
+    }
+
+    function resolvePurchaseQuantity(preset, gold, unitCost) {
+        const maxAffordable = computeMaxAffordable(gold, unitCost);
+        if (!maxAffordable) return 0;
+
+        if (String(preset || '').toLowerCase() === 'max') {
+            return maxAffordable;
+        }
+
+        const requested = Math.max(1, Math.floor(Number(preset) || 1));
+        return Math.min(requested, maxAffordable);
+    }
+
+    function buildPurchaseQuote(unit) {
+        const api = catalogApi();
+        const gold = resolveCommanderGold();
+        const unitCost = Math.max(0, Math.floor(Number(unit?.goldCost) || 0));
+        const maxAffordable = computeMaxAffordable(gold, unitCost);
+        const quantity = resolvePurchaseQuantity(selectedPurchasePreset, gold, unitCost);
+        const totalCost = unitCost * quantity;
+
+        return {
+            gold,
+            unitCost,
+            maxAffordable,
+            quantity,
+            totalCost,
+            canAffordAny: maxAffordable > 0,
+            canAffordSelection: quantity > 0 && totalCost <= gold,
+            formatGold: (value) => (api?.formatGold ? api.formatGold(value) : String(value))
+        };
+    }
+
+    function renderPurchaseControls(unit, access) {
+        if (!access.allowed) {
+            return (
+                `<div class="age-barracks-detail-actions">`
+                + `<button type="button" class="age-barracks-purchase-btn" disabled`
+                + ` title="${escapeHtml(access.reason)}">${escapeHtml(access.reason)}</button>`
+                + '</div>'
+            );
+        }
+
+        const quote = buildPurchaseQuote(unit);
+        const presets = ['1', '5', '10', 'max'];
+        const presetLabels = { max: 'Max' };
+        const qtyButtons = presets.map((preset) => {
+            const isActive = selectedPurchasePreset === preset;
+            const disabled = preset === 'max'
+                ? !quote.canAffordAny
+                : resolvePurchaseQuantity(preset, quote.gold, quote.unitCost) < 1;
+            const label = presetLabels[preset] || preset;
+            return (
+                `<button type="button"`
+                + ` class="age-barracks-qty-btn${isActive ? ' is-active' : ''}"`
+                + ` data-barracks-qty="${escapeHtml(preset)}"`
+                + ` aria-pressed="${isActive ? 'true' : 'false'}"`
+                + `${disabled ? ' disabled' : ''}>${escapeHtml(label)}</button>`
+            );
+        }).join('');
+
+        const buyDisabled = purchaseInFlight || !quote.canAffordSelection;
+        const buyLabel = purchaseInFlight
+            ? 'Purchasing…'
+            : `Buy — ${quote.formatGold(quote.totalCost)}`;
+        const summaryLine = quote.quantity
+            ? `${quote.quantity} ${quote.quantity === 1 ? 'unit' : 'units'} · ${quote.formatGold(quote.totalCost)}`
+            : 'Not enough gold for this unit.';
+        const messageLine = purchaseMessage
+            ? `<p class="age-barracks-detail-message${purchaseMessage.startsWith('Recruited') ? ' is-success' : ' is-error'}">${escapeHtml(purchaseMessage)}</p>`
+            : '';
+
+        return (
+            `<div class="age-barracks-purchase-panel">`
+            + `<div class="age-barracks-qty-picker">`
+            + `<span class="age-barracks-qty-label">Quantity</span>`
+            + `<div class="age-barracks-qty-options" role="group" aria-label="Purchase quantity">${qtyButtons}</div>`
+            + `<p class="age-barracks-qty-summary">${escapeHtml(summaryLine)}</p>`
+            + '</div>'
+            + messageLine
+            + `<div class="age-barracks-detail-actions">`
+            + `<button type="button" id="age-barracks-purchase-btn"`
+            + ` class="age-barracks-purchase-btn${buyDisabled ? '' : ' is-ready'}"`
+            + `${buyDisabled ? ' disabled' : ''}`
+            + ` title="${escapeHtml(buyDisabled && !purchaseInFlight ? 'Insufficient gold for this quantity.' : `Purchase ${quote.quantity} unit(s)`)}">`
+            + `${escapeHtml(buyLabel)}`
+            + '</button>'
+            + `<p class="age-barracks-detail-footnote">${escapeHtml(quote.formatGold(unit.goldCost))} per unit · ${quote.maxAffordable} max affordable</p>`
+            + '</div>'
+            + '</div>'
+        );
+    }
+
+    function refreshSelectedUnitDetail() {
+        if (!catalog || !selectedUnitId) return;
+        const api = catalogApi();
+        renderUnitDetail(api.getUnitById(catalog, selectedUnitId));
     }
 
     function renderPromotionTable(unit) {
@@ -171,20 +278,57 @@
             + lockLine
             + capNotes
             + renderPromotionTable(unit)
-            + `<div class="age-barracks-detail-actions">`
-            + `<button type="button" class="age-barracks-purchase-btn"${access.allowed ? '' : ' disabled'}`
-            + ` title="${escapeHtml(access.allowed
-                ? 'Recruitment checkout will connect to your ledger in a future update.'
-                : access.reason)}">`
-            + (access.allowed
-                ? `Recruit — ${escapeHtml(api.formatGold(unit.goldCost))}`
-                : escapeHtml(access.reason))
-            + '</button>'
-            + `<p class="age-barracks-detail-footnote">Purchases debit commander gold when recruitment goes live.</p>`
-            + '</div>'
+            + renderPurchaseControls(unit, access)
             + '</div>'
             + '</div>'
         );
+    }
+
+    async function submitPurchase() {
+        if (purchaseInFlight || !catalog || !selectedUnitId) return;
+
+        const api = catalogApi();
+        const unit = api.getUnitById(catalog, selectedUnitId);
+        if (!unit) return;
+
+        const access = api.evaluateUnitPurchaseAccess(unit, getCommanderContext());
+        if (!access.allowed) return;
+
+        const quote = buildPurchaseQuote(unit);
+        if (!quote.canAffordSelection || !quote.quantity) {
+            purchaseMessage = 'Not enough gold for this purchase.';
+            refreshSelectedUnitDetail();
+            return;
+        }
+
+        const recruitmentApi = global.RoyalArmiesAgeRecruitment;
+        if (!recruitmentApi?.recruitUnits) {
+            purchaseMessage = 'Recruitment checkout is unavailable right now.';
+            refreshSelectedUnitDetail();
+            return;
+        }
+
+        purchaseInFlight = true;
+        purchaseMessage = '';
+        refreshSelectedUnitDetail();
+
+        try {
+            const result = await recruitmentApi.recruitUnits({
+                unitId: unit.id,
+                quantity: quote.quantity
+            });
+            purchaseMessage = `Recruited ${result.quantity} ${result.quantity === 1 ? 'unit' : 'units'} for ${api.formatGold(result.goldSpent)}.`;
+            selectedPurchasePreset = '1';
+        } catch (error) {
+            purchaseMessage = error?.message || 'Recruitment failed. Try again shortly.';
+            if (typeof global.showRiftError === 'function' && error?.code) {
+                global.showRiftError(error.code, error.message);
+            }
+        } finally {
+            purchaseInFlight = false;
+            refreshSelectedUnitDetail();
+            syncCommanderGold();
+        }
     }
 
     function renderUnitGrid() {
@@ -318,6 +462,9 @@
         workspace.setAttribute('aria-hidden', 'true');
         global.document.body.classList.remove('age-barracks-open');
         selectedUnitId = '';
+        selectedPurchasePreset = '1';
+        purchaseMessage = '';
+        purchaseInFlight = false;
     }
 
     function onWorkspaceClick(event) {
@@ -325,13 +472,31 @@
         if (categoryBtn) {
             activeCategoryId = categoryBtn.getAttribute('data-barracks-category') || 'infantry';
             selectedUnitId = '';
+            selectedPurchasePreset = '1';
+            purchaseMessage = '';
             renderBarracks();
+            return;
+        }
+
+        const qtyBtn = event.target.closest('[data-barracks-qty]');
+        if (qtyBtn && !qtyBtn.disabled) {
+            selectedPurchasePreset = qtyBtn.getAttribute('data-barracks-qty') || '1';
+            purchaseMessage = '';
+            refreshSelectedUnitDetail();
+            return;
+        }
+
+        if (event.target.closest('#age-barracks-purchase-btn')) {
+            event.preventDefault();
+            void submitPurchase();
             return;
         }
 
         const unitBtn = event.target.closest('[data-barracks-unit-id]');
         if (unitBtn) {
             selectedUnitId = unitBtn.getAttribute('data-barracks-unit-id') || '';
+            selectedPurchasePreset = '1';
+            purchaseMessage = '';
             renderUnitGrid();
             return;
         }
@@ -351,6 +516,16 @@
 
     function onAgeGoldUpdated() {
         syncCommanderGold();
+        if (isOpen() && selectedUnitId) {
+            refreshSelectedUnitDetail();
+        }
+    }
+
+    function onAgeMovementUpdated() {
+        syncCommanderGold();
+        if (isOpen() && selectedUnitId) {
+            refreshSelectedUnitDetail();
+        }
     }
 
     function onSettlementVenueOpen(event) {
@@ -371,6 +546,8 @@
             global.RoyalArmiesAgeGold?.AGE_GOLD_UPDATED_EVENT || 'royalarmies:age-gold-updated',
             onAgeGoldUpdated
         );
+        global.addEventListener('royalarmies:age-movement-updated', onAgeMovementUpdated);
+        global.addEventListener('royalarmies:age-recruitment-updated', onAgeMovementUpdated);
     }
 
     function enableAgeBarracks() {

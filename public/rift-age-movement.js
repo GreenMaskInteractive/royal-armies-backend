@@ -246,6 +246,12 @@
         if (Array.isArray(payload.ageArmy) && typeof global.player !== 'undefined') {
             global.player.ageArmy = payload.ageArmy.slice();
         }
+        if (payload.ageGold !== undefined && global.RoyalArmiesAgeGold?.setAgeCommanderGold) {
+            global.RoyalArmiesAgeGold.setAgeCommanderGold(
+                Math.max(0, Math.floor(Number(payload.ageGold) || 0)),
+                { source: 'server-sync', silent: true }
+            );
+        }
 
         global.dispatchEvent(new CustomEvent('royalarmies:age-movement-updated', {
             detail: { ...state }
@@ -489,7 +495,8 @@
         getAlliedNationIds,
         getWarNationIds,
         getUnitsTotal,
-        getUnitsUninjured
+        getUnitsUninjured,
+        applyStatePayload
     };
 
     if (global.RoyalArmiesAgeWaterRoutes?.loadRoutes) {

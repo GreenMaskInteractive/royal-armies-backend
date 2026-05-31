@@ -80,6 +80,11 @@ const {
     buildAgeRosterHudPayload,
     buildCommanderAgeRosterSeedPatch
 } = require('./nexus-age-roster');
+const {
+    resolveCommanderAgeGold,
+    buildCommanderAgeGoldSeedPatch,
+    executeAgeUnitRecruitment
+} = require('./nexus-age-recruitment');
 
 /* Block 2: Environment Path Resolution */
 const isProduction = process.env.RENDER === 'true';
@@ -1089,7 +1094,10 @@ function ensureCommanderAgeRoster(commander) {
         return buildAgeRosterHudPayload(null);
     }
 
-    const seedPatch = buildCommanderAgeRosterSeedPatch(commander);
+    const seedPatch = {
+        ...buildCommanderAgeRosterSeedPatch(commander),
+        ...buildCommanderAgeGoldSeedPatch(commander)
+    };
     if (Object.keys(seedPatch).length) {
         db.get('commanders')
             .find({ username: commander.username })
@@ -1123,6 +1131,7 @@ function buildAgeMovementStatePayload(username, commander) {
         cityLosers: store.cityLosers,
         alliedNationIds: mapNation ? resolveAlliedNationIds(mapNation) : [],
         rules,
+        ageGold: resolveCommanderAgeGold(commander),
         unitsTotal: roster.unitsTotal,
         unitsUninjured: roster.unitsUninjured,
         ageArmy: roster.ageArmy
@@ -4965,6 +4974,54 @@ app.get('/api/portal/age/city-players', (req, res) => {
     res.json({
         status: 'ok',
         ...buildAgeCityPlayersPayload(catalogCityId, username)
+    });
+});
+
+app.post('/api/portal/age/recruit-units', (req, res) => {
+    const username = resolveLedgerCommanderUsername(req.body?.username || '');
+    if (!username) {
+        return sendApiError(res, 'NEXUS-GEN-002');
+    }
+
+    let commander = db.get('commanders').find({ username }).value();
+    if (!commander) {
+        return sendApiError(res, 'NEXUS-GEN-004');
+    }
+
+    ensureCommanderAgeRoster(commander);
+    commander = db.get('commanders').find({ username }).value();
+
+    const unitId = String(req.body?.unitId || '').trim();
+    const quantity = req.body?.quantity;
+    const result = executeAgeUnitRecruitment({ commander, unitId, quantity });
+
+    if (!result.ok) {
+        return sendApiError(res, result.errorCode || 'NEXUS-AGE-012');
+    }
+
+    db.get('commanders')
+        .find({ username })
+        .assign({
+            ageGold: result.ageGold,
+            ageArmy: result.ageArmy,
+            ageRecruitedAt: new Date().toISOString()
+        })
+        .write();
+
+    commander = db.get('commanders').find({ username }).value();
+
+    res.json({
+        status: 'ok',
+        action: 'recruit-units',
+        unitId: result.unitId,
+        quantity: result.quantity,
+        unitCost: result.unitCost,
+        goldSpent: result.goldSpent,
+        ageGold: result.ageGold,
+        ageArmy: result.ageArmy,
+        unitsTotal: result.unitsTotal,
+        unitsUninjured: result.unitsUninjured,
+        ...buildAgeMovementStatePayload(username, commander)
     });
 });
 

@@ -8,6 +8,13 @@ function floorNonNegative(value) {
     return Number.isFinite(numeric) && numeric > 0 ? numeric : 0;
 }
 
+function attachOptionalStackId(stack, raw) {
+    if (raw?.catalogUnitId) {
+        stack.catalogUnitId = String(raw.catalogUnitId).trim().slice(0, 64);
+    }
+    return stack;
+}
+
 function normalizeAgeArmyStack(raw) {
     if (!raw || typeof raw !== 'object') return null;
 
@@ -16,7 +23,7 @@ function normalizeAgeArmyStack(raw) {
 
     const injuredQty = Math.min(qty, floorNonNegative(raw.injuredQty ?? raw.injured));
 
-    return {
+    return attachOptionalStackId({
         class: String(raw.class || raw.type || 'INFANTRY').trim().slice(0, 32) || 'INFANTRY',
         name: String(raw.name || 'Recruit Shieldman').trim().slice(0, 64) || 'Recruit Shieldman',
         rank: Math.max(1, Math.floor(Number(raw.rank) || 1)),
@@ -24,7 +31,7 @@ function normalizeAgeArmyStack(raw) {
         qty,
         injuredQty,
         purpose: String(raw.purpose || raw.role || raw.armyRole || '').trim().slice(0, 24)
-    };
+    }, raw);
 }
 
 function normalizeAgeArmy(raw) {

@@ -20906,6 +20906,83 @@ body.age-barracks-open {
     gap: 8px;
 }
 
+.age-barracks-purchase-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    margin-top: 4px;
+}
+
+.age-barracks-qty-picker {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.age-barracks-qty-label {
+    font-size: 0.68rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: rgba(201, 168, 76, 0.78);
+}
+
+.age-barracks-qty-options {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.age-barracks-qty-btn {
+    min-width: 52px;
+    padding: 8px 12px;
+    border: 1px solid rgba(184, 144, 48, 0.28);
+    border-radius: 8px;
+    background: rgba(0, 0, 0, 0.28);
+    color: #ecdcb4;
+    font-size: 0.82rem;
+    letter-spacing: 0.04em;
+    cursor: pointer;
+}
+
+.age-barracks-qty-btn.is-active,
+.age-barracks-qty-btn:hover:not(:disabled),
+.age-barracks-qty-btn:focus-visible:not(:disabled) {
+    border-color: rgba(255, 215, 0, 0.52);
+    background: rgba(255, 215, 0, 0.08);
+    color: #ffd978;
+}
+
+.age-barracks-qty-btn:disabled {
+    opacity: 0.42;
+    cursor: not-allowed;
+}
+
+.age-barracks-qty-summary {
+    margin: 0;
+    font-size: 0.8rem;
+    color: rgba(236, 220, 180, 0.72);
+}
+
+.age-barracks-detail-message {
+    margin: 0;
+    padding: 8px 10px;
+    border-radius: 8px;
+    font-size: 0.78rem;
+    line-height: 1.45;
+}
+
+.age-barracks-detail-message.is-success {
+    border: 1px solid rgba(120, 200, 120, 0.28);
+    background: rgba(30, 80, 40, 0.22);
+    color: rgba(180, 240, 180, 0.92);
+}
+
+.age-barracks-detail-message.is-error {
+    border: 1px solid rgba(255, 120, 90, 0.28);
+    background: rgba(120, 40, 30, 0.22);
+    color: rgba(255, 180, 150, 0.92);
+}
+
 .age-barracks-purchase-btn {
     padding: 12px 16px;
     border: 1px solid rgba(184, 144, 48, 0.42);
@@ -20917,6 +20994,13 @@ body.age-barracks-open {
     text-transform: uppercase;
     cursor: not-allowed;
     opacity: 0.72;
+}
+
+.age-barracks-purchase-btn.is-ready:not(:disabled) {
+    cursor: pointer;
+    opacity: 1;
+    border-color: rgba(255, 215, 0, 0.62);
+    background: linear-gradient(180deg, rgba(255, 215, 0, 0.24), rgba(255, 215, 0, 0.08));
 }
 
 .age-barracks-detail-footnote,

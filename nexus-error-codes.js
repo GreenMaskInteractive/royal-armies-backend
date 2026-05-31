@@ -590,6 +590,36 @@
             message: 'You already hold that city.',
             category: 'game'
         },
+        'NEXUS-AGE-011': {
+            http: 400,
+            title: 'Recruitment',
+            message: 'Insufficient gold for this purchase.',
+            category: 'game'
+        },
+        'NEXUS-AGE-012': {
+            http: 400,
+            title: 'Recruitment',
+            message: 'That unit is not available in the barracks catalog.',
+            category: 'game'
+        },
+        'NEXUS-AGE-013': {
+            http: 400,
+            title: 'Recruitment',
+            message: 'Choose a valid unit quantity before purchasing.',
+            category: 'game'
+        },
+        'NEXUS-AGE-014': {
+            http: 400,
+            title: 'Recruitment',
+            message: 'Your commander class cannot recruit this unit line.',
+            category: 'game'
+        },
+        'NEXUS-AGE-015': {
+            http: 400,
+            title: 'Recruitment',
+            message: 'Your commander rank is too low to recruit this unit.',
+            category: 'game'
+        },
 
         /* --- Client-only network --- */
         'RIFT-NET-001': {
