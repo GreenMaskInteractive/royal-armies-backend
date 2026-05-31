@@ -21764,7 +21764,7 @@ body.age-guild-overlay-open .age-guild-bounties-arena:not([hidden]) {
 #age-page-canvas .age-guild-battle-panel {
     position: absolute;
     top: 8px;
-    left: 0;
+    left: 200px;
     width: min(400px, 44vw);
     max-height: min(48vh, 400px);
     display: flex;
@@ -22429,6 +22429,9 @@ button.age-guild-gear-slot {
 .age-guild-top-band,
 .age-guild-bottom-band,
 .age-guild-battle-deck,
+.age-guild-battle-board,
+.age-guild-battle-board-war-hub,
+.age-guild-battle-btn-wrap,
 .age-guild-job-body,
 .age-guild-job-back,
 .age-guild-job-close {
