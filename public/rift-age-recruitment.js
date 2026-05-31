@@ -25,22 +25,63 @@
         return saved && saved.trim() ? saved.trim() : '';
     }
 
-    function applyRecruitmentPayload(payload) {
+    function syncRecruitmentResources(payload) {
         if (!payload || typeof payload !== 'object') return;
 
-        if (payload.ageGold !== undefined && global.RoyalArmiesAgeGold?.setAgeCommanderGold) {
-            global.RoyalArmiesAgeGold.setAgeCommanderGold(
-                Math.max(0, Math.floor(Number(payload.ageGold) || 0)),
-                { source: 'barracks-recruit' }
-            );
+        const nextGold = payload.ageGold !== undefined
+            ? Math.max(0, Math.floor(Number(payload.ageGold) || 0))
+            : null;
+        const nextProvisions = payload.ageProvisions !== undefined
+            ? Math.max(0, Math.floor(Number(payload.ageProvisions) || 0))
+            : null;
+        const goldSpent = Math.max(0, Math.floor(Number(payload.goldSpent) || 0));
+        const provisionsSpent = Math.max(0, Math.floor(Number(payload.provisionsSpent) || 0));
+
+        if (nextGold != null && global.RoyalArmiesAgeGold?.setAgeCommanderGold) {
+            global.RoyalArmiesAgeGold.setAgeCommanderGold(nextGold, { source: 'barracks-recruit' });
+        } else if (goldSpent && global.RoyalArmiesAgeGold?.applyAgeCommanderGoldDelta) {
+            global.RoyalArmiesAgeGold.applyAgeCommanderGoldDelta(-goldSpent, { source: 'barracks-recruit' });
         }
 
-        if (payload.ageProvisions !== undefined && global.RoyalArmiesAgeProvisions?.setAgeCommanderProvisions) {
-            global.RoyalArmiesAgeProvisions.setAgeCommanderProvisions(
-                Math.max(0, Math.floor(Number(payload.ageProvisions) || 0)),
-                { source: 'barracks-recruit' }
+        if (nextProvisions != null && global.RoyalArmiesAgeProvisions?.setAgeCommanderProvisions) {
+            global.RoyalArmiesAgeProvisions.setAgeCommanderProvisions(nextProvisions, { source: 'barracks-recruit' });
+        } else if (provisionsSpent && global.RoyalArmiesAgeProvisions?.applyAgeCommanderProvisionsDelta) {
+            global.RoyalArmiesAgeProvisions.applyAgeCommanderProvisionsDelta(-provisionsSpent, { source: 'barracks-recruit' });
+        } else if (nextProvisions != null) {
+            writeHudProvisionsFallback(nextProvisions);
+        } else if (provisionsSpent) {
+            writeHudProvisionsFallback(
+                Math.max(0, resolveHudProvisionsFallback() - provisionsSpent)
             );
         }
+    }
+
+    function resolveHudProvisionsFallback() {
+        if (typeof global.player !== 'undefined' && Number.isFinite(Number(global.player.ageProvisions))) {
+            return Math.max(0, Math.floor(Number(global.player.ageProvisions)));
+        }
+        const el = global.document.getElementById('age-hud-provisions');
+        if (!el?.textContent) return 0;
+        const parsed = Number(String(el.textContent).replace(/[^\d]/g, ''));
+        return Number.isFinite(parsed) ? Math.max(0, Math.floor(parsed)) : 0;
+    }
+
+    function writeHudProvisionsFallback(value) {
+        const normalized = Math.max(0, Math.floor(Number(value) || 0));
+        const el = global.document.getElementById('age-hud-provisions');
+        if (el) {
+            el.textContent = normalized.toLocaleString('en-US');
+        }
+        if (typeof global.player !== 'undefined') {
+            global.player.ageProvisions = normalized;
+        }
+        global.dispatchEvent(new CustomEvent('royalarmies:age-provisions-updated', {
+            detail: { provisions: normalized, source: 'barracks-recruit-fallback' }
+        }));
+    }
+
+    function applyRecruitmentPayload(payload) {
+        if (!payload || typeof payload !== 'object') return;
 
         if (global.RoyalArmiesAgeMovement?.applyStatePayload) {
             global.RoyalArmiesAgeMovement.applyStatePayload(payload);
@@ -52,6 +93,8 @@
                 global.refreshAgeHudUnits();
             }
         }
+
+        syncRecruitmentResources(payload);
 
         global.dispatchEvent(new CustomEvent('royalarmies:age-recruitment-updated', {
             detail: { ...payload }
@@ -96,7 +139,7 @@
     }
 
     global.RoyalArmiesAgeRecruitment = {
-        MAX_RECRUIT_QUANTITY: 999,
+        MAX_RECRUIT_QUANTITY: 15,
         recruitUnits,
         applyRecruitmentPayload
     };

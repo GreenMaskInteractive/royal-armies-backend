@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Royal Armies — Age Alpha</title>
     <link rel="stylesheet" href="style.css?v=royal-family-titles-1">
-    <link rel="stylesheet" href="style2.css?v=barracks-provisions-1">
+    <link rel="stylesheet" href="style2.css?v=recruit-batch-cap-1">
     <link rel="stylesheet" href="mobile-responsive.css?v=records-compact-tabs-1">
     <link rel="stylesheet" href="dev-page-navigator.css">
     <link rel="stylesheet" href="custom-cursor.css?v=scrollbar-cursor-3">
@@ -962,9 +962,15 @@
                             <p id="age-barracks-commander-status" class="age-barracks-commander-status" aria-live="polite"></p>
                         </div>
                         <div class="age-barracks-header-actions">
-                            <div class="age-barracks-wallet" aria-label="Commander gold">
-                                <span class="age-barracks-wallet-label">Gold</span>
-                                <span id="age-barracks-commander-gold" class="age-barracks-wallet-value" aria-live="polite">—</span>
+                            <div class="age-barracks-wallets">
+                                <div class="age-barracks-wallet" aria-label="Commander gold">
+                                    <span class="age-barracks-wallet-label">Gold</span>
+                                    <span id="age-barracks-commander-gold" class="age-barracks-wallet-value" aria-live="polite">—</span>
+                                </div>
+                                <div class="age-barracks-wallet" aria-label="Commander provisions">
+                                    <span class="age-barracks-wallet-label">Provisions</span>
+                                    <span id="age-barracks-commander-provisions" class="age-barracks-wallet-value" aria-live="polite">—</span>
+                                </div>
                             </div>
                             <button
                                 type="button"
@@ -1296,8 +1302,8 @@
     <script src="age-world-water-routes.js?v=cross-border-neighbors-2"></script>
     <script src="rift-age-movement.js?v=barracks-provisions-1"></script>
     <script src="rift-age-gold.js?v=age-gold-sync-1"></script>
-    <script src="rift-age-provisions.js?v=barracks-provisions-1"></script>
-    <script src="rift-age-recruitment.js?v=barracks-provisions-1"></script>
+    <script src="rift-age-provisions.js?v=provisions-deplete-1"></script>
+    <script src="rift-age-recruitment.js?v=swarm-recruit-1"></script>
     <script src="rift-player-loc-pins.js?v=player-loc-pins-1"></script>
     <script src="age-world-map.js?v=cross-border-neighbors-2"></script>
     <script src="age-world-plan-overlay.js?v=hq-clear-plan-fix-1"></script>
@@ -1310,8 +1316,8 @@
     <script src="age-quick-tips-panel.js?v=quick-tips-panel-1"></script>
     <script src="age-page.js?v=barracks-provisions-1"></script>
     <script src="age-war-ledger.js?v=war-ledger-bottom-bar-1"></script>
-    <script src="rift-unit-purchase-catalog.js?v=barracks-provisions-1"></script>
-    <script src="age-barracks.js?v=barracks-provisions-1"></script>
+    <script src="rift-unit-purchase-catalog.js?v=swarm-recruit-1"></script>
+    <script src="age-barracks.js?v=swarm-recruit-1"></script>
     <script src="age-records.js?v=records-nation-defaults-1"></script>
     <script src="dev-page-navigator.js?v=dev-nav-drag-fix-1"></script>
     <script src="custom-cursor.js?v=scrollbar-cursor-3"></script>

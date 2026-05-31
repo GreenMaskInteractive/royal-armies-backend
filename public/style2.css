@@ -20541,6 +20541,13 @@ body.age-barracks-open {
     flex: 0 0 auto;
 }
 
+.age-barracks-wallets {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 10px;
+}
+
 .age-barracks-wallet {
     display: flex;
     flex-direction: column;

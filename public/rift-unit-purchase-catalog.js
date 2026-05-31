@@ -120,7 +120,7 @@
 
         catalogPromise = (async () => {
             const response = await global.fetch(
-                resolveApiUrl('data/unit-purchase-catalog.json?v=unit-catalog-3'),
+                resolveApiUrl('data/unit-purchase-catalog.json?v=unit-catalog-5'),
                 { cache: 'no-store' }
             );
             if (!response.ok) {
@@ -233,6 +233,43 @@
         return Number.isFinite(upc) && upc > 0 ? Math.floor(upc) : 0;
     }
 
+    function resolveRecruitBalanceRules(catalog) {
+        return catalog?.meta?.recruitBalance || {};
+    }
+
+    /**
+     * Cheaper/weaker swarm units (tier 1 rank or PvP) skip the standard 15 batch cap so
+     * training battles stay viable as provisions grow through The Swarm phase.
+     */
+    function isSwarmRecruitUnit(unit, catalog) {
+        if (!unit) return false;
+        if (unit.swarmRecruitEligible === true) return true;
+        if (unit.swarmRecruitEligible === false) return false;
+
+        const tier = Math.max(1, Math.floor(Number(unit.tier) || 1));
+        if (tier === 1) return true;
+
+        const rules = resolveRecruitBalanceRules(catalog || getCachedCatalog());
+        const swarmMaxUpc = Math.max(1, Math.floor(Number(rules.swarmRecruitMaxUpc) || 11));
+        const upc = resolveRecruitUnitUpc(unit);
+        return upc > 0 && upc <= swarmMaxUpc;
+    }
+
+    function resolveMaxRecruitBatchQuantity(unit, catalog) {
+        const rules = resolveRecruitBalanceRules(catalog || getCachedCatalog());
+        if (isSwarmRecruitUnit(unit, catalog)) {
+            const swarmCeiling = Number(rules.swarmRecruitMaxBatchQuantity);
+            return Number.isFinite(swarmCeiling) && swarmCeiling > 0
+                ? Math.floor(swarmCeiling)
+                : 999;
+        }
+
+        const standardCap = Number(rules.maxBatchQuantity);
+        return Number.isFinite(standardCap) && standardCap > 0
+            ? Math.floor(standardCap)
+            : 15;
+    }
+
     function formatGold(value) {
         const numeric = Number(value);
         if (!Number.isFinite(numeric)) return '—';
@@ -258,6 +295,9 @@
         evaluateUnitPurchaseAccess,
         formatUnitRoleLabel,
         resolveRecruitUnitUpc,
+        resolveRecruitBalanceRules,
+        isSwarmRecruitUnit,
+        resolveMaxRecruitBatchQuantity,
         resolveUnitPortraitUrl,
         formatGold,
         formatPromotionLabel,

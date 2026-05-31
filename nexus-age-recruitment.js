@@ -15,7 +15,8 @@ const {
 const CATALOG_PATH = path.join(__dirname, 'public', 'data', 'unit-purchase-catalog.json');
 const AGE_COMMANDER_GOLD_DEFAULT = 20000;
 const AGE_COMMANDER_PROVISIONS_DEFAULT = 132;
-const MAX_RECRUIT_QUANTITY = 999;
+const MAX_RECRUIT_QUANTITY_DEFAULT = 15;
+const SWARM_RECRUIT_BATCH_CEILING_DEFAULT = 999;
 const FOUR_TIER_UNLOCK_RANKS = [1, 7, 14, 18];
 const EXTENDED_UNLOCK_RANKS = [1, 7, 14, 18, 20, 21, 22];
 const CLASS_BY_PATH = {
@@ -86,6 +87,46 @@ function resolveRecruitUnitUpc(unit) {
     return Number.isFinite(upc) && upc > 0 ? Math.floor(upc) : 0;
 }
 
+function resolveRecruitBalanceRules(catalog) {
+    return catalog?.meta?.recruitBalance || {};
+}
+
+function isSwarmRecruitUnit(unit, catalog) {
+    if (!unit) return false;
+    if (unit.swarmRecruitEligible === true) return true;
+    if (unit.swarmRecruitEligible === false) return false;
+
+    const tier = Math.max(1, Math.floor(Number(unit.tier) || 1));
+    if (tier === 1) return true;
+
+    const rules = resolveRecruitBalanceRules(catalog || loadUnitPurchaseCatalog());
+    const swarmMaxUpc = Math.max(1, Math.floor(Number(rules.swarmRecruitMaxUpc) || 11));
+    const upc = resolveRecruitUnitUpc(unit);
+    return upc > 0 && upc <= swarmMaxUpc;
+}
+
+function resolveMaxRecruitBatchQuantity(unit) {
+    const catalog = loadUnitPurchaseCatalog();
+    const rules = resolveRecruitBalanceRules(catalog);
+    if (isSwarmRecruitUnit(unit, catalog)) {
+        const swarmCeiling = Number(rules.swarmRecruitMaxBatchQuantity);
+        return Number.isFinite(swarmCeiling) && swarmCeiling > 0
+            ? Math.floor(swarmCeiling)
+            : SWARM_RECRUIT_BATCH_CEILING_DEFAULT;
+    }
+
+    return resolveMaxRecruitQuantity();
+}
+
+function resolveMaxRecruitQuantity() {
+    const catalog = loadUnitPurchaseCatalog();
+    const fromMeta = catalog?.meta?.recruitBalance?.maxBatchQuantity;
+    if (Number.isFinite(Number(fromMeta)) && Number(fromMeta) > 0) {
+        return Math.floor(Number(fromMeta));
+    }
+    return MAX_RECRUIT_QUANTITY_DEFAULT;
+}
+
 function computeMaxRecruitQuantityByGold(gold, unitCost) {
     const cost = Math.max(0, Math.floor(Number(unitCost) || 0));
     if (!cost) return 0;
@@ -98,11 +139,12 @@ function computeMaxRecruitQuantityByProvisions(provisions, upcPerUnit) {
     return Math.floor(Math.max(0, Number(provisions) || 0) / upc);
 }
 
-function computeMaxRecruitQuantity(gold, provisions, unitCost, upcPerUnit) {
+function computeMaxRecruitQuantity(gold, provisions, unitCost, upcPerUnit, unit) {
     const byGold = computeMaxRecruitQuantityByGold(gold, unitCost);
     const byProvisions = computeMaxRecruitQuantityByProvisions(provisions, upcPerUnit);
     if (!byGold || !byProvisions) return 0;
-    return Math.min(MAX_RECRUIT_QUANTITY, byGold, byProvisions);
+    const batchCap = unit ? resolveMaxRecruitBatchQuantity(unit) : resolveMaxRecruitQuantity();
+    return Math.min(batchCap, byGold, byProvisions);
 }
 
 function getCategoryMaxTier(catalog, categoryId) {
@@ -168,10 +210,11 @@ function evaluateUnitPurchaseAccess(unit, commander) {
     return { allowed: true };
 }
 
-function normalizeRecruitQuantity(rawQuantity) {
+function normalizeRecruitQuantity(rawQuantity, unit) {
     const quantity = Math.floor(Number(rawQuantity) || 0);
     if (!Number.isFinite(quantity) || quantity < 1) return 0;
-    return Math.min(MAX_RECRUIT_QUANTITY, quantity);
+    const batchCap = unit ? resolveMaxRecruitBatchQuantity(unit) : resolveMaxRecruitQuantity();
+    return Math.min(batchCap, quantity);
 }
 
 function resolveUnitPurpose(unitRole) {
@@ -220,7 +263,7 @@ function mergeRecruitStackIntoArmy(army, recruitStack) {
 function executeAgeUnitRecruitment({ commander, unitId, quantity }) {
     const catalog = loadUnitPurchaseCatalog();
     const unit = getCatalogUnitById(catalog, unitId);
-    const normalizedQuantity = normalizeRecruitQuantity(quantity);
+    const normalizedQuantity = normalizeRecruitQuantity(quantity, unit);
 
     if (!unit) {
         return { ok: false, errorCode: 'NEXUS-AGE-012' };
@@ -242,7 +285,7 @@ function executeAgeUnitRecruitment({ commander, unitId, quantity }) {
 
     const currentGold = resolveCommanderAgeGold(commander);
     const currentProvisions = resolveCommanderAgeProvisions(commander);
-    const maxAllowed = computeMaxRecruitQuantity(currentGold, currentProvisions, unitCost, upcPerUnit);
+    const maxAllowed = computeMaxRecruitQuantity(currentGold, currentProvisions, unitCost, upcPerUnit, unit);
     if (normalizedQuantity > maxAllowed) {
         const maxByGold = computeMaxRecruitQuantityByGold(currentGold, unitCost);
         const maxByProvisions = computeMaxRecruitQuantityByProvisions(currentProvisions, upcPerUnit);
@@ -288,7 +331,11 @@ function executeAgeUnitRecruitment({ commander, unitId, quantity }) {
 module.exports = {
     AGE_COMMANDER_GOLD_DEFAULT,
     AGE_COMMANDER_PROVISIONS_DEFAULT,
-    MAX_RECRUIT_QUANTITY,
+    MAX_RECRUIT_QUANTITY: MAX_RECRUIT_QUANTITY_DEFAULT,
+    SWARM_RECRUIT_BATCH_CEILING_DEFAULT,
+    resolveMaxRecruitQuantity,
+    resolveMaxRecruitBatchQuantity,
+    isSwarmRecruitUnit,
     loadUnitPurchaseCatalog,
     resolveCommanderAgeGold,
     resolveCommanderAgeProvisions,

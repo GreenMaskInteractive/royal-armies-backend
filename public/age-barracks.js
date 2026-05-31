@@ -45,6 +45,22 @@
         return parseDisplayNumber(raw);
     }
 
+    function resolveCommanderProvisions() {
+        if (global.RoyalArmiesAgeProvisions?.resolveAgeCommanderProvisions) {
+            return global.RoyalArmiesAgeProvisions.resolveAgeCommanderProvisions();
+        }
+        if (typeof global.resolveAgeCommanderProvisions === 'function') {
+            return global.resolveAgeCommanderProvisions();
+        }
+
+        const hudEl = global.document.getElementById('age-hud-provisions');
+        if (hudEl?.textContent) {
+            const fromHud = parseDisplayNumber(hudEl.textContent);
+            if (fromHud != null) return fromHud;
+        }
+        return 132;
+    }
+
     function resolveCommanderGold() {
         const hudEl = global.document.getElementById('age-hud-gold');
         if (hudEl?.textContent) {
@@ -61,26 +77,6 @@
         return 20000;
     }
 
-    function resolveCommanderProvisions() {
-        const hudEl = global.document.getElementById('age-hud-provisions');
-        if (hudEl?.textContent) {
-            const fromHud = parseDisplayNumber(hudEl.textContent);
-            if (fromHud != null) return fromHud;
-        }
-
-        if (global.RoyalArmiesAgeProvisions?.resolveAgeCommanderProvisions) {
-            return global.RoyalArmiesAgeProvisions.resolveAgeCommanderProvisions();
-        }
-        if (typeof global.resolveAgeCommanderProvisions === 'function') {
-            return global.resolveAgeCommanderProvisions();
-        }
-        return 132;
-    }
-
-    function resolveMaxRecruitQuantity() {
-        return global.RoyalArmiesAgeRecruitment?.MAX_RECRUIT_QUANTITY || 999;
-    }
-
     function computeMaxAffordableByGold(gold, unitCost) {
         const cost = Math.max(0, Math.floor(Number(unitCost) || 0));
         if (!cost) return 0;
@@ -93,15 +89,31 @@
         return Math.floor(Math.max(0, Number(provisions) || 0) / upc);
     }
 
-    function computeMaxAffordable(gold, unitCost, provisions, upcPerUnit) {
+    function resolveMaxRecruitQuantityForUnit(unit) {
+        const api = catalogApi();
+        if (api?.resolveMaxRecruitBatchQuantity) {
+            return api.resolveMaxRecruitBatchQuantity(unit, catalog);
+        }
+        return global.RoyalArmiesAgeRecruitment?.MAX_RECRUIT_QUANTITY || 15;
+    }
+
+    function isSwarmRecruitUnit(unit) {
+        const api = catalogApi();
+        if (api?.isSwarmRecruitUnit) {
+            return api.isSwarmRecruitUnit(unit, catalog);
+        }
+        return Math.max(1, Math.floor(Number(unit?.tier) || 1)) === 1;
+    }
+
+    function computeMaxAffordable(gold, unitCost, provisions, upcPerUnit, unit) {
         const byGold = computeMaxAffordableByGold(gold, unitCost);
         const byProvisions = computeMaxAffordableByProvisions(provisions, upcPerUnit);
         if (!byGold || !byProvisions) return 0;
-        return Math.min(resolveMaxRecruitQuantity(), byGold, byProvisions);
+        return Math.min(resolveMaxRecruitQuantityForUnit(unit), byGold, byProvisions);
     }
 
-    function resolvePurchaseQuantity(preset, gold, unitCost, provisions, upcPerUnit) {
-        const maxAffordable = computeMaxAffordable(gold, unitCost, provisions, upcPerUnit);
+    function resolvePurchaseQuantity(preset, gold, unitCost, provisions, upcPerUnit, unit) {
+        const maxAffordable = computeMaxAffordable(gold, unitCost, provisions, upcPerUnit, unit);
         if (!maxAffordable) return 0;
 
         const normalizedPreset = String(preset || '').trim().toLowerCase();
@@ -129,6 +141,14 @@
         const api = catalogApi();
         const gold = resolveCommanderGold();
         goldEl.textContent = api?.formatGold ? api.formatGold(gold) : gold.toLocaleString('en-US');
+    }
+
+    function syncCommanderProvisions() {
+        const provisionsEl = global.document.getElementById('age-barracks-commander-provisions');
+        if (!provisionsEl) return;
+
+        const provisions = resolveCommanderProvisions();
+        provisionsEl.textContent = provisions.toLocaleString('en-US');
     }
 
     function ensureValidActiveCategory() {
@@ -161,17 +181,27 @@
         const upcPerUnit = api?.resolveRecruitUnitUpc ? api.resolveRecruitUnitUpc(unit) : 0;
         const maxByGold = computeMaxAffordableByGold(gold, unitCost);
         const maxByProvisions = computeMaxAffordableByProvisions(provisions, upcPerUnit);
-        const maxAffordable = computeMaxAffordable(gold, unitCost, provisions, upcPerUnit);
+        const maxAffordable = computeMaxAffordable(gold, unitCost, provisions, upcPerUnit, unit);
         const quantity = resolvePurchaseQuantity(
             selectedPurchasePreset,
             gold,
             unitCost,
             provisions,
-            upcPerUnit
+            upcPerUnit,
+            unit
         );
         const totalGoldCost = unitCost * quantity;
         const totalProvisionsCost = upcPerUnit * quantity;
-        const limitedByProvisions = maxByProvisions > 0 && maxByProvisions <= maxByGold;
+        const batchCap = resolveMaxRecruitQuantityForUnit(unit);
+        const swarmRecruit = isSwarmRecruitUnit(unit);
+        const rawMax = Math.min(
+            maxByGold || 0,
+            maxByProvisions || 0
+        );
+        const limitedByBatch = !swarmRecruit && rawMax > batchCap && maxAffordable === batchCap;
+        const limitedByProvisions = !limitedByBatch
+            && maxByProvisions > 0
+            && maxByProvisions <= maxByGold;
 
         return {
             gold,
@@ -181,6 +211,9 @@
             maxByGold,
             maxByProvisions,
             maxAffordable,
+            batchCap,
+            swarmRecruit,
+            limitedByBatch,
             limitedByProvisions,
             quantity,
             totalGoldCost,
@@ -214,7 +247,8 @@
                     quote.gold,
                     quote.unitCost,
                     quote.provisions,
-                    quote.upcPerUnit
+                    quote.upcPerUnit,
+                    unit
                 ) < 1;
             const label = preset === 'max'
                 ? `Max (${quote.maxAffordable})`
@@ -239,9 +273,13 @@
                 ? 'Not enough gold or Provisions for this unit.'
                 : 'Unit provision cost unavailable.');
         const limitLine = quote.canAffordAny
-            ? (quote.limitedByProvisions
-                ? `Limited by Provisions (${quote.maxByProvisions} max · ${quote.upcPerUnit} UPC each)`
-                : `Limited by gold (${quote.maxByGold} max · ${quote.formatGold(quote.unitCost)} each)`)
+            ? (quote.swarmRecruit
+                ? `Swarm recruit — up to ${quote.maxAffordable} by Provisions and gold (no per-purchase cap)`
+                : quote.limitedByBatch
+                    ? `Limited to ${quote.batchCap} units per purchase (${quote.upcPerUnit} UPC each · ${quote.maxByProvisions} affordable by Provisions)`
+                    : quote.limitedByProvisions
+                        ? `Limited by Provisions (${quote.maxByProvisions} max · ${quote.upcPerUnit} UPC each)`
+                        : `Limited by gold (${quote.maxByGold} max · ${quote.formatGold(quote.unitCost)} each)`)
             : '';
         const messageLine = purchaseMessage
             ? `<p class="age-barracks-detail-message${purchaseMessage.startsWith('Recruited') ? ' is-success' : ' is-error'}">${escapeHtml(purchaseMessage)}</p>`
@@ -264,7 +302,7 @@
                 : `Purchase ${quote.quantity} unit(s)`)}">`
             + `${escapeHtml(buyLabel)}`
             + '</button>'
-            + `<p class="age-barracks-detail-footnote">${escapeHtml(quote.formatGold(quote.unitCost))} · ${escapeHtml(quote.upcPerUnit)} UPC per unit · ${quote.maxByGold} max by gold · ${quote.maxByProvisions} max by Provisions</p>`
+            + `<p class="age-barracks-detail-footnote">${escapeHtml(quote.formatGold(quote.unitCost))} · ${escapeHtml(quote.upcPerUnit)} UPC per unit · ${quote.swarmRecruit ? 'swarm recruit (no 15 cap)' : `${quote.batchCap} max per purchase`} · ${quote.maxByGold} max by gold · ${quote.maxByProvisions} max by Provisions</p>`
             + (limitLine ? `<p class="age-barracks-detail-limit">${escapeHtml(limitLine)}</p>` : '')
             + '</div>'
             + '</div>'
@@ -416,8 +454,12 @@
             }
         } finally {
             purchaseInFlight = false;
-            refreshSelectedUnitDetail();
             syncCommanderGold();
+            syncCommanderProvisions();
+            if (typeof global.refreshAgeHudProvisions === 'function') {
+                global.refreshAgeHudProvisions();
+            }
+            refreshSelectedUnitDetail();
         }
     }
 
@@ -498,6 +540,7 @@
         ensureValidActiveCategory();
         syncCommanderStatus();
         syncCommanderGold();
+        syncCommanderProvisions();
         renderCategoryNav();
         syncCategoryLabel();
         renderUnitGrid();
@@ -612,6 +655,7 @@
     }
 
     function onAgeProvisionsUpdated() {
+        syncCommanderProvisions();
         if (isOpen() && selectedUnitId) {
             refreshSelectedUnitDetail();
         }
@@ -619,6 +663,7 @@
 
     function onAgeMovementUpdated() {
         syncCommanderGold();
+        syncCommanderProvisions();
         if (isOpen() && selectedUnitId) {
             refreshSelectedUnitDetail();
         }

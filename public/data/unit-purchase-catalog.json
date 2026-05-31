@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "Royal Armies Unit Purchase Catalog",
-    "version": 3,
+    "version": 5,
     "promotionLabels": {
       "app": "Apprentice",
       "std": "Standard",
@@ -39,6 +39,41 @@
         "A-1": "Rank",
         "A-2": "PvP"
       }
+    },
+    "recruitBalance": {
+      "maxBatchQuantity": 15,
+      "swarmRecruitMaxUpc": 11,
+      "swarmRecruitMaxBatchQuantity": 999,
+      "rank1BaseProvisions": 132,
+      "rankUpPayoutProvisions": 110,
+      "tier1ReferenceUpc": 11,
+      "upcLadderByRole": {
+        "rank": {
+          "app": 11,
+          "std": 20,
+          "vet": 31,
+          "mst": 44,
+          "leg": 55,
+          "elite": 68
+        },
+        "pvp": {
+          "app": 8,
+          "std": 14,
+          "vet": 22,
+          "mst": 31,
+          "leg": 40,
+          "elite": 50
+        },
+        "both": {
+          "app": 9,
+          "std": 16,
+          "vet": 25,
+          "mst": 36,
+          "leg": 48,
+          "elite": 59
+        }
+      },
+      "notes": "Tier-1 rank and PvP swarm units skip the 15 batch cap (Provisions/gold only) for training battles. Stronger tier 2+ recruits stay capped at 15 per purchase. Rank tier-1 = 11 UPC; PvP tier-1 = 8 UPC."
     }
   },
   "categories": [
@@ -109,17 +144,17 @@
         "app": {
           "hp": 114,
           "str": 11,
-          "upc": 3
+          "upc": 11
         },
         "std": {
           "hp": 132,
           "str": 11,
-          "upc": 5
+          "upc": 20
         },
         "vet": {
           "hp": 150,
           "str": 12,
-          "upc": 8
+          "upc": 31
         }
       },
       "combatType": "PHYS_INF",
@@ -148,17 +183,17 @@
         "std": {
           "hp": 141,
           "str": 13,
-          "upc": 5
+          "upc": 20
         },
         "vet": {
           "hp": 161,
           "str": 14,
-          "upc": 9
+          "upc": 31
         },
         "mst": {
           "hp": 181,
           "str": 15,
-          "upc": 13
+          "upc": 44
         }
       },
       "combatType": "PHYS_INF",
@@ -187,17 +222,17 @@
         "std": {
           "hp": 118,
           "str": 22,
-          "upc": 8
+          "upc": 14
         },
         "vet": {
           "hp": 127,
           "str": 25,
-          "upc": 13
+          "upc": 22
         },
         "mst": {
           "hp": 135,
           "str": 27,
-          "upc": 18
+          "upc": 31
         }
       },
       "combatType": "PHYS_INF",
@@ -227,22 +262,22 @@
         "std": {
           "hp": 208,
           "str": 22,
-          "upc": 12
+          "upc": 20
         },
         "vet": {
           "hp": 225,
           "str": 23,
-          "upc": 18
+          "upc": 31
         },
         "mst": {
           "hp": 244,
           "str": 24,
-          "upc": 24
+          "upc": 44
         },
         "leg": {
           "hp": 262,
           "str": 25,
-          "upc": 30
+          "upc": 55
         }
       },
       "combatType": "PHYS_INF",
@@ -272,12 +307,12 @@
         "std": {
           "hp": 164,
           "str": 38,
-          "upc": 17
+          "upc": 14
         },
         "vet": {
           "hp": 177,
           "str": 41,
-          "upc": 24
+          "upc": 22
         },
         "mst": {
           "hp": 189,
@@ -287,7 +322,7 @@
         "leg": {
           "hp": 202,
           "str": 44,
-          "upc": 38
+          "upc": 40
         }
       },
       "combatType": "PHYS_INF",
@@ -319,7 +354,7 @@
         "std": {
           "hp": 268,
           "str": 52,
-          "upc": 23
+          "upc": 20
         },
         "vet": {
           "hp": 283,
@@ -329,17 +364,17 @@
         "mst": {
           "hp": 291,
           "str": 53,
-          "upc": 39
+          "upc": 44
         },
         "leg": {
           "hp": 306,
           "str": 54,
-          "upc": 47
+          "upc": 55
         },
         "elite": {
           "hp": 315,
           "str": 54,
-          "upc": 55
+          "upc": 68
         }
       },
       "combatType": "PHYS_INF",
@@ -371,27 +406,27 @@
         "std": {
           "hp": 212,
           "str": 58,
-          "upc": 30
+          "upc": 14
         },
         "vet": {
           "hp": 226,
           "str": 60,
-          "upc": 37
+          "upc": 22
         },
         "mst": {
           "hp": 238,
           "str": 62,
-          "upc": 44
+          "upc": 31
         },
         "leg": {
           "hp": 254,
           "str": 63,
-          "upc": 51
+          "upc": 40
         },
         "elite": {
           "hp": 265,
           "str": 64,
-          "upc": 58
+          "upc": 50
         }
       },
       "combatType": "PHYS_INF",
@@ -421,17 +456,17 @@
         "app": {
           "hp": 92,
           "str": 12,
-          "upc": 3
+          "upc": 9
         },
         "std": {
           "hp": 110,
           "str": 12,
-          "upc": 6
+          "upc": 16
         },
         "vet": {
           "hp": 128,
           "str": 13,
-          "upc": 9
+          "upc": 25
         }
       },
       "combatType": "PHYS_CAV",
@@ -461,17 +496,17 @@
         "std": {
           "hp": 119,
           "str": 21,
-          "upc": 10
+          "upc": 16
         },
         "vet": {
           "hp": 132,
           "str": 24,
-          "upc": 14
+          "upc": 25
         },
         "mst": {
           "hp": 144,
           "str": 27,
-          "upc": 18
+          "upc": 36
         }
       },
       "combatType": "PHYS_CAV",
@@ -502,7 +537,7 @@
         "std": {
           "hp": 184,
           "str": 35,
-          "upc": 20
+          "upc": 16
         },
         "vet": {
           "hp": 198,
@@ -512,7 +547,7 @@
         "mst": {
           "hp": 214,
           "str": 43,
-          "upc": 30
+          "upc": 36
         }
       },
       "combatType": "PHYS_CAV",
@@ -542,19 +577,19 @@
           "hp": 75,
           "str": 6,
           "rng": 7,
-          "upc": 3
+          "upc": 8
         },
         "std": {
           "hp": 82,
           "str": 7,
           "rng": 8,
-          "upc": 7
+          "upc": 14
         },
         "vet": {
           "hp": 90,
           "str": 8,
           "rng": 9,
-          "upc": 11
+          "upc": 22
         }
       },
       "combatType": "PHYS_ART",
@@ -584,19 +619,19 @@
           "hp": 110,
           "str": 8,
           "rng": 12,
-          "upc": 9
+          "upc": 14
         },
         "vet": {
           "hp": 135,
           "str": 10,
           "rng": 15,
-          "upc": 13
+          "upc": 22
         },
         "mst": {
           "hp": 160,
           "str": 12,
           "rng": 18,
-          "upc": 17
+          "upc": 31
         }
       },
       "combatType": "PHYS_ART",
@@ -627,19 +662,19 @@
           "hp": 200,
           "str": 15,
           "rng": 30,
-          "upc": 16
+          "upc": 14
         },
         "vet": {
           "hp": 240,
           "str": 18,
           "rng": 38,
-          "upc": 21
+          "upc": 22
         },
         "mst": {
           "hp": 280,
           "str": 22,
           "rng": 55,
-          "upc": 26
+          "upc": 31
         }
       },
       "combatType": "PHYS_ART",
@@ -668,17 +703,17 @@
         "app": {
           "hp": 78,
           "str": 7,
-          "upc": 3
+          "upc": 11
         },
         "std": {
           "hp": 93,
           "str": 7,
-          "upc": 7
+          "upc": 20
         },
         "vet": {
           "hp": 108,
           "str": 8,
-          "upc": 9
+          "upc": 31
         }
       },
       "combatType": "PHYS_BST",
@@ -707,17 +742,17 @@
         "std": {
           "hp": 114,
           "str": 9,
-          "upc": 9
+          "upc": 20
         },
         "vet": {
           "hp": 122,
           "str": 10,
-          "upc": 13
+          "upc": 31
         },
         "mst": {
           "hp": 131,
           "str": 11,
-          "upc": 17
+          "upc": 44
         }
       },
       "combatType": "PHYS_BST",
@@ -746,17 +781,17 @@
         "std": {
           "hp": 108,
           "str": 18,
-          "upc": 13
+          "upc": 14
         },
         "vet": {
           "hp": 117,
           "str": 21,
-          "upc": 17
+          "upc": 22
         },
         "mst": {
           "hp": 126,
           "str": 23,
-          "upc": 22
+          "upc": 31
         }
       },
       "combatType": "PHYS_BST",
@@ -787,22 +822,22 @@
         "std": {
           "hp": 140,
           "str": 14,
-          "upc": 16
+          "upc": 20
         },
         "vet": {
           "hp": 146,
           "str": 15,
-          "upc": 20
+          "upc": 31
         },
         "mst": {
           "hp": 152,
           "str": 16,
-          "upc": 24
+          "upc": 44
         },
         "leg": {
           "hp": 159,
           "str": 18,
-          "upc": 28
+          "upc": 55
         }
       },
       "combatType": "PHYS_BST",
@@ -833,12 +868,12 @@
         "std": {
           "hp": 124,
           "str": 24,
-          "upc": 22
+          "upc": 14
         },
         "vet": {
           "hp": 131,
           "str": 26,
-          "upc": 27
+          "upc": 22
         },
         "mst": {
           "hp": 139,
@@ -848,7 +883,7 @@
         "leg": {
           "hp": 146,
           "str": 31,
-          "upc": 36
+          "upc": 40
         }
       },
       "combatType": "PHYS_BST",
@@ -877,17 +912,17 @@
         "app": {
           "hp": 98,
           "str": 13,
-          "upc": 5
+          "upc": 11
         },
         "std": {
           "hp": 115,
           "str": 13,
-          "upc": 8
+          "upc": 20
         },
         "vet": {
           "hp": 132,
           "str": 14,
-          "upc": 11
+          "upc": 31
         }
       },
       "combatType": "MAG_INF",
@@ -916,17 +951,17 @@
         "std": {
           "hp": 123,
           "str": 16,
-          "upc": 8
+          "upc": 20
         },
         "vet": {
           "hp": 142,
           "str": 17,
-          "upc": 14
+          "upc": 31
         },
         "mst": {
           "hp": 161,
           "str": 18,
-          "upc": 20
+          "upc": 44
         }
       },
       "combatType": "MAG_INF",
@@ -955,17 +990,17 @@
         "std": {
           "hp": 124,
           "str": 32,
-          "upc": 12
+          "upc": 14
         },
         "vet": {
           "hp": 140,
           "str": 33,
-          "upc": 21
+          "upc": 22
         },
         "mst": {
           "hp": 156,
           "str": 35,
-          "upc": 30
+          "upc": 31
         }
       },
       "combatType": "MAG_INF",
@@ -995,22 +1030,22 @@
         "std": {
           "hp": 188,
           "str": 26,
-          "upc": 18
+          "upc": 20
         },
         "vet": {
           "hp": 205,
           "str": 27,
-          "upc": 24
+          "upc": 31
         },
         "mst": {
           "hp": 222,
           "str": 28,
-          "upc": 30
+          "upc": 44
         },
         "leg": {
           "hp": 238,
           "str": 30,
-          "upc": 36
+          "upc": 55
         }
       },
       "combatType": "MAG_INF",
@@ -1040,22 +1075,22 @@
         "std": {
           "hp": 172,
           "str": 42,
-          "upc": 25
+          "upc": 14
         },
         "vet": {
           "hp": 187,
           "str": 44,
-          "upc": 34
+          "upc": 22
         },
         "mst": {
           "hp": 201,
           "str": 46,
-          "upc": 43
+          "upc": 31
         },
         "leg": {
           "hp": 216,
           "str": 48,
-          "upc": 52
+          "upc": 40
         }
       },
       "combatType": "MAG_INF",
@@ -1087,27 +1122,27 @@
         "std": {
           "hp": 254,
           "str": 49,
-          "upc": 32
+          "upc": 20
         },
         "vet": {
           "hp": 266,
           "str": 51,
-          "upc": 42
+          "upc": 31
         },
         "mst": {
           "hp": 277,
           "str": 53,
-          "upc": 52
+          "upc": 44
         },
         "leg": {
           "hp": 288,
           "str": 54,
-          "upc": 62
+          "upc": 55
         },
         "elite": {
           "hp": 299,
           "str": 56,
-          "upc": 72
+          "upc": 68
         }
       },
       "combatType": "MAG_INF",
@@ -1139,27 +1174,27 @@
         "std": {
           "hp": 224,
           "str": 50,
-          "upc": 40
+          "upc": 14
         },
         "vet": {
           "hp": 235,
           "str": 51,
-          "upc": 50
+          "upc": 22
         },
         "mst": {
           "hp": 246,
           "str": 52,
-          "upc": 60
+          "upc": 31
         },
         "leg": {
           "hp": 255,
           "str": 52,
-          "upc": 70
+          "upc": 40
         },
         "elite": {
           "hp": 265,
           "str": 53,
-          "upc": 80
+          "upc": 50
         }
       },
       "combatType": "MAG_INF",
@@ -1189,17 +1224,17 @@
         "app": {
           "hp": 92,
           "str": 13,
-          "upc": 4
+          "upc": 11
         },
         "std": {
           "hp": 110,
           "str": 14,
-          "upc": 7
+          "upc": 20
         },
         "vet": {
           "hp": 128,
           "str": 15,
-          "upc": 11
+          "upc": 31
         }
       },
       "combatType": "MAG_CAV",
@@ -1229,17 +1264,17 @@
         "std": {
           "hp": 119,
           "str": 24,
-          "upc": 12
+          "upc": 14
         },
         "vet": {
           "hp": 134,
           "str": 28,
-          "upc": 21
+          "upc": 22
         },
         "mst": {
           "hp": 144,
           "str": 32,
-          "upc": 30
+          "upc": 31
         }
       },
       "combatType": "MAG_CAV",
@@ -1270,17 +1305,17 @@
         "std": {
           "hp": 182,
           "str": 42,
-          "upc": 30
+          "upc": 14
         },
         "vet": {
           "hp": 198,
           "str": 47,
-          "upc": 45
+          "upc": 22
         },
         "mst": {
           "hp": 214,
           "str": 52,
-          "upc": 60
+          "upc": 31
         }
       },
       "combatType": "MAG_CAV",
@@ -1310,19 +1345,19 @@
           "hp": 75,
           "str": 7,
           "rng": 24,
-          "upc": 4
+          "upc": 8
         },
         "std": {
           "hp": 88,
           "str": 8,
           "rng": 25,
-          "upc": 8
+          "upc": 14
         },
         "vet": {
           "hp": 104,
           "str": 9,
           "rng": 26,
-          "upc": 12
+          "upc": 22
         }
       },
       "combatType": "MAG_ART",
@@ -1352,19 +1387,19 @@
           "hp": 111,
           "str": 10,
           "rng": 30,
-          "upc": 10
+          "upc": 14
         },
         "vet": {
           "hp": 130,
           "str": 11,
           "rng": 33,
-          "upc": 16
+          "upc": 22
         },
         "mst": {
           "hp": 148,
           "str": 12,
           "rng": 36,
-          "upc": 22
+          "upc": 31
         }
       },
       "combatType": "MAG_ART",
@@ -1395,19 +1430,19 @@
           "hp": 172,
           "str": 14,
           "rng": 38,
-          "upc": 18
+          "upc": 14
         },
         "vet": {
           "hp": 192,
           "str": 16,
           "rng": 42,
-          "upc": 25
+          "upc": 22
         },
         "mst": {
           "hp": 211,
           "str": 18,
           "rng": 45,
-          "upc": 32
+          "upc": 31
         }
       },
       "combatType": "MAG_ART",
@@ -1436,17 +1471,17 @@
         "app": {
           "hp": 88,
           "str": 9,
-          "upc": 4
+          "upc": 11
         },
         "std": {
           "hp": 104,
           "str": 10,
-          "upc": 8
+          "upc": 20
         },
         "vet": {
           "hp": 120,
           "str": 11,
-          "upc": 12
+          "upc": 31
         }
       },
       "combatType": "MAG_BST",
@@ -1475,17 +1510,17 @@
         "std": {
           "hp": 111,
           "str": 13,
-          "upc": 10
+          "upc": 20
         },
         "vet": {
           "hp": 130,
           "str": 14,
-          "upc": 16
+          "upc": 31
         },
         "mst": {
           "hp": 148,
           "str": 15,
-          "upc": 22
+          "upc": 44
         }
       },
       "combatType": "MAG_BST",
@@ -1514,17 +1549,17 @@
         "std": {
           "hp": 155,
           "str": 16,
-          "upc": 16
+          "upc": 20
         },
         "vet": {
           "hp": 170,
           "str": 17,
-          "upc": 24
+          "upc": 31
         },
         "mst": {
           "hp": 184,
           "str": 19,
-          "upc": 32
+          "upc": 44
         }
       },
       "combatType": "MAG_BST",
@@ -1555,22 +1590,22 @@
         "std": {
           "hp": 196,
           "str": 22,
-          "upc": 22
+          "upc": 20
         },
         "vet": {
           "hp": 211,
           "str": 24,
-          "upc": 27
+          "upc": 31
         },
         "mst": {
           "hp": 227,
           "str": 26,
-          "upc": 32
+          "upc": 44
         },
         "leg": {
           "hp": 242,
           "str": 28,
-          "upc": 36
+          "upc": 55
         }
       },
       "combatType": "MAG_BST",
@@ -1601,22 +1636,22 @@
         "std": {
           "hp": 172,
           "str": 38,
-          "upc": 28
+          "upc": 14
         },
         "vet": {
           "hp": 185,
           "str": 41,
-          "upc": 34
+          "upc": 22
         },
         "mst": {
           "hp": 198,
           "str": 44,
-          "upc": 39
+          "upc": 31
         },
         "leg": {
           "hp": 211,
           "str": 48,
-          "upc": 44
+          "upc": 40
         }
       },
       "combatType": "MAG_BST",
