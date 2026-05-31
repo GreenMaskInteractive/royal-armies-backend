@@ -515,10 +515,14 @@ function renderPortalDeploymentDeckMarkup() {
                     ${renderPortalAgeCountdownPanelMarkup()}
                     <div class="deployment-action-button-row portal-deployment-member-actions" id="portal-deployment-member-actions">
                         <div class="action-btn-aura-housing aura-glow-red">
-                            <button type="button" class="portal-join-age-btn portal-join-age-btn--primary" onclick="launchGameRoundSector(false, event)">Join Age</button>
+                            <button type="button" class="deployment-image-trigger-btn" onclick="launchGameRoundSector(false, event)" aria-label="Join Age">
+                                <img src="images/joinagebtn.png?v=portal-join-age-image-1" alt="Join Age">
+                            </button>
                         </div>
                         <div class="action-btn-aura-housing aura-glow-blue">
-                            <button type="button" class="portal-join-age-btn portal-join-age-btn--tutorial" onclick="launchGameRoundSector(true, event)">Tutorial Age</button>
+                            <button type="button" class="deployment-image-trigger-btn" onclick="launchGameRoundSector(true, event)" aria-label="Tutorial Age">
+                                <img src="images/joinagetutorialbtn.png?v=portal-join-age-image-1" alt="Tutorial Age">
+                            </button>
                         </div>
                     </div>
                     ${renderPortalDeploymentServerPanelMarkup()}
@@ -3517,14 +3521,14 @@ function renderCommunityChatInputTray() {
             composeBanner = `
                 <div class="chat-compose-context-banner chat-compose-context-banner--reply">
                     <span class="chat-compose-context-copy">↳ Replying to <strong>${escapeCommunityChatDisplayHtml(communityChatComposeState.sender)}</strong>: "${escapeCommunityChatDisplayHtml(communityChatComposeState.snippet)}"</span>
-                    <button type="button" class="chat-compose-context-cancel" onclick="cancelCommunityChatComposeMode()">Cancel</button>
+                    <button type="button" class="cancel-btn chat-compose-context-cancel" onclick="cancelCommunityChatComposeMode()">Cancel</button>
                 </div>
             `;
         } else if (communityChatComposeState.mode === 'edit') {
             composeBanner = `
                 <div class="chat-compose-context-banner chat-compose-context-banner--edit">
                     <span class="chat-compose-context-copy">✎ Editing your message</span>
-                    <button type="button" class="chat-compose-context-cancel" onclick="cancelCommunityChatComposeMode()">Cancel</button>
+                    <button type="button" class="cancel-btn chat-compose-context-cancel" onclick="cancelCommunityChatComposeMode()">Cancel</button>
                 </div>
             `;
         }

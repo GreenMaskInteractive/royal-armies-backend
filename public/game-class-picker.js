@@ -1,5 +1,5 @@
 /**
- * Choose-class — CSS grid side panels; layout resync on resize, fonts, and image load.
+ * Choose-class — portrait fade swap and side info panels.
  */
 (function initGameClassPicker(global) {
     'use strict';
@@ -7,24 +7,30 @@
     const GAME_CLASS_OPTIONS = {
         battlemaster: {
             id: 'battlemaster',
+            label: 'Battlemaster',
             side: 'left',
             panelId: 'game-class-panel-battlemaster',
             pathCode: 'PHYS'
         },
         archmage: {
             id: 'archmage',
+            label: 'Archmage',
             side: 'right',
             panelId: 'game-class-panel-archmage',
             pathCode: 'MAG'
         }
     };
 
+    const CLASS_SWAP_MS_FALLBACK = 900;
     const LAYOUT_SYNC_DELAYS_MS = [0, 50, 180, 420];
     const DESKTOP_LAYOUT_MQ = '(min-width: 900px)';
 
+    let displayedClassId = 'battlemaster';
     let activeClassId = null;
+    let isClassSwapAnimating = false;
     let layoutObserver = null;
     let layoutSyncToken = 0;
+    let cachedBattlemasterPanelHeight = 0;
 
     function getPickerRoot() {
         return global.document.getElementById('game-class-picker');
@@ -34,10 +40,35 @@
         return global.document.querySelector('.game-class-picker-stage');
     }
 
+    function getShowcaseRoot() {
+        return global.document.querySelector('.game-class-showcase');
+    }
+
+    function getPortraitStage() {
+        return global.document.querySelector('.game-class-portrait-stage');
+    }
+
+    function getClassSwapMs() {
+        const canvas = global.document.getElementById('game-page-canvas')
+            || global.document.querySelector('.game-page-canvas');
+        if (!canvas) return CLASS_SWAP_MS_FALLBACK;
+
+        const raw = global.getComputedStyle(canvas).getPropertyValue('--game-class-swap-ms').trim();
+        const parsed = Number.parseInt(raw, 10);
+        return Number.isFinite(parsed) && parsed > 0 ? parsed : CLASS_SWAP_MS_FALLBACK;
+    }
+
+    function setShowcaseAccentClass(classId) {
+        const showcase = getShowcaseRoot();
+        if (showcase && GAME_CLASS_OPTIONS[classId]) {
+            showcase.dataset.accentClass = classId;
+        }
+    }
+
     function getClassOptions() {
         const root = getPickerRoot();
         if (!root) return [];
-        return Array.from(root.querySelectorAll('.game-class-option'));
+        return Array.from(root.querySelectorAll('.game-class-portrait-card'));
     }
 
     function getClassPanels() {
@@ -46,8 +77,20 @@
         return Array.from(root.querySelectorAll('.game-class-side-panel'));
     }
 
+    function getShowcaseLabelEl() {
+        return global.document.getElementById('game-class-showcase-label');
+    }
+
     function usesDocumentFlowLayout() {
         return global.matchMedia(DESKTOP_LAYOUT_MQ).matches;
+    }
+
+    function prefersReducedMotion() {
+        return global.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    }
+
+    function getOtherClassId(classId) {
+        return classId === 'battlemaster' ? 'archmage' : 'battlemaster';
     }
 
     function clearPanelInlineCoords(panel) {
@@ -66,24 +109,31 @@
         ].forEach((prop) => panel.style.removeProperty(prop));
     }
 
-    /** Same height for Archmage panel bezel as Battlemaster (measured in grid flow). */
     function measureBattlemasterPanelHeight() {
+        if (cachedBattlemasterPanelHeight > 0) {
+            return cachedBattlemasterPanelHeight;
+        }
+
         const bmPanel = global.document.getElementById('game-class-panel-battlemaster');
         if (!bmPanel) return 0;
 
-        const wasHidden = bmPanel.hidden;
         const wasActive = bmPanel.classList.contains('is-active');
         const prevVisibility = bmPanel.style.visibility;
         const prevPointerEvents = bmPanel.style.pointerEvents;
         const prevPosition = bmPanel.style.position;
         const prevLeft = bmPanel.style.left;
+        const prevOpacity = bmPanel.style.opacity;
+        const hadFadingOut = bmPanel.classList.contains('is-fading-out');
+        const hadFadingIn = bmPanel.classList.contains('is-fading-in');
 
         bmPanel.hidden = false;
+        bmPanel.classList.remove('is-fading-out', 'is-fading-in');
         bmPanel.classList.add('is-active');
         bmPanel.style.setProperty('visibility', 'hidden', 'important');
         bmPanel.style.setProperty('pointer-events', 'none', 'important');
         bmPanel.style.setProperty('position', 'absolute', 'important');
         bmPanel.style.setProperty('left', '-10000px', 'important');
+        bmPanel.style.setProperty('opacity', '0', 'important');
 
         const height = Math.ceil(bmPanel.getBoundingClientRect().height);
 
@@ -91,15 +141,26 @@
         bmPanel.style.pointerEvents = prevPointerEvents;
         bmPanel.style.position = prevPosition;
         bmPanel.style.left = prevLeft;
-        if (!wasActive) bmPanel.classList.remove('is-active');
-        if (wasHidden) bmPanel.hidden = true;
+        bmPanel.style.opacity = prevOpacity;
+        bmPanel.classList.toggle('is-fading-out', hadFadingOut);
+        bmPanel.classList.toggle('is-fading-in', hadFadingIn);
+        if (!wasActive) {
+            bmPanel.classList.remove('is-active');
+        }
+
+        if (height > 0) {
+            cachedBattlemasterPanelHeight = height;
+        }
 
         return height;
     }
 
-    function syncArchmagePanelHeight() {
+    function syncArchmagePanelHeight(forceMeasure) {
         const root = getPickerRoot();
         if (!root) return;
+
+        const panelClassId = activeClassId || displayedClassId;
+        if (panelClassId !== 'archmage' && !forceMeasure) return;
 
         const bmHeight = measureBattlemasterPanelHeight();
         if (bmHeight > 0) {
@@ -108,33 +169,75 @@
     }
 
     function syncStageActiveSide() {
-        const root = getPickerRoot();
         const stage = getPickerStage();
-        if (!root || !stage) return;
+        if (!stage) return;
 
         stage.classList.remove('has-active-panel-left', 'has-active-panel-right');
-        if (activeClassId === 'battlemaster') {
+        if (activeClassId || displayedClassId) {
             stage.classList.add('has-active-panel-left');
-        } else if (activeClassId === 'archmage') {
-            stage.classList.add('has-active-panel-right');
         }
+    }
+
+    function updateShowcaseLabelForClass(classId) {
+        const labelEl = getShowcaseLabelEl();
+        const meta = GAME_CLASS_OPTIONS[classId];
+        if (!labelEl || !meta) return;
+        labelEl.textContent = meta.label;
+    }
+
+    function syncPortraitStackState() {
+        const showcase = getShowcaseRoot();
+        const backClassId = getOtherClassId(displayedClassId);
+
+        if (showcase) {
+            showcase.dataset.displayedClass = displayedClassId;
+            setShowcaseAccentClass(displayedClassId);
+        }
+
+        getClassOptions().forEach((card) => {
+            const classId = card.dataset.classId;
+            const isFront = classId === displayedClassId;
+            const isBack = classId === backClassId;
+
+            card.classList.toggle('is-front', isFront);
+            card.classList.toggle('is-back', isBack);
+            card.classList.remove('is-hovered');
+            card.tabIndex = isFront ? 0 : -1;
+        });
+
+        updateShowcaseLabelForClass(displayedClassId);
+    }
+
+    function setPanelVisibilityState(panel, { isActive, isFadingOut, isFadingIn }) {
+        panel.hidden = false;
+        panel.classList.toggle('is-active', Boolean(isActive));
+        panel.classList.toggle('is-fading-out', Boolean(isFadingOut));
+        panel.classList.toggle('is-fading-in', Boolean(isFadingIn));
+        panel.setAttribute(
+            'aria-hidden',
+            (isActive || isFadingIn) && !isFadingOut ? 'false' : 'true'
+        );
     }
 
     function refreshPanelState() {
         const root = getPickerRoot();
-        if (!root) return;
+        const pickerStage = getPickerStage();
+        if (!root || pickerStage?.classList.contains('is-swapping')) return;
 
-        root.dataset.activePanel = activeClassId || '';
-        root.classList.toggle('has-active-panel', Boolean(activeClassId));
+        const panelClassId = activeClassId || displayedClassId;
+        root.dataset.activePanel = panelClassId;
+        root.classList.toggle('has-active-panel', Boolean(panelClassId));
         syncStageActiveSide();
 
         getClassPanels().forEach((panel) => {
-            const panelClassId = panel.dataset.classPanel;
-            const isActive = panelClassId === activeClassId;
+            const panelClassIdAttr = panel.dataset.classPanel;
+            const isActive = panelClassIdAttr === panelClassId;
 
-            panel.classList.toggle('is-active', isActive);
-            panel.hidden = !isActive;
-            panel.setAttribute('aria-hidden', isActive ? 'false' : 'true');
+            setPanelVisibilityState(panel, {
+                isActive,
+                isFadingOut: false,
+                isFadingIn: false
+            });
 
             if (isActive) {
                 resetPanelPerkDetail(panel);
@@ -146,10 +249,102 @@
         syncArchmagePanelHeight();
     }
 
+    function beginPanelSwap(fromClassId, targetClassId) {
+        const pickerStage = getPickerStage();
+        if (!pickerStage || fromClassId === targetClassId) return;
+
+        if (!usesDocumentFlowLayout() || prefersReducedMotion()) {
+            activeClassId = targetClassId;
+            refreshPanelState();
+            return;
+        }
+
+        pickerStage.classList.add('is-swapping');
+        activeClassId = targetClassId;
+
+        getClassPanels().forEach((panel) => {
+            const panelClassId = panel.dataset.classPanel;
+
+            if (panelClassId === fromClassId) {
+                setPanelVisibilityState(panel, {
+                    isActive: true,
+                    isFadingOut: false,
+                    isFadingIn: false
+                });
+                return;
+            }
+
+            if (panelClassId === targetClassId) {
+                setPanelVisibilityState(panel, {
+                    isActive: false,
+                    isFadingOut: false,
+                    isFadingIn: false
+                });
+                resetPanelPerkDetail(panel);
+                return;
+            }
+
+            setPanelVisibilityState(panel, {
+                isActive: false,
+                isFadingOut: false,
+                isFadingIn: false
+            });
+        });
+
+        void pickerStage.offsetHeight;
+
+        getClassPanels().forEach((panel) => {
+            const panelClassId = panel.dataset.classPanel;
+
+            if (panelClassId === fromClassId) {
+                panel.classList.add('is-fading-out');
+                panel.setAttribute('aria-hidden', 'true');
+                return;
+            }
+
+            if (panelClassId === targetClassId) {
+                panel.classList.add('is-fading-in');
+                panel.setAttribute('aria-hidden', 'false');
+            }
+        });
+    }
+
+    function finalizePanelSwap() {
+        const root = getPickerRoot();
+        const pickerStage = getPickerStage();
+        const panelClassId = displayedClassId;
+
+        if (root) {
+            root.dataset.activePanel = panelClassId;
+            root.classList.toggle('has-active-panel', Boolean(panelClassId));
+        }
+
+        getClassPanels().forEach((panel) => {
+            const isActive = panel.dataset.classPanel === panelClassId;
+            setPanelVisibilityState(panel, {
+                isActive,
+                isFadingOut: false,
+                isFadingIn: false
+            });
+
+            if (!isActive) {
+                clearPanelInlineCoords(panel);
+            }
+        });
+
+        if (pickerStage) {
+            pickerStage.classList.remove('is-swapping');
+        }
+
+        syncStageActiveSide();
+        syncArchmagePanelHeight();
+    }
+
     function refreshSelectionState() {
         const root = getPickerRoot();
         if (!root) return;
 
+        syncPortraitStackState();
         root.classList.toggle('has-selection', Boolean(activeClassId));
 
         getClassOptions().forEach((option) => {
@@ -166,37 +361,87 @@
 
     function selectClass(classId) {
         if (!GAME_CLASS_OPTIONS[classId]) return;
-        activeClassId = activeClassId === classId ? null : classId;
+        if (classId !== displayedClassId) return;
+        activeClassId = classId;
         refreshSelectionState();
     }
 
-    function showPanelPerk(panel, perkBtn) {
-        if (!panel || !perkBtn) return;
+    function finishClassSwap() {
+        const portraitStage = getPortraitStage();
+        const showcase = getShowcaseRoot();
 
-        const entry = perkBtn.closest('.game-class-perk-entry');
-
-        panel.querySelectorAll('.game-class-perk-entry').forEach((row) => {
-            row.classList.toggle('is-active', row === entry);
+        getClassOptions().forEach((card) => {
+            card.classList.remove('is-fading-out', 'is-fading-in');
         });
 
-        panel.querySelectorAll('.game-class-perk-btn').forEach((btn) => {
-            const isActive = btn === perkBtn;
-            btn.classList.toggle('is-active', isActive);
-            btn.setAttribute('aria-pressed', isActive ? 'true' : 'false');
-        });
+        if (portraitStage) {
+            portraitStage.classList.remove('is-swapping');
+        }
+        if (showcase) {
+            showcase.classList.remove('is-swapping');
+        }
 
-        scheduleLayoutSync();
+        activeClassId = displayedClassId;
+        isClassSwapAnimating = false;
+        finalizePanelSwap();
+        refreshSelectionState();
     }
 
-    function resetPanelPerkDetail(panel) {
-        if (!panel) return;
-        const firstPerk = panel.querySelector('.game-class-perk-btn');
-        if (firstPerk) showPanelPerk(panel, firstPerk);
+    function openPanelForClass(classId) {
+        if (!GAME_CLASS_OPTIONS[classId]) return;
+        activeClassId = classId;
+        refreshPanelState();
+    }
+
+    function swapDisplayedClass() {
+        if (isClassSwapAnimating) return;
+
+        const portraitStage = getPortraitStage();
+        const showcase = getShowcaseRoot();
+        if (!portraitStage) return;
+
+        const targetClassId = getOtherClassId(displayedClassId);
+        const swapMs = getClassSwapMs();
+
+        if (prefersReducedMotion()) {
+            displayedClassId = targetClassId;
+            setShowcaseAccentClass(targetClassId);
+            updateShowcaseLabelForClass(targetClassId);
+            openPanelForClass(targetClassId);
+            refreshSelectionState();
+            return;
+        }
+
+        isClassSwapAnimating = true;
+        portraitStage.classList.add('is-swapping');
+        if (showcase) {
+            showcase.classList.add('is-swapping');
+        }
+        setShowcaseAccentClass(targetClassId);
+        updateShowcaseLabelForClass(targetClassId);
+        beginPanelSwap(displayedClassId, targetClassId);
+
+        getClassOptions().forEach((card) => {
+            const classId = card.dataset.classId;
+            card.classList.toggle('is-fading-out', classId === displayedClassId);
+            card.classList.toggle('is-fading-in', classId === targetClassId);
+        });
+
+        global.setTimeout(() => {
+            displayedClassId = targetClassId;
+            finishClassSwap();
+        }, swapMs);
+    }
+
+    function resetPanelPerkDetail(_panel) {
+        /* Static perk layout — nothing to reset. */
     }
 
     function confirmClassSelection(classId) {
         if (!GAME_CLASS_OPTIONS[classId]) return;
         activeClassId = classId;
+        displayedClassId = classId;
+        setShowcaseAccentClass(classId);
         refreshSelectionState();
         global.dispatchEvent(new CustomEvent('royalarmies:class-confirmed', {
             detail: {
@@ -244,26 +489,20 @@
         }
     }
 
-    function bindClassPanel(panel) {
-        const classId = panel.dataset.classPanel;
-        if (!classId) return;
+    function bindClassConfirmButton() {
+        const confirmBtn = global.document.getElementById('game-class-confirm-btn');
+        if (!confirmBtn || confirmBtn.dataset.bound === 'true') return;
 
-        panel.querySelectorAll('.game-class-perk-btn').forEach((perkBtn) => {
-            perkBtn.addEventListener('click', (event) => {
-                event.preventDefault();
-                event.stopPropagation();
-                showPanelPerk(panel, perkBtn);
-            });
+        confirmBtn.addEventListener('click', (event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            confirmClassSelection(displayedClassId);
         });
+        confirmBtn.dataset.bound = 'true';
+    }
 
-        const selectBtn = panel.querySelector('.game-class-select-btn');
-        if (selectBtn) {
-            selectBtn.addEventListener('click', (event) => {
-                event.preventDefault();
-                event.stopPropagation();
-                confirmClassSelection(classId);
-            });
-        }
+    function bindClassPanel(_panel) {
+        /* Perk rows are static in alpha — no click-to-highlight wiring. */
     }
 
     function bindClassOption(option) {
@@ -271,7 +510,9 @@
         if (!classId || !GAME_CLASS_OPTIONS[classId]) return;
 
         option.addEventListener('mouseenter', () => {
-            option.classList.add('is-hovered');
+            if (classId === displayedClassId) {
+                option.classList.add('is-hovered');
+            }
         });
 
         option.addEventListener('mouseleave', () => {
@@ -280,27 +521,37 @@
 
         option.addEventListener('click', (event) => {
             event.preventDefault();
+            if (classId !== displayedClassId) return;
             selectClass(classId);
         });
 
         option.addEventListener('keydown', (event) => {
             if (event.key !== 'Enter' && event.key !== ' ') return;
             event.preventDefault();
+            if (classId !== displayedClassId) return;
             selectClass(classId);
         });
     }
 
-    function bindPickerDismiss() {
-        global.document.addEventListener('pointerdown', (event) => {
-            const root = getPickerRoot();
-            if (!root || !activeClassId) return;
-            if (event.target.closest('.game-class-option')) return;
-            if (event.target.closest('.game-class-side-panel')) return;
-            if (root.contains(event.target)) {
-                activeClassId = null;
-                refreshSelectionState();
-            }
-        });
+    function bindClassSwapControls() {
+        const prevBtn = global.document.querySelector('.game-class-showcase-arrow--prev');
+        const nextBtn = global.document.querySelector('.game-class-showcase-arrow--next');
+
+        if (prevBtn) {
+            prevBtn.addEventListener('click', (event) => {
+                event.preventDefault();
+                event.stopPropagation();
+                swapDisplayedClass();
+            });
+        }
+
+        if (nextBtn) {
+            nextBtn.addEventListener('click', (event) => {
+                event.preventDefault();
+                event.stopPropagation();
+                swapDisplayedClass();
+            });
+        }
     }
 
     function bindClassPickerLayout() {
@@ -335,9 +586,15 @@
 
         getClassOptions().forEach(bindClassOption);
         getClassPanels().forEach(bindClassPanel);
-        bindPickerDismiss();
+        bindClassConfirmButton();
+        bindClassSwapControls();
         bindClassPickerLayout();
         bindPortraitImageLoads();
+        getClassPanels().forEach((panel) => {
+            panel.hidden = false;
+        });
+        activeClassId = displayedClassId;
+        syncArchmagePanelHeight(true);
         refreshSelectionState();
         scheduleLayoutSync();
 
@@ -349,15 +606,20 @@
     global.getSelectedGameClassId = function getSelectedGameClassId() {
         return activeClassId;
     };
+    global.getDisplayedGameClassId = function getDisplayedGameClassId() {
+        return displayedClassId;
+    };
     global.getSelectedGameClassPath = function getSelectedGameClassPath() {
         return activeClassId ? GAME_CLASS_OPTIONS[activeClassId].pathCode : null;
     };
     global.initGameClassPicker = initGameClassPicker;
     global.clearGameClassPickerSelection = function clearGameClassPickerSelection() {
-        activeClassId = null;
+        displayedClassId = 'battlemaster';
+        activeClassId = displayedClassId;
         refreshSelectionState();
     };
     global.confirmGameClassSelection = confirmClassSelection;
+    global.swapDisplayedGameClass = swapDisplayedClass;
 
     if (global.document.readyState === 'loading') {
         global.document.addEventListener('DOMContentLoaded', initGameClassPicker);

@@ -105,6 +105,12 @@ const {
     buildAdminGoldRestorePatch
 } = require('./nexus-age-ledger-admin');
 const {
+    buildCommanderRankResetLedgerPatch,
+    buildCommanderExileResetLedgerPatch,
+    canApplyCommanderAgeReset,
+    incrementAgeResetUsage
+} = require('./nexus-age-commander-reset');
+const {
     buildGuildStatePayload,
     executeGuildTrainingBattleWithLedger,
     executeGuildHeal,
@@ -1099,6 +1105,15 @@ function writeCommanderMovementRecord(username, record) {
     store.commanders[storageUsername] = record;
     writeAgeMovementStore(store);
     return record;
+}
+
+function clearCommanderMovementRecord(username) {
+    const storageUsername = resolveCommanderStorageUsername(username);
+    const store = readAgeMovementStore();
+    if (store.commanders[storageUsername]) {
+        delete store.commanders[storageUsername];
+        writeAgeMovementStore(store);
+    }
 }
 
 function resolveAlliedNationIds(nationKey) {
@@ -6023,6 +6038,75 @@ app.post('/api/portal/age/leave', (req, res) => {
     res.json({
         status: 'ok',
         countryChatWiped,
+        ...getPortalLiveMetricsPayload()
+    });
+});
+
+app.post('/api/portal/age/commander-reset', (req, res) => {
+    const username = resolveLedgerCommanderUsername(req.body?.username || '');
+    if (!username) {
+        return sendApiError(res, 'NEXUS-GEN-002');
+    }
+
+    const mode = String(req.body?.mode || '').trim().toLowerCase();
+    if (mode !== 'rank' && mode !== 'exile') {
+        return sendApiError(res, 'NEXUS-AGE-026');
+    }
+
+    const sessionKey = String(req.body?.sessionKey || '').trim();
+    if (!sessionKey) {
+        return sendApiError(res, 'NEXUS-AGE-024');
+    }
+
+    let commander = db.get('commanders').find({ username }).value();
+    if (!commander) {
+        return sendApiError(res, 'NEXUS-GEN-004');
+    }
+
+    const enrolledNation = resolveCatalogNationKey(commander.gameNation);
+    if (!enrolledNation) {
+        return sendApiError(res, 'NEXUS-AGE-024');
+    }
+
+    const userKey = username.toLowerCase();
+    const currentUsage = normalizeCommanderAgeResetUsage(commander.ageResetUsage);
+    if (!canApplyCommanderAgeReset(currentUsage, userKey, sessionKey, mode)) {
+        return sendApiError(res, 'NEXUS-AGE-025');
+    }
+
+    const ledgerPatch = mode === 'exile'
+        ? buildCommanderExileResetLedgerPatch()
+        : buildCommanderRankResetLedgerPatch();
+    const nextUsage = incrementAgeResetUsage(currentUsage, userKey, sessionKey, mode);
+
+    db.get('commanders')
+        .find({ username })
+        .assign({
+            ...ledgerPatch,
+            ageResetUsage: nextUsage,
+            dossierUpdatedAt: new Date().toISOString()
+        })
+        .write();
+
+    if (mode === 'exile') {
+        clearCommanderMovementRecord(username);
+        removeAgeSession(username);
+        maybeFinalizeCountryChatAfterAgeVacant();
+    }
+
+    commander = db.get('commanders').find({ username }).value();
+
+    res.json({
+        status: 'ok',
+        action: 'commander-reset',
+        mode,
+        rank: Number(commander.rank) || 1,
+        ageGold: resolveCommanderAgeGold(commander),
+        ageProvisions: resolveCommanderAgeProvisions(commander),
+        ageGuildXp: Math.max(0, Math.floor(Number(commander.ageGuildXp) || 0)),
+        gameNation: String(commander.gameNation || '').trim(),
+        ageArmy: [],
+        ageResetUsage: normalizeCommanderAgeResetUsage(commander.ageResetUsage),
         ...getPortalLiveMetricsPayload()
     });
 });

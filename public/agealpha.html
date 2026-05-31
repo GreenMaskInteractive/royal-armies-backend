@@ -4,13 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Royal Armies — Age Alpha</title>
-    <link rel="stylesheet" href="style.css?v=royal-family-titles-1">
-    <link rel="stylesheet" href="style2.css?v=player-report-modal-1">
+    <link rel="stylesheet" href="style.css?v=site-viewport-stable-1">
+    <link rel="stylesheet" href="style2.css?v=site-viewport-stable-1">
     <link rel="stylesheet" href="mobile-responsive.css?v=records-compact-tabs-1">
     <link rel="stylesheet" href="dev-page-navigator.css">
     <link rel="stylesheet" href="custom-cursor.css?v=scrollbar-cursor-3">
 </head>
 <body id="age-page-canvas" class="age-page-canvas game-page-canvas" data-age-slug="alpha">
+<script src="rift-viewport-metrics.js?v=site-viewport-stable-1"></script>
 <script src="page-route-transition.js?v=route-fade-1"></script>
 
     <main class="age-page-main" aria-label="Age Alpha — World Map">
@@ -790,7 +791,7 @@
                                 <button
                                     type="button"
                                     id="age-hq-planning-confirm-btn"
-                                    class="age-hq-planning-confirm-btn"
+                                    class="confirm-btn age-hq-planning-confirm-btn"
                                     data-hq-planning-confirm
                                     disabled>
                                     Confirm Plan
@@ -798,7 +799,7 @@
                                 <button
                                     type="button"
                                     id="age-hq-planning-clear-btn"
-                                    class="age-hq-planning-clear-btn"
+                                    class="cancel-btn age-hq-planning-clear-btn"
                                     data-hq-planning-clear
                                     hidden>
                                     Clear Plan
@@ -1404,19 +1405,20 @@
                 <p id="player-report-feedback" class="player-report-feedback" hidden role="alert"></p>
                 <div class="player-report-modal-actions modal-action-btn-row">
                     <button type="button" id="player-report-submit-btn" class="portal-rejoin-age-btn confirm-btn" disabled aria-disabled="true">Submit report</button>
-                    <button type="button" id="player-report-cancel-btn" class="modal-action-btn cancel main-portal-auth-secondary-btn">Cancel</button>
+                    <button type="button" id="player-report-cancel-btn" class="cancel-btn modal-action-btn cancel main-portal-auth-secondary-btn">Cancel</button>
                 </div>
             </div>
         </div>
     </div>
 
+    <script src="rift-confirm-buttons.js?v=hub-action-btn-compact-1"></script>
     <script src="dev-environment.js"></script>
     <script src="rift-error-codes.js?v=player-report-modal-1"></script>
-    <script src="portal-alerts.js?v=local-silent-error-popups-1"></script>
+    <script src="portal-alerts.js?v=ra-action-btn-1"></script>
     <script src="rift-error-display.js?v=update-underway-notice-1"></script>
     <script src="commander-dossier-sync.js?v=dossier-sync-1"></script>
-    <script src="script.js?v=mailbox-system-unread-bar-1"></script>
-    <script src="commander-hub.js?v=player-report-modal-1"></script>
+    <script src="script.js?v=commander-rank-reset-1"></script>
+    <script src="commander-hub.js?v=hub-action-btn-compact-1"></script>
     <script src="portal-commander-identity-menu.js?v=headquarters-chronicles-bp-1"></script>
     <script src="rift-official-age.js?v=official-age-page-1"></script>
     <script src="game-chat.js?v=update-underway-notice-1"></script>
@@ -1430,7 +1432,7 @@
     <script src="rift-age-provisions.js?v=provisions-deplete-1"></script>
     <script src="rift-age-recruitment.js?v=swarm-recruit-1"></script>
     <script src="rift-player-loc-pins.js?v=player-loc-pins-1"></script>
-    <script src="age-world-map.js?v=guild-settlement-jobs-3"></script>
+    <script src="age-world-map.js?v=nation-centroid-labels-1"></script>
     <script src="age-world-plan-overlay.js?v=hq-clear-plan-fix-1"></script>
     <script src="age-view-tabs.js?v=guild-settlement-jobs-3"></script>
     <script src="age-headquarters-planning-map.js?v=hold-sf-mf-staging-1"></script>
@@ -1439,7 +1441,7 @@
     <script src="age-chronicles-battle-pass.js?v=bp-premium-badge-1"></script>
     <script src="age-left-reports-panel.js?v=quick-tips-panel-1"></script>
     <script src="age-quick-tips-panel.js?v=quick-tips-panel-1"></script>
-    <script src="age-page.js?v=guild-battle-sim-1"></script>
+    <script src="age-page.js?v=site-viewport-stable-1"></script>
     <script src="age-war-ledger.js?v=war-ledger-bottom-bar-1"></script>
     <script src="rift-unit-purchase-catalog.js?v=swarm-recruit-1"></script>
     <script src="rift-age-guild-training.js?v=guild-settlement-jobs-3"></script>

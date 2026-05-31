@@ -14,13 +14,14 @@
 
     <!-- Block 2: Page Title & Stylesheet Bridge -->
     <title>Royal Armies - An MMOHFT Medieval-Fantasy Strategy Game</title>
-    <link rel="stylesheet" href="style.css?v=royal-family-titles-1">
-    <link rel="stylesheet" href="style2.css?v=player-report-modal-1">
+    <link rel="stylesheet" href="style.css?v=site-viewport-stable-1">
+    <link rel="stylesheet" href="style2.css?v=site-viewport-stable-1">
     <link rel="stylesheet" href="mobile-responsive.css?v=age-mobile-hud-1">
     <link rel="stylesheet" href="dev-page-navigator.css">
     <link rel="stylesheet" href="custom-cursor.css?v=scrollbar-cursor-2">
 </head>
 <body id="main-dashboard-canvas">
+<script src="rift-viewport-metrics.js?v=site-viewport-stable-1"></script>
 <script>
 (function enforceEarlyActiveAgePortalLock() {
     try {
@@ -54,7 +55,6 @@
         <div class="header-logo-housing-block portal-brand-logo-static" aria-hidden="false">
             <div class="portal-brand-logo-stack">
                 <img src="images/royalarmiestitle.png?v=logo-trim-gimp-1" alt="Royal Armies Official Title Logo" class="portal-brand-logo-asset">
-                <p class="portal-early-access-readout">Early Access</p>
             </div>
         </div>
     </header>
@@ -318,10 +318,14 @@
 
                     <div class="deployment-action-button-row portal-deployment-member-actions" id="portal-deployment-member-actions">
                         <div class="action-btn-aura-housing aura-glow-red">
-                            <button type="button" class="portal-join-age-btn portal-join-age-btn--primary" onclick="launchGameRoundSector(false, event)">Join Age</button>
+                            <button type="button" class="deployment-image-trigger-btn" onclick="launchGameRoundSector(false, event)" aria-label="Join Age">
+                                <img src="images/joinagebtn.png?v=portal-join-age-image-1" alt="Join Age">
+                            </button>
                         </div>
                         <div class="action-btn-aura-housing aura-glow-blue">
-                            <button type="button" class="portal-join-age-btn portal-join-age-btn--tutorial" onclick="launchGameRoundSector(true, event)">Tutorial Age</button>
+                            <button type="button" class="deployment-image-trigger-btn" onclick="launchGameRoundSector(true, event)" aria-label="Tutorial Age">
+                                <img src="images/joinagetutorialbtn.png?v=portal-join-age-image-1" alt="Tutorial Age">
+                            </button>
                         </div>
                     </div>
 
@@ -556,7 +560,7 @@
                 This is a daily "Community Safety & Fairness" system reminder to keep players informed of their current discipline status.
             </div>
             <div class="suicide-popup-action-row">
-                <button class="suicide-safe-retreat-btn" onclick="closePenaltyOverlayWindow()">OK</button>
+                <button class="cancel-btn suicide-safe-retreat-btn" onclick="closePenaltyOverlayWindow()">OK</button>
             </div>
         </div>
     </div>
@@ -601,7 +605,7 @@
                 <div id="auth-loading" class="main-portal-auth-loading" style="display: none;">Authenticating...</div>
                 <div id="auth-buttons" class="main-portal-auth-btn-row">
                     <button type="button" id="btn-login-main" class="portal-rejoin-age-btn confirm-btn" onclick="handleLogin()">Login</button>
-                    <button type="button" id="btn-register-main" class="modal-action-btn cancel main-portal-auth-secondary-btn" onclick="handleRegister()">Create Account</button>
+                    <button type="button" id="btn-register-main" class="main-portal-auth-secondary-btn" onclick="handleRegister()">Create Account</button>
                 </div>
             </div>
             </div>
@@ -628,7 +632,7 @@
                 </label>
                 <div class="modal-action-btn-row main-portal-auth-btn-row">
                     <button type="button" id="reg-submit-btn" class="portal-rejoin-age-btn confirm-btn" onclick="submitRegistration()" disabled aria-disabled="true">Confirm</button>
-                    <button type="button" class="modal-action-btn cancel main-portal-auth-secondary-btn" onclick="closeRegister()">Cancel</button>
+                    <button type="button" class="cancel-btn modal-action-btn cancel main-portal-auth-secondary-btn" onclick="closeRegister()">Cancel</button>
                 </div>
             </div>
             </div>
@@ -652,7 +656,7 @@
                 </div>
                 <div class="modal-action-btn-row main-portal-auth-btn-row">
                     <button type="button" class="portal-rejoin-age-btn confirm-btn" onclick="submitForgot(event)">Send</button>
-                    <button type="button" class="modal-action-btn cancel main-portal-auth-secondary-btn" onclick="closeForgot()">Cancel</button>
+                    <button type="button" class="cancel-btn modal-action-btn cancel main-portal-auth-secondary-btn" onclick="closeForgot()">Cancel</button>
                 </div>
             </div>
             </div>
@@ -676,7 +680,7 @@
                 <p id="terms-dashboard-feedback" class="terms-dashboard-feedback" hidden role="alert"></p>
                 <div class="terms-dashboard-gate-actions modal-action-btn-row">
                     <button type="button" id="terms-dashboard-confirm-btn" class="portal-rejoin-age-btn confirm-btn" disabled aria-disabled="true">Confirm &amp; Play</button>
-                    <button type="button" id="terms-dashboard-logout-btn" class="modal-action-btn cancel main-portal-auth-secondary-btn">Log Out</button>
+                    <button type="button" id="terms-dashboard-logout-btn" class="cancel-btn modal-action-btn cancel main-portal-auth-secondary-btn">Log Out</button>
                 </div>
             </div>
         </div>
@@ -717,7 +721,7 @@
                 <p id="player-report-feedback" class="player-report-feedback" hidden role="alert"></p>
                 <div class="player-report-modal-actions modal-action-btn-row">
                     <button type="button" id="player-report-submit-btn" class="portal-rejoin-age-btn confirm-btn" disabled aria-disabled="true">Submit report</button>
-                    <button type="button" id="player-report-cancel-btn" class="modal-action-btn cancel main-portal-auth-secondary-btn">Cancel</button>
+                    <button type="button" id="player-report-cancel-btn" class="cancel-btn modal-action-btn cancel main-portal-auth-secondary-btn">Cancel</button>
                 </div>
             </div>
         </div>
@@ -728,8 +732,8 @@
             <h3 id="logout-modal-title" class="modal-alert-header">Log out?</h3>
             <p class="modal-alert-body">Your session will end and your online status will clear immediately. You can sign in again from the Age Portal.</p>
             <div class="modal-action-btn-row">
-                <button type="button" class="modal-action-btn confirm" onclick="executeLogoutRedirect()">Log out</button>
-                <button type="button" class="modal-action-btn cancel" onclick="closeMainLogoutConfirmationWindow()">Stay signed in</button>
+                <button type="button" class="confirm-btn modal-action-btn confirm" onclick="executeLogoutRedirect()">Log out</button>
+                <button type="button" class="cancel-btn modal-action-btn cancel" onclick="closeMainLogoutConfirmationWindow()">Stay signed in</button>
             </div>
         </div>
     </div>
@@ -752,18 +756,19 @@
     <script src="portal-commander-identity-menu.js?v=avatar-name-menu-trigger-1"></script>
     <script src="achievement-system.js?v=first-timer-icon-png-1"></script>
     <script src="dev-page-navigator.js?v=dev-nav-drag-fix-1"></script>
+    <script src="rift-confirm-buttons.js?v=hub-action-btn-compact-1"></script>
     <script src="nexus-account-validation.js?v=registration-username-rules-1"></script>
     <script src="rift-error-codes.js?v=player-report-modal-1"></script>
     <script src="terms-acceptance.js?v=legal-terms-2026-06-01"></script>
     <script src="royalty-billing.js?v=legal-terms-compliance-1"></script>
-    <script src="portal-alerts.js?v=local-silent-error-popups-1"></script>
+    <script src="portal-alerts.js?v=ra-action-btn-1"></script>
     <script src="rift-error-display.js?v=update-underway-notice-1"></script>
     <script src="rank-data.js"></script>
-    <script src="script.js?v=active-age-resume-routing-1"></script>
-    <script src="commander-hub.js?v=player-report-modal-1"></script>
+    <script src="script.js?v=commander-rank-reset-1"></script>
+    <script src="commander-hub.js?v=hub-action-btn-compact-1"></script>
     <script src="maintenance-alert.js?v=maintenance-always-on-1"></script>
     <script src="rift-player-report.js?v=player-report-modal-1"></script>
-    <script src="script2.js?v=player-report-modal-1"></script>
+    <script src="script2.js?v=portal-join-age-image-1"></script>
     <script src="custom-cursor.js?v=scrollbar-cursor-2"></script>
 
 </body>

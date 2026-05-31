@@ -984,6 +984,9 @@
         if (!mapFrame) return;
 
         const runSync = () => {
+            if (typeof global.RoyalArmiesViewportMetrics?.schedule === 'function') {
+                global.RoyalArmiesViewportMetrics.schedule();
+            }
             global.requestAnimationFrame(() => {
                 syncCouncilBoardLayoutToMap();
                 syncHeadquartersPlanningLayout();
@@ -994,6 +997,10 @@
 
         runSync();
         global.addEventListener('resize', runSync, { passive: true });
+        global.addEventListener('royalarmies:viewport-metrics-updated', runSync, { passive: true });
+        if (global.visualViewport) {
+            global.visualViewport.addEventListener('resize', runSync, { passive: true });
+        }
 
         if (typeof global.ResizeObserver === 'function') {
             if (councilBoardLayoutObserver) {

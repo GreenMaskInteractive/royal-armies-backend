@@ -11,7 +11,7 @@ html.legal-page-root body {
 }
 
 .legal-page-shell {
-    min-height: 100dvh;
+    min-height: var(--ra-layout-vh, 100dvh);
     display: flex;
     flex-direction: column;
     box-sizing: border-box;

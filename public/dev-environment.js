@@ -180,6 +180,11 @@
         return isLocalDevPlayerBypassActive();
     }
 
+    /** Local game.html — preview onboarding progression instead of resuming agealpha. */
+    function shouldAllowLocalGameProgressionPreview() {
+        return isLocalDevelopmentHost() && !isProductionRoyalArmiesHost();
+    }
+
     function shouldSkipLocalDevAutoLogin() {
         if (getLocalDevViewMode() === LOCAL_DEV_VIEW_MODES.guest) return true;
         try {
@@ -253,6 +258,7 @@
     global.setLocalDevViewMode = setLocalDevViewMode;
     global.isLocalDevPlayerBypassActive = isLocalDevPlayerBypassActive;
     global.isPortalDevFullAccessBypass = isPortalDevFullAccessBypass;
+    global.shouldAllowLocalGameProgressionPreview = shouldAllowLocalGameProgressionPreview;
     global.getRoyalArmiesApiOrigin = getRoyalArmiesApiOrigin;
     global.resolveRoyalArmiesApiUrl = resolveRoyalArmiesApiUrl;
     global.RoyalArmiesDev = {
@@ -273,6 +279,7 @@
         setLocalDevViewMode,
         isLocalDevPlayerBypassActive,
         isPortalDevFullAccessBypass,
+        shouldAllowLocalGameProgressionPreview,
         localDevAutoLoginUsername: LOCAL_DEV_AUTO_LOGIN_USERNAME,
         localDevPlayerBypassUsername: LOCAL_DEV_PLAYER_BYPASS_USERNAME,
         viewModes: LOCAL_DEV_VIEW_MODES,

@@ -98,12 +98,12 @@
 
             if (isConfirm) {
                 actionsEl.innerHTML = `
-                    <button type="button" class="modal-action-btn confirm" data-portal-alert-action="confirm">${escapePortalAlertHtml(config.confirmLabel || 'Confirm')}</button>
-                    <button type="button" class="modal-action-btn cancel" data-portal-alert-action="cancel">${escapePortalAlertHtml(config.cancelLabel || 'Cancel')}</button>
+                    <button type="button" class="confirm-btn modal-action-btn confirm" data-portal-alert-action="confirm">${escapePortalAlertHtml(config.confirmLabel || 'Confirm')}</button>
+                    <button type="button" class="cancel-btn modal-action-btn cancel" data-portal-alert-action="cancel">${escapePortalAlertHtml(config.cancelLabel || 'Cancel')}</button>
                 `;
             } else {
                 actionsEl.innerHTML = `
-                    <button type="button" class="modal-action-btn confirm portal-alert-ok-btn" data-portal-alert-action="confirm">${escapePortalAlertHtml(config.confirmLabel || 'OK')}</button>
+                    <button type="button" class="confirm-btn modal-action-btn confirm portal-alert-ok-btn" data-portal-alert-action="confirm">${escapePortalAlertHtml(config.confirmLabel || 'OK')}</button>
                 `;
             }
 

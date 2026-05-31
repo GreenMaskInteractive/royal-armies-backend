@@ -886,7 +886,7 @@ function mountSecurityOverlayActions(primaryLabel, onPrimary, onCancel) {
     
     const cancelBtn = document.createElement('button');
     cancelBtn.type = 'button';
-    cancelBtn.className = 'suicide-safe-retreat-btn';
+    cancelBtn.className = 'cancel-btn suicide-safe-retreat-btn';
     cancelBtn.innerText = 'Cancel';
     cancelBtn.onclick = onCancel;
 
@@ -2554,7 +2554,7 @@ function closeChronicleDetail() {
 /* --- Block 9: Global Audio Engine (audio/uihover.wav) --- */
 document.addEventListener('mouseover', (e) => {
     // This looks for anything clickable (icons, buttons, lore titles, cards, links)
-    const target = e.target.closest('.nav-icon, .img-btn, .radial-slot, .update-item, .quest-card, .close-modal, .forgot-link, .confirm-btn, .revert-btn');
+    const target = e.target.closest('.nav-icon, .img-btn, .radial-slot, .update-item, .quest-card, .close-modal, .forgot-link, .confirm-btn, .cancel-btn, .revert-btn');
     
     if (target && !target.classList.contains('disabled')) {
         const hoverSound = document.getElementById('hover-sound');
@@ -2571,7 +2571,7 @@ hoverSound.volume = 0.2;
 /* --- Block 10: Global Selection Engine (uiselect.wav) --- */
 document.addEventListener('click', (e) => {
     // Finds the clickable target (buttons, icons, lore titles, etc.)
-    const target = e.target.closest('.nav-icon, .img-btn, .radial-slot, .update-item, .quest-card, .close-modal, .forgot-link, .confirm-btn, .revert-btn');
+    const target = e.target.closest('.nav-icon, .img-btn, .radial-slot, .update-item, .quest-card, .close-modal, .forgot-link, .confirm-btn, .cancel-btn, .revert-btn');
     
     if (target && !target.classList.contains('disabled')) {
         const selectSound = document.getElementById('select-sound');
@@ -4888,7 +4888,7 @@ function renderSuicideDialogStep() {
         if (btnInfo.action === 'next' || btnInfo.action === 'commit') {
             button.className = 'suicide-danger-confirm-btn';
         } else {
-            button.className = 'suicide-safe-retreat-btn';
+            button.className = 'cancel-btn suicide-safe-retreat-btn';
         }
         
         // THE FIXED INTERCEPT LINK: Direct property handler captures click data cleanly
@@ -4900,6 +4900,151 @@ function renderSuicideDialogStep() {
         
         btnDock.appendChild(button);
     });
+}
+
+function syncCommanderAgeResetUsageFromServer(ageResetUsage) {
+    if (!ageResetUsage || typeof ageResetUsage !== 'object') return;
+    try {
+        localStorage.setItem(COMMANDER_AGE_RESET_USAGE_KEY, JSON.stringify(ageResetUsage));
+    } catch (_err) {
+        /* ignore */
+    }
+}
+
+function applyCommanderAgeResetPayload(mode, payload) {
+    if (typeof player === 'undefined' || !payload || typeof payload !== 'object') return;
+
+    player.rank = Math.max(1, Math.floor(Number(payload.rank) || 1));
+    player.ageGuildXp = Math.max(0, Math.floor(Number(payload.ageGuildXp) || 0));
+    player.ageArmy = Array.isArray(payload.ageArmy) ? payload.ageArmy.slice() : [];
+    player.army = [];
+
+    if (Number.isFinite(Number(payload.ageGold))) {
+        const nextGold = Math.max(0, Math.floor(Number(payload.ageGold)));
+        player.ageGold = nextGold;
+        if (typeof setAgeCommanderGold === 'function') {
+            setAgeCommanderGold(nextGold, { source: 'commander-reset', silent: true });
+        } else if (typeof refreshAgeHudGold === 'function') {
+            refreshAgeHudGold();
+        }
+    }
+
+    if (Number.isFinite(Number(payload.ageProvisions))) {
+        player.ageProvisions = Math.max(0, Math.floor(Number(payload.ageProvisions)));
+    }
+
+    if (mode === 'exile') {
+        player.gameNation = '';
+    } else if (payload.gameNation) {
+        player.gameNation = String(payload.gameNation).trim();
+    }
+
+    syncCommanderAgeResetUsageFromServer(payload.ageResetUsage);
+
+    if (typeof refreshAgeHudUnits === 'function') {
+        refreshAgeHudUnits();
+    }
+    if (typeof refreshAgeHudProvisions === 'function') {
+        refreshAgeHudProvisions();
+    }
+}
+
+async function commitCommanderAgeResetToServer(mode) {
+    const username = typeof getActiveCommanderUsername === 'function' ? getActiveCommanderUsername() : '';
+    if (!username || username.toLowerCase() === 'testaccount') {
+        return { ok: false, message: 'Sign in to reset your commander rank.' };
+    }
+
+    const sessionKey = localStorage.getItem(COMMANDER_ACTIVE_AGE_SESSION_KEY) || '';
+    if (!sessionKey) {
+        return { ok: false, message: 'Rank reset is only available during an active Age session.' };
+    }
+
+    try {
+        const response = await fetch('/api/portal/age/commander-reset', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username, mode, sessionKey })
+        });
+        const payload = await response.json().catch(() => ({}));
+        if (!response.ok || payload.status !== 'ok') {
+            return {
+                ok: false,
+                message: payload.message || 'Your rank reset could not be completed. Try again shortly.'
+            };
+        }
+
+        applyCommanderAgeResetPayload(mode, payload);
+        return { ok: true, payload };
+    } catch (err) {
+        console.warn('Commander rank reset failed:', err);
+        return { ok: false, message: 'Network error — your rank reset could not reach the server.' };
+    }
+}
+
+function clearCommanderLocalAgeSessionFlags() {
+    localStorage.removeItem('savedCommanderInActiveAge');
+    const sessionStartedKey = resolveCommanderGameSessionStartedStorageKey();
+    if (sessionStartedKey) {
+        localStorage.removeItem(sessionStartedKey);
+    }
+}
+
+function finalizeCommanderAgeReset(mode) {
+    hasUnsavedChanges = false;
+
+    if (mode === 'exile') {
+        clearCommanderLocalAgeSessionFlags();
+        clearCommanderAgeResetSession();
+        if (typeof notifyPortalAgeSessionLeave === 'function') {
+            notifyPortalAgeSessionLeave();
+        }
+        if (typeof applyPortalDeploymentDeckPresentation === 'function') {
+            applyPortalDeploymentDeckPresentation();
+        }
+        if (typeof isMainPortalHub === 'function' && !isMainPortalHub()) {
+            const destination = '/main.html';
+            if (window.RoyalArmiesPageRouteTransition && typeof window.RoyalArmiesPageRouteTransition.navigateTo === 'function') {
+                window.RoyalArmiesPageRouteTransition.navigateTo(destination);
+            } else {
+                window.location.href = destination;
+            }
+        }
+    }
+
+    reloadProfilePanelView();
+    applyProfileRankResetButtonState();
+    closeSuicideOverlayWindow();
+}
+
+async function handleSuicideCommitReset() {
+    const mode = currentSuicideMode;
+    if ((mode !== 'rank' && mode !== 'exile') || !canUseCommanderReset(mode)) {
+        closeSuicideOverlayWindow();
+        applyProfileRankResetButtonState();
+        return;
+    }
+
+    const btnDock = document.getElementById('suicide-popup-btn-dock');
+    if (btnDock) {
+        btnDock.querySelectorAll('button').forEach((button) => {
+            button.disabled = true;
+        });
+    }
+
+    const result = await commitCommanderAgeResetToServer(mode);
+    if (!result.ok) {
+        if (typeof showSaveChangesConfirmation === 'function') {
+            showSaveChangesConfirmation(result.message || 'Rank reset failed.');
+        }
+        closeSuicideOverlayWindow();
+        applyProfileRankResetButtonState();
+        return;
+    }
+
+    currentSuicideStep++;
+    renderSuicideDialogStep();
+    applyProfileRankResetButtonState();
 }
 
 function handleSuicideActionSelection(action) {
@@ -4917,41 +5062,9 @@ function handleSuicideActionSelection(action) {
             return;
         }
 
-        if (currentSuicideMode === 'rank' || currentSuicideMode === 'exile') {
-            incrementCommanderResetUsage(currentSuicideMode);
-        }
-
-        // ACCOUNT DEFAULT STRUCTURAL DISK WIPING SIMULATION
-        if (currentSuicideMode === 'rank') {
-            player.rank = 1;
-            player.xp = 0;
-            player.gold = 1000; // Reset gold currency metrics back to default baseline configurations
-            console.log("Commander rank defaults written.");
-        } else if (currentSuicideMode === 'exile') {
-            player.rank = 1;
-            player.xp = 0;
-            player.gold = 1000;
-            player.country = "Unassigned Void";
-            console.log("Commander exile default states written.");
-        }
-        
-        // Push step index pointer to the final confirmation panel text box block row
-        currentSuicideStep++;
-        renderSuicideDialogStep();
-        applyProfileRankResetButtonState();
+        handleSuicideCommitReset();
     } else if (action === 'finalize') {
-        // Clear variables, commit changes to disk memory cache records, re-render, and clear the screen
-        hasUnsavedChanges = false;
-        localStorage.removeItem('savedCommanderInActiveAge');
-        if (currentSuicideMode === 'exile') {
-            clearCommanderAgeResetSession();
-        }
-        if (typeof notifyPortalAgeSessionLeave === 'function') notifyPortalAgeSessionLeave();
-        if (typeof saveSettings === 'function') saveSettings();
-        reloadProfilePanelView();
-        applyProfileRankResetButtonState();
-        
-        closeSuicideOverlayWindow();
+        finalizeCommanderAgeReset(currentSuicideMode);
     }
 }
 
@@ -5635,13 +5748,13 @@ function openFocusedDossierReadingOverlay(msg, track) {
 
     if (track === 'inbox') {
         const replyBtn = document.createElement('button');
-        replyBtn.className = 'suicide-safe-retreat-btn';
+        replyBtn.className = 'cancel-btn suicide-safe-retreat-btn';
         replyBtn.innerText = 'Reply';
         replyBtn.onclick = () => openMessageComposeFromDossier(msg, 'reply');
         btnDock.appendChild(replyBtn);
 
         const forwardBtn = document.createElement('button');
-        forwardBtn.className = 'suicide-safe-retreat-btn';
+        forwardBtn.className = 'cancel-btn suicide-safe-retreat-btn';
         forwardBtn.innerText = 'Forward';
         forwardBtn.onclick = () => openMessageComposeFromDossier(msg, 'forward');
         btnDock.appendChild(forwardBtn);
@@ -5672,7 +5785,7 @@ function openFocusedDossierReadingOverlay(msg, track) {
     };
 
     const returnBtn = document.createElement('button');
-    returnBtn.className = 'suicide-safe-retreat-btn';
+    returnBtn.className = 'cancel-btn suicide-safe-retreat-btn';
     returnBtn.innerText = 'Close';
     returnBtn.onclick = () => closeSuicideOverlayWindow();
 

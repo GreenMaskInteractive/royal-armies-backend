@@ -117,6 +117,19 @@
         }
     }
 
+    function isLocalGameProgressionPreviewActive() {
+        return typeof global.shouldAllowLocalGameProgressionPreview === 'function'
+            && global.shouldAllowLocalGameProgressionPreview();
+    }
+
+    function shouldResumeActiveAgeSession() {
+        return isGameSessionStarted() && !isLocalGameProgressionPreviewActive();
+    }
+
+    function shouldBlockOnboardingProgression() {
+        return isOnboardingViewAnimating || shouldResumeActiveAgeSession();
+    }
+
     function consumeProgressionResetQuery() {
         try {
             const url = new URL(global.location.href);
@@ -217,7 +230,7 @@
         const viewport = global.document.getElementById('game-page-viewport');
         const progress = global.document.getElementById('game-onboarding-progress');
         const sessionStage = global.document.getElementById('game-session-stage');
-        const started = isGameSessionStarted();
+        const started = shouldResumeActiveAgeSession();
 
         if (canvas) {
             canvas.classList.toggle('game-session-active', started);
@@ -667,7 +680,7 @@
     }
 
     async function enterGameSessionFromOnboarding() {
-        if (isGameSessionStarted() || isOnboardingViewAnimating) {
+        if (shouldBlockOnboardingProgression()) {
             return false;
         }
         if (activeGameView !== 'join-battle') {
@@ -753,7 +766,7 @@
     }
 
     function advanceGameOnboarding() {
-        if (isOnboardingViewAnimating || isGameSessionStarted()) {
+        if (shouldBlockOnboardingProgression()) {
             return false;
         }
 
@@ -773,7 +786,7 @@
             event.preventDefault();
             event.stopPropagation();
         }
-        if (isOnboardingViewAnimating || isGameSessionStarted() || activeGameView !== 'region') {
+        if (shouldBlockOnboardingProgression() || activeGameView !== 'region') {
             return false;
         }
 
@@ -918,7 +931,7 @@
             consumeProgressionResetQuery();
         }
 
-        if (isGameSessionStarted()) {
+        if (shouldResumeActiveAgeSession()) {
             const agePath = resolveOfficialAgePagePath();
             if (global.RoyalArmiesPageRouteTransition && typeof global.RoyalArmiesPageRouteTransition.navigateTo === 'function') {
                 await global.RoyalArmiesPageRouteTransition.navigateTo(agePath);

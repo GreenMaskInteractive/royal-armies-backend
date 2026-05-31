@@ -345,6 +345,9 @@
     }
 
     function scheduleRegionFlankLayout() {
+        if (typeof global.RoyalArmiesViewportMetrics?.schedule === 'function') {
+            global.RoyalArmiesViewportMetrics.schedule();
+        }
         global.requestAnimationFrame(() => {
             syncRegionFlankLayout();
             global.requestAnimationFrame(syncRegionFlankLayout);
@@ -372,6 +375,10 @@
 
         global.addEventListener('resize', syncRegionFlankLayout, { passive: true });
         global.addEventListener('orientationchange', syncRegionFlankLayout, { passive: true });
+        global.addEventListener('royalarmies:viewport-metrics-updated', scheduleRegionFlankLayout, { passive: true });
+        if (global.visualViewport) {
+            global.visualViewport.addEventListener('resize', scheduleRegionFlankLayout, { passive: true });
+        }
 
         detailPanels.forEach((detailPanel) => {
             detailPanel.addEventListener('transitionend', (event) => {
@@ -1047,7 +1054,13 @@
         const saved = await persistOnboardingNationSelection(selectedNationId, lockedRegionId);
         updateConfirmButtonVisibility();
 
-        if (!saved) return;
+        const allowLocalPreviewAdvance = typeof global.shouldAllowLocalGameProgressionPreview === 'function'
+            && global.shouldAllowLocalGameProgressionPreview();
+
+        if (!saved && !allowLocalPreviewAdvance) {
+            if (nationConfirmBtn) nationConfirmBtn.disabled = false;
+            return;
+        }
 
         if (typeof global.advanceGameOnboarding === 'function') {
             global.advanceGameOnboarding();

@@ -668,6 +668,24 @@
             message: 'That bounty contract is unavailable or has expired.',
             category: 'game'
         },
+        'NEXUS-AGE-024': {
+            http: 403,
+            title: 'Rank reset',
+            message: 'Rank reset is only available while you are actively playing an Age.',
+            category: 'game'
+        },
+        'NEXUS-AGE-025': {
+            http: 429,
+            title: 'Rank reset',
+            message: 'You have used all rank or exile resets allowed for this Age session.',
+            category: 'game'
+        },
+        'NEXUS-AGE-026': {
+            http: 400,
+            title: 'Rank reset',
+            message: 'Choose a valid rank reset type (rank or exile).',
+            category: 'game'
+        },
 
         /* --- Player conduct reports --- */
         'NEXUS-REPORT-001': {

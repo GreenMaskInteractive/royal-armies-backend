@@ -4,9 +4,17 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Royal Armies - Age Session (In Development)</title>
+    <script src="dev-environment.js"></script>
     <script>
     (function enforceEarlyActiveAgeSessionResume() {
         try {
+            if (typeof shouldAllowLocalGameProgressionPreview === 'function'
+                && shouldAllowLocalGameProgressionPreview()) {
+                return;
+            }
+            var params = new URLSearchParams(window.location.search);
+            if (params.get('riftProgressionReset') === '1') return;
+
             var username = String(localStorage.getItem('activeCommanderUser') || '').trim().toLowerCase();
             if (!username) return;
             if (localStorage.getItem('royalArmies_' + username + '_gameSessionStarted') !== 'true') return;
@@ -24,13 +32,14 @@
         visibility: hidden !important;
     }
     </style>
-    <link rel="stylesheet" href="style.css?v=royal-family-titles-1">
-    <link rel="stylesheet" href="style2.css?v=game-class-layout-stable-1">
-    <link rel="stylesheet" href="mobile-responsive.css?v=game-class-layout-stable-1">
+    <link rel="stylesheet" href="style.css?v=site-viewport-stable-1">
+    <link rel="stylesheet" href="style2.css?v=site-viewport-stable-1">
+    <link rel="stylesheet" href="mobile-responsive.css?v=game-class-showcase-1">
     <link rel="stylesheet" href="dev-page-navigator.css">
     <link rel="stylesheet" href="custom-cursor.css?v=scrollbar-cursor-3">
 </head>
 <body id="game-page-canvas" class="game-page-canvas">
+<script src="rift-viewport-metrics.js?v=site-viewport-stable-1"></script>
 <script src="page-route-transition.js?v=route-fade-1"></script>
 
     <div class="game-page-staging-deck">
@@ -112,61 +121,72 @@
 
                     <div class="game-class-picker-stage">
                         <div class="game-class-picker-duo" role="group" aria-label="Choose your class">
-                            <div class="game-class-option-column game-class-option-column--battlemaster">
-                                <button
-                                    type="button"
-                                    class="game-class-option"
-                                    data-class-id="battlemaster"
-                                    aria-pressed="false"
-                                    aria-controls="game-class-panel-battlemaster"
-                                    aria-label="Battlemaster">
-                                    <span class="game-class-option-art-stack" aria-hidden="true">
-                                        <img
-                                            src="images/bgwindow.png"
-                                            alt=""
-                                            class="game-class-option-bg-window"
-                                            width="1276"
-                                            height="832"
-                                            decoding="async"
-                                            draggable="false">
-                                        <img
-                                            src="images/battlemasterclass.png"
-                                            alt=""
-                                            class="game-class-option-img"
-                                            width="512"
-                                            height="768"
-                                            draggable="false">
-                                    </span>
-                                    <span class="game-class-option-label">Battlemaster</span>
-                                </button>
-                            </div>
-                            <div class="game-class-option-column game-class-option-column--archmage">
-                                <button
-                                    type="button"
-                                    class="game-class-option"
-                                    data-class-id="archmage"
-                                    aria-pressed="false"
-                                    aria-controls="game-class-panel-archmage"
-                                    aria-label="Archmage">
-                                    <span class="game-class-option-art-stack" aria-hidden="true">
-                                        <img
-                                            src="images/bgwindow.png"
-                                            alt=""
-                                            class="game-class-option-bg-window"
-                                            width="1276"
-                                            height="832"
-                                            decoding="async"
-                                            draggable="false">
-                                        <img
-                                            src="images/classarchmage.png"
-                                            alt=""
-                                            class="game-class-option-img"
-                                            width="512"
-                                            height="768"
-                                            draggable="false">
-                                    </span>
-                                    <span class="game-class-option-label">Archmage</span>
-                                </button>
+                            <div class="game-class-showcase" data-displayed-class="battlemaster" data-accent-class="battlemaster">
+                                <div class="game-class-showcase-stage">
+                                    <div class="game-class-showcase-aura" aria-hidden="true"></div>
+                                    <div class="game-class-showcase-ring" aria-hidden="true"></div>
+                                    <div class="game-class-portrait-stage" aria-hidden="false">
+                                            <button
+                                                type="button"
+                                                class="game-class-portrait-card game-class-option is-front"
+                                                data-class-id="battlemaster"
+                                                aria-pressed="false"
+                                                aria-controls="game-class-panel-battlemaster"
+                                                aria-label="Battlemaster">
+                                                <img
+                                                    src="images/battlemasterclass.png"
+                                                    alt=""
+                                                    class="game-class-portrait-img"
+                                                    width="512"
+                                                    height="768"
+                                                    draggable="false">
+                                            </button>
+                                            <button
+                                                type="button"
+                                                class="game-class-portrait-card game-class-option is-back"
+                                                data-class-id="archmage"
+                                                aria-pressed="false"
+                                                aria-controls="game-class-panel-archmage"
+                                                aria-label="Archmage"
+                                                tabindex="-1">
+                                                <img
+                                                    src="images/classarchmage.png"
+                                                    alt=""
+                                                    class="game-class-portrait-img"
+                                                    width="512"
+                                                    height="768"
+                                                    draggable="false">
+                                            </button>
+                                    </div>
+                                </div>
+                                <div class="game-class-showcase-command" aria-label="Switch class">
+                                    <button
+                                        type="button"
+                                        class="game-class-showcase-arrow game-class-showcase-arrow--prev"
+                                        aria-label="Show previous class">
+                                        <span class="game-class-showcase-arrow-glyph" aria-hidden="true"></span>
+                                    </button>
+                                    <div class="game-class-showcase-nameplate">
+                                        <span class="game-class-showcase-nameplate-rule" aria-hidden="true"></span>
+                                        <p class="game-class-showcase-label" id="game-class-showcase-label" aria-live="polite">Battlemaster</p>
+                                        <span class="game-class-showcase-nameplate-rule" aria-hidden="true"></span>
+                                    </div>
+                                    <button
+                                        type="button"
+                                        class="game-class-showcase-arrow game-class-showcase-arrow--next"
+                                        aria-label="Show next class">
+                                        <span class="game-class-showcase-arrow-glyph" aria-hidden="true"></span>
+                                    </button>
+                                </div>
+                                <div class="confirm-btn-dock">
+                                    <button
+                                        type="button"
+                                        id="game-class-confirm-btn"
+                                        class="confirm-btn"
+                                        aria-label="Confirm selected class">
+                                        Confirm Class
+                                    </button>
+                                </div>
                             </div>
                         </div>
 
@@ -188,16 +208,11 @@
                                     is finished in one blow. The title is earned only when a warrior proves worth against the fiercest foe—marking one
                                     ready to face any challenger on the field.
                                 </p>
-                                <div class="game-class-perk-layout" role="list" aria-label="Battlemaster perks">
-                                    <div class="game-class-perk-entry is-active" role="listitem">
-                                        <button
-                                            type="button"
-                                            class="game-class-perk-btn is-active"
-                                            data-perk-id="tactical-retainers"
-                                            aria-pressed="true"
-                                            aria-label="Tactical Retainers, Economy">
-                                            <img src="images/avatars/commanderprofile01.png" alt="" class="game-class-perk-icon" width="64" height="64" draggable="false">
-                                        </button>
+                                <div class="game-class-perk-layout game-class-perk-layout--static" role="list" aria-label="Battlemaster perks">
+                                    <div class="game-class-perk-entry" role="listitem">
+                                        <div class="game-class-perk-icon-slot" aria-hidden="true">
+                                            <img src="images/units/unit-portrait-placeholder.svg" alt="" class="game-class-perk-icon is-placeholder" width="64" height="64" draggable="false">
+                                        </div>
                                         <div class="game-class-perk-entry-text">
                                             <h5 class="game-class-perk-entry-title">Tactical Retainers</h5>
                                             <p class="game-class-perk-entry-subtitle">Economy</p>
@@ -205,14 +220,9 @@
                                         </div>
                                     </div>
                                     <div class="game-class-perk-entry" role="listitem">
-                                        <button
-                                            type="button"
-                                            class="game-class-perk-btn"
-                                            data-perk-id="vanguard-press"
-                                            aria-pressed="false"
-                                            aria-label="Vanguard Press, Phase Manipulation">
-                                            <img src="images/avatars/commanderprofile02.png" alt="" class="game-class-perk-icon" width="64" height="64" draggable="false">
-                                        </button>
+                                        <div class="game-class-perk-icon-slot" aria-hidden="true">
+                                            <img src="images/units/unit-portrait-placeholder.svg" alt="" class="game-class-perk-icon is-placeholder" width="64" height="64" draggable="false">
+                                        </div>
                                         <div class="game-class-perk-entry-text">
                                             <h5 class="game-class-perk-entry-title">Vanguard Press</h5>
                                             <p class="game-class-perk-entry-subtitle">Phase Manipulation</p>
@@ -220,14 +230,9 @@
                                         </div>
                                     </div>
                                     <div class="game-class-perk-entry" role="listitem">
-                                        <button
-                                            type="button"
-                                            class="game-class-perk-btn"
-                                            data-perk-id="iron-rally"
-                                            aria-pressed="false"
-                                            aria-label="Iron Rally, Leadership and Cooperation">
-                                            <img src="images/avatars/commanderprofile03.png" alt="" class="game-class-perk-icon" width="64" height="64" draggable="false">
-                                        </button>
+                                        <div class="game-class-perk-icon-slot" aria-hidden="true">
+                                            <img src="images/units/unit-portrait-placeholder.svg" alt="" class="game-class-perk-icon is-placeholder" width="64" height="64" draggable="false">
+                                        </div>
                                         <div class="game-class-perk-entry-text">
                                             <h5 class="game-class-perk-entry-title">Iron Rally</h5>
                                             <p class="game-class-perk-entry-subtitle">Leadership &amp; Cooperation</p>
@@ -235,15 +240,13 @@
                                         </div>
                                     </div>
                                 </div>
-                                <button type="button" class="game-class-select-btn portal-rejoin-age-btn confirm-btn" data-class-select="battlemaster">
-                                    Select Battlemaster
-                                </button>
+                                <p class="game-class-panel-alpha-notice">Class abilities are not active in this alpha version. They are not permanent and are subject to change in future updates.</p>
                             </div>
                             </div>
                         </aside>
                         <aside
                             id="game-class-panel-archmage"
-                            class="game-class-side-panel portal-deployment-server-panel game-class-side-panel--right"
+                            class="game-class-side-panel portal-deployment-server-panel game-class-side-panel--left"
                             data-class-panel="archmage"
                             aria-labelledby="game-class-panel-archmage-honor"
                             hidden>
@@ -259,16 +262,11 @@
                                     and scholars who press ever toward mastery of their craft—and their rise has done much to kindle the age of sorcery
                                     across the realm.
                                 </p>
-                                <div class="game-class-perk-layout" role="list" aria-label="Archmage perks">
-                                    <div class="game-class-perk-entry is-active" role="listitem">
-                                        <button
-                                            type="button"
-                                            class="game-class-perk-btn is-active"
-                                            data-perk-id="alchemical-logistics"
-                                            aria-pressed="true"
-                                            aria-label="Alchemical Logistics, Economy">
-                                            <img src="images/avatars/archmageprofile01.png" alt="" class="game-class-perk-icon" width="64" height="64" draggable="false">
-                                        </button>
+                                <div class="game-class-perk-layout game-class-perk-layout--static" role="list" aria-label="Archmage perks">
+                                    <div class="game-class-perk-entry" role="listitem">
+                                        <div class="game-class-perk-icon-slot" aria-hidden="true">
+                                            <img src="images/units/unit-portrait-placeholder.svg" alt="" class="game-class-perk-icon is-placeholder" width="64" height="64" draggable="false">
+                                        </div>
                                         <div class="game-class-perk-entry-text">
                                             <h5 class="game-class-perk-entry-title">Alchemical Logistics</h5>
                                             <p class="game-class-perk-entry-subtitle">Economy</p>
@@ -276,14 +274,9 @@
                                         </div>
                                     </div>
                                     <div class="game-class-perk-entry" role="listitem">
-                                        <button
-                                            type="button"
-                                            class="game-class-perk-btn"
-                                            data-perk-id="arcane-volley"
-                                            aria-pressed="false"
-                                            aria-label="Arcane Volley, Border Defense Focus">
-                                            <img src="images/avatars/archmageprofile02.png" alt="" class="game-class-perk-icon" width="64" height="64" draggable="false">
-                                        </button>
+                                        <div class="game-class-perk-icon-slot" aria-hidden="true">
+                                            <img src="images/units/unit-portrait-placeholder.svg" alt="" class="game-class-perk-icon is-placeholder" width="64" height="64" draggable="false">
+                                        </div>
                                         <div class="game-class-perk-entry-text">
                                             <h5 class="game-class-perk-entry-title">Arcane Volley</h5>
                                             <p class="game-class-perk-entry-subtitle">Border Defense Focus</p>
@@ -291,14 +284,9 @@
                                         </div>
                                     </div>
                                     <div class="game-class-perk-entry" role="listitem">
-                                        <button
-                                            type="button"
-                                            class="game-class-perk-btn"
-                                            data-perk-id="leyline-anchor"
-                                            aria-pressed="false"
-                                            aria-label="Leyline Anchor, Rapid Frontline Rebound">
-                                            <img src="images/avatars/archmageprofile03.png" alt="" class="game-class-perk-icon" width="64" height="64" draggable="false">
-                                        </button>
+                                        <div class="game-class-perk-icon-slot" aria-hidden="true">
+                                            <img src="images/units/unit-portrait-placeholder.svg" alt="" class="game-class-perk-icon is-placeholder" width="64" height="64" draggable="false">
+                                        </div>
                                         <div class="game-class-perk-entry-text">
                                             <h5 class="game-class-perk-entry-title">Leyline Anchor</h5>
                                             <p class="game-class-perk-entry-subtitle">Rapid Frontline Rebound</p>
@@ -306,9 +294,7 @@
                                         </div>
                                     </div>
                                 </div>
-                                <button type="button" class="game-class-select-btn portal-rejoin-age-btn confirm-btn" data-class-select="archmage">
-                                    Select Archmage
-                                </button>
+                                <p class="game-class-panel-alpha-notice">Class abilities are not active in this alpha version. They are not permanent and are subject to change in future updates.</p>
                             </div>
                             </div>
                         </aside>
@@ -383,7 +369,7 @@
                             <button
                                 type="button"
                                 id="game-location-back-region-btn"
-                                class="portal-rejoin-age-btn confirm-btn game-location-panel-btn game-location-back-region-btn"
+                                class="cancel-btn game-location-panel-btn game-location-back-region-btn"
                                 hidden>
                                 Change Region
                             </button>
@@ -11497,18 +11483,18 @@
 
     <div id="game-onboarding-session-transition" class="game-onboarding-session-transition" aria-hidden="true"></div>
 
+    <script src="rift-confirm-buttons.js?v=ra-action-btn-1"></script>
     <script src="dev-environment.js"></script>
     <script src="rift-error-codes.js?v=nexus-rift-acronyms-1"></script>
-    <script src="portal-alerts.js?v=local-silent-error-popups-1"></script>
+    <script src="portal-alerts.js?v=ra-action-btn-1"></script>
     <script src="rift-error-display.js?v=local-silent-error-popups-1"></script>
     <script src="commander-dossier-sync.js?v=onboarding-game-nation-1"></script>
-    <script src="script.js?v=active-age-resume-routing-1"></script>
+    <script src="script.js?v=commander-rank-reset-1"></script>
     <script src="portal-commander-identity-menu.js?v=avatar-name-menu-trigger-1"></script>
-    <script src="rift-viewport-metrics.js?v=game-class-layout-stable-1"></script>
-    <script src="game-class-picker.js?v=game-class-layout-stable-1"></script>
-    <script src="game-regions-map.js?v=onboarding-aesthene-only-1"></script>
+    <script src="game-class-picker.js?v=game-class-panel-alpha-1"></script>
+    <script src="game-regions-map.js?v=site-viewport-stable-1"></script>
     <script src="rift-official-age.js?v=official-age-page-1"></script>
-    <script src="game.js?v=game-handoff-routing-1"></script>
+    <script src="game.js?v=local-progression-preview-2"></script>
     <script src="dev-page-navigator.js?v=game-handoff-routing-1"></script>
     <script src="custom-cursor.js?v=scrollbar-cursor-3"></script>
 </body>

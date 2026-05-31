@@ -8,7 +8,7 @@
 
     const DATA_URL = 'data/age-world-cities.json?v=cross-border-neighbors-2';
     const REGION_PATHS_URL = 'data/age-world-region-paths.json?v=glifora-border-fix-2';
-    const NATION_PATHS_URL = 'data/game-nation-paths.json?v=game-nation-paths-3';
+    const NATION_PATHS_URL = 'data/game-nation-paths.json?v=nation-centroid-labels-1';
     const NATIVE_SIZE = 1642;
     const LERP = 0.08;
     const WHEEL_ZOOM_FACTOR = 0.00135;
@@ -883,13 +883,15 @@
         const nodes = [];
         catalog.nations.forEach((nation) => {
             const terrains = nation.terrainTypes.join(', ');
-            const pos = labelPosition(nation.centroid);
+            const labelCentroid = nation?.centroid || null;
+            if (!labelCentroid) return;
+            const pos = labelPosition(labelCentroid);
             const node = global.document.createElement('div');
             node.className = 'age-world-map-label age-world-map-label--nation';
             node.id = `age-label-nation-${nation.id}`;
             node.style.left = pos.left;
             node.style.top = pos.top;
-            stampLabelCentroid(node, nation.centroid);
+            stampLabelCentroid(node, labelCentroid);
             node.innerHTML = `
                 <span class="age-world-map-label-title">${nation.name}</span>
                 <span class="age-world-map-label-sub">Terrains: ${terrains}</span>

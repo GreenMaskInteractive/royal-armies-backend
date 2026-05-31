@@ -424,10 +424,9 @@ body {
 
 .modal-overlay {
     position: fixed !important;
-    top: 0 !important;
-    left: 0 !important;
-    width: 100vw !important;
-    height: 100vh !important;
+    inset: 0 !important;
+    width: auto !important;
+    height: auto !important;
     background: rgba(0, 0, 0, 0.9) !important;
     z-index: 2147483647 !important;
     display: none;
@@ -2142,37 +2141,7 @@ div.slot-aura#aura-messages,
     z-index: 10 !important;
 }
 
-/* SKINNING CONFIRM AND REVERT WITH YOUR METALLIC REGISTER BUTTON ASSET */
-.confirm-btn, .revert-btn {
-    background-image: url('images/borderedcontainer_thin.png') !important;
-    background-size: 100% 100% !important;
-    background-repeat: no-repeat !important;
-    background-color: transparent !important;
-    width: 150px !important;
-    height: 40px !important;
-    border: none !important;
-    cursor: pointer !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    font-family: 'Cinzel', serif !important;
-    font-size: 0.85rem !important;
-    font-weight: bold !important;
-    letter-spacing: 1px !important;
-    text-shadow: 1px 1px 3px rgba(0,0,0,0.8) !important;
-    transition: filter 0.2s ease, transform 0.1s ease !important;
-}
-
-.confirm-btn { color: #228b22 !important; }
-.revert-btn { color: #cc0000 !important; }
-
-.confirm-btn:hover, .revert-btn:hover {
-    filter: brightness(1.3) drop-shadow(0 0 8px rgba(212, 175, 55, 0.4)) !important;
-}
-
-.confirm-btn:active, .revert-btn:active {
-    transform: scale(0.97) !important;
-}
+/* Legacy borderedcontainer revert styling removed — see style2.css action button group */
 
 .lore-details-view input[type="range"] {
     /* THE NUMBER: Increase this pixel count to stretch the slider track as wide as you want! */
@@ -2944,7 +2913,8 @@ body #commander-security-overlay,
     border-color: #ff3333 !important;
 }
 
-.suicide-safe-retreat-btn {
+/* Retreat/cancel buttons use canonical action styling in style2.css when .cancel-btn is present */
+.suicide-safe-retreat-btn:not(.cancel-btn) {
     background: linear-gradient(135deg, #1c1813 0%, #0a0806 100%) !important;
     border: 1px solid rgba(184, 144, 48, 0.4) !important;
     color: #f1e0ac !important;
@@ -2957,7 +2927,7 @@ body #commander-security-overlay,
     transition: background 0.2s ease !important;
 }
 
-.suicide-safe-retreat-btn:hover {
+.suicide-safe-retreat-btn:not(.cancel-btn):hover {
     background: #2b241a !important;
     border-color: #ffd700 !important;
 }
