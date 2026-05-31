@@ -449,6 +449,44 @@
             category: 'game'
         },
 
+        /* --- Age Headquarters --- */
+        'NEXUS-HQ-001': {
+            http: 400,
+            title: 'SF Planning',
+            message: 'Too many planning markers for this nation.',
+            category: 'game'
+        },
+        'NEXUS-HQ-002': {
+            http: 400,
+            title: 'SF Planning',
+            message: 'Move and Main Force arrows exceed the 3 MP chain limit.',
+            category: 'game'
+        },
+        'NEXUS-HQ-003': {
+            http: 400,
+            title: 'Leadership vote',
+            message: 'That commander is not eligible for this vote.',
+            category: 'game'
+        },
+        'NEXUS-HQ-004': {
+            http: 400,
+            title: 'Leadership vote',
+            message: 'Leader and Vice Leader votes must be for different commanders.',
+            category: 'game'
+        },
+        'NEXUS-HQ-005': {
+            http: 400,
+            title: 'War declaration',
+            message: 'Select a valid target nation before sending a declaration.',
+            category: 'game'
+        },
+        'NEXUS-HQ-006': {
+            http: 403,
+            title: 'Headquarters',
+            message: 'Council or Leader access is required for this action.',
+            category: 'game'
+        },
+
         /* --- Age map movement --- */
         'NEXUS-AGE-001': {
             http: 400,
@@ -559,7 +597,13 @@
         GAME_SYSTEM_TEXT_REQUIRED: 'NEXUS-GAME-001',
         GAME_SYSTEM_READ_ONLY: 'NEXUS-GAME-002',
         GAME_NATION_REQUIRED: 'NEXUS-GAME-003',
-        GAME_ALLIANCE_REQUIRED: 'NEXUS-GAME-004'
+        GAME_ALLIANCE_REQUIRED: 'NEXUS-GAME-004',
+        HQ_PLANNING_TOO_LARGE: 'NEXUS-HQ-001',
+        HQ_PLANNING_MP_EXCEEDED: 'NEXUS-HQ-002',
+        HQ_VOTE_CANDIDATE_INVALID: 'NEXUS-HQ-003',
+        HQ_VOTE_DUPLICATE_CANDIDATE: 'NEXUS-HQ-004',
+        HQ_WAR_TARGET_REQUIRED: 'NEXUS-HQ-005',
+        HQ_COUNCIL_REQUIRED: 'NEXUS-HQ-006'
     };
 
     function getErrorDefinition(code) {

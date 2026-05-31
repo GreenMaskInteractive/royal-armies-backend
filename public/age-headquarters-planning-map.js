@@ -29,6 +29,9 @@
 
     const PILL_MARKER_TYPES = new Set(['hold', 'taxi']);
     const ARROW_MARKER_TYPES = new Set(['sf', 'mf', 'move']);
+    const MP_LIMITED_ARROW_TYPES = new Set(['move', 'mf']);
+    const MAX_PLANNING_MOVE_MP = 3;
+    const TEMP_MAIN_MARKER_TYPE = 'temp-main';
 
     const HQ_TINT = {
         own: { fill: 'rgba(255, 196, 48, 0.46)', stroke: 'rgba(255, 228, 120, 1)' },
@@ -87,9 +90,13 @@
     let pillIdCounter = 0;
     let arrowIdCounter = 0;
     let sfArrowCounter = 0;
+    let tempMainCityId = '';
 
     let onBorderCitySelected = null;
     let onPillsChanged = null;
+    let onMoveMfMpChanged = null;
+    let onPlanningSyncRequested = null;
+    let planningSyncSuppressed = false;
 
     function clamp(value, min, max) {
         return Math.min(max, Math.max(min, value));
@@ -196,6 +203,66 @@
         return PILL_MARKER_TYPES.has(type);
     }
 
+    function isTempMainMarkerType(type) {
+        return type === TEMP_MAIN_MARKER_TYPE;
+    }
+
+    function resolveLegMovePointCost(fromCity, toCity) {
+        if (!fromCity || !toCity) return Infinity;
+
+        if (global.RoyalArmiesAgeWaterRoutes?.resolveCityConnection) {
+            const connection = global.RoyalArmiesAgeWaterRoutes.resolveCityConnection(fromCity, toCity);
+            if (connection?.movePointCost) {
+                return Math.max(1, Math.min(MAX_PLANNING_MOVE_MP, Math.floor(Number(connection.movePointCost)) || 1));
+            }
+        }
+
+        if (citiesAreConnected(fromCity, toCity)) return 1;
+        return Infinity;
+    }
+
+    function countTrailingMoveMfMpUsed() {
+        const steps = getAllPlanningSteps();
+        let mpUsed = 0;
+
+        for (let i = steps.length - 1; i >= 0; i -= 1) {
+            const step = steps[i];
+            if (step.kind !== 'arrow' || !MP_LIMITED_ARROW_TYPES.has(step.type)) break;
+
+            const fromCity = cityById.get(step.fromCityId);
+            const toCity = cityById.get(step.toCityId);
+            mpUsed += resolveLegMovePointCost(fromCity, toCity);
+        }
+
+        return mpUsed;
+    }
+
+    function getMoveMfMpBudget() {
+        const used = countTrailingMoveMfMpUsed();
+        return {
+            used,
+            max: MAX_PLANNING_MOVE_MP,
+            remaining: Math.max(0, MAX_PLANNING_MOVE_MP - used)
+        };
+    }
+
+    function wouldExceedMoveMfMpCap(fromCity, toCity, type) {
+        if (!MP_LIMITED_ARROW_TYPES.has(type)) return false;
+
+        const legCost = resolveLegMovePointCost(fromCity, toCity);
+        if (!Number.isFinite(legCost) || legCost <= 0) return true;
+
+        return countTrailingMoveMfMpUsed() + legCost > MAX_PLANNING_MOVE_MP;
+    }
+
+    function notifyPlanningChanged() {
+        if (typeof onPillsChanged === 'function') onPillsChanged(getAllPlanningSteps());
+        if (typeof onMoveMfMpChanged === 'function') onMoveMfMpChanged(getMoveMfMpBudget());
+        if (!planningSyncSuppressed && typeof onPlanningSyncRequested === 'function') {
+            onPlanningSyncRequested(getPlanningSnapshot());
+        }
+    }
+
     function getAllPlanningSteps() {
         const steps = pills.map((pill) => ({ kind: 'pill', ...pill }))
             .concat(arrowMarkers.map((arrow) => ({ kind: 'arrow', ...arrow })));
@@ -241,6 +308,116 @@
         return edge === 'from' ? step.fromCityId : step.toCityId;
     }
 
+    function resolveCurveHintCity(fromCityId, toCityId) {
+        const steps = getAllPlanningSteps();
+        if (!steps.length) return null;
+
+        for (let i = 0; i < steps.length; i += 1) {
+            const step = steps[i];
+            const stepFrom = resolveStepCityId(step, 'from');
+            const stepTo = resolveStepCityId(step, 'to');
+            const isMatchingArrow = step.kind === 'arrow'
+                && step.fromCityId === fromCityId
+                && step.toCityId === toCityId;
+            const isMatchingSegmentEnd = stepTo === toCityId
+                && (stepFrom === fromCityId || (i > 0 && resolveStepCityId(steps[i - 1], 'to') === fromCityId));
+
+            if (!isMatchingArrow && !isMatchingSegmentEnd) continue;
+
+            for (let j = i + 1; j < steps.length; j += 1) {
+                const hintId = resolveStepCityId(steps[j], 'to');
+                if (hintId && hintId !== toCityId) {
+                    return cityById.get(hintId) || null;
+                }
+            }
+            break;
+        }
+
+        return null;
+    }
+
+    function resolveIncomingChainCity(fromCityId, toCityId) {
+        const steps = getAllPlanningSteps();
+        if (!steps.length) return null;
+
+        for (let i = 0; i < steps.length; i += 1) {
+            const step = steps[i];
+            const stepFrom = resolveStepCityId(step, 'from');
+            const stepTo = resolveStepCityId(step, 'to');
+            const isMatchingArrow = step.kind === 'arrow'
+                && step.fromCityId === fromCityId
+                && step.toCityId === toCityId;
+            const isMatchingSegmentEnd = stepTo === toCityId
+                && (stepFrom === fromCityId || (i > 0 && resolveStepCityId(steps[i - 1], 'to') === fromCityId));
+
+            if (!isMatchingArrow && !isMatchingSegmentEnd) continue;
+
+            if (i === 0) {
+                return cityById.get(playerMapCityId) || null;
+            }
+
+            const prev = steps[i - 1];
+            if (prev.kind === 'arrow') {
+                return cityById.get(prev.fromCityId) || null;
+            }
+
+            if (prev.kind === 'pill' && prev.cityId === fromCityId && i >= 2) {
+                return cityById.get(resolveStepCityId(steps[i - 2], 'from')) || null;
+            }
+
+            return cityById.get(resolveStepCityId(prev, 'from')) || null;
+        }
+
+        return null;
+    }
+
+    function resolveCurveSide(fromCity, toCity, forwardHintCity, incomingCity) {
+        const outX = toCity.centroid.x - fromCity.centroid.x;
+        const outY = toCity.centroid.y - fromCity.centroid.y;
+
+        if (forwardHintCity?.centroid) {
+            const hintX = forwardHintCity.centroid.x - toCity.centroid.x;
+            const hintY = forwardHintCity.centroid.y - toCity.centroid.y;
+            const cross = outX * hintY - outY * hintX;
+            if (Math.abs(cross) > 0.01) {
+                return cross >= 0 ? 1 : -1;
+            }
+        }
+
+        if (incomingCity?.centroid) {
+            const inX = fromCity.centroid.x - incomingCity.centroid.x;
+            const inY = fromCity.centroid.y - incomingCity.centroid.y;
+            const cross = inX * outY - inY * outX;
+            if (Math.abs(cross) > 0.01) {
+                return cross >= 0 ? 1 : -1;
+            }
+        }
+
+        return 1;
+    }
+
+    function buildArrowGeometry(fromCity, toCity, forwardHintCity, incomingCity) {
+        if (!fromCity?.centroid || !toCity?.centroid) return null;
+
+        const start = mapPointToFramePixels(fromCity.centroid.x, fromCity.centroid.y);
+        const end = mapPointToFramePixels(toCity.centroid.x, toCity.centroid.y);
+        const midX = (start.x + end.x) / 2;
+        const midY = (start.y + end.y) / 2;
+        const dx = end.x - start.x;
+        const dy = end.y - start.y;
+        const dist = Math.hypot(dx, dy) || 1;
+        const perpX = -dy / dist;
+        const perpY = dx / dist;
+        const curve = Math.min(80, dist * 0.28);
+        const side = resolveCurveSide(fromCity, toCity, forwardHintCity, incomingCity);
+        const cx = midX + perpX * curve * side;
+        const cy = midY + perpY * curve * side;
+
+        return {
+            d: `M ${start.x.toFixed(2)} ${start.y.toFixed(2)} Q ${cx.toFixed(2)} ${cy.toFixed(2)} ${end.x.toFixed(2)} ${end.y.toFixed(2)}`
+        };
+    }
+
     function canPlacePillAtCity(city) {
         if (!city || city.id === playerMapCityId) return false;
 
@@ -273,18 +450,32 @@
         if (type === 'move') {
             const destOk = ownership === 'own' || ownership === 'current';
             const fromOk = fromOwnership === 'own' || fromOwnership === 'current';
-            return destOk && fromOk;
+            if (!destOk || !fromOk) return false;
+            return !wouldExceedMoveMfMpCap(fromCity, city, type);
         }
 
         if (type === 'sf' || type === 'mf') {
+            if (type === 'mf' && wouldExceedMoveMfMpCap(fromCity, city, type)) {
+                return false;
+            }
             return ownership !== 'own' && ownership !== 'ally' && ownership !== 'current';
         }
 
         return false;
     }
 
+    function canPlaceTempMainAtCity(city) {
+        if (!city || city.id === playerMapCityId) return false;
+
+        const ownership = resolveCityOwnershipKind(city);
+        return ownership === 'own';
+    }
+
     function canHighlightCityForActiveTool(city) {
         if (!city) return false;
+        if (activeMarkerType && isTempMainMarkerType(activeMarkerType)) {
+            return canPlaceTempMainAtCity(city);
+        }
         if (activeMarkerType && isArrowMarkerType(activeMarkerType)) {
             return canPlaceArrowAtCity(city, activeMarkerType);
         }
@@ -322,6 +513,12 @@
         if (!cityId) return;
         const city = cityById.get(cityId);
         if (!city) return;
+
+        if (activeMarkerType && isTempMainMarkerType(activeMarkerType)) {
+            if (!canPlaceTempMainAtCity(city)) return;
+            setTempMainAtCity(cityId);
+            return;
+        }
 
         if (activeMarkerType && isArrowMarkerType(activeMarkerType)) {
             if (!canPlaceArrowAtCity(city, activeMarkerType)) return;
@@ -880,13 +1077,60 @@
             pillsLayer.appendChild(button);
         });
 
+        renderArmyLocationMarkers();
+
         syncPillPositions();
         syncArrowPaths();
         buildCityLayers();
         if (selectedBorderCityId) {
             setSelectedBorderCity(selectedBorderCityId);
         }
-        if (typeof onPillsChanged === 'function') onPillsChanged(getAllPlanningSteps());
+        notifyPlanningChanged();
+    }
+
+    function renderArmyLocationMarker(cityId, type, label, title) {
+        const city = cityById.get(cityId);
+        if (!city?.centroid || !pillsLayer) return;
+
+        const node = global.document.createElement('div');
+        node.className = `age-hq-planning-pill age-hq-army-location-marker age-hq-planning-pill--${type}`;
+        node.dataset.cityId = cityId;
+        node.dataset.armyMarker = type;
+        node.title = title;
+        node.setAttribute('role', 'img');
+        node.setAttribute('aria-label', label);
+        node.textContent = label;
+        pillsLayer.appendChild(node);
+    }
+
+    function renderArmyLocationMarkers() {
+        if (!tempMainCityId) return;
+
+        if (playerMapCityId) {
+            renderArmyLocationMarker(
+                playerMapCityId,
+                'main',
+                'Main',
+                'Primary main army location'
+            );
+        }
+
+        renderArmyLocationMarker(
+            tempMainCityId,
+            'temp-main',
+            'Temp Main',
+            'Temporary main army decoy location (Vice Leader separation tactic)'
+        );
+    }
+
+    function setTempMainAtCity(cityId) {
+        if (!canPlaceTempMainAtCity(cityById.get(cityId))) return;
+        tempMainCityId = cityId;
+        renderPlanningMarkers();
+    }
+
+    function getTempMainCityId() {
+        return tempMainCityId || '';
     }
 
     function renderPlanningMarkers() {
@@ -897,52 +1141,63 @@
         if (!pillsLayer || !frameEl) return;
         pillsLayer.querySelectorAll('.age-hq-planning-pill').forEach((node) => {
             const pill = pills.find((entry) => entry.id === node.dataset.pillId);
-            const city = cityById.get(pill?.cityId || '');
-            if (!pill || !city?.centroid) return;
+            const cityId = pill?.cityId || node.dataset.cityId;
+            const city = cityById.get(cityId || '');
+            if (!city?.centroid) return;
 
             const point = mapPointToFramePixels(city.centroid.x, city.centroid.y);
-            const offset = resolvePillOffsetPx(pill);
-            node.style.left = `${Math.round(point.x + offset.x)}px`;
-            node.style.top = `${Math.round(point.y + offset.y)}px`;
+            let offsetX = 12;
+            let offsetY = -16;
+
+            if (pill) {
+                const offset = resolvePillOffsetPx(pill);
+                offsetX = offset.x;
+                offsetY = offset.y;
+            } else if (node.dataset.armyMarker === 'main') {
+                offsetX = -42;
+                offsetY = -18;
+            } else if (node.dataset.armyMarker === 'temp-main') {
+                offsetX = 12;
+                offsetY = -34;
+            }
+
+            node.style.left = `${Math.round(point.x + offsetX)}px`;
+            node.style.top = `${Math.round(point.y + offsetY)}px`;
         });
     }
 
-    function buildArrowGeometry(fromCity, toCity) {
-        if (!fromCity?.centroid || !toCity?.centroid) return null;
+    function appendArrowStrokes(d, variant, frag, withHead) {
+        const shadow = global.document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        shadow.setAttribute('class', `age-hq-planning-arrow age-hq-planning-arrow--shadow age-hq-planning-arrow--${variant}`);
+        shadow.setAttribute('d', d);
+        frag.appendChild(shadow);
 
-        const start = mapPointToFramePixels(fromCity.centroid.x, fromCity.centroid.y);
-        const end = mapPointToFramePixels(toCity.centroid.x, toCity.centroid.y);
-        const midX = (start.x + end.x) / 2;
-        const midY = (start.y + end.y) / 2;
-        const dx = end.x - start.x;
-        const dy = end.y - start.y;
-        const dist = Math.hypot(dx, dy) || 1;
-        const curve = Math.min(80, dist * 0.28);
-        const cx = midX - (dy / dist) * curve;
-        const cy = midY + (dx / dist) * curve;
-
-        return {
-            d: `M ${start.x.toFixed(2)} ${start.y.toFixed(2)} Q ${cx.toFixed(2)} ${cy.toFixed(2)} ${end.x.toFixed(2)} ${end.y.toFixed(2)}`
-        };
+        const main = global.document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        main.setAttribute('class', `age-hq-planning-arrow age-hq-planning-arrow--main age-hq-planning-arrow--${variant}`);
+        main.setAttribute('d', d);
+        if (withHead) {
+            main.setAttribute('marker-end', 'url(#age-hq-arrowhead)');
+        }
+        frag.appendChild(main);
     }
 
-    function appendPlainConnector(fromCityId, toCityId, frag, defsFrag) {
+    function appendPlainConnector(fromCityId, toCityId, frag) {
         const fromCity = cityById.get(fromCityId);
         const toCity = cityById.get(toCityId);
-        const geom = buildArrowGeometry(fromCity, toCity);
+        const forwardHintCity = resolveCurveHintCity(fromCityId, toCityId);
+        const incomingCity = resolveIncomingChainCity(fromCityId, toCityId);
+        const geom = buildArrowGeometry(fromCity, toCity, forwardHintCity, incomingCity);
         if (!geom) return;
 
-        const path = global.document.createElementNS('http://www.w3.org/2000/svg', 'path');
-        path.setAttribute('class', 'age-hq-planning-arrow age-hq-planning-arrow--link');
-        path.setAttribute('d', geom.d);
-        path.setAttribute('marker-end', 'url(#age-hq-arrowhead)');
-        frag.appendChild(path);
+        appendArrowStrokes(geom.d, 'link', frag, true);
     }
 
     function appendLabeledArrow(arrow, frag, defsFrag) {
         const fromCity = cityById.get(arrow.fromCityId);
         const toCity = cityById.get(arrow.toCityId);
-        const geom = buildArrowGeometry(fromCity, toCity);
+        const forwardHintCity = resolveCurveHintCity(arrow.fromCityId, arrow.toCityId);
+        const incomingCity = resolveIncomingChainCity(arrow.fromCityId, arrow.toCityId);
+        const geom = buildArrowGeometry(fromCity, toCity, forwardHintCity, incomingCity);
         if (!geom) return;
 
         const pathId = `age-hq-arrow-path-${arrow.id}`;
@@ -952,16 +1207,13 @@
         defsFrag.appendChild(pathDef);
 
         const group = global.document.createElementNS('http://www.w3.org/2000/svg', 'g');
-        group.setAttribute('class', `age-hq-planning-arrow-group age-hq-planning-arrow-group--${arrow.type}`);
+        group.setAttribute('class', 'age-hq-planning-arrow-group');
         group.dataset.arrowId = arrow.id;
 
-        const path = global.document.createElementNS('http://www.w3.org/2000/svg', 'path');
-        path.setAttribute('class', `age-hq-planning-arrow age-hq-planning-arrow--${arrow.type}`);
-        path.setAttribute('d', geom.d);
-        path.setAttribute('marker-end', 'url(#age-hq-arrowhead)');
+        appendArrowStrokes(geom.d, 'order', group, true);
 
         const label = global.document.createElementNS('http://www.w3.org/2000/svg', 'text');
-        label.setAttribute('class', `age-hq-planning-arrow-label age-hq-planning-arrow-label--${arrow.type}`);
+        label.setAttribute('class', 'age-hq-planning-arrow-label');
 
         const textPath = global.document.createElementNS('http://www.w3.org/2000/svg', 'textPath');
         textPath.setAttribute('href', `#${pathId}`);
@@ -970,7 +1222,6 @@
         textPath.textContent = arrow.label;
 
         label.appendChild(textPath);
-        group.appendChild(path);
         group.appendChild(label);
         frag.appendChild(group);
     }
@@ -998,7 +1249,7 @@
             const fromId = resolveStepCityId(current, 'to');
             const toId = resolveStepCityId(next, 'from');
             if (fromId && toId && fromId !== toId) {
-                appendPlainConnector(fromId, toId, frag, defsFrag);
+                appendPlainConnector(fromId, toId, frag);
             }
         }
 
@@ -1180,8 +1431,12 @@
                 </div>
                 <svg class="age-hq-planning-arrows" aria-hidden="true">
                     <defs>
-                        <marker id="age-hq-arrowhead" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto">
-                            <path d="M0,0 L8,4 L0,8 Z" class="age-hq-planning-arrow-head"></path>
+                        <filter id="age-hq-arrow-glow" x="-40%" y="-40%" width="180%" height="180%">
+                            <feDropShadow dx="0" dy="0" stdDeviation="2.8" flood-color="#FFE566" flood-opacity="0.55"></feDropShadow>
+                            <feDropShadow dx="0" dy="1.5" stdDeviation="1.2" flood-color="#000000" flood-opacity="0.9"></feDropShadow>
+                        </filter>
+                        <marker id="age-hq-arrowhead" markerWidth="12" markerHeight="12" refX="10.5" refY="6" orient="auto" markerUnits="userSpaceOnUse">
+                            <path d="M0,1 L11,6 L0,11 Z" class="age-hq-planning-arrow-head"></path>
                         </marker>
                         <g class="age-hq-planning-arrows-defs"></g>
                     </defs>
@@ -1319,10 +1574,44 @@
         return getAllPlanningSteps();
     }
 
+    function getPlanningSnapshot() {
+        return {
+            pills: pills.map((pill) => ({
+                id: pill.id,
+                cityId: pill.cityId,
+                type: pill.type,
+                order: pill.order
+            })),
+            arrows: arrowMarkers.map((arrow) => ({
+                id: arrow.id,
+                fromCityId: arrow.fromCityId,
+                toCityId: arrow.toCityId,
+                type: arrow.type,
+                sfIndex: arrow.sfIndex,
+                label: arrow.label,
+                order: arrow.order
+            })),
+            tempMainCityId: tempMainCityId || '',
+            sfArrowCounter
+        };
+    }
+
+    function applyPlanningSnapshot(snapshot) {
+        planningSyncSuppressed = true;
+        pills = Array.isArray(snapshot?.pills) ? snapshot.pills.map((pill) => ({ ...pill })) : [];
+        arrowMarkers = Array.isArray(snapshot?.arrows) ? snapshot.arrows.map((arrow) => ({ ...arrow })) : [];
+        tempMainCityId = String(snapshot?.tempMainCityId || '');
+        sfArrowCounter = Math.max(0, Math.floor(Number(snapshot?.sfArrowCounter) || 0));
+        selectedBorderCityId = '';
+        renderPlanningMarkers();
+        planningSyncSuppressed = false;
+    }
+
     function clearPlanningMarkers() {
         pills = [];
         arrowMarkers = [];
         sfArrowCounter = 0;
+        tempMainCityId = '';
         renderPlanningMarkers();
     }
 
@@ -1344,9 +1633,15 @@
         getPills,
         getArrowMarkers,
         getPlanningSteps,
+        getPlanningSnapshot,
+        applyPlanningSnapshot,
+        getMoveMfMpBudget,
+        getTempMainCityId,
         clearPlanningMarkers,
         resetPlanningMap,
         set onBorderCitySelected(fn) { onBorderCitySelected = fn; },
-        set onPillsChanged(fn) { onPillsChanged = fn; }
+        set onPillsChanged(fn) { onPillsChanged = fn; },
+        set onMoveMfMpChanged(fn) { onMoveMfMpChanged = fn; },
+        set onPlanningSyncRequested(fn) { onPlanningSyncRequested = fn; }
     };
 })(window);

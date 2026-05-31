@@ -17050,6 +17050,13 @@ body.is-age-chronicles-battle-pass-open {
     align-items: stretch;
 }
 
+.age-headquarters-shell.age-headquarters-shell--member-view {
+    grid-template-columns: minmax(280px, 420px);
+    justify-content: center;
+    max-width: 440px;
+    margin: 0 auto;
+}
+
 .age-headquarters-planning-column {
     position: relative;
     min-width: 0;
@@ -17226,6 +17233,33 @@ body.is-age-chronicles-battle-pass-open {
     color: #071018;
 }
 
+.age-hq-planning-pill--main {
+    background: linear-gradient(180deg, #ffe7a8 0%, #c8942a 100%);
+    color: #1a1208;
+    border-color: rgba(255, 228, 120, 0.85);
+    cursor: default;
+    pointer-events: none;
+    font-size: 10px;
+    letter-spacing: 0.06em;
+}
+
+.age-hq-planning-pill--temp-main {
+    background: linear-gradient(180deg, #d8b8ff 0%, #7a48c8 100%);
+    color: #120820;
+    border-color: rgba(200, 160, 255, 0.75);
+    cursor: default;
+    pointer-events: none;
+    font-size: 10px;
+    letter-spacing: 0.04em;
+    max-width: 92px;
+    white-space: nowrap;
+}
+
+.age-hq-army-location-marker {
+    z-index: 7;
+    box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.35), 0 3px 10px rgba(0, 0, 0, 0.4);
+}
+
 .age-hq-planning-pill:hover,
 .age-hq-planning-pill:focus-visible {
     outline: 2px solid rgba(255, 240, 160, 0.85);
@@ -17240,59 +17274,64 @@ body.is-age-chronicles-battle-pass-open {
     pointer-events: none;
     z-index: 4;
     overflow: visible;
+    --hq-arrow-ink: #ffe566;
+    --hq-arrow-halo: #0a0804;
+}
+
+.age-hq-planning-arrow-group {
+    filter: url(#age-hq-arrow-glow);
 }
 
 .age-hq-planning-arrow {
     fill: none;
-    stroke: rgba(255, 210, 96, 0.82);
-    stroke-width: 2.2px;
     stroke-linecap: round;
+    stroke-linejoin: round;
+    vector-effect: non-scaling-stroke;
 }
 
-.age-hq-planning-arrow--link {
-    stroke: rgba(255, 210, 96, 0.55);
-    stroke-width: 1.8px;
+.age-hq-planning-arrow--shadow {
+    stroke: var(--hq-arrow-halo);
+    opacity: 0.95;
 }
 
-.age-hq-planning-arrow--sf {
-    stroke: rgba(255, 196, 72, 0.92);
+.age-hq-planning-arrow--shadow.age-hq-planning-arrow--order {
+    stroke-width: 6px;
 }
 
-.age-hq-planning-arrow--mf {
-    stroke: rgba(255, 120, 120, 0.92);
+.age-hq-planning-arrow--shadow.age-hq-planning-arrow--link {
+    stroke-width: 4.5px;
+    opacity: 0.82;
 }
 
-.age-hq-planning-arrow--move {
-    stroke: rgba(120, 220, 160, 0.92);
+.age-hq-planning-arrow--main {
+    stroke: var(--hq-arrow-ink);
+}
+
+.age-hq-planning-arrow--main.age-hq-planning-arrow--order {
+    stroke-width: 3.2px;
+}
+
+.age-hq-planning-arrow--main.age-hq-planning-arrow--link {
+    stroke-width: 2.4px;
 }
 
 .age-hq-planning-arrow-label {
-    font-size: 11px;
-    font-weight: 800;
-    letter-spacing: 0.05em;
+    font-size: 12px;
+    font-weight: 900;
+    letter-spacing: 0.08em;
     text-transform: uppercase;
+    fill: var(--hq-arrow-ink);
+    stroke: var(--hq-arrow-halo);
     paint-order: stroke fill;
-    stroke-width: 3px;
+    stroke-width: 4px;
     stroke-linejoin: round;
 }
 
-.age-hq-planning-arrow-label--sf {
-    fill: #ffe7a8;
-    stroke: rgba(24, 16, 4, 0.92);
-}
-
-.age-hq-planning-arrow-label--mf {
-    fill: #ffd0d0;
-    stroke: rgba(32, 8, 8, 0.92);
-}
-
-.age-hq-planning-arrow-label--move {
-    fill: #c8f5dc;
-    stroke: rgba(8, 24, 16, 0.92);
-}
-
 .age-hq-planning-arrow-head {
-    fill: rgba(255, 210, 96, 0.95);
+    fill: var(--hq-arrow-ink);
+    stroke: var(--hq-arrow-halo);
+    stroke-width: 1.2px;
+    stroke-linejoin: round;
 }
 
 .age-hq-planning-toolbar {
@@ -17483,6 +17522,13 @@ body.is-age-chronicles-battle-pass-open {
     --hq-marker-accent-soft: rgba(120, 220, 160, 0.16);
     --hq-marker-glyph-bg: rgba(120, 220, 160, 0.14);
     --hq-marker-glyph-fg: #b8f5d0;
+}
+
+.age-hq-marker-btn--temp-main {
+    --hq-marker-accent: rgba(196, 148, 255, 0.95);
+    --hq-marker-accent-soft: rgba(196, 148, 255, 0.16);
+    --hq-marker-glyph-bg: rgba(196, 148, 255, 0.14);
+    --hq-marker-glyph-fg: #dfc8ff;
 }
 
 .age-hq-marker-btn--reset {

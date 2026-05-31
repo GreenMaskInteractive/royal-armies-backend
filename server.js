@@ -53,6 +53,16 @@ const {
     resolveOnboardingNationId,
     getOnboardingOpenConfig
 } = require('./nexus-onboarding');
+const {
+    getDefaultNationHeadquartersState,
+    normalizeNationHeadquartersState,
+    buildHeadquartersWorkspacePayload,
+    applyPlanningPatch,
+    applyResetPlanningPatch,
+    applyVotePatch,
+    listWarTargetNations,
+    listNationVoteCandidates
+} = require('./nexus-age-headquarters');
 
 /* Block 2: Environment Path Resolution */
 const isProduction = process.env.RENDER === 'true';
@@ -107,7 +117,9 @@ db.defaults({
             countryChatClearedAt: null
         },
         nationCouncilBoards: {},
-        nationTreasuries: {}
+        nationTreasuries: {},
+        nationLeadership: {},
+        nationHeadquarters: {}
     },
     mailbox: {
         messages: [],
@@ -1328,8 +1340,140 @@ function appendGameChatNationSystemEventToStore(store, nationKey, text) {
     return { entry };
 }
 
-function canEditNationCouncilBoard(_commander) {
-    return true;
+function canEditNationCouncilBoard(commander) {
+    return resolveHeadquartersAccessForCommander(commander).council;
+}
+
+function normalizeHeadquartersUsername(value) {
+    return String(value || '').trim().toLowerCase();
+}
+
+function readNationLeadershipMap() {
+    const stored = db.get('portal.nationLeadership').value();
+    return stored && typeof stored === 'object' && !Array.isArray(stored) ? stored : {};
+}
+
+function readNationLeadershipForNation(nationKey) {
+    const storageKey = getCouncilBoardStorageKey(nationKey);
+    if (!storageKey) return null;
+
+    const record = readNationLeadershipMap()[storageKey];
+    if (!record || typeof record !== 'object') return null;
+
+    const councilUsernames = Array.isArray(record.councilUsernames)
+        ? record.councilUsernames.map(normalizeHeadquartersUsername).filter(Boolean)
+        : [];
+
+    return {
+        leaderUsername: normalizeHeadquartersUsername(record.leaderUsername),
+        viceLeaderUsername: normalizeHeadquartersUsername(record.viceLeaderUsername),
+        councilUsernames: [...new Set(councilUsernames)]
+    };
+}
+
+function resolveHeadquartersAdminAccess(username, storageKey) {
+    if (!username || !storageKey || !isMailboxRecipientRosterAdmin(username)) {
+        return null;
+    }
+
+    return {
+        gameNation: storageKey,
+        council: true,
+        leader: true,
+        viceLeader: true
+    };
+}
+
+function resolveHeadquartersAccessForCommander(commander) {
+    const username = normalizeHeadquartersUsername(commander?.username);
+    const gameNation = resolveCouncilBoardNationKey(commander);
+    const storageKey = getCouncilBoardStorageKey(gameNation);
+
+    if (!username || !storageKey) {
+        return {
+            gameNation: storageKey || '',
+            council: false,
+            leader: false,
+            viceLeader: false
+        };
+    }
+
+    const adminAccess = resolveHeadquartersAdminAccess(username, storageKey);
+    if (adminAccess) {
+        return adminAccess;
+    }
+
+    const leadership = readNationLeadershipForNation(storageKey);
+    if (!leadership) {
+        return {
+            gameNation: storageKey,
+            council: false,
+            leader: false,
+            viceLeader: false
+        };
+    }
+
+    const isLeader = leadership.leaderUsername === username;
+    const isViceLeader = leadership.viceLeaderUsername === username;
+    const isCouncilMember = leadership.councilUsernames.includes(username);
+
+    return {
+        gameNation: storageKey,
+        council: isLeader || isViceLeader || isCouncilMember,
+        leader: isLeader,
+        viceLeader: isViceLeader
+    };
+}
+
+function readNationHeadquartersMap() {
+    const stored = db.get('portal.nationHeadquarters').value();
+    return stored && typeof stored === 'object' && !Array.isArray(stored) ? stored : {};
+}
+
+function writeNationHeadquartersMap(map) {
+    db.set('portal.nationHeadquarters', map && typeof map === 'object' ? map : {}).write();
+}
+
+function readNationHeadquartersForNation(nationKey) {
+    const storageKey = getCouncilBoardStorageKey(nationKey);
+    if (!storageKey) return getDefaultNationHeadquartersState();
+
+    const record = readNationHeadquartersMap()[storageKey];
+    return normalizeNationHeadquartersState(record);
+}
+
+function writeNationHeadquartersForNation(nationKey, nextState) {
+    const storageKey = getCouncilBoardStorageKey(nationKey);
+    if (!storageKey) {
+        return { errorCode: 'GAME_NATION_REQUIRED' };
+    }
+
+    const boards = readNationHeadquartersMap();
+    boards[storageKey] = normalizeNationHeadquartersState({
+        ...nextState,
+        updatedAt: new Date().toISOString()
+    });
+    writeNationHeadquartersMap(boards);
+    return { state: boards[storageKey] };
+}
+
+function buildHeadquartersWorkspaceForCommander(commander) {
+    const access = resolveHeadquartersAccessForCommander(commander);
+    const nationState = readNationHeadquartersForNation(access.gameNation);
+    const voteCandidates = listNationVoteCandidates(
+        db.get('commanders').value() || [],
+        access.gameNation,
+        (entry) => getCouncilBoardStorageKey(resolveCouncilBoardNationKey(entry))
+    );
+    const warTargets = listWarTargetNations(access.gameNation);
+
+    return buildHeadquartersWorkspacePayload({
+        access,
+        nationState,
+        voteCandidates,
+        warTargets,
+        username: commander?.username || ''
+    });
 }
 
 function ensureGameChatSeedMessages(store) {
@@ -4043,6 +4187,121 @@ app.post('/api/portal/game-chat/messages', (req, res) => {
         syncMode: 'full',
         viewerRestrictions,
         ui: getGameChatUiFromCommander(commander)
+    });
+});
+
+app.get('/api/portal/age/headquarters', (req, res) => {
+    const username = resolveLedgerCommanderUsername(req.query?.username || '');
+    if (!username) {
+        return sendApiError(res, 'NEXUS-GEN-002');
+    }
+
+    const commander = db.get('commanders').find({ username }).value();
+    if (!commander) {
+        return sendApiError(res, 'NEXUS-GEN-004');
+    }
+
+    res.json({
+        status: 'ok',
+        workspace: buildHeadquartersWorkspaceForCommander(commander)
+    });
+});
+
+app.patch('/api/portal/age/headquarters', (req, res) => {
+    const username = resolveLedgerCommanderUsername(req.body?.username || '');
+    if (!username) {
+        return sendApiError(res, 'NEXUS-GEN-002');
+    }
+
+    const commander = db.get('commanders').find({ username }).value();
+    if (!commander) {
+        return sendApiError(res, 'NEXUS-GEN-004');
+    }
+
+    const access = resolveHeadquartersAccessForCommander(commander);
+    const gameNation = access.gameNation;
+    if (!gameNation) {
+        return sendApiError(res, 'GAME_NATION_REQUIRED');
+    }
+
+    const body = req.body || {};
+    const currentState = readNationHeadquartersForNation(gameNation);
+    let nextState = { ...currentState };
+    let responseExtra = {};
+
+    if (body.resetPlanning === true) {
+        const resetPatch = applyResetPlanningPatch(currentState, username, access);
+        if (resetPatch.errorCode) {
+            return sendApiError(res, resetPatch.errorCode);
+        }
+        nextState = { ...nextState, ...resetPatch };
+    } else if (body.planning && typeof body.planning === 'object') {
+        const planningPatch = applyPlanningPatch(currentState, body.planning, username, access);
+        if (planningPatch.errorCode) {
+            return sendApiError(res, planningPatch.errorCode);
+        }
+        nextState = { ...nextState, ...planningPatch };
+    }
+
+    if (body.vote && typeof body.vote === 'object') {
+        const voteCandidates = listNationVoteCandidates(
+            db.get('commanders').value() || [],
+            gameNation,
+            (entry) => getCouncilBoardStorageKey(resolveCouncilBoardNationKey(entry))
+        );
+        const votePatch = applyVotePatch(nextState, body.vote, username, voteCandidates);
+        if (votePatch.errorCode) {
+            return sendApiError(res, votePatch.errorCode);
+        }
+        nextState = { ...nextState, ...votePatch };
+    }
+
+    if (body.warDeclarationDraft && typeof body.warDeclarationDraft === 'object') {
+        if (!access.council) {
+            return sendApiError(res, 'HQ_COUNCIL_REQUIRED');
+        }
+        const targetNationId = resolveCatalogNationKey(body.warDeclarationDraft.targetNationId);
+        if (!targetNationId) {
+            return sendApiError(res, 'HQ_WAR_TARGET_REQUIRED');
+        }
+        const targetName = listWarTargetNations(gameNation).find((row) => row.id === targetNationId)?.name || targetNationId;
+        responseExtra.warDeclarationDraft = {
+            targetNationId,
+            targetNationName: targetName,
+            preparedAt: new Date().toISOString(),
+            preparedBy: username
+        };
+    }
+
+    const writeResult = writeNationHeadquartersForNation(gameNation, nextState);
+    if (writeResult.errorCode) {
+        return sendApiError(res, writeResult.errorCode);
+    }
+
+    res.json({
+        status: 'ok',
+        workspace: buildHeadquartersWorkspaceForCommander(commander),
+        ...responseExtra
+    });
+});
+
+app.get('/api/portal/age/headquarters-access', (req, res) => {
+    const username = resolveLedgerCommanderUsername(req.query?.username || '');
+    if (!username) {
+        return sendApiError(res, 'NEXUS-GEN-002');
+    }
+
+    const commander = db.get('commanders').find({ username }).value();
+    if (!commander) {
+        return sendApiError(res, 'NEXUS-GEN-004');
+    }
+
+    const workspace = buildHeadquartersWorkspaceForCommander(commander);
+
+    res.json({
+        status: 'ok',
+        gameNation: workspace.gameNation,
+        access: workspace.access
     });
 });
 

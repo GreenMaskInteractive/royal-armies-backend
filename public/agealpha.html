@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Royal Armies — Age Alpha</title>
     <link rel="stylesheet" href="style.css?v=royal-family-titles-1">
-    <link rel="stylesheet" href="style2.css?v=hq-arrow-markers-1">
+    <link rel="stylesheet" href="style2.css?v=hq-member-layout-1">
     <link rel="stylesheet" href="mobile-responsive.css?v=headquarters-players-rail-1">
     <link rel="stylesheet" href="dev-page-navigator.css">
     <link rel="stylesheet" href="custom-cursor.css?v=scrollbar-cursor-3">
@@ -539,7 +539,7 @@
 
             <div id="age-headquarters-workspace" class="age-headquarters-workspace" hidden aria-hidden="true">
                 <div class="age-headquarters-shell">
-                    <section class="age-headquarters-planning-column" aria-label="SF Planning">
+                    <section class="age-headquarters-planning-column" aria-label="SF Planning" data-hq-council-only hidden>
                         <header class="age-headquarters-section-head">
                             <p class="age-headquarters-section-eyebrow">Nation Command</p>
                             <h2 class="age-headquarters-section-title">SF Planning</h2>
@@ -586,6 +586,13 @@
                                         <span class="age-hq-marker-btn-copy">
                                             <span class="age-hq-marker-btn-kicker">March</span>
                                             <span class="age-hq-marker-btn-title">Move</span>
+                                        </span>
+                                    </button>
+                                    <button type="button" class="age-hq-marker-btn age-hq-marker-btn--temp-main" data-hq-marker="temp-main" data-hq-vice-only hidden>
+                                        <span class="age-hq-marker-btn-glyph" aria-hidden="true">TM</span>
+                                        <span class="age-hq-marker-btn-copy">
+                                            <span class="age-hq-marker-btn-kicker">Split</span>
+                                            <span class="age-hq-marker-btn-title">Temp Main</span>
                                         </span>
                                     </button>
                                 </div>
@@ -647,11 +654,11 @@
                         </section>
 
                         <section class="age-headquarters-ops-card age-headquarters-ops-card--restricted" id="age-hq-council-restricted-notice" hidden>
-                            <p class="age-headquarters-restricted-copy">Council and Leader tools are hidden for your current role. Leader voting remains available below.</p>
+                            <p class="age-headquarters-restricted-copy">Council and Leader planning tools are restricted to appointed nation leadership. You can still cast Leader and Vice Leader votes here.</p>
                         </section>
                     </aside>
 
-                    <aside class="age-headquarters-players-rail" aria-label="Commanders in city">
+                    <aside class="age-headquarters-players-rail" aria-label="Commanders in city" data-hq-council-only hidden>
                         <header class="age-headquarters-players-head">
                             <h3 class="age-headquarters-players-title">Players</h3>
                             <p id="age-hq-players-city" class="age-hq-players-city" hidden></p>
@@ -927,8 +934,8 @@
     <script src="rift-player-loc-pins.js?v=player-loc-pins-1"></script>
     <script src="age-world-map.js?v=water-routes-1"></script>
     <script src="age-view-tabs.js?v=headquarters-players-rail-1"></script>
-    <script src="age-headquarters-planning-map.js?v=hq-arrow-markers-1"></script>
-    <script src="age-headquarters.js?v=hq-arrow-markers-1"></script>
+    <script src="age-headquarters-planning-map.js?v=hq-server-sync-1"></script>
+    <script src="age-headquarters.js?v=hq-member-layout-1"></script>
     <script src="age-chronicles-battle-pass.js?v=bp-premium-badge-1"></script>
     <script src="age-left-reports-panel.js?v=intelligence-peace-state-1"></script>
     <script src="age-page.js?v=headquarters-planning-1"></script>

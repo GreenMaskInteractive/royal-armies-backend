@@ -17,8 +17,8 @@
           "earnedAt": "2026-05-24T21:31:49.881Z"
         }
       ],
-      "dossierUpdatedAt": "2026-05-31T01:09:31.983Z",
-      "profileUpdatedAt": "2026-05-31T01:09:31.983Z",
+      "dossierUpdatedAt": "2026-05-31T01:35:24.805Z",
+      "profileUpdatedAt": "2026-05-31T01:35:24.805Z",
       "country": "North America",
       "timezone": "New York (GMT-4)"
     }
@@ -99,15 +99,15 @@
     "gameAge": {
       "activeSlug": "alpha",
       "startedAt": null,
-      "endedAt": "2026-05-31T01:08:52.142Z",
+      "endedAt": "2026-05-31T01:34:57.372Z",
       "countryChatClearedAt": "2026-05-28T00:07:31.122Z"
     },
     "ageMovement": {
       "commanders": {
         "caleb_admin": {
           "catalogCityId": "aesthene-phariis",
-          "movePoints": 1,
-          "lastMovePointRegenAt": "2026-05-31T01:00:00.000Z"
+          "movePoints": 2,
+          "lastMovePointRegenAt": "2026-05-31T01:30:00.000Z"
         }
       },
       "cityHolders": {},
