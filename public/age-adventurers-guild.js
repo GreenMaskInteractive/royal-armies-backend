@@ -189,15 +189,20 @@
         );
     }
 
-    function renderSettlementGuildJobs() {
+    function renderSettlementGuildJobs(options = {}) {
         const optionsEl = resolveGuildJobsContainer();
         const hub = hubManifest || { jobs: [], settlementTierLabel: 'Settlement', rank: 1 };
         if (!optionsEl) return;
 
         const jobs = Array.isArray(hub.jobs) ? hub.jobs : [];
-        const nextHtml = !jobs.length
-            ? '<p class="age-settlement-guild-jobs-empty">No guild jobs are configured for this settlement.</p>'
-            : jobs.map((job) => renderSettlementGuildJobOption(job)).join('');
+        let nextHtml;
+        if (!jobs.length && options.loading) {
+            nextHtml = '<p class="age-settlement-guild-jobs-empty">Loading guild contracts…</p>';
+        } else if (!jobs.length) {
+            nextHtml = '<p class="age-settlement-guild-jobs-empty">No guild jobs are configured for this settlement.</p>';
+        } else {
+            nextHtml = jobs.map((job) => renderSettlementGuildJobOption(job)).join('');
+        }
 
         if (optionsEl.innerHTML !== nextHtml) {
             optionsEl.innerHTML = nextHtml;
@@ -223,6 +228,18 @@
         toggleBtn?.setAttribute('aria-expanded', 'false');
     }
 
+    async function ensureSettlementGuildHubLoaded(detail = {}) {
+        settlementTier = String(detail?.settlementTier || settlementTier || 'village').trim().toLowerCase();
+        resolveApi()?.setSettlementTier?.(settlementTier);
+
+        if (Array.isArray(hubManifest?.jobs) && hubManifest.jobs.length) {
+            return hubManifest;
+        }
+
+        await loadGuildState();
+        return hubManifest;
+    }
+
     async function toggleSettlementJobs(detail) {
         settlementTier = String(detail?.settlementTier || settlementTier || 'village').trim().toLowerCase();
         resolveApi()?.setSettlementTier?.(settlementTier);
@@ -230,7 +247,8 @@
         guildJobsExpanded = !guildJobsExpanded;
         syncSettlementMenuGuild();
         if (guildJobsExpanded) {
-            await loadGuildState();
+            renderSettlementGuildJobs({ loading: !Array.isArray(hubManifest?.jobs) || !hubManifest.jobs.length });
+            await ensureSettlementGuildHubLoaded({ settlementTier });
             renderSettlementGuildJobs();
         }
     }
@@ -970,6 +988,7 @@
     global.RoyalArmiesAdventurersGuild = {
         toggleSettlementJobs,
         syncSettlementMenuGuild,
+        ensureSettlementGuildHubLoaded,
         openJob,
         closeJobWorkspace,
         closeTrainingView,

@@ -608,6 +608,9 @@
 
         if (activeView === VIEW_CITY) {
             renderSettlementMenu();
+            void global.RoyalArmiesAdventurersGuild?.ensureSettlementGuildHubLoaded?.({
+                settlementTier: resolveSettlementTier()
+            });
         }
     }
 

@@ -258,7 +258,7 @@
                 { source: 'server-sync', silent: true }
             );
         }
-        if (global.RoyalArmiesAgeGuildTraining?.applyGuildPayload) {
+        if (options.eventSource !== 'guild-sync' && global.RoyalArmiesAgeGuildTraining?.applyGuildPayload) {
             global.RoyalArmiesAgeGuildTraining.applyGuildPayload(payload);
         }
 
