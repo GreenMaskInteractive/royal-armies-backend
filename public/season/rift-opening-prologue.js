@@ -14,8 +14,8 @@
     const NARRATION_METADATA_TIMEOUT_MS = 8000;
 
     /**
-     * Narration subtitle lines — fade-in/out windows (M:SS:ff hundredths).
-     * Times match distressedwoman1.mp3; scaled to actual file duration when it differs.
+     * Narration subtitle lines. `in` is when a line appears; it stays on screen until the next line's `in`.
+     * Times use M:SS:ff hundredths and match distressedwoman1.mp3 (scaled when file duration differs).
      */
     const LOCAL_PROLOGUE_SUBTITLE_CUE_MARKS = Object.freeze([
         {
@@ -2233,15 +2233,17 @@
 
     function resolveActiveCueIndexAtTime(scriptTime) {
         const t = Number(scriptTime) || 0;
+        let index = -1;
 
         for (let i = 0; i < LOCAL_PROLOGUE_CUES.length; i += 1) {
-            const cue = LOCAL_PROLOGUE_CUES[i];
-            if (t >= cue.start && t <= cue.end) {
-                return i;
+            if (t >= LOCAL_PROLOGUE_CUES[i].start) {
+                index = i;
+            } else {
+                break;
             }
         }
 
-        return -1;
+        return index;
     }
 
     function renderSubtitleCue(cueIndex) {
