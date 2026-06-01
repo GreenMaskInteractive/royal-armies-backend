@@ -38,11 +38,14 @@ const RANK_BY_PROMOTION = Object.freeze({
 
 /** Per-survivor XP weight by combat lane — infantry ranks fastest. */
 const UNIT_LANE_XP_RATE = Object.freeze({
-    infantry: 5,
-    cavalry: 3.5,
-    beasts: 3.5,
-    ranged: 2.5
+    infantry: 4.2,
+    cavalry: 3,
+    beasts: 3,
+    ranged: 2.1
 });
+
+/** Solo guild drills only — commander guild XP uses separate curves in nexus-age-guild-xp.js. */
+const UNIT_TRAINING_XP_SCALE = 0.72;
 
 const PROMOTION_LABELS = Object.freeze({
     app: 'Apprentice',
@@ -76,8 +79,8 @@ function resolveStackPromotionKey(stack, catalogUnit) {
 function resolveUnitPromotionXpRequired(currentRank, tier) {
     const rank = Math.max(1, Math.floor(Number(currentRank) || 1));
     const tierNum = Math.max(1, Math.floor(Number(tier) || 1));
-    const base = 24 + rank * 8;
-    const tierScale = 1 + (tierNum - 1) * 0.35;
+    const base = 38 + rank * 11;
+    const tierScale = 1 + (tierNum - 1) * 0.38;
     return Math.round(base * tierScale);
 }
 
@@ -269,7 +272,7 @@ function distributeTrainingUnitXp(battle, army, catalog, trainingMode = 'street-
 
         const lane = String(stack?.phaseLane || 'infantry').trim().toLowerCase();
         const laneRate = UNIT_LANE_XP_RATE[lane] || 3;
-        const perSurvivor = participatingRounds * laneRate * outcomeMult * duration.factor * modeMult;
+        const perSurvivor = participatingRounds * laneRate * outcomeMult * duration.factor * modeMult * UNIT_TRAINING_XP_SCALE;
         if (!perSurvivor) return;
 
         const existing = nextArmy[armyIndex];
