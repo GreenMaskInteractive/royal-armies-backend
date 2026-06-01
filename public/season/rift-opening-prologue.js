@@ -47,7 +47,9 @@
     const PROLOGUE_MUSIC_DELAY_MS = 2000;
     /** Black screen hold after narration; music ramps during logo reveals, then Cascading Skies on Enter the War. */
     const PROLOGUE_TITLE_LOGO_REVEAL_MS = 6500;
-    const PROLOGUE_SUBTITLE_LOGO_REVEAL_MS = 1500;
+    const PROLOGUE_SUBTITLE_LOGO_EXPLOSIVE_MS = 520;
+    const PROLOGUE_SUBTITLE_LOGO_EXPLOSIVE_IMPACT = 0.18;
+    const PROLOGUE_SUBTITLE_LOGO_EXPLOSIVE_BURST_SPARKS = 14;
     /** Wall-clock ms for Archimedes ramp from prologue level to peak during logo reveals. */
     const PROLOGUE_MUSIC_PEAK_RAMP_MS = 2800;
     const PROLOGUE_MUSIC_OUT_FADE_MS = 1200;
@@ -799,6 +801,7 @@
                         decoding="async"
                     >
                     <div class="game-opening-prologue-subtitle-logo-wrap">
+                        <div class="game-opening-prologue-subtitle-explosion-flash" aria-hidden="true"></div>
                         <div class="game-opening-prologue-subtitle-sparks" aria-hidden="true"></div>
                         <img
                             src="${PROLOGUE_SUBTITLE_LOGO_SRC}"
@@ -1138,16 +1141,195 @@
         if (!logoEl) return;
 
         const hideSubtitle = Boolean(options && options.hideSubtitle);
-        logoEl.classList.remove('is-arriving', 'is-arrived');
+        logoEl.classList.remove('is-arriving', 'is-arrived', 'is-exploding');
         logoEl.style.removeProperty('--prologue-logo-arrive-ms');
         logoEl.style.removeProperty('animation');
         logoEl.style.removeProperty('transform');
         logoEl.style.removeProperty('opacity');
         logoEl.style.removeProperty('filter');
+        resetSubtitleLogoExplosionState(logoEl);
 
         if (hideSubtitle && logoEl.classList.contains('game-opening-prologue-logo--subtitle')) {
             logoEl.hidden = true;
         }
+    }
+
+    function resolveSubtitleLogoWrap(logoEl) {
+        return logoEl?.closest('.game-opening-prologue-subtitle-logo-wrap') || null;
+    }
+
+    function resetSubtitleLogoExplosionState(logoEl) {
+        const wrap = resolveSubtitleLogoWrap(logoEl);
+        if (!wrap) return;
+
+        wrap.classList.remove('is-exploding');
+        wrap.style.removeProperty('transform');
+        const flashEl = wrap.querySelector('.game-opening-prologue-subtitle-explosion-flash');
+        if (flashEl) {
+            flashEl.style.removeProperty('opacity');
+            flashEl.style.removeProperty('transform');
+        }
+    }
+
+    function resolveSubtitleLogoExplosiveMotion(progress) {
+        const impact = PROLOGUE_SUBTITLE_LOGO_EXPLOSIVE_IMPACT;
+
+        if (progress < impact) {
+            const t = progress / impact;
+            return {
+                scale: 0.04 + (t * 0.12),
+                opacity: t * 0.22,
+                blur: 10,
+                brightness: 0.35 + (t * 0.25),
+                flashOpacity: t * 0.12,
+                flashScale: 0.15 + (t * 0.35),
+                shake: 0
+            };
+        }
+
+        if (progress < 0.44) {
+            const t = (progress - impact) / (0.44 - impact);
+            const burst = 1 - ((1 - t) ** 2);
+            return {
+                scale: 0.16 + (burst * 1.18),
+                opacity: Math.min(1, 0.22 + (burst * 1.05)),
+                blur: Math.max(0, 9 * (1 - t)),
+                brightness: 1.35 + ((1 - t) * 0.85),
+                flashOpacity: 0.15 + ((1 - t) * 0.95),
+                flashScale: 0.5 + (burst * 1.35),
+                shake: Math.sin((progress - impact) * 95) * 5.5 * (1 - t)
+            };
+        }
+
+        const t = (progress - 0.44) / 0.56;
+        const settle = 1 - ((1 - t) ** 3);
+        return {
+            scale: 1.34 - (settle * 0.34),
+            opacity: 1,
+            blur: 0,
+            brightness: 1 + ((1 - settle) * 0.18),
+            flashOpacity: Math.max(0, 0.55 * (1 - t)),
+            flashScale: 1.35 + (t * 0.25),
+            shake: 0
+        };
+    }
+
+    function fireSubtitleLogoExplosionImpact(subtitleLogoEl, generation) {
+        playPrologueSubtitleLogoSfx();
+
+        const sparksHost = resolveSubtitleSparksHost(subtitleLogoEl);
+        if (sparksHost && global.RoyalArmiesSubtitleLogoSparks) {
+            if (typeof global.RoyalArmiesSubtitleLogoSparks.burst === 'function') {
+                for (let i = 0; i < 3; i += 1) {
+                    global.RoyalArmiesSubtitleLogoSparks.burst(sparksHost, {
+                        sparksPerBurst: PROLOGUE_SUBTITLE_LOGO_EXPLOSIVE_BURST_SPARKS,
+                        flashChance: 1
+                    });
+                }
+            }
+            startSubtitleLogoSparks(subtitleLogoEl, generation);
+        }
+    }
+
+    function playSubtitleLogoExplosiveAnimation(logoEl, generation, options) {
+        if (!logoEl) return Promise.resolve();
+
+        const animationOptions = options && typeof options === 'object' ? options : {};
+        const onComplete = typeof animationOptions.onComplete === 'function'
+            ? animationOptions.onComplete
+            : null;
+        const wrap = resolveSubtitleLogoWrap(logoEl);
+        const flashEl = wrap?.querySelector('.game-opening-prologue-subtitle-explosion-flash');
+        const durationMs = PROLOGUE_SUBTITLE_LOGO_EXPLOSIVE_MS;
+        const reducedMotion = global.matchMedia
+            && global.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+        if (reducedMotion) {
+            return playLogoArriveAnimation(logoEl, 360, generation, {
+                easing: 'linear',
+                onComplete: () => {
+                    fireSubtitleLogoExplosionImpact(logoEl, generation);
+                    if (onComplete) onComplete();
+                }
+            });
+        }
+
+        return new Promise((resolve) => {
+            logoEl.hidden = false;
+            logoEl.classList.remove('is-arrived');
+            logoEl.classList.add('is-arriving', 'is-exploding');
+            wrap?.classList.add('is-exploding');
+
+            const startedAt = global.performance?.now?.() ?? Date.now();
+            let settled = false;
+            let impactFired = false;
+            let completeFired = false;
+
+            const finish = () => {
+                if (settled || generation !== logoRevealGeneration) return;
+                settled = true;
+                logoEl.classList.remove('is-arriving', 'is-exploding');
+                logoEl.classList.add('is-arrived');
+                logoEl.style.removeProperty('transform');
+                logoEl.style.removeProperty('opacity');
+                logoEl.style.removeProperty('filter');
+                resetSubtitleLogoExplosionState(logoEl);
+                resolve();
+            };
+
+            const tick = (now) => {
+                if (settled || generation !== logoRevealGeneration) return;
+
+                const elapsed = now - startedAt;
+                const progress = durationMs <= 0 ? 1 : Math.min(1, elapsed / durationMs);
+                const motion = resolveSubtitleLogoExplosiveMotion(progress);
+
+                if (!impactFired && progress >= PROLOGUE_SUBTITLE_LOGO_EXPLOSIVE_IMPACT) {
+                    impactFired = true;
+                    fireSubtitleLogoExplosionImpact(logoEl, generation);
+                }
+
+                logoEl.style.opacity = String(motion.opacity);
+                logoEl.style.transform = `scale3d(${motion.scale}, ${motion.scale}, ${motion.scale}) translateZ(0)`;
+                logoEl.style.filter = `blur(${motion.blur}px) brightness(${motion.brightness}) drop-shadow(0 0 ${12 + (motion.brightness * 10)}px rgba(255, 150, 40, 0.55))`;
+
+                if (wrap) {
+                    wrap.style.transform = motion.shake
+                        ? `translate(${motion.shake.toFixed(2)}px, ${(motion.shake * 0.35).toFixed(2)}px)`
+                        : '';
+                }
+
+                if (flashEl) {
+                    flashEl.style.opacity = String(motion.flashOpacity);
+                    flashEl.style.transform = `translate(-50%, -50%) scale(${motion.flashScale.toFixed(3)})`;
+                }
+
+                if (progress < 1) {
+                    global.requestAnimationFrame(tick);
+                    return;
+                }
+
+                if (onComplete && !completeFired) {
+                    completeFired = true;
+                    onComplete();
+                }
+
+                finish();
+            };
+
+            logoEl.style.opacity = '0';
+            logoEl.style.transform = 'scale3d(0.04, 0.04, 0.04) translateZ(0)';
+            logoEl.style.filter = 'blur(10px) brightness(0.35)';
+            if (flashEl) {
+                flashEl.style.left = '50%';
+                flashEl.style.top = '50%';
+                flashEl.style.opacity = '0';
+                flashEl.style.transform = 'translate(-50%, -50%) scale(0.15)';
+            }
+
+            global.requestAnimationFrame(tick);
+            global.setTimeout(finish, durationMs + 160);
+        });
     }
 
     function playLogoArriveAnimation(logoEl, durationMs, generation, options) {
@@ -1263,12 +1445,9 @@
         await playLogoArriveAnimation(titleLogoEl, PROLOGUE_TITLE_LOGO_REVEAL_MS, generation);
         if (generation !== logoRevealGeneration) return;
 
-        await playLogoArriveAnimation(subtitleLogoEl, PROLOGUE_SUBTITLE_LOGO_REVEAL_MS, generation, {
-            easing: 'linear',
+        await playSubtitleLogoExplosiveAnimation(subtitleLogoEl, generation, {
             onComplete: () => {
                 if (generation !== logoRevealGeneration) return;
-                playPrologueSubtitleLogoSfx();
-                startSubtitleLogoSparks(subtitleLogoEl, generation);
                 loreToolFadePromise = beginLoreToolFadeIn(generation);
             }
         });
