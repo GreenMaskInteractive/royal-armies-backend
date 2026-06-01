@@ -17,6 +17,11 @@ Pushing to `main` deploys [royalarmies.com](https://royalarmies.com) via Render.
 - User explicitly opted out for that task, e.g. "don't commit", "don't deploy", "no push", "local only", "stop auto deploy", "don't auto deploy"
 - There are no changes to commit
 - Changes likely contain secrets (`.env`, credentials) — warn instead of committing
+- **Age of War seasonal work** — see `age-of-war-season-hold.mdc`: do **not** push seasonal paths to `main`. Commit non-seasonal files only, or use branch `season/age-of-war` and skip push.
+
+## Seasonal hold (Age of War)
+
+If staged files match the seasonal inventory in `age-of-war-season-hold.mdc`, do **not** push to `main`. Push non-seasonal changes in a separate commit, or commit seasonal work only on `season/age-of-war`.
 
 ## Commit workflow
 
