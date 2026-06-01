@@ -279,8 +279,27 @@
         isLeadInActive = false;
     }
 
-    function isPrologueSequenceActive() {
-        return isPlaying || isLeadInActive || isFadingOut || isLocalProloguePending();
+    function isProloguePlaybackActive() {
+        return isPlaying || isLeadInActive || isFadingOut;
+    }
+
+    function shouldForcePrologueRestart() {
+        try {
+            return new URLSearchParams(global.location.search).get('riftProgressionReset') === '1';
+        } catch (_err) {
+            return false;
+        }
+    }
+
+    function resetStaleLocalPrologueState(options) {
+        const force = Boolean(options && options.force);
+        if (!force && isProloguePlaybackActive()) return;
+
+        clearPrologueLeadInTimer();
+        isPlaying = false;
+        isLeadInActive = false;
+        isFadingOut = false;
+        setLocalProloguePending(false);
     }
 
     function beginNarrationPlayback() {
@@ -300,7 +319,7 @@
     }
 
     async function finishPrologue(reason) {
-        if (!isPrologueSequenceActive() || isFadingOut) return;
+        if (!isProloguePlaybackActive() || isFadingOut) return;
 
         clearPrologueLeadInTimer();
         isPlaying = false;
@@ -335,9 +354,11 @@
         if (!shouldRunLocalPrologue()) {
             return Promise.resolve('disabled');
         }
-        if (isPrologueSequenceActive()) {
+        if (isProloguePlaybackActive()) {
             return Promise.resolve('already-playing');
         }
+
+        resetStaleLocalPrologueState({ force: shouldForcePrologueRestart() });
 
         ensureOverlay();
         finishCallback = typeof options?.onComplete === 'function' ? options.onComplete : null;
@@ -363,7 +384,7 @@
             return isPlaying || isLeadInActive;
         },
         shouldHoldProgression: function shouldHoldProgression() {
-            return isPrologueSequenceActive();
+            return isProloguePlaybackActive();
         },
         start: startLocalPrologue,
         skip: function skipPrologue() {
