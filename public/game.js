@@ -555,13 +555,13 @@
         closeGameMobileCommanderSubmenu();
         if (nextView === 'class'
             && global.RoyalArmiesMusicFlow
-            && typeof global.RoyalArmiesMusicFlow.markProgressionPhaseStart === 'function'
+            && typeof global.RoyalArmiesMusicFlow.startProgressionPageMusic === 'function'
             && (!global.RoyalArmiesMusicFlow.shouldHoldForOpeningPrologue
                 || !global.RoyalArmiesMusicFlow.shouldHoldForOpeningPrologue())
             && (!global.RoyalArmiesOpeningPrologue
                 || typeof global.RoyalArmiesOpeningPrologue.shouldHoldProgression !== 'function'
                 || !global.RoyalArmiesOpeningPrologue.shouldHoldProgression())) {
-            global.RoyalArmiesMusicFlow.markProgressionPhaseStart();
+            global.RoyalArmiesMusicFlow.startProgressionPageMusic();
         }
     }
 
@@ -855,10 +855,10 @@
             if (activeGameView !== 'class') return;
             if (event.detail?.enterWarExitReason === 'button') return;
             if (!global.RoyalArmiesMusicFlow
-                || typeof global.RoyalArmiesMusicFlow.markProgressionPhaseStart !== 'function') {
+                || typeof global.RoyalArmiesMusicFlow.startProgressionPageMusic !== 'function') {
                 return;
             }
-            global.RoyalArmiesMusicFlow.markProgressionPhaseStart();
+            global.RoyalArmiesMusicFlow.startProgressionPageMusic();
         });
 
         const joinBattleBtn = global.document.getElementById('game-join-battle-continue-btn');

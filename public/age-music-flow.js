@@ -14,6 +14,11 @@
             id: 'kindred',
             title: 'KINDRED MEMORIES',
             file: 'audio/Kindred%20Memories.wav'
+        },
+        cascadingSkies: {
+            id: 'cascading-skies',
+            title: 'CASCADING SKIES',
+            file: 'audio/cascadingskies.wav'
         }
     });
 
@@ -102,11 +107,13 @@
 
     function resolveStoredTrackId() {
         const stored = String(readSession(STORAGE.currentTrack) || '').trim().toLowerCase();
+        if (stored === TRACKS.cascadingSkies.id) return TRACKS.cascadingSkies.id;
         if (stored === TRACKS.kindred.id) return TRACKS.kindred.id;
         return TRACKS.archimedes.id;
     }
 
     function resolveTrackById(trackId) {
+        if (trackId === TRACKS.cascadingSkies.id) return TRACKS.cascadingSkies;
         if (trackId === TRACKS.kindred.id) return TRACKS.kindred;
         return TRACKS.archimedes;
     }
@@ -162,6 +169,7 @@
             audio.load();
         } else {
             audio.src = track.file;
+            audio.load();
         }
         writeSession(STORAGE.currentTrack, track.id);
 
@@ -314,14 +322,30 @@
         }
     }
 
-    function markProgressionPhaseStart(options) {
+    function startPrologueOutroMusic(options = {}) {
         const volumeOption = options && typeof options === 'object' && options.volume != null
             ? clampVolume(options.volume)
             : null;
 
-        if (readSession(STORAGE.progressionStarted) === '1') {
-            const audio = resolveAudioElement();
-            if (!audio) return Promise.resolve();
+        writeSession(STORAGE.progressionStarted, '1');
+        loadTrack(TRACKS.kindred.id, { restoreTime: false });
+
+        const audio = resolveAudioElement();
+        if (audio) {
+            audio.loop = false;
+        }
+
+        return tryPlay(volumeOption != null ? { volume: volumeOption } : { volume: 0.5 });
+    }
+
+    function startProgressionPageMusic(options = {}) {
+        const volumeOption = options && typeof options === 'object' && options.volume != null
+            ? clampVolume(options.volume)
+            : null;
+        const audio = resolveAudioElement();
+        const onProgressionTrack = resolveStoredTrackId() === TRACKS.cascadingSkies.id;
+
+        if (onProgressionTrack && audio) {
             if (volumeOption != null) {
                 audio.volume = volumeOption;
                 writeSession(STORAGE.volume, String(audio.volume));
@@ -333,12 +357,19 @@
         }
 
         writeSession(STORAGE.progressionStarted, '1');
-        loadTrack(TRACKS.kindred.id, { restoreTime: false });
-        const audio = resolveAudioElement();
+        writeSession(STORAGE.currentTrack, TRACKS.cascadingSkies.id);
+        writeSession(STORAGE.currentTime, '0');
+        loadTrack(TRACKS.cascadingSkies.id, { restoreTime: false });
+
         if (audio) {
-            audio.loop = false;
+            audio.loop = true;
         }
+
         return tryPlay(volumeOption != null ? { volume: volumeOption } : { volume: 0.5 });
+    }
+
+    function markProgressionPhaseStart(options) {
+        return startProgressionPageMusic(options);
     }
 
     function cancelWaitForTrackEnd() {
@@ -451,16 +482,7 @@
         cancelWaitForTrackEnd();
         await fadeMusicOut(fadeOutMs);
 
-        writeSession(STORAGE.currentTrack, TRACKS.archimedes.id);
-        writeSession(STORAGE.currentTime, '0');
-        loadTrack(TRACKS.archimedes.id, { restoreTime: false });
-
-        const audio = resolveAudioElement();
-        if (audio) {
-            audio.loop = true;
-        }
-
-        return tryPlay({ volume });
+        return startProgressionPageMusic({ volume });
     }
 
     function bindLifecycle() {
@@ -487,6 +509,8 @@
         prepareJoinAgeLaunch,
         markProgressionPhaseStart,
         markIntroCinematicComplete: markProgressionPhaseStart,
+        startPrologueOutroMusic,
+        startProgressionPageMusic,
         startGamePageArchimedes,
         rampMusicVolume,
         fadeMusicOut,

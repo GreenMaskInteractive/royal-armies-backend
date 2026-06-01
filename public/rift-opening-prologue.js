@@ -756,8 +756,8 @@
 
     async function waitForEnterWarGate(generation) {
         if (global.RoyalArmiesMusicFlow
-            && typeof global.RoyalArmiesMusicFlow.markProgressionPhaseStart === 'function') {
-            global.RoyalArmiesMusicFlow.markProgressionPhaseStart({ volume: PROLOGUE_MUSIC_PEAK_VOLUME });
+            && typeof global.RoyalArmiesMusicFlow.startPrologueOutroMusic === 'function') {
+            global.RoyalArmiesMusicFlow.startPrologueOutroMusic({ volume: PROLOGUE_MUSIC_PEAK_VOLUME });
         }
 
         if (loreToolFadePromise) {
