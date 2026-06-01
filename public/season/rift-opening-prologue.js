@@ -239,8 +239,16 @@
         return 120;
     }
 
+    function getTrailerLastCinematicEndSec() {
+        const lastShot = PROLOGUE_CINEMATIC_SHOTS[PROLOGUE_CINEMATIC_SHOTS.length - 1];
+        if (!lastShot) return getTrailerNarrationDurationSec();
+
+        const scale = cueTimelineScale > 0 ? cueTimelineScale : 1;
+        return lastShot.scriptEnd * scale;
+    }
+
     function getTrailerFinaleStartSec() {
-        return getTrailerNarrationDurationSec();
+        return getTrailerLastCinematicEndSec();
     }
 
     function getTrailerFinaleEndSec() {
@@ -371,15 +379,16 @@
         isPostNarrationHold = true;
 
         overlayEl?.classList.add('is-trailer-finale-visible', 'is-logo-reveal-active');
-        overlayEl?.classList.remove('is-cinematics-active');
         setSubtitleDockActive(false);
-        clearCinematicShots();
         audioEl?.pause();
         mountTrailerPlayerLayout();
 
         trailerFinaleSequencePromise = (async () => {
             try {
+                await fadeOutTrailerLastCinematicShotIfNeeded();
                 await fadeOutCinematicChromeIfNeeded();
+                clearCinematicShots();
+                overlayEl?.classList.remove('is-cinematics-active');
                 clearSubtitlesForPostNarrationHold();
 
                 const musicRamp = global.RoyalArmiesMusicFlow
@@ -847,9 +856,7 @@
             syncCinematicToAudioTime(true);
         } else if (clamped < finaleEnd) {
             overlayEl.classList.add('is-trailer-finale-visible');
-            overlayEl.classList.remove('is-cinematics-active');
             setSubtitleDockActive(false);
-            clearCinematicShots();
 
             if (audioEl && seekMedia) {
                 audioEl.pause();
@@ -859,6 +866,8 @@
             const finaleProgress = (clamped - finaleStart) / Math.max(0.001, finaleEnd - finaleStart);
 
             if (seekMedia) {
+                overlayEl.classList.remove('is-cinematics-active');
+                clearCinematicShots();
                 cancelTrailerFinaleSequenceForScrub();
                 applyTrailerFinaleProgress(finaleProgress);
                 if (finaleProgress >= 0.98) {
@@ -867,13 +876,13 @@
             } else if (!trailerFinaleSequenceStarted && isTrailerReplayPlaying) {
                 void beginTrailerFinaleSequence();
             } else if (!trailerFinaleSequenceStarted) {
+                overlayEl.classList.remove('is-cinematics-active');
+                clearCinematicShots();
                 applyTrailerFinaleProgress(finaleProgress);
             }
         } else {
             overlayEl.classList.add('is-trailer-finale-visible');
-            overlayEl.classList.remove('is-cinematics-active');
             setSubtitleDockActive(false);
-            clearCinematicShots();
 
             if (audioEl && seekMedia) {
                 audioEl.pause();
@@ -881,12 +890,16 @@
             }
 
             if (seekMedia) {
+                overlayEl.classList.remove('is-cinematics-active');
+                clearCinematicShots();
                 cancelTrailerFinaleSequenceForScrub();
                 ensureTrailerFinaleDomVisible();
                 lockTrailerFinaleVisuals();
             } else if (!trailerFinaleSequenceStarted && isTrailerReplayPlaying) {
                 void beginTrailerFinaleSequence();
             } else if (!trailerFinaleSequenceStarted && !isTrailerFinaleLocked) {
+                overlayEl.classList.remove('is-cinematics-active');
+                clearCinematicShots();
                 ensureTrailerFinaleDomVisible();
             }
         }
@@ -1934,7 +1947,50 @@
         return resolveCinematicShotOpacity(scriptTime, lastShot);
     }
 
+    async function fadeOutTrailerLastCinematicShotIfNeeded() {
+        const lastShot = PROLOGUE_CINEMATIC_SHOTS[PROLOGUE_CINEMATIC_SHOTS.length - 1];
+        if (!lastShot || !cinematicShotEls.length) return;
+
+        const lastShotEl = cinematicShotEls.find(
+            (shotEl) => Number(shotEl.dataset.cinematicId) === lastShot.id
+        );
+        if (!lastShotEl) return;
+
+        const rawOpacity = lastShotEl.style.getPropertyValue('--cine-shot-opacity')
+            || global.getComputedStyle(lastShotEl).opacity
+            || '0';
+        const startOpacity = Math.max(0, Math.min(1, parseFloat(rawOpacity) || 0));
+        if (startOpacity <= 0.001) return;
+
+        overlayEl?.classList.add('is-cinematics-active');
+
+        const scale = cueTimelineScale > 0 ? cueTimelineScale : 1;
+        const fadeMs = Math.max(16, startOpacity * PROLOGUE_CINEMATIC_FADE_SEC * 1000 * scale);
+        const startedAt = global.performance?.now?.() ?? Date.now();
+
+        await new Promise((resolve) => {
+            const tick = (now) => {
+                const progress = Math.min(1, (now - startedAt) / fadeMs);
+                const opacity = startOpacity * (1 - progress);
+                const opacityText = String(opacity);
+
+                lastShotEl.style.setProperty('--cine-shot-opacity', opacityText);
+                lastShotEl.classList.toggle('is-visible', opacity > 0.01);
+
+                if (progress < 1) {
+                    global.requestAnimationFrame(tick);
+                } else {
+                    resolve();
+                }
+            };
+
+            global.requestAnimationFrame(tick);
+        });
+    }
+
     async function fadeOutCinematicChromeIfNeeded() {
+        if (isTrailerReplayMode) return;
+
         const frameBorderEl = overlayEl?.querySelector('.game-opening-prologue-cinematic-frame-border');
         if (!frameBorderEl) return;
 
