@@ -57,9 +57,56 @@
     const PROLOGUE_SUBTITLE_SPARK_INTERVAL_MS = 170;
     const PROLOGUE_SUBTITLE_SPARKS_PER_BURST = 5;
     const PROLOGUE_SUBTITLE_SPARK_FLASH_CHANCE = 0.24;
+    const PROLOGUE_CINEMATIC_FADE_SEC = 1;
+    const PROLOGUE_CINEMATIC_IMAGE_VERSION = 'prologue-cinematic-1';
+
+    /**
+     * Narration-synced stills (script timeline seconds). Times use M:SS:ff or SS:ff
+     * where the last segment is hundredths of a second (17:50 = 17.5s, 1:18:00 = 78s).
+     */
+    const PROLOGUE_CINEMATIC_SHOT_MARKS = Object.freeze([
+        { id: 1, in: '0:00', out: '9:00' },
+        { id: 2, in: '10:00', out: '17:50' },
+        { id: 3, in: '19:00', out: '26:50' },
+        { id: 4, in: '27:50', out: '41:50' },
+        { id: 5, in: '45:00', out: '59:00' },
+        { id: 6, in: '1:00:50', out: '1:08:50' },
+        { id: 7, in: '1:09:50', out: '1:18:00' }
+    ]);
+
+    function parseNarrationTimecode(timeToken) {
+        const raw = String(timeToken || '').trim();
+        if (!raw) return 0;
+
+        const segments = raw.split(':').map((part) => {
+            const num = Number(part);
+            return Number.isFinite(num) ? num : 0;
+        });
+
+        if (segments.length >= 3) {
+            const [minutes, seconds, fraction] = segments;
+            return (minutes * 60) + seconds + (fraction / 100);
+        }
+
+        if (segments.length === 2) {
+            return segments[0] + (segments[1] / 100);
+        }
+
+        return segments[0] || 0;
+    }
+
+    const PROLOGUE_CINEMATIC_SHOTS = Object.freeze(
+        PROLOGUE_CINEMATIC_SHOT_MARKS.map((mark) => ({
+            id: mark.id,
+            src: `images/cinematic${mark.id}.png?v=${PROLOGUE_CINEMATIC_IMAGE_VERSION}`,
+            scriptStart: parseNarrationTimecode(mark.in),
+            scriptEnd: parseNarrationTimecode(mark.out)
+        }))
+    );
 
     let overlayEl = null;
     let subtitleEl = null;
+    let cinematicShotEls = [];
     let audioEl = null;
     let subtitleLogoSfxEl = null;
     let subtitleSparkTimer = null;
@@ -74,6 +121,7 @@
     let subtitleSyncFrame = null;
     let cueTimelineScale = 1;
     let activeCueIndex = -1;
+    let activeCinematicShotId = -1;
     let finishCallback = null;
     const LOCAL_PROLOGUE_PENDING_KEY = 'royalArmies_localProloguePending';
 
@@ -215,6 +263,55 @@
                 color: rgba(255, 242, 210, 0.96) !important;
                 text-shadow: 0 1px 12px rgba(0, 0, 0, 0.65) !important;
             }
+            #${OVERLAY_ID} .game-opening-prologue-cinematic-stage {
+                position: absolute !important;
+                inset: 0 !important;
+                z-index: 0 !important;
+                overflow: hidden !important;
+                background: #000 !important;
+                pointer-events: none !important;
+            }
+            #${OVERLAY_ID} .game-opening-prologue-cinematic-shot {
+                position: absolute !important;
+                inset: 0 !important;
+                opacity: 0 !important;
+                pointer-events: none !important;
+            }
+            #${OVERLAY_ID} .game-opening-prologue-cinematic-shot img {
+                position: absolute !important;
+                left: 50% !important;
+                top: 50% !important;
+                width: 118% !important;
+                height: 118% !important;
+                min-width: 118% !important;
+                min-height: 118% !important;
+                object-fit: cover !important;
+                transform: translate(-50%, -50%) scale(var(--cine-scale, 1.1))
+                    translate(var(--cine-x1, 0%), var(--cine-y1, 0%)) !important;
+                will-change: transform !important;
+            }
+            #${OVERLAY_ID} .game-opening-prologue-cinematic-shot img.is-panning {
+                animation: game-opening-prologue-cinematic-pan
+                    var(--cine-pan-duration, 8s) linear forwards !important;
+            }
+            @keyframes game-opening-prologue-cinematic-pan {
+                from {
+                    transform: translate(-50%, -50%) scale(var(--cine-scale, 1.1))
+                        translate(var(--cine-x1, 0%), var(--cine-y1, 0%));
+                }
+                to {
+                    transform: translate(-50%, -50%) scale(var(--cine-scale, 1.1))
+                        translate(var(--cine-x2, 0%), var(--cine-y2, 0%));
+                }
+            }
+            #${OVERLAY_ID}.is-cinematics-active .game-opening-prologue-scrim {
+                background: linear-gradient(
+                    180deg,
+                    rgba(0, 0, 0, 0.24) 0%,
+                    rgba(0, 0, 0, 0.38) 52%,
+                    rgba(0, 0, 0, 0.58) 100%
+                ) !important;
+            }
         `.trim();
         global.document.head.appendChild(style);
     }
@@ -231,6 +328,129 @@
     function refreshSubtitleElements() {
         if (!overlayEl) return;
         subtitleEl = overlayEl.querySelector(`#${SUBTITLE_ID}`);
+        cinematicShotEls = Array.from(
+            overlayEl.querySelectorAll('.game-opening-prologue-cinematic-shot')
+        );
+    }
+
+    function buildCinematicStageMarkup() {
+        return `
+            <div class="game-opening-prologue-cinematic-stage" aria-hidden="true">
+                ${PROLOGUE_CINEMATIC_SHOTS.map((shot) => `
+                    <div
+                        class="game-opening-prologue-cinematic-shot"
+                        data-cinematic-id="${shot.id}"
+                        aria-hidden="true"
+                    >
+                        <img
+                            src="${shot.src}"
+                            alt=""
+                            decoding="async"
+                            draggable="false"
+                        >
+                    </div>
+                `.trim()).join('')}
+            </div>
+        `.trim();
+    }
+
+    function preloadCinematicImages() {
+        PROLOGUE_CINEMATIC_SHOTS.forEach((shot) => {
+            const img = new Image();
+            img.decoding = 'async';
+            img.src = shot.src;
+        });
+    }
+
+    function assignRandomCinematicPan(imgEl, durationSec) {
+        if (!imgEl) return;
+
+        const panMag = 2.5 + (Math.random() * 4.5);
+        const angle = Math.random() * Math.PI * 2;
+        const x1 = Math.cos(angle) * panMag;
+        const y1 = Math.sin(angle) * panMag;
+        const x2 = Math.cos(angle + Math.PI) * panMag;
+        const y2 = Math.sin(angle + Math.PI) * panMag;
+        const scale = 1.08 + (Math.random() * 0.08);
+
+        imgEl.style.setProperty('--cine-x1', `${x1.toFixed(2)}%`);
+        imgEl.style.setProperty('--cine-y1', `${y1.toFixed(2)}%`);
+        imgEl.style.setProperty('--cine-x2', `${x2.toFixed(2)}%`);
+        imgEl.style.setProperty('--cine-y2', `${y2.toFixed(2)}%`);
+        imgEl.style.setProperty('--cine-scale', scale.toFixed(3));
+        imgEl.style.setProperty('--cine-pan-duration', `${Math.max(1, durationSec).toFixed(2)}s`);
+        imgEl.classList.remove('is-panning');
+        void imgEl.offsetWidth;
+        imgEl.classList.add('is-panning');
+    }
+
+    function clearCinematicShots() {
+        cinematicShotEls.forEach((shotEl) => {
+            shotEl.style.opacity = '0';
+            shotEl.removeAttribute('data-pan-bound');
+            const imgEl = shotEl.querySelector('img');
+            if (imgEl) {
+                imgEl.classList.remove('is-panning');
+            }
+        });
+        activeCinematicShotId = -1;
+        overlayEl?.classList.remove('is-cinematics-active');
+    }
+
+    function resolveCinematicShotOpacity(scriptTime, shot) {
+        if (scriptTime < shot.scriptStart || scriptTime > shot.scriptEnd) {
+            return 0;
+        }
+
+        const fadeSpan = Math.max(0.001, PROLOGUE_CINEMATIC_FADE_SEC);
+        const fadeIn = Math.min(1, (scriptTime - shot.scriptStart) / fadeSpan);
+        const fadeOut = Math.min(1, (shot.scriptEnd - scriptTime) / fadeSpan);
+        return Math.min(fadeIn, fadeOut);
+    }
+
+    function syncCinematicToAudioTime() {
+        if (!audioEl || !isPlaying || !cinematicShotEls.length) return;
+
+        const scriptTime = toScriptTimelineTime(audioEl.currentTime || 0);
+        let dominantShotId = -1;
+        let dominantOpacity = 0;
+
+        cinematicShotEls.forEach((shotEl) => {
+            const shotId = Number(shotEl.dataset.cinematicId) || 0;
+            const shot = PROLOGUE_CINEMATIC_SHOTS.find((entry) => entry.id === shotId);
+            if (!shot) return;
+
+            const opacity = resolveCinematicShotOpacity(scriptTime, shot);
+            shotEl.style.opacity = String(opacity);
+
+            if (opacity > 0) {
+                const imgEl = shotEl.querySelector('img');
+                const remainingScriptSec = Math.max(0.001, shot.scriptEnd - scriptTime);
+                const remainingWallSec = remainingScriptSec * (cueTimelineScale > 0 ? cueTimelineScale : 1);
+
+                if (shotEl.dataset.panBound !== '1') {
+                    assignRandomCinematicPan(imgEl, remainingWallSec);
+                    shotEl.dataset.panBound = '1';
+                }
+
+                if (opacity >= dominantOpacity) {
+                    dominantOpacity = opacity;
+                    dominantShotId = shotId;
+                }
+            } else {
+                shotEl.removeAttribute('data-pan-bound');
+                const imgEl = shotEl.querySelector('img');
+                if (imgEl) imgEl.classList.remove('is-panning');
+            }
+        });
+
+        if (dominantOpacity > 0) {
+            overlayEl?.classList.add('is-cinematics-active');
+        } else {
+            overlayEl?.classList.remove('is-cinematics-active');
+        }
+
+        activeCinematicShotId = dominantShotId;
     }
 
     function setSubtitleDockActive(active) {
@@ -289,6 +509,7 @@
         overlayEl.setAttribute('aria-label', 'Opening narrative');
         overlayEl.hidden = true;
         overlayEl.innerHTML = `
+            ${buildCinematicStageMarkup()}
             <div class="game-opening-prologue-scrim" aria-hidden="true"></div>
             <div class="game-opening-prologue-logo-stage" aria-hidden="true">
                 <img
@@ -341,7 +562,7 @@
         (global.document.documentElement || global.document.body).appendChild(overlayEl);
         global.document.body.appendChild(audioEl);
 
-        subtitleEl = overlayEl.querySelector(`#${SUBTITLE_ID}`);
+        refreshSubtitleElements();
         const skipBtn = overlayEl.querySelector('#game-opening-prologue-skip');
         if (skipBtn) {
             skipBtn.addEventListener('click', () => finishPrologue('skipped'));
@@ -452,11 +673,16 @@
         renderSubtitleCue(cueIndex);
     }
 
+    function syncPrologueToAudioTime() {
+        syncSubtitleToAudioTime();
+        syncCinematicToAudioTime();
+    }
+
     function startSubtitleSyncLoop() {
         stopSubtitleSyncLoop();
 
         const tick = () => {
-            syncSubtitleToAudioTime();
+            syncPrologueToAudioTime();
             if (isPlaying) {
                 subtitleSyncFrame = global.requestAnimationFrame(tick);
             }
@@ -498,6 +724,7 @@
         global.document.body.classList.remove('game-opening-prologue-active');
         if (subtitleEl) subtitleEl.textContent = '';
         activeCueIndex = -1;
+        clearCinematicShots();
         isFadingOut = false;
         stopSubtitleSyncLoop();
     }
@@ -721,6 +948,7 @@
     function clearSubtitlesForPostNarrationHold() {
         if (subtitleEl) subtitleEl.textContent = '';
         setSubtitleDockActive(false);
+        clearCinematicShots();
     }
 
     function clearLogoReveal() {
@@ -902,6 +1130,7 @@
         clearMusicDelayTimer();
         clearPrologueMusicAnimation();
         stopSubtitleSyncLoop();
+        clearCinematicShots();
         clearLogoReveal();
         clearEnterWarGate();
         isPlaying = false;
@@ -969,6 +1198,7 @@
         resetStaleLocalPrologueState({ force: shouldForcePrologueRestart() });
 
         ensureOverlay();
+        preloadCinematicImages();
         finishCallback = typeof options?.onComplete === 'function' ? options.onComplete : null;
         setLocalProloguePending(true);
         isPlaying = true;
@@ -1021,6 +1251,17 @@
                 audioEnd: toAudioTimelineTime(cue.end),
                 scale: cueTimelineScale,
                 text: cue.text
+            }));
+        },
+        getCinematicTimings: function getCinematicTimings() {
+            return PROLOGUE_CINEMATIC_SHOTS.map((shot) => ({
+                id: shot.id,
+                src: shot.src,
+                scriptStart: shot.scriptStart,
+                scriptEnd: shot.scriptEnd,
+                audioStart: toAudioTimelineTime(shot.scriptStart),
+                audioEnd: toAudioTimelineTime(shot.scriptEnd),
+                scale: cueTimelineScale
             }));
         }
     };
