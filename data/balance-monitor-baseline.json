@@ -1,18 +1,53 @@
 {
-  "version": "2026-05-31",
-  "notes": "Baseline thresholds for Age balance telemetry during active testing.",
-  "recruitment": {
-    "maxUnitsPerRecruitEvent": 25,
-    "maxTier1UnitsBeforeRank7": 70
+  "version": "2026-05-31-multi-profile",
+  "notes": "Multi-profile balance baselines. Keep Royal Armies as the decision baseline and use Last Knights as a pacing reference.",
+  "monitoring": {
+    "activeProfiles": [
+      "royalArmies",
+      "referenceLastKnights"
+    ]
   },
-  "progression": {
-    "maxProvisionGrantPerPromotion": 110,
-    "maxEarlyProvisionGrantPerPromotion": 85,
-    "earlyRankCutoff": 10,
-    "maxPromotionsPerBattleEvent": 1
-  },
-  "battle": {
-    "maxXpGainPerTrainingBattle": 60,
-    "maxInjuriesPerTrainingBattle": 6
+  "profiles": {
+    "royalArmies": {
+      "label": "Royal Armies target",
+      "notes": "Primary baseline for balancing changes shipped to production.",
+      "recruitment": {
+        "maxUnitsPerRecruitEvent": 25,
+        "maxTier1UnitsBeforeRank7": 70
+      },
+      "progression": {
+        "maxProvisionGrantPerPromotion": 110,
+        "maxEarlyProvisionGrantPerPromotion": 85,
+        "earlyRankCutoff": 10,
+        "maxPromotionsPerBattleEvent": 1
+      },
+      "battle": {
+        "maxXpGainPerTrainingBattle": 60,
+        "maxInjuriesPerTrainingBattle": 6
+      }
+    },
+    "referenceLastKnights": {
+      "label": "Last Knights reference",
+      "notes": "External reference from publicly visible TLK mechanics. Adjust over time to align with Royal Armies identity.",
+      "sourceUrls": [
+        "https://lastknights.fandom.com/wiki/The_Last_Knights",
+        "https://newrpg.com/browser-games/the-last-knights/",
+        "https://lastknights.com/"
+      ],
+      "recruitment": {
+        "maxUnitsPerRecruitEvent": 20,
+        "maxTier1UnitsBeforeRank7": 58
+      },
+      "progression": {
+        "maxProvisionGrantPerPromotion": 100,
+        "maxEarlyProvisionGrantPerPromotion": 70,
+        "earlyRankCutoff": 10,
+        "maxPromotionsPerBattleEvent": 1
+      },
+      "battle": {
+        "maxXpGainPerTrainingBattle": 52,
+        "maxInjuriesPerTrainingBattle": 5
+      }
+    }
   }
 }

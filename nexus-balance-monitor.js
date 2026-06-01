@@ -12,20 +12,52 @@ const LOG_PATH = path.join(LOG_DIRECTORY, 'balance-monitor.jsonl');
 
 const DEFAULT_BASELINE = Object.freeze({
     version: '2026-05-31',
-    notes: 'Default desktop testing baseline for Age progression pacing.',
-    recruitment: {
-        maxUnitsPerRecruitEvent: 25,
-        maxTier1UnitsBeforeRank7: 70
+    notes: 'Default desktop testing baseline set.',
+    monitoring: {
+        activeProfiles: ['royalArmies', 'referenceLastKnights']
     },
-    progression: {
-        maxProvisionGrantPerPromotion: 110,
-        maxEarlyProvisionGrantPerPromotion: 85,
-        earlyRankCutoff: 10,
-        maxPromotionsPerBattleEvent: 1
-    },
-    battle: {
-        maxXpGainPerTrainingBattle: 60,
-        maxInjuriesPerTrainingBattle: 6
+    profiles: {
+        royalArmies: {
+            label: 'Royal Armies target',
+            notes: 'Primary baseline for live balancing decisions.',
+            recruitment: {
+                maxUnitsPerRecruitEvent: 25,
+                maxTier1UnitsBeforeRank7: 70
+            },
+            progression: {
+                maxProvisionGrantPerPromotion: 110,
+                maxEarlyProvisionGrantPerPromotion: 85,
+                earlyRankCutoff: 10,
+                maxPromotionsPerBattleEvent: 1
+            },
+            battle: {
+                maxXpGainPerTrainingBattle: 60,
+                maxInjuriesPerTrainingBattle: 6
+            }
+        },
+        referenceLastKnights: {
+            label: 'Last Knights reference',
+            notes: 'External pacing reference derived from publicly visible mechanics (barracks, ranks, wages/income pressure, unit individuality). Tune over time to match Royal Armies goals.',
+            sourceUrls: [
+                'https://lastknights.fandom.com/wiki/The_Last_Knights',
+                'https://newrpg.com/browser-games/the-last-knights/',
+                'https://lastknights.com/'
+            ],
+            recruitment: {
+                maxUnitsPerRecruitEvent: 20,
+                maxTier1UnitsBeforeRank7: 58
+            },
+            progression: {
+                maxProvisionGrantPerPromotion: 100,
+                maxEarlyProvisionGrantPerPromotion: 70,
+                earlyRankCutoff: 10,
+                maxPromotionsPerBattleEvent: 1
+            },
+            battle: {
+                maxXpGainPerTrainingBattle: 52,
+                maxInjuriesPerTrainingBattle: 5
+            }
+        }
     }
 });
 
@@ -174,22 +206,71 @@ function detectIssues(eventType, payload, baseline) {
     return [];
 }
 
+function coerceLegacyBaselineShape(raw) {
+    if (!raw || typeof raw !== 'object') return null;
+    if (raw.profiles && typeof raw.profiles === 'object') return raw;
+
+    return {
+        version: String(raw.version || 'legacy'),
+        notes: String(raw.notes || 'Legacy single-profile baseline shape.'),
+        monitoring: {
+            activeProfiles: ['royalArmies']
+        },
+        profiles: {
+            royalArmies: {
+                label: 'Royal Armies target',
+                recruitment: raw.recruitment || {},
+                progression: raw.progression || {},
+                battle: raw.battle || {}
+            }
+        }
+    };
+}
+
+function resolveActiveProfiles(baseline) {
+    const configured = Array.isArray(baseline?.monitoring?.activeProfiles)
+        ? baseline.monitoring.activeProfiles
+        : [];
+    const fromConfigured = configured
+        .map((value) => String(value || '').trim())
+        .filter((value) => value && baseline?.profiles?.[value]);
+    if (fromConfigured.length) return fromConfigured;
+
+    return Object.keys(baseline?.profiles || {});
+}
+
 function recordBalanceEvent(eventType, payload = {}) {
     try {
-        const baseline = getBaseline();
-        const issues = detectIssues(eventType, payload, baseline);
+        const baseline = coerceLegacyBaselineShape(getBaseline()) || DEFAULT_BASELINE;
+        const activeProfiles = resolveActiveProfiles(baseline);
+        const issuesByProfile = {};
+        const allIssues = [];
+
+        activeProfiles.forEach((profileId) => {
+            const profile = baseline?.profiles?.[profileId];
+            if (!profile) return;
+            const issues = detectIssues(eventType, payload, profile).map((issue) => ({
+                ...issue,
+                profileId
+            }));
+            issuesByProfile[profileId] = issues;
+            allIssues.push(...issues);
+        });
+
         const entry = {
             at: new Date().toISOString(),
             eventType: String(eventType || 'unknown').trim() || 'unknown',
             baselineVersion: String(baseline?.version || 'unknown'),
+            activeProfiles,
             payload,
-            issues
+            issues: allIssues,
+            issuesByProfile
         };
         ensureLogDirectory();
         fs.appendFileSync(LOG_PATH, `${JSON.stringify(entry)}\n`, 'utf8');
-        return { ok: true, issues };
+        return { ok: true, issues: allIssues, issuesByProfile };
     } catch {
-        return { ok: false, issues: [] };
+        return { ok: false, issues: [], issuesByProfile: {} };
     }
 }
 
