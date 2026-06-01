@@ -96,7 +96,49 @@
     }
 
     function isMailboxApiAvailable() {
-        return isNexusBackendSameOrigin() || isLocalDevelopmentHost();
+        if (isNexusBackendSameOrigin()) return true;
+        if (!isRoyalArmiesApiReachable()) return false;
+        return isLocalDevelopmentHost();
+    }
+
+    let royalArmiesApiReachable = null;
+
+    function isRoyalArmiesApiReachable() {
+        if (isNexusBackendSameOrigin()) return true;
+        if (!isLiveStaticPreviewHost()) return true;
+        return royalArmiesApiReachable !== false;
+    }
+
+    function shouldSuppressRepeatedLocalDevApiWarnings() {
+        return isLiveStaticPreviewHost() && royalArmiesApiReachable === false;
+    }
+
+    function isFetchConnectionFailure(err) {
+        const msg = String(err && (err.message || err)).toLowerCase();
+        return msg.includes('failed to fetch')
+            || msg.includes('networkerror')
+            || msg.includes('network request failed')
+            || msg.includes('connection refused')
+            || msg.includes('load failed');
+    }
+
+    function markRoyalArmiesApiReachable() {
+        royalArmiesApiReachable = true;
+    }
+
+    function markRoyalArmiesApiUnreachable() {
+        if (royalArmiesApiReachable === false) return;
+        royalArmiesApiReachable = false;
+        console.warn(
+            '[RIFT] Royal Armies API is not running at http://localhost:3000. '
+            + 'Live Server only serves HTML/CSS/JS — start the backend with `node server.js`, '
+            + 'or open http://localhost:3000/main instead.'
+        );
+        try {
+            global.dispatchEvent(new CustomEvent('royalarmies:api-unreachable'));
+        } catch (_err) {
+            /* ignore */
+        }
     }
 
     /** Auto sign-in as caleb_admin on local dev (port 3000, Live Server :5500, etc.). */
@@ -240,16 +282,16 @@
 
         const nativeFetch = global.fetch.bind(global);
         global.fetch = function patchedRoyalArmiesFetch(input, init) {
-            if (typeof input === 'string' && input.startsWith('/api')) {
-                return nativeFetch(`${apiOrigin}${input}`, init);
-            }
+            let requestPromise;
 
-            if (input instanceof Request) {
+            if (typeof input === 'string' && input.startsWith('/api')) {
+                requestPromise = nativeFetch(`${apiOrigin}${input}`, init);
+            } else if (input instanceof Request) {
                 const requestUrl = input.url;
                 try {
                     const parsed = new URL(requestUrl, global.location.href);
                     if (parsed.pathname.startsWith('/api')) {
-                        return nativeFetch(
+                        requestPromise = nativeFetch(
                             new Request(`${apiOrigin}${parsed.pathname}${parsed.search}`, input),
                             init
                         );
@@ -259,7 +301,21 @@
                 }
             }
 
-            return nativeFetch(input, init);
+            if (!requestPromise) {
+                return nativeFetch(input, init);
+            }
+
+            return requestPromise
+                .then((response) => {
+                    markRoyalArmiesApiReachable();
+                    return response;
+                })
+                .catch((err) => {
+                    if (isFetchConnectionFailure(err)) {
+                        markRoyalArmiesApiUnreachable();
+                    }
+                    throw err;
+                });
         };
 
         global.__royalArmiesFetchPatched = true;
@@ -291,6 +347,8 @@
     global.resolveRoyalArmiesApiUrl = resolveRoyalArmiesApiUrl;
     global.shouldUseHtmlPageExtensions = shouldUseHtmlPageExtensions;
     global.resolveRoyalArmiesPageUrl = resolveRoyalArmiesPageUrl;
+    global.isRoyalArmiesApiReachable = isRoyalArmiesApiReachable;
+    global.shouldSuppressRepeatedLocalDevApiWarnings = shouldSuppressRepeatedLocalDevApiWarnings;
     global.RoyalArmiesDev = {
         isLocalDevelopmentHost,
         isLiveStaticPreviewHost,
@@ -317,6 +375,8 @@
         resolveRoyalArmiesApiUrl,
         shouldUseHtmlPageExtensions,
         resolveRoyalArmiesPageUrl,
+        isRoyalArmiesApiReachable,
+        shouldSuppressRepeatedLocalDevApiWarnings,
         liveServerApiOrigin: LIVE_SERVER_API_ORIGIN
     };
 })(window);

@@ -368,6 +368,10 @@
             applyCommanderDossierToClient(payload);
             return true;
         } catch (err) {
+            if (typeof global.shouldSuppressRepeatedLocalDevApiWarnings === 'function'
+                && global.shouldSuppressRepeatedLocalDevApiWarnings()) {
+                return false;
+            }
             console.warn('Dossier sync failed:', err.message);
             return false;
         }
@@ -396,6 +400,10 @@
             return true;
         } catch (err) {
             pendingPatch = { ...patch, ...pendingPatch };
+            if (typeof global.shouldSuppressRepeatedLocalDevApiWarnings === 'function'
+                && global.shouldSuppressRepeatedLocalDevApiWarnings()) {
+                return null;
+            }
             console.warn('Dossier save failed:', err.message);
             return false;
         }
