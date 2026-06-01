@@ -1112,30 +1112,33 @@ body.age-of-war-trailer-page {
 .game-opening-prologue.is-trailer-replay-mode .game-opening-prologue-logo-stack {
     width: min(42cqw, 100%) !important;
     max-width: 100%;
-    max-height: min(35cqh, 100%) !important;
+    max-height: none !important;
     gap: clamp(7px, 1.2vh, 15px);
-    transform: translateY(-7cqh);
+    transform: translateY(-4cqh);
 }
 
 .game-opening-prologue.is-trailer-replay-mode .game-opening-prologue-trailer-outro {
-    position: absolute;
-    left: 50%;
-    bottom: clamp(6px, 2.2cqh, 18px);
+    position: relative;
     top: auto;
+    left: auto;
+    bottom: auto;
     z-index: 5;
-    width: min(45cqw, 100%) !important;
+    width: 100% !important;
     max-width: 100%;
-    margin-top: 0;
-    transform: translateX(-50%);
+    margin-top: clamp(8px, 1.4cqh, 14px);
+    transform: none;
+    text-align: center;
+    opacity: 0;
     transition: opacity 0.85s ease;
 }
 
 .game-opening-prologue.is-trailer-replay-mode .game-opening-prologue-trailer-outro.is-visible {
-    transform: translateX(-50%);
+    opacity: 1;
+    transform: none;
 }
 
 .game-opening-prologue.is-trailer-replay-mode .game-opening-prologue-trailer-taglines {
-    margin-top: clamp(14px, 2.4cqh, 22px);
+    margin-top: clamp(10px, 1.6cqh, 16px);
 }
 
 .game-opening-prologue.is-trailer-replay-mode .game-opening-prologue-lore-tool {
