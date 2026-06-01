@@ -5087,10 +5087,14 @@ async function handleSuicideCommitReset() {
     }
 
     const btnDock = document.getElementById('suicide-popup-btn-dock');
+    const textField = document.getElementById('suicide-popup-text-field');
     if (btnDock) {
         btnDock.querySelectorAll('button').forEach((button) => {
             button.disabled = true;
         });
+    }
+    if (textField) {
+        textField.innerText = 'Applying reset and restoring starter defaults...';
     }
 
     const result = await commitCommanderAgeResetToServer(mode);
@@ -5103,8 +5107,11 @@ async function handleSuicideCommitReset() {
         return;
     }
 
-    currentSuicideStep++;
-    renderSuicideDialogStep();
+    /*
+     * Apply the reset immediately after a successful server commit to avoid
+     * a perceived lag where old values remain visible behind the confirmation overlay.
+     */
+    finalizeCommanderAgeReset(mode);
     applyProfileRankResetButtonState();
 }
 
