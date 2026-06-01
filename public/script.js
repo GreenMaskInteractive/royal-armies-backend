@@ -3490,6 +3490,37 @@ function canUseCommanderReset(mode) {
     return getCommanderResetRemaining(mode) > 0;
 }
 
+function showCommanderResetUnavailableDialog(mode) {
+    const overlay = document.getElementById('commander-suicide-overlay');
+    const textField = document.getElementById('suicide-popup-text-field');
+    const btnDock = document.getElementById('suicide-popup-btn-dock');
+    const overlayHeader = document.getElementById('suicide-popup-header-title');
+    if (!overlay || !textField || !btnDock) return;
+
+    currentSuicideMode = null;
+    currentSuicideStep = 0;
+
+    if (overlayHeader) {
+        overlayHeader.textContent = 'Reset unavailable';
+    }
+
+    textField.innerText = getCommanderResetButtonTitle(mode);
+    btnDock.innerHTML = '';
+
+    const closeBtn = document.createElement('button');
+    closeBtn.className = 'cancel-btn suicide-safe-retreat-btn';
+    closeBtn.innerText = 'Close';
+    closeBtn.onclick = (event) => {
+        if (event) event.stopPropagation();
+        closeSuicideOverlayWindow();
+    };
+    btnDock.appendChild(closeBtn);
+
+    overlay.classList.remove('mailbox-reading-overlay');
+    overlay.style.setProperty('display', 'flex', 'important');
+    overlay.classList.remove('suicide-overlay-hidden');
+}
+
 function incrementCommanderResetUsage(mode) {
     if (mode !== 'rank' && mode !== 'exile') return;
 
@@ -3594,8 +3625,9 @@ function applyProfileRankResetButtonState() {
         if (mode !== 'rank' && mode !== 'exile') return;
 
         const allowed = canUseCommanderReset(mode);
-        btn.disabled = !allowed;
-        btn.classList.toggle('rank-reset-disabled', !allowed);
+        btn.disabled = false;
+        btn.classList.toggle('rank-reset-disabled', false);
+        btn.classList.toggle('rank-reset-limited', !allowed);
         btn.setAttribute('aria-disabled', allowed ? 'false' : 'true');
         btn.title = getCommanderResetButtonTitle(mode);
     });
@@ -4838,6 +4870,7 @@ let currentSuicideStep = 0;
 function triggerCommanderSuicide(mode) {
     if ((mode === 'rank' || mode === 'exile') && !canUseCommanderReset(mode)) {
         applyProfileRankResetButtonState();
+        showCommanderResetUnavailableDialog(mode);
         return;
     }
 

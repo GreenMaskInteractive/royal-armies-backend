@@ -8543,6 +8543,22 @@ body #commander-suicide-overlay.mailbox-reading-overlay .suicide-popup-body-text
     transform: none !important;
 }
 
+#commander-hub-modal .rank-reset-action-btn.rank-reset-limited,
+#portal-commander-hub-page .rank-reset-action-btn.rank-reset-limited,
+#commander-hub-modal .danger-action-btn.rank-reset-limited,
+#portal-commander-hub-page .danger-action-btn.rank-reset-limited,
+#commander-hub-modal [data-commander-reset-mode].rank-reset-limited,
+#portal-commander-hub-page [data-commander-reset-mode].rank-reset-limited {
+    opacity: 0.48 !important;
+    filter: grayscale(0.72) !important;
+    cursor: help !important;
+    color: rgba(241, 224, 172, 0.6) !important;
+    border-color: rgba(184, 144, 48, 0.28) !important;
+    background: linear-gradient(135deg, rgba(24, 20, 15, 0.7) 0%, rgba(12, 10, 8, 0.82) 100%) !important;
+    box-shadow: none !important;
+    transform: none !important;
+}
+
 /* Messages / Settings channel list scrollbar */
 #commander-hub-modal .commander-hub-subnav-list , #portal-commander-hub-page .commander-hub-subnav-list {
     scrollbar-width: thin !important;
