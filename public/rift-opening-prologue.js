@@ -63,6 +63,7 @@
     let subtitleSparkTimer = null;
     let logoRevealGeneration = 0;
     let enterWarGateResolver = null;
+    let loreToolFadePromise = null;
     let isPlaying = false;
     let isPostNarrationHold = false;
     let isFadingOut = false;
@@ -514,21 +515,44 @@
         loreToolEl.classList.remove('is-visible');
         loreToolEl.style.removeProperty('transition');
         loreToolEl.style.opacity = '0';
+        loreToolFadePromise = null;
     }
 
     function beginLoreToolFadeIn(generation) {
         const loreToolEl = overlayEl?.querySelector('.game-opening-prologue-lore-tool');
-        if (!loreToolEl || generation !== logoRevealGeneration) return;
+        if (!loreToolEl || generation !== logoRevealGeneration) {
+            return Promise.resolve();
+        }
 
         loreToolEl.classList.remove('is-visible');
         loreToolEl.style.opacity = '0';
         loreToolEl.style.transition = `opacity ${PROLOGUE_LORE_TOOL_FADE_MS}ms ease-in`;
         void loreToolEl.offsetWidth;
 
-        if (generation !== logoRevealGeneration) return;
+        if (generation !== logoRevealGeneration) {
+            return Promise.resolve();
+        }
 
         loreToolEl.classList.add('is-visible');
         loreToolEl.style.opacity = '1';
+
+        return new Promise((resolve) => {
+            let settled = false;
+
+            const finish = () => {
+                if (settled || generation !== logoRevealGeneration) return;
+                settled = true;
+                resolve();
+            };
+
+            loreToolEl.addEventListener('transitionend', (event) => {
+                if (event.propertyName === 'opacity') {
+                    finish();
+                }
+            }, { once: true });
+
+            global.setTimeout(finish, PROLOGUE_LORE_TOOL_FADE_MS + 80);
+        });
     }
 
     function resetLogoElement(logoEl, options) {
@@ -665,7 +689,7 @@
                 if (generation !== logoRevealGeneration) return;
                 playPrologueSubtitleLogoSfx();
                 startSubtitleLogoSparks(subtitleLogoEl, generation);
-                beginLoreToolFadeIn(generation);
+                loreToolFadePromise = beginLoreToolFadeIn(generation);
             }
         });
         if (generation !== logoRevealGeneration) return;
@@ -706,15 +730,21 @@
         hideEnterWarButton();
     }
 
-    function waitForEnterWarGate(generation) {
+    async function waitForEnterWarGate(generation) {
+        if (global.RoyalArmiesMusicFlow
+            && typeof global.RoyalArmiesMusicFlow.markProgressionPhaseStart === 'function') {
+            global.RoyalArmiesMusicFlow.markProgressionPhaseStart({ volume: PROLOGUE_MUSIC_PEAK_VOLUME });
+        }
+
+        if (loreToolFadePromise) {
+            await loreToolFadePromise;
+        }
+
+        if (generation !== logoRevealGeneration) return;
+
         return new Promise((resolve) => {
             enterWarGateResolver = resolve;
             showEnterWarButton();
-
-            if (global.RoyalArmiesMusicFlow
-                && typeof global.RoyalArmiesMusicFlow.markProgressionPhaseStart === 'function') {
-                global.RoyalArmiesMusicFlow.markProgressionPhaseStart({ volume: PROLOGUE_MUSIC_PEAK_VOLUME });
-            }
 
             if (!global.RoyalArmiesMusicFlow
                 || typeof global.RoyalArmiesMusicFlow.waitForCurrentTrackEnd !== 'function') {
