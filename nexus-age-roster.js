@@ -15,6 +15,30 @@ function attachOptionalStackId(stack, raw) {
     return stack;
 }
 
+function normalizeUnitXpEachSlots(raw, qty) {
+    const count = Math.max(0, Math.floor(Number(qty) || 0));
+    if (!count) return [];
+
+    if (Array.isArray(raw?.unitXpEach) && raw.unitXpEach.length) {
+        const slots = raw.unitXpEach.map((value) => {
+            const numeric = Math.floor(Number(value) || 0);
+            return Number.isFinite(numeric) && numeric > 0 ? numeric : 0;
+        });
+        while (slots.length < count) slots.push(0);
+        return slots.slice(0, count);
+    }
+
+    const legacyXp = Math.floor(Number(raw?.unitXp) || 0);
+    if (legacyXp > 0) {
+        return Array.from({ length: count }, (_, index) => {
+            const jitter = 0.94 + (((index * 17) + legacyXp) % 13) / 100;
+            return Math.max(0, Math.floor(legacyXp * jitter));
+        });
+    }
+
+    return Array(count).fill(0);
+}
+
 function normalizeAgeArmyStack(raw) {
     if (!raw || typeof raw !== 'object') return null;
 
@@ -22,11 +46,7 @@ function normalizeAgeArmyStack(raw) {
     if (!qty) return null;
 
     const injuredQty = Math.min(qty, floorNonNegative(raw.injuredQty ?? raw.injured));
-
-    const unitXpRaw = Number(raw.unitXp);
-    const unitXp = Number.isFinite(unitXpRaw) && unitXpRaw > 0
-        ? Math.floor(unitXpRaw)
-        : 0;
+    const unitXpEach = normalizeUnitXpEachSlots(raw, qty);
 
     return attachOptionalStackId({
         class: String(raw.class || raw.type || 'INFANTRY').trim().slice(0, 32) || 'INFANTRY',
@@ -35,7 +55,7 @@ function normalizeAgeArmyStack(raw) {
         tier: Math.max(1, Math.floor(Number(raw.tier) || 1)),
         qty,
         injuredQty,
-        unitXp,
+        unitXpEach,
         purpose: String(raw.purpose || raw.role || raw.armyRole || '').trim().slice(0, 24)
     }, raw);
 }
@@ -99,6 +119,7 @@ function buildCommanderAgeRosterSeedPatch(commander) {
 }
 
 module.exports = {
+    normalizeUnitXpEachSlots,
     normalizeAgeArmyStack,
     normalizeAgeArmy,
     resolveCommanderAgeArmy,

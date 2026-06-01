@@ -78,7 +78,8 @@
             body: JSON.stringify({
                 username,
                 catalogUnitId: options.catalogUnitId,
-                rank: options.rank
+                rank: options.rank,
+                quantity: options.quantity
             })
         });
 
@@ -106,7 +107,8 @@
             body: JSON.stringify({
                 username,
                 catalogUnitId: options.catalogUnitId,
-                rank: options.rank
+                rank: options.rank,
+                quantity: options.quantity
             })
         });
 

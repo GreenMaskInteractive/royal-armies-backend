@@ -23568,6 +23568,38 @@ body.player-report-modal-open {
     color: rgba(210, 230, 215, 0.88);
 }
 
+.age-guild-log-workspace-links {
+    margin: 8px 0 0;
+    font-size: 0.82rem;
+    line-height: 1.45;
+    color: rgba(210, 198, 170, 0.82);
+}
+
+.age-guild-log-workspace-links-label {
+    color: rgba(190, 180, 160, 0.78);
+}
+
+.age-guild-log-workspace-link {
+    margin: 0;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: rgba(255, 220, 150, 0.94);
+    font: inherit;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+    cursor: pointer;
+}
+
+.age-guild-log-workspace-link:hover,
+.age-guild-log-workspace-link:focus-visible {
+    color: rgba(255, 235, 180, 0.98);
+}
+
+.age-guild-log-workspace-sep {
+    color: rgba(160, 150, 130, 0.72);
+}
+
 .age-guild-open-evolution-btn {
     padding: 7px 12px;
     border-radius: 3px;
@@ -23710,7 +23742,151 @@ body.player-report-modal-open {
     padding: 16px 24px 24px;
     display: flex;
     flex-direction: column;
+    gap: 20px;
+}
+
+.age-unit-evolution-category {
+    display: flex;
+    flex-direction: column;
     gap: 12px;
+}
+
+.age-unit-evolution-category-title {
+    margin: 0;
+    padding-bottom: 6px;
+    font-size: 0.78rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: rgba(255, 210, 120, 0.78);
+    border-bottom: 1px solid rgba(255, 210, 120, 0.14);
+}
+
+.age-unit-evolution-group {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.age-unit-evolution-group-title {
+    margin: 0;
+    font-size: 0.86rem;
+    font-weight: 700;
+    color: rgba(220, 200, 160, 0.88);
+}
+
+.age-unit-evolution-group-stacks {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.age-unit-evolution-stack-xp {
+    margin: 0 0 10px;
+    font-size: 0.82rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.04em;
+    color: rgba(190, 220, 190, 0.92);
+}
+
+.age-unit-evolution-qty-picker {
+    margin-bottom: 10px;
+}
+
+.age-unit-evolution-qty-label {
+    display: block;
+    margin-bottom: 6px;
+    font-size: 0.68rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: rgba(190, 180, 160, 0.72);
+}
+
+.age-unit-evolution-qty-options {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 8px;
+}
+
+.age-unit-evolution-qty-custom {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 6px;
+}
+
+.age-unit-evolution-qty-custom.is-custom-active .age-unit-evolution-qty-input {
+    border-color: rgba(255, 210, 120, 0.48);
+    background: rgba(48, 38, 22, 0.92);
+    color: rgba(255, 232, 190, 0.96);
+}
+
+.age-unit-evolution-qty-custom-label {
+    font-size: 0.68rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: rgba(190, 180, 160, 0.72);
+}
+
+.age-unit-evolution-qty-input {
+    width: 88px;
+    padding: 5px 8px;
+    border-radius: 4px;
+    border: 1px solid rgba(255, 210, 120, 0.22);
+    background: rgba(24, 20, 14, 0.72);
+    color: rgba(230, 210, 170, 0.88);
+    font-size: 0.82rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+}
+
+.age-unit-evolution-qty-input:focus-visible {
+    outline: none;
+    border-color: rgba(255, 210, 120, 0.48);
+    box-shadow: 0 0 0 1px rgba(255, 210, 120, 0.24);
+}
+
+.age-unit-evolution-qty-input::-webkit-outer-spin-button,
+.age-unit-evolution-qty-input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+.age-unit-evolution-qty-input[type='number'] {
+    -moz-appearance: textfield;
+    appearance: textfield;
+}
+
+.age-unit-evolution-qty-btn {
+    min-width: 44px;
+    padding: 5px 10px;
+    border-radius: 4px;
+    border: 1px solid rgba(255, 210, 120, 0.22);
+    background: rgba(24, 20, 14, 0.72);
+    color: rgba(230, 210, 170, 0.88);
+    font-size: 0.74rem;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.age-unit-evolution-qty-btn.is-active,
+.age-unit-evolution-qty-btn:hover:not(:disabled),
+.age-unit-evolution-qty-btn:focus-visible:not(:disabled) {
+    border-color: rgba(255, 210, 120, 0.48);
+    background: rgba(48, 38, 22, 0.92);
+    color: rgba(255, 232, 190, 0.96);
+}
+
+.age-unit-evolution-qty-btn:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+
+.age-unit-evolution-qty-summary {
+    margin: 0;
+    font-size: 0.74rem;
+    color: rgba(180, 170, 150, 0.78);
 }
 
 .age-unit-evolution-empty {

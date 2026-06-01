@@ -37,7 +37,9 @@ const {
     scanArmyReadyToPromote,
     buildUnitEvolutionPayload,
     executeUnitRankPromotion,
-    executeUnitTierEvolution
+    executeUnitTierEvolution,
+    swapRandomHealthyUnitToInjured,
+    swapRandomInjuredUnitToHealthy
 } = require('./nexus-age-unit-xp');
 
 const TRADE_CONVOY_LOTS = Object.freeze([
@@ -342,7 +344,7 @@ function distributeInjuriesWeighted(army, injuryCount, catalog) {
         }
 
         const stack = next[picked.index];
-        stack.injuredQty = Math.max(0, Math.floor(Number(stack.injuredQty) || 0) + 1);
+        next[picked.index] = swapRandomHealthyUnitToInjured(stack);
         remaining -= 1;
     }
 
@@ -489,10 +491,7 @@ function healOneInjuredUnit(army, catalog, availableGold) {
         return { ok: false, errorCode: 'NEXUS-AGE-011' };
     }
 
-    stacks[target.index] = {
-        ...target.stack,
-        injuredQty: Math.max(0, Math.floor(Number(target.stack.injuredQty) || 0) - 1)
-    };
+    stacks[target.index] = swapRandomInjuredUnitToHealthy(target.stack);
 
     return {
         ok: true,

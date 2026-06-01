@@ -9,7 +9,8 @@ const path = require('path');
 const {
     normalizeAgeArmy,
     resolveCommanderAgeArmy,
-    buildAgeRosterHudPayload
+    buildAgeRosterHudPayload,
+    normalizeUnitXpEachSlots
 } = require('./nexus-age-roster');
 
 const CATALOG_PATH = path.join(__dirname, 'public', 'data', 'unit-purchase-catalog.json');
@@ -235,7 +236,7 @@ function buildRecruitStack(unit, quantity) {
         rank: PROMOTION_RANK[firstPromotion] || 1,
         qty: quantity,
         injuredQty: 0,
-        unitXp: 0,
+        unitXpEach: Array(Math.max(1, Math.floor(Number(quantity) || 1))).fill(0),
         purpose: resolveUnitPurpose(unit.unitRole)
     };
 }
@@ -250,12 +251,19 @@ function mergeRecruitStackIntoArmy(army, recruitStack) {
 
     if (matchIndex >= 0) {
         const existing = next[matchIndex];
+        const existingQty = Math.max(0, Math.floor(Number(existing.qty) || 0));
+        const recruitQty = Math.max(0, Math.floor(Number(recruitStack.qty) || 0));
         next[matchIndex] = {
             ...existing,
-            qty: Math.max(0, Math.floor(Number(existing.qty) || 0)) + recruitStack.qty
+            qty: existingQty + recruitQty,
+            unitXpEach: normalizeUnitXpEachSlots(existing, existingQty)
+                .concat(normalizeUnitXpEachSlots(recruitStack, recruitQty))
         };
     } else {
-        next.push(recruitStack);
+        next.push({
+            ...recruitStack,
+            unitXpEach: normalizeUnitXpEachSlots(recruitStack, recruitStack.qty)
+        });
     }
 
     return normalizeAgeArmy(next);

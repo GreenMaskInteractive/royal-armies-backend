@@ -11,7 +11,7 @@ const {
     getCatalogUnitById,
     resolveCommanderAgeProvisions
 } = require('./nexus-age-recruitment');
-const { normalizeAgeArmy, resolveCommanderAgeArmy } = require('./nexus-age-roster');
+const { normalizeAgeArmy, resolveCommanderAgeArmy, normalizeUnitXpEachSlots } = require('./nexus-age-roster');
 const {
     resolveTrainingOutcomeMultiplier,
     resolveTrainingBattleDurationFactor,
@@ -121,6 +121,91 @@ function stackHealthyQty(stack) {
     return Math.max(0, qty - injured);
 }
 
+function ensureUnitXpEach(stack) {
+    const qty = floorNonNegative(stack?.qty);
+    return normalizeUnitXpEachSlots(stack, qty);
+}
+
+function resolveHealthyUnitXpValues(stack) {
+    const slots = ensureUnitXpEach(stack);
+    const healthyQty = stackHealthyQty(stack);
+    return slots.slice(0, healthyQty);
+}
+
+function resolveStackUnitXpSummary(stack, xpRequired) {
+    const healthyXp = resolveHealthyUnitXpValues(stack);
+    const required = Math.max(0, Math.floor(Number(xpRequired) || 0));
+    const unitXpMin = healthyXp.length ? Math.min(...healthyXp) : 0;
+    const unitXpMax = healthyXp.length ? Math.max(...healthyXp) : 0;
+    const readyUnitCount = required > 0
+        ? healthyXp.filter((xp) => xp >= required).length
+        : 0;
+
+    return {
+        unitXpMin,
+        unitXpMax,
+        readyUnitCount,
+        unitXpEach: ensureUnitXpEach(stack)
+    };
+}
+
+function pickRandomIndices(count, poolSize) {
+    const take = Math.min(Math.max(0, Math.floor(Number(count) || 0)), poolSize);
+    const indices = Array.from({ length: poolSize }, (_, index) => index);
+    const picked = [];
+
+    for (let step = 0; step < take; step += 1) {
+        const slot = Math.floor(Math.random() * indices.length);
+        picked.push(indices.splice(slot, 1)[0]);
+    }
+
+    return picked;
+}
+
+function swapRandomHealthyUnitToInjured(stack) {
+    const qty = floorNonNegative(stack?.qty);
+    const injuredQty = Math.min(qty, floorNonNegative(stack?.injuredQty ?? stack?.injured));
+    const healthyQty = Math.max(0, qty - injuredQty);
+    if (!healthyQty) return stack;
+
+    const slots = ensureUnitXpEach(stack);
+    const pick = Math.floor(Math.random() * healthyQty);
+    const boundary = healthyQty - 1;
+    if (pick !== boundary) {
+        const temp = slots[pick];
+        slots[pick] = slots[boundary];
+        slots[boundary] = temp;
+    }
+
+    return {
+        ...stack,
+        unitXpEach: slots,
+        injuredQty: injuredQty + 1
+    };
+}
+
+function swapRandomInjuredUnitToHealthy(stack) {
+    const qty = floorNonNegative(stack?.qty);
+    const injuredQty = Math.min(qty, floorNonNegative(stack?.injuredQty ?? stack?.injured));
+    if (!injuredQty) return stack;
+
+    const healthyQty = qty - injuredQty;
+    const slots = ensureUnitXpEach(stack);
+    const pick = healthyQty + Math.floor(Math.random() * injuredQty);
+    const boundary = healthyQty - 1;
+    if (pick !== boundary) {
+        const temp = slots[pick];
+        slots[pick] = slots[boundary];
+        slots[boundary] = temp;
+    }
+
+    return {
+        ...stack,
+        unitXpEach: slots,
+        injuredQty: injuredQty - 1
+    };
+}
+
 function isStackReadyToPromote(stack, catalog) {
     const catalogUnit = getCatalogUnitById(catalog, stack?.catalogUnitId);
     if (!catalogUnit) return false;
@@ -129,8 +214,7 @@ function isStackReadyToPromote(stack, catalog) {
     if (!nextRank) return false;
 
     const required = resolveUnitPromotionXpRequired(stack.rank, stack.tier);
-    const unitXp = floorNonNegative(stack?.unitXp);
-    return unitXp >= required;
+    return resolveStackUnitXpSummary(stack, required).readyUnitCount > 0;
 }
 
 function findArmyStackMatch(army, catalogUnitId, rank) {
@@ -186,20 +270,32 @@ function distributeTrainingUnitXp(battle, army, catalog, trainingMode = 'street-
         const lane = String(stack?.phaseLane || 'infantry').trim().toLowerCase();
         const laneRate = UNIT_LANE_XP_RATE[lane] || 3;
         const perSurvivor = participatingRounds * laneRate * outcomeMult * duration.factor * modeMult;
-        const xpGained = applyUnitXpVolatility(perSurvivor) * survivors;
-        if (!xpGained) return;
+        if (!perSurvivor) return;
 
         const existing = nextArmy[armyIndex];
-        const priorXp = floorNonNegative(existing?.unitXp);
-        const newUnitXp = priorXp + xpGained;
+        const slots = ensureUnitXpEach(existing);
+        const healthyQty = stackHealthyQty(existing);
+        const survivorCount = Math.min(survivors, healthyQty);
+        const participantIndices = pickRandomIndices(survivorCount, healthyQty);
+        if (!participantIndices.length) return;
+
+        let totalXpGained = 0;
+        participantIndices.forEach((slotIndex) => {
+            const gain = applyUnitXpVolatility(perSurvivor);
+            slots[slotIndex] = floorNonNegative(slots[slotIndex]) + gain;
+            totalXpGained += gain;
+        });
+        if (!totalXpGained) return;
+
         nextArmy[armyIndex] = {
             ...existing,
-            unitXp: newUnitXp
+            unitXpEach: slots
         };
 
         const catalogUnit = getCatalogUnitById(catalogRef, catalogUnitId);
         const displayName = catalogUnit?.displayName || catalogUnit?.name || stack?.name || 'Unit';
         const required = resolveUnitPromotionXpRequired(existing.rank, existing.tier);
+        const xpSummary = resolveStackUnitXpSummary(nextArmy[armyIndex], required);
         const ready = isStackReadyToPromote(nextArmy[armyIndex], catalogRef);
         const nextRank = resolveNextPromotionRank(nextArmy[armyIndex], catalogUnit);
 
@@ -208,19 +304,24 @@ function distributeTrainingUnitXp(battle, army, catalog, trainingMode = 'street-
             rank,
             name: displayName,
             lane,
-            survivors,
+            survivors: survivorCount,
             participatingRounds,
-            xpGained,
-            unitXp: newUnitXp,
+            xpGained: totalXpGained,
+            unitXpMin: xpSummary.unitXpMin,
+            unitXpMax: xpSummary.unitXpMax,
+            readyUnitCount: xpSummary.readyUnitCount,
             unitXpRequired: required,
             readyToPromote: ready,
             nextPromotionRank: nextRank,
             nextPromotionLabel: nextRank ? formatPromotionRankLabel(nextRank) : null
         });
 
-        let line = `${displayName}: ${survivors} participating survivor(s) earned ${xpGained} XP (${newUnitXp}/${required})`;
+        const xpRangeLabel = xpSummary.unitXpMin === xpSummary.unitXpMax
+            ? `${xpSummary.unitXpMin}`
+            : `${xpSummary.unitXpMin}–${xpSummary.unitXpMax}`;
+        let line = `${displayName}: ${survivorCount} participating survivor(s) earned ${totalXpGained} XP (${xpRangeLabel}/${required})`;
         if (ready && nextRank) {
-            line += ` — ready for ${formatPromotionRankLabel(nextRank)} promotion`;
+            line += ` — ${xpSummary.readyUnitCount} ready for ${formatPromotionRankLabel(nextRank)} promotion`;
         }
         unitXpLogLines.push(line);
     });
@@ -231,7 +332,9 @@ function distributeTrainingUnitXp(battle, army, catalog, trainingMode = 'street-
             catalogUnitId: entry.catalogUnitId,
             rank: entry.rank,
             name: entry.name,
-            unitXp: entry.unitXp,
+            qty: entry.readyUnitCount,
+            unitXpMin: entry.unitXpMin,
+            unitXpMax: entry.unitXpMax,
             unitXpRequired: entry.unitXpRequired,
             nextPromotionRank: entry.nextPromotionRank,
             nextPromotionLabel: entry.nextPromotionLabel
@@ -254,13 +357,16 @@ function scanArmyReadyToPromote(army, catalog) {
 
         const catalogUnit = getCatalogUnitById(catalogRef, stack.catalogUnitId);
         const nextRank = resolveNextPromotionRank(stack, catalogUnit);
+        const unitXpRequired = resolveUnitPromotionXpRequired(stack.rank, stack.tier);
+        const xpSummary = resolveStackUnitXpSummary(stack, unitXpRequired);
         ready.push({
             catalogUnitId: stack.catalogUnitId,
             rank: stack.rank,
             name: catalogUnit?.displayName || catalogUnit?.name || stack.name || 'Unit',
-            qty: stackHealthyQty(stack),
-            unitXp: floorNonNegative(stack.unitXp),
-            unitXpRequired: resolveUnitPromotionXpRequired(stack.rank, stack.tier),
+            qty: xpSummary.readyUnitCount,
+            unitXpMin: xpSummary.unitXpMin,
+            unitXpMax: xpSummary.unitXpMax,
+            unitXpRequired,
             nextPromotionRank: nextRank,
             nextPromotionLabel: nextRank ? formatPromotionRankLabel(nextRank) : null,
             tier: stack.tier
@@ -270,7 +376,7 @@ function scanArmyReadyToPromote(army, catalog) {
     return ready;
 }
 
-function resolveRankPromotionProvisionCost(stack, catalog) {
+function resolveRankPromotionProvisionCost(stack, catalog, quantity) {
     const catalogUnit = getCatalogUnitById(catalog, stack?.catalogUnitId);
     if (!catalogUnit) return 0;
 
@@ -279,18 +385,99 @@ function resolveRankPromotionProvisionCost(stack, catalog) {
 
     const nextKey = PROMOTION_BY_RANK[nextRank];
     const upc = Math.max(0, Math.floor(Number(catalogUnit?.stats?.[nextKey]?.upc) || 0));
-    return upc * stackHealthyQty(stack);
+    const qty = normalizeActionQuantity(quantity, stackHealthyQty(stack));
+    return upc * qty;
 }
 
-function resolveTierEvolutionProvisionCost(stack, catalog) {
+function resolveRankPromotionProvisionCostPerUnit(stack, catalog) {
+    const catalogUnit = getCatalogUnitById(catalog, stack?.catalogUnitId);
+    if (!catalogUnit) return 0;
+
+    const nextRank = resolveNextPromotionRank(stack, catalogUnit);
+    if (!nextRank) return 0;
+
+    const nextKey = PROMOTION_BY_RANK[nextRank];
+    return Math.max(0, Math.floor(Number(catalogUnit?.stats?.[nextKey]?.upc) || 0));
+}
+
+function resolveTierEvolutionProvisionCost(stack, catalog, quantity) {
     const catalogUnit = getCatalogUnitById(catalog, stack?.catalogUnitId);
     if (!catalogUnit) return 0;
 
     const perUnit = Math.max(0, Math.floor(Number(catalogUnit.tierEvolutionCost) || 0));
-    return perUnit * stackHealthyQty(stack);
+    const qty = normalizeActionQuantity(quantity, stackHealthyQty(stack));
+    return perUnit * qty;
 }
 
-function buildUnitEvolutionStackRow(stack, catalog, commanderRank) {
+function resolveTierEvolutionProvisionCostPerUnit(stack, catalog) {
+    const catalogUnit = getCatalogUnitById(catalog, stack?.catalogUnitId);
+    if (!catalogUnit) return 0;
+    return Math.max(0, Math.floor(Number(catalogUnit.tierEvolutionCost) || 0));
+}
+
+function normalizeActionQuantity(rawQuantity, maxQuantity) {
+    const max = Math.max(0, Math.floor(Number(maxQuantity) || 0));
+    if (!max) return 0;
+
+    const quantity = Math.floor(Number(rawQuantity) || 0);
+    if (!Number.isFinite(quantity) || quantity < 1) return 0;
+    return Math.min(max, quantity);
+}
+
+function subtractHealthyUnitsFromStack(stack, count) {
+    return extractHealthyUnitsFromStack(stack, count);
+}
+
+function extractHealthyUnitsFromStack(stack, count, options = {}) {
+    const qty = floorNonNegative(stack?.qty);
+    const injuredQty = Math.min(qty, floorNonNegative(stack?.injuredQty ?? stack?.injured));
+    const healthyQty = Math.max(0, qty - injuredQty);
+    const take = Math.min(Math.max(0, Math.floor(Number(count) || 0)), healthyQty);
+    const xpRequired = Math.max(0, Math.floor(Number(options.xpRequired) || 0));
+    const slots = ensureUnitXpEach(stack);
+
+    const eligible = [];
+    for (let index = 0; index < healthyQty; index += 1) {
+        if (xpRequired > 0 && slots[index] < xpRequired) continue;
+        eligible.push({ index, xp: slots[index] });
+    }
+
+    if (xpRequired > 0) {
+        eligible.sort((left, right) => right.xp - left.xp);
+    }
+
+    const picked = eligible.slice(0, take);
+    if (picked.length < take) {
+        return { take: 0, remaining: stack, extractedSlots: [] };
+    }
+
+    const removeIndices = new Set(picked.map((entry) => entry.index));
+    const extractedSlots = picked.map((entry) => entry.xp);
+    const remainingSlots = slots.filter((_, index) => !removeIndices.has(index));
+
+    return {
+        take,
+        extractedSlots,
+        remaining: {
+            ...stack,
+            qty: qty - take,
+            injuredQty,
+            unitXpEach: remainingSlots
+        }
+    };
+}
+
+function resolveMaxAffordableQuantity(provisions, perUnitCost, maxQuantity) {
+    const perUnit = Math.max(0, Math.floor(Number(perUnitCost) || 0));
+    const max = Math.max(0, Math.floor(Number(maxQuantity) || 0));
+    if (!max) return 0;
+    if (!perUnit) return max;
+
+    const provisionCap = Math.floor(Math.max(0, Math.floor(Number(provisions) || 0)) / perUnit);
+    return Math.min(max, provisionCap);
+}
+
+function buildUnitEvolutionStackRow(stack, catalog, commanderRank, provisions) {
     const catalogUnit = getCatalogUnitById(catalog, stack?.catalogUnitId);
     if (!catalogUnit) return null;
 
@@ -299,11 +486,18 @@ function buildUnitEvolutionStackRow(stack, catalog, commanderRank) {
 
     const nextRank = resolveNextPromotionRank(stack, catalogUnit);
     const xpRequired = resolveUnitPromotionXpRequired(stack.rank, stack.tier);
-    const unitXp = floorNonNegative(stack?.unitXp);
-    const rankCost = nextRank ? resolveRankPromotionProvisionCost(stack, catalog) : 0;
+    const xpSummary = resolveStackUnitXpSummary(stack, xpRequired);
+    const rankCostPerUnit = nextRank ? resolveRankPromotionProvisionCostPerUnit(stack, catalog) : 0;
     const evolveTarget = resolveTierEvolutionTarget(catalog, stack.catalogUnitId);
-    const tierCost = evolveTarget ? resolveTierEvolutionProvisionCost(stack, catalog) : 0;
+    const tierCostPerUnit = resolveTierEvolutionProvisionCostPerUnit(stack, catalog);
     const evolveUnlockRank = evolveTarget ? Math.max(1, Math.floor(Number(evolveTarget.unlockRank) || 1)) : 0;
+    const readyToPromote = Boolean(nextRank && xpSummary.readyUnitCount > 0);
+    const maxRankPromoteQty = readyToPromote
+        ? resolveMaxAffordableQuantity(provisions, rankCostPerUnit, xpSummary.readyUnitCount)
+        : 0;
+    const maxEvolveQty = evolveTarget && commanderRank >= evolveUnlockRank
+        ? resolveMaxAffordableQuantity(provisions, tierCostPerUnit, healthyQty)
+        : 0;
 
     return {
         catalogUnitId: stack.catalogUnitId,
@@ -313,29 +507,149 @@ function buildUnitEvolutionStackRow(stack, catalog, commanderRank) {
         healthyQty,
         injuredQty: Math.min(floorNonNegative(stack.qty), floorNonNegative(stack.injuredQty)),
         name: catalogUnit.displayName || catalogUnit.name || stack.name,
-        unitXp,
+        unitXpMin: xpSummary.unitXpMin,
+        unitXpMax: xpSummary.unitXpMax,
+        readyUnitCount: xpSummary.readyUnitCount,
         unitXpRequired: xpRequired,
-        readyToPromote: Boolean(nextRank && unitXp >= xpRequired),
+        readyToPromote,
         currentPromotionLabel: formatPromotionRankLabel(stack.rank),
         nextPromotionRank: nextRank,
         nextPromotionLabel: nextRank ? formatPromotionRankLabel(nextRank) : null,
-        rankPromotionCost: rankCost,
-        canPromoteRank: Boolean(
-            nextRank
-            && unitXp >= xpRequired
-            && rankCost > 0
-        ),
+        promotionBandLabel: nextRank
+            ? `${formatPromotionRankLabel(stack.rank)} → ${formatPromotionRankLabel(nextRank)}`
+            : formatPromotionRankLabel(stack.rank),
+        rankPromotionCostPerUnit: rankCostPerUnit,
+        rankPromotionCost: rankCostPerUnit * healthyQty,
+        maxRankPromoteQty,
+        canPromoteRank: Boolean(readyToPromote && maxRankPromoteQty > 0 && rankCostPerUnit > 0),
         evolveTargetId: evolveTarget?.id || null,
         evolveTargetName: evolveTarget?.displayName || evolveTarget?.name || null,
         evolveTargetTier: evolveTarget?.tier || null,
-        tierEvolutionCost: tierCost,
+        tierEvolutionCostPerUnit: tierCostPerUnit,
+        tierEvolutionCost: tierCostPerUnit * healthyQty,
+        maxEvolveQty,
         canEvolveTier: Boolean(
             evolveTarget
             && commanderRank >= evolveUnlockRank
-            && tierCost > 0
+            && maxEvolveQty > 0
+            && tierCostPerUnit > 0
         ),
-        evolveUnlockRank
+        evolveUnlockRank,
+        evolveBandLabel: evolveTarget
+            ? `Tier ${stack.tier} → Tier ${evolveTarget.tier}`
+            : null
     };
+}
+
+function groupStacksByPromotionBand(stacks) {
+    const map = new Map();
+
+    (Array.isArray(stacks) ? stacks : []).forEach((stack) => {
+        const label = String(stack?.promotionBandLabel || stack?.currentPromotionLabel || 'Promotion').trim();
+        if (!map.has(label)) {
+            map.set(label, {
+                id: `band-${label.replace(/[^a-z0-9]+/gi, '-').toLowerCase()}`,
+                label,
+                stacks: []
+            });
+        }
+        map.get(label).stacks.push(stack);
+    });
+
+    return Array.from(map.values())
+        .sort((left, right) => {
+            const leftTier = Math.min(...left.stacks.map((s) => Math.floor(Number(s.tier) || 1)));
+            const rightTier = Math.min(...right.stacks.map((s) => Math.floor(Number(s.tier) || 1)));
+            if (leftTier !== rightTier) return leftTier - rightTier;
+            const leftRank = Math.min(...left.stacks.map((s) => Math.floor(Number(s.rank) || 1)));
+            const rightRank = Math.min(...right.stacks.map((s) => Math.floor(Number(s.rank) || 1)));
+            if (leftRank !== rightRank) return leftRank - rightRank;
+            return String(left.label).localeCompare(String(right.label));
+        })
+        .map((group) => ({
+            ...group,
+            stacks: group.stacks.slice().sort((left, right) => {
+                const tierDiff = Math.floor(Number(left.tier) || 0) - Math.floor(Number(right.tier) || 0);
+                if (tierDiff) return tierDiff;
+                const rankDiff = Math.floor(Number(left.rank) || 0) - Math.floor(Number(right.rank) || 0);
+                if (rankDiff) return rankDiff;
+                return String(left.name || '').localeCompare(String(right.name || ''));
+            })
+        }));
+}
+
+function groupStacksByTier(stacks) {
+    const map = new Map();
+
+    (Array.isArray(stacks) ? stacks : []).forEach((stack) => {
+        const tier = Math.max(1, Math.floor(Number(stack?.tier) || 1));
+        if (!map.has(tier)) {
+            map.set(tier, {
+                id: `tier-${tier}`,
+                tier,
+                label: `Tier ${tier}`,
+                stacks: []
+            });
+        }
+        map.get(tier).stacks.push(stack);
+    });
+
+    return Array.from(map.values())
+        .sort((left, right) => left.tier - right.tier)
+        .map((group) => ({
+            ...group,
+            stacks: group.stacks.slice().sort((left, right) => {
+                const rankDiff = Math.floor(Number(left.rank) || 0) - Math.floor(Number(right.rank) || 0);
+                if (rankDiff) return rankDiff;
+                return String(left.name || '').localeCompare(String(right.name || ''));
+            })
+        }));
+}
+
+function groupEvolveStacksByTransition(stacks) {
+    const map = new Map();
+
+    (Array.isArray(stacks) ? stacks : []).forEach((stack) => {
+        const fromTier = Math.max(1, Math.floor(Number(stack?.tier) || 1));
+        const toTier = Math.max(fromTier + 1, Math.floor(Number(stack?.evolveTargetTier) || fromTier + 1));
+        const key = `${fromTier}-${toTier}`;
+        if (!map.has(key)) {
+            map.set(key, {
+                id: `evolve-${key}`,
+                fromTier,
+                toTier,
+                label: `Tier ${fromTier} → Tier ${toTier}`,
+                stacks: []
+            });
+        }
+        map.get(key).stacks.push(stack);
+    });
+
+    return Array.from(map.values()).sort((left, right) => left.fromTier - right.fromTier);
+}
+
+function buildUnitEvolutionCategories(stacks) {
+    const rankStacks = (Array.isArray(stacks) ? stacks : []).filter((stack) => stack?.canPromoteRank);
+    const evolveStacks = (Array.isArray(stacks) ? stacks : []).filter((stack) => stack?.canEvolveTier);
+    const categories = [];
+
+    if (rankStacks.length) {
+        categories.push({
+            id: 'rank-promotion',
+            label: 'Rank promotions ready',
+            groups: groupStacksByPromotionBand(rankStacks)
+        });
+    }
+
+    if (evolveStacks.length) {
+        categories.push({
+            id: 'tier-evolution',
+            label: 'Tier evolution available',
+            groups: groupEvolveStacksByTransition(evolveStacks)
+        });
+    }
+
+    return categories;
 }
 
 function buildUnitEvolutionPayload(commander, catalog) {
@@ -345,13 +659,16 @@ function buildUnitEvolutionPayload(commander, catalog) {
     const provisions = resolveCommanderAgeProvisions(commander);
 
     const stacks = normalizeAgeArmy(army)
-        .map((stack) => buildUnitEvolutionStackRow(stack, catalogRef, commanderRank))
+        .map((stack) => buildUnitEvolutionStackRow(stack, catalogRef, commanderRank, provisions))
         .filter(Boolean);
+
+    const categories = buildUnitEvolutionCategories(stacks);
 
     return {
         ageProvisions: provisions,
         commanderRank,
         stacks,
+        categories,
         readyCount: stacks.filter((row) => row.readyToPromote).length
     };
 }
@@ -366,19 +683,25 @@ function mergeEvolvedStackIntoArmy(army, evolvedStack) {
 
     if (matchIndex >= 0) {
         const existing = next[matchIndex];
+        const existingSlots = ensureUnitXpEach(existing);
+        const evolvedSlots = ensureUnitXpEach(evolvedStack);
         next[matchIndex] = {
             ...existing,
             qty: floorNonNegative(existing.qty) + floorNonNegative(evolvedStack.qty),
-            injuredQty: floorNonNegative(existing.injuredQty) + floorNonNegative(evolvedStack.injuredQty)
+            injuredQty: floorNonNegative(existing.injuredQty) + floorNonNegative(evolvedStack.injuredQty),
+            unitXpEach: existingSlots.concat(evolvedSlots)
         };
     } else {
-        next.push(evolvedStack);
+        next.push({
+            ...evolvedStack,
+            unitXpEach: ensureUnitXpEach(evolvedStack)
+        });
     }
 
     return normalizeAgeArmy(next);
 }
 
-function executeUnitRankPromotion(commander, catalogUnitId, rank) {
+function executeUnitRankPromotion(commander, catalogUnitId, rank, quantity) {
     const catalog = loadUnitPurchaseCatalog();
     const army = resolveCommanderAgeArmy(commander);
     const id = String(catalogUnitId || '').trim();
@@ -404,24 +727,48 @@ function executeUnitRankPromotion(commander, catalogUnitId, rank) {
         return { ok: false, errorCode: 'NEXUS-AGE-027' };
     }
 
-    const provisionCost = resolveRankPromotionProvisionCost(stack, catalog);
+    const healthyQty = stackHealthyQty(stack);
+    const xpRequired = resolveUnitPromotionXpRequired(stack.rank, stack.tier);
+    const readyCount = resolveStackUnitXpSummary(stack, xpRequired).readyUnitCount;
+    const promoteQty = normalizeActionQuantity(quantity, Math.min(healthyQty, readyCount));
+    if (!promoteQty) {
+        return { ok: false, errorCode: 'NEXUS-AGE-013' };
+    }
+
+    const upcPerUnit = resolveRankPromotionProvisionCostPerUnit(stack, catalog);
+    const provisionCost = upcPerUnit * promoteQty;
     const provisions = resolveCommanderAgeProvisions(commander);
     if (provisionCost <= 0 || provisions < provisionCost) {
         return { ok: false, errorCode: 'NEXUS-AGE-016' };
     }
 
-    const nextArmy = army.slice();
-    nextArmy[stackIndex] = {
+    const extraction = extractHealthyUnitsFromStack(stack, promoteQty, { xpRequired });
+    if (!extraction.take) {
+        return { ok: false, errorCode: 'NEXUS-AGE-017' };
+    }
+
+    let nextArmy = army.slice();
+    if (floorNonNegative(extraction.remaining.qty) > 0) {
+        nextArmy[stackIndex] = extraction.remaining;
+    } else {
+        nextArmy.splice(stackIndex, 1);
+    }
+
+    const promotedStack = {
         ...stack,
         rank: nextRank,
-        unitXp: 0
+        qty: extraction.take,
+        injuredQty: 0,
+        unitXpEach: Array(extraction.take).fill(0)
     };
+    nextArmy = mergeEvolvedStackIntoArmy(nextArmy, promotedStack);
 
     return {
         ok: true,
         ageArmy: normalizeAgeArmy(nextArmy),
         ageProvisions: provisions - provisionCost,
         provisionsSpent: provisionCost,
+        quantityPromoted: extraction.take,
         promotedFrom: rankNum,
         promotedTo: nextRank,
         promotionLabel: formatPromotionRankLabel(nextRank),
@@ -429,7 +776,7 @@ function executeUnitRankPromotion(commander, catalogUnitId, rank) {
     };
 }
 
-function executeUnitTierEvolution(commander, catalogUnitId, rank) {
+function executeUnitTierEvolution(commander, catalogUnitId, rank, quantity) {
     const catalog = loadUnitPurchaseCatalog();
     const army = resolveCommanderAgeArmy(commander);
     const id = String(catalogUnitId || '').trim();
@@ -455,11 +802,13 @@ function executeUnitTierEvolution(commander, catalogUnitId, rank) {
     }
 
     const healthyQty = stackHealthyQty(stack);
-    if (!healthyQty) {
-        return { ok: false, errorCode: 'NEXUS-AGE-017' };
+    const evolveQty = normalizeActionQuantity(quantity, healthyQty);
+    if (!evolveQty) {
+        return { ok: false, errorCode: 'NEXUS-AGE-013' };
     }
 
-    const provisionCost = resolveTierEvolutionProvisionCost(stack, catalog);
+    const perUnit = resolveTierEvolutionProvisionCostPerUnit(stack, catalog);
+    const provisionCost = perUnit * evolveQty;
     const provisions = resolveCommanderAgeProvisions(commander);
     if (provisionCost <= 0 || provisions < provisionCost) {
         return { ok: false, errorCode: 'NEXUS-AGE-016' };
@@ -470,31 +819,26 @@ function executeUnitTierEvolution(commander, catalogUnitId, rank) {
         : 'app';
     const newRank = RANK_BY_PROMOTION[firstPromotion] || 1;
 
+    const extraction = extractHealthyUnitsFromStack(stack, evolveQty);
+    if (!extraction.take) {
+        return { ok: false, errorCode: 'NEXUS-AGE-017' };
+    }
+
     const evolvedStack = {
         catalogUnitId: evolveTarget.id,
         class: String(evolveTarget.combatType || stack.class || 'PHYS_INF').trim(),
         name: String(evolveTarget.name || stack.name).trim(),
         tier: Math.max(1, Math.floor(Number(evolveTarget.tier) || 1)),
         rank: newRank,
-        qty: healthyQty,
+        qty: extraction.take,
         injuredQty: 0,
-        unitXp: 0,
+        unitXpEach: Array(extraction.take).fill(0),
         purpose: stack.purpose || 'rank'
     };
 
     let nextArmy = army.slice();
-    const remainingQty = floorNonNegative(stack.qty) - healthyQty;
-    const remainingInjured = Math.min(
-        remainingQty,
-        floorNonNegative(stack.injuredQty)
-    );
-
-    if (remainingQty > 0) {
-        nextArmy[stackIndex] = {
-            ...stack,
-            qty: remainingQty,
-            injuredQty: remainingInjured
-        };
+    if (floorNonNegative(extraction.remaining.qty) > 0) {
+        nextArmy[stackIndex] = extraction.remaining;
     } else {
         nextArmy.splice(stackIndex, 1);
     }
@@ -510,7 +854,7 @@ function executeUnitTierEvolution(commander, catalogUnitId, rank) {
         toUnitId: evolveTarget.id,
         fromName: catalogUnit.displayName || catalogUnit.name,
         toName: evolveTarget.displayName || evolveTarget.name,
-        unitsEvolved: healthyQty
+        unitsEvolved: extraction.take
     };
 }
 
@@ -524,11 +868,19 @@ module.exports = {
     resolveNextPromotionRank,
     resolveTierEvolutionTarget,
     isStackReadyToPromote,
+    swapRandomHealthyUnitToInjured,
+    swapRandomInjuredUnitToHealthy,
+    ensureUnitXpEach,
+    resolveStackUnitXpSummary,
     distributeTrainingUnitXp,
     scanArmyReadyToPromote,
     buildUnitEvolutionPayload,
+    buildUnitEvolutionCategories,
     executeUnitRankPromotion,
     executeUnitTierEvolution,
     resolveRankPromotionProvisionCost,
-    resolveTierEvolutionProvisionCost
+    resolveRankPromotionProvisionCostPerUnit,
+    resolveTierEvolutionProvisionCost,
+    resolveTierEvolutionProvisionCostPerUnit,
+    normalizeActionQuantity
 };

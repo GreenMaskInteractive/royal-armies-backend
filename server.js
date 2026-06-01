@@ -5536,7 +5536,8 @@ app.post('/api/portal/age/units/promote-rank', (req, res) => {
     const result = executeUnitRankPromotion(
         commander,
         req.body?.catalogUnitId,
-        req.body?.rank
+        req.body?.rank,
+        req.body?.quantity
     );
     if (!result.ok) {
         return sendApiError(res, result.errorCode || 'NEXUS-AGE-027', {
@@ -5555,6 +5556,7 @@ app.post('/api/portal/age/units/promote-rank', (req, res) => {
         status: 'ok',
         action: 'unit-promote-rank',
         provisionsSpent: result.provisionsSpent,
+        quantityPromoted: result.quantityPromoted,
         promotedFrom: result.promotedFrom,
         promotedTo: result.promotedTo,
         promotionLabel: result.promotionLabel,
@@ -5582,7 +5584,8 @@ app.post('/api/portal/age/units/evolve-tier', (req, res) => {
     const result = executeUnitTierEvolution(
         commander,
         req.body?.catalogUnitId,
-        req.body?.rank
+        req.body?.rank,
+        req.body?.quantity
     );
     if (!result.ok) {
         return sendApiError(res, result.errorCode || 'NEXUS-AGE-012', {

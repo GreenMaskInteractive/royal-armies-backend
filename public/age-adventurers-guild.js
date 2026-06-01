@@ -536,6 +536,28 @@
         if (unitsBar) unitsBar.setAttribute('aria-valuenow', String(Math.round(healthProgress * 100)));
     }
 
+    function renderBattleLogWorkspaceLinks() {
+        return (
+            '<p class="age-guild-log-workspace-links">'
+            + '<span class="age-guild-log-workspace-links-label">Barracks:</span> '
+            + '<button type="button" class="age-guild-log-workspace-link" data-guild-log-workspace="registry">Garrison Registry</button>'
+            + '<span class="age-guild-log-workspace-sep" aria-hidden="true"> · </span>'
+            + '<button type="button" class="age-guild-log-workspace-link" data-guild-log-workspace="evolution">Unit Evolution Workspace</button>'
+            + '</p>'
+        );
+    }
+
+    function openBattleLogWorkspace(target) {
+        const normalized = String(target || '').trim().toLowerCase();
+        if (normalized === 'registry') {
+            global.RoyalArmiesAgeBarracks?.open();
+            return;
+        }
+        if (normalized === 'evolution') {
+            global.RoyalArmiesAgeUnitEvolution?.open({ highlightReady: true });
+        }
+    }
+
     function renderBattleLog() {
         const logEl = global.document.getElementById('age-guild-log');
         if (!logEl) return;
@@ -581,6 +603,9 @@
             )
             : '';
 
+        const showWorkspaceLinks = Boolean(result.rankPromoted);
+        const workspaceLinksBlock = showWorkspaceLinks ? renderBattleLogWorkspaceLinks() : '';
+
         logEl.innerHTML = (
             `<article class="age-guild-log-entry ${winnerClass}">`
             + '<header class="age-guild-log-head">'
@@ -589,6 +614,7 @@
             + `${result.injuriesApplied ? ` · ${escapeHtml(result.injuriesApplied)} injured` : ''}</p>`
             + rankLine
             + unitPromoteBlock
+            + workspaceLinksBlock
             + '</header>'
             + `<ol class="age-guild-battle-log">${logLines}</ol>`
             + '</article>'
@@ -1257,6 +1283,12 @@
         if (bountyBtn) {
             event.preventDefault();
             void acceptBountyContract(bountyBtn.getAttribute('data-bounty-id'));
+            return;
+        }
+        const workspaceLink = event.target.closest('[data-guild-log-workspace]');
+        if (workspaceLink) {
+            event.preventDefault();
+            openBattleLogWorkspace(workspaceLink.getAttribute('data-guild-log-workspace'));
         }
     }
 
