@@ -219,6 +219,29 @@
         return SCRIPT_TIMELINE_DURATION * (cueTimelineScale > 0 ? cueTimelineScale : 1);
     }
 
+    function isTrailerNarrationComplete() {
+        const narrationSec = getTrailerNarrationDurationSec();
+
+        if (trailerReplayTimeSec >= narrationSec - 0.05) {
+            return true;
+        }
+
+        if (!audioEl) {
+            return false;
+        }
+
+        if (audioEl.ended) {
+            return true;
+        }
+
+        if (Number.isFinite(audioEl.duration) && audioEl.duration > 0
+            && audioEl.currentTime >= audioEl.duration - 0.05) {
+            return true;
+        }
+
+        return false;
+    }
+
     function isTrailerMobileDevice() {
         if (!isTrailerPage()) return false;
         if (global.matchMedia && global.matchMedia('(max-width: 900px)').matches) return true;
@@ -797,10 +820,20 @@
         const finaleEnd = getTrailerFinaleEndSec();
         const totalSec = getTrailerTimelineDurationSec();
         const musicAudio = getTrailerMusicAudio();
+        const narrationDone = isTrailerNarrationComplete();
 
-        if (trailerReplayTimeSec < narrationSec - 0.03) {
-            trailerReplayTimeSec = audioEl?.currentTime || trailerReplayTimeSec;
+        if (!narrationDone && trailerReplayTimeSec < narrationSec - 0.03) {
+            const audioClock = Number(audioEl?.currentTime);
+            if (Number.isFinite(audioClock)) {
+                if (audioClock >= 0.03 || trailerReplayTimeSec < 0.03) {
+                    trailerReplayTimeSec = Math.max(trailerReplayTimeSec, audioClock);
+                }
+            }
             return;
+        }
+
+        if (narrationDone && trailerReplayTimeSec < finaleStart - 0.03) {
+            trailerReplayTimeSec = Math.max(trailerReplayTimeSec, finaleStart);
         }
 
         if (trailerReplayTimeSec < finaleEnd) {
@@ -1272,9 +1305,11 @@
         const totalSec = getTrailerTimelineDurationSec();
         const finaleStart = getTrailerFinaleStartSec();
         const musicAudio = getTrailerMusicAudio();
+        const narrationDone = isTrailerNarrationComplete();
+        const pastNarrationPhase = narrationDone || trailerReplayTimeSec >= finaleStart - 0.03;
 
-        if (trailerReplayTimeSec < finaleStart - 0.03) {
-            if (audioEl?.paused) {
+        if (!pastNarrationPhase) {
+            if (audioEl?.paused && !audioEl.ended) {
                 audioEl.play().catch(() => {});
             }
             if (trailerReplayTimeSec >= TRAILER_MUSIC_START_SEC - 0.03
@@ -1287,6 +1322,21 @@
             syncTrailerMusicToTimeline(trailerReplayTimeSec, { force: true });
             musicAudio.play().catch(() => {});
         }
+    }
+
+    function handleTrailerNarrationEnded() {
+        if (!isTrailerReplayMode || !isTrailerReplayPlaying) return;
+
+        const narrationSec = getTrailerNarrationDurationSec();
+        const finaleStart = getTrailerFinaleStartSec();
+        trailerReplayTimeSec = Math.max(trailerReplayTimeSec, finaleStart, narrationSec - 0.02);
+
+        if (audioEl) {
+            audioEl.pause();
+            audioEl.currentTime = Math.max(0, narrationSec - 0.02);
+        }
+
+        applyTrailerTimelinePosition(trailerReplayTimeSec, { syncMusic: false, seekMedia: false });
     }
 
     function bindTrailerMediaPauseGuard(mediaEl) {
@@ -1305,6 +1355,11 @@
 
         bindTrailerMediaPauseGuard(audioEl);
         bindTrailerMediaPauseGuard(getTrailerMusicAudio());
+
+        if (audioEl && audioEl.dataset.riftTrailerNarrationEndedBound !== '1') {
+            audioEl.dataset.riftTrailerNarrationEndedBound = '1';
+            audioEl.addEventListener('ended', handleTrailerNarrationEnded);
+        }
     }
 
     function ensureTrailerMusicPauseGuard() {
