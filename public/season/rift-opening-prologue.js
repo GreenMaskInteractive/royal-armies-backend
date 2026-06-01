@@ -304,6 +304,7 @@
 
         reparentTrailerSubtitleDockForPlayer();
         refreshSubtitleElements();
+        bindTrailerPlayerControls();
     }
 
     function applyTrailerFinaleProgress(progress) {
@@ -889,73 +890,103 @@
     }
 
     function bindTrailerPlayerControls() {
-        const playerEl = overlayEl?.querySelector('#game-opening-prologue-trailer-player');
-        const seekEl = overlayEl?.querySelector('#game-opening-prologue-trailer-seek');
-        const playBtn = overlayEl?.querySelector('#game-opening-prologue-trailer-play-btn');
-        const replayBtn = overlayEl?.querySelector('#game-opening-prologue-trailer-replay-btn');
-        const fullscreenBtn = overlayEl?.querySelector('#game-opening-prologue-trailer-fullscreen-btn');
         const viewportEl = overlayEl?.querySelector('#game-opening-prologue-trailer-viewport');
+        const controlsEl = overlayEl?.querySelector('.game-opening-prologue-trailer-controls');
+        if (!viewportEl || viewportEl.dataset.riftControlsBound === '1') return;
 
-        if (!playerEl || playerEl.dataset.riftBound === '1') return;
-        playerEl.dataset.riftBound = '1';
-
+        viewportEl.dataset.riftControlsBound = '1';
         bindTrailerOrientationListeners();
-        bindTrailerControlsHover(viewportEl, overlayEl?.querySelector('.game-opening-prologue-trailer-controls'), seekEl);
 
-        if (playBtn) {
-            playBtn.addEventListener('click', () => {
+        const showControls = () => {
+            viewportEl.classList.add('is-trailer-controls-hot');
+        };
+
+        viewportEl.addEventListener('click', (event) => {
+            if (event.target.closest('#game-opening-prologue-trailer-play-btn')) {
+                event.preventDefault();
+                showControls();
                 if (isTrailerReplayPlaying) {
                     pauseTrailerReplayPlayback();
                 } else {
                     void tryStartTrailerPlaybackWithOrientation();
                 }
-            });
-        }
+                return;
+            }
 
-        if (replayBtn) {
-            replayBtn.addEventListener('click', () => restartTrailerReplay());
-        }
+            if (event.target.closest('#game-opening-prologue-trailer-replay-btn')) {
+                event.preventDefault();
+                restartTrailerReplay();
+                return;
+            }
 
-        if (fullscreenBtn) {
-            fullscreenBtn.addEventListener('click', () => {
+            if (event.target.closest('#game-opening-prologue-trailer-fullscreen-btn')) {
+                event.preventDefault();
                 void toggleTrailerFullscreen();
-            });
-        }
+            }
+        });
 
-        if (seekEl) {
-            seekEl.addEventListener('pointerdown', beginTrailerSeek);
-            seekEl.addEventListener('keydown', (event) => {
-                if (event.key === 'ArrowLeft'
-                    || event.key === 'ArrowRight'
-                    || event.key === 'Home'
-                    || event.key === 'End') {
-                    beginTrailerSeek();
-                }
-            });
-            seekEl.addEventListener('input', () => {
-                if (!trailerSeekActive) beginTrailerSeek();
+        viewportEl.addEventListener('dblclick', (event) => {
+            if (event.target.closest('.game-opening-prologue-trailer-controls')) return;
+            void toggleTrailerFullscreen();
+        });
 
-                const totalSec = getTrailerTimelineDurationSec();
-                const progress = Math.max(0, Math.min(1, Number(seekEl.value) / 1000));
-                applyTrailerTimelinePosition(totalSec * progress, { syncMusic: true });
-            });
-            seekEl.addEventListener('change', finishTrailerSeek);
-            seekEl.addEventListener('pointerup', finishTrailerSeek);
-            seekEl.addEventListener('keyup', (event) => {
-                if (event.key === 'ArrowLeft'
-                    || event.key === 'ArrowRight'
-                    || event.key === 'Home'
-                    || event.key === 'End') {
-                    finishTrailerSeek();
-                }
-            });
-        }
+        viewportEl.addEventListener('pointerdown', (event) => {
+            if (event.target.closest('.game-opening-prologue-trailer-controls')) {
+                showControls();
+            }
+            if (event.target.closest('#game-opening-prologue-trailer-seek')) {
+                beginTrailerSeek();
+            }
+        }, { passive: true });
 
-        if (viewportEl) {
-            viewportEl.addEventListener('dblclick', () => {
-                void toggleTrailerFullscreen();
-            });
-        }
+        viewportEl.addEventListener('input', (event) => {
+            const seekEl = event.target.closest('#game-opening-prologue-trailer-seek');
+            if (!seekEl) return;
+
+            if (!trailerSeekActive) beginTrailerSeek();
+
+            const totalSec = getTrailerTimelineDurationSec();
+            const progress = Math.max(0, Math.min(1, Number(seekEl.value) / 1000));
+            applyTrailerTimelinePosition(totalSec * progress, { syncMusic: true });
+        });
+
+        viewportEl.addEventListener('change', (event) => {
+            if (event.target.closest('#game-opening-prologue-trailer-seek')) {
+                finishTrailerSeek();
+            }
+        });
+
+        viewportEl.addEventListener('pointerup', (event) => {
+            if (event.target.closest('#game-opening-prologue-trailer-seek')) {
+                finishTrailerSeek();
+            }
+        });
+
+        viewportEl.addEventListener('keydown', (event) => {
+            if (!event.target.closest('#game-opening-prologue-trailer-seek')) return;
+            if (event.key === 'ArrowLeft'
+                || event.key === 'ArrowRight'
+                || event.key === 'Home'
+                || event.key === 'End') {
+                beginTrailerSeek();
+            }
+        });
+
+        viewportEl.addEventListener('keyup', (event) => {
+            if (!event.target.closest('#game-opening-prologue-trailer-seek')) return;
+            if (event.key === 'ArrowLeft'
+                || event.key === 'ArrowRight'
+                || event.key === 'Home'
+                || event.key === 'End') {
+                finishTrailerSeek();
+            }
+        });
+
+        bindTrailerControlsHover(
+            viewportEl,
+            controlsEl,
+            viewportEl.querySelector('#game-opening-prologue-trailer-seek')
+        );
     }
 
     function queueTrailerPlayerAutoplay() {
@@ -1914,6 +1945,10 @@
             if (isTrailerPage() && isTrailerReplayMode) return;
             finishPrologue('error');
         });
+
+        if (isTrailerPage() && isTrailerReplayMode && overlayEl) {
+            mountTrailerPlayerLayout();
+        }
 
         return overlayEl;
     }

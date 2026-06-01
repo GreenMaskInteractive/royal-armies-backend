@@ -1317,7 +1317,7 @@ body.is-trailer-mobile-device .game-opening-prologue.is-trailer-replay-mode .gam
     box-sizing: border-box;
     opacity: 0;
     visibility: hidden;
-    pointer-events: none;
+    pointer-events: auto;
     transition: opacity 0.22s ease, visibility 0.22s ease;
 }
 
@@ -1326,7 +1326,6 @@ body.is-trailer-mobile-device .game-opening-prologue.is-trailer-replay-mode .gam
 .game-opening-prologue-trailer-controls:focus-within {
     opacity: 1;
     visibility: visible;
-    pointer-events: auto;
 }
 
 .game-opening-prologue-trailer-stage:fullscreen .game-opening-prologue-trailer-controls,
@@ -1354,6 +1353,7 @@ body.is-trailer-mobile-device .game-opening-prologue.is-trailer-replay-mode .gam
     justify-content: center;
     cursor: pointer;
     touch-action: manipulation;
+    pointer-events: auto;
     font-family: inherit;
     text-transform: none;
     letter-spacing: 0;
@@ -1394,6 +1394,7 @@ body.is-trailer-mobile-device .game-opening-prologue.is-trailer-replay-mode .gam
     accent-color: #e03030;
     cursor: pointer;
     touch-action: manipulation;
+    pointer-events: auto;
     background: transparent;
 }
 
