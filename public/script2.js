@@ -1384,6 +1384,9 @@ function launchGameRoundSectorAfterTermsCheck(isTutorialModeActive, clickEvent) 
     if (typeof beginCommanderAgeResetSession === 'function') {
         beginCommanderAgeResetSession();
     }
+    if (window.RoyalArmiesMusicFlow && typeof window.RoyalArmiesMusicFlow.prepareJoinAgeLaunch === 'function') {
+        window.RoyalArmiesMusicFlow.prepareJoinAgeLaunch();
+    }
 
     const attemptGamePageHandoff = () => {
         if (!deployPulseFinished || !selectAudioFinished) return;
@@ -6766,7 +6769,12 @@ window.onload = () => {
         applyPortalGuestDeploymentChrome();
     }
     window.cachedAgePortalViewportHTML = snapshotAgePortalViewportForCache();
-    if (getPortalBackgroundAudioElement()?.paused) {
+    if (
+        (!window.RoyalArmiesMusicFlow
+            || typeof window.RoyalArmiesMusicFlow.shouldSuppressPortalMainMusic !== 'function'
+            || !window.RoyalArmiesMusicFlow.shouldSuppressPortalMainMusic())
+        && getPortalBackgroundAudioElement()?.paused
+    ) {
         startPortalBackgroundMusic({ silentFail: true });
     }
 };

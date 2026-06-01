@@ -545,6 +545,13 @@
         refreshGameOnboardingProgress(nextView);
         scheduleRegionFlankLayoutIfNeeded(nextView);
         closeGameMobileCommanderSubmenu();
+        if (nextView === 'class'
+            && global.RoyalArmiesMusicFlow
+            && typeof global.RoyalArmiesMusicFlow.markProgressionPhaseStart === 'function'
+            && (!global.RoyalArmiesMusicFlow.shouldHoldForOpeningPrologue
+                || !global.RoyalArmiesMusicFlow.shouldHoldForOpeningPrologue())) {
+            global.RoyalArmiesMusicFlow.markProgressionPhaseStart();
+        }
     }
 
     function setActiveGameViewAnimated(nextView) {

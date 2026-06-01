@@ -15048,6 +15048,53 @@ body.developer-maintenance-alert-active #page-landing {
     overflow: visible;
 }
 
+.age-bottom-music-player-host {
+    flex: 0 1 auto;
+    min-width: 0;
+    max-width: min(520px, 46vw);
+    margin-right: auto;
+}
+
+.age-bottom-music-player {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 8px;
+    border: 1px solid rgba(184, 144, 48, 0.28);
+    border-radius: 4px;
+    background: rgba(10, 8, 6, 0.72);
+    box-shadow: inset 0 1px 0 rgba(255, 215, 120, 0.08);
+}
+
+.age-bottom-music-title {
+    max-width: 240px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-family: 'Cinzel', serif;
+    font-size: 0.62rem;
+    letter-spacing: 0.06em;
+    color: rgba(241, 224, 172, 0.9);
+}
+
+.age-bottom-music-btn {
+    padding: 4px 8px;
+    border: 1px solid rgba(184, 144, 48, 0.35);
+    border-radius: 3px;
+    background: rgba(0, 0, 0, 0.4);
+    color: rgba(241, 224, 172, 0.9);
+    font-family: 'Cinzel', serif;
+    font-size: 0.58rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    cursor: pointer;
+}
+
+.age-bottom-music-btn:hover {
+    color: #ffd700;
+    border-color: rgba(255, 215, 0, 0.55);
+}
+
 #age-page-canvas .age-map-bottom-dock-shell > .age-map-bottom-dock-nav {
     position: absolute;
     left: 50%;
