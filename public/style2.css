@@ -13105,7 +13105,7 @@ body.game-opening-prologue-active .game-onboarding-progress {
     align-items: center;
     justify-content: flex-start;
     width: 100%;
-    margin: 0;
+    margin: 0 0 50px;
     padding: 0;
     line-height: 0;
     box-sizing: border-box;
