@@ -9935,6 +9935,59 @@ body.developer-maintenance-alert-active #page-landing {
     pointer-events: none;
 }
 
+.game-opening-prologue-logo-stage {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    perspective: 1400px;
+    pointer-events: none;
+    opacity: 0;
+    visibility: hidden;
+    z-index: 1;
+}
+
+.game-opening-prologue.is-logo-reveal-active .game-opening-prologue-logo-stage {
+    opacity: 1;
+    visibility: visible;
+}
+
+.game-opening-prologue-logo {
+    display: block;
+    width: min(680px, 88vw);
+    max-width: 680px;
+    height: auto;
+    object-fit: contain;
+    transform-origin: center center;
+    opacity: 0;
+    transform: scale3d(0.04, 0.04, 0.04) translateZ(-1400px);
+    filter: blur(14px);
+    will-change: transform, opacity, filter;
+}
+
+.game-opening-prologue.is-logo-reveal-active .game-opening-prologue-logo {
+    animation: game-opening-prologue-logo-arrive var(--prologue-logo-reveal-ms, 15s) ease-out forwards;
+}
+
+@keyframes game-opening-prologue-logo-arrive {
+    0% {
+        opacity: 0;
+        transform: scale3d(0.04, 0.04, 0.04) translateZ(-1400px);
+        filter: blur(14px);
+    }
+
+    12% {
+        opacity: 0.18;
+    }
+
+    100% {
+        opacity: 1;
+        transform: scale3d(1, 1, 1) translateZ(0);
+        filter: blur(0);
+    }
+}
+
 .game-opening-prologue-subtitle-dock {
     position: absolute;
     left: 50%;

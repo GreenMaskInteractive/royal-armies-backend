@@ -39,13 +39,14 @@
     const PROLOGUE_AUDIO_SRC = 'audio/distressedwoman.mp3';
     const PROLOGUE_NARRATION_VOLUME = 1;
     const PROLOGUE_MUSIC_VOLUME = 0.3;
-    const PROLOGUE_MUSIC_PEAK_VOLUME = 0.7;
+    const PROLOGUE_MUSIC_PEAK_VOLUME = 1;
     /** Narration starts immediately; background music joins after this delay. */
     const PROLOGUE_MUSIC_DELAY_MS = 2000;
     /** Black screen hold after narration; music ramps to peak over this duration. */
     const PROLOGUE_POST_NARRATION_HOLD_MS = 15000;
     const PROLOGUE_MUSIC_OUT_FADE_MS = 1200;
     const PROLOGUE_REVEAL_FADE_MS = 900;
+    const PROLOGUE_LOGO_SRC = 'images/royalarmiestitle.png?v=logo-trim-gimp-1';
 
     let overlayEl = null;
     let subtitleEl = null;
@@ -167,6 +168,14 @@
         overlayEl.hidden = true;
         overlayEl.innerHTML = `
             <div class="game-opening-prologue-scrim" aria-hidden="true"></div>
+            <div class="game-opening-prologue-logo-stage" aria-hidden="true">
+                <img
+                    src="${PROLOGUE_LOGO_SRC}"
+                    alt="Royal Armies"
+                    class="game-opening-prologue-logo"
+                    decoding="async"
+                >
+            </div>
             <div class="game-opening-prologue-subtitle-dock">
                 <p id="${SUBTITLE_ID}" class="game-opening-prologue-subtitle" aria-live="polite"></p>
             </div>
@@ -313,6 +322,7 @@
             overlayEl.hidden = true;
             overlayEl.classList.remove('is-revealing', 'is-subtitles-active');
         }
+        clearLogoReveal();
         global.document.body.classList.remove('game-opening-prologue-active');
         if (subtitleEl) subtitleEl.textContent = '';
         activeCueIndex = -1;
@@ -338,21 +348,45 @@
         if (overlayEl) overlayEl.classList.remove('is-subtitles-active');
     }
 
+    function beginLogoRevealSequence() {
+        ensureOverlay();
+        if (!overlayEl) return;
+
+        overlayEl.style.setProperty('--prologue-logo-reveal-ms', `${PROLOGUE_POST_NARRATION_HOLD_MS}ms`);
+
+        const logoEl = overlayEl.querySelector('.game-opening-prologue-logo');
+        if (logoEl) {
+            logoEl.style.animation = 'none';
+            void logoEl.offsetWidth;
+            logoEl.style.removeProperty('animation');
+        }
+
+        overlayEl.classList.add('is-logo-reveal-active');
+    }
+
+    function clearLogoReveal() {
+        if (!overlayEl) return;
+        overlayEl.classList.remove('is-logo-reveal-active');
+        overlayEl.style.removeProperty('--prologue-logo-reveal-ms');
+    }
+
     async function runPostNarrationHoldSequence() {
         isPostNarrationHold = true;
         clearSubtitlesForPostNarrationHold();
+        beginLogoRevealSequence();
+
+        const holdTasks = [waitPrologueFade(PROLOGUE_POST_NARRATION_HOLD_MS)];
 
         if (global.RoyalArmiesMusicFlow
             && typeof global.RoyalArmiesMusicFlow.rampMusicVolume === 'function') {
-            await global.RoyalArmiesMusicFlow.rampMusicVolume(
+            holdTasks.push(global.RoyalArmiesMusicFlow.rampMusicVolume(
                 PROLOGUE_MUSIC_VOLUME,
                 PROLOGUE_MUSIC_PEAK_VOLUME,
                 PROLOGUE_POST_NARRATION_HOLD_MS
-            );
-        } else {
-            await waitPrologueFade(PROLOGUE_POST_NARRATION_HOLD_MS);
+            ));
         }
 
+        await Promise.all(holdTasks);
         isPostNarrationHold = false;
     }
 
@@ -392,6 +426,7 @@
         clearMusicDelayTimer();
         clearPrologueMusicAnimation();
         stopSubtitleSyncLoop();
+        clearLogoReveal();
         isPlaying = false;
         isPostNarrationHold = false;
         isFadingOut = false;
