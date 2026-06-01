@@ -140,6 +140,9 @@
     let trailerReplayTimeSec = 0;
     let trailerReplayFrame = null;
     let trailerImpactAudioUnlocked = false;
+    let trailerRotatePromptDismissed = false;
+    let trailerOrientationBound = false;
+    let trailerAutoplayQueued = false;
     const LOCAL_PROLOGUE_PENDING_KEY = 'royalArmies_localProloguePending';
 
     function canSyncPrologueTimeline() {
@@ -158,8 +161,215 @@
         return SCRIPT_TIMELINE_DURATION * (cueTimelineScale > 0 ? cueTimelineScale : 1);
     }
 
+    function isTrailerMobileDevice() {
+        if (!isTrailerPage()) return false;
+        if (global.matchMedia && global.matchMedia('(max-width: 900px)').matches) return true;
+        return /Android|iPhone|iPad|iPod|Mobile/i.test(global.navigator.userAgent || '');
+    }
+
+    function isTrailerPortraitViewport() {
+        return global.matchMedia
+            ? global.matchMedia('(orientation: portrait)').matches
+            : (global.innerHeight > global.innerWidth);
+    }
+
+    function getTrailerMusicAudio() {
+        if (!global.RoyalArmiesMusicFlow
+            || typeof global.RoyalArmiesMusicFlow.getAudioElement !== 'function') {
+            return null;
+        }
+        return global.RoyalArmiesMusicFlow.getAudioElement();
+    }
+
+    function getTrailerMusicDurationSec() {
+        const musicAudio = getTrailerMusicAudio();
+        if (musicAudio && Number.isFinite(musicAudio.duration) && musicAudio.duration > 0) {
+            return musicAudio.duration;
+        }
+        return 120;
+    }
+
+    function getTrailerFinaleStartSec() {
+        return getTrailerNarrationDurationSec();
+    }
+
+    function getTrailerFinaleEndSec() {
+        return getTrailerFinaleStartSec() + (TRAILER_POST_NARRATION_MS / 1000);
+    }
+
     function getTrailerTimelineDurationSec() {
-        return getTrailerNarrationDurationSec() + (TRAILER_POST_NARRATION_MS / 1000);
+        const narrationSec = getTrailerNarrationDurationSec();
+        const finaleEnd = getTrailerFinaleEndSec();
+        const musicEnd = TRAILER_MUSIC_START_SEC + getTrailerMusicDurationSec();
+        return Math.max(finaleEnd, musicEnd, narrationSec + 1);
+    }
+
+    function getTrailerFullscreenElement() {
+        return overlayEl?.querySelector('#game-opening-prologue-trailer-stage') || overlayEl;
+    }
+
+    function isTrailerFullscreenActive() {
+        const target = getTrailerFullscreenElement();
+        const active = global.document.fullscreenElement;
+        return Boolean(target && active && (active === target || target.contains(active)));
+    }
+
+    async function requestTrailerLandscapeLock() {
+        if (!isTrailerMobileDevice()) return;
+
+        try {
+            if (global.screen?.orientation?.lock) {
+                await global.screen.orientation.lock('landscape');
+            }
+        } catch (_err) {
+            /* iOS may require a user gesture + fullscreen first */
+        }
+    }
+
+    function updateTrailerOrientationClasses() {
+        if (!overlayEl || !isTrailerPage()) return;
+
+        const mobile = isTrailerMobileDevice();
+        const portrait = isTrailerPortraitViewport();
+        overlayEl.classList.toggle('is-trailer-mobile', mobile);
+        overlayEl.classList.toggle('is-trailer-portrait', portrait);
+        global.document.body.classList.toggle('is-trailer-mobile-device', mobile);
+        global.document.body.classList.toggle('is-trailer-portrait-viewport', portrait);
+
+        const rotatePrompt = overlayEl.querySelector('#game-opening-prologue-trailer-rotate-prompt');
+        if (rotatePrompt) {
+            const showPrompt = mobile && portrait && !trailerRotatePromptDismissed && isTrailerReplayMode;
+            rotatePrompt.hidden = !showPrompt;
+            rotatePrompt.setAttribute('aria-hidden', showPrompt ? 'false' : 'true');
+        }
+
+        const fullscreenBtn = overlayEl.querySelector('#game-opening-prologue-trailer-fullscreen-btn');
+        if (fullscreenBtn) {
+            fullscreenBtn.textContent = isTrailerFullscreenActive() ? 'Exit full' : 'Fullscreen';
+        }
+    }
+
+    function bindTrailerOrientationListeners() {
+        if (trailerOrientationBound || !isTrailerPage()) return;
+        trailerOrientationBound = true;
+
+        const onOrientationChange = () => updateTrailerOrientationClasses();
+        if (global.matchMedia) {
+            global.matchMedia('(orientation: portrait)').addEventListener('change', onOrientationChange);
+            global.matchMedia('(orientation: landscape)').addEventListener('change', onOrientationChange);
+            global.matchMedia('(max-width: 900px)').addEventListener('change', onOrientationChange);
+        }
+        global.addEventListener('resize', onOrientationChange);
+        global.document.addEventListener('fullscreenchange', onOrientationChange);
+    }
+
+    function mountTrailerPlayerLayout() {
+        if (!overlayEl) return;
+
+        const playerEl = overlayEl.querySelector('#game-opening-prologue-trailer-player');
+        const stageEl = overlayEl.querySelector('#game-opening-prologue-trailer-stage');
+        const viewportEl = overlayEl.querySelector('#game-opening-prologue-trailer-viewport');
+        const finalePaneEl = overlayEl.querySelector('#game-opening-prologue-trailer-finale-pane');
+        const cinematicStageEl = overlayEl.querySelector('.game-opening-prologue-cinematic-stage');
+        const logoStageEl = overlayEl.querySelector('.game-opening-prologue-logo-stage');
+
+        if (playerEl && stageEl && playerEl.parentElement === overlayEl) {
+            overlayEl.insertBefore(playerEl, overlayEl.firstChild?.nextSibling || null);
+        }
+
+        if (cinematicStageEl && viewportEl && cinematicStageEl.parentElement !== viewportEl) {
+            viewportEl.appendChild(cinematicStageEl);
+        }
+
+        if (logoStageEl && finalePaneEl && logoStageEl.parentElement !== finalePaneEl) {
+            finalePaneEl.appendChild(logoStageEl);
+        }
+
+        reparentTrailerSubtitleDockForPlayer();
+    }
+
+    function applyTrailerFinaleProgress(progress) {
+        const p = Math.max(0, Math.min(1, Number(progress) || 0));
+        const titleLogoEl = overlayEl?.querySelector('.game-opening-prologue-logo--title');
+        const subtitleLogoEl = overlayEl?.querySelector('.game-opening-prologue-logo--subtitle');
+        const loreToolEl = overlayEl?.querySelector('.game-opening-prologue-lore-tool');
+        const outroEl = overlayEl?.querySelector('#game-opening-prologue-trailer-outro');
+        const titlePhaseEnd = PROLOGUE_TITLE_LOGO_REVEAL_MS / TRAILER_POST_NARRATION_MS;
+
+        overlayEl?.classList.add('is-logo-reveal-active');
+
+        if (p <= 0.001) {
+            overlayEl?.classList.remove('is-trailer-finale-visible');
+            return;
+        }
+
+        overlayEl?.classList.add('is-trailer-finale-visible');
+
+        if (titleLogoEl) {
+            titleLogoEl.hidden = false;
+            titleLogoEl.classList.remove('is-exploding');
+            if (p >= titlePhaseEnd) {
+                titleLogoEl.classList.remove('is-arriving');
+                titleLogoEl.classList.add('is-arrived');
+                titleLogoEl.style.removeProperty('transform');
+                titleLogoEl.style.removeProperty('opacity');
+                titleLogoEl.style.removeProperty('filter');
+            } else {
+                titleLogoEl.classList.add('is-arrived');
+            }
+        }
+
+        if (p >= titlePhaseEnd) {
+            if (subtitleLogoEl) {
+                subtitleLogoEl.hidden = false;
+                subtitleLogoEl.classList.remove('is-arriving', 'is-exploding');
+                subtitleLogoEl.classList.add('is-arrived');
+            }
+            if (loreToolEl) {
+                const loreProgress = Math.min(1, (p - titlePhaseEnd) / Math.max(0.001, 1 - titlePhaseEnd));
+                loreToolEl.classList.toggle('is-visible', loreProgress > 0.12);
+                loreToolEl.style.opacity = String(Math.min(1, loreProgress * 1.15));
+            }
+            if (outroEl && p > titlePhaseEnd + 0.12) {
+                outroEl.hidden = false;
+                outroEl.classList.add('is-visible', 'is-taglines-visible');
+            }
+        } else if (subtitleLogoEl) {
+            subtitleLogoEl.hidden = true;
+        }
+
+        if (p >= 0.98) {
+            ensureTrailerFinaleDomVisible();
+        }
+    }
+
+    function pauseTrailerMusicPlayback() {
+        const musicAudio = getTrailerMusicAudio();
+        if (musicAudio) musicAudio.pause();
+    }
+
+    function syncTrailerPlaybackClock() {
+        const narrationSec = getTrailerNarrationDurationSec();
+        const finaleStart = getTrailerFinaleStartSec();
+        const finaleEnd = getTrailerFinaleEndSec();
+        const totalSec = getTrailerTimelineDurationSec();
+        const musicAudio = getTrailerMusicAudio();
+
+        if (trailerReplayTimeSec < narrationSec - 0.03) {
+            trailerReplayTimeSec = audioEl?.currentTime || trailerReplayTimeSec;
+            return;
+        }
+
+        if (trailerReplayTimeSec < finaleEnd) {
+            if (musicAudio && !musicAudio.paused) {
+                trailerReplayTimeSec = Math.min(finaleEnd, TRAILER_MUSIC_START_SEC + (musicAudio.currentTime || 0));
+            }
+            return;
+        }
+
+        if (musicAudio && !musicAudio.paused) {
+            trailerReplayTimeSec = Math.min(totalSec, TRAILER_MUSIC_START_SEC + (musicAudio.currentTime || 0));
+        }
     }
 
     function formatTrailerClock(totalSec) {
@@ -284,11 +494,13 @@
 
         const opts = options && typeof options === 'object' ? options : {};
         const narrationSec = getTrailerNarrationDurationSec();
+        const finaleStart = getTrailerFinaleStartSec();
+        const finaleEnd = getTrailerFinaleEndSec();
         const totalSec = getTrailerTimelineDurationSec();
         const clamped = Math.max(0, Math.min(totalSec, Number(timeSec) || 0));
         trailerReplayTimeSec = clamped;
 
-        if (clamped < narrationSec - 0.04) {
+        if (clamped < finaleStart - 0.03) {
             overlayEl.classList.remove('is-trailer-finale-visible');
             overlayEl.classList.add('is-cinematics-active');
             setSubtitleDockActive(true);
@@ -299,6 +511,19 @@
 
             syncSubtitleToAudioTime(true);
             syncCinematicToAudioTime(true);
+        } else if (clamped < finaleEnd) {
+            overlayEl.classList.add('is-trailer-finale-visible');
+            overlayEl.classList.remove('is-cinematics-active');
+            setSubtitleDockActive(false);
+            clearCinematicShots();
+
+            if (audioEl) {
+                audioEl.pause();
+                audioEl.currentTime = Math.max(0, narrationSec - 0.02);
+            }
+
+            const finaleProgress = (clamped - finaleStart) / Math.max(0.001, finaleEnd - finaleStart);
+            applyTrailerFinaleProgress(finaleProgress);
         } else {
             overlayEl.classList.add('is-trailer-finale-visible');
             overlayEl.classList.remove('is-cinematics-active');
@@ -318,6 +543,7 @@
         }
 
         updateTrailerPlayerUi();
+        updateTrailerOrientationClasses();
     }
 
     function stopTrailerReplaySyncLoop() {
@@ -333,25 +559,23 @@
         const tick = () => {
             if (!isTrailerReplayMode || !isTrailerReplayPlaying) return;
 
-            const narrationSec = getTrailerNarrationDurationSec();
             const totalSec = getTrailerTimelineDurationSec();
+            syncTrailerPlaybackClock();
+            applyTrailerTimelinePosition(trailerReplayTimeSec, { syncMusic: false });
 
-            if (trailerReplayTimeSec < narrationSec - 0.04) {
-                trailerReplayTimeSec = audioEl?.currentTime || trailerReplayTimeSec;
+            if (trailerReplayTimeSec < getTrailerFinaleStartSec() - 0.03) {
                 syncSubtitleToAudioTime(true);
                 syncCinematicToAudioTime(true);
-                syncTrailerMusicToTimeline(trailerReplayTimeSec);
-            } else {
-                trailerReplayTimeSec = Math.min(totalSec, trailerReplayTimeSec + (1 / 60));
-                applyTrailerTimelinePosition(trailerReplayTimeSec, { syncMusic: true });
             }
 
             updateTrailerPlayerUi();
 
-            if (trailerReplayTimeSec >= totalSec - 0.02) {
+            if (trailerReplayTimeSec >= totalSec - 0.03) {
                 isTrailerReplayPlaying = false;
                 trailerReplayTimeSec = totalSec;
-                applyTrailerTimelinePosition(totalSec, { syncMusic: true });
+                applyTrailerTimelinePosition(totalSec, { syncMusic: false });
+                pauseTrailerMusicPlayback();
+                audioEl?.pause();
                 updateTrailerPlayerUi();
                 stopTrailerReplaySyncLoop();
                 return;
@@ -366,33 +590,72 @@
     function pauseTrailerReplayPlayback() {
         isTrailerReplayPlaying = false;
         audioEl?.pause();
+        pauseTrailerMusicPlayback();
         stopTrailerReplaySyncLoop();
         updateTrailerPlayerUi();
+    }
+
+    async function tryStartTrailerPlaybackWithOrientation() {
+        if (!isTrailerReplayMode) return;
+
+        if (isTrailerMobileDevice() && isTrailerPortraitViewport() && !trailerRotatePromptDismissed) {
+            updateTrailerOrientationClasses();
+            return;
+        }
+
+        if (isTrailerMobileDevice()) {
+            await requestTrailerLandscapeLock();
+        }
+
+        startTrailerReplayPlayback();
     }
 
     function startTrailerReplayPlayback() {
         if (!isTrailerReplayMode) return;
 
         const totalSec = getTrailerTimelineDurationSec();
-        if (trailerReplayTimeSec >= totalSec - 0.02) {
+        if (trailerReplayTimeSec >= totalSec - 0.03) {
             restartTrailerReplay();
             return;
         }
 
         isTrailerReplayPlaying = true;
         const narrationSec = getTrailerNarrationDurationSec();
+        const musicAudio = getTrailerMusicAudio();
 
-        if (trailerReplayTimeSec < narrationSec - 0.04) {
+        if (trailerReplayTimeSec < narrationSec - 0.03) {
             overlayEl.classList.remove('is-trailer-finale-visible');
             setSubtitleDockActive(true);
+            syncTrailerMusicToTimeline(trailerReplayTimeSec);
             audioEl?.play().catch(() => {});
-            global.RoyalArmiesMusicFlow?.getAudioElement?.()?.play?.().catch(() => {});
+            musicAudio?.play().catch(() => {});
         } else {
             applyTrailerTimelinePosition(trailerReplayTimeSec, { syncMusic: true });
+            musicAudio?.play().catch(() => {});
         }
 
         startTrailerReplaySyncLoop();
         updateTrailerPlayerUi();
+    }
+
+    async function toggleTrailerFullscreen() {
+        const target = getTrailerFullscreenElement();
+        if (!target) return;
+
+        try {
+            if (isTrailerFullscreenActive()) {
+                await global.document.exitFullscreen();
+            } else {
+                await target.requestFullscreen();
+                if (isTrailerMobileDevice()) {
+                    await requestTrailerLandscapeLock();
+                }
+            }
+        } catch (_err) {
+            /* ignored */
+        }
+
+        updateTrailerOrientationClasses();
     }
 
     function restartTrailerReplay() {
@@ -404,7 +667,8 @@
         isTrailerReplayPlaying = false;
         trailerReplayTimeSec = 0;
         trailerImpactAudioUnlocked = false;
-        isFadingOut = false;
+        trailerRotatePromptDismissed = false;
+        trailerAutoplayQueued = false;
         isPostNarrationHold = false;
 
         if (overlayEl) {
@@ -432,22 +696,44 @@
         const seekEl = overlayEl?.querySelector('#game-opening-prologue-trailer-seek');
         const playBtn = overlayEl?.querySelector('#game-opening-prologue-trailer-play-btn');
         const replayBtn = overlayEl?.querySelector('#game-opening-prologue-trailer-replay-btn');
+        const fullscreenBtn = overlayEl?.querySelector('#game-opening-prologue-trailer-fullscreen-btn');
+        const rotateDismissBtn = overlayEl?.querySelector('#game-opening-prologue-trailer-rotate-dismiss');
+        const viewportEl = overlayEl?.querySelector('#game-opening-prologue-trailer-viewport');
 
         if (!playerEl || playerEl.dataset.riftBound === '1') return;
         playerEl.dataset.riftBound = '1';
+
+        bindTrailerOrientationListeners();
 
         if (playBtn) {
             playBtn.addEventListener('click', () => {
                 if (isTrailerReplayPlaying) {
                     pauseTrailerReplayPlayback();
                 } else {
-                    startTrailerReplayPlayback();
+                    void tryStartTrailerPlaybackWithOrientation();
                 }
             });
         }
 
         if (replayBtn) {
             replayBtn.addEventListener('click', () => restartTrailerReplay());
+        }
+
+        if (fullscreenBtn) {
+            fullscreenBtn.addEventListener('click', () => {
+                void toggleTrailerFullscreen();
+            });
+        }
+
+        if (rotateDismissBtn) {
+            rotateDismissBtn.addEventListener('click', () => {
+                trailerRotatePromptDismissed = true;
+                void (async () => {
+                    await toggleTrailerFullscreen();
+                    await requestTrailerLandscapeLock();
+                    startTrailerReplayPlayback();
+                })();
+            });
         }
 
         if (seekEl) {
@@ -458,6 +744,22 @@
                 applyTrailerTimelinePosition(totalSec * progress, { syncMusic: true });
             });
         }
+
+        if (viewportEl) {
+            viewportEl.addEventListener('dblclick', () => {
+                void toggleTrailerFullscreen();
+            });
+        }
+    }
+
+    function queueTrailerPlayerAutoplay() {
+        if (!isTrailerReplayMode || trailerAutoplayQueued) return;
+        trailerAutoplayQueued = true;
+
+        global.setTimeout(() => {
+            if (!isTrailerReplayMode || isTrailerReplayPlaying) return;
+            void tryStartTrailerPlaybackWithOrientation();
+        }, isTrailerMobileDevice() ? 480 : 220);
     }
 
     async function waitForTrailerSoundtrackEnd() {
@@ -472,8 +774,8 @@
 
         isTrailerReplayMode = true;
         isTrailerReplayPlaying = false;
-        lockTrailerFinaleVisuals();
-        reparentTrailerSubtitleDockForPlayer();
+        trailerAutoplayQueued = false;
+        mountTrailerPlayerLayout();
 
         const playerEl = overlayEl.querySelector('#game-opening-prologue-trailer-player');
         if (playerEl) {
@@ -481,14 +783,16 @@
         }
 
         overlayEl.classList.add('is-trailer-replay-mode');
-        overlayEl.classList.remove('is-revealing');
+        overlayEl.classList.remove('is-revealing', 'is-trailer-finale-visible');
         overlayEl.hidden = false;
         overlayEl.removeAttribute('hidden');
 
-        trailerReplayTimeSec = getTrailerTimelineDurationSec();
-        applyTrailerTimelinePosition(trailerReplayTimeSec, { syncMusic: true });
+        trailerReplayTimeSec = 0;
+        applyTrailerTimelinePosition(0, { syncMusic: true });
         bindTrailerPlayerControls();
         updateTrailerPlayerUi();
+        updateTrailerOrientationClasses();
+        queueTrailerPlayerAutoplay();
     }
 
     function splitParagraphIntoSentences(text) {
@@ -1133,7 +1437,7 @@
 
         if (overlayEl && global.document.contains(overlayEl)) {
             const missingTrailerPlayer = isTrailerPage()
-                && !overlayEl.querySelector('#game-opening-prologue-trailer-player');
+                && !overlayEl.querySelector('#game-opening-prologue-trailer-stage');
             if (!overlayEl.querySelector('.game-opening-prologue-cinematic-frame-border')
                 || !overlayEl.querySelector('.game-opening-prologue-subtitle-dock-inner')
                 || missingTrailerPlayer) {
@@ -1228,11 +1532,37 @@
             </div>
             ${isTrailerPage() ? `
             <div class="game-opening-prologue-trailer-player" id="game-opening-prologue-trailer-player" hidden>
-                <div class="game-opening-prologue-trailer-player-bar">
-                    <button type="button" class="game-opening-prologue-trailer-btn" id="game-opening-prologue-trailer-replay-btn">Replay</button>
-                    <button type="button" class="game-opening-prologue-trailer-btn" id="game-opening-prologue-trailer-play-btn">Play</button>
-                    <input type="range" class="game-opening-prologue-trailer-seek" id="game-opening-prologue-trailer-seek" min="0" max="1000" value="1000" aria-label="Trailer timeline">
-                    <span class="game-opening-prologue-trailer-time" id="game-opening-prologue-trailer-time">0:00 / 0:00</span>
+                <div class="game-opening-prologue-trailer-stage" id="game-opening-prologue-trailer-stage">
+                    <div class="game-opening-prologue-trailer-viewport" id="game-opening-prologue-trailer-viewport">
+                        <div
+                            class="game-opening-prologue-trailer-rotate-prompt"
+                            id="game-opening-prologue-trailer-rotate-prompt"
+                            hidden
+                            aria-live="polite"
+                        >
+                            <div class="game-opening-prologue-trailer-rotate-prompt-inner">
+                                <p class="game-opening-prologue-trailer-rotate-title">Rotate your phone</p>
+                                <p class="game-opening-prologue-trailer-rotate-copy">This trailer is best watched with your phone on its side.</p>
+                                <button
+                                    type="button"
+                                    class="game-opening-prologue-trailer-btn game-opening-prologue-trailer-btn--primary"
+                                    id="game-opening-prologue-trailer-rotate-dismiss"
+                                >
+                                    Watch sideways
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="game-opening-prologue-trailer-finale-pane" id="game-opening-prologue-trailer-finale-pane"></div>
+                    <div class="game-opening-prologue-trailer-controls">
+                        <div class="game-opening-prologue-trailer-controls-row">
+                            <button type="button" class="game-opening-prologue-trailer-btn" id="game-opening-prologue-trailer-replay-btn">Replay</button>
+                            <button type="button" class="game-opening-prologue-trailer-btn" id="game-opening-prologue-trailer-play-btn">Play</button>
+                            <button type="button" class="game-opening-prologue-trailer-btn" id="game-opening-prologue-trailer-fullscreen-btn">Fullscreen</button>
+                            <span class="game-opening-prologue-trailer-time" id="game-opening-prologue-trailer-time">0:00 / 0:00</span>
+                        </div>
+                        <input type="range" class="game-opening-prologue-trailer-seek" id="game-opening-prologue-trailer-seek" min="0" max="1000" value="0" aria-label="Trailer timeline">
+                    </div>
                 </div>
             </div>
             ` : ''}
@@ -2272,6 +2602,10 @@
 
     function bootOpeningPrologue() {
         if (!shouldRunOpeningPrologue()) return;
+        if (isTrailerPage()) {
+            bindTrailerOrientationListeners();
+            updateTrailerOrientationClasses();
+        }
         startLocalPrologue();
     }
 
