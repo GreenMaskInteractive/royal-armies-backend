@@ -5260,6 +5260,46 @@ app.post('/api/portal/age/admin/reset-age-rosters', (req, res) => {
     });
 });
 
+app.post('/api/portal/age/admin/set-provisions', (req, res) => {
+    const actingUsername = resolveLedgerCommanderUsername(req.body?.username || '');
+    if (!actingUsername) {
+        return sendApiError(res, 'NEXUS-GEN-002');
+    }
+    if (!isAgeLedgerAdminUsername(actingUsername)) {
+        return sendApiError(res, 'NEXUS-AGE-018');
+    }
+
+    const targetUsername = resolveLedgerCommanderUsername(
+        req.body?.targetUsername || req.body?.commanderUsername || actingUsername
+    );
+    if (!targetUsername) {
+        return sendApiError(res, 'NEXUS-GEN-004');
+    }
+
+    let commander = db.get('commanders').find({ username: targetUsername }).value();
+    if (!commander) {
+        return sendApiError(res, 'NEXUS-GEN-004');
+    }
+
+    const nextProvisions = Math.floor(Number(req.body?.ageProvisions));
+    if (!Number.isFinite(nextProvisions) || nextProvisions < 0) {
+        return sendApiError(res, 'NEXUS-GEN-002');
+    }
+
+    const previousProvisions = resolveCommanderAgeProvisions(commander);
+    persistCommanderGuildLedger(targetUsername, { ageProvisions: nextProvisions });
+    commander = db.get('commanders').find({ username: targetUsername }).value();
+
+    res.json({
+        status: 'ok',
+        action: 'set-provisions',
+        username: targetUsername,
+        previousProvisions,
+        ageProvisions: resolveCommanderAgeProvisions(commander),
+        ...buildAgeMovementStatePayload(targetUsername, commander)
+    });
+});
+
 function persistCommanderGuildLedger(username, patch) {
     if (!username || !patch || typeof patch !== 'object') return;
     const assign = {};
