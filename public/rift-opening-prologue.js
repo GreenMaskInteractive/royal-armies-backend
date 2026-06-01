@@ -37,7 +37,7 @@
 
     const PROLOGUE_AUDIO_SRC = 'audio/distressedwoman.mp3';
     const PROLOGUE_NARRATION_VOLUME = 1;
-    const PROLOGUE_MUSIC_VOLUME = 0.5;
+    const PROLOGUE_MUSIC_VOLUME = 0.4;
     /** Narration starts immediately; background music joins after this delay. */
     const PROLOGUE_MUSIC_DELAY_MS = 2000;
     /** Hold black screen after narration ends before fading to progression. */
