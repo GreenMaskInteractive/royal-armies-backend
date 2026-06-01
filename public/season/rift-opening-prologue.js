@@ -9,7 +9,7 @@
     const OVERLAY_ID = 'game-opening-prologue';
     const AUDIO_ID = 'game-opening-prologue-audio';
     const SUBTITLE_ID = 'game-opening-prologue-subtitle';
-    const CRITICAL_STYLE_ID = 'rift-opening-prologue-critical-styles-v5';
+    const CRITICAL_STYLE_ID = 'rift-opening-prologue-critical-styles-v6';
     const TRAILER_LORE_TOOL_MAX_OPACITY = 0.5;
     const NARRATION_METADATA_TIMEOUT_MS = 8000;
 
@@ -1064,6 +1064,10 @@
         if (legacyStyleV2) legacyStyleV2.remove();
         const legacyStyleV3 = global.document.getElementById('rift-opening-prologue-critical-styles-v3');
         if (legacyStyleV3) legacyStyleV3.remove();
+        const legacyStyleV4 = global.document.getElementById('rift-opening-prologue-critical-styles-v4');
+        if (legacyStyleV4) legacyStyleV4.remove();
+        const legacyStyleV5 = global.document.getElementById('rift-opening-prologue-critical-styles-v5');
+        if (legacyStyleV5) legacyStyleV5.remove();
         if (global.document.getElementById(CRITICAL_STYLE_ID)) return;
 
         const style = global.document.createElement('style');
@@ -1266,11 +1270,34 @@
                 transform: translate(-50%, -50%) scale(1.08);
                 will-change: transform !important;
             }
+            #${OVERLAY_ID}.is-trailer-replay-mode .game-opening-prologue-cinematic-stage {
+                padding: 0 !important;
+                align-items: stretch !important;
+                justify-content: stretch !important;
+            }
+            #${OVERLAY_ID}.is-trailer-replay-mode .game-opening-prologue-cinematic-frame {
+                width: 100% !important;
+                max-width: none !important;
+                height: 100% !important;
+                max-height: none !important;
+                aspect-ratio: auto !important;
+                flex: 1 1 auto !important;
+                border-radius: 0 !important;
+            }
+            #${OVERLAY_ID}.is-trailer-replay-mode .game-opening-prologue-cinematic-frame::before,
+            #${OVERLAY_ID}.is-trailer-replay-mode .game-opening-prologue-cinematic-frame-border {
+                display: none !important;
+            }
             #${OVERLAY_ID}.is-trailer-replay-mode .game-opening-prologue-cinematic-shot img {
                 width: 100% !important;
                 height: 100% !important;
                 min-width: 100% !important;
                 min-height: 100% !important;
+                transform: translate(-50%, -50%) !important;
+            }
+            #${OVERLAY_ID}.is-trailer-replay-mode .game-opening-prologue-subtitle-dock.is-trailer-player-dock {
+                bottom: max(8px, 0.6cqh) !important;
+                width: min(92cqw, 100%) !important;
             }
         `.trim();
         global.document.head.appendChild(style);
@@ -1376,7 +1403,9 @@
         const y1 = Math.sin(angle) * panMag;
         const x2 = Math.cos(angle + Math.PI) * panMag;
         const y2 = Math.sin(angle + Math.PI) * panMag;
-        const scale = 1.08 + (Math.random() * 0.08);
+        const scale = isTrailerReplayMode
+            ? 1 + (Math.random() * 0.04)
+            : 1.08 + (Math.random() * 0.08);
         const duration = Math.max(1, durationSec * PROLOGUE_CINEMATIC_PAN_DURATION_SCALE);
 
         cinematicPanStyleCounter += 1;
