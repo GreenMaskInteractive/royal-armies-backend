@@ -395,7 +395,7 @@
                 max-width: 75% !important;
                 aspect-ratio: 4 / 3 !important;
                 height: auto !important;
-                max-height: min(82%, calc(100% - clamp(128px, 17vh, 188px))) !important;
+                max-height: min(90%, calc(100% - clamp(128px, 17vh, 188px))) !important;
                 flex: 0 0 auto !important;
                 border: none !important;
                 border-radius: 6px !important;
