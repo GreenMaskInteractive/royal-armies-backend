@@ -169,7 +169,9 @@ async function refreshDeveloperMaintenanceAlert() {
         if (generation !== maintenanceAlertRefreshGeneration) {
             return maintenanceAlertLastPayload;
         }
-
+        if (typeof shouldSuppressRepeatedLocalDevApiWarnings === 'function' && shouldSuppressRepeatedLocalDevApiWarnings()) {
+            return maintenanceAlertLastPayload;
+        }
         console.warn('Developer maintenance alert unavailable:', err.message);
         if (maintenanceAlertLastPayload && isMaintenanceAlertPayloadActive(maintenanceAlertLastPayload)) {
             applyDeveloperMaintenanceAlert(maintenanceAlertLastPayload);

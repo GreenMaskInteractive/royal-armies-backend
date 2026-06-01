@@ -1387,6 +1387,9 @@ async function fetchCommanderMailboxFromServer() {
         persistMailboxAndSyncNav();
         return true;
     } catch (err) {
+        if (typeof shouldSuppressRepeatedLocalDevApiWarnings === 'function' && shouldSuppressRepeatedLocalDevApiWarnings()) {
+            return false;
+        }
         console.warn('Mailbox sync failed:', err.message);
         return false;
     }
@@ -1726,6 +1729,13 @@ function startPortalMailboxPolling() {
     if (typeof isMailboxApiAvailable === 'function' && !isMailboxApiAvailable()) {
         syncNavMailboxIndicators();
         return;
+    }
+
+    if (!window.__royalArmiesMailboxApiUnreachableBound) {
+        window.__royalArmiesMailboxApiUnreachableBound = true;
+        window.addEventListener('royalarmies:api-unreachable', () => {
+            stopPortalMailboxPolling();
+        });
     }
 
     const runPoll = () => {
