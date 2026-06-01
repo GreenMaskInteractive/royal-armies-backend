@@ -266,6 +266,237 @@
         return TRAILER_MUSIC_START_SEC + getTrailerMusicDurationSec();
     }
 
+    function getTrailerCreditsTimelineStartSec() {
+        return getTrailerFinaleEndSec()
+            + ((TRAILER_CREDITS_TAGLINES_REVEAL_MS + TRAILER_MAIN_FINALE_HOLD_MS) / 1000);
+    }
+
+    function isTrailerScrubPreview() {
+        return trailerSeekActive;
+    }
+
+    function suspendTrailerFinaleSequencesForScrub() {
+        resetTrailerCreditsState();
+        logoRevealGeneration += 1;
+        trailerCreditsGeneration += 1;
+        resetTrailerFinaleSequenceState();
+        isTrailerFinaleLocked = false;
+        overlayEl?.classList.remove('is-trailer-finale-locked');
+        clearEnterWarGate();
+    }
+
+    function setTrailerScrubPreviewActive(active) {
+        overlayEl?.classList.toggle('is-trailer-scrubbing', Boolean(active));
+    }
+
+    function setTrailerOutroInstant(visible, taglinesVisible) {
+        const outroEl = overlayEl?.querySelector('#game-opening-prologue-trailer-outro');
+        if (!outroEl) return;
+
+        if (!visible) {
+            outroEl.hidden = true;
+            outroEl.classList.remove('is-visible', 'is-taglines-visible');
+            return;
+        }
+
+        outroEl.hidden = false;
+        outroEl.classList.add('is-visible');
+        outroEl.classList.toggle('is-taglines-visible', Boolean(taglinesVisible));
+    }
+
+    function resolveTrailerCreditsScrubTimings() {
+        const fadeOutMainMs = 1500;
+        const greenmaskInMs = 2200;
+        const greenmaskOutMs = 1500;
+        const alphaInMs = 2200;
+        const alphaOutMs = 1800;
+        const creditsStartSec = getTrailerCreditsTimelineStartSec();
+        const creditsEndSec = getTrailerMusicEndSec() - (TRAILER_CREDITS_MUSIC_END_BUFFER_MS / 1000);
+        const creditsSpanMs = Math.max(10000, (creditsEndSec - creditsStartSec) * 1000);
+        const fixedMs = fadeOutMainMs + greenmaskInMs + greenmaskOutMs + alphaInMs + alphaOutMs;
+        const holdBudgetMs = Math.max(3000, creditsSpanMs - fixedMs);
+
+        return {
+            fadeOutMainMs,
+            greenmaskInMs,
+            greenmaskHoldMs: Math.round(holdBudgetMs * 0.4),
+            greenmaskOutMs,
+            alphaInMs,
+            alphaHoldMs: Math.round(holdBudgetMs * 0.6),
+            alphaOutMs,
+        };
+    }
+
+    function applyTrailerMainFinaleScrubState() {
+        if (!overlayEl) return;
+
+        overlayEl.classList.add('is-trailer-finale-visible', 'is-logo-reveal-active');
+        setSubtitleDockActive(false);
+
+        const logoStage = overlayEl.querySelector('.game-opening-prologue-logo-stage');
+        const logoStack = logoStage?.querySelector('.game-opening-prologue-logo-stack');
+        const loreToolEl = overlayEl.querySelector('.game-opening-prologue-lore-tool');
+        const creditsEl = overlayEl.querySelector('#game-opening-prologue-trailer-credits');
+
+        logoStage?.classList.remove('is-trailer-main-finale-hidden');
+
+        const titleLogoEl = overlayEl.querySelector('.game-opening-prologue-logo--title');
+        if (titleLogoEl) {
+            titleLogoEl.hidden = false;
+            titleLogoEl.classList.remove('is-arriving', 'is-exploding');
+            titleLogoEl.classList.add('is-arrived');
+            titleLogoEl.style.removeProperty('transform');
+            titleLogoEl.style.removeProperty('opacity');
+            titleLogoEl.style.removeProperty('filter');
+        }
+
+        const subtitleLogoEl = overlayEl.querySelector('.game-opening-prologue-logo--subtitle');
+        if (subtitleLogoEl) {
+            subtitleLogoEl.hidden = false;
+            subtitleLogoEl.classList.remove('is-arriving', 'is-exploding');
+            subtitleLogoEl.classList.add('is-arrived');
+            subtitleLogoEl.style.removeProperty('transform');
+            subtitleLogoEl.style.removeProperty('opacity');
+            subtitleLogoEl.style.removeProperty('filter');
+            resetSubtitleLogoExplosionState(subtitleLogoEl);
+        }
+
+        if (logoStack) {
+            logoStack.style.transition = 'none';
+            logoStack.style.opacity = '1';
+        }
+
+        if (loreToolEl) {
+            loreToolEl.classList.add('is-visible');
+            loreToolEl.style.transition = 'none';
+            loreToolEl.style.opacity = String(TRAILER_LORE_TOOL_PEAK_OPACITY);
+        }
+
+        setTrailerOutroInstant(true, true);
+
+        if (creditsEl) {
+            creditsEl.hidden = true;
+            creditsEl.classList.remove('is-active');
+            creditsEl.querySelectorAll('.game-opening-prologue-trailer-credits-panel').forEach((panel) => {
+                panel.style.transition = 'none';
+                panel.style.opacity = '0';
+            });
+        }
+    }
+
+    function applyTrailerCreditsScrubState(timeSec) {
+        if (!overlayEl) return;
+
+        const creditsStartSec = getTrailerCreditsTimelineStartSec();
+        const elapsedMs = Math.max(0, (timeSec - creditsStartSec) * 1000);
+        const timings = resolveTrailerCreditsScrubTimings();
+
+        const logoStage = overlayEl.querySelector('.game-opening-prologue-logo-stage');
+        const logoStack = logoStage?.querySelector('.game-opening-prologue-logo-stack');
+        const loreToolEl = overlayEl.querySelector('.game-opening-prologue-lore-tool');
+        const creditsEl = overlayEl.querySelector('#game-opening-prologue-trailer-credits');
+        const greenmaskPanel = creditsEl?.querySelector('.game-opening-prologue-trailer-credits-panel--greenmask');
+        const alphaPanel = creditsEl?.querySelector('.game-opening-prologue-trailer-credits-panel--alpha');
+
+        overlayEl.classList.add('is-trailer-finale-visible', 'is-logo-reveal-active');
+        setSubtitleDockActive(false);
+
+        if (creditsEl) {
+            creditsEl.hidden = false;
+            creditsEl.classList.add('is-active');
+        }
+
+        const setMainFinaleOpacity = (opacity) => {
+            const clamped = Math.max(0, Math.min(1, opacity));
+            if (logoStack) {
+                logoStack.style.transition = 'none';
+                logoStack.style.opacity = String(clamped);
+            }
+            if (loreToolEl) {
+                loreToolEl.style.transition = 'none';
+                loreToolEl.classList.toggle('is-visible', clamped > 0.01);
+                loreToolEl.style.opacity = String(TRAILER_LORE_TOOL_PEAK_OPACITY * clamped);
+            }
+            if (clamped <= 0.001) {
+                logoStage?.classList.add('is-trailer-main-finale-hidden');
+            } else {
+                logoStage?.classList.remove('is-trailer-main-finale-hidden');
+            }
+        };
+
+        const setPanelOpacity = (panel, opacity) => {
+            if (!panel) return;
+            panel.style.transition = 'none';
+            panel.style.opacity = String(Math.max(0, Math.min(1, opacity)));
+        };
+
+        let cursorMs = 0;
+
+        if (elapsedMs < timings.fadeOutMainMs) {
+            setMainFinaleOpacity(1 - (elapsedMs / timings.fadeOutMainMs));
+            setPanelOpacity(greenmaskPanel, 0);
+            setPanelOpacity(alphaPanel, 0);
+            return;
+        }
+
+        cursorMs += timings.fadeOutMainMs;
+        setMainFinaleOpacity(0);
+        setTrailerOutroInstant(false, false);
+
+        if (elapsedMs < cursorMs + timings.greenmaskInMs) {
+            const t = (elapsedMs - cursorMs) / timings.greenmaskInMs;
+            setPanelOpacity(greenmaskPanel, t);
+            setPanelOpacity(alphaPanel, 0);
+            return;
+        }
+
+        cursorMs += timings.greenmaskInMs;
+
+        if (elapsedMs < cursorMs + timings.greenmaskHoldMs) {
+            setPanelOpacity(greenmaskPanel, 1);
+            setPanelOpacity(alphaPanel, 0);
+            return;
+        }
+
+        cursorMs += timings.greenmaskHoldMs;
+
+        if (elapsedMs < cursorMs + timings.greenmaskOutMs) {
+            const t = (elapsedMs - cursorMs) / timings.greenmaskOutMs;
+            setPanelOpacity(greenmaskPanel, 1 - t);
+            setPanelOpacity(alphaPanel, 0);
+            return;
+        }
+
+        cursorMs += timings.greenmaskOutMs;
+
+        if (elapsedMs < cursorMs + timings.alphaInMs) {
+            const t = (elapsedMs - cursorMs) / timings.alphaInMs;
+            setPanelOpacity(greenmaskPanel, 0);
+            setPanelOpacity(alphaPanel, t);
+            return;
+        }
+
+        cursorMs += timings.alphaInMs;
+
+        if (elapsedMs < cursorMs + timings.alphaHoldMs) {
+            setPanelOpacity(greenmaskPanel, 0);
+            setPanelOpacity(alphaPanel, 1);
+            return;
+        }
+
+        cursorMs += timings.alphaHoldMs;
+
+        if (elapsedMs < cursorMs + timings.alphaOutMs) {
+            const t = (elapsedMs - cursorMs) / timings.alphaOutMs;
+            setPanelOpacity(greenmaskPanel, 0);
+            setPanelOpacity(alphaPanel, 1 - t);
+            return;
+        }
+
+        setPanelOpacity(greenmaskPanel, 0);
+        setPanelOpacity(alphaPanel, 0);
+    }
+
     function getTrailerTimelineDurationSec() {
         const narrationSec = getTrailerNarrationDurationSec();
         const finaleEnd = getTrailerFinaleEndSec();
@@ -431,7 +662,9 @@
         return trailerFinaleSequencePromise;
     }
 
-    function applyTrailerFinaleProgress(progress) {
+    function applyTrailerFinaleProgress(progress, options) {
+        const opts = options && typeof options === 'object' ? options : {};
+        const scrubbing = Boolean(opts.scrub);
         const p = Math.max(0, Math.min(1, Number(progress) || 0));
         const titleLogoEl = overlayEl?.querySelector('.game-opening-prologue-logo--title');
         const subtitleLogoEl = overlayEl?.querySelector('.game-opening-prologue-logo--subtitle');
@@ -440,6 +673,22 @@
         const titlePhaseEnd = PROLOGUE_TITLE_LOGO_REVEAL_MS / TRAILER_POST_NARRATION_MS;
 
         overlayEl?.classList.add('is-logo-reveal-active');
+
+        if (scrubbing) {
+            const logoStage = overlayEl?.querySelector('.game-opening-prologue-logo-stage');
+            const logoStack = logoStage?.querySelector('.game-opening-prologue-logo-stack');
+            const creditsEl = overlayEl?.querySelector('#game-opening-prologue-trailer-credits');
+
+            logoStage?.classList.remove('is-trailer-main-finale-hidden');
+            if (logoStack) {
+                logoStack.style.transition = 'none';
+                logoStack.style.opacity = '1';
+            }
+            if (creditsEl) {
+                creditsEl.hidden = true;
+                creditsEl.classList.remove('is-active');
+            }
+        }
 
         if (p <= 0.001) {
             overlayEl?.classList.remove('is-trailer-finale-visible');
@@ -471,13 +720,22 @@
             if (loreToolEl) {
                 const loreProgress = Math.min(1, (p - titlePhaseEnd) / Math.max(0.001, 1 - titlePhaseEnd));
                 loreToolEl.classList.toggle('is-visible', loreProgress > 0.12);
+                if (scrubbing) {
+                    loreToolEl.style.transition = 'none';
+                }
                 loreToolEl.style.opacity = String(
-                    Math.min(TRAILER_LORE_TOOL_MAX_OPACITY, loreProgress * TRAILER_LORE_TOOL_MAX_OPACITY)
+                    Math.min(TRAILER_LORE_TOOL_PEAK_OPACITY, loreProgress * TRAILER_LORE_TOOL_PEAK_OPACITY)
                 );
             }
             if (outroEl && p > titlePhaseEnd + 0.12) {
-                outroEl.hidden = false;
-                outroEl.classList.add('is-visible', 'is-taglines-visible');
+                if (scrubbing) {
+                    setTrailerOutroInstant(true, p > titlePhaseEnd + 0.2);
+                } else {
+                    outroEl.hidden = false;
+                    outroEl.classList.add('is-visible', 'is-taglines-visible');
+                }
+            } else if (scrubbing) {
+                setTrailerOutroInstant(false, false);
             }
         } else if (subtitleLogoEl) {
             subtitleLogoEl.hidden = true;
@@ -835,12 +1093,16 @@
 
         const opts = options && typeof options === 'object' ? options : {};
         const seekMedia = opts.seekMedia !== false;
+        const scrubbing = Boolean(opts.scrubbing) || isTrailerScrubPreview();
         const narrationSec = getTrailerNarrationDurationSec();
         const finaleStart = getTrailerFinaleStartSec();
         const finaleEnd = getTrailerFinaleEndSec();
+        const creditsStart = getTrailerCreditsTimelineStartSec();
         const totalSec = getTrailerTimelineDurationSec();
         const clamped = Math.max(0, Math.min(totalSec, Number(timeSec) || 0));
         trailerReplayTimeSec = clamped;
+
+        setTrailerScrubPreviewActive(scrubbing && seekMedia);
 
         if (clamped < finaleStart - 0.03) {
             if (trailerFinaleSequenceStarted || isPostNarrationHold || isTrailerFinaleLocked) {
@@ -861,13 +1123,13 @@
                 audioEl.currentTime = clamped;
             }
 
-            if (seekMedia) {
+            if (seekMedia && !scrubbing) {
                 cinematicShotEls.forEach((shotEl) => shotEl.removeAttribute('data-pan-bound'));
             }
 
             syncSubtitleToAudioTime(true);
-            syncCinematicToAudioTime(true);
-        } else if (clamped < finaleEnd) {
+            syncCinematicToAudioTime(true, { scrub: scrubbing && seekMedia });
+        } else if (clamped < creditsStart) {
             overlayEl.classList.add('is-trailer-finale-visible');
             setSubtitleDockActive(false);
 
@@ -881,10 +1143,20 @@
             if (seekMedia) {
                 overlayEl.classList.remove('is-cinematics-active');
                 clearCinematicShots();
-                cancelTrailerFinaleSequenceForScrub();
-                applyTrailerFinaleProgress(finaleProgress);
-                if (finaleProgress >= 0.98) {
-                    ensureTrailerFinaleDomVisible();
+
+                if (scrubbing) {
+                    suspendTrailerFinaleSequencesForScrub();
+                    if (clamped < finaleEnd) {
+                        applyTrailerFinaleProgress(finaleProgress, { scrub: true });
+                    } else {
+                        applyTrailerMainFinaleScrubState();
+                    }
+                } else {
+                    cancelTrailerFinaleSequenceForScrub();
+                    applyTrailerFinaleProgress(finaleProgress);
+                    if (finaleProgress >= 0.98) {
+                        ensureTrailerFinaleDomVisible();
+                    }
                 }
             } else if (!trailerFinaleSequenceStarted && isTrailerReplayPlaying) {
                 void beginTrailerFinaleSequence();
@@ -905,9 +1177,15 @@
             if (seekMedia) {
                 overlayEl.classList.remove('is-cinematics-active');
                 clearCinematicShots();
-                cancelTrailerFinaleSequenceForScrub();
-                ensureTrailerFinaleDomVisible();
-                lockTrailerFinaleVisuals();
+
+                if (scrubbing) {
+                    suspendTrailerFinaleSequencesForScrub();
+                    applyTrailerCreditsScrubState(clamped);
+                } else {
+                    cancelTrailerFinaleSequenceForScrub();
+                    ensureTrailerFinaleDomVisible();
+                    lockTrailerFinaleVisuals();
+                }
             } else if (!trailerFinaleSequenceStarted && isTrailerReplayPlaying) {
                 void beginTrailerFinaleSequence();
             } else if (!trailerFinaleSequenceStarted && !isTrailerFinaleLocked) {
@@ -922,7 +1200,9 @@
         }
 
         updateTrailerPlayerUi();
-        updateTrailerOrientationClasses();
+        if (!scrubbing) {
+            updateTrailerOrientationClasses();
+        }
     }
 
     function shouldKeepTrailerMediaPlaying() {
@@ -1137,6 +1417,7 @@
         trailerSeekActive = false;
         const shouldResume = trailerSeekWasPlaying;
         trailerSeekWasPlaying = false;
+        setTrailerScrubPreviewActive(false);
 
         if (shouldResume) {
             const totalSec = getTrailerTimelineDurationSec();
@@ -1144,6 +1425,7 @@
             startTrailerReplayPlayback({ fromSeekEnd: atEnd });
         } else {
             updateTrailerPlayerUi();
+            updateTrailerOrientationClasses();
         }
     }
 
@@ -1329,7 +1611,7 @@
 
             const totalSec = getTrailerTimelineDurationSec();
             const progress = Math.max(0, Math.min(1, Number(seekEl.value) / 1000));
-            applyTrailerTimelinePosition(totalSec * progress, { syncMusic: true });
+            applyTrailerTimelinePosition(totalSec * progress, { syncMusic: true, scrubbing: true });
         });
 
         viewportEl.addEventListener('change', (event) => {
@@ -1887,6 +2169,62 @@
         imgEl.classList.remove('is-panning');
     }
 
+    function seededUnitRandom(seed) {
+        const value = Math.sin(Number(seed) * 12.9898 + 78.233) * 43758.5453;
+        return value - Math.floor(value);
+    }
+
+    function ensureTrailerCinematicPanParams(shotEl) {
+        if (shotEl.dataset.cinePanReady === '1') {
+            return {
+                x1: parseFloat(shotEl.dataset.cinePanX1) || 0,
+                y1: parseFloat(shotEl.dataset.cinePanY1) || 0,
+                x2: parseFloat(shotEl.dataset.cinePanX2) || 0,
+                y2: parseFloat(shotEl.dataset.cinePanY2) || 0,
+                scale: parseFloat(shotEl.dataset.cinePanScale) || 1.12,
+            };
+        }
+
+        const shotId = Number(shotEl.dataset.cinematicId) || 1;
+        const panMag = isTrailerReplayMode
+            ? 4 + (seededUnitRandom(shotId * 5.43) * 5)
+            : 2.5 + (seededUnitRandom(shotId * 3.17) * 4.5);
+        const angle = seededUnitRandom(shotId * 7.91) * Math.PI * 2;
+        const scale = isTrailerReplayMode
+            ? TRAILER_CINE_PAN_SCALE_MIN + (seededUnitRandom(shotId * 11.13) * TRAILER_CINE_PAN_SCALE_RANGE)
+            : 1.08 + (seededUnitRandom(shotId * 13.37) * 0.08);
+        const params = {
+            x1: Math.cos(angle) * panMag,
+            y1: Math.sin(angle) * panMag,
+            x2: Math.cos(angle + Math.PI) * panMag,
+            y2: Math.sin(angle + Math.PI) * panMag,
+            scale,
+        };
+
+        shotEl.dataset.cinePanX1 = String(params.x1);
+        shotEl.dataset.cinePanY1 = String(params.y1);
+        shotEl.dataset.cinePanX2 = String(params.x2);
+        shotEl.dataset.cinePanY2 = String(params.y2);
+        shotEl.dataset.cinePanScale = String(params.scale);
+        shotEl.dataset.cinePanReady = '1';
+
+        return params;
+    }
+
+    function applyTrailerCinematicPanScrub(imgEl, shotEl, shot, scriptTime) {
+        if (!imgEl || !shotEl || !shot) return;
+
+        const params = ensureTrailerCinematicPanParams(shotEl);
+        const shotDuration = Math.max(0.001, shot.scriptEnd - shot.scriptStart);
+        const progress = Math.max(0, Math.min(1, (scriptTime - shot.scriptStart) / shotDuration));
+        const x = params.x1 + ((params.x2 - params.x1) * progress);
+        const y = params.y1 + ((params.y2 - params.y1) * progress);
+
+        removeCinematicPanAnimation(imgEl);
+        imgEl.style.transform = `translate(-50%, -50%) scale(${params.scale.toFixed(3)}) translate(${x.toFixed(2)}%, ${y.toFixed(2)}%)`;
+        shotEl.dataset.panBound = '1';
+    }
+
     function assignRandomCinematicPan(imgEl, durationSec) {
         if (!imgEl) return;
 
@@ -2079,10 +2417,12 @@
         return audioEl?.currentTime || 0;
     }
 
-    function syncCinematicToAudioTime(force) {
+    function syncCinematicToAudioTime(force, options) {
         if ((!audioEl && !isTrailerReplayMode) || !cinematicShotEls.length) return;
         if (!force && !canSyncPrologueTimeline()) return;
 
+        const opts = options && typeof options === 'object' ? options : {};
+        const scrub = Boolean(opts.scrub);
         const scriptTime = toScriptTimelineTime(getCinematicSyncTimeSec());
         let dominantShotId = -1;
         let dominantOpacity = 0;
@@ -2107,7 +2447,9 @@
                 const remainingScriptSec = Math.max(0.001, shot.scriptEnd - scriptTime);
                 const remainingWallSec = remainingScriptSec * (cueTimelineScale > 0 ? cueTimelineScale : 1);
 
-                if (shotEl.dataset.panBound !== '1') {
+                if (scrub && isTrailerReplayMode && imgEl) {
+                    applyTrailerCinematicPanScrub(imgEl, shotEl, shot, scriptTime);
+                } else if (shotEl.dataset.panBound !== '1') {
                     assignRandomCinematicPan(imgEl, remainingWallSec);
                     shotEl.dataset.panBound = '1';
                 }
@@ -2117,9 +2459,11 @@
                     dominantShotId = shotId;
                 }
             } else {
-                shotEl.removeAttribute('data-pan-bound');
-                const imgEl = shotEl.querySelector('img');
-                if (imgEl) removeCinematicPanAnimation(imgEl);
+                if (!scrub) {
+                    shotEl.removeAttribute('data-pan-bound');
+                    const imgEl = shotEl.querySelector('img');
+                    if (imgEl) removeCinematicPanAnimation(imgEl);
+                }
             }
         });
 

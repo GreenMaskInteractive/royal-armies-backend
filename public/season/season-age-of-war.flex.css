@@ -361,6 +361,17 @@
     }
 }
 
+.game-opening-prologue.is-trailer-scrubbing .game-opening-prologue-trailer-outro,
+.game-opening-prologue.is-trailer-scrubbing .game-opening-prologue-lore-tool,
+.game-opening-prologue.is-trailer-scrubbing .game-opening-prologue-logo-stack,
+.game-opening-prologue.is-trailer-scrubbing .game-opening-prologue-trailer-credits-panel {
+    transition: none !important;
+}
+
+.game-opening-prologue.is-trailer-scrubbing .game-opening-prologue-cinematic-shot img {
+    animation: none !important;
+}
+
 .game-opening-prologue-trailer-credits {
     position: absolute;
     inset: 0;
