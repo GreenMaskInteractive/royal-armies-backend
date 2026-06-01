@@ -395,24 +395,11 @@
 
 .game-opening-prologue-trailer-credits-logo {
     display: block;
-    width: min(220px, 52cqw);
+    width: min(110px, 26cqw);
     max-width: 100%;
     height: auto;
     object-fit: contain;
     filter: drop-shadow(0 0 18px rgba(255, 196, 88, 0.28));
-}
-
-.game-opening-prologue-trailer-credits-studio {
-    margin: 0;
-    font-family: 'Cinzel', Georgia, 'Times New Roman', serif;
-    font-size: clamp(0.72rem, 1.55vw, 1.18rem);
-    font-weight: 700;
-    letter-spacing: 0.34em;
-    text-transform: uppercase;
-    color: rgba(255, 224, 164, 0.96);
-    text-shadow:
-        0 0 18px rgba(255, 180, 48, 0.32),
-        0 2px 16px rgba(0, 0, 0, 0.72);
 }
 
 .game-opening-prologue-trailer-credits-alpha-copy {
@@ -436,12 +423,7 @@
 }
 
 .game-opening-prologue.is-trailer-replay-mode .game-opening-prologue-trailer-credits-logo {
-    width: min(120px, 34cqw);
-}
-
-.game-opening-prologue.is-trailer-replay-mode .game-opening-prologue-trailer-credits-studio {
-    font-size: clamp(0.48rem, 1.05vw, 0.72rem);
-    letter-spacing: 0.28em;
+    width: min(60px, 17cqw);
 }
 
 .game-opening-prologue.is-trailer-replay-mode .game-opening-prologue-trailer-credits-alpha-copy {
@@ -1221,27 +1203,26 @@ body.age-of-war-trailer-page {
     max-width: 100%;
     max-height: none !important;
     gap: clamp(7px, 1.2vh, 15px);
-    transform: translateY(-4cqh);
 }
 
 .game-opening-prologue.is-trailer-replay-mode .game-opening-prologue-trailer-outro {
-    position: relative;
-    top: auto;
-    left: auto;
+    position: absolute;
+    top: calc(100% + clamp(8px, 1.4cqh, 14px));
+    left: 50%;
     bottom: auto;
     z-index: 5;
-    width: 100% !important;
+    width: min(920px, 96cqw) !important;
     max-width: 100%;
-    margin-top: clamp(8px, 1.4cqh, 14px);
-    transform: none;
+    margin-top: 0;
+    transform: translateX(-50%) translateY(12px);
     text-align: center;
     opacity: 0;
-    transition: opacity 0.85s ease;
+    transition: opacity 0.85s ease, transform 0.85s ease;
 }
 
 .game-opening-prologue.is-trailer-replay-mode .game-opening-prologue-trailer-outro.is-visible {
     opacity: 1;
-    transform: none;
+    transform: translateX(-50%) translateY(0);
 }
 
 .game-opening-prologue.is-trailer-replay-mode .game-opening-prologue-trailer-taglines {

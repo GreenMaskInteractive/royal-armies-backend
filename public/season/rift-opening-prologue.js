@@ -88,7 +88,8 @@
     const PROLOGUE_LOGO_SRC = 'images/royalarmiestitle.png?v=logo-trim-gimp-1';
     const PROLOGUE_SUBTITLE_LOGO_SRC = 'season/royalarmiessubtitlelogo.png?v=age-subtitle-1';
     const PROLOGUE_LORE_TOOL_SRC = 'images/royalarmiesloretool.png?v=prologue-lore-tool-1';
-    const TRAILER_GREENMASK_LOGO_SRC = 'images/greenmaskinteractivelogo.png?v=trailer-credits-1';
+    const TRAILER_GREENMASK_LOGO_SRC = 'images/greenmaskinteractivelogo.png?v=trailer-credits-2';
+    const TRAILER_LORE_TOOL_PEAK_OPACITY = 0.35;
     const TRAILER_MAIN_FINALE_HOLD_MS = 20000;
     const TRAILER_CREDITS_TAGLINES_REVEAL_MS = 860;
     const TRAILER_CREDITS_MUSIC_END_BUFFER_MS = 350;
@@ -2301,7 +2302,6 @@
                             class="game-opening-prologue-trailer-credits-logo"
                             decoding="async"
                         >
-                        <p class="game-opening-prologue-trailer-credits-studio">GREENMASK INTERACTIVE</p>
                     </div>
                     <div class="game-opening-prologue-trailer-credits-panel game-opening-prologue-trailer-credits-panel--alpha">
                         <p class="game-opening-prologue-trailer-credits-alpha-copy">
@@ -2664,7 +2664,8 @@
         }
 
         loreToolEl.classList.add('is-visible');
-        loreToolEl.style.opacity = '1';
+        const peakOpacity = isTrailerPage() ? TRAILER_LORE_TOOL_PEAK_OPACITY : 1;
+        loreToolEl.style.opacity = String(peakOpacity);
 
         return new Promise((resolve) => {
             let settled = false;
@@ -3222,7 +3223,14 @@
             logoStage.querySelector('.game-opening-prologue-lore-tool'),
         ].filter(Boolean);
 
-        await animateTrailerElementsOpacity(targets, 1, 0, durationMs);
+        const fadeJobs = targets.map((el) => {
+            const fromOpacity = el.classList.contains('game-opening-prologue-lore-tool')
+                ? TRAILER_LORE_TOOL_PEAK_OPACITY
+                : 1;
+            return animateTrailerElementsOpacity([el], fromOpacity, 0, durationMs);
+        });
+
+        await Promise.all(fadeJobs);
         logoStage.classList.add('is-trailer-main-finale-hidden');
     }
 
