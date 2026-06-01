@@ -235,6 +235,7 @@ function buildRecruitStack(unit, quantity) {
         rank: PROMOTION_RANK[firstPromotion] || 1,
         qty: quantity,
         injuredQty: 0,
+        unitXp: 0,
         purpose: resolveUnitPurpose(unit.unitRole)
     };
 }

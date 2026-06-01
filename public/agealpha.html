@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Royal Armies — Age Alpha</title>
     <link rel="stylesheet" href="style.css?v=site-viewport-stable-1">
-    <link rel="stylesheet" href="style2.css?v=guild-battle-rebuild-1">
+    <link rel="stylesheet" href="style2.css?v=garrison-menu-2">
     <link rel="stylesheet" href="mobile-responsive.css?v=records-compact-tabs-1">
     <link rel="stylesheet" href="dev-page-navigator.css">
     <link rel="stylesheet" href="custom-cursor.css?v=scrollbar-cursor-3">
@@ -953,12 +953,12 @@
                 </div>
             </div>
 
-            <div id="age-barracks-workspace" class="age-barracks-workspace" hidden aria-hidden="true" aria-label="Barracks recruitment">
+            <div id="age-barracks-workspace" class="age-barracks-workspace" hidden aria-hidden="true" aria-label="Garrison Registry recruitment">
                 <div class="age-barracks-shell">
                     <header class="age-barracks-header">
                         <div class="age-barracks-header-copy">
-                            <p class="age-barracks-eyebrow">Settlement Venue</p>
-                            <h2 class="age-barracks-title">Barracks</h2>
+                            <p class="age-barracks-eyebrow">Barracks</p>
+                            <h2 class="age-barracks-title">Garrison Registry</h2>
                             <p class="age-barracks-subtitle">Recruit units, review promotion paths, and prepare your standing army.</p>
                             <p id="age-barracks-commander-status" class="age-barracks-commander-status" aria-live="polite"></p>
                         </div>
@@ -990,12 +990,50 @@
                         <div class="age-barracks-main">
                             <div class="age-barracks-main-head">
                                 <h3 id="age-barracks-active-category-label" class="age-barracks-active-category-label">Infantry</h3>
-                                <p class="age-barracks-main-hint">Select a unit to view stats, promotion costs, and purchase price.</p>
+                                <p class="age-barracks-main-hint">Select a unit to view stats, promotion costs, and recruit price.</p>
                             </div>
                             <div id="age-barracks-unit-grid" class="age-barracks-unit-grid" aria-live="polite"></div>
                             <aside id="age-barracks-unit-detail" class="age-barracks-unit-detail" hidden aria-live="polite"></aside>
                         </div>
                     </div>
+                </div>
+            </div>
+
+            <div id="age-rank-promotion-overlay" class="age-rank-promotion-overlay" hidden aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="age-rank-promotion-title">
+                <div class="age-rank-promotion-card">
+                    <p class="age-rank-promotion-eyebrow">Commander Promotion</p>
+                    <h2 id="age-rank-promotion-title" class="age-rank-promotion-title">Rank Up!</h2>
+                    <p class="age-rank-promotion-rank-line">You are now <strong id="age-rank-promotion-rank">—</strong></p>
+                    <p id="age-rank-promotion-detail" class="age-rank-promotion-detail"></p>
+                    <p id="age-rank-promotion-provisions" class="age-rank-promotion-provisions" hidden></p>
+                    <div class="age-rank-promotion-actions">
+                        <button type="button" id="age-rank-promotion-barracks" class="age-rank-promotion-btn age-rank-promotion-btn--primary">Garrison Registry</button>
+                        <button type="button" id="age-rank-promotion-evolution" class="age-rank-promotion-btn age-rank-promotion-btn--secondary">Unit Evolution Workspace</button>
+                        <button type="button" id="age-rank-promotion-dismiss" class="age-rank-promotion-btn age-rank-promotion-btn--ghost">Continue</button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="age-unit-evolution-workspace" class="age-unit-evolution-workspace" hidden aria-hidden="true" aria-label="Unit Evolution workspace">
+                <div class="age-unit-evolution-shell">
+                    <header class="age-unit-evolution-header">
+                        <div class="age-unit-evolution-header-copy">
+                            <p class="age-unit-evolution-eyebrow">Barracks</p>
+                            <h2 class="age-unit-evolution-title">Unit Evolution Workspace</h2>
+                            <p class="age-unit-evolution-subtitle">Spend provisions on rank promotions and tier evolutions when units are eligible.</p>
+                            <p id="age-unit-evolution-ready-count" class="age-unit-evolution-ready-count" aria-live="polite"></p>
+                        </div>
+                        <div class="age-unit-evolution-header-actions">
+                            <div class="age-unit-evolution-wallet" aria-label="Commander provisions">
+                                <span class="age-unit-evolution-wallet-label">Provisions</span>
+                                <span id="age-unit-evolution-provisions" class="age-unit-evolution-wallet-value">—</span>
+                            </div>
+                            <button type="button" id="age-unit-evolution-open-barracks" class="age-unit-evolution-link-btn">Garrison Registry</button>
+                            <button type="button" id="age-unit-evolution-close" class="age-unit-evolution-close" aria-label="Close Unit Evolution workspace">Close</button>
+                        </div>
+                    </header>
+                    <p id="age-unit-evolution-status" class="age-unit-evolution-status" hidden aria-live="polite"></p>
+                    <div id="age-unit-evolution-stack-list" class="age-unit-evolution-stack-list" aria-live="polite"></div>
                 </div>
             </div>
 
@@ -1481,7 +1519,7 @@
     <script src="rift-player-loc-pins.js?v=player-loc-pins-1"></script>
     <script src="age-world-map.js?v=nation-centroid-labels-1"></script>
     <script src="age-world-plan-overlay.js?v=hq-clear-plan-fix-1"></script>
-    <script src="age-view-tabs.js?v=guild-jobs-fix-1"></script>
+    <script src="age-view-tabs.js?v=garrison-menu-2"></script>
     <script src="age-headquarters-planning-map.js?v=hold-sf-mf-staging-1"></script>
     <script src="age-headquarters.js?v=fortifications-collapse-1"></script>
     <script src="age-dispatch-alert.js?v=hq-dispatch-dismiss-1"></script>
@@ -1491,9 +1529,11 @@
     <script src="age-page.js?v=site-viewport-stable-1"></script>
     <script src="age-war-ledger.js?v=war-ledger-bottom-bar-1"></script>
     <script src="rift-unit-purchase-catalog.js?v=swarm-recruit-1"></script>
-    <script src="rift-age-guild-training.js?v=guild-battle-debug-2"></script>
-    <script src="age-adventurers-guild.js?v=guild-battle-debug-2"></script>
-    <script src="age-barracks.js?v=swarm-recruit-1"></script>
+    <script src="rift-age-guild-training.js?v=unit-evolution-1"></script>
+    <script src="rift-age-unit-evolution.js?v=unit-evolution-1"></script>
+    <script src="age-adventurers-guild.js?v=garrison-menu-1"></script>
+    <script src="age-unit-evolution.js?v=unit-evolution-3"></script>
+    <script src="age-barracks.js?v=garrison-menu-2"></script>
     <script src="age-records.js?v=records-nation-defaults-1"></script>
     <script src="dev-page-navigator.js?v=dev-nav-drag-fix-1"></script>
     <script src="custom-cursor.js?v=scrollbar-cursor-3"></script>

@@ -492,5 +492,8 @@ module.exports = {
     appendPvpBattleXpLogLines,
     appendBattleXpLogLines,
     resolvePhaseParticipation,
-    countStackParticipationRounds
+    countStackParticipationRounds,
+    allocateStackSurvivors,
+    resolveTrainingOutcomeMultiplier,
+    resolveTrainingBattleDurationFactor
 };

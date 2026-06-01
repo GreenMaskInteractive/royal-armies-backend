@@ -573,6 +573,12 @@
             message: 'Choose a valid rank reset type (rank or exile).',
             category: 'game'
         },
+        'NEXUS-AGE-027': {
+            http: 400,
+            title: 'Unit promotion',
+            message: 'This unit stack has not earned enough experience for the next promotion rank.',
+            category: 'game'
+        },
 
         /* --- Player conduct reports --- */
         'NEXUS-REPORT-001': {

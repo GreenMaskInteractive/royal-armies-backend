@@ -4,7 +4,7 @@
 (function initRoyalArmiesAdventurersGuild(global) {
     'use strict';
 
-    const BATTLE_CHARGE_MS = 1000;
+    const BATTLE_CHARGE_MS = 1500;
     const BATTLE_RING_CIRCUMFERENCE = 2 * Math.PI * 46;
     const BATTLE_DEBUG = (
         new URLSearchParams(global.location?.search || '').has('guildBattleDebug')
@@ -567,6 +567,20 @@
             + `${result.provisionsGranted ? ` · +${escapeHtml(result.provisionsGranted)} provisions` : ''}</p>`
             : '';
 
+        const promoteReady = Array.isArray(result.unitsReadyToPromote) ? result.unitsReadyToPromote : [];
+        const unitPromoteBlock = promoteReady.length
+            ? (
+                '<div class="age-guild-log-unit-promote">'
+                + `<p class="age-guild-log-unit-promote-title">${escapeHtml(promoteReady.length)} unit stack(s) ready for promotion</p>`
+                + '<ul class="age-guild-log-unit-promote-list">'
+                + promoteReady.map((entry) => (
+                    `<li>${escapeHtml(entry.name)} → ${escapeHtml(entry.nextPromotionLabel || 'next rank')}</li>`
+                )).join('')
+                + '</ul>'
+                + '</div>'
+            )
+            : '';
+
         logEl.innerHTML = (
             `<article class="age-guild-log-entry ${winnerClass}">`
             + '<header class="age-guild-log-head">'
@@ -574,11 +588,84 @@
             + `<p class="age-guild-log-meta">${escapeHtml(formatEndReason(result))} · +${escapeHtml(result.xpGain ?? 0)} XP${escapeHtml(survivorMeta)}`
             + `${result.injuriesApplied ? ` · ${escapeHtml(result.injuriesApplied)} injured` : ''}</p>`
             + rankLine
+            + unitPromoteBlock
             + '</header>'
             + `<ol class="age-guild-battle-log">${logLines}</ol>`
             + '</article>'
         );
         logEl.scrollTop = 0;
+    }
+
+    function showCommanderRankPromotionPopup(result) {
+        const overlay = global.document.getElementById('age-rank-promotion-overlay');
+        if (!overlay || !result?.rankPromoted) return;
+
+        const rankEl = global.document.getElementById('age-rank-promotion-rank');
+        const detailEl = global.document.getElementById('age-rank-promotion-detail');
+        const provisionsEl = global.document.getElementById('age-rank-promotion-provisions');
+
+        if (rankEl) rankEl.textContent = String(result.rank ?? '');
+        if (detailEl) {
+            detailEl.textContent = `You have reached commander rank ${result.rank}. Train your units and expand your army.`;
+        }
+        if (provisionsEl) {
+            if (result.provisionsGranted) {
+                provisionsEl.hidden = false;
+                provisionsEl.textContent = `+${result.provisionsGranted} provisions granted`;
+            } else {
+                provisionsEl.hidden = true;
+                provisionsEl.textContent = '';
+            }
+        }
+
+        overlay.hidden = false;
+        overlay.setAttribute('aria-hidden', 'false');
+        global.document.body.classList.add('age-rank-promotion-open');
+        global.document.getElementById('age-rank-promotion-dismiss')?.focus();
+    }
+
+    function dismissCommanderRankPromotionPopup() {
+        const overlay = global.document.getElementById('age-rank-promotion-overlay');
+        if (!overlay) return;
+
+        overlay.hidden = true;
+        overlay.setAttribute('aria-hidden', 'true');
+        global.document.body.classList.remove('age-rank-promotion-open');
+    }
+
+    function openBarracksFromRankPopup() {
+        dismissCommanderRankPromotionPopup();
+        global.RoyalArmiesAgeBarracks?.open();
+    }
+
+    function openUnitEvolutionFromRankPopup() {
+        dismissCommanderRankPromotionPopup();
+        global.RoyalArmiesAgeUnitEvolution?.open({ highlightReady: true });
+    }
+
+    function onRankPromotionOverlayClick(event) {
+        if (event.target.closest('#age-rank-promotion-dismiss')) {
+            event.preventDefault();
+            dismissCommanderRankPromotionPopup();
+            return;
+        }
+        if (event.target.closest('#age-rank-promotion-barracks')) {
+            event.preventDefault();
+            openBarracksFromRankPopup();
+            return;
+        }
+        if (event.target.closest('#age-rank-promotion-evolution')) {
+            event.preventDefault();
+            openUnitEvolutionFromRankPopup();
+        }
+    }
+
+    function onRankPromotionOverlayKeydown(event) {
+        if (event.key !== 'Escape') return;
+        const overlay = global.document.getElementById('age-rank-promotion-overlay');
+        if (!overlay || overlay.hidden) return;
+        event.preventDefault();
+        dismissCommanderRankPromotionPopup();
     }
 
     function renderTradeView() {
@@ -823,6 +910,9 @@
             }
             setBattleTab('details');
             renderGuildPanel();
+            if (lastBattleResult.rankPromoted) {
+                showCommanderRankPromotionPopup(lastBattleResult);
+            }
             if (!battle.holdActive && battle.autoHeal) {
                 await battleRunAutoHealLoop();
             }
@@ -1173,6 +1263,7 @@
     function onSettlementMenuClick(event) {
         const jobBtn = event.target.closest('[data-guild-job]');
         if (!jobBtn) return;
+        if (event.target.closest('[data-garrison-option]')) return;
         event.preventDefault();
         event.stopPropagation();
         openJob(jobBtn.getAttribute('data-guild-job'));
@@ -1214,10 +1305,15 @@
         });
 
         global.document.getElementById('age-settlement-menu-list')?.addEventListener('click', onSettlementMenuClick, true);
+
+        const rankOverlay = global.document.getElementById('age-rank-promotion-overlay');
+        rankOverlay?.addEventListener('click', onRankPromotionOverlayClick);
+        global.document.addEventListener('keydown', onRankPromotionOverlayKeydown);
     }
 
     function enableAgeAdventurersGuild() {
         bindGuild();
+        global.enableAgeUnitEvolution?.();
     }
 
     global.RoyalArmiesAdventurersGuild = {

@@ -147,7 +147,7 @@
             {
                 id: 'barracks',
                 label: 'Barracks',
-                description: 'Recruit units and manage your standing army garrison.'
+                description: 'Garrison Registry and Unit Evolution Workspace.'
             },
             {
                 id: 'blacksmith',
@@ -195,7 +195,7 @@
             {
                 id: 'barracks',
                 label: 'Barracks',
-                description: 'Recruit units and manage your standing army garrison.'
+                description: 'Garrison Registry and Unit Evolution Workspace.'
             },
             {
                 id: 'blacksmith',
@@ -238,7 +238,7 @@
             {
                 id: 'barracks',
                 label: 'Barracks',
-                description: 'Recruit units and manage your standing army garrison.'
+                description: 'Garrison Registry and Unit Evolution Workspace.'
             },
             {
                 id: 'blacksmith',
@@ -503,24 +503,40 @@
                 : '';
             const mark = escapeSettlementMenuHtml(resolveVenueMark(venue.id));
             const label = escapeSettlementMenuHtml(venue.label);
+            const isExpandable = venue.id === 'adventurers-guild' || venue.id === 'barracks';
+            const subPanelId = venue.id === 'adventurers-guild'
+                ? 'age-settlement-guild-jobs'
+                : (venue.id === 'barracks' ? 'age-settlement-garrison-options' : '');
+            const wrapClass = venue.id === 'adventurers-guild'
+                ? 'age-settlement-menu-guild-wrap'
+                : (venue.id === 'barracks' ? 'age-settlement-menu-garrison-wrap' : '');
             const itemHtml = (
-                `<button type="button" class="age-settlement-menu-item${placementClass}${borderClass}${venue.id === 'adventurers-guild' ? ' age-settlement-menu-item--expandable' : ''}"`
+                `<button type="button" class="age-settlement-menu-item${placementClass}${borderClass}${isExpandable ? ' age-settlement-menu-item--expandable' : ''}"`
                 + ` data-settlement-venue="${escapeSettlementMenuHtml(venue.id)}"`
-                + `${venue.id === 'adventurers-guild' ? ' aria-expanded="false" aria-controls="age-settlement-guild-jobs"' : ''}>`
+                + `${isExpandable ? ` aria-expanded="false" aria-controls="${subPanelId}"` : ''}>`
                 + `<span class="age-settlement-menu-item-mark" aria-hidden="true">${mark}</span>`
                 + `<span class="age-settlement-menu-item-body">`
                 + `<span class="age-settlement-menu-item-label">${label}</span>`
                 + description
                 + '</span>'
-                + `<span class="age-settlement-menu-item-chevron" aria-hidden="true">${venue.id === 'adventurers-guild' ? '▾' : '›'}</span>`
+                + `<span class="age-settlement-menu-item-chevron" aria-hidden="true">${isExpandable ? '▾' : '›'}</span>`
                 + '</button>'
             );
 
             if (venue.id === 'adventurers-guild') {
                 return (
-                    `<div class="age-settlement-menu-guild-wrap">`
+                    `<div class="${wrapClass}">`
                     + itemHtml
                     + '<div id="age-settlement-guild-jobs" class="age-settlement-guild-jobs" hidden></div>'
+                    + '</div>'
+                );
+            }
+
+            if (venue.id === 'barracks') {
+                return (
+                    `<div class="${wrapClass}">`
+                    + itemHtml
+                    + '<div id="age-settlement-garrison-options" class="age-settlement-garrison-options" hidden></div>'
                     + '</div>'
                 );
             }
@@ -555,6 +571,10 @@
         if (typeof global.RoyalArmiesAdventurersGuild?.syncSettlementMenuGuild === 'function') {
             global.RoyalArmiesAdventurersGuild.syncSettlementMenuGuild();
         }
+
+        if (typeof global.RoyalArmiesAgeBarracks?.syncSettlementMenuGarrison === 'function') {
+            global.RoyalArmiesAgeBarracks.syncSettlementMenuGarrison();
+        }
     }
 
     function handleVenueClick(venueId) {
@@ -566,6 +586,13 @@
                     settlementTier: tier,
                     city: resolveCurrentCity()
                 });
+            }
+            return;
+        }
+
+        if (venueId === 'barracks') {
+            if (typeof global.RoyalArmiesAgeBarracks?.toggleSettlementGarrisonMenu === 'function') {
+                global.RoyalArmiesAgeBarracks.toggleSettlementGarrisonMenu();
             }
             return;
         }
@@ -641,6 +668,9 @@
 
     function onSettlementMenuClick(event) {
         if (event.target.closest('[data-guild-job]')) {
+            return;
+        }
+        if (event.target.closest('[data-garrison-option]')) {
             return;
         }
         const button = event.target.closest('[data-settlement-venue]');

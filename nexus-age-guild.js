@@ -32,6 +32,13 @@ const {
     buildCommanderEquipmentBonuses,
     commanderHasAcquiredGear
 } = require('./nexus-age-commander-gear');
+const {
+    distributeTrainingUnitXp,
+    scanArmyReadyToPromote,
+    buildUnitEvolutionPayload,
+    executeUnitRankPromotion,
+    executeUnitTierEvolution
+} = require('./nexus-age-unit-xp');
 
 const TRADE_CONVOY_LOTS = Object.freeze([
     { id: 'guild-spice-crate', label: 'Spice Crate', costGold: 2400, resaleGold: 3120 },
@@ -575,11 +582,18 @@ function executeGuildTrainingBattleWithLedger(commander, trainingMode = 'street-
 
     const injuryMitigation = resolveCommanderInjuryMitigation(commander, catalog);
     const injuryCount = resolveBattleInjuryCount(commander, battle, trainingMode, catalog);
+    const preArmy = resolveCommanderAgeArmy(commander);
+    const unitXpResult = distributeTrainingUnitXp(battle, preArmy, catalog, trainingMode);
     const nextArmy = distributeInjuriesWeighted(
-        resolveCommanderAgeArmy(commander),
+        unitXpResult.ageArmy,
         injuryCount,
         catalog
     );
+    const unitsReadyToPromote = scanArmyReadyToPromote(nextArmy, catalog);
+    if (Array.isArray(battle.log) && unitXpResult.unitXpLogLines?.length) {
+        battle.log.push('— Unit experience —');
+        unitXpResult.unitXpLogLines.forEach((line) => battle.log.push(line));
+    }
     const xpCalc = calculateGuildTrainingBattleXp(battle, trainingMode, commander);
     const xpGain = xpCalc.xpGain;
     if (Array.isArray(battle.log)) {
@@ -632,6 +646,9 @@ function executeGuildTrainingBattleWithLedger(commander, trainingMode = 'street-
         rankPromotions: xpResult.promotions,
         provisionsGranted: xpResult.provisionsGranted,
         ageProvisions: nextProvisions,
+        unitXpGains: unitXpResult.unitXpGains,
+        unitsReadyToPromote,
+        unitsReadyToPromoteCount: unitsReadyToPromote.length,
         unitsTotal: roster.unitsTotal,
         unitsUninjured: roster.unitsUninjured,
         unitsInjured: roster.unitsTotal - roster.unitsUninjured,
@@ -749,5 +766,8 @@ module.exports = {
     resolveCommanderInjuryMitigation,
     resolveBattleInjuryCount,
     distributeInjuries,
-    distributeInjuriesWeighted
+    distributeInjuriesWeighted,
+    buildUnitEvolutionPayload,
+    executeUnitRankPromotion,
+    executeUnitTierEvolution
 };

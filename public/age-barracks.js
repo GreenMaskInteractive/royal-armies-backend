@@ -13,6 +13,20 @@
     let selectedPurchasePreset = '1';
     let purchaseInFlight = false;
     let purchaseMessage = '';
+    let garrisonMenuExpanded = false;
+
+    const GARRISON_MENU_OPTIONS = Object.freeze([
+        {
+            id: 'registry',
+            label: 'Garrison Registry',
+            description: 'Recruit units and review promotion paths.'
+        },
+        {
+            id: 'evolution',
+            label: 'Unit Evolution Workspace',
+            description: 'Spend provisions on rank promotions and tier evolutions.'
+        }
+    ]);
 
     function escapeHtml(value) {
         return String(value ?? '')
@@ -168,6 +182,64 @@
         return global.document.getElementById('age-barracks-workspace');
     }
 
+    function resolveGarrisonMenuWrap() {
+        return global.document.querySelector('.age-settlement-menu-garrison-wrap');
+    }
+
+    function resolveGarrisonOptionsContainer() {
+        return global.document.getElementById('age-settlement-garrison-options');
+    }
+
+    function renderSettlementGarrisonOptions() {
+        const optionsEl = resolveGarrisonOptionsContainer();
+        if (!optionsEl) return;
+
+        optionsEl.innerHTML = GARRISON_MENU_OPTIONS.map((option) => (
+            `<button type="button" class="age-settlement-garrison-option" data-garrison-option="${escapeHtml(option.id)}">`
+            + `<span class="age-settlement-garrison-option-label">${escapeHtml(option.label)}</span>`
+            + `<span class="age-settlement-garrison-option-desc">${escapeHtml(option.description)}</span>`
+            + '</button>'
+        )).join('');
+    }
+
+    function syncSettlementMenuGarrison() {
+        const wrap = resolveGarrisonMenuWrap();
+        const optionsEl = resolveGarrisonOptionsContainer();
+        const toggleBtn = wrap?.querySelector('[data-settlement-venue="barracks"]');
+        if (!wrap || !optionsEl) return;
+
+        if (garrisonMenuExpanded) {
+            wrap.classList.add('is-expanded');
+            optionsEl.hidden = false;
+            toggleBtn?.setAttribute('aria-expanded', 'true');
+            renderSettlementGarrisonOptions();
+            return;
+        }
+
+        wrap.classList.remove('is-expanded');
+        optionsEl.hidden = true;
+        toggleBtn?.setAttribute('aria-expanded', 'false');
+    }
+
+    function toggleSettlementGarrisonMenu() {
+        garrisonMenuExpanded = !garrisonMenuExpanded;
+        syncSettlementMenuGarrison();
+    }
+
+    function openGarrisonMenuOption(optionId) {
+        garrisonMenuExpanded = false;
+        syncSettlementMenuGarrison();
+
+        const normalized = String(optionId || '').trim().toLowerCase();
+        if (normalized === 'registry') {
+            void open();
+            return;
+        }
+        if (normalized === 'evolution') {
+            global.RoyalArmiesAgeUnitEvolution?.open({ highlightReady: true });
+        }
+    }
+
     function isOpen() {
         const workspace = resolveWorkspace();
         return Boolean(workspace && !workspace.hidden);
@@ -258,15 +330,15 @@
                 + ` class="age-barracks-qty-btn${isActive ? ' is-active' : ''}"`
                 + ` data-barracks-qty="${escapeHtml(preset)}"`
                 + ` aria-pressed="${isActive ? 'true' : 'false'}"`
-                + ` aria-label="${escapeHtml(preset === 'max' ? `Buy maximum affordable units (${quote.maxAffordable})` : `Buy ${preset} units`)}"`
+                + ` aria-label="${escapeHtml(preset === 'max' ? `Recruit maximum affordable units (${quote.maxAffordable})` : `Recruit ${preset} units`)}"`
                 + `${disabled ? ' disabled' : ''}>${escapeHtml(label)}</button>`
             );
         }).join('');
 
         const buyDisabled = purchaseInFlight || !quote.canAffordSelection;
         const buyLabel = purchaseInFlight
-            ? 'Purchasing…'
-            : `Buy — ${quote.formatGold(quote.totalGoldCost)}`;
+            ? 'Recruiting…'
+            : `Recruit — ${quote.formatGold(quote.totalGoldCost)}`;
         const summaryLine = quote.quantity
             ? `${quote.quantity} ${quote.quantity === 1 ? 'unit' : 'units'} · ${quote.formatGold(quote.totalGoldCost)} · ${quote.totalProvisionsCost} Provisions`
             : (quote.upcPerUnit
@@ -289,7 +361,7 @@
             `<div class="age-barracks-purchase-panel">`
             + `<div class="age-barracks-qty-picker">`
             + `<span class="age-barracks-qty-label">Quantity</span>`
-            + `<div class="age-barracks-qty-options" role="group" aria-label="Purchase quantity">${qtyButtons}</div>`
+            + `<div class="age-barracks-qty-options" role="group" aria-label="Recruit quantity">${qtyButtons}</div>`
             + `<p class="age-barracks-qty-summary">${escapeHtml(summaryLine)}</p>`
             + '</div>'
             + messageLine
@@ -299,7 +371,7 @@
             + `${buyDisabled ? ' disabled' : ''}`
             + ` title="${escapeHtml(buyDisabled && !purchaseInFlight
                 ? (quote.limitedByProvisions ? 'Insufficient Provisions for this quantity.' : 'Insufficient gold for this quantity.')
-                : `Purchase ${quote.quantity} unit(s)`)}">`
+                : `Recruit ${quote.quantity} unit(s)`)}">`
             + `${escapeHtml(buyLabel)}`
             + '</button>'
             + `<p class="age-barracks-detail-footnote">${escapeHtml(quote.formatGold(quote.unitCost))} · ${escapeHtml(quote.upcPerUnit)} UPC per unit · ${quote.swarmRecruit ? 'swarm recruit (no 15 cap)' : `${quote.batchCap} max per purchase`} · ${quote.maxByGold} max by gold · ${quote.maxByProvisions} max by Provisions</p>`
@@ -395,7 +467,7 @@
             + branchLine
             + specialLine
             + `<dl class="age-barracks-detail-costs">`
-            + `<div><dt>Purchase</dt><dd>${escapeHtml(api.formatGold(unit.goldCost))}</dd></div>`
+            + `<div><dt>Recruit</dt><dd>${escapeHtml(api.formatGold(unit.goldCost))}</dd></div>`
             + `<div><dt>Tier evolution</dt><dd>${escapeHtml(unit.tierEvolutionCost)} Provisions</dd></div>`
             + `<div><dt>Unlock</dt><dd>Commander Rank ${escapeHtml(unit.unlockRank ?? '—')}</dd></div>`
             + `<div><dt>Role</dt><dd>${escapeHtml(unit.roleLabel || 'Rank')}</dd></div>`
@@ -423,8 +495,8 @@
         const quote = buildPurchaseQuote(unit);
         if (!quote.canAffordSelection || !quote.quantity) {
             purchaseMessage = quote.limitedByProvisions
-                ? 'Not enough Provisions for this purchase.'
-                : 'Not enough gold for this purchase.';
+                ? 'Not enough Provisions for this recruitment.'
+                : 'Not enough gold for this recruitment.';
             refreshSelectedUnitDetail();
             return;
         }
@@ -669,10 +741,13 @@
         }
     }
 
-    function onSettlementVenueOpen(event) {
-        const venueId = event?.detail?.venueId;
-        if (venueId !== 'barracks') return;
-        void open();
+    function onSettlementMenuClick(event) {
+        const optionBtn = event.target.closest('[data-garrison-option]');
+        if (!optionBtn) return;
+
+        event.preventDefault();
+        event.stopPropagation();
+        openGarrisonMenuOption(optionBtn.getAttribute('data-garrison-option'));
     }
 
     function bindBarracks() {
@@ -682,7 +757,7 @@
         const workspace = resolveWorkspace();
         workspace?.addEventListener('click', onWorkspaceClick);
         global.document.addEventListener('keydown', onWorkspaceKeydown);
-        global.addEventListener('royal-armies-settlement-venue-open', onSettlementVenueOpen);
+        global.document.getElementById('age-settlement-menu-list')?.addEventListener('click', onSettlementMenuClick, true);
         global.addEventListener(
             global.RoyalArmiesAgeGold?.AGE_GOLD_UPDATED_EVENT || 'royalarmies:age-gold-updated',
             onAgeGoldUpdated
@@ -703,7 +778,9 @@
         open,
         close,
         isOpen,
-        enableAgeBarracks
+        enableAgeBarracks,
+        toggleSettlementGarrisonMenu,
+        syncSettlementMenuGarrison
     };
 
     global.enableAgeBarracks = enableAgeBarracks;

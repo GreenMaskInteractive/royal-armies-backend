@@ -263,7 +263,12 @@ function buildBattleArmy(label, stacks, catalog) {
 
         army.stacks.push({
             name: catalogUnit?.displayName || catalogUnit?.name || stack.name || 'Unit',
+            catalogUnitId: catalogUnit?.id || String(stack?.catalogUnitId || '').trim() || null,
+            rank: Math.max(1, Math.floor(Number(stack?.rank) || 1)),
             qty,
+            startingQty: qty,
+            survivorsQty: qty,
+            participatedRounds: 0,
             combatType: stats.combatType,
             classId,
             phaseLane: laneId
@@ -315,6 +320,58 @@ function resolveCounterMultiplierFromLane(lane, defenderClassId) {
     return 1 + (0.5 * (bonusStacks / totalStacks));
 }
 
+function syncStackSurvivorsFromArmyUnits(army) {
+    const rows = (Array.isArray(army?.stacks) ? army.stacks : []).map((stack) => ({
+        stack,
+        startingQty: Math.max(0, Math.floor(Number(stack?.startingQty ?? stack?.qty) || 0))
+    })).filter((row) => row.startingQty > 0);
+
+    const totalStarting = rows.reduce((sum, row) => sum + row.startingQty, 0);
+    const target = Math.max(0, Math.floor(Number(army?.currentUnits) || 0));
+
+    if (!totalStarting || !target) {
+        rows.forEach(({ stack }) => {
+            stack.survivorsQty = 0;
+        });
+        return;
+    }
+
+    const cappedTarget = Math.min(totalStarting, target);
+    const exact = rows.map((row) => (cappedTarget * row.startingQty) / totalStarting);
+    const survivors = exact.map((value) => Math.floor(value));
+    let remainder = cappedTarget - survivors.reduce((sum, qty) => sum + qty, 0);
+
+    const fractionalOrder = exact
+        .map((value, index) => ({ index, fractional: value - Math.floor(value) }))
+        .sort((left, right) => right.fractional - left.fractional);
+
+    for (let step = 0; step < remainder; step += 1) {
+        survivors[fractionalOrder[step % fractionalOrder.length].index] += 1;
+    }
+
+    rows.forEach(({ stack }, index) => {
+        stack.survivorsQty = survivors[index];
+    });
+}
+
+/** Credit participation only for stacks alive in this lane when the phase begins. */
+function markStackPhaseParticipation(army, phaseId, rounds = 1) {
+    const laneId = String(phaseId || 'infantry').trim().toLowerCase();
+    const roundsToCredit = Math.max(0, Math.floor(Number(rounds) || 0));
+    if (!roundsToCredit) return;
+
+    (Array.isArray(army?.stacks) ? army.stacks : []).forEach((stack) => {
+        if (String(stack?.phaseLane || '').trim().toLowerCase() !== laneId) return;
+        if (Math.max(0, Math.floor(Number(stack?.survivorsQty) || 0)) <= 0) return;
+        stack.participatedRounds = Math.max(0, Math.floor(Number(stack.participatedRounds) || 0)) + roundsToCredit;
+    });
+}
+
+function resolveLanePhaseActive(army, phaseId) {
+    const lane = army?.lanes?.[phaseId];
+    return Boolean(lane && lane.units > 0 && lane.attack > 0);
+}
+
 function applyCasualties(army, damage) {
     const dealt = Math.min(Math.max(0, Math.floor(Number(damage) || 0)), army.currentHp);
     if (!dealt) return 0;
@@ -322,6 +379,7 @@ function applyCasualties(army, damage) {
     const survivalRatio = army.currentHp > 0 ? (army.currentHp - dealt) / army.currentHp : 0;
     army.currentHp -= dealt;
     army.currentUnits = Math.max(0, Math.floor(army.currentUnits * survivalRatio));
+    syncStackSurvivorsFromArmyUnits(army);
 
     return dealt;
 }
@@ -427,6 +485,8 @@ function resolvePhaseStrike(attacker, defender, phaseId, phaseLabel, log) {
 function runBattlePhaseExchange(commander, npc, phaseId, phaseLabel, log) {
     log.push(`— ${phaseLabel} —`);
 
+    markStackPhaseParticipation(commander, phaseId, 1);
+
     const endedByCommanderStrike = resolvePhaseStrike(commander, npc, phaseId, phaseLabel, log);
     if (endedByCommanderStrike || commander.outcome || npc.outcome) return true;
 
@@ -448,6 +508,8 @@ function runInfantryPhase(commander, npc, log) {
             log.push('No infantry remaining on either side — phase skipped.');
             break;
         }
+
+        markStackPhaseParticipation(commander, 'infantry', 1);
 
         roundsPlayed = round;
         log.push(`Infantry round ${round}:`);
@@ -510,7 +572,15 @@ function simulateTrainingBattle(attackerStacks, defenderStacks, catalog, trainin
     let battleEndedEarly = false;
 
     for (const phase of BATTLE_PHASES) {
-        phaseParticipation[phase.id] = true;
+        const commanderLaneActive = resolveLanePhaseActive(commander, phase.id);
+        const npcLaneActive = resolveLanePhaseActive(npc, phase.id);
+
+        if (!commanderLaneActive && !npcLaneActive) {
+            log.push(`— ${phase.label} — skipped (no units in this lane).`);
+            continue;
+        }
+
+        phaseParticipation[phase.id] = commanderLaneActive || npcLaneActive;
         battleEndedEarly = runBattlePhaseExchange(commander, npc, phase.id, phase.label, log);
         if (battleEndedEarly) break;
     }
@@ -523,6 +593,9 @@ function simulateTrainingBattle(attackerStacks, defenderStacks, catalog, trainin
 
     evaluateArmyOutcome(commander);
     evaluateArmyOutcome(npc);
+
+    syncStackSurvivorsFromArmyUnits(commander);
+    syncStackSurvivorsFromArmyUnits(npc);
 
     const { winner, endReason } = resolveBattleWinner(commander, npc);
     const phasesCompleted = BATTLE_PHASES.length + (infantryRounds > 0 ? 1 : 0);

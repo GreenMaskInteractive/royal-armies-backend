@@ -90,7 +90,8 @@ const {
 const { buildAgeRecordsPayload } = require('./nexus-age-records');
 const {
     buildAgeRosterHudPayload,
-    buildCommanderAgeRosterSeedPatch
+    buildCommanderAgeRosterSeedPatch,
+    resolveCommanderAgeArmy
 } = require('./nexus-age-roster');
 const {
     resolveCommanderAgeGold,
@@ -116,7 +117,10 @@ const {
     executeGuildTrainingBattleWithLedger,
     executeCityAssaultBattleWithLedger,
     executeGuildHeal,
-    executeTradeConvoyPurchase
+    executeTradeConvoyPurchase,
+    buildUnitEvolutionPayload,
+    executeUnitRankPromotion,
+    executeUnitTierEvolution
 } = require('./nexus-age-guild');
 const {
     buildGuildHubManifest,
@@ -5481,6 +5485,9 @@ app.post('/api/portal/age/guild/training-battle', (req, res) => {
             ageProvisions: result.ageProvisions,
             ageArmy: result.ageArmy,
             commanderGear: result.commanderGear,
+            unitXpGains: result.unitXpGains || [],
+            unitsReadyToPromote: result.unitsReadyToPromote || [],
+            unitsReadyToPromoteCount: result.unitsReadyToPromoteCount || 0,
             ...buildGuildHubResponse(commander, settlementTier),
             ...buildAgeMovementStatePayload(username, commander)
         });
@@ -5488,6 +5495,121 @@ app.post('/api/portal/age/guild/training-battle', (req, res) => {
         console.error('[NEXUS] guild training-battle uncaught:', err);
         return sendApiError(res, 'NEXUS-GEN-001');
     }
+});
+
+app.get('/api/portal/age/units/evolution', (req, res) => {
+    const username = resolveLedgerCommanderUsername(req.query?.username || '');
+    if (!username) {
+        return sendApiError(res, 'NEXUS-GEN-002');
+    }
+
+    let commander = db.get('commanders').find({ username }).value();
+    if (!commander) {
+        return sendApiError(res, 'NEXUS-GEN-004');
+    }
+
+    ensureCommanderAgeRoster(commander);
+    commander = db.get('commanders').find({ username }).value();
+
+    res.json({
+        status: 'ok',
+        action: 'unit-evolution-state',
+        ...buildUnitEvolutionPayload(commander),
+        ageArmy: resolveCommanderAgeArmy(commander)
+    });
+});
+
+app.post('/api/portal/age/units/promote-rank', (req, res) => {
+    const username = resolveLedgerCommanderUsername(req.body?.username || '');
+    if (!username) {
+        return sendApiError(res, 'NEXUS-GEN-002');
+    }
+
+    let commander = db.get('commanders').find({ username }).value();
+    if (!commander) {
+        return sendApiError(res, 'NEXUS-GEN-004');
+    }
+
+    ensureCommanderAgeRoster(commander);
+    commander = db.get('commanders').find({ username }).value();
+
+    const result = executeUnitRankPromotion(
+        commander,
+        req.body?.catalogUnitId,
+        req.body?.rank
+    );
+    if (!result.ok) {
+        return sendApiError(res, result.errorCode || 'NEXUS-AGE-027', {
+            unlockRank: result.unlockRank
+        });
+    }
+
+    persistCommanderGuildLedger(username, {
+        ageArmy: result.ageArmy,
+        ageProvisions: result.ageProvisions
+    });
+
+    commander = db.get('commanders').find({ username }).value();
+
+    res.json({
+        status: 'ok',
+        action: 'unit-promote-rank',
+        provisionsSpent: result.provisionsSpent,
+        promotedFrom: result.promotedFrom,
+        promotedTo: result.promotedTo,
+        promotionLabel: result.promotionLabel,
+        unitName: result.unitName,
+        ageProvisions: result.ageProvisions,
+        ageArmy: result.ageArmy,
+        ...buildUnitEvolutionPayload(commander)
+    });
+});
+
+app.post('/api/portal/age/units/evolve-tier', (req, res) => {
+    const username = resolveLedgerCommanderUsername(req.body?.username || '');
+    if (!username) {
+        return sendApiError(res, 'NEXUS-GEN-002');
+    }
+
+    let commander = db.get('commanders').find({ username }).value();
+    if (!commander) {
+        return sendApiError(res, 'NEXUS-GEN-004');
+    }
+
+    ensureCommanderAgeRoster(commander);
+    commander = db.get('commanders').find({ username }).value();
+
+    const result = executeUnitTierEvolution(
+        commander,
+        req.body?.catalogUnitId,
+        req.body?.rank
+    );
+    if (!result.ok) {
+        return sendApiError(res, result.errorCode || 'NEXUS-AGE-012', {
+            unlockRank: result.unlockRank
+        });
+    }
+
+    persistCommanderGuildLedger(username, {
+        ageArmy: result.ageArmy,
+        ageProvisions: result.ageProvisions
+    });
+
+    commander = db.get('commanders').find({ username }).value();
+
+    res.json({
+        status: 'ok',
+        action: 'unit-evolve-tier',
+        provisionsSpent: result.provisionsSpent,
+        fromUnitId: result.fromUnitId,
+        toUnitId: result.toUnitId,
+        fromName: result.fromName,
+        toName: result.toName,
+        unitsEvolved: result.unitsEvolved,
+        ageProvisions: result.ageProvisions,
+        ageArmy: result.ageArmy,
+        ...buildUnitEvolutionPayload(commander)
+    });
 });
 
 app.post('/api/portal/age/guild/heal', (req, res) => {

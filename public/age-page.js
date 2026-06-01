@@ -1069,6 +1069,10 @@
             global.enableAgeAdventurersGuild();
         }
 
+        if (typeof global.enableAgeUnitEvolution === 'function') {
+            global.enableAgeUnitEvolution();
+        }
+
         bindCouncilBoardLayoutSync();
 
         if (typeof global.bindPortalNewMessagesBarNavigation === 'function') {

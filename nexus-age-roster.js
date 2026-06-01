@@ -23,6 +23,11 @@ function normalizeAgeArmyStack(raw) {
 
     const injuredQty = Math.min(qty, floorNonNegative(raw.injuredQty ?? raw.injured));
 
+    const unitXpRaw = Number(raw.unitXp);
+    const unitXp = Number.isFinite(unitXpRaw) && unitXpRaw > 0
+        ? Math.floor(unitXpRaw)
+        : 0;
+
     return attachOptionalStackId({
         class: String(raw.class || raw.type || 'INFANTRY').trim().slice(0, 32) || 'INFANTRY',
         name: String(raw.name || 'Recruit Shieldman').trim().slice(0, 64) || 'Recruit Shieldman',
@@ -30,6 +35,7 @@ function normalizeAgeArmyStack(raw) {
         tier: Math.max(1, Math.floor(Number(raw.tier) || 1)),
         qty,
         injuredQty,
+        unitXp,
         purpose: String(raw.purpose || raw.role || raw.armyRole || '').trim().slice(0, 24)
     }, raw);
 }
