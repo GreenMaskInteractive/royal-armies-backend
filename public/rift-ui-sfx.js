@@ -1,5 +1,5 @@
 /**
- * RIFT — Global UI hover/select SFX (uihover.wav / uiselect.wav) for button controls only.
+ * RIFT — Global UI hover/select SFX (uihover.wav / uiselect.wav) for mouse-driven controls.
  */
 (function initRoyalArmiesUiSfx(global) {
     'use strict';
@@ -10,24 +10,58 @@
     const SELECT_SRC = 'audio/uiselect.wav';
     const DEFAULT_VOLUME = 0.2;
 
-    const BUTTON_SELECTOR = [
+    const INTERACTIVE_SELECTOR = [
+        'a[href]',
         'button',
+        'summary',
+        'select',
         'input[type="button"]',
         'input[type="submit"]',
         'input[type="reset"]',
-        '[role="button"]'
+        'input[type="checkbox"]',
+        'input[type="radio"]',
+        'label[for]',
+        '[role="button"]',
+        '[role="menuitem"]',
+        '[role="tab"]',
+        '[role="link"]',
+        '[role="option"]',
+        '[role="switch"]',
+        '[role="checkbox"]',
+        '[role="radio"]',
+        '[data-ui-interactive]',
+        '.nav-icon',
+        '.img-btn',
+        '.radial-slot',
+        '.update-item',
+        '.quest-card',
+        '.close-modal',
+        '.forgot-link',
+        '.confirm-btn',
+        '.cancel-btn',
+        '.revert-btn',
+        '.portal-nav-tab',
+        '.portal-mobile-nav-page-item',
+        '.media-playlist-track-btn',
+        '.game-onboarding-progress-step',
+        '.game-class-option',
+        '.game-region-list-item',
+        '.game-region-nation-item',
+        '.game-opening-prologue-enter-war-btn',
+        '.game-opening-prologue-skip',
+        '.age-bottom-music-btn',
+        '.age-guild-training-return-btn',
+        '#age-guild-battle-btn'
     ].join(', ');
 
     const HOVER_SKIP_SELECTOR = [
         '[data-ui-sfx-hover="off"]',
-        '[role="tab"]',
         '.action-btn-aura-housing',
         '.action-btn-aura-housing *'
     ].join(', ');
 
     const SELECT_SKIP_SELECTOR = [
         '[data-ui-sfx-select="off"]',
-        '[role="tab"]',
         '.action-btn-aura-housing',
         '.action-btn-aura-housing *'
     ].join(', ');
@@ -62,7 +96,7 @@
         selectAudio = ensureAudioElement(SELECT_AUDIO_ID, SELECT_SRC);
     }
 
-    function isDisabledButton(element) {
+    function isDisabledControl(element) {
         if (!element) return true;
         if (element.matches(':disabled')) return true;
         if (element.getAttribute('aria-disabled') === 'true') return true;
@@ -75,16 +109,38 @@
         return Boolean(element && element.closest(skipSelector));
     }
 
-    function isButtonControl(element) {
+    function isPointerInteractive(element) {
         if (!element || !(element instanceof Element)) return false;
-        if (!element.matches(BUTTON_SELECTOR)) return false;
-        if (element.getAttribute('role') === 'tab') return false;
-        return !isDisabledButton(element);
+        if (isDisabledControl(element)) return false;
+        if (element.matches('input:not([type="button"]):not([type="submit"]):not([type="reset"]):not([type="checkbox"]):not([type="radio"]), textarea')) {
+            return false;
+        }
+
+        if (element.matches(INTERACTIVE_SELECTOR)) return true;
+
+        try {
+            const style = global.getComputedStyle(element);
+            if (style.cursor === 'pointer' && style.pointerEvents !== 'none') {
+                return !element.matches('[aria-hidden="true"], .is-hidden, [hidden]');
+            }
+        } catch (_err) {
+            /* ignore */
+        }
+
+        return false;
     }
 
-    function resolveButtonTarget(fromElement) {
-        const button = fromElement instanceof Element ? fromElement.closest(BUTTON_SELECTOR) : null;
-        return isButtonControl(button) ? button : null;
+    function resolveInteractiveTarget(fromElement) {
+        let node = fromElement instanceof Element ? fromElement : null;
+
+        while (node && node !== global.document.documentElement) {
+            if (isPointerInteractive(node)) {
+                return node;
+            }
+            node = node.parentElement;
+        }
+
+        return null;
     }
 
     function playHoverSFX() {
@@ -106,7 +162,7 @@
     }
 
     function onDocumentMouseOver(event) {
-        const target = resolveButtonTarget(event.target);
+        const target = resolveInteractiveTarget(event.target);
         if (!target) return;
         if (matchesSkipSelector(target, HOVER_SKIP_SELECTOR)) return;
         if (target.contains(event.relatedTarget)) return;
@@ -117,7 +173,7 @@
     function onDocumentClick(event) {
         if (event.defaultPrevented) return;
 
-        const target = resolveButtonTarget(event.target);
+        const target = resolveInteractiveTarget(event.target);
         if (!target) return;
         if (matchesSkipSelector(target, SELECT_SKIP_SELECTOR)) return;
 
@@ -143,8 +199,7 @@
     global.RoyalArmiesUiSfx = {
         playHover: playHoverSFX,
         playSelect: playSelectSFX,
-        resolveButtonTarget,
-        resolveInteractiveTarget: resolveButtonTarget
+        resolveInteractiveTarget
     };
 
     if (global.document.readyState === 'loading') {
