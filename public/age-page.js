@@ -1018,12 +1018,10 @@
             const rightHud = global.document.getElementById('age-map-hud-right');
             const reportsPanel = rightHud?.querySelector('.age-left-reports-panel');
             const cityInfoPanel = rightHud?.querySelector('.age-city-info-panel');
-            const topBar = global.document.querySelector('#age-page-canvas .age-map-hud-top-bar');
             if (chatMessages) councilBoardLayoutObserver.observe(chatMessages);
             if (chatCompose) councilBoardLayoutObserver.observe(chatCompose);
             if (bottomDock) councilBoardLayoutObserver.observe(bottomDock);
             if (rightHud) councilBoardLayoutObserver.observe(rightHud);
-            if (topBar) councilBoardLayoutObserver.observe(topBar);
             if (reportsPanel) councilBoardLayoutObserver.observe(reportsPanel);
             if (cityInfoPanel) councilBoardLayoutObserver.observe(cityInfoPanel);
 

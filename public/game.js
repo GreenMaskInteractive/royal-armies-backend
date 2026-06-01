@@ -414,22 +414,14 @@
         }
     }
 
-    function resolveMainPortalUrl() {
-        if (typeof global.resolveRoyalArmiesPageUrl === 'function') {
-            return global.resolveRoyalArmiesPageUrl('main');
-        }
-        return '/main';
-    }
-
     async function returnToAgePortal() {
         stopGamePresenceLoop();
         await postAgeLeave(false);
-        const mainUrl = resolveMainPortalUrl();
         if (global.RoyalArmiesPageRouteTransition && typeof global.RoyalArmiesPageRouteTransition.navigateTo === 'function') {
-            await global.RoyalArmiesPageRouteTransition.navigateTo(mainUrl);
+            await global.RoyalArmiesPageRouteTransition.navigateTo('/main');
             return;
         }
-        global.location.href = mainUrl;
+        global.location.href = '/main';
     }
 
     function refreshGamePageNavChrome() {
@@ -553,16 +545,6 @@
         refreshGameOnboardingProgress(nextView);
         scheduleRegionFlankLayoutIfNeeded(nextView);
         closeGameMobileCommanderSubmenu();
-        if (nextView === 'class'
-            && global.RoyalArmiesMusicFlow
-            && typeof global.RoyalArmiesMusicFlow.startProgressionPageMusic === 'function'
-            && (!global.RoyalArmiesMusicFlow.shouldHoldForOpeningPrologue
-                || !global.RoyalArmiesMusicFlow.shouldHoldForOpeningPrologue())
-            && (!global.RoyalArmiesOpeningPrologue
-                || typeof global.RoyalArmiesOpeningPrologue.shouldHoldProgression !== 'function'
-                || !global.RoyalArmiesOpeningPrologue.shouldHoldProgression())) {
-            global.RoyalArmiesMusicFlow.startProgressionPageMusic();
-        }
     }
 
     function setActiveGameViewAnimated(nextView) {
@@ -691,9 +673,6 @@
     }
 
     function resolveOfficialAgePagePath() {
-        if (typeof global.resolveRoyalArmiesPageUrl === 'function') {
-            return global.resolveRoyalArmiesPageUrl('agealpha');
-        }
         if (typeof global.getOfficialAgePagePath === 'function') {
             return global.getOfficialAgePagePath();
         }
@@ -851,16 +830,6 @@
             advanceGameOnboarding();
         });
 
-        global.addEventListener('royalarmies:opening-prologue-finished', (event) => {
-            if (activeGameView !== 'class') return;
-            if (event.detail?.enterWarExitReason === 'button') return;
-            if (!global.RoyalArmiesMusicFlow
-                || typeof global.RoyalArmiesMusicFlow.startProgressionPageMusic !== 'function') {
-                return;
-            }
-            global.RoyalArmiesMusicFlow.startProgressionPageMusic();
-        });
-
         const joinBattleBtn = global.document.getElementById('game-join-battle-continue-btn');
         if (joinBattleBtn) {
             joinBattleBtn.addEventListener('click', () => {
@@ -923,7 +892,7 @@
 
         const username = resolveGamePageUsername();
         if (!username) {
-            global.location.replace(resolveMainPortalUrl());
+            global.location.replace('/main');
             return;
         }
 

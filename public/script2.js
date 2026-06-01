@@ -1384,9 +1384,6 @@ function launchGameRoundSectorAfterTermsCheck(isTutorialModeActive, clickEvent) 
     if (typeof beginCommanderAgeResetSession === 'function') {
         beginCommanderAgeResetSession();
     }
-    if (window.RoyalArmiesMusicFlow && typeof window.RoyalArmiesMusicFlow.prepareJoinAgeLaunch === 'function') {
-        window.RoyalArmiesMusicFlow.prepareJoinAgeLaunch();
-    }
 
     const attemptGamePageHandoff = () => {
         if (!deployPulseFinished || !selectAudioFinished) return;
@@ -1537,25 +1534,6 @@ function executeLogoutRedirect() {
 
 let portalMetricsPollTimer = null;
 let portalPresenceHeartbeatTimer = null;
-
-function pausePortalBackgroundApiPolling() {
-    if (portalPresenceHeartbeatTimer) {
-        clearInterval(portalPresenceHeartbeatTimer);
-        portalPresenceHeartbeatTimer = null;
-    }
-    if (portalMetricsPollTimer) {
-        clearInterval(portalMetricsPollTimer);
-        portalMetricsPollTimer = null;
-    }
-    if (typeof stopCommunityChatPresenceLoop === 'function') {
-        stopCommunityChatPresenceLoop();
-    }
-}
-
-if (!window.__royalArmiesApiUnreachableBound) {
-    window.__royalArmiesApiUnreachableBound = true;
-    window.addEventListener('royalarmies:api-unreachable', pausePortalBackgroundApiPolling);
-}
 let communityChatPresencePollTimer = null;
 const PORTAL_PRESENCE_HEARTBEAT_MS = 20000;
 const CHAT_PRESENCE_HEARTBEAT_MS = 8000;
@@ -1710,18 +1688,12 @@ function applyPortalLiveMetricsToBanner(metrics) {
 }
 
 async function fetchPortalLiveMetrics() {
-    if (typeof isRoyalArmiesApiReachable === 'function' && !isRoyalArmiesApiReachable()) {
-        return;
-    }
     try {
         const response = await fetch('/api/portal/metrics', { cache: 'no-store' });
         if (!response.ok) throw new Error(`metrics ${response.status}`);
         const metrics = await response.json();
         applyPortalLiveMetricsToBanner(metrics);
     } catch (err) {
-        if (typeof shouldSuppressRepeatedLocalDevApiWarnings === 'function' && shouldSuppressRepeatedLocalDevApiWarnings()) {
-            return;
-        }
         console.warn('Portal live metrics unavailable:', err);
         applyPortalLiveMetricsToBanner({
             registeredCount: 0,
@@ -1744,9 +1716,6 @@ function applyPortalMetricsPayload(metrics) {
 async function sendPortalPresenceHeartbeat(options = {}) {
     const username = resolvePortalPresenceUsername();
     if (!username || username.toLowerCase() === 'testaccount') return null;
-    if (typeof isRoyalArmiesApiReachable === 'function' && !isRoyalArmiesApiReachable()) {
-        return null;
-    }
 
     const onCommunityChat = options.onCommunityChat === true
         || (options.onCommunityChat !== false && activeMainPortalView === 'chat');
@@ -1781,9 +1750,6 @@ async function sendPortalPresenceHeartbeat(options = {}) {
         applyPortalMetricsPayload(payload);
         return payload;
     } catch (err) {
-        if (typeof shouldSuppressRepeatedLocalDevApiWarnings === 'function' && shouldSuppressRepeatedLocalDevApiWarnings()) {
-            return null;
-        }
         console.warn('Portal presence heartbeat failed:', err);
         return null;
     }
@@ -6800,12 +6766,7 @@ window.onload = () => {
         applyPortalGuestDeploymentChrome();
     }
     window.cachedAgePortalViewportHTML = snapshotAgePortalViewportForCache();
-    if (
-        (!window.RoyalArmiesMusicFlow
-            || typeof window.RoyalArmiesMusicFlow.shouldSuppressPortalMainMusic !== 'function'
-            || !window.RoyalArmiesMusicFlow.shouldSuppressPortalMainMusic())
-        && getPortalBackgroundAudioElement()?.paused
-    ) {
+    if (getPortalBackgroundAudioElement()?.paused) {
         startPortalBackgroundMusic({ silentFail: true });
     }
 };
