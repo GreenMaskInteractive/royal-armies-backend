@@ -1006,7 +1006,7 @@ body.age-of-war-trailer-page {
     transform: translate(-50%, -50%) scale(1.04);
 }
 
-/* Desktop — match pre-player cinematic frame size (66% · 4:3) */
+/* Desktop — cinematic frame (66% width · 16:9) */
 @media (min-width: 901px) {
     body:not(.is-trailer-mobile-device) .game-opening-prologue.is-trailer-replay-mode {
         padding: 0;
@@ -1052,7 +1052,7 @@ body.age-of-war-trailer-page {
     body:not(.is-trailer-mobile-device) .game-opening-prologue.is-trailer-replay-mode .game-opening-prologue-cinematic-frame {
         width: 66%;
         max-width: 66%;
-        aspect-ratio: 4 / 3;
+        aspect-ratio: 16 / 9;
         height: auto;
         max-height: min(88vh, calc(100vh - clamp(128px, 17vh, 188px) - clamp(24px, 4vh, 48px)));
         border-radius: 6px;
