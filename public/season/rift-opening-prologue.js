@@ -9,7 +9,7 @@
     const OVERLAY_ID = 'game-opening-prologue';
     const AUDIO_ID = 'game-opening-prologue-audio';
     const SUBTITLE_ID = 'game-opening-prologue-subtitle';
-    const CRITICAL_STYLE_ID = 'rift-opening-prologue-critical-styles-v8';
+    const CRITICAL_STYLE_ID = 'rift-opening-prologue-critical-styles-v9';
     const TRAILER_LORE_TOOL_MAX_OPACITY = 0.4;
     const NARRATION_METADATA_TIMEOUT_MS = 8000;
 
@@ -70,6 +70,9 @@
     /** Native cinematic still dimensions (images/cinematic*.png). Player frame matches this aspect. */
     const TRAILER_CINE_NATIVE_WIDTH = 1408;
     const TRAILER_CINE_NATIVE_HEIGHT = 768;
+    /** Ken Burns zoom range in trailer replay (scale min + random * range). */
+    const TRAILER_CINE_PAN_SCALE_MIN = 1.12;
+    const TRAILER_CINE_PAN_SCALE_RANGE = 0.10;
     const TRAILER_POST_NARRATION_MS = PROLOGUE_TITLE_LOGO_REVEAL_MS
         + PROLOGUE_SUBTITLE_LOGO_EXPLOSIVE_MS
         + 600;
@@ -1135,6 +1138,8 @@
         if (legacyStyleV6) legacyStyleV6.remove();
         const legacyStyleV7 = global.document.getElementById('rift-opening-prologue-critical-styles-v7');
         if (legacyStyleV7) legacyStyleV7.remove();
+        const legacyStyleV8 = global.document.getElementById('rift-opening-prologue-critical-styles-v8');
+        if (legacyStyleV8) legacyStyleV8.remove();
         if (global.document.getElementById(CRITICAL_STYLE_ID)) return;
 
         const style = global.document.createElement('style');
@@ -1363,7 +1368,7 @@
                 max-width: 100% !important;
                 max-height: 100% !important;
                 object-fit: contain !important;
-                transform: translate(-50%, -50%) !important;
+                transform: translate(-50%, -50%) scale(1.12) !important;
             }
             #${OVERLAY_ID}.is-trailer-replay-mode .game-opening-prologue-subtitle-dock.is-trailer-player-dock {
                 left: 50% !important;
@@ -1488,14 +1493,16 @@
 
         removeCinematicPanAnimation(imgEl);
 
-        const panMag = 2.5 + (Math.random() * 4.5);
+        const panMag = isTrailerReplayMode
+            ? 4 + (Math.random() * 5)
+            : 2.5 + (Math.random() * 4.5);
         const angle = Math.random() * Math.PI * 2;
         const x1 = Math.cos(angle) * panMag;
         const y1 = Math.sin(angle) * panMag;
         const x2 = Math.cos(angle + Math.PI) * panMag;
         const y2 = Math.sin(angle + Math.PI) * panMag;
         const scale = isTrailerReplayMode
-            ? 1.06 + (Math.random() * 0.06)
+            ? TRAILER_CINE_PAN_SCALE_MIN + (Math.random() * TRAILER_CINE_PAN_SCALE_RANGE)
             : 1.08 + (Math.random() * 0.08);
         const duration = Math.max(1, durationSec * PROLOGUE_CINEMATIC_PAN_DURATION_SCALE);
 
