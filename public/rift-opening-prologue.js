@@ -43,7 +43,7 @@
     /** Narration starts immediately; background music joins after this delay. */
     const PROLOGUE_MUSIC_DELAY_MS = 2000;
     /** Black screen hold after narration; music ramps to peak over this duration. */
-    const PROLOGUE_POST_NARRATION_HOLD_MS = 7000;
+    const PROLOGUE_POST_NARRATION_HOLD_MS = 15000;
     const PROLOGUE_MUSIC_OUT_FADE_MS = 1200;
     const PROLOGUE_REVEAL_FADE_MS = 900;
 
