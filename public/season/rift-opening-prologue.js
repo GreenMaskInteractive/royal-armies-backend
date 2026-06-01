@@ -391,8 +391,8 @@
             }
             #${OVERLAY_ID} .game-opening-prologue-cinematic-frame {
                 position: relative !important;
-                width: 75% !important;
-                max-width: 75% !important;
+                width: 62% !important;
+                max-width: 62% !important;
                 aspect-ratio: 4 / 3 !important;
                 height: auto !important;
                 max-height: min(90%, calc(100% - clamp(128px, 17vh, 188px))) !important;
