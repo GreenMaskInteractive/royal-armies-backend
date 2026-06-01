@@ -9982,9 +9982,11 @@ body.developer-maintenance-alert-active #page-landing {
 }
 
 .game-opening-prologue-enter-war-btn {
-    position: relative;
+    position: absolute;
+    top: calc(100% + clamp(12px, 2vh, 24px));
+    left: 50%;
     z-index: 4;
-    margin-top: clamp(8px, 1.6vh, 18px);
+    margin-top: 0;
     padding: 12px 28px;
     border: 1px solid rgba(255, 215, 120, 0.55);
     border-radius: 4px;
@@ -9997,15 +9999,16 @@ body.developer-maintenance-alert-active #page-landing {
     text-transform: uppercase;
     cursor: pointer;
     opacity: 0;
-    transform: translateY(8px);
+    transform: translateX(-50%) translateY(8px);
     transition: opacity 0.55s ease, transform 0.55s ease, color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
     pointer-events: none;
+    white-space: nowrap;
 }
 
 .game-opening-prologue-enter-war-btn.is-visible {
     opacity: 1;
-    transform: translateY(0);
+    transform: translateX(-50%) translateY(0);
     pointer-events: auto;
 }
 
