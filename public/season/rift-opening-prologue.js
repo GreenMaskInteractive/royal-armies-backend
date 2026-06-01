@@ -9,7 +9,8 @@
     const OVERLAY_ID = 'game-opening-prologue';
     const AUDIO_ID = 'game-opening-prologue-audio';
     const SUBTITLE_ID = 'game-opening-prologue-subtitle';
-    const CRITICAL_STYLE_ID = 'rift-opening-prologue-critical-styles-v4';
+    const CRITICAL_STYLE_ID = 'rift-opening-prologue-critical-styles-v5';
+    const TRAILER_LORE_TOOL_MAX_OPACITY = 0.5;
     const NARRATION_METADATA_TIMEOUT_MS = 8000;
 
     /**
@@ -336,7 +337,9 @@
             if (loreToolEl) {
                 const loreProgress = Math.min(1, (p - titlePhaseEnd) / Math.max(0.001, 1 - titlePhaseEnd));
                 loreToolEl.classList.toggle('is-visible', loreProgress > 0.12);
-                loreToolEl.style.opacity = String(Math.min(1, loreProgress * 1.15));
+                loreToolEl.style.opacity = String(
+                    Math.min(TRAILER_LORE_TOOL_MAX_OPACITY, loreProgress * TRAILER_LORE_TOOL_MAX_OPACITY)
+                );
             }
             if (outroEl && p > titlePhaseEnd + 0.12) {
                 outroEl.hidden = false;
@@ -458,7 +461,7 @@
 
         if (loreToolEl) {
             loreToolEl.classList.add('is-visible');
-            loreToolEl.style.opacity = '1';
+            loreToolEl.style.opacity = String(TRAILER_LORE_TOOL_MAX_OPACITY);
         }
 
         if (outroEl) {
@@ -1205,6 +1208,12 @@
                 object-fit: cover !important;
                 transform: translate(-50%, -50%) scale(1.08);
                 will-change: transform !important;
+            }
+            #${OVERLAY_ID}.is-trailer-replay-mode .game-opening-prologue-cinematic-shot img {
+                width: 100% !important;
+                height: 100% !important;
+                min-width: 100% !important;
+                min-height: 100% !important;
             }
         `.trim();
         global.document.head.appendChild(style);
