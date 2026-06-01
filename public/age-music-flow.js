@@ -176,8 +176,32 @@
 
     function tryPlay() {
         const audio = resolveAudioElement();
-        if (!audio) return;
-        audio.play().catch(() => {});
+        if (!audio) return Promise.resolve();
+        applyStoredVolumeAndMute(audio);
+        audio.muted = false;
+        return audio.play().catch(() => {});
+    }
+
+    function startGamePageArchimedes(options = {}) {
+        if (!isGamePage()) return Promise.resolve();
+
+        writeSession(STORAGE.autoplayGranted, '1');
+        writeSession(STORAGE.currentTrack, TRACKS.archimedes.id);
+        if (options.resetTime !== false) {
+            writeSession(STORAGE.currentTime, '0');
+        }
+
+        loadTrack(TRACKS.archimedes.id, { restoreTime: false });
+        return tryPlay();
+    }
+
+    function shouldAutoStartGamePageMusic() {
+        if (!isGamePage()) return false;
+        if (readSession(STORAGE.startRequested) === '1') return true;
+        if (typeof global.isLocalDevelopmentHost === 'function' && global.isLocalDevelopmentHost()) {
+            return true;
+        }
+        return false;
     }
 
     function shouldSuppressPortalMainMusic() {
@@ -267,11 +291,9 @@
     }
 
     function bootGamePageMusic() {
-        if (!isGamePage()) return;
-        if (readSession(STORAGE.startRequested) !== '1') return;
+        if (!shouldAutoStartGamePageMusic()) return;
 
-        loadTrack(TRACKS.archimedes.id, { restoreTime: false });
-        tryPlay();
+        startGamePageArchimedes();
         writeSession(STORAGE.startRequested, '0');
         if (readSession(STORAGE.openingProloguePending) === '1') {
             global.dispatchEvent(new CustomEvent('royalarmies:opening-prologue-ready', {
@@ -321,6 +343,7 @@
         prepareJoinAgeLaunch,
         markProgressionPhaseStart,
         markIntroCinematicComplete: markProgressionPhaseStart,
+        startGamePageArchimedes,
         shouldHoldForOpeningPrologue: function shouldHoldForOpeningPrologue() {
             return readSession(STORAGE.openingProloguePending) === '1';
         }

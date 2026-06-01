@@ -10,10 +10,9 @@
     const SUBTITLE_ID = 'game-opening-prologue-subtitle';
 
     /**
-     * Tune start/end seconds here while iterating on distressedwoman.mp3 locally.
-     * Each cue is one spoken paragraph from the narration script.
+     * Tune paragraph start/end seconds, then sentence cues are split automatically.
      */
-    const LOCAL_PROLOGUE_CUES = Object.freeze([
+    const LOCAL_PROLOGUE_PARAGRAPH_BLOCKS = Object.freeze([
         {
             start: 0,
             end: 22,
@@ -52,6 +51,43 @@
     let finishCallback = null;
     const LOCAL_PROLOGUE_PENDING_KEY = 'royalArmies_localProloguePending';
 
+    function splitParagraphIntoSentences(text) {
+        return String(text || '')
+            .match(/[^.!?]+[.!?]+|[^.!?]+$/g)
+            ?.map((sentence) => sentence.trim())
+            .filter(Boolean) || [];
+    }
+
+    function buildSentenceCuesFromParagraphBlocks(blocks) {
+        const cues = [];
+
+        blocks.forEach((block) => {
+            const sentences = splitParagraphIntoSentences(block.text);
+            if (!sentences.length) return;
+
+            const totalWeight = sentences.reduce((sum, sentence) => sum + sentence.length, 0) || 1;
+            const span = Math.max(0.001, block.end - block.start);
+            let cursor = block.start;
+
+            sentences.forEach((sentence, index) => {
+                const isLast = index === sentences.length - 1;
+                const end = isLast
+                    ? block.end
+                    : cursor + (span * (sentence.length / totalWeight));
+                cues.push({
+                    start: cursor,
+                    end,
+                    text: sentence
+                });
+                cursor = end;
+            });
+        });
+
+        return cues;
+    }
+
+    const LOCAL_PROLOGUE_CUES = Object.freeze(buildSentenceCuesFromParagraphBlocks(LOCAL_PROLOGUE_PARAGRAPH_BLOCKS));
+
     function isLocalDevHost() {
         if (typeof global.isLocalDevelopmentHost === 'function') {
             return global.isLocalDevelopmentHost();
@@ -89,6 +125,13 @@
 
     function shouldRunLocalPrologue() {
         return isLocalDevHost() && isGamePage();
+    }
+
+    function ensurePrologueBackgroundMusic() {
+        if (global.RoyalArmiesMusicFlow
+            && typeof global.RoyalArmiesMusicFlow.startGamePageArchimedes === 'function') {
+            global.RoyalArmiesMusicFlow.startGamePageArchimedes();
+        }
     }
 
     function ensureOverlay() {
@@ -135,7 +178,7 @@
         return String(text || '').trim().split(/\s+/).filter(Boolean);
     }
 
-    function renderSubtitleWords(cueIndex, spokenWordCount) {
+    function renderSubtitleCue(cueIndex, spokenWordCount) {
         if (!subtitleEl) return;
         const cue = LOCAL_PROLOGUE_CUES[cueIndex];
         if (!cue) {
@@ -196,7 +239,7 @@
         if (cueIndex !== activeCueIndex) {
             activeCueIndex = cueIndex;
         }
-        renderSubtitleWords(cueIndex, spokenCount);
+        renderSubtitleCue(cueIndex, spokenCount);
     }
 
     function showOverlay(options) {
@@ -244,8 +287,9 @@
         clearPrologueLeadInTimer();
         isPlaying = true;
         activeCueIndex = -1;
+        ensurePrologueBackgroundMusic();
         showOverlay({ subtitles: true });
-        renderSubtitleWords(0, 0);
+        renderSubtitleCue(0, 0);
 
         if (!audioEl) return;
         audioEl.currentTime = 0;
@@ -299,6 +343,7 @@
         finishCallback = typeof options?.onComplete === 'function' ? options.onComplete : null;
         setLocalProloguePending(true);
         isLeadInActive = true;
+        ensurePrologueBackgroundMusic();
         showOverlay({ subtitles: false });
 
         leadInTimer = global.setTimeout(() => {
