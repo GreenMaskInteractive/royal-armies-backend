@@ -428,7 +428,7 @@ body {
     width: auto !important;
     height: auto !important;
     background: rgba(0, 0, 0, 0.9) !important;
-    z-index: 2147483647 !important;
+    z-index: 2147483600 !important;
     display: none;
     justify-content: center;
     align-items: center;
@@ -2800,7 +2800,7 @@ body #commander-suicide-overlay,
     justify-content: center !important;
     
     /* MAXIMUM LAYER FORCE: Forces rendering pass in front of all text boxes, headers, and wheels */
-    z-index: 2147483647 !important; /* Maximum safe 32-bit browser rendering value */
+    z-index: 2147483600 !important; /* Keep below custom cursor shell layer */
     
     box-sizing: border-box !important;
     margin: 0 !important;
