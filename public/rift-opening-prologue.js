@@ -43,9 +43,11 @@
     /** Narration starts immediately; background music joins after this delay. */
     const PROLOGUE_MUSIC_DELAY_MS = 2000;
     /** Black screen hold after narration; music ramps to peak over this duration. */
-    const PROLOGUE_POST_NARRATION_HOLD_MS = 15000;
+    const PROLOGUE_POST_NARRATION_HOLD_MS = 20000;
     const PROLOGUE_TITLE_LOGO_REVEAL_MS = 4200;
     const PROLOGUE_SUBTITLE_LOGO_REVEAL_MS = 1500;
+    /** Fire subtitle SFX this many ms before the subtitle logo animation completes. */
+    const PROLOGUE_SUBTITLE_LOGO_SFX_LEAD_MS = 60;
     const PROLOGUE_MUSIC_OUT_FADE_MS = 1200;
     const PROLOGUE_REVEAL_FADE_MS = 900;
     const PROLOGUE_LOGO_SRC = 'images/royalarmiestitle.png?v=logo-trim-gimp-1';
@@ -392,8 +394,15 @@
         }
     }
 
-    function playLogoArriveAnimation(logoEl, durationMs, generation) {
+    function playLogoArriveAnimation(logoEl, durationMs, generation, options) {
         if (!logoEl) return Promise.resolve();
+
+        const animationOptions = options && typeof options === 'object' ? options : {};
+        const useLinearMotion = animationOptions.easing === 'linear';
+        const nearCompleteLeadMs = Math.max(0, Number(animationOptions.nearCompleteLeadMs) || 0);
+        const onNearComplete = typeof animationOptions.onNearComplete === 'function'
+            ? animationOptions.onNearComplete
+            : null;
 
         return new Promise((resolve) => {
             logoEl.hidden = false;
@@ -402,6 +411,7 @@
 
             const startedAt = global.performance?.now?.() ?? Date.now();
             let settled = false;
+            let nearCompleteFired = false;
 
             const finish = () => {
                 if (settled || generation !== logoRevealGeneration) return;
@@ -414,16 +424,26 @@
                 resolve();
             };
 
+            const resolveMotionProgress = (progress) => {
+                if (useLinearMotion) return progress;
+                return 1 - ((1 - progress) ** 3);
+            };
+
             const tick = (now) => {
                 if (settled || generation !== logoRevealGeneration) return;
 
                 const elapsed = now - startedAt;
                 const progress = durationMs <= 0 ? 1 : Math.min(1, elapsed / durationMs);
-                const eased = 1 - ((1 - progress) ** 3);
-                const scale = 0.04 + (0.96 * eased);
-                const depth = -1400 + (1400 * eased);
-                const opacity = Math.min(1, eased * 1.15);
-                const blur = 14 * (1 - eased);
+                const motion = resolveMotionProgress(progress);
+                const scale = 0.04 + (0.96 * motion);
+                const depth = -1400 + (1400 * motion);
+                const opacity = useLinearMotion ? motion : Math.min(1, motion * 1.15);
+                const blur = 14 * (1 - motion);
+
+                if (onNearComplete && !nearCompleteFired && elapsed >= (durationMs - nearCompleteLeadMs)) {
+                    nearCompleteFired = true;
+                    onNearComplete();
+                }
 
                 logoEl.style.opacity = String(opacity);
                 logoEl.style.transform = `scale3d(${scale}, ${scale}, ${scale}) translateZ(${depth}px)`;
@@ -482,10 +502,15 @@
         await playLogoArriveAnimation(titleLogoEl, PROLOGUE_TITLE_LOGO_REVEAL_MS, generation);
         if (generation !== logoRevealGeneration) return;
 
-        await playLogoArriveAnimation(subtitleLogoEl, PROLOGUE_SUBTITLE_LOGO_REVEAL_MS, generation);
+        await playLogoArriveAnimation(subtitleLogoEl, PROLOGUE_SUBTITLE_LOGO_REVEAL_MS, generation, {
+            easing: 'linear',
+            nearCompleteLeadMs: PROLOGUE_SUBTITLE_LOGO_SFX_LEAD_MS,
+            onNearComplete: () => {
+                if (generation !== logoRevealGeneration) return;
+                playPrologueSubtitleLogoSfx();
+            }
+        });
         if (generation !== logoRevealGeneration) return;
-
-        playPrologueSubtitleLogoSfx();
     }
 
     async function runPostNarrationHoldSequence() {
