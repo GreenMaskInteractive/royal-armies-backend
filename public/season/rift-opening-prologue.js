@@ -59,6 +59,8 @@
     const PROLOGUE_SUBTITLE_SPARKS_PER_BURST = 5;
     const PROLOGUE_SUBTITLE_SPARK_FLASH_CHANCE = 0.24;
     const PROLOGUE_CINEMATIC_FADE_SEC = 1;
+    /** Lower = faster Ken Burns pan (1 = wall-clock match, 0.85 ≈ 18% faster). */
+    const PROLOGUE_CINEMATIC_PAN_DURATION_SCALE = 0.85;
     const PROLOGUE_CINEMATIC_IMAGE_VERSION = 'prologue-cinematic-1';
 
     /**
@@ -391,11 +393,11 @@
             }
             #${OVERLAY_ID} .game-opening-prologue-cinematic-frame {
                 position: relative !important;
-                width: 62% !important;
-                max-width: 62% !important;
+                width: 74% !important;
+                max-width: 74% !important;
                 aspect-ratio: 4 / 3 !important;
                 height: auto !important;
-                max-height: min(90%, calc(100% - clamp(128px, 17vh, 188px))) !important;
+                max-height: min(94%, calc(100% - clamp(128px, 17vh, 188px))) !important;
                 flex: 0 0 auto !important;
                 border: none !important;
                 border-radius: 6px !important;
@@ -517,7 +519,7 @@
         imgEl.style.setProperty('--cine-x2', `${x2.toFixed(2)}%`);
         imgEl.style.setProperty('--cine-y2', `${y2.toFixed(2)}%`);
         imgEl.style.setProperty('--cine-scale', scale.toFixed(3));
-        imgEl.style.setProperty('--cine-pan-duration', `${Math.max(1, durationSec).toFixed(2)}s`);
+        imgEl.style.setProperty('--cine-pan-duration', `${Math.max(1, durationSec * PROLOGUE_CINEMATIC_PAN_DURATION_SCALE).toFixed(2)}s`);
         imgEl.classList.remove('is-panning');
         void imgEl.offsetWidth;
         imgEl.classList.add('is-panning');
