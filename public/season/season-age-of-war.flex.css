@@ -1115,39 +1115,10 @@ body.is-trailer-mobile-device .game-opening-prologue.is-trailer-replay-mode .gam
 
     .game-opening-prologue.is-trailer-replay-mode .game-opening-prologue-trailer-viewport {
         flex: 0 0 auto;
+        width: 100%;
         height: min(calc(100cqw * 9 / 16 + 300px), calc(100vh - 120px));
-        border-radius: 0;
+        border-radius: 8px;
     }
-
-    .game-opening-prologue.is-trailer-replay-mode .game-opening-prologue-trailer-controls {
-        flex: 0 0 auto;
-        width: 100%;
-        margin: 0;
-        border: none;
-        border-top: 1px solid rgba(212, 168, 64, 0.38);
-        border-radius: 0;
-        box-shadow: none;
-        overflow: visible;
-        box-sizing: border-box;
-        padding: clamp(10px, 1.2vh, 14px) 18px;
-    }
-
-    .game-opening-prologue.is-trailer-replay-mode .game-opening-prologue-trailer-controls-row {
-        flex-wrap: nowrap;
-        width: 100%;
-        min-width: 0;
-    }
-
-    .game-opening-prologue.is-trailer-replay-mode .game-opening-prologue-trailer-time {
-        flex: 0 0 auto;
-        flex-shrink: 0;
-        margin-left: auto;
-        min-width: 11em;
-        padding-right: 2px;
-        overflow: visible;
-        text-align: right;
-    }
-
 }
 
 /* Fullscreen — viewport grows; picture layers stay clipped inside it */
@@ -1184,19 +1155,10 @@ body.is-trailer-mobile-device .game-opening-prologue.is-trailer-replay-mode .gam
     border-radius: 0;
 }
 
-.game-opening-prologue.is-trailer-replay-mode.is-trailer-player-fullscreen .game-opening-prologue-trailer-controls,
-.game-opening-prologue-trailer-stage:fullscreen .game-opening-prologue-trailer-controls,
-.game-opening-prologue-trailer-stage:-webkit-full-screen .game-opening-prologue-trailer-controls {
-    flex: 0 0 auto;
-    width: 100%;
-    border-top: 1px solid rgba(212, 168, 64, 0.38);
-    border-radius: 0;
-}
-
 .game-opening-prologue.is-trailer-replay-mode .game-opening-prologue-subtitle-dock.is-trailer-player-dock {
     position: absolute;
     left: 50%;
-    bottom: max(2.5cqh, 10px);
+    bottom: max(14cqh, 56px);
     transform: translateX(-50%);
     z-index: 8;
     width: min(92cqw, 100%);
@@ -1231,92 +1193,127 @@ body.is-trailer-mobile-device .game-opening-prologue.is-trailer-replay-mode .gam
 }
 
 .game-opening-prologue-trailer-controls {
-    flex: 0 0 auto;
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 12;
     display: flex;
     flex-direction: column;
-    gap: 10px;
-    padding: clamp(10px, 1.2vh, 14px);
-    border: 1px solid rgba(212, 168, 64, 0.42);
-    border-radius: 8px;
-    background: linear-gradient(180deg, rgba(24, 18, 10, 0.96) 0%, rgba(6, 5, 4, 0.98) 100%);
-    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.55);
+    gap: 6px;
+    padding: 28px 10px 8px;
+    border: none;
+    border-radius: 0;
+    background: linear-gradient(
+        180deg,
+        rgba(0, 0, 0, 0) 0%,
+        rgba(0, 0, 0, 0.45) 32%,
+        rgba(0, 0, 0, 0.88) 100%
+    );
+    box-shadow: none;
+    box-sizing: border-box;
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition: opacity 0.22s ease, visibility 0.22s ease;
+}
+
+.game-opening-prologue-trailer-viewport.is-trailer-controls-hot .game-opening-prologue-trailer-controls,
+.game-opening-prologue-trailer-viewport.is-trailer-controls-pinned .game-opening-prologue-trailer-controls,
+.game-opening-prologue-trailer-controls:focus-within {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
 }
 
 .game-opening-prologue-trailer-stage:fullscreen .game-opening-prologue-trailer-controls,
 .game-opening-prologue-trailer-stage:-webkit-full-screen .game-opening-prologue-trailer-controls {
-    margin-top: auto;
+    padding-bottom: max(8px, env(safe-area-inset-bottom, 8px));
 }
 
 .game-opening-prologue-trailer-controls-row {
     display: flex;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
     align-items: center;
-    gap: 10px;
+    gap: 4px;
+    width: 100%;
+    min-width: 0;
 }
 
-.game-opening-prologue-trailer-btn {
-    min-height: 44px;
-    padding: 10px 16px;
-    border: 1px solid rgba(255, 215, 120, 0.5);
-    border-radius: 6px;
-    background: linear-gradient(180deg, rgba(48, 36, 18, 0.96) 0%, rgba(12, 10, 8, 0.98) 100%);
-    color: rgba(255, 236, 190, 0.96);
-    font-family: 'Cinzel', Georgia, 'Times New Roman', serif;
-    font-size: clamp(0.72rem, 2.8vw, 0.86rem);
-    font-weight: 700;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    cursor: pointer;
-    touch-action: manipulation;
+.game-opening-prologue-trailer-controls-spacer {
+    flex: 1 1 auto;
+    min-width: 8px;
 }
 
-.game-opening-prologue-trailer-btn--icon {
+.game-opening-prologue.is-trailer-replay-mode .game-opening-prologue-trailer-btn {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 44px;
-    min-width: 44px;
-    padding: 0;
-    letter-spacing: 0;
+    cursor: pointer;
+    touch-action: manipulation;
+    font-family: inherit;
     text-transform: none;
+    letter-spacing: 0;
+    min-height: 36px;
+    width: 36px;
+    min-width: 36px;
+    padding: 0;
+    border: none;
+    border-radius: 4px;
+    background: transparent;
+    color: rgba(255, 255, 255, 0.96);
+    box-shadow: none;
 }
 
-.game-opening-prologue-trailer-icon {
-    display: block;
-    width: 22px;
-    height: 22px;
-    pointer-events: none;
+.game-opening-prologue.is-trailer-replay-mode .game-opening-prologue-trailer-btn--icon {
+    width: 36px;
+    min-width: 36px;
 }
 
-.game-opening-prologue-trailer-btn--primary {
-    border-color: rgba(255, 215, 0, 0.72);
-    color: #ffd978;
+.game-opening-prologue.is-trailer-replay-mode .game-opening-prologue-trailer-icon {
+    width: 24px;
+    height: 24px;
 }
 
-.game-opening-prologue-trailer-btn:hover,
-.game-opening-prologue-trailer-btn:focus-visible {
-    color: #ffd700;
-    border-color: rgba(255, 215, 0, 0.72);
+.game-opening-prologue.is-trailer-replay-mode .game-opening-prologue-trailer-btn:hover,
+.game-opening-prologue.is-trailer-replay-mode .game-opening-prologue-trailer-btn:focus-visible {
+    color: #fff;
+    background: rgba(255, 255, 255, 0.14);
     outline: none;
 }
 
 .game-opening-prologue-trailer-seek {
     width: 100%;
-    min-height: 36px;
-    accent-color: #d4a020;
+    height: 20px;
+    min-height: 20px;
+    margin: 0;
+    padding: 0;
+    accent-color: #e03030;
     cursor: pointer;
     touch-action: manipulation;
+    background: transparent;
+}
+
+.game-opening-prologue-trailer-seek::-webkit-slider-runnable-track {
+    height: 3px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.28);
+}
+
+.game-opening-prologue-trailer-seek::-webkit-slider-thumb {
+    margin-top: -5px;
 }
 
 .game-opening-prologue-trailer-time {
     flex: 0 0 auto;
-    margin-left: auto;
-    min-width: 11em;
-    font-family: 'Cinzel', Georgia, 'Times New Roman', serif;
-    font-size: clamp(0.72rem, 2.6vw, 0.82rem);
-    letter-spacing: 0.06em;
-    color: rgba(255, 236, 196, 0.92);
-    text-align: right;
+    margin: 0 0 0 6px;
+    min-width: 0;
+    font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    font-size: 0.8125rem;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    color: rgba(255, 255, 255, 0.94);
+    text-align: left;
     white-space: nowrap;
     overflow: visible;
 }

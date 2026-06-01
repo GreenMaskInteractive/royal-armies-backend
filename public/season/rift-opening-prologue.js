@@ -287,6 +287,11 @@
             viewportEl.appendChild(finalePaneEl);
         }
 
+        const controlsEl = overlayEl.querySelector('.game-opening-prologue-trailer-controls');
+        if (controlsEl && viewportEl && controlsEl.parentElement !== viewportEl) {
+            viewportEl.appendChild(controlsEl);
+        }
+
         reparentTrailerSubtitleDockForPlayer();
         refreshSubtitleElements();
     }
@@ -499,6 +504,72 @@
                 isTrailerReplayPlaying ? 'pause' : 'play',
                 isTrailerReplayPlaying ? 'Pause' : 'Play'
             );
+        }
+
+        const viewportEl = overlayEl?.querySelector('#game-opening-prologue-trailer-viewport');
+        if (viewportEl) {
+            viewportEl.classList.toggle('is-trailer-controls-pinned', !isTrailerReplayPlaying);
+        }
+    }
+
+    function bindTrailerControlsHover(viewportEl, controlsEl, seekEl) {
+        if (!viewportEl || viewportEl.dataset.riftControlsHoverBound === '1') return;
+        viewportEl.dataset.riftControlsHoverBound = '1';
+
+        const bottomHoverPx = 100;
+        let hideTimer = null;
+
+        const showControls = () => {
+            if (hideTimer) {
+                global.clearTimeout(hideTimer);
+                hideTimer = null;
+            }
+            viewportEl.classList.add('is-trailer-controls-hot');
+        };
+
+        const scheduleHideControls = () => {
+            if (hideTimer) global.clearTimeout(hideTimer);
+            hideTimer = global.setTimeout(() => {
+                hideTimer = null;
+                if (!isTrailerReplayPlaying || seekEl === global.document.activeElement) return;
+                viewportEl.classList.remove('is-trailer-controls-hot');
+            }, 900);
+        };
+
+        viewportEl.addEventListener('mousemove', (event) => {
+            const rect = viewportEl.getBoundingClientRect();
+            if (event.clientY >= rect.bottom - bottomHoverPx) {
+                showControls();
+            } else if (!controlsEl?.matches(':hover')) {
+                scheduleHideControls();
+            }
+        });
+
+        viewportEl.addEventListener('mouseleave', () => {
+            if (hideTimer) global.clearTimeout(hideTimer);
+            hideTimer = null;
+            if (!isTrailerReplayPlaying) return;
+            viewportEl.classList.remove('is-trailer-controls-hot');
+        });
+
+        controlsEl?.addEventListener('mouseenter', showControls);
+        controlsEl?.addEventListener('mouseleave', () => {
+            if (!isTrailerReplayPlaying) return;
+            scheduleHideControls();
+        });
+
+        seekEl?.addEventListener('pointerdown', showControls);
+        seekEl?.addEventListener('focus', showControls);
+        seekEl?.addEventListener('blur', () => {
+            if (!isTrailerReplayPlaying) return;
+            scheduleHideControls();
+        });
+
+        if (isTrailerMobileDevice()) {
+            viewportEl.addEventListener('touchstart', () => {
+                showControls();
+                scheduleHideControls();
+            }, { passive: true });
         }
     }
 
@@ -724,6 +795,7 @@
         playerEl.dataset.riftBound = '1';
 
         bindTrailerOrientationListeners();
+        bindTrailerControlsHover(viewportEl, overlayEl?.querySelector('.game-opening-prologue-trailer-controls'), seekEl);
 
         if (playBtn) {
             playBtn.addEventListener('click', () => {
@@ -1479,10 +1551,15 @@
                 && !overlayEl.querySelector(
                     '#game-opening-prologue-trailer-viewport #game-opening-prologue-trailer-finale-pane'
                 );
+            const staleTrailerControls = isTrailerPage()
+                && !overlayEl.querySelector(
+                    '#game-opening-prologue-trailer-viewport .game-opening-prologue-trailer-controls'
+                );
             if (!overlayEl.querySelector('.game-opening-prologue-cinematic-frame-border')
                 || !overlayEl.querySelector('.game-opening-prologue-subtitle-dock-inner')
                 || missingTrailerPlayer
-                || staleTrailerViewport) {
+                || staleTrailerViewport
+                || staleTrailerControls) {
                 overlayEl.remove();
                 overlayEl = null;
                 subtitleEl = null;
@@ -1582,15 +1659,16 @@
                             hidden
                             aria-hidden="true"
                         ></div>
-                    </div>
-                    <div class="game-opening-prologue-trailer-controls">
-                        <div class="game-opening-prologue-trailer-controls-row">
-                            ${buildTrailerIconButtonMarkup('game-opening-prologue-trailer-replay-btn', 'replay', 'Replay')}
-                            ${buildTrailerIconButtonMarkup('game-opening-prologue-trailer-play-btn', 'play', 'Play')}
-                            ${buildTrailerIconButtonMarkup('game-opening-prologue-trailer-fullscreen-btn', 'fullscreen', 'Fullscreen')}
-                            <span class="game-opening-prologue-trailer-time" id="game-opening-prologue-trailer-time">0:00 / 0:00</span>
+                        <div class="game-opening-prologue-trailer-controls" id="game-opening-prologue-trailer-controls">
+                            <input type="range" class="game-opening-prologue-trailer-seek" id="game-opening-prologue-trailer-seek" min="0" max="1000" value="0" aria-label="Trailer timeline">
+                            <div class="game-opening-prologue-trailer-controls-row">
+                                ${buildTrailerIconButtonMarkup('game-opening-prologue-trailer-play-btn', 'play', 'Play')}
+                                ${buildTrailerIconButtonMarkup('game-opening-prologue-trailer-replay-btn', 'replay', 'Replay')}
+                                <span class="game-opening-prologue-trailer-time" id="game-opening-prologue-trailer-time">0:00 / 0:00</span>
+                                <span class="game-opening-prologue-trailer-controls-spacer" aria-hidden="true"></span>
+                                ${buildTrailerIconButtonMarkup('game-opening-prologue-trailer-fullscreen-btn', 'fullscreen', 'Fullscreen')}
+                            </div>
                         </div>
-                        <input type="range" class="game-opening-prologue-trailer-seek" id="game-opening-prologue-trailer-seek" min="0" max="1000" value="0" aria-label="Trailer timeline">
                     </div>
                 </div>
             </div>
