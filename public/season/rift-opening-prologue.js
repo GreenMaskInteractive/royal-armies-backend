@@ -40,7 +40,7 @@
 
     const PROLOGUE_AUDIO_SRC = 'season/distressedwoman1.mp3';
     const PROLOGUE_NARRATION_VOLUME = 1;
-    const PROLOGUE_MUSIC_VOLUME = 0.3;
+    const PROLOGUE_MUSIC_VOLUME = 0.4;
     const PROLOGUE_MUSIC_PEAK_VOLUME = 1;
     /** Narration starts immediately; background music joins after this delay. */
     const PROLOGUE_MUSIC_DELAY_MS = 2000;
