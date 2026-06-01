@@ -9999,8 +9999,103 @@ body.developer-maintenance-alert-active #page-landing {
 }
 
 .game-opening-prologue-logo--subtitle {
+    position: relative;
+    z-index: 2;
     width: min(520px, 72vw);
     max-width: 520px;
+}
+
+.game-opening-prologue-subtitle-logo-wrap {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.game-opening-prologue-subtitle-sparks {
+    position: absolute;
+    inset: 0;
+    overflow: visible;
+    pointer-events: none;
+    z-index: 3;
+}
+
+.game-opening-prologue-spark {
+    position: absolute;
+    border-radius: 50%;
+    background: radial-gradient(circle, #fff8dc 0%, #ffd700 42%, rgba(255, 130, 20, 0.85) 100%);
+    box-shadow:
+        0 0 6px rgba(255, 230, 140, 0.95),
+        0 0 14px rgba(255, 120, 0, 0.55);
+    transform: translate(-50%, -50%);
+    opacity: 1;
+    animation: game-opening-prologue-spark-fly var(--spark-duration, 500ms) ease-out forwards;
+}
+
+.game-opening-prologue-spark.is-streak {
+    border-radius: 999px;
+    animation-name: game-opening-prologue-spark-streak-fly;
+}
+
+.game-opening-prologue-spark.is-white-hot {
+    background: radial-gradient(circle, #ffffff 0%, #ffe9a8 52%, rgba(255, 200, 120, 0.75) 100%);
+    box-shadow:
+        0 0 8px rgba(255, 255, 255, 0.95),
+        0 0 16px rgba(255, 215, 120, 0.65);
+}
+
+.game-opening-prologue-spark-flash {
+    position: absolute;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    transform: translate(-50%, -50%) scale(0.2);
+    background: radial-gradient(circle, rgba(255, 255, 255, 0.95) 0%, rgba(255, 220, 120, 0.55) 42%, rgba(255, 120, 0, 0) 72%);
+    opacity: 0.95;
+    animation: game-opening-prologue-spark-flash 260ms ease-out forwards;
+}
+
+@keyframes game-opening-prologue-spark-fly {
+    0% {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1);
+    }
+
+    100% {
+        opacity: 0;
+        transform: translate(calc(-50% + var(--spark-dx)), calc(-50% + var(--spark-dy))) scale(0.1);
+    }
+}
+
+@keyframes game-opening-prologue-spark-streak-fly {
+    0% {
+        opacity: 1;
+        transform: translate(-50%, -50%) rotate(var(--spark-rotation, 0deg)) scale(1);
+    }
+
+    100% {
+        opacity: 0;
+        transform: translate(calc(-50% + var(--spark-dx)), calc(-50% + var(--spark-dy)))
+            rotate(var(--spark-rotation, 0deg))
+            scale(0.15);
+    }
+}
+
+@keyframes game-opening-prologue-spark-flash {
+    0% {
+        opacity: 0.95;
+        transform: translate(-50%, -50%) scale(0.2);
+    }
+
+    35% {
+        opacity: 0.85;
+        transform: translate(-50%, -50%) scale(1);
+    }
+
+    100% {
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(1.35);
+    }
 }
 
 .game-opening-prologue-logo.is-arrived {

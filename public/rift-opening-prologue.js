@@ -53,11 +53,15 @@
     const PROLOGUE_LORE_TOOL_SRC = 'images/royalarmiesloretool.png?v=prologue-lore-tool-1';
     const PROLOGUE_LORE_TOOL_FADE_MS = 12000;
     const PROLOGUE_SUBTITLE_LOGO_SFX_SRC = 'audio/joinagesfxselect.wav';
+    const PROLOGUE_SUBTITLE_SPARK_INTERVAL_MS = 170;
+    const PROLOGUE_SUBTITLE_SPARKS_PER_BURST = 5;
+    const PROLOGUE_SUBTITLE_SPARK_FLASH_CHANCE = 0.24;
 
     let overlayEl = null;
     let subtitleEl = null;
     let audioEl = null;
     let subtitleLogoSfxEl = null;
+    let subtitleSparkTimer = null;
     let logoRevealGeneration = 0;
     let isPlaying = false;
     let isPostNarrationHold = false;
@@ -191,13 +195,16 @@
                         class="game-opening-prologue-logo game-opening-prologue-logo--title"
                         decoding="async"
                     >
-                    <img
-                        src="${PROLOGUE_SUBTITLE_LOGO_SRC}"
-                        alt=""
-                        class="game-opening-prologue-logo game-opening-prologue-logo--subtitle"
-                        decoding="async"
-                        hidden
-                    >
+                    <div class="game-opening-prologue-subtitle-logo-wrap">
+                        <div class="game-opening-prologue-subtitle-sparks" aria-hidden="true"></div>
+                        <img
+                            src="${PROLOGUE_SUBTITLE_LOGO_SRC}"
+                            alt=""
+                            class="game-opening-prologue-logo game-opening-prologue-logo--subtitle"
+                            decoding="async"
+                            hidden
+                        >
+                    </div>
                 </div>
             </div>
             <div class="game-opening-prologue-subtitle-dock">
@@ -387,6 +394,105 @@
         sfx.play().catch(() => {});
     }
 
+    function clearSubtitleLogoSparks() {
+        if (subtitleSparkTimer) {
+            global.clearInterval(subtitleSparkTimer);
+            subtitleSparkTimer = null;
+        }
+
+        overlayEl?.querySelectorAll('.game-opening-prologue-subtitle-sparks').forEach((host) => {
+            host.innerHTML = '';
+        });
+    }
+
+    function resolveSubtitleSparksHost(subtitleLogoEl) {
+        return subtitleLogoEl?.closest('.game-opening-prologue-subtitle-logo-wrap')
+            ?.querySelector('.game-opening-prologue-subtitle-sparks')
+            || null;
+    }
+
+    function spawnSubtitleSparkParticle(sparksHost, x, y) {
+        const spark = global.document.createElement('span');
+        spark.className = 'game-opening-prologue-spark';
+
+        const angle = (Math.random() * Math.PI * 2);
+        const distance = 16 + (Math.random() * 48);
+        const dx = Math.cos(angle) * distance;
+        const dy = Math.sin(angle) * distance - (10 + (Math.random() * 28));
+        const duration = 280 + Math.floor(Math.random() * 460);
+        const isStreak = Math.random() < 0.38;
+        const isWhiteHot = Math.random() < 0.42;
+
+        spark.style.left = `${x}px`;
+        spark.style.top = `${y}px`;
+        spark.style.setProperty('--spark-dx', `${dx.toFixed(1)}px`);
+        spark.style.setProperty('--spark-dy', `${dy.toFixed(1)}px`);
+        spark.style.setProperty('--spark-duration', `${duration}ms`);
+
+        if (isStreak) {
+            spark.classList.add('is-streak');
+            spark.style.setProperty('--spark-rotation', `${((angle * 180) / Math.PI).toFixed(1)}deg`);
+            spark.style.width = `${8 + Math.floor(Math.random() * 16)}px`;
+            spark.style.height = '2px';
+        } else {
+            const size = 2 + Math.random() * 3.5;
+            spark.style.width = `${size}px`;
+            spark.style.height = `${size}px`;
+        }
+
+        if (isWhiteHot) {
+            spark.classList.add('is-white-hot');
+        }
+
+        sparksHost.appendChild(spark);
+        spark.addEventListener('animationend', () => spark.remove(), { once: true });
+        global.setTimeout(() => spark.remove(), duration + 80);
+    }
+
+    function spawnSubtitleSparkFlash(sparksHost, x, y) {
+        const flash = global.document.createElement('span');
+        flash.className = 'game-opening-prologue-spark-flash';
+        flash.style.left = `${x}px`;
+        flash.style.top = `${y}px`;
+        sparksHost.appendChild(flash);
+        flash.addEventListener('animationend', () => flash.remove(), { once: true });
+        global.setTimeout(() => flash.remove(), 320);
+    }
+
+    function burstSubtitleLogoSparks(subtitleLogoEl) {
+        const sparksHost = resolveSubtitleSparksHost(subtitleLogoEl);
+        if (!sparksHost || subtitleLogoEl.hidden) return;
+
+        const width = sparksHost.clientWidth;
+        const height = sparksHost.clientHeight;
+        if (width <= 0 || height <= 0) return;
+
+        for (let i = 0; i < PROLOGUE_SUBTITLE_SPARKS_PER_BURST; i += 1) {
+            const x = width * (0.08 + (Math.random() * 0.84));
+            const y = height * (0.12 + (Math.random() * 0.76));
+            spawnSubtitleSparkParticle(sparksHost, x, y);
+        }
+
+        if (Math.random() < PROLOGUE_SUBTITLE_SPARK_FLASH_CHANCE) {
+            const flashX = width * (0.15 + (Math.random() * 0.7));
+            const flashY = height * (0.18 + (Math.random() * 0.64));
+            spawnSubtitleSparkFlash(sparksHost, flashX, flashY);
+        }
+    }
+
+    function startSubtitleLogoSparks(subtitleLogoEl, generation) {
+        clearSubtitleLogoSparks();
+        if (!subtitleLogoEl) return;
+
+        const runBurst = () => {
+            if (generation !== logoRevealGeneration) return;
+            burstSubtitleLogoSparks(subtitleLogoEl);
+        };
+
+        runBurst();
+        subtitleSparkTimer = global.setInterval(runBurst, PROLOGUE_SUBTITLE_SPARK_INTERVAL_MS);
+    }
+
     function resetLoreToolBackdrop() {
         const loreToolEl = overlayEl?.querySelector('.game-opening-prologue-lore-tool');
         if (!loreToolEl) return;
@@ -509,6 +615,7 @@
 
         overlayEl.classList.remove('is-logo-reveal-active');
         resetLoreToolBackdrop();
+        clearSubtitleLogoSparks();
         overlayEl.querySelectorAll('.game-opening-prologue-logo').forEach((logoEl) => {
             resetLogoElement(logoEl, { hideSubtitle: true });
         });
@@ -543,6 +650,7 @@
             onComplete: () => {
                 if (generation !== logoRevealGeneration) return;
                 playPrologueSubtitleLogoSfx();
+                startSubtitleLogoSparks(subtitleLogoEl, generation);
             }
         });
         if (generation !== logoRevealGeneration) return;
