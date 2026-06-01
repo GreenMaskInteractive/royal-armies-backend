@@ -37,6 +37,7 @@
     let chatSessionEnabled = false;
     let chatSyncSince = '';
     let chatPollInFlight = false;
+    let ageChatPoppedOut = false;
 
     function isGameChatUnlocked() {
         if (typeof global.isOfficialAgePageActive === 'function') {
@@ -64,15 +65,178 @@
     }
 
     function isAgeChatDocked() {
-        return Boolean(getAgeChatDockHosts().length) && isGameChatUnlocked();
+        return Boolean(getAgeChatDockHosts().length) && isGameChatUnlocked() && !ageChatPoppedOut;
+    }
+
+    function getAgeChatDockColumn() {
+        return global.document.querySelector('.age-map-bottom-dock-chat-column');
+    }
+
+    function buildAgeChatPopoutToggleMarkup() {
+        return `
+            <button
+                type="button"
+                id="age-game-chat-popout-toggle"
+                class="game-chat-popout-toggle"
+                aria-pressed="false"
+                aria-label="Pop chat out to a larger window"
+                title="Pop out chat">
+                <span class="game-chat-popout-toggle-label">Pop out</span>
+            </button>
+        `.trim();
+    }
+
+    function ensureAgeChatPopoutOverlay() {
+        let overlay = global.document.getElementById('age-game-chat-popout-overlay');
+        if (overlay) return overlay;
+
+        overlay = global.document.createElement('div');
+        overlay.id = 'age-game-chat-popout-overlay';
+        overlay.className = 'age-game-chat-popout-overlay';
+        overlay.hidden = true;
+        overlay.setAttribute('role', 'presentation');
+        overlay.innerHTML = `
+            <div class="age-game-chat-popout-panel" role="dialog" aria-modal="true" aria-label="Game chat">
+                <div id="age-game-chat-popout-shell" class="age-game-chat-popout-shell"></div>
+            </div>
+        `.trim();
+        overlay.addEventListener('click', (event) => {
+            if (event.target === overlay) {
+                setAgeChatPoppedOut(false);
+            }
+        });
+        global.document.body.appendChild(overlay);
+        return overlay;
+    }
+
+    function ensureAgeChatDockPlaceholder() {
+        const column = getAgeChatDockColumn();
+        if (!column) return null;
+
+        let placeholder = global.document.getElementById('age-map-bottom-chat-docked-placeholder');
+        if (placeholder) return placeholder;
+
+        placeholder = global.document.createElement('div');
+        placeholder.id = 'age-map-bottom-chat-docked-placeholder';
+        placeholder.className = 'age-map-bottom-chat-docked-placeholder';
+        placeholder.hidden = true;
+        placeholder.innerHTML = `
+            <button
+                type="button"
+                id="age-game-chat-dock-restore-btn"
+                class="age-game-chat-dock-restore-btn">
+                Chat open — dock
+            </button>
+        `.trim();
+        column.appendChild(placeholder);
+        return placeholder;
+    }
+
+    function updateAgeChatPopoutToggle() {
+        const toggle = global.document.getElementById('age-game-chat-popout-toggle');
+        if (!toggle) return;
+
+        const label = toggle.querySelector('.game-chat-popout-toggle-label');
+        const popped = ageChatPoppedOut;
+        toggle.setAttribute('aria-pressed', popped ? 'true' : 'false');
+        toggle.setAttribute(
+            'aria-label',
+            popped ? 'Dock chat back to the map bar' : 'Pop chat out to a larger window'
+        );
+        toggle.title = popped ? 'Dock chat' : 'Pop out chat';
+        if (label) {
+            label.textContent = popped ? 'Dock' : 'Pop out';
+        }
+    }
+
+    function syncAgeHudLayoutAfterChatMove() {
+        if (typeof global.syncAgeMapHudLayout === 'function') {
+            global.syncAgeMapHudLayout();
+            global.requestAnimationFrame(() => {
+                global.syncAgeMapHudLayout();
+            });
+        }
+    }
+
+    function setAgeChatPoppedOut(popped) {
+        if (!getAgeChatDockHosts().length) return;
+        if (ageChatPoppedOut === popped) return;
+
+        const messagesHost = getAgeBottomChatMessagesHost();
+        const composeHost = getAgeBottomChatComposeHost();
+        const column = getAgeChatDockColumn();
+        const overlay = ensureAgeChatPopoutOverlay();
+        const shell = overlay.querySelector('#age-game-chat-popout-shell');
+        const placeholder = ensureAgeChatDockPlaceholder();
+        if (!messagesHost || !composeHost || !shell || !column) return;
+
+        ageChatPoppedOut = popped;
+        global.document.body.classList.toggle('age-game-chat-is-popped-out', popped);
+
+        if (popped) {
+            shell.appendChild(messagesHost);
+            shell.appendChild(composeHost);
+            messagesHost.classList.add('is-age-chat-popped-out');
+            composeHost.classList.add('is-age-chat-popped-out');
+            overlay.hidden = false;
+            if (placeholder) placeholder.hidden = false;
+        } else {
+            column.insertBefore(messagesHost, placeholder || null);
+            if (placeholder && placeholder.parentNode === column) {
+                column.insertBefore(composeHost, placeholder);
+            } else {
+                column.appendChild(composeHost);
+            }
+            messagesHost.classList.remove('is-age-chat-popped-out');
+            composeHost.classList.remove('is-age-chat-popped-out');
+            overlay.hidden = true;
+            if (placeholder) placeholder.hidden = true;
+        }
+
+        updateAgeChatPopoutToggle();
+        syncAgeHudLayoutAfterChatMove();
+    }
+
+    function toggleAgeChatPopout() {
+        if (!getAgeChatDockHosts().length) return;
+        setAgeChatPoppedOut(!ageChatPoppedOut);
+    }
+
+    function ensureAgeChatPopoutControl() {
+        if (!getAgeChatDockHosts().length) return;
+        const header = global.document.querySelector(
+            '.age-map-bottom-chat-messages-host .game-chat-module-header'
+        );
+        if (!header || header.querySelector('#age-game-chat-popout-toggle')) return;
+
+        header.insertAdjacentHTML('beforeend', buildAgeChatPopoutToggleMarkup());
+        updateAgeChatPopoutToggle();
     }
 
     function setAgeChatDockVisibility(unlocked) {
+        if (!unlocked && ageChatPoppedOut) {
+            setAgeChatPoppedOut(false);
+        }
+
         getAgeChatDockHosts().forEach((host) => {
             host.hidden = !unlocked;
             host.setAttribute('aria-hidden', unlocked ? 'false' : 'true');
             host.classList.toggle('is-age-chat-gated', !unlocked);
         });
+
+        const placeholder = global.document.getElementById('age-map-bottom-chat-docked-placeholder');
+        if (placeholder) {
+            placeholder.hidden = !unlocked || !ageChatPoppedOut;
+            placeholder.setAttribute('aria-hidden', (!unlocked || !ageChatPoppedOut) ? 'true' : 'false');
+            placeholder.classList.toggle('is-age-chat-gated', !unlocked);
+        }
+
+        const overlay = global.document.getElementById('age-game-chat-popout-overlay');
+        if (overlay) {
+            overlay.hidden = !unlocked || !ageChatPoppedOut;
+            overlay.setAttribute('aria-hidden', (!unlocked || !ageChatPoppedOut) ? 'true' : 'false');
+            overlay.classList.toggle('is-age-chat-gated', !unlocked);
+        }
     }
 
     function refreshGameChatVisibility() {
@@ -899,9 +1063,22 @@
         global.__riftGameChatControlsBound = true;
 
         global.document.addEventListener('click', (event) => {
+            if (event.target.closest('#age-game-chat-popout-toggle, #age-game-chat-dock-restore-btn')) {
+                event.preventDefault();
+                toggleAgeChatPopout();
+                return;
+            }
+
             const tab = event.target.closest('.game-chat-tab[data-game-chat-tab]');
             if (!tab) return;
             setActiveTab(tab.getAttribute('data-game-chat-tab') || 'global');
+        });
+
+        global.document.addEventListener('keydown', (event) => {
+            if (event.key === 'Escape' && ageChatPoppedOut) {
+                event.preventDefault();
+                setAgeChatPoppedOut(false);
+            }
         });
 
         global.document.addEventListener('submit', (event) => {
@@ -995,6 +1172,7 @@
         messagesHost.innerHTML = `
             <header class="game-chat-module-header">
                 ${buildGameChatTabsMarkup()}
+                ${buildAgeChatPopoutToggleMarkup()}
             </header>
             <div id="game-chat-messages" class="game-chat-messages" role="log" aria-live="polite" aria-relevant="additions"></div>
             <p id="game-chat-compose-hint" class="game-chat-compose-hint" hidden></p>
@@ -1048,7 +1226,7 @@
         bindGameChatControls();
 
         if (getAgeChatDockHosts().length) {
-            /* Age dock uses fixed split layout — no resize handle. */
+            ensureAgeChatPopoutControl();
         } else {
             bindResizeHandle();
         }
@@ -1079,7 +1257,10 @@
         getActiveTab: () => activeTab,
         applyPanelOpacity,
         refreshVisibility: refreshGameChatVisibility,
-        enableForOfficialAge: enableGameChatForOfficialAge
+        enableForOfficialAge: enableGameChatForOfficialAge,
+        isAgeChatPoppedOut: () => ageChatPoppedOut,
+        setAgeChatPoppedOut,
+        toggleAgeChatPopout
     };
 
     if (global.document.readyState === 'loading') {
