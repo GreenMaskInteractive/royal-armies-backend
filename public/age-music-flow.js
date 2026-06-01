@@ -174,10 +174,15 @@
         syncUi(track.title);
     }
 
-    function tryPlay() {
+    function tryPlay(options = {}) {
         const audio = resolveAudioElement();
         if (!audio) return Promise.resolve();
-        applyStoredVolumeAndMute(audio);
+        if (options.volume != null) {
+            audio.volume = Math.max(0, Math.min(1, options.volume));
+            writeSession(STORAGE.volume, String(audio.volume));
+        } else {
+            applyStoredVolumeAndMute(audio);
+        }
         audio.muted = false;
         return audio.play().catch(() => {});
     }
@@ -192,15 +197,20 @@
         }
 
         loadTrack(TRACKS.archimedes.id, { restoreTime: false });
-        return tryPlay();
+
+        const playOptions = {};
+        if (options.volume != null) {
+            playOptions.volume = options.volume;
+        }
+        return tryPlay(playOptions);
     }
 
     function shouldAutoStartGamePageMusic() {
         if (!isGamePage()) return false;
-        if (readSession(STORAGE.startRequested) === '1') return true;
         if (typeof global.isLocalDevelopmentHost === 'function' && global.isLocalDevelopmentHost()) {
-            return true;
+            return false;
         }
+        if (readSession(STORAGE.startRequested) === '1') return true;
         return false;
     }
 
@@ -306,7 +316,7 @@
         if (readSession(STORAGE.progressionStarted) === '1') return;
         writeSession(STORAGE.progressionStarted, '1');
         loadTrack(TRACKS.kindred.id, { restoreTime: false });
-        tryPlay();
+        tryPlay({ volume: 0.5 });
     }
 
     function bootAgePageMusic() {
