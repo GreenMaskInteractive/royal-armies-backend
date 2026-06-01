@@ -3218,17 +3218,25 @@
         const logoStage = overlayEl?.querySelector('.game-opening-prologue-logo-stage');
         if (!logoStage) return;
 
-        const targets = [
-            logoStage.querySelector('.game-opening-prologue-logo-stack'),
-            logoStage.querySelector('.game-opening-prologue-lore-tool'),
-        ].filter(Boolean);
+        const logoStack = logoStage.querySelector('.game-opening-prologue-logo-stack');
+        const loreToolEl = logoStage.querySelector('.game-opening-prologue-lore-tool');
 
-        const fadeJobs = targets.map((el) => {
-            const fromOpacity = el.classList.contains('game-opening-prologue-lore-tool')
-                ? TRAILER_LORE_TOOL_PEAK_OPACITY
-                : 1;
-            return animateTrailerElementsOpacity([el], fromOpacity, 0, durationMs);
-        });
+        if (loreToolEl) {
+            loreToolEl.style.transition = 'none';
+            void loreToolEl.offsetWidth;
+        }
+
+        const fadeJobs = [];
+        if (logoStack) {
+            fadeJobs.push(animateTrailerElementsOpacity([logoStack], 1, 0, durationMs));
+        }
+        if (loreToolEl) {
+            const inlineOpacity = parseFloat(loreToolEl.style.opacity);
+            const fromOpacity = Number.isFinite(inlineOpacity) && inlineOpacity > 0
+                ? inlineOpacity
+                : TRAILER_LORE_TOOL_PEAK_OPACITY;
+            fadeJobs.push(animateTrailerElementsOpacity([loreToolEl], fromOpacity, 0, durationMs));
+        }
 
         await Promise.all(fadeJobs);
         logoStage.classList.add('is-trailer-main-finale-hidden');

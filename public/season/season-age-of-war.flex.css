@@ -395,7 +395,7 @@
 
 .game-opening-prologue-trailer-credits-logo {
     display: block;
-    width: min(110px, 26cqw);
+    width: min(220px, 52cqw);
     max-width: 100%;
     height: auto;
     object-fit: contain;
@@ -423,7 +423,7 @@
 }
 
 .game-opening-prologue.is-trailer-replay-mode .game-opening-prologue-trailer-credits-logo {
-    width: min(60px, 17cqw);
+    width: min(120px, 34cqw);
 }
 
 .game-opening-prologue.is-trailer-replay-mode .game-opening-prologue-trailer-credits-alpha-copy {
