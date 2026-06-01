@@ -549,7 +549,10 @@
             && global.RoyalArmiesMusicFlow
             && typeof global.RoyalArmiesMusicFlow.markProgressionPhaseStart === 'function'
             && (!global.RoyalArmiesMusicFlow.shouldHoldForOpeningPrologue
-                || !global.RoyalArmiesMusicFlow.shouldHoldForOpeningPrologue())) {
+                || !global.RoyalArmiesMusicFlow.shouldHoldForOpeningPrologue())
+            && (!global.RoyalArmiesOpeningPrologue
+                || typeof global.RoyalArmiesOpeningPrologue.shouldHoldProgression !== 'function'
+                || !global.RoyalArmiesOpeningPrologue.shouldHoldProgression())) {
             global.RoyalArmiesMusicFlow.markProgressionPhaseStart();
         }
     }
@@ -835,6 +838,15 @@
         global.addEventListener('royalarmies:class-confirmed', () => {
             if (activeGameView !== 'class') return;
             advanceGameOnboarding();
+        });
+
+        global.addEventListener('royalarmies:opening-prologue-finished', () => {
+            if (activeGameView !== 'class') return;
+            if (!global.RoyalArmiesMusicFlow
+                || typeof global.RoyalArmiesMusicFlow.markProgressionPhaseStart !== 'function') {
+                return;
+            }
+            global.RoyalArmiesMusicFlow.markProgressionPhaseStart();
         });
 
         const joinBattleBtn = global.document.getElementById('game-join-battle-continue-btn');

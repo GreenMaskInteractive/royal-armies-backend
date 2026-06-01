@@ -9909,6 +9909,95 @@ body.developer-maintenance-alert-active #page-landing {
     opacity: 0 !important;
 }
 
+/* RIFT — local-dev opening prologue (distressedwoman.mp3 + subtitles) */
+.game-opening-prologue {
+    position: fixed;
+    inset: 0;
+    z-index: 10040;
+    pointer-events: none;
+}
+
+.game-opening-prologue:not([hidden]) {
+    pointer-events: auto;
+}
+
+.game-opening-prologue-scrim {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+        180deg,
+        rgba(4, 3, 2, 0.08) 0%,
+        rgba(4, 3, 2, 0.22) 55%,
+        rgba(4, 3, 2, 0.72) 100%
+    );
+    pointer-events: none;
+}
+
+.game-opening-prologue-subtitle-dock {
+    position: absolute;
+    left: 50%;
+    bottom: clamp(72px, 12vh, 132px);
+    transform: translateX(-50%);
+    width: min(920px, calc(100vw - 48px));
+    padding: 14px 18px;
+    border: 1px solid rgba(184, 144, 48, 0.35);
+    border-radius: 6px;
+    background: rgba(8, 6, 4, 0.82);
+    box-shadow: 0 8px 28px rgba(0, 0, 0, 0.45);
+}
+
+.game-opening-prologue-subtitle {
+    margin: 0;
+    font-family: 'Cinzel', serif;
+    font-size: clamp(0.78rem, 1.05vw, 0.98rem);
+    line-height: 1.65;
+    letter-spacing: 0.03em;
+    text-align: center;
+    color: rgba(214, 198, 156, 0.72);
+}
+
+.game-opening-prologue-word {
+    display: inline;
+    margin-right: 0.28em;
+    transition: color 0.12s ease, text-shadow 0.12s ease;
+}
+
+.game-opening-prologue-word.is-spoken {
+    color: rgba(255, 236, 190, 0.96);
+    text-shadow: 0 0 8px rgba(255, 215, 120, 0.18);
+}
+
+.game-opening-prologue-word.is-pending {
+    color: #ffd700;
+    text-shadow: 0 0 10px rgba(255, 215, 0, 0.35);
+}
+
+.game-opening-prologue-skip {
+    position: absolute;
+    right: 18px;
+    bottom: 18px;
+    padding: 6px 10px;
+    border: 1px solid rgba(184, 144, 48, 0.4);
+    border-radius: 4px;
+    background: rgba(0, 0, 0, 0.55);
+    color: rgba(241, 224, 172, 0.88);
+    font-family: 'Cinzel', serif;
+    font-size: 0.62rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    cursor: pointer;
+}
+
+.game-opening-prologue-skip:hover {
+    color: #ffd700;
+    border-color: rgba(255, 215, 0, 0.55);
+}
+
+body.game-opening-prologue-active .game-onboarding-progress {
+    opacity: 0.35;
+    pointer-events: none;
+}
+
 .game-onboarding-step-stage {
     display: flex !important;
     flex-direction: column !important;
