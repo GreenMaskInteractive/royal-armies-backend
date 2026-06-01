@@ -24,7 +24,7 @@ const textFiles = [
 
 const binaryFiles = [
     'public/images/royalarmiessubtitlelogo.png',
-    'public/audio/distressedwoman.mp3'
+    'public/audio/distressedwoman1.mp3'
 ];
 
 fs.mkdirSync(outDir, { recursive: true });
