@@ -1150,6 +1150,48 @@ body.is-trailer-mobile-device .game-opening-prologue.is-trailer-replay-mode .gam
 
 }
 
+/* Fullscreen — viewport grows; picture layers stay clipped inside it */
+.game-opening-prologue.is-trailer-replay-mode.is-trailer-player-fullscreen .game-opening-prologue-trailer-player,
+.game-opening-prologue-trailer-stage:fullscreen {
+    width: 100%;
+    height: 100%;
+    max-height: 100%;
+}
+
+.game-opening-prologue.is-trailer-replay-mode.is-trailer-player-fullscreen .game-opening-prologue-trailer-stage,
+.game-opening-prologue-trailer-stage:fullscreen,
+.game-opening-prologue-trailer-stage:-webkit-full-screen {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    width: 100%;
+    height: 100%;
+    max-height: 100%;
+    border: none;
+    border-radius: 0;
+    box-shadow: none;
+}
+
+.game-opening-prologue.is-trailer-replay-mode.is-trailer-player-fullscreen .game-opening-prologue-trailer-viewport,
+.game-opening-prologue-trailer-stage:fullscreen .game-opening-prologue-trailer-viewport,
+.game-opening-prologue-trailer-stage:-webkit-full-screen .game-opening-prologue-trailer-viewport {
+    flex: 1 1 auto;
+    width: 100%;
+    height: auto;
+    min-height: 0;
+    max-height: none;
+    border-radius: 0;
+}
+
+.game-opening-prologue.is-trailer-replay-mode.is-trailer-player-fullscreen .game-opening-prologue-trailer-controls,
+.game-opening-prologue-trailer-stage:fullscreen .game-opening-prologue-trailer-controls,
+.game-opening-prologue-trailer-stage:-webkit-full-screen .game-opening-prologue-trailer-controls {
+    flex: 0 0 auto;
+    width: 100%;
+    border-top: 1px solid rgba(212, 168, 64, 0.38);
+    border-radius: 0;
+}
+
 .game-opening-prologue.is-trailer-replay-mode .game-opening-prologue-subtitle-dock.is-trailer-player-dock {
     position: absolute;
     left: 50%;
