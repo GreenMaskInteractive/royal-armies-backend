@@ -14,29 +14,59 @@
     const NARRATION_METADATA_TIMEOUT_MS = 8000;
 
     /**
-     * Tune paragraph start/end seconds on the script timeline, then sentence cues
-     * are split by word count and scaled to the actual narration file duration.
+     * Narration subtitle lines — fade-in/out windows (M:SS:ff hundredths).
+     * Times match distressedwoman1.mp3; scaled to actual file duration when it differs.
      */
-    const LOCAL_PROLOGUE_PARAGRAPH_BLOCKS = Object.freeze([
+    const LOCAL_PROLOGUE_SUBTITLE_CUE_MARKS = Object.freeze([
         {
-            start: 0,
-            end: 22,
-            text: 'The continent of Amnek was once a jewel of the world, its sprawling lands and islands shaped by the hands of my noble ancestors: the Aidoriian race. But time is a river that steals all things, and now, my people have forgotten the greatness that once was.'
+            in: '0:00:00',
+            out: '0:08:87',
+            text: 'The continent of Amnek was once a jewel of the world, its sprawling lands and islands shaped by the hands of my noble ancestors: the Aidoriian race.'
         },
         {
-            start: 22,
-            end: 44,
-            text: 'I still hear the whispers of our fallen glory, carried by the tales my mother and father passed down to me. Today, Vaelior stands as the last true kingdom of our bloodline, yet I watch with a heavy heart as it begins to crumble from within. I cannot bear to let our heritage fade into the shadows of history.'
+            in: '0:10:58',
+            out: '0:17:60',
+            text: 'But time is a river that steals all things, and now, my people have forgotten the greatness that once was.'
         },
         {
-            start: 44,
-            end: 58,
-            text: 'But what can one lone soul do? The hourglass empties quickly. Soon, even Vaelior will be swallowed whole by the dread invaders who seized our lands during the First Great Transition, the same dark beings who laid our countless kingdoms to ruin.'
+            in: '0:19:26',
+            out: '0:26:09',
+            text: 'I still hear the whispers of our fallen glory, carried by the tales my mother and father passed down to me.'
         },
         {
-            start: 58,
-            end: 78,
-            text: 'Is there no one left in this fractured realm—no noble heroes or sworn protectors—who still care for the Aidoriian people? Is there anyone brave enough to champion our cause, preserve our history, and deliver us from the encroaching shadows?'
+            in: '0:27:76',
+            out: '0:36:36',
+            text: 'Today, Vaelior stands as the last true kingdom of our bloodline, yet I watch with a heavy heart as it begins to crumble from within.'
+        },
+        {
+            in: '0:37:82',
+            out: '0:41:77',
+            text: 'I cannot bear to let our heritage fade into the shadows of history.'
+        },
+        {
+            in: '0:42:79',
+            out: '0:44:68',
+            text: 'But what can one lone soul do?'
+        },
+        {
+            in: '0:45:99',
+            out: '0:47:70',
+            text: 'The hourglass empties quickly.'
+        },
+        {
+            in: '0:48:64',
+            out: '0:59:38',
+            text: 'Soon, even Vaelior will be swallowed whole by the dread invaders who seized our lands during the First Great Transition, the same dark beings who laid our countless kingdoms to ruin.'
+        },
+        {
+            in: '1:00:91',
+            out: '1:08:82',
+            text: 'Is there no one left in this fractured realm—no noble heroes or sworn protectors—who still care for the Aidoriian people?'
+        },
+        {
+            in: '1:09:64',
+            out: '1:17:52',
+            text: 'Is there anyone brave enough to champion our cause, preserve our history, and deliver us from the encroaching shadows?'
         }
     ]);
 
@@ -64,6 +94,8 @@
     const PROLOGUE_SUBTITLE_SPARKS_PER_BURST = 5;
     const PROLOGUE_SUBTITLE_SPARK_FLASH_CHANCE = 0.24;
     const PROLOGUE_CINEMATIC_FADE_SEC = 1;
+    /** Soft edge fade within each subtitle cue window (seconds). */
+    const PROLOGUE_SUBTITLE_FADE_SEC = 0.35;
     /** Pan duration multiplier vs remaining shot time (1 = match, >1 = slower). */
     const PROLOGUE_CINEMATIC_PAN_DURATION_SCALE = 1.3;
     const PROLOGUE_CINEMATIC_IMAGE_VERSION = 'prologue-cine-1';
@@ -139,6 +171,7 @@
     let subtitleSyncFrame = null;
     let cueTimelineScale = 1;
     let activeCueIndex = -1;
+    let activeSubtitleOpacity = 0;
     let activeCinematicShotId = -1;
     let cinematicPanStyleCounter = 0;
     let finishCallback = null;
@@ -158,6 +191,8 @@
     let trailerBackgroundGuardsBound = false;
     let trailerVisibilityKeepaliveBound = false;
     let trailerMediaSessionBound = false;
+    let trailerControlsHideTimer = null;
+    let trailerControlsViewportEl = null;
     const TRAILER_REPLAY_SYNC_MS = 250;
     const LOCAL_PROLOGUE_PENDING_KEY = 'royalArmies_localProloguePending';
 
@@ -608,65 +643,110 @@
         }
     }
 
+    function blurTrailerControlsFocus() {
+        const active = global.document.activeElement;
+        if (active?.closest?.('.game-opening-prologue-trailer-controls')) {
+            active.blur();
+        }
+    }
+
+    function showTrailerControls() {
+        if (!trailerControlsViewportEl) return;
+
+        if (trailerControlsHideTimer) {
+            global.clearTimeout(trailerControlsHideTimer);
+            trailerControlsHideTimer = null;
+        }
+
+        trailerControlsViewportEl.classList.add('is-trailer-controls-hot');
+    }
+
+    function scheduleHideTrailerControls(delayMs) {
+        if (!trailerControlsViewportEl || !isTrailerReplayPlaying) return;
+
+        if (trailerControlsHideTimer) {
+            global.clearTimeout(trailerControlsHideTimer);
+        }
+
+        trailerControlsHideTimer = global.setTimeout(() => {
+            trailerControlsHideTimer = null;
+            const seekEl = trailerControlsViewportEl?.querySelector('#game-opening-prologue-trailer-seek');
+            if (!isTrailerReplayPlaying || seekEl === global.document.activeElement) return;
+
+            blurTrailerControlsFocus();
+            trailerControlsViewportEl?.classList.remove('is-trailer-controls-hot');
+        }, delayMs || 900);
+    }
+
     function bindTrailerControlsHover(viewportEl, controlsEl, seekEl) {
         if (!viewportEl || viewportEl.dataset.riftControlsHoverBound === '1') return;
         viewportEl.dataset.riftControlsHoverBound = '1';
 
+        trailerControlsViewportEl = viewportEl;
+
+        const stageEl = overlayEl?.querySelector('#game-opening-prologue-trailer-stage') || viewportEl;
+        const hoverSurfaceEl = stageEl;
         const bottomHoverPx = 100;
-        let hideTimer = null;
 
-        const showControls = () => {
-            if (hideTimer) {
-                global.clearTimeout(hideTimer);
-                hideTimer = null;
-            }
-            viewportEl.classList.add('is-trailer-controls-hot');
-        };
-
-        const scheduleHideControls = () => {
-            if (hideTimer) global.clearTimeout(hideTimer);
-            hideTimer = global.setTimeout(() => {
-                hideTimer = null;
-                if (!isTrailerReplayPlaying || seekEl === global.document.activeElement) return;
-                viewportEl.classList.remove('is-trailer-controls-hot');
-            }, 900);
-        };
-
-        viewportEl.addEventListener('mousemove', (event) => {
-            const rect = viewportEl.getBoundingClientRect();
-            if (event.clientY >= rect.bottom - bottomHoverPx) {
-                showControls();
-            } else if (!controlsEl?.matches(':hover')) {
-                scheduleHideControls();
-            }
-        });
-
-        viewportEl.addEventListener('mouseleave', () => {
-            if (hideTimer) global.clearTimeout(hideTimer);
-            hideTimer = null;
+        const handlePointerActivity = (event) => {
             if (!isTrailerReplayPlaying) return;
+
+            const rect = viewportEl.getBoundingClientRect();
+            const inBottomBand = event.clientY >= rect.bottom - bottomHoverPx
+                && event.clientX >= rect.left
+                && event.clientX <= rect.right;
+            const overControls = Boolean(
+                controlsEl?.contains(event.target)
+                || event.target.closest?.('.game-opening-prologue-trailer-controls')
+            );
+
+            if (inBottomBand || overControls) {
+                showTrailerControls();
+                if (!overControls && !seekEl?.matches(':active')) {
+                    scheduleHideTrailerControls();
+                }
+            } else {
+                scheduleHideTrailerControls();
+            }
+        };
+
+        hoverSurfaceEl.addEventListener('mousemove', handlePointerActivity);
+        hoverSurfaceEl.addEventListener('mouseleave', () => {
+            if (trailerControlsHideTimer) {
+                global.clearTimeout(trailerControlsHideTimer);
+                trailerControlsHideTimer = null;
+            }
+            if (!isTrailerReplayPlaying) return;
+            blurTrailerControlsFocus();
             viewportEl.classList.remove('is-trailer-controls-hot');
         });
 
-        controlsEl?.addEventListener('mouseenter', showControls);
+        controlsEl?.addEventListener('mouseenter', () => {
+            showTrailerControls();
+        });
         controlsEl?.addEventListener('mouseleave', () => {
             if (!isTrailerReplayPlaying) return;
-            scheduleHideControls();
+            scheduleHideTrailerControls();
         });
 
-        seekEl?.addEventListener('pointerdown', showControls);
-        seekEl?.addEventListener('focus', showControls);
+        seekEl?.addEventListener('pointerdown', showTrailerControls);
+        seekEl?.addEventListener('focus', showTrailerControls);
         seekEl?.addEventListener('blur', () => {
             if (!isTrailerReplayPlaying) return;
-            scheduleHideControls();
+            scheduleHideTrailerControls();
         });
 
         if (isTrailerMobileDevice()) {
-            viewportEl.addEventListener('touchstart', () => {
-                showControls();
-                scheduleHideControls();
+            hoverSurfaceEl.addEventListener('touchstart', () => {
+                showTrailerControls();
+                scheduleHideTrailerControls();
             }, { passive: true });
         }
+
+        global.document.addEventListener('fullscreenchange', () => {
+            if (!isTrailerReplayMode || !isTrailerReplayPlaying) return;
+            scheduleHideTrailerControls(120);
+        });
     }
 
     function applyTrailerTimelinePosition(timeSec, options) {
@@ -965,6 +1045,7 @@
         startTrailerReplaySyncLoop();
         updateTrailerPlayerUi();
         updateTrailerMediaSession();
+        scheduleHideTrailerControls(500);
     }
 
     async function toggleTrailerFullscreen() {
@@ -1025,33 +1106,44 @@
         if (!viewportEl || viewportEl.dataset.riftControlsBound === '1') return;
 
         viewportEl.dataset.riftControlsBound = '1';
+        trailerControlsViewportEl = viewportEl;
         bindTrailerOrientationListeners();
-
-        const showControls = () => {
-            viewportEl.classList.add('is-trailer-controls-hot');
-        };
 
         viewportEl.addEventListener('click', (event) => {
             if (event.target.closest('#game-opening-prologue-trailer-play-btn')) {
                 event.preventDefault();
-                showControls();
+                showTrailerControls();
+                blurTrailerControlsFocus();
                 if (isTrailerReplayPlaying) {
                     pauseTrailerReplayPlayback();
                 } else {
                     void tryStartTrailerPlaybackWithOrientation();
                 }
+                scheduleHideTrailerControls();
                 return;
             }
 
             if (event.target.closest('#game-opening-prologue-trailer-replay-btn')) {
                 event.preventDefault();
+                showTrailerControls();
+                blurTrailerControlsFocus();
                 restartTrailerReplay();
+                scheduleHideTrailerControls();
                 return;
             }
 
             if (event.target.closest('#game-opening-prologue-trailer-fullscreen-btn')) {
                 event.preventDefault();
+                showTrailerControls();
+                blurTrailerControlsFocus();
                 void toggleTrailerFullscreen();
+                scheduleHideTrailerControls();
+                return;
+            }
+
+            if (isTrailerReplayPlaying && !event.target.closest('.game-opening-prologue-trailer-controls')) {
+                showTrailerControls();
+                scheduleHideTrailerControls();
             }
         });
 
@@ -1062,7 +1154,8 @@
 
         viewportEl.addEventListener('pointerdown', (event) => {
             if (event.target.closest('.game-opening-prologue-trailer-controls')) {
-                showControls();
+                showTrailerControls();
+                scheduleHideTrailerControls();
             }
             if (event.target.closest('#game-opening-prologue-trailer-seek')) {
                 beginTrailerSeek();
@@ -1170,51 +1263,15 @@
         queueTrailerPlayerAutoplay();
     }
 
-    function splitParagraphIntoSentences(text) {
-        return String(text || '')
-            .match(/[^.!?]+[.!?]+|[^.!?]+$/g)
-            ?.map((sentence) => sentence.trim())
-            .filter(Boolean) || [];
-    }
+    const LOCAL_PROLOGUE_CUES = Object.freeze(
+        LOCAL_PROLOGUE_SUBTITLE_CUE_MARKS.map((mark) => ({
+            start: parseNarrationTimecode(mark.in),
+            end: parseNarrationTimecode(mark.out),
+            text: mark.text
+        }))
+    );
 
-    const SCRIPT_TIMELINE_DURATION = LOCAL_PROLOGUE_PARAGRAPH_BLOCKS[
-        LOCAL_PROLOGUE_PARAGRAPH_BLOCKS.length - 1
-    ].end;
-
-    function countCueWords(text) {
-        return String(text || '').trim().split(/\s+/).filter(Boolean).length;
-    }
-
-    function buildSentenceCuesFromParagraphBlocks(blocks) {
-        const cues = [];
-
-        blocks.forEach((block) => {
-            const sentences = splitParagraphIntoSentences(block.text);
-            if (!sentences.length) return;
-
-            const wordCounts = sentences.map(countCueWords);
-            const totalWords = wordCounts.reduce((sum, count) => sum + count, 0) || 1;
-            const span = Math.max(0.001, block.end - block.start);
-            let cursor = block.start;
-
-            sentences.forEach((sentence, index) => {
-                const isLast = index === sentences.length - 1;
-                const end = isLast
-                    ? block.end
-                    : cursor + (span * (wordCounts[index] / totalWords));
-                cues.push({
-                    start: cursor,
-                    end,
-                    text: sentence
-                });
-                cursor = end;
-            });
-        });
-
-        return cues;
-    }
-
-    const LOCAL_PROLOGUE_CUES = Object.freeze(buildSentenceCuesFromParagraphBlocks(LOCAL_PROLOGUE_PARAGRAPH_BLOCKS));
+    const SCRIPT_TIMELINE_DURATION = LOCAL_PROLOGUE_CUES[LOCAL_PROLOGUE_CUES.length - 1].end;
 
     function isLocalDevHost() {
         if (typeof global.isLocalDevelopmentHost === 'function') {
@@ -2137,42 +2194,77 @@
         updateCueTimelineScale(audioDuration);
     }
 
-    function renderSubtitleCue(cueIndex) {
-        if (!subtitleEl) refreshSubtitleElements();
-        if (!subtitleEl) return;
-        const cue = LOCAL_PROLOGUE_CUES[cueIndex];
-        if (!cue) {
-            subtitleEl.textContent = '';
-            return;
+    function getSubtitleSyncTimeSec() {
+        if (isTrailerReplayMode) {
+            return trailerReplayTimeSec;
         }
-
-        subtitleEl.textContent = cue.text;
+        return audioEl?.currentTime || 0;
     }
 
-    function resolveActiveCueIndex(audioTime) {
-        const scriptTime = toScriptTimelineTime(audioTime);
-        let index = 0;
+    function resolveActiveCueIndexAtTime(scriptTime) {
+        const t = Number(scriptTime) || 0;
 
         for (let i = 0; i < LOCAL_PROLOGUE_CUES.length; i += 1) {
-            if (scriptTime >= LOCAL_PROLOGUE_CUES[i].start) {
-                index = i;
-            } else {
-                break;
+            const cue = LOCAL_PROLOGUE_CUES[i];
+            if (t >= cue.start && t <= cue.end) {
+                return i;
             }
         }
 
-        return index;
+        return -1;
+    }
+
+    function resolveSubtitleOpacityAtTime(scriptTime) {
+        const t = Number(scriptTime) || 0;
+        const fadeSec = Math.max(0.001, PROLOGUE_SUBTITLE_FADE_SEC);
+
+        for (let i = 0; i < LOCAL_PROLOGUE_CUES.length; i += 1) {
+            const cue = LOCAL_PROLOGUE_CUES[i];
+            if (t < cue.start || t > cue.end) continue;
+
+            const fadeIn = Math.min(1, (t - cue.start) / fadeSec);
+            const fadeOut = Math.min(1, (cue.end - t) / fadeSec);
+            return Math.min(fadeIn, fadeOut);
+        }
+
+        return 0;
+    }
+
+    function applySubtitleDockOpacity(opacity) {
+        const dock = overlayEl?.querySelector('.game-opening-prologue-subtitle-dock');
+        if (!dock) return;
+
+        const clamped = Math.max(0, Math.min(1, Number(opacity) || 0));
+        dock.style.setProperty('--trailer-subtitle-opacity', String(clamped));
+    }
+
+    function renderSubtitleCue(cueIndex) {
+        if (!subtitleEl) refreshSubtitleElements();
+        if (!subtitleEl) return;
+
+        const cue = cueIndex >= 0 ? LOCAL_PROLOGUE_CUES[cueIndex] : null;
+        subtitleEl.textContent = cue ? cue.text : '';
+    }
+
+    function resolveActiveCueIndex(audioTime) {
+        return resolveActiveCueIndexAtTime(toScriptTimelineTime(audioTime));
     }
 
     function syncSubtitleToAudioTime(force) {
-        if (!audioEl) return;
+        if (!audioEl && !isTrailerReplayMode) return;
         if (!force && !canSyncPrologueTimeline()) return;
 
-        const cueIndex = resolveActiveCueIndex(audioEl.currentTime || 0);
-        if (!force && cueIndex === activeCueIndex) return;
+        const scriptTime = toScriptTimelineTime(getSubtitleSyncTimeSec());
+        const cueIndex = resolveActiveCueIndexAtTime(scriptTime);
+        const opacity = resolveSubtitleOpacityAtTime(scriptTime);
+        const opacityChanged = Math.abs(opacity - activeSubtitleOpacity) >= 0.02;
+
+        if (!force && cueIndex === activeCueIndex && !opacityChanged) return;
 
         activeCueIndex = cueIndex;
+        activeSubtitleOpacity = opacity;
         renderSubtitleCue(cueIndex);
+        applySubtitleDockOpacity(opacity);
     }
 
     function syncPrologueToAudioTime() {
@@ -2208,7 +2300,8 @@
         if (options && options.subtitles === true) {
             setSubtitleDockActive(true);
             activeCueIndex = -1;
-            renderSubtitleCue(0);
+            activeSubtitleOpacity = 0;
+            syncSubtitleToAudioTime(true);
         } else {
             setSubtitleDockActive(false);
         }

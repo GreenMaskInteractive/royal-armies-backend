@@ -1250,7 +1250,7 @@ body.is-trailer-mobile-device .game-opening-prologue.is-trailer-replay-mode .gam
     margin: 0;
     box-sizing: border-box;
     text-align: center;
-    opacity: 1 !important;
+    opacity: var(--trailer-subtitle-opacity, var(--subtitle-dock-opacity, 1)) !important;
     visibility: visible !important;
     display: block !important;
     pointer-events: none;
@@ -1322,8 +1322,7 @@ body.is-trailer-mobile-device .game-opening-prologue.is-trailer-replay-mode .gam
 }
 
 .game-opening-prologue-trailer-viewport.is-trailer-controls-hot .game-opening-prologue-trailer-controls,
-.game-opening-prologue-trailer-viewport.is-trailer-controls-pinned .game-opening-prologue-trailer-controls,
-.game-opening-prologue-trailer-controls:focus-within {
+.game-opening-prologue-trailer-viewport.is-trailer-controls-pinned .game-opening-prologue-trailer-controls {
     opacity: 1;
     visibility: visible;
 }
