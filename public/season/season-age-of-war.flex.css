@@ -261,14 +261,31 @@
 
 .game-opening-prologue-trailer-taglines {
     margin-top: clamp(52px, 8.5vh, 96px);
-    opacity: 0;
-    transform: translateY(16px);
-    transition: opacity 0.95s ease 0.12s, transform 0.95s ease 0.12s;
 }
 
-.game-opening-prologue-trailer-outro.is-taglines-visible .game-opening-prologue-trailer-taglines {
+.game-opening-prologue-trailer-call,
+.game-opening-prologue-trailer-site {
+    clip-path: inset(0 100% 0 0);
+    opacity: 0;
+    transform: translateX(-12px);
+    transition:
+        clip-path 0.42s cubic-bezier(0.22, 1, 0.36, 1),
+        opacity 0.42s cubic-bezier(0.22, 1, 0.36, 1),
+        transform 0.42s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.game-opening-prologue-trailer-outro.is-taglines-visible .game-opening-prologue-trailer-call {
+    clip-path: inset(0 0 0 0);
     opacity: 1;
-    transform: translateY(0);
+    transform: translateX(0);
+    transition-delay: 0s;
+}
+
+.game-opening-prologue-trailer-outro.is-taglines-visible .game-opening-prologue-trailer-site {
+    clip-path: inset(0 0 0 0);
+    opacity: 1;
+    transform: translateX(0);
+    transition-delay: 0.1s;
 }
 
 .game-opening-prologue-trailer-call {
@@ -1097,6 +1114,28 @@ body.age-of-war-trailer-page {
     max-width: 100%;
     max-height: min(35cqh, 100%) !important;
     gap: clamp(7px, 1.2vh, 15px);
+    transform: translateY(-7cqh);
+}
+
+.game-opening-prologue.is-trailer-replay-mode .game-opening-prologue-trailer-outro {
+    position: absolute;
+    left: 50%;
+    bottom: clamp(6px, 2.2cqh, 18px);
+    top: auto;
+    z-index: 5;
+    width: min(45cqw, 100%) !important;
+    max-width: 100%;
+    margin-top: 0;
+    transform: translateX(-50%);
+    transition: opacity 0.85s ease;
+}
+
+.game-opening-prologue.is-trailer-replay-mode .game-opening-prologue-trailer-outro.is-visible {
+    transform: translateX(-50%);
+}
+
+.game-opening-prologue.is-trailer-replay-mode .game-opening-prologue-trailer-taglines {
+    margin-top: clamp(14px, 2.4cqh, 22px);
 }
 
 .game-opening-prologue.is-trailer-replay-mode .game-opening-prologue-lore-tool {
@@ -1104,18 +1143,9 @@ body.age-of-war-trailer-page {
     max-height: min(66cqh, 96%) !important;
 }
 
-.game-opening-prologue.is-trailer-replay-mode .game-opening-prologue-trailer-outro {
-    width: min(45cqw, 100%) !important;
-    max-width: 100%;
-}
-
 .game-opening-prologue.is-trailer-replay-mode .game-opening-prologue-trailer-coming-soon {
     font-size: clamp(0.72rem, 1.7vw, 1.32rem);
     letter-spacing: 0.28em;
-}
-
-.game-opening-prologue.is-trailer-replay-mode .game-opening-prologue-trailer-taglines {
-    margin-top: clamp(26px, 4.25vh, 48px);
 }
 
 .game-opening-prologue.is-trailer-replay-mode .game-opening-prologue-trailer-call {
@@ -1284,15 +1314,6 @@ body.is-trailer-mobile-device .game-opening-prologue.is-trailer-replay-mode .gam
 
 .game-opening-prologue.is-trailer-replay-mode:not(.is-trailer-finale-visible) .game-opening-prologue-trailer-finale-pane {
     display: none;
-}
-
-.game-opening-prologue.is-trailer-replay-mode .game-opening-prologue-trailer-outro {
-    position: relative;
-    top: auto;
-    left: auto;
-    width: 100%;
-    transform: none;
-    margin-top: clamp(6px, 0.8vh, 10px);
 }
 
 .game-opening-prologue-trailer-controls {

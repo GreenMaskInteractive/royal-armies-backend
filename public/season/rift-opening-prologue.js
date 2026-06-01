@@ -2219,8 +2219,8 @@
                 <span class="game-opening-prologue-subtitle-corner game-opening-prologue-subtitle-corner--bl" aria-hidden="true"></span>
                 <span class="game-opening-prologue-subtitle-corner game-opening-prologue-subtitle-corner--br" aria-hidden="true"></span>
                 <div class="game-opening-prologue-subtitle-dock-inner">
-                    <p id="${SUBTITLE_ID}" class="game-opening-prologue-subtitle" aria-live="polite"></p>
-                </div>
+                <p id="${SUBTITLE_ID}" class="game-opening-prologue-subtitle" aria-live="polite"></p>
+            </div>
             </div>
             ${isTrailerPage() ? `
             <div class="game-opening-prologue-trailer-player" id="game-opening-prologue-trailer-player" hidden>
@@ -2317,17 +2317,17 @@
 
         return Promise.race([
             new Promise((resolve) => {
-                const onReady = () => {
-                    const duration = Number.isFinite(audioEl.duration) && audioEl.duration > 0
-                        ? audioEl.duration
-                        : null;
-                    resolve(duration);
-                };
+            const onReady = () => {
+                const duration = Number.isFinite(audioEl.duration) && audioEl.duration > 0
+                    ? audioEl.duration
+                    : null;
+                resolve(duration);
+            };
 
-                audioEl.addEventListener('loadedmetadata', onReady, { once: true });
-                audioEl.addEventListener('durationchange', onReady, { once: true });
+            audioEl.addEventListener('loadedmetadata', onReady, { once: true });
+            audioEl.addEventListener('durationchange', onReady, { once: true });
                 audioEl.addEventListener('error', () => resolve(null), { once: true });
-                audioEl.load();
+            audioEl.load();
             }),
             new Promise((resolve) => {
                 global.setTimeout(() => resolve(null), NARRATION_METADATA_TIMEOUT_MS);
@@ -2480,8 +2480,8 @@
             if (playPromise && typeof playPromise.catch === 'function') {
                 playPromise.catch(() => {
                     global.setTimeout(() => {
-                        sfx.currentTime = 0;
-                        sfx.play().catch(() => {});
+        sfx.currentTime = 0;
+        sfx.play().catch(() => {});
                     }, 32);
                 });
             }
@@ -3004,7 +3004,7 @@
             outroEl.classList.add('is-visible');
             global.setTimeout(() => {
                 outroEl.classList.add('is-taglines-visible');
-            }, 680);
+            }, 860);
         });
     }
 
