@@ -9968,6 +9968,35 @@ body.developer-maintenance-alert-active #page-landing {
     opacity: 0;
     transform: translate(-50%, -50%);
     pointer-events: none;
+    filter:
+        drop-shadow(0 0 14px rgba(150, 18, 22, 0.42))
+        drop-shadow(0 0 34px rgba(82, 0, 24, 0.36))
+        drop-shadow(0 0 56px rgba(24, 0, 6, 0.48))
+        drop-shadow(0 0 6px rgba(196, 48, 18, 0.28));
+    will-change: filter, opacity;
+}
+
+.game-opening-prologue-lore-tool.is-visible {
+    animation: game-opening-prologue-lore-tool-glow 5.8s ease-in-out infinite;
+}
+
+@keyframes game-opening-prologue-lore-tool-glow {
+    0%,
+    100% {
+        filter:
+            drop-shadow(0 0 14px rgba(150, 18, 22, 0.42))
+            drop-shadow(0 0 34px rgba(82, 0, 24, 0.36))
+            drop-shadow(0 0 56px rgba(24, 0, 6, 0.48))
+            drop-shadow(0 0 6px rgba(196, 48, 18, 0.28));
+    }
+
+    50% {
+        filter:
+            drop-shadow(0 0 24px rgba(190, 24, 28, 0.68))
+            drop-shadow(0 0 48px rgba(104, 0, 32, 0.54))
+            drop-shadow(0 0 76px rgba(36, 0, 10, 0.62))
+            drop-shadow(0 0 12px rgba(228, 72, 24, 0.42));
+    }
 }
 
 .game-opening-prologue-logo-stack {
