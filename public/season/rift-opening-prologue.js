@@ -320,10 +320,19 @@
                 height: auto !important;
                 max-height: min(75%, calc(100% - clamp(128px, 17vh, 188px))) !important;
                 flex: 0 0 auto !important;
-                border: 2px solid rgba(184, 144, 48, 0.62) !important;
+                border: none !important;
                 border-radius: 6px !important;
                 overflow: hidden !important;
                 background: #080604 !important;
+            }
+            #${OVERLAY_ID} .game-opening-prologue-cinematic-frame-border {
+                position: absolute !important;
+                inset: 0 !important;
+                z-index: 3 !important;
+                border: 2px solid rgba(184, 144, 48, 0.62) !important;
+                border-radius: 6px !important;
+                pointer-events: none !important;
+                opacity: var(--cine-frame-opacity, 0);
                 box-shadow:
                     0 0 0 1px rgba(255, 215, 120, 0.14),
                     0 16px 44px rgba(0, 0, 0, 0.55),
@@ -387,6 +396,7 @@
         return `
             <div class="game-opening-prologue-cinematic-stage" aria-hidden="true">
                 <div class="game-opening-prologue-cinematic-frame">
+                    <div class="game-opening-prologue-cinematic-frame-border" aria-hidden="true"></div>
                     ${PROLOGUE_CINEMATIC_SHOTS.map((shot) => `
                         <div
                             class="game-opening-prologue-cinematic-shot"
@@ -448,6 +458,10 @@
             }
         });
         activeCinematicShotId = -1;
+        const frameBorderEl = overlayEl?.querySelector('.game-opening-prologue-cinematic-frame-border');
+        if (frameBorderEl) {
+            frameBorderEl.style.setProperty('--cine-frame-opacity', '0');
+        }
         overlayEl?.classList.remove('is-cinematics-active');
     }
 
@@ -468,6 +482,7 @@
         const scriptTime = toScriptTimelineTime(audioEl.currentTime || 0);
         let dominantShotId = -1;
         let dominantOpacity = 0;
+        let frameBorderOpacity = 0;
 
         cinematicShotEls.forEach((shotEl) => {
             const shotId = Number(shotEl.dataset.cinematicId) || 0;
@@ -475,6 +490,7 @@
             if (!shot) return;
 
             const opacity = resolveCinematicShotOpacity(scriptTime, shot);
+            frameBorderOpacity = Math.max(frameBorderOpacity, opacity);
             shotEl.style.setProperty('--cine-shot-opacity', String(opacity));
             shotEl.style.opacity = String(opacity);
             shotEl.classList.toggle('is-visible', opacity > 0);
@@ -499,6 +515,11 @@
                 if (imgEl) imgEl.classList.remove('is-panning');
             }
         });
+
+        const frameBorderEl = overlayEl?.querySelector('.game-opening-prologue-cinematic-frame-border');
+        if (frameBorderEl) {
+            frameBorderEl.style.setProperty('--cine-frame-opacity', String(frameBorderOpacity));
+        }
 
         if (dominantOpacity > 0) {
             overlayEl?.classList.add('is-cinematics-active');
@@ -554,7 +575,7 @@
         removeStalePrologueNodes();
 
         if (overlayEl && global.document.contains(overlayEl)) {
-            if (!overlayEl.querySelector('.game-opening-prologue-cinematic-frame')) {
+            if (!overlayEl.querySelector('.game-opening-prologue-cinematic-frame-border')) {
                 overlayEl.remove();
                 overlayEl = null;
                 subtitleEl = null;

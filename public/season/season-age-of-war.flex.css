@@ -53,10 +53,20 @@
     height: auto;
     max-height: min(75%, calc(100% - clamp(128px, 17vh, 188px)));
     flex: 0 0 auto;
-    border: 2px solid rgba(184, 144, 48, 0.62);
+    border: none;
     border-radius: 6px;
     overflow: hidden;
     background: #080604;
+}
+
+.game-opening-prologue-cinematic-frame-border {
+    position: absolute;
+    inset: 0;
+    z-index: 3;
+    border: 2px solid rgba(184, 144, 48, 0.62);
+    border-radius: 6px;
+    pointer-events: none;
+    opacity: var(--cine-frame-opacity, 0);
     box-shadow:
         0 0 0 1px rgba(255, 215, 120, 0.14),
         0 16px 44px rgba(0, 0, 0, 0.55),
