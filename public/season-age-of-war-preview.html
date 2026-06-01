@@ -74,8 +74,9 @@
             Production pages are unchanged.
         </p>
         <div class="season-preview-hub-actions">
+            <a href="ageofwarcinematic.html">Age of War cinematic (start here)</a>
             <a href="season-age-of-war-age.html">Age Alpha (season HUD + music)</a>
-            <a href="season-age-of-war-game.html">Game page (opening prologue)</a>
+            <a href="season-age-of-war-game.html?riftProgressionReset=1">Game progression (onboarding)</a>
             <a href="agealpha.html">Production Age Alpha (compare)</a>
             <a href="game.html">Production game shell (compare)</a>
         </div>
@@ -83,7 +84,7 @@
         <ul>
             <li>Right HUD <em>Age of War</em> subtitle logo + spark bursts</li>
             <li>Bottom-bar music player placement and cross-page soundtrack flow</li>
-            <li>Black-screen opening prologue (narration, lore tool, Enter the War)</li>
+            <li>Opening cinematic page (<code>ageofwarcinematic.html</code>) → progression onboarding</li>
             <li>Seasonal FLEX in <code>public/season/season-age-of-war.flex.css</code></li>
             <li>Seasonal RIFT copies in <code>public/season/</code></li>
         </ul>
@@ -92,7 +93,7 @@
             <li>Run the backend (<code>node server.js</code>) or Live Server from <code>public/</code> (ports <strong>3000</strong> or <strong>5500</strong>).</li>
             <li>Use the <strong>Dev bypass</strong> bar at the bottom to jump between season and production pages (no need to follow links above).</li>
             <li>Sign in as <code>caleb_admin</code> on localhost for full Age API behavior (Portal view → Owner).</li>
-            <li>Replay prologue: pick <em>Season · opening prologue</em> in Dev bypass (adds <code>riftProgressionReset=1</code> automatically).</li>
+            <li>Replay cinematic: open <code>ageofwarcinematic.html</code> or pick <em>Season · cinematic</em> in Dev bypass.</li>
         </ul>
         <p><strong>Refresh assets from branch</strong></p>
         <ul>

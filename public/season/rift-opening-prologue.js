@@ -1,6 +1,7 @@
 /**
  * RIFT — Opening narrative prologue (local dev preview only).
- * Plays distressedwoman1.mp3 with sentence subtitles on every game-page visit.
+ * Plays distressedwoman1.mp3 with cinematic stills + sentence subtitles (local dev).
+ * Runs on ageofwarcinematic.html; on completion navigates to the game progression screen.
  */
 (function initRoyalArmiesOpeningPrologue(global) {
     'use strict';
@@ -186,6 +187,36 @@
         return global.document.body?.id === 'game-page-canvas';
     }
 
+    function isCinematicPage() {
+        return global.document.body?.id === 'age-of-war-cinematic-canvas';
+    }
+
+    function shouldRunOpeningPrologue() {
+        return isLocalDevHost() && isCinematicPage();
+    }
+
+    function resolveProgressionPageUrl() {
+        const isSeasonPreview = global.document.body?.dataset?.seasonPreview === 'age-of-war';
+        const slug = isSeasonPreview ? 'season-age-of-war-game' : 'game';
+        if (typeof global.resolveRoyalArmiesPageUrl === 'function') {
+            return global.resolveRoyalArmiesPageUrl(slug, 'riftProgressionReset=1');
+        }
+        return `/${slug}.html?riftProgressionReset=1`;
+    }
+
+    async function transitionToProgressionScreen() {
+        if (!isCinematicPage()) return;
+
+        const url = resolveProgressionPageUrl();
+        if (global.RoyalArmiesPageRouteTransition
+            && typeof global.RoyalArmiesPageRouteTransition.navigateTo === 'function') {
+            await global.RoyalArmiesPageRouteTransition.navigateTo(url);
+            return;
+        }
+
+        global.location.assign(url);
+    }
+
     function setLocalProloguePending(active) {
         try {
             if (active) {
@@ -204,10 +235,6 @@
         } catch (_err) {
             return false;
         }
-    }
-
-    function shouldRunLocalPrologue() {
-        return isLocalDevHost() && isGamePage();
     }
 
     function ensurePrologueCriticalStyles() {
@@ -590,7 +617,7 @@
             <div class="game-opening-prologue-subtitle-dock">
                 <p id="${SUBTITLE_ID}" class="game-opening-prologue-subtitle" aria-live="polite"></p>
             </div>
-            <button type="button" class="game-opening-prologue-skip" id="game-opening-prologue-skip">Skip prologue (local dev)</button>
+            <button type="button" class="game-opening-prologue-skip" id="game-opening-prologue-skip">${isCinematicPage() ? 'Skip to progression (local dev)' : 'Skip prologue (local dev)'}</button>
         `.trim();
 
         audioEl = global.document.createElement('audio');
@@ -1226,10 +1253,14 @@
             finishCallback = null;
             cb(reason);
         }
+
+        if (isCinematicPage() && reason !== 'error') {
+            await transitionToProgressionScreen();
+        }
     }
 
     async function startLocalPrologue(options) {
-        if (!shouldRunLocalPrologue()) {
+        if (!shouldRunOpeningPrologue()) {
             return Promise.resolve('disabled');
         }
         if (isProloguePlaybackActive()) {
@@ -1270,12 +1301,15 @@
         return Promise.resolve('playing');
     }
 
-    function bootGamePagePrologue() {
-        if (!shouldRunLocalPrologue()) return;
+    function bootOpeningPrologue() {
+        if (!shouldRunOpeningPrologue()) return;
         startLocalPrologue();
     }
 
     global.RoyalArmiesOpeningPrologue = {
+        isCinematicPage: function isOpeningPrologueCinematicPage() {
+            return isCinematicPage();
+        },
         isPlaying: function isProloguePlaying() {
             return isPlaying || isPostNarrationHold;
         },
@@ -1310,8 +1344,8 @@
     };
 
     if (global.document.readyState === 'loading') {
-        global.document.addEventListener('DOMContentLoaded', bootGamePagePrologue, { once: true });
+        global.document.addEventListener('DOMContentLoaded', bootOpeningPrologue, { once: true });
     } else {
-        bootGamePagePrologue();
+        bootOpeningPrologue();
     }
 })(window);

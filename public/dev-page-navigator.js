@@ -12,8 +12,9 @@
             label: 'Age of War · season preview',
             pages: [
                 { id: 'season-hub', label: 'Season hub', path: '/season-age-of-war-preview', file: 'season-age-of-war-preview.html' },
+                { id: 'ageofwarcinematic', label: 'Season · cinematic', path: '/ageofwarcinematic', file: 'ageofwarcinematic.html' },
                 { id: 'season-age', label: 'Season · Age HUD + music', path: '/season-age-of-war-age', file: 'season-age-of-war-age.html' },
-                { id: 'season-game', label: 'Season · opening prologue', path: '/season-age-of-war-game', file: 'season-age-of-war-game.html' }
+                { id: 'season-game', label: 'Season · progression', path: '/season-age-of-war-game', file: 'season-age-of-war-game.html' }
             ]
         },
         {
@@ -30,6 +31,7 @@
 
     const DEV_SEASON_PREVIEW_FILES = new Set([
         'season-age-of-war-preview.html',
+        'ageofwarcinematic.html',
         'season-age-of-war-age.html',
         'season-age-of-war-game.html'
     ]);
@@ -62,6 +64,7 @@
             || slug === 'game'
             || slug === 'agealpha'
             || slug === 'season-age-of-war-preview'
+            || slug === 'ageofwarcinematic'
             || slug === 'season-age-of-war-age'
             || slug === 'season-age-of-war-game'
             || slug === '';
