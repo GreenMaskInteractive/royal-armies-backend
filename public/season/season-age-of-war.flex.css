@@ -359,15 +359,94 @@
     transform: translateX(-50%);
     z-index: 5;
     width: min(920px, calc(100vw - 48px));
-    padding: 14px 18px;
-    border: 1px solid rgba(184, 144, 48, 0.35);
-    border-radius: 6px;
-    background: rgba(8, 6, 4, 0.88);
-    box-shadow: 0 8px 28px rgba(0, 0, 0, 0.45);
+    padding: 0;
+    border: 1px solid rgba(212, 168, 64, 0.58);
+    border-radius: 4px;
+    background: linear-gradient(180deg, rgba(36, 28, 16, 0.94) 0%, rgba(8, 6, 4, 0.98) 100%);
+    box-shadow:
+        0 0 0 1px rgba(255, 215, 120, 0.14),
+        0 0 28px rgba(255, 176, 48, 0.1),
+        0 14px 42px rgba(0, 0, 0, 0.58),
+        inset 0 1px 0 rgba(255, 236, 190, 0.16),
+        inset 0 -1px 0 rgba(0, 0, 0, 0.45);
+    outline: 1px solid rgba(255, 215, 120, 0.16);
+    outline-offset: 5px;
+    backdrop-filter: blur(8px);
     opacity: 1;
     visibility: visible;
     pointer-events: none;
     transition: opacity 0.35s ease, visibility 0.35s ease;
+}
+
+.game-opening-prologue-subtitle-dock-inner {
+    position: relative;
+    padding: 16px 34px 18px;
+}
+
+.game-opening-prologue-subtitle-dock-inner::before,
+.game-opening-prologue-subtitle-dock-inner::after {
+    content: '';
+    position: absolute;
+    left: 18px;
+    right: 18px;
+    height: 1px;
+    pointer-events: none;
+}
+
+.game-opening-prologue-subtitle-dock-inner::before {
+    top: 7px;
+    background: linear-gradient(
+        90deg,
+        transparent 0%,
+        rgba(255, 215, 120, 0.55) 50%,
+        transparent 100%
+    );
+}
+
+.game-opening-prologue-subtitle-dock-inner::after {
+    bottom: 7px;
+    background: linear-gradient(
+        90deg,
+        transparent 0%,
+        rgba(184, 144, 48, 0.42) 50%,
+        transparent 100%
+    );
+}
+
+.game-opening-prologue-subtitle-corner {
+    position: absolute;
+    width: 14px;
+    height: 14px;
+    border: 2px solid rgba(255, 212, 120, 0.78);
+    pointer-events: none;
+}
+
+.game-opening-prologue-subtitle-corner--tl {
+    top: 5px;
+    left: 7px;
+    border-right: none;
+    border-bottom: none;
+}
+
+.game-opening-prologue-subtitle-corner--tr {
+    top: 5px;
+    right: 7px;
+    border-left: none;
+    border-bottom: none;
+}
+
+.game-opening-prologue-subtitle-corner--bl {
+    bottom: 5px;
+    left: 7px;
+    border-right: none;
+    border-top: none;
+}
+
+.game-opening-prologue-subtitle-corner--br {
+    bottom: 5px;
+    right: 7px;
+    border-left: none;
+    border-top: none;
 }
 
 .game-opening-prologue.is-logo-reveal-active .game-opening-prologue-subtitle-dock,
@@ -385,12 +464,15 @@
     margin: 0;
     min-height: 2.8em;
     font-family: 'Cinzel', Georgia, 'Times New Roman', serif;
-    font-size: clamp(0.85rem, 1.15vw, 1.05rem);
-    line-height: 1.65;
-    letter-spacing: 0.03em;
+    font-size: clamp(0.88rem, 1.18vw, 1.08rem);
+    font-weight: 500;
+    line-height: 1.7;
+    letter-spacing: 0.045em;
     text-align: center;
-    color: rgba(255, 242, 210, 0.96);
-    text-shadow: 0 1px 12px rgba(0, 0, 0, 0.65);
+    color: rgba(255, 244, 214, 0.98);
+    text-shadow:
+        0 0 20px rgba(255, 196, 88, 0.14),
+        0 2px 16px rgba(0, 0, 0, 0.78);
 }
 
 .game-opening-prologue-word {

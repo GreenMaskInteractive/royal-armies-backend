@@ -9,7 +9,7 @@
     const OVERLAY_ID = 'game-opening-prologue';
     const AUDIO_ID = 'game-opening-prologue-audio';
     const SUBTITLE_ID = 'game-opening-prologue-subtitle';
-    const CRITICAL_STYLE_ID = 'rift-opening-prologue-critical-styles-v2';
+    const CRITICAL_STYLE_ID = 'rift-opening-prologue-critical-styles-v3';
     const NARRATION_METADATA_TIMEOUT_MS = 8000;
 
     /**
@@ -240,6 +240,8 @@
     function ensurePrologueCriticalStyles() {
         const legacyStyle = global.document.getElementById('rift-opening-prologue-critical-styles');
         if (legacyStyle) legacyStyle.remove();
+        const legacyStyleV2 = global.document.getElementById('rift-opening-prologue-critical-styles-v2');
+        if (legacyStyleV2) legacyStyleV2.remove();
         if (global.document.getElementById(CRITICAL_STYLE_ID)) return;
 
         const style = global.document.createElement('style');
@@ -260,15 +262,86 @@
                 transform: translateX(-50%) !important;
                 z-index: 5 !important;
                 width: min(920px, calc(100vw - 48px)) !important;
-                padding: 14px 18px !important;
-                border: 1px solid rgba(184, 144, 48, 0.35) !important;
-                border-radius: 6px !important;
-                background: rgba(8, 6, 4, 0.88) !important;
-                box-shadow: 0 8px 28px rgba(0, 0, 0, 0.45) !important;
+                padding: 0 !important;
+                border: 1px solid rgba(212, 168, 64, 0.58) !important;
+                border-radius: 4px !important;
+                background:
+                    linear-gradient(180deg, rgba(36, 28, 16, 0.94) 0%, rgba(8, 6, 4, 0.98) 100%) !important;
+                box-shadow:
+                    0 0 0 1px rgba(255, 215, 120, 0.14),
+                    0 0 28px rgba(255, 176, 48, 0.1),
+                    0 14px 42px rgba(0, 0, 0, 0.58),
+                    inset 0 1px 0 rgba(255, 236, 190, 0.16),
+                    inset 0 -1px 0 rgba(0, 0, 0, 0.45) !important;
+                outline: 1px solid rgba(255, 215, 120, 0.16) !important;
+                outline-offset: 5px !important;
+                backdrop-filter: blur(8px) !important;
                 pointer-events: none !important;
                 opacity: 1 !important;
                 visibility: visible !important;
                 display: block !important;
+            }
+            #${OVERLAY_ID} .game-opening-prologue-subtitle-dock-inner {
+                position: relative !important;
+                padding: 16px 34px 18px !important;
+            }
+            #${OVERLAY_ID} .game-opening-prologue-subtitle-dock-inner::before,
+            #${OVERLAY_ID} .game-opening-prologue-subtitle-dock-inner::after {
+                content: '' !important;
+                position: absolute !important;
+                left: 18px !important;
+                right: 18px !important;
+                height: 1px !important;
+                pointer-events: none !important;
+            }
+            #${OVERLAY_ID} .game-opening-prologue-subtitle-dock-inner::before {
+                top: 7px !important;
+                background: linear-gradient(
+                    90deg,
+                    transparent 0%,
+                    rgba(255, 215, 120, 0.55) 50%,
+                    transparent 100%
+                ) !important;
+            }
+            #${OVERLAY_ID} .game-opening-prologue-subtitle-dock-inner::after {
+                bottom: 7px !important;
+                background: linear-gradient(
+                    90deg,
+                    transparent 0%,
+                    rgba(184, 144, 48, 0.42) 50%,
+                    transparent 100%
+                ) !important;
+            }
+            #${OVERLAY_ID} .game-opening-prologue-subtitle-corner {
+                position: absolute !important;
+                width: 14px !important;
+                height: 14px !important;
+                border: 2px solid rgba(255, 212, 120, 0.78) !important;
+                pointer-events: none !important;
+            }
+            #${OVERLAY_ID} .game-opening-prologue-subtitle-corner--tl {
+                top: 5px !important;
+                left: 7px !important;
+                border-right: none !important;
+                border-bottom: none !important;
+            }
+            #${OVERLAY_ID} .game-opening-prologue-subtitle-corner--tr {
+                top: 5px !important;
+                right: 7px !important;
+                border-left: none !important;
+                border-bottom: none !important;
+            }
+            #${OVERLAY_ID} .game-opening-prologue-subtitle-corner--bl {
+                bottom: 5px !important;
+                left: 7px !important;
+                border-right: none !important;
+                border-top: none !important;
+            }
+            #${OVERLAY_ID} .game-opening-prologue-subtitle-corner--br {
+                bottom: 5px !important;
+                right: 7px !important;
+                border-left: none !important;
+                border-top: none !important;
             }
             #${OVERLAY_ID}.is-logo-reveal-active .game-opening-prologue-subtitle-dock,
             #${OVERLAY_ID}[data-subtitles-hidden="1"] .game-opening-prologue-subtitle-dock {
@@ -285,12 +358,16 @@
             #${OVERLAY_ID} .game-opening-prologue-subtitle {
                 margin: 0 !important;
                 min-height: 2.8em !important;
-                font-family: Georgia, 'Times New Roman', serif !important;
-                font-size: clamp(0.85rem, 1.15vw, 1.05rem) !important;
-                line-height: 1.65 !important;
+                font-family: 'Cinzel', Georgia, 'Times New Roman', serif !important;
+                font-size: clamp(0.88rem, 1.18vw, 1.08rem) !important;
+                font-weight: 500 !important;
+                line-height: 1.7 !important;
+                letter-spacing: 0.045em !important;
                 text-align: center !important;
-                color: rgba(255, 242, 210, 0.96) !important;
-                text-shadow: 0 1px 12px rgba(0, 0, 0, 0.65) !important;
+                color: rgba(255, 244, 214, 0.98) !important;
+                text-shadow:
+                    0 0 20px rgba(255, 196, 88, 0.14),
+                    0 2px 16px rgba(0, 0, 0, 0.78) !important;
             }
             #${OVERLAY_ID} .game-opening-prologue-scrim {
                 position: absolute !important;
@@ -575,7 +652,8 @@
         removeStalePrologueNodes();
 
         if (overlayEl && global.document.contains(overlayEl)) {
-            if (!overlayEl.querySelector('.game-opening-prologue-cinematic-frame-border')) {
+            if (!overlayEl.querySelector('.game-opening-prologue-cinematic-frame-border')
+                || !overlayEl.querySelector('.game-opening-prologue-subtitle-dock-inner')) {
                 overlayEl.remove();
                 overlayEl = null;
                 subtitleEl = null;
@@ -636,7 +714,13 @@
                 </div>
             </div>
             <div class="game-opening-prologue-subtitle-dock">
-                <p id="${SUBTITLE_ID}" class="game-opening-prologue-subtitle" aria-live="polite"></p>
+                <span class="game-opening-prologue-subtitle-corner game-opening-prologue-subtitle-corner--tl" aria-hidden="true"></span>
+                <span class="game-opening-prologue-subtitle-corner game-opening-prologue-subtitle-corner--tr" aria-hidden="true"></span>
+                <span class="game-opening-prologue-subtitle-corner game-opening-prologue-subtitle-corner--bl" aria-hidden="true"></span>
+                <span class="game-opening-prologue-subtitle-corner game-opening-prologue-subtitle-corner--br" aria-hidden="true"></span>
+                <div class="game-opening-prologue-subtitle-dock-inner">
+                    <p id="${SUBTITLE_ID}" class="game-opening-prologue-subtitle" aria-live="polite"></p>
+                </div>
             </div>
             <button type="button" class="game-opening-prologue-skip" id="game-opening-prologue-skip">${isCinematicPage() ? 'Skip to progression (local dev)' : 'Skip prologue (local dev)'}</button>
         `.trim();
@@ -732,9 +816,6 @@
         }
 
         subtitleEl.textContent = cue.text;
-        subtitleEl.style.setProperty('color', 'rgba(255, 242, 210, 0.96)', 'important');
-        subtitleEl.style.setProperty('opacity', '1', 'important');
-        subtitleEl.style.setProperty('visibility', 'visible', 'important');
     }
 
     function resolveActiveCueIndex(audioTime) {
