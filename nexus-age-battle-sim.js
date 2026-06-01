@@ -7,6 +7,9 @@
  *   3. Cavalry charge
  *   4. Infantry grind (up to 5 rounds)
  *
+ * Baseline combat uses catalog unit stats only — no multi-hero roster and no
+ * Trainer / Parry / Leadership perks until those systems are acquired on the ledger.
+ *
  * Victory: annihilation (0 HP/units) or opponent routes (morale / unsustainable losses).
  */
 'use strict';
@@ -644,6 +647,28 @@ function resolveTrainingStackRank(entry, commanderRank, band) {
     return Math.max(1, Math.min(6, Math.round(lerpTrainingNumber(baseRank, peakRank, t))));
 }
 
+function buildRandomizedTrainingHostStacks(bandStacks) {
+    const pool = Array.isArray(bandStacks) ? bandStacks.filter(Boolean) : [];
+    if (!pool.length) return [];
+
+    const shuffled = [...pool];
+    for (let i = shuffled.length - 1; i > 0; i -= 1) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+
+    const minTypes = Math.min(3, pool.length);
+    const maxTypes = pool.length;
+    const typeCount = minTypes + Math.floor(Math.random() * (maxTypes - minTypes + 1));
+    const picked = shuffled.slice(0, typeCount);
+
+    return picked.map((entry) => {
+        const base = Math.max(1, Math.floor(Number(entry.weight ?? entry.qty) || 1));
+        const jitter = 0.35 + Math.random() * 1.3;
+        return { ...entry, weight: Math.max(1, Math.round(base * jitter)) };
+    });
+}
+
 function distributeTrainingNpcQuantities(stacks, targetTotal) {
     const total = Math.max(1, Math.min(TRAINING_NPC_MAX_UNITS, Math.floor(Number(targetTotal) || 1)));
     if (!stacks.length) return [];
@@ -703,7 +728,8 @@ function buildTrainingNpcArmy(catalog, templateStacks, trainingMode = 'street-pa
         TRAINING_NPC_MAX_UNITS,
         Math.max(1, Math.round(resolveTrainingNpcTargetTotal(rank) * modeScale))
     );
-    const distributed = distributeTrainingNpcQuantities(band.stacks, targetTotal);
+    const hostStacks = buildRandomizedTrainingHostStacks(band.stacks);
+    const distributed = distributeTrainingNpcQuantities(hostStacks, targetTotal);
 
     return distributed.map(({ entry, qty }) => {
         const catalogUnit = getCatalogUnitById(catalogRef, entry.catalogUnitId);

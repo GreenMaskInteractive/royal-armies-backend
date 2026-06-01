@@ -1,12 +1,18 @@
 /**
- * NEXUS — Guild commander XP (Last Knights style: survival + round participation).
+ * NEXUS — Guild commander XP.
  *
- * Training pays extremely little so early progression stays local; city battles pay
- * much more so commanders graduate toward fighting alongside comrades on the map.
+ * Participation XP (survivors × combat rounds) applies only when your fight helps
+ * Solo guild training drills use outcome, fight duration (rounds to resolve), and
+ * host mix — not participation credit. Acquired gear Trainer / guild XP perks apply
+ * only when stored on the commander ledger (see resolveAcquiredGuildTrainingXpMultiplier).
+ *
+ * Tier gap: training ≪ PvP ≪ city battles / main drops.
  */
 'use strict';
 
-/** Per-survivor XP weight by phase lane — tuned per engagement profile below. */
+const { resolveAcquiredGuildTrainingXpMultiplier } = require('./nexus-age-commander-gear');
+
+/** Per-survivor XP weight by phase lane — participation profiles only. */
 const BASE_LANE_RATES = Object.freeze({
     ranged: 2.5,
     beasts: 3.5,
@@ -20,17 +26,14 @@ const TRAINING_MODE_XP_MULTIPLIER = Object.freeze({
     'border-patrol': 0.8
 });
 
+/** Solo drill outcome anchors (scaled by training mode). Not participation XP. */
+const TRAINING_DRILL_OUTCOME_BASE = Object.freeze({
+    commander: 8,
+    draw: 5,
+    npc: 2
+});
+
 const ENGAGEMENT_XP_PROFILES = Object.freeze({
-    training: Object.freeze({
-        label: 'training',
-        laneRateScale: 0.06,
-        globalScale: 0.07,
-        minXpGain: 0,
-        enforceMinimum: false,
-        resolveContextMultiplier(mode) {
-            return TRAINING_MODE_XP_MULTIPLIER[normalizeTrainingMode(mode)] || TRAINING_MODE_XP_MULTIPLIER['street-patrol'];
-        }
-    }),
     'city-battle': Object.freeze({
         label: 'city battle',
         laneRateScale: 1.65,
@@ -42,6 +45,20 @@ const ENGAGEMENT_XP_PROFILES = Object.freeze({
             const roleMult = role === 'defense' ? 1.1 : 1;
             const comrades = Math.max(1, Math.floor(Number(options.playersInCity) || 1));
             const allyMult = 1 + Math.min(0.4, Math.max(0, comrades - 1) * 0.06);
+            return roleMult * allyMult;
+        }
+    }),
+    'pvp-battle': Object.freeze({
+        label: 'PvP',
+        laneRateScale: 1.15,
+        globalScale: 1.05,
+        minXpGain: 1,
+        enforceMinimum: true,
+        resolveContextMultiplier(mode, options = {}) {
+            const role = String(mode || 'attack').trim().toLowerCase();
+            const roleMult = role === 'defense' ? 1.05 : 1;
+            const comrades = Math.max(1, Math.floor(Number(options.playersInEngagement) || 1));
+            const allyMult = 1 + Math.min(0.25, Math.max(0, comrades - 1) * 0.04);
             return roleMult * allyMult;
         }
     })
@@ -83,7 +100,7 @@ function countStackParticipationRounds(phaseLane, participation) {
     return 0;
 }
 
-/** Shorter fights yield less XP; deep infantry grinds earn the most. */
+/** Shorter fights yield less participation XP; deep infantry grinds earn the most. */
 function resolveBattleLengthFactor(participation, profileKey) {
     let engagementWeight = 0;
     if (participation.ranged) engagementWeight += 1;
@@ -91,20 +108,20 @@ function resolveBattleLengthFactor(participation, profileKey) {
     if (participation.cavalry) engagementWeight += 1;
     engagementWeight += participation.infantryRounds;
 
-    if (profileKey === 'city-battle') {
-        if (engagementWeight <= 0) return 0.55;
-        if (engagementWeight <= 1) return 0.72;
-        if (engagementWeight <= 2) return 0.86;
-        if (engagementWeight <= 3) return 0.94;
+    if (profileKey === 'pvp-battle') {
+        if (engagementWeight <= 0) return 0.6;
+        if (engagementWeight <= 1) return 0.76;
+        if (engagementWeight <= 2) return 0.88;
+        if (engagementWeight <= 3) return 0.95;
         if (engagementWeight <= 4) return 0.98;
         return 1;
     }
 
-    if (engagementWeight <= 0) return 0.35;
-    if (engagementWeight <= 1) return 0.45;
-    if (engagementWeight <= 2) return 0.62;
-    if (engagementWeight <= 3) return 0.78;
-    if (engagementWeight <= 4) return 0.9;
+    if (engagementWeight <= 0) return 0.55;
+    if (engagementWeight <= 1) return 0.72;
+    if (engagementWeight <= 2) return 0.86;
+    if (engagementWeight <= 3) return 0.94;
+    if (engagementWeight <= 4) return 0.98;
     return 1;
 }
 
@@ -140,14 +157,14 @@ function allocateStackSurvivors(stacks, totalSurviving) {
     return rows.map((row, index) => ({ ...row, survivors: survivors[index] }));
 }
 
-function calculateParticipationBattleXp(battle, profileKey = 'training', options = {}) {
-    const profile = ENGAGEMENT_XP_PROFILES[profileKey] || ENGAGEMENT_XP_PROFILES.training;
+function calculateParticipationBattleXp(battle, profileKey = 'city-battle', options = {}) {
+    const profile = ENGAGEMENT_XP_PROFILES[profileKey] || ENGAGEMENT_XP_PROFILES['city-battle'];
     const force = battle?.commanderForce;
     const stacks = Array.isArray(force?.stacks) ? force.stacks : [];
     const totalStarting = Math.max(0, Math.floor(Number(force?.units) || 0));
     const totalSurviving = Math.max(0, Math.floor(Number(force?.unitsRemaining) || 0));
 
-    const contextMode = options.mode || options.trainingMode || options.battleRole || 'street-patrol';
+    const contextMode = options.mode || options.battleRole || options.pvpRole || 'assault';
     const contextMultiplier = profile.resolveContextMultiplier(contextMode, options);
 
     if (!totalStarting || !totalSurviving || !stacks.length) {
@@ -222,15 +239,145 @@ function calculateParticipationBattleXp(battle, profileKey = 'training', options
     };
 }
 
-function calculateGuildTrainingBattleXp(battle, trainingMode = 'street-patrol') {
-    const xpCalc = calculateParticipationBattleXp(battle, 'training', { trainingMode });
-    const mode = normalizeTrainingMode(trainingMode);
+function resolveTrainingOutcomeMultiplier(battle) {
+    const winner = String(battle?.winner || 'npc').trim().toLowerCase();
+    const force = battle?.commanderForce;
+    const startUnits = Math.max(1, Math.floor(Number(force?.units) || 1));
+    const remainUnits = Math.max(0, Math.floor(Number(force?.unitsRemaining) || 0));
+    const startHp = Math.max(1, Math.floor(Number(force?.hp) || 1));
+    const remainHp = Math.max(0, Math.floor(Number(force?.hpRemaining) || 0));
+    const survivalRatio = remainUnits / startUnits;
+    const hpRatio = remainHp / startHp;
+    const margin = (survivalRatio + hpRatio) / 2;
+
+    if (winner === 'commander') {
+        return 0.9 + margin * 0.2;
+    }
+    if (winner === 'draw') {
+        return 0.55 + margin * 0.25;
+    }
+    return 0.35 + margin * 0.25;
+}
+
+/** Max engagement rounds in training: 3 phase exchanges + 5 infantry rounds. */
+const TRAINING_MAX_ENGAGEMENT_ROUNDS = 8;
+
+function resolveTrainingEngagementRounds(battle) {
+    const participation = resolvePhaseParticipation(battle);
+    let engagementRounds = 0;
+    if (participation.ranged) engagementRounds += 1;
+    if (participation.beasts) engagementRounds += 1;
+    if (participation.cavalry) engagementRounds += 1;
+    engagementRounds += participation.infantryRounds;
+
+    const endReason = String(battle?.endReason || '').trim().toLowerCase();
+    const endedBeforeInfantry = participation.infantryRounds === 0 && endReason === 'routing';
+
     return {
-        ...xpCalc,
+        participation,
+        engagementRounds,
+        infantryRounds: participation.infantryRounds,
+        endedBeforeInfantry
+    };
+}
+
+/**
+ * Longer training fights earn more drill XP; quick routs earn less (Last Knights-style).
+ * Returns multiplier ~0.76 (blitz) through ~1.16 (deep infantry grind).
+ */
+function resolveTrainingBattleDurationFactor(battle) {
+    const { engagementRounds, endedBeforeInfantry } = resolveTrainingEngagementRounds(battle);
+
+    if (engagementRounds <= 0) {
+        return { factor: 0.74, engagementRounds: 0 };
+    }
+
+    if (endedBeforeInfantry) {
+        const quickRatio = Math.max(1, engagementRounds) / 3;
+        const factor = 0.76 + quickRatio * 0.1;
+        return {
+            factor: Math.round(factor * 1000) / 1000,
+            engagementRounds
+        };
+    }
+
+    const ratio = Math.min(1, engagementRounds / TRAINING_MAX_ENGAGEMENT_ROUNDS);
+    const factor = 0.84 + ratio * 0.32;
+    return {
+        factor: Math.round(factor * 1000) / 1000,
+        engagementRounds
+    };
+}
+
+function resolveTrainingHostMixBonus(battle) {
+    const npcStacks = battle?.npcForce?.stacks;
+    if (!Array.isArray(npcStacks) || !npcStacks.length) return 0;
+
+    const lanes = new Set();
+    npcStacks.forEach((stack) => {
+        lanes.add(String(stack?.phaseLane || 'infantry').trim().toLowerCase());
+    });
+
+    const bonus = Math.max(0, lanes.size - 1) + Math.max(0, npcStacks.length - 1);
+    return Math.min(4, bonus);
+}
+
+/** Small per-fight variance tied to battle shape plus light volatility (Last Knights-style). */
+function resolveTrainingDrillVarianceBonus(battle) {
+    const rounds = Math.max(0, Math.floor(Number(battle?.roundsPlayed) || 0));
+    const npcUnits = Math.max(0, Math.floor(Number(battle?.npcUnits) || 0));
+    const shapeBonus = (rounds + npcUnits) % 3;
+    const jitter = Math.floor(Math.random() * 3);
+    return shapeBonus + jitter;
+}
+
+function applyTrainingDrillVolatility(rawXp) {
+    const volatility = 0.86 + Math.random() * 0.26;
+    return Math.max(0, Math.round(rawXp * volatility));
+}
+
+function calculateGuildTrainingBattleXp(battle, trainingMode = 'street-patrol', commander = null) {
+    const mode = normalizeTrainingMode(trainingMode);
+    const modeMult = TRAINING_MODE_XP_MULTIPLIER[mode] || 0.5;
+    const modeRel = modeMult / TRAINING_MODE_XP_MULTIPLIER['street-patrol'];
+    const winner = String(battle?.winner || 'npc').trim().toLowerCase();
+    const outcomeKey = winner === 'commander' || winner === 'draw' ? winner : 'npc';
+    const baseXp = Math.round((TRAINING_DRILL_OUTCOME_BASE[outcomeKey] || 0) * modeRel);
+    const outcomeMult = resolveTrainingOutcomeMultiplier(battle);
+    const { factor: durationFactor, engagementRounds } = resolveTrainingBattleDurationFactor(battle);
+    const hostBonus = resolveTrainingHostMixBonus(battle);
+    const varianceBonus = resolveTrainingDrillVarianceBonus(battle);
+    const coreXp = baseXp * outcomeMult + hostBonus + varianceBonus;
+    const preVolatilityXp = Math.max(0, Math.round(coreXp * durationFactor));
+    const preBonusXp = applyTrainingDrillVolatility(preVolatilityXp);
+    const acquiredBonus = commander
+        ? resolveAcquiredGuildTrainingXpMultiplier(commander, winner)
+        : { multiplier: 1, sources: [] };
+    const xpGain = Math.max(0, Math.round(preBonusXp * acquiredBonus.multiplier));
+
+    const force = battle?.commanderForce;
+
+    return {
+        xpGain,
         xpBreakdown: {
-            ...xpCalc.xpBreakdown,
+            profile: 'solo training drill',
             trainingMode: mode,
-            trainingMultiplier: TRAINING_MODE_XP_MULTIPLIER[mode]
+            trainingMultiplier: modeMult,
+            outcome: outcomeKey,
+            baseXp,
+            outcomeMultiplier: Math.round(outcomeMult * 1000) / 1000,
+            engagementRounds,
+            durationFactor,
+            hostMixBonus: hostBonus,
+            varianceBonus,
+            preVolatilityXp,
+            preBonusXp,
+            coreXp: Math.round(coreXp * 1000) / 1000,
+            acquiredBonusMultiplier: acquiredBonus.multiplier,
+            acquiredBonusSources: acquiredBonus.sources,
+            totalSurviving: Math.max(0, Math.floor(Number(force?.unitsRemaining) || 0)),
+            infantryRounds: Math.max(0, Math.floor(Number(battle?.infantryRounds) || 0)),
+            roundsPlayed: Math.max(0, Math.floor(Number(battle?.roundsPlayed) || 0))
         }
     };
 }
@@ -250,18 +397,51 @@ function calculateCityBattleGuildXp(battle, options = {}) {
     };
 }
 
-function appendBattleXpLogLines(log, xpCalc, profileKey = 'training') {
+function calculatePvpBattleGuildXp(battle, options = {}) {
+    const xpCalc = calculateParticipationBattleXp(battle, 'pvp-battle', {
+        pvpRole: options.pvpRole || options.battleRole || 'attack',
+        playersInEngagement: options.playersInEngagement || options.playersInCity || 1
+    });
+    return {
+        ...xpCalc,
+        xpBreakdown: {
+            ...xpCalc.xpBreakdown,
+            pvpRole: String(options.pvpRole || options.battleRole || 'attack').trim().toLowerCase(),
+            playersInEngagement: Math.max(1, Math.floor(Number(options.playersInEngagement || options.playersInCity) || 1))
+        }
+    };
+}
+
+function appendBattleXpLogLines(log, xpCalc, profileKey = 'city-battle') {
     if (!Array.isArray(log) || !xpCalc) return;
 
     const breakdown = xpCalc.xpBreakdown || {};
     const profileLabel = breakdown.profile || profileKey;
 
     if (!xpCalc.xpGain) {
+        if (profileKey === 'solo-training') {
+            log.push('Experience: no guild XP — training drill yielded no credit.');
+            return;
+        }
         if ((breakdown.totalSurviving || 0) <= 0) {
             log.push(`Experience: no guild XP — no units survived the ${profileLabel}.`);
         } else {
             log.push(`Experience: no guild XP — survivors did not participate in combat rounds.`);
         }
+        return;
+    }
+
+    if (profileKey === 'solo-training') {
+        const rounds = breakdown.engagementRounds ?? 0;
+        const duration = breakdown.durationFactor;
+        const bonusMult = breakdown.acquiredBonusMultiplier;
+        log.push(
+            `Experience: +${xpCalc.xpGain} guild XP from solo training`
+            + ` (${breakdown.outcome || 'npc'} · ${rounds} engagement round(s)`
+            + `${Number.isFinite(duration) ? ` · duration ×${duration}` : ''}`
+            + `${breakdown.hostMixBonus ? ` · host mix +${breakdown.hostMixBonus}` : ''}`
+            + `${bonusMult > 1 ? ` · acquired bonus ×${bonusMult}` : ''}).`
+        );
         return;
     }
 
@@ -271,11 +451,11 @@ function appendBattleXpLogLines(log, xpCalc, profileKey = 'training') {
             + ` surviving unit(s) in the ${profileLabel}`
             + ` (ally scale ×${Math.round((breakdown.contextMultiplier || 1) * 100) / 100}).`
         );
-    } else {
+    } else if (profileKey === 'pvp-battle') {
         log.push(
             `Experience: +${xpCalc.xpGain} guild XP from ${breakdown.totalSurviving || 0}`
-            + ` surviving unit(s) across combat rounds`
-            + ` (training scale ×${breakdown.trainingMultiplier ?? breakdown.contextMultiplier}).`
+            + ` surviving unit(s) in ${profileLabel}`
+            + ` (engagement scale ×${Math.round((breakdown.contextMultiplier || 1) * 100) / 100}).`
         );
     }
 
@@ -291,17 +471,25 @@ function appendBattleXpLogLines(log, xpCalc, profileKey = 'training') {
 }
 
 function appendGuildTrainingXpLogLines(log, xpCalc) {
-    appendBattleXpLogLines(log, xpCalc, 'training');
+    appendBattleXpLogLines(log, xpCalc, 'solo-training');
+}
+
+function appendPvpBattleXpLogLines(log, xpCalc) {
+    appendBattleXpLogLines(log, xpCalc, 'pvp-battle');
 }
 
 module.exports = {
     BASE_LANE_RATES,
     TRAINING_MODE_XP_MULTIPLIER,
+    TRAINING_DRILL_OUTCOME_BASE,
+    TRAINING_MAX_ENGAGEMENT_ROUNDS,
     ENGAGEMENT_XP_PROFILES,
     calculateParticipationBattleXp,
     calculateGuildTrainingBattleXp,
     calculateCityBattleGuildXp,
+    calculatePvpBattleGuildXp,
     appendGuildTrainingXpLogLines,
+    appendPvpBattleXpLogLines,
     appendBattleXpLogLines,
     resolvePhaseParticipation,
     countStackParticipationRounds

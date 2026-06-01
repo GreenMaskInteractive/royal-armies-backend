@@ -5226,8 +5226,13 @@ app.post('/api/portal/age/admin/reset-age-rosters', (req, res) => {
         if (!isAgeLedgerAdminUsername(commander?.username)) return;
         commanders[index] = {
             ...commander,
-            ...buildAdminGoldRestorePatch(),
-            ageArmy: []
+            ...buildCommanderRankResetLedgerPatch(),
+            ageGearSlots: null,
+            ageGearLocked: false,
+            ageGuildMerch: [],
+            ageGuildPerks: null,
+            ageGuildBonuses: null,
+            ageResetUsage: {}
         };
     });
 
@@ -5241,6 +5246,8 @@ app.post('/api/portal/age/admin/reset-age-rosters', (req, res) => {
         status: 'ok',
         action: 'reset-age-rosters',
         resetCount,
+        rank: adminCommander ? Math.max(1, Math.floor(Number(adminCommander.rank) || 1)) : 1,
+        ageGuildXp: adminCommander ? Math.max(0, Math.floor(Number(adminCommander.ageGuildXp) || 0)) : 0,
         ageGold: adminCommander ? resolveCommanderAgeGold(adminCommander) : null,
         ageProvisions: adminCommander ? resolveCommanderAgeProvisions(adminCommander) : null,
         ageArmy: [],

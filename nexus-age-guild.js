@@ -22,12 +22,15 @@ const {
     calculateGuildTrainingBattleXp,
     appendGuildTrainingXpLogLines,
     calculateCityBattleGuildXp,
-    appendBattleXpLogLines
+    calculatePvpBattleGuildXp,
+    appendBattleXpLogLines,
+    appendPvpBattleXpLogLines
 } = require('./nexus-age-guild-xp');
 const { executeCityAssaultBattle } = require('./nexus-age-city-battle');
 const {
     buildCommanderGearPanelPayload,
-    buildCommanderEquipmentBonuses
+    buildCommanderEquipmentBonuses,
+    commanderHasAcquiredGear
 } = require('./nexus-age-commander-gear');
 
 const TRADE_CONVOY_LOTS = Object.freeze([
@@ -74,7 +77,7 @@ const GUILD_XP_BY_OUTCOME = Object.freeze({
     npc: 10
 });
 
-/** @deprecated Training battles use calculateGuildTrainingBattleXp instead. */
+/** @deprecated Use TRAINING_DRILL_OUTCOME_BASE in nexus-age-guild-xp for solo drills. */
 
 const STREET_PATROL_LOOT_TABLE = Object.freeze([
     { label: 'You found a silver bracelet', goldMin: 85, goldMax: 120 },
@@ -372,7 +375,9 @@ function resolveCommanderInjuryMitigation(commander, catalog) {
         mitigation += Math.max(0, Number(bonuses.injuryMitigation) || 0);
     }
 
-    const equipment = buildCommanderEquipmentBonuses(commander);
+    const equipment = commanderHasAcquiredGear(commander)
+        ? buildCommanderEquipmentBonuses(commander)
+        : null;
     if (equipment && typeof equipment === 'object') {
         mitigation += Math.max(0, Number(equipment.injuryMitigation) || 0);
     }
@@ -575,7 +580,7 @@ function executeGuildTrainingBattleWithLedger(commander, trainingMode = 'street-
         injuryCount,
         catalog
     );
-    const xpCalc = calculateGuildTrainingBattleXp(battle, trainingMode);
+    const xpCalc = calculateGuildTrainingBattleXp(battle, trainingMode, commander);
     const xpGain = xpCalc.xpGain;
     if (Array.isArray(battle.log)) {
         appendGuildTrainingXpLogLines(battle.log, xpCalc);
@@ -738,6 +743,8 @@ module.exports = {
     executeCityAssaultBattleWithLedger,
     executeGuildHeal,
     executeTradeConvoyPurchase,
+    calculatePvpBattleGuildXp,
+    appendPvpBattleXpLogLines,
     resolveStackHealCost,
     resolveCommanderInjuryMitigation,
     resolveBattleInjuryCount,

@@ -451,8 +451,62 @@ function normalizeEquippedSlotMap(raw) {
 
 function resolveEquippedSlotMap(commander) {
     const persisted = normalizeEquippedSlotMap(commander?.ageGearSlots);
-    if (persisted && commander?.ageGearLocked) return persisted;
+    if (persisted) return persisted;
+    // No acquired gear — empty loadout. Do not apply DEFAULT_LOADOUTS to battle outcomes.
+    return {};
+}
 
+function commanderHasAcquiredGear(commander) {
+    return Boolean(normalizeEquippedSlotMap(commander?.ageGearSlots));
+}
+
+/**
+ * Last Knights Trainer parity: 0.5% guild XP per trainer point on wins only.
+ * Applies only when perks are explicitly stored on the commander ledger.
+ */
+function resolveAcquiredGuildTrainingXpMultiplier(commander, battleWinner) {
+    if (String(battleWinner || '').trim().toLowerCase() !== 'commander') {
+        return { multiplier: 1, sources: [] };
+    }
+
+    let multiplier = 1;
+    const sources = [];
+
+    if (commanderHasAcquiredGear(commander)) {
+        const totals = buildCommanderEquipmentBonuses(commander);
+        const gearXp = Math.max(0, Number(totals.guildXp) || 0);
+        if (gearXp > 0) {
+            multiplier += gearXp;
+            sources.push({ type: 'gear', guildXp: gearXp });
+        }
+    }
+
+    const perks = commander?.ageGuildPerks;
+    if (perks && typeof perks === 'object') {
+        const trainer = Math.max(0, Math.floor(Number(perks.trainer) || 0));
+        if (trainer > 0) {
+            const trainerBonus = trainer * 0.005;
+            multiplier += trainerBonus;
+            sources.push({ type: 'trainer', points: trainer, guildXp: trainerBonus });
+        }
+    }
+
+    const guildBonuses = commander?.ageGuildBonuses;
+    if (guildBonuses && typeof guildBonuses === 'object') {
+        const bonusXp = Math.max(0, Number(guildBonuses.guildXp) || 0);
+        if (bonusXp > 0) {
+            multiplier += bonusXp;
+            sources.push({ type: 'guild-bonus', guildXp: bonusXp });
+        }
+    }
+
+    return {
+        multiplier: Math.round(multiplier * 1000) / 1000,
+        sources
+    };
+}
+
+function resolvePreviewGearLoadout(commander) {
     const classId = resolveCommanderClassId(commander);
     const tier = resolveGearTierFromRank(resolveCommanderRank(commander));
     return DEFAULT_LOADOUTS[classId]?.[tier] || DEFAULT_LOADOUTS.battlemaster[1];
@@ -567,5 +621,8 @@ module.exports = {
     buildCommanderGearPanelPayload,
     buildCommanderEquipmentBonuses,
     buildCommanderAgeGearSeedPatch,
-    resolveEquippedSlotMap
+    resolveEquippedSlotMap,
+    commanderHasAcquiredGear,
+    resolveAcquiredGuildTrainingXpMultiplier,
+    resolvePreviewGearLoadout
 };
