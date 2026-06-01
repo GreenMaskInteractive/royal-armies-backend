@@ -1258,14 +1258,17 @@ body.is-trailer-mobile-device .game-opening-prologue.is-trailer-replay-mode .gam
     justify-content: center;
     align-items: center;
     text-align: center;
+    min-height: 4.75em;
+    padding: 14px 34px;
+    box-sizing: border-box;
 }
 
 .game-opening-prologue.is-trailer-replay-mode .game-opening-prologue-subtitle-dock.is-trailer-player-dock .game-opening-prologue-subtitle {
     width: 100%;
     max-width: 100%;
+    min-height: 0;
+    margin: 0;
     text-align: center;
-    margin-left: auto;
-    margin-right: auto;
 }
 
 .game-opening-prologue-trailer-finale-pane {

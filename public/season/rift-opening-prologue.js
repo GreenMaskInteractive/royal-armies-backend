@@ -9,7 +9,7 @@
     const OVERLAY_ID = 'game-opening-prologue';
     const AUDIO_ID = 'game-opening-prologue-audio';
     const SUBTITLE_ID = 'game-opening-prologue-subtitle';
-    const CRITICAL_STYLE_ID = 'rift-opening-prologue-critical-styles-v9';
+    const CRITICAL_STYLE_ID = 'rift-opening-prologue-critical-styles-v10';
     const TRAILER_LORE_TOOL_MAX_OPACITY = 0.4;
     const NARRATION_METADATA_TIMEOUT_MS = 8000;
 
@@ -1140,6 +1140,8 @@
         if (legacyStyleV7) legacyStyleV7.remove();
         const legacyStyleV8 = global.document.getElementById('rift-opening-prologue-critical-styles-v8');
         if (legacyStyleV8) legacyStyleV8.remove();
+        const legacyStyleV9 = global.document.getElementById('rift-opening-prologue-critical-styles-v9');
+        if (legacyStyleV9) legacyStyleV9.remove();
         if (global.document.getElementById(CRITICAL_STYLE_ID)) return;
 
         const style = global.document.createElement('style');
@@ -1385,15 +1387,16 @@
                 justify-content: center !important;
                 align-items: center !important;
                 text-align: center !important;
-                padding-left: 34px !important;
-                padding-right: 34px !important;
+                min-height: 4.75em !important;
+                padding: 14px 34px !important;
+                box-sizing: border-box !important;
             }
             #${OVERLAY_ID}.is-trailer-replay-mode .game-opening-prologue-subtitle-dock.is-trailer-player-dock .game-opening-prologue-subtitle {
                 width: 100% !important;
                 max-width: 100% !important;
+                min-height: 0 !important;
+                margin: 0 !important;
                 text-align: center !important;
-                margin-left: auto !important;
-                margin-right: auto !important;
             }
         `.trim();
         global.document.head.appendChild(style);
