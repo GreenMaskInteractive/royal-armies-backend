@@ -1213,6 +1213,24 @@ body.is-trailer-mobile-device .game-opening-prologue.is-trailer-replay-mode .gam
     touch-action: manipulation;
 }
 
+.game-opening-prologue-trailer-btn--icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    min-width: 44px;
+    padding: 0;
+    letter-spacing: 0;
+    text-transform: none;
+}
+
+.game-opening-prologue-trailer-icon {
+    display: block;
+    width: 22px;
+    height: 22px;
+    pointer-events: none;
+}
+
 .game-opening-prologue-trailer-btn--primary {
     border-color: rgba(255, 215, 0, 0.72);
     color: #ffd978;

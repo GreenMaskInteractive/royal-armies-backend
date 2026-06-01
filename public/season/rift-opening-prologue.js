@@ -238,7 +238,11 @@
 
         const fullscreenBtn = overlayEl.querySelector('#game-opening-prologue-trailer-fullscreen-btn');
         if (fullscreenBtn) {
-            fullscreenBtn.textContent = isTrailerFullscreenActive() ? 'Exit full' : 'Fullscreen';
+            setTrailerControlButtonIcon(
+                fullscreenBtn,
+                isTrailerFullscreenActive() ? 'exitFullscreen' : 'fullscreen',
+                isTrailerFullscreenActive() ? 'Exit fullscreen' : 'Fullscreen'
+            );
         }
     }
 
@@ -485,7 +489,11 @@
             timeEl.textContent = `${formatTrailerClock(trailerReplayTimeSec)} / ${formatTrailerClock(totalSec)}`;
         }
         if (playBtn) {
-            playBtn.textContent = isTrailerReplayPlaying ? 'Pause' : 'Play';
+            setTrailerControlButtonIcon(
+                playBtn,
+                isTrailerReplayPlaying ? 'pause' : 'play',
+                isTrailerReplayPlaying ? 'Pause' : 'Play'
+            );
         }
     }
 
@@ -1166,6 +1174,34 @@
         `.trim();
     }
 
+    const TRAILER_CONTROL_ICON_SVGS = Object.freeze({
+        replay: '<svg class="game-opening-prologue-trailer-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="currentColor" d="M12 5V1L7 6l5 5V7c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6H4c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8z"/></svg>',
+        play: '<svg class="game-opening-prologue-trailer-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="currentColor" d="M8 5v14l11-7z"/></svg>',
+        pause: '<svg class="game-opening-prologue-trailer-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="currentColor" d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>',
+        fullscreen: '<svg class="game-opening-prologue-trailer-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="currentColor" d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg>',
+        exitFullscreen: '<svg class="game-opening-prologue-trailer-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="currentColor" d="M5 16h3v3h2v-5H5v2zm3-8H5v2h5V5H8v3zm6 11h2v-3h3v-2h-5v5zm2-11V5h-2v5h5V8h-3z"/></svg>'
+    });
+
+    function setTrailerControlButtonIcon(btn, iconName, label) {
+        if (!btn || !TRAILER_CONTROL_ICON_SVGS[iconName]) return;
+
+        btn.innerHTML = TRAILER_CONTROL_ICON_SVGS[iconName];
+        btn.setAttribute('aria-label', label);
+        btn.title = label;
+    }
+
+    function buildTrailerIconButtonMarkup(id, iconName, label) {
+        return `
+            <button
+                type="button"
+                class="game-opening-prologue-trailer-btn game-opening-prologue-trailer-btn--icon"
+                id="${id}"
+                aria-label="${label}"
+                title="${label}"
+            >${TRAILER_CONTROL_ICON_SVGS[iconName]}</button>
+        `.trim();
+    }
+
     function preloadCinematicImages() {
         PROLOGUE_CINEMATIC_SHOTS.forEach((shot) => {
             const img = new Image();
@@ -1533,9 +1569,9 @@
                     <div class="game-opening-prologue-trailer-finale-pane" id="game-opening-prologue-trailer-finale-pane"></div>
                     <div class="game-opening-prologue-trailer-controls">
                         <div class="game-opening-prologue-trailer-controls-row">
-                            <button type="button" class="game-opening-prologue-trailer-btn" id="game-opening-prologue-trailer-replay-btn">Replay</button>
-                            <button type="button" class="game-opening-prologue-trailer-btn" id="game-opening-prologue-trailer-play-btn">Play</button>
-                            <button type="button" class="game-opening-prologue-trailer-btn" id="game-opening-prologue-trailer-fullscreen-btn">Fullscreen</button>
+                            ${buildTrailerIconButtonMarkup('game-opening-prologue-trailer-replay-btn', 'replay', 'Replay')}
+                            ${buildTrailerIconButtonMarkup('game-opening-prologue-trailer-play-btn', 'play', 'Play')}
+                            ${buildTrailerIconButtonMarkup('game-opening-prologue-trailer-fullscreen-btn', 'fullscreen', 'Fullscreen')}
                             <span class="game-opening-prologue-trailer-time" id="game-opening-prologue-trailer-time">0:00 / 0:00</span>
                         </div>
                         <input type="range" class="game-opening-prologue-trailer-seek" id="game-opening-prologue-trailer-seek" min="0" max="1000" value="0" aria-label="Trailer timeline">
