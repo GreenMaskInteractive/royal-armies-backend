@@ -63,6 +63,7 @@
     let subtitleSparkTimer = null;
     let logoRevealGeneration = 0;
     let enterWarGateResolver = null;
+    let enterWarExitReason = null;
     let loreToolFadePromise = null;
     let isPlaying = false;
     let isPostNarrationHold = false;
@@ -241,7 +242,9 @@
         const enterWarBtn = overlayEl.querySelector('#game-opening-prologue-enter-war-btn');
         if (enterWarBtn && enterWarBtn.dataset.riftBound !== '1') {
             enterWarBtn.dataset.riftBound = '1';
-            enterWarBtn.addEventListener('click', () => resolveEnterWarGate('button'));
+            enterWarBtn.addEventListener('click', () => {
+                void resolveEnterWarGate('button');
+            });
         }
 
         audioEl.addEventListener('ended', () => finishPrologue('completed'));
@@ -714,11 +717,26 @@
         enterWarBtn.classList.remove('is-visible');
     }
 
-    function resolveEnterWarGate(reason) {
+    async function resolveEnterWarGate(reason) {
         if (!enterWarGateResolver) return;
         const resolve = enterWarGateResolver;
         enterWarGateResolver = null;
+        enterWarExitReason = reason;
         hideEnterWarButton();
+
+        if (global.RoyalArmiesMusicFlow
+            && typeof global.RoyalArmiesMusicFlow.cancelWaitForTrackEnd === 'function') {
+            global.RoyalArmiesMusicFlow.cancelWaitForTrackEnd();
+        }
+
+        if (reason === 'button'
+            && global.RoyalArmiesMusicFlow
+            && typeof global.RoyalArmiesMusicFlow.handoffToGameplayMusic === 'function') {
+            await global.RoyalArmiesMusicFlow.handoffToGameplayMusic({
+                fadeOutMs: PROLOGUE_MUSIC_OUT_FADE_MS
+            });
+        }
+
         resolve(reason);
     }
 
@@ -732,6 +750,7 @@
             enterWarGateResolver = null;
             resolve('cancelled');
         }
+        enterWarExitReason = null;
         hideEnterWarButton();
     }
 
@@ -865,8 +884,13 @@
         setLocalProloguePending(false);
 
         global.dispatchEvent(new CustomEvent('royalarmies:opening-prologue-finished', {
-            detail: { reason: reason || 'completed' }
+            detail: {
+                reason: reason || 'completed',
+                enterWarExitReason: enterWarExitReason || null
+            }
         }));
+
+        enterWarExitReason = null;
 
         if (typeof finishCallback === 'function') {
             const cb = finishCallback;

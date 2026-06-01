@@ -851,8 +851,9 @@
             advanceGameOnboarding();
         });
 
-        global.addEventListener('royalarmies:opening-prologue-finished', () => {
+        global.addEventListener('royalarmies:opening-prologue-finished', (event) => {
             if (activeGameView !== 'class') return;
+            if (event.detail?.enterWarExitReason === 'button') return;
             if (!global.RoyalArmiesMusicFlow
                 || typeof global.RoyalArmiesMusicFlow.markProgressionPhaseStart !== 'function') {
                 return;

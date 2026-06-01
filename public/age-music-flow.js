@@ -442,6 +442,27 @@
         audio.pause();
     }
 
+    async function handoffToGameplayMusic(options = {}) {
+        const fadeOutMs = Math.max(0, Number(options.fadeOutMs) || 1200);
+        const volume = options.volume != null
+            ? clampVolume(options.volume)
+            : Math.max(0, Math.min(1, parseNumber(readSession(STORAGE.volume), 0.5)));
+
+        cancelWaitForTrackEnd();
+        await fadeMusicOut(fadeOutMs);
+
+        writeSession(STORAGE.currentTrack, TRACKS.archimedes.id);
+        writeSession(STORAGE.currentTime, '0');
+        loadTrack(TRACKS.archimedes.id, { restoreTime: false });
+
+        const audio = resolveAudioElement();
+        if (audio) {
+            audio.loop = true;
+        }
+
+        return tryPlay({ volume });
+    }
+
     function bindLifecycle() {
         global.addEventListener('beforeunload', persistAudioState);
         global.document.addEventListener('visibilitychange', () => {
@@ -469,6 +490,7 @@
         startGamePageArchimedes,
         rampMusicVolume,
         fadeMusicOut,
+        handoffToGameplayMusic,
         cancelMusicVolumeAnimation,
         waitForCurrentTrackEnd,
         cancelWaitForTrackEnd,
