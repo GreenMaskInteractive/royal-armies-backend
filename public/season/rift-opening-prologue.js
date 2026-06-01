@@ -59,8 +59,8 @@
     const PROLOGUE_SUBTITLE_SPARKS_PER_BURST = 5;
     const PROLOGUE_SUBTITLE_SPARK_FLASH_CHANCE = 0.24;
     const PROLOGUE_CINEMATIC_FADE_SEC = 1;
-    /** Lower = faster Ken Burns pan (1 = wall-clock match, 0.85 ≈ 18% faster). */
-    const PROLOGUE_CINEMATIC_PAN_DURATION_SCALE = 0.85;
+    /** Pan duration multiplier vs remaining shot time (1 = match, >1 = slower). */
+    const PROLOGUE_CINEMATIC_PAN_DURATION_SCALE = 1.3;
     const PROLOGUE_CINEMATIC_IMAGE_VERSION = 'prologue-cinematic-1';
 
     /**
