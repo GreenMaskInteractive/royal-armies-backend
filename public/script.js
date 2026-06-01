@@ -2561,43 +2561,7 @@ function closeChronicleDetail() {
 
 /* --- Section: Global UI Sound Hooks --- */
 
-/* --- Block 9: Global Audio Engine (audio/uihover.wav) --- */
-document.addEventListener('mouseover', (e) => {
-    // This looks for anything clickable (icons, buttons, lore titles, cards, links)
-    const target = e.target.closest('.nav-icon, .img-btn, .radial-slot, .update-item, .quest-card, .close-modal, .forgot-link, .confirm-btn, .cancel-btn, .revert-btn');
-    
-    if (target && !target.classList.contains('disabled')) {
-        const hoverSound = document.getElementById('hover-sound');
-        if (hoverSound) {
-hoverSound.volume = 0.2;
-            hoverSound.currentTime = 0; // Resets sound so it can play rapidly
-            hoverSound.play().catch(() => { 
-                /* Prevents console errors if user hasn't clicked anything yet */ 
-            });
-        }
-    }
-});
-
-/* --- Block 10: Global Selection Engine (uiselect.wav) --- */
-document.addEventListener('click', (e) => {
-    // Finds the clickable target (buttons, icons, lore titles, etc.)
-    const target = e.target.closest('.nav-icon, .img-btn, .radial-slot, .update-item, .quest-card, .close-modal, .forgot-link, .confirm-btn, .cancel-btn, .revert-btn');
-    
-    if (target && !target.classList.contains('disabled')) {
-        const selectSound = document.getElementById('select-sound');
-        if (selectSound) {
-            // Reset to 0 so it can play again immediately if double-clicked
-            selectSound.currentTime = 0; 
-            
-            // Set a slightly lower volume so it doesn't pierce the ears
-            selectSound.volume = 0.2; 
-            
-            selectSound.play().catch(() => {
-                /* Handles any browser-side blocking */
-            });
-        }
-    }
-});
+/* --- Block 9–10: Global UI hover/select SFX — see rift-ui-sfx.js --- */
 
 /* --- Block 11: Logout and Portal Reset --- */
 function handleLogout() {
