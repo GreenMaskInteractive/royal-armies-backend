@@ -1007,34 +1007,72 @@ body.is-trailer-mobile-device .game-opening-prologue.is-trailer-replay-mode .gam
     transform: translate(-50%, -50%) scale(1.04);
 }
 
-/* Desktop replay — fixed 16:9 widescreen frame */
+/* Desktop replay — connected widescreen player (+300px video height) */
 @media (min-width: 901px) {
     .game-opening-prologue.is-trailer-replay-mode {
         padding: clamp(12px, 2vh, 20px) clamp(12px, 2vw, 20px);
+        justify-content: center;
+        align-items: center;
     }
 
     .game-opening-prologue.is-trailer-replay-mode .game-opening-prologue-trailer-player {
+        container-type: inline-size;
+        container-name: trailer-player;
         width: min(1200px, 94vw);
         height: auto;
         max-height: none;
+        gap: 0;
+        margin: 0 auto;
     }
 
     .game-opening-prologue.is-trailer-replay-mode .game-opening-prologue-trailer-stage {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr);
+        grid-template-rows: auto auto;
         flex: 0 0 auto;
         width: 100%;
-        background: transparent;
+        gap: 0;
+        border: 1px solid rgba(212, 168, 64, 0.48);
+        border-radius: 8px;
+        overflow: hidden;
+        background: #000;
+        box-shadow:
+            0 0 0 1px rgba(255, 215, 120, 0.12),
+            0 18px 52px rgba(0, 0, 0, 0.62);
     }
 
     .game-opening-prologue.is-trailer-replay-mode .game-opening-prologue-trailer-viewport {
+        grid-row: 1;
+        grid-column: 1;
         flex: 0 0 auto;
         width: 100%;
-        aspect-ratio: 16 / 9;
-        height: auto;
+        aspect-ratio: auto;
+        height: min(calc(100cqw * 9 / 16 + 300px), calc(100vh - 96px));
         min-height: 0;
         overflow: hidden;
         background: #000;
-        border-radius: 6px;
+        border-radius: 0;
         padding: 0;
+    }
+
+    .game-opening-prologue.is-trailer-replay-mode .game-opening-prologue-trailer-finale-pane {
+        grid-row: 1;
+        grid-column: 1;
+        align-self: end;
+        z-index: 4;
+        width: 100%;
+        pointer-events: none;
+    }
+
+    .game-opening-prologue.is-trailer-replay-mode .game-opening-prologue-trailer-controls {
+        grid-row: 2;
+        grid-column: 1;
+        width: 100%;
+        margin: 0;
+        border: none;
+        border-top: 1px solid rgba(212, 168, 64, 0.38);
+        border-radius: 0;
+        box-shadow: none;
     }
 
     .game-opening-prologue.is-trailer-replay-mode .game-opening-prologue-cinematic-stage {
@@ -1053,8 +1091,8 @@ body.is-trailer-mobile-device .game-opening-prologue.is-trailer-replay-mode .gam
         height: 100%;
         max-width: none;
         max-height: none;
-        aspect-ratio: 16 / 9;
-        border-radius: 6px;
+        aspect-ratio: auto;
+        border-radius: 0;
         overflow: hidden;
         background: transparent;
     }
@@ -1062,6 +1100,10 @@ body.is-trailer-mobile-device .game-opening-prologue.is-trailer-replay-mode .gam
     .game-opening-prologue.is-trailer-replay-mode .game-opening-prologue-cinematic-frame::before,
     .game-opening-prologue.is-trailer-replay-mode .game-opening-prologue-cinematic-frame-border {
         display: block !important;
+    }
+
+    .game-opening-prologue.is-trailer-replay-mode .game-opening-prologue-cinematic-frame-border {
+        border-radius: 0;
     }
 
     .game-opening-prologue.is-trailer-replay-mode .game-opening-prologue-cinematic-shot img {
@@ -1075,22 +1117,30 @@ body.is-trailer-mobile-device .game-opening-prologue.is-trailer-replay-mode .gam
         transform: translate(-50%, -50%) scale(1.08);
     }
 
-    .game-opening-prologue.is-trailer-replay-mode .game-opening-prologue-trailer-controls {
-        width: 100%;
-        margin: 0;
-    }
-
     .game-opening-prologue-trailer-stage:fullscreen .game-opening-prologue-trailer-viewport,
     .game-opening-prologue-trailer-stage:-webkit-full-screen .game-opening-prologue-trailer-viewport {
         flex: 1 1 auto;
         width: 100%;
         height: auto;
         min-height: 0;
+        max-height: none;
         aspect-ratio: auto;
         overflow: hidden;
         padding: 0;
         background: #000;
         border-radius: 0;
+    }
+
+    .game-opening-prologue-trailer-stage:fullscreen .game-opening-prologue-trailer-finale-pane,
+    .game-opening-prologue-trailer-stage:-webkit-full-screen .game-opening-prologue-trailer-finale-pane {
+        grid-row: 1;
+        grid-column: 1;
+    }
+
+    .game-opening-prologue-trailer-stage:fullscreen .game-opening-prologue-trailer-controls,
+    .game-opening-prologue-trailer-stage:-webkit-full-screen .game-opening-prologue-trailer-controls {
+        grid-row: 2;
+        border-top: 1px solid rgba(212, 168, 64, 0.38);
     }
 
     .game-opening-prologue-trailer-stage:fullscreen .game-opening-prologue-cinematic-stage,
