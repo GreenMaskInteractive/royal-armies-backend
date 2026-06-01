@@ -698,8 +698,13 @@
     function showEnterWarButton() {
         const enterWarBtn = overlayEl?.querySelector('#game-opening-prologue-enter-war-btn');
         if (!enterWarBtn) return;
+        enterWarBtn.classList.remove('is-visible');
         enterWarBtn.hidden = false;
-        enterWarBtn.classList.add('is-visible');
+        // Let the browser paint opacity:0 before animating — hidden→visible in one frame skips the transition.
+        void enterWarBtn.offsetWidth;
+        global.requestAnimationFrame(() => {
+            enterWarBtn.classList.add('is-visible');
+        });
     }
 
     function hideEnterWarButton() {
