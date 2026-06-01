@@ -7,7 +7,8 @@
 .game-opening-prologue {
     position: fixed;
     inset: 0;
-    z-index: 10040;
+    /* Above .game-page-staging-deck (100010) so narration subtitles stay visible */
+    z-index: 100100;
     pointer-events: none;
     opacity: 1;
     transition: opacity 0.9s ease-in-out;
@@ -269,16 +270,18 @@
 .game-opening-prologue-subtitle-dock {
     position: absolute;
     left: 50%;
-    bottom: clamp(72px, 12vh, 132px);
+    bottom: clamp(88px, 14vh, 148px);
     transform: translateX(-50%);
+    z-index: 4;
     width: min(920px, calc(100vw - 48px));
     padding: 14px 18px;
     border: 1px solid rgba(184, 144, 48, 0.35);
     border-radius: 6px;
-    background: rgba(8, 6, 4, 0.82);
+    background: rgba(8, 6, 4, 0.88);
     box-shadow: 0 8px 28px rgba(0, 0, 0, 0.45);
     opacity: 0;
     visibility: hidden;
+    pointer-events: none;
     transition: opacity 0.35s ease, visibility 0.35s ease;
 }
 
@@ -289,12 +292,14 @@
 
 .game-opening-prologue-subtitle {
     margin: 0;
-    font-family: 'Cinzel', serif;
-    font-size: clamp(0.78rem, 1.05vw, 0.98rem);
+    min-height: 2.8em;
+    font-family: 'Cinzel', Georgia, 'Times New Roman', serif;
+    font-size: clamp(0.85rem, 1.15vw, 1.05rem);
     line-height: 1.65;
     letter-spacing: 0.03em;
     text-align: center;
-    color: rgba(214, 198, 156, 0.72);
+    color: rgba(255, 242, 210, 0.96);
+    text-shadow: 0 1px 12px rgba(0, 0, 0, 0.65);
 }
 
 .game-opening-prologue-word {
@@ -317,6 +322,7 @@
     position: absolute;
     right: 18px;
     bottom: 18px;
+    z-index: 5;
     padding: 6px 10px;
     border: 1px solid rgba(184, 144, 48, 0.4);
     border-radius: 4px;
