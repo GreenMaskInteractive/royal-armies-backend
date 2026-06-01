@@ -16,7 +16,11 @@
     }
 
     function getOfficialAgePagePath() {
-        return `/age${getOfficialAgeSlug()}`;
+        const slug = `age${getOfficialAgeSlug()}`;
+        if (typeof global.resolveRoyalArmiesPageUrl === 'function') {
+            return global.resolveRoyalArmiesPageUrl(slug);
+        }
+        return `/${slug}`;
     }
 
     function isOfficialAgePageActive() {
