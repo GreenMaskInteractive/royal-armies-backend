@@ -3102,7 +3102,26 @@ app.post('/api/portal/maintenance-alert', (req, res) => {
     res.json({ status: 'ok', ...payload });
 });
 
-app.use(express.static(PUBLIC_DIR));
+/** Unlisted Age of War trailer — direct URL only; not linked from site nav or dev tools. */
+const AGE_OF_WAR_TRAILER_FILE = 'royalarmies-ageofwar-trailer.html';
+function sendAgeOfWarTrailerPage(res) {
+    res.set('X-Robots-Tag', 'noindex, nofollow, noarchive, nosnippet');
+    res.set('Cache-Control', 'private, no-store');
+    res.sendFile(path.join(PUBLIC_DIR, AGE_OF_WAR_TRAILER_FILE));
+}
+
+app.get(['/royalarmies-ageofwar-trailer', '/royalarmies-ageofwar-trailer.html'], (req, res) => {
+    sendAgeOfWarTrailerPage(res);
+});
+
+app.use(express.static(PUBLIC_DIR, {
+    setHeaders(res, filePath) {
+        if (path.basename(filePath) === AGE_OF_WAR_TRAILER_FILE) {
+            res.set('X-Robots-Tag', 'noindex, nofollow, noarchive, nosnippet');
+            res.set('Cache-Control', 'private, no-store');
+        }
+    }
+}));
 
 /* --- Section: Email Dispatch Engine --- */
 

@@ -194,12 +194,22 @@
         return global.document.body?.id === 'game-page-canvas';
     }
 
+    const AGE_OF_WAR_CINEMATIC_PAGE_ID = 'age-of-war-cinematic-canvas';
+    const AGE_OF_WAR_TRAILER_PAGE_ID = 'royal-armies-ageofwar-trailer-canvas';
+
+    function isTrailerPage() {
+        return global.document.body?.id === AGE_OF_WAR_TRAILER_PAGE_ID
+            || global.document.body?.dataset?.ageOfWarTrailer === '1';
+    }
+
     function isCinematicPage() {
-        return global.document.body?.id === 'age-of-war-cinematic-canvas';
+        const pageId = global.document.body?.id || '';
+        return pageId === AGE_OF_WAR_CINEMATIC_PAGE_ID || isTrailerPage();
     }
 
     function shouldRunOpeningPrologue() {
-        return isLocalDevHost() && isCinematicPage();
+        if (isTrailerPage()) return true;
+        return isLocalDevHost() && global.document.body?.id === AGE_OF_WAR_CINEMATIC_PAGE_ID;
     }
 
     function resolveProgressionPageUrl() {
@@ -835,7 +845,7 @@
                     <p id="${SUBTITLE_ID}" class="game-opening-prologue-subtitle" aria-live="polite"></p>
                 </div>
             </div>
-            <button type="button" class="game-opening-prologue-skip" id="game-opening-prologue-skip">${isCinematicPage() ? 'Skip to progression (local dev)' : 'Skip prologue (local dev)'}</button>
+            ${isTrailerPage() ? '' : `<button type="button" class="game-opening-prologue-skip" id="game-opening-prologue-skip">${global.document.body?.id === AGE_OF_WAR_CINEMATIC_PAGE_ID ? 'Skip to progression (local dev)' : 'Skip prologue (local dev)'}</button>`}
         `.trim();
 
         audioEl = global.document.createElement('audio');
@@ -1730,7 +1740,7 @@
             cb(reason);
         }
 
-        if (isCinematicPage() && reason !== 'error') {
+        if (isCinematicPage() && !isTrailerPage() && reason !== 'error') {
             await transitionToProgressionScreen();
         }
     }

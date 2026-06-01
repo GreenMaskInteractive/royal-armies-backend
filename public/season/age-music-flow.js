@@ -39,6 +39,7 @@
     const MAIN_PAGE_ID = 'main-dashboard-canvas';
     const GAME_PAGE_ID = 'game-page-canvas';
     const CINEMATIC_PAGE_ID = 'age-of-war-cinematic-canvas';
+    const TRAILER_PAGE_ID = 'royal-armies-ageofwar-trailer-canvas';
     const AGE_PAGE_ID = 'age-page-canvas';
 
     let audioEl = null;
@@ -58,7 +59,12 @@
     }
 
     function isCinematicPage() {
-        return pageId() === CINEMATIC_PAGE_ID;
+        const id = pageId();
+        return id === CINEMATIC_PAGE_ID || id === TRAILER_PAGE_ID;
+    }
+
+    function isTrailerPage() {
+        return pageId() === TRAILER_PAGE_ID;
     }
 
     function supportsPrologueSoundtrackPage() {
@@ -513,7 +519,7 @@
         } else if (isGamePage()) {
             bootGamePageMusic();
         } else if (isCinematicPage()) {
-            writeSession(STORAGE.openingProloguePending, '1');
+            writeSession(STORAGE.openingProloguePending, isTrailerPage() ? '0' : '1');
         } else if (isAgePage()) {
             bootAgePageMusic();
         }
