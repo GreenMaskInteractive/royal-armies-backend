@@ -49,7 +49,7 @@
     const PROLOGUE_TITLE_LOGO_REVEAL_MS = 6500;
     const PROLOGUE_SUBTITLE_LOGO_REVEAL_MS = 1500;
     /** Wall-clock ms for Archimedes ramp from prologue level to peak during logo reveals. */
-    const PROLOGUE_MUSIC_PEAK_RAMP_MS = 4500;
+    const PROLOGUE_MUSIC_PEAK_RAMP_MS = 2800;
     const PROLOGUE_MUSIC_OUT_FADE_MS = 1200;
     const PROLOGUE_REVEAL_FADE_MS = 900;
     const PROLOGUE_LOGO_SRC = 'images/royalarmiestitle.png?v=logo-trim-gimp-1';
