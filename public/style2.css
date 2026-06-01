@@ -15471,7 +15471,7 @@ body.game-opening-prologue-active .game-onboarding-progress {
     flex: 0 1 auto;
     min-width: 0;
     max-width: min(520px, 46vw);
-    margin-right: auto;
+    margin-left: auto;
 }
 
 .age-bottom-music-player {
@@ -15533,10 +15533,8 @@ body.game-opening-prologue-active .game-onboarding-progress {
 
 /* Commander nametag — bottom HUD (replaces End Turn) */
 #age-page-canvas .age-map-bottom-commander-nametag {
-    position: absolute;
-    right: 0;
-    top: 0;
-    bottom: 0;
+    position: relative;
+    flex: 0 0 auto;
     display: flex;
     align-items: center;
     justify-content: flex-end;

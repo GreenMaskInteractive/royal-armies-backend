@@ -273,6 +273,8 @@
         const controls = global.document.querySelector('.age-map-bottom-dock-controls');
         if (!controls) return;
 
+        const nametag = controls.querySelector('.age-map-bottom-commander-nametag');
+
         const host = global.document.createElement('div');
         host.id = PLAYER_HOST_ID;
         host.className = 'age-bottom-music-player-host';
@@ -283,7 +285,11 @@
                 <button type="button" id="age-bottom-music-mute-btn" class="age-bottom-music-btn">Mute</button>
             </div>
         `.trim();
-        controls.prepend(host);
+        if (nametag) {
+            controls.insertBefore(host, nametag);
+        } else {
+            controls.appendChild(host);
+        }
 
         const playBtn = host.querySelector('#age-bottom-music-play-btn');
         const muteBtn = host.querySelector('#age-bottom-music-mute-btn');
