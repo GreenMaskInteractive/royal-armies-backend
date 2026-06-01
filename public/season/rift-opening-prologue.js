@@ -9,7 +9,7 @@
     const OVERLAY_ID = 'game-opening-prologue';
     const AUDIO_ID = 'game-opening-prologue-audio';
     const SUBTITLE_ID = 'game-opening-prologue-subtitle';
-    const CRITICAL_STYLE_ID = 'rift-opening-prologue-critical-styles-v7';
+    const CRITICAL_STYLE_ID = 'rift-opening-prologue-critical-styles-v8';
     const TRAILER_LORE_TOOL_MAX_OPACITY = 0.4;
     const NARRATION_METADATA_TIMEOUT_MS = 8000;
 
@@ -1133,6 +1133,8 @@
         if (legacyStyleV5) legacyStyleV5.remove();
         const legacyStyleV6 = global.document.getElementById('rift-opening-prologue-critical-styles-v6');
         if (legacyStyleV6) legacyStyleV6.remove();
+        const legacyStyleV7 = global.document.getElementById('rift-opening-prologue-critical-styles-v7');
+        if (legacyStyleV7) legacyStyleV7.remove();
         if (global.document.getElementById(CRITICAL_STYLE_ID)) return;
 
         const style = global.document.createElement('style');
@@ -1364,8 +1366,29 @@
                 transform: translate(-50%, -50%) !important;
             }
             #${OVERLAY_ID}.is-trailer-replay-mode .game-opening-prologue-subtitle-dock.is-trailer-player-dock {
+                left: 50% !important;
+                right: auto !important;
+                transform: translateX(-50%) !important;
                 bottom: max(8px, 0.6cqh) !important;
-                width: min(92cqw, 100%) !important;
+                width: min(92cqw, calc(100% - 16px)) !important;
+                max-width: calc(100% - 16px) !important;
+                box-sizing: border-box !important;
+                text-align: center !important;
+            }
+            #${OVERLAY_ID}.is-trailer-replay-mode .game-opening-prologue-subtitle-dock.is-trailer-player-dock .game-opening-prologue-subtitle-dock-inner {
+                display: flex !important;
+                justify-content: center !important;
+                align-items: center !important;
+                text-align: center !important;
+                padding-left: 34px !important;
+                padding-right: 34px !important;
+            }
+            #${OVERLAY_ID}.is-trailer-replay-mode .game-opening-prologue-subtitle-dock.is-trailer-player-dock .game-opening-prologue-subtitle {
+                width: 100% !important;
+                max-width: 100% !important;
+                text-align: center !important;
+                margin-left: auto !important;
+                margin-right: auto !important;
             }
         `.trim();
         global.document.head.appendChild(style);
