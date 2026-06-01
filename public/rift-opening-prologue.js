@@ -39,12 +39,14 @@
     const PROLOGUE_AUDIO_SRC = 'audio/distressedwoman.mp3';
     /** Background music plays through the whole prologue; narration starts after this lead-in. */
     const PROLOGUE_MUSIC_LEAD_MS = 2000;
+    const PROLOGUE_REVEAL_FADE_MS = 900;
 
     let overlayEl = null;
     let subtitleEl = null;
     let audioEl = null;
     let isPlaying = false;
     let isLeadInActive = false;
+    let isFadingOut = false;
     let leadInTimer = null;
     let activeCueIndex = -1;
     let finishCallback = null;
@@ -197,17 +199,33 @@
         renderSubtitleWords(cueIndex, spokenCount);
     }
 
-    function showOverlay() {
+    function showOverlay(options) {
         ensureOverlay();
         overlayEl.hidden = false;
+        overlayEl.classList.remove('is-revealing');
+        if (options && options.subtitles === true) {
+            overlayEl.classList.add('is-subtitles-active');
+        } else {
+            overlayEl.classList.remove('is-subtitles-active');
+        }
         global.document.body.classList.add('game-opening-prologue-active');
     }
 
     function hideOverlay() {
-        if (overlayEl) overlayEl.hidden = true;
+        if (overlayEl) {
+            overlayEl.hidden = true;
+            overlayEl.classList.remove('is-revealing', 'is-subtitles-active');
+        }
         global.document.body.classList.remove('game-opening-prologue-active');
         if (subtitleEl) subtitleEl.textContent = '';
         activeCueIndex = -1;
+        isFadingOut = false;
+    }
+
+    function waitPrologueFade(ms) {
+        return new Promise((resolve) => {
+            global.setTimeout(resolve, ms);
+        });
     }
 
     function clearPrologueLeadInTimer() {
@@ -219,14 +237,14 @@
     }
 
     function isPrologueSequenceActive() {
-        return isPlaying || isLeadInActive || isLocalProloguePending();
+        return isPlaying || isLeadInActive || isFadingOut || isLocalProloguePending();
     }
 
     function beginNarrationPlayback() {
         clearPrologueLeadInTimer();
         isPlaying = true;
         activeCueIndex = -1;
-        showOverlay();
+        showOverlay({ subtitles: true });
         renderSubtitleWords(0, 0);
 
         if (!audioEl) return;
@@ -237,25 +255,26 @@
             });
     }
 
-    function finishPrologue(reason) {
-        if (!isPrologueSequenceActive()) return;
+    async function finishPrologue(reason) {
+        if (!isPrologueSequenceActive() || isFadingOut) return;
 
         clearPrologueLeadInTimer();
         isPlaying = false;
+        isLeadInActive = false;
+        isFadingOut = true;
 
         if (audioEl) {
             audioEl.pause();
             audioEl.currentTime = 0;
         }
 
+        if (overlayEl && !overlayEl.hidden) {
+            overlayEl.classList.add('is-revealing');
+            await waitPrologueFade(PROLOGUE_REVEAL_FADE_MS);
+        }
+
         hideOverlay();
         setLocalProloguePending(false);
-
-        if (global.RoyalArmiesMusicFlow
-            && typeof global.RoyalArmiesMusicFlow.markIntroCinematicComplete === 'function'
-            && reason !== 'skipped') {
-            /* progression soundtrack handoff remains available after narration */
-        }
 
         global.dispatchEvent(new CustomEvent('royalarmies:opening-prologue-finished', {
             detail: { reason: reason || 'completed' }
@@ -280,6 +299,7 @@
         finishCallback = typeof options?.onComplete === 'function' ? options.onComplete : null;
         setLocalProloguePending(true);
         isLeadInActive = true;
+        showOverlay({ subtitles: false });
 
         leadInTimer = global.setTimeout(() => {
             beginNarrationPlayback();

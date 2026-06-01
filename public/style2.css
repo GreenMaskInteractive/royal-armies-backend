@@ -9915,21 +9915,23 @@ body.developer-maintenance-alert-active #page-landing {
     inset: 0;
     z-index: 10040;
     pointer-events: none;
+    opacity: 1;
+    transition: opacity 0.9s ease-in-out;
 }
 
 .game-opening-prologue:not([hidden]) {
     pointer-events: auto;
 }
 
+.game-opening-prologue.is-revealing {
+    opacity: 0;
+    pointer-events: none;
+}
+
 .game-opening-prologue-scrim {
     position: absolute;
     inset: 0;
-    background: linear-gradient(
-        180deg,
-        rgba(4, 3, 2, 0.08) 0%,
-        rgba(4, 3, 2, 0.22) 55%,
-        rgba(4, 3, 2, 0.72) 100%
-    );
+    background: #000;
     pointer-events: none;
 }
 
@@ -9944,6 +9946,14 @@ body.developer-maintenance-alert-active #page-landing {
     border-radius: 6px;
     background: rgba(8, 6, 4, 0.82);
     box-shadow: 0 8px 28px rgba(0, 0, 0, 0.45);
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.35s ease, visibility 0.35s ease;
+}
+
+.game-opening-prologue.is-subtitles-active .game-opening-prologue-subtitle-dock {
+    opacity: 1;
+    visibility: visible;
 }
 
 .game-opening-prologue-subtitle {
@@ -9993,9 +10003,14 @@ body.developer-maintenance-alert-active #page-landing {
     border-color: rgba(255, 215, 0, 0.55);
 }
 
+body.game-opening-prologue-active .game-page-staging-deck,
 body.game-opening-prologue-active .game-onboarding-progress {
-    opacity: 0.35;
+    visibility: hidden;
     pointer-events: none;
+}
+
+body.game-opening-prologue-active .game-onboarding-progress {
+    opacity: 0;
 }
 
 .game-onboarding-step-stage {
