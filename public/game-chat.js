@@ -308,6 +308,7 @@
                 .map(normalizeGameMessage)
                 .filter(Boolean);
             if (!incoming.length) return;
+            processMentionAlertsForEntries(incoming, TAB_LABELS[channelId] || channelId, channelId);
             messagesByChannel[channelId] = mergeMessageList(messagesByChannel[channelId], incoming);
         });
 
@@ -315,6 +316,7 @@
             .map(normalizeCommunityMessage)
             .filter(Boolean);
         if (incomingCommunity.length) {
+            processMentionAlertsForEntries(incomingCommunity, TAB_LABELS.global, 'global');
             communityMessages = mergeMessageList(communityMessages, incomingCommunity);
         }
     }
@@ -580,6 +582,29 @@
         return sortMessagesBySentAt(messagesByChannel[activeTab] || []);
     }
 
+    function formatMessageBodyHtml(entry) {
+        if (entry.channel === 'system') {
+            return escapeHtml(entry.text);
+        }
+
+        const authorLabel = escapeHtml(entry.author || 'Commander');
+        const textHtml = global.RoyalArmiesChatMentions?.formatChatMentionBodyHtml
+            ? global.RoyalArmiesChatMentions.formatChatMentionBodyHtml(entry.text)
+            : escapeHtml(entry.text);
+
+        return `<strong class="game-chat-msg-author">${authorLabel}</strong> ${textHtml}`;
+    }
+
+    function processMentionAlertsForEntries(entries, channelLabel, channelId) {
+        if (!global.RoyalArmiesChatMentions?.processIncomingMessagesForMentionAlerts) return;
+        global.RoyalArmiesChatMentions.processIncomingMessagesForMentionAlerts(
+            entries,
+            resolveUsername(),
+            channelLabel,
+            channelId
+        );
+    }
+
     function resolveMessageToneClass(entry) {
         if (entry.channel === 'system' || entry.source === 'system') {
             return 'game-chat-msg--system';
@@ -608,15 +633,10 @@
 
         viewport.innerHTML = entries.map((entry) => {
             const toneClass = resolveMessageToneClass(entry);
-            const authorLabel = entry.channel === 'system'
-                ? 'System Event'
-                : escapeHtml(entry.author || 'Commander');
             const communityTag = entry.source === 'community'
                 ? `<span class="game-chat-msg-tag">Community · ${escapeHtml(entry.communityChannel || 'general')}</span>`
                 : '';
-            const body = entry.channel === 'system'
-                ? escapeHtml(entry.text)
-                : `<strong class="game-chat-msg-author">${authorLabel}</strong> ${escapeHtml(entry.text)}`;
+            const body = formatMessageBodyHtml(entry);
 
             const pendingClass = entry.pending ? ' is-pending' : '';
 
@@ -852,6 +872,7 @@
             messagesByChannel[activeTab] = [...(messagesByChannel[activeTab] || []), optimistic];
         }
         if (input) input.value = '';
+        global.RoyalArmiesChatMentions?.hideMentionSuggestDropdown?.();
         renderActiveChatStream();
 
         if (sendBtn) sendBtn.disabled = true;
@@ -890,8 +911,14 @@
         });
 
         global.document.addEventListener('keydown', (event) => {
-            if (event.key !== 'Enter' || event.shiftKey) return;
             const input = event.target;
+            if (input?.id === 'game-chat-compose-input') {
+                if (global.RoyalArmiesChatMentions?.handleMentionKeydown?.(event)) {
+                    return;
+                }
+            }
+
+            if (event.key !== 'Enter' || event.shiftKey) return;
             if (!input || input.id !== 'game-chat-compose-input') return;
             if (input.disabled) return;
 
@@ -943,10 +970,18 @@
     function buildGameChatComposeMarkup() {
         return `
             <form id="game-chat-compose-form" class="game-chat-compose-form">
-                <input id="game-chat-compose-input" class="game-chat-compose-input" type="text" maxlength="500" autocomplete="off" placeholder="Message Global…">
+                <div class="chat-input-mention-anchor game-chat-compose-mention-anchor">
+                    <input id="game-chat-compose-input" class="game-chat-compose-input" type="text" maxlength="500" autocomplete="off" placeholder="Message Global…" aria-label="Chat message">
+                    <div class="chat-mention-suggest-dropdown" role="listbox" aria-label="Mention suggestions" hidden></div>
+                </div>
                 <button id="game-chat-compose-send" type="submit" class="game-chat-compose-send">Send</button>
             </form>
         `.trim();
+    }
+
+    function wireGameChatMentionAutocomplete() {
+        const input = global.document.getElementById('game-chat-compose-input');
+        global.RoyalArmiesChatMentions?.wireMentionAutocomplete?.(input);
     }
 
     function mountAgeDockedChatSplit() {
@@ -968,6 +1003,7 @@
         composeHost.classList.add('game-chat-module--age-docked');
         composeHost.setAttribute('aria-label', 'Chat message');
         composeHost.innerHTML = buildGameChatComposeMarkup();
+        wireGameChatMentionAutocomplete();
     }
 
     function mountGameChatModule() {
@@ -1002,6 +1038,7 @@
         const module = wrapper.firstElementChild;
         if (!module) return;
         global.document.body.appendChild(module);
+        wireGameChatMentionAutocomplete();
     }
 
     async function enableGameChatForOfficialAge() {

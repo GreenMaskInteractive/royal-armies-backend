@@ -4919,6 +4919,12 @@ function applyCommanderAgeResetPayload(mode, payload) {
     player.ageArmy = Array.isArray(payload.ageArmy) ? payload.ageArmy.slice() : [];
     player.army = [];
 
+    if (typeof setAgeCommanderRank === 'function') {
+        setAgeCommanderRank(player.rank, { source: 'commander-reset', silent: true });
+    } else if (typeof refreshAgeHudCommanderRank === 'function') {
+        refreshAgeHudCommanderRank();
+    }
+
     if (Number.isFinite(Number(payload.ageGold))) {
         const nextGold = Math.max(0, Math.floor(Number(payload.ageGold)));
         player.ageGold = nextGold;

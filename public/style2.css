@@ -12765,6 +12765,13 @@ body.developer-maintenance-alert-active #page-landing {
     background: var(--age-hud-rail-chip-bg, rgba(0, 0, 0, 0.35));
 }
 
+#age-page-canvas .age-map-resource-item--commander-rank .age-map-resource-value {
+    min-width: 1.4em;
+    text-align: center;
+    font-variant-numeric: tabular-nums;
+    color: rgba(255, 232, 190, 0.96);
+}
+
 .age-map-resource-tip {
     position: absolute;
     left: 50%;
@@ -15214,6 +15221,28 @@ body.developer-maintenance-alert-active #page-landing {
     box-sizing: border-box !important;
 }
 
+#age-page-canvas .age-map-bottom-chat-compose-host .game-chat-compose-mention-anchor,
+.game-chat-compose-form .game-chat-compose-mention-anchor {
+    position: relative;
+    flex: 1 1 auto;
+    min-width: 0;
+    display: flex;
+    align-items: stretch;
+}
+
+#age-page-canvas .age-map-bottom-chat-compose-host .game-chat-compose-mention-anchor .chat-mention-suggest-dropdown,
+.game-chat-compose-form .game-chat-compose-mention-anchor .chat-mention-suggest-dropdown {
+    left: 0;
+    right: 0;
+    bottom: calc(100% + 8px);
+    top: auto;
+}
+
+#age-page-canvas .age-map-bottom-chat-compose-host .game-chat-compose-mention-anchor .game-chat-compose-input,
+.game-chat-compose-form .game-chat-compose-mention-anchor .game-chat-compose-input {
+    width: 100%;
+}
+
 #age-page-canvas .age-map-bottom-chat-compose-host .game-chat-compose-input,
 #age-page-canvas .age-map-bottom-chat-compose-host .game-chat-compose-send {
     height: var(--age-chat-compose-control-height) !important;
@@ -16390,6 +16419,11 @@ body.developer-maintenance-alert-active #page-landing {
 .game-chat-msg--alliance .game-chat-msg-body,
 .game-chat-msg--alliance .game-chat-msg-author {
     color: #78b8ff !important;
+}
+
+.game-chat-msg-body .chat-shoutout-mention-badge {
+    color: rgba(255, 232, 160, 0.96);
+    font-weight: 700;
 }
 
 .game-chat-compose-hint {

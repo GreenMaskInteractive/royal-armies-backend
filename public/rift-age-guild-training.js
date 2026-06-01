@@ -47,8 +47,16 @@
     function applyGuildPayload(payload) {
         if (!payload || typeof payload !== 'object') return;
 
-        if (payload.rank !== undefined && typeof global.player !== 'undefined') {
-            global.player.rank = Math.max(1, Math.floor(Number(payload.rank) || 1));
+        if (payload.rank !== undefined) {
+            const rank = Math.max(1, Math.floor(Number(payload.rank) || 1));
+            if (typeof global.player !== 'undefined') {
+                global.player.rank = rank;
+            }
+            if (global.RoyalArmiesAgeCommanderRank?.setAgeCommanderRank) {
+                global.RoyalArmiesAgeCommanderRank.setAgeCommanderRank(rank, { source: 'guild-sync', silent: true });
+            } else if (typeof global.refreshAgeHudCommanderRank === 'function') {
+                global.refreshAgeHudCommanderRank();
+            }
         }
         if (payload.ageGuildXp !== undefined && typeof global.player !== 'undefined') {
             global.player.ageGuildXp = Math.max(0, Math.floor(Number(payload.ageGuildXp) || 0));

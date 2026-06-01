@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Royal Armies — Age Alpha</title>
     <link rel="stylesheet" href="style.css?v=site-viewport-stable-1">
-    <link rel="stylesheet" href="style2.css?v=unit-evolution-qty-3">
+    <link rel="stylesheet" href="style2.css?v=age-chat-mentions-1">
     <link rel="stylesheet" href="mobile-responsive.css?v=records-compact-tabs-1">
     <link rel="stylesheet" href="dev-page-navigator.css">
     <link rel="stylesheet" href="custom-cursor.css?v=scrollbar-cursor-3">
@@ -34,6 +34,13 @@
                         </div>
                     </div>
                     <ul class="age-map-resource-strip" aria-label="Realm resources">
+                        <li
+                            class="age-map-resource-item age-map-resource-item--commander-rank"
+                            id="age-hud-commander-rank-item"
+                            title="Commander rank from Adventurer's Guild training and battles.">
+                            <span class="age-map-resource-label">Rank</span>
+                            <span class="age-map-resource-value" id="age-hud-commander-rank" aria-live="polite" aria-label="Commander rank 1">1</span>
+                        </li>
                         <li class="age-map-resource-item">
                             <span class="age-map-resource-label">Gold</span>
                             <span class="age-map-resource-value" id="age-hud-gold">20,000</span>
@@ -1502,11 +1509,12 @@
     <script src="portal-alerts.js?v=ra-action-btn-1"></script>
     <script src="rift-error-display.js?v=update-underway-notice-1"></script>
     <script src="commander-dossier-sync.js?v=dossier-sync-1"></script>
-    <script src="script.js?v=commander-rank-reset-1"></script>
+    <script src="script.js?v=commander-rank-hud-1"></script>
     <script src="commander-hub.js?v=hub-action-btn-compact-1"></script>
     <script src="portal-commander-identity-menu.js?v=headquarters-chronicles-bp-1"></script>
     <script src="rift-official-age.js?v=official-age-page-1"></script>
-    <script src="game-chat.js?v=update-underway-notice-1"></script>
+    <script src="rift-chat-mentions.js?v=age-chat-mentions-1"></script>
+    <script src="game-chat.js?v=age-chat-mentions-1"></script>
     <script src="age-council-board.js?v=council-editor-preview-1"></script>
     <script src="rift-player-report.js?v=player-report-modal-1"></script>
     <script src="age-movement-panel.js?v=player-report-modal-1"></script>
@@ -1514,6 +1522,7 @@
     <script src="age-world-water-routes.js?v=cross-border-neighbors-2"></script>
     <script src="rift-age-movement.js?v=guild-jobs-fix-1"></script>
     <script src="rift-age-gold.js?v=age-gold-sync-1"></script>
+    <script src="rift-age-commander-rank.js?v=commander-rank-hud-1"></script>
     <script src="rift-age-provisions.js?v=provisions-deplete-1"></script>
     <script src="rift-age-recruitment.js?v=swarm-recruit-1"></script>
     <script src="rift-player-loc-pins.js?v=player-loc-pins-1"></script>
@@ -1529,7 +1538,7 @@
     <script src="age-page.js?v=site-viewport-stable-1"></script>
     <script src="age-war-ledger.js?v=war-ledger-bottom-bar-1"></script>
     <script src="rift-unit-purchase-catalog.js?v=swarm-recruit-1"></script>
-    <script src="rift-age-guild-training.js?v=unit-evolution-1"></script>
+    <script src="rift-age-guild-training.js?v=commander-rank-hud-1"></script>
     <script src="rift-age-unit-evolution.js?v=unit-evolution-qty-1"></script>
     <script src="age-adventurers-guild.js?v=garrison-menu-4"></script>
     <script src="age-unit-evolution.js?v=unit-xp-each-1"></script>
