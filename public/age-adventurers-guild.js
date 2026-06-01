@@ -83,7 +83,7 @@
             ...(guildState || {}),
             rank: payload.rank ?? guildState?.rank ?? 1,
             ageGuildXp: payload.ageGuildXp ?? guildState?.ageGuildXp ?? 0,
-            ageGuildXpRequired: payload.ageGuildXpRequired ?? guildState?.ageGuildXpRequired ?? 95,
+            ageGuildXpRequired: payload.ageGuildXpRequired ?? guildState?.ageGuildXpRequired ?? 107,
             ageGuildXpProgress: payload.ageGuildXpProgress ?? guildState?.ageGuildXpProgress ?? 0,
             unitsTotal: payload.unitsTotal ?? guildState?.unitsTotal ?? 0,
             unitsUninjured: payload.unitsUninjured ?? guildState?.unitsUninjured ?? 0,

@@ -234,9 +234,15 @@ function resolveGuildXp(commander) {
     return Math.max(0, Math.floor(Number(commander?.ageGuildXp) || 0));
 }
 
+/**
+ * Guild XP to promote from `rank` → rank + 1.
+ * Linear + quadratic so each tier needs a larger jump than the last (rank 1 ≈ 107, rank 10 ≈ 719).
+ */
 function resolveGuildXpRequired(rank) {
     const r = Math.max(1, Math.floor(Number(rank) || 1));
-    return 70 + (r * 25);
+    const linear = 75 + r * 32;
+    const curved = (r - 1) * (r - 1) * 4;
+    return Math.round(linear + curved);
 }
 
 function resolveRankUpProvisionsGrant(newRank) {
