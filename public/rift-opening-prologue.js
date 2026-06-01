@@ -37,11 +37,15 @@
     ]);
 
     const PROLOGUE_AUDIO_SRC = 'audio/distressedwoman.mp3';
+    /** Let Archimedes (background music) start before narration + subtitles. */
+    const PROLOGUE_MUSIC_LEAD_MS = 2000;
 
     let overlayEl = null;
     let subtitleEl = null;
     let audioEl = null;
     let isPlaying = false;
+    let isLeadInActive = false;
+    let leadInTimer = null;
     let activeCueIndex = -1;
     let finishCallback = null;
     const LOCAL_PROLOGUE_PENDING_KEY = 'royalArmies_localProloguePending';
@@ -223,8 +227,38 @@
         activeCueIndex = -1;
     }
 
+    function clearPrologueLeadInTimer() {
+        if (leadInTimer) {
+            global.clearTimeout(leadInTimer);
+            leadInTimer = null;
+        }
+        isLeadInActive = false;
+    }
+
+    function isPrologueSequenceActive() {
+        return isPlaying || isLeadInActive || isLocalProloguePending();
+    }
+
+    function beginNarrationPlayback() {
+        clearPrologueLeadInTimer();
+        pauseBackgroundMusic();
+        isPlaying = true;
+        activeCueIndex = -1;
+        showOverlay();
+        renderSubtitleWords(0, 0);
+
+        if (!audioEl) return;
+        audioEl.currentTime = 0;
+        audioEl.play()
+            .catch(() => {
+                finishPrologue('blocked');
+            });
+    }
+
     function finishPrologue(reason) {
-        if (!isPlaying) return;
+        if (!isPrologueSequenceActive()) return;
+
+        clearPrologueLeadInTimer();
         isPlaying = false;
 
         if (audioEl) {
@@ -257,43 +291,33 @@
         if (!shouldRunLocalPrologue()) {
             return Promise.resolve('disabled');
         }
-        if (isPlaying) {
+        if (isPrologueSequenceActive()) {
             return Promise.resolve('already-playing');
         }
 
         ensureOverlay();
         finishCallback = typeof options?.onComplete === 'function' ? options.onComplete : null;
+        setLocalProloguePending(true);
+        isLeadInActive = true;
 
-        pauseBackgroundMusic();
-        isPlaying = true;
-        activeCueIndex = -1;
-        showOverlay();
-        renderSubtitleWords(0, 0);
+        leadInTimer = global.setTimeout(() => {
+            beginNarrationPlayback();
+        }, PROLOGUE_MUSIC_LEAD_MS);
 
-        audioEl.currentTime = 0;
-        return audioEl.play()
-            .then(() => 'started')
-            .catch(() => {
-                finishPrologue('blocked');
-                return 'blocked';
-            });
+        return Promise.resolve('lead-in');
     }
 
     function bootGamePagePrologue() {
         if (!shouldRunLocalPrologue()) return;
-
-        setLocalProloguePending(true);
-        global.setTimeout(() => {
-            startLocalPrologue();
-        }, 120);
+        startLocalPrologue();
     }
 
     global.RoyalArmiesOpeningPrologue = {
         isPlaying: function isProloguePlaying() {
-            return isPlaying;
+            return isPlaying || isLeadInActive;
         },
         shouldHoldProgression: function shouldHoldProgression() {
-            return isPlaying || isLocalProloguePending();
+            return isPrologueSequenceActive();
         },
         start: startLocalPrologue,
         skip: function skipPrologue() {
