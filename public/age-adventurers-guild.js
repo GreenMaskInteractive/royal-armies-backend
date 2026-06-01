@@ -1037,9 +1037,6 @@
             if (lastBattleResult.rankPromoted) {
                 showCommanderRankPromotionPopup(lastBattleResult);
             }
-            if (!battle.holdActive && battle.autoHeal) {
-                await battleRunAutoHealLoop();
-            }
         } catch (error) {
             console.error('[RIFT][guild-battle] runTrainingBattle failed', error);
             if (typeof global.showRiftError === 'function' && error?.code) {
@@ -1056,12 +1053,7 @@
             renderGuildPanel();
             battleLog('battleExecute finally', { holdActive: battle.holdActive });
 
-            if (!battle.holdActive) {
-                battleSyncUi();
-                return;
-            }
-
-            if (!getUnitsUninjuredCount() && battle.autoHeal) {
+            if (battle.autoHeal && getUnitsInjuredCount()) {
                 await battleRunAutoHealLoop();
             }
 
@@ -1369,6 +1361,9 @@
             event.preventDefault();
             battle.autoHeal = !battle.autoHeal;
             updateControlStates();
+            if (battle.autoHeal) {
+                void battleRunAutoHealLoop();
+            }
             return;
         }
         const tradeBtn = event.target.closest('[data-trade-lot]');
