@@ -1018,7 +1018,7 @@ body.is-trailer-mobile-device .game-opening-prologue.is-trailer-replay-mode .gam
     .game-opening-prologue.is-trailer-replay-mode .game-opening-prologue-trailer-player {
         container-type: inline-size;
         container-name: trailer-player;
-        width: min(1300px, 94vw);
+        width: min(1400px, calc(100vw - 40px));
         height: auto;
         max-height: none;
         gap: 0;
@@ -1034,7 +1034,7 @@ body.is-trailer-mobile-device .game-opening-prologue.is-trailer-replay-mode .gam
         gap: 0;
         border: 1px solid rgba(212, 168, 64, 0.48);
         border-radius: 8px;
-        overflow: hidden;
+        overflow: visible;
         background: #000;
         box-shadow:
             0 0 0 1px rgba(255, 215, 120, 0.12),
@@ -1051,7 +1051,7 @@ body.is-trailer-mobile-device .game-opening-prologue.is-trailer-replay-mode .gam
         min-height: 0;
         overflow: hidden;
         background: #000;
-        border-radius: 0;
+        border-radius: 8px 8px 0 0;
         padding: 0;
     }
 
@@ -1071,8 +1071,27 @@ body.is-trailer-mobile-device .game-opening-prologue.is-trailer-replay-mode .gam
         margin: 0;
         border: none;
         border-top: 1px solid rgba(212, 168, 64, 0.38);
-        border-radius: 0;
+        border-radius: 0 0 8px 8px;
         box-shadow: none;
+        overflow: visible;
+        box-sizing: border-box;
+        padding: clamp(10px, 1.2vh, 14px) 18px;
+    }
+
+    .game-opening-prologue.is-trailer-replay-mode .game-opening-prologue-trailer-controls-row {
+        flex-wrap: nowrap;
+        width: 100%;
+        min-width: 0;
+    }
+
+    .game-opening-prologue.is-trailer-replay-mode .game-opening-prologue-trailer-time {
+        flex: 0 0 auto;
+        flex-shrink: 0;
+        margin-left: auto;
+        min-width: 11em;
+        padding-right: 2px;
+        overflow: visible;
+        text-align: right;
     }
 
     .game-opening-prologue.is-trailer-replay-mode .game-opening-prologue-cinematic-stage {
@@ -1302,14 +1321,16 @@ body.is-trailer-mobile-device .game-opening-prologue.is-trailer-replay-mode .gam
 }
 
 .game-opening-prologue-trailer-time {
+    flex: 0 0 auto;
     margin-left: auto;
-    min-width: 7.5em;
+    min-width: 11em;
     font-family: 'Cinzel', Georgia, 'Times New Roman', serif;
     font-size: clamp(0.72rem, 2.6vw, 0.82rem);
-    letter-spacing: 0.08em;
+    letter-spacing: 0.06em;
     color: rgba(255, 236, 196, 0.92);
     text-align: right;
     white-space: nowrap;
+    overflow: visible;
 }
 
 body.is-trailer-mobile-device.is-trailer-portrait-viewport .game-opening-prologue.is-trailer-replay-mode .game-opening-prologue-trailer-player {
