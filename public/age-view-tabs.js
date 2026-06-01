@@ -344,6 +344,9 @@
 
         if (canvas) {
             canvas.dataset.ageView = activeView;
+            global.dispatchEvent(new CustomEvent('royalarmies:age-view-changed', {
+                detail: { view: activeView }
+            }));
         }
 
         if (rightHud) {

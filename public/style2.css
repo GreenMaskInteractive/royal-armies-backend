@@ -13109,6 +13109,24 @@ body.game-opening-prologue-active .game-onboarding-progress {
     padding: 0;
     line-height: 0;
     box-sizing: border-box;
+    overflow: visible;
+}
+
+#age-page-canvas .age-map-hud-subtitle-logo-wrap {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: flex-start;
+    max-width: 100%;
+    overflow: visible;
+}
+
+#age-page-canvas .age-map-hud-subtitle-logo-wrap .game-opening-prologue-subtitle-sparks {
+    position: absolute;
+    inset: 0;
+    overflow: visible;
+    pointer-events: none;
+    z-index: 3;
 }
 
 #age-page-canvas .age-map-hud-subtitle-logo {
@@ -13120,6 +13138,9 @@ body.game-opening-prologue-active .game-onboarding-progress {
     height: auto;
     object-fit: contain;
     object-position: left center;
+    opacity: 1;
+    transform: none;
+    filter: none;
 }
 
 #age-page-canvas[data-age-view="city"] .age-map-hud-subtitle-brand {

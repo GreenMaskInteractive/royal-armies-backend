@@ -1153,6 +1153,14 @@
             global.enableAgeViewTabs();
         }
 
+        if (global.RoyalArmiesSubtitleLogoSparks
+            && typeof global.RoyalArmiesSubtitleLogoSparks.syncAgeHud === 'function'
+            && typeof global.requestAnimationFrame === 'function') {
+            global.requestAnimationFrame(() => {
+                global.RoyalArmiesSubtitleLogoSparks.syncAgeHud();
+            });
+        }
+
         if (typeof global.enableAgeHeadquarters === 'function') {
             global.enableAgeHeadquarters();
         }

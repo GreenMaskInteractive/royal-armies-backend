@@ -42,7 +42,7 @@
     const PROLOGUE_MUSIC_PEAK_VOLUME = 1;
     /** Narration starts immediately; background music joins after this delay. */
     const PROLOGUE_MUSIC_DELAY_MS = 2000;
-    /** Black screen hold after narration; music ramps during logo reveals, then Kindred plays out. */
+    /** Black screen hold after narration; music ramps during logo reveals, then Cascading Skies on Enter the War. */
     const PROLOGUE_TITLE_LOGO_REVEAL_MS = 6500;
     const PROLOGUE_SUBTITLE_LOGO_REVEAL_MS = 1500;
     const PROLOGUE_MUSIC_OUT_FADE_MS = 1200;
@@ -414,12 +414,21 @@
 
     function clearSubtitleLogoSparks() {
         if (subtitleSparkTimer) {
-            global.clearInterval(subtitleSparkTimer);
+            if (typeof subtitleSparkTimer === 'function') {
+                subtitleSparkTimer();
+            } else {
+                global.clearInterval(subtitleSparkTimer);
+            }
             subtitleSparkTimer = null;
         }
 
         overlayEl?.querySelectorAll('.game-opening-prologue-subtitle-sparks').forEach((host) => {
-            host.innerHTML = '';
+            if (global.RoyalArmiesSubtitleLogoSparks
+                && typeof global.RoyalArmiesSubtitleLogoSparks.stop === 'function') {
+                global.RoyalArmiesSubtitleLogoSparks.stop(host);
+            } else {
+                host.innerHTML = '';
+            }
         });
     }
 
@@ -429,86 +438,28 @@
             || null;
     }
 
-    function spawnSubtitleSparkParticle(sparksHost, x, y) {
-        const spark = global.document.createElement('span');
-        spark.className = 'game-opening-prologue-spark';
-
-        const angle = (Math.random() * Math.PI * 2);
-        const distance = 16 + (Math.random() * 48);
-        const dx = Math.cos(angle) * distance;
-        const dy = Math.sin(angle) * distance - (10 + (Math.random() * 28));
-        const duration = 280 + Math.floor(Math.random() * 460);
-        const isStreak = Math.random() < 0.38;
-        const isWhiteHot = Math.random() < 0.42;
-
-        spark.style.left = `${x}px`;
-        spark.style.top = `${y}px`;
-        spark.style.setProperty('--spark-dx', `${dx.toFixed(1)}px`);
-        spark.style.setProperty('--spark-dy', `${dy.toFixed(1)}px`);
-        spark.style.setProperty('--spark-duration', `${duration}ms`);
-
-        if (isStreak) {
-            spark.classList.add('is-streak');
-            spark.style.setProperty('--spark-rotation', `${((angle * 180) / Math.PI).toFixed(1)}deg`);
-            spark.style.width = `${8 + Math.floor(Math.random() * 16)}px`;
-            spark.style.height = '2px';
-        } else {
-            const size = 2 + Math.random() * 3.5;
-            spark.style.width = `${size}px`;
-            spark.style.height = `${size}px`;
-        }
-
-        if (isWhiteHot) {
-            spark.classList.add('is-white-hot');
-        }
-
-        sparksHost.appendChild(spark);
-        spark.addEventListener('animationend', () => spark.remove(), { once: true });
-        global.setTimeout(() => spark.remove(), duration + 80);
-    }
-
-    function spawnSubtitleSparkFlash(sparksHost, x, y) {
-        const flash = global.document.createElement('span');
-        flash.className = 'game-opening-prologue-spark-flash';
-        flash.style.left = `${x}px`;
-        flash.style.top = `${y}px`;
-        sparksHost.appendChild(flash);
-        flash.addEventListener('animationend', () => flash.remove(), { once: true });
-        global.setTimeout(() => flash.remove(), 320);
-    }
-
-    function burstSubtitleLogoSparks(subtitleLogoEl) {
-        const sparksHost = resolveSubtitleSparksHost(subtitleLogoEl);
-        if (!sparksHost || subtitleLogoEl.hidden) return;
-
-        const width = sparksHost.clientWidth;
-        const height = sparksHost.clientHeight;
-        if (width <= 0 || height <= 0) return;
-
-        for (let i = 0; i < PROLOGUE_SUBTITLE_SPARKS_PER_BURST; i += 1) {
-            const x = width * (0.08 + (Math.random() * 0.84));
-            const y = height * (0.12 + (Math.random() * 0.76));
-            spawnSubtitleSparkParticle(sparksHost, x, y);
-        }
-
-        if (Math.random() < PROLOGUE_SUBTITLE_SPARK_FLASH_CHANCE) {
-            const flashX = width * (0.15 + (Math.random() * 0.7));
-            const flashY = height * (0.18 + (Math.random() * 0.64));
-            spawnSubtitleSparkFlash(sparksHost, flashX, flashY);
-        }
-    }
-
     function startSubtitleLogoSparks(subtitleLogoEl, generation) {
         clearSubtitleLogoSparks();
         if (!subtitleLogoEl) return;
 
-        const runBurst = () => {
-            if (generation !== logoRevealGeneration) return;
-            burstSubtitleLogoSparks(subtitleLogoEl);
-        };
+        const sparksHost = resolveSubtitleSparksHost(subtitleLogoEl);
+        if (!sparksHost) return;
 
-        runBurst();
-        subtitleSparkTimer = global.setInterval(runBurst, PROLOGUE_SUBTITLE_SPARK_INTERVAL_MS);
+        if (global.RoyalArmiesSubtitleLogoSparks
+            && typeof global.RoyalArmiesSubtitleLogoSparks.startLoop === 'function') {
+            subtitleSparkTimer = global.RoyalArmiesSubtitleLogoSparks.startLoop(sparksHost, {
+                intervalMs: PROLOGUE_SUBTITLE_SPARK_INTERVAL_MS,
+                sparksPerBurst: PROLOGUE_SUBTITLE_SPARKS_PER_BURST,
+                flashChance: PROLOGUE_SUBTITLE_SPARK_FLASH_CHANCE,
+                shouldContinue: () => (
+                    generation === logoRevealGeneration
+                    && !subtitleLogoEl.hidden
+                )
+            });
+            return;
+        }
+
+        subtitleSparkTimer = null;
     }
 
     function resetLoreToolBackdrop() {
