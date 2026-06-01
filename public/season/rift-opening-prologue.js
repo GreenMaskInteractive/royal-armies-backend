@@ -144,6 +144,8 @@
     let trailerImpactAudioUnlocked = false;
     let trailerOrientationBound = false;
     let trailerAutoplayQueued = false;
+    let trailerSeekActive = false;
+    let trailerSeekWasPlaying = false;
     const LOCAL_PROLOGUE_PENDING_KEY = 'royalArmies_localProloguePending';
 
     function canSyncPrologueTimeline() {
@@ -687,6 +689,35 @@
         trailerReplayFrame = global.requestAnimationFrame(tick);
     }
 
+    function beginTrailerSeek() {
+        if (trailerSeekActive) return;
+
+        trailerSeekActive = true;
+        trailerSeekWasPlaying = isTrailerReplayPlaying;
+
+        if (isTrailerReplayPlaying) {
+            isTrailerReplayPlaying = false;
+            audioEl?.pause();
+            pauseTrailerMusicPlayback();
+            stopTrailerReplaySyncLoop();
+            updateTrailerPlayerUi();
+        }
+    }
+
+    function finishTrailerSeek() {
+        if (!trailerSeekActive) return;
+
+        trailerSeekActive = false;
+        const shouldResume = trailerSeekWasPlaying;
+        trailerSeekWasPlaying = false;
+
+        if (shouldResume) {
+            startTrailerReplayPlayback();
+        } else {
+            updateTrailerPlayerUi();
+        }
+    }
+
     function pauseTrailerReplayPlayback() {
         isTrailerReplayPlaying = false;
         audioEl?.pause();
@@ -716,21 +747,25 @@
 
         isTrailerReplayPlaying = true;
         const narrationSec = getTrailerNarrationDurationSec();
-        const musicAudio = getTrailerMusicAudio();
 
-        ensurePrologueBackgroundMusic();
+        ensurePrologueBackgroundMusic({ resetTime: false });
+
+        const musicAudio = getTrailerMusicAudio();
+        syncTrailerMusicToTimeline(trailerReplayTimeSec, { force: true });
 
         if (trailerReplayTimeSec < narrationSec - 0.03) {
             overlayEl.classList.remove('is-trailer-finale-visible');
             setSubtitleDockActive(true);
-            syncTrailerMusicToTimeline(trailerReplayTimeSec);
             unlockTrailerImpactAudio();
             audioEl?.play().catch(() => {});
             if (trailerReplayTimeSec >= TRAILER_MUSIC_START_SEC - 0.03) {
                 musicAudio?.play().catch(() => {});
+            } else {
+                musicAudio?.pause();
             }
         } else {
-            applyTrailerTimelinePosition(trailerReplayTimeSec, { syncMusic: true });
+            applyTrailerTimelinePosition(trailerReplayTimeSec, { syncMusic: false, seekMedia: false });
+            audioEl?.pause();
             musicAudio?.play().catch(() => {});
         }
 
@@ -764,6 +799,8 @@
 
         isTrailerFinaleLocked = false;
         isTrailerReplayPlaying = false;
+        trailerSeekActive = false;
+        trailerSeekWasPlaying = false;
         trailerReplayTimeSec = 0;
         trailerImpactAudioUnlocked = false;
         trailerAutoplayQueued = false;
@@ -821,11 +858,31 @@
         }
 
         if (seekEl) {
+            seekEl.addEventListener('pointerdown', beginTrailerSeek);
+            seekEl.addEventListener('keydown', (event) => {
+                if (event.key === 'ArrowLeft'
+                    || event.key === 'ArrowRight'
+                    || event.key === 'Home'
+                    || event.key === 'End') {
+                    beginTrailerSeek();
+                }
+            });
             seekEl.addEventListener('input', () => {
+                if (!trailerSeekActive) beginTrailerSeek();
+
                 const totalSec = getTrailerTimelineDurationSec();
                 const progress = Math.max(0, Math.min(1, Number(seekEl.value) / 1000));
-                pauseTrailerReplayPlayback();
                 applyTrailerTimelinePosition(totalSec * progress, { syncMusic: true });
+            });
+            seekEl.addEventListener('change', finishTrailerSeek);
+            seekEl.addEventListener('pointerup', finishTrailerSeek);
+            seekEl.addEventListener('keyup', (event) => {
+                if (event.key === 'ArrowLeft'
+                    || event.key === 'ArrowRight'
+                    || event.key === 'Home'
+                    || event.key === 'End') {
+                    finishTrailerSeek();
+                }
             });
         }
 
@@ -1539,12 +1596,13 @@
         }
     }
 
-    function ensurePrologueBackgroundMusic() {
+    function ensurePrologueBackgroundMusic(options) {
+        const opts = options && typeof options === 'object' ? options : {};
         if (global.RoyalArmiesMusicFlow
             && typeof global.RoyalArmiesMusicFlow.startGamePageArchimedes === 'function') {
             global.RoyalArmiesMusicFlow.startGamePageArchimedes({
                 volume: PROLOGUE_MUSIC_VOLUME,
-                resetTime: true
+                resetTime: opts.resetTime !== false
             });
         }
     }
