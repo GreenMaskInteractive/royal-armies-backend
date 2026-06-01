@@ -94,25 +94,8 @@
     min-width: 118%;
     min-height: 118%;
     object-fit: cover;
-    transform: translate(-50%, -50%) scale(var(--cine-scale, 1.1))
-        translate(var(--cine-x1, 0%), var(--cine-y1, 0%));
+    transform: translate(-50%, -50%) scale(1.08);
     will-change: transform;
-}
-
-.game-opening-prologue-cinematic-shot img.is-panning {
-    animation: game-opening-prologue-cinematic-pan var(--cine-pan-duration, 8s) linear forwards;
-}
-
-@keyframes game-opening-prologue-cinematic-pan {
-    from {
-        transform: translate(-50%, -50%) scale(var(--cine-scale, 1.1))
-            translate(var(--cine-x1, 0%), var(--cine-y1, 0%));
-    }
-
-    to {
-        transform: translate(-50%, -50%) scale(var(--cine-scale, 1.1))
-            translate(var(--cine-x2, 0%), var(--cine-y2, 0%));
-    }
 }
 
 .game-opening-prologue-logo-stage {

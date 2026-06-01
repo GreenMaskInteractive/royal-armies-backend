@@ -125,6 +125,7 @@
     let cueTimelineScale = 1;
     let activeCueIndex = -1;
     let activeCinematicShotId = -1;
+    let cinematicPanStyleCounter = 0;
     let finishCallback = null;
     const LOCAL_PROLOGUE_PENDING_KEY = 'royalArmies_localProloguePending';
 
@@ -432,23 +433,8 @@
                 min-width: 118% !important;
                 min-height: 118% !important;
                 object-fit: cover !important;
-                transform: translate(-50%, -50%) scale(var(--cine-scale, 1.1))
-                    translate(var(--cine-x1, 0%), var(--cine-y1, 0%)) !important;
+                transform: translate(-50%, -50%) scale(1.08);
                 will-change: transform !important;
-            }
-            #${OVERLAY_ID} .game-opening-prologue-cinematic-shot img.is-panning {
-                animation: game-opening-prologue-cinematic-pan
-                    var(--cine-pan-duration, 8s) linear forwards !important;
-            }
-            @keyframes game-opening-prologue-cinematic-pan {
-                from {
-                    transform: translate(-50%, -50%) scale(var(--cine-scale, 1.1))
-                        translate(var(--cine-x1, 0%), var(--cine-y1, 0%));
-                }
-                to {
-                    transform: translate(-50%, -50%) scale(var(--cine-scale, 1.1))
-                        translate(var(--cine-x2, 0%), var(--cine-y2, 0%));
-                }
             }
         `.trim();
         global.document.head.appendChild(style);
@@ -503,8 +489,22 @@
         });
     }
 
+    function removeCinematicPanAnimation(imgEl) {
+        if (!imgEl) return;
+
+        const styleId = imgEl.dataset.cinePanStyleId;
+        if (styleId) {
+            global.document.getElementById(styleId)?.remove();
+            imgEl.removeAttribute('data-cine-pan-style-id');
+        }
+        imgEl.style.removeProperty('animation');
+        imgEl.classList.remove('is-panning');
+    }
+
     function assignRandomCinematicPan(imgEl, durationSec) {
         if (!imgEl) return;
+
+        removeCinematicPanAnimation(imgEl);
 
         const panMag = 2.5 + (Math.random() * 4.5);
         const angle = Math.random() * Math.PI * 2;
@@ -513,16 +513,32 @@
         const x2 = Math.cos(angle + Math.PI) * panMag;
         const y2 = Math.sin(angle + Math.PI) * panMag;
         const scale = 1.08 + (Math.random() * 0.08);
+        const duration = Math.max(1, durationSec * PROLOGUE_CINEMATIC_PAN_DURATION_SCALE);
 
-        imgEl.style.setProperty('--cine-x1', `${x1.toFixed(2)}%`);
-        imgEl.style.setProperty('--cine-y1', `${y1.toFixed(2)}%`);
-        imgEl.style.setProperty('--cine-x2', `${x2.toFixed(2)}%`);
-        imgEl.style.setProperty('--cine-y2', `${y2.toFixed(2)}%`);
-        imgEl.style.setProperty('--cine-scale', scale.toFixed(3));
-        imgEl.style.setProperty('--cine-pan-duration', `${Math.max(1, durationSec * PROLOGUE_CINEMATIC_PAN_DURATION_SCALE).toFixed(2)}s`);
-        imgEl.classList.remove('is-panning');
-        void imgEl.offsetWidth;
+        cinematicPanStyleCounter += 1;
+        const animName = `game-opening-prologue-cinematic-pan-${cinematicPanStyleCounter}`;
+        const styleId = `${animName}-style`;
+        const styleEl = global.document.createElement('style');
+        styleEl.id = styleId;
+        styleEl.textContent = `
+            @keyframes ${animName} {
+                from {
+                    transform: translate(-50%, -50%) scale(${scale.toFixed(3)})
+                        translate(${x1.toFixed(2)}%, ${y1.toFixed(2)}%);
+                }
+                to {
+                    transform: translate(-50%, -50%) scale(${scale.toFixed(3)})
+                        translate(${x2.toFixed(2)}%, ${y2.toFixed(2)}%);
+                }
+            }
+        `.trim();
+        global.document.head.appendChild(styleEl);
+
+        imgEl.dataset.cinePanStyleId = styleId;
         imgEl.classList.add('is-panning');
+        imgEl.style.animation = 'none';
+        void imgEl.offsetWidth;
+        imgEl.style.animation = `${animName} ${duration.toFixed(2)}s linear forwards`;
     }
 
     function clearCinematicShots() {
@@ -533,7 +549,7 @@
             shotEl.removeAttribute('data-pan-bound');
             const imgEl = shotEl.querySelector('img');
             if (imgEl) {
-                imgEl.classList.remove('is-panning');
+                removeCinematicPanAnimation(imgEl);
             }
         });
         activeCinematicShotId = -1;
@@ -591,7 +607,7 @@
             } else {
                 shotEl.removeAttribute('data-pan-bound');
                 const imgEl = shotEl.querySelector('img');
-                if (imgEl) imgEl.classList.remove('is-panning');
+                if (imgEl) removeCinematicPanAnimation(imgEl);
             }
         });
 
