@@ -9,7 +9,7 @@
     const OVERLAY_ID = 'game-opening-prologue';
     const AUDIO_ID = 'game-opening-prologue-audio';
     const SUBTITLE_ID = 'game-opening-prologue-subtitle';
-    const CRITICAL_STYLE_ID = 'rift-opening-prologue-critical-styles-v11';
+    const CRITICAL_STYLE_ID = 'rift-opening-prologue-critical-styles-v12';
     const TRAILER_LORE_TOOL_MAX_OPACITY = 0.4;
     const NARRATION_METADATA_TIMEOUT_MS = 8000;
 
@@ -94,8 +94,6 @@
     const PROLOGUE_SUBTITLE_SPARKS_PER_BURST = 5;
     const PROLOGUE_SUBTITLE_SPARK_FLASH_CHANCE = 0.24;
     const PROLOGUE_CINEMATIC_FADE_SEC = 1;
-    /** Soft edge fade within each subtitle cue window (seconds). */
-    const PROLOGUE_SUBTITLE_FADE_SEC = 0.35;
     /** Pan duration multiplier vs remaining shot time (1 = match, >1 = slower). */
     const PROLOGUE_CINEMATIC_PAN_DURATION_SCALE = 1.3;
     const PROLOGUE_CINEMATIC_IMAGE_VERSION = 'prologue-cine-1';
@@ -171,7 +169,6 @@
     let subtitleSyncFrame = null;
     let cueTimelineScale = 1;
     let activeCueIndex = -1;
-    let activeSubtitleOpacity = 0;
     let activeCinematicShotId = -1;
     let cinematicPanStyleCounter = 0;
     let finishCallback = null;
@@ -910,13 +907,20 @@
 
             if (global.document.visibilityState === 'hidden') {
                 resumeTrailerMediaIfInterrupted();
+                if (!trailerReplayInterval && isTrailerReplayPlaying) {
+                    stopTrailerReplaySyncLoop();
+                    startTrailerReplaySyncLoop();
+                }
                 return;
             }
 
             syncTrailerPlaybackClock();
             applyTrailerTimelinePosition(trailerReplayTimeSec, { syncMusic: false, seekMedia: false });
             resumeTrailerMediaIfInterrupted();
-            if (!trailerReplayInterval) {
+            if (!trailerReplayFrame && !trailerReplayInterval) {
+                startTrailerReplaySyncLoop();
+            } else if (trailerReplayInterval && global.document.visibilityState === 'visible') {
+                stopTrailerReplaySyncLoop();
                 startTrailerReplaySyncLoop();
             }
         });
@@ -966,12 +970,33 @@
 
             if (trailerReplayTimeSec >= totalSec - 0.03) {
                 pauseTrailerReplayAtEnd();
-                return;
             }
         };
 
+        const scheduleVisibleLoop = () => {
+            trailerReplayFrame = global.requestAnimationFrame(() => {
+                if (!isTrailerReplayMode || !isTrailerReplayPlaying) return;
+
+                if (global.document.visibilityState === 'hidden') {
+                    stopTrailerReplaySyncLoop();
+                    trailerReplayInterval = global.setInterval(tick, TRAILER_REPLAY_SYNC_MS);
+                    return;
+                }
+
+                tick();
+                if (isTrailerReplayMode && isTrailerReplayPlaying) {
+                    scheduleVisibleLoop();
+                }
+            });
+        };
+
         tick();
-        trailerReplayInterval = global.setInterval(tick, TRAILER_REPLAY_SYNC_MS);
+
+        if (global.document.visibilityState === 'hidden') {
+            trailerReplayInterval = global.setInterval(tick, TRAILER_REPLAY_SYNC_MS);
+        } else {
+            scheduleVisibleLoop();
+        }
     }
 
     function beginTrailerSeek() {
@@ -1558,6 +1583,7 @@
                 z-index: 1 !important;
                 opacity: var(--cine-shot-opacity, 0);
                 pointer-events: none !important;
+                transition: opacity 0.18s linear;
             }
             #${OVERLAY_ID} .game-opening-prologue-cinematic-shot img {
                 position: absolute !important;
@@ -1819,7 +1845,6 @@
                         if (Number(shotEl.dataset.cinematicId) !== lastShot.id) return;
                         const opacityText = String(opacity);
                         shotEl.style.setProperty('--cine-shot-opacity', opacityText);
-                        shotEl.style.opacity = opacityText;
                     });
                 }
 
@@ -1837,7 +1862,6 @@
     function clearCinematicShots() {
         cinematicShotEls.forEach((shotEl) => {
             shotEl.style.setProperty('--cine-shot-opacity', '0');
-            shotEl.style.opacity = '0';
             shotEl.classList.remove('is-visible');
             shotEl.removeAttribute('data-pan-bound');
             const imgEl = shotEl.querySelector('img');
@@ -1862,11 +1886,18 @@
         return Math.min(fadeIn, fadeOut);
     }
 
+    function getCinematicSyncTimeSec() {
+        if (isTrailerReplayMode) {
+            return trailerReplayTimeSec;
+        }
+        return audioEl?.currentTime || 0;
+    }
+
     function syncCinematicToAudioTime(force) {
-        if (!audioEl || !cinematicShotEls.length) return;
+        if ((!audioEl && !isTrailerReplayMode) || !cinematicShotEls.length) return;
         if (!force && !canSyncPrologueTimeline()) return;
 
-        const scriptTime = toScriptTimelineTime(audioEl.currentTime || 0);
+        const scriptTime = toScriptTimelineTime(getCinematicSyncTimeSec());
         let dominantShotId = -1;
         let dominantOpacity = 0;
 
@@ -1883,7 +1914,6 @@
 
             const opacity = resolveCinematicShotOpacity(scriptTime, shot);
             shotEl.style.setProperty('--cine-shot-opacity', String(opacity));
-            shotEl.style.opacity = String(opacity);
             shotEl.classList.toggle('is-visible', opacity > 0);
 
             if (opacity > 0) {
@@ -2214,30 +2244,6 @@
         return -1;
     }
 
-    function resolveSubtitleOpacityAtTime(scriptTime) {
-        const t = Number(scriptTime) || 0;
-        const fadeSec = Math.max(0.001, PROLOGUE_SUBTITLE_FADE_SEC);
-
-        for (let i = 0; i < LOCAL_PROLOGUE_CUES.length; i += 1) {
-            const cue = LOCAL_PROLOGUE_CUES[i];
-            if (t < cue.start || t > cue.end) continue;
-
-            const fadeIn = Math.min(1, (t - cue.start) / fadeSec);
-            const fadeOut = Math.min(1, (cue.end - t) / fadeSec);
-            return Math.min(fadeIn, fadeOut);
-        }
-
-        return 0;
-    }
-
-    function applySubtitleDockOpacity(opacity) {
-        const dock = overlayEl?.querySelector('.game-opening-prologue-subtitle-dock');
-        if (!dock) return;
-
-        const clamped = Math.max(0, Math.min(1, Number(opacity) || 0));
-        dock.style.setProperty('--trailer-subtitle-opacity', String(clamped));
-    }
-
     function renderSubtitleCue(cueIndex) {
         if (!subtitleEl) refreshSubtitleElements();
         if (!subtitleEl) return;
@@ -2256,15 +2262,11 @@
 
         const scriptTime = toScriptTimelineTime(getSubtitleSyncTimeSec());
         const cueIndex = resolveActiveCueIndexAtTime(scriptTime);
-        const opacity = resolveSubtitleOpacityAtTime(scriptTime);
-        const opacityChanged = Math.abs(opacity - activeSubtitleOpacity) >= 0.02;
 
-        if (!force && cueIndex === activeCueIndex && !opacityChanged) return;
+        if (!force && cueIndex === activeCueIndex) return;
 
         activeCueIndex = cueIndex;
-        activeSubtitleOpacity = opacity;
         renderSubtitleCue(cueIndex);
-        applySubtitleDockOpacity(opacity);
     }
 
     function syncPrologueToAudioTime() {
@@ -2300,7 +2302,6 @@
         if (options && options.subtitles === true) {
             setSubtitleDockActive(true);
             activeCueIndex = -1;
-            activeSubtitleOpacity = 0;
             syncSubtitleToAudioTime(true);
         } else {
             setSubtitleDockActive(false);

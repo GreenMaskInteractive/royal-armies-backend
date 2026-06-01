@@ -90,7 +90,7 @@
     z-index: 1;
     opacity: var(--cine-shot-opacity, 0);
     pointer-events: none;
-    will-change: opacity;
+    transition: opacity 0.18s linear;
 }
 
 .game-opening-prologue-cinematic-shot.is-visible {
@@ -1250,7 +1250,7 @@ body.is-trailer-mobile-device .game-opening-prologue.is-trailer-replay-mode .gam
     margin: 0;
     box-sizing: border-box;
     text-align: center;
-    opacity: var(--trailer-subtitle-opacity, var(--subtitle-dock-opacity, 1)) !important;
+    opacity: 1 !important;
     visibility: visible !important;
     display: block !important;
     pointer-events: none;
