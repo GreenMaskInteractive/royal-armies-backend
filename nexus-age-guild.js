@@ -235,14 +235,38 @@ function resolveGuildXp(commander) {
 }
 
 /**
- * Guild XP to promote from `rank` → rank + 1.
- * Linear + quadratic so each tier needs a larger jump than the last (rank 1 ≈ 107, rank 10 ≈ 719).
+ * Promotion XP per rank — matches Last Knights commander chart (lastknights.com).
+ * Index 0 = rank 1 → 2 (90 XP), … index 20 = rank 21 → 22 (80,000 XP).
  */
+const GUILD_XP_REQUIRED_BY_RANK = Object.freeze([
+    90,
+    200,
+    350,
+    520,
+    700,
+    1000,
+    1350,
+    1900,
+    2400,
+    3100,
+    4500,
+    6000,
+    8000,
+    10000,
+    13000,
+    16000,
+    20000,
+    25000,
+    32000,
+    45000,
+    80000
+]);
+
 function resolveGuildXpRequired(rank) {
     const r = Math.max(1, Math.floor(Number(rank) || 1));
-    const linear = 75 + r * 32;
-    const curved = (r - 1) * (r - 1) * 4;
-    return Math.round(linear + curved);
+    if (r >= MAX_COMMANDER_RANK) return 0;
+    const index = Math.min(r - 1, GUILD_XP_REQUIRED_BY_RANK.length - 1);
+    return GUILD_XP_REQUIRED_BY_RANK[index];
 }
 
 function resolveRankUpProvisionsGrant(newRank) {
