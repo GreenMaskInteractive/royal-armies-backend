@@ -25,6 +25,8 @@
     const HQ_PLANNING_EDGE_BLEED_PX = 16;
 
     let councilBoardLayoutObserver = null;
+    let subtitleLayoutRaf = null;
+    const SUBTITLE_BAND_MAX_PX = 320;
 
     /** Matches countdowntimermodal.png: thin wings (L/R), tall center crest (MM). */
     const PORTAL_GAME_TIME_CHAR_SCALE_CLASSES = [
@@ -783,11 +785,7 @@
                 '--age-right-hud-height',
                 '--age-right-reports-height'
             ].forEach((prop) => canvas.style.removeProperty(prop));
-            const subtitleSlot = global.document.querySelector('#age-page-canvas .age-map-hud-subtitle-slot');
-            if (subtitleSlot) {
-                subtitleSlot.style.removeProperty('--age-subtitle-slot-padding-top');
-                subtitleSlot.style.minHeight = '';
-            }
+            clearAgeHudSubtitleVerticalCenter();
             return;
         }
 
@@ -845,10 +843,35 @@
 
         canvas.style.removeProperty('--age-right-hud-height');
         syncHeadquartersPlanningLayout();
-        syncAgeHudSubtitleVerticalCenter();
+        scheduleAgeHudSubtitleVerticalCenter();
+    }
+
+    function clearAgeHudSubtitleVerticalCenter() {
+        const slot = global.document.querySelector('#age-page-canvas .age-map-hud-subtitle-slot');
+        if (!slot) return;
+        slot.classList.remove('is-measuring');
+        slot.style.removeProperty('--age-subtitle-slot-padding-top');
+        slot.style.removeProperty('min-height');
+    }
+
+    function scheduleAgeHudSubtitleVerticalCenter() {
+        if (typeof global.requestAnimationFrame !== 'function') {
+            syncAgeHudSubtitleVerticalCenter();
+            return;
+        }
+
+        if (subtitleLayoutRaf) {
+            global.cancelAnimationFrame(subtitleLayoutRaf);
+        }
+
+        subtitleLayoutRaf = global.requestAnimationFrame(() => {
+            subtitleLayoutRaf = null;
+            syncAgeHudSubtitleVerticalCenter();
+        });
     }
 
     global.syncAgeHudSubtitleVerticalCenter = syncAgeHudSubtitleVerticalCenter;
+    global.scheduleAgeHudSubtitleVerticalCenter = scheduleAgeHudSubtitleVerticalCenter;
 
     function syncAgeHudSubtitleVerticalCenter() {
         const canvas = global.document.getElementById('age-page-canvas');
@@ -856,8 +879,7 @@
         if (!canvas || !slot) return;
 
         if (isAgeMobileLayout() || (canvas.dataset.ageView || 'map') !== 'map') {
-            slot.style.removeProperty('--age-subtitle-slot-padding-top');
-            slot.style.minHeight = '';
+            clearAgeHudSubtitleVerticalCenter();
             return;
         }
 
@@ -865,19 +887,32 @@
         const cityPanel = global.document.querySelector('#age-page-canvas .age-city-info-panel');
         const logo = slot.querySelector('.age-map-hud-subtitle-logo');
         if (!topBar || !cityPanel || !logo || cityPanel.hidden) {
-            slot.style.removeProperty('--age-subtitle-slot-padding-top');
-            slot.style.minHeight = '';
+            clearAgeHudSubtitleVerticalCenter();
             return;
         }
 
+        slot.classList.add('is-measuring');
+        slot.style.removeProperty('--age-subtitle-slot-padding-top');
+        slot.style.removeProperty('min-height');
+        void slot.offsetHeight;
+
         const topBarBottom = topBar.getBoundingClientRect().bottom;
         const cityPanelTop = cityPanel.getBoundingClientRect().top;
-        const logoHeight = logo.getBoundingClientRect().height;
-        const bandHeight = cityPanelTop - topBarBottom;
+        const bandHeight = Math.min(
+            SUBTITLE_BAND_MAX_PX,
+            Math.max(0, cityPanelTop - topBarBottom)
+        );
 
-        if (bandHeight <= 0 || logoHeight <= 0) {
-            slot.style.removeProperty('--age-subtitle-slot-padding-top');
-            slot.style.minHeight = '';
+        slot.classList.remove('is-measuring');
+
+        if (bandHeight <= 0) {
+            clearAgeHudSubtitleVerticalCenter();
+            return;
+        }
+
+        const logoHeight = logo.getBoundingClientRect().height;
+        if (logoHeight <= 0) {
+            clearAgeHudSubtitleVerticalCenter();
             return;
         }
 
@@ -1062,13 +1097,11 @@
             const rightHud = global.document.getElementById('age-map-hud-right');
             const reportsPanel = rightHud?.querySelector('.age-left-reports-panel');
             const cityInfoPanel = rightHud?.querySelector('.age-city-info-panel');
-            const subtitleSlot = rightHud?.querySelector('.age-map-hud-subtitle-slot');
             const topBar = global.document.querySelector('#age-page-canvas .age-map-hud-top-bar');
             if (chatMessages) councilBoardLayoutObserver.observe(chatMessages);
             if (chatCompose) councilBoardLayoutObserver.observe(chatCompose);
             if (bottomDock) councilBoardLayoutObserver.observe(bottomDock);
             if (rightHud) councilBoardLayoutObserver.observe(rightHud);
-            if (subtitleSlot) councilBoardLayoutObserver.observe(subtitleSlot);
             if (topBar) councilBoardLayoutObserver.observe(topBar);
             if (reportsPanel) councilBoardLayoutObserver.observe(reportsPanel);
             if (cityInfoPanel) councilBoardLayoutObserver.observe(cityInfoPanel);
@@ -1201,7 +1234,7 @@
 
         if (typeof global.requestAnimationFrame === 'function') {
             global.requestAnimationFrame(() => {
-                syncAgeHudSubtitleVerticalCenter();
+                scheduleAgeHudSubtitleVerticalCenter();
                 if (global.RoyalArmiesSubtitleLogoSparks
                     && typeof global.RoyalArmiesSubtitleLogoSparks.syncAgeHud === 'function') {
                     global.RoyalArmiesSubtitleLogoSparks.syncAgeHud();

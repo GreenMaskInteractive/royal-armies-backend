@@ -13106,10 +13106,22 @@ body.game-opening-prologue-active .game-onboarding-progress {
     justify-content: flex-start;
     width: 100%;
     min-height: 0;
+    max-height: 320px;
     margin: 0;
     padding: var(--age-subtitle-slot-padding-top, 0) 0 0;
     box-sizing: border-box;
     overflow: visible;
+}
+
+#age-page-canvas .age-map-hud-subtitle-slot.is-measuring {
+    visibility: hidden;
+    min-height: 0 !important;
+    max-height: none;
+    height: 0 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    overflow: hidden;
+    pointer-events: none;
 }
 
 /* Same dimensions as game-page opening prologue subtitle logo */

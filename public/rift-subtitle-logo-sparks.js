@@ -183,8 +183,8 @@
 
         global.addEventListener('royalarmies:age-view-changed', () => {
             syncAgeHudSubtitleSparks();
-            if (typeof global.syncAgeHudSubtitleVerticalCenter === 'function') {
-                global.requestAnimationFrame(() => global.syncAgeHudSubtitleVerticalCenter());
+            if (typeof global.scheduleAgeHudSubtitleVerticalCenter === 'function') {
+                global.scheduleAgeHudSubtitleVerticalCenter();
             }
         });
 
