@@ -8,7 +8,7 @@
     const OVERLAY_ID = 'game-opening-prologue';
     const AUDIO_ID = 'game-opening-prologue-audio';
     const SUBTITLE_ID = 'game-opening-prologue-subtitle';
-    const CRITICAL_STYLE_ID = 'rift-opening-prologue-critical-styles';
+    const CRITICAL_STYLE_ID = 'rift-opening-prologue-critical-styles-v2';
     const NARRATION_METADATA_TIMEOUT_MS = 8000;
 
     /**
@@ -211,6 +211,8 @@
     }
 
     function ensurePrologueCriticalStyles() {
+        const legacyStyle = global.document.getElementById('rift-opening-prologue-critical-styles');
+        if (legacyStyle) legacyStyle.remove();
         if (global.document.getElementById(CRITICAL_STYLE_ID)) return;
 
         const style = global.document.createElement('style');
@@ -227,9 +229,9 @@
             #${OVERLAY_ID} .game-opening-prologue-subtitle-dock {
                 position: absolute !important;
                 left: 50% !important;
-                bottom: clamp(88px, 14vh, 148px) !important;
+                bottom: clamp(52px, 6.5vh, 76px) !important;
                 transform: translateX(-50%) !important;
-                z-index: 6 !important;
+                z-index: 5 !important;
                 width: min(920px, calc(100vw - 48px)) !important;
                 padding: 14px 18px !important;
                 border: 1px solid rgba(184, 144, 48, 0.35) !important;
@@ -263,25 +265,33 @@
                 color: rgba(255, 242, 210, 0.96) !important;
                 text-shadow: 0 1px 12px rgba(0, 0, 0, 0.65) !important;
             }
+            #${OVERLAY_ID} .game-opening-prologue-scrim {
+                position: absolute !important;
+                inset: 0 !important;
+                z-index: 0 !important;
+                background: #000 !important;
+                pointer-events: none !important;
+            }
             #${OVERLAY_ID} .game-opening-prologue-cinematic-stage {
                 position: absolute !important;
-                top: 0 !important;
-                left: 0 !important;
-                right: 0 !important;
-                bottom: clamp(160px, 22vh, 240px) !important;
-                z-index: 0 !important;
+                inset: 0 !important;
+                z-index: 2 !important;
                 display: flex !important;
                 align-items: center !important;
                 justify-content: center !important;
-                padding: clamp(12px, 2vh, 24px) clamp(12px, 2vw, 24px) !important;
+                padding: clamp(12px, 2vh, 24px) clamp(12px, 2vw, 24px)
+                    clamp(128px, 17vh, 188px) !important;
                 box-sizing: border-box !important;
-                background: #000 !important;
+                background: transparent !important;
                 pointer-events: none !important;
             }
             #${OVERLAY_ID} .game-opening-prologue-cinematic-frame {
                 position: relative !important;
                 width: 75% !important;
-                height: 75% !important;
+                max-width: 75% !important;
+                aspect-ratio: 16 / 9 !important;
+                height: auto !important;
+                max-height: min(75%, calc(100% - clamp(128px, 17vh, 188px))) !important;
                 flex: 0 0 auto !important;
                 border: 2px solid rgba(184, 144, 48, 0.62) !important;
                 border-radius: 6px !important;
@@ -295,7 +305,7 @@
             #${OVERLAY_ID} .game-opening-prologue-cinematic-shot {
                 position: absolute !important;
                 inset: 0 !important;
-                opacity: 0 !important;
+                opacity: var(--cine-shot-opacity, 0);
                 pointer-events: none !important;
             }
             #${OVERLAY_ID} .game-opening-prologue-cinematic-shot img {
@@ -324,14 +334,6 @@
                     transform: translate(-50%, -50%) scale(var(--cine-scale, 1.1))
                         translate(var(--cine-x2, 0%), var(--cine-y2, 0%));
                 }
-            }
-            #${OVERLAY_ID}.is-cinematics-active .game-opening-prologue-scrim {
-                background: linear-gradient(
-                    180deg,
-                    rgba(0, 0, 0, 0.24) 0%,
-                    rgba(0, 0, 0, 0.38) 52%,
-                    rgba(0, 0, 0, 0.58) 100%
-                ) !important;
             }
         `.trim();
         global.document.head.appendChild(style);
@@ -409,7 +411,9 @@
 
     function clearCinematicShots() {
         cinematicShotEls.forEach((shotEl) => {
+            shotEl.style.setProperty('--cine-shot-opacity', '0');
             shotEl.style.opacity = '0';
+            shotEl.classList.remove('is-visible');
             shotEl.removeAttribute('data-pan-bound');
             const imgEl = shotEl.querySelector('img');
             if (imgEl) {
@@ -444,7 +448,9 @@
             if (!shot) return;
 
             const opacity = resolveCinematicShotOpacity(scriptTime, shot);
+            shotEl.style.setProperty('--cine-shot-opacity', String(opacity));
             shotEl.style.opacity = String(opacity);
+            shotEl.classList.toggle('is-visible', opacity > 0);
 
             if (opacity > 0) {
                 const imgEl = shotEl.querySelector('img');
@@ -474,6 +480,11 @@
         }
 
         activeCinematicShotId = dominantShotId;
+    }
+
+    function primeCinematicFrame() {
+        if (!audioEl || !cinematicShotEls.length) return;
+        syncCinematicToAudioTime();
     }
 
     function setSubtitleDockActive(active) {
@@ -516,8 +527,15 @@
         removeStalePrologueNodes();
 
         if (overlayEl && global.document.contains(overlayEl)) {
-            refreshSubtitleElements();
-            return overlayEl;
+            if (!overlayEl.querySelector('.game-opening-prologue-cinematic-frame')) {
+                overlayEl.remove();
+                overlayEl = null;
+                subtitleEl = null;
+                cinematicShotEls = [];
+            } else {
+                refreshSubtitleElements();
+                return overlayEl;
+            }
         }
 
         overlayEl = null;
@@ -532,8 +550,8 @@
         overlayEl.setAttribute('aria-label', 'Opening narrative');
         overlayEl.hidden = true;
         overlayEl.innerHTML = `
-            ${buildCinematicStageMarkup()}
             <div class="game-opening-prologue-scrim" aria-hidden="true"></div>
+            ${buildCinematicStageMarkup()}
             <div class="game-opening-prologue-logo-stage" aria-hidden="true">
                 <img
                     src="${PROLOGUE_LORE_TOOL_SRC}"
@@ -1230,6 +1248,8 @@
         showOverlay({ subtitles: true });
 
         await prepareCueTimeline();
+
+        primeCinematicFrame();
 
         if (audioEl) {
             audioEl.volume = PROLOGUE_NARRATION_VOLUME;

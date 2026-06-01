@@ -28,38 +28,30 @@
     inset: 0;
     background: #000;
     pointer-events: none;
-    z-index: 1;
-}
-
-.game-opening-prologue.is-cinematics-active .game-opening-prologue-scrim {
-    background: linear-gradient(
-        180deg,
-        rgba(0, 0, 0, 0.24) 0%,
-        rgba(0, 0, 0, 0.38) 52%,
-        rgba(0, 0, 0, 0.58) 100%
-    );
+    z-index: 0;
 }
 
 .game-opening-prologue-cinematic-stage {
     position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: clamp(160px, 22vh, 240px);
-    z-index: 0;
+    inset: 0;
+    z-index: 2;
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: clamp(12px, 2vh, 24px) clamp(12px, 2vw, 24px);
+    padding: clamp(12px, 2vh, 24px) clamp(12px, 2vw, 24px)
+        clamp(128px, 17vh, 188px);
     box-sizing: border-box;
-    background: #000;
+    background: transparent;
     pointer-events: none;
 }
 
 .game-opening-prologue-cinematic-frame {
     position: relative;
     width: 75%;
-    height: 75%;
+    max-width: 75%;
+    aspect-ratio: 16 / 9;
+    height: auto;
+    max-height: min(75%, calc(100% - clamp(128px, 17vh, 188px)));
     flex: 0 0 auto;
     border: 2px solid rgba(184, 144, 48, 0.62);
     border-radius: 6px;
@@ -74,9 +66,13 @@
 .game-opening-prologue-cinematic-shot {
     position: absolute;
     inset: 0;
-    opacity: 0;
+    opacity: var(--cine-shot-opacity, 0);
     pointer-events: none;
     will-change: opacity;
+}
+
+.game-opening-prologue-cinematic-shot.is-visible {
+    opacity: var(--cine-shot-opacity, 1);
 }
 
 .game-opening-prologue-cinematic-shot img {
@@ -120,7 +116,7 @@
     pointer-events: none;
     opacity: 0;
     visibility: hidden;
-    z-index: 1;
+    z-index: 3;
 }
 
 .game-opening-prologue.is-logo-reveal-active .game-opening-prologue-logo-stage {
@@ -349,9 +345,9 @@
 .game-opening-prologue-subtitle-dock {
     position: absolute;
     left: 50%;
-    bottom: clamp(88px, 14vh, 148px);
+    bottom: clamp(52px, 6.5vh, 76px);
     transform: translateX(-50%);
-    z-index: 4;
+    z-index: 5;
     width: min(920px, calc(100vw - 48px));
     padding: 14px 18px;
     border: 1px solid rgba(184, 144, 48, 0.35);
