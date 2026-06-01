@@ -417,7 +417,7 @@
     margin: 0;
     max-width: min(36em, 92%);
     font-family: 'Cinzel', Georgia, 'Times New Roman', serif;
-    font-size: clamp(0.58rem, 1.05vw, 0.92rem);
+    font-size: clamp(0.95rem, 2.1vw, 1.45rem);
     font-weight: 600;
     font-style: italic;
     line-height: 1.55;
@@ -447,7 +447,7 @@
 }
 
 .game-opening-prologue.is-trailer-replay-mode .game-opening-prologue-trailer-credits-alpha-copy {
-    max-width: min(30em, 96%);
+    max-width: min(32em, 96%);
 }
 
 .game-opening-prologue-enter-war-btn:hover,
@@ -1262,7 +1262,7 @@ body.age-of-war-trailer-page {
 }
 
 .game-opening-prologue.is-trailer-replay-mode:not(.is-trailer-player-fullscreen) .game-opening-prologue-trailer-credits-alpha-copy {
-    font-size: clamp(0.4rem, 1.85cqw, 0.65rem);
+    font-size: clamp(0.62rem, 3.6cqw, 1.2rem);
 }
 
 .game-opening-prologue.is-trailer-replay-mode:not(.is-trailer-player-fullscreen) .game-opening-prologue-trailer-credits-thanks-copy {
@@ -1360,7 +1360,7 @@ body.age-of-war-trailer-page {
 
 .game-opening-prologue.is-trailer-replay-mode.is-trailer-player-fullscreen .game-opening-prologue-trailer-credits-alpha-copy,
 .game-opening-prologue-trailer-stage:fullscreen .game-opening-prologue-trailer-credits-alpha-copy {
-    font-size: clamp(0.42rem, 2.35cqw, 1.05rem);
+    font-size: clamp(0.72rem, 4cqw, 1.95rem);
 }
 
 .game-opening-prologue.is-trailer-replay-mode.is-trailer-player-fullscreen .game-opening-prologue-trailer-credits-thanks-copy,
