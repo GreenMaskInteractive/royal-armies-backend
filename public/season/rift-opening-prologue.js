@@ -8,6 +8,8 @@
     const OVERLAY_ID = 'game-opening-prologue';
     const AUDIO_ID = 'game-opening-prologue-audio';
     const SUBTITLE_ID = 'game-opening-prologue-subtitle';
+    const CRITICAL_STYLE_ID = 'rift-opening-prologue-critical-styles';
+    const NARRATION_METADATA_TIMEOUT_MS = 8000;
 
     /**
      * Tune paragraph start/end seconds on the script timeline, then sentence cues
@@ -160,6 +162,91 @@
         return isLocalDevHost() && isGamePage();
     }
 
+    function ensurePrologueCriticalStyles() {
+        if (global.document.getElementById(CRITICAL_STYLE_ID)) return;
+
+        const style = global.document.createElement('style');
+        style.id = CRITICAL_STYLE_ID;
+        style.textContent = `
+            #${OVERLAY_ID} {
+                position: fixed !important;
+                inset: 0 !important;
+                z-index: 100100 !important;
+            }
+            #${OVERLAY_ID}[hidden] {
+                display: none !important;
+            }
+            #${OVERLAY_ID} .game-opening-prologue-subtitle-dock {
+                position: absolute !important;
+                left: 50% !important;
+                bottom: clamp(88px, 14vh, 148px) !important;
+                transform: translateX(-50%) !important;
+                z-index: 6 !important;
+                width: min(920px, calc(100vw - 48px)) !important;
+                padding: 14px 18px !important;
+                border: 1px solid rgba(184, 144, 48, 0.35) !important;
+                border-radius: 6px !important;
+                background: rgba(8, 6, 4, 0.88) !important;
+                box-shadow: 0 8px 28px rgba(0, 0, 0, 0.45) !important;
+                pointer-events: none !important;
+            }
+            #${OVERLAY_ID}.is-subtitles-active .game-opening-prologue-subtitle-dock,
+            #${OVERLAY_ID}[data-subtitles-active="1"] .game-opening-prologue-subtitle-dock {
+                opacity: 1 !important;
+                visibility: visible !important;
+                display: block !important;
+            }
+            #${OVERLAY_ID} .game-opening-prologue-subtitle {
+                margin: 0 !important;
+                min-height: 2.8em !important;
+                font-family: Georgia, 'Times New Roman', serif !important;
+                font-size: clamp(0.85rem, 1.15vw, 1.05rem) !important;
+                line-height: 1.65 !important;
+                text-align: center !important;
+                color: rgba(255, 242, 210, 0.96) !important;
+                text-shadow: 0 1px 12px rgba(0, 0, 0, 0.65) !important;
+            }
+        `.trim();
+        global.document.head.appendChild(style);
+    }
+
+    function removeStalePrologueNodes() {
+        global.document.querySelectorAll(`#${OVERLAY_ID}`).forEach((node) => {
+            if (node !== overlayEl) node.remove();
+        });
+        global.document.querySelectorAll(`#${AUDIO_ID}`).forEach((node) => {
+            if (node !== audioEl) node.remove();
+        });
+    }
+
+    function refreshSubtitleElements() {
+        if (!overlayEl) return;
+        subtitleEl = overlayEl.querySelector(`#${SUBTITLE_ID}`);
+    }
+
+    function setSubtitleDockActive(active) {
+        if (!overlayEl) return;
+
+        const dock = overlayEl.querySelector('.game-opening-prologue-subtitle-dock');
+        if (active) {
+            overlayEl.classList.add('is-subtitles-active');
+            overlayEl.setAttribute('data-subtitles-active', '1');
+            if (dock) {
+                dock.style.setProperty('opacity', '1', 'important');
+                dock.style.setProperty('visibility', 'visible', 'important');
+                dock.style.setProperty('display', 'block', 'important');
+            }
+        } else {
+            overlayEl.classList.remove('is-subtitles-active');
+            overlayEl.removeAttribute('data-subtitles-active');
+            if (dock) {
+                dock.style.removeProperty('opacity');
+                dock.style.removeProperty('visibility');
+                dock.style.removeProperty('display');
+            }
+        }
+    }
+
     function ensurePrologueBackgroundMusic() {
         if (global.RoyalArmiesMusicFlow
             && typeof global.RoyalArmiesMusicFlow.startGamePageArchimedes === 'function') {
@@ -171,7 +258,17 @@
     }
 
     function ensureOverlay() {
-        if (overlayEl && global.document.contains(overlayEl)) return overlayEl;
+        ensurePrologueCriticalStyles();
+        removeStalePrologueNodes();
+
+        if (overlayEl && global.document.contains(overlayEl)) {
+            refreshSubtitleElements();
+            return overlayEl;
+        }
+
+        overlayEl = null;
+        subtitleEl = null;
+        audioEl = null;
 
         overlayEl = global.document.createElement('div');
         overlayEl.id = OVERLAY_ID;
@@ -279,18 +376,24 @@
             return Promise.resolve(audioEl.duration);
         }
 
-        return new Promise((resolve) => {
-            const onReady = () => {
-                const duration = Number.isFinite(audioEl.duration) && audioEl.duration > 0
-                    ? audioEl.duration
-                    : null;
-                resolve(duration);
-            };
+        return Promise.race([
+            new Promise((resolve) => {
+                const onReady = () => {
+                    const duration = Number.isFinite(audioEl.duration) && audioEl.duration > 0
+                        ? audioEl.duration
+                        : null;
+                    resolve(duration);
+                };
 
-            audioEl.addEventListener('loadedmetadata', onReady, { once: true });
-            audioEl.addEventListener('durationchange', onReady, { once: true });
-            audioEl.load();
-        });
+                audioEl.addEventListener('loadedmetadata', onReady, { once: true });
+                audioEl.addEventListener('durationchange', onReady, { once: true });
+                audioEl.addEventListener('error', () => resolve(null), { once: true });
+                audioEl.load();
+            }),
+            new Promise((resolve) => {
+                global.setTimeout(() => resolve(null), NARRATION_METADATA_TIMEOUT_MS);
+            })
+        ]);
     }
 
     async function prepareCueTimeline() {
@@ -299,6 +402,7 @@
     }
 
     function renderSubtitleCue(cueIndex) {
+        if (!subtitleEl) refreshSubtitleElements();
         if (!subtitleEl) return;
         const cue = LOCAL_PROLOGUE_CUES[cueIndex];
         if (!cue) {
@@ -356,14 +460,15 @@
 
     function showOverlay(options) {
         ensureOverlay();
+        overlayEl.removeAttribute('hidden');
         overlayEl.hidden = false;
         overlayEl.classList.remove('is-revealing');
         if (options && options.subtitles === true) {
-            overlayEl.classList.add('is-subtitles-active');
+            setSubtitleDockActive(true);
             activeCueIndex = -1;
             renderSubtitleCue(0);
         } else {
-            overlayEl.classList.remove('is-subtitles-active');
+            setSubtitleDockActive(false);
         }
         global.document.body.classList.add('game-opening-prologue-active');
     }
@@ -371,7 +476,9 @@
     function hideOverlay() {
         if (overlayEl) {
             overlayEl.hidden = true;
-            overlayEl.classList.remove('is-revealing', 'is-subtitles-active');
+            overlayEl.setAttribute('hidden', '');
+            overlayEl.classList.remove('is-revealing');
+            setSubtitleDockActive(false);
         }
         clearLogoReveal();
         global.document.body.classList.remove('game-opening-prologue-active');
@@ -599,7 +706,7 @@
 
     function clearSubtitlesForPostNarrationHold() {
         if (subtitleEl) subtitleEl.textContent = '';
-        if (overlayEl) overlayEl.classList.remove('is-subtitles-active');
+        setSubtitleDockActive(false);
     }
 
     function clearLogoReveal() {
@@ -852,10 +959,10 @@
         setLocalProloguePending(true);
         isPlaying = true;
 
-        await prepareCueTimeline();
-
         activeCueIndex = -1;
         showOverlay({ subtitles: true });
+
+        await prepareCueTimeline();
 
         if (audioEl) {
             audioEl.volume = PROLOGUE_NARRATION_VOLUME;
