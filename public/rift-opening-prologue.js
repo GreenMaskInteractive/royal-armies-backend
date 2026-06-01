@@ -49,7 +49,7 @@
     const PROLOGUE_MUSIC_OUT_FADE_MS = 1200;
     const PROLOGUE_REVEAL_FADE_MS = 900;
     const PROLOGUE_LOGO_SRC = 'images/royalarmiestitle.png?v=logo-trim-gimp-1';
-    const PROLOGUE_SUBTITLE_LOGO_SRC = 'images/royalarmiessubtitlelogo.png?v=1';
+    const PROLOGUE_SUBTITLE_LOGO_SRC = 'images/royalarmiessubtitlelogo.png?v=age-subtitle-1';
     const PROLOGUE_SUBTITLE_LOGO_SFX_SRC = 'audio/joinagesfxselect.wav';
 
     let overlayEl = null;
