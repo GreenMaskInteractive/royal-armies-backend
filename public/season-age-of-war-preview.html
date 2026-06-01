@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Royal Armies — Age of War season preview</title>
+    <link rel="stylesheet" href="style.css?v=cursor-modal-layer-fix-1">
+    <link rel="stylesheet" href="season/season-age-of-war.flex.css?v=season-preview-1">
+    <style>
+        .season-preview-hub {
+            max-width: 720px;
+            margin: 72px auto 48px;
+            padding: 0 20px;
+            color: #f6e6c8;
+            font-family: Georgia, 'Times New Roman', serif;
+            line-height: 1.55;
+        }
+        .season-preview-hub h1 {
+            font-family: 'Cinzel', serif;
+            font-size: 1.45rem;
+            letter-spacing: 0.06em;
+            color: #ffd978;
+            margin: 0 0 12px;
+        }
+        .season-preview-hub p { margin: 0 0 14px; }
+        .season-preview-hub ul { margin: 0 0 20px 1.2em; }
+        .season-preview-hub-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin: 24px 0;
+        }
+        .season-preview-hub-actions a {
+            display: inline-block;
+            padding: 12px 18px;
+            border: 1px solid rgba(255, 196, 88, 0.5);
+            border-radius: 4px;
+            background: rgba(24, 10, 8, 0.85);
+            color: #ffd978;
+            font-family: 'Cinzel', serif;
+            font-size: 0.85rem;
+            letter-spacing: 0.05em;
+            text-decoration: none;
+        }
+        .season-preview-hub-actions a:hover {
+            border-color: #ffd700;
+            color: #fff4d0;
+        }
+        .season-preview-hub code {
+            font-size: 0.92em;
+            color: #ffe8b8;
+        }
+        .season-preview-hub-note {
+            font-size: 0.9rem;
+            opacity: 0.92;
+            border-top: 1px solid rgba(255, 196, 88, 0.25);
+            padding-top: 16px;
+        }
+    </style>
+</head>
+<body style="background: #0a0806;">
+    <div class="season-preview-banner" role="status">
+        <p><strong>Local season sandbox</strong> — not deployed on royalarmies.com until you merge <code>season/age-of-war</code> → <code>main</code>.</p>
+    </div>
+    <main class="season-preview-hub">
+        <h1>Age of War — seasonal preview</h1>
+        <p>
+            Use these MAP pages to review seasonal work before merging into
+            <code>agealpha.html</code>, <code>game.html</code>, and production FLEX/RIFT bundles.
+            Production pages are unchanged.
+        </p>
+        <div class="season-preview-hub-actions">
+            <a href="season-age-of-war-age.html">Age Alpha (season HUD + music)</a>
+            <a href="season-age-of-war-game.html">Game page (opening prologue)</a>
+            <a href="agealpha.html">Production Age Alpha (compare)</a>
+            <a href="game.html">Production game shell (compare)</a>
+        </div>
+        <p><strong>Included in this preview</strong></p>
+        <ul>
+            <li>Right HUD <em>Age of War</em> subtitle logo + spark bursts</li>
+            <li>Bottom-bar music player placement and cross-page soundtrack flow</li>
+            <li>Black-screen opening prologue (narration, lore tool, Enter the War)</li>
+            <li>Seasonal FLEX in <code>public/season/season-age-of-war.flex.css</code></li>
+            <li>Seasonal RIFT copies in <code>public/season/</code></li>
+        </ul>
+        <p><strong>Local server</strong></p>
+        <ul>
+            <li>Run the backend (<code>node server.js</code>) or Live Server from <code>public/</code>.</li>
+            <li>Sign in as <code>caleb_admin</code> on localhost for full Age API behavior.</li>
+            <li>Replay prologue: open game preview with <code>?riftProgressionReset=1</code>.</li>
+        </ul>
+        <p><strong>Refresh assets from branch</strong></p>
+        <ul>
+            <li><code>node scripts/export-season-preview-assets.js</code></li>
+            <li><code>node scripts/build-season-flex-css.js</code></li>
+        </ul>
+        <p class="season-preview-hub-note">
+            When ready to ship: merge <code>season/age-of-war</code>, fold
+            <code>season-age-of-war.flex.css</code> into <code>style2.css</code> (or keep rules inline),
+            wire scripts into official HTML, bump all <code>?v=</code> cache busts, then push <code>main</code>.
+        </p>
+    </main>
+</body>
+</html>
