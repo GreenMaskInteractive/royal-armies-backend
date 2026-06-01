@@ -541,6 +541,7 @@
         cancelMusicVolumeAnimation,
         waitForCurrentTrackEnd,
         cancelWaitForTrackEnd,
+        getAudioElement: resolveAudioElement,
         shouldHoldForOpeningPrologue: function shouldHoldForOpeningPrologue() {
             if (readSession(STORAGE.openingProloguePending) === '1') return true;
             try {
