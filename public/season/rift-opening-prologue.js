@@ -90,7 +90,7 @@
     const PROLOGUE_LORE_TOOL_SRC = 'images/royalarmiesloretool.png?v=prologue-lore-tool-1';
     const TRAILER_GREENMASK_LOGO_SRC = 'images/greenmaskinteractivelogo.png?v=trailer-credits-2';
     const TRAILER_LORE_TOOL_PEAK_OPACITY = 0.35;
-    const TRAILER_MAIN_FINALE_HOLD_MS = 20000;
+    const TRAILER_MAIN_FINALE_HOLD_MS = 7000;
     const TRAILER_CREDITS_TAGLINES_REVEAL_MS = 860;
     const TRAILER_CREDITS_MUSIC_END_BUFFER_MS = 350;
     const PROLOGUE_LORE_TOOL_FADE_MS = 12000;
