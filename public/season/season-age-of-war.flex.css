@@ -56,7 +56,18 @@
     border: none;
     border-radius: 6px;
     overflow: hidden;
+    background: transparent;
+}
+
+.game-opening-prologue-cinematic-frame::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    border-radius: inherit;
     background: #080604;
+    opacity: var(--cine-frame-opacity, 0);
+    pointer-events: none;
 }
 
 .game-opening-prologue-cinematic-frame-border {
@@ -76,6 +87,7 @@
 .game-opening-prologue-cinematic-shot {
     position: absolute;
     inset: 0;
+    z-index: 1;
     opacity: var(--cine-shot-opacity, 0);
     pointer-events: none;
     will-change: opacity;
@@ -355,7 +367,7 @@
     outline: 1px solid rgba(255, 215, 120, 0.16);
     outline-offset: 5px;
     backdrop-filter: blur(8px);
-    opacity: 1;
+    opacity: var(--subtitle-dock-opacity, 1);
     visibility: visible;
     pointer-events: none;
     transition: opacity 0.35s ease, visibility 0.35s ease;

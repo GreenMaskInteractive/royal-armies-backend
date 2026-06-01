@@ -9,7 +9,7 @@
     const OVERLAY_ID = 'game-opening-prologue';
     const AUDIO_ID = 'game-opening-prologue-audio';
     const SUBTITLE_ID = 'game-opening-prologue-subtitle';
-    const CRITICAL_STYLE_ID = 'rift-opening-prologue-critical-styles-v3';
+    const CRITICAL_STYLE_ID = 'rift-opening-prologue-critical-styles-v4';
     const NARRATION_METADATA_TIMEOUT_MS = 8000;
 
     /**
@@ -48,6 +48,8 @@
     /** Black screen hold after narration; music ramps during logo reveals, then Cascading Skies on Enter the War. */
     const PROLOGUE_TITLE_LOGO_REVEAL_MS = 6500;
     const PROLOGUE_SUBTITLE_LOGO_REVEAL_MS = 1500;
+    /** Wall-clock ms for Archimedes ramp from prologue level to peak during logo reveals. */
+    const PROLOGUE_MUSIC_PEAK_RAMP_MS = 4500;
     const PROLOGUE_MUSIC_OUT_FADE_MS = 1200;
     const PROLOGUE_REVEAL_FADE_MS = 900;
     const PROLOGUE_LOGO_SRC = 'images/royalarmiestitle.png?v=logo-trim-gimp-1';
@@ -245,6 +247,8 @@
         if (legacyStyle) legacyStyle.remove();
         const legacyStyleV2 = global.document.getElementById('rift-opening-prologue-critical-styles-v2');
         if (legacyStyleV2) legacyStyleV2.remove();
+        const legacyStyleV3 = global.document.getElementById('rift-opening-prologue-critical-styles-v3');
+        if (legacyStyleV3) legacyStyleV3.remove();
         if (global.document.getElementById(CRITICAL_STYLE_ID)) return;
 
         const style = global.document.createElement('style');
@@ -280,7 +284,7 @@
                 outline-offset: 5px !important;
                 backdrop-filter: blur(8px) !important;
                 pointer-events: none !important;
-                opacity: 1 !important;
+                opacity: var(--subtitle-dock-opacity, 1) !important;
                 visibility: visible !important;
                 display: block !important;
             }
@@ -403,7 +407,17 @@
                 border: none !important;
                 border-radius: 6px !important;
                 overflow: hidden !important;
+                background: transparent !important;
+            }
+            #${OVERLAY_ID} .game-opening-prologue-cinematic-frame::before {
+                content: '' !important;
+                position: absolute !important;
+                inset: 0 !important;
+                z-index: 0 !important;
+                border-radius: inherit !important;
                 background: #080604 !important;
+                opacity: var(--cine-frame-opacity, 0) !important;
+                pointer-events: none !important;
             }
             #${OVERLAY_ID} .game-opening-prologue-cinematic-frame-border {
                 position: absolute !important;
@@ -421,6 +435,7 @@
             #${OVERLAY_ID} .game-opening-prologue-cinematic-shot {
                 position: absolute !important;
                 inset: 0 !important;
+                z-index: 1 !important;
                 opacity: var(--cine-shot-opacity, 0);
                 pointer-events: none !important;
             }
@@ -541,6 +556,75 @@
         imgEl.style.animation = `${animName} ${duration.toFixed(2)}s linear forwards`;
     }
 
+    function setCinematicFrameOpacity(opacity) {
+        const clamped = Math.max(0, Math.min(1, Number(opacity) || 0));
+        const opacityText = String(clamped);
+        const frameEl = overlayEl?.querySelector('.game-opening-prologue-cinematic-frame');
+        const frameBorderEl = overlayEl?.querySelector('.game-opening-prologue-cinematic-frame-border');
+
+        if (frameEl) {
+            frameEl.style.setProperty('--cine-frame-opacity', opacityText);
+        }
+        if (frameBorderEl) {
+            frameBorderEl.style.setProperty('--cine-frame-opacity', opacityText);
+            frameBorderEl.style.opacity = opacityText;
+        }
+    }
+
+    function resolveLastCinematicShotFadeOpacity(scriptTime) {
+        const lastShot = PROLOGUE_CINEMATIC_SHOTS[PROLOGUE_CINEMATIC_SHOTS.length - 1];
+        if (!lastShot) return 1;
+
+        const fadeSpan = Math.max(0.001, PROLOGUE_CINEMATIC_FADE_SEC);
+        if (scriptTime < lastShot.scriptEnd - fadeSpan || scriptTime > lastShot.scriptEnd) {
+            return 1;
+        }
+
+        return resolveCinematicShotOpacity(scriptTime, lastShot);
+    }
+
+    async function fadeOutCinematicChromeIfNeeded() {
+        const frameBorderEl = overlayEl?.querySelector('.game-opening-prologue-cinematic-frame-border');
+        if (!frameBorderEl) return;
+
+        const rawOpacity = frameBorderEl.style.getPropertyValue('--cine-frame-opacity')
+            || global.getComputedStyle(frameBorderEl).getPropertyValue('--cine-frame-opacity')
+            || '0';
+        const startOpacity = Math.max(0, Math.min(1, parseFloat(rawOpacity) || 0));
+        if (startOpacity <= 0.001) return;
+
+        const scale = cueTimelineScale > 0 ? cueTimelineScale : 1;
+        const fadeMs = Math.max(16, startOpacity * PROLOGUE_CINEMATIC_FADE_SEC * 1000 * scale);
+        const lastShot = PROLOGUE_CINEMATIC_SHOTS[PROLOGUE_CINEMATIC_SHOTS.length - 1];
+        const startedAt = global.performance?.now?.() ?? Date.now();
+
+        await new Promise((resolve) => {
+            const tick = (now) => {
+                const progress = Math.min(1, (now - startedAt) / fadeMs);
+                const opacity = startOpacity * (1 - progress);
+                setCinematicFrameOpacity(opacity);
+                overlayEl?.style.setProperty('--subtitle-dock-opacity', String(opacity));
+
+                if (lastShot) {
+                    cinematicShotEls.forEach((shotEl) => {
+                        if (Number(shotEl.dataset.cinematicId) !== lastShot.id) return;
+                        const opacityText = String(opacity);
+                        shotEl.style.setProperty('--cine-shot-opacity', opacityText);
+                        shotEl.style.opacity = opacityText;
+                    });
+                }
+
+                if (progress < 1) {
+                    global.requestAnimationFrame(tick);
+                } else {
+                    resolve();
+                }
+            };
+
+            global.requestAnimationFrame(tick);
+        });
+    }
+
     function clearCinematicShots() {
         cinematicShotEls.forEach((shotEl) => {
             shotEl.style.setProperty('--cine-shot-opacity', '0');
@@ -553,10 +637,8 @@
             }
         });
         activeCinematicShotId = -1;
-        const frameBorderEl = overlayEl?.querySelector('.game-opening-prologue-cinematic-frame-border');
-        if (frameBorderEl) {
-            frameBorderEl.style.setProperty('--cine-frame-opacity', '0');
-        }
+        setCinematicFrameOpacity(0);
+        overlayEl?.style.removeProperty('--subtitle-dock-opacity');
         overlayEl?.classList.remove('is-cinematics-active');
     }
 
@@ -577,7 +659,12 @@
         const scriptTime = toScriptTimelineTime(audioEl.currentTime || 0);
         let dominantShotId = -1;
         let dominantOpacity = 0;
-        let frameBorderOpacity = 0;
+
+        const frameBorderOpacity = Math.max(...cinematicShotEls.map((shotEl) => {
+            const shotId = Number(shotEl.dataset.cinematicId) || 0;
+            const shot = PROLOGUE_CINEMATIC_SHOTS.find((entry) => entry.id === shotId);
+            return shot ? resolveCinematicShotOpacity(scriptTime, shot) : 0;
+        }), 0);
 
         cinematicShotEls.forEach((shotEl) => {
             const shotId = Number(shotEl.dataset.cinematicId) || 0;
@@ -585,7 +672,6 @@
             if (!shot) return;
 
             const opacity = resolveCinematicShotOpacity(scriptTime, shot);
-            frameBorderOpacity = Math.max(frameBorderOpacity, opacity);
             shotEl.style.setProperty('--cine-shot-opacity', String(opacity));
             shotEl.style.opacity = String(opacity);
             shotEl.classList.toggle('is-visible', opacity > 0);
@@ -611,10 +697,11 @@
             }
         });
 
-        const frameBorderEl = overlayEl?.querySelector('.game-opening-prologue-cinematic-frame-border');
-        if (frameBorderEl) {
-            frameBorderEl.style.setProperty('--cine-frame-opacity', String(frameBorderOpacity));
-        }
+        setCinematicFrameOpacity(frameBorderOpacity);
+        overlayEl?.style.setProperty(
+            '--subtitle-dock-opacity',
+            String(resolveLastCinematicShotFadeOpacity(scriptTime))
+        );
 
         if (dominantOpacity > 0) {
             overlayEl?.classList.add('is-cinematics-active');
@@ -1259,15 +1346,15 @@
 
     async function runPostNarrationHoldSequence() {
         isPostNarrationHold = true;
+        await fadeOutCinematicChromeIfNeeded();
         clearSubtitlesForPostNarrationHold();
 
-        const logoMusicRampMs = PROLOGUE_TITLE_LOGO_REVEAL_MS + PROLOGUE_SUBTITLE_LOGO_REVEAL_MS;
         const musicRamp = global.RoyalArmiesMusicFlow
             && typeof global.RoyalArmiesMusicFlow.rampMusicVolume === 'function'
             ? global.RoyalArmiesMusicFlow.rampMusicVolume(
                 PROLOGUE_MUSIC_VOLUME,
                 PROLOGUE_MUSIC_PEAK_VOLUME,
-                logoMusicRampMs
+                PROLOGUE_MUSIC_PEAK_RAMP_MS
             )
             : Promise.resolve();
 
