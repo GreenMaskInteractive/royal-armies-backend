@@ -434,7 +434,7 @@
 }
 
 .game-opening-prologue.is-trailer-replay-mode .game-opening-prologue-trailer-credits-logo {
-    width: min(1222px, 82cqw);
+    width: min(917px, 61.5cqw);
     max-width: 96%;
 }
 
@@ -1450,7 +1450,7 @@ body.is-trailer-mobile-device .game-opening-prologue.is-trailer-replay-mode .gam
     );
     box-shadow: none;
     box-sizing: border-box;
-    opacity: 0.42;
+    opacity: 0;
     visibility: visible;
     pointer-events: none;
     transition: opacity 0.22s ease;
@@ -1462,9 +1462,12 @@ body.is-trailer-mobile-device .game-opening-prologue.is-trailer-replay-mode .gam
     visibility: visible;
 }
 
-.game-opening-prologue-trailer-seek,
-.game-opening-prologue-trailer-controls-row,
-.game-opening-prologue-trailer-controls .game-opening-prologue-trailer-btn {
+.game-opening-prologue-trailer-viewport.is-trailer-controls-hot .game-opening-prologue-trailer-seek,
+.game-opening-prologue-trailer-viewport.is-trailer-controls-hot .game-opening-prologue-trailer-controls-row,
+.game-opening-prologue-trailer-viewport.is-trailer-controls-hot .game-opening-prologue-trailer-controls .game-opening-prologue-trailer-btn,
+.game-opening-prologue-trailer-viewport.is-trailer-controls-pinned .game-opening-prologue-trailer-seek,
+.game-opening-prologue-trailer-viewport.is-trailer-controls-pinned .game-opening-prologue-trailer-controls-row,
+.game-opening-prologue-trailer-viewport.is-trailer-controls-pinned .game-opening-prologue-trailer-controls .game-opening-prologue-trailer-btn {
     pointer-events: auto;
 }
 
