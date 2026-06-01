@@ -755,11 +755,6 @@
     }
 
     async function waitForEnterWarGate(generation) {
-        if (global.RoyalArmiesMusicFlow
-            && typeof global.RoyalArmiesMusicFlow.startPrologueOutroMusic === 'function') {
-            global.RoyalArmiesMusicFlow.startPrologueOutroMusic({ volume: PROLOGUE_MUSIC_PEAK_VOLUME });
-        }
-
         if (loreToolFadePromise) {
             await loreToolFadePromise;
         }
@@ -769,16 +764,6 @@
         return new Promise((resolve) => {
             enterWarGateResolver = resolve;
             showEnterWarButton();
-
-            if (!global.RoyalArmiesMusicFlow
-                || typeof global.RoyalArmiesMusicFlow.waitForCurrentTrackEnd !== 'function') {
-                return;
-            }
-
-            global.RoyalArmiesMusicFlow.waitForCurrentTrackEnd().then(() => {
-                if (generation !== logoRevealGeneration) return;
-                resolveEnterWarGate('song-ended');
-            });
         });
     }
 
@@ -912,10 +897,10 @@
         ensureOverlay();
         finishCallback = typeof options?.onComplete === 'function' ? options.onComplete : null;
         setLocalProloguePending(true);
+        isPlaying = true;
 
         await prepareCueTimeline();
 
-        isPlaying = true;
         activeCueIndex = -1;
         showOverlay({ subtitles: true });
         syncSubtitleToAudioTime();

@@ -519,7 +519,12 @@
         waitForCurrentTrackEnd,
         cancelWaitForTrackEnd,
         shouldHoldForOpeningPrologue: function shouldHoldForOpeningPrologue() {
-            return readSession(STORAGE.openingProloguePending) === '1';
+            if (readSession(STORAGE.openingProloguePending) === '1') return true;
+            try {
+                return global.sessionStorage.getItem('royalArmies_localProloguePending') === '1';
+            } catch (_err) {
+                return false;
+            }
         }
     };
 
