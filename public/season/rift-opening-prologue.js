@@ -2195,7 +2195,10 @@
                         hidden
                         aria-live="polite"
                     >
-                        <p class="game-opening-prologue-trailer-coming-soon">Coming Soon</p>
+                        <p class="game-opening-prologue-trailer-coming-soon">
+                            <span class="game-opening-prologue-trailer-coming-soon-headline">Coming Soon</span>
+                            <span class="game-opening-prologue-trailer-coming-soon-date">Winter 2026</span>
+                        </p>
                         <div class="game-opening-prologue-trailer-taglines">
                             <p class="game-opening-prologue-trailer-call">Stand and Join the War!</p>
                             <p class="game-opening-prologue-trailer-site">RoyalArmies.com</p>
