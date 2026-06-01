@@ -4,7 +4,7 @@
 (function initRoyalArmiesAdventurersGuild(global) {
     'use strict';
 
-    const BATTLE_CHARGE_MS = 1500;
+    const BATTLE_CHARGE_MS = 750;
     const BATTLE_RING_CIRCUMFERENCE = 2 * Math.PI * 46;
     const EXTENDED_BATTLE_LOG_STORAGE_KEY = 'rift-age-guild-extended-battle-log';
     const BATTLE_DEBUG = (
@@ -1167,6 +1167,7 @@
 
         battle.wrap = wrap;
         wrap.style.setProperty('--age-guild-charge-circumference', String(BATTLE_RING_CIRCUMFERENCE));
+        wrap.style.setProperty('--age-guild-charge-duration', `${BATTLE_CHARGE_MS}ms`);
 
         if (progressRing) {
             progressRing.style.strokeDasharray = `${BATTLE_RING_CIRCUMFERENCE}`;
