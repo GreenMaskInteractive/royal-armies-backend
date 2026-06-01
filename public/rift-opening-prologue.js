@@ -37,7 +37,7 @@
     ]);
 
     const PROLOGUE_AUDIO_SRC = 'audio/distressedwoman.mp3';
-    /** Let Archimedes (background music) start before narration + subtitles. */
+    /** Background music plays through the whole prologue; narration starts after this lead-in. */
     const PROLOGUE_MUSIC_LEAD_MS = 2000;
 
     let overlayEl = null;
@@ -87,23 +87,6 @@
 
     function shouldRunLocalPrologue() {
         return isLocalDevHost() && isGamePage();
-    }
-
-    function pauseBackgroundMusic() {
-        const bg = global.document.getElementById('portal-background-theme-audio')
-            || global.document.getElementById('ra-global-music-audio');
-        if (bg && !bg.paused) {
-            bg.dataset.prologuePaused = '1';
-            bg.pause();
-        }
-    }
-
-    function resumeBackgroundMusic() {
-        const bg = global.document.getElementById('portal-background-theme-audio')
-            || global.document.getElementById('ra-global-music-audio');
-        if (!bg) return;
-        delete bg.dataset.prologuePaused;
-        bg.play().catch(() => {});
     }
 
     function ensureOverlay() {
@@ -241,7 +224,6 @@
 
     function beginNarrationPlayback() {
         clearPrologueLeadInTimer();
-        pauseBackgroundMusic();
         isPlaying = true;
         activeCueIndex = -1;
         showOverlay();
@@ -268,7 +250,6 @@
 
         hideOverlay();
         setLocalProloguePending(false);
-        resumeBackgroundMusic();
 
         if (global.RoyalArmiesMusicFlow
             && typeof global.RoyalArmiesMusicFlow.markIntroCinematicComplete === 'function'
