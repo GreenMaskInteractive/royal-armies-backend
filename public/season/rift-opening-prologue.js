@@ -78,6 +78,7 @@
     const PROLOGUE_MUSIC_DELAY_MS = 2000;
     /** Black screen hold after narration; music ramps during logo reveals, then Cascading Skies on Enter the War. */
     const PROLOGUE_TITLE_LOGO_REVEAL_MS = 6500;
+    const TRAILER_TITLE_LOGO_REVEAL_MS = 9000;
     const PROLOGUE_SUBTITLE_LOGO_EXPLOSIVE_MS = 640;
     const PROLOGUE_SUBTITLE_LOGO_EXPLOSIVE_IMPACT = 0.18;
     const PROLOGUE_SUBTITLE_LOGO_EXPLOSIVE_BURST_SPARKS = 14;
@@ -90,7 +91,7 @@
     const PROLOGUE_LORE_TOOL_SRC = 'images/royalarmiesloretool.png?v=prologue-lore-tool-1';
     const TRAILER_GREENMASK_LOGO_SRC = 'images/greenmaskinteractivelogo.png?v=trailer-credits-2';
     const TRAILER_LORE_TOOL_PEAK_OPACITY = 0.35;
-    const TRAILER_MAIN_FINALE_HOLD_MS = 7000;
+    const TRAILER_MAIN_FINALE_HOLD_MS = 11000;
     const TRAILER_CREDITS_TAGLINES_REVEAL_MS = 860;
     const TRAILER_CREDITS_MUSIC_END_BUFFER_MS = 350;
     const PROLOGUE_LORE_TOOL_FADE_MS = 12000;
@@ -108,7 +109,7 @@
     /** Ken Burns zoom range in trailer replay (scale min + random * range). */
     const TRAILER_CINE_PAN_SCALE_MIN = 1.12;
     const TRAILER_CINE_PAN_SCALE_RANGE = 0.10;
-    const TRAILER_POST_NARRATION_MS = PROLOGUE_TITLE_LOGO_REVEAL_MS
+    const TRAILER_POST_NARRATION_MS = TRAILER_TITLE_LOGO_REVEAL_MS
         + PROLOGUE_SUBTITLE_LOGO_EXPLOSIVE_MS
         + 600;
     const TRAILER_MUSIC_START_SEC = PROLOGUE_MUSIC_DELAY_MS / 1000;
@@ -310,20 +311,26 @@
         const greenmaskOutMs = 1500;
         const alphaInMs = 2200;
         const alphaOutMs = 1800;
+        const thanksInMs = 2000;
+        const thanksOutMs = 1500;
         const creditsStartSec = getTrailerCreditsTimelineStartSec();
         const creditsEndSec = getTrailerMusicEndSec() - (TRAILER_CREDITS_MUSIC_END_BUFFER_MS / 1000);
         const creditsSpanMs = Math.max(10000, (creditsEndSec - creditsStartSec) * 1000);
-        const fixedMs = fadeOutMainMs + greenmaskInMs + greenmaskOutMs + alphaInMs + alphaOutMs;
+        const fixedMs = fadeOutMainMs + greenmaskInMs + greenmaskOutMs + alphaInMs + alphaOutMs
+            + thanksInMs + thanksOutMs;
         const holdBudgetMs = Math.max(3000, creditsSpanMs - fixedMs);
 
         return {
             fadeOutMainMs,
             greenmaskInMs,
-            greenmaskHoldMs: Math.round(holdBudgetMs * 0.4),
+            greenmaskHoldMs: Math.round(holdBudgetMs * 0.35),
             greenmaskOutMs,
             alphaInMs,
-            alphaHoldMs: Math.round(holdBudgetMs * 0.6),
+            alphaHoldMs: Math.round(holdBudgetMs * 0.5),
             alphaOutMs,
+            thanksInMs,
+            thanksHoldMs: Math.round(holdBudgetMs * 0.15),
+            thanksOutMs,
         };
     }
 
@@ -397,6 +404,7 @@
         const creditsEl = overlayEl.querySelector('#game-opening-prologue-trailer-credits');
         const greenmaskPanel = creditsEl?.querySelector('.game-opening-prologue-trailer-credits-panel--greenmask');
         const alphaPanel = creditsEl?.querySelector('.game-opening-prologue-trailer-credits-panel--alpha');
+        const thanksPanel = creditsEl?.querySelector('.game-opening-prologue-trailer-credits-panel--thanks');
 
         overlayEl.classList.add('is-trailer-finale-visible', 'is-logo-reveal-active');
         setSubtitleDockActive(false);
@@ -436,6 +444,7 @@
             setMainFinaleOpacity(1 - (elapsedMs / timings.fadeOutMainMs));
             setPanelOpacity(greenmaskPanel, 0);
             setPanelOpacity(alphaPanel, 0);
+            setPanelOpacity(thanksPanel, 0);
             return;
         }
 
@@ -490,11 +499,42 @@
             const t = (elapsedMs - cursorMs) / timings.alphaOutMs;
             setPanelOpacity(greenmaskPanel, 0);
             setPanelOpacity(alphaPanel, 1 - t);
+            setPanelOpacity(thanksPanel, 0);
+            return;
+        }
+
+        cursorMs += timings.alphaOutMs;
+
+        if (elapsedMs < cursorMs + timings.thanksInMs) {
+            const t = (elapsedMs - cursorMs) / timings.thanksInMs;
+            setPanelOpacity(greenmaskPanel, 0);
+            setPanelOpacity(alphaPanel, 0);
+            setPanelOpacity(thanksPanel, t);
+            return;
+        }
+
+        cursorMs += timings.thanksInMs;
+
+        if (elapsedMs < cursorMs + timings.thanksHoldMs) {
+            setPanelOpacity(greenmaskPanel, 0);
+            setPanelOpacity(alphaPanel, 0);
+            setPanelOpacity(thanksPanel, 1);
+            return;
+        }
+
+        cursorMs += timings.thanksHoldMs;
+
+        if (elapsedMs < cursorMs + timings.thanksOutMs) {
+            const t = (elapsedMs - cursorMs) / timings.thanksOutMs;
+            setPanelOpacity(greenmaskPanel, 0);
+            setPanelOpacity(alphaPanel, 0);
+            setPanelOpacity(thanksPanel, 1 - t);
             return;
         }
 
         setPanelOpacity(greenmaskPanel, 0);
         setPanelOpacity(alphaPanel, 0);
+        setPanelOpacity(thanksPanel, 0);
     }
 
     function getTrailerTimelineDurationSec() {
@@ -670,7 +710,7 @@
         const subtitleLogoEl = overlayEl?.querySelector('.game-opening-prologue-logo--subtitle');
         const loreToolEl = overlayEl?.querySelector('.game-opening-prologue-lore-tool');
         const outroEl = overlayEl?.querySelector('#game-opening-prologue-trailer-outro');
-        const titlePhaseEnd = PROLOGUE_TITLE_LOGO_REVEAL_MS / TRAILER_POST_NARRATION_MS;
+        const titlePhaseEnd = TRAILER_TITLE_LOGO_REVEAL_MS / TRAILER_POST_NARRATION_MS;
 
         overlayEl?.classList.add('is-logo-reveal-active');
 
@@ -2582,12 +2622,15 @@
                 );
             const missingTrailerCredits = isTrailerPage()
                 && !overlayEl.querySelector('#game-opening-prologue-trailer-credits');
+            const missingTrailerThanksPanel = isTrailerPage()
+                && !overlayEl.querySelector('.game-opening-prologue-trailer-credits-panel--thanks');
             if (!overlayEl.querySelector('.game-opening-prologue-cinematic-frame-border')
                 || !overlayEl.querySelector('.game-opening-prologue-subtitle-dock-inner')
                 || missingTrailerPlayer
                 || staleTrailerViewport
                 || staleTrailerControls
-                || missingTrailerCredits) {
+                || missingTrailerCredits
+                || missingTrailerThanksPanel) {
                 overlayEl.remove();
                 overlayEl = null;
                 subtitleEl = null;
@@ -2689,6 +2732,9 @@
                         <p class="game-opening-prologue-trailer-credits-alpha-copy">
                             Register to play the Alpha version and be kept up to date on the progression of the Royal Armies
                         </p>
+                    </div>
+                    <div class="game-opening-prologue-trailer-credits-panel game-opening-prologue-trailer-credits-panel--thanks">
+                        <p class="game-opening-prologue-trailer-credits-thanks-copy">Thanks for Watching!</p>
                     </div>
                 </div>
                 `.trim() : ''}
@@ -3458,7 +3504,11 @@
         resetLogoElement(titleLogoEl);
         resetLogoElement(subtitleLogoEl, { hideSubtitle: true });
 
-        await playLogoArriveAnimation(titleLogoEl, PROLOGUE_TITLE_LOGO_REVEAL_MS, generation);
+        await playLogoArriveAnimation(
+            titleLogoEl,
+            isTrailerPage() ? TRAILER_TITLE_LOGO_REVEAL_MS : PROLOGUE_TITLE_LOGO_REVEAL_MS,
+            generation
+        );
         if (generation !== logoRevealGeneration) return;
 
         if (isTrailerPage()) {
@@ -3571,26 +3621,32 @@
         const greenmaskOutMs = 1500;
         const alphaInMs = 2200;
         const alphaOutMs = 1800;
+        const thanksInMs = 2000;
+        const thanksOutMs = 1500;
 
         const remainingMs = Math.max(
             6000,
             ((getTrailerMusicEndSec() - getTrailerPlaybackNowSec()) * 1000) - TRAILER_CREDITS_MUSIC_END_BUFFER_MS
         );
-        const fixedMs = fadeOutMainMs + greenmaskInMs + greenmaskOutMs + alphaInMs + alphaOutMs;
+        const fixedMs = fadeOutMainMs + greenmaskInMs + greenmaskOutMs + alphaInMs + alphaOutMs
+            + thanksInMs + thanksOutMs;
         const holdBudgetMs = Math.max(3000, remainingMs - fixedMs);
 
         return {
             fadeOutMainMs,
             greenmaskInMs,
-            greenmaskHoldMs: Math.round(holdBudgetMs * 0.4),
+            greenmaskHoldMs: Math.round(holdBudgetMs * 0.35),
             greenmaskOutMs,
             alphaInMs,
-            alphaHoldMs: Math.round(holdBudgetMs * 0.6),
+            alphaHoldMs: Math.round(holdBudgetMs * 0.5),
             alphaOutMs,
+            thanksInMs,
+            thanksHoldMs: Math.round(holdBudgetMs * 0.15),
+            thanksOutMs,
         };
     }
 
-    function computeTrailerAlphaFadeOutMs(defaultMs) {
+    function computeTrailerCreditsFadeOutMs(defaultMs) {
         const msUntilEnd = ((getTrailerMusicEndSec() - getTrailerPlaybackNowSec()) * 1000)
             - TRAILER_CREDITS_MUSIC_END_BUFFER_MS;
         return Math.max(800, Math.min(defaultMs, msUntilEnd));
@@ -3633,7 +3689,8 @@
         const creditsEl = overlayEl?.querySelector('#game-opening-prologue-trailer-credits');
         const greenmaskPanel = creditsEl?.querySelector('.game-opening-prologue-trailer-credits-panel--greenmask');
         const alphaPanel = creditsEl?.querySelector('.game-opening-prologue-trailer-credits-panel--alpha');
-        if (!creditsEl || !greenmaskPanel || !alphaPanel) {
+        const thanksPanel = creditsEl?.querySelector('.game-opening-prologue-trailer-credits-panel--thanks');
+        if (!creditsEl || !greenmaskPanel || !alphaPanel || !thanksPanel) {
             trailerCreditsRunning = false;
             return;
         }
@@ -3642,6 +3699,7 @@
         creditsEl.classList.add('is-active');
         greenmaskPanel.style.opacity = '0';
         alphaPanel.style.opacity = '0';
+        thanksPanel.style.opacity = '0';
 
         const timings = computeTrailerCreditsTimings();
 
@@ -3678,8 +3736,23 @@
             return;
         }
 
-        const alphaOutMs = computeTrailerAlphaFadeOutMs(timings.alphaOutMs);
+        const alphaOutMs = computeTrailerCreditsFadeOutMs(timings.alphaOutMs);
         await animateTrailerElementsOpacity([alphaPanel], 1, 0, alphaOutMs);
+
+        if (generation !== logoRevealGeneration || generation !== trailerCreditsGeneration) {
+            trailerCreditsRunning = false;
+            return;
+        }
+
+        await animateTrailerElementsOpacity([thanksPanel], 0, 1, timings.thanksInMs);
+
+        if (!(await waitTrailerPlaybackMs(timings.thanksHoldMs, generation))) {
+            trailerCreditsRunning = false;
+            return;
+        }
+
+        const thanksOutMs = computeTrailerCreditsFadeOutMs(timings.thanksOutMs);
+        await animateTrailerElementsOpacity([thanksPanel], 1, 0, thanksOutMs);
 
         trailerCreditsRunning = false;
     }

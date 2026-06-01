@@ -428,6 +428,19 @@
         0 2px 14px rgba(0, 0, 0, 0.72);
 }
 
+.game-opening-prologue-trailer-credits-thanks-copy {
+    margin: 0;
+    font-family: 'Cinzel', Georgia, 'Times New Roman', serif;
+    font-size: clamp(0.82rem, 1.35vw, 1.45rem);
+    font-weight: 700;
+    letter-spacing: 0.22em;
+    text-transform: none;
+    color: rgba(255, 224, 164, 0.96);
+    text-shadow:
+        0 0 18px rgba(255, 180, 48, 0.32),
+        0 2px 16px rgba(0, 0, 0, 0.72);
+}
+
 .game-opening-prologue-logo-stage.is-trailer-main-finale-hidden .game-opening-prologue-logo-stack,
 .game-opening-prologue-logo-stage.is-trailer-main-finale-hidden .game-opening-prologue-lore-tool {
     visibility: hidden;
@@ -441,6 +454,11 @@
 .game-opening-prologue.is-trailer-replay-mode .game-opening-prologue-trailer-credits-alpha-copy {
     font-size: clamp(0.42rem, 2.35cqw, 1.05rem);
     max-width: min(30em, 96%);
+}
+
+.game-opening-prologue.is-trailer-replay-mode .game-opening-prologue-trailer-credits-thanks-copy {
+    font-size: clamp(0.72rem, 4.2cqw, 2.1rem);
+    letter-spacing: 0.2em;
 }
 
 .game-opening-prologue-enter-war-btn:hover,
