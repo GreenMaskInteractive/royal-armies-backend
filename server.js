@@ -5306,6 +5306,62 @@ app.post('/api/portal/age/admin/set-provisions', (req, res) => {
     });
 });
 
+app.post('/api/portal/age/admin/reset-commander-progress', (req, res) => {
+    const actingUsername = resolveLedgerCommanderUsername(req.body?.username || '');
+    if (!actingUsername) {
+        return sendApiError(res, 'NEXUS-GEN-002');
+    }
+    if (!isAgeLedgerAdminUsername(actingUsername)) {
+        return sendApiError(res, 'NEXUS-AGE-018');
+    }
+
+    const targetUsername = resolveLedgerCommanderUsername(
+        req.body?.targetUsername || req.body?.commanderUsername || actingUsername
+    );
+    if (!targetUsername) {
+        return sendApiError(res, 'NEXUS-GEN-004');
+    }
+
+    let commander = db.get('commanders').find({ username: targetUsername }).value();
+    if (!commander) {
+        return sendApiError(res, 'NEXUS-GEN-004');
+    }
+
+    db.get('commanders')
+        .find({ username: targetUsername })
+        .assign({
+            ...buildCommanderRankResetLedgerPatch(),
+            ageGearSlots: null,
+            ageGearLocked: false,
+            ageGuildMerch: [],
+            ageGuildPerks: null,
+            ageGuildBonuses: null,
+            army: [],
+            dossierUpdatedAt: new Date().toISOString()
+        })
+        .write();
+
+    commander = db.get('commanders').find({ username: targetUsername }).value();
+    ensureCommanderAgeRoster(commander);
+    commander = db.get('commanders').find({ username: targetUsername }).value();
+    const roster = buildAgeRosterHudPayload(commander);
+
+    res.json({
+        status: 'ok',
+        action: 'reset-commander-progress',
+        username: targetUsername,
+        rank: Math.max(1, Math.floor(Number(commander.rank) || 1)),
+        ageGuildXp: Math.max(0, Math.floor(Number(commander.ageGuildXp) || 0)),
+        ageGold: resolveCommanderAgeGold(commander),
+        ageProvisions: resolveCommanderAgeProvisions(commander),
+        ageArmy: roster.ageArmy,
+        unitsTotal: roster.unitsTotal,
+        unitsUninjured: roster.unitsUninjured,
+        ...buildGuildStatePayload(commander),
+        ...buildAgeMovementStatePayload(targetUsername, commander)
+    });
+});
+
 function persistCommanderGuildLedger(username, patch) {
     if (!username || !patch || typeof patch !== 'object') return;
     const assign = {};
