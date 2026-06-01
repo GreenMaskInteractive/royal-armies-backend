@@ -146,6 +146,7 @@
     let trailerAutoplayQueued = false;
     let trailerSeekActive = false;
     let trailerSeekWasPlaying = false;
+    let trailerMusicInitialized = false;
     const LOCAL_PROLOGUE_PENDING_KEY = 'royalArmies_localProloguePending';
 
     function canSyncPrologueTimeline() {
@@ -432,6 +433,80 @@
         musicAudio.currentTime = targetTime;
     }
 
+    function ensureTrailerMusicReady(options) {
+        const opts = options && typeof options === 'object' ? options : {};
+        const musicAudio = getTrailerMusicAudio();
+        const canReuse = Boolean(
+            trailerMusicInitialized
+            && musicAudio
+            && musicAudio.readyState >= 1
+            && !opts.forceInit
+        );
+
+        if (canReuse) {
+            musicAudio.volume = PROLOGUE_MUSIC_VOLUME;
+            musicAudio.muted = false;
+            return musicAudio;
+        }
+
+        ensurePrologueBackgroundMusic({ resetTime: opts.resetTime !== false });
+        trailerMusicInitialized = true;
+        return getTrailerMusicAudio();
+    }
+
+    function playTrailerNarrationAtTime(timeSec) {
+        if (!audioEl) return Promise.resolve();
+
+        const narrationSec = getTrailerNarrationDurationSec();
+        const target = Math.max(0, Math.min(narrationSec, Number(timeSec) || 0));
+        audioEl.currentTime = target;
+        return audioEl.play().catch(() => {});
+    }
+
+    function playTrailerMusicAtTime(timeSec) {
+        const musicAudio = getTrailerMusicAudio();
+        if (!musicAudio) return Promise.resolve();
+
+        syncTrailerMusicToTimeline(timeSec, { force: true });
+        return musicAudio.play().catch(() => {});
+    }
+
+    function resumeTrailerTimelineMedia(timeSec) {
+        const finaleStart = getTrailerFinaleStartSec();
+        const musicAudio = ensureTrailerMusicReady({ resetTime: false });
+
+        applyTrailerTimelinePosition(timeSec, { syncMusic: true, seekMedia: true });
+
+        if (timeSec < finaleStart - 0.03) {
+            overlayEl?.classList.remove('is-trailer-finale-visible');
+            setSubtitleDockActive(true);
+            unlockTrailerImpactAudio();
+            playTrailerNarrationAtTime(timeSec);
+            syncTrailerMusicToTimeline(timeSec, { force: true });
+            if (timeSec >= TRAILER_MUSIC_START_SEC - 0.03) {
+                playTrailerMusicAtTime(timeSec);
+            } else {
+                musicAudio?.pause();
+            }
+        } else {
+            audioEl?.pause();
+            syncTrailerMusicToTimeline(timeSec, { force: true });
+            playTrailerMusicAtTime(timeSec);
+        }
+    }
+
+    function pauseTrailerReplayAtEnd() {
+        const totalSec = getTrailerTimelineDurationSec();
+
+        isTrailerReplayPlaying = false;
+        trailerReplayTimeSec = totalSec;
+        applyTrailerTimelinePosition(totalSec, { syncMusic: true, seekMedia: true });
+        pauseTrailerMusicPlayback();
+        audioEl?.pause();
+        stopTrailerReplaySyncLoop();
+        updateTrailerPlayerUi();
+    }
+
     function ensureTrailerFinaleDomVisible() {
         if (!overlayEl) return;
 
@@ -673,13 +748,7 @@
             updateTrailerPlayerUi();
 
             if (trailerReplayTimeSec >= totalSec - 0.03) {
-                isTrailerReplayPlaying = false;
-                trailerReplayTimeSec = totalSec;
-                applyTrailerTimelinePosition(totalSec, { syncMusic: false, seekMedia: false });
-                pauseTrailerMusicPlayback();
-                audioEl?.pause();
-                updateTrailerPlayerUi();
-                stopTrailerReplaySyncLoop();
+                pauseTrailerReplayAtEnd();
                 return;
             }
 
@@ -712,7 +781,9 @@
         trailerSeekWasPlaying = false;
 
         if (shouldResume) {
-            startTrailerReplayPlayback();
+            const totalSec = getTrailerTimelineDurationSec();
+            const atEnd = trailerReplayTimeSec >= totalSec - 0.03;
+            startTrailerReplayPlayback({ fromSeekEnd: atEnd });
         } else {
             updateTrailerPlayerUi();
         }
@@ -736,39 +807,22 @@
         startTrailerReplayPlayback();
     }
 
-    function startTrailerReplayPlayback() {
+    function startTrailerReplayPlayback(options) {
         if (!isTrailerReplayMode) return;
 
+        const opts = options && typeof options === 'object' ? options : {};
         const totalSec = getTrailerTimelineDurationSec();
         if (trailerReplayTimeSec >= totalSec - 0.03) {
-            restartTrailerReplay();
+            if (opts.fromSeekEnd) {
+                pauseTrailerReplayAtEnd();
+            } else {
+                restartTrailerReplay();
+            }
             return;
         }
 
         isTrailerReplayPlaying = true;
-        const narrationSec = getTrailerNarrationDurationSec();
-
-        ensurePrologueBackgroundMusic({ resetTime: false });
-
-        const musicAudio = getTrailerMusicAudio();
-        syncTrailerMusicToTimeline(trailerReplayTimeSec, { force: true });
-
-        if (trailerReplayTimeSec < narrationSec - 0.03) {
-            overlayEl.classList.remove('is-trailer-finale-visible');
-            setSubtitleDockActive(true);
-            unlockTrailerImpactAudio();
-            audioEl?.play().catch(() => {});
-            if (trailerReplayTimeSec >= TRAILER_MUSIC_START_SEC - 0.03) {
-                musicAudio?.play().catch(() => {});
-            } else {
-                musicAudio?.pause();
-            }
-        } else {
-            applyTrailerTimelinePosition(trailerReplayTimeSec, { syncMusic: false, seekMedia: false });
-            audioEl?.pause();
-            musicAudio?.play().catch(() => {});
-        }
-
+        resumeTrailerTimelineMedia(trailerReplayTimeSec);
         startTrailerReplaySyncLoop();
         updateTrailerPlayerUi();
     }
@@ -804,6 +858,7 @@
         trailerReplayTimeSec = 0;
         trailerImpactAudioUnlocked = false;
         trailerAutoplayQueued = false;
+        trailerMusicInitialized = false;
         isPostNarrationHold = false;
 
         if (overlayEl) {
