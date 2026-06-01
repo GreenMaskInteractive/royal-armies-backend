@@ -216,6 +216,115 @@
     pointer-events: auto;
 }
 
+.game-opening-prologue-trailer-outro {
+    position: absolute;
+    top: calc(100% + clamp(16px, 2.4vh, 28px));
+    left: 50%;
+    z-index: 4;
+    width: min(920px, calc(100vw - 40px));
+    transform: translateX(-50%) translateY(18px);
+    text-align: center;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.85s ease, transform 0.85s ease;
+}
+
+.game-opening-prologue-trailer-outro.is-visible {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+}
+
+.game-opening-prologue-trailer-coming-soon {
+    margin: 0;
+    font-family: 'Cinzel', Georgia, 'Times New Roman', serif;
+    font-size: clamp(1.45rem, 3.4vw, 2.65rem);
+    font-weight: 700;
+    letter-spacing: 0.34em;
+    text-transform: uppercase;
+    line-height: 1.15;
+    background: linear-gradient(
+        180deg,
+        #fff6d8 0%,
+        #ffd978 34%,
+        #d4a020 68%,
+        #8a5a08 100%
+    );
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    filter: drop-shadow(0 0 18px rgba(255, 196, 72, 0.42));
+    text-shadow:
+        0 0 24px rgba(255, 180, 48, 0.35),
+        0 4px 24px rgba(0, 0, 0, 0.65);
+    animation: game-opening-prologue-trailer-soon-glow 3.6s ease-in-out infinite;
+}
+
+.game-opening-prologue-trailer-taglines {
+    margin-top: clamp(52px, 8.5vh, 96px);
+    opacity: 0;
+    transform: translateY(16px);
+    transition: opacity 0.95s ease 0.12s, transform 0.95s ease 0.12s;
+}
+
+.game-opening-prologue-trailer-outro.is-taglines-visible .game-opening-prologue-trailer-taglines {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.game-opening-prologue-trailer-call {
+    margin: 0 0 clamp(14px, 2vh, 22px);
+    font-family: 'Cinzel', Georgia, 'Times New Roman', serif;
+    font-size: clamp(1rem, 1.75vw, 1.45rem);
+    font-weight: 600;
+    font-style: italic;
+    letter-spacing: 0.12em;
+    line-height: 1.45;
+    color: rgba(255, 236, 196, 0.96);
+    text-shadow:
+        0 0 22px rgba(255, 170, 48, 0.28),
+        0 2px 18px rgba(0, 0, 0, 0.72);
+}
+
+.game-opening-prologue-trailer-site {
+    margin: 0;
+    font-family: 'Cinzel', Georgia, 'Times New Roman', serif;
+    font-size: clamp(0.92rem, 1.35vw, 1.18rem);
+    font-weight: 700;
+    letter-spacing: 0.28em;
+    text-transform: uppercase;
+    color: rgba(255, 215, 120, 0.98);
+    text-shadow:
+        0 0 16px rgba(255, 196, 88, 0.38),
+        0 0 32px rgba(255, 120, 24, 0.18),
+        0 2px 14px rgba(0, 0, 0, 0.68);
+}
+
+.game-opening-prologue-trailer-site::after {
+    content: '';
+    display: block;
+    width: min(220px, 42vw);
+    height: 1px;
+    margin: clamp(12px, 1.6vh, 18px) auto 0;
+    background: linear-gradient(
+        90deg,
+        transparent 0%,
+        rgba(255, 215, 120, 0.72) 50%,
+        transparent 100%
+    );
+    box-shadow: 0 0 12px rgba(255, 180, 48, 0.35);
+}
+
+@keyframes game-opening-prologue-trailer-soon-glow {
+    0%,
+    100% {
+        filter: drop-shadow(0 0 16px rgba(255, 196, 72, 0.38));
+    }
+
+    50% {
+        filter: drop-shadow(0 0 28px rgba(255, 215, 120, 0.62));
+    }
+}
+
 .game-opening-prologue-enter-war-btn:hover,
 .game-opening-prologue-enter-war-btn:focus-visible {
     color: #ffd700;

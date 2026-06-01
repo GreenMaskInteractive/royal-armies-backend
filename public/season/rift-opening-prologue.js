@@ -826,6 +826,20 @@
                             hidden
                         >
                     </div>
+                    ${isTrailerPage() ? `
+                    <div
+                        class="game-opening-prologue-trailer-outro"
+                        id="game-opening-prologue-trailer-outro"
+                        hidden
+                        aria-live="polite"
+                    >
+                        <p class="game-opening-prologue-trailer-coming-soon">Coming Soon</p>
+                        <div class="game-opening-prologue-trailer-taglines">
+                            <p class="game-opening-prologue-trailer-call">Stand and Join the War!</p>
+                            <p class="game-opening-prologue-trailer-site">RoyalArmies.com</p>
+                        </div>
+                    </div>
+                    `.trim() : `
                     <button
                         type="button"
                         class="game-opening-prologue-enter-war-btn"
@@ -834,6 +848,7 @@
                     >
                         Enter the War
                     </button>
+                    `.trim()}
                 </div>
             </div>
             <div class="game-opening-prologue-subtitle-dock">
@@ -1554,6 +1569,28 @@
         if (generation !== logoRevealGeneration) return;
     }
 
+    function showTrailerOutro() {
+        const outroEl = overlayEl?.querySelector('#game-opening-prologue-trailer-outro');
+        if (!outroEl) return;
+
+        outroEl.hidden = false;
+        outroEl.classList.remove('is-visible', 'is-taglines-visible');
+        void outroEl.offsetWidth;
+        global.requestAnimationFrame(() => {
+            outroEl.classList.add('is-visible');
+            global.setTimeout(() => {
+                outroEl.classList.add('is-taglines-visible');
+            }, 680);
+        });
+    }
+
+    function hideTrailerOutro() {
+        const outroEl = overlayEl?.querySelector('#game-opening-prologue-trailer-outro');
+        if (!outroEl) return;
+        outroEl.hidden = true;
+        outroEl.classList.remove('is-visible', 'is-taglines-visible');
+    }
+
     function showEnterWarButton() {
         const enterWarBtn = overlayEl?.querySelector('#game-opening-prologue-enter-war-btn');
         if (!enterWarBtn) return;
@@ -1608,6 +1645,7 @@
         }
         enterWarExitReason = null;
         hideEnterWarButton();
+        hideTrailerOutro();
     }
 
     async function waitForEnterWarGate(generation) {
@@ -1616,6 +1654,11 @@
         }
 
         if (generation !== logoRevealGeneration) return;
+
+        if (isTrailerPage()) {
+            showTrailerOutro();
+            return;
+        }
 
         return new Promise((resolve) => {
             enterWarGateResolver = resolve;
