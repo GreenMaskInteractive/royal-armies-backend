@@ -25,8 +25,6 @@
     const HQ_PLANNING_EDGE_BLEED_PX = 16;
 
     let councilBoardLayoutObserver = null;
-    let subtitleLayoutRaf = null;
-    const SUBTITLE_BAND_MAX_PX = 320;
 
     /** Matches countdowntimermodal.png: thin wings (L/R), tall center crest (MM). */
     const PORTAL_GAME_TIME_CHAR_SCALE_CLASSES = [
@@ -785,7 +783,6 @@
                 '--age-right-hud-height',
                 '--age-right-reports-height'
             ].forEach((prop) => canvas.style.removeProperty(prop));
-            clearAgeHudSubtitleVerticalCenter();
             return;
         }
 
@@ -843,82 +840,6 @@
 
         canvas.style.removeProperty('--age-right-hud-height');
         syncHeadquartersPlanningLayout();
-        scheduleAgeHudSubtitleVerticalCenter();
-    }
-
-    function clearAgeHudSubtitleVerticalCenter() {
-        const slot = global.document.querySelector('#age-page-canvas .age-map-hud-subtitle-slot');
-        if (!slot) return;
-        slot.classList.remove('is-measuring');
-        slot.style.removeProperty('--age-subtitle-slot-padding-top');
-        slot.style.removeProperty('min-height');
-    }
-
-    function scheduleAgeHudSubtitleVerticalCenter() {
-        if (typeof global.requestAnimationFrame !== 'function') {
-            syncAgeHudSubtitleVerticalCenter();
-            return;
-        }
-
-        if (subtitleLayoutRaf) {
-            global.cancelAnimationFrame(subtitleLayoutRaf);
-        }
-
-        subtitleLayoutRaf = global.requestAnimationFrame(() => {
-            subtitleLayoutRaf = null;
-            syncAgeHudSubtitleVerticalCenter();
-        });
-    }
-
-    global.syncAgeHudSubtitleVerticalCenter = syncAgeHudSubtitleVerticalCenter;
-    global.scheduleAgeHudSubtitleVerticalCenter = scheduleAgeHudSubtitleVerticalCenter;
-
-    function syncAgeHudSubtitleVerticalCenter() {
-        const canvas = global.document.getElementById('age-page-canvas');
-        const slot = global.document.querySelector('#age-page-canvas .age-map-hud-subtitle-slot');
-        if (!canvas || !slot) return;
-
-        if (isAgeMobileLayout() || (canvas.dataset.ageView || 'map') !== 'map') {
-            clearAgeHudSubtitleVerticalCenter();
-            return;
-        }
-
-        const topBar = global.document.querySelector('#age-page-canvas .age-map-hud-top-bar');
-        const cityPanel = global.document.querySelector('#age-page-canvas .age-city-info-panel');
-        const logo = slot.querySelector('.age-map-hud-subtitle-logo');
-        if (!topBar || !cityPanel || !logo || cityPanel.hidden) {
-            clearAgeHudSubtitleVerticalCenter();
-            return;
-        }
-
-        slot.classList.add('is-measuring');
-        slot.style.removeProperty('--age-subtitle-slot-padding-top');
-        slot.style.removeProperty('min-height');
-        void slot.offsetHeight;
-
-        const topBarBottom = topBar.getBoundingClientRect().bottom;
-        const cityPanelTop = cityPanel.getBoundingClientRect().top;
-        const bandHeight = Math.min(
-            SUBTITLE_BAND_MAX_PX,
-            Math.max(0, cityPanelTop - topBarBottom)
-        );
-
-        slot.classList.remove('is-measuring');
-
-        if (bandHeight <= 0) {
-            clearAgeHudSubtitleVerticalCenter();
-            return;
-        }
-
-        const logoHeight = logo.getBoundingClientRect().height;
-        if (logoHeight <= 0) {
-            clearAgeHudSubtitleVerticalCenter();
-            return;
-        }
-
-        const paddingTop = Math.max(0, (bandHeight - logoHeight) / 2);
-        slot.style.setProperty('--age-subtitle-slot-padding-top', `${paddingTop}px`);
-        slot.style.minHeight = `${bandHeight}px`;
     }
 
     function clearHeadquartersPlanningLayoutVars(canvas) {
@@ -1230,16 +1151,6 @@
 
         if (typeof global.enableAgeViewTabs === 'function') {
             global.enableAgeViewTabs();
-        }
-
-        if (typeof global.requestAnimationFrame === 'function') {
-            global.requestAnimationFrame(() => {
-                scheduleAgeHudSubtitleVerticalCenter();
-                if (global.RoyalArmiesSubtitleLogoSparks
-                    && typeof global.RoyalArmiesSubtitleLogoSparks.syncAgeHud === 'function') {
-                    global.RoyalArmiesSubtitleLogoSparks.syncAgeHud();
-                }
-            });
         }
 
         if (typeof global.enableAgeHeadquarters === 'function') {

@@ -2693,11 +2693,6 @@ body {
         font-size: 0.92rem !important;
     }
 
-    #age-page-canvas .age-map-hud-subtitle-logo {
-        width: min(520px, 100%) !important;
-        max-width: 100% !important;
-    }
-
     #age-page-canvas .age-map-resource-strip {
         flex: 1 1 100% !important;
         display: flex !important;

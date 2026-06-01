@@ -12876,8 +12876,6 @@ body.game-opening-prologue-active .game-onboarding-progress {
     --age-hud-rail-chip-bg: rgba(0, 0, 0, 0.34);
     --age-hud-rail-chip-border: rgba(184, 144, 48, 0.28);
     --age-hud-rail-divider: rgba(184, 144, 48, 0.32);
-    --age-hud-subtitle-nudge-y: 20px;
-    --age-hud-right-panels-nudge-y: 50px;
 }
 
 #age-page-canvas .age-page-main {
@@ -13098,81 +13096,6 @@ body.game-opening-prologue-active .game-onboarding-progress {
     text-transform: uppercase;
     color: #ffd978;
     text-shadow: 0 0 14px rgba(255, 215, 0, 0.22);
-}
-
-/* Subtitle band: vertically centered between top bar and city info panel (padding set in RIFT) */
-#age-page-canvas .age-map-hud-subtitle-slot {
-    flex: 0 0 auto;
-    display: flex;
-    align-items: flex-start;
-    justify-content: flex-start;
-    width: 100%;
-    min-height: 0;
-    max-height: 320px;
-    margin: 0;
-    padding: calc(var(--age-subtitle-slot-padding-top, 0px) + var(--age-hud-subtitle-nudge-y, 20px)) 0 0;
-    box-sizing: border-box;
-    overflow: visible;
-}
-
-#age-page-canvas .age-map-hud-subtitle-slot.is-measuring {
-    visibility: hidden;
-    min-height: 0 !important;
-    max-height: none;
-    height: 0 !important;
-    padding: 0 !important;
-    margin: 0 !important;
-    overflow: hidden;
-    pointer-events: none;
-}
-
-/* Same dimensions as game-page opening prologue subtitle logo */
-#age-page-canvas .age-map-hud-subtitle-brand {
-    flex: 0 0 auto;
-    display: flex;
-    align-items: center;
-    justify-content: flex-start;
-    width: 100%;
-    margin: 0;
-    padding: 0;
-    line-height: 0;
-    box-sizing: border-box;
-    overflow: visible;
-}
-
-#age-page-canvas .age-map-hud-subtitle-logo-wrap {
-    position: relative;
-    display: inline-flex;
-    align-items: center;
-    justify-content: flex-start;
-    max-width: 100%;
-    overflow: visible;
-}
-
-#age-page-canvas .age-map-hud-subtitle-logo-wrap .game-opening-prologue-subtitle-sparks {
-    position: absolute;
-    inset: 0;
-    overflow: visible;
-    pointer-events: none;
-    z-index: 3;
-}
-
-#age-page-canvas .age-map-hud-subtitle-logo {
-    display: block;
-    position: relative;
-    z-index: 2;
-    width: min(520px, 72vw);
-    max-width: 520px;
-    height: auto;
-    object-fit: contain;
-    object-position: left center;
-    opacity: 1;
-    transform: none;
-    filter: none;
-}
-
-#age-page-canvas[data-age-view="city"] .age-map-hud-subtitle-slot {
-    display: none !important;
 }
 
 .age-map-resource-strip {
@@ -14997,7 +14920,6 @@ body.game-opening-prologue-active .game-onboarding-progress {
     flex-direction: column;
     gap: 10px;
     flex: 0 0 auto;
-    margin-top: var(--age-hud-right-panels-nudge-y, 50px);
     box-sizing: border-box;
     padding: 10px 12px 12px;
     border-radius: 6px;
