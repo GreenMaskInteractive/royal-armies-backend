@@ -7,11 +7,32 @@
     const DEV_NAV_PORTS = new Set(['3000', '5500']);
     const DEV_NAV_POSITION_STORAGE_KEY = 'royalArmies_devPageNavigatorPosition';
 
-    const DEV_SITE_PAGES = [
-        { id: 'main', label: 'Age Portal', path: '/main', file: 'main.html' },
-        { id: 'game', label: 'Game (progression)', path: '/game', file: 'game.html' },
-        { id: 'agealpha', label: 'Age Alpha (live session)', path: '/agealpha', file: 'agealpha.html' }
+    const DEV_SITE_PAGE_GROUPS = [
+        {
+            label: 'Age of War · season preview',
+            pages: [
+                { id: 'season-hub', label: 'Season hub', path: '/season-age-of-war-preview', file: 'season-age-of-war-preview.html' },
+                { id: 'season-age', label: 'Season · Age HUD + music', path: '/season-age-of-war-age', file: 'season-age-of-war-age.html' },
+                { id: 'season-game', label: 'Season · opening prologue', path: '/season-age-of-war-game', file: 'season-age-of-war-game.html' }
+            ]
+        },
+        {
+            label: 'Production / compare',
+            pages: [
+                { id: 'main', label: 'Age Portal', path: '/main', file: 'main.html' },
+                { id: 'game', label: 'Game (progression)', path: '/game', file: 'game.html' },
+                { id: 'agealpha', label: 'Age Alpha (live session)', path: '/agealpha', file: 'agealpha.html' }
+            ]
+        }
     ];
+
+    const DEV_SITE_PAGES = DEV_SITE_PAGE_GROUPS.flatMap((group) => group.pages);
+
+    const DEV_SEASON_PREVIEW_FILES = new Set([
+        'season-age-of-war-preview.html',
+        'season-age-of-war-age.html',
+        'season-age-of-war-game.html'
+    ]);
 
     function isDevPageNavigatorEnabled() {
         return DEV_NAV_PORTS.has(String(global.location.port || ''));
@@ -37,7 +58,13 @@
 
     function isDevPortalPersonaPage() {
         const slug = getPathSlug();
-        return slug === 'main' || slug === 'game' || slug === 'agealpha' || slug === '';
+        return slug === 'main'
+            || slug === 'game'
+            || slug === 'agealpha'
+            || slug === 'season-age-of-war-preview'
+            || slug === 'season-age-of-war-age'
+            || slug === 'season-age-of-war-game'
+            || slug === '';
     }
 
     function resolveDevPageHref(page) {
@@ -49,28 +76,33 @@
 
         const fileName = page.file || 'main.html';
         const slug = fileName.replace(/\.html$/i, '');
-        let href = typeof global.resolveRoyalArmiesPageUrl === 'function'
-            ? global.resolveRoyalArmiesPageUrl(slug)
-            : (usesExtensionlessDevUrls()
-                ? (page.path && page.path.startsWith('/') ? page.path : `/${slug}`)
-                : (() => {
-                    const base = getPageDirectoryBase();
-                    return base.endsWith('/') ? `${base}${fileName}` : `${base}/${fileName}`;
-                })());
+        let href;
 
-        if (page.id === 'game' || fileName === 'game.html') {
-            const url = new URL(href, global.location.href);
+        if (DEV_SEASON_PREVIEW_FILES.has(fileName)) {
+            const base = getPageDirectoryBase();
+            href = base.endsWith('/') ? `${base}${fileName}` : `${base}/${fileName}`;
+        } else {
+            href = typeof global.resolveRoyalArmiesPageUrl === 'function'
+                ? global.resolveRoyalArmiesPageUrl(slug)
+                : (usesExtensionlessDevUrls()
+                    ? (page.path && page.path.startsWith('/') ? page.path : `/${slug}`)
+                    : (() => {
+                        const base = getPageDirectoryBase();
+                        return base.endsWith('/') ? `${base}${fileName}` : `${base}/${fileName}`;
+                    })());
+        }
+
+        const url = new URL(href, global.location.href);
+
+        if (page.id === 'game' || page.id === 'season-game' || fileName === 'game.html' || fileName === 'season-age-of-war-game.html') {
             url.searchParams.set('riftProgressionReset', '1');
-            href = `${url.pathname}${url.search}`;
         }
 
-        if (page.id === 'agealpha' || fileName === 'agealpha.html') {
-            const url = new URL(href, global.location.href);
+        if (page.id === 'agealpha' || page.id === 'season-age' || fileName === 'agealpha.html' || fileName === 'season-age-of-war-age.html') {
             url.searchParams.set('riftAgeDevBypass', '1');
-            href = `${url.pathname}${url.search}`;
         }
 
-        return href;
+        return `${url.pathname}${url.search}`;
     }
 
     function findDevPageFromSelect(select) {
@@ -152,12 +184,13 @@
 
     function buildDevPageNavigatorMarkup() {
         const currentId = getCurrentPageId();
-        const pageOptions = DEV_SITE_PAGES.map((page) => {
-            const selected = page.id === currentId ? ' selected' : '';
-            const value = typeof global.resolveRoyalArmiesPageUrl === 'function'
-                ? global.resolveRoyalArmiesPageUrl(page.id)
-                : (page.path || '/main');
-            return `<option value="${value}" data-dev-page-id="${page.id}"${selected}>${page.label}</option>`;
+        const pageOptions = DEV_SITE_PAGE_GROUPS.map((group) => {
+            const options = group.pages.map((page) => {
+                const selected = page.id === currentId ? ' selected' : '';
+                const value = resolveDevPageHref(page);
+                return `<option value="${value}" data-dev-page-id="${page.id}"${selected}>${page.label}</option>`;
+            }).join('');
+            return `<optgroup label="${group.label}">${options}</optgroup>`;
         }).join('');
 
         const viewMode = getCurrentDevViewMode();
@@ -177,7 +210,7 @@
         const achievementTestBtn = (
             typeof global.isLocalDevelopmentHost === 'function'
             && global.isLocalDevelopmentHost()
-            && getCurrentPageId() === 'game'
+            && (getCurrentPageId() === 'game' || getCurrentPageId() === 'season-game')
         )
             ? '<button type="button" id="dev-achievement-popup-test" class="dev-page-navigator-go dev-page-navigator-go--secondary" title="Preview the Whoa Slow Down achievement popup">Achievement</button>'
             : '';
@@ -438,6 +471,7 @@
     global.RoyalArmiesDevPageNavigator = {
         enabled: isDevPageNavigatorEnabled,
         pages: DEV_SITE_PAGES,
+        pageGroups: DEV_SITE_PAGE_GROUPS,
         navigateTo: navigateToDevPage,
         applyDevViewMode,
         remount: mountDevPageNavigator
