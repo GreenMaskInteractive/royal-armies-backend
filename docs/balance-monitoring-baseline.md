@@ -29,6 +29,10 @@ The monitor supports multiple baseline profiles:
 
 `monitoring.activeProfiles` controls which profiles are evaluated on each event.
 
+External source curation for the Last Knights reference profile lives in:
+
+- `docs/last-knights-public-mechanics-sources.md`
+
 Current checks per profile:
 
 - **Recruitment**
@@ -57,3 +61,4 @@ Current checks per profile:
 - Logging is designed to be non-blocking: telemetry failures do not break gameplay flows.
 - This monitor is for balancing diagnostics, not player-facing analytics.
 - Last Knights values are reference-only and intentionally editable as your own design goals evolve.
+- Public posts must be validated as the same game before they are used in baseline tuning.
