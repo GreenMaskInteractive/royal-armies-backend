@@ -65,6 +65,7 @@
     const PROLOGUE_CINEMATIC_FADE_SEC = 1;
     /** Pan duration multiplier vs remaining shot time (1 = match, >1 = slower). */
     const PROLOGUE_CINEMATIC_PAN_DURATION_SCALE = 1.3;
+    const PROLOGUE_CINEMATIC_IMAGE_VERSION = 'prologue-cine-1';
     const TRAILER_POST_NARRATION_MS = PROLOGUE_TITLE_LOGO_REVEAL_MS
         + PROLOGUE_SUBTITLE_LOGO_EXPLOSIVE_MS
         + 600;
@@ -274,7 +275,7 @@
         const logoStageEl = overlayEl.querySelector('.game-opening-prologue-logo-stage');
 
         if (playerEl && stageEl && playerEl.parentElement === overlayEl) {
-            overlayEl.insertBefore(playerEl, overlayEl.firstChild?.nextSibling || null);
+            overlayEl.appendChild(playerEl);
         }
 
         if (cinematicStageEl && viewportEl && cinematicStageEl.parentElement !== viewportEl) {
@@ -286,6 +287,7 @@
         }
 
         reparentTrailerSubtitleDockForPlayer();
+        refreshSubtitleElements();
     }
 
     function applyTrailerFinaleProgress(progress) {
@@ -563,9 +565,21 @@
             syncTrailerPlaybackClock();
             applyTrailerTimelinePosition(trailerReplayTimeSec, { syncMusic: false });
 
+            const musicAudio = getTrailerMusicAudio();
+            const narrationSec = getTrailerNarrationDurationSec();
+            if (musicAudio && musicAudio.paused) {
+                if (trailerReplayTimeSec >= TRAILER_MUSIC_START_SEC - 0.03
+                    && trailerReplayTimeSec < totalSec - 0.03) {
+                    syncTrailerMusicToTimeline(trailerReplayTimeSec);
+                    musicAudio.play().catch(() => {});
+                }
+            }
+
             if (trailerReplayTimeSec < getTrailerFinaleStartSec() - 0.03) {
                 syncSubtitleToAudioTime(true);
                 syncCinematicToAudioTime(true);
+            } else if (audioEl && !audioEl.paused) {
+                audioEl.pause();
             }
 
             updateTrailerPlayerUi();
@@ -623,12 +637,17 @@
         const narrationSec = getTrailerNarrationDurationSec();
         const musicAudio = getTrailerMusicAudio();
 
+        ensurePrologueBackgroundMusic();
+
         if (trailerReplayTimeSec < narrationSec - 0.03) {
             overlayEl.classList.remove('is-trailer-finale-visible');
             setSubtitleDockActive(true);
             syncTrailerMusicToTimeline(trailerReplayTimeSec);
+            unlockTrailerImpactAudio();
             audioEl?.play().catch(() => {});
-            musicAudio?.play().catch(() => {});
+            if (trailerReplayTimeSec >= TRAILER_MUSIC_START_SEC - 0.03) {
+                musicAudio?.play().catch(() => {});
+            }
         } else {
             applyTrailerTimelinePosition(trailerReplayTimeSec, { syncMusic: true });
             musicAudio?.play().catch(() => {});
@@ -662,24 +681,19 @@
         pauseTrailerReplayPlayback();
         stopTrailerReplaySyncLoop();
 
-        isTrailerReplayMode = false;
         isTrailerFinaleLocked = false;
         isTrailerReplayPlaying = false;
         trailerReplayTimeSec = 0;
         trailerImpactAudioUnlocked = false;
-        trailerRotatePromptDismissed = false;
         trailerAutoplayQueued = false;
         isPostNarrationHold = false;
 
         if (overlayEl) {
             overlayEl.classList.remove(
-                'is-trailer-replay-mode',
                 'is-trailer-finale-locked',
                 'is-trailer-finale-visible',
                 'is-logo-reveal-active'
             );
-            const playerEl = overlayEl.querySelector('#game-opening-prologue-trailer-player');
-            if (playerEl) playerEl.hidden = true;
         }
 
         clearLogoReveal();
@@ -687,8 +701,8 @@
         clearSubtitleLogoSparks();
         hideTrailerOutro();
         resetLoreToolBackdrop();
-        setLocalProloguePending(false);
-        void startLocalPrologue();
+        applyTrailerTimelinePosition(0, { syncMusic: true });
+        void tryStartTrailerPlaybackWithOrientation();
     }
 
     function bindTrailerPlayerControls() {
@@ -1593,8 +1607,14 @@
             });
         }
 
-        audioEl.addEventListener('ended', () => finishPrologue('completed'));
-        audioEl.addEventListener('error', () => finishPrologue('error'));
+        audioEl.addEventListener('ended', () => {
+            if (isTrailerPage()) return;
+            finishPrologue('completed');
+        });
+        audioEl.addEventListener('error', () => {
+            if (isTrailerPage() && isTrailerReplayMode) return;
+            finishPrologue('error');
+        });
 
         return overlayEl;
     }
@@ -2468,23 +2488,14 @@
         if (!isProloguePlaybackActive() || isFadingOut) return;
 
         if (isTrailerPage()) {
-            if (!isTrailerFinaleLocked) {
-                clearEnterWarGate();
-            }
+            pauseTrailerReplayPlayback();
             clearMusicDelayTimer();
             clearPrologueMusicAnimation();
             stopSubtitleSyncLoop();
             isPlaying = false;
+            audioEl?.pause();
 
-            if (audioEl && reason === 'completed') {
-                audioEl.pause();
-            }
-
-            if (reason === 'completed') {
-                await runPostNarrationHoldSequence();
-                await waitForTrailerSoundtrackEnd();
-                enterTrailerReplayMode();
-            } else if (reason !== 'completed') {
+            if (reason !== 'completed') {
                 await fadePrologueBackgroundMusicOut();
                 hideOverlay();
             }
@@ -2550,9 +2561,43 @@
         }
     }
 
+    async function startTrailerPlayerExperience(options) {
+        if (!isTrailerPage() || !shouldRunOpeningPrologue()) {
+            return Promise.resolve('disabled');
+        }
+        if (isTrailerReplayMode && isTrailerReplayPlaying) {
+            return Promise.resolve('already-playing');
+        }
+
+        resetStaleLocalPrologueState({ force: shouldForcePrologueRestart() });
+
+        ensureOverlay();
+        preloadCinematicImages();
+        finishCallback = typeof options?.onComplete === 'function' ? options.onComplete : null;
+        ensureSubtitleLogoSfx();
+
+        activeCueIndex = -1;
+        showOverlay({ subtitles: true });
+
+        await prepareCueTimeline();
+
+        if (audioEl) {
+            audioEl.volume = PROLOGUE_NARRATION_VOLUME;
+            audioEl.currentTime = 0;
+        }
+
+        mountTrailerPlayerLayout();
+        enterTrailerReplayMode();
+
+        return Promise.resolve('playing');
+    }
+
     async function startLocalPrologue(options) {
         if (!shouldRunOpeningPrologue()) {
             return Promise.resolve('disabled');
+        }
+        if (isTrailerPage()) {
+            return startTrailerPlayerExperience(options);
         }
         if (isProloguePlaybackActive()) {
             return Promise.resolve('already-playing');
@@ -2576,15 +2621,7 @@
         if (audioEl) {
             audioEl.volume = PROLOGUE_NARRATION_VOLUME;
             audioEl.currentTime = 0;
-            if (isTrailerPage()) {
-                ensureSubtitleLogoSfx();
-            }
             audioEl.play()
-                .then(() => {
-                    if (isTrailerPage()) {
-                        unlockTrailerImpactAudio();
-                    }
-                })
                 .catch(() => {
                     finishPrologue('blocked');
                 });
@@ -2605,6 +2642,8 @@
         if (isTrailerPage()) {
             bindTrailerOrientationListeners();
             updateTrailerOrientationClasses();
+            void startTrailerPlayerExperience();
+            return;
         }
         startLocalPrologue();
     }

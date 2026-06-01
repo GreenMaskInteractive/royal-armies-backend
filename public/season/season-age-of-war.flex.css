@@ -924,6 +924,8 @@ body.age-of-war-trailer-page {
 }
 
 .game-opening-prologue-trailer-player {
+    position: relative;
+    z-index: 2;
     display: flex;
     flex-direction: column;
     width: min(1400px, 100%);
@@ -931,6 +933,7 @@ body.age-of-war-trailer-page {
     max-height: 100dvh;
     margin: 0 auto;
     gap: clamp(8px, 1vh, 12px);
+    pointer-events: auto;
 }
 
 .game-opening-prologue-trailer-stage {
