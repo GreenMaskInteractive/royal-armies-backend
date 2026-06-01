@@ -640,7 +640,6 @@
         resetLoreToolBackdrop();
         resetLogoElement(titleLogoEl);
         resetLogoElement(subtitleLogoEl, { hideSubtitle: true });
-        beginLoreToolFadeIn(generation);
 
         await playLogoArriveAnimation(titleLogoEl, PROLOGUE_TITLE_LOGO_REVEAL_MS, generation);
         if (generation !== logoRevealGeneration) return;
@@ -651,6 +650,7 @@
                 if (generation !== logoRevealGeneration) return;
                 playPrologueSubtitleLogoSfx();
                 startSubtitleLogoSparks(subtitleLogoEl, generation);
+                beginLoreToolFadeIn(generation);
             }
         });
         if (generation !== logoRevealGeneration) return;
