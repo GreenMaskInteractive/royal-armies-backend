@@ -789,6 +789,7 @@ module.exports = {
     GUILD_XP_BY_OUTCOME,
     TRADE_CONVOY_LOTS,
     resolveGuildXpRequired,
+    buildGuildProgressPayload,
     buildGuildStatePayload,
     executeGuildTrainingBattleWithLedger,
     executeCityAssaultBattleWithLedger,

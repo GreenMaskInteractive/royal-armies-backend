@@ -693,6 +693,9 @@
             }
             refreshAgeHudMovePoints();
             refreshAgeHudUnits();
+            if (typeof global.refreshAgeHudCommanderRank === 'function') {
+                global.refreshAgeHudCommanderRank();
+            }
         }
 
         scheduleAgeMovePointHalfHourRefresh();

@@ -113,6 +113,7 @@ const {
 } = require('./nexus-age-commander-reset');
 const { buildCommanderAgeGearSeedPatch } = require('./nexus-age-commander-gear');
 const {
+    buildGuildProgressPayload,
     buildGuildStatePayload,
     executeGuildTrainingBattleWithLedger,
     executeCityAssaultBattleWithLedger,
@@ -1182,6 +1183,7 @@ function buildAgeMovementStatePayload(username, commander) {
     const store = readAgeMovementStore();
     const rules = getMovePointRules();
     const roster = buildAgeRosterHudPayload(commander);
+    const guildProgress = buildGuildProgressPayload(commander);
 
     return {
         gameNation: councilNation,
@@ -1196,6 +1198,10 @@ function buildAgeMovementStatePayload(username, commander) {
         rules,
         ageGold: resolveCommanderAgeGold(commander),
         ageProvisions: resolveCommanderAgeProvisions(commander),
+        rank: guildProgress.rank,
+        ageGuildXp: guildProgress.ageGuildXp,
+        ageGuildXpRequired: guildProgress.ageGuildXpRequired,
+        ageGuildXpProgress: guildProgress.ageGuildXpProgress,
         unitsTotal: roster.unitsTotal,
         unitsUninjured: roster.unitsUninjured,
         ageArmy: roster.ageArmy

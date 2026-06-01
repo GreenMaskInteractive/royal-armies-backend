@@ -258,6 +258,20 @@
                 { source: 'server-sync', silent: true }
             );
         }
+        if (payload.rank !== undefined) {
+            const rank = Math.max(1, Math.floor(Number(payload.rank) || 1));
+            if (typeof global.player !== 'undefined') {
+                global.player.rank = rank;
+            }
+            if (global.RoyalArmiesAgeCommanderRank?.setAgeCommanderRank) {
+                global.RoyalArmiesAgeCommanderRank.setAgeCommanderRank(rank, { source: 'server-sync', silent: true });
+            } else if (typeof global.refreshAgeHudCommanderRank === 'function') {
+                global.refreshAgeHudCommanderRank();
+            }
+        }
+        if (payload.ageGuildXp !== undefined && typeof global.player !== 'undefined') {
+            global.player.ageGuildXp = Math.max(0, Math.floor(Number(payload.ageGuildXp) || 0));
+        }
         if (options.eventSource !== 'guild-sync' && global.RoyalArmiesAgeGuildTraining?.applyGuildPayload) {
             global.RoyalArmiesAgeGuildTraining.applyGuildPayload(payload);
         }
