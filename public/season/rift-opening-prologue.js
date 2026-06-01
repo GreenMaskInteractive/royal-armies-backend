@@ -1737,6 +1737,13 @@
     function removeCinematicPanAnimation(imgEl) {
         if (!imgEl) return;
 
+        if (imgEl.classList.contains('is-panning')) {
+            const computed = global.getComputedStyle(imgEl).transform;
+            if (computed && computed !== 'none') {
+                imgEl.style.transform = computed;
+            }
+        }
+
         const styleId = imgEl.dataset.cinePanStyleId;
         if (styleId) {
             global.document.getElementById(styleId)?.remove();
@@ -1762,7 +1769,9 @@
         const scale = isTrailerReplayMode
             ? TRAILER_CINE_PAN_SCALE_MIN + (Math.random() * TRAILER_CINE_PAN_SCALE_RANGE)
             : 1.08 + (Math.random() * 0.08);
-        const duration = Math.max(1, durationSec * PROLOGUE_CINEMATIC_PAN_DURATION_SCALE);
+        const duration = isTrailerReplayMode
+            ? Math.max(0.5, durationSec)
+            : Math.max(1, durationSec * PROLOGUE_CINEMATIC_PAN_DURATION_SCALE);
 
         cinematicPanStyleCounter += 1;
         const animName = `game-opening-prologue-cinematic-pan-${cinematicPanStyleCounter}`;
