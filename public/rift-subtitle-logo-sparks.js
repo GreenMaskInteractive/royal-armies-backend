@@ -133,14 +133,14 @@
         const canvas = global.document.getElementById('age-page-canvas');
         if (!canvas) return;
 
-        const sparksHost = canvas.querySelector('.age-map-hud-subtitle-brand .game-opening-prologue-subtitle-sparks');
+        const sparksHost = canvas.querySelector('.age-map-hud-subtitle-slot .game-opening-prologue-subtitle-sparks');
         if (!sparksHost) return;
 
         const shouldRun = () => {
             const view = canvas.dataset.ageView || 'map';
             if (view !== 'map') return false;
-            const brand = canvas.querySelector('.age-map-hud-subtitle-brand');
-            if (!brand || brand.hidden) return false;
+            const slot = canvas.querySelector('.age-map-hud-subtitle-slot');
+            if (!slot || slot.hidden) return false;
             return sparksHost.clientWidth > 0 && sparksHost.clientHeight > 0;
         };
 
@@ -158,7 +158,7 @@
         const canvas = global.document.getElementById('age-page-canvas');
         if (!canvas) return;
 
-        const sparksHost = canvas.querySelector('.age-map-hud-subtitle-brand .game-opening-prologue-subtitle-sparks');
+        const sparksHost = canvas.querySelector('.age-map-hud-subtitle-slot .game-opening-prologue-subtitle-sparks');
         if (!sparksHost) return;
 
         const view = canvas.dataset.ageView || 'map';
@@ -181,18 +181,23 @@
     function bindAgeHudLifecycle() {
         if (global.document.body?.id !== 'age-page-canvas') return;
 
-        global.addEventListener('royalarmies:age-view-changed', syncAgeHudSubtitleSparks);
+        global.addEventListener('royalarmies:age-view-changed', () => {
+            syncAgeHudSubtitleSparks();
+            if (typeof global.syncAgeHudSubtitleVerticalCenter === 'function') {
+                global.requestAnimationFrame(() => global.syncAgeHudSubtitleVerticalCenter());
+            }
+        });
 
         if (typeof global.ResizeObserver === 'function') {
-            const brand = global.document.querySelector('.age-map-hud-subtitle-brand');
-            const sparksHost = brand?.querySelector('.game-opening-prologue-subtitle-sparks');
-            if (brand && sparksHost) {
+            const slot = global.document.querySelector('.age-map-hud-subtitle-slot');
+            const sparksHost = slot?.querySelector('.game-opening-prologue-subtitle-sparks');
+            if (slot && sparksHost) {
                 const observer = new global.ResizeObserver(() => {
                     if (!activeLoops.has(sparksHost) && sparksHost.clientWidth > 0) {
                         syncAgeHudSubtitleSparks();
                     }
                 });
-                observer.observe(brand);
+                observer.observe(slot);
                 observer.observe(sparksHost);
             }
         }

@@ -783,6 +783,11 @@
                 '--age-right-hud-height',
                 '--age-right-reports-height'
             ].forEach((prop) => canvas.style.removeProperty(prop));
+            const subtitleSlot = global.document.querySelector('#age-page-canvas .age-map-hud-subtitle-slot');
+            if (subtitleSlot) {
+                subtitleSlot.style.removeProperty('--age-subtitle-slot-padding-top');
+                subtitleSlot.style.minHeight = '';
+            }
             return;
         }
 
@@ -840,6 +845,45 @@
 
         canvas.style.removeProperty('--age-right-hud-height');
         syncHeadquartersPlanningLayout();
+        syncAgeHudSubtitleVerticalCenter();
+    }
+
+    global.syncAgeHudSubtitleVerticalCenter = syncAgeHudSubtitleVerticalCenter;
+
+    function syncAgeHudSubtitleVerticalCenter() {
+        const canvas = global.document.getElementById('age-page-canvas');
+        const slot = global.document.querySelector('#age-page-canvas .age-map-hud-subtitle-slot');
+        if (!canvas || !slot) return;
+
+        if (isAgeMobileLayout() || (canvas.dataset.ageView || 'map') !== 'map') {
+            slot.style.removeProperty('--age-subtitle-slot-padding-top');
+            slot.style.minHeight = '';
+            return;
+        }
+
+        const topBar = global.document.querySelector('#age-page-canvas .age-map-hud-top-bar');
+        const cityPanel = global.document.querySelector('#age-page-canvas .age-city-info-panel');
+        const logo = slot.querySelector('.age-map-hud-subtitle-logo');
+        if (!topBar || !cityPanel || !logo || cityPanel.hidden) {
+            slot.style.removeProperty('--age-subtitle-slot-padding-top');
+            slot.style.minHeight = '';
+            return;
+        }
+
+        const topBarBottom = topBar.getBoundingClientRect().bottom;
+        const cityPanelTop = cityPanel.getBoundingClientRect().top;
+        const logoHeight = logo.getBoundingClientRect().height;
+        const bandHeight = cityPanelTop - topBarBottom;
+
+        if (bandHeight <= 0 || logoHeight <= 0) {
+            slot.style.removeProperty('--age-subtitle-slot-padding-top');
+            slot.style.minHeight = '';
+            return;
+        }
+
+        const paddingTop = Math.max(0, (bandHeight - logoHeight) / 2);
+        slot.style.setProperty('--age-subtitle-slot-padding-top', `${paddingTop}px`);
+        slot.style.minHeight = `${bandHeight}px`;
     }
 
     function clearHeadquartersPlanningLayoutVars(canvas) {
@@ -1018,12 +1062,14 @@
             const rightHud = global.document.getElementById('age-map-hud-right');
             const reportsPanel = rightHud?.querySelector('.age-left-reports-panel');
             const cityInfoPanel = rightHud?.querySelector('.age-city-info-panel');
-            const subtitleBrand = rightHud?.querySelector('.age-map-hud-subtitle-brand');
+            const subtitleSlot = rightHud?.querySelector('.age-map-hud-subtitle-slot');
+            const topBar = global.document.querySelector('#age-page-canvas .age-map-hud-top-bar');
             if (chatMessages) councilBoardLayoutObserver.observe(chatMessages);
             if (chatCompose) councilBoardLayoutObserver.observe(chatCompose);
             if (bottomDock) councilBoardLayoutObserver.observe(bottomDock);
             if (rightHud) councilBoardLayoutObserver.observe(rightHud);
-            if (subtitleBrand) councilBoardLayoutObserver.observe(subtitleBrand);
+            if (subtitleSlot) councilBoardLayoutObserver.observe(subtitleSlot);
+            if (topBar) councilBoardLayoutObserver.observe(topBar);
             if (reportsPanel) councilBoardLayoutObserver.observe(reportsPanel);
             if (cityInfoPanel) councilBoardLayoutObserver.observe(cityInfoPanel);
 
@@ -1153,11 +1199,13 @@
             global.enableAgeViewTabs();
         }
 
-        if (global.RoyalArmiesSubtitleLogoSparks
-            && typeof global.RoyalArmiesSubtitleLogoSparks.syncAgeHud === 'function'
-            && typeof global.requestAnimationFrame === 'function') {
+        if (typeof global.requestAnimationFrame === 'function') {
             global.requestAnimationFrame(() => {
-                global.RoyalArmiesSubtitleLogoSparks.syncAgeHud();
+                syncAgeHudSubtitleVerticalCenter();
+                if (global.RoyalArmiesSubtitleLogoSparks
+                    && typeof global.RoyalArmiesSubtitleLogoSparks.syncAgeHud === 'function') {
+                    global.RoyalArmiesSubtitleLogoSparks.syncAgeHud();
+                }
             });
         }
 

@@ -13098,6 +13098,20 @@ body.game-opening-prologue-active .game-onboarding-progress {
     text-shadow: 0 0 14px rgba(255, 215, 0, 0.22);
 }
 
+/* Subtitle band: vertically centered between top bar and city info panel (padding set in RIFT) */
+#age-page-canvas .age-map-hud-subtitle-slot {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: flex-start;
+    justify-content: flex-start;
+    width: 100%;
+    min-height: 0;
+    margin: 0;
+    padding: var(--age-subtitle-slot-padding-top, 0) 0 0;
+    box-sizing: border-box;
+    overflow: visible;
+}
+
 /* Same dimensions as game-page opening prologue subtitle logo */
 #age-page-canvas .age-map-hud-subtitle-brand {
     flex: 0 0 auto;
@@ -13105,7 +13119,7 @@ body.game-opening-prologue-active .game-onboarding-progress {
     align-items: center;
     justify-content: flex-start;
     width: 100%;
-    margin: 0 0 50px;
+    margin: 0;
     padding: 0;
     line-height: 0;
     box-sizing: border-box;
@@ -13143,7 +13157,7 @@ body.game-opening-prologue-active .game-onboarding-progress {
     filter: none;
 }
 
-#age-page-canvas[data-age-view="city"] .age-map-hud-subtitle-brand {
+#age-page-canvas[data-age-view="city"] .age-map-hud-subtitle-slot {
     display: none !important;
 }
 
