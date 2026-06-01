@@ -9,7 +9,7 @@
     const OVERLAY_ID = 'game-opening-prologue';
     const AUDIO_ID = 'game-opening-prologue-audio';
     const SUBTITLE_ID = 'game-opening-prologue-subtitle';
-    const CRITICAL_STYLE_ID = 'rift-opening-prologue-critical-styles-v6';
+    const CRITICAL_STYLE_ID = 'rift-opening-prologue-critical-styles-v7';
     const TRAILER_LORE_TOOL_MAX_OPACITY = 0.4;
     const NARRATION_METADATA_TIMEOUT_MS = 8000;
 
@@ -67,6 +67,9 @@
     /** Pan duration multiplier vs remaining shot time (1 = match, >1 = slower). */
     const PROLOGUE_CINEMATIC_PAN_DURATION_SCALE = 1.3;
     const PROLOGUE_CINEMATIC_IMAGE_VERSION = 'prologue-cine-1';
+    /** Native cinematic still dimensions (images/cinematic*.png). Player frame matches this aspect. */
+    const TRAILER_CINE_NATIVE_WIDTH = 1408;
+    const TRAILER_CINE_NATIVE_HEIGHT = 768;
     const TRAILER_POST_NARRATION_MS = PROLOGUE_TITLE_LOGO_REVEAL_MS
         + PROLOGUE_SUBTITLE_LOGO_EXPLOSIVE_MS
         + 600;
@@ -979,6 +982,11 @@
         }
 
         overlayEl.classList.add('is-trailer-replay-mode');
+        overlayEl.style.setProperty(
+            '--trailer-cine-aspect-ratio',
+            `${TRAILER_CINE_NATIVE_WIDTH} / ${TRAILER_CINE_NATIVE_HEIGHT}`
+        );
+        overlayEl.style.setProperty('--trailer-cine-max-width', `${TRAILER_CINE_NATIVE_WIDTH}px`);
         overlayEl.classList.remove('is-revealing', 'is-trailer-finale-visible');
         overlayEl.hidden = false;
         overlayEl.removeAttribute('hidden');
@@ -1123,6 +1131,8 @@
         if (legacyStyleV4) legacyStyleV4.remove();
         const legacyStyleV5 = global.document.getElementById('rift-opening-prologue-critical-styles-v5');
         if (legacyStyleV5) legacyStyleV5.remove();
+        const legacyStyleV6 = global.document.getElementById('rift-opening-prologue-critical-styles-v6');
+        if (legacyStyleV6) legacyStyleV6.remove();
         if (global.document.getElementById(CRITICAL_STYLE_ID)) return;
 
         const style = global.document.createElement('style');
@@ -1346,8 +1356,11 @@
             #${OVERLAY_ID}.is-trailer-replay-mode .game-opening-prologue-cinematic-shot img {
                 width: 100% !important;
                 height: 100% !important;
-                min-width: 100% !important;
-                min-height: 100% !important;
+                min-width: 0 !important;
+                min-height: 0 !important;
+                max-width: 100% !important;
+                max-height: 100% !important;
+                object-fit: contain !important;
                 transform: translate(-50%, -50%) !important;
             }
             #${OVERLAY_ID}.is-trailer-replay-mode .game-opening-prologue-subtitle-dock.is-trailer-player-dock {
@@ -1459,7 +1472,7 @@
         const x2 = Math.cos(angle + Math.PI) * panMag;
         const y2 = Math.sin(angle + Math.PI) * panMag;
         const scale = isTrailerReplayMode
-            ? 1 + (Math.random() * 0.04)
+            ? 1.06 + (Math.random() * 0.06)
             : 1.08 + (Math.random() * 0.08);
         const duration = Math.max(1, durationSec * PROLOGUE_CINEMATIC_PAN_DURATION_SCALE);
 
