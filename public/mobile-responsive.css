@@ -2693,9 +2693,9 @@ body {
         font-size: 0.92rem !important;
     }
 
-    #age-page-canvas .age-map-age-badge-subtitle-logo {
-        max-height: 20px !important;
-        max-width: min(96px, 24vw) !important;
+    #age-page-canvas .age-map-hud-subtitle-logo {
+        width: min(520px, 100%) !important;
+        max-width: 100% !important;
     }
 
     #age-page-canvas .age-map-resource-strip {

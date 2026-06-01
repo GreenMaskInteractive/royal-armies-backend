@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Royal Armies — Age Alpha</title>
     <link rel="stylesheet" href="style.css?v=cursor-modal-layer-fix-1">
-    <link rel="stylesheet" href="style2.css?v=age-badge-subtitle-1">
-    <link rel="stylesheet" href="mobile-responsive.css?v=age-badge-subtitle-1">
+    <link rel="stylesheet" href="style2.css?v=age-hud-subtitle-stack-1">
+    <link rel="stylesheet" href="mobile-responsive.css?v=age-hud-subtitle-stack-1">
     <link rel="stylesheet" href="dev-page-navigator.css">
     <link rel="stylesheet" href="custom-cursor.css?v=scrollbar-cursor-3">
 </head>
@@ -30,17 +30,7 @@
                         <div class="age-map-top-bar-separator" aria-hidden="true"></div>
                         <div class="age-map-age-badge">
                             <span class="age-map-age-badge-eyebrow">Current Age</span>
-                            <div class="age-map-age-badge-title-row">
-                                <h1 id="age-map-age-title" class="age-map-age-badge-title">Age Alpha</h1>
-                                <img
-                                    src="images/royalarmiessubtitlelogo.png?v=age-subtitle-1"
-                                    alt=""
-                                    class="age-map-age-badge-subtitle-logo"
-                                    width="280"
-                                    height="48"
-                                    decoding="async"
-                                    aria-hidden="true">
-                            </div>
+                            <h1 id="age-map-age-title" class="age-map-age-badge-title">Age Alpha</h1>
                         </div>
                     </div>
                     <ul class="age-map-resource-strip" aria-label="Realm resources">
@@ -162,6 +152,15 @@
 
             <aside class="age-map-hud age-map-hud--right" id="age-map-hud-right" aria-label="City info and nation reports">
                 <div class="age-map-hud-panel-inner age-map-hud-panel-inner--right">
+                    <div class="age-map-hud-subtitle-brand" aria-hidden="true">
+                        <img
+                            src="images/royalarmiessubtitlelogo.png?v=age-subtitle-1"
+                            alt=""
+                            class="age-map-hud-subtitle-logo"
+                            width="520"
+                            height="90"
+                            decoding="async">
+                    </div>
                     <section class="age-map-hud-section age-city-info-panel" aria-label="City and players">
                         <div class="age-city-info-tabs" role="tablist" aria-label="City info views">
                             <button
