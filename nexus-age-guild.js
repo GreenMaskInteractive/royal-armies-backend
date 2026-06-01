@@ -77,7 +77,13 @@ const HEAL_COST_MULTIPLIER_BY_RANK = {
     6: 1.05
 };
 
-const RANK_UP_PROVISIONS = 110;
+const RANK_UP_PROVISIONS_BY_NEW_RANK = Object.freeze([
+    { maxRank: 4, grant: 55 },
+    { maxRank: 7, grant: 70 },
+    { maxRank: 10, grant: 85 },
+    { maxRank: 14, grant: 95 },
+    { maxRank: 21, grant: 105 }
+]);
 const MAX_COMMANDER_RANK = 22;
 
 const GUILD_XP_BY_OUTCOME = Object.freeze({
@@ -235,7 +241,9 @@ function resolveGuildXpRequired(rank) {
 
 function resolveRankUpProvisionsGrant(newRank) {
     if (newRank <= 1 || newRank > 21) return 0;
-    return RANK_UP_PROVISIONS;
+    const normalized = Math.max(2, Math.floor(Number(newRank) || 2));
+    const bucket = RANK_UP_PROVISIONS_BY_NEW_RANK.find((entry) => normalized <= entry.maxRank);
+    return Math.max(0, Math.floor(Number(bucket?.grant) || 0));
 }
 
 function buildGuildProgressPayload(commander) {
