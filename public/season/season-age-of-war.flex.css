@@ -446,19 +446,8 @@
     visibility: hidden;
 }
 
-.game-opening-prologue.is-trailer-replay-mode .game-opening-prologue-trailer-credits-logo {
-    width: min(917px, 61.5cqw);
-    max-width: 96%;
-}
-
 .game-opening-prologue.is-trailer-replay-mode .game-opening-prologue-trailer-credits-alpha-copy {
-    font-size: clamp(0.42rem, 2.35cqw, 1.05rem);
     max-width: min(30em, 96%);
-}
-
-.game-opening-prologue.is-trailer-replay-mode .game-opening-prologue-trailer-credits-thanks-copy {
-    font-size: clamp(0.72rem, 4.2cqw, 2.1rem);
-    letter-spacing: 0.2em;
 }
 
 .game-opening-prologue-enter-war-btn:hover,
@@ -1218,21 +1207,66 @@ body.age-of-war-trailer-page {
     pointer-events: none;
 }
 
-.game-opening-prologue.is-trailer-replay-mode .game-opening-prologue-logo--title {
-    width: min(48cqw, 780px) !important;
-    max-width: min(48cqw, 780px) !important;
+.game-opening-prologue.is-trailer-replay-mode:not(.is-trailer-player-fullscreen) .game-opening-prologue-logo--title {
+    width: min(340px, 38cqw) !important;
+    max-width: min(340px, 38cqw) !important;
 }
 
-.game-opening-prologue.is-trailer-replay-mode .game-opening-prologue-logo--subtitle {
-    width: min(38cqw, 620px) !important;
-    max-width: min(38cqw, 620px) !important;
+.game-opening-prologue.is-trailer-replay-mode:not(.is-trailer-player-fullscreen) .game-opening-prologue-logo--subtitle {
+    width: min(260px, 30cqw) !important;
+    max-width: min(260px, 30cqw) !important;
 }
 
-.game-opening-prologue.is-trailer-replay-mode .game-opening-prologue-logo-stack {
-    width: min(52cqw, 100%) !important;
+.game-opening-prologue.is-trailer-replay-mode:not(.is-trailer-player-fullscreen) .game-opening-prologue-logo-stack {
+    width: min(40cqw, 100%) !important;
     max-width: 100%;
     max-height: none !important;
-    gap: clamp(7px, 1.6cqh, 22px);
+    gap: clamp(6px, 1.2cqh, 14px);
+}
+
+.game-opening-prologue.is-trailer-replay-mode:not(.is-trailer-player-fullscreen) .game-opening-prologue-trailer-outro {
+    width: min(640px, 92cqw) !important;
+}
+
+.game-opening-prologue.is-trailer-replay-mode:not(.is-trailer-player-fullscreen) .game-opening-prologue-lore-tool {
+    max-width: min(55cqw, 96%) !important;
+    max-height: min(58cqh, 96%) !important;
+}
+
+.game-opening-prologue.is-trailer-replay-mode:not(.is-trailer-player-fullscreen) .game-opening-prologue-trailer-coming-soon-headline {
+    font-size: clamp(0.68rem, 3.2cqw, 1.05rem);
+    letter-spacing: 0.24em;
+}
+
+.game-opening-prologue.is-trailer-replay-mode:not(.is-trailer-player-fullscreen) .game-opening-prologue-trailer-coming-soon-date {
+    font-size: clamp(0.48rem, 2.2cqw, 0.72rem);
+    letter-spacing: 0.16em;
+}
+
+.game-opening-prologue.is-trailer-replay-mode:not(.is-trailer-player-fullscreen) .game-opening-prologue-trailer-call {
+    font-size: clamp(0.46rem, 2.1cqw, 0.72rem);
+    margin: 0 0 clamp(6px, 1cqh, 10px);
+}
+
+.game-opening-prologue.is-trailer-replay-mode:not(.is-trailer-player-fullscreen) .game-opening-prologue-trailer-site {
+    font-size: clamp(0.42rem, 1.8cqw, 0.58rem);
+}
+
+.game-opening-prologue.is-trailer-replay-mode:not(.is-trailer-player-fullscreen) .game-opening-prologue-subtitle-dock.is-trailer-player-dock .game-opening-prologue-subtitle {
+    font-size: clamp(0.68rem, 2.2cqw, 0.95rem);
+}
+
+.game-opening-prologue.is-trailer-replay-mode:not(.is-trailer-player-fullscreen) .game-opening-prologue-trailer-credits-logo {
+    width: min(688px, 46cqw);
+    max-width: 96%;
+}
+
+.game-opening-prologue.is-trailer-replay-mode:not(.is-trailer-player-fullscreen) .game-opening-prologue-trailer-credits-alpha-copy {
+    font-size: clamp(0.4rem, 1.85cqw, 0.65rem);
+}
+
+.game-opening-prologue.is-trailer-replay-mode:not(.is-trailer-player-fullscreen) .game-opening-prologue-trailer-credits-thanks-copy {
+    font-size: clamp(0.62rem, 3.2cqw, 1.2rem);
 }
 
 .game-opening-prologue.is-trailer-replay-mode .game-opening-prologue-trailer-outro {
@@ -1241,7 +1275,6 @@ body.age-of-war-trailer-page {
     left: 50%;
     bottom: auto;
     z-index: 5;
-    width: min(920px, 96cqw) !important;
     max-width: 100%;
     margin-top: 0;
     transform: translateX(-50%) translateY(12px);
@@ -1259,32 +1292,81 @@ body.age-of-war-trailer-page {
     margin-top: clamp(10px, 1.6cqh, 16px);
 }
 
-.game-opening-prologue.is-trailer-replay-mode .game-opening-prologue-lore-tool {
-    max-width: min(62cqw, 96%) !important;
-    max-height: min(66cqh, 96%) !important;
-}
-
 .game-opening-prologue.is-trailer-replay-mode .game-opening-prologue-trailer-coming-soon {
     gap: clamp(4px, 0.55cqh, 8px);
 }
 
-.game-opening-prologue.is-trailer-replay-mode .game-opening-prologue-trailer-coming-soon-headline {
+.game-opening-prologue.is-trailer-replay-mode.is-trailer-player-fullscreen .game-opening-prologue-logo--title,
+.game-opening-prologue-trailer-stage:fullscreen .game-opening-prologue-logo--title {
+    width: min(780px, 48cqw) !important;
+    max-width: min(780px, 48cqw) !important;
+}
+
+.game-opening-prologue.is-trailer-replay-mode.is-trailer-player-fullscreen .game-opening-prologue-logo--subtitle,
+.game-opening-prologue-trailer-stage:fullscreen .game-opening-prologue-logo--subtitle {
+    width: min(620px, 38cqw) !important;
+    max-width: min(620px, 38cqw) !important;
+}
+
+.game-opening-prologue.is-trailer-replay-mode.is-trailer-player-fullscreen .game-opening-prologue-logo-stack,
+.game-opening-prologue-trailer-stage:fullscreen .game-opening-prologue-logo-stack {
+    width: min(52cqw, 100%) !important;
+    gap: clamp(7px, 1.6cqh, 22px);
+}
+
+.game-opening-prologue.is-trailer-replay-mode.is-trailer-player-fullscreen .game-opening-prologue-trailer-outro,
+.game-opening-prologue-trailer-stage:fullscreen .game-opening-prologue-trailer-outro {
+    width: min(920px, 96cqw) !important;
+}
+
+.game-opening-prologue.is-trailer-replay-mode.is-trailer-player-fullscreen .game-opening-prologue-lore-tool,
+.game-opening-prologue-trailer-stage:fullscreen .game-opening-prologue-lore-tool {
+    max-width: min(62cqw, 96%) !important;
+    max-height: min(66cqh, 96%) !important;
+}
+
+.game-opening-prologue.is-trailer-replay-mode.is-trailer-player-fullscreen .game-opening-prologue-trailer-coming-soon-headline,
+.game-opening-prologue-trailer-stage:fullscreen .game-opening-prologue-trailer-coming-soon-headline {
     font-size: clamp(0.72rem, 4.8cqw, 2.35rem);
     letter-spacing: 0.28em;
 }
 
-.game-opening-prologue.is-trailer-replay-mode .game-opening-prologue-trailer-coming-soon-date {
+.game-opening-prologue.is-trailer-replay-mode.is-trailer-player-fullscreen .game-opening-prologue-trailer-coming-soon-date,
+.game-opening-prologue-trailer-stage:fullscreen .game-opening-prologue-trailer-coming-soon-date {
     font-size: clamp(0.52rem, 2.8cqw, 1.35rem);
     letter-spacing: 0.18em;
 }
 
-.game-opening-prologue.is-trailer-replay-mode .game-opening-prologue-trailer-call {
+.game-opening-prologue.is-trailer-replay-mode.is-trailer-player-fullscreen .game-opening-prologue-trailer-call,
+.game-opening-prologue-trailer-stage:fullscreen .game-opening-prologue-trailer-call {
     font-size: clamp(0.5rem, 2.5cqw, 1.2rem);
     margin: 0 0 clamp(7px, 1.2cqh, 14px);
 }
 
-.game-opening-prologue.is-trailer-replay-mode .game-opening-prologue-trailer-site {
+.game-opening-prologue.is-trailer-replay-mode.is-trailer-player-fullscreen .game-opening-prologue-trailer-site,
+.game-opening-prologue-trailer-stage:fullscreen .game-opening-prologue-trailer-site {
     font-size: clamp(0.46rem, 2.1cqw, 1rem);
+}
+
+.game-opening-prologue.is-trailer-replay-mode.is-trailer-player-fullscreen .game-opening-prologue-subtitle-dock.is-trailer-player-dock .game-opening-prologue-subtitle,
+.game-opening-prologue-trailer-stage:fullscreen .game-opening-prologue-subtitle-dock.is-trailer-player-dock .game-opening-prologue-subtitle {
+    font-size: clamp(0.72rem, 2.8cqw, 1.65rem);
+}
+
+.game-opening-prologue.is-trailer-replay-mode.is-trailer-player-fullscreen .game-opening-prologue-trailer-credits-logo,
+.game-opening-prologue-trailer-stage:fullscreen .game-opening-prologue-trailer-credits-logo {
+    width: min(917px, 61.5cqw);
+}
+
+.game-opening-prologue.is-trailer-replay-mode.is-trailer-player-fullscreen .game-opening-prologue-trailer-credits-alpha-copy,
+.game-opening-prologue-trailer-stage:fullscreen .game-opening-prologue-trailer-credits-alpha-copy {
+    font-size: clamp(0.42rem, 2.35cqw, 1.05rem);
+}
+
+.game-opening-prologue.is-trailer-replay-mode.is-trailer-player-fullscreen .game-opening-prologue-trailer-credits-thanks-copy,
+.game-opening-prologue-trailer-stage:fullscreen .game-opening-prologue-trailer-credits-thanks-copy {
+    font-size: clamp(0.72rem, 4.2cqw, 2.1rem);
+    letter-spacing: 0.2em;
 }
 
 .game-opening-prologue-trailer-stage:fullscreen .game-opening-prologue-trailer-viewport,
@@ -1432,7 +1514,6 @@ body.is-trailer-mobile-device .game-opening-prologue.is-trailer-replay-mode .gam
     min-height: 0;
     margin: 0;
     text-align: center;
-    font-size: clamp(0.72rem, 2.8cqw, 1.65rem);
     line-height: 1.55;
 }
 
