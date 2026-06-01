@@ -37,11 +37,13 @@
 
     const PROLOGUE_AUDIO_SRC = 'audio/distressedwoman.mp3';
     const PROLOGUE_NARRATION_VOLUME = 1;
-    const PROLOGUE_MUSIC_VOLUME = 0.4;
+    const PROLOGUE_MUSIC_VOLUME = 0.3;
+    const PROLOGUE_MUSIC_PEAK_VOLUME = 0.7;
     /** Narration starts immediately; background music joins after this delay. */
     const PROLOGUE_MUSIC_DELAY_MS = 2000;
-    /** Hold black screen after narration ends before fading to progression. */
-    const PROLOGUE_POST_NARRATION_HOLD_MS = 2000;
+    /** Black screen hold after narration; music ramps to peak over this duration. */
+    const PROLOGUE_POST_NARRATION_HOLD_MS = 7000;
+    const PROLOGUE_MUSIC_OUT_FADE_MS = 1200;
     const PROLOGUE_REVEAL_FADE_MS = 900;
 
     let overlayEl = null;
@@ -279,6 +281,46 @@
         });
     }
 
+    function clearPrologueMusicAnimation() {
+        if (global.RoyalArmiesMusicFlow
+            && typeof global.RoyalArmiesMusicFlow.cancelMusicVolumeAnimation === 'function') {
+            global.RoyalArmiesMusicFlow.cancelMusicVolumeAnimation();
+        }
+    }
+
+    function clearSubtitlesForPostNarrationHold() {
+        if (subtitleEl) subtitleEl.textContent = '';
+        if (overlayEl) overlayEl.classList.remove('is-subtitles-active');
+    }
+
+    async function runPostNarrationHoldSequence() {
+        isPostNarrationHold = true;
+        clearSubtitlesForPostNarrationHold();
+
+        if (global.RoyalArmiesMusicFlow
+            && typeof global.RoyalArmiesMusicFlow.rampMusicVolume === 'function') {
+            await global.RoyalArmiesMusicFlow.rampMusicVolume(
+                PROLOGUE_MUSIC_VOLUME,
+                PROLOGUE_MUSIC_PEAK_VOLUME,
+                PROLOGUE_POST_NARRATION_HOLD_MS
+            );
+        } else {
+            await waitPrologueFade(PROLOGUE_POST_NARRATION_HOLD_MS);
+        }
+
+        isPostNarrationHold = false;
+    }
+
+    async function fadePrologueBackgroundMusicOut() {
+        if (global.RoyalArmiesMusicFlow
+            && typeof global.RoyalArmiesMusicFlow.fadeMusicOut === 'function') {
+            await global.RoyalArmiesMusicFlow.fadeMusicOut(PROLOGUE_MUSIC_OUT_FADE_MS);
+            return;
+        }
+
+        clearPrologueMusicAnimation();
+    }
+
     function clearMusicDelayTimer() {
         if (musicDelayTimer) {
             global.clearTimeout(musicDelayTimer);
@@ -303,6 +345,7 @@
         if (!force && isProloguePlaybackActive()) return;
 
         clearMusicDelayTimer();
+        clearPrologueMusicAnimation();
         isPlaying = false;
         isPostNarrationHold = false;
         isFadingOut = false;
@@ -313,6 +356,7 @@
         if (!isProloguePlaybackActive() || isFadingOut) return;
 
         clearMusicDelayTimer();
+        clearPrologueMusicAnimation();
         isPlaying = false;
 
         if (audioEl) {
@@ -321,12 +365,11 @@
         }
 
         if (reason === 'completed') {
-            isPostNarrationHold = true;
-            await waitPrologueFade(PROLOGUE_POST_NARRATION_HOLD_MS);
-            isPostNarrationHold = false;
+            await runPostNarrationHoldSequence();
         }
 
         isFadingOut = true;
+        await fadePrologueBackgroundMusicOut();
 
         if (overlayEl && !overlayEl.hidden) {
             overlayEl.classList.add('is-revealing');

@@ -36,6 +36,7 @@
     const AGE_PAGE_ID = 'age-page-canvas';
 
     let audioEl = null;
+    let volumeRampGeneration = 0;
 
     function pageId() {
         return global.document?.body?.id || '';
@@ -329,6 +330,69 @@
         writeSession(STORAGE.openingProloguePending, '0');
     }
 
+    function cancelMusicVolumeAnimation() {
+        volumeRampGeneration += 1;
+    }
+
+    function clampVolume(volume) {
+        return Math.max(0, Math.min(1, Number(volume) || 0));
+    }
+
+    function rampMusicVolume(fromVolume, toVolume, durationMs) {
+        const audio = resolveAudioElement();
+        if (!audio) return Promise.resolve();
+
+        const generation = volumeRampGeneration + 1;
+        volumeRampGeneration = generation;
+        const startVolume = clampVolume(fromVolume);
+        const endVolume = clampVolume(toVolume);
+        const spanMs = Math.max(0, Number(durationMs) || 0);
+        audio.volume = startVolume;
+
+        if (spanMs <= 0 || startVolume === endVolume) {
+            audio.volume = endVolume;
+            return Promise.resolve();
+        }
+
+        const startedAt = global.performance?.now?.() ?? Date.now();
+
+        return new Promise((resolve) => {
+            function tick(now) {
+                if (generation !== volumeRampGeneration) {
+                    resolve();
+                    return;
+                }
+
+                const elapsed = now - startedAt;
+                const progress = Math.min(1, elapsed / spanMs);
+                audio.volume = startVolume + ((endVolume - startVolume) * progress);
+
+                if (progress < 1) {
+                    global.requestAnimationFrame(tick);
+                } else {
+                    resolve();
+                }
+            }
+
+            global.requestAnimationFrame(tick);
+        });
+    }
+
+    async function fadeMusicOut(durationMs) {
+        cancelMusicVolumeAnimation();
+        const audio = resolveAudioElement();
+        if (!audio) return;
+
+        const startVolume = audio.volume || 0;
+        if (startVolume <= 0) {
+            audio.pause();
+            return;
+        }
+
+        await rampMusicVolume(startVolume, 0, durationMs);
+        audio.pause();
+    }
+
     function bindLifecycle() {
         global.addEventListener('beforeunload', persistAudioState);
         global.document.addEventListener('visibilitychange', () => {
@@ -354,6 +418,9 @@
         markProgressionPhaseStart,
         markIntroCinematicComplete: markProgressionPhaseStart,
         startGamePageArchimedes,
+        rampMusicVolume,
+        fadeMusicOut,
+        cancelMusicVolumeAnimation,
         shouldHoldForOpeningPrologue: function shouldHoldForOpeningPrologue() {
             return readSession(STORAGE.openingProloguePending) === '1';
         }
