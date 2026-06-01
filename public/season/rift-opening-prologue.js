@@ -235,6 +235,7 @@
         overlayEl.classList.toggle('is-trailer-portrait', portrait);
         global.document.body.classList.toggle('is-trailer-mobile-device', mobile);
         global.document.body.classList.toggle('is-trailer-portrait-viewport', portrait);
+        overlayEl?.classList.toggle('is-trailer-player-fullscreen', isTrailerFullscreenActive());
 
         const fullscreenBtn = overlayEl.querySelector('#game-opening-prologue-trailer-fullscreen-btn');
         if (fullscreenBtn) {
@@ -275,11 +276,15 @@
         }
 
         if (cinematicStageEl && viewportEl && cinematicStageEl.parentElement !== viewportEl) {
-            viewportEl.appendChild(cinematicStageEl);
+            viewportEl.insertBefore(cinematicStageEl, viewportEl.firstChild);
         }
 
         if (logoStageEl && finalePaneEl && logoStageEl.parentElement !== finalePaneEl) {
             finalePaneEl.appendChild(logoStageEl);
+        }
+
+        if (finalePaneEl && viewportEl && finalePaneEl.parentElement !== viewportEl) {
+            viewportEl.appendChild(finalePaneEl);
         }
 
         reparentTrailerSubtitleDockForPlayer();
@@ -1470,9 +1475,14 @@
         if (overlayEl && global.document.contains(overlayEl)) {
             const missingTrailerPlayer = isTrailerPage()
                 && !overlayEl.querySelector('#game-opening-prologue-trailer-stage');
+            const staleTrailerViewport = isTrailerPage()
+                && !overlayEl.querySelector(
+                    '#game-opening-prologue-trailer-viewport #game-opening-prologue-trailer-finale-pane'
+                );
             if (!overlayEl.querySelector('.game-opening-prologue-cinematic-frame-border')
                 || !overlayEl.querySelector('.game-opening-prologue-subtitle-dock-inner')
-                || missingTrailerPlayer) {
+                || missingTrailerPlayer
+                || staleTrailerViewport) {
                 overlayEl.remove();
                 overlayEl = null;
                 subtitleEl = null;
@@ -1565,8 +1575,14 @@
             ${isTrailerPage() ? `
             <div class="game-opening-prologue-trailer-player" id="game-opening-prologue-trailer-player" hidden>
                 <div class="game-opening-prologue-trailer-stage" id="game-opening-prologue-trailer-stage">
-                    <div class="game-opening-prologue-trailer-viewport" id="game-opening-prologue-trailer-viewport"></div>
-                    <div class="game-opening-prologue-trailer-finale-pane" id="game-opening-prologue-trailer-finale-pane"></div>
+                    <div class="game-opening-prologue-trailer-viewport" id="game-opening-prologue-trailer-viewport">
+                        <div
+                            class="game-opening-prologue-trailer-finale-pane"
+                            id="game-opening-prologue-trailer-finale-pane"
+                            hidden
+                            aria-hidden="true"
+                        ></div>
+                    </div>
                     <div class="game-opening-prologue-trailer-controls">
                         <div class="game-opening-prologue-trailer-controls-row">
                             ${buildTrailerIconButtonMarkup('game-opening-prologue-trailer-replay-btn', 'replay', 'Replay')}
