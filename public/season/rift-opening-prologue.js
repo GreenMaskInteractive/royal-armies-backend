@@ -47,7 +47,7 @@
     const PROLOGUE_MUSIC_DELAY_MS = 2000;
     /** Black screen hold after narration; music ramps during logo reveals, then Cascading Skies on Enter the War. */
     const PROLOGUE_TITLE_LOGO_REVEAL_MS = 6500;
-    const PROLOGUE_SUBTITLE_LOGO_EXPLOSIVE_MS = 520;
+    const PROLOGUE_SUBTITLE_LOGO_EXPLOSIVE_MS = 640;
     const PROLOGUE_SUBTITLE_LOGO_EXPLOSIVE_IMPACT = 0.18;
     const PROLOGUE_SUBTITLE_LOGO_EXPLOSIVE_BURST_SPARKS = 14;
     /** Wall-clock ms for Archimedes ramp from prologue level to peak during logo reveals. */
@@ -801,7 +801,12 @@
                         decoding="async"
                     >
                     <div class="game-opening-prologue-subtitle-logo-wrap">
-                        <div class="game-opening-prologue-subtitle-explosion-flash" aria-hidden="true"></div>
+                        <div class="game-opening-prologue-subtitle-fire-fx" aria-hidden="true">
+                            <div class="game-opening-prologue-subtitle-fire-smoke"></div>
+                            <div class="game-opening-prologue-subtitle-fire-outer"></div>
+                            <div class="game-opening-prologue-subtitle-fire-core"></div>
+                            <div class="game-opening-prologue-subtitle-fire-embers"></div>
+                        </div>
                         <div class="game-opening-prologue-subtitle-sparks" aria-hidden="true"></div>
                         <img
                             src="${PROLOGUE_SUBTITLE_LOGO_SRC}"
@@ -1164,58 +1169,145 @@
 
         wrap.classList.remove('is-exploding');
         wrap.style.removeProperty('transform');
-        const flashEl = wrap.querySelector('.game-opening-prologue-subtitle-explosion-flash');
-        if (flashEl) {
-            flashEl.style.removeProperty('opacity');
-            flashEl.style.removeProperty('transform');
-        }
+        wrap.querySelectorAll([
+            '.game-opening-prologue-subtitle-fire-core',
+            '.game-opening-prologue-subtitle-fire-outer',
+            '.game-opening-prologue-subtitle-fire-smoke',
+            '.game-opening-prologue-subtitle-fire-fx'
+        ].join(', ')).forEach((node) => {
+            node.style.removeProperty('opacity');
+            node.style.removeProperty('transform');
+        });
+        const embersHost = wrap.querySelector('.game-opening-prologue-subtitle-fire-embers');
+        if (embersHost) embersHost.innerHTML = '';
     }
 
-    function resolveSubtitleLogoExplosiveMotion(progress) {
+    function resolveSubtitleLogoFireMotion(progress, flickerSeed) {
         const impact = PROLOGUE_SUBTITLE_LOGO_EXPLOSIVE_IMPACT;
+        const flicker = 0.82 + (0.18 * Math.sin((progress * 48) + flickerSeed));
 
         if (progress < impact) {
             const t = progress / impact;
             return {
-                scale: 0.04 + (t * 0.12),
-                opacity: t * 0.22,
+                scale: 0.04 + (t * 0.1),
+                opacity: t * 0.18,
                 blur: 10,
-                brightness: 0.35 + (t * 0.25),
-                flashOpacity: t * 0.12,
-                flashScale: 0.15 + (t * 0.35),
+                brightness: 0.28 + (t * 0.22),
+                fireCoreOpacity: t * 0.28 * flicker,
+                fireCoreScale: 0.12 + (t * 0.28),
+                fireCoreScaleY: 0.18 + (t * 0.42),
+                fireOuterOpacity: t * 0.16 * flicker,
+                fireOuterScale: 0.1 + (t * 0.34),
+                fireOuterScaleY: 0.14 + (t * 0.52),
+                fireOuterRotate: -4 + (t * 8),
+                fireSmokeOpacity: 0,
+                fireSmokeScale: 0.2,
                 shake: 0
             };
         }
 
-        if (progress < 0.44) {
-            const t = (progress - impact) / (0.44 - impact);
-            const burst = 1 - ((1 - t) ** 2);
+        if (progress < 0.48) {
+            const t = (progress - impact) / (0.48 - impact);
+            const burst = 1 - ((1 - t) ** 2.2);
             return {
-                scale: 0.16 + (burst * 1.18),
-                opacity: Math.min(1, 0.22 + (burst * 1.05)),
-                blur: Math.max(0, 9 * (1 - t)),
-                brightness: 1.35 + ((1 - t) * 0.85),
-                flashOpacity: 0.15 + ((1 - t) * 0.95),
-                flashScale: 0.5 + (burst * 1.35),
-                shake: Math.sin((progress - impact) * 95) * 5.5 * (1 - t)
+                scale: 0.14 + (burst * 1.2),
+                opacity: Math.min(1, 0.18 + (burst * 1.02)),
+                blur: Math.max(0, 8 * (1 - t)),
+                brightness: 1.1 + ((1 - t) * 0.95),
+                fireCoreOpacity: (0.2 + ((1 - t) * 0.95)) * flicker,
+                fireCoreScale: 0.4 + (burst * 1.05),
+                fireCoreScaleY: 0.55 + (burst * 1.45),
+                fireOuterOpacity: (0.15 + ((1 - t) * 0.88)) * flicker,
+                fireOuterScale: 0.35 + (burst * 1.55),
+                fireOuterScaleY: 0.5 + (burst * 1.85),
+                fireOuterRotate: -8 + (burst * 16),
+                fireSmokeOpacity: Math.max(0, (t - 0.35) * 0.55),
+                fireSmokeScale: 0.45 + (burst * 1.15),
+                shake: Math.sin((progress - impact) * 88) * 6 * (1 - t)
             };
         }
 
-        const t = (progress - 0.44) / 0.56;
+        const t = (progress - 0.48) / 0.52;
         const settle = 1 - ((1 - t) ** 3);
+        const emberGlow = Math.max(0, 0.42 * (1 - t));
         return {
             scale: 1.34 - (settle * 0.34),
             opacity: 1,
             blur: 0,
-            brightness: 1 + ((1 - settle) * 0.18),
-            flashOpacity: Math.max(0, 0.55 * (1 - t)),
-            flashScale: 1.35 + (t * 0.25),
+            brightness: 1 + ((1 - settle) * 0.12),
+            fireCoreOpacity: emberGlow * flicker,
+            fireCoreScale: 1.45 - (settle * 0.35),
+            fireCoreScaleY: 1.95 - (settle * 0.75),
+            fireOuterOpacity: emberGlow * 0.72 * flicker,
+            fireOuterScale: 1.9 - (settle * 0.45),
+            fireOuterScaleY: 2.25 - (settle * 0.55),
+            fireOuterRotate: 8 - (settle * 8),
+            fireSmokeOpacity: Math.max(0, 0.38 * (1 - t)),
+            fireSmokeScale: 1.55 + (t * 0.35),
             shake: 0
         };
     }
 
+    function spawnFireEmberBurst(wrap) {
+        const embersHost = wrap?.querySelector('.game-opening-prologue-subtitle-fire-embers');
+        if (!embersHost) return;
+
+        const width = embersHost.clientWidth || wrap.clientWidth || 320;
+        const height = embersHost.clientHeight || wrap.clientHeight || 120;
+        const emberCount = 22;
+
+        for (let i = 0; i < emberCount; i += 1) {
+            const ember = global.document.createElement('span');
+            ember.className = 'game-opening-prologue-fire-ember';
+            const x = width * (0.12 + (Math.random() * 0.76));
+            const y = height * (0.34 + (Math.random() * 0.42));
+            const dx = (Math.random() - 0.5) * 120;
+            const dy = -(36 + (Math.random() * 92));
+            const duration = 420 + Math.floor(Math.random() * 520);
+            const size = 3 + (Math.random() * 7);
+            const isHot = Math.random() < 0.35;
+
+            ember.style.left = `${x}px`;
+            ember.style.top = `${y}px`;
+            ember.style.width = `${size}px`;
+            ember.style.height = `${size * (0.75 + Math.random() * 0.8)}px`;
+            ember.style.setProperty('--ember-dx', `${dx.toFixed(1)}px`);
+            ember.style.setProperty('--ember-dy', `${dy.toFixed(1)}px`);
+            ember.style.setProperty('--ember-duration', `${duration}ms`);
+            if (isHot) ember.classList.add('is-hot');
+
+            embersHost.appendChild(ember);
+            ember.addEventListener('animationend', () => ember.remove(), { once: true });
+            global.setTimeout(() => ember.remove(), duration + 80);
+        }
+    }
+
+    function applySubtitleLogoFireLayers(wrap, motion) {
+        if (!wrap) return;
+
+        const coreEl = wrap.querySelector('.game-opening-prologue-subtitle-fire-core');
+        const outerEl = wrap.querySelector('.game-opening-prologue-subtitle-fire-outer');
+        const smokeEl = wrap.querySelector('.game-opening-prologue-subtitle-fire-smoke');
+
+        if (coreEl) {
+            coreEl.style.opacity = String(motion.fireCoreOpacity);
+            coreEl.style.transform = `translate(-50%, -50%) scale(${motion.fireCoreScale.toFixed(3)}, ${motion.fireCoreScaleY.toFixed(3)})`;
+        }
+        if (outerEl) {
+            outerEl.style.opacity = String(motion.fireOuterOpacity);
+            outerEl.style.transform = `translate(-50%, -50%) rotate(${motion.fireOuterRotate.toFixed(2)}deg) scale(${motion.fireOuterScale.toFixed(3)}, ${motion.fireOuterScaleY.toFixed(3)})`;
+        }
+        if (smokeEl) {
+            smokeEl.style.opacity = String(motion.fireSmokeOpacity);
+            smokeEl.style.transform = `translate(-50%, -50%) scale(${motion.fireSmokeScale.toFixed(3)})`;
+        }
+    }
+
     function fireSubtitleLogoExplosionImpact(subtitleLogoEl, generation) {
         playPrologueSubtitleLogoSfx();
+
+        const wrap = resolveSubtitleLogoWrap(subtitleLogoEl);
+        if (wrap) spawnFireEmberBurst(wrap);
 
         const sparksHost = resolveSubtitleSparksHost(subtitleLogoEl);
         if (sparksHost && global.RoyalArmiesSubtitleLogoSparks) {
@@ -1239,8 +1331,8 @@
             ? animationOptions.onComplete
             : null;
         const wrap = resolveSubtitleLogoWrap(logoEl);
-        const flashEl = wrap?.querySelector('.game-opening-prologue-subtitle-explosion-flash');
         const durationMs = PROLOGUE_SUBTITLE_LOGO_EXPLOSIVE_MS;
+        const flickerSeed = Math.random() * Math.PI * 2;
         const reducedMotion = global.matchMedia
             && global.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
@@ -1282,7 +1374,7 @@
 
                 const elapsed = now - startedAt;
                 const progress = durationMs <= 0 ? 1 : Math.min(1, elapsed / durationMs);
-                const motion = resolveSubtitleLogoExplosiveMotion(progress);
+                const motion = resolveSubtitleLogoFireMotion(progress, flickerSeed);
 
                 if (!impactFired && progress >= PROLOGUE_SUBTITLE_LOGO_EXPLOSIVE_IMPACT) {
                     impactFired = true;
@@ -1291,7 +1383,13 @@
 
                 logoEl.style.opacity = String(motion.opacity);
                 logoEl.style.transform = `scale3d(${motion.scale}, ${motion.scale}, ${motion.scale}) translateZ(0)`;
-                logoEl.style.filter = `blur(${motion.blur}px) brightness(${motion.brightness}) drop-shadow(0 0 ${12 + (motion.brightness * 10)}px rgba(255, 150, 40, 0.55))`;
+                logoEl.style.filter = [
+                    `blur(${motion.blur}px)`,
+                    `brightness(${motion.brightness})`,
+                    `saturate(${1.05 + (motion.fireCoreOpacity * 0.35)})`,
+                    `drop-shadow(0 0 ${10 + (motion.fireCoreOpacity * 18)}px rgba(255, 96, 12, 0.72))`,
+                    `drop-shadow(0 0 ${24 + (motion.fireOuterOpacity * 34)}px rgba(255, 42, 0, 0.48))`
+                ].join(' ');
 
                 if (wrap) {
                     wrap.style.transform = motion.shake
@@ -1299,10 +1397,7 @@
                         : '';
                 }
 
-                if (flashEl) {
-                    flashEl.style.opacity = String(motion.flashOpacity);
-                    flashEl.style.transform = `translate(-50%, -50%) scale(${motion.flashScale.toFixed(3)})`;
-                }
+                applySubtitleLogoFireLayers(wrap, motion);
 
                 if (progress < 1) {
                     global.requestAnimationFrame(tick);
@@ -1319,13 +1414,8 @@
 
             logoEl.style.opacity = '0';
             logoEl.style.transform = 'scale3d(0.04, 0.04, 0.04) translateZ(0)';
-            logoEl.style.filter = 'blur(10px) brightness(0.35)';
-            if (flashEl) {
-                flashEl.style.left = '50%';
-                flashEl.style.top = '50%';
-                flashEl.style.opacity = '0';
-                flashEl.style.transform = 'translate(-50%, -50%) scale(0.15)';
-            }
+            logoEl.style.filter = 'blur(10px) brightness(0.28) saturate(0.85)';
+            applySubtitleLogoFireLayers(wrap, resolveSubtitleLogoFireMotion(0, flickerSeed));
 
             global.requestAnimationFrame(tick);
             global.setTimeout(finish, durationMs + 160);

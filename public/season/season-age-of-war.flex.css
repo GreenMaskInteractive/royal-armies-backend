@@ -255,26 +255,93 @@
     justify-content: center;
 }
 
-.game-opening-prologue-subtitle-explosion-flash {
+.game-opening-prologue-subtitle-fire-fx {
+    position: absolute;
+    inset: -28% -18%;
+    z-index: 1;
+    pointer-events: none;
+    overflow: visible;
+}
+
+.game-opening-prologue-subtitle-fire-core,
+.game-opening-prologue-subtitle-fire-outer,
+.game-opening-prologue-subtitle-fire-smoke {
     position: absolute;
     left: 50%;
     top: 50%;
-    width: 140%;
-    height: 140%;
-    z-index: 1;
-    border-radius: 50%;
     opacity: 0;
     pointer-events: none;
     transform: translate(-50%, -50%) scale(0.15);
-    background: radial-gradient(
-        circle,
-        rgba(255, 255, 255, 0.98) 0%,
-        rgba(255, 210, 90, 0.82) 18%,
-        rgba(255, 120, 24, 0.48) 42%,
-        rgba(255, 60, 0, 0) 72%
-    );
-    mix-blend-mode: screen;
     will-change: transform, opacity;
+}
+
+.game-opening-prologue-subtitle-fire-core {
+    width: 58%;
+    height: 68%;
+    border-radius: 46% 46% 42% 42%;
+    background:
+        radial-gradient(circle at 50% 62%, rgba(255, 255, 230, 0.98) 0%, rgba(255, 220, 80, 0.92) 16%, rgba(255, 130, 18, 0.78) 38%, rgba(220, 48, 0, 0) 72%);
+    mix-blend-mode: screen;
+    filter: blur(0.4px);
+}
+
+.game-opening-prologue-subtitle-fire-outer {
+    width: 118%;
+    height: 138%;
+    border-radius: 48% 48% 40% 40%;
+    background:
+        radial-gradient(circle at 50% 58%, rgba(255, 210, 70, 0.55) 0%, rgba(255, 96, 10, 0.72) 28%, rgba(180, 22, 0, 0.62) 52%, rgba(70, 8, 0, 0) 78%);
+    mix-blend-mode: screen;
+    filter: blur(1.2px);
+}
+
+.game-opening-prologue-subtitle-fire-smoke {
+    width: 150%;
+    height: 150%;
+    border-radius: 50%;
+    background:
+        radial-gradient(circle, rgba(36, 16, 8, 0.55) 0%, rgba(24, 10, 6, 0.38) 34%, rgba(8, 4, 4, 0) 72%);
+    mix-blend-mode: multiply;
+    filter: blur(3px);
+}
+
+.game-opening-prologue-subtitle-fire-embers {
+    position: absolute;
+    inset: 0;
+    overflow: visible;
+    pointer-events: none;
+    z-index: 2;
+}
+
+.game-opening-prologue-fire-ember {
+    position: absolute;
+    border-radius: 45% 55% 50% 50%;
+    transform: translate(-50%, -50%);
+    background: linear-gradient(180deg, rgba(255, 230, 120, 0.95) 0%, rgba(255, 110, 16, 0.92) 52%, rgba(160, 24, 0, 0.85) 100%);
+    box-shadow:
+        0 0 8px rgba(255, 120, 20, 0.85),
+        0 0 16px rgba(255, 48, 0, 0.45);
+    opacity: 0.95;
+    animation: game-opening-prologue-fire-ember-rise var(--ember-duration, 520ms) ease-out forwards;
+}
+
+.game-opening-prologue-fire-ember.is-hot {
+    background: linear-gradient(180deg, rgba(255, 255, 220, 0.98) 0%, rgba(255, 170, 40, 0.95) 48%, rgba(220, 52, 0, 0.9) 100%);
+    box-shadow:
+        0 0 10px rgba(255, 200, 80, 0.95),
+        0 0 20px rgba(255, 72, 0, 0.55);
+}
+
+@keyframes game-opening-prologue-fire-ember-rise {
+    0% {
+        opacity: 0.95;
+        transform: translate(-50%, -50%) scale(1);
+    }
+
+    100% {
+        opacity: 0;
+        transform: translate(calc(-50% + var(--ember-dx)), calc(-50% + var(--ember-dy))) scale(0.15);
+    }
 }
 
 .game-opening-prologue-subtitle-logo-wrap.is-exploding {
