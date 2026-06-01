@@ -414,14 +414,22 @@
         }
     }
 
+    function resolveMainPortalUrl() {
+        if (typeof global.resolveRoyalArmiesPageUrl === 'function') {
+            return global.resolveRoyalArmiesPageUrl('main');
+        }
+        return '/main';
+    }
+
     async function returnToAgePortal() {
         stopGamePresenceLoop();
         await postAgeLeave(false);
+        const mainUrl = resolveMainPortalUrl();
         if (global.RoyalArmiesPageRouteTransition && typeof global.RoyalArmiesPageRouteTransition.navigateTo === 'function') {
-            await global.RoyalArmiesPageRouteTransition.navigateTo('/main');
+            await global.RoyalArmiesPageRouteTransition.navigateTo(mainUrl);
             return;
         }
-        global.location.href = '/main';
+        global.location.href = mainUrl;
     }
 
     function refreshGamePageNavChrome() {
@@ -673,6 +681,9 @@
     }
 
     function resolveOfficialAgePagePath() {
+        if (typeof global.resolveRoyalArmiesPageUrl === 'function') {
+            return global.resolveRoyalArmiesPageUrl('agealpha');
+        }
         if (typeof global.getOfficialAgePagePath === 'function') {
             return global.getOfficialAgePagePath();
         }
@@ -892,7 +903,7 @@
 
         const username = resolveGamePageUsername();
         if (!username) {
-            global.location.replace('/main');
+            global.location.replace(resolveMainPortalUrl());
             return;
         }
 

@@ -59,6 +59,34 @@
         return origin ? `${origin}${route}` : route;
     }
 
+    /** Live Server / file:// previews need literal *.html paths; production uses extensionless slugs. */
+    function shouldUseHtmlPageExtensions() {
+        if (isProductionRoyalArmiesHost()) return false;
+        return isLocalDevelopmentHost();
+    }
+
+    function normalizeRoyalArmiesPageQuery(query) {
+        if (query == null || query === '') return '';
+        if (query instanceof URLSearchParams) {
+            const serialized = query.toString();
+            return serialized ? `?${serialized}` : '';
+        }
+        const raw = String(query);
+        return raw.startsWith('?') ? raw : `?${raw}`;
+    }
+
+    function resolveRoyalArmiesPageUrl(pageSlug, query) {
+        const slug = String(pageSlug || '')
+            .trim()
+            .replace(/^\//, '')
+            .replace(/\.html$/i, '');
+        const safeSlug = slug || 'main';
+        const path = shouldUseHtmlPageExtensions()
+            ? `/${safeSlug}.html`
+            : `/${safeSlug}`;
+        return `${path}${normalizeRoyalArmiesPageQuery(query)}`;
+    }
+
     function isPortalPreviewNavEnabled() {
         return isLocalDevelopmentHost();
     }
@@ -261,6 +289,8 @@
     global.shouldAllowLocalGameProgressionPreview = shouldAllowLocalGameProgressionPreview;
     global.getRoyalArmiesApiOrigin = getRoyalArmiesApiOrigin;
     global.resolveRoyalArmiesApiUrl = resolveRoyalArmiesApiUrl;
+    global.shouldUseHtmlPageExtensions = shouldUseHtmlPageExtensions;
+    global.resolveRoyalArmiesPageUrl = resolveRoyalArmiesPageUrl;
     global.RoyalArmiesDev = {
         isLocalDevelopmentHost,
         isLiveStaticPreviewHost,
@@ -285,6 +315,8 @@
         viewModes: LOCAL_DEV_VIEW_MODES,
         getRoyalArmiesApiOrigin,
         resolveRoyalArmiesApiUrl,
+        shouldUseHtmlPageExtensions,
+        resolveRoyalArmiesPageUrl,
         liveServerApiOrigin: LIVE_SERVER_API_ORIGIN
     };
 })(window);

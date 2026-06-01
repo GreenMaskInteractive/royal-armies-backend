@@ -3370,6 +3370,9 @@ function isCommanderGameSessionStarted(username) {
 }
 
 function resolveOfficialAgeResumePath() {
+    if (typeof resolveRoyalArmiesPageUrl === 'function') {
+        return resolveRoyalArmiesPageUrl('agealpha');
+    }
     if (typeof getOfficialAgePagePath === 'function') {
         return getOfficialAgePagePath();
     }
@@ -3397,6 +3400,9 @@ function resolveGamePageHandoffUrl(options) {
     params.set('tutorial', tutorial ? 'true' : 'false');
     params.set('joinAge', joinAge ? '1' : '0');
     params.set('server', server);
+    if (typeof resolveRoyalArmiesPageUrl === 'function') {
+        return resolveRoyalArmiesPageUrl('game', params);
+    }
     return `/game?${params.toString()}`;
 }
 

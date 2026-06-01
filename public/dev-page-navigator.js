@@ -18,7 +18,10 @@
     }
 
     function usesExtensionlessDevUrls() {
-        return true;
+        if (typeof global.shouldUseHtmlPageExtensions === 'function') {
+            return !global.shouldUseHtmlPageExtensions();
+        }
+        return false;
     }
 
     function getPageDirectoryBase() {
@@ -38,15 +41,22 @@
     }
 
     function resolveDevPageHref(page) {
-        if (!page) return '/main';
+        if (!page) {
+            return typeof global.resolveRoyalArmiesPageUrl === 'function'
+                ? global.resolveRoyalArmiesPageUrl('main')
+                : '/main';
+        }
 
         const fileName = page.file || 'main.html';
-        let href = page.path && page.path.startsWith('/')
-            ? page.path
-            : (() => {
-                const base = getPageDirectoryBase();
-                return base.endsWith('/') ? `${base}${fileName}` : `${base}/${fileName}`;
-            })();
+        const slug = fileName.replace(/\.html$/i, '');
+        let href = typeof global.resolveRoyalArmiesPageUrl === 'function'
+            ? global.resolveRoyalArmiesPageUrl(slug)
+            : (usesExtensionlessDevUrls()
+                ? (page.path && page.path.startsWith('/') ? page.path : `/${slug}`)
+                : (() => {
+                    const base = getPageDirectoryBase();
+                    return base.endsWith('/') ? `${base}${fileName}` : `${base}/${fileName}`;
+                })());
 
         if (page.id === 'game' || fileName === 'game.html') {
             const url = new URL(href, global.location.href);
@@ -144,7 +154,9 @@
         const currentId = getCurrentPageId();
         const pageOptions = DEV_SITE_PAGES.map((page) => {
             const selected = page.id === currentId ? ' selected' : '';
-            const value = page.path || '/main';
+            const value = typeof global.resolveRoyalArmiesPageUrl === 'function'
+                ? global.resolveRoyalArmiesPageUrl(page.id)
+                : (page.path || '/main');
             return `<option value="${value}" data-dev-page-id="${page.id}"${selected}>${page.label}</option>`;
         }).join('');
 

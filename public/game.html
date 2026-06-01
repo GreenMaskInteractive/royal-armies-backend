@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Royal Armies - Age Session (In Development)</title>
-    <script src="dev-environment.js"></script>
+    <script src="dev-environment.js?v=local-html-urls-1"></script>
     <script>
     (function enforceEarlyActiveAgeSessionResume() {
         try {
@@ -21,7 +21,9 @@
             document.documentElement.classList.add('game-session-resume-redirect');
             var pathBase = window.location.pathname.replace(/\/$/, '').replace(/\.html$/i, '');
             if (pathBase === '/agealpha' || pathBase === '/age') return;
-            window.location.replace('/agealpha');
+            window.location.replace(typeof resolveRoyalArmiesPageUrl === 'function'
+                ? resolveRoyalArmiesPageUrl('agealpha')
+                : '/agealpha');
         } catch (_err) {
             /* ignore */
         }
@@ -11484,17 +11486,18 @@
     <div id="game-onboarding-session-transition" class="game-onboarding-session-transition" aria-hidden="true"></div>
 
     <script src="rift-confirm-buttons.js?v=ra-action-btn-1"></script>
-    <script src="dev-environment.js"></script>
+    <script src="dev-environment.js?v=local-html-urls-1"></script>
     <script src="rift-error-codes.js?v=nexus-rift-acronyms-1"></script>
     <script src="portal-alerts.js?v=ra-action-btn-1"></script>
     <script src="rift-error-display.js?v=local-silent-error-popups-1"></script>
     <script src="commander-dossier-sync.js?v=onboarding-game-nation-1"></script>
+    <script src="rift-ui-sfx.js?v=ui-sfx-global-3"></script>
     <script src="script.js?v=commander-rank-reset-4"></script>
     <script src="portal-commander-identity-menu.js?v=avatar-name-menu-trigger-1"></script>
     <script src="game-class-picker.js?v=game-class-panel-alpha-1"></script>
     <script src="game-regions-map.js?v=site-viewport-stable-1"></script>
     <script src="rift-official-age.js?v=official-age-page-1"></script>
-    <script src="game.js?v=local-progression-preview-2"></script>
+    <script src="game.js?v=local-progression-preview-5"></script>
     <script src="dev-page-navigator.js?v=game-handoff-routing-1"></script>
     <script src="custom-cursor.js?v=scrollbar-cursor-3"></script>
 </body>
