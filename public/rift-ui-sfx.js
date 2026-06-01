@@ -20,12 +20,14 @@
 
     const HOVER_SKIP_SELECTOR = [
         '[data-ui-sfx-hover="off"]',
+        '[role="tab"]',
         '.action-btn-aura-housing',
         '.action-btn-aura-housing *'
     ].join(', ');
 
     const SELECT_SKIP_SELECTOR = [
         '[data-ui-sfx-select="off"]',
+        '[role="tab"]',
         '.action-btn-aura-housing',
         '.action-btn-aura-housing *'
     ].join(', ');
@@ -76,6 +78,7 @@
     function isButtonControl(element) {
         if (!element || !(element instanceof Element)) return false;
         if (!element.matches(BUTTON_SELECTOR)) return false;
+        if (element.getAttribute('role') === 'tab') return false;
         return !isDisabledButton(element);
     }
 
