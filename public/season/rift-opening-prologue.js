@@ -10,7 +10,7 @@
     const AUDIO_ID = 'game-opening-prologue-audio';
     const SUBTITLE_ID = 'game-opening-prologue-subtitle';
     const CRITICAL_STYLE_ID = 'rift-opening-prologue-critical-styles-v6';
-    const TRAILER_LORE_TOOL_MAX_OPACITY = 0.5;
+    const TRAILER_LORE_TOOL_MAX_OPACITY = 0.4;
     const NARRATION_METADATA_TIMEOUT_MS = 8000;
 
     /**
