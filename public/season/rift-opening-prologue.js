@@ -50,7 +50,7 @@
     const PROLOGUE_MUSIC_OUT_FADE_MS = 1200;
     const PROLOGUE_REVEAL_FADE_MS = 900;
     const PROLOGUE_LOGO_SRC = 'images/royalarmiestitle.png?v=logo-trim-gimp-1';
-    const PROLOGUE_SUBTITLE_LOGO_SRC = 'images/royalarmiessubtitlelogo.png?v=age-subtitle-1';
+    const PROLOGUE_SUBTITLE_LOGO_SRC = 'season/royalarmiessubtitlelogo.png?v=age-subtitle-1';
     const PROLOGUE_LORE_TOOL_SRC = 'images/royalarmiesloretool.png?v=prologue-lore-tool-1';
     const PROLOGUE_LORE_TOOL_FADE_MS = 12000;
     const PROLOGUE_SUBTITLE_LOGO_SFX_SRC = 'audio/joinagesfxselect.wav';
@@ -189,6 +189,15 @@
                 background: rgba(8, 6, 4, 0.88) !important;
                 box-shadow: 0 8px 28px rgba(0, 0, 0, 0.45) !important;
                 pointer-events: none !important;
+                opacity: 1 !important;
+                visibility: visible !important;
+                display: block !important;
+            }
+            #${OVERLAY_ID}.is-logo-reveal-active .game-opening-prologue-subtitle-dock,
+            #${OVERLAY_ID}[data-subtitles-hidden="1"] .game-opening-prologue-subtitle-dock {
+                opacity: 0 !important;
+                visibility: hidden !important;
+                display: none !important;
             }
             #${OVERLAY_ID}.is-subtitles-active .game-opening-prologue-subtitle-dock,
             #${OVERLAY_ID}[data-subtitles-active="1"] .game-opening-prologue-subtitle-dock {
@@ -231,6 +240,7 @@
         if (active) {
             overlayEl.classList.add('is-subtitles-active');
             overlayEl.setAttribute('data-subtitles-active', '1');
+            overlayEl.removeAttribute('data-subtitles-hidden');
             if (dock) {
                 dock.style.setProperty('opacity', '1', 'important');
                 dock.style.setProperty('visibility', 'visible', 'important');
@@ -239,6 +249,7 @@
         } else {
             overlayEl.classList.remove('is-subtitles-active');
             overlayEl.removeAttribute('data-subtitles-active');
+            overlayEl.setAttribute('data-subtitles-hidden', '1');
             if (dock) {
                 dock.style.removeProperty('opacity');
                 dock.style.removeProperty('visibility');
@@ -327,7 +338,7 @@
         audioEl.src = PROLOGUE_AUDIO_SRC;
         audioEl.volume = PROLOGUE_NARRATION_VOLUME;
 
-        (global.document.body || global.document.documentElement).appendChild(overlayEl);
+        (global.document.documentElement || global.document.body).appendChild(overlayEl);
         global.document.body.appendChild(audioEl);
 
         subtitleEl = overlayEl.querySelector(`#${SUBTITLE_ID}`);
@@ -411,6 +422,9 @@
         }
 
         subtitleEl.textContent = cue.text;
+        subtitleEl.style.setProperty('color', 'rgba(255, 242, 210, 0.96)', 'important');
+        subtitleEl.style.setProperty('opacity', '1', 'important');
+        subtitleEl.style.setProperty('visibility', 'visible', 'important');
     }
 
     function resolveActiveCueIndex(audioTime) {

@@ -279,10 +279,16 @@
     border-radius: 6px;
     background: rgba(8, 6, 4, 0.88);
     box-shadow: 0 8px 28px rgba(0, 0, 0, 0.45);
-    opacity: 0;
-    visibility: hidden;
+    opacity: 1;
+    visibility: visible;
     pointer-events: none;
     transition: opacity 0.35s ease, visibility 0.35s ease;
+}
+
+.game-opening-prologue.is-logo-reveal-active .game-opening-prologue-subtitle-dock,
+.game-opening-prologue[data-subtitles-hidden="1"] .game-opening-prologue-subtitle-dock {
+    opacity: 0;
+    visibility: hidden;
 }
 
 .game-opening-prologue.is-subtitles-active .game-opening-prologue-subtitle-dock {
