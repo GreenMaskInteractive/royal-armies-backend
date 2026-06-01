@@ -58,7 +58,7 @@
     const PROLOGUE_SUBTITLE_LOGO_SRC = 'season/royalarmiessubtitlelogo.png?v=age-subtitle-1';
     const PROLOGUE_LORE_TOOL_SRC = 'images/royalarmiesloretool.png?v=prologue-lore-tool-1';
     const PROLOGUE_LORE_TOOL_FADE_MS = 12000;
-    const PROLOGUE_SUBTITLE_LOGO_SFX_SRC = 'audio/joinagesfxselect.wav';
+    const PROLOGUE_SUBTITLE_LOGO_SFX_SRC = 'audio/explosionsfx.wav?v=prologue-explosion-1';
     const PROLOGUE_SUBTITLE_SPARK_INTERVAL_MS = 170;
     const PROLOGUE_SUBTITLE_SPARKS_PER_BURST = 5;
     const PROLOGUE_SUBTITLE_SPARK_FLASH_CHANCE = 0.24;
