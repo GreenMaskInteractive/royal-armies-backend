@@ -7,8 +7,7 @@ const {
     loadUnitPurchaseCatalog,
     getCatalogUnitById,
     resolveCommanderAgeGold,
-    resolveCommanderAgeProvisions,
-    AGE_COMMANDER_PROVISIONS_DEFAULT
+    resolveCommanderAgeProvisions
 } = require('./nexus-age-recruitment');
 const {
     normalizeAgeArmy,
@@ -609,10 +608,10 @@ function executeGuildTrainingBattleWithLedger(commander, trainingMode = 'street-
     }
     const xpResult = applyGuildRankXp(commander, xpGain);
 
+    const currentProvisions = resolveCommanderAgeProvisions(commander);
     const nextProvisions = Math.max(
         0,
-        Math.floor(Number(resolveCommanderAgeProvisions(commander)) || AGE_COMMANDER_PROVISIONS_DEFAULT)
-            + xpResult.provisionsGranted
+        Math.floor(currentProvisions) + xpResult.provisionsGranted
     );
 
     const roster = buildAgeRosterHudPayload({

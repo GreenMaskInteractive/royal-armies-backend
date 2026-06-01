@@ -730,7 +730,12 @@
         if (provisionsEl) {
             if (result.provisionsGranted) {
                 provisionsEl.hidden = false;
-                provisionsEl.textContent = `+${result.provisionsGranted} provisions granted`;
+                const balance = result.ageProvisions != null
+                    ? Math.max(0, Math.floor(Number(result.ageProvisions) || 0))
+                    : null;
+                provisionsEl.textContent = balance != null
+                    ? `+${result.provisionsGranted} provisions (balance now ${balance.toLocaleString('en-US')})`
+                    : `+${result.provisionsGranted} provisions granted`;
             } else {
                 provisionsEl.hidden = true;
                 provisionsEl.textContent = '';
