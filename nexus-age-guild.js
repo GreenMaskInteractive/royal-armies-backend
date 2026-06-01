@@ -41,6 +41,7 @@ const {
     swapRandomHealthyUnitToInjured,
     swapRandomInjuredUnitToHealthy
 } = require('./nexus-age-unit-xp');
+const { recordBalanceEvent } = require('./nexus-balance-monitor');
 
 const TRADE_CONVOY_LOTS = Object.freeze([
     { id: 'guild-spice-crate', label: 'Spice Crate', costGold: 2400, resaleGold: 3120 },
@@ -631,6 +632,24 @@ function executeGuildTrainingBattleWithLedger(commander, trainingMode = 'street-
         ageArmy: nextArmy
     });
 
+    recordBalanceEvent('rank-progression', {
+        source: 'guild-training',
+        username: String(commander?.username || '').trim() || null,
+        rankBefore: resolveCommanderRank(commander),
+        rankAfter: xpResult.rank,
+        promotionsCount: Array.isArray(xpResult.promotions) ? xpResult.promotions.length : 0,
+        provisionsGranted: xpResult.provisionsGranted,
+        ageProvisionsAfter: nextProvisions
+    });
+    recordBalanceEvent('training-battle', {
+        source: 'guild-training',
+        username: String(commander?.username || '').trim() || null,
+        trainingMode: String(trainingMode || 'street-patrol').trim().toLowerCase(),
+        winner: String(battle?.winner || ''),
+        xpGain,
+        injuriesApplied: injuryCount
+    });
+
     return {
         ok: true,
         ...battle,
@@ -677,6 +696,15 @@ function executeCityAssaultBattleWithLedger(commander, city, playersInCity = 1) 
     }
 
     const xpResult = applyGuildRankXp(commander, xpCalc.xpGain);
+
+    recordBalanceEvent('rank-progression', {
+        source: 'city-assault',
+        username: String(commander?.username || '').trim() || null,
+        rankBefore: resolveCommanderRank(commander),
+        rankAfter: xpResult.rank,
+        promotionsCount: Array.isArray(xpResult.promotions) ? xpResult.promotions.length : 0,
+        provisionsGranted: xpResult.provisionsGranted
+    });
 
     return {
         ok: true,

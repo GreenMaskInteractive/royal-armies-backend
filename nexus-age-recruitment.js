@@ -12,6 +12,7 @@ const {
     buildAgeRosterHudPayload,
     normalizeUnitXpEachSlots
 } = require('./nexus-age-roster');
+const { recordBalanceEvent } = require('./nexus-balance-monitor');
 
 const CATALOG_PATH = path.join(__dirname, 'public', 'data', 'unit-purchase-catalog.json');
 const AGE_COMMANDER_GOLD_DEFAULT = 20000;
@@ -337,6 +338,24 @@ function executeAgeUnitRecruitment({ commander, unitId, quantity }) {
     };
 }
 
+function executeAgeUnitRecruitmentWithBalanceAudit({ commander, unitId, quantity }) {
+    const result = executeAgeUnitRecruitment({ commander, unitId, quantity });
+    if (!result?.ok) return result;
+
+    recordBalanceEvent('recruitment', {
+        username: String(commander?.username || '').trim() || null,
+        commanderRank: Math.max(1, Math.floor(Number(commander?.rank) || 1)),
+        unitId: result.unitId,
+        quantity: result.quantity,
+        upcPerUnit: result.upcPerUnit,
+        provisionsSpent: result.provisionsSpent,
+        provisionsAfter: result.ageProvisions,
+        unitsTotal: result.unitsTotal
+    });
+
+    return result;
+}
+
 module.exports = {
     AGE_COMMANDER_GOLD_DEFAULT,
     AGE_COMMANDER_PROVISIONS_DEFAULT,
@@ -356,5 +375,6 @@ module.exports = {
     computeMaxRecruitQuantityByProvisions,
     evaluateUnitPurchaseAccess,
     executeAgeUnitRecruitment,
+    executeAgeUnitRecruitmentWithBalanceAudit,
     getCatalogUnitById
 };

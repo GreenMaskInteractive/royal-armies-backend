@@ -1,0 +1,18 @@
+{
+  "version": "2026-05-31",
+  "notes": "Baseline thresholds for Age balance telemetry during active testing.",
+  "recruitment": {
+    "maxUnitsPerRecruitEvent": 25,
+    "maxTier1UnitsBeforeRank7": 70
+  },
+  "progression": {
+    "maxProvisionGrantPerPromotion": 110,
+    "maxEarlyProvisionGrantPerPromotion": 85,
+    "earlyRankCutoff": 10,
+    "maxPromotionsPerBattleEvent": 1
+  },
+  "battle": {
+    "maxXpGainPerTrainingBattle": 60,
+    "maxInjuriesPerTrainingBattle": 6
+  }
+}

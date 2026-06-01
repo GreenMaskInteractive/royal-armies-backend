@@ -98,7 +98,7 @@ const {
     buildCommanderAgeGoldSeedPatch,
     resolveCommanderAgeProvisions,
     buildCommanderAgeProvisionsSeedPatch,
-    executeAgeUnitRecruitment
+    executeAgeUnitRecruitmentWithBalanceAudit
 } = require('./nexus-age-recruitment');
 const {
     isAgeLedgerAdminUsername,
@@ -5178,7 +5178,7 @@ app.post('/api/portal/age/recruit-units', (req, res) => {
 
     const unitId = String(req.body?.unitId || '').trim();
     const quantity = req.body?.quantity;
-    const result = executeAgeUnitRecruitment({ commander, unitId, quantity });
+    const result = executeAgeUnitRecruitmentWithBalanceAudit({ commander, unitId, quantity });
 
     if (!result.ok) {
         return sendApiError(res, result.errorCode || 'NEXUS-AGE-012');
