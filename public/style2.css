@@ -22880,6 +22880,103 @@ button.age-guild-gear-slot {
     color: rgba(244, 232, 200, 0.82);
 }
 
+.age-guild-battle-report-toolbar {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    padding: 0 0 8px;
+    border-bottom: 1px solid rgba(184, 144, 48, 0.18);
+    margin-bottom: 8px;
+}
+
+.age-guild-battle-log-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    user-select: none;
+    font-family: 'Cinzel', serif;
+    font-size: 0.62rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: rgba(241, 224, 172, 0.82);
+}
+
+.age-guild-battle-log-toggle-input {
+    width: 14px;
+    height: 14px;
+    margin: 0;
+    accent-color: #c8942c;
+    cursor: pointer;
+}
+
+.age-guild-battle-log-toggle:hover,
+.age-guild-battle-log-toggle:focus-within {
+    color: #ffd978;
+}
+
+#age-guild-battle-tab-details {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+}
+
+#age-guild-battle-tab-details .age-guild-log {
+    flex: 1 1 auto;
+    min-height: 0;
+}
+
+.age-guild-log-summary {
+    display: grid;
+    gap: 8px;
+}
+
+.age-guild-log-summary-row {
+    margin: 0;
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 10px;
+    font-size: 0.82rem;
+    line-height: 1.35;
+    color: rgba(244, 232, 200, 0.9);
+}
+
+.age-guild-log-summary-label {
+    font-family: 'Cinzel', serif;
+    font-size: 0.62rem;
+    font-weight: 700;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    color: rgba(241, 224, 172, 0.72);
+}
+
+.age-guild-log-summary-value {
+    font-weight: 600;
+    color: #f1e0ac;
+    text-align: right;
+}
+
+.age-guild-log-summary-section {
+    display: grid;
+    gap: 6px;
+}
+
+.age-guild-log-extended {
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid rgba(184, 144, 48, 0.22);
+    display: grid;
+    gap: 8px;
+}
+
+.age-guild-log-head--extended {
+    display: grid;
+    gap: 4px;
+}
+
 .age-guild-battle-deck:not(.age-guild-battle-board) {
     position: relative;
     pointer-events: auto;

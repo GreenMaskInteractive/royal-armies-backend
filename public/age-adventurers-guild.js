@@ -6,6 +6,7 @@
 
     const BATTLE_CHARGE_MS = 1500;
     const BATTLE_RING_CIRCUMFERENCE = 2 * Math.PI * 46;
+    const EXTENDED_BATTLE_LOG_STORAGE_KEY = 'rift-age-guild-extended-battle-log';
     const BATTLE_DEBUG = (
         new URLSearchParams(global.location?.search || '').has('guildBattleDebug')
         || global.localStorage?.getItem('rift-guild-battle-debug') === '1'
@@ -43,6 +44,7 @@
     let guildStateLoadInFlight = null;
     let lootLog = [];
     let activeBattleTab = 'details';
+    let showExtendedBattleLog = false;
     let lootTabAlert = false;
     let trainingViewActive = false;
     let overlayJobActive = false;
@@ -272,6 +274,128 @@
             await ensureSettlementGuildHubLoaded({ settlementTier });
             renderSettlementGuildJobs();
         }
+    }
+
+    function loadExtendedBattleLogPreference() {
+        try {
+            showExtendedBattleLog = global.localStorage?.getItem(EXTENDED_BATTLE_LOG_STORAGE_KEY) === '1';
+        } catch {
+            showExtendedBattleLog = false;
+        }
+    }
+
+    function setExtendedBattleLog(enabled) {
+        showExtendedBattleLog = Boolean(enabled);
+        try {
+            global.localStorage?.setItem(
+                EXTENDED_BATTLE_LOG_STORAGE_KEY,
+                showExtendedBattleLog ? '1' : '0'
+            );
+        } catch {
+            /* ignore */
+        }
+        syncExtendedBattleLogToggle();
+        renderBattleLog();
+    }
+
+    function syncExtendedBattleLogToggle() {
+        const toggle = global.document.getElementById('age-guild-battle-log-extended-toggle');
+        if (!toggle) return;
+        toggle.checked = showExtendedBattleLog;
+        toggle.setAttribute('aria-checked', showExtendedBattleLog ? 'true' : 'false');
+    }
+
+    function renderCommanderXpSummaryRow(result) {
+        const xp = Math.max(0, Math.floor(Number(result?.xpGain) || 0));
+        return (
+            '<p class="age-guild-log-summary-row age-guild-log-summary-xp">'
+            + '<span class="age-guild-log-summary-label">Guild XP</span> '
+            + `<span class="age-guild-log-summary-value">+${escapeHtml(xp)}</span>`
+            + '</p>'
+        );
+    }
+
+    function renderInjuriesSummaryRow(injuriesApplied) {
+        const count = Math.max(0, Math.floor(Number(injuriesApplied) || 0));
+        return (
+            '<p class="age-guild-log-summary-row age-guild-log-summary-injuries">'
+            + '<span class="age-guild-log-summary-label">Injuries</span> '
+            + `<span class="age-guild-log-summary-value">${count ? `${escapeHtml(count)} unit(s) injured` : 'None'}</span>`
+            + '</p>'
+        );
+    }
+
+    function renderBattleLogExtendedBlock(result) {
+        const xpBreakdown = result.xpBreakdown && typeof result.xpBreakdown === 'object' ? result.xpBreakdown : null;
+        const survivorMeta = xpBreakdown && Number.isFinite(xpBreakdown.totalSurviving)
+            ? ` · ${xpBreakdown.totalSurviving} survivor(s)`
+            : '';
+        const logLines = (Array.isArray(result.log) ? result.log : [])
+            .map((line) => `<li>${escapeHtml(line)}</li>`)
+            .join('');
+
+        return (
+            '<div class="age-guild-log-extended">'
+            + '<header class="age-guild-log-head age-guild-log-head--extended">'
+            + `<p class="age-guild-log-outcome">${escapeHtml(formatWinnerLabel(result.winner))}</p>`
+            + `<p class="age-guild-log-meta">${escapeHtml(formatEndReason(result))} · +${escapeHtml(result.xpGain ?? 0)} XP${escapeHtml(survivorMeta)}`
+            + `${result.injuriesApplied ? ` · ${escapeHtml(result.injuriesApplied)} injured` : ''}</p>`
+            + '</header>'
+            + `<ol class="age-guild-battle-log">${logLines}</ol>`
+            + '</div>'
+        );
+    }
+
+    function renderBattleLogSummaryBlock(result) {
+        const rankLine = result.rankPromoted
+            ? `<p class="age-guild-log-promotion">Promoted to rank ${escapeHtml(result.rank)}`
+            + `${result.provisionsGranted ? ` · +${escapeHtml(result.provisionsGranted)} provisions` : ''}</p>`
+            : '';
+
+        const promoteReady = Array.isArray(result.unitsReadyToPromote) ? result.unitsReadyToPromote : [];
+        const unitPromoteBlock = promoteReady.length
+            ? (
+                '<div class="age-guild-log-unit-promote">'
+                + `<p class="age-guild-log-unit-promote-title">${escapeHtml(promoteReady.length)} unit stack(s) ready for promotion</p>`
+                + '<ul class="age-guild-log-unit-promote-list">'
+                + promoteReady.map((entry) => (
+                    `<li>${escapeHtml(entry.name)} → ${escapeHtml(entry.nextPromotionLabel || 'next rank')}</li>`
+                )).join('')
+                + '</ul>'
+                + '</div>'
+            )
+            : '';
+
+        const showWorkspaceLinks = Boolean(result.rankPromoted);
+        const workspaceLinksBlock = showWorkspaceLinks ? renderBattleLogWorkspaceLinks() : '';
+
+        return (
+            '<div class="age-guild-log-summary">'
+            + renderCommanderXpSummaryRow(result)
+            + renderInjuriesSummaryRow(result.injuriesApplied)
+            + (rankLine || unitPromoteBlock || workspaceLinksBlock
+                ? `<div class="age-guild-log-summary-section age-guild-log-summary-section--promotions">${rankLine}${unitPromoteBlock}${workspaceLinksBlock}</div>`
+                : '')
+            + '</div>'
+        );
+    }
+
+    function renderBattleLogToolbar() {
+        return (
+            '<div class="age-guild-battle-report-toolbar">'
+            + '<label class="age-guild-battle-log-toggle">'
+            + '<input type="checkbox" id="age-guild-battle-log-extended-toggle" class="age-guild-battle-log-toggle-input">'
+            + '<span class="age-guild-battle-log-toggle-label">Show full battle log</span>'
+            + '</label>'
+            + '</div>'
+        );
+    }
+
+    function ensureBattleLogToolbar() {
+        const panel = global.document.getElementById('age-guild-battle-tab-details');
+        if (!panel || panel.querySelector('.age-guild-battle-report-toolbar')) return;
+        panel.insertAdjacentHTML('afterbegin', renderBattleLogToolbar());
+        syncExtendedBattleLogToggle();
     }
 
     function setBattleTab(tabId) {
@@ -559,6 +683,9 @@
     }
 
     function renderBattleLog() {
+        ensureBattleLogToolbar();
+        syncExtendedBattleLogToggle();
+
         const logEl = global.document.getElementById('age-guild-log');
         if (!logEl) return;
 
@@ -577,46 +704,12 @@
 
         const result = lastBattleResult;
         const winnerClass = result.winner === 'commander' ? 'is-victory' : (result.winner === 'npc' ? 'is-defeat' : 'is-draw');
-        const xpBreakdown = result.xpBreakdown && typeof result.xpBreakdown === 'object' ? result.xpBreakdown : null;
-        const survivorMeta = xpBreakdown && Number.isFinite(xpBreakdown.totalSurviving)
-            ? ` · ${xpBreakdown.totalSurviving} survivor(s)`
-            : '';
-        const logLines = (Array.isArray(result.log) ? result.log : [])
-            .map((line) => `<li>${escapeHtml(line)}</li>`)
-            .join('');
-        const rankLine = result.rankPromoted
-            ? `<p class="age-guild-log-promotion">Promoted to rank ${escapeHtml(result.rank)}`
-            + `${result.provisionsGranted ? ` · +${escapeHtml(result.provisionsGranted)} provisions` : ''}</p>`
-            : '';
-
-        const promoteReady = Array.isArray(result.unitsReadyToPromote) ? result.unitsReadyToPromote : [];
-        const unitPromoteBlock = promoteReady.length
-            ? (
-                '<div class="age-guild-log-unit-promote">'
-                + `<p class="age-guild-log-unit-promote-title">${escapeHtml(promoteReady.length)} unit stack(s) ready for promotion</p>`
-                + '<ul class="age-guild-log-unit-promote-list">'
-                + promoteReady.map((entry) => (
-                    `<li>${escapeHtml(entry.name)} → ${escapeHtml(entry.nextPromotionLabel || 'next rank')}</li>`
-                )).join('')
-                + '</ul>'
-                + '</div>'
-            )
-            : '';
-
-        const showWorkspaceLinks = Boolean(result.rankPromoted);
-        const workspaceLinksBlock = showWorkspaceLinks ? renderBattleLogWorkspaceLinks() : '';
+        const extendedBlock = showExtendedBattleLog ? renderBattleLogExtendedBlock(result) : '';
 
         logEl.innerHTML = (
-            `<article class="age-guild-log-entry ${winnerClass}">`
-            + '<header class="age-guild-log-head">'
-            + `<p class="age-guild-log-outcome">${escapeHtml(formatWinnerLabel(result.winner))}</p>`
-            + `<p class="age-guild-log-meta">${escapeHtml(formatEndReason(result))} · +${escapeHtml(result.xpGain ?? 0)} XP${escapeHtml(survivorMeta)}`
-            + `${result.injuriesApplied ? ` · ${escapeHtml(result.injuriesApplied)} injured` : ''}</p>`
-            + rankLine
-            + unitPromoteBlock
-            + workspaceLinksBlock
-            + '</header>'
-            + `<ol class="age-guild-battle-log">${logLines}</ol>`
+            `<article class="age-guild-log-entry ${winnerClass} age-guild-log-entry--summary">`
+            + renderBattleLogSummaryBlock(result)
+            + extendedBlock
             + '</article>'
         );
         logEl.scrollTop = 0;
@@ -1292,6 +1385,11 @@
         }
     }
 
+    function onBattleLogToggleChange(event) {
+        if (event.target?.id !== 'age-guild-battle-log-extended-toggle') return;
+        setExtendedBattleLog(event.target.checked);
+    }
+
     function onSettlementMenuClick(event) {
         const jobBtn = event.target.closest('[data-guild-job]');
         if (!jobBtn) return;
@@ -1317,11 +1415,14 @@
         if (bound) return;
         bound = true;
 
+        loadExtendedBattleLogPreference();
+
         const workspace = resolveWorkspace();
 
         battleControlsBind();
 
         workspace?.addEventListener('click', onWorkspaceClick);
+        workspace?.addEventListener('change', onBattleLogToggleChange);
         global.document.addEventListener('keydown', onWorkspaceKeydown);
         global.addEventListener('royalarmies:age-guild-updated', (event) => {
             mergeGuildState(event?.detail || {});
