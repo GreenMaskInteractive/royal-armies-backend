@@ -46,8 +46,6 @@
     const PROLOGUE_POST_NARRATION_HOLD_MS = 20000;
     const PROLOGUE_TITLE_LOGO_REVEAL_MS = 4200;
     const PROLOGUE_SUBTITLE_LOGO_REVEAL_MS = 1500;
-    /** Fire subtitle SFX this many ms before the subtitle logo animation completes. */
-    const PROLOGUE_SUBTITLE_LOGO_SFX_LEAD_MS = 60;
     const PROLOGUE_MUSIC_OUT_FADE_MS = 1200;
     const PROLOGUE_REVEAL_FADE_MS = 900;
     const PROLOGUE_LOGO_SRC = 'images/royalarmiestitle.png?v=logo-trim-gimp-1';
@@ -399,9 +397,8 @@
 
         const animationOptions = options && typeof options === 'object' ? options : {};
         const useLinearMotion = animationOptions.easing === 'linear';
-        const nearCompleteLeadMs = Math.max(0, Number(animationOptions.nearCompleteLeadMs) || 0);
-        const onNearComplete = typeof animationOptions.onNearComplete === 'function'
-            ? animationOptions.onNearComplete
+        const onComplete = typeof animationOptions.onComplete === 'function'
+            ? animationOptions.onComplete
             : null;
 
         return new Promise((resolve) => {
@@ -411,7 +408,7 @@
 
             const startedAt = global.performance?.now?.() ?? Date.now();
             let settled = false;
-            let nearCompleteFired = false;
+            let completeFired = false;
 
             const finish = () => {
                 if (settled || generation !== logoRevealGeneration) return;
@@ -440,20 +437,21 @@
                 const opacity = useLinearMotion ? motion : Math.min(1, motion * 1.15);
                 const blur = 14 * (1 - motion);
 
-                if (onNearComplete && !nearCompleteFired && elapsed >= (durationMs - nearCompleteLeadMs)) {
-                    nearCompleteFired = true;
-                    onNearComplete();
-                }
-
                 logoEl.style.opacity = String(opacity);
                 logoEl.style.transform = `scale3d(${scale}, ${scale}, ${scale}) translateZ(${depth}px)`;
                 logoEl.style.filter = `blur(${blur}px)`;
 
                 if (progress < 1) {
                     global.requestAnimationFrame(tick);
-                } else {
-                    finish();
+                    return;
                 }
+
+                if (onComplete && !completeFired) {
+                    completeFired = true;
+                    onComplete();
+                }
+
+                finish();
             };
 
             logoEl.style.opacity = '0';
@@ -504,8 +502,7 @@
 
         await playLogoArriveAnimation(subtitleLogoEl, PROLOGUE_SUBTITLE_LOGO_REVEAL_MS, generation, {
             easing: 'linear',
-            nearCompleteLeadMs: PROLOGUE_SUBTITLE_LOGO_SFX_LEAD_MS,
-            onNearComplete: () => {
+            onComplete: () => {
                 if (generation !== logoRevealGeneration) return;
                 playPrologueSubtitleLogoSfx();
             }
