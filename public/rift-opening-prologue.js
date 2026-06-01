@@ -382,7 +382,10 @@
         const hideSubtitle = Boolean(options && options.hideSubtitle);
         logoEl.classList.remove('is-arriving', 'is-arrived');
         logoEl.style.removeProperty('--prologue-logo-arrive-ms');
-        logoEl.style.animation = 'none';
+        logoEl.style.removeProperty('animation');
+        logoEl.style.removeProperty('transform');
+        logoEl.style.removeProperty('opacity');
+        logoEl.style.removeProperty('filter');
 
         if (hideSubtitle && logoEl.classList.contains('game-opening-prologue-logo--subtitle')) {
             logoEl.hidden = true;
@@ -394,23 +397,50 @@
 
         return new Promise((resolve) => {
             logoEl.hidden = false;
-            logoEl.style.setProperty('--prologue-logo-arrive-ms', `${durationMs}ms`);
             logoEl.classList.remove('is-arrived');
-            logoEl.classList.remove('is-arriving');
-            void logoEl.offsetWidth;
             logoEl.classList.add('is-arriving');
 
+            const startedAt = global.performance?.now?.() ?? Date.now();
             let settled = false;
+
             const finish = () => {
                 if (settled || generation !== logoRevealGeneration) return;
                 settled = true;
                 logoEl.classList.remove('is-arriving');
                 logoEl.classList.add('is-arrived');
+                logoEl.style.removeProperty('transform');
+                logoEl.style.removeProperty('opacity');
+                logoEl.style.removeProperty('filter');
                 resolve();
             };
 
-            logoEl.addEventListener('animationend', finish, { once: true });
-            global.setTimeout(finish, durationMs + 120);
+            const tick = (now) => {
+                if (settled || generation !== logoRevealGeneration) return;
+
+                const elapsed = now - startedAt;
+                const progress = durationMs <= 0 ? 1 : Math.min(1, elapsed / durationMs);
+                const eased = 1 - ((1 - progress) ** 3);
+                const scale = 0.04 + (0.96 * eased);
+                const depth = -1400 + (1400 * eased);
+                const opacity = Math.min(1, eased * 1.15);
+                const blur = 14 * (1 - eased);
+
+                logoEl.style.opacity = String(opacity);
+                logoEl.style.transform = `scale3d(${scale}, ${scale}, ${scale}) translateZ(${depth}px)`;
+                logoEl.style.filter = `blur(${blur}px)`;
+
+                if (progress < 1) {
+                    global.requestAnimationFrame(tick);
+                } else {
+                    finish();
+                }
+            };
+
+            logoEl.style.opacity = '0';
+            logoEl.style.transform = 'scale3d(0.04, 0.04, 0.04) translateZ(-1400px)';
+            logoEl.style.filter = 'blur(14px)';
+            global.requestAnimationFrame(tick);
+            global.setTimeout(finish, durationMs + 160);
         });
     }
 
