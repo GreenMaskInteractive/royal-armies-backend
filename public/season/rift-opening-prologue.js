@@ -37,9 +37,7 @@
     ]);
 
     const PROLOGUE_AUDIO_SRC = 'season/distressedwoman.mp3';
-    /** HTML audio.volume caps at 1.0 — use Web Audio gain for louder narration. */
     const PROLOGUE_NARRATION_VOLUME = 1;
-    const PROLOGUE_NARRATION_GAIN = 2.35;
     const PROLOGUE_MUSIC_VOLUME = 0.3;
     const PROLOGUE_MUSIC_PEAK_VOLUME = 1;
     /** Narration starts immediately; background music joins after this delay. */
@@ -76,9 +74,6 @@
     let activeCueIndex = -1;
     let finishCallback = null;
     const LOCAL_PROLOGUE_PENDING_KEY = 'royalArmies_localProloguePending';
-    let narrationAudioContext = null;
-    let narrationGainNode = null;
-    let narrationSourceNode = null;
 
     function splitParagraphIntoSentences(text) {
         return String(text || '')
@@ -237,7 +232,6 @@
 
         (global.document.body || global.document.documentElement).appendChild(overlayEl);
         global.document.body.appendChild(audioEl);
-        wireNarrationAudioBoost();
 
         subtitleEl = overlayEl.querySelector(`#${SUBTITLE_ID}`);
         const skipBtn = overlayEl.querySelector('#game-opening-prologue-skip');
@@ -275,55 +269,6 @@
         }
 
         cueTimelineScale = audioDuration / SCRIPT_TIMELINE_DURATION;
-    }
-
-    function wireNarrationAudioBoost() {
-        if (!audioEl || audioEl.dataset.riftNarrationBoost === '1') return;
-
-        const AudioCtx = global.AudioContext || global.webkitAudioContext;
-        if (!AudioCtx) {
-            audioEl.volume = 1;
-            audioEl.dataset.riftNarrationBoost = '1';
-            return;
-        }
-
-        try {
-            if (!narrationAudioContext) {
-                narrationAudioContext = new AudioCtx();
-            }
-            narrationGainNode = narrationAudioContext.createGain();
-            narrationGainNode.gain.value = PROLOGUE_NARRATION_GAIN;
-            narrationSourceNode = narrationAudioContext.createMediaElementSource(audioEl);
-            narrationSourceNode.connect(narrationGainNode);
-            narrationGainNode.connect(narrationAudioContext.destination);
-            audioEl.volume = 1;
-            audioEl.dataset.riftNarrationBoost = '1';
-        } catch (err) {
-            console.warn('[RIFT][opening-prologue] Web Audio narration boost unavailable', err);
-            audioEl.volume = 1;
-            audioEl.dataset.riftNarrationBoost = '1';
-        }
-    }
-
-    async function resumeNarrationAudioContext() {
-        if (!narrationAudioContext) return;
-        if (narrationAudioContext.state === 'suspended') {
-            try {
-                await narrationAudioContext.resume();
-            } catch (_err) {
-                /* ignore */
-            }
-        }
-    }
-
-    function setNarrationGain(value) {
-        if (narrationGainNode) {
-            narrationGainNode.gain.value = value;
-            return;
-        }
-        if (audioEl) {
-            audioEl.volume = Math.min(1, value);
-        }
     }
 
     function waitForNarrationMetadata() {
@@ -913,14 +858,9 @@
         showOverlay({ subtitles: true });
 
         if (audioEl) {
-            wireNarrationAudioBoost();
-            setNarrationGain(PROLOGUE_NARRATION_GAIN);
+            audioEl.volume = PROLOGUE_NARRATION_VOLUME;
             audioEl.currentTime = 0;
-            await resumeNarrationAudioContext();
             audioEl.play()
-                .then(() => {
-                    syncSubtitleToAudioTime();
-                })
                 .catch(() => {
                     finishPrologue('blocked');
                 });
