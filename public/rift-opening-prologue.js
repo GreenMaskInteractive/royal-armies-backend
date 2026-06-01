@@ -1,6 +1,6 @@
 /**
  * RIFT — Opening narrative prologue (local dev preview only).
- * Plays distressedwoman.mp3 with karaoke-style subtitles on every game-page visit.
+ * Plays distressedwoman.mp3 with sentence subtitles on every game-page visit.
  */
 (function initRoyalArmiesOpeningPrologue(global) {
     'use strict';
@@ -184,11 +184,7 @@
         return overlayEl;
     }
 
-    function tokenizeCueText(text) {
-        return String(text || '').trim().split(/\s+/).filter(Boolean);
-    }
-
-    function renderSubtitleCue(cueIndex, spokenWordCount) {
+    function renderSubtitleCue(cueIndex) {
         if (!subtitleEl) return;
         const cue = LOCAL_PROLOGUE_CUES[cueIndex];
         if (!cue) {
@@ -196,25 +192,7 @@
             return;
         }
 
-        const words = tokenizeCueText(cue.text);
-        subtitleEl.innerHTML = words.map((word, index) => {
-            const spoken = index < spokenWordCount;
-            const pending = index === spokenWordCount;
-            const classes = [
-                'game-opening-prologue-word',
-                spoken ? 'is-spoken' : '',
-                pending ? 'is-pending' : ''
-            ].filter(Boolean).join(' ');
-            return `<span class="${classes}">${escapeHtml(word)}</span>`;
-        }).join(' ');
-    }
-
-    function escapeHtml(value) {
-        return String(value)
-            .replace(/&/g, '&amp;')
-            .replace(/</g, '&lt;')
-            .replace(/>/g, '&gt;')
-            .replace(/"/g, '&quot;');
+        subtitleEl.textContent = cue.text;
     }
 
     function resolveActiveCueIndex(currentTime) {
@@ -230,26 +208,14 @@
         return 0;
     }
 
-    function resolveSpokenWordCount(cue, currentTime) {
-        const words = tokenizeCueText(cue.text);
-        if (!words.length) return 0;
-        const span = Math.max(0.001, cue.end - cue.start);
-        const progress = Math.max(0, Math.min(1, (currentTime - cue.start) / span));
-        return Math.min(words.length, Math.floor(progress * words.length) + (progress > 0 ? 1 : 0));
-    }
-
     function onPrologueTimeUpdate() {
         if (!audioEl || !isPlaying) return;
 
-        const t = audioEl.currentTime || 0;
-        const cueIndex = resolveActiveCueIndex(t);
-        const cue = LOCAL_PROLOGUE_CUES[cueIndex];
-        const spokenCount = resolveSpokenWordCount(cue, t);
+        const cueIndex = resolveActiveCueIndex(audioEl.currentTime || 0);
+        if (cueIndex === activeCueIndex) return;
 
-        if (cueIndex !== activeCueIndex) {
-            activeCueIndex = cueIndex;
-        }
-        renderSubtitleCue(cueIndex, spokenCount);
+        activeCueIndex = cueIndex;
+        renderSubtitleCue(cueIndex);
     }
 
     function showOverlay(options) {
@@ -406,7 +372,7 @@
         isPlaying = true;
         activeCueIndex = -1;
         showOverlay({ subtitles: true });
-        renderSubtitleCue(0, 0);
+        renderSubtitleCue(0);
 
         if (audioEl) {
             audioEl.volume = PROLOGUE_NARRATION_VOLUME;
