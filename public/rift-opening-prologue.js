@@ -50,6 +50,8 @@
     const PROLOGUE_REVEAL_FADE_MS = 900;
     const PROLOGUE_LOGO_SRC = 'images/royalarmiestitle.png?v=logo-trim-gimp-1';
     const PROLOGUE_SUBTITLE_LOGO_SRC = 'images/royalarmiessubtitlelogo.png?v=age-subtitle-1';
+    const PROLOGUE_LORE_TOOL_SRC = 'images/royalarmiesloretool.png?v=prologue-lore-tool-1';
+    const PROLOGUE_LORE_TOOL_FADE_MS = 12000;
     const PROLOGUE_SUBTITLE_LOGO_SFX_SRC = 'audio/joinagesfxselect.wav';
 
     let overlayEl = null;
@@ -176,18 +178,27 @@
             <div class="game-opening-prologue-scrim" aria-hidden="true"></div>
             <div class="game-opening-prologue-logo-stage" aria-hidden="true">
                 <img
-                    src="${PROLOGUE_LOGO_SRC}"
-                    alt="Royal Armies"
-                    class="game-opening-prologue-logo game-opening-prologue-logo--title"
-                    decoding="async"
-                >
-                <img
-                    src="${PROLOGUE_SUBTITLE_LOGO_SRC}"
+                    src="${PROLOGUE_LORE_TOOL_SRC}"
                     alt=""
-                    class="game-opening-prologue-logo game-opening-prologue-logo--subtitle"
+                    class="game-opening-prologue-lore-tool"
                     decoding="async"
-                    hidden
+                    aria-hidden="true"
                 >
+                <div class="game-opening-prologue-logo-stack">
+                    <img
+                        src="${PROLOGUE_LOGO_SRC}"
+                        alt="Royal Armies"
+                        class="game-opening-prologue-logo game-opening-prologue-logo--title"
+                        decoding="async"
+                    >
+                    <img
+                        src="${PROLOGUE_SUBTITLE_LOGO_SRC}"
+                        alt=""
+                        class="game-opening-prologue-logo game-opening-prologue-logo--subtitle"
+                        decoding="async"
+                        hidden
+                    >
+                </div>
             </div>
             <div class="game-opening-prologue-subtitle-dock">
                 <p id="${SUBTITLE_ID}" class="game-opening-prologue-subtitle" aria-live="polite"></p>
@@ -376,6 +387,30 @@
         sfx.play().catch(() => {});
     }
 
+    function resetLoreToolBackdrop() {
+        const loreToolEl = overlayEl?.querySelector('.game-opening-prologue-lore-tool');
+        if (!loreToolEl) return;
+
+        loreToolEl.classList.remove('is-visible');
+        loreToolEl.style.removeProperty('transition');
+        loreToolEl.style.opacity = '0';
+    }
+
+    function beginLoreToolFadeIn(generation) {
+        const loreToolEl = overlayEl?.querySelector('.game-opening-prologue-lore-tool');
+        if (!loreToolEl || generation !== logoRevealGeneration) return;
+
+        loreToolEl.classList.remove('is-visible');
+        loreToolEl.style.opacity = '0';
+        loreToolEl.style.transition = `opacity ${PROLOGUE_LORE_TOOL_FADE_MS}ms ease-in`;
+        void loreToolEl.offsetWidth;
+
+        if (generation !== logoRevealGeneration) return;
+
+        loreToolEl.classList.add('is-visible');
+        loreToolEl.style.opacity = '1';
+    }
+
     function resetLogoElement(logoEl, options) {
         if (!logoEl) return;
 
@@ -473,6 +508,7 @@
         if (!overlayEl) return;
 
         overlayEl.classList.remove('is-logo-reveal-active');
+        resetLoreToolBackdrop();
         overlayEl.querySelectorAll('.game-opening-prologue-logo').forEach((logoEl) => {
             resetLogoElement(logoEl, { hideSubtitle: true });
         });
@@ -494,8 +530,10 @@
         const subtitleLogoEl = overlayEl.querySelector('.game-opening-prologue-logo--subtitle');
 
         overlayEl.classList.add('is-logo-reveal-active');
+        resetLoreToolBackdrop();
         resetLogoElement(titleLogoEl);
         resetLogoElement(subtitleLogoEl, { hideSubtitle: true });
+        beginLoreToolFadeIn(generation);
 
         await playLogoArriveAnimation(titleLogoEl, PROLOGUE_TITLE_LOGO_REVEAL_MS, generation);
         if (generation !== logoRevealGeneration) return;

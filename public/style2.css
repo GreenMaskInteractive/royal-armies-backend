@@ -9939,10 +9939,8 @@ body.developer-maintenance-alert-active #page-landing {
     position: absolute;
     inset: 0;
     display: flex;
-    flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: clamp(14px, 2.4vh, 30px);
     perspective: 1400px;
     transform-style: preserve-3d;
     pointer-events: none;
@@ -9954,6 +9952,33 @@ body.developer-maintenance-alert-active #page-landing {
 .game-opening-prologue.is-logo-reveal-active .game-opening-prologue-logo-stage {
     opacity: 1;
     visibility: visible;
+}
+
+.game-opening-prologue-lore-tool {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    z-index: 0;
+    display: block;
+    width: auto;
+    height: auto;
+    max-width: min(742px, 92vw);
+    max-height: min(92vh, 920px);
+    object-fit: contain;
+    opacity: 0;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+}
+
+.game-opening-prologue-logo-stack {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: clamp(14px, 2.4vh, 30px);
+    transform-style: preserve-3d;
 }
 
 .game-opening-prologue-logo {
