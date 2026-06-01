@@ -10,7 +10,8 @@
     const SUBTITLE_ID = 'game-opening-prologue-subtitle';
 
     /**
-     * Tune paragraph start/end seconds, then sentence cues are split automatically.
+     * Tune paragraph start/end seconds on the script timeline, then sentence cues
+     * are split by word count and scaled to the actual narration file duration.
      */
     const LOCAL_PROLOGUE_PARAGRAPH_BLOCKS = Object.freeze([
         {
@@ -53,6 +54,8 @@
     let isPostNarrationHold = false;
     let isFadingOut = false;
     let musicDelayTimer = null;
+    let subtitleSyncFrame = null;
+    let cueTimelineScale = 1;
     let activeCueIndex = -1;
     let finishCallback = null;
     const LOCAL_PROLOGUE_PENDING_KEY = 'royalArmies_localProloguePending';
@@ -64,6 +67,14 @@
             .filter(Boolean) || [];
     }
 
+    const SCRIPT_TIMELINE_DURATION = LOCAL_PROLOGUE_PARAGRAPH_BLOCKS[
+        LOCAL_PROLOGUE_PARAGRAPH_BLOCKS.length - 1
+    ].end;
+
+    function countCueWords(text) {
+        return String(text || '').trim().split(/\s+/).filter(Boolean).length;
+    }
+
     function buildSentenceCuesFromParagraphBlocks(blocks) {
         const cues = [];
 
@@ -71,7 +82,8 @@
             const sentences = splitParagraphIntoSentences(block.text);
             if (!sentences.length) return;
 
-            const totalWeight = sentences.reduce((sum, sentence) => sum + sentence.length, 0) || 1;
+            const wordCounts = sentences.map(countCueWords);
+            const totalWords = wordCounts.reduce((sum, count) => sum + count, 0) || 1;
             const span = Math.max(0.001, block.end - block.start);
             let cursor = block.start;
 
@@ -79,7 +91,7 @@
                 const isLast = index === sentences.length - 1;
                 const end = isLast
                     ? block.end
-                    : cursor + (span * (sentence.length / totalWeight));
+                    : cursor + (span * (wordCounts[index] / totalWords));
                 cues.push({
                     start: cursor,
                     end,
@@ -177,11 +189,55 @@
             skipBtn.addEventListener('click', () => finishPrologue('skipped'));
         }
 
-        audioEl.addEventListener('timeupdate', onPrologueTimeUpdate);
         audioEl.addEventListener('ended', () => finishPrologue('completed'));
         audioEl.addEventListener('error', () => finishPrologue('error'));
 
         return overlayEl;
+    }
+
+    function toScriptTimelineTime(audioTime) {
+        const scale = cueTimelineScale > 0 ? cueTimelineScale : 1;
+        return (Number(audioTime) || 0) / scale;
+    }
+
+    function toAudioTimelineTime(scriptTime) {
+        return (Number(scriptTime) || 0) * (cueTimelineScale > 0 ? cueTimelineScale : 1);
+    }
+
+    function updateCueTimelineScale(audioDuration) {
+        if (!Number.isFinite(audioDuration) || audioDuration <= 0 || SCRIPT_TIMELINE_DURATION <= 0) {
+            cueTimelineScale = 1;
+            return;
+        }
+
+        cueTimelineScale = audioDuration / SCRIPT_TIMELINE_DURATION;
+    }
+
+    function waitForNarrationMetadata() {
+        ensureOverlay();
+        if (!audioEl) return Promise.resolve(null);
+
+        if (Number.isFinite(audioEl.duration) && audioEl.duration > 0) {
+            return Promise.resolve(audioEl.duration);
+        }
+
+        return new Promise((resolve) => {
+            const onReady = () => {
+                const duration = Number.isFinite(audioEl.duration) && audioEl.duration > 0
+                    ? audioEl.duration
+                    : null;
+                resolve(duration);
+            };
+
+            audioEl.addEventListener('loadedmetadata', onReady, { once: true });
+            audioEl.addEventListener('durationchange', onReady, { once: true });
+            audioEl.load();
+        });
+    }
+
+    async function prepareCueTimeline() {
+        const audioDuration = await waitForNarrationMetadata();
+        updateCueTimelineScale(audioDuration);
     }
 
     function renderSubtitleCue(cueIndex) {
@@ -195,20 +251,22 @@
         subtitleEl.textContent = cue.text;
     }
 
-    function resolveActiveCueIndex(currentTime) {
+    function resolveActiveCueIndex(audioTime) {
+        const scriptTime = toScriptTimelineTime(audioTime);
+        let index = 0;
+
         for (let i = 0; i < LOCAL_PROLOGUE_CUES.length; i += 1) {
-            const cue = LOCAL_PROLOGUE_CUES[i];
-            if (currentTime >= cue.start && currentTime < cue.end) {
-                return i;
+            if (scriptTime >= LOCAL_PROLOGUE_CUES[i].start) {
+                index = i;
+            } else {
+                break;
             }
         }
-        if (currentTime >= LOCAL_PROLOGUE_CUES[LOCAL_PROLOGUE_CUES.length - 1].end) {
-            return LOCAL_PROLOGUE_CUES.length - 1;
-        }
-        return 0;
+
+        return index;
     }
 
-    function onPrologueTimeUpdate() {
+    function syncSubtitleToAudioTime() {
         if (!audioEl || !isPlaying) return;
 
         const cueIndex = resolveActiveCueIndex(audioEl.currentTime || 0);
@@ -216,6 +274,26 @@
 
         activeCueIndex = cueIndex;
         renderSubtitleCue(cueIndex);
+    }
+
+    function startSubtitleSyncLoop() {
+        stopSubtitleSyncLoop();
+
+        const tick = () => {
+            syncSubtitleToAudioTime();
+            if (isPlaying) {
+                subtitleSyncFrame = global.requestAnimationFrame(tick);
+            }
+        };
+
+        subtitleSyncFrame = global.requestAnimationFrame(tick);
+    }
+
+    function stopSubtitleSyncLoop() {
+        if (subtitleSyncFrame) {
+            global.cancelAnimationFrame(subtitleSyncFrame);
+            subtitleSyncFrame = null;
+        }
     }
 
     function showOverlay(options) {
@@ -239,6 +317,7 @@
         if (subtitleEl) subtitleEl.textContent = '';
         activeCueIndex = -1;
         isFadingOut = false;
+        stopSubtitleSyncLoop();
     }
 
     function waitPrologueFade(ms) {
@@ -312,6 +391,7 @@
 
         clearMusicDelayTimer();
         clearPrologueMusicAnimation();
+        stopSubtitleSyncLoop();
         isPlaying = false;
         isPostNarrationHold = false;
         isFadingOut = false;
@@ -323,6 +403,7 @@
 
         clearMusicDelayTimer();
         clearPrologueMusicAnimation();
+        stopSubtitleSyncLoop();
         isPlaying = false;
 
         if (audioEl) {
@@ -356,7 +437,7 @@
         }
     }
 
-    function startLocalPrologue(options) {
+    async function startLocalPrologue(options) {
         if (!shouldRunLocalPrologue()) {
             return Promise.resolve('disabled');
         }
@@ -369,10 +450,13 @@
         ensureOverlay();
         finishCallback = typeof options?.onComplete === 'function' ? options.onComplete : null;
         setLocalProloguePending(true);
+
+        await prepareCueTimeline();
+
         isPlaying = true;
         activeCueIndex = -1;
         showOverlay({ subtitles: true });
-        renderSubtitleCue(0);
+        syncSubtitleToAudioTime();
 
         if (audioEl) {
             audioEl.volume = PROLOGUE_NARRATION_VOLUME;
@@ -382,6 +466,8 @@
                     finishPrologue('blocked');
                 });
         }
+
+        startSubtitleSyncLoop();
 
         musicDelayTimer = global.setTimeout(() => {
             musicDelayTimer = null;
@@ -408,7 +494,14 @@
             finishPrologue('skipped');
         },
         getCueTimings: function getCueTimings() {
-            return LOCAL_PROLOGUE_CUES.map((cue) => ({ start: cue.start, end: cue.end, text: cue.text }));
+            return LOCAL_PROLOGUE_CUES.map((cue) => ({
+                scriptStart: cue.start,
+                scriptEnd: cue.end,
+                audioStart: toAudioTimelineTime(cue.start),
+                audioEnd: toAudioTimelineTime(cue.end),
+                scale: cueTimelineScale,
+                text: cue.text
+            }));
         }
     };
 
