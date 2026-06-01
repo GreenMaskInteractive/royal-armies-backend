@@ -1056,7 +1056,10 @@ body.age-of-war-trailer-page {
     object-fit: contain;
     left: 50%;
     top: 50%;
-    transform: translate(-50%, -50%) scale(1.12) !important;
+}
+
+.game-opening-prologue.is-trailer-replay-mode .game-opening-prologue-cinematic-shot img:not(.is-panning) {
+    transform: translate(-50%, -50%) scale(1.12);
 }
 
 .game-opening-prologue.is-trailer-replay-mode .game-opening-prologue-lore-tool.is-visible {

@@ -9,7 +9,7 @@
     const OVERLAY_ID = 'game-opening-prologue';
     const AUDIO_ID = 'game-opening-prologue-audio';
     const SUBTITLE_ID = 'game-opening-prologue-subtitle';
-    const CRITICAL_STYLE_ID = 'rift-opening-prologue-critical-styles-v10';
+    const CRITICAL_STYLE_ID = 'rift-opening-prologue-critical-styles-v11';
     const TRAILER_LORE_TOOL_MAX_OPACITY = 0.4;
     const NARRATION_METADATA_TIMEOUT_MS = 8000;
 
@@ -680,6 +680,10 @@
                 audioEl.currentTime = clamped;
             }
 
+            if (seekMedia) {
+                cinematicShotEls.forEach((shotEl) => shotEl.removeAttribute('data-pan-bound'));
+            }
+
             syncSubtitleToAudioTime(true);
             syncCinematicToAudioTime(true);
         } else if (clamped < finaleEnd) {
@@ -1142,6 +1146,8 @@
         if (legacyStyleV8) legacyStyleV8.remove();
         const legacyStyleV9 = global.document.getElementById('rift-opening-prologue-critical-styles-v9');
         if (legacyStyleV9) legacyStyleV9.remove();
+        const legacyStyleV10 = global.document.getElementById('rift-opening-prologue-critical-styles-v10');
+        if (legacyStyleV10) legacyStyleV10.remove();
         if (global.document.getElementById(CRITICAL_STYLE_ID)) return;
 
         const style = global.document.createElement('style');
@@ -1370,7 +1376,9 @@
                 max-width: 100% !important;
                 max-height: 100% !important;
                 object-fit: contain !important;
-                transform: translate(-50%, -50%) scale(1.12) !important;
+            }
+            #${OVERLAY_ID}.is-trailer-replay-mode .game-opening-prologue-cinematic-shot img:not(.is-panning) {
+                transform: translate(-50%, -50%) scale(1.12);
             }
             #${OVERLAY_ID}.is-trailer-replay-mode .game-opening-prologue-subtitle-dock.is-trailer-player-dock {
                 left: 50% !important;
@@ -1530,6 +1538,7 @@
 
         imgEl.dataset.cinePanStyleId = styleId;
         imgEl.classList.add('is-panning');
+        imgEl.style.removeProperty('transform');
         imgEl.style.animation = 'none';
         void imgEl.offsetWidth;
         imgEl.style.animation = `${animName} ${duration.toFixed(2)}s linear forwards`;
