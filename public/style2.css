@@ -9939,8 +9939,10 @@ body.developer-maintenance-alert-active #page-landing {
     position: absolute;
     inset: 0;
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
+    gap: clamp(14px, 2.4vh, 30px);
     perspective: 1400px;
     pointer-events: none;
     opacity: 0;
@@ -9955,8 +9957,6 @@ body.developer-maintenance-alert-active #page-landing {
 
 .game-opening-prologue-logo {
     display: block;
-    width: min(680px, 88vw);
-    max-width: 680px;
     height: auto;
     object-fit: contain;
     transform-origin: center center;
@@ -9966,8 +9966,24 @@ body.developer-maintenance-alert-active #page-landing {
     will-change: transform, opacity, filter;
 }
 
-.game-opening-prologue.is-logo-reveal-active .game-opening-prologue-logo {
-    animation: game-opening-prologue-logo-arrive var(--prologue-logo-reveal-ms, 15s) ease-out forwards;
+.game-opening-prologue-logo--title {
+    width: min(680px, 88vw);
+    max-width: 680px;
+}
+
+.game-opening-prologue-logo--subtitle {
+    width: min(520px, 72vw);
+    max-width: 520px;
+}
+
+.game-opening-prologue-logo.is-arriving {
+    animation: game-opening-prologue-logo-arrive var(--prologue-logo-arrive-ms, 4.2s) ease-out forwards;
+}
+
+.game-opening-prologue-logo.is-arrived {
+    opacity: 1;
+    transform: scale3d(1, 1, 1) translateZ(0);
+    filter: blur(0);
 }
 
 @keyframes game-opening-prologue-logo-arrive {

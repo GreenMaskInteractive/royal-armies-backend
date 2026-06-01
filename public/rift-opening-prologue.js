@@ -44,13 +44,19 @@
     const PROLOGUE_MUSIC_DELAY_MS = 2000;
     /** Black screen hold after narration; music ramps to peak over this duration. */
     const PROLOGUE_POST_NARRATION_HOLD_MS = 15000;
+    const PROLOGUE_TITLE_LOGO_REVEAL_MS = 4200;
+    const PROLOGUE_SUBTITLE_LOGO_REVEAL_MS = 1500;
     const PROLOGUE_MUSIC_OUT_FADE_MS = 1200;
     const PROLOGUE_REVEAL_FADE_MS = 900;
     const PROLOGUE_LOGO_SRC = 'images/royalarmiestitle.png?v=logo-trim-gimp-1';
+    const PROLOGUE_SUBTITLE_LOGO_SRC = 'images/royalarmiessubtitlelogo.png?v=1';
+    const PROLOGUE_SUBTITLE_LOGO_SFX_SRC = 'audio/joinagesfxselect.wav';
 
     let overlayEl = null;
     let subtitleEl = null;
     let audioEl = null;
+    let subtitleLogoSfxEl = null;
+    let logoRevealGeneration = 0;
     let isPlaying = false;
     let isPostNarrationHold = false;
     let isFadingOut = false;
@@ -172,8 +178,15 @@
                 <img
                     src="${PROLOGUE_LOGO_SRC}"
                     alt="Royal Armies"
-                    class="game-opening-prologue-logo"
+                    class="game-opening-prologue-logo game-opening-prologue-logo--title"
                     decoding="async"
+                >
+                <img
+                    src="${PROLOGUE_SUBTITLE_LOGO_SRC}"
+                    alt=""
+                    class="game-opening-prologue-logo game-opening-prologue-logo--subtitle"
+                    decoding="async"
+                    hidden
                 >
             </div>
             <div class="game-opening-prologue-subtitle-dock">
@@ -343,39 +356,116 @@
         }
     }
 
+    function ensureSubtitleLogoSfx() {
+        if (subtitleLogoSfxEl && global.document.contains(subtitleLogoSfxEl)) {
+            return subtitleLogoSfxEl;
+        }
+
+        subtitleLogoSfxEl = global.document.createElement('audio');
+        subtitleLogoSfxEl.preload = 'auto';
+        subtitleLogoSfxEl.setAttribute('playsinline', '');
+        subtitleLogoSfxEl.src = PROLOGUE_SUBTITLE_LOGO_SFX_SRC;
+        global.document.body.appendChild(subtitleLogoSfxEl);
+        return subtitleLogoSfxEl;
+    }
+
+    function playPrologueSubtitleLogoSfx() {
+        const sfx = ensureSubtitleLogoSfx();
+        sfx.volume = 1;
+        sfx.currentTime = 0;
+        sfx.play().catch(() => {});
+    }
+
+    function resetLogoElement(logoEl, options) {
+        if (!logoEl) return;
+
+        const hideSubtitle = Boolean(options && options.hideSubtitle);
+        logoEl.classList.remove('is-arriving', 'is-arrived');
+        logoEl.style.removeProperty('--prologue-logo-arrive-ms');
+        logoEl.style.animation = 'none';
+
+        if (hideSubtitle && logoEl.classList.contains('game-opening-prologue-logo--subtitle')) {
+            logoEl.hidden = true;
+        }
+    }
+
+    function playLogoArriveAnimation(logoEl, durationMs, generation) {
+        if (!logoEl) return Promise.resolve();
+
+        return new Promise((resolve) => {
+            logoEl.hidden = false;
+            logoEl.style.setProperty('--prologue-logo-arrive-ms', `${durationMs}ms`);
+            logoEl.classList.remove('is-arrived');
+            logoEl.classList.remove('is-arriving');
+            void logoEl.offsetWidth;
+            logoEl.classList.add('is-arriving');
+
+            let settled = false;
+            const finish = () => {
+                if (settled || generation !== logoRevealGeneration) return;
+                settled = true;
+                logoEl.classList.remove('is-arriving');
+                logoEl.classList.add('is-arrived');
+                resolve();
+            };
+
+            logoEl.addEventListener('animationend', finish, { once: true });
+            global.setTimeout(finish, durationMs + 120);
+        });
+    }
+
     function clearSubtitlesForPostNarrationHold() {
         if (subtitleEl) subtitleEl.textContent = '';
         if (overlayEl) overlayEl.classList.remove('is-subtitles-active');
     }
 
-    function beginLogoRevealSequence() {
+    function clearLogoReveal() {
+        logoRevealGeneration += 1;
+
+        if (!overlayEl) return;
+
+        overlayEl.classList.remove('is-logo-reveal-active');
+        overlayEl.querySelectorAll('.game-opening-prologue-logo').forEach((logoEl) => {
+            resetLogoElement(logoEl, { hideSubtitle: true });
+        });
+
+        if (subtitleLogoSfxEl) {
+            subtitleLogoSfxEl.pause();
+            subtitleLogoSfxEl.currentTime = 0;
+        }
+    }
+
+    async function runSequentialLogoReveal() {
         ensureOverlay();
         if (!overlayEl) return;
 
-        overlayEl.style.setProperty('--prologue-logo-reveal-ms', `${PROLOGUE_POST_NARRATION_HOLD_MS}ms`);
+        const generation = logoRevealGeneration + 1;
+        logoRevealGeneration = generation;
 
-        const logoEl = overlayEl.querySelector('.game-opening-prologue-logo');
-        if (logoEl) {
-            logoEl.style.animation = 'none';
-            void logoEl.offsetWidth;
-            logoEl.style.removeProperty('animation');
-        }
+        const titleLogoEl = overlayEl.querySelector('.game-opening-prologue-logo--title');
+        const subtitleLogoEl = overlayEl.querySelector('.game-opening-prologue-logo--subtitle');
 
         overlayEl.classList.add('is-logo-reveal-active');
-    }
+        resetLogoElement(titleLogoEl);
+        resetLogoElement(subtitleLogoEl, { hideSubtitle: true });
 
-    function clearLogoReveal() {
-        if (!overlayEl) return;
-        overlayEl.classList.remove('is-logo-reveal-active');
-        overlayEl.style.removeProperty('--prologue-logo-reveal-ms');
+        await playLogoArriveAnimation(titleLogoEl, PROLOGUE_TITLE_LOGO_REVEAL_MS, generation);
+        if (generation !== logoRevealGeneration) return;
+
+        await playLogoArriveAnimation(subtitleLogoEl, PROLOGUE_SUBTITLE_LOGO_REVEAL_MS, generation);
+        if (generation !== logoRevealGeneration) return;
+
+        playPrologueSubtitleLogoSfx();
     }
 
     async function runPostNarrationHoldSequence() {
         isPostNarrationHold = true;
         clearSubtitlesForPostNarrationHold();
-        beginLogoRevealSequence();
 
-        const holdTasks = [waitPrologueFade(PROLOGUE_POST_NARRATION_HOLD_MS)];
+        const holdTasks = [
+            waitPrologueFade(PROLOGUE_POST_NARRATION_HOLD_MS),
+            runSequentialLogoReveal()
+        ];
 
         if (global.RoyalArmiesMusicFlow
             && typeof global.RoyalArmiesMusicFlow.rampMusicVolume === 'function') {
