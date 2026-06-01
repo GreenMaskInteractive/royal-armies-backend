@@ -4,7 +4,7 @@
 (function initRoyalArmiesAdventurersGuild(global) {
     'use strict';
 
-    const BATTLE_CHARGE_MS = 850;
+    const BATTLE_CHARGE_MS = 930;
     const BATTLE_RING_CIRCUMFERENCE = 2 * Math.PI * 46;
     const EXTENDED_BATTLE_LOG_STORAGE_KEY = 'rift-age-guild-extended-battle-log';
     const BATTLE_DEBUG = (
