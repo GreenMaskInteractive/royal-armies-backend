@@ -3490,8 +3490,30 @@ function canUseCommanderReset(mode) {
     return getCommanderResetRemaining(mode) > 0;
 }
 
+function ensureCommanderResetOverlayMounted() {
+    let overlay = document.getElementById('commander-suicide-overlay');
+    if (overlay) return overlay;
+
+    const host = document.body || document.documentElement;
+    if (!host) return null;
+
+    overlay = document.createElement('div');
+    overlay.id = 'commander-suicide-overlay';
+    overlay.className = 'suicide-overlay-hidden';
+    overlay.style.setProperty('display', 'none', 'important');
+    overlay.innerHTML = `
+        <div class="suicide-popup-bezel">
+            <div class="suicide-popup-header" id="suicide-popup-header-title">System Message</div>
+            <div class="suicide-popup-body-text" id="suicide-popup-text-field"></div>
+            <div class="suicide-popup-action-row" id="suicide-popup-btn-dock"></div>
+        </div>
+    `.trim();
+    host.appendChild(overlay);
+    return overlay;
+}
+
 function showCommanderResetUnavailableDialog(mode) {
-    const overlay = document.getElementById('commander-suicide-overlay');
+    const overlay = ensureCommanderResetOverlayMounted();
     const textField = document.getElementById('suicide-popup-text-field');
     const btnDock = document.getElementById('suicide-popup-btn-dock');
     const overlayHeader = document.getElementById('suicide-popup-header-title');
@@ -4880,7 +4902,7 @@ function triggerCommanderSuicide(mode) {
     currentSuicideMode = mode;
     currentSuicideStep = 0;
     
-    const overlay = document.getElementById('commander-suicide-overlay');
+    const overlay = ensureCommanderResetOverlayMounted();
     if (overlay) {
         overlay.classList.remove('mailbox-reading-overlay');
         // 2. Clear the inline display constraints to unlock visual rendering passes
