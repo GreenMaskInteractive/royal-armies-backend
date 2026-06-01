@@ -9981,6 +9981,42 @@ body.developer-maintenance-alert-active #page-landing {
     transform-style: preserve-3d;
 }
 
+.game-opening-prologue-enter-war-btn {
+    position: relative;
+    z-index: 4;
+    margin-top: clamp(8px, 1.6vh, 18px);
+    padding: 12px 28px;
+    border: 1px solid rgba(255, 215, 120, 0.55);
+    border-radius: 4px;
+    background: linear-gradient(180deg, rgba(48, 36, 18, 0.96) 0%, rgba(12, 10, 8, 0.98) 100%);
+    color: rgba(255, 236, 190, 0.96);
+    font-family: 'Cinzel', serif;
+    font-size: clamp(0.72rem, 0.95vw, 0.88rem);
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    cursor: pointer;
+    opacity: 0;
+    transform: translateY(8px);
+    transition: opacity 0.55s ease, transform 0.55s ease, color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+    pointer-events: none;
+}
+
+.game-opening-prologue-enter-war-btn.is-visible {
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: auto;
+}
+
+.game-opening-prologue-enter-war-btn:hover,
+.game-opening-prologue-enter-war-btn:focus-visible {
+    color: #ffd700;
+    border-color: rgba(255, 215, 0, 0.72);
+    box-shadow: 0 0 18px rgba(255, 215, 0, 0.22), 0 8px 24px rgba(0, 0, 0, 0.45);
+    outline: none;
+}
+
 .game-opening-prologue-logo {
     display: block;
     height: auto;

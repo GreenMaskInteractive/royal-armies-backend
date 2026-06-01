@@ -42,9 +42,8 @@
     const PROLOGUE_MUSIC_PEAK_VOLUME = 1;
     /** Narration starts immediately; background music joins after this delay. */
     const PROLOGUE_MUSIC_DELAY_MS = 2000;
-    /** Black screen hold after narration; music ramps to peak over this duration. */
-    const PROLOGUE_POST_NARRATION_HOLD_MS = 20000;
-    const PROLOGUE_TITLE_LOGO_REVEAL_MS = 4200;
+    /** Black screen hold after narration; music ramps during logo reveals, then Kindred plays out. */
+    const PROLOGUE_TITLE_LOGO_REVEAL_MS = 6500;
     const PROLOGUE_SUBTITLE_LOGO_REVEAL_MS = 1500;
     const PROLOGUE_MUSIC_OUT_FADE_MS = 1200;
     const PROLOGUE_REVEAL_FADE_MS = 900;
@@ -63,6 +62,7 @@
     let subtitleLogoSfxEl = null;
     let subtitleSparkTimer = null;
     let logoRevealGeneration = 0;
+    let enterWarGateResolver = null;
     let isPlaying = false;
     let isPostNarrationHold = false;
     let isFadingOut = false;
@@ -205,6 +205,14 @@
                             hidden
                         >
                     </div>
+                    <button
+                        type="button"
+                        class="game-opening-prologue-enter-war-btn"
+                        id="game-opening-prologue-enter-war-btn"
+                        hidden
+                    >
+                        Enter the War
+                    </button>
                 </div>
             </div>
             <div class="game-opening-prologue-subtitle-dock">
@@ -227,6 +235,12 @@
         const skipBtn = overlayEl.querySelector('#game-opening-prologue-skip');
         if (skipBtn) {
             skipBtn.addEventListener('click', () => finishPrologue('skipped'));
+        }
+
+        const enterWarBtn = overlayEl.querySelector('#game-opening-prologue-enter-war-btn');
+        if (enterWarBtn && enterWarBtn.dataset.riftBound !== '1') {
+            enterWarBtn.dataset.riftBound = '1';
+            enterWarBtn.addEventListener('click', () => resolveEnterWarGate('button'));
         }
 
         audioEl.addEventListener('ended', () => finishPrologue('completed'));
@@ -616,6 +630,7 @@
         overlayEl.classList.remove('is-logo-reveal-active');
         resetLoreToolBackdrop();
         clearSubtitleLogoSparks();
+        clearEnterWarGate();
         overlayEl.querySelectorAll('.game-opening-prologue-logo').forEach((logoEl) => {
             resetLogoElement(logoEl, { hideSubtitle: true });
         });
@@ -656,25 +671,85 @@
         if (generation !== logoRevealGeneration) return;
     }
 
+    function showEnterWarButton() {
+        const enterWarBtn = overlayEl?.querySelector('#game-opening-prologue-enter-war-btn');
+        if (!enterWarBtn) return;
+        enterWarBtn.hidden = false;
+        enterWarBtn.classList.add('is-visible');
+    }
+
+    function hideEnterWarButton() {
+        const enterWarBtn = overlayEl?.querySelector('#game-opening-prologue-enter-war-btn');
+        if (!enterWarBtn) return;
+        enterWarBtn.hidden = true;
+        enterWarBtn.classList.remove('is-visible');
+    }
+
+    function resolveEnterWarGate(reason) {
+        if (!enterWarGateResolver) return;
+        const resolve = enterWarGateResolver;
+        enterWarGateResolver = null;
+        hideEnterWarButton();
+        resolve(reason);
+    }
+
+    function clearEnterWarGate() {
+        if (global.RoyalArmiesMusicFlow
+            && typeof global.RoyalArmiesMusicFlow.cancelWaitForTrackEnd === 'function') {
+            global.RoyalArmiesMusicFlow.cancelWaitForTrackEnd();
+        }
+        if (enterWarGateResolver) {
+            const resolve = enterWarGateResolver;
+            enterWarGateResolver = null;
+            resolve('cancelled');
+        }
+        hideEnterWarButton();
+    }
+
+    function waitForEnterWarGate(generation) {
+        return new Promise((resolve) => {
+            enterWarGateResolver = resolve;
+            showEnterWarButton();
+
+            if (global.RoyalArmiesMusicFlow
+                && typeof global.RoyalArmiesMusicFlow.markProgressionPhaseStart === 'function') {
+                global.RoyalArmiesMusicFlow.markProgressionPhaseStart({ volume: PROLOGUE_MUSIC_PEAK_VOLUME });
+            }
+
+            if (!global.RoyalArmiesMusicFlow
+                || typeof global.RoyalArmiesMusicFlow.waitForCurrentTrackEnd !== 'function') {
+                return;
+            }
+
+            global.RoyalArmiesMusicFlow.waitForCurrentTrackEnd().then(() => {
+                if (generation !== logoRevealGeneration) return;
+                resolveEnterWarGate('song-ended');
+            });
+        });
+    }
+
     async function runPostNarrationHoldSequence() {
         isPostNarrationHold = true;
         clearSubtitlesForPostNarrationHold();
 
-        const holdTasks = [
-            waitPrologueFade(PROLOGUE_POST_NARRATION_HOLD_MS),
-            runSequentialLogoReveal()
-        ];
-
-        if (global.RoyalArmiesMusicFlow
-            && typeof global.RoyalArmiesMusicFlow.rampMusicVolume === 'function') {
-            holdTasks.push(global.RoyalArmiesMusicFlow.rampMusicVolume(
+        const logoMusicRampMs = PROLOGUE_TITLE_LOGO_REVEAL_MS + PROLOGUE_SUBTITLE_LOGO_REVEAL_MS;
+        const musicRamp = global.RoyalArmiesMusicFlow
+            && typeof global.RoyalArmiesMusicFlow.rampMusicVolume === 'function'
+            ? global.RoyalArmiesMusicFlow.rampMusicVolume(
                 PROLOGUE_MUSIC_VOLUME,
                 PROLOGUE_MUSIC_PEAK_VOLUME,
-                PROLOGUE_POST_NARRATION_HOLD_MS
-            ));
-        }
+                logoMusicRampMs
+            )
+            : Promise.resolve();
 
-        await Promise.all(holdTasks);
+        await Promise.all([
+            runSequentialLogoReveal(),
+            musicRamp
+        ]);
+
+        if (!isPostNarrationHold) return;
+
+        await waitForEnterWarGate(logoRevealGeneration);
         isPostNarrationHold = false;
     }
 
@@ -715,6 +790,7 @@
         clearPrologueMusicAnimation();
         stopSubtitleSyncLoop();
         clearLogoReveal();
+        clearEnterWarGate();
         isPlaying = false;
         isPostNarrationHold = false;
         isFadingOut = false;
@@ -724,6 +800,7 @@
     async function finishPrologue(reason) {
         if (!isProloguePlaybackActive() || isFadingOut) return;
 
+        clearEnterWarGate();
         clearMusicDelayTimer();
         clearPrologueMusicAnimation();
         stopSubtitleSyncLoop();
@@ -739,7 +816,10 @@
         }
 
         isFadingOut = true;
-        await fadePrologueBackgroundMusicOut();
+
+        if (reason !== 'completed') {
+            await fadePrologueBackgroundMusicOut();
+        }
 
         if (overlayEl && !overlayEl.hidden) {
             overlayEl.classList.add('is-revealing');

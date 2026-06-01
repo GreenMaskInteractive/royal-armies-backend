@@ -37,6 +37,7 @@
 
     let audioEl = null;
     let volumeRampGeneration = 0;
+    let trackEndWaitGeneration = 0;
 
     function pageId() {
         return global.document?.body?.id || '';
@@ -313,11 +314,59 @@
         }
     }
 
-    function markProgressionPhaseStart() {
-        if (readSession(STORAGE.progressionStarted) === '1') return;
+    function markProgressionPhaseStart(options) {
+        const volumeOption = options && typeof options === 'object' && options.volume != null
+            ? clampVolume(options.volume)
+            : null;
+
+        if (readSession(STORAGE.progressionStarted) === '1') {
+            const audio = resolveAudioElement();
+            if (!audio) return Promise.resolve();
+            if (volumeOption != null) {
+                audio.volume = volumeOption;
+                writeSession(STORAGE.volume, String(audio.volume));
+            }
+            if (audio.paused) {
+                return tryPlay(volumeOption != null ? { volume: volumeOption } : {});
+            }
+            return Promise.resolve();
+        }
+
         writeSession(STORAGE.progressionStarted, '1');
         loadTrack(TRACKS.kindred.id, { restoreTime: false });
-        tryPlay({ volume: 0.5 });
+        const audio = resolveAudioElement();
+        if (audio) {
+            audio.loop = false;
+        }
+        return tryPlay(volumeOption != null ? { volume: volumeOption } : { volume: 0.5 });
+    }
+
+    function cancelWaitForTrackEnd() {
+        trackEndWaitGeneration += 1;
+    }
+
+    function waitForCurrentTrackEnd() {
+        cancelWaitForTrackEnd();
+        const audio = resolveAudioElement();
+        if (!audio) return Promise.resolve();
+
+        const generation = trackEndWaitGeneration + 1;
+        trackEndWaitGeneration = generation;
+
+        if (audio.ended) return Promise.resolve();
+        if (Number.isFinite(audio.duration) && audio.duration > 0 && audio.currentTime >= audio.duration - 0.05) {
+            return Promise.resolve();
+        }
+
+        return new Promise((resolve) => {
+            const onEnd = () => {
+                if (generation !== trackEndWaitGeneration) return;
+                audio.removeEventListener('ended', onEnd);
+                resolve();
+            };
+
+            audio.addEventListener('ended', onEnd);
+        });
     }
 
     function bootAgePageMusic() {
@@ -421,6 +470,8 @@
         rampMusicVolume,
         fadeMusicOut,
         cancelMusicVolumeAnimation,
+        waitForCurrentTrackEnd,
+        cancelWaitForTrackEnd,
         shouldHoldForOpeningPrologue: function shouldHoldForOpeningPrologue() {
             return readSession(STORAGE.openingProloguePending) === '1';
         }
