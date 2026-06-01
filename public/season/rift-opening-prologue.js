@@ -141,7 +141,6 @@
     let trailerReplayTimeSec = 0;
     let trailerReplayFrame = null;
     let trailerImpactAudioUnlocked = false;
-    let trailerRotatePromptDismissed = false;
     let trailerOrientationBound = false;
     let trailerAutoplayQueued = false;
     const LOCAL_PROLOGUE_PENDING_KEY = 'royalArmies_localProloguePending';
@@ -236,13 +235,6 @@
         overlayEl.classList.toggle('is-trailer-portrait', portrait);
         global.document.body.classList.toggle('is-trailer-mobile-device', mobile);
         global.document.body.classList.toggle('is-trailer-portrait-viewport', portrait);
-
-        const rotatePrompt = overlayEl.querySelector('#game-opening-prologue-trailer-rotate-prompt');
-        if (rotatePrompt) {
-            const showPrompt = mobile && portrait && !trailerRotatePromptDismissed && isTrailerReplayMode;
-            rotatePrompt.hidden = !showPrompt;
-            rotatePrompt.setAttribute('aria-hidden', showPrompt ? 'false' : 'true');
-        }
 
         const fullscreenBtn = overlayEl.querySelector('#game-opening-prologue-trailer-fullscreen-btn');
         if (fullscreenBtn) {
@@ -612,11 +604,6 @@
     async function tryStartTrailerPlaybackWithOrientation() {
         if (!isTrailerReplayMode) return;
 
-        if (isTrailerMobileDevice() && isTrailerPortraitViewport() && !trailerRotatePromptDismissed) {
-            updateTrailerOrientationClasses();
-            return;
-        }
-
         if (isTrailerMobileDevice()) {
             await requestTrailerLandscapeLock();
         }
@@ -711,7 +698,6 @@
         const playBtn = overlayEl?.querySelector('#game-opening-prologue-trailer-play-btn');
         const replayBtn = overlayEl?.querySelector('#game-opening-prologue-trailer-replay-btn');
         const fullscreenBtn = overlayEl?.querySelector('#game-opening-prologue-trailer-fullscreen-btn');
-        const rotateDismissBtn = overlayEl?.querySelector('#game-opening-prologue-trailer-rotate-dismiss');
         const viewportEl = overlayEl?.querySelector('#game-opening-prologue-trailer-viewport');
 
         if (!playerEl || playerEl.dataset.riftBound === '1') return;
@@ -736,17 +722,6 @@
         if (fullscreenBtn) {
             fullscreenBtn.addEventListener('click', () => {
                 void toggleTrailerFullscreen();
-            });
-        }
-
-        if (rotateDismissBtn) {
-            rotateDismissBtn.addEventListener('click', () => {
-                trailerRotatePromptDismissed = true;
-                void (async () => {
-                    await toggleTrailerFullscreen();
-                    await requestTrailerLandscapeLock();
-                    startTrailerReplayPlayback();
-                })();
             });
         }
 
@@ -1547,26 +1522,7 @@
             ${isTrailerPage() ? `
             <div class="game-opening-prologue-trailer-player" id="game-opening-prologue-trailer-player" hidden>
                 <div class="game-opening-prologue-trailer-stage" id="game-opening-prologue-trailer-stage">
-                    <div class="game-opening-prologue-trailer-viewport" id="game-opening-prologue-trailer-viewport">
-                        <div
-                            class="game-opening-prologue-trailer-rotate-prompt"
-                            id="game-opening-prologue-trailer-rotate-prompt"
-                            hidden
-                            aria-live="polite"
-                        >
-                            <div class="game-opening-prologue-trailer-rotate-prompt-inner">
-                                <p class="game-opening-prologue-trailer-rotate-title">Rotate your phone</p>
-                                <p class="game-opening-prologue-trailer-rotate-copy">This trailer is best watched with your phone on its side.</p>
-                                <button
-                                    type="button"
-                                    class="game-opening-prologue-trailer-btn game-opening-prologue-trailer-btn--primary"
-                                    id="game-opening-prologue-trailer-rotate-dismiss"
-                                >
-                                    Watch sideways
-                                </button>
-                            </div>
-                        </div>
-                    </div>
+                    <div class="game-opening-prologue-trailer-viewport" id="game-opening-prologue-trailer-viewport"></div>
                     <div class="game-opening-prologue-trailer-finale-pane" id="game-opening-prologue-trailer-finale-pane"></div>
                     <div class="game-opening-prologue-trailer-controls">
                         <div class="game-opening-prologue-trailer-controls-row">

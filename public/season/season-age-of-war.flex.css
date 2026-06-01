@@ -1121,44 +1121,6 @@ body.age-of-war-trailer-page {
     white-space: nowrap;
 }
 
-.game-opening-prologue-trailer-rotate-prompt {
-    position: absolute;
-    inset: 0;
-    z-index: 20;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 24px;
-    background: rgba(0, 0, 0, 0.88);
-}
-
-.game-opening-prologue-trailer-rotate-prompt-inner {
-    max-width: 360px;
-    text-align: center;
-    padding: 24px 20px;
-    border: 1px solid rgba(212, 168, 64, 0.5);
-    border-radius: 10px;
-    background: linear-gradient(180deg, rgba(28, 20, 10, 0.98) 0%, rgba(8, 6, 4, 0.99) 100%);
-    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.65);
-}
-
-.game-opening-prologue-trailer-rotate-title {
-    margin: 0 0 10px;
-    font-family: 'Cinzel', Georgia, 'Times New Roman', serif;
-    font-size: clamp(1.1rem, 4.5vw, 1.45rem);
-    letter-spacing: 0.14em;
-    text-transform: uppercase;
-    color: #ffd978;
-}
-
-.game-opening-prologue-trailer-rotate-copy {
-    margin: 0 0 18px;
-    font-family: 'Cinzel', Georgia, 'Times New Roman', serif;
-    font-size: clamp(0.82rem, 3.2vw, 0.98rem);
-    line-height: 1.5;
-    color: rgba(255, 236, 196, 0.9);
-}
-
 body.is-trailer-mobile-device.is-trailer-portrait-viewport .game-opening-prologue.is-trailer-replay-mode .game-opening-prologue-trailer-player {
     height: 100dvh;
 }
