@@ -38,6 +38,7 @@
     const AUDIO_ID = 'ra-global-music-audio';
     const MAIN_PAGE_ID = 'main-dashboard-canvas';
     const GAME_PAGE_ID = 'game-page-canvas';
+    const CINEMATIC_PAGE_ID = 'age-of-war-cinematic-canvas';
     const AGE_PAGE_ID = 'age-page-canvas';
 
     let audioEl = null;
@@ -54,6 +55,14 @@
 
     function isGamePage() {
         return pageId() === GAME_PAGE_ID;
+    }
+
+    function isCinematicPage() {
+        return pageId() === CINEMATIC_PAGE_ID;
+    }
+
+    function supportsPrologueSoundtrackPage() {
+        return isGamePage() || isCinematicPage();
     }
 
     function isAgePage() {
@@ -198,7 +207,7 @@
     }
 
     function startGamePageArchimedes(options = {}) {
-        if (!isGamePage()) return Promise.resolve();
+        if (!supportsPrologueSoundtrackPage()) return Promise.resolve();
 
         writeSession(STORAGE.autoplayGranted, '1');
         writeSession(STORAGE.currentTrack, TRACKS.archimedes.id);
@@ -503,6 +512,8 @@
             hideMainPagePlayer();
         } else if (isGamePage()) {
             bootGamePageMusic();
+        } else if (isCinematicPage()) {
+            writeSession(STORAGE.openingProloguePending, '1');
         } else if (isAgePage()) {
             bootAgePageMusic();
         }
