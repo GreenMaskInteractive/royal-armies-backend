@@ -38,7 +38,7 @@
 
     const PROLOGUE_AUDIO_SRC = 'audio/distressedwoman.mp3';
     /** Background music plays through the whole prologue; narration starts after this lead-in. */
-    const PROLOGUE_MUSIC_LEAD_MS = 2000;
+    const PROLOGUE_MUSIC_LEAD_MS = 5000;
     const PROLOGUE_REVEAL_FADE_MS = 900;
 
     let overlayEl = null;
