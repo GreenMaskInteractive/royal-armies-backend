@@ -265,11 +265,32 @@
             }
             #${OVERLAY_ID} .game-opening-prologue-cinematic-stage {
                 position: absolute !important;
-                inset: 0 !important;
+                top: 0 !important;
+                left: 0 !important;
+                right: 0 !important;
+                bottom: clamp(160px, 22vh, 240px) !important;
                 z-index: 0 !important;
-                overflow: hidden !important;
+                display: flex !important;
+                align-items: center !important;
+                justify-content: center !important;
+                padding: clamp(12px, 2vh, 24px) clamp(12px, 2vw, 24px) !important;
+                box-sizing: border-box !important;
                 background: #000 !important;
                 pointer-events: none !important;
+            }
+            #${OVERLAY_ID} .game-opening-prologue-cinematic-frame {
+                position: relative !important;
+                width: 75% !important;
+                height: 75% !important;
+                flex: 0 0 auto !important;
+                border: 2px solid rgba(184, 144, 48, 0.62) !important;
+                border-radius: 6px !important;
+                overflow: hidden !important;
+                background: #080604 !important;
+                box-shadow:
+                    0 0 0 1px rgba(255, 215, 120, 0.14),
+                    0 16px 44px rgba(0, 0, 0, 0.55),
+                    inset 0 0 28px rgba(0, 0, 0, 0.32) !important;
             }
             #${OVERLAY_ID} .game-opening-prologue-cinematic-shot {
                 position: absolute !important;
@@ -336,20 +357,22 @@
     function buildCinematicStageMarkup() {
         return `
             <div class="game-opening-prologue-cinematic-stage" aria-hidden="true">
-                ${PROLOGUE_CINEMATIC_SHOTS.map((shot) => `
-                    <div
-                        class="game-opening-prologue-cinematic-shot"
-                        data-cinematic-id="${shot.id}"
-                        aria-hidden="true"
-                    >
-                        <img
-                            src="${shot.src}"
-                            alt=""
-                            decoding="async"
-                            draggable="false"
+                <div class="game-opening-prologue-cinematic-frame">
+                    ${PROLOGUE_CINEMATIC_SHOTS.map((shot) => `
+                        <div
+                            class="game-opening-prologue-cinematic-shot"
+                            data-cinematic-id="${shot.id}"
+                            aria-hidden="true"
                         >
-                    </div>
-                `.trim()).join('')}
+                            <img
+                                src="${shot.src}"
+                                alt=""
+                                decoding="async"
+                                draggable="false"
+                            >
+                        </div>
+                    `.trim()).join('')}
+                </div>
             </div>
         `.trim();
     }

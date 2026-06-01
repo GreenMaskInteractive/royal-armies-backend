@@ -42,11 +42,33 @@
 
 .game-opening-prologue-cinematic-stage {
     position: absolute;
-    inset: 0;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: clamp(160px, 22vh, 240px);
     z-index: 0;
-    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: clamp(12px, 2vh, 24px) clamp(12px, 2vw, 24px);
+    box-sizing: border-box;
     background: #000;
     pointer-events: none;
+}
+
+.game-opening-prologue-cinematic-frame {
+    position: relative;
+    width: 75%;
+    height: 75%;
+    flex: 0 0 auto;
+    border: 2px solid rgba(184, 144, 48, 0.62);
+    border-radius: 6px;
+    overflow: hidden;
+    background: #080604;
+    box-shadow:
+        0 0 0 1px rgba(255, 215, 120, 0.14),
+        0 16px 44px rgba(0, 0, 0, 0.55),
+        inset 0 0 28px rgba(0, 0, 0, 0.32);
 }
 
 .game-opening-prologue-cinematic-shot {
