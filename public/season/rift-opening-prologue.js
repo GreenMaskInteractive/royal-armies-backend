@@ -1,6 +1,6 @@
 /**
  * RIFT — Opening narrative prologue (local dev preview only).
- * Plays distressedwoman.mp3 with sentence subtitles on every game-page visit.
+ * Plays distressedwoman1.mp3 with sentence subtitles on every game-page visit.
  */
 (function initRoyalArmiesOpeningPrologue(global) {
     'use strict';
@@ -36,7 +36,7 @@
         }
     ]);
 
-    const PROLOGUE_AUDIO_SRC = 'season/distressedwoman.mp3';
+    const PROLOGUE_AUDIO_SRC = 'season/distressedwoman1.mp3';
     const PROLOGUE_NARRATION_VOLUME = 1;
     const PROLOGUE_MUSIC_VOLUME = 0.3;
     const PROLOGUE_MUSIC_PEAK_VOLUME = 1;
