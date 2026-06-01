@@ -968,7 +968,8 @@ body.age-of-war-trailer-page {
     border-radius: 0;
 }
 
-.game-opening-prologue.is-trailer-replay-mode .game-opening-prologue-cinematic-stage {
+/* Mobile replay — full-bleed viewport */
+body.is-trailer-mobile-device .game-opening-prologue.is-trailer-replay-mode .game-opening-prologue-cinematic-stage {
     position: absolute;
     inset: 0;
     z-index: 1;
@@ -979,7 +980,7 @@ body.age-of-war-trailer-page {
     margin: 0;
 }
 
-.game-opening-prologue.is-trailer-replay-mode .game-opening-prologue-cinematic-frame {
+body.is-trailer-mobile-device .game-opening-prologue.is-trailer-replay-mode .game-opening-prologue-cinematic-frame {
     width: 100%;
     height: 100%;
     max-width: none;
@@ -990,12 +991,12 @@ body.age-of-war-trailer-page {
     background: #000;
 }
 
-.game-opening-prologue.is-trailer-replay-mode .game-opening-prologue-cinematic-frame::before,
-.game-opening-prologue.is-trailer-replay-mode .game-opening-prologue-cinematic-frame-border {
+body.is-trailer-mobile-device .game-opening-prologue.is-trailer-replay-mode .game-opening-prologue-cinematic-frame::before,
+body.is-trailer-mobile-device .game-opening-prologue.is-trailer-replay-mode .game-opening-prologue-cinematic-frame-border {
     display: none !important;
 }
 
-.game-opening-prologue.is-trailer-replay-mode .game-opening-prologue-cinematic-shot img {
+body.is-trailer-mobile-device .game-opening-prologue.is-trailer-replay-mode .game-opening-prologue-cinematic-shot img {
     width: 100%;
     height: 100%;
     min-width: 100%;
@@ -1006,91 +1007,94 @@ body.age-of-war-trailer-page {
     transform: translate(-50%, -50%) scale(1.04);
 }
 
-/* Desktop — cinematic frame (66% width · 16:9) */
+/* Desktop replay — fixed 16:9 widescreen frame */
 @media (min-width: 901px) {
-    body:not(.is-trailer-mobile-device) .game-opening-prologue.is-trailer-replay-mode {
-        padding: 0;
+    .game-opening-prologue.is-trailer-replay-mode {
+        padding: clamp(12px, 2vh, 20px) clamp(12px, 2vw, 20px);
     }
 
-    body:not(.is-trailer-mobile-device) .game-opening-prologue.is-trailer-replay-mode .game-opening-prologue-trailer-player {
-        width: 100%;
+    .game-opening-prologue.is-trailer-replay-mode .game-opening-prologue-trailer-player {
+        width: min(1200px, 94vw);
         height: auto;
         max-height: none;
     }
 
-    body:not(.is-trailer-mobile-device) .game-opening-prologue.is-trailer-replay-mode .game-opening-prologue-trailer-stage {
+    .game-opening-prologue.is-trailer-replay-mode .game-opening-prologue-trailer-stage {
         flex: 0 0 auto;
         width: 100%;
         background: transparent;
     }
 
-    body:not(.is-trailer-mobile-device) .game-opening-prologue.is-trailer-replay-mode .game-opening-prologue-trailer-viewport {
+    .game-opening-prologue.is-trailer-replay-mode .game-opening-prologue-trailer-viewport {
         flex: 0 0 auto;
         width: 100%;
-        height: auto;
-        overflow: visible;
-        background: transparent;
-        border-radius: 6px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        padding: clamp(12px, 2vh, 24px) clamp(12px, 2vw, 24px)
-            clamp(128px, 17vh, 188px);
-        box-sizing: border-box;
-    }
-
-    body:not(.is-trailer-mobile-device) .game-opening-prologue.is-trailer-replay-mode .game-opening-prologue-cinematic-stage {
-        position: relative;
-        inset: auto;
-        width: 100%;
-        height: auto;
-        padding: 0;
-        align-items: center;
-        justify-content: center;
-    }
-
-    body:not(.is-trailer-mobile-device) .game-opening-prologue.is-trailer-replay-mode .game-opening-prologue-cinematic-frame {
-        width: 66%;
-        max-width: 66%;
         aspect-ratio: 16 / 9;
         height: auto;
-        max-height: min(88vh, calc(100vh - clamp(128px, 17vh, 188px) - clamp(24px, 4vh, 48px)));
+        min-height: 0;
+        overflow: hidden;
+        background: #000;
+        border-radius: 6px;
+        padding: 0;
+    }
+
+    .game-opening-prologue.is-trailer-replay-mode .game-opening-prologue-cinematic-stage {
+        position: absolute;
+        inset: 0;
+        z-index: 1;
+        display: flex;
+        align-items: stretch;
+        justify-content: stretch;
+        padding: 0;
+        margin: 0;
+    }
+
+    .game-opening-prologue.is-trailer-replay-mode .game-opening-prologue-cinematic-frame {
+        width: 100%;
+        height: 100%;
+        max-width: none;
+        max-height: none;
+        aspect-ratio: 16 / 9;
         border-radius: 6px;
         overflow: hidden;
         background: transparent;
     }
 
-    body:not(.is-trailer-mobile-device) .game-opening-prologue.is-trailer-replay-mode .game-opening-prologue-cinematic-frame::before,
-    body:not(.is-trailer-mobile-device) .game-opening-prologue.is-trailer-replay-mode .game-opening-prologue-cinematic-frame-border {
+    .game-opening-prologue.is-trailer-replay-mode .game-opening-prologue-cinematic-frame::before,
+    .game-opening-prologue.is-trailer-replay-mode .game-opening-prologue-cinematic-frame-border {
         display: block !important;
     }
 
-    body:not(.is-trailer-mobile-device) .game-opening-prologue.is-trailer-replay-mode .game-opening-prologue-cinematic-shot img {
+    .game-opening-prologue.is-trailer-replay-mode .game-opening-prologue-cinematic-shot img {
         width: 118%;
         height: 118%;
         min-width: 118%;
         min-height: 118%;
+        object-fit: cover;
+        left: 50%;
+        top: 50%;
         transform: translate(-50%, -50%) scale(1.08);
     }
 
-    body:not(.is-trailer-mobile-device) .game-opening-prologue.is-trailer-replay-mode .game-opening-prologue-trailer-controls {
-        width: min(920px, calc(100vw - 48px));
-        margin: 0 auto;
+    .game-opening-prologue.is-trailer-replay-mode .game-opening-prologue-trailer-controls {
+        width: 100%;
+        margin: 0;
     }
 
-    body:not(.is-trailer-mobile-device) .game-opening-prologue-trailer-stage:fullscreen .game-opening-prologue-trailer-viewport,
-    body:not(.is-trailer-mobile-device) .game-opening-prologue-trailer-stage:-webkit-full-screen .game-opening-prologue-trailer-viewport {
+    .game-opening-prologue-trailer-stage:fullscreen .game-opening-prologue-trailer-viewport,
+    .game-opening-prologue-trailer-stage:-webkit-full-screen .game-opening-prologue-trailer-viewport {
         flex: 1 1 auto;
+        width: 100%;
         height: auto;
         min-height: 0;
+        aspect-ratio: auto;
         overflow: hidden;
         padding: 0;
         background: #000;
         border-radius: 0;
     }
 
-    body:not(.is-trailer-mobile-device) .game-opening-prologue-trailer-stage:fullscreen .game-opening-prologue-cinematic-stage,
-    body:not(.is-trailer-mobile-device) .game-opening-prologue-trailer-stage:-webkit-full-screen .game-opening-prologue-cinematic-stage {
+    .game-opening-prologue-trailer-stage:fullscreen .game-opening-prologue-cinematic-stage,
+    .game-opening-prologue-trailer-stage:-webkit-full-screen .game-opening-prologue-cinematic-stage {
         position: absolute;
         inset: 0;
         padding: 0;
@@ -1098,8 +1102,8 @@ body.age-of-war-trailer-page {
         justify-content: stretch;
     }
 
-    body:not(.is-trailer-mobile-device) .game-opening-prologue-trailer-stage:fullscreen .game-opening-prologue-cinematic-frame,
-    body:not(.is-trailer-mobile-device) .game-opening-prologue-trailer-stage:-webkit-full-screen .game-opening-prologue-cinematic-frame {
+    .game-opening-prologue-trailer-stage:fullscreen .game-opening-prologue-cinematic-frame,
+    .game-opening-prologue-trailer-stage:-webkit-full-screen .game-opening-prologue-cinematic-frame {
         width: 100%;
         max-width: none;
         height: 100%;
@@ -1108,15 +1112,15 @@ body.age-of-war-trailer-page {
         border-radius: 0;
     }
 
-    body:not(.is-trailer-mobile-device) .game-opening-prologue-trailer-stage:fullscreen .game-opening-prologue-cinematic-frame::before,
-    body:not(.is-trailer-mobile-device) .game-opening-prologue-trailer-stage:-webkit-full-screen .game-opening-prologue-cinematic-frame::before,
-    body:not(.is-trailer-mobile-device) .game-opening-prologue-trailer-stage:fullscreen .game-opening-prologue-cinematic-frame-border,
-    body:not(.is-trailer-mobile-device) .game-opening-prologue-trailer-stage:-webkit-full-screen .game-opening-prologue-cinematic-frame-border {
+    .game-opening-prologue-trailer-stage:fullscreen .game-opening-prologue-cinematic-frame::before,
+    .game-opening-prologue-trailer-stage:-webkit-full-screen .game-opening-prologue-cinematic-frame::before,
+    .game-opening-prologue-trailer-stage:fullscreen .game-opening-prologue-cinematic-frame-border,
+    .game-opening-prologue-trailer-stage:-webkit-full-screen .game-opening-prologue-cinematic-frame-border {
         display: none !important;
     }
 
-    body:not(.is-trailer-mobile-device) .game-opening-prologue-trailer-stage:fullscreen .game-opening-prologue-cinematic-shot img,
-    body:not(.is-trailer-mobile-device) .game-opening-prologue-trailer-stage:-webkit-full-screen .game-opening-prologue-cinematic-shot img {
+    .game-opening-prologue-trailer-stage:fullscreen .game-opening-prologue-cinematic-shot img,
+    .game-opening-prologue-trailer-stage:-webkit-full-screen .game-opening-prologue-cinematic-shot img {
         width: 100%;
         height: 100%;
         min-width: 100%;
