@@ -3103,15 +3103,19 @@ app.post('/api/portal/maintenance-alert', (req, res) => {
 });
 
 /** Unlisted Age of War trailer — direct URL only; not linked from site nav or dev tools. */
-const AGE_OF_WAR_TRAILER_FILE = 'royalarmies-ageofwar-trailer.html';
+const AGE_OF_WAR_TRAILER_FILE = 'ageofwar-trailer.html';
 function sendAgeOfWarTrailerPage(res) {
     res.set('X-Robots-Tag', 'noindex, nofollow, noarchive, nosnippet');
     res.set('Cache-Control', 'private, no-store');
     res.sendFile(path.join(PUBLIC_DIR, AGE_OF_WAR_TRAILER_FILE));
 }
 
-app.get(['/royalarmies-ageofwar-trailer', '/royalarmies-ageofwar-trailer.html'], (req, res) => {
+app.get(['/ageofwar-trailer', '/ageofwar-trailer.html'], (req, res) => {
     sendAgeOfWarTrailerPage(res);
+});
+
+app.get(['/royalarmies-ageofwar-trailer', '/royalarmies-ageofwar-trailer.html'], (req, res) => {
+    redirectWithQuery(req, res, '/ageofwar-trailer');
 });
 
 app.use(express.static(PUBLIC_DIR, {
