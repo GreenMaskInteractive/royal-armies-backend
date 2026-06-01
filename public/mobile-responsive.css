@@ -2693,6 +2693,11 @@ body {
         font-size: 0.92rem !important;
     }
 
+    #age-page-canvas .age-map-age-badge-subtitle-logo {
+        max-height: 20px !important;
+        max-width: min(96px, 24vw) !important;
+    }
+
     #age-page-canvas .age-map-resource-strip {
         flex: 1 1 100% !important;
         display: flex !important;
