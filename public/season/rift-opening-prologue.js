@@ -390,7 +390,7 @@
             });
     }
 
-    function syncTrailerMusicToTimeline(timeSec) {
+    function syncTrailerMusicToTimeline(timeSec, options) {
         if (!global.RoyalArmiesMusicFlow
             || typeof global.RoyalArmiesMusicFlow.getAudioElement !== 'function') {
             return;
@@ -399,12 +399,18 @@
         const musicAudio = global.RoyalArmiesMusicFlow.getAudioElement();
         if (!musicAudio) return;
 
+        const opts = options && typeof options === 'object' ? options : {};
         const musicTime = Math.max(0, timeSec - TRAILER_MUSIC_START_SEC);
-        if (Number.isFinite(musicAudio.duration) && musicAudio.duration > 0) {
-            musicAudio.currentTime = Math.min(musicAudio.duration - 0.01, musicTime);
-        } else {
-            musicAudio.currentTime = musicTime;
+        const targetTime = Number.isFinite(musicAudio.duration) && musicAudio.duration > 0
+            ? Math.min(musicAudio.duration - 0.01, musicTime)
+            : musicTime;
+
+        if (!opts.force) {
+            const drift = Math.abs((musicAudio.currentTime || 0) - targetTime);
+            if (drift < 0.15) return;
         }
+
+        musicAudio.currentTime = targetTime;
     }
 
     function ensureTrailerFinaleDomVisible() {
@@ -487,6 +493,7 @@
         if (!isTrailerReplayMode || !overlayEl) return;
 
         const opts = options && typeof options === 'object' ? options : {};
+        const seekMedia = opts.seekMedia !== false;
         const narrationSec = getTrailerNarrationDurationSec();
         const finaleStart = getTrailerFinaleStartSec();
         const finaleEnd = getTrailerFinaleEndSec();
@@ -499,7 +506,7 @@
             overlayEl.classList.add('is-cinematics-active');
             setSubtitleDockActive(true);
 
-            if (audioEl) {
+            if (audioEl && seekMedia) {
                 audioEl.currentTime = clamped;
             }
 
@@ -511,7 +518,7 @@
             setSubtitleDockActive(false);
             clearCinematicShots();
 
-            if (audioEl) {
+            if (audioEl && seekMedia) {
                 audioEl.pause();
                 audioEl.currentTime = Math.max(0, narrationSec - 0.02);
             }
@@ -524,7 +531,7 @@
             setSubtitleDockActive(false);
             clearCinematicShots();
 
-            if (audioEl) {
+            if (audioEl && seekMedia) {
                 audioEl.pause();
                 audioEl.currentTime = Math.max(0, narrationSec - 0.02);
             }
@@ -533,7 +540,7 @@
         }
 
         if (opts.syncMusic !== false) {
-            syncTrailerMusicToTimeline(clamped);
+            syncTrailerMusicToTimeline(clamped, { force: seekMedia });
         }
 
         updateTrailerPlayerUi();
@@ -555,14 +562,14 @@
 
             const totalSec = getTrailerTimelineDurationSec();
             syncTrailerPlaybackClock();
-            applyTrailerTimelinePosition(trailerReplayTimeSec, { syncMusic: false });
+            applyTrailerTimelinePosition(trailerReplayTimeSec, { syncMusic: false, seekMedia: false });
 
             const musicAudio = getTrailerMusicAudio();
             const narrationSec = getTrailerNarrationDurationSec();
             if (musicAudio && musicAudio.paused) {
                 if (trailerReplayTimeSec >= TRAILER_MUSIC_START_SEC - 0.03
                     && trailerReplayTimeSec < totalSec - 0.03) {
-                    syncTrailerMusicToTimeline(trailerReplayTimeSec);
+                    syncTrailerMusicToTimeline(trailerReplayTimeSec, { force: true });
                     musicAudio.play().catch(() => {});
                 }
             }
@@ -579,7 +586,7 @@
             if (trailerReplayTimeSec >= totalSec - 0.03) {
                 isTrailerReplayPlaying = false;
                 trailerReplayTimeSec = totalSec;
-                applyTrailerTimelinePosition(totalSec, { syncMusic: false });
+                applyTrailerTimelinePosition(totalSec, { syncMusic: false, seekMedia: false });
                 pauseTrailerMusicPlayback();
                 audioEl?.pause();
                 updateTrailerPlayerUi();
