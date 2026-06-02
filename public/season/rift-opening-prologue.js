@@ -291,8 +291,7 @@
     }
 
     function getTrailerCreditsTimelineStartSec() {
-        return getTrailerFinaleEndSec()
-            + ((TRAILER_CREDITS_TAGLINES_REVEAL_MS + TRAILER_MAIN_FINALE_HOLD_MS) / 1000);
+        return getTrailerFinaleEndSec() + (TRAILER_MAIN_FINALE_HOLD_MS / 1000);
     }
 
     function isTrailerScrubPreview() {
@@ -328,33 +327,54 @@
         outroEl.classList.toggle('is-taglines-visible', Boolean(taglinesVisible));
     }
 
-    function resolveTrailerCreditsScrubTimings() {
+    function resolveTrailerCreditsPhaseTimings(options) {
+        const opts = options && typeof options === 'object' ? options : {};
         const fadeOutMainMs = 1500;
+        const outroFadeInMs = 1200;
+        const outroTaglinesMs = TRAILER_CREDITS_TAGLINES_REVEAL_MS;
+        const outroInMs = outroFadeInMs + outroTaglinesMs;
+        const outroOutMs = 1500;
         const greenmaskInMs = 2200;
         const greenmaskOutMs = 1500;
         const alphaInMs = 2200;
         const alphaOutMs = 1800;
         const thanksInMs = 2000;
         const thanksOutMs = 1500;
-        const creditsStartSec = getTrailerCreditsTimelineStartSec();
-        const creditsEndSec = getTrailerMusicEndSec() - (TRAILER_CREDITS_MUSIC_END_BUFFER_MS / 1000);
-        const creditsSpanMs = Math.max(10000, (creditsEndSec - creditsStartSec) * 1000);
-        const fixedMs = fadeOutMainMs + greenmaskInMs + greenmaskOutMs + alphaInMs + alphaOutMs
-            + thanksInMs + thanksOutMs;
-        const holdBudgetMs = Math.max(3000, creditsSpanMs - fixedMs);
+        const fixedMs = fadeOutMainMs + outroInMs + outroOutMs + greenmaskInMs + greenmaskOutMs
+            + alphaInMs + alphaOutMs + thanksInMs + thanksOutMs;
+
+        let holdBudgetMs = 8000;
+        if (Number.isFinite(opts.remainingMs)) {
+            holdBudgetMs = Math.max(3000, opts.remainingMs - fixedMs);
+        } else if (Number.isFinite(opts.creditsSpanMs)) {
+            holdBudgetMs = Math.max(3000, opts.creditsSpanMs - fixedMs);
+        }
 
         return {
             fadeOutMainMs,
+            outroFadeInMs,
+            outroTaglinesMs,
+            outroInMs,
+            outroHoldMs: Math.round(holdBudgetMs * 0.22),
+            outroOutMs,
             greenmaskInMs,
-            greenmaskHoldMs: Math.round(holdBudgetMs * 0.35),
+            greenmaskHoldMs: Math.round(holdBudgetMs * 0.28),
             greenmaskOutMs,
             alphaInMs,
-            alphaHoldMs: Math.round(holdBudgetMs * 0.5),
+            alphaHoldMs: Math.round(holdBudgetMs * 0.38),
             alphaOutMs,
             thanksInMs,
-            thanksHoldMs: Math.round(holdBudgetMs * 0.15),
+            thanksHoldMs: Math.round(holdBudgetMs * 0.12),
             thanksOutMs,
         };
+    }
+
+    function resolveTrailerCreditsScrubTimings() {
+        const creditsStartSec = getTrailerCreditsTimelineStartSec();
+        const creditsEndSec = getTrailerMusicEndSec() - (TRAILER_CREDITS_MUSIC_END_BUFFER_MS / 1000);
+        const creditsSpanMs = Math.max(10000, (creditsEndSec - creditsStartSec) * 1000);
+
+        return resolveTrailerCreditsPhaseTimings({ creditsSpanMs });
     }
 
     function applyTrailerMainFinaleScrubState() {
@@ -402,7 +422,7 @@
             loreToolEl.style.opacity = String(TRAILER_LORE_TOOL_PEAK_OPACITY);
         }
 
-        setTrailerOutroInstant(true, true);
+        setTrailerOutroInstant(false, false);
 
         if (creditsEl) {
             creditsEl.hidden = true;
@@ -425,6 +445,7 @@
         const logoStack = logoStage?.querySelector('.game-opening-prologue-logo-stack');
         const loreToolEl = overlayEl.querySelector('.game-opening-prologue-lore-tool');
         const creditsEl = overlayEl.querySelector('#game-opening-prologue-trailer-credits');
+        const outroPanel = creditsEl?.querySelector('.game-opening-prologue-trailer-credits-panel--outro');
         const greenmaskPanel = creditsEl?.querySelector('.game-opening-prologue-trailer-credits-panel--greenmask');
         const alphaPanel = creditsEl?.querySelector('.game-opening-prologue-trailer-credits-panel--alpha');
         const thanksPanel = creditsEl?.querySelector('.game-opening-prologue-trailer-credits-panel--thanks');
@@ -465,14 +486,47 @@
 
         if (elapsedMs < timings.fadeOutMainMs) {
             setMainFinaleOpacity(1 - (elapsedMs / timings.fadeOutMainMs));
+            setPanelOpacity(outroPanel, 0);
             setPanelOpacity(greenmaskPanel, 0);
             setPanelOpacity(alphaPanel, 0);
             setPanelOpacity(thanksPanel, 0);
+            setTrailerOutroInstant(false, false);
             return;
         }
 
         cursorMs += timings.fadeOutMainMs;
         setMainFinaleOpacity(0);
+        setPanelOpacity(greenmaskPanel, 0);
+        setPanelOpacity(alphaPanel, 0);
+        setPanelOpacity(thanksPanel, 0);
+
+        if (elapsedMs < cursorMs + timings.outroInMs) {
+            const phaseMs = elapsedMs - cursorMs;
+            const fadeT = Math.min(1, phaseMs / timings.outroFadeInMs);
+            setPanelOpacity(outroPanel, fadeT);
+            setTrailerOutroInstant(fadeT > 0.01, phaseMs >= timings.outroTaglinesMs);
+            return;
+        }
+
+        cursorMs += timings.outroInMs;
+
+        if (elapsedMs < cursorMs + timings.outroHoldMs) {
+            setPanelOpacity(outroPanel, 1);
+            setTrailerOutroInstant(true, true);
+            return;
+        }
+
+        cursorMs += timings.outroHoldMs;
+
+        if (elapsedMs < cursorMs + timings.outroOutMs) {
+            const t = (elapsedMs - cursorMs) / timings.outroOutMs;
+            setPanelOpacity(outroPanel, 1 - t);
+            setTrailerOutroInstant(t < 0.98, true);
+            return;
+        }
+
+        cursorMs += timings.outroOutMs;
+        setPanelOpacity(outroPanel, 0);
         setTrailerOutroInstant(false, false);
 
         if (elapsedMs < cursorMs + timings.greenmaskInMs) {
@@ -732,7 +786,6 @@
         const titleLogoEl = overlayEl?.querySelector('.game-opening-prologue-logo--title');
         const subtitleLogoEl = overlayEl?.querySelector('.game-opening-prologue-logo--subtitle');
         const loreToolEl = overlayEl?.querySelector('.game-opening-prologue-lore-tool');
-        const outroEl = overlayEl?.querySelector('#game-opening-prologue-trailer-outro');
         const titlePhaseEnd = TRAILER_TITLE_LOGO_REVEAL_MS / TRAILER_POST_NARRATION_MS;
 
         overlayEl?.classList.add('is-logo-reveal-active');
@@ -789,16 +842,6 @@
                 loreToolEl.style.opacity = String(
                     Math.min(TRAILER_LORE_TOOL_PEAK_OPACITY, loreProgress * TRAILER_LORE_TOOL_PEAK_OPACITY)
                 );
-            }
-            if (outroEl && p > titlePhaseEnd + 0.12) {
-                if (scrubbing) {
-                    setTrailerOutroInstant(true, p > titlePhaseEnd + 0.2);
-                } else {
-                    outroEl.hidden = false;
-                    outroEl.classList.add('is-visible', 'is-taglines-visible');
-                }
-            } else if (scrubbing) {
-                setTrailerOutroInstant(false, false);
             }
         } else if (subtitleLogoEl) {
             subtitleLogoEl.hidden = true;
@@ -978,7 +1021,6 @@
         const titleLogoEl = overlayEl.querySelector('.game-opening-prologue-logo--title');
         const subtitleLogoEl = overlayEl.querySelector('.game-opening-prologue-logo--subtitle');
         const loreToolEl = overlayEl.querySelector('.game-opening-prologue-lore-tool');
-        const outroEl = overlayEl.querySelector('#game-opening-prologue-trailer-outro');
 
         overlayEl.classList.add('is-logo-reveal-active', 'is-trailer-finale-visible');
 
@@ -1005,11 +1047,6 @@
             loreToolEl.classList.add('is-visible');
             loreToolEl.style.opacity = String(TRAILER_LORE_TOOL_MAX_OPACITY);
         }
-
-        if (outroEl) {
-            outroEl.hidden = false;
-            outroEl.classList.add('is-visible', 'is-taglines-visible');
-        }
     }
 
     function lockTrailerFinaleVisuals() {
@@ -1018,7 +1055,6 @@
         isTrailerFinaleLocked = true;
         overlayEl?.classList.add('is-trailer-finale-locked');
         ensureTrailerFinaleDomVisible();
-        showTrailerOutro();
     }
 
     function reparentTrailerSubtitleDockForPlayer() {
@@ -2679,13 +2715,16 @@
                 && !overlayEl.querySelector('#game-opening-prologue-trailer-credits');
             const missingTrailerThanksPanel = isTrailerPage()
                 && !overlayEl.querySelector('.game-opening-prologue-trailer-credits-panel--thanks');
+            const missingTrailerOutroPanel = isTrailerPage()
+                && !overlayEl.querySelector('.game-opening-prologue-trailer-credits-panel--outro');
             if (!overlayEl.querySelector('.game-opening-prologue-cinematic-frame-border')
                 || !overlayEl.querySelector('.game-opening-prologue-subtitle-dock-inner')
                 || missingTrailerPlayer
                 || staleTrailerViewport
                 || staleTrailerControls
                 || missingTrailerCredits
-                || missingTrailerThanksPanel) {
+                || missingTrailerThanksPanel
+                || missingTrailerOutroPanel) {
                 overlayEl.remove();
                 overlayEl = null;
                 subtitleEl = null;
@@ -2741,23 +2780,7 @@
                             hidden
                         >
                     </div>
-                    ${isTrailerPage() ? `
-                    <div
-                        class="game-opening-prologue-trailer-outro"
-                        id="game-opening-prologue-trailer-outro"
-                        hidden
-                        aria-live="polite"
-                    >
-                        <p class="game-opening-prologue-trailer-coming-soon">
-                            <span class="game-opening-prologue-trailer-coming-soon-headline">Coming Soon</span>
-                            <span class="game-opening-prologue-trailer-coming-soon-date">Winter 2026</span>
-                        </p>
-                        <div class="game-opening-prologue-trailer-taglines">
-                            <p class="game-opening-prologue-trailer-call">Stand and Join the War!</p>
-                            <p class="game-opening-prologue-trailer-site">RoyalArmies.com</p>
-                        </div>
-                    </div>
-                    `.trim() : `
+                    ${isTrailerPage() ? '' : `
                     <button
                         type="button"
                         class="game-opening-prologue-enter-war-btn"
@@ -2775,6 +2798,23 @@
                     hidden
                     aria-live="polite"
                 >
+                    <div class="game-opening-prologue-trailer-credits-panel game-opening-prologue-trailer-credits-panel--outro">
+                        <div
+                            class="game-opening-prologue-trailer-outro"
+                            id="game-opening-prologue-trailer-outro"
+                            hidden
+                            aria-live="polite"
+                        >
+                            <p class="game-opening-prologue-trailer-coming-soon">
+                                <span class="game-opening-prologue-trailer-coming-soon-headline">Coming Soon</span>
+                                <span class="game-opening-prologue-trailer-coming-soon-date">Winter 2026</span>
+                            </p>
+                            <div class="game-opening-prologue-trailer-taglines">
+                                <p class="game-opening-prologue-trailer-call">Stand and Join the War!</p>
+                                <p class="game-opening-prologue-trailer-site">RoyalArmies.com</p>
+                            </div>
+                        </div>
+                    </div>
                     <div class="game-opening-prologue-trailer-credits-panel game-opening-prologue-trailer-credits-panel--greenmask">
                         <img
                             src="${TRAILER_GREENMASK_LOGO_SRC}"
@@ -3604,6 +3644,7 @@
         creditsEl.querySelectorAll('.game-opening-prologue-trailer-credits-panel').forEach((panel) => {
             panel.style.removeProperty('opacity');
         });
+        hideTrailerOutro();
     }
 
     function waitTrailerPlaybackMs(ms, generation) {
@@ -3671,34 +3712,12 @@
     }
 
     function computeTrailerCreditsTimings() {
-        const fadeOutMainMs = 1500;
-        const greenmaskInMs = 2200;
-        const greenmaskOutMs = 1500;
-        const alphaInMs = 2200;
-        const alphaOutMs = 1800;
-        const thanksInMs = 2000;
-        const thanksOutMs = 1500;
-
         const remainingMs = Math.max(
             6000,
             ((getTrailerMusicEndSec() - getTrailerPlaybackNowSec()) * 1000) - TRAILER_CREDITS_MUSIC_END_BUFFER_MS
         );
-        const fixedMs = fadeOutMainMs + greenmaskInMs + greenmaskOutMs + alphaInMs + alphaOutMs
-            + thanksInMs + thanksOutMs;
-        const holdBudgetMs = Math.max(3000, remainingMs - fixedMs);
 
-        return {
-            fadeOutMainMs,
-            greenmaskInMs,
-            greenmaskHoldMs: Math.round(holdBudgetMs * 0.35),
-            greenmaskOutMs,
-            alphaInMs,
-            alphaHoldMs: Math.round(holdBudgetMs * 0.5),
-            alphaOutMs,
-            thanksInMs,
-            thanksHoldMs: Math.round(holdBudgetMs * 0.15),
-            thanksOutMs,
-        };
+        return resolveTrailerCreditsPhaseTimings({ remainingMs });
     }
 
     function computeTrailerCreditsFadeOutMs(defaultMs) {
@@ -3742,19 +3761,24 @@
         trailerCreditsRunning = true;
 
         const creditsEl = overlayEl?.querySelector('#game-opening-prologue-trailer-credits');
+        const outroPanel = creditsEl?.querySelector('.game-opening-prologue-trailer-credits-panel--outro');
+        const outroEl = creditsEl?.querySelector('#game-opening-prologue-trailer-outro');
         const greenmaskPanel = creditsEl?.querySelector('.game-opening-prologue-trailer-credits-panel--greenmask');
         const alphaPanel = creditsEl?.querySelector('.game-opening-prologue-trailer-credits-panel--alpha');
         const thanksPanel = creditsEl?.querySelector('.game-opening-prologue-trailer-credits-panel--thanks');
-        if (!creditsEl || !greenmaskPanel || !alphaPanel || !thanksPanel) {
+        if (!creditsEl || !outroPanel || !outroEl || !greenmaskPanel || !alphaPanel || !thanksPanel) {
             trailerCreditsRunning = false;
             return;
         }
 
         creditsEl.hidden = false;
         creditsEl.classList.add('is-active');
+        outroPanel.style.opacity = '0';
         greenmaskPanel.style.opacity = '0';
         alphaPanel.style.opacity = '0';
         thanksPanel.style.opacity = '0';
+        outroEl.hidden = true;
+        outroEl.classList.remove('is-visible', 'is-taglines-visible');
 
         const timings = computeTrailerCreditsTimings();
 
@@ -3764,6 +3788,41 @@
         }
 
         await fadeTrailerMainFinaleOut(timings.fadeOutMainMs);
+
+        if (generation !== logoRevealGeneration || generation !== trailerCreditsGeneration) {
+            trailerCreditsRunning = false;
+            return;
+        }
+
+        outroEl.hidden = false;
+        outroEl.classList.remove('is-visible', 'is-taglines-visible');
+        void outroEl.offsetWidth;
+        outroEl.classList.add('is-visible');
+
+        const outroFadeInPromise = animateTrailerElementsOpacity([outroPanel], 0, 1, timings.outroFadeInMs);
+
+        if (!(await waitTrailerPlaybackMs(timings.outroTaglinesMs, generation))) {
+            trailerCreditsRunning = false;
+            return;
+        }
+
+        outroEl.classList.add('is-taglines-visible');
+        await outroFadeInPromise;
+
+        if (generation !== logoRevealGeneration || generation !== trailerCreditsGeneration) {
+            trailerCreditsRunning = false;
+            return;
+        }
+
+        if (!(await waitTrailerPlaybackMs(timings.outroHoldMs, generation))) {
+            trailerCreditsRunning = false;
+            return;
+        }
+
+        const outroOutMs = computeTrailerCreditsFadeOutMs(timings.outroOutMs);
+        await animateTrailerElementsOpacity([outroPanel], 1, 0, outroOutMs);
+        outroEl.classList.remove('is-visible', 'is-taglines-visible');
+        outroEl.hidden = true;
 
         if (generation !== logoRevealGeneration || generation !== trailerCreditsGeneration) {
             trailerCreditsRunning = false;
@@ -3812,26 +3871,16 @@
         trailerCreditsRunning = false;
     }
 
-    function showTrailerOutro() {
-        const outroEl = overlayEl?.querySelector('#game-opening-prologue-trailer-outro');
-        if (!outroEl) return;
-
-        outroEl.hidden = false;
-        outroEl.classList.remove('is-visible', 'is-taglines-visible');
-        void outroEl.offsetWidth;
-        global.requestAnimationFrame(() => {
-            outroEl.classList.add('is-visible');
-            global.setTimeout(() => {
-                outroEl.classList.add('is-taglines-visible');
-            }, 860);
-        });
-    }
-
     function hideTrailerOutro() {
         const outroEl = overlayEl?.querySelector('#game-opening-prologue-trailer-outro');
+        const outroPanel = overlayEl?.querySelector('.game-opening-prologue-trailer-credits-panel--outro');
         if (!outroEl) return;
+
         outroEl.hidden = true;
         outroEl.classList.remove('is-visible', 'is-taglines-visible');
+        if (outroPanel) {
+            outroPanel.style.removeProperty('opacity');
+        }
     }
 
     function showEnterWarButton() {
@@ -3906,12 +3955,8 @@
             isTrailerFinaleLocked = true;
             overlayEl?.classList.add('is-trailer-finale-locked');
             ensureTrailerFinaleDomVisible();
-            showTrailerOutro();
 
-            const holdOk = await waitTrailerPlaybackMs(
-                TRAILER_CREDITS_TAGLINES_REVEAL_MS + TRAILER_MAIN_FINALE_HOLD_MS,
-                generation
-            );
+            const holdOk = await waitTrailerPlaybackMs(TRAILER_MAIN_FINALE_HOLD_MS, generation);
             if (!holdOk || generation !== logoRevealGeneration) return;
 
             await runTrailerCreditsSequence(generation);
