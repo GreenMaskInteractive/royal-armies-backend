@@ -442,14 +442,10 @@
     function buildPlaylistSectionMarkup(title, entries, activeId, sectionModifier) {
         if (!entries.length) return '';
 
-        const listClass = sectionModifier === 'undiscovered'
-            ? 'game-chat-music-playlist game-chat-music-playlist--undiscovered'
-            : 'game-chat-music-playlist';
-
         return `
             <section class="game-chat-music-playlist-section game-chat-music-playlist-section--${sectionModifier}">
                 <h4 class="game-chat-music-playlist-heading">${escapePlaylistTitle(title)}</h4>
-                <ul class="${listClass}">
+                <ul class="game-chat-music-playlist">
                     ${entries.map((entry) => buildPlaylistItemMarkup(entry, activeId)).join('')}
                 </ul>
             </section>
