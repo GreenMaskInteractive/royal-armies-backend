@@ -304,12 +304,36 @@
 
     function suspendTrailerFinaleSequencesForScrub() {
         resetTrailerCreditsState();
-        logoRevealGeneration += 1;
         trailerCreditsGeneration += 1;
         resetTrailerFinaleSequenceState();
         isTrailerFinaleLocked = false;
         overlayEl?.classList.remove('is-trailer-finale-locked');
-        clearEnterWarGate();
+        clearLogoReveal();
+    }
+
+    function clearTrailerFinaleOverlayForScrub() {
+        suspendTrailerFinaleSequencesForScrub();
+        hideTrailerOutro();
+        resetLoreToolBackdrop();
+        overlayEl?.classList.remove(
+            'is-trailer-finale-visible',
+            'is-trailer-finale-locked',
+            'is-logo-reveal-active'
+        );
+    }
+
+    function shouldStartTrailerFinaleSequenceAtProgress(finaleProgress) {
+        return (Number(finaleProgress) || 0) < 0.06;
+    }
+
+    function freezeTrailerTimelinePreviewAtCurrentTime() {
+        if (!isTrailerReplayMode) return;
+
+        applyTrailerTimelinePosition(trailerReplayTimeSec, {
+            syncMusic: false,
+            seekMedia: true,
+            scrubbing: true,
+        });
     }
 
     function setTrailerScrubPreviewActive(active) {
@@ -782,6 +806,9 @@
         if (!isTrailerReplayMode || trailerFinaleSequenceStarted) {
             return trailerFinaleSequencePromise || Promise.resolve();
         }
+        if (trailerSeekActive || trailerUserPausedPlayback) {
+            return Promise.resolve();
+        }
 
         trailerFinaleSequenceStarted = true;
         isPostNarrationHold = true;
@@ -854,6 +881,20 @@
             if (creditsEl) {
                 creditsEl.hidden = true;
                 creditsEl.classList.remove('is-active');
+            }
+
+            if (titleLogoEl) {
+                titleLogoEl.classList.remove('is-arriving', 'is-exploding');
+                titleLogoEl.style.removeProperty('transform');
+                titleLogoEl.style.removeProperty('opacity');
+                titleLogoEl.style.removeProperty('filter');
+            }
+            if (subtitleLogoEl) {
+                subtitleLogoEl.classList.remove('is-arriving', 'is-exploding');
+                subtitleLogoEl.style.removeProperty('transform');
+                subtitleLogoEl.style.removeProperty('opacity');
+                subtitleLogoEl.style.removeProperty('filter');
+                resetSubtitleLogoExplosionState(subtitleLogoEl);
             }
         }
 
@@ -1279,7 +1320,9 @@
         setTrailerScrubPreviewActive(scrubbing && seekMedia);
 
         if (clamped < finaleStart - 0.03) {
-            if (trailerFinaleSequenceStarted || isPostNarrationHold || isTrailerFinaleLocked) {
+            if (scrubbing && seekMedia) {
+                clearTrailerFinaleOverlayForScrub();
+            } else if (trailerFinaleSequenceStarted || isPostNarrationHold || isTrailerFinaleLocked) {
                 cancelTrailerFinaleSequenceForScrub();
                 isTrailerFinaleLocked = false;
                 overlayEl.classList.remove(
@@ -1336,8 +1379,17 @@
                         ensureTrailerFinaleDomVisible();
                     }
                 }
-            } else if (!trailerFinaleSequenceStarted && isTrailerReplayPlaying) {
-                void beginTrailerFinaleSequence();
+            } else if (!trailerFinaleSequenceStarted && isTrailerReplayPlaying && !trailerSeekActive) {
+                if (shouldStartTrailerFinaleSequenceAtProgress(finaleProgress)) {
+                    void beginTrailerFinaleSequence();
+                } else {
+                    overlayEl.classList.remove('is-cinematics-active');
+                    clearCinematicShots();
+                    applyTrailerFinaleProgress(finaleProgress);
+                    if (finaleProgress >= 0.98) {
+                        ensureTrailerFinaleDomVisible();
+                    }
+                }
             } else if (!trailerFinaleSequenceStarted) {
                 overlayEl.classList.remove('is-cinematics-active');
                 clearCinematicShots();
@@ -1364,8 +1416,16 @@
                     ensureTrailerFinaleDomVisible();
                     lockTrailerFinaleVisuals();
                 }
-            } else if (!trailerFinaleSequenceStarted && isTrailerReplayPlaying) {
-                void beginTrailerFinaleSequence();
+            } else if (!trailerFinaleSequenceStarted && isTrailerReplayPlaying && !trailerSeekActive) {
+                if (shouldStartTrailerFinaleSequenceAtProgress(
+                    (clamped - finaleStart) / Math.max(0.001, finaleEnd - finaleStart)
+                )) {
+                    void beginTrailerFinaleSequence();
+                } else {
+                    overlayEl.classList.remove('is-cinematics-active');
+                    clearCinematicShots();
+                    ensureTrailerFinaleDomVisible();
+                }
             } else if (!trailerFinaleSequenceStarted && !isTrailerFinaleLocked) {
                 overlayEl.classList.remove('is-cinematics-active');
                 clearCinematicShots();
@@ -1607,6 +1667,10 @@
         trailerSeekActive = true;
         trailerSeekWasPlaying = isTrailerReplayPlaying;
 
+        if (trailerReplayTimeSec >= getTrailerFinaleStartSec() - 0.03) {
+            suspendTrailerFinaleSequencesForScrub();
+        }
+
         if (isTrailerReplayPlaying) {
             isTrailerReplayPlaying = false;
             audioEl?.pause();
@@ -1628,6 +1692,8 @@
             resetTrailerCinematicPanState();
             syncCinematicToAudioTime(true);
             syncSubtitleToAudioTime(true);
+        } else {
+            freezeTrailerTimelinePreviewAtCurrentTime();
         }
 
         if (shouldResume) {
@@ -1646,6 +1712,12 @@
         audioEl?.pause();
         pauseTrailerMusicPlayback();
         stopTrailerReplaySyncLoop();
+
+        if (trailerReplayTimeSec >= getTrailerFinaleStartSec() - 0.03) {
+            suspendTrailerFinaleSequencesForScrub();
+            freezeTrailerTimelinePreviewAtCurrentTime();
+        }
+
         updateTrailerPlayerUi();
         updateTrailerMediaSession();
     }
@@ -3756,8 +3828,8 @@
                     return;
                 }
 
-                if (!isTrailerReplayPlaying) {
-                    global.setTimeout(tick, 120);
+                if (!isTrailerReplayPlaying || trailerSeekActive || trailerUserPausedPlayback) {
+                    resolve(false);
                     return;
                 }
 
