@@ -23,6 +23,7 @@
 
 const http = require('http');
 const fs = require('fs');
+const os = require('os');
 const path = require('path');
 const { spawn } = require('child_process');
 
@@ -164,6 +165,15 @@ function runFfmpeg(ffmpegPath, args) {
     });
 }
 
+function verifyFrameSequence(framesDir, totalFrames) {
+    for (let i = 0; i < totalFrames; i += 1) {
+        const framePath = path.join(framesDir, `frame_${String(i).padStart(6, '0')}.png`);
+        if (!fs.existsSync(framePath)) {
+            throw new Error(`Missing trailer frame ${i + 1}/${totalFrames}: ${framePath}`);
+        }
+    }
+}
+
 async function waitForPaint(page) {
     await page.evaluate(() => new Promise((resolve) => {
         requestAnimationFrame(() => {
@@ -210,7 +220,8 @@ async function main() {
         process.exit(1);
     }
 
-    const framesDir = path.join(OUTPUT_DIR, 'frames');
+    const framesDir = path.join(os.tmpdir(), `royal-armies-trailer-frames-${Date.now()}`);
+    fs.rmSync(framesDir, { recursive: true, force: true });
     fs.mkdirSync(framesDir, { recursive: true });
     fs.mkdirSync(OUTPUT_DIR, { recursive: true });
 
@@ -312,9 +323,11 @@ async function main() {
         });
 
         console.log('[NEXUS] Encoding video…');
+        verifyFrameSequence(framesDir, totalFrames);
         await runFfmpeg(ffmpegPath, [
             '-y',
             '-framerate', String(fps),
+            '-start_number', '0',
             '-i', path.join(framesDir, 'frame_%06d.png'),
             '-c:v', 'libx264',
             '-pix_fmt', 'yuv420p',
@@ -363,16 +376,12 @@ async function main() {
 
         markTrailerRenderComplete(outputPath);
         console.log(`[NEXUS] Done: ${outputPath}`);
-
-        if (!opts.keepFrames) {
-            fs.rmSync(framesDir, { recursive: true, force: true });
-            if (fs.existsSync(videoOnlyPath)) {
-                fs.unlinkSync(videoOnlyPath);
-            }
-        }
     } finally {
         await browser.close();
         await new Promise((resolve) => server.close(resolve));
+        if (!opts.keepFrames && fs.existsSync(framesDir)) {
+            fs.rmSync(framesDir, { recursive: true, force: true });
+        }
     }
 }
 
