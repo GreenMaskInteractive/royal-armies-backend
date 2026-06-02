@@ -4014,6 +4014,7 @@ function stageUIScale(val) {
     if (isPortalMobileVisualSettingsLayout()) return;
     hasUnsavedChanges = true;
     stagedScale = parseFloat(val); // Capture the slider data silently in memory
+    document.documentElement.style.setProperty('--ui-scale', String(stagedScale));
     
     // 1. DYNAMICALLY RE-SCALE THE MINI CONTAINER MODEL IN THE SANDBOX SCREEN
     const miniFrame = document.getElementById('preview-modal-frame');
@@ -4026,6 +4027,8 @@ function stageUIScale(val) {
     if (label) {
         label.innerText = Math.round(stagedScale * 100) + "%";
     }
+
+    document.dispatchEvent(new CustomEvent('royalarmies:viewport-resync-request'));
 }
 
 function stageGameChatOpacity(val) {

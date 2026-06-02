@@ -1,0 +1,69 @@
+/**
+ * FLEX — 3840×2160 design canvas proportional scale (desktop).
+ * Variables are set by rift-viewport-metrics.js.
+ */
+
+html.ra-design-scale-on {
+    overflow: hidden !important;
+    width: 100% !important;
+    height: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+html.ra-design-scale-on body {
+    margin: 0 !important;
+    overflow: hidden !important;
+}
+
+html.ra-design-scale-on .ra-design-surface {
+    box-sizing: border-box !important;
+    width: var(--ra-design-width, 3840px) !important;
+    height: var(--ra-design-height, 2160px) !important;
+    min-width: var(--ra-design-width, 3840px) !important;
+    min-height: var(--ra-design-height, 2160px) !important;
+    max-width: none !important;
+    transform: translate3d(
+            var(--ra-design-translate-x, 0px),
+            var(--ra-design-translate-y, 0px),
+            0
+        )
+        scale(var(--ra-design-scale, 1)) !important;
+    transform-origin: 0 0 !important;
+    will-change: transform;
+}
+
+html.ra-design-scale-on #main-dashboard-canvas {
+    background-attachment: scroll !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+}
+
+html.ra-design-scale-on #game-page-canvas::before,
+html.ra-design-scale-on .game-page-canvas::before,
+html.ra-design-scale-on #age-page-canvas::before,
+html.ra-design-scale-on .age-page-canvas::before {
+    position: absolute !important;
+}
+
+/* Tablet/phone keeps existing responsive layouts (no 4K canvas). */
+@media (max-width: 1024px) {
+    html.ra-design-scale-on {
+        overflow: auto !important;
+        height: auto !important;
+    }
+
+    html.ra-design-scale-on body {
+        overflow-x: hidden !important;
+        overflow-y: auto !important;
+    }
+
+    html.ra-design-scale-on .ra-design-surface {
+        width: 100% !important;
+        min-width: 0 !important;
+        height: auto !important;
+        min-height: 0 !important;
+        max-width: 100% !important;
+        transform: none !important;
+    }
+}
