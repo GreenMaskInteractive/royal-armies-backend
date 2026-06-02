@@ -541,7 +541,7 @@ const PORTAL_MOBILE_NAV_VIEW_LABELS = {
     portal: 'Age Portal',
     leaderboards: 'Leaderboards',
     chat: 'Community Chat',
-    lore: 'Lore',
+    lore: 'Nations',
     royalty: 'Royalty',
     chronicles: 'The Chronicles',
     roadmap: 'Roadmap',
@@ -1374,6 +1374,11 @@ function launchGameRoundSectorAfterTermsCheck(isTutorialModeActive, clickEvent) 
 
     const clickedHousing = clickEvent?.target?.closest?.('.action-btn-aura-housing')
         ?? clickEvent?.currentTarget?.closest?.('.action-btn-aura-housing');
+
+    if (window.RoyalArmiesMusicFlow
+        && typeof window.RoyalArmiesMusicFlow.prepareJoinAgeLaunch === 'function') {
+        window.RoyalArmiesMusicFlow.prepareJoinAgeLaunch();
+    }
 
     haltAllPortalAudioForGameLaunch();
     resetAllJoinAgeDeploymentButtonShakeStates();
@@ -5490,7 +5495,7 @@ const ROADMAP_EVOLUTION_PHASES = [
             {
                 title: 'Age Portal navigation',
                 items: [
-                    `Dedicated portal home with sticky top navigation: Age Portal, Leaderboards, Community Chat, Lore, Royalty, ${CHRONICLE_BATTLE_PASS_HEADING}, and this Evolution Roadmap.`,
+                    `Dedicated portal home with sticky top navigation: Age Portal, Leaderboards, Community Chat, Nations, Royalty, ${CHRONICLE_BATTLE_PASS_HEADING}, and this Evolution Roadmap.`,
                     'Live Age metrics strip: Great Transition countdown, game mode, Age cycle, leading nation, registered and active player rosters.',
                     'Join the Age deployment deck with tutorial vs standard entry, SFX, and visual feedback (battle screen redirect pending).'
                 ]
@@ -5725,7 +5730,7 @@ function renderMasterLorePortalCanvas(viewport) {
         <div class="lore-workspace-chassis">
             <header class="lore-codex-hero">
                 <p class="lore-codex-eyebrow">Royal Armies · Amnek</p>
-                <h2 class="lore-codex-title">Lore of the Fifteen Nations</h2>
+                <h2 class="lore-codex-title">The Fifteen Nations</h2>
                 <p class="lore-codex-lead">
                     Explore the sovereign realms that shape the continent. Choose a nation to read its chronicle,
                     then press <strong>Listen</strong> to hear its history narration.
@@ -5775,6 +5780,19 @@ function renderMasterLorePortalCanvas(viewport) {
 /* ==========================================================================
    SECTION 9: SYSTEM OPTIONS & AUDIO SOUNDTRACK CHANNEL MIXER
    ========================================================================== */
+
+function isMainPortalDashboardPage() {
+    return (document.body?.id || '') === 'main-dashboard-canvas';
+}
+
+function suppressMainPortalBackgroundMusic() {
+    if (!isMainPortalDashboardPage()) return;
+
+    const playerHome = document.getElementById('portal-media-player-home');
+    if (playerHome) playerHome.hidden = true;
+
+    haltPortalBackgroundMusicImmediately();
+}
 
 function getPortalBackgroundAudioElement() {
     return document.getElementById('portal-background-theme-audio');
@@ -5843,6 +5861,14 @@ function applyPortalBackgroundMusicVolume() {
 }
 
 function startPortalBackgroundMusic(options = {}) {
+    if (isMainPortalDashboardPage()
+        || (window.RoyalArmiesMusicFlow
+            && typeof window.RoyalArmiesMusicFlow.shouldSuppressPortalMainMusic === 'function'
+            && window.RoyalArmiesMusicFlow.shouldSuppressPortalMainMusic())) {
+        suppressMainPortalBackgroundMusic();
+        return Promise.resolve();
+    }
+
     const bgMusic = getPortalBackgroundAudioElement();
     if (!bgMusic) return Promise.resolve();
 
@@ -5887,6 +5913,8 @@ function startPortalBackgroundMusic(options = {}) {
 }
 
 function bindPortalBackgroundMusicAutoplayUnlock() {
+    if (isMainPortalDashboardPage()) return;
+
     const unlock = () => {
         startPortalBackgroundMusic({ markSessionGranted: true, silentFail: true });
         document.removeEventListener('pointerdown', unlock);
@@ -6032,6 +6060,11 @@ window.addEventListener('scroll', () => {
 }, { passive: true });
 
 window.addEventListener("DOMContentLoaded", () => {
+    if (isMainPortalDashboardPage()) {
+        suppressMainPortalBackgroundMusic();
+        return;
+    }
+
     const bgMusic = getPortalBackgroundAudioElement();
     if (!bgMusic) return;
 
@@ -6057,7 +6090,7 @@ window.addEventListener("DOMContentLoaded", () => {
 });
 
 window.addEventListener('pageshow', (event) => {
-    if (event.persisted) {
+    if (event.persisted && !isMainPortalDashboardPage()) {
         startPortalBackgroundMusic({ silentFail: true });
     }
 });
@@ -6797,7 +6830,7 @@ window.onload = () => {
         applyPortalGuestDeploymentChrome();
     }
     window.cachedAgePortalViewportHTML = snapshotAgePortalViewportForCache();
-    if (getPortalBackgroundAudioElement()?.paused) {
+    if (!isMainPortalDashboardPage() && getPortalBackgroundAudioElement()?.paused) {
         startPortalBackgroundMusic({ silentFail: true });
     }
 };

@@ -553,6 +553,16 @@
         refreshGameOnboardingProgress(nextView);
         scheduleRegionFlankLayoutIfNeeded(nextView);
         closeGameMobileCommanderSubmenu();
+        if (nextView === 'class'
+            && global.RoyalArmiesMusicFlow
+            && typeof global.RoyalArmiesMusicFlow.startProgressionPageMusic === 'function'
+            && (!global.RoyalArmiesMusicFlow.shouldHoldForOpeningPrologue
+                || !global.RoyalArmiesMusicFlow.shouldHoldForOpeningPrologue())
+            && (!global.RoyalArmiesOpeningPrologue
+                || typeof global.RoyalArmiesOpeningPrologue.shouldHoldProgression !== 'function'
+                || !global.RoyalArmiesOpeningPrologue.shouldHoldProgression())) {
+            global.RoyalArmiesMusicFlow.startProgressionPageMusic();
+        }
     }
 
     function setActiveGameViewAnimated(nextView) {
