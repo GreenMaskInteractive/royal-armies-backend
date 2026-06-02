@@ -15122,7 +15122,7 @@ body.developer-maintenance-alert-active #page-landing {
     transform: none;
 }
 
-/* Bottom-right tray — music player (left) + commander nametag (right) */
+/* Bottom-right tray — commander nametag */
 #age-page-canvas .age-map-bottom-dock-tray {
     position: absolute;
     right: 0;
@@ -15134,131 +15134,10 @@ body.developer-maintenance-alert-active #page-landing {
     justify-content: flex-end;
     gap: 0;
     min-width: 0;
-    max-width: min(720px, 62vw);
+    max-width: min(520px, 42vw);
     z-index: 40;
     overflow: visible;
     pointer-events: none;
-}
-
-#age-page-canvas .age-bottom-music-player-host {
-    flex: 0 0 auto;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    align-self: stretch;
-    min-width: 0;
-    max-width: min(320px, 36vw);
-    padding: 4px 10px 4px 12px;
-    box-sizing: border-box;
-    pointer-events: auto;
-    border-right: 1px solid var(--age-hud-rail-divider);
-}
-
-#age-page-canvas .age-bottom-music-player {
-    width: 100%;
-    min-width: 0;
-    margin: 0;
-}
-
-#age-page-canvas .age-bottom-music-player-bezel {
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    gap: 10px;
-    width: 100%;
-    min-width: 0;
-    padding: 6px 10px !important;
-    box-sizing: border-box;
-}
-
-#age-page-canvas .age-bottom-music-transport-btn {
-    flex: 0 0 auto;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 32px;
-    height: 32px;
-    margin: 0;
-    padding: 0;
-    border: 1px solid rgba(184, 144, 48, 0.45);
-    border-radius: 4px;
-    background:
-        linear-gradient(180deg, rgba(255, 215, 0, 0.12) 0%, transparent 48%),
-        rgba(0, 0, 0, 0.55);
-    color: #ffd978;
-    cursor: pointer;
-    box-shadow: inset 0 1px 0 rgba(255, 215, 0, 0.14);
-}
-
-#age-page-canvas .age-bottom-music-transport-btn:hover,
-#age-page-canvas .age-bottom-music-transport-btn:focus-visible {
-    color: #fff4d0;
-    border-color: rgba(255, 215, 0, 0.62);
-}
-
-#age-page-canvas .age-bottom-music-transport-glyph {
-    font-size: 0.72rem;
-    line-height: 1;
-    letter-spacing: -0.08em;
-}
-
-#age-page-canvas .age-bottom-music-meta {
-    flex: 1 1 auto;
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    justify-content: center;
-    gap: 2px;
-    min-width: 0;
-}
-
-#age-page-canvas .age-bottom-music-eyebrow {
-    font-family: 'Segoe UI', Tahoma, sans-serif;
-    font-size: 0.52rem;
-    font-weight: 600;
-    letter-spacing: 0.14em;
-    text-transform: uppercase;
-    color: rgba(184, 144, 48, 0.82);
-    line-height: 1.2;
-}
-
-#age-page-canvas .age-bottom-music-title {
-    display: block;
-    max-width: 100%;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    font-family: 'Cinzel', serif;
-    font-size: 0.68rem;
-    font-weight: 600;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: #f1e0ac;
-    line-height: 1.25;
-}
-
-#age-page-canvas .age-bottom-music-utility-btn {
-    flex: 0 0 auto;
-    margin: 0;
-    padding: 5px 10px;
-    border: 1px solid rgba(184, 144, 48, 0.38);
-    border-radius: 4px;
-    background: rgba(0, 0, 0, 0.42);
-    color: rgba(241, 224, 172, 0.92);
-    font-family: 'Cinzel', serif;
-    font-size: 0.58rem;
-    font-weight: 600;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    cursor: pointer;
-    white-space: nowrap;
-}
-
-#age-page-canvas .age-bottom-music-utility-btn:hover,
-#age-page-canvas .age-bottom-music-utility-btn:focus-visible {
-    color: #ffd700;
-    border-color: rgba(255, 215, 0, 0.55);
-    background: rgba(24, 18, 10, 0.88);
 }
 
 /* Commander nametag — bottom HUD (replaces End Turn) */
@@ -15411,6 +15290,164 @@ body.developer-maintenance-alert-active #page-landing {
     min-height: 0 !important;
     max-height: none !important;
     padding: 6px 8px !important;
+}
+
+#age-page-canvas .age-map-bottom-chat-messages-host .game-chat-music-panel,
+.game-chat-module-panel .game-chat-music-panel,
+.age-game-chat-popout-shell .game-chat-music-panel {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-x: hidden;
+    overflow-y: auto;
+    padding: 8px;
+    box-sizing: border-box;
+}
+
+.game-chat-music-player {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    min-height: 0;
+}
+
+.game-chat-music-controls {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+}
+
+.game-chat-music-transport-btn {
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    margin: 0;
+    padding: 0;
+    border: 1px solid rgba(184, 144, 48, 0.45);
+    border-radius: 4px;
+    background: rgba(0, 0, 0, 0.45);
+    color: #ffd978;
+    cursor: pointer;
+}
+
+.game-chat-music-transport-btn:hover,
+.game-chat-music-transport-btn:focus-visible {
+    color: #fff4d0;
+    border-color: rgba(255, 215, 0, 0.62);
+}
+
+.game-chat-music-transport-glyph {
+    font-size: 0.72rem;
+    line-height: 1;
+    letter-spacing: -0.08em;
+}
+
+.game-chat-music-meta {
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: center;
+    gap: 2px;
+    min-width: 0;
+}
+
+.game-chat-music-eyebrow {
+    font-family: 'Segoe UI', Tahoma, sans-serif;
+    font-size: 0.52rem;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: rgba(184, 144, 48, 0.82);
+    line-height: 1.2;
+}
+
+.game-chat-music-title {
+    display: block;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-family: 'Cinzel', serif;
+    font-size: 0.68rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #f1e0ac;
+    line-height: 1.25;
+}
+
+.game-chat-music-utility-btn {
+    flex: 0 0 auto;
+    margin: 0;
+    padding: 5px 10px;
+    border: 1px solid rgba(184, 144, 48, 0.38);
+    border-radius: 4px;
+    background: rgba(0, 0, 0, 0.35);
+    color: rgba(241, 224, 172, 0.92);
+    font-family: 'Cinzel', serif;
+    font-size: 0.58rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.game-chat-music-utility-btn:hover,
+.game-chat-music-utility-btn:focus-visible {
+    color: #ffd700;
+    border-color: rgba(255, 215, 0, 0.55);
+}
+
+.game-chat-music-playlist {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.game-chat-music-playlist-btn {
+    width: 100%;
+    margin: 0;
+    padding: 7px 10px;
+    border: 1px solid rgba(184, 144, 48, 0.22);
+    border-radius: 3px;
+    background: rgba(0, 0, 0, 0.28);
+    color: rgba(241, 224, 172, 0.88);
+    font-family: 'Cinzel', serif;
+    font-size: 0.64rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    text-align: left;
+    cursor: pointer;
+    box-sizing: border-box;
+}
+
+.game-chat-music-playlist-btn:hover,
+.game-chat-music-playlist-btn:focus-visible {
+    color: #ffd700;
+    border-color: rgba(184, 144, 48, 0.45);
+    background: rgba(184, 144, 48, 0.1);
+}
+
+.game-chat-music-playlist-btn.is-active,
+.game-chat-music-playlist-item.is-active .game-chat-music-playlist-btn {
+    color: #ffd700;
+    border-color: rgba(184, 144, 48, 0.55);
+    background: rgba(184, 144, 48, 0.16);
+}
+
+.game-chat-module-panel--music-tab .game-chat-compose-form,
+.game-chat-module-panel--music-tab #game-chat-compose-hint {
+    display: none !important;
 }
 
 #age-page-canvas .age-map-bottom-chat-messages-host .game-chat-compose-hint {

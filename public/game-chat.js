@@ -8,7 +8,8 @@
         system: 'System',
         global: 'Global',
         country: 'Country',
-        alliance: 'Alliance'
+        alliance: 'Alliance',
+        music: 'Music'
     };
 
     const SYNC_POLL_LIVE_MS = 2500;
@@ -732,6 +733,10 @@
     }
 
     function getMessagesForActiveTab() {
+        if (activeTab === 'music') {
+            return [];
+        }
+
         if (activeTab === 'global') {
             const viewerUsername = resolveUsername();
             const gameGlobal = messagesByChannel.global || [];
@@ -786,6 +791,13 @@
     }
 
     function renderActiveChatStream() {
+        if (activeTab === 'music') {
+            if (global.RoyalArmiesMusicFlow && typeof global.RoyalArmiesMusicFlow.refreshChatMusicPanel === 'function') {
+                global.RoyalArmiesMusicFlow.refreshChatMusicPanel();
+            }
+            return;
+        }
+
         const viewport = global.document.getElementById('game-chat-messages');
         if (!viewport) return;
 
@@ -830,19 +842,34 @@
             btn.setAttribute('aria-selected', isActive ? 'true' : 'false');
         });
 
+        updateMusicTabLayout();
         updateComposeState();
         renderActiveChatStream();
 
-        if (!options.skipServerSave) {
+        if (!options.skipServerSave && tabId !== 'music') {
             scheduleUiSave({ activeTab: tabId });
         }
+    }
+
+    function updateMusicTabLayout() {
+        const isMusic = activeTab === 'music';
+        const messages = global.document.getElementById('game-chat-messages');
+        const musicPanel = global.document.getElementById('game-chat-music-panel');
+        const composeHost = getAgeBottomChatComposeHost();
+        const modulePanel = global.document.querySelector('#game-chat-module .game-chat-module-panel');
+
+        if (messages) messages.hidden = isMusic;
+        if (musicPanel) musicPanel.hidden = !isMusic;
+        if (composeHost) composeHost.hidden = isMusic;
+        if (modulePanel) modulePanel.classList.toggle('game-chat-module-panel--music-tab', isMusic);
     }
 
     function updateComposeState() {
         const input = global.document.getElementById('game-chat-compose-input');
         const sendBtn = global.document.getElementById('game-chat-compose-send');
         const hint = global.document.getElementById('game-chat-compose-hint');
-        const readOnly = activeTab === 'system';
+        const readOnly = activeTab === 'system' || activeTab === 'music';
+        const isMusicTab = activeTab === 'music';
         const allianceBlocked = activeTab === 'alliance' && !hasAlliance;
         const globalRestriction = getActiveGlobalChatRestriction();
         const globalBlocked = isGlobalChatComposeBlocked();
@@ -872,7 +899,7 @@
                     ? 'System feed is read-only.'
                     : (allianceBlocked ? 'Alliance chat unlocks when your nation forms an alliance.' : '');
             }
-            hint.hidden = !(composeErrorMessage || readOnly || allianceBlocked || globalBlocked);
+            hint.hidden = isMusicTab || !(composeErrorMessage || readOnly || allianceBlocked || globalBlocked);
         }
     }
 
@@ -1012,7 +1039,7 @@
 
     async function handleComposeSubmit(event) {
         event.preventDefault();
-        if (activeTab === 'system') return;
+        if (activeTab === 'system' || activeTab === 'music') return;
         if (activeTab === 'alliance' && !hasAlliance) return;
         if (isGlobalChatComposeBlocked()) return;
 
@@ -1140,8 +1167,13 @@
                 <button type="button" class="game-chat-tab is-active" data-game-chat-tab="global" role="tab" aria-selected="true">Global</button>
                 <button type="button" class="game-chat-tab" data-game-chat-tab="country" role="tab" aria-selected="false">Country</button>
                 <button type="button" class="game-chat-tab" data-game-chat-tab="alliance" role="tab" aria-selected="false" id="game-chat-tab-alliance" hidden>Alliance</button>
+                <button type="button" class="game-chat-tab" data-game-chat-tab="music" role="tab" aria-selected="false">Music</button>
             </nav>
         `.trim();
+    }
+
+    function buildGameChatMusicPanelMarkup() {
+        return '<div id="game-chat-music-panel" class="game-chat-music-panel" hidden aria-label="Soundtrack player"></div>';
     }
 
     function buildGameChatComposeMarkup() {
@@ -1175,6 +1207,7 @@
                 ${buildAgeChatPopoutToggleMarkup()}
             </header>
             <div id="game-chat-messages" class="game-chat-messages" role="log" aria-live="polite" aria-relevant="additions"></div>
+            ${buildGameChatMusicPanelMarkup()}
             <p id="game-chat-compose-hint" class="game-chat-compose-hint" hidden></p>
         `.trim();
 
@@ -1205,6 +1238,7 @@
                     </header>
 
                     <div id="game-chat-messages" class="game-chat-messages" role="log" aria-live="polite" aria-relevant="additions"></div>
+                    ${buildGameChatMusicPanelMarkup()}
 
                     <p id="game-chat-compose-hint" class="game-chat-compose-hint" hidden></p>
 
@@ -1224,6 +1258,12 @@
 
         mountGameChatModule();
         bindGameChatControls();
+        updateMusicTabLayout();
+
+        if (global.RoyalArmiesMusicFlow && typeof global.RoyalArmiesMusicFlow.mountAgeChatMusicPlayer === 'function') {
+            global.RoyalArmiesMusicFlow.mountAgeChatMusicPlayer();
+        }
+        global.dispatchEvent(new CustomEvent('royalarmies:age-chat-ready'));
 
         if (getAgeChatDockHosts().length) {
             ensureAgeChatPopoutControl();

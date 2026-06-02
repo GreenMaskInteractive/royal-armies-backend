@@ -34,7 +34,14 @@
         hasJoinedAgeEver: 'royalArmies_hasJoinedAgeEver'
     });
 
-    const PLAYER_HOST_ID = 'age-bottom-music-player-host';
+    const PLAYER_HOST_ID = 'game-chat-music-panel';
+    const MUSIC_PANEL_READY_EVENT = 'royalarmies:age-chat-ready';
+
+    /** Tracks selectable in the age chat Music tab (Archimedes reserved for prologue / trailer). */
+    const PLAYLIST_TRACK_IDS = Object.freeze([
+        TRACKS.cascadingSkies.id,
+        TRACKS.kindred.id
+    ]);
     const AUDIO_ID = 'ra-global-music-audio';
     const MAIN_PAGE_ID = 'main-dashboard-canvas';
     const GAME_PAGE_ID = 'game-page-canvas';
@@ -128,13 +135,25 @@
         const stored = String(readSession(STORAGE.currentTrack) || '').trim().toLowerCase();
         if (stored === TRACKS.cascadingSkies.id) return TRACKS.cascadingSkies.id;
         if (stored === TRACKS.kindred.id) return TRACKS.kindred.id;
-        return TRACKS.archimedes.id;
+        if (stored === TRACKS.archimedes.id) return TRACKS.archimedes.id;
+        return TRACKS.cascadingSkies.id;
+    }
+
+    function resolveAgePlaylistTrackId(trackId) {
+        const normalized = String(trackId || '').trim().toLowerCase();
+        if (normalized === TRACKS.kindred.id) return TRACKS.kindred.id;
+        return TRACKS.cascadingSkies.id;
     }
 
     function resolveTrackById(trackId) {
         if (trackId === TRACKS.cascadingSkies.id) return TRACKS.cascadingSkies;
         if (trackId === TRACKS.kindred.id) return TRACKS.kindred;
-        return TRACKS.archimedes;
+        if (trackId === TRACKS.archimedes.id) return TRACKS.archimedes;
+        return TRACKS.cascadingSkies;
+    }
+
+    function isPlaylistTrackId(trackId) {
+        return PLAYLIST_TRACK_IDS.includes(String(trackId || '').trim().toLowerCase());
     }
 
     function resolveAudioElement() {
@@ -269,21 +288,46 @@
         writeSession(STORAGE.autoplayGranted, '1');
         writeSession(STORAGE.progressionStarted, '0');
         writeSession(STORAGE.openingProloguePending, hasJoinedBefore ? '0' : '1');
-        writeSession(STORAGE.currentTrack, TRACKS.archimedes.id);
+        writeSession(STORAGE.currentTrack, TRACKS.cascadingSkies.id);
         writeSession(STORAGE.currentTime, '0');
     }
 
+    function removeLegacyBottomMusicPlayer() {
+        const legacyHost = global.document.getElementById('age-bottom-music-player-host');
+        if (legacyHost) legacyHost.remove();
+    }
+
+    function buildPlaylistMarkup(activeTrackId) {
+        const activeId = resolveAgePlaylistTrackId(activeTrackId);
+        return PLAYLIST_TRACK_IDS.map((trackId) => {
+            const track = resolveTrackById(trackId);
+            const isActive = track.id === activeId;
+            return `
+                <li class="game-chat-music-playlist-item${isActive ? ' is-active' : ''}">
+                    <button
+                        type="button"
+                        class="game-chat-music-playlist-btn${isActive ? ' is-active' : ''}"
+                        data-music-track-id="${track.id}"
+                        aria-current="${isActive ? 'true' : 'false'}">
+                        ${track.title}
+                    </button>
+                </li>
+            `.trim();
+        }).join('');
+    }
+
     function syncUi(trackTitle) {
-        const title = String(trackTitle || resolveTrackById(resolveStoredTrackId()).title);
-        const compactLabel = global.document.getElementById('age-bottom-music-title');
-        if (compactLabel) compactLabel.textContent = title;
+        const trackId = resolveStoredTrackId();
+        const title = String(trackTitle || resolveTrackById(trackId).title);
+        const nowPlaying = global.document.getElementById('game-chat-music-now-playing');
+        if (nowPlaying) nowPlaying.textContent = title;
 
         const trackLabel = global.document.getElementById('media-active-track-name');
         if (trackLabel) trackLabel.textContent = `🎵 ${title}`;
 
         const audio = resolveAudioElement();
-        const playBtn = global.document.getElementById('age-bottom-music-play-btn');
-        const playGlyph = playBtn?.querySelector('.age-bottom-music-transport-glyph');
+        const playBtn = global.document.getElementById('game-chat-music-play-btn');
+        const playGlyph = playBtn?.querySelector('.game-chat-music-transport-glyph');
         if (playBtn && audio) {
             const isPaused = audio.paused;
             playBtn.setAttribute('aria-label', isPaused ? 'Play soundtrack' : 'Pause soundtrack');
@@ -291,47 +335,48 @@
                 playGlyph.textContent = isPaused ? '▶' : '❚❚';
             }
         }
-    }
 
-    function buildAgeBottomPlayer() {
-        if (!isAgePage()) return;
-        if (global.document.getElementById(PLAYER_HOST_ID)) return;
-
-        const tray = global.document.querySelector('.age-map-bottom-dock-tray')
-            || global.document.querySelector('.age-map-bottom-dock-controls');
-        if (!tray) return;
-
-        const nametag = tray.querySelector('.age-map-bottom-commander-nametag');
-
-        const host = global.document.createElement('div');
-        host.id = PLAYER_HOST_ID;
-        host.className = 'age-bottom-music-player-host';
-        host.innerHTML = `
-            <div class="age-bottom-music-player portal-deployment-server-panel" aria-label="Music player">
-                <div class="portal-server-panel-controls game-page-panel-bezel age-bottom-music-player-bezel">
-                    <button
-                        type="button"
-                        id="age-bottom-music-play-btn"
-                        class="age-bottom-music-transport-btn"
-                        aria-label="Play soundtrack">
-                        <span class="age-bottom-music-transport-glyph" aria-hidden="true">▶</span>
-                    </button>
-                    <div class="age-bottom-music-meta">
-                        <span class="age-bottom-music-eyebrow">Now playing</span>
-                        <span id="age-bottom-music-title" class="age-bottom-music-title">ARCHIMEDES' LULLABY</span>
-                    </div>
-                    <button type="button" id="age-bottom-music-mute-btn" class="age-bottom-music-utility-btn" aria-label="Mute soundtrack">Mute</button>
-                </div>
-            </div>
-        `.trim();
-        if (nametag) {
-            tray.insertBefore(host, nametag);
-        } else {
-            tray.appendChild(host);
+        const muteBtn = global.document.getElementById('game-chat-music-mute-btn');
+        if (muteBtn && audio) {
+            muteBtn.textContent = audio.muted ? 'Unmute' : 'Mute';
+            muteBtn.setAttribute('aria-label', audio.muted ? 'Unmute soundtrack' : 'Mute soundtrack');
         }
 
-        const playBtn = host.querySelector('#age-bottom-music-play-btn');
-        const muteBtn = host.querySelector('#age-bottom-music-mute-btn');
+        const playlist = global.document.getElementById('game-chat-music-playlist');
+        if (playlist) {
+            playlist.innerHTML = buildPlaylistMarkup(trackId);
+        }
+    }
+
+    function refreshChatMusicPanel() {
+        syncUi();
+    }
+
+    function selectPlaylistTrack(trackId) {
+        const normalized = resolveAgePlaylistTrackId(trackId);
+        if (!isPlaylistTrackId(normalized)) return;
+
+        writeSession(STORAGE.currentTrack, normalized);
+        writeSession(STORAGE.currentTime, '0');
+        loadTrack(normalized, { restoreTime: false });
+
+        const audio = resolveAudioElement();
+        if (audio) {
+            audio.loop = normalized === TRACKS.cascadingSkies.id;
+        }
+
+        tryPlay();
+        syncUi();
+    }
+
+    function bindAgeChatMusicPlayerControls(host) {
+        if (!host || host.dataset.musicControlsBound === '1') return;
+        host.dataset.musicControlsBound = '1';
+
+        const playBtn = host.querySelector('#game-chat-music-play-btn');
+        const muteBtn = host.querySelector('#game-chat-music-mute-btn');
+        const playlist = host.querySelector('#game-chat-music-playlist');
+
         if (playBtn) {
             playBtn.addEventListener('click', () => {
                 const audio = resolveAudioElement();
@@ -344,16 +389,69 @@
                 syncUi();
             });
         }
+
         if (muteBtn) {
             muteBtn.addEventListener('click', () => {
                 const audio = resolveAudioElement();
                 if (!audio) return;
                 audio.muted = !audio.muted;
                 writeSession(STORAGE.muted, audio.muted ? '1' : '0');
-                muteBtn.textContent = audio.muted ? 'Unmute' : 'Mute';
-                muteBtn.setAttribute('aria-label', audio.muted ? 'Unmute soundtrack' : 'Mute soundtrack');
+                syncUi();
             });
         }
+
+        if (playlist) {
+            playlist.addEventListener('click', (event) => {
+                const button = event.target.closest('[data-music-track-id]');
+                if (!button) return;
+                selectPlaylistTrack(button.getAttribute('data-music-track-id'));
+            });
+        }
+    }
+
+    function mountAgeChatMusicPlayer() {
+        if (!isAgePage()) return false;
+
+        removeLegacyBottomMusicPlayer();
+
+        const host = global.document.getElementById(PLAYER_HOST_ID);
+        if (!host) return false;
+        if (host.dataset.musicPlayerMounted === '1') {
+            syncUi();
+            return true;
+        }
+
+        host.dataset.musicPlayerMounted = '1';
+        host.innerHTML = `
+            <div class="game-chat-music-player" aria-label="Music player">
+                <div class="game-chat-music-controls">
+                    <button
+                        type="button"
+                        id="game-chat-music-play-btn"
+                        class="game-chat-music-transport-btn"
+                        aria-label="Play soundtrack">
+                        <span class="game-chat-music-transport-glyph" aria-hidden="true">▶</span>
+                    </button>
+                    <div class="game-chat-music-meta">
+                        <span class="game-chat-music-eyebrow">Now playing</span>
+                        <span id="game-chat-music-now-playing" class="game-chat-music-title">${TRACKS.cascadingSkies.title}</span>
+                    </div>
+                    <button type="button" id="game-chat-music-mute-btn" class="game-chat-music-utility-btn" aria-label="Mute soundtrack">Mute</button>
+                </div>
+                <ul id="game-chat-music-playlist" class="game-chat-music-playlist" aria-label="Soundtrack playlist"></ul>
+            </div>
+        `.trim();
+
+        bindAgeChatMusicPlayerControls(host);
+        syncUi();
+        return true;
+    }
+
+    function ensureAgeChatMusicPlayerMounted() {
+        if (mountAgeChatMusicPlayer()) return;
+        global.addEventListener(MUSIC_PANEL_READY_EVENT, () => {
+            mountAgeChatMusicPlayer();
+        }, { once: true });
     }
 
     function bootGamePageMusic() {
@@ -448,12 +546,22 @@
 
     function bootAgePageMusic() {
         if (!isAgePage()) return;
-        buildAgeBottomPlayer();
-        const trackId = resolveStoredTrackId();
+
+        ensureAgeChatMusicPlayerMounted();
+
+        const trackId = TRACKS.cascadingSkies.id;
+        writeSession(STORAGE.currentTrack, trackId);
         loadTrack(trackId, { restoreTime: true });
+
+        const audio = resolveAudioElement();
+        if (audio) {
+            audio.loop = true;
+        }
+
         tryPlay();
         writeLocal(STORAGE.hasJoinedAgeEver, '1');
         writeSession(STORAGE.openingProloguePending, '0');
+        syncUi();
     }
 
     function cancelMusicVolumeAnimation() {
@@ -561,6 +669,9 @@
         startPrologueOutroMusic,
         startProgressionPageMusic,
         startGamePageArchimedes,
+        mountAgeChatMusicPlayer,
+        refreshChatMusicPanel,
+        selectPlaylistTrack,
         rampMusicVolume,
         fadeMusicOut,
         handoffToGameplayMusic,
