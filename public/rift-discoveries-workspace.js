@@ -649,6 +649,24 @@
         global.document.body.classList.remove('is-rift-discoveries-workspace-open');
     }
 
+    function buildDiscoveriesMenuInnerHtml(labelClass) {
+        const labelCls = labelClass || 'dropdown-action-item-label';
+        return `
+            <span class="commander-menu-side-slot commander-menu-side-slot--lead" aria-hidden="true">
+                <span class="rift-discovery-unread-dot" aria-hidden="true"></span>
+            </span>
+            <span class="${labelCls}">Discoveries</span>
+            <span class="commander-menu-side-slot commander-menu-side-slot--trail" aria-hidden="true"></span>
+        `.trim();
+    }
+
+    function upgradeDiscoveriesMenuButtons() {
+        global.document.querySelectorAll('[data-commander-menu-action="discoveries"]').forEach((btn) => {
+            if (btn.querySelector('.commander-menu-side-slot--trail')) return;
+            btn.innerHTML = buildDiscoveriesMenuInnerHtml();
+        });
+    }
+
     function injectDiscoveriesMenuItems() {
         const buildDesktopBtn = () => {
             const btn = global.document.createElement('button');
@@ -656,7 +674,7 @@
             btn.className = 'dropdown-action-item dropdown-action-item-discoveries';
             btn.setAttribute('role', 'menuitem');
             btn.setAttribute('data-commander-menu-action', 'discoveries');
-            btn.innerHTML = '<span class="rift-discovery-unread-dot" aria-hidden="true"></span><span class="dropdown-action-item-label">Discoveries</span>';
+            btn.innerHTML = buildDiscoveriesMenuInnerHtml();
             btn.addEventListener('click', (event) => {
                 if (typeof global.portalDesktopCommanderMenuAction === 'function') {
                     global.portalDesktopCommanderMenuAction('discoveries', event);
@@ -666,7 +684,11 @@
         };
 
         global.document.querySelectorAll('#portal-desktop-commander-menu').forEach((menu) => {
-            if (menu.querySelector('[data-commander-menu-action="discoveries"]')) return;
+            const existing = menu.querySelector('[data-commander-menu-action="discoveries"]');
+            if (existing) {
+                upgradeDiscoveriesMenuButtons();
+                return;
+            }
 
             const settingsBtn = [...menu.querySelectorAll('.dropdown-action-item')].find((btn) => (
                 (btn.getAttribute('onclick') || '').includes("'settings'")
@@ -677,7 +699,12 @@
         });
 
         const mobileInsert = (submenu, actionHandlerName) => {
-            if (!submenu || submenu.querySelector('[data-commander-menu-action="discoveries"]')) return;
+            const existing = submenu?.querySelector('[data-commander-menu-action="discoveries"]');
+            if (existing) {
+                upgradeDiscoveriesMenuButtons();
+                return;
+            }
+            if (!submenu) return;
             const settingsBtn = [...submenu.querySelectorAll('.portal-mobile-submenu-item')].find((btn) => (
                 (btn.getAttribute('onclick') || '').includes("'settings'")
             ));
@@ -687,7 +714,7 @@
             btn.type = 'button';
             btn.className = 'portal-mobile-submenu-item portal-mobile-submenu-item-discoveries';
             btn.setAttribute('data-commander-menu-action', 'discoveries');
-            btn.innerHTML = '<span class="rift-discovery-unread-dot" aria-hidden="true"></span><span>Discoveries</span>';
+            btn.innerHTML = buildDiscoveriesMenuInnerHtml('portal-mobile-submenu-label');
             btn.addEventListener('click', (event) => {
                 if (typeof global[actionHandlerName] === 'function') {
                     global[actionHandlerName]('discoveries', event);
@@ -699,6 +726,7 @@
         mobileInsert(global.document.getElementById('portal-mobile-commander-submenu'), 'portalMobileNavCommanderAction');
         mobileInsert(global.document.getElementById('game-mobile-commander-submenu'), 'gameMobileNavCommanderAction');
 
+        upgradeDiscoveriesMenuButtons();
         syncUnreadIndicators();
     }
 

@@ -308,24 +308,26 @@
     top: calc(100% + 6px) !important;
     left: 0 !important;
     right: auto !important;
-    width: max(100%, 236px) !important;
-    min-width: 236px !important;
-    max-width: min(100vw - 48px, 300px) !important;
+    width: max(100%, 268px) !important;
+    min-width: 268px !important;
+    max-width: min(100vw - 48px, 340px) !important;
     display: flex !important;
     flex-direction: column !important;
     align-items: stretch !important;
-    gap: 3px !important;
-    padding: 8px 7px 7px !important;
+    gap: 5px !important;
+    padding: 10px 9px 9px !important;
     margin: 0 !important;
     box-sizing: border-box !important;
-    border: 1px solid rgba(201, 162, 72, 0.55) !important;
-    border-radius: 6px !important;
+    border: 1px solid rgba(212, 175, 88, 0.62) !important;
+    border-radius: 8px !important;
     background:
-        linear-gradient(180deg, rgba(36, 28, 18, 0.99) 0%, rgba(10, 8, 5, 0.99) 100%) !important;
+        radial-gradient(ellipse 120% 90% at 50% -30%, rgba(255, 200, 96, 0.16) 0%, transparent 58%),
+        linear-gradient(180deg, rgba(42, 32, 20, 0.99) 0%, rgba(10, 8, 5, 0.99) 100%) !important;
     box-shadow:
-        0 14px 32px rgba(0, 0, 0, 0.62),
-        inset 0 1px 0 rgba(255, 230, 160, 0.1),
-        inset 0 -1px 0 rgba(0, 0, 0, 0.35) !important;
+        0 18px 42px rgba(0, 0, 0, 0.68),
+        0 0 0 1px rgba(255, 215, 0, 0.07),
+        inset 0 1px 0 rgba(255, 230, 160, 0.14),
+        inset 0 -1px 0 rgba(0, 0, 0, 0.38) !important;
     z-index: 100003 !important;
     opacity: 0 !important;
     visibility: hidden !important;
@@ -346,23 +348,30 @@
 .portal-commander-identity-menu .dropdown-action-item {
     width: 100% !important;
     flex: 0 0 auto !important;
+    min-height: 42px !important;
+    padding: 11px 12px !important;
+    font-family: 'Cinzel', serif !important;
+    font-size: 0.84rem !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.06em !important;
+    line-height: 1.25 !important;
     text-align: center !important;
-    padding: 10px 12px !important;
-    font-size: 0.74rem !important;
-    letter-spacing: 0.04em !important;
-    border: 1px solid transparent !important;
-    border-radius: 3px !important;
-    color: rgba(220, 228, 238, 0.92) !important;
-    transition: background 0.16s ease, border-color 0.16s ease, color 0.16s ease, box-shadow 0.16s ease !important;
+    border: 1px solid rgba(184, 144, 48, 0.2) !important;
+    border-radius: 5px !important;
+    color: rgba(228, 236, 246, 0.96) !important;
+    background: rgba(0, 0, 0, 0.22) !important;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03) !important;
+    transition: background 0.16s ease, border-color 0.16s ease, color 0.16s ease, box-shadow 0.16s ease, transform 0.12s ease !important;
 }
 
 .portal-commander-identity-menu .dropdown-action-item:hover,
 .portal-commander-identity-menu .dropdown-action-item:focus-visible {
-    background: rgba(184, 144, 48, 0.12) !important;
-    border-color: rgba(201, 162, 72, 0.35) !important;
-    color: #ffe8a8 !important;
-    box-shadow: inset 0 0 0 1px rgba(255, 215, 0, 0.08) !important;
+    background: linear-gradient(180deg, rgba(184, 144, 48, 0.2) 0%, rgba(120, 90, 30, 0.14) 100%) !important;
+    border-color: rgba(255, 215, 0, 0.42) !important;
+    color: #fff0c8 !important;
+    box-shadow: inset 0 0 0 1px rgba(255, 215, 0, 0.12), 0 0 14px rgba(255, 215, 0, 0.1) !important;
     outline: none !important;
+    transform: translateY(-1px) !important;
 }
 
 .portal-commander-identity-menu .dropdown-action-item-view-profile {
@@ -6285,7 +6294,6 @@ body.is-terms-gate-active #main-portal-dynamic-viewport {
     pointer-events: none !important;
 }
 
-.portal-commander-identity-menu .dropdown-action-item,
 .avatar-hover-dropdown-menu .dropdown-action-item {
     position: relative !important;
     z-index: 1 !important;
@@ -6309,7 +6317,6 @@ body.is-terms-gate-active #main-portal-dynamic-viewport {
 }
 
 /* TARGET HOVER EFFECTS: Lights elements up to look exactly like royal update-item links */
-.portal-commander-identity-menu .dropdown-action-item:hover,
 .avatar-hover-dropdown-menu .dropdown-action-item:hover {
     background: rgba(184, 144, 48, 0.08) !important;
     border-color: rgba(184, 144, 48, 0.25) !important;
@@ -6317,12 +6324,10 @@ body.is-terms-gate-active #main-portal-dynamic-viewport {
     text-shadow: 0 0 6px rgba(255, 215, 0, 0.4) !important;
 }
 
-.portal-commander-identity-menu .dropdown-action-item-view-profile,
 .avatar-hover-dropdown-menu .dropdown-action-item-view-profile {
     color: #ffd700 !important;
 }
 
-.portal-commander-identity-menu .dropdown-action-item-messages,
 .avatar-hover-dropdown-menu .dropdown-action-item-messages,
 .portal-mobile-submenu-item-messages {
     display: inline-flex !important;
@@ -6330,40 +6335,6 @@ body.is-terms-gate-active #main-portal-dynamic-viewport {
     justify-content: center !important;
     gap: 8px !important;
     width: 100% !important;
-}
-
-.portal-commander-identity-menu .dropdown-action-item-discoveries,
-.avatar-hover-dropdown-menu .dropdown-action-item-discoveries,
-.portal-mobile-submenu-item-discoveries {
-    position: relative !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    width: 100% !important;
-    flex: 0 0 auto !important;
-    min-width: 0 !important;
-    text-align: center !important;
-    padding: 10px 12px 10px 22px !important;
-    box-sizing: border-box !important;
-}
-
-.portal-commander-identity-menu .dropdown-action-item-discoveries .rift-discovery-unread-dot,
-.portal-mobile-submenu-item-discoveries .rift-discovery-unread-dot {
-    position: absolute !important;
-    left: 12px !important;
-    top: 50% !important;
-    margin: 0 !important;
-    transform: translateY(-50%) !important;
-    flex-shrink: 0 !important;
-}
-
-.portal-commander-identity-menu .dropdown-action-item-discoveries .dropdown-action-item-label,
-.portal-mobile-submenu-item-discoveries > span:not(.rift-discovery-unread-dot) {
-    flex: 0 0 auto !important;
-    width: 100% !important;
-    text-align: center !important;
-    line-height: 1.25 !important;
-    pointer-events: none !important;
 }
 
 .dropdown-messages-label {
@@ -6455,6 +6426,101 @@ body.is-terms-gate-active #main-portal-dynamic-viewport {
 
 .dropdown-messages-unread-count[hidden] {
     display: none !important;
+}
+
+/* Commander nametag menu — unified centered rows (wins over avatar dropdown rules) */
+.portal-commander-identity-menu .dropdown-action-item {
+    position: relative !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 100% !important;
+    flex: 0 0 auto !important;
+    min-width: 0 !important;
+    white-space: normal !important;
+    cursor: pointer !important;
+}
+
+.portal-commander-identity-menu .commander-menu-side-slot {
+    flex: 0 0 20px !important;
+    width: 20px !important;
+    min-width: 20px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    align-self: stretch !important;
+    pointer-events: none !important;
+}
+
+.portal-commander-identity-menu .dropdown-action-item-label,
+.portal-commander-identity-menu .dropdown-messages-label {
+    flex: 1 1 auto !important;
+    min-width: 0 !important;
+    text-align: center !important;
+    line-height: 1.25 !important;
+}
+
+.portal-commander-identity-menu .dropdown-action-item-messages {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 0 !important;
+    padding-left: 12px !important;
+    padding-right: 12px !important;
+}
+
+.portal-commander-identity-menu .dropdown-action-item-messages .dropdown-messages-unread-count {
+    position: absolute !important;
+    right: 12px !important;
+    top: 50% !important;
+    transform: translateY(-50%) !important;
+    margin: 0 !important;
+}
+
+.portal-commander-identity-menu .dropdown-action-item-messages .dropdown-messages-unread-count[hidden] {
+    display: none !important;
+    visibility: hidden !important;
+}
+
+.portal-commander-identity-menu .dropdown-action-item-discoveries,
+.portal-mobile-submenu-item-discoveries {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 0 !important;
+    padding-left: 12px !important;
+    padding-right: 12px !important;
+}
+
+.portal-commander-identity-menu .dropdown-action-item-discoveries .rift-discovery-unread-dot,
+.portal-mobile-submenu-item-discoveries .rift-discovery-unread-dot {
+    position: static !important;
+    transform: none !important;
+    margin: 0 !important;
+}
+
+.portal-mobile-submenu-item-discoveries {
+    position: relative !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    font-size: 0.84rem !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.06em !important;
+    padding: 11px 12px !important;
+}
+
+.portal-mobile-submenu-item-discoveries .commander-menu-side-slot {
+    flex: 0 0 20px !important;
+    width: 20px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+
+.portal-mobile-submenu-item-discoveries .portal-mobile-submenu-label {
+    flex: 1 1 auto !important;
+    text-align: center !important;
 }
 
 .commander-hub-top-tab[data-hub-tab="messages"] {
@@ -15373,21 +15439,6 @@ body.developer-maintenance-alert-active #page-landing {
 
 #age-page-canvas .age-map-bottom-commander-nametag .portal-commander-identity-card.is-commander-menu-open .portal-commander-identity-menu:not([hidden]) {
     transform: translateY(0) scale(1) !important;
-}
-
-#age-page-canvas .age-map-bottom-commander-nametag .portal-commander-identity-menu .dropdown-action-item-discoveries {
-    justify-content: center !important;
-    text-align: center !important;
-}
-
-#age-page-canvas .age-map-bottom-commander-nametag .portal-commander-identity-menu .dropdown-action-item-discoveries .rift-discovery-unread-dot {
-    left: 12px !important;
-    top: 50% !important;
-    transform: translateY(-50%) !important;
-}
-
-#age-page-canvas .age-map-bottom-commander-nametag .portal-commander-identity-menu .dropdown-action-item-discoveries .dropdown-action-item-label {
-    text-align: center !important;
 }
 
 #age-page-canvas .age-map-bottom-commander-nametag .portal-commander-identity-card.is-commander-menu-open {
