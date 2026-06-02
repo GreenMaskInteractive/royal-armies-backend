@@ -1849,6 +1849,14 @@ body.is-trailer-mobile-device.is-trailer-portrait-viewport .game-opening-prologu
 }
 
 /* Trailer MP4 playback + render progress overlay */
+.game-opening-prologue.is-trailer-render-mode .game-opening-prologue-subtitle-dock,
+.game-opening-prologue.is-trailer-render-mode .game-opening-prologue-subtitle-dock.is-trailer-player-dock {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+}
+
 .game-opening-prologue-trailer-mp4-video {
     position: absolute;
     inset: 0;

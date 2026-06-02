@@ -107,8 +107,13 @@
     const TRAILER_CINE_NATIVE_WIDTH = 1408;
     const TRAILER_CINE_NATIVE_HEIGHT = 768;
     /** Ken Burns zoom range in trailer replay (scale min + random * range). */
-    const TRAILER_CINE_PAN_SCALE_MIN = 1.12;
-    const TRAILER_CINE_PAN_SCALE_RANGE = 0.10;
+    const TRAILER_CINE_PAN_SCALE_MIN = 1.30;
+    const TRAILER_CINE_PAN_SCALE_RANGE = 0.12;
+    /** Extra headroom for headless MP4 export so Ken Burns pans never expose letterboxing. */
+    const TRAILER_CINE_EXPORT_PAN_SCALE_MIN = 1.40;
+    const TRAILER_CINE_EXPORT_PAN_SCALE_RANGE = 0.10;
+    /** archimedeslullaby.wav — used when browser metadata is unavailable during export. */
+    const TRAILER_ARCHIMEDES_MUSIC_DURATION_SEC = 184.603;
     const TRAILER_POST_NARRATION_MS = TRAILER_TITLE_LOGO_REVEAL_MS
         + PROLOGUE_SUBTITLE_LOGO_EXPLOSIVE_MS
         + 600;
@@ -206,10 +211,11 @@
     let trailerWantsFullscreen = false;
     let trailerPlayerLayoutMounted = false;
     let trailerTimelinePreviewLocked = false;
+    let trailerMusicDurationSecKnown = null;
     const TRAILER_SUBTITLE_SCRUB_FLICKER_SEED = 2.17;
     const TRAILER_REPLAY_SYNC_MS = 250;
     const TRAILER_MP4_SRC = 'season/royal-armies-age-of-war-trailer.mp4';
-    const TRAILER_MP4_CACHE_BUST = 'trailer-mp4-full-1';
+    const TRAILER_MP4_CACHE_BUST = 'trailer-render-fix-1';
     const TRAILER_RENDER_STATUS_PATH = '/api/portal/trailer/render/status';
     const TRAILER_RENDER_POLL_MS = 1000;
     const LOCAL_PROLOGUE_PENDING_KEY = 'royalArmies_localProloguePending';
@@ -278,11 +284,16 @@
     }
 
     function getTrailerMusicDurationSec() {
+        if (Number.isFinite(trailerMusicDurationSecKnown) && trailerMusicDurationSecKnown > 0) {
+            return trailerMusicDurationSecKnown;
+        }
+
         const musicAudio = getTrailerMusicAudio();
         if (musicAudio && Number.isFinite(musicAudio.duration) && musicAudio.duration > 0) {
             return musicAudio.duration;
         }
-        return 120;
+
+        return TRAILER_ARCHIMEDES_MUSIC_DURATION_SEC;
     }
 
     function getTrailerLastCinematicEndSec() {
@@ -1559,7 +1570,7 @@
 
         if (timeSec < finaleStart - 0.03) {
             overlayEl?.classList.remove('is-trailer-finale-visible');
-            setSubtitleDockActive(true);
+            setSubtitleDockActive(shouldShowTrailerNarrationSubtitleDock());
             unlockTrailerImpactAudio();
             playTrailerNarrationAtTime(timeSec);
             syncTrailerMusicToTimeline(timeSec, { force: true });
@@ -1825,7 +1836,7 @@
 
             overlayEl.classList.remove('is-trailer-finale-visible');
             overlayEl.classList.add('is-cinematics-active');
-            setSubtitleDockActive(true);
+            setSubtitleDockActive(shouldShowTrailerNarrationSubtitleDock());
 
             if (audioEl && seekMedia) {
                 audioEl.currentTime = clamped;
@@ -2798,7 +2809,8 @@
                 border-top: none !important;
             }
             #${OVERLAY_ID}.is-logo-reveal-active .game-opening-prologue-subtitle-dock,
-            #${OVERLAY_ID}[data-subtitles-hidden="1"] .game-opening-prologue-subtitle-dock {
+            #${OVERLAY_ID}[data-subtitles-hidden="1"] .game-opening-prologue-subtitle-dock,
+            #${OVERLAY_ID}.is-trailer-render-mode .game-opening-prologue-subtitle-dock {
                 opacity: 0 !important;
                 visibility: hidden !important;
                 display: none !important;
@@ -3073,6 +3085,7 @@
         musicAudio.volume = 0;
 
         if (Number.isFinite(musicAudio.duration) && musicAudio.duration > 0) {
+            trailerMusicDurationSecKnown = musicAudio.duration;
             return;
         }
 
@@ -3084,6 +3097,11 @@
             musicAudio.load();
             global.setTimeout(finish, NARRATION_METADATA_TIMEOUT_MS);
         });
+
+        const resolvedDuration = Number(musicAudio.duration);
+        trailerMusicDurationSecKnown = Number.isFinite(resolvedDuration) && resolvedDuration > 0
+            ? resolvedDuration
+            : TRAILER_ARCHIMEDES_MUSIC_DURATION_SEC;
     }
 
     function removeCinematicPanAnimation(imgEl) {
@@ -3126,8 +3144,9 @@
             ? 4 + (seededUnitRandom(shotId * 5.43) * 5)
             : 2.5 + (seededUnitRandom(shotId * 3.17) * 4.5);
         const angle = seededUnitRandom(shotId * 7.91) * Math.PI * 2;
-        const scale = isTrailerReplayMode
-            ? TRAILER_CINE_PAN_SCALE_MIN + (seededUnitRandom(shotId * 11.13) * TRAILER_CINE_PAN_SCALE_RANGE)
+        const panScale = resolveTrailerCinematicPanScaleRange();
+        const scale = isTrailerReplayMode || isTrailerRenderMode()
+            ? panScale.min + (seededUnitRandom(shotId * 11.13) * panScale.range)
             : 1.08 + (seededUnitRandom(shotId * 13.37) * 0.08);
         const params = {
             x1: Math.cos(angle) * panMag,
@@ -3184,8 +3203,9 @@
         const y1 = Math.sin(angle) * panMag;
         const x2 = Math.cos(angle + Math.PI) * panMag;
         const y2 = Math.sin(angle + Math.PI) * panMag;
-        const scale = isTrailerReplayMode
-            ? TRAILER_CINE_PAN_SCALE_MIN + (Math.random() * TRAILER_CINE_PAN_SCALE_RANGE)
+        const panScale = resolveTrailerCinematicPanScaleRange();
+        const scale = isTrailerReplayMode || isTrailerRenderMode()
+            ? panScale.min + (Math.random() * panScale.range)
             : 1.08 + (Math.random() * 0.08);
         const duration = isTrailerReplayMode
             ? Math.max(0.5, durationSec)
@@ -3440,6 +3460,49 @@
 
     function areTrailerNarrationSubtitlesEnabled() {
         return TRAILER_NARRATION_SUBTITLES_ENABLED;
+    }
+
+    function shouldShowTrailerNarrationSubtitleDock() {
+        return !isTrailerRenderMode()
+            && !trailerMp4Mode
+            && areTrailerNarrationSubtitlesEnabled();
+    }
+
+    function hideTrailerSubtitleDockForExport() {
+        if (!overlayEl) return;
+
+        setSubtitleDockActive(false);
+        overlayEl.setAttribute('data-subtitles-hidden', '1');
+
+        const dock = overlayEl.querySelector('.game-opening-prologue-subtitle-dock');
+        if (dock) {
+            dock.hidden = true;
+            dock.setAttribute('aria-hidden', 'true');
+            dock.style.setProperty('display', 'none', 'important');
+            dock.style.setProperty('visibility', 'hidden', 'important');
+            dock.style.setProperty('opacity', '0', 'important');
+        }
+    }
+
+    function resolveTrailerCinematicPanScaleRange() {
+        if (isTrailerRenderMode()) {
+            return {
+                min: TRAILER_CINE_EXPORT_PAN_SCALE_MIN,
+                range: TRAILER_CINE_EXPORT_PAN_SCALE_RANGE,
+            };
+        }
+
+        if (isTrailerReplayMode) {
+            return {
+                min: TRAILER_CINE_PAN_SCALE_MIN,
+                range: TRAILER_CINE_PAN_SCALE_RANGE,
+            };
+        }
+
+        return {
+            min: 1.08,
+            range: 0.08,
+        };
     }
 
     function setSubtitleDockActive(active) {
@@ -5017,6 +5080,9 @@
         await global.document.fonts.ready;
         await waitForTrailerExportAssetsLoaded();
         await waitForTrailerMusicMetadata();
+        if (!Number.isFinite(trailerMusicDurationSecKnown) || trailerMusicDurationSecKnown < 150) {
+            trailerMusicDurationSecKnown = TRAILER_ARCHIMEDES_MUSIC_DURATION_SEC;
+        }
 
         mountTrailerPlayerLayout();
         enterTrailerReplayMode();
@@ -5025,6 +5091,7 @@
             'is-trailer-render-mode',
             'is-trailer-player-fullscreen'
         );
+        hideTrailerSubtitleDockForExport();
 
         audioEl?.pause();
         getTrailerMusicAudio()?.pause();
