@@ -1847,3 +1847,86 @@ body.is-trailer-mobile-device.is-trailer-portrait-viewport .game-opening-prologu
         bottom: max(8px, env(safe-area-inset-bottom, 8px));
     }
 }
+
+/* Trailer MP4 playback + render progress overlay */
+.game-opening-prologue-trailer-mp4-video {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    background: #000;
+    pointer-events: none;
+}
+
+.game-opening-prologue.is-trailer-mp4-mode .game-opening-prologue-cinematic-stage,
+.game-opening-prologue.is-trailer-mp4-mode .game-opening-prologue-trailer-finale-pane,
+.game-opening-prologue.is-trailer-mp4-mode .game-opening-prologue-subtitle-dock,
+.game-opening-prologue.is-trailer-mp4-mode .game-opening-prologue-cinematic-frame {
+    visibility: hidden !important;
+    pointer-events: none !important;
+}
+
+.game-opening-prologue.is-trailer-render-progress .game-opening-prologue-cinematic-stage,
+.game-opening-prologue.is-trailer-render-progress .game-opening-prologue-trailer-finale-pane,
+.game-opening-prologue.is-trailer-render-progress .game-opening-prologue-subtitle-dock,
+.game-opening-prologue.is-trailer-composition-paused .game-opening-prologue-cinematic-stage,
+.game-opening-prologue.is-trailer-composition-paused .game-opening-prologue-trailer-finale-pane,
+.game-opening-prologue.is-trailer-composition-paused .game-opening-prologue-subtitle-dock {
+    visibility: hidden !important;
+    pointer-events: none !important;
+}
+
+.game-opening-prologue-trailer-render-progress {
+    position: absolute;
+    inset: 0;
+    z-index: 12;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    background:
+        radial-gradient(circle at center, rgba(18, 14, 8, 0.72) 0%, rgba(0, 0, 0, 0.92) 72%);
+    pointer-events: none;
+}
+
+.game-opening-prologue-trailer-render-progress-inner {
+    min-width: min(92%, 420px);
+    padding: 28px 34px;
+    border: 1px solid rgba(184, 144, 48, 0.42);
+    border-radius: 10px;
+    background: linear-gradient(180deg, rgba(24, 18, 10, 0.94) 0%, rgba(8, 6, 4, 0.96) 100%);
+    box-shadow:
+        0 0 0 1px rgba(255, 215, 120, 0.08),
+        0 16px 42px rgba(0, 0, 0, 0.58);
+    text-align: center;
+}
+
+.game-opening-prologue-trailer-render-progress-label {
+    margin: 0 0 10px;
+    font-family: 'Cinzel', Georgia, 'Times New Roman', serif;
+    font-size: clamp(0.92rem, 1.4vw, 1.08rem);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: rgba(232, 201, 122, 0.92);
+}
+
+.game-opening-prologue-trailer-render-progress-percent {
+    margin: 0;
+    font-family: 'Consolas', 'Courier New', monospace;
+    font-size: clamp(2rem, 5vw, 3rem);
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.04em;
+    color: #f6df9a;
+    text-shadow: 0 0 18px rgba(214, 170, 60, 0.28);
+}
+
+.game-opening-prologue-trailer-render-progress-detail {
+    margin: 12px 0 0;
+    font-family: 'Consolas', 'Courier New', monospace;
+    font-size: clamp(0.78rem, 1.05vw, 0.92rem);
+    letter-spacing: 0.05em;
+    color: rgba(196, 176, 132, 0.88);
+}

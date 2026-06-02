@@ -24,6 +24,16 @@ const { spawn } = require('child_process');
 const ROOT = path.join(__dirname, '..');
 const PUBLIC_DIR = path.join(ROOT, 'public');
 const OUTPUT_DIR = path.join(ROOT, 'dist', 'trailer');
+const {
+    markTrailerRenderStarting,
+    markTrailerRenderProgress,
+    markTrailerRenderComplete,
+    markTrailerRenderFailed,
+} = require('../nexus-trailer-render');
+
+const CAPTURE_PROGRESS_MAX = 82;
+const ENCODE_PROGRESS = 90;
+const MUX_PROGRESS = 97;
 
 const MIME = {
     '.html': 'text/html; charset=utf-8',
@@ -157,6 +167,21 @@ async function waitForPaint(page) {
     }));
 }
 
+function reportCaptureProgress(frameIndex, totalFrames, timeSec) {
+    const ratio = totalFrames > 0 ? (frameIndex + 1) / totalFrames : 0;
+    const percent = Math.min(CAPTURE_PROGRESS_MAX, ratio * CAPTURE_PROGRESS_MAX);
+
+    markTrailerRenderProgress({
+        status: 'rendering',
+        phase: 'capturing',
+        percent: Number(percent.toFixed(1)),
+        frame: frameIndex + 1,
+        totalFrames,
+        message: `Capturing frame ${frameIndex + 1} of ${totalFrames}`,
+        timeSec: Number(timeSec.toFixed(2)),
+    });
+}
+
 async function main() {
     const opts = parseArgs(process.argv.slice(2));
     if (opts.help) {
@@ -230,6 +255,11 @@ async function main() {
 
         console.log(`[NEXUS] Rendering ${totalFrames} frames @ ${fps}fps (${durationSec.toFixed(2)}s, ${width}x${height})`);
 
+        markTrailerRenderStarting({
+            totalFrames,
+            durationSec,
+        });
+
         for (let i = 0; i < totalFrames; i += 1) {
             const t = Math.min(durationSec, i / fps);
             await page.evaluate((sec) => window.RoyalArmiesTrailerExport.seekTo(sec), t);
@@ -248,6 +278,10 @@ async function main() {
                 const pct = (((i + 1) / totalFrames) * 100).toFixed(1);
                 console.log(`[NEXUS] Frame ${i + 1}/${totalFrames} (${pct}%) @ ${t.toFixed(2)}s`);
             }
+
+            if (i === 0 || i === totalFrames - 1 || ((i + 1) % Math.max(1, Math.floor(fps / 2))) === 0) {
+                reportCaptureProgress(i, totalFrames, t);
+            }
         }
 
         const videoOnlyPath = path.join(OUTPUT_DIR, 'video-only.mp4');
@@ -255,6 +289,15 @@ async function main() {
         const narrationPath = path.join(PUBLIC_DIR, 'season', 'distressedwoman1.mp3');
         const musicPath = path.join(PUBLIC_DIR, 'audio', 'archimedeslullaby.wav');
         const musicDelayMs = Math.round((Number(config.musicStartSec) || 2) * 1000);
+
+        markTrailerRenderProgress({
+            status: 'rendering',
+            phase: 'encoding',
+            percent: CAPTURE_PROGRESS_MAX,
+            frame: totalFrames,
+            totalFrames,
+            message: 'Encoding video…',
+        });
 
         console.log('[NEXUS] Encoding video…');
         await runFfmpeg(ffmpegPath, [
@@ -268,6 +311,15 @@ async function main() {
             '-movflags', '+faststart',
             videoOnlyPath,
         ]);
+
+        markTrailerRenderProgress({
+            status: 'rendering',
+            phase: 'encoding',
+            percent: ENCODE_PROGRESS,
+            frame: totalFrames,
+            totalFrames,
+            message: 'Video encoded — muxing audio…',
+        });
 
         console.log('[NEXUS] Muxing narration + music…');
         await runFfmpeg(ffmpegPath, [
@@ -287,6 +339,16 @@ async function main() {
             outputPath,
         ]);
 
+        markTrailerRenderProgress({
+            status: 'rendering',
+            phase: 'publishing',
+            percent: MUX_PROGRESS,
+            frame: totalFrames,
+            totalFrames,
+            message: 'Publishing trailer video…',
+        });
+
+        markTrailerRenderComplete(outputPath);
         console.log(`[NEXUS] Done: ${outputPath}`);
 
         if (!opts.keepFrames) {
@@ -303,5 +365,6 @@ async function main() {
 
 main().catch((error) => {
     console.error('[NEXUS] Trailer render failed:', error);
+    markTrailerRenderFailed(error);
     process.exit(1);
 });

@@ -137,6 +137,11 @@ const {
     claimBountyPvpVictory,
     BOUNTY_REWARDS
 } = require('./nexus-age-guild-bounties');
+const {
+    getTrailerRenderStatusPayload,
+    startTrailerRenderJob,
+    canStartTrailerRenderFromRequest,
+} = require('./nexus-trailer-render');
 
 /* Block 2: Environment Path Resolution */
 const isProduction = process.env.RENDER === 'true';
@@ -3897,6 +3902,22 @@ app.get('/api/portal/error-codes', (req, res) => {
 
 app.get('/api/portal/metrics', (req, res) => {
     res.json(getPortalLiveMetricsPayload());
+});
+
+app.get('/api/portal/trailer/render/status', (req, res) => {
+    res.set('Cache-Control', 'no-store');
+    res.json(getTrailerRenderStatusPayload());
+});
+
+app.post('/api/portal/trailer/render/start', (req, res) => {
+    if (!canStartTrailerRenderFromRequest(req)) {
+        return sendApiError(res, 'NEXUS-GEN-003');
+    }
+
+    const previewSec = Math.max(0, Number(req.body?.previewSec) || 0);
+    const result = startTrailerRenderJob({ previewSec });
+    res.set('Cache-Control', 'no-store');
+    res.json({ status: 'ok', ...result });
 });
 
 app.get('/api/portal/mailbox-recipient-roster', (req, res) => {
