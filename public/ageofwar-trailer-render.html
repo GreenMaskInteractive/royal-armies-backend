@@ -8,7 +8,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="season/season-age-of-war.flex.css?v=trailer-sfx-bake-1">
+    <link rel="stylesheet" href="season/season-age-of-war.flex.css?v=trailer-mp4-fill-1">
     <style>
     html,
     body.age-of-war-trailer-page {
@@ -40,22 +40,26 @@
     .game-opening-prologue.is-trailer-render-mode .game-opening-prologue-trailer-player {
         display: block !important;
         visibility: visible !important;
-    }
-
-    .game-opening-prologue.is-trailer-render-mode .game-opening-prologue-trailer-player[hidden] {
-        display: block !important;
-    }
-
-    .game-opening-prologue.is-trailer-render-mode .game-opening-prologue-trailer-stage {
+        margin: 0 !important;
         width: 1408px !important;
         height: 768px !important;
         max-width: 1408px !important;
         max-height: 768px !important;
     }
 
+    .game-opening-prologue.is-trailer-render-mode .game-opening-prologue-trailer-player[hidden] {
+        display: block !important;
+    }
+
+    .game-opening-prologue.is-trailer-render-mode .game-opening-prologue-trailer-stage,
     .game-opening-prologue.is-trailer-render-mode .game-opening-prologue-trailer-viewport {
         width: 1408px !important;
         height: 768px !important;
+        max-width: 1408px !important;
+        max-height: 768px !important;
+        border: none !important;
+        box-shadow: none !important;
+        border-radius: 0 !important;
     }
     </style>
 </head>
@@ -68,6 +72,6 @@
 >
     <script src="season/age-music-flow.js?v=trailer-render-export-1"></script>
     <script src="season/rift-subtitle-logo-sparks.js?v=trailer-render-export-1"></script>
-    <script src="season/rift-opening-prologue.js?v=trailer-sfx-bake-1"></script>
+    <script src="season/rift-opening-prologue.js?v=trailer-mp4-fill-1"></script>
 </body>
 </html>

@@ -1863,9 +1863,55 @@ body.is-trailer-mobile-device.is-trailer-portrait-viewport .game-opening-prologu
     z-index: 2;
     width: 100%;
     height: 100%;
-    object-fit: contain;
+    object-fit: cover;
+    object-position: center center;
     background: #000;
     pointer-events: none;
+}
+
+.game-opening-prologue.is-trailer-mp4-mode .game-opening-prologue-trailer-viewport {
+    width: 100%;
+    height: 100%;
+    max-height: none;
+    border: none;
+    box-shadow: none;
+    border-radius: 0;
+}
+
+.game-opening-prologue.is-trailer-mp4-mode .game-opening-prologue-trailer-stage {
+    border: none;
+    box-shadow: none;
+    border-radius: 0;
+}
+
+@media (min-width: 901px) {
+    .game-opening-prologue.is-trailer-mp4-mode.is-trailer-replay-mode .game-opening-prologue-trailer-player {
+        margin-top: 0;
+        width: min(
+            var(--trailer-cine-max-width, 1408px),
+            calc(100vw - 40px),
+            calc((100vh - 40px) * 1408 / 768)
+        );
+    }
+}
+
+.game-opening-prologue.is-trailer-render-mode .game-opening-prologue-trailer-player {
+    margin: 0 !important;
+    width: 1408px !important;
+    height: 768px !important;
+    max-width: 1408px !important;
+    max-height: 768px !important;
+}
+
+.game-opening-prologue.is-trailer-render-mode .game-opening-prologue-trailer-stage,
+.game-opening-prologue.is-trailer-render-mode .game-opening-prologue-trailer-viewport {
+    width: 1408px !important;
+    height: 768px !important;
+    max-width: 1408px !important;
+    max-height: 768px !important;
+    border: none !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
 }
 
 .game-opening-prologue.is-trailer-mp4-mode .game-opening-prologue-cinematic-stage,

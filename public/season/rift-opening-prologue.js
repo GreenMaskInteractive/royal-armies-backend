@@ -215,7 +215,7 @@
     const TRAILER_SUBTITLE_SCRUB_FLICKER_SEED = 2.17;
     const TRAILER_REPLAY_SYNC_MS = 250;
     const TRAILER_MP4_SRC = 'season/royal-armies-age-of-war-trailer.mp4';
-    const TRAILER_MP4_CACHE_BUST = 'trailer-sfx-bake-1';
+    const TRAILER_MP4_CACHE_BUST = 'trailer-mp4-fill-1';
     /** When true, subtitle explosion SFX is baked into the MP4 audio — skip overlay playback. */
     const TRAILER_MP4_BAKED_SUBTITLE_SFX = true;
     const TRAILER_RENDER_STATUS_PATH = '/api/portal/trailer/render/status';
@@ -5216,7 +5216,7 @@
                 height: TRAILER_CINE_NATIVE_HEIGHT,
                 fps: 30,
                 durationSec: getTrailerTimelineDurationSec(),
-                stageSelector: '#game-opening-prologue-trailer-stage',
+                stageSelector: '#game-opening-prologue-trailer-viewport',
                 narrationSrc: PROLOGUE_AUDIO_SRC,
                 musicSrc: 'audio/archimedeslullaby.wav',
                 musicStartSec: TRAILER_MUSIC_START_SEC,
