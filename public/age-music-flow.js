@@ -201,10 +201,15 @@
         const normalized = String(trackId || '').trim().toLowerCase();
         if (!isDiscoverableTrackId(normalized)) return false;
         const discovered = readDiscoveredTrackIds();
-        if (discovered.has(normalized)) return true;
-        discovered.add(normalized);
-        writeDiscoveredTrackIds(discovered);
+        const isNew = !discovered.has(normalized);
+        if (isNew) {
+            discovered.add(normalized);
+            writeDiscoveredTrackIds(discovered);
+        }
         syncUi();
+        if (isNew && typeof global.recordSongDiscovery === 'function') {
+            global.recordSongDiscovery(normalized);
+        }
         return true;
     }
 
@@ -393,6 +398,8 @@
         removeSession(STORAGE.currentTime);
     }
 
+    const PENDING_STARTER_SONG_DISCOVERIES_KEY = 'royalArmies_pendingStarterSongDiscoveries';
+
     function prepareJoinAgeLaunch() {
         const hasJoinedBefore = readLocal(STORAGE.hasJoinedAgeEver) === '1';
         writeSession(STORAGE.startRequested, '1');
@@ -401,6 +408,9 @@
         writeSession(STORAGE.openingProloguePending, hasJoinedBefore ? '0' : '1');
         writeSession(STORAGE.currentTrack, TRACKS.cascadingSkies.id);
         writeSession(STORAGE.currentTime, '0');
+        if (!hasJoinedBefore) {
+            writeSession(PENDING_STARTER_SONG_DISCOVERIES_KEY, '1');
+        }
     }
 
     function removeLegacyBottomMusicPlayer() {
@@ -838,6 +848,9 @@
     global.RoyalArmiesMusicFlow = {
         shouldSuppressPortalMainMusic,
         prepareJoinAgeLaunch,
+        getStarterPlaylistTrackIds: () => PLAYLIST_TRACK_IDS.slice(),
+        getTrackDefinitionById: resolveTrackById,
+        getDiscoverableTracks: () => DISCOVERABLE_TRACKS.slice(),
         markProgressionPhaseStart,
         markIntroCinematicComplete: markProgressionPhaseStart,
         startPrologueOutroMusic,
@@ -848,7 +861,6 @@
         selectPlaylistTrack,
         markTrackDiscovered,
         isTrackDiscovered,
-        getDiscoverableTracks: () => DISCOVERABLE_TRACKS.slice(),
         rampMusicVolume,
         fadeMusicOut,
         handoffToGameplayMusic,
@@ -866,9 +878,24 @@
         }
     };
 
+    function notifyMusicFlowReady() {
+        if (global.RoyalArmiesDiscoveries?.registerMusicCatalog) {
+            global.RoyalArmiesDiscoveries.registerMusicCatalog();
+        }
+        try {
+            global.dispatchEvent(new CustomEvent('royalarmies:music-flow-ready'));
+        } catch (_err) {
+            /* ignore */
+        }
+    }
+
     if (global.document.readyState === 'loading') {
-        global.document.addEventListener('DOMContentLoaded', init, { once: true });
+        global.document.addEventListener('DOMContentLoaded', () => {
+            init();
+            notifyMusicFlowReady();
+        }, { once: true });
     } else {
         init();
+        notifyMusicFlowReady();
     }
 })(window);

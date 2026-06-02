@@ -376,17 +376,47 @@
 
 .portal-commander-identity-menu .dropdown-action-item-discoveries,
 .portal-mobile-submenu-item-discoveries {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 8px !important;
     color: #e8d4a0 !important;
 }
 
-.portal-commander-identity-menu .dropdown-action-item-discoveries::before,
-.portal-mobile-submenu-item-discoveries::before {
-    content: '✦';
-    display: inline-block;
-    margin-right: 8px;
-    color: rgba(255, 215, 0, 0.75);
-    font-size: 0.62rem;
-    vertical-align: middle;
+.rift-discovery-unread-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #ffd700;
+    box-shadow: 0 0 8px rgba(255, 215, 0, 0.65);
+    flex: 0 0 auto;
+    opacity: 0;
+    transform: scale(0.6);
+    transition: opacity 0.15s ease, transform 0.15s ease;
+}
+
+.has-discovery-unread > .rift-discovery-unread-dot,
+.rift-discoveries-workspace-tab.has-discovery-unread > .rift-discovery-unread-dot {
+    opacity: 1;
+    transform: scale(1);
+}
+
+.rift-discoveries-workspace-tab.has-discovery-unread .rift-discoveries-workspace-tab-label {
+    font-weight: 700;
+    color: #ffe8a8;
+}
+
+.rift-discoveries-workspace-tab {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+}
+
+.rift-discoveries-workspace-article-discovery-line {
+    margin: 0 0 14px;
+    font-family: 'Cinzel', serif;
+    font-size: 0.82rem;
+    letter-spacing: 0.03em;
+    color: rgba(255, 224, 160, 0.9);
 }
 
 .portal-commander-identity-menu .dropdown-action-item-chronicles-bp,
@@ -19748,8 +19778,9 @@ body.is-age-chronicles-battle-pass-open {
 
 .rift-discovery-toast-panel {
     position: relative;
-    min-width: min(360px, 92vw);
-    padding: 38px 18px 14px;
+    min-width: min(380px, 92vw);
+    max-width: 440px;
+    padding: 16px 18px 14px;
     border: 1px solid rgba(201, 162, 72, 0.55);
     border-radius: 8px;
     background: linear-gradient(180deg, rgba(30, 24, 16, 0.98) 0%, rgba(8, 6, 4, 0.99) 100%);
@@ -19757,47 +19788,113 @@ body.is-age-chronicles-battle-pass-open {
     text-align: center;
 }
 
-.rift-discovery-toast-icon {
+.rift-discovery-toast-dismiss {
     position: absolute;
-    top: -22px;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 44px;
-    height: 44px;
-    object-fit: contain;
-    filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.5));
+    top: 8px;
+    right: 8px;
+    width: 28px;
+    height: 28px;
+    border: 1px solid rgba(184, 144, 48, 0.35);
+    border-radius: 4px;
+    background: rgba(0, 0, 0, 0.35);
+    color: #f0e4c8;
+    font-size: 1.1rem;
+    line-height: 1;
+    cursor: pointer;
+}
+
+.rift-discovery-toast-dismiss:hover,
+.rift-discovery-toast-dismiss:focus-visible {
+    border-color: rgba(255, 215, 0, 0.55);
+    outline: none;
 }
 
 .rift-discovery-toast-kicker {
-    margin: 0 0 6px;
+    margin: 0 0 10px;
     font-family: 'Cinzel', serif;
-    font-size: 0.82rem;
+    font-size: 0.86rem;
     letter-spacing: 0.08em;
     color: #ffd978;
 }
 
-.rift-discovery-toast-title {
-    margin: 0 0 12px;
+.rift-discovery-toast-divider {
+    height: 1px;
+    margin: 0 0 14px;
+    background: linear-gradient(90deg, transparent, rgba(201, 162, 72, 0.55), transparent);
+}
+
+.rift-discovery-toast-icon-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.rift-discovery-toast-icon-btn {
+    border: 1px solid rgba(184, 144, 48, 0.35);
+    border-radius: 6px;
+    background: rgba(0, 0, 0, 0.25);
+    padding: 6px;
+    cursor: pointer;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
+}
+
+.rift-discovery-toast-icon-btn img {
+    width: 40px;
+    height: 40px;
+    object-fit: contain;
+    display: block;
+    filter: drop-shadow(0 3px 8px rgba(0, 0, 0, 0.45));
+}
+
+.rift-discovery-toast-icon-btn.is-active,
+.rift-discovery-toast-icon-btn:hover,
+.rift-discovery-toast-icon-btn:focus-visible {
+    border-color: rgba(255, 215, 0, 0.65);
+    box-shadow: 0 0 12px rgba(255, 215, 0, 0.2);
+    outline: none;
+    transform: translateY(-1px);
+}
+
+.rift-discovery-toast-category {
+    margin: 0 0 8px;
     font-family: 'Cinzel', serif;
-    font-size: 1rem;
+    font-size: 0.74rem;
+    letter-spacing: 0.06em;
+    color: rgba(255, 224, 160, 0.88);
+}
+
+.rift-discovery-toast-line {
+    margin: 0 0 12px;
+    font-size: 0.9rem;
+    line-height: 1.45;
     color: #f5ecd4;
 }
 
-.rift-discovery-toast-open-btn {
-    border: 1px solid rgba(184, 144, 48, 0.45);
-    border-radius: 4px;
-    background: rgba(184, 144, 48, 0.12);
-    color: #ffe8a8;
-    font-family: 'Cinzel', serif;
+.rift-discovery-toast-footnote {
+    margin: 0;
     font-size: 0.72rem;
-    letter-spacing: 0.06em;
-    padding: 7px 14px;
+    color: rgba(200, 190, 170, 0.82);
+}
+
+.rift-discovery-toast-link {
+    border: none;
+    background: none;
+    padding: 0;
+    margin: 0;
+    font: inherit;
+    font-size: inherit;
+    color: #ffd978;
+    text-decoration: underline;
+    text-underline-offset: 2px;
     cursor: pointer;
 }
 
-.rift-discovery-toast-open-btn:hover,
-.rift-discovery-toast-open-btn:focus-visible {
-    border-color: rgba(255, 215, 0, 0.6);
+.rift-discovery-toast-link:hover,
+.rift-discovery-toast-link:focus-visible {
+    color: #fff0c0;
     outline: none;
 }
 

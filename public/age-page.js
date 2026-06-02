@@ -1312,6 +1312,9 @@
             await bootAgePageDeferred();
         } finally {
             await releaseAgePageLoadingGate();
+            if (typeof global.RoyalArmiesDiscoveries?.runPendingStarterSongDiscoveries === 'function') {
+                global.RoyalArmiesDiscoveries.runPendingStarterSongDiscoveries();
+            }
         }
     }
 
