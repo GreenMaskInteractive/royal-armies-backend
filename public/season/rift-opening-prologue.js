@@ -2240,6 +2240,7 @@
         const playerEl = overlayEl.querySelector('#game-opening-prologue-trailer-player');
         if (playerEl) {
             playerEl.hidden = false;
+            playerEl.removeAttribute('hidden');
         }
 
         overlayEl.classList.add('is-trailer-replay-mode');
@@ -2253,14 +2254,20 @@
         overlayEl.removeAttribute('hidden');
 
         trailerReplayTimeSec = 0;
-        applyTrailerTimelinePosition(0, { syncMusic: true });
-        bindTrailerPlayerControls();
-        bindTrailerBackgroundPlaybackGuards();
-        bindTrailerVisibilityKeepalive();
-        bindTrailerMediaSession();
+        applyTrailerTimelinePosition(0, { syncMusic: !isTrailerRenderMode() });
+        if (!isTrailerRenderMode()) {
+            bindTrailerPlayerControls();
+            bindTrailerBackgroundPlaybackGuards();
+            bindTrailerVisibilityKeepalive();
+            bindTrailerMediaSession();
+        }
+
         updateTrailerPlayerUi();
         updateTrailerOrientationClasses();
-        queueTrailerPlayerAutoplay();
+
+        if (!isTrailerRenderMode()) {
+            queueTrailerPlayerAutoplay();
+        }
     }
 
     const LOCAL_PROLOGUE_CUES = Object.freeze(
@@ -2294,6 +2301,10 @@
     function isTrailerPage() {
         return global.document.body?.id === AGE_OF_WAR_TRAILER_PAGE_ID
             || global.document.body?.dataset?.ageOfWarTrailer === '1';
+    }
+
+    function isTrailerRenderMode() {
+        return isTrailerPage() && global.document.body?.dataset?.trailerRender === '1';
     }
 
     function isCinematicPage() {
@@ -2706,6 +2717,56 @@
             const img = new Image();
             img.decoding = 'async';
             img.src = shot.src;
+        });
+    }
+
+    function waitForImageSrc(src) {
+        return new Promise((resolve) => {
+            const img = new Image();
+            img.decoding = 'async';
+            img.onload = () => resolve(true);
+            img.onerror = () => resolve(false);
+            img.src = src;
+        });
+    }
+
+    function waitForCinematicImagesLoaded() {
+        return Promise.all(PROLOGUE_CINEMATIC_SHOTS.map((shot) => waitForImageSrc(shot.src)));
+    }
+
+    function waitForTrailerExportAssetsLoaded() {
+        return Promise.all([
+            waitForCinematicImagesLoaded(),
+            waitForImageSrc(PROLOGUE_LOGO_SRC),
+            waitForImageSrc(PROLOGUE_SUBTITLE_LOGO_SRC),
+            waitForImageSrc(PROLOGUE_LORE_TOOL_SRC),
+            waitForImageSrc(TRAILER_GREENMASK_LOGO_SRC),
+        ]);
+    }
+
+    async function waitForTrailerMusicMetadata() {
+        if (global.RoyalArmiesMusicFlow
+            && typeof global.RoyalArmiesMusicFlow.startGamePageArchimedes === 'function') {
+            await global.RoyalArmiesMusicFlow.startGamePageArchimedes({ volume: 0.001, resetTime: true });
+        }
+
+        const musicAudio = getTrailerMusicAudio();
+        if (!musicAudio) return;
+
+        musicAudio.pause();
+        musicAudio.volume = 0;
+
+        if (Number.isFinite(musicAudio.duration) && musicAudio.duration > 0) {
+            return;
+        }
+
+        await new Promise((resolve) => {
+            const finish = () => resolve();
+            musicAudio.addEventListener('loadedmetadata', finish, { once: true });
+            musicAudio.addEventListener('durationchange', finish, { once: true });
+            musicAudio.addEventListener('error', finish, { once: true });
+            musicAudio.load();
+            global.setTimeout(finish, NARRATION_METADATA_TIMEOUT_MS);
         });
     }
 
@@ -4567,6 +4628,65 @@
         return Promise.resolve('playing');
     }
 
+    let trailerExportReady = false;
+    let trailerExportReadyResolve = null;
+    const trailerExportReadyPromise = new Promise((resolve) => {
+        trailerExportReadyResolve = resolve;
+    });
+
+    function seekTrailerExportFrame(timeSec) {
+        const totalSec = getTrailerTimelineDurationSec();
+        const clamped = Math.max(0, Math.min(totalSec, Number(timeSec) || 0));
+        trailerReplayTimeSec = clamped;
+        applyTrailerTimelinePosition(clamped, {
+            syncMusic: false,
+            seekMedia: true,
+            scrubbing: true,
+        });
+        return clamped;
+    }
+
+    async function startTrailerRenderExport() {
+        if (!isTrailerRenderMode() || !shouldRunOpeningPrologue()) {
+            return Promise.resolve('disabled');
+        }
+
+        resetStaleLocalPrologueState({ force: shouldForcePrologueRestart() });
+
+        ensureOverlay();
+        preloadCinematicImages();
+        ensureSubtitleLogoSfx();
+
+        activeCueIndex = -1;
+        showOverlay({ subtitles: false });
+
+        await prepareCueTimeline();
+        await global.document.fonts.ready;
+        await waitForTrailerExportAssetsLoaded();
+        await waitForTrailerMusicMetadata();
+
+        mountTrailerPlayerLayout();
+        enterTrailerReplayMode();
+
+        overlayEl?.classList.add(
+            'is-trailer-render-mode',
+            'is-trailer-player-fullscreen'
+        );
+
+        audioEl?.pause();
+        getTrailerMusicAudio()?.pause();
+
+        trailerReplayTimeSec = 0;
+        seekTrailerExportFrame(0);
+
+        trailerExportReady = true;
+        if (typeof trailerExportReadyResolve === 'function') {
+            trailerExportReadyResolve();
+        }
+
+        return Promise.resolve('ready');
+    }
+
     async function startLocalPrologue(options) {
         if (!shouldRunOpeningPrologue()) {
             return Promise.resolve('disabled');
@@ -4617,11 +4737,40 @@
         if (isTrailerPage()) {
             bindTrailerOrientationListeners();
             updateTrailerOrientationClasses();
-            void startTrailerPlayerExperience();
+            if (isTrailerRenderMode()) {
+                void startTrailerRenderExport();
+            } else {
+                void startTrailerPlayerExperience();
+            }
             return;
         }
         startLocalPrologue();
     }
+
+    global.RoyalArmiesTrailerExport = {
+        get isReady() {
+            return trailerExportReady;
+        },
+        ready: trailerExportReadyPromise,
+        seekTo(timeSec) {
+            return seekTrailerExportFrame(timeSec);
+        },
+        getDurationSec() {
+            return getTrailerTimelineDurationSec();
+        },
+        getExportConfig() {
+            return {
+                width: TRAILER_CINE_NATIVE_WIDTH,
+                height: TRAILER_CINE_NATIVE_HEIGHT,
+                fps: 30,
+                durationSec: getTrailerTimelineDurationSec(),
+                stageSelector: '#game-opening-prologue-trailer-stage',
+                narrationSrc: PROLOGUE_AUDIO_SRC,
+                musicSrc: 'audio/archimedeslullaby.wav',
+                musicStartSec: TRAILER_MUSIC_START_SEC,
+            };
+        },
+    };
 
     global.RoyalArmiesOpeningPrologue = {
         isCinematicPage: function isOpeningPrologueCinematicPage() {
