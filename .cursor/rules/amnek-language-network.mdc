@@ -1,0 +1,29 @@
+# Amnek Master Language Network
+
+Use `public/rift-amnek-language-network.js` (`RoyalArmiesAmnekLanguageNetwork`) for all English ↔ regional dialect work on Amnek.
+
+## Dialects (5)
+
+| Dialect | Region | Nations | Syntax |
+|---------|--------|---------|--------|
+| woodland | North-Gale Woodlands | Krall, Aethelgard, Saelthine | OVS |
+| ridge | Crescent Ridge | Dravic, Aesthene, Vaerenth | SVO (+ Ex- imperative) |
+| basin | Verdant Basin | Thruun, Zevros | SOV |
+| gulf | Wyrmtooth Gulf | Vaelior, Skaros | VSO |
+| reach | Dreadforge Reach | Mynor, Khaerant | Case (subject um, object tas) |
+
+**Caldera Highlands** (Trex, Gorz, Lyllis) has no dialect in this spec yet.
+
+## Translation rules
+
+1. Never use English word order for dialect output — follow each region's syntax.
+2. Prefer `translateStructured(dialectId, { subject, verb, object, imperative, past, plural, ... })` for dialogue and UI copy.
+3. Use `translateEnglishPhrase` / `translateToDialect` only for rough natural-language input; use `translateToEnglish` for reverse lookup.
+4. Missing dictionary words: `synthesizeTerm()` using regional phonetic constraints (no modern slang).
+5. Archimedes / main-theme tracks and prologue audio are separate from these five dialects.
+
+## API
+
+- `getDialectForNation('aesthene')` → `'ridge'`
+- `getDialectForRegion('region-3')` → `'ridge'`
+- `markTrackDiscovered` is music-only — do not confuse with dialect discovery.
