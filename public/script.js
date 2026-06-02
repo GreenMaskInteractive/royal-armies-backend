@@ -3662,7 +3662,7 @@ function loadLore(type, customMount) {
     }
 
     if (type === 'archives' || type === 'manuscripts' || type === 'letters' || type === 'nations') {
-        body.innerHTML = '<p style="padding:12px;">Nation chronicles and audio narration are on the <strong>Age Portal</strong>. Log in and open the <strong>Lore</strong> tab.</p>';
+        body.innerHTML = '<p style="padding:12px;">Nation chronicles and audio narration are on the <strong>Age Portal</strong>. Log in and open the <strong>Nations</strong> tab.</p>';
         return;
     }
     

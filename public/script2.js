@@ -541,7 +541,7 @@ const PORTAL_MOBILE_NAV_VIEW_LABELS = {
     portal: 'Age Portal',
     leaderboards: 'Leaderboards',
     chat: 'Community Chat',
-    lore: 'Lore',
+    lore: 'Nations',
     royalty: 'Royalty',
     chronicles: 'The Chronicles',
     roadmap: 'Roadmap',
@@ -5495,7 +5495,7 @@ const ROADMAP_EVOLUTION_PHASES = [
             {
                 title: 'Age Portal navigation',
                 items: [
-                    `Dedicated portal home with sticky top navigation: Age Portal, Leaderboards, Community Chat, Lore, Royalty, ${CHRONICLE_BATTLE_PASS_HEADING}, and this Evolution Roadmap.`,
+                    `Dedicated portal home with sticky top navigation: Age Portal, Leaderboards, Community Chat, Nations, Royalty, ${CHRONICLE_BATTLE_PASS_HEADING}, and this Evolution Roadmap.`,
                     'Live Age metrics strip: Great Transition countdown, game mode, Age cycle, leading nation, registered and active player rosters.',
                     'Join the Age deployment deck with tutorial vs standard entry, SFX, and visual feedback (battle screen redirect pending).'
                 ]
@@ -5730,7 +5730,7 @@ function renderMasterLorePortalCanvas(viewport) {
         <div class="lore-workspace-chassis">
             <header class="lore-codex-hero">
                 <p class="lore-codex-eyebrow">Royal Armies · Amnek</p>
-                <h2 class="lore-codex-title">Lore of the Fifteen Nations</h2>
+                <h2 class="lore-codex-title">The Fifteen Nations</h2>
                 <p class="lore-codex-lead">
                     Explore the sovereign realms that shape the continent. Choose a nation to read its chronicle,
                     then press <strong>Listen</strong> to hear its history narration.
