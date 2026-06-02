@@ -1,6 +1,7 @@
 /**
- * FLEX — 3840×2160 design canvas proportional scale (desktop).
- * Variables are set by rift-viewport-metrics.js.
+ * FLEX — Legacy 3840×2160 design canvas scale (disabled).
+ * Site uses universal viewport metrics in rift-viewport-metrics.js only.
+ * Kept for reference; not loaded by default.
  */
 
 html.ra-design-scale-on {

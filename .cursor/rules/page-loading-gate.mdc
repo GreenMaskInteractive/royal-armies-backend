@@ -9,7 +9,7 @@ alwaysApply: false
 Every player-facing **MAP** page must load the site-wide boot overlay immediately after viewport metrics:
 
 ```html
-<script src="rift-viewport-metrics.js?v=site-viewport-stable-1"></script>
+<script src="rift-viewport-metrics.js?v=universal-viewport-1"></script>
 <script src="rift-page-loading-gate.js?v=page-loading-gate-1"></script>
 ```
 
