@@ -1375,6 +1375,11 @@ function launchGameRoundSectorAfterTermsCheck(isTutorialModeActive, clickEvent) 
     const clickedHousing = clickEvent?.target?.closest?.('.action-btn-aura-housing')
         ?? clickEvent?.currentTarget?.closest?.('.action-btn-aura-housing');
 
+    if (window.RoyalArmiesMusicFlow
+        && typeof window.RoyalArmiesMusicFlow.prepareJoinAgeLaunch === 'function') {
+        window.RoyalArmiesMusicFlow.prepareJoinAgeLaunch();
+    }
+
     haltAllPortalAudioForGameLaunch();
     resetAllJoinAgeDeploymentButtonShakeStates();
 
@@ -5776,6 +5781,19 @@ function renderMasterLorePortalCanvas(viewport) {
    SECTION 9: SYSTEM OPTIONS & AUDIO SOUNDTRACK CHANNEL MIXER
    ========================================================================== */
 
+function isMainPortalDashboardPage() {
+    return (document.body?.id || '') === 'main-dashboard-canvas';
+}
+
+function suppressMainPortalBackgroundMusic() {
+    if (!isMainPortalDashboardPage()) return;
+
+    const playerHome = document.getElementById('portal-media-player-home');
+    if (playerHome) playerHome.hidden = true;
+
+    haltPortalBackgroundMusicImmediately();
+}
+
 function getPortalBackgroundAudioElement() {
     return document.getElementById('portal-background-theme-audio');
 }
@@ -5843,6 +5861,14 @@ function applyPortalBackgroundMusicVolume() {
 }
 
 function startPortalBackgroundMusic(options = {}) {
+    if (isMainPortalDashboardPage()
+        || (window.RoyalArmiesMusicFlow
+            && typeof window.RoyalArmiesMusicFlow.shouldSuppressPortalMainMusic === 'function'
+            && window.RoyalArmiesMusicFlow.shouldSuppressPortalMainMusic())) {
+        suppressMainPortalBackgroundMusic();
+        return Promise.resolve();
+    }
+
     const bgMusic = getPortalBackgroundAudioElement();
     if (!bgMusic) return Promise.resolve();
 
@@ -5887,6 +5913,8 @@ function startPortalBackgroundMusic(options = {}) {
 }
 
 function bindPortalBackgroundMusicAutoplayUnlock() {
+    if (isMainPortalDashboardPage()) return;
+
     const unlock = () => {
         startPortalBackgroundMusic({ markSessionGranted: true, silentFail: true });
         document.removeEventListener('pointerdown', unlock);
@@ -6032,6 +6060,11 @@ window.addEventListener('scroll', () => {
 }, { passive: true });
 
 window.addEventListener("DOMContentLoaded", () => {
+    if (isMainPortalDashboardPage()) {
+        suppressMainPortalBackgroundMusic();
+        return;
+    }
+
     const bgMusic = getPortalBackgroundAudioElement();
     if (!bgMusic) return;
 
@@ -6057,7 +6090,7 @@ window.addEventListener("DOMContentLoaded", () => {
 });
 
 window.addEventListener('pageshow', (event) => {
-    if (event.persisted) {
+    if (event.persisted && !isMainPortalDashboardPage()) {
         startPortalBackgroundMusic({ silentFail: true });
     }
 });
@@ -6797,7 +6830,7 @@ window.onload = () => {
         applyPortalGuestDeploymentChrome();
     }
     window.cachedAgePortalViewportHTML = snapshotAgePortalViewportForCache();
-    if (getPortalBackgroundAudioElement()?.paused) {
+    if (!isMainPortalDashboardPage() && getPortalBackgroundAudioElement()?.paused) {
         startPortalBackgroundMusic({ silentFail: true });
     }
 };
