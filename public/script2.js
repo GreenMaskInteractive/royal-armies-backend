@@ -578,6 +578,8 @@ function snapshotAgePortalViewportForCache() {
 }
 
 function mountPortalMediaPlayerForViewport() {
+    if (isMainPortalDashboardPage()) return;
+
     const home = document.getElementById('portal-media-player-home');
     const mobileMount = document.getElementById('portal-mobile-nav-media-mount');
     const dockInNav = isPortalMobileNavLayout() && mobileMount;
@@ -5788,8 +5790,12 @@ function isMainPortalDashboardPage() {
 function suppressMainPortalBackgroundMusic() {
     if (!isMainPortalDashboardPage()) return;
 
-    const playerHome = document.getElementById('portal-media-player-home');
-    if (playerHome) playerHome.hidden = true;
+    document.querySelectorAll(
+        '#portal-media-player-home, .portal-media-player-home, #portal-floating-media-player-deck, #portal-mobile-nav-media-mount'
+    ).forEach((node) => {
+        node.hidden = true;
+        node.setAttribute('aria-hidden', 'true');
+    });
 
     haltPortalBackgroundMusicImmediately();
 }

@@ -4547,7 +4547,8 @@ function saveSettings() {
         if (typeof hydratePortalVolumeStateFromStorage === 'function') {
             hydratePortalVolumeStateFromStorage();
         }
-        if (typeof startPortalBackgroundMusic === 'function') {
+        if (typeof startPortalBackgroundMusic === 'function'
+            && (document.body?.id || '') !== 'main-dashboard-canvas') {
             const bgTrack = document.getElementById('portal-background-theme-audio');
             if (bgTrack && bgTrack.paused && (confirmedMusicVol * confirmedMasterVol) > 0) {
                 startPortalBackgroundMusic({ markSessionGranted: true, silentFail: true });

@@ -19,6 +19,11 @@
             id: 'cascading-skies',
             title: 'CASCADING SKIES',
             file: 'audio/cascadingskies.wav'
+        },
+        wanderingSoul: {
+            id: 'wandering-soul',
+            title: 'WANDERING SOUL',
+            file: 'audio/Wandering%20Soul.wav'
         }
     });
 
@@ -40,7 +45,8 @@
     /** Tracks selectable in the age chat Music tab (Archimedes reserved for prologue / trailer). */
     const PLAYLIST_TRACK_IDS = Object.freeze([
         TRACKS.cascadingSkies.id,
-        TRACKS.kindred.id
+        TRACKS.kindred.id,
+        TRACKS.wanderingSoul.id
     ]);
 
     /**
@@ -160,6 +166,7 @@
         const stored = String(readSession(STORAGE.currentTrack) || '').trim().toLowerCase();
         if (stored === TRACKS.cascadingSkies.id) return TRACKS.cascadingSkies.id;
         if (stored === TRACKS.kindred.id) return TRACKS.kindred.id;
+        if (stored === TRACKS.wanderingSoul.id) return TRACKS.wanderingSoul.id;
         if (stored === TRACKS.archimedes.id) return TRACKS.archimedes.id;
         if (isDiscoverableTrackId(stored) && isTrackDiscovered(stored)) return stored;
         return TRACKS.cascadingSkies.id;
@@ -204,6 +211,7 @@
     function resolveAgePlaylistTrackId(trackId) {
         const normalized = String(trackId || '').trim().toLowerCase();
         if (normalized === TRACKS.kindred.id) return TRACKS.kindred.id;
+        if (normalized === TRACKS.wanderingSoul.id) return TRACKS.wanderingSoul.id;
         if (isDiscoverableTrackId(normalized) && isTrackDiscovered(normalized)) return normalized;
         return TRACKS.cascadingSkies.id;
     }
@@ -212,6 +220,7 @@
         const normalized = String(trackId || '').trim().toLowerCase();
         if (normalized === TRACKS.cascadingSkies.id) return TRACKS.cascadingSkies;
         if (normalized === TRACKS.kindred.id) return TRACKS.kindred;
+        if (normalized === TRACKS.wanderingSoul.id) return TRACKS.wanderingSoul;
         if (normalized === TRACKS.archimedes.id) return TRACKS.archimedes;
         if (DISCOVERABLE_TRACK_BY_ID[normalized]) return DISCOVERABLE_TRACK_BY_ID[normalized];
         return TRACKS.cascadingSkies;
@@ -248,15 +257,8 @@
     }
 
     function resolveAudioElement() {
+        if (isMainPage()) return null;
         if (audioEl && global.document.contains(audioEl)) return audioEl;
-
-        if (!isMainPage()) {
-            const portalAudio = global.document.getElementById('portal-background-theme-audio');
-            if (portalAudio) {
-                audioEl = portalAudio;
-                return audioEl;
-            }
-        }
 
         const existingGlobal = global.document.getElementById(AUDIO_ID);
         if (existingGlobal) {
@@ -287,6 +289,7 @@
     }
 
     function loadTrack(trackId, options = {}) {
+        if (isMainPage()) return;
         const audio = resolveAudioElement();
         if (!audio) return;
 
@@ -361,16 +364,33 @@
 
     function hideMainPagePlayer() {
         if (!isMainPage()) return;
-        const playerHome = global.document.getElementById('portal-media-player-home');
-        if (playerHome) playerHome.hidden = true;
+
+        global.document.querySelectorAll(
+            '#portal-media-player-home, .portal-media-player-home, #portal-floating-media-player-deck, #portal-mobile-nav-media-mount'
+        ).forEach((node) => {
+            node.hidden = true;
+            node.setAttribute('aria-hidden', 'true');
+        });
 
         const portalAudio = global.document.getElementById('portal-background-theme-audio');
         if (portalAudio) {
             portalAudio.pause();
             portalAudio.currentTime = 0;
             portalAudio.muted = true;
+            portalAudio.removeAttribute('src');
+            const source = portalAudio.querySelector('source');
+            if (source) source.removeAttribute('src');
         }
+
+        if (audioEl) {
+            audioEl.pause();
+            audioEl = null;
+        }
+
         removeSession(STORAGE.startRequested);
+        removeSession(STORAGE.autoplayGranted);
+        removeSession(STORAGE.currentTrack);
+        removeSession(STORAGE.currentTime);
     }
 
     function prepareJoinAgeLaunch() {
@@ -474,8 +494,10 @@
         const nowPlaying = global.document.getElementById('game-chat-music-now-playing');
         if (nowPlaying) nowPlaying.textContent = title;
 
-        const trackLabel = global.document.getElementById('media-active-track-name');
-        if (trackLabel) trackLabel.textContent = `🎵 ${title}`;
+        if (!isMainPage()) {
+            const trackLabel = global.document.getElementById('media-active-track-name');
+            if (trackLabel) trackLabel.textContent = `🎵 ${title}`;
+        }
 
         const audio = resolveAudioElement();
         const playBtn = global.document.getElementById('game-chat-music-play-btn');

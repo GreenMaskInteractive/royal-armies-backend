@@ -145,7 +145,6 @@
                                 <img src="images/royalarmiestitle.png?v=logo-trim-gimp-1" alt="Royal Armies" class="portal-mobile-nav-brand-logo">
                             </div>
                         </div>
-                        <div id="portal-mobile-nav-media-mount" class="portal-mobile-nav-media-mount" aria-label="Background music player"></div>
                         <div class="portal-commander-identity-shell portal-mobile-commander-shell" id="portal-mobile-commander-shell">
                             <button type="button" class="portal-commander-new-messages-bar" id="portal-mobile-new-messages-bar" hidden aria-live="polite" aria-label="You have new messages. Open messages.">
                                 <span class="portal-commander-new-messages-bar-text">You have new messages</span>
@@ -427,51 +426,6 @@
 
             </div>
 
-            <!-- --- Section: Floating Media Player HUD --- -->
-
-            <!-- Block 7: Floating High-Command Media Controller (re-parented to mobile nav on ≤1024px via script2.js) -->
-            <div id="portal-media-player-home" class="portal-media-player-home">
-            <div id="portal-floating-media-player-deck">
-
-                <div class="media-track-identity-row">
-                    <div class="media-disc-vinyl-icon-housing">
-                        <span class="vinyl-spinning-glyph" id="media-vinyl-spinning-node">💿</span>
-                    </div>
-                    <div class="media-meta-text-cell">
-                        <div class="media-track-title-ticker" id="media-active-track-name">🎵 ARCHIMEDES' LULLABY</div>
-                        <div class="media-artist-label media-player-expanded-only">Royal Armies Orchestral Core</div>
-                    </div>
-                    <button type="button" id="media-player-expand-toggle" class="media-player-expand-toggle" onclick="togglePortalMediaPlayerExpanded()" aria-expanded="false" aria-label="Expand media player" title="Expand player">
-                        <span class="media-player-expand-icon" aria-hidden="true">▾</span>
-                    </button>
-                </div>
-
-                <div class="media-timeline-interface-wrapper">
-                    <span class="media-time-stamp-clock" id="media-current-time-clock">00:00</span>
-                    <input type="range" min="0" max="100" value="0" id="media-timeline-progress-scrubber" class="media-scrub-input" oninput="manuallyScrubActiveTrackTimeline(this)">
-                    <span class="media-time-stamp-clock" id="media-total-duration-clock">00:00</span>
-                </div>
-
-                <div class="media-control-buttons-row media-player-expanded-only">
-                    <button class="media-deck-btn master-play-trigger" id="media-toggle-play-btn" onclick="togglePortalBackgroundPlayback()" title="Pause / Play Track">
-                        <span class="media-btn-icon-symbol" id="media-play-symbol-node">⏸</span>
-                    </button>
-                </div>
-
-                <div class="media-playlist-block media-player-expanded-only" id="portal-media-playlist-block">
-                    <ul class="media-playlist-track-list" id="media-playlist-track-list" aria-label="Soundtrack playlist"></ul>
-                </div>
-
-                <div class="media-volume-mixer-sub-row media-player-expanded-only">
-                    <button class="media-mute-toggle-inline" id="media-toggle-mute-btn" onclick="togglePortalBackgroundMuteState()" title="Mute/Unmute">
-                        <span class="media-btn-icon-symbol volume-icon-size" id="media-mute-symbol-node">🔊</span>
-                    </button>
-                    <input type="range" min="0" max="1" step="0.05" value="0.5" id="media-volume-slider-input" class="media-vol-range-slider" oninput="manuallyAdjustPlayerDeckVolume(this.value)">
-                </div>
-
-            </div>
-            </div>
-
         </div>
 
         </div>
@@ -748,10 +702,7 @@
 
     <!-- --- Section: Logic Engine & Background Theme --- -->
 
-    <!-- Block 9: Background Theme Audio Channel (before script so metadata hooks bind reliably) -->
-    <audio id="portal-background-theme-audio" preload="auto" playsinline>
-        <source src="audio/archimedeslullaby.wav" type="audio/wav">
-    </audio>
+    <!-- Block 9: Nation lore narration only (soundtrack plays on game / age pages via age-music-flow.js) -->
     <audio id="portal-lore-narration-audio" preload="none" playsinline></audio>
 
     <!-- Block 10: Commander Hub + Shared RAGE Logic -->
@@ -773,8 +724,8 @@
     <script src="commander-hub.js?v=hub-action-btn-compact-1"></script>
     <script src="maintenance-alert.js?v=local-api-reachability-1"></script>
     <script src="rift-player-report.js?v=player-report-modal-1"></script>
-    <script src="age-music-flow.js?v=game-age-only-1"></script>
-    <script src="script2.js?v=chat-music-tab-1"></script>
+    <script src="age-music-flow.js?v=age-soundtrack-wandering-soul-1"></script>
+    <script src="script2.js?v=main-no-portal-music-1"></script>
     <script src="custom-cursor.js?v=design-scale-hud-fix-1"></script>
 
 </body>
