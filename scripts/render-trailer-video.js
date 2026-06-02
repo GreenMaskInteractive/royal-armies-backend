@@ -293,7 +293,14 @@ async function main() {
         const outputPath = path.join(OUTPUT_DIR, opts.output);
         const narrationPath = path.join(PUBLIC_DIR, 'season', 'distressedwoman1.mp3');
         const musicPath = path.join(PUBLIC_DIR, 'audio', 'archimedeslullaby.wav');
+        const sfxRelPath = String(config.subtitleImpactSfxPath || 'audio/explosionsfx.wav').replace(/^\/+/, '');
+        const sfxPath = path.join(PUBLIC_DIR, sfxRelPath);
         const musicDelayMs = Math.round((Number(config.musicStartSec) || 2) * 1000);
+        const sfxDelayMs = Math.round((Number(config.subtitleImpactSec) || 0) * 1000);
+
+        if (!fs.existsSync(sfxPath)) {
+            throw new Error(`Subtitle impact SFX not found: ${sfxPath}`);
+        }
 
         markTrailerRenderProgress({
             status: 'rendering',
@@ -326,14 +333,15 @@ async function main() {
             message: 'Video encoded — muxing audio…',
         });
 
-        console.log('[NEXUS] Muxing narration + music…');
+        console.log(`[NEXUS] Muxing narration + music + subtitle impact SFX @ ${(sfxDelayMs / 1000).toFixed(2)}s…`);
         await runFfmpeg(ffmpegPath, [
             '-y',
             '-i', videoOnlyPath,
             '-i', narrationPath,
             '-i', musicPath,
+            '-i', sfxPath,
             '-filter_complex',
-            `[1:a]volume=1.0[nar];[2:a]adelay=${musicDelayMs}|${musicDelayMs},volume=0.45[mus];[nar][mus]amix=inputs=2:duration=longest:dropout_transition=0[aout]`,
+            `[1:a]volume=1.0[nar];[2:a]adelay=${musicDelayMs}|${musicDelayMs},volume=0.45[mus];[3:a]adelay=${sfxDelayMs}|${sfxDelayMs},volume=1.0[sfx];[nar][mus][sfx]amix=inputs=3:duration=longest:dropout_transition=0[aout]`,
             '-map', '0:v:0',
             '-map', '[aout]',
             '-c:v', 'copy',

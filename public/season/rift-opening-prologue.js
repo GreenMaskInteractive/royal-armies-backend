@@ -215,7 +215,9 @@
     const TRAILER_SUBTITLE_SCRUB_FLICKER_SEED = 2.17;
     const TRAILER_REPLAY_SYNC_MS = 250;
     const TRAILER_MP4_SRC = 'season/royal-armies-age-of-war-trailer.mp4';
-    const TRAILER_MP4_CACHE_BUST = 'trailer-render-fix-1';
+    const TRAILER_MP4_CACHE_BUST = 'trailer-sfx-bake-1';
+    /** When true, subtitle explosion SFX is baked into the MP4 audio — skip overlay playback. */
+    const TRAILER_MP4_BAKED_SUBTITLE_SFX = true;
     const TRAILER_RENDER_STATUS_PATH = '/api/portal/trailer/render/status';
     const TRAILER_RENDER_POLL_MS = 1000;
     const LOCAL_PROLOGUE_PENDING_KEY = 'royalArmies_localProloguePending';
@@ -310,6 +312,19 @@
 
     function getTrailerFinaleEndSec() {
         return getTrailerFinaleStartSec() + (TRAILER_POST_NARRATION_MS / 1000);
+    }
+
+    function getTrailerSubtitleImpactProgress() {
+        const titlePhaseEnd = TRAILER_TITLE_LOGO_REVEAL_MS / TRAILER_POST_NARRATION_MS;
+        const subtitlePhaseSpan = PROLOGUE_SUBTITLE_LOGO_EXPLOSIVE_MS / TRAILER_POST_NARRATION_MS;
+        return titlePhaseEnd + (PROLOGUE_SUBTITLE_LOGO_EXPLOSIVE_IMPACT * subtitlePhaseSpan);
+    }
+
+    function getTrailerSubtitleImpactSec() {
+        const finaleStart = getTrailerFinaleStartSec();
+        const finaleEnd = getTrailerFinaleEndSec();
+        const impactProgress = getTrailerSubtitleImpactProgress();
+        return finaleStart + (impactProgress * (finaleEnd - finaleStart));
     }
 
     function getTrailerMusicEndSec() {
@@ -1482,8 +1497,14 @@
         trailerSubtitleImpactSfxGeneration = -1;
     }
 
+    function shouldPlayTrailerSubtitleImpactOverlaySfx() {
+        return isTrailerReplayMode
+            && isTrailerReplayPlaying
+            && !(trailerMp4Mode && TRAILER_MP4_BAKED_SUBTITLE_SFX);
+    }
+
     function syncTrailerFinaleAudioCues(timeSec) {
-        if (!isTrailerReplayMode || !isTrailerReplayPlaying) return;
+        if (!shouldPlayTrailerSubtitleImpactOverlaySfx()) return;
         if (trailerSeekActive || trailerUserPausedPlayback || trailerTimelinePreviewLocked) return;
         if (trailerFinaleSequenceStarted || trailerCreditsRunning) return;
         if (global.document.visibilityState === 'hidden') return;
@@ -1497,9 +1518,7 @@
         if (trailerSubtitleImpactSfxGeneration === generation) return;
 
         const finaleProgress = (clamped - finaleStart) / Math.max(0.001, finaleEnd - finaleStart);
-        const titlePhaseEnd = TRAILER_TITLE_LOGO_REVEAL_MS / TRAILER_POST_NARRATION_MS;
-        const subtitlePhaseSpan = PROLOGUE_SUBTITLE_LOGO_EXPLOSIVE_MS / TRAILER_POST_NARRATION_MS;
-        const impactProgress = titlePhaseEnd + (PROLOGUE_SUBTITLE_LOGO_EXPLOSIVE_IMPACT * subtitlePhaseSpan);
+        const impactProgress = getTrailerSubtitleImpactProgress();
 
         if (finaleProgress + 0.002 < impactProgress) return;
 
@@ -1938,7 +1957,7 @@
             updateTrailerOrientationClasses();
         }
 
-        if (isTrailerReplayMode && isTrailerReplayPlaying && !isTrailerScrubPreview()) {
+        if (shouldPlayTrailerSubtitleImpactOverlaySfx() && !isTrailerScrubPreview()) {
             syncTrailerFinaleAudioCues(clamped);
         }
     }
@@ -2149,6 +2168,7 @@
 
             if (trailerMp4Mode && trailerMp4VideoEl) {
                 syncTrailerPlaybackClock();
+                syncTrailerFinaleAudioCues(trailerReplayTimeSec);
                 updateTrailerPlayerUi();
                 updateTrailerMediaSession();
                 if (trailerReplayTimeSec >= totalSec - 0.03 || trailerMp4VideoEl.ended) {
@@ -2294,6 +2314,7 @@
             isTrailerReplayPlaying = true;
             trailerUserPausedPlayback = false;
             unlockTrailerTimelinePreview();
+            unlockTrailerImpactAudio();
             trailerMp4VideoEl.play().catch(() => {});
             startTrailerReplaySyncLoop();
             updateTrailerPlayerUi();
@@ -2344,6 +2365,8 @@
             trailerMp4VideoEl.currentTime = 0;
             trailerUserPausedPlayback = false;
             trailerAutoplayQueued = false;
+            trailerImpactAudioUnlocked = false;
+            resetTrailerFinaleAudioCues();
             unlockTrailerTimelinePreview();
             updateTrailerPlayerUi();
             void tryStartTrailerPlaybackWithOrientation();
@@ -5197,6 +5220,8 @@
                 narrationSrc: PROLOGUE_AUDIO_SRC,
                 musicSrc: 'audio/archimedeslullaby.wav',
                 musicStartSec: TRAILER_MUSIC_START_SEC,
+                subtitleImpactSec: getTrailerSubtitleImpactSec(),
+                subtitleImpactSfxPath: 'audio/explosionsfx.wav',
             };
         },
     };
