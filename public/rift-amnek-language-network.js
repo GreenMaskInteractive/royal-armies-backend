@@ -6,6 +6,7 @@
     'use strict';
 
     const DIALECT_IDS = Object.freeze({
+        highlands: 'highlands',
         woodland: 'woodland',
         ridge: 'ridge',
         basin: 'basin',
@@ -14,6 +15,7 @@
     });
 
     const REGION_DIALECT = Object.freeze({
+        'region-1': DIALECT_IDS.highlands,
         'region-2': DIALECT_IDS.woodland,
         'region-3': DIALECT_IDS.ridge,
         'region-4': DIALECT_IDS.basin,
@@ -22,6 +24,9 @@
     });
 
     const NATION_DIALECT = Object.freeze({
+        trex: DIALECT_IDS.highlands,
+        gorz: DIALECT_IDS.highlands,
+        lyllis: DIALECT_IDS.highlands,
         krall: DIALECT_IDS.woodland,
         aethelgard: DIALECT_IDS.woodland,
         saelthine: DIALECT_IDS.woodland,
@@ -37,6 +42,7 @@
     });
 
     const REGION_LABELS = Object.freeze({
+        'region-1': 'Caldera Highlands',
         'region-2': 'North-Gale Woodlands',
         'region-3': 'Crescent Ridge',
         'region-4': 'Verdant Basin',
@@ -49,6 +55,30 @@
     }
 
     const DIALECTS = Object.freeze({
+        [DIALECT_IDS.highlands]: {
+            id: DIALECT_IDS.highlands,
+            name: 'Highlands Dialect',
+            regionName: 'Caldera Highlands',
+            profile: 'Volcanic, echoing, imposing — heavy vowels and resonant trailing consonants.',
+            syntax: 'VOS',
+            wordOrder: ['verb', 'object', 'subject'],
+            stripArticles: true,
+            adjectivesFollowNoun: true,
+            entries: [
+                entry('Awak', 'ɑːwɑːk', ['awaken', 'awakens', 'rise', 'rises']),
+                entry('Gorz', 'gɔːrz', ['power', 'zealot', 'zealots']),
+                entry('Lyl', 'laɪl', ['dark', 'forbidden']),
+                entry('Trex', 'trɛks', ['crush', 'crushes', 'break', 'breaks']),
+                entry('Kaldar', 'kældɑːr', ['volcano', 'fire']),
+                entry('Rok', 'rɒk', ['stone', 'stones', 'mountain', 'mountains']),
+                entry('Khor', 'xɔːr', ['enemy', 'enemies', 'intruder', 'intruders']),
+                entry('Blud', 'blʌd', ['blood', 'sacrifice']),
+                entry('Sest', 'sɛst', ['throne', 'seat']),
+                entry('Magh', 'mɑːg', ['rule', 'rules', 'dominate', 'dominates'])
+            ],
+            pluralSuffix: 'z',
+            phoneticSeed: ['gh', 'or', 'akh', 'uz', 'kald', 'rok', 'khor', 'magh']
+        },
         [DIALECT_IDS.woodland]: {
             id: DIALECT_IDS.woodland,
             name: 'Woodland Dialect',
@@ -280,6 +310,14 @@
         return out.toLowerCase();
     }
 
+    function applyHighlandsGrammar(term, role, options) {
+        let out = term.toLowerCase();
+        if (options.plural && role !== 'verb' && !out.endsWith('z')) {
+            out = `${out}z`;
+        }
+        return out;
+    }
+
     function applyReachCase(term, role, options) {
         const base = term.replace(/(-um|-tas|-vass)$/i, '');
         if (role === 'subject') {
@@ -301,6 +339,8 @@
         const base = row.term.split(/\s*\/\s*/)[0].trim();
 
         switch (dialect.id) {
+            case DIALECT_IDS.highlands:
+                return applyHighlandsGrammar(base, role, options);
             case DIALECT_IDS.woodland:
                 return applyWoodlandGrammar(base, role, options);
             case DIALECT_IDS.ridge:
@@ -329,6 +369,11 @@
             if (id === DIALECT_IDS.gulf) return 'sh';
             return match;
         });
+
+        if (id === DIALECT_IDS.highlands) {
+            const tail = dialect.phoneticSeed[(token.length + 1) % dialect.phoneticSeed.length];
+            composed = `gh${body}${tail}`.replace(/ghgh/gi, 'gh');
+        }
 
         if (id === DIALECT_IDS.ridge && body.length > 2) {
             composed = `${composed.slice(0, 3)}-${composed.slice(3, 5)}`;
@@ -429,7 +474,7 @@
             const row = LOOKUP.englishToDialect[id][tokens[i]];
             if (!row) continue;
             const keys = row.englishKeys.join(' ').toLowerCase();
-            if (/(burn|count|mourn|awaken|arise|obeys|obey|serve|drink|die|remain|win|fall|protect|trade|pour)/.test(keys)) {
+            if (/(burn|count|mourn|awaken|arise|obeys|obey|serve|drink|die|remain|win|fall|protect|trade|pour|crush|break|rule|dominate)/.test(keys)) {
                 return i;
             }
         }
@@ -501,6 +546,15 @@
             });
         }
 
+        if (dialect.syntax === 'VOS' && other.length >= 2) {
+            return translateStructured(id, {
+                verb: verbToken,
+                object: other[other.length - 1],
+                subject: other[0],
+                plural: { object: pluralObject }
+            });
+        }
+
         if (dialect.syntax === 'CASE' && other.length >= 2) {
             return translateStructured(id, {
                 subject: other[0],
@@ -545,6 +599,7 @@
             if (id === DIALECT_IDS.gulf && /^(sha-|eru-)/.test(bare)) bare = bare.replace(/^(sha-|eru-)/, '');
             if (id === DIALECT_IDS.reach) bare = stripReachAffixes(bare);
             if (id === DIALECT_IDS.woodland && /-ag$/.test(bare)) bare = bare.slice(0, -3);
+            if (id === DIALECT_IDS.highlands && /z$/i.test(bare) && bare.length > 2) bare = bare.slice(0, -1);
             return bare;
         });
 
@@ -567,6 +622,8 @@
             ordered = [ordered[1], ordered.slice(2).join(' '), ordered[0]].filter(Boolean);
         } else if (dialect.syntax === 'CASE' && ordered.length === 3) {
             ordered = [`the ${ordered[0]}`, ordered[2], `the ${ordered[1]}`];
+        } else if (dialect.syntax === 'VOS' && ordered.length === 3) {
+            ordered = [ordered[2], ordered[0], ordered[1]];
         } else if (dialect.syntax === 'SVO' && ordered.length >= 2) {
             ordered = ordered;
         }
@@ -600,6 +657,10 @@
             {
                 label: 'Reach — "The guard obeys the order."',
                 result: translateEnglishPhrase(DIALECT_IDS.reach, 'The guard obeys the order.')
+            },
+            {
+                label: 'Highlands — "The enemy crushes stone."',
+                result: translateEnglishPhrase(DIALECT_IDS.highlands, 'The enemy crushes stone.')
             }
         ];
     }
