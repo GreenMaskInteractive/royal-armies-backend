@@ -1,6 +1,9 @@
 /**
  * RIFT — Viewport metrics + 3840×2160 proportional design canvas scaling.
  * Window resize and browser zoom (visualViewport) keep layout positions stable.
+ *
+ * New MAP pages: load rift-page-loading-gate.js immediately after this file for the
+ * site-wide "Loading game..." overlay during slow boots.
  */
 (function initRoyalArmiesViewportMetrics(global) {
     'use strict';

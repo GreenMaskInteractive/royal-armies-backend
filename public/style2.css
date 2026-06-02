@@ -12512,6 +12512,63 @@ body.developer-maintenance-alert-active #page-landing {
     pointer-events: none !important;
 }
 
+/* --- Site-wide page boot loading gate (RIFT) --- */
+.ra-page-loading-gate {
+    position: fixed;
+    inset: 0;
+    z-index: 2147483640;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    box-sizing: border-box;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.22s ease;
+}
+
+.ra-page-loading-gate.is-visible {
+    pointer-events: auto;
+    opacity: 1;
+}
+
+.ra-page-loading-gate[hidden] {
+    display: none !important;
+}
+
+.ra-page-loading-gate-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(4, 3, 2, 0.62);
+}
+
+.ra-page-loading-gate-dialog {
+    position: relative;
+    z-index: 1;
+    width: min(420px, calc(100vw - 48px));
+    margin: 0;
+}
+
+.ra-page-loading-gate-dialog .portal-server-panel-controls {
+    padding: 22px 28px;
+    text-align: center;
+}
+
+.ra-page-loading-gate-message {
+    margin: 0;
+    font-family: 'Cinzel', serif;
+    font-size: 0.95rem;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #ffd978;
+}
+
+#age-page-canvas.is-age-hud-layout-pending .age-map-hud--left {
+    visibility: hidden;
+    pointer-events: none;
+}
+
 /* --- Official age session: world map shell (agealpha, age1, age2, …) --- */
 #age-page-canvas {
     --age-map-slot-gap: 10px;

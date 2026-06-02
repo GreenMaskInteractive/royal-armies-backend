@@ -1,0 +1,28 @@
+---
+description: Site-wide loading overlay on every MAP page
+globs: public/**/*.html
+alwaysApply: false
+---
+
+# Page loading gate (RIFT)
+
+Every player-facing **MAP** page must load the site-wide boot overlay immediately after viewport metrics:
+
+```html
+<script src="rift-viewport-metrics.js?v=site-viewport-stable-1"></script>
+<script src="rift-page-loading-gate.js?v=page-loading-gate-1"></script>
+```
+
+## Behavior
+
+- Shows a dark full-page cover and **Loading game...** if loading takes longer than ~120ms.
+- Baseline: holds until `window` `load`, then releases.
+- Long async boots: `RoyalArmiesPageLoadingGate.retain('reason')` / `await release('reason')`, or `trackBoot(async () => { ... })`.
+- Opt out (automation, headless render): `<body data-ra-page-loading="off">`.
+
+## Events
+
+- `royalarmies:page-loading-retain` — `detail: { reason }`
+- `royalarmies:page-loading-release` — `detail: { reason }`
+
+Bump `rift-page-loading-gate.js?v=` when changing the script (Cloudflare cache rule).

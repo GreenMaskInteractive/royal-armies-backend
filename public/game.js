@@ -947,38 +947,43 @@
     }
 
     async function bootGamePage() {
-        if (shouldResetProgressionFromDevBypass()) {
-            resetGameProgressionToStart();
-            consumeProgressionResetQuery();
-        }
+        global.RoyalArmiesPageLoadingGate?.retain?.('game-page-boot');
+        try {
+            if (shouldResetProgressionFromDevBypass()) {
+                resetGameProgressionToStart();
+                consumeProgressionResetQuery();
+            }
 
-        if (shouldResumeActiveAgeSession()) {
-            const agePath = resolveOfficialAgePagePath();
-            if (global.RoyalArmiesPageRouteTransition && typeof global.RoyalArmiesPageRouteTransition.navigateTo === 'function') {
-                await global.RoyalArmiesPageRouteTransition.navigateTo(agePath);
+            if (shouldResumeActiveAgeSession()) {
+                const agePath = resolveOfficialAgePagePath();
+                if (global.RoyalArmiesPageRouteTransition && typeof global.RoyalArmiesPageRouteTransition.navigateTo === 'function') {
+                    await global.RoyalArmiesPageRouteTransition.navigateTo(agePath);
+                    return;
+                }
+                global.location.replace(agePath);
                 return;
             }
-            global.location.replace(agePath);
-            return;
-        }
 
-        applyGameTutorialConcludedChrome();
-        applyGameSessionChrome();
-        bindGameOnboardingProgression();
-        bindGamePageNavigation();
-        registerUnloadHandlers();
-        setActiveGameView('class');
+            applyGameTutorialConcludedChrome();
+            applyGameSessionChrome();
+            bindGameOnboardingProgression();
+            bindGamePageNavigation();
+            registerUnloadHandlers();
+            setActiveGameView('class');
 
-        await bootstrapGamePageSession();
+            await bootstrapGamePageSession();
 
-        if (typeof global.bindPortalNewMessagesBarNavigation === 'function') {
-            global.bindPortalNewMessagesBarNavigation();
-        }
-        if (typeof global.fetchCommanderMailboxFromServer === 'function') {
-            await global.fetchCommanderMailboxFromServer();
-        }
-        if (typeof global.startPortalMailboxPolling === 'function') {
-            global.startPortalMailboxPolling();
+            if (typeof global.bindPortalNewMessagesBarNavigation === 'function') {
+                global.bindPortalNewMessagesBarNavigation();
+            }
+            if (typeof global.fetchCommanderMailboxFromServer === 'function') {
+                await global.fetchCommanderMailboxFromServer();
+            }
+            if (typeof global.startPortalMailboxPolling === 'function') {
+                global.startPortalMailboxPolling();
+            }
+        } finally {
+            await global.RoyalArmiesPageLoadingGate?.release?.('game-page-boot');
         }
     }
 

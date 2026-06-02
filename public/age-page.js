@@ -23,8 +23,13 @@
     const HQ_PLANNING_BASE_GAP_PX = 12;
     const HQ_PLANNING_LAYOUT_CLEARANCE_PX = 16;
     const HQ_PLANNING_EDGE_BLEED_PX = 16;
+    const MAP_FRAME_LAYOUT_MAX_EDGE = 1642;
+    const COUNCIL_LAYOUT_RETRY_MAX_FRAMES = 90;
 
     let councilBoardLayoutObserver = null;
+    let councilLayoutStabilizeRaf = 0;
+    let councilLayoutStableFrames = 0;
+    let lastCouncilLayoutKey = '';
 
     /** Matches countdowntimermodal.png: thin wings (L/R), tall center crest (MM). */
     const PORTAL_GAME_TIME_CHAR_SCALE_CLASSES = [
@@ -752,6 +757,99 @@
         return global.window.innerHeight;
     }
 
+    function retainAgePageLoadingGate() {
+        global.RoyalArmiesPageLoadingGate?.retain?.('age-page-boot');
+    }
+
+    async function releaseAgePageLoadingGate() {
+        scheduleCouncilBoardLayoutUntilStable(24);
+        await new Promise((resolve) => {
+            global.requestAnimationFrame(() => {
+                syncCouncilBoardLayoutToMap();
+                global.requestAnimationFrame(resolve);
+            });
+        });
+        await global.RoyalArmiesPageLoadingGate?.release?.('age-page-boot');
+    }
+
+    function readAgeMapSlotTopPx(canvas) {
+        if (!canvas) return 0;
+        const raw = global.getComputedStyle(canvas).getPropertyValue('--age-map-slot-top');
+        const parsed = parseFloat(raw);
+        return Number.isFinite(parsed) ? parsed : 0;
+    }
+
+    function resolveMapFrameLayoutRect(mapFrame) {
+        const anchor = mapFrame.closest('.age-map-anchor');
+        const measured = mapFrame.getBoundingClientRect();
+        if (!anchor) {
+            return measured.width >= 8 && measured.height >= 8 ? measured : null;
+        }
+
+        const anchorRect = anchor.getBoundingClientRect();
+        if (anchorRect.width < 8 || anchorRect.height < 8) {
+            return measured.width >= 8 && measured.height >= 8 ? measured : null;
+        }
+
+        const mapSize = Math.min(MAP_FRAME_LAYOUT_MAX_EDGE, anchorRect.width, anchorRect.height);
+        const estimated = {
+            left: anchorRect.left + ((anchorRect.width - mapSize) / 2),
+            top: anchorRect.top + ((anchorRect.height - mapSize) / 2),
+            width: mapSize,
+            height: mapSize,
+            right: anchorRect.left + ((anchorRect.width + mapSize) / 2),
+            bottom: anchorRect.top + ((anchorRect.height + mapSize) / 2)
+        };
+
+        if (measured.width < 8 || measured.height < 8) {
+            return estimated;
+        }
+
+        const canvas = global.document.getElementById('age-page-canvas');
+        const slotTop = readAgeMapSlotTopPx(canvas);
+        const minTop = slotTop > 0 ? slotTop - 12 : anchorRect.top;
+        const measuredLooksStaged = measured.top < minTop
+            || (
+                measured.width >= anchorRect.width * 0.94
+                && measured.height >= anchorRect.height * 0.94
+                && Math.abs(measured.left - anchorRect.left) < 3
+            );
+
+        if (measuredLooksStaged) {
+            return estimated;
+        }
+
+        const deltaLeft = Math.abs(measured.left - estimated.left);
+        const deltaTop = Math.abs(measured.top - estimated.top);
+        const deltaSize = Math.abs(measured.width - estimated.width);
+        if (deltaLeft > 48 || deltaTop > 48 || deltaSize > 48) {
+            return estimated;
+        }
+
+        return measured;
+    }
+
+    function scheduleCouncilBoardLayoutUntilStable(maxFrames = COUNCIL_LAYOUT_RETRY_MAX_FRAMES) {
+        if (councilLayoutStabilizeRaf) {
+            global.cancelAnimationFrame(councilLayoutStabilizeRaf);
+        }
+        councilLayoutStableFrames = 0;
+
+        let frames = 0;
+        const tick = () => {
+            councilLayoutStabilizeRaf = 0;
+            frames += 1;
+            const before = lastCouncilLayoutKey;
+            syncCouncilBoardLayoutToMap();
+            const stable = Boolean(before) && before === lastCouncilLayoutKey;
+            councilLayoutStableFrames = stable ? councilLayoutStableFrames + 1 : 0;
+            if (councilLayoutStableFrames >= 2 || frames >= maxFrames) return;
+            councilLayoutStabilizeRaf = global.requestAnimationFrame(tick);
+        };
+
+        councilLayoutStabilizeRaf = global.requestAnimationFrame(tick);
+    }
+
     function measureReportsPanelHeightPx(reportsPanel) {
         if (!reportsPanel) return RIGHT_REPORTS_MIN_HEIGHT_PX;
 
@@ -776,6 +874,7 @@
         if (!canvas || !mapFrame) return;
 
         if (isAgeMobileLayout()) {
+            canvas.classList.remove('is-age-hud-layout-pending');
             [
                 '--age-council-board-top',
                 '--age-council-board-left',
@@ -786,6 +885,7 @@
                 '--age-right-hud-height',
                 '--age-right-reports-height'
             ].forEach((prop) => canvas.style.removeProperty(prop));
+            lastCouncilLayoutKey = '';
             return;
         }
 
@@ -793,8 +893,11 @@
         const leftPosition = COUNCIL_BOARD_LEFT_POSITION_PX;
         canvas.style.setProperty('--age-council-board-left', `${leftPosition}px`);
 
-        const mapRect = mapFrame.getBoundingClientRect();
-        if (mapRect.width < 8 || mapRect.height < 8) return;
+        const mapRect = resolveMapFrameLayoutRect(mapFrame);
+        if (!mapRect || mapRect.width < 8 || mapRect.height < 8) {
+            canvas.classList.add('is-age-hud-layout-pending');
+            return;
+        }
 
         const width = Math.max(
             COUNCIL_BOARD_MIN_WIDTH_PX,
@@ -842,6 +945,8 @@
         }
 
         canvas.style.removeProperty('--age-right-hud-height');
+        canvas.classList.remove('is-age-hud-layout-pending');
+        lastCouncilLayoutKey = `${top}|${width}|${councilHeight}|${leftPosition}`;
         syncHeadquartersPlanningLayout();
     }
 
@@ -995,10 +1100,23 @@
                 syncHeadquartersPlanningLayout();
                 syncHeadquartersCommandRailLayout();
                 global.RoyalArmiesAgeHeadquartersPlanningMap?.refreshLayout?.();
+                scheduleCouncilBoardLayoutUntilStable(48);
             });
         };
 
         runSync();
+
+        const mapBgImage = global.document.getElementById('age-world-map-bg-image');
+        if (mapBgImage && mapBgImage.dataset.ageCouncilLayoutBound !== 'true') {
+            mapBgImage.dataset.ageCouncilLayoutBound = 'true';
+            if (mapBgImage.complete) {
+                runSync();
+            } else {
+                mapBgImage.addEventListener('load', runSync, { once: true, passive: true });
+            }
+        }
+
+        global.addEventListener('load', runSync, { once: true, passive: true });
         global.addEventListener('resize', runSync, { passive: true });
         global.addEventListener('royalarmies:viewport-metrics-updated', runSync, { passive: true });
         if (global.visualViewport) {
@@ -1076,8 +1194,6 @@
             global.enableAgeUnitEvolution();
         }
 
-        bindCouncilBoardLayoutSync();
-
         if (typeof global.bindPortalNewMessagesBarNavigation === 'function') {
             global.bindPortalNewMessagesBarNavigation();
         }
@@ -1100,74 +1216,75 @@
 
         applyAgeMapShellLabels();
         refreshAgeHudMovePoints();
+        bindCouncilBoardLayoutSync();
 
         bindPageNavigation();
         bindAgeMobileHudControls();
         registerUnloadHandlers();
+
+        retainAgePageLoadingGate();
         try {
-            await bootstrapAgePageSession();
-        } catch (err) {
-            console.warn('[RIFT] Age page bootstrap failed:', err);
-        }
+            try {
+                await bootstrapAgePageSession();
+            } catch (err) {
+                console.warn('[RIFT] Age page bootstrap failed:', err);
+            }
 
-        initializeAgePageUniversalGameTimeClock();
+            initializeAgePageUniversalGameTimeClock();
 
-        const criticalBoot = [];
+            const criticalBoot = [];
 
-        if (typeof global.enableAgeWorldMap === 'function') {
-            criticalBoot.push(
-                global.enableAgeWorldMap().catch((err) => {
-                    console.warn('[RIFT] Age world map failed to initialize:', err);
-                })
-            );
-        }
-        if (typeof global.RoyalArmiesGameChat?.enableForOfficialAge === 'function') {
-            criticalBoot.push(global.RoyalArmiesGameChat.enableForOfficialAge());
-        }
+            if (typeof global.enableAgeWorldMap === 'function') {
+                criticalBoot.push(
+                    global.enableAgeWorldMap().catch((err) => {
+                        console.warn('[RIFT] Age world map failed to initialize:', err);
+                    })
+                );
+            }
+            if (typeof global.RoyalArmiesGameChat?.enableForOfficialAge === 'function') {
+                criticalBoot.push(global.RoyalArmiesGameChat.enableForOfficialAge());
+            }
 
-        await Promise.all(criticalBoot);
+            await Promise.all(criticalBoot);
 
-        if (typeof global.enableAgeWorldPlanOverlay === 'function') {
-            global.enableAgeWorldPlanOverlay().catch((err) => {
-                console.warn('[RIFT] Age world plan overlay failed to initialize:', err);
-            });
-        }
+            if (typeof global.enableAgeWorldPlanOverlay === 'function') {
+                global.enableAgeWorldPlanOverlay().catch((err) => {
+                    console.warn('[RIFT] Age world plan overlay failed to initialize:', err);
+                });
+            }
 
-        if (typeof global.enableAgeDispatchAlert === 'function') {
-            global.enableAgeDispatchAlert().catch((err) => {
-                console.warn('[RIFT] Age dispatch alert failed to initialize:', err);
-            });
-        }
+            if (typeof global.enableAgeDispatchAlert === 'function') {
+                global.enableAgeDispatchAlert().catch((err) => {
+                    console.warn('[RIFT] Age dispatch alert failed to initialize:', err);
+                });
+            }
 
-        if (typeof global.enableAgeMovementPanel === 'function') {
-            global.enableAgeMovementPanel();
-        }
+            if (typeof global.enableAgeMovementPanel === 'function') {
+                global.enableAgeMovementPanel();
+            }
 
-        const bootCatalogCityId = global.RoyalArmiesAgeMovement?.getCatalogCityId?.();
-        if (bootCatalogCityId) {
-            global.RoyalArmiesAgeMovementPanel?.syncCatalogCity?.(bootCatalogCityId);
-            global.RoyalArmiesAgeWorldMap?.refreshPlayerCity?.();
-        }
-        global.RoyalArmiesAgeWorldMap?.refreshNationCityHighlights?.();
+            const bootCatalogCityId = global.RoyalArmiesAgeMovement?.getCatalogCityId?.();
+            if (bootCatalogCityId) {
+                global.RoyalArmiesAgeMovementPanel?.syncCatalogCity?.(bootCatalogCityId);
+                global.RoyalArmiesAgeWorldMap?.refreshPlayerCity?.();
+            }
+            global.RoyalArmiesAgeWorldMap?.refreshNationCityHighlights?.();
 
-        if (typeof global.enableAgeViewTabs === 'function') {
-            global.enableAgeViewTabs();
-        }
+            if (typeof global.enableAgeViewTabs === 'function') {
+                global.enableAgeViewTabs();
+            }
 
-        if (typeof global.enableAgeHeadquarters === 'function') {
-            global.enableAgeHeadquarters();
-        }
+            if (typeof global.enableAgeHeadquarters === 'function') {
+                global.enableAgeHeadquarters();
+            }
 
-        if (typeof global.requestAnimationFrame === 'function') {
-            global.requestAnimationFrame(syncCouncilBoardLayoutToMap);
-        }
+            if (typeof global.requestAnimationFrame === 'function') {
+                global.requestAnimationFrame(syncCouncilBoardLayoutToMap);
+            }
 
-        if (typeof global.requestAnimationFrame === 'function') {
-            global.requestAnimationFrame(() => {
-                void bootAgePageDeferred();
-            });
-        } else {
-            void bootAgePageDeferred();
+            await bootAgePageDeferred();
+        } finally {
+            await releaseAgePageLoadingGate();
         }
     }
 
