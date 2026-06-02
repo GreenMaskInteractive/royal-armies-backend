@@ -325,7 +325,7 @@ function isRoyalGuardBotSender(sender) {
 }
 
 const GAME_CHAT_CHANNEL_IDS = ['system', 'global', 'country', 'alliance'];
-const GAME_CHAT_UI_TABS = new Set(GAME_CHAT_CHANNEL_IDS);
+const GAME_CHAT_UI_TABS = new Set([...GAME_CHAT_CHANNEL_IDS, 'music']);
 const GAME_CHAT_TEXT_MAX = 500;
 const GAME_CHAT_MAX_PER_CHANNEL = 300;
 const GAME_CHAT_ARCHIVE_MAX = 10000;

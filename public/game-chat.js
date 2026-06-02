@@ -846,7 +846,7 @@
         updateComposeState();
         renderActiveChatStream();
 
-        if (!options.skipServerSave && tabId !== 'music') {
+        if (!options.skipServerSave) {
             scheduleUiSave({ activeTab: tabId });
         }
     }
@@ -972,7 +972,10 @@
 
         const tab = String(ui.activeTab || 'global').trim();
         if (TAB_LABELS[tab]) {
-            setActiveTab(tab, { skipServerSave: true });
+            const staleServerTab = activeTab === 'music' && tab !== 'music';
+            if (!staleServerTab) {
+                setActiveTab(tab, { skipServerSave: true });
+            }
         }
     }
 

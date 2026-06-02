@@ -15447,18 +15447,19 @@ body.developer-maintenance-alert-active #page-landing {
 
 .game-chat-music-playlist-item.is-locked .game-chat-music-playlist-btn,
 .game-chat-music-playlist-btn.is-locked {
-    color: rgba(241, 224, 172, 0.38);
-    border-color: rgba(184, 144, 48, 0.14);
-    background: rgba(0, 0, 0, 0.18);
+    color: #e07070;
+    border-color: rgba(200, 72, 72, 0.42);
+    background: rgba(48, 10, 10, 0.38);
     cursor: not-allowed;
     pointer-events: none;
+    text-shadow: 0 0 6px rgba(200, 48, 48, 0.35);
 }
 
 .game-chat-music-playlist-item.is-locked .game-chat-music-playlist-btn:hover,
 .game-chat-music-playlist-item.is-locked .game-chat-music-playlist-btn:focus-visible {
-    color: rgba(241, 224, 172, 0.38);
-    border-color: rgba(184, 144, 48, 0.14);
-    background: rgba(0, 0, 0, 0.18);
+    color: #f08080;
+    border-color: rgba(220, 80, 80, 0.5);
+    background: rgba(56, 12, 12, 0.45);
 }
 
 .game-chat-module-panel--music-tab .game-chat-compose-form,
