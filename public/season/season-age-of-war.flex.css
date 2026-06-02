@@ -1916,9 +1916,23 @@ body.is-trailer-mobile-device.is-trailer-portrait-viewport .game-opening-prologu
 
 .game-opening-prologue.is-trailer-mp4-mode .game-opening-prologue-cinematic-stage,
 .game-opening-prologue.is-trailer-mp4-mode .game-opening-prologue-trailer-finale-pane,
-.game-opening-prologue.is-trailer-mp4-mode .game-opening-prologue-subtitle-dock,
 .game-opening-prologue.is-trailer-mp4-mode .game-opening-prologue-cinematic-frame {
+    display: none !important;
     visibility: hidden !important;
+    pointer-events: none !important;
+}
+
+/* Replay dock uses display:block !important — must beat it while MP4 is playing */
+.game-opening-prologue.is-trailer-mp4-mode .game-opening-prologue-subtitle-dock,
+.game-opening-prologue.is-trailer-replay-mode.is-trailer-mp4-mode .game-opening-prologue-subtitle-dock,
+.game-opening-prologue.is-trailer-replay-mode.is-trailer-mp4-mode .game-opening-prologue-subtitle-dock.is-trailer-player-dock {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    height: 0 !important;
+    min-height: 0 !important;
+    max-height: 0 !important;
+    overflow: hidden !important;
     pointer-events: none !important;
 }
 

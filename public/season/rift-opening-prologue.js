@@ -215,7 +215,7 @@
     const TRAILER_SUBTITLE_SCRUB_FLICKER_SEED = 2.17;
     const TRAILER_REPLAY_SYNC_MS = 250;
     const TRAILER_MP4_SRC = 'season/royal-armies-age-of-war-trailer.mp4';
-    const TRAILER_MP4_CACHE_BUST = 'trailer-mp4-fill-1';
+    const TRAILER_MP4_CACHE_BUST = 'trailer-no-subtitle-dock-1';
     /** When true, subtitle explosion SFX is baked into the MP4 audio — skip overlay playback. */
     const TRAILER_MP4_BAKED_SUBTITLE_SFX = true;
     const TRAILER_RENDER_STATUS_PATH = '/api/portal/trailer/render/status';
@@ -1177,6 +1177,7 @@
         trailerMp4Mode = true;
         overlayEl.classList.add('is-trailer-mp4-mode');
         overlayEl.classList.remove('is-trailer-render-progress', 'is-trailer-composition-paused');
+        hideTrailerSubtitleDockForExport();
         pauseTrailerCompositionMedia();
         return true;
     }
@@ -5083,6 +5084,7 @@
     });
 
     function seekTrailerExportFrame(timeSec) {
+        hideTrailerSubtitleDockForExport();
         const totalSec = getTrailerTimelineDurationSec();
         const clamped = Math.max(0, Math.min(totalSec, Number(timeSec) || 0));
         trailerReplayTimeSec = clamped;
