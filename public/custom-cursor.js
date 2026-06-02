@@ -17,29 +17,38 @@
         'html.royal-armies-custom-cursor body,',
         'html.royal-armies-custom-cursor body#main-dashboard-canvas,',
         'html.royal-armies-custom-cursor body#game-page-canvas,',
+        'html.royal-armies-custom-cursor body#age-page-canvas,',
         'html.royal-armies-custom-cursor *,',
         'html.royal-armies-custom-cursor *::before,',
         'html.royal-armies-custom-cursor *::after,',
         'html.royal-armies-custom-cursor body#main-dashboard-canvas *,',
         'html.royal-armies-custom-cursor body#game-page-canvas *,',
+        'html.royal-armies-custom-cursor body#age-page-canvas *,',
         'html.royal-armies-custom-cursor body#main-dashboard-canvas *::before,',
         'html.royal-armies-custom-cursor body#main-dashboard-canvas *::after,',
         'html.royal-armies-custom-cursor body#game-page-canvas *::before,',
         'html.royal-armies-custom-cursor body#game-page-canvas *::after,',
+        'html.royal-armies-custom-cursor body#age-page-canvas *::before,',
+        'html.royal-armies-custom-cursor body#age-page-canvas *::after,',
         'html.royal-armies-custom-cursor body#main-dashboard-canvas [class],',
         'html.royal-armies-custom-cursor body#game-page-canvas [class],',
+        'html.royal-armies-custom-cursor body#age-page-canvas [class],',
         'html.royal-armies-custom-cursor body#main-dashboard-canvas [id],',
         'html.royal-armies-custom-cursor body#game-page-canvas [id],',
+        'html.royal-armies-custom-cursor body#age-page-canvas [id],',
         'html.royal-armies-custom-cursor body#main-dashboard-canvas :is(',
         'html.royal-armies-custom-cursor body#game-page-canvas :is(',
+        'html.royal-armies-custom-cursor body#age-page-canvas :is(',
         '    a, button, input, select, textarea, label, summary,',
         '    [role="button"], [role="link"], [role="tab"],',
         '    [href], [onclick], .nav-tab, .footer-icon-link',
         '),',
         'html.royal-armies-custom-cursor body#main-dashboard-canvas *::-webkit-slider-thumb,',
         'html.royal-armies-custom-cursor body#game-page-canvas *::-webkit-slider-thumb,',
+        'html.royal-armies-custom-cursor body#age-page-canvas *::-webkit-slider-thumb,',
         'html.royal-armies-custom-cursor body#main-dashboard-canvas *::-moz-range-thumb,',
         'html.royal-armies-custom-cursor body#game-page-canvas *::-moz-range-thumb,',
+        'html.royal-armies-custom-cursor body#age-page-canvas *::-moz-range-thumb,',
         'html.royal-armies-custom-cursor *::-webkit-scrollbar,',
         'html.royal-armies-custom-cursor *::-webkit-scrollbar-track,',
         'html.royal-armies-custom-cursor *::-webkit-scrollbar-thumb,',
@@ -120,7 +129,9 @@
 
     function positionCursor(clientX, clientY) {
         if (!cursorShell) return;
-        cursorShell.style.transform = `translate(${clientX - FINGERTIP_HOTSPOT_X}px, ${clientY - FINGERTIP_HOTSPOT_Y}px)`;
+        cursorShell.style.left = `${clientX - FINGERTIP_HOTSPOT_X}px`;
+        cursorShell.style.top = `${clientY - FINGERTIP_HOTSPOT_Y}px`;
+        cursorShell.style.removeProperty('transform');
         if (!cursorVisible) {
             cursorShell.classList.add('is-visible');
             cursorVisible = true;
@@ -211,6 +222,11 @@
         window.addEventListener('blur', () => {
             pointerButtonHeld = false;
             hideCursor();
+        }, { passive: true });
+
+        window.addEventListener('royalarmies:viewport-metrics-updated', () => {
+            if (!shouldEnableCustomCursor() || !cursorVisible) return;
+            trackPointer(lastPointerX, lastPointerY);
         }, { passive: true });
     }
 

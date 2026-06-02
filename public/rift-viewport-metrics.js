@@ -11,7 +11,7 @@
     const DESIGN_WIDTH = 3840;
     const DESIGN_HEIGHT = 2160;
     const DESIGN_SCALE_STYLESHEET_ID = 'ra-design-scale-css';
-    const DESIGN_SCALE_STYLESHEET_HREF = 'rift-design-scale.css?v=design-cursor-fix-1';
+    const DESIGN_SCALE_STYLESHEET_HREF = 'rift-design-scale.css?v=design-scale-hud-fix-1';
     const DESKTOP_SCALE_MIN_WIDTH = 1025;
 
     const CANVAS_SELECTORS = [
@@ -181,6 +181,63 @@
         });
     }
 
+    function readDesignTransform() {
+        const docEl = global.document.documentElement;
+        if (!docEl || !docEl.classList.contains('ra-design-scale-on')) {
+            return null;
+        }
+
+        const styles = global.getComputedStyle(docEl);
+        const scale = Number.parseFloat(styles.getPropertyValue('--ra-design-scale'));
+        const tx = Number.parseFloat(styles.getPropertyValue('--ra-design-translate-x'));
+        const ty = Number.parseFloat(styles.getPropertyValue('--ra-design-translate-y'));
+
+        if (!Number.isFinite(scale) || scale <= 0) {
+            return null;
+        }
+
+        return {
+            scale,
+            tx: Number.isFinite(tx) ? tx : 0,
+            ty: Number.isFinite(ty) ? ty : 0
+        };
+    }
+
+    function clientPointToDesign(clientX, clientY) {
+        const transform = readDesignTransform();
+        if (!transform) {
+            return { x: clientX, y: clientY };
+        }
+
+        return {
+            x: (clientX - transform.tx) / transform.scale,
+            y: (clientY - transform.ty) / transform.scale
+        };
+    }
+
+    function clientRectToDesign(rect) {
+        const transform = readDesignTransform();
+        if (!transform || !rect) {
+            return rect;
+        }
+
+        const left = (rect.left - transform.tx) / transform.scale;
+        const top = (rect.top - transform.ty) / transform.scale;
+        const width = rect.width / transform.scale;
+        const height = rect.height / transform.scale;
+
+        return {
+            left,
+            top,
+            right: left + width,
+            bottom: top + height,
+            width,
+            height,
+            x: rect.x,
+            y: rect.y
+        };
+    }
+
     function applyViewportMetrics() {
         const docEl = global.document.documentElement;
         const frame = resolveViewportFrame();
@@ -302,6 +359,9 @@
         sync: applyViewportMetrics,
         schedule: scheduleViewportMetrics,
         designWidth: DESIGN_WIDTH,
-        designHeight: DESIGN_HEIGHT
+        designHeight: DESIGN_HEIGHT,
+        isDesignScaleEnabled: () => Boolean(readDesignTransform()),
+        clientPointToDesign,
+        clientRectToDesign
     };
 }(typeof window !== 'undefined' ? window : globalThis));

@@ -728,11 +728,19 @@
         global.document.title = `Royal Armies — ${label}`;
     }
 
+    function mapViewportRectToLayoutSpace(rect) {
+        if (!rect) return rect;
+        if (typeof global.RoyalArmiesViewportMetrics?.clientRectToDesign === 'function') {
+            return global.RoyalArmiesViewportMetrics.clientRectToDesign(rect);
+        }
+        return rect;
+    }
+
     function resolveLeftColumnBottomLimitPx() {
         const clearance = LEFT_COLUMN_CHAT_CLEARANCE_PX;
         const chatMessages = global.document.getElementById('age-map-bottom-chat-messages-host');
         if (chatMessages) {
-            const messagesRect = chatMessages.getBoundingClientRect();
+            const messagesRect = mapViewportRectToLayoutSpace(chatMessages.getBoundingClientRect());
             if (messagesRect.height > 4 && messagesRect.width > 4) {
                 return messagesRect.top - clearance;
             }
@@ -740,7 +748,7 @@
 
         const chatCompose = global.document.getElementById('age-map-bottom-chat-compose-host');
         if (chatCompose) {
-            const composeRect = chatCompose.getBoundingClientRect();
+            const composeRect = mapViewportRectToLayoutSpace(chatCompose.getBoundingClientRect());
             if (composeRect.height > 4 && composeRect.width > 4) {
                 return composeRect.top - clearance;
             }
@@ -748,10 +756,18 @@
 
         const bottomDock = global.document.querySelector('#age-page-canvas .age-map-hud--bottom');
         if (bottomDock) {
-            const dockRect = bottomDock.getBoundingClientRect();
+            const dockRect = mapViewportRectToLayoutSpace(bottomDock.getBoundingClientRect());
             if (dockRect.height > 4) {
                 return dockRect.top - clearance;
             }
+        }
+
+        const canvas = global.document.getElementById('age-page-canvas');
+        const layoutHeight = canvas
+            ? parseFloat(global.getComputedStyle(canvas).getPropertyValue('--ra-layout-vh'))
+            : NaN;
+        if (Number.isFinite(layoutHeight) && layoutHeight > 0) {
+            return layoutHeight;
         }
 
         return global.window.innerHeight;
@@ -783,12 +799,16 @@
         const anchor = mapFrame.closest('.age-map-anchor');
         const measured = mapFrame.getBoundingClientRect();
         if (!anchor) {
-            return measured.width >= 8 && measured.height >= 8 ? measured : null;
+            return measured.width >= 8 && measured.height >= 8
+                ? mapViewportRectToLayoutSpace(measured)
+                : null;
         }
 
         const anchorRect = anchor.getBoundingClientRect();
         if (anchorRect.width < 8 || anchorRect.height < 8) {
-            return measured.width >= 8 && measured.height >= 8 ? measured : null;
+            return measured.width >= 8 && measured.height >= 8
+                ? mapViewportRectToLayoutSpace(measured)
+                : null;
         }
 
         const mapSize = Math.min(MAP_FRAME_LAYOUT_MAX_EDGE, anchorRect.width, anchorRect.height);
@@ -802,31 +822,33 @@
         };
 
         if (measured.width < 8 || measured.height < 8) {
-            return estimated;
+            return mapViewportRectToLayoutSpace(estimated);
         }
 
         const canvas = global.document.getElementById('age-page-canvas');
         const slotTop = readAgeMapSlotTopPx(canvas);
-        const minTop = slotTop > 0 ? slotTop - 12 : anchorRect.top;
-        const measuredLooksStaged = measured.top < minTop
+        const layoutMeasured = mapViewportRectToLayoutSpace(measured);
+        const minTop = slotTop > 0 ? slotTop - 12 : layoutMeasured.top;
+        const measuredLooksStaged = layoutMeasured.top < minTop
             || (
                 measured.width >= anchorRect.width * 0.94
                 && measured.height >= anchorRect.height * 0.94
                 && Math.abs(measured.left - anchorRect.left) < 3
             );
+        const layoutEstimated = mapViewportRectToLayoutSpace(estimated);
 
         if (measuredLooksStaged) {
-            return estimated;
+            return layoutEstimated;
         }
 
-        const deltaLeft = Math.abs(measured.left - estimated.left);
-        const deltaTop = Math.abs(measured.top - estimated.top);
-        const deltaSize = Math.abs(measured.width - estimated.width);
+        const deltaLeft = Math.abs(layoutMeasured.left - layoutEstimated.left);
+        const deltaTop = Math.abs(layoutMeasured.top - layoutEstimated.top);
+        const deltaSize = Math.abs(layoutMeasured.width - layoutEstimated.width);
         if (deltaLeft > 48 || deltaTop > 48 || deltaSize > 48) {
-            return estimated;
+            return layoutEstimated;
         }
 
-        return measured;
+        return layoutMeasured;
     }
 
     function scheduleCouncilBoardLayoutUntilStable(maxFrames = COUNCIL_LAYOUT_RETRY_MAX_FRAMES) {
