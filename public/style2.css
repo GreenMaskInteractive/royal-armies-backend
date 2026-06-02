@@ -308,20 +308,24 @@
     top: calc(100% + 6px) !important;
     left: 0 !important;
     right: auto !important;
-    width: max(100%, 220px) !important;
-    min-width: 220px !important;
-    max-width: min(100vw - 48px, 280px) !important;
+    width: max(100%, 236px) !important;
+    min-width: 236px !important;
+    max-width: min(100vw - 48px, 300px) !important;
     display: flex !important;
     flex-direction: column !important;
     align-items: stretch !important;
-    gap: 2px !important;
-    padding: 6px !important;
+    gap: 3px !important;
+    padding: 8px 7px 7px !important;
     margin: 0 !important;
     box-sizing: border-box !important;
-    border: 1px solid rgba(184, 144, 48, 0.45) !important;
-    border-radius: 4px !important;
-    background: linear-gradient(180deg, rgba(24, 20, 14, 0.98) 0%, rgba(8, 6, 4, 0.99) 100%) !important;
-    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.04) !important;
+    border: 1px solid rgba(201, 162, 72, 0.55) !important;
+    border-radius: 6px !important;
+    background:
+        linear-gradient(180deg, rgba(36, 28, 18, 0.99) 0%, rgba(10, 8, 5, 0.99) 100%) !important;
+    box-shadow:
+        0 14px 32px rgba(0, 0, 0, 0.62),
+        inset 0 1px 0 rgba(255, 230, 160, 0.1),
+        inset 0 -1px 0 rgba(0, 0, 0, 0.35) !important;
     z-index: 100003 !important;
     opacity: 0 !important;
     visibility: hidden !important;
@@ -343,16 +347,52 @@
     width: 100% !important;
     flex: 0 0 auto !important;
     text-align: left !important;
-    padding: 10px 12px !important;
+    padding: 10px 12px 10px 14px !important;
     font-size: 0.74rem !important;
+    letter-spacing: 0.04em !important;
     border: 1px solid transparent !important;
-    border-radius: 2px !important;
+    border-radius: 3px !important;
+    color: rgba(220, 228, 238, 0.92) !important;
+    transition: background 0.16s ease, border-color 0.16s ease, color 0.16s ease, box-shadow 0.16s ease !important;
+}
+
+.portal-commander-identity-menu .dropdown-action-item:hover,
+.portal-commander-identity-menu .dropdown-action-item:focus-visible {
+    background: rgba(184, 144, 48, 0.12) !important;
+    border-color: rgba(201, 162, 72, 0.35) !important;
+    color: #ffe8a8 !important;
+    box-shadow: inset 0 0 0 1px rgba(255, 215, 0, 0.08) !important;
+    outline: none !important;
 }
 
 .portal-commander-identity-menu .dropdown-action-item-view-profile {
     border-right: none !important;
-    margin-bottom: 0 !important;
+    margin-bottom: 2px !important;
     padding-bottom: 10px !important;
+    color: #ffd978 !important;
+    border-bottom: 1px solid rgba(184, 144, 48, 0.22) !important;
+    border-radius: 3px 3px 2px 2px !important;
+}
+
+.portal-commander-identity-menu .dropdown-action-item-discoveries,
+.portal-mobile-submenu-item-discoveries {
+    color: #e8d4a0 !important;
+}
+
+.portal-commander-identity-menu .dropdown-action-item-discoveries::before,
+.portal-mobile-submenu-item-discoveries::before {
+    content: '✦';
+    display: inline-block;
+    margin-right: 8px;
+    color: rgba(255, 215, 0, 0.75);
+    font-size: 0.62rem;
+    vertical-align: middle;
+}
+
+.portal-commander-identity-menu .dropdown-action-item-chronicles-bp,
+.portal-commander-identity-menu .dropdown-action-item-return-portal,
+.portal-commander-identity-menu .dropdown-action-item-logout {
+    margin-top: 4px !important;
 }
 
 .portal-nav-commander-menu-rail {
@@ -19428,6 +19468,341 @@ body.is-age-chronicles-battle-pass-open {
 
 .portal-commander-identity-menu .dropdown-action-item-chronicles-bp {
     color: #ffe4a8;
+}
+
+/* RIFT — Discoveries journal workspace */
+.rift-discoveries-workspace-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 12060;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    box-sizing: border-box;
+}
+
+.rift-discoveries-workspace-modal[hidden] {
+    display: none !important;
+}
+
+.rift-discoveries-workspace-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(4, 3, 2, 0.8);
+    backdrop-filter: blur(2px);
+}
+
+.rift-discoveries-workspace-dialog {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    width: min(920px, 92vw);
+    height: min(640px, 82vh);
+    border: 1px solid rgba(184, 144, 48, 0.45);
+    border-radius: 10px;
+    background:
+        radial-gradient(circle at 10% 0%, rgba(255, 200, 96, 0.1) 0%, transparent 40%),
+        linear-gradient(180deg, rgba(24, 18, 12, 0.99) 0%, rgba(6, 5, 4, 0.99) 100%);
+    box-shadow: 0 24px 64px rgba(0, 0, 0, 0.55), inset 0 1px 0 rgba(255, 215, 0, 0.1);
+    overflow: hidden;
+}
+
+.rift-discoveries-workspace-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 16px 18px 12px;
+    border-bottom: 1px solid rgba(184, 144, 48, 0.28);
+    flex: 0 0 auto;
+}
+
+.rift-discoveries-workspace-eyebrow {
+    margin: 0 0 4px;
+    font-family: 'Cinzel', serif;
+    font-size: 0.62rem;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: rgba(255, 217, 120, 0.72);
+}
+
+.rift-discoveries-workspace-title {
+    margin: 0;
+    font-family: 'Cinzel', serif;
+    font-size: 1.28rem;
+    letter-spacing: 0.06em;
+    color: #ffd978;
+}
+
+.rift-discoveries-workspace-close {
+    border: 1px solid rgba(184, 144, 48, 0.35);
+    border-radius: 4px;
+    background: rgba(0, 0, 0, 0.35);
+    color: #f0e4c8;
+    width: 34px;
+    height: 34px;
+    font-size: 1.35rem;
+    line-height: 1;
+    cursor: pointer;
+}
+
+.rift-discoveries-workspace-close:hover,
+.rift-discoveries-workspace-close:focus-visible {
+    border-color: rgba(255, 215, 0, 0.55);
+    outline: none;
+}
+
+.rift-discoveries-workspace-body {
+    display: grid;
+    grid-template-columns: minmax(220px, 34%) minmax(0, 1fr);
+    flex: 1 1 auto;
+    min-height: 0;
+}
+
+.rift-discoveries-workspace-nav {
+    border-right: 1px solid rgba(184, 144, 48, 0.22);
+    padding: 12px 10px;
+    overflow: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.rift-discoveries-workspace-nav-empty {
+    padding: 8px 6px 12px;
+    border-bottom: 1px solid rgba(184, 144, 48, 0.16);
+    margin-bottom: 4px;
+}
+
+.rift-discoveries-workspace-nav-empty p {
+    margin: 0 0 8px;
+    font-size: 0.82rem;
+    line-height: 1.45;
+    color: rgba(220, 210, 180, 0.88);
+}
+
+.rift-discoveries-workspace-nav-hint {
+    font-size: 0.74rem !important;
+    color: rgba(200, 190, 160, 0.72) !important;
+}
+
+.rift-discoveries-workspace-category-head {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+}
+
+.rift-discoveries-workspace-category-icon {
+    width: 34px;
+    height: 34px;
+    object-fit: contain;
+    flex: 0 0 auto;
+    filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.45));
+}
+
+.rift-discoveries-workspace-category-title {
+    margin: 0;
+    font-family: 'Cinzel', serif;
+    font-size: 0.78rem;
+    letter-spacing: 0.05em;
+    color: #f0dfae;
+}
+
+.rift-discoveries-workspace-tab-list {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding-left: 44px;
+}
+
+.rift-discoveries-workspace-tab {
+    border: 1px solid transparent;
+    border-radius: 3px;
+    background: transparent;
+    color: rgba(210, 220, 230, 0.9);
+    font-family: 'Segoe UI', sans-serif;
+    font-size: 0.8rem;
+    text-align: left;
+    padding: 7px 10px;
+    cursor: pointer;
+}
+
+.rift-discoveries-workspace-tab:hover,
+.rift-discoveries-workspace-tab:focus-visible {
+    border-color: rgba(184, 144, 48, 0.3);
+    background: rgba(184, 144, 48, 0.08);
+    outline: none;
+}
+
+.rift-discoveries-workspace-tab.is-active {
+    border-color: rgba(255, 215, 0, 0.45);
+    background: rgba(184, 144, 48, 0.16);
+    color: #ffe8a8;
+}
+
+.rift-discoveries-workspace-category-empty {
+    margin: 0;
+    padding-left: 44px;
+    font-size: 0.74rem;
+    color: rgba(180, 170, 150, 0.65);
+    font-style: italic;
+}
+
+.rift-discoveries-workspace-detail {
+    padding: 16px 18px;
+    overflow: auto;
+    min-height: 0;
+}
+
+.rift-discoveries-workspace-empty {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100%;
+    text-align: center;
+    color: rgba(200, 190, 170, 0.72);
+    font-size: 0.88rem;
+}
+
+.rift-discoveries-workspace-article-head {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    margin-bottom: 14px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid rgba(184, 144, 48, 0.2);
+}
+
+.rift-discoveries-workspace-article-icon {
+    width: 48px;
+    height: 48px;
+    object-fit: contain;
+    filter: drop-shadow(0 3px 8px rgba(0, 0, 0, 0.45));
+}
+
+.rift-discoveries-workspace-article-category {
+    margin: 0 0 4px;
+    font-family: 'Cinzel', serif;
+    font-size: 0.64rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: rgba(255, 217, 120, 0.7);
+}
+
+.rift-discoveries-workspace-article-title {
+    margin: 0;
+    font-family: 'Cinzel', serif;
+    font-size: 1.1rem;
+    color: #ffd978;
+}
+
+.rift-discoveries-workspace-article-subtitle {
+    margin: 6px 0 0;
+    font-size: 0.78rem;
+    color: rgba(200, 190, 170, 0.8);
+}
+
+.rift-discoveries-workspace-article-body {
+    font-size: 0.9rem;
+    line-height: 1.6;
+    color: rgba(232, 226, 210, 0.94);
+}
+
+.rift-discoveries-workspace-article-body p {
+    margin: 0 0 12px;
+}
+
+.rift-discovery-signatory {
+    margin-top: 16px !important;
+    font-style: italic;
+    color: rgba(255, 217, 120, 0.75) !important;
+}
+
+.rift-discovery-toast {
+    position: fixed;
+    top: 18px;
+    left: 50%;
+    transform: translateX(-50%) translateY(-12px);
+    z-index: 12100;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.22s ease, transform 0.22s ease;
+}
+
+.rift-discovery-toast.is-visible {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateX(-50%) translateY(0);
+}
+
+.rift-discovery-toast[hidden] {
+    display: block !important;
+}
+
+.rift-discovery-toast:not(.is-visible)[hidden] {
+    display: none !important;
+}
+
+.rift-discovery-toast-panel {
+    position: relative;
+    min-width: min(360px, 92vw);
+    padding: 38px 18px 14px;
+    border: 1px solid rgba(201, 162, 72, 0.55);
+    border-radius: 8px;
+    background: linear-gradient(180deg, rgba(30, 24, 16, 0.98) 0%, rgba(8, 6, 4, 0.99) 100%);
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.55);
+    text-align: center;
+}
+
+.rift-discovery-toast-icon {
+    position: absolute;
+    top: -22px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 44px;
+    height: 44px;
+    object-fit: contain;
+    filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.5));
+}
+
+.rift-discovery-toast-kicker {
+    margin: 0 0 6px;
+    font-family: 'Cinzel', serif;
+    font-size: 0.82rem;
+    letter-spacing: 0.08em;
+    color: #ffd978;
+}
+
+.rift-discovery-toast-title {
+    margin: 0 0 12px;
+    font-family: 'Cinzel', serif;
+    font-size: 1rem;
+    color: #f5ecd4;
+}
+
+.rift-discovery-toast-open-btn {
+    border: 1px solid rgba(184, 144, 48, 0.45);
+    border-radius: 4px;
+    background: rgba(184, 144, 48, 0.12);
+    color: #ffe8a8;
+    font-family: 'Cinzel', serif;
+    font-size: 0.72rem;
+    letter-spacing: 0.06em;
+    padding: 7px 14px;
+    cursor: pointer;
+}
+
+.rift-discovery-toast-open-btn:hover,
+.rift-discovery-toast-open-btn:focus-visible {
+    border-color: rgba(255, 215, 0, 0.6);
+    outline: none;
+}
+
+body.is-rift-discoveries-workspace-open {
+    overflow: hidden;
 }
 
 /* Age — Headquarters nation leadership workspace */

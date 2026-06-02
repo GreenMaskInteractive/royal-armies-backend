@@ -72,6 +72,11 @@
                     global.openCommanderHubModal('settings', event);
                 }
                 break;
+            case 'discoveries':
+                if (typeof global.openDiscoveriesWorkspace === 'function') {
+                    global.openDiscoveriesWorkspace(event);
+                }
+                break;
             case 'chronicles-battle-pass':
                 if (typeof global.openAgeChroniclesBattlePassModal === 'function') {
                     global.openAgeChroniclesBattlePassModal(event);

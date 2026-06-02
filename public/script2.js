@@ -783,6 +783,11 @@ function portalMobileNavCommanderAction(action, event) {
                 openCommanderHubModal('settings', event);
             }
             break;
+        case 'discoveries':
+            if (typeof openDiscoveriesWorkspace === 'function') {
+                openDiscoveriesWorkspace(event);
+            }
+            break;
         case 'logout':
             if (typeof handleHeaderAuthAction === 'function') {
                 handleHeaderAuthAction();
