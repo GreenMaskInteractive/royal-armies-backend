@@ -282,9 +282,14 @@
         if (trackLabel) trackLabel.textContent = `🎵 ${title}`;
 
         const audio = resolveAudioElement();
-        const playGlyph = global.document.getElementById('age-bottom-music-play-btn');
-        if (playGlyph && audio) {
-            playGlyph.textContent = audio.paused ? 'Play' : 'Pause';
+        const playBtn = global.document.getElementById('age-bottom-music-play-btn');
+        const playGlyph = playBtn?.querySelector('.age-bottom-music-transport-glyph');
+        if (playBtn && audio) {
+            const isPaused = audio.paused;
+            playBtn.setAttribute('aria-label', isPaused ? 'Play soundtrack' : 'Pause soundtrack');
+            if (playGlyph) {
+                playGlyph.textContent = isPaused ? '▶' : '❚❚';
+            }
         }
     }
 
@@ -292,25 +297,37 @@
         if (!isAgePage()) return;
         if (global.document.getElementById(PLAYER_HOST_ID)) return;
 
-        const controls = global.document.querySelector('.age-map-bottom-dock-controls');
-        if (!controls) return;
+        const tray = global.document.querySelector('.age-map-bottom-dock-tray')
+            || global.document.querySelector('.age-map-bottom-dock-controls');
+        if (!tray) return;
 
-        const nametag = controls.querySelector('.age-map-bottom-commander-nametag');
+        const nametag = tray.querySelector('.age-map-bottom-commander-nametag');
 
         const host = global.document.createElement('div');
         host.id = PLAYER_HOST_ID;
         host.className = 'age-bottom-music-player-host';
         host.innerHTML = `
-            <div class="age-bottom-music-player" aria-label="Music player">
-                <span id="age-bottom-music-title" class="age-bottom-music-title">ARCHIMEDES' LULLABY</span>
-                <button type="button" id="age-bottom-music-play-btn" class="age-bottom-music-btn">Play</button>
-                <button type="button" id="age-bottom-music-mute-btn" class="age-bottom-music-btn">Mute</button>
+            <div class="age-bottom-music-player portal-deployment-server-panel" aria-label="Music player">
+                <div class="portal-server-panel-controls game-page-panel-bezel age-bottom-music-player-bezel">
+                    <button
+                        type="button"
+                        id="age-bottom-music-play-btn"
+                        class="age-bottom-music-transport-btn"
+                        aria-label="Play soundtrack">
+                        <span class="age-bottom-music-transport-glyph" aria-hidden="true">▶</span>
+                    </button>
+                    <div class="age-bottom-music-meta">
+                        <span class="age-bottom-music-eyebrow">Now playing</span>
+                        <span id="age-bottom-music-title" class="age-bottom-music-title">ARCHIMEDES' LULLABY</span>
+                    </div>
+                    <button type="button" id="age-bottom-music-mute-btn" class="age-bottom-music-utility-btn" aria-label="Mute soundtrack">Mute</button>
+                </div>
             </div>
         `.trim();
         if (nametag) {
-            controls.insertBefore(host, nametag);
+            tray.insertBefore(host, nametag);
         } else {
-            controls.appendChild(host);
+            tray.appendChild(host);
         }
 
         const playBtn = host.querySelector('#age-bottom-music-play-btn');
@@ -334,6 +351,7 @@
                 audio.muted = !audio.muted;
                 writeSession(STORAGE.muted, audio.muted ? '1' : '0');
                 muteBtn.textContent = audio.muted ? 'Unmute' : 'Mute';
+                muteBtn.setAttribute('aria-label', audio.muted ? 'Unmute soundtrack' : 'Mute soundtrack');
             });
         }
     }
