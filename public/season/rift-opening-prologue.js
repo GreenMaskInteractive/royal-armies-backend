@@ -616,12 +616,21 @@
         };
     }
 
+    function getTrailerCanonicalMusicEndSec() {
+        return TRAILER_MUSIC_START_SEC + TRAILER_ARCHIMEDES_MUSIC_DURATION_SEC;
+    }
+
     function resolveTrailerCreditsScrubTimings() {
         const creditsStartSec = getTrailerCreditsTimelineStartSec();
-        const creditsEndSec = getTrailerMusicEndSec() - (TRAILER_CREDITS_MUSIC_END_BUFFER_MS / 1000);
-        const creditsSpanMs = Math.max(10000, (creditsEndSec - creditsStartSec) * 1000);
+        const musicEndSec = isTrailerRenderMode()
+            ? getTrailerCanonicalMusicEndSec()
+            : getTrailerMusicEndSec();
+        const remainingMs = Math.max(
+            6000,
+            ((musicEndSec - creditsStartSec) * 1000) - TRAILER_CREDITS_MUSIC_END_BUFFER_MS
+        );
 
-        return resolveTrailerCreditsPhaseTimings({ creditsSpanMs });
+        return resolveTrailerCreditsPhaseTimings({ remainingMs });
     }
 
     function applyTrailerMainFinaleScrubState() {
