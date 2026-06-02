@@ -416,12 +416,14 @@
         if (entry.locked) {
             return `
                 <li class="${itemClasses}">
-                    <span
+                    <button
+                        type="button"
                         class="${btnClasses}"
+                        disabled
                         aria-disabled="true"
                         title="${lockHint}">
                         ${label}
-                    </span>
+                    </button>
                 </li>
             `.trim();
         }

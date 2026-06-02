@@ -15440,10 +15440,13 @@ body.developer-maintenance-alert-active #page-landing {
 }
 
 .game-chat-music-playlist-btn {
+    display: block;
     width: 100%;
     margin: 0;
     padding: 7px 10px;
-    border: 1px solid rgba(184, 144, 48, 0.22);
+    border-width: 1px;
+    border-style: solid;
+    border-color: rgba(184, 144, 48, 0.22);
     border-radius: 3px;
     background: rgba(0, 0, 0, 0.28);
     color: rgba(241, 224, 172, 0.88);
@@ -15453,8 +15456,11 @@ body.developer-maintenance-alert-active #page-landing {
     letter-spacing: 0.06em;
     text-transform: uppercase;
     text-align: left;
+    line-height: 1.25;
     cursor: pointer;
     box-sizing: border-box;
+    appearance: none;
+    -webkit-appearance: none;
 }
 
 .game-chat-music-playlist-btn:hover,
@@ -15472,15 +15478,24 @@ body.developer-maintenance-alert-active #page-landing {
 }
 
 .game-chat-music-playlist-item.is-locked .game-chat-music-playlist-btn,
-.game-chat-music-playlist-btn.is-locked {
+.game-chat-music-playlist-btn.is-locked,
+.game-chat-music-playlist-btn:disabled {
     color: #e07070;
+    border-width: 1px;
+    border-style: solid;
+    border-color: rgba(184, 144, 48, 0.22);
+    background: rgba(0, 0, 0, 0.28);
+    opacity: 1;
     cursor: not-allowed;
     pointer-events: none;
 }
 
 .game-chat-music-playlist-item.is-locked .game-chat-music-playlist-btn:hover,
-.game-chat-music-playlist-item.is-locked .game-chat-music-playlist-btn:focus-visible {
+.game-chat-music-playlist-item.is-locked .game-chat-music-playlist-btn:focus-visible,
+.game-chat-music-playlist-btn.is-locked:hover,
+.game-chat-music-playlist-btn:disabled:hover {
     color: #e07070;
+    border-width: 1px;
     border-color: rgba(184, 144, 48, 0.22);
     background: rgba(0, 0, 0, 0.28);
 }
