@@ -42,6 +42,31 @@
         TRACKS.cascadingSkies.id,
         TRACKS.kindred.id
     ]);
+
+    /**
+     * City-discoverable tracks (wav: audio/<slug>.wav, slug = lowercase title without spaces/punctuation).
+     * Wired to map city entry later via markTrackDiscovered().
+     */
+    const DISCOVERABLE_TRACKS = Object.freeze([
+        { id: 'rivers-of-blood', title: 'Rivers of Blood', file: 'audio/riversofblood.wav' },
+        { id: 'dravic-fortitude', title: 'Dravic Fortitude', file: 'audio/dravicfortitude.wav' },
+        { id: 'awakened', title: 'Awakened', file: 'audio/awakened.wav' },
+        { id: 'aidoriian-memories', title: 'Aidoriian Memories', file: 'audio/aidoriianmemories.wav' },
+        { id: 'bellows-canyon', title: "Bellow's Canyon", file: 'audio/bellowscanyon.wav' },
+        { id: 'the-battles-of-old', title: 'The Battles of Old', file: 'audio/thebattlesofold.wav' },
+        { id: 'a-gracious-host', title: 'A Gracious Host', file: 'audio/agracioushost.wav' },
+        { id: 'arcane-soul', title: 'Arcane Soul', file: 'audio/arcanesoul.wav' },
+        { id: 'a-warriors-pride', title: "A Warrior's Pride", file: 'audio/awarriorspride.wav' },
+        { id: 'drunken-thrunesian', title: 'Drunken Thrunesian', file: 'audio/drunkenthrunesian.wav' },
+        { id: 'field-of-gods', title: 'Field of gods', file: 'audio/fieldofgods.wav' }
+    ]);
+
+    const DISCOVERABLE_TRACK_BY_ID = DISCOVERABLE_TRACKS.reduce((map, track) => {
+        map[track.id] = track;
+        return map;
+    }, Object.create(null));
+
+    const STORAGE_DISCOVERED_TRACKS = 'royalArmies_discoveredMusicTracks';
     const AUDIO_ID = 'ra-global-music-audio';
     const MAIN_PAGE_ID = 'main-dashboard-canvas';
     const GAME_PAGE_ID = 'game-page-canvas';
@@ -136,24 +161,90 @@
         if (stored === TRACKS.cascadingSkies.id) return TRACKS.cascadingSkies.id;
         if (stored === TRACKS.kindred.id) return TRACKS.kindred.id;
         if (stored === TRACKS.archimedes.id) return TRACKS.archimedes.id;
+        if (isDiscoverableTrackId(stored) && isTrackDiscovered(stored)) return stored;
         return TRACKS.cascadingSkies.id;
+    }
+
+    function readDiscoveredTrackIds() {
+        try {
+            const raw = readLocal(STORAGE_DISCOVERED_TRACKS);
+            if (!raw) return new Set();
+            const parsed = JSON.parse(raw);
+            if (!Array.isArray(parsed)) return new Set();
+            return new Set(parsed.map((id) => String(id || '').trim().toLowerCase()).filter(Boolean));
+        } catch (_err) {
+            return new Set();
+        }
+    }
+
+    function writeDiscoveredTrackIds(trackIdSet) {
+        writeLocal(STORAGE_DISCOVERED_TRACKS, JSON.stringify([...trackIdSet]));
+    }
+
+    function isDiscoverableTrackId(trackId) {
+        return Boolean(DISCOVERABLE_TRACK_BY_ID[String(trackId || '').trim().toLowerCase()]);
+    }
+
+    function isTrackDiscovered(trackId) {
+        const normalized = String(trackId || '').trim().toLowerCase();
+        return readDiscoveredTrackIds().has(normalized);
+    }
+
+    function markTrackDiscovered(trackId) {
+        const normalized = String(trackId || '').trim().toLowerCase();
+        if (!isDiscoverableTrackId(normalized)) return false;
+        const discovered = readDiscoveredTrackIds();
+        if (discovered.has(normalized)) return true;
+        discovered.add(normalized);
+        writeDiscoveredTrackIds(discovered);
+        syncUi();
+        return true;
     }
 
     function resolveAgePlaylistTrackId(trackId) {
         const normalized = String(trackId || '').trim().toLowerCase();
         if (normalized === TRACKS.kindred.id) return TRACKS.kindred.id;
+        if (isDiscoverableTrackId(normalized) && isTrackDiscovered(normalized)) return normalized;
         return TRACKS.cascadingSkies.id;
     }
 
     function resolveTrackById(trackId) {
-        if (trackId === TRACKS.cascadingSkies.id) return TRACKS.cascadingSkies;
-        if (trackId === TRACKS.kindred.id) return TRACKS.kindred;
-        if (trackId === TRACKS.archimedes.id) return TRACKS.archimedes;
+        const normalized = String(trackId || '').trim().toLowerCase();
+        if (normalized === TRACKS.cascadingSkies.id) return TRACKS.cascadingSkies;
+        if (normalized === TRACKS.kindred.id) return TRACKS.kindred;
+        if (normalized === TRACKS.archimedes.id) return TRACKS.archimedes;
+        if (DISCOVERABLE_TRACK_BY_ID[normalized]) return DISCOVERABLE_TRACK_BY_ID[normalized];
         return TRACKS.cascadingSkies;
     }
 
     function isPlaylistTrackId(trackId) {
-        return PLAYLIST_TRACK_IDS.includes(String(trackId || '').trim().toLowerCase());
+        const normalized = String(trackId || '').trim().toLowerCase();
+        if (PLAYLIST_TRACK_IDS.includes(normalized)) return true;
+        return isDiscoverableTrackId(normalized) && isTrackDiscovered(normalized);
+    }
+
+    function getChatPlaylistEntries() {
+        const entries = PLAYLIST_TRACK_IDS.map((trackId) => {
+            const track = resolveTrackById(trackId);
+            return {
+                id: track.id,
+                title: track.title,
+                locked: false,
+                discovered: true
+            };
+        });
+
+        DISCOVERABLE_TRACKS.forEach((track) => {
+            const discovered = isTrackDiscovered(track.id);
+            entries.push({
+                id: track.id,
+                title: track.title,
+                locked: !discovered,
+                discovered
+            });
+        });
+
+        return entries;
     }
 
     function resolveAudioElement() {
@@ -297,19 +388,55 @@
         if (legacyHost) legacyHost.remove();
     }
 
+    function escapePlaylistTitle(title) {
+        return String(title || '')
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;');
+    }
+
     function buildPlaylistMarkup(activeTrackId) {
         const activeId = resolveAgePlaylistTrackId(activeTrackId);
-        return PLAYLIST_TRACK_IDS.map((trackId) => {
-            const track = resolveTrackById(trackId);
-            const isActive = track.id === activeId;
+        return getChatPlaylistEntries().map((entry) => {
+            const isActive = !entry.locked && entry.id === activeId;
+            const itemClasses = [
+                'game-chat-music-playlist-item',
+                isActive ? 'is-active' : '',
+                entry.locked ? 'is-locked' : ''
+            ].filter(Boolean).join(' ');
+
+            const btnClasses = [
+                'game-chat-music-playlist-btn',
+                isActive ? 'is-active' : '',
+                entry.locked ? 'is-locked' : ''
+            ].filter(Boolean).join(' ');
+
+            const label = escapePlaylistTitle(entry.title);
+            const lockHint = 'Discover this track by entering certain cities on the map.';
+
+            if (entry.locked) {
+                return `
+                    <li class="${itemClasses}">
+                        <span
+                            class="${btnClasses}"
+                            role="listitem"
+                            aria-disabled="true"
+                            title="${lockHint}">
+                            ${label}
+                        </span>
+                    </li>
+                `.trim();
+            }
+
             return `
-                <li class="game-chat-music-playlist-item${isActive ? ' is-active' : ''}">
+                <li class="${itemClasses}">
                     <button
                         type="button"
-                        class="game-chat-music-playlist-btn${isActive ? ' is-active' : ''}"
-                        data-music-track-id="${track.id}"
+                        class="${btnClasses}"
+                        data-music-track-id="${entry.id}"
                         aria-current="${isActive ? 'true' : 'false'}">
-                        ${track.title}
+                        ${label}
                     </button>
                 </li>
             `.trim();
@@ -402,8 +529,8 @@
 
         if (playlist) {
             playlist.addEventListener('click', (event) => {
-                const button = event.target.closest('[data-music-track-id]');
-                if (!button) return;
+                const button = event.target.closest('[data-music-track-id]:not(.is-locked)');
+                if (!button || button.disabled) return;
                 selectPlaylistTrack(button.getAttribute('data-music-track-id'));
             });
         }
@@ -672,6 +799,9 @@
         mountAgeChatMusicPlayer,
         refreshChatMusicPanel,
         selectPlaylistTrack,
+        markTrackDiscovered,
+        isTrackDiscovered,
+        getDiscoverableTracks: () => DISCOVERABLE_TRACKS.slice(),
         rampMusicVolume,
         fadeMusicOut,
         handoffToGameplayMusic,

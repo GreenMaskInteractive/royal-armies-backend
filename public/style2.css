@@ -15445,6 +15445,22 @@ body.developer-maintenance-alert-active #page-landing {
     background: rgba(184, 144, 48, 0.16);
 }
 
+.game-chat-music-playlist-item.is-locked .game-chat-music-playlist-btn,
+.game-chat-music-playlist-btn.is-locked {
+    color: rgba(241, 224, 172, 0.38);
+    border-color: rgba(184, 144, 48, 0.14);
+    background: rgba(0, 0, 0, 0.18);
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+.game-chat-music-playlist-item.is-locked .game-chat-music-playlist-btn:hover,
+.game-chat-music-playlist-item.is-locked .game-chat-music-playlist-btn:focus-visible {
+    color: rgba(241, 224, 172, 0.38);
+    border-color: rgba(184, 144, 48, 0.14);
+    background: rgba(0, 0, 0, 0.18);
+}
+
 .game-chat-module-panel--music-tab .game-chat-compose-form,
 .game-chat-module-panel--music-tab #game-chat-compose-hint {
     display: none !important;
