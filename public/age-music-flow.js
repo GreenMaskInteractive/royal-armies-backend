@@ -396,51 +396,78 @@
             .replace(/"/g, '&quot;');
     }
 
-    function buildPlaylistMarkup(activeTrackId) {
-        const activeId = resolveAgePlaylistTrackId(activeTrackId);
-        return getChatPlaylistEntries().map((entry) => {
-            const isActive = !entry.locked && entry.id === activeId;
-            const itemClasses = [
-                'game-chat-music-playlist-item',
-                isActive ? 'is-active' : '',
-                entry.locked ? 'is-locked' : ''
-            ].filter(Boolean).join(' ');
+    function buildPlaylistItemMarkup(entry, activeId) {
+        const isActive = !entry.locked && entry.id === activeId;
+        const itemClasses = [
+            'game-chat-music-playlist-item',
+            isActive ? 'is-active' : '',
+            entry.locked ? 'is-locked' : ''
+        ].filter(Boolean).join(' ');
 
-            const btnClasses = [
-                'game-chat-music-playlist-btn',
-                isActive ? 'is-active' : '',
-                entry.locked ? 'is-locked' : ''
-            ].filter(Boolean).join(' ');
+        const btnClasses = [
+            'game-chat-music-playlist-btn',
+            isActive ? 'is-active' : '',
+            entry.locked ? 'is-locked' : ''
+        ].filter(Boolean).join(' ');
 
-            const label = escapePlaylistTitle(entry.title);
-            const lockHint = 'Discover this track by entering certain cities on the map.';
+        const label = escapePlaylistTitle(entry.title);
+        const lockHint = 'Discover this track by entering certain cities on the map.';
 
-            if (entry.locked) {
-                return `
-                    <li class="${itemClasses}">
-                        <span
-                            class="${btnClasses}"
-                            role="listitem"
-                            aria-disabled="true"
-                            title="${lockHint}">
-                            ${label}
-                        </span>
-                    </li>
-                `.trim();
-            }
-
+        if (entry.locked) {
             return `
                 <li class="${itemClasses}">
-                    <button
-                        type="button"
+                    <span
                         class="${btnClasses}"
-                        data-music-track-id="${entry.id}"
-                        aria-current="${isActive ? 'true' : 'false'}">
+                        aria-disabled="true"
+                        title="${lockHint}">
                         ${label}
-                    </button>
+                    </span>
                 </li>
             `.trim();
-        }).join('');
+        }
+
+        return `
+            <li class="${itemClasses}">
+                <button
+                    type="button"
+                    class="${btnClasses}"
+                    data-music-track-id="${entry.id}"
+                    aria-current="${isActive ? 'true' : 'false'}">
+                    ${label}
+                </button>
+            </li>
+        `.trim();
+    }
+
+    function buildPlaylistSectionMarkup(title, entries, activeId, sectionModifier) {
+        if (!entries.length) return '';
+
+        const listClass = sectionModifier === 'undiscovered'
+            ? 'game-chat-music-playlist game-chat-music-playlist--undiscovered'
+            : 'game-chat-music-playlist';
+
+        return `
+            <section class="game-chat-music-playlist-section game-chat-music-playlist-section--${sectionModifier}">
+                <h4 class="game-chat-music-playlist-heading">${escapePlaylistTitle(title)}</h4>
+                <ul class="${listClass}">
+                    ${entries.map((entry) => buildPlaylistItemMarkup(entry, activeId)).join('')}
+                </ul>
+            </section>
+        `.trim();
+    }
+
+    function buildPlaylistMarkup(activeTrackId) {
+        const activeId = resolveAgePlaylistTrackId(activeTrackId);
+        const allEntries = getChatPlaylistEntries();
+        const discovered = allEntries.filter((entry) => !entry.locked);
+        const undiscovered = allEntries.filter((entry) => entry.locked);
+
+        return `
+            <div class="game-chat-music-playlist-catalog">
+                ${buildPlaylistSectionMarkup('Discovered', discovered, activeId, 'discovered')}
+                ${buildPlaylistSectionMarkup('Undiscovered', undiscovered, activeId, 'undiscovered')}
+            </div>
+        `.trim();
     }
 
     function syncUi(trackTitle) {
@@ -469,9 +496,9 @@
             muteBtn.setAttribute('aria-label', audio.muted ? 'Unmute soundtrack' : 'Mute soundtrack');
         }
 
-        const playlist = global.document.getElementById('game-chat-music-playlist');
-        if (playlist) {
-            playlist.innerHTML = buildPlaylistMarkup(trackId);
+        const playlistCatalog = global.document.getElementById('game-chat-music-playlist-catalog');
+        if (playlistCatalog) {
+            playlistCatalog.innerHTML = buildPlaylistMarkup(trackId);
         }
     }
 
@@ -502,7 +529,7 @@
 
         const playBtn = host.querySelector('#game-chat-music-play-btn');
         const muteBtn = host.querySelector('#game-chat-music-mute-btn');
-        const playlist = host.querySelector('#game-chat-music-playlist');
+        const playlistCatalog = host.querySelector('#game-chat-music-playlist-catalog');
 
         if (playBtn) {
             playBtn.addEventListener('click', () => {
@@ -527,8 +554,8 @@
             });
         }
 
-        if (playlist) {
-            playlist.addEventListener('click', (event) => {
+        if (playlistCatalog) {
+            playlistCatalog.addEventListener('click', (event) => {
                 const button = event.target.closest('[data-music-track-id]:not(.is-locked)');
                 if (!button || button.disabled) return;
                 selectPlaylistTrack(button.getAttribute('data-music-track-id'));
@@ -565,7 +592,7 @@
                     </div>
                     <button type="button" id="game-chat-music-mute-btn" class="game-chat-music-utility-btn" aria-label="Mute soundtrack">Mute</button>
                 </div>
-                <ul id="game-chat-music-playlist" class="game-chat-music-playlist" aria-label="Soundtrack playlist"></ul>
+                <div id="game-chat-music-playlist-catalog" class="game-chat-music-playlist-catalog" aria-label="Soundtrack playlist"></div>
             </div>
         `.trim();
 

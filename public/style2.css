@@ -15404,6 +15404,36 @@ body.developer-maintenance-alert-active #page-landing {
     border-color: rgba(255, 215, 0, 0.55);
 }
 
+.game-chat-music-playlist-catalog {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    min-height: 0;
+}
+
+.game-chat-music-playlist-section {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 0;
+}
+
+.game-chat-music-playlist-heading {
+    margin: 0;
+    padding: 0 2px;
+    font-family: 'Cinzel', serif;
+    font-size: 0.58rem;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: rgba(184, 144, 48, 0.88);
+    line-height: 1.2;
+}
+
+.game-chat-music-playlist-section--undiscovered .game-chat-music-playlist-heading {
+    color: rgba(224, 112, 112, 0.82);
+}
+
 .game-chat-music-playlist {
     list-style: none;
     margin: 0;
@@ -15411,6 +15441,22 @@ body.developer-maintenance-alert-active #page-landing {
     display: flex;
     flex-direction: column;
     gap: 4px;
+}
+
+.game-chat-music-playlist--undiscovered {
+    gap: 10px;
+    padding-top: 2px;
+    padding-bottom: 4px;
+}
+
+.game-chat-music-playlist--undiscovered .game-chat-music-playlist-item {
+    margin: 0;
+}
+
+.game-chat-music-playlist--undiscovered .game-chat-music-playlist-btn,
+.game-chat-music-playlist--undiscovered .game-chat-music-playlist-item.is-locked .game-chat-music-playlist-btn {
+    padding-top: 9px;
+    padding-bottom: 9px;
 }
 
 .game-chat-music-playlist-btn {
