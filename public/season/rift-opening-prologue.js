@@ -1246,8 +1246,12 @@
                 audioEl.currentTime = clamped;
             }
 
-            if (seekMedia && !scrubbing) {
-                cinematicShotEls.forEach((shotEl) => shotEl.removeAttribute('data-pan-bound'));
+            if (seekMedia) {
+                if (isTrailerReplayMode) {
+                    resetTrailerCinematicPanState();
+                } else if (!scrubbing) {
+                    cinematicShotEls.forEach((shotEl) => shotEl.removeAttribute('data-pan-bound'));
+                }
             }
 
             syncSubtitleToAudioTime(true);
@@ -1563,6 +1567,12 @@
         const shouldResume = trailerSeekWasPlaying;
         trailerSeekWasPlaying = false;
         setTrailerScrubPreviewActive(false);
+
+        if (trailerReplayTimeSec < getTrailerFinaleStartSec() - 0.03) {
+            resetTrailerCinematicPanState();
+            syncCinematicToAudioTime(true);
+            syncSubtitleToAudioTime(true);
+        }
 
         if (shouldResume) {
             const totalSec = getTrailerTimelineDurationSec();
@@ -2380,6 +2390,17 @@
         return params;
     }
 
+    function resetTrailerCinematicPanState() {
+        cinematicShotEls.forEach((shotEl) => {
+            shotEl.removeAttribute('data-pan-bound');
+            const imgEl = shotEl.querySelector('img');
+            if (imgEl) {
+                removeCinematicPanAnimation(imgEl);
+                imgEl.style.removeProperty('transform');
+            }
+        });
+    }
+
     function applyTrailerCinematicPanScrub(imgEl, shotEl, shot, scriptTime) {
         if (!imgEl || !shotEl || !shot) return;
 
@@ -2391,7 +2412,6 @@
 
         removeCinematicPanAnimation(imgEl);
         imgEl.style.transform = `translate(-50%, -50%) scale(${params.scale.toFixed(3)}) translate(${x.toFixed(2)}%, ${y.toFixed(2)}%)`;
-        shotEl.dataset.panBound = '1';
     }
 
     function assignRandomCinematicPan(imgEl, durationSec) {
@@ -2613,26 +2633,27 @@
 
             if (opacity > 0) {
                 const imgEl = shotEl.querySelector('img');
-                const remainingScriptSec = Math.max(0.001, shot.scriptEnd - scriptTime);
-                const remainingWallSec = remainingScriptSec * (cueTimelineScale > 0 ? cueTimelineScale : 1);
 
-                if (scrub && isTrailerReplayMode && imgEl) {
+                if (isTrailerReplayMode && imgEl) {
                     applyTrailerCinematicPanScrub(imgEl, shotEl, shot, scriptTime);
-                } else if (shotEl.dataset.panBound !== '1') {
-                    assignRandomCinematicPan(imgEl, remainingWallSec);
-                    shotEl.dataset.panBound = '1';
+                } else {
+                    const remainingScriptSec = Math.max(0.001, shot.scriptEnd - scriptTime);
+                    const remainingWallSec = remainingScriptSec * (cueTimelineScale > 0 ? cueTimelineScale : 1);
+
+                    if (shotEl.dataset.panBound !== '1') {
+                        assignRandomCinematicPan(imgEl, remainingWallSec);
+                        shotEl.dataset.panBound = '1';
+                    }
                 }
 
                 if (opacity >= dominantOpacity) {
                     dominantOpacity = opacity;
                     dominantShotId = shotId;
                 }
-            } else {
-                if (!scrub) {
-                    shotEl.removeAttribute('data-pan-bound');
-                    const imgEl = shotEl.querySelector('img');
-                    if (imgEl) removeCinematicPanAnimation(imgEl);
-                }
+            } else if (!scrub || isTrailerReplayMode) {
+                shotEl.removeAttribute('data-pan-bound');
+                const imgEl = shotEl.querySelector('img');
+                if (imgEl) removeCinematicPanAnimation(imgEl);
             }
         });
 
