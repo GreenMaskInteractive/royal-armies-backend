@@ -209,7 +209,7 @@
     const TRAILER_SUBTITLE_SCRUB_FLICKER_SEED = 2.17;
     const TRAILER_REPLAY_SYNC_MS = 250;
     const TRAILER_MP4_SRC = 'season/royal-armies-age-of-war-trailer.mp4';
-    const TRAILER_MP4_CACHE_BUST = 'trailer-mp4-1';
+    const TRAILER_MP4_CACHE_BUST = 'trailer-mp4-full-1';
     const TRAILER_RENDER_STATUS_PATH = '/api/portal/trailer/render/status';
     const TRAILER_RENDER_POLL_MS = 1000;
     const LOCAL_PROLOGUE_PENDING_KEY = 'royalArmies_localProloguePending';
