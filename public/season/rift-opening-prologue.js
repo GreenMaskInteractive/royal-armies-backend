@@ -113,6 +113,8 @@
         + PROLOGUE_SUBTITLE_LOGO_EXPLOSIVE_MS
         + 600;
     const TRAILER_MUSIC_START_SEC = PROLOGUE_MUSIC_DELAY_MS / 1000;
+    /** Set false to hide narration subtitles on the Age of War trailer player. */
+    const TRAILER_NARRATION_SUBTITLES_ENABLED = false;
 
     /**
      * Narration-synced stills (script timeline seconds). Times use M:SS:ff or SS:ff
@@ -2681,8 +2683,16 @@
         syncCinematicToAudioTime();
     }
 
+    function areTrailerNarrationSubtitlesEnabled() {
+        return TRAILER_NARRATION_SUBTITLES_ENABLED;
+    }
+
     function setSubtitleDockActive(active) {
         if (!overlayEl) return;
+
+        if (isTrailerPage() && !areTrailerNarrationSubtitlesEnabled()) {
+            active = false;
+        }
 
         const dock = overlayEl.querySelector('.game-opening-prologue-subtitle-dock');
         if (active) {
@@ -3018,6 +3028,7 @@
 
     function syncSubtitleToAudioTime(force) {
         if (!audioEl && !isTrailerReplayMode) return;
+        if (isTrailerPage() && !areTrailerNarrationSubtitlesEnabled()) return;
         if (!force && !canSyncPrologueTimeline()) return;
 
         const scriptTime = toScriptTimelineTime(getSubtitleSyncTimeSec());
@@ -3060,9 +3071,11 @@
         overlayEl.hidden = false;
         overlayEl.classList.remove('is-revealing');
         if (options && options.subtitles === true) {
-            setSubtitleDockActive(true);
+            setSubtitleDockActive(!(isTrailerPage() && !areTrailerNarrationSubtitlesEnabled()));
             activeCueIndex = -1;
-            syncSubtitleToAudioTime(true);
+            if (!isTrailerPage() || areTrailerNarrationSubtitlesEnabled()) {
+                syncSubtitleToAudioTime(true);
+            }
         } else {
             setSubtitleDockActive(false);
         }

@@ -400,6 +400,13 @@
     animation: none !important;
 }
 
+.game-opening-prologue.is-trailer-replay-mode[data-subtitles-hidden="1"] .game-opening-prologue-subtitle-dock.is-trailer-player-dock {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+}
+
 .game-opening-prologue-trailer-credits {
     position: absolute;
     inset: 0;
