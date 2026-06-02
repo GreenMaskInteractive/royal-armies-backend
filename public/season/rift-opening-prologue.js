@@ -93,7 +93,14 @@
     const TRAILER_LORE_TOOL_PEAK_OPACITY = 0.35;
     const TRAILER_MAIN_FINALE_HOLD_MS = 11000;
     const TRAILER_CREDITS_TAGLINES_REVEAL_MS = 860;
-    const TRAILER_CREDITS_MUSIC_END_BUFFER_MS = 350;
+    const TRAILER_CREDITS_MUSIC_END_BUFFER_MS = 0;
+    /** Quick ramp to peak right after the last cinematic fades out. */
+    const TRAILER_FINALE_MUSIC_RAMP_MS = 1200;
+    /** Green Mask + alpha panel cycles (fade in, hold, fade out). */
+    const TRAILER_CREDITS_PANEL_TRANSITION_MS = 7000;
+    const TRAILER_CREDITS_THANKS_IN_MS = 1200;
+    const TRAILER_CREDITS_THANKS_HOLD_MS = 4000;
+    const TRAILER_CREDITS_THANKS_MUSIC_FADE_MS = 4000;
     const PROLOGUE_LORE_TOOL_FADE_MS = 12000;
     const PROLOGUE_SUBTITLE_LOGO_SFX_SRC = 'audio/explosionsfx.wav?v=prologue-explosion-1';
     const PROLOGUE_SUBTITLE_SPARK_INTERVAL_MS = 170;
@@ -215,7 +222,7 @@
     const TRAILER_SUBTITLE_SCRUB_FLICKER_SEED = 2.17;
     const TRAILER_REPLAY_SYNC_MS = 250;
     const TRAILER_MP4_SRC = 'season/royal-armies-age-of-war-trailer.mp4';
-    const TRAILER_MP4_CACHE_BUST = 'trailer-no-subtitle-dock-1';
+    const TRAILER_MP4_CACHE_BUST = 'trailer-credits-timing-1';
     /** When true, subtitle explosion SFX is baked into the MP4 audio — skip overlay playback. */
     const TRAILER_MP4_BAKED_SUBTITLE_SFX = true;
     const TRAILER_RENDER_STATUS_PATH = '/api/portal/trailer/render/status';
@@ -333,6 +340,102 @@
 
     function getTrailerCreditsTimelineStartSec() {
         return getTrailerFinaleEndSec() + (TRAILER_MAIN_FINALE_HOLD_MS / 1000);
+    }
+
+    function resolveTrailerCreditsPhaseTimings() {
+        const fadeOutMainMs = 1500;
+        const outroFadeInMs = 1200;
+        const outroTaglinesMs = TRAILER_CREDITS_TAGLINES_REVEAL_MS;
+        const outroInMs = outroFadeInMs + outroTaglinesMs;
+        const outroOutMs = 1500;
+        const outroHoldMs = 2500;
+        const panelInMs = Math.round(TRAILER_CREDITS_PANEL_TRANSITION_MS * 0.25);
+        const panelHoldMs = Math.round(TRAILER_CREDITS_PANEL_TRANSITION_MS * 0.5);
+        const panelOutMs = TRAILER_CREDITS_PANEL_TRANSITION_MS - panelInMs - panelHoldMs;
+
+        return {
+            fadeOutMainMs,
+            outroFadeInMs,
+            outroTaglinesMs,
+            outroInMs,
+            outroHoldMs,
+            outroOutMs,
+            greenmaskInMs: panelInMs,
+            greenmaskHoldMs: panelHoldMs,
+            greenmaskOutMs: panelOutMs,
+            alphaInMs: panelInMs,
+            alphaHoldMs: panelHoldMs,
+            alphaOutMs: panelOutMs,
+            thanksInMs: TRAILER_CREDITS_THANKS_IN_MS,
+            thanksHoldMs: TRAILER_CREDITS_THANKS_HOLD_MS,
+            thanksOutMs: 0,
+        };
+    }
+
+    function getTrailerCreditsSequenceDurationMs(timings) {
+        const t = timings || resolveTrailerCreditsPhaseTimings();
+        return t.fadeOutMainMs + t.outroInMs + t.outroHoldMs + t.outroOutMs
+            + t.greenmaskInMs + t.greenmaskHoldMs + t.greenmaskOutMs
+            + t.alphaInMs + t.alphaHoldMs + t.alphaOutMs
+            + t.thanksInMs + t.thanksHoldMs + t.thanksOutMs;
+    }
+
+    function getTrailerCreditsEndSec() {
+        return getTrailerCreditsTimelineStartSec() + (getTrailerCreditsSequenceDurationMs() / 1000);
+    }
+
+    function getTrailerCreditsThanksFadeStartSec() {
+        const t = resolveTrailerCreditsPhaseTimings();
+        const beforeThanksHoldMs = t.fadeOutMainMs + t.outroInMs + t.outroHoldMs + t.outroOutMs
+            + t.greenmaskInMs + t.greenmaskHoldMs + t.greenmaskOutMs
+            + t.alphaInMs + t.alphaHoldMs + t.alphaOutMs
+            + t.thanksInMs;
+        return getTrailerCreditsTimelineStartSec() + (beforeThanksHoldMs / 1000);
+    }
+
+    function syncTrailerMusicVolumeForTimeline(timeSec) {
+        if (trailerMp4Mode) return;
+
+        const musicAudio = getTrailerMusicAudio();
+        if (!musicAudio) return;
+
+        const clamped = Math.max(0, Number(timeSec) || 0);
+        const finaleStart = getTrailerFinaleStartSec();
+        const rampEndSec = finaleStart + (TRAILER_FINALE_MUSIC_RAMP_MS / 1000);
+        const fadeStartSec = getTrailerCreditsThanksFadeStartSec();
+        const endSec = getTrailerCreditsEndSec();
+        const baseVol = PROLOGUE_MUSIC_VOLUME;
+        const peakVol = PROLOGUE_MUSIC_PEAK_VOLUME;
+
+        if (clamped < TRAILER_MUSIC_START_SEC) {
+            musicAudio.volume = baseVol;
+            return;
+        }
+
+        if (clamped < finaleStart) {
+            musicAudio.volume = baseVol;
+            return;
+        }
+
+        if (clamped < rampEndSec) {
+            const rampSpan = Math.max(0.001, rampEndSec - finaleStart);
+            const progress = (clamped - finaleStart) / rampSpan;
+            musicAudio.volume = baseVol + ((peakVol - baseVol) * progress);
+            return;
+        }
+
+        if (clamped < fadeStartSec) {
+            musicAudio.volume = peakVol;
+            return;
+        }
+
+        if (clamped < endSec) {
+            const fadeSpan = Math.max(0.001, endSec - fadeStartSec);
+            musicAudio.volume = peakVol * Math.max(0, (endSec - clamped) / fadeSpan);
+            return;
+        }
+
+        musicAudio.volume = 0;
     }
 
     function isTrailerScrubPreview() {
@@ -589,63 +692,12 @@
             && global.document.visibilityState !== 'hidden';
     }
 
-    function resolveTrailerCreditsPhaseTimings(options) {
-        const opts = options && typeof options === 'object' ? options : {};
-        const fadeOutMainMs = 1500;
-        const outroFadeInMs = 1200;
-        const outroTaglinesMs = TRAILER_CREDITS_TAGLINES_REVEAL_MS;
-        const outroInMs = outroFadeInMs + outroTaglinesMs;
-        const outroOutMs = 1500;
-        const greenmaskInMs = 2200;
-        const greenmaskOutMs = 1500;
-        const alphaInMs = 2200;
-        const alphaOutMs = 1800;
-        const thanksInMs = 2000;
-        const thanksOutMs = 1500;
-        const fixedMs = fadeOutMainMs + outroInMs + outroOutMs + greenmaskInMs + greenmaskOutMs
-            + alphaInMs + alphaOutMs + thanksInMs + thanksOutMs;
-
-        let holdBudgetMs = 8000;
-        if (Number.isFinite(opts.remainingMs)) {
-            holdBudgetMs = Math.max(3000, opts.remainingMs - fixedMs);
-        } else if (Number.isFinite(opts.creditsSpanMs)) {
-            holdBudgetMs = Math.max(3000, opts.creditsSpanMs - fixedMs);
-        }
-
-        return {
-            fadeOutMainMs,
-            outroFadeInMs,
-            outroTaglinesMs,
-            outroInMs,
-            outroHoldMs: Math.round(holdBudgetMs * 0.22),
-            outroOutMs,
-            greenmaskInMs,
-            greenmaskHoldMs: Math.round(holdBudgetMs * 0.28),
-            greenmaskOutMs,
-            alphaInMs,
-            alphaHoldMs: Math.round(holdBudgetMs * 0.38),
-            alphaOutMs,
-            thanksInMs,
-            thanksHoldMs: Math.round(holdBudgetMs * 0.12),
-            thanksOutMs,
-        };
-    }
-
     function getTrailerCanonicalMusicEndSec() {
         return TRAILER_MUSIC_START_SEC + TRAILER_ARCHIMEDES_MUSIC_DURATION_SEC;
     }
 
     function resolveTrailerCreditsScrubTimings() {
-        const creditsStartSec = getTrailerCreditsTimelineStartSec();
-        const musicEndSec = isTrailerRenderMode()
-            ? getTrailerCanonicalMusicEndSec()
-            : getTrailerMusicEndSec();
-        const remainingMs = Math.max(
-            6000,
-            ((musicEndSec - creditsStartSec) * 1000) - TRAILER_CREDITS_MUSIC_END_BUFFER_MS
-        );
-
-        return resolveTrailerCreditsPhaseTimings({ remainingMs });
+        return resolveTrailerCreditsPhaseTimings();
     }
 
     function applyTrailerMainFinaleScrubState() {
@@ -888,6 +940,10 @@
         setPanelOpacity(greenmaskPanel, 0);
         setPanelOpacity(alphaPanel, 0);
         setPanelOpacity(thanksPanel, 0);
+
+        if (!trailerMp4Mode) {
+            syncTrailerMusicVolumeForTimeline(timeSec);
+        }
     }
 
     function getTrailerTimelineDurationSec() {
@@ -900,8 +956,8 @@
 
         const narrationSec = getTrailerNarrationDurationSec();
         const finaleEnd = getTrailerFinaleEndSec();
-        const musicEnd = TRAILER_MUSIC_START_SEC + getTrailerMusicDurationSec();
-        return Math.max(finaleEnd, musicEnd, narrationSec + 1);
+        const creditsEnd = getTrailerCreditsEndSec();
+        return Math.max(finaleEnd, creditsEnd, narrationSec + 1);
     }
 
     function getTrailerFullscreenElement() {
@@ -1290,12 +1346,23 @@
                 overlayEl?.classList.remove('is-cinematics-active');
                 clearSubtitlesForPostNarrationHold();
 
+                ensureTrailerMusicReady({ resetTime: false });
+                const musicAudio = getTrailerMusicAudio();
+                const finaleStart = getTrailerFinaleStartSec();
+                if (musicAudio) {
+                    syncTrailerMusicToTimeline(finaleStart, { force: true });
+                    if (musicAudio.paused) {
+                        await musicAudio.play().catch(() => {});
+                    }
+                    musicAudio.volume = PROLOGUE_MUSIC_VOLUME;
+                }
+
                 const musicRamp = global.RoyalArmiesMusicFlow
                     && typeof global.RoyalArmiesMusicFlow.rampMusicVolume === 'function'
                     ? global.RoyalArmiesMusicFlow.rampMusicVolume(
                         PROLOGUE_MUSIC_VOLUME,
                         PROLOGUE_MUSIC_PEAK_VOLUME,
-                        PROLOGUE_MUSIC_PEAK_RAMP_MS
+                        TRAILER_FINALE_MUSIC_RAMP_MS
                     )
                     : Promise.resolve();
 
@@ -1960,6 +2027,10 @@
 
         if (shouldPlayTrailerSubtitleImpactOverlaySfx() && !isTrailerScrubPreview()) {
             syncTrailerFinaleAudioCues(clamped);
+        }
+
+        if (!trailerMp4Mode && clamped >= TRAILER_MUSIC_START_SEC - 0.02) {
+            syncTrailerMusicVolumeForTimeline(clamped);
         }
     }
 
@@ -4607,18 +4678,7 @@
     }
 
     function computeTrailerCreditsTimings() {
-        const remainingMs = Math.max(
-            6000,
-            ((getTrailerMusicEndSec() - getTrailerPlaybackNowSec()) * 1000) - TRAILER_CREDITS_MUSIC_END_BUFFER_MS
-        );
-
-        return resolveTrailerCreditsPhaseTimings({ remainingMs });
-    }
-
-    function computeTrailerCreditsFadeOutMs(defaultMs) {
-        const msUntilEnd = ((getTrailerMusicEndSec() - getTrailerPlaybackNowSec()) * 1000)
-            - TRAILER_CREDITS_MUSIC_END_BUFFER_MS;
-        return Math.max(800, Math.min(defaultMs, msUntilEnd));
+        return resolveTrailerCreditsPhaseTimings();
     }
 
     async function fadeTrailerMainFinaleOut(durationMs) {
@@ -4714,8 +4774,7 @@
             return;
         }
 
-        const outroOutMs = computeTrailerCreditsFadeOutMs(timings.outroOutMs);
-        await animateTrailerElementsOpacity([outroPanel], 1, 0, outroOutMs);
+        await animateTrailerElementsOpacity([outroPanel], 1, 0, timings.outroOutMs);
         outroEl.classList.remove('is-visible', 'is-taglines-visible');
         outroEl.hidden = true;
 
@@ -4745,8 +4804,7 @@
             return;
         }
 
-        const alphaOutMs = computeTrailerCreditsFadeOutMs(timings.alphaOutMs);
-        await animateTrailerElementsOpacity([alphaPanel], 1, 0, alphaOutMs);
+        await animateTrailerElementsOpacity([alphaPanel], 1, 0, timings.alphaOutMs);
 
         if (generation !== logoRevealGeneration || generation !== trailerCreditsGeneration) {
             trailerCreditsRunning = false;
@@ -4755,15 +4813,27 @@
 
         await animateTrailerElementsOpacity([thanksPanel], 0, 1, timings.thanksInMs);
 
-        if (!(await waitTrailerPlaybackMs(timings.thanksHoldMs, generation))) {
+        const musicFadePromise = global.RoyalArmiesMusicFlow
+            && typeof global.RoyalArmiesMusicFlow.rampMusicVolume === 'function'
+            ? global.RoyalArmiesMusicFlow.rampMusicVolume(
+                PROLOGUE_MUSIC_PEAK_VOLUME,
+                0,
+                TRAILER_CREDITS_THANKS_MUSIC_FADE_MS
+            )
+            : Promise.resolve();
+
+        const holdOk = await Promise.all([
+            waitTrailerPlaybackMs(timings.thanksHoldMs, generation),
+            musicFadePromise,
+        ]).then(([ok]) => ok);
+
+        if (!holdOk || generation !== logoRevealGeneration || generation !== trailerCreditsGeneration) {
             trailerCreditsRunning = false;
             return;
         }
 
-        const thanksOutMs = computeTrailerCreditsFadeOutMs(timings.thanksOutMs);
-        await animateTrailerElementsOpacity([thanksPanel], 1, 0, thanksOutMs);
-
         trailerCreditsRunning = false;
+        pauseTrailerReplayAtEnd();
     }
 
     function hideTrailerOutro() {
@@ -4869,12 +4939,23 @@
         await fadeOutCinematicChromeIfNeeded();
         clearSubtitlesForPostNarrationHold();
 
+        ensureTrailerMusicReady({ resetTime: false });
+        const musicAudio = getTrailerMusicAudio();
+        const finaleStart = getTrailerFinaleStartSec();
+        if (musicAudio) {
+            syncTrailerMusicToTimeline(finaleStart, { force: true });
+            if (musicAudio.paused) {
+                await musicAudio.play().catch(() => {});
+            }
+            musicAudio.volume = PROLOGUE_MUSIC_VOLUME;
+        }
+
         const musicRamp = global.RoyalArmiesMusicFlow
             && typeof global.RoyalArmiesMusicFlow.rampMusicVolume === 'function'
             ? global.RoyalArmiesMusicFlow.rampMusicVolume(
                 PROLOGUE_MUSIC_VOLUME,
                 PROLOGUE_MUSIC_PEAK_VOLUME,
-                PROLOGUE_MUSIC_PEAK_RAMP_MS
+                TRAILER_FINALE_MUSIC_RAMP_MS
             )
             : Promise.resolve();
 
@@ -5217,13 +5298,22 @@
                 width: TRAILER_CINE_NATIVE_WIDTH,
                 height: TRAILER_CINE_NATIVE_HEIGHT,
                 fps: 30,
-                durationSec: getTrailerTimelineDurationSec(),
+                durationSec: getTrailerCreditsEndSec(),
                 stageSelector: '#game-opening-prologue-trailer-viewport',
                 narrationSrc: PROLOGUE_AUDIO_SRC,
                 musicSrc: 'audio/archimedeslullaby.wav',
                 musicStartSec: TRAILER_MUSIC_START_SEC,
                 subtitleImpactSec: getTrailerSubtitleImpactSec(),
                 subtitleImpactSfxPath: 'audio/explosionsfx.wav',
+                musicVolume: {
+                    musicStartSec: TRAILER_MUSIC_START_SEC,
+                    finaleStartSec: getTrailerFinaleStartSec(),
+                    rampSec: TRAILER_FINALE_MUSIC_RAMP_MS / 1000,
+                    fadeStartSec: getTrailerCreditsThanksFadeStartSec(),
+                    endSec: getTrailerCreditsEndSec(),
+                    baseVol: PROLOGUE_MUSIC_VOLUME,
+                    peakVol: PROLOGUE_MUSIC_PEAK_VOLUME,
+                },
             };
         },
     };

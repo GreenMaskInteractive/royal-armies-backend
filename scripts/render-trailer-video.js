@@ -174,6 +174,26 @@ function verifyFrameSequence(framesDir, totalFrames) {
     }
 }
 
+function buildTrailerMusicVolumeExpression(musicVolume) {
+    const spec = musicVolume && typeof musicVolume === 'object' ? musicVolume : {};
+    const musicStartSec = Number(spec.musicStartSec) || 2;
+    const finaleStartSec = Number(spec.finaleStartSec) || musicStartSec;
+    const rampSec = Math.max(0.05, Number(spec.rampSec) || 1.2);
+    const fadeStartSec = Number(spec.fadeStartSec) || finaleStartSec + rampSec;
+    const endSec = Math.max(fadeStartSec + 0.05, Number(spec.endSec) || fadeStartSec + 4);
+    const baseVol = Number(spec.baseVol) || 0.4;
+    const peakVol = Number(spec.peakVol) || 1;
+
+    const tRampStart = Math.max(0, finaleStartSec - musicStartSec);
+    const tRampEnd = tRampStart + rampSec;
+    const tFadeStart = Math.max(tRampEnd, fadeStartSec - musicStartSec);
+    const tEnd = Math.max(tFadeStart + 0.05, endSec - musicStartSec);
+    const rampDur = Math.max(0.001, tRampEnd - tRampStart);
+    const fadeDur = Math.max(0.001, tEnd - tFadeStart);
+
+    return `if(lt(t\\,${tRampStart.toFixed(3)})\\,${baseVol.toFixed(4)},if(lt(t\\,${tRampEnd.toFixed(3)})\\,${baseVol.toFixed(4)}+(${(peakVol - baseVol).toFixed(4)})*((t-${tRampStart.toFixed(3)})/${rampDur.toFixed(3)}),if(lt(t\\,${tFadeStart.toFixed(3)})\\,${peakVol.toFixed(4)},if(lt(t\\,${tEnd.toFixed(3)})\\,${peakVol.toFixed(4)}*((${tEnd.toFixed(3)}-t)/${fadeDur.toFixed(3)})\\,0))))`;
+}
+
 async function waitForPaint(page) {
     await page.evaluate(() => new Promise((resolve) => {
         requestAnimationFrame(() => {
@@ -308,6 +328,7 @@ async function main() {
         const sfxPath = path.join(PUBLIC_DIR, sfxRelPath);
         const musicDelayMs = Math.round((Number(config.musicStartSec) || 2) * 1000);
         const sfxDelayMs = Math.round((Number(config.subtitleImpactSec) || 0) * 1000);
+        const musicVolumeExpr = buildTrailerMusicVolumeExpression(config.musicVolume);
 
         if (!fs.existsSync(sfxPath)) {
             throw new Error(`Subtitle impact SFX not found: ${sfxPath}`);
@@ -354,7 +375,7 @@ async function main() {
             '-i', musicPath,
             '-i', sfxPath,
             '-filter_complex',
-            `[1:a]volume=1.0[nar];[2:a]adelay=${musicDelayMs}|${musicDelayMs},volume=0.45[mus];[3:a]adelay=${sfxDelayMs}|${sfxDelayMs},volume=1.0[sfx];[nar][mus][sfx]amix=inputs=3:duration=longest:dropout_transition=0[aout]`,
+            `[1:a]volume=1.0[nar];[2:a]adelay=${musicDelayMs}|${musicDelayMs},volume=${musicVolumeExpr}[mus];[3:a]adelay=${sfxDelayMs}|${sfxDelayMs},volume=1.0[sfx];[nar][mus][sfx]amix=inputs=3:duration=longest:dropout_transition=0[aout]`,
             '-map', '0:v:0',
             '-map', '[aout]',
             '-c:v', 'copy',
