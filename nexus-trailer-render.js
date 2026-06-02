@@ -1,10 +1,12 @@
 /**
- * [NEXUS] Trailer MP4 render job status and publish helpers.
+ * [NEXUS] Trailer MP4 render job status, remote sync, and publish helpers.
  */
 'use strict';
 
 const fs = require('fs');
 const path = require('path');
+const http = require('http');
+const https = require('https');
 const { spawn } = require('child_process');
 
 const ROOT = __dirname;
@@ -14,6 +16,7 @@ const RENDER_SCRIPT = path.join(ROOT, 'scripts', 'render-trailer-video.js');
 const DIST_MP4 = path.join(ROOT, 'dist', 'trailer', 'royal-armies-age-of-war-trailer.mp4');
 const PUBLIC_MP4 = path.join(ROOT, 'public', 'season', 'royal-armies-age-of-war-trailer.mp4');
 const PUBLIC_MP4_URL = 'season/royal-armies-age-of-war-trailer.mp4';
+const DEFAULT_REMOTE_SYNC_URL = 'https://www.royalarmies.com/api/portal/trailer/render/progress';
 
 /** @type {import('child_process').ChildProcess | null} */
 let activeRenderChild = null;
@@ -38,6 +41,44 @@ function defaultStatus() {
         startedAt: null,
         updatedAt: null,
         finishedAt: null,
+        timeSec: null,
+    };
+}
+
+function sanitizeTrailerRenderProgressPayload(payload) {
+    const input = payload && typeof payload === 'object' ? payload : {};
+    const next = {
+        status: typeof input.status === 'string' ? input.status : undefined,
+        phase: typeof input.phase === 'string' ? input.phase : undefined,
+        percent: Number.isFinite(Number(input.percent)) ? Number(input.percent) : undefined,
+        frame: Number.isFinite(Number(input.frame)) ? Number(input.frame) : undefined,
+        totalFrames: Number.isFinite(Number(input.totalFrames)) ? Number(input.totalFrames) : undefined,
+        durationSec: Number.isFinite(Number(input.durationSec)) ? Number(input.durationSec) : undefined,
+        message: typeof input.message === 'string' ? input.message.slice(0, 240) : undefined,
+        outputPath: typeof input.outputPath === 'string' ? input.outputPath.slice(0, 512) : undefined,
+        error: typeof input.error === 'string' ? input.error.slice(0, 512) : undefined,
+        startedAt: typeof input.startedAt === 'string' ? input.startedAt : undefined,
+        finishedAt: typeof input.finishedAt === 'string' ? input.finishedAt : undefined,
+        timeSec: Number.isFinite(Number(input.timeSec)) ? Number(input.timeSec) : undefined,
+    };
+
+    Object.keys(next).forEach((key) => {
+        if (next[key] === undefined) delete next[key];
+    });
+
+    return next;
+}
+
+function normalizeTrailerRenderStatusRecord(stored) {
+    if (!stored || typeof stored !== 'object') {
+        return defaultStatus();
+    }
+
+    return {
+        ...defaultStatus(),
+        ...stored,
+        mp4Available: fs.existsSync(PUBLIC_MP4),
+        publicUrl: PUBLIC_MP4_URL,
     };
 }
 
@@ -50,31 +91,154 @@ function readTrailerRenderStatus() {
 
     try {
         const parsed = JSON.parse(fs.readFileSync(STATUS_PATH, 'utf8'));
-        return {
-            ...defaultStatus(),
-            ...parsed,
-            mp4Available: fs.existsSync(PUBLIC_MP4),
-            publicUrl: PUBLIC_MP4_URL,
-        };
+        return normalizeTrailerRenderStatusRecord(parsed);
     } catch (_err) {
         return defaultStatus();
     }
+}
+
+function readTrailerRenderRemoteStatus(db) {
+    if (!db || typeof db.get !== 'function') {
+        return null;
+    }
+
+    const stored = db.get('portal.trailerRenderStatus').value();
+    if (!stored || typeof stored !== 'object') {
+        return null;
+    }
+
+    return normalizeTrailerRenderStatusRecord(stored);
+}
+
+function writeTrailerRenderRemoteStatus(db, patch) {
+    const current = readTrailerRenderRemoteStatus(db) || defaultStatus();
+    const next = normalizeTrailerRenderStatusRecord({
+        ...current,
+        ...sanitizeTrailerRenderProgressPayload(patch),
+        updatedAt: new Date().toISOString(),
+    });
+
+    db.set('portal.trailerRenderStatus', next).write();
+    return next;
 }
 
 function writeTrailerRenderStatus(patch) {
     ensureRuntimeDir();
 
     const current = readTrailerRenderStatus();
-    const next = {
+    const next = normalizeTrailerRenderStatusRecord({
         ...current,
         ...patch,
-        mp4Available: fs.existsSync(PUBLIC_MP4),
-        publicUrl: PUBLIC_MP4_URL,
         updatedAt: new Date().toISOString(),
-    };
+    });
 
     fs.writeFileSync(STATUS_PATH, `${JSON.stringify(next, null, 2)}\n`, 'utf8');
+    queueTrailerRenderRemoteSync(next);
     return next;
+}
+
+function getTrailerRenderSyncSecret() {
+    return String(process.env.TRAILER_RENDER_SYNC_SECRET || '').trim();
+}
+
+function resolveTrailerRenderSyncConfig() {
+    const secret = getTrailerRenderSyncSecret();
+    const url = String(process.env.TRAILER_RENDER_SYNC_URL || DEFAULT_REMOTE_SYNC_URL).trim();
+
+    if (!secret || process.env.TRAILER_RENDER_SYNC === '0') {
+        return { enabled: false, secret: '', url: '' };
+    }
+
+    return {
+        enabled: true,
+        secret,
+        url,
+    };
+}
+
+function syncTrailerRenderStatusRemote(status, config) {
+    const syncConfig = config || resolveTrailerRenderSyncConfig();
+    if (!syncConfig.enabled) {
+        return Promise.resolve(false);
+    }
+
+    return new Promise((resolve, reject) => {
+        let target;
+        try {
+            target = new URL(syncConfig.url);
+        } catch (error) {
+            reject(error);
+            return;
+        }
+
+        const body = JSON.stringify(sanitizeTrailerRenderProgressPayload(status));
+        const lib = target.protocol === 'https:' ? https : http;
+        const req = lib.request({
+            hostname: target.hostname,
+            port: target.port || (target.protocol === 'https:' ? 443 : 80),
+            path: `${target.pathname}${target.search}`,
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Content-Length': Buffer.byteLength(body),
+                'X-Trailer-Render-Secret': syncConfig.secret,
+            },
+        }, (res) => {
+            res.resume();
+            res.on('end', () => {
+                if (res.statusCode >= 200 && res.statusCode < 300) {
+                    resolve(true);
+                    return;
+                }
+                reject(new Error(`Remote trailer render sync failed with HTTP ${res.statusCode}`));
+            });
+        });
+
+        req.on('error', reject);
+        req.write(body);
+        req.end();
+    });
+}
+
+function queueTrailerRenderRemoteSync(status) {
+    const config = resolveTrailerRenderSyncConfig();
+    if (!config.enabled) return;
+
+    syncTrailerRenderStatusRemote(status, config).catch((error) => {
+        console.warn('[NEXUS] Trailer render remote sync failed:', error.message);
+    });
+}
+
+function pickTrailerRenderStatus(localStatus, remoteStatus) {
+    const candidates = [localStatus, remoteStatus].filter(Boolean);
+    if (!candidates.length) {
+        return defaultStatus();
+    }
+
+    const rendering = candidates.filter((entry) => entry.status === 'rendering');
+    if (rendering.length) {
+        return rendering.sort(
+            (a, b) => Date.parse(b.updatedAt || 0) - Date.parse(a.updatedAt || 0)
+        )[0];
+    }
+
+    const complete = candidates.filter((entry) => entry.status === 'complete');
+    if (complete.length) {
+        return complete.sort(
+            (a, b) => Date.parse(b.updatedAt || 0) - Date.parse(a.updatedAt || 0)
+        )[0];
+    }
+
+    const errored = candidates.filter((entry) => entry.status === 'error');
+    if (errored.length) {
+        return errored.sort(
+            (a, b) => Date.parse(b.updatedAt || 0) - Date.parse(a.updatedAt || 0)
+        )[0];
+    }
+
+    return candidates.sort(
+        (a, b) => Date.parse(b.updatedAt || 0) - Date.parse(a.updatedAt || 0)
+    )[0];
 }
 
 function markTrailerRenderStarting(options) {
@@ -90,6 +254,7 @@ function markTrailerRenderStarting(options) {
         error: null,
         startedAt: new Date().toISOString(),
         finishedAt: null,
+        timeSec: 0,
     });
 }
 
@@ -99,7 +264,10 @@ function markTrailerRenderProgress(patch) {
         return current;
     }
 
-    return writeTrailerRenderStatus(patch);
+    return writeTrailerRenderStatus({
+        status: 'rendering',
+        ...patch,
+    });
 }
 
 function publishTrailerMp4ToPublic(sourcePath) {
@@ -140,21 +308,40 @@ function markTrailerRenderFailed(error) {
     });
 }
 
-function isTrailerRenderRunning() {
+function isTrailerRenderRunning(localStatus, remoteStatus) {
     if (activeRenderChild && !activeRenderChild.killed) {
         return true;
     }
 
-    const status = readTrailerRenderStatus();
-    return status.status === 'rendering';
+    const picked = pickTrailerRenderStatus(localStatus || readTrailerRenderStatus(), remoteStatus || null);
+    return picked.status === 'rendering';
 }
 
-function getTrailerRenderStatusPayload() {
-    const status = readTrailerRenderStatus();
+function getTrailerRenderStatusPayload(db) {
+    const local = readTrailerRenderStatus();
+    const remote = readTrailerRenderRemoteStatus(db);
+    const status = pickTrailerRenderStatus(local, remote);
+
     return {
         ...status,
-        running: isTrailerRenderRunning(),
+        running: isTrailerRenderRunning(local, remote),
+        syncEnabled: resolveTrailerRenderSyncConfig().enabled,
     };
+}
+
+function verifyTrailerRenderSyncSecret(req) {
+    const expected = getTrailerRenderSyncSecret();
+    if (!expected) {
+        return false;
+    }
+
+    const provided = String(
+        req?.headers?.['x-trailer-render-secret']
+        || req?.headers?.['x-trailer-render-sync-secret']
+        || ''
+    ).trim();
+
+    return Boolean(provided) && provided === expected;
 }
 
 function startTrailerRenderJob(options) {
@@ -219,14 +406,20 @@ module.exports = {
     PUBLIC_MP4,
     PUBLIC_MP4_URL,
     DIST_MP4,
+    DEFAULT_REMOTE_SYNC_URL,
     readTrailerRenderStatus,
+    readTrailerRenderRemoteStatus,
     writeTrailerRenderStatus,
+    writeTrailerRenderRemoteStatus,
     markTrailerRenderStarting,
     markTrailerRenderProgress,
     markTrailerRenderComplete,
     markTrailerRenderFailed,
     publishTrailerMp4ToPublic,
-    isTrailerRenderRunning,
+    sanitizeTrailerRenderProgressPayload,
+    verifyTrailerRenderSyncSecret,
+    resolveTrailerRenderSyncConfig,
+    syncTrailerRenderStatusRemote,
     getTrailerRenderStatusPayload,
     startTrailerRenderJob,
     canStartTrailerRenderFromRequest,

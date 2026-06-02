@@ -13,6 +13,11 @@
  *   --output royal-armies-age-of-war-trailer.mp4
  *   --keep-frames
  *   --preview-sec 5   (only render first N seconds — quick smoke test)
+ *
+ * Remote progress sync (optional — shows overlay on royalarmies.com while rendering locally):
+ *   set TRAILER_RENDER_SYNC_SECRET=your-shared-secret
+ *   set TRAILER_RENDER_SYNC_URL=https://www.royalarmies.com/api/portal/trailer/render/progress
+ *   npm run render:trailer
  */
 'use strict';
 

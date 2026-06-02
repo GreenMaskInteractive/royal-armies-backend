@@ -1044,22 +1044,30 @@
 
         updateTrailerRenderProgressOverlay(status);
 
-        if (status.status === 'complete' && status.mp4Available) {
-            stopTrailerRenderProgressWatch();
-            overlayEl?.classList.remove('is-trailer-render-progress', 'is-trailer-composition-paused');
-            overlayEl?.querySelector('#game-opening-prologue-trailer-render-progress')?.remove();
+        if (status.status === 'complete') {
+            if (status.mp4Available) {
+                stopTrailerRenderProgressWatch();
+                overlayEl?.classList.remove('is-trailer-render-progress', 'is-trailer-composition-paused');
+                overlayEl?.querySelector('#game-opening-prologue-trailer-render-progress')?.remove();
 
-            const cacheToken = status.finishedAt
-                ? `trailer-mp4-${Date.parse(status.finishedAt) || Date.now()}`
-                : TRAILER_MP4_CACHE_BUST;
+                const cacheToken = status.finishedAt
+                    ? `trailer-mp4-${Date.parse(status.finishedAt) || Date.now()}`
+                    : TRAILER_MP4_CACHE_BUST;
 
-            if (await activateTrailerMp4Mode(cacheToken)) {
-                trailerReplayTimeSec = 0;
-                if (trailerMp4VideoEl) {
-                    trailerMp4VideoEl.currentTime = 0;
+                if (await activateTrailerMp4Mode(cacheToken)) {
+                    trailerReplayTimeSec = 0;
+                    if (trailerMp4VideoEl) {
+                        trailerMp4VideoEl.currentTime = 0;
+                    }
+                    updateTrailerPlayerUi();
+                    void tryStartTrailerPlaybackWithOrientation();
                 }
-                updateTrailerPlayerUi();
-                void tryStartTrailerPlaybackWithOrientation();
+            } else {
+                updateTrailerRenderProgressOverlay({
+                    ...status,
+                    percent: 100,
+                    message: 'Render complete — publishing video file…',
+                });
             }
             return;
         }
@@ -4925,6 +4933,16 @@
         if (renderStatus?.status === 'rendering' || renderStatus?.running) {
             enterTrailerReplayMode({ useComposition: false, useAutoplay: false });
             beginTrailerRenderProgressWatch(renderStatus);
+            return Promise.resolve('rendering');
+        }
+
+        if (renderStatus?.status === 'complete' && !renderStatus?.mp4Available) {
+            enterTrailerReplayMode({ useComposition: false, useAutoplay: false });
+            beginTrailerRenderProgressWatch({
+                ...renderStatus,
+                percent: 100,
+                message: 'Render complete — publishing video file…',
+            });
             return Promise.resolve('rendering');
         }
 

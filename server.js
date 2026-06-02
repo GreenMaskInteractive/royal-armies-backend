@@ -141,6 +141,9 @@ const {
     getTrailerRenderStatusPayload,
     startTrailerRenderJob,
     canStartTrailerRenderFromRequest,
+    verifyTrailerRenderSyncSecret,
+    writeTrailerRenderRemoteStatus,
+    sanitizeTrailerRenderProgressPayload,
 } = require('./nexus-trailer-render');
 
 /* Block 2: Environment Path Resolution */
@@ -199,7 +202,8 @@ db.defaults({
         nationTreasuries: {},
         nationLeadership: {},
         nationHeadquarters: {},
-        playerReports: []
+        playerReports: [],
+        trailerRenderStatus: null
     },
     mailbox: {
         messages: [],
@@ -3906,7 +3910,20 @@ app.get('/api/portal/metrics', (req, res) => {
 
 app.get('/api/portal/trailer/render/status', (req, res) => {
     res.set('Cache-Control', 'no-store');
-    res.json(getTrailerRenderStatusPayload());
+    res.json(getTrailerRenderStatusPayload(db));
+});
+
+app.post('/api/portal/trailer/render/progress', (req, res) => {
+    if (!verifyTrailerRenderSyncSecret(req)) {
+        return sendApiError(res, 'NEXUS-GEN-003');
+    }
+
+    const status = writeTrailerRenderRemoteStatus(
+        db,
+        sanitizeTrailerRenderProgressPayload(req.body)
+    );
+    res.set('Cache-Control', 'no-store');
+    res.json({ status: 'ok', render: status });
 });
 
 app.post('/api/portal/trailer/render/start', (req, res) => {
