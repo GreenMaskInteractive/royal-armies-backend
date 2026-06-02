@@ -396,6 +396,15 @@
     transition: none !important;
 }
 
+.game-opening-prologue.is-trailer-scrubbing .game-opening-prologue-trailer-coming-soon {
+    animation: none !important;
+}
+
+.game-opening-prologue.is-trailer-scrubbing .game-opening-prologue-trailer-call,
+.game-opening-prologue.is-trailer-scrubbing .game-opening-prologue-trailer-site {
+    transition: none !important;
+}
+
 .game-opening-prologue.is-trailer-scrubbing .game-opening-prologue-cinematic-shot img {
     animation: none !important;
 }
