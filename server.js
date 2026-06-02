@@ -3133,6 +3133,9 @@ app.use(express.static(PUBLIC_DIR, {
             res.set('X-Robots-Tag', 'noindex, nofollow, noarchive, nosnippet');
             res.set('Cache-Control', 'private, no-store');
         }
+        if (path.basename(filePath) === 'royal-armies-age-of-war-trailer.mp4') {
+            res.set('Cache-Control', 'public, max-age=300, must-revalidate');
+        }
     }
 }));
 
