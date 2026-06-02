@@ -8,7 +8,7 @@
     const DESIGN_WIDTH = 3840;
     const DESIGN_HEIGHT = 2160;
     const DESIGN_SCALE_STYLESHEET_ID = 'ra-design-scale-css';
-    const DESIGN_SCALE_STYLESHEET_HREF = 'rift-design-scale.css?v=design-3840-2160-1';
+    const DESIGN_SCALE_STYLESHEET_HREF = 'rift-design-scale.css?v=design-cursor-fix-1';
     const DESKTOP_SCALE_MIN_WIDTH = 1025;
 
     const CANVAS_SELECTORS = [

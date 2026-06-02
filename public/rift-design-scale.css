@@ -35,8 +35,17 @@ html.ra-design-scale-on .ra-design-surface {
 
 html.ra-design-scale-on #main-dashboard-canvas {
     background-attachment: scroll !important;
+    height: auto !important;
+    min-height: var(--ra-design-height, 2160px) !important;
+    max-height: none !important;
     overflow-y: auto !important;
     overflow-x: hidden !important;
+}
+
+/* Fixed UI layers must sit outside the scaled surface (see custom-cursor.js). */
+html.ra-design-scale-on #royal-armies-custom-cursor,
+html.ra-design-scale-on #cursor-click-fx-layer {
+    transform: none !important;
 }
 
 html.ra-design-scale-on #game-page-canvas::before,

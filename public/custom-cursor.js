@@ -202,8 +202,9 @@
             trackPointer(lastPointerX, lastPointerY);
         }, true);
 
-        document.addEventListener('mouseleave', () => {
+        document.documentElement.addEventListener('mouseleave', (event) => {
             if (!shouldEnableCustomCursor() || pointerButtonHeld) return;
+            if (event.relatedTarget instanceof Node) return;
             hideCursor();
         }, { passive: true });
 
@@ -236,28 +237,47 @@
         if (body) body.style.setProperty('cursor', 'none', 'important');
     }
 
+    function resolveCursorMountRoot() {
+        return document.documentElement || document.body;
+    }
+
+    function reparentCursorOverlay(node) {
+        if (!(node instanceof Element)) return;
+        const mountRoot = resolveCursorMountRoot();
+        if (node.parentElement !== mountRoot) {
+            mountRoot.appendChild(node);
+        }
+    }
+
     function mountCustomCursorElements() {
-        if (cursorShell) return;
+        const existingShell = document.getElementById('royal-armies-custom-cursor');
+        const existingFxLayer = document.getElementById('cursor-click-fx-layer');
+        if (existingShell) cursorShell = existingShell;
+        if (existingFxLayer) clickFxLayer = existingFxLayer;
 
-        cursorShell = document.createElement('div');
-        cursorShell.id = 'royal-armies-custom-cursor';
-        cursorShell.setAttribute('aria-hidden', 'true');
+        if (!cursorShell) {
+            cursorShell = document.createElement('div');
+            cursorShell.id = 'royal-armies-custom-cursor';
+            cursorShell.setAttribute('aria-hidden', 'true');
 
-        const cursorImage = document.createElement('img');
-        cursorImage.src = CURSOR_IMAGE_SRC;
-        cursorImage.width = CURSOR_DISPLAY_PX;
-        cursorImage.height = CURSOR_DISPLAY_PX;
-        cursorImage.alt = '';
-        cursorImage.draggable = false;
-        cursorImage.decoding = 'async';
-        cursorShell.appendChild(cursorImage);
+            const cursorImage = document.createElement('img');
+            cursorImage.src = CURSOR_IMAGE_SRC;
+            cursorImage.width = CURSOR_DISPLAY_PX;
+            cursorImage.height = CURSOR_DISPLAY_PX;
+            cursorImage.alt = '';
+            cursorImage.draggable = false;
+            cursorImage.decoding = 'async';
+            cursorShell.appendChild(cursorImage);
+        }
 
-        clickFxLayer = document.createElement('div');
-        clickFxLayer.id = 'cursor-click-fx-layer';
-        clickFxLayer.setAttribute('aria-hidden', 'true');
+        if (!clickFxLayer) {
+            clickFxLayer = document.createElement('div');
+            clickFxLayer.id = 'cursor-click-fx-layer';
+            clickFxLayer.setAttribute('aria-hidden', 'true');
+        }
 
-        document.body.appendChild(clickFxLayer);
-        document.body.appendChild(cursorShell);
+        reparentCursorOverlay(clickFxLayer);
+        reparentCursorOverlay(cursorShell);
         bindCursorListeners();
     }
 
