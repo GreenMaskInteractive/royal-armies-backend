@@ -191,16 +191,7 @@ function buildTrailerMusicVolumeFilter(musicVolume) {
     const rampDur = Math.max(0.001, tRampEnd - tRampStart);
     const fadeDur = Math.max(0.001, tEnd - tFadeStart);
 
-    const expr = [
-        `if(lt(t,${tRampStart.toFixed(3)}),${baseVol.toFixed(4)}`,
-        `if(lt(t,${tRampEnd.toFixed(3)}),${baseVol.toFixed(4)}+(${(peakVol - baseVol).toFixed(4)})*((t-${tRampStart.toFixed(3)})/${rampDur.toFixed(3)})`,
-        `if(lt(t,${tFadeStart.toFixed(3)}),${peakVol.toFixed(4)}`,
-        `if(lt(t,${tEnd.toFixed(3)}),${peakVol.toFixed(4)}*((${tEnd.toFixed(3)}-t)/${fadeDur.toFixed(3)}),0)`,
-        ')',
-        ')',
-        ')',
-        ')',
-    ].join(',');
+    const expr = `if(lt(t,${tRampStart.toFixed(3)}),${baseVol.toFixed(4)},if(lt(t,${tRampEnd.toFixed(3)}),${baseVol.toFixed(4)}+(${(peakVol - baseVol).toFixed(4)})*((t-${tRampStart.toFixed(3)})/${rampDur.toFixed(3)}),if(lt(t,${tFadeStart.toFixed(3)}),${peakVol.toFixed(4)},if(lt(t,${tEnd.toFixed(3)}),${peakVol.toFixed(4)}*((${tEnd.toFixed(3)}-t)/${fadeDur.toFixed(3)}),0))))`;
 
     return `volume='${expr}':eval=frame`;
 }
