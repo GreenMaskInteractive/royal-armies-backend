@@ -148,6 +148,15 @@
 
         applyStylePatch(docEl, patch);
 
+        if (global.RoyalArmiesDisplayResolution && typeof global.RoyalArmiesDisplayResolution.sync === 'function') {
+            global.RoyalArmiesDisplayResolution.sync({
+                layoutWidth: frame.layoutWidth,
+                layoutHeight: frame.layoutHeight,
+                visualWidth: frame.visualWidth,
+                visualHeight: frame.visualHeight
+            });
+        }
+
         global.document.dispatchEvent(new CustomEvent('royalarmies:viewport-metrics-updated', {
             detail: {
                 layoutWidth: frame.layoutWidth,

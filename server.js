@@ -2504,10 +2504,21 @@ function getDefaultCommanderChronicleXp() {
     };
 }
 
+const COMMANDER_DISPLAY_RESOLUTION_PRESETS = new Set([
+    'auto',
+    '1280x720',
+    '1366x768',
+    '1600x900',
+    '1920x1080',
+    '2560x1440',
+    '3840x2160'
+]);
+
 function getDefaultCommanderPreferences() {
     return {
         uiScale: 1,
         textScale: 1,
+        displayResolution: 'auto',
         highContrast: false,
         masterVol: 1,
         musicVol: 0.5,
@@ -2540,6 +2551,9 @@ function normalizeCommanderPreferences(raw) {
     return {
         uiScale: clampNumber(source.uiScale, 0.5, 2, defaults.uiScale),
         textScale: clampNumber(source.textScale, 0.75, 1.5, defaults.textScale),
+        displayResolution: COMMANDER_DISPLAY_RESOLUTION_PRESETS.has(String(source.displayResolution || '').trim())
+            ? String(source.displayResolution).trim()
+            : defaults.displayResolution,
         highContrast: !!source.highContrast,
         masterVol: clampNumber(source.masterVol, 0, 1, defaults.masterVol),
         musicVol: clampNumber(source.musicVol, 0, 1, defaults.musicVol),

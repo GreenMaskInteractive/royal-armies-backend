@@ -2101,6 +2101,32 @@ div.slot-aura#aura-messages,
     flex-shrink: 0 !important;
 }
 
+.settings-resolution-select {
+    flex: 1;
+    max-width: 100%;
+    min-width: 0;
+    margin: 0;
+    padding: 8px 10px;
+    font-family: 'Cinzel', serif;
+    font-size: 0.82rem;
+    color: #ffd700;
+    background: linear-gradient(135deg, #1e1a12 0%, #110e0a 100%);
+    border: 2px solid #b89030;
+    border-radius: 3px;
+    cursor: pointer;
+}
+
+.settings-resolution-select:focus {
+    outline: none;
+    border-color: #ffd700;
+    box-shadow: 0 0 8px rgba(212, 175, 55, 0.45);
+}
+
+.portal-mobile-setting-locked .settings-resolution-select {
+    opacity: 0.55;
+    cursor: not-allowed;
+}
+
 .settings-hint-line {
     margin: -4px 0 12px 0 !important;
     padding: 0 4px !important;

@@ -104,6 +104,9 @@
         };
         setNum('savedUIScale', prefs.uiScale);
         setNum('savedTextScale', prefs.textScale);
+        if (prefs.displayResolution) {
+            global.localStorage.setItem('savedDisplayResolution', String(prefs.displayResolution).trim());
+        }
         global.localStorage.setItem('savedHighContrast', prefs.highContrast ? 'true' : 'false');
         setNum('savedMasterVol', prefs.masterVol);
         setNum('savedMusicVol', prefs.musicVol);
@@ -145,6 +148,7 @@
             dossier.preferences = {
                 uiScale: parseFloat(global.localStorage.getItem('savedUIScale')) || 1,
                 textScale: parseFloat(global.localStorage.getItem('savedTextScale')) || 1,
+                displayResolution: global.localStorage.getItem('savedDisplayResolution') || 'auto',
                 highContrast: global.localStorage.getItem('savedHighContrast') === 'true',
                 masterVol: parseFloat(global.localStorage.getItem('savedMasterVol')) || 1,
                 musicVol: parseFloat(global.localStorage.getItem('savedMusicVol')) || 0.5,
@@ -179,6 +183,24 @@
             global.stagedTextScale = global.confirmedTextScale;
             if (typeof global.applyTextScaleToDocument === 'function') {
                 global.applyTextScaleToDocument(global.confirmedTextScale, { silent: true });
+            }
+        }
+        if (preferences.displayResolution) {
+            const presetId = String(preferences.displayResolution).trim();
+            try {
+                global.localStorage.setItem('savedDisplayResolution', presetId);
+            } catch (_err) {
+                /* ignore */
+            }
+            if (typeof global.confirmedDisplayResolution !== 'undefined') {
+                global.confirmedDisplayResolution = presetId;
+                global.stagedDisplayResolution = presetId;
+            }
+            if (global.RoyalArmiesDisplayResolution && typeof global.RoyalArmiesDisplayResolution.applyPreset === 'function') {
+                global.RoyalArmiesDisplayResolution.applyPreset(presetId, {
+                    layoutWidth: global.innerWidth,
+                    layoutHeight: global.innerHeight
+                });
             }
         }
         if (typeof global.confirmedMasterVol !== 'undefined') {
@@ -295,6 +317,9 @@
         return {
             uiScale: typeof global.confirmedScale !== 'undefined' ? global.confirmedScale : 1,
             textScale: typeof global.confirmedTextScale !== 'undefined' ? global.confirmedTextScale : 1,
+            displayResolution: global.RoyalArmiesDisplayResolution && typeof global.RoyalArmiesDisplayResolution.readStoredPresetId === 'function'
+                ? global.RoyalArmiesDisplayResolution.readStoredPresetId()
+                : (global.localStorage.getItem('savedDisplayResolution') || 'auto'),
             highContrast: global.document.body.classList.contains('high-contrast-mode'),
             masterVol: typeof global.confirmedMasterVol !== 'undefined' ? global.confirmedMasterVol : 1,
             musicVol: typeof global.confirmedMusicVol !== 'undefined' ? global.confirmedMusicVol : 0.5,

@@ -64,12 +64,43 @@ let stagedSafetyLock = confirmedSafetyLock;
 let confirmedGameChatOpacity = Math.max(15, Math.min(100, parseFloat(localStorage.getItem('savedGameChatOpacity')) || 85));
 let stagedGameChatOpacity = confirmedGameChatOpacity;
 
+function readDisplayResolutionPresetId() {
+    if (appRuntimeGlobal.RoyalArmiesDisplayResolution && typeof appRuntimeGlobal.RoyalArmiesDisplayResolution.readStoredPresetId === 'function') {
+        return appRuntimeGlobal.RoyalArmiesDisplayResolution.readStoredPresetId();
+    }
+    const raw = localStorage.getItem('savedDisplayResolution');
+    return raw && String(raw).trim() ? String(raw).trim() : 'auto';
+}
+
+function getDisplayResolutionLayoutFrame() {
+    return {
+        layoutWidth: window.innerWidth,
+        layoutHeight: window.innerHeight
+    };
+}
+
+let confirmedDisplayResolution = readDisplayResolutionPresetId();
+let stagedDisplayResolution = confirmedDisplayResolution;
+if (typeof window !== 'undefined') {
+    window.confirmedDisplayResolution = confirmedDisplayResolution;
+    window.stagedDisplayResolution = stagedDisplayResolution;
+}
+
+function syncDisplayResolutionGlobals() {
+    if (typeof window === 'undefined') return;
+    window.confirmedDisplayResolution = confirmedDisplayResolution;
+    window.stagedDisplayResolution = stagedDisplayResolution;
+}
+
 // RUN INSTANTLY ON BOOT: Sync visual styles (skip landing index — uses landing-login.css)
 if (document.getElementById('page-landing')) {
     document.documentElement.style.setProperty('--text-scale', String(confirmedTextScale));
 } else {
 document.documentElement.style.setProperty('--ui-scale', confirmedScale); 
     applyTextScaleToDocument(confirmedTextScale, { silent: true });
+    if (appRuntimeGlobal.RoyalArmiesDisplayResolution && typeof appRuntimeGlobal.RoyalArmiesDisplayResolution.applyPreset === 'function') {
+        appRuntimeGlobal.RoyalArmiesDisplayResolution.applyPreset(confirmedDisplayResolution, getDisplayResolutionLayoutFrame());
+    }
 }
 if (localStorage.getItem('savedHighContrast') === 'true') { 
     document.body.classList.add('high-contrast-mode'); 
@@ -2783,6 +2814,22 @@ const nationLore = {
                         </div>
 
                         <div class="settings-group">
+                            <label class="settings-label" for="display-resolution-select">Display Resolution</label>
+                            <div class="settings-right-wrapper">
+                                <select id="display-resolution-select" class="settings-resolution-select" onchange="stageDisplayResolution(this.value)">
+                                    <option value="auto">Auto (monitor native)</option>
+                                    <option value="1280x720">1280 × 720 (HD)</option>
+                                    <option value="1366x768">1366 × 768 (WXGA)</option>
+                                    <option value="1600x900">1600 × 900 (HD+)</option>
+                                    <option value="1920x1080">1920 × 1080 (Full HD)</option>
+                                    <option value="2560x1440">2560 × 1440 (QHD)</option>
+                                    <option value="3840x2160">3840 × 2160 (4K UHD)</option>
+                                </select>
+                            </div>
+                        </div>
+                        <p class="settings-hint-line">Scales the game layout to match a target desktop resolution. Interface Scaling adjusts UI elements separately.</p>
+
+                        <div class="settings-group">
                             <label class="settings-label">Interface Scaling</label>
                             <div class="settings-right-wrapper">
                                 <input type="range" min="0.5" max="1.2" step="0.1" value="1" id="ui-scale-slider" oninput="stageUIScale(this.value)">
@@ -3858,6 +3905,8 @@ function loadLore(type, customMount) {
                             if (hcCheck) hcCheck.checked = document.body.classList.contains('high-contrast-mode');
                             const fontCheck = document.getElementById('font-toggle-check');
                             if (fontCheck) fontCheck.checked = isDyslexiaFontEnabled();
+                            const resolutionSelect = document.getElementById('display-resolution-select');
+                            if (resolutionSelect) resolutionSelect.value = confirmedDisplayResolution;
                             if (typeof applyPortalMobileVisualSettingsRestrictions === 'function') {
                                 applyPortalMobileVisualSettingsRestrictions();
                             }
@@ -3950,15 +3999,18 @@ function applyPortalMobileVisualSettingsRestrictions() {
     const uiSlider = document.getElementById('ui-scale-slider');
     const textSlider = document.getElementById('text-scale-slider');
     const hcCheck = document.getElementById('hc-toggle-check');
+    const resolutionSelect = document.getElementById('display-resolution-select');
     const uiGroup = uiSlider?.closest('.settings-group');
     const textGroup = textSlider?.closest('.settings-group');
     const hcGroup = hcCheck?.closest('.settings-group');
+    const resolutionGroup = resolutionSelect?.closest('.settings-group');
     const previewBackdrop = document.getElementById('preview-backdrop-zone');
 
     const scaleLockTitle = 'Interface scaling is adjusted automatically on mobile.';
     const hcLockTitle = 'High contrast is not used on the mobile portal layout.';
+    const resolutionLockTitle = 'Display resolution uses your device screen on mobile.';
 
-    [uiGroup, textGroup, hcGroup].forEach((groupEl) => {
+    [uiGroup, textGroup, hcGroup, resolutionGroup].forEach((groupEl) => {
         if (!groupEl) return;
         groupEl.classList.remove('portal-mobile-setting-locked');
         groupEl.removeAttribute('title');
@@ -3968,6 +4020,7 @@ function applyPortalMobileVisualSettingsRestrictions() {
         if (uiSlider) uiSlider.disabled = false;
         if (textSlider) textSlider.disabled = false;
         if (hcCheck) hcCheck.disabled = false;
+        if (resolutionSelect) resolutionSelect.disabled = false;
         return;
     }
 
@@ -4003,6 +4056,35 @@ function applyPortalMobileVisualSettingsRestrictions() {
 
     document.body.classList.remove('high-contrast-mode');
     if (previewBackdrop) previewBackdrop.classList.remove('preview-hc-active');
+
+    if (resolutionSelect) {
+        resolutionSelect.disabled = true;
+        resolutionSelect.value = 'auto';
+        stagedDisplayResolution = 'auto';
+        confirmedDisplayResolution = 'auto';
+        if (appRuntimeGlobal.RoyalArmiesDisplayResolution && typeof appRuntimeGlobal.RoyalArmiesDisplayResolution.applyPreset === 'function') {
+            appRuntimeGlobal.RoyalArmiesDisplayResolution.applyPreset('auto', getDisplayResolutionLayoutFrame());
+        }
+        if (resolutionGroup) {
+            resolutionGroup.classList.add('portal-mobile-setting-locked');
+            resolutionGroup.setAttribute('title', resolutionLockTitle);
+        }
+    }
+}
+
+function stageDisplayResolution(presetId) {
+    if (isPortalMobileVisualSettingsLayout()) return;
+    hasUnsavedChanges = true;
+    if (appRuntimeGlobal.RoyalArmiesDisplayResolution && typeof appRuntimeGlobal.RoyalArmiesDisplayResolution.normalizePresetId === 'function') {
+        stagedDisplayResolution = appRuntimeGlobal.RoyalArmiesDisplayResolution.normalizePresetId(presetId);
+    } else {
+        stagedDisplayResolution = String(presetId || 'auto').trim() || 'auto';
+    }
+    if (appRuntimeGlobal.RoyalArmiesDisplayResolution && typeof appRuntimeGlobal.RoyalArmiesDisplayResolution.stagePreset === 'function') {
+        appRuntimeGlobal.RoyalArmiesDisplayResolution.stagePreset(stagedDisplayResolution, getDisplayResolutionLayoutFrame());
+    }
+    syncDisplayResolutionGlobals();
+    document.dispatchEvent(new CustomEvent('royalarmies:viewport-resync-request'));
 }
 
 function stageTextScale(val) {
@@ -4401,6 +4483,14 @@ function saveSettings() {
         confirmedPings = stagedPings; 
         confirmedSafetyLock = stagedSafetyLock; 
         confirmedGameChatOpacity = stagedGameChatOpacity;
+        confirmedDisplayResolution = stagedDisplayResolution;
+
+        if (appRuntimeGlobal.RoyalArmiesDisplayResolution && typeof appRuntimeGlobal.RoyalArmiesDisplayResolution.confirmPreset === 'function') {
+            appRuntimeGlobal.RoyalArmiesDisplayResolution.confirmPreset(confirmedDisplayResolution, getDisplayResolutionLayoutFrame());
+        } else {
+            localStorage.setItem('savedDisplayResolution', confirmedDisplayResolution);
+        }
+        syncDisplayResolutionGlobals();
 
         if (appRuntimeGlobal.RoyalArmiesGameChat && typeof appRuntimeGlobal.RoyalArmiesGameChat.applyPanelOpacity === 'function') {
             appRuntimeGlobal.RoyalArmiesGameChat.applyPanelOpacity(confirmedGameChatOpacity, {
@@ -4509,9 +4599,16 @@ function revertSettings() {
         confirmedSafetyLock = "Double-Click"; stagedSafetyLock = "Double-Click"; 
         confirmedGameChatOpacity = 85;
         stagedGameChatOpacity = 85;
+        confirmedDisplayResolution = 'auto';
+        stagedDisplayResolution = 'auto';
         
         document.documentElement.style.setProperty('--ui-scale', 1); 
         localStorage.clear(); 
+
+        if (appRuntimeGlobal.RoyalArmiesDisplayResolution && typeof appRuntimeGlobal.RoyalArmiesDisplayResolution.applyPreset === 'function') {
+            appRuntimeGlobal.RoyalArmiesDisplayResolution.applyPreset('auto', getDisplayResolutionLayoutFrame());
+        }
+        syncDisplayResolutionGlobals();
         
         // 2. RE-SYNC ACTIVE VIEW SLIDERS IF RENDERED ON THE MONITOR (UPDATED FOR BACKGROUND MUSIC)
         const scaleSlider = document.getElementById('ui-scale-slider'); 
@@ -4522,6 +4619,9 @@ function revertSettings() {
 
         const textScaleLabel = document.getElementById('text-scale-value');
         if (textScaleLabel) textScaleLabel.innerText = '100%';
+
+        const resolutionSelect = document.getElementById('display-resolution-select');
+        if (resolutionSelect) resolutionSelect.value = 'auto';
         
         const label = document.getElementById('scale-value'); 
         if (label) label.innerText = "100%"; 
@@ -4591,6 +4691,7 @@ window.resolveGamePageHandoffUrl = resolveGamePageHandoffUrl;
 window.enforceActiveAgePortalLock = enforceActiveAgePortalLock;
 window.applyProfileRankResetButtonState = applyProfileRankResetButtonState;
 window.applyPortalMobileVisualSettingsRestrictions = applyPortalMobileVisualSettingsRestrictions;
+window.stageDisplayResolution = stageDisplayResolution;
 window.beginCommanderAgeResetSession = beginCommanderAgeResetSession;
 window.ensureCommanderAgeResetSessionContinuity = ensureCommanderAgeResetSessionContinuity;
 window.canUseCommanderReset = canUseCommanderReset;
