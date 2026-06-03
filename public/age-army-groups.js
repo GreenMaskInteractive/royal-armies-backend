@@ -427,12 +427,14 @@
                 actions.appendChild(escortCheck);
             }
 
-            const viewBtn = global.document.createElement('button');
-            viewBtn.type = 'button';
-            viewBtn.className = 'age-army-groups-member-btn';
-            viewBtn.textContent = 'View army';
-            viewBtn.dataset.armyView = member.username;
-            actions.appendChild(viewBtn);
+            if (!member.isSelf) {
+                const viewBtn = global.document.createElement('button');
+                viewBtn.type = 'button';
+                viewBtn.className = 'age-army-groups-member-btn';
+                viewBtn.textContent = 'View army';
+                viewBtn.dataset.armyView = member.username;
+                actions.appendChild(viewBtn);
+            }
 
             if (group.canManageMembers && !member.isLeader) {
                 const kickBtn = global.document.createElement('button');
@@ -974,10 +976,18 @@
 
     async function viewMemberArmy(targetUsername) {
         const username = resolveUsername();
-        if (!username || !targetUsername) return;
+        const target = String(targetUsername || '').trim();
+        if (!username || !target) return;
+
+        const selfKey = username.toLowerCase();
+        if (target.toLowerCase() === selfKey) {
+            showFeedback('View your own army from the Barracks or Garrison page.', true);
+            return;
+        }
+
         try {
             const response = await fetch(
-                resolveApiUrl(`${API_BASE}/member-army?username=${encodeURIComponent(username)}&targetUsername=${encodeURIComponent(targetUsername)}`),
+                resolveApiUrl(`${API_BASE}/member-army?username=${encodeURIComponent(username)}&targetUsername=${encodeURIComponent(target)}`),
                 resolveApiFetchInit()
             );
             const data = await parseResponse(response);

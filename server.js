@@ -5214,10 +5214,16 @@ app.get('/api/portal/age/army-groups', (req, res) => {
 });
 
 function resolveArmyGroupMemberRank(username) {
-    const normalized = resolveLedgerCommanderUsername(username);
-    if (!normalized) return 1;
-    const commander = db.get('commanders').find({ username: normalized }).value();
+    const commander = findCommanderByUsername(username);
     return Math.max(1, Math.floor(Number(commander?.rank) || 1));
+}
+
+function armyGroupRosterIncludesMember(memberUsernames, username) {
+    const needle = String(username || '').trim().toLowerCase();
+    if (!needle) return false;
+    return (Array.isArray(memberUsernames) ? memberUsernames : []).some(
+        (entry) => String(entry || '').trim().toLowerCase() === needle
+    );
 }
 
 function respondArmyGroupsPayload(res, gameNation, commander, username, state, extra = {}) {
@@ -5849,13 +5855,21 @@ app.get('/api/portal/age/army-groups/member-army', (req, res) => {
         return sendApiError(res, 'NEXUS-GEN-002');
     }
 
-    const commander = db.get('commanders').find({ username }).value();
+    if (username.toLowerCase() === targetUsername.toLowerCase()) {
+        return sendApiError(
+            res,
+            'NEXUS-GEN-005',
+            'View your own army from the Barracks or Garrison page.'
+        );
+    }
+
+    const commander = findCommanderByUsername(username);
     if (!commander) return sendApiError(res, 'NEXUS-GEN-004');
 
     const gameNation = getCouncilBoardStorageKey(resolveCouncilBoardNationKey(commander));
     if (!gameNation) return sendApiError(res, 'GAME_NATION_REQUIRED');
 
-    const targetCommander = db.get('commanders').find({ username: targetUsername }).value();
+    const targetCommander = findCommanderByUsername(targetUsername);
     if (!targetCommander) return sendApiError(res, 'NEXUS-GEN-004');
 
     const state = readNationArmyGroupsForNation(gameNation);
@@ -5863,8 +5877,8 @@ app.get('/api/portal/age/army-groups/member-army', (req, res) => {
     const access = resolveHeadquartersAccessForCommander(commander);
     const nationCommand = Boolean(access?.leader || access?.viceLeader);
     const sharedRoster = normalized.groups.some(
-        (group) => group.memberUsernames.includes(username)
-            && group.memberUsernames.includes(targetUsername)
+        (group) => armyGroupRosterIncludesMember(group.memberUsernames, username)
+            && armyGroupRosterIncludesMember(group.memberUsernames, targetUsername)
     );
 
     if (!sharedRoster && !nationCommand) {
@@ -5872,13 +5886,13 @@ app.get('/api/portal/age/army-groups/member-army', (req, res) => {
     }
 
     ensureCommanderAgeRoster(targetCommander);
-    const refreshed = db.get('commanders').find({ username: targetUsername }).value();
+    const refreshed = findCommanderByUsername(targetUsername) || targetCommander;
     const roster = buildAgeRosterHudPayload(refreshed);
 
     res.json({
         status: 'ok',
-        username: targetUsername,
-        rank: resolveArmyGroupMemberRank(targetUsername),
+        username: String(refreshed.username || targetUsername).trim(),
+        rank: resolveArmyGroupMemberRank(refreshed.username || targetUsername),
         ...roster
     });
 });
