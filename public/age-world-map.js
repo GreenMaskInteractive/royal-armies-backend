@@ -307,6 +307,7 @@
         if (typeof global.RoyalArmiesAgeWorldPlanOverlay?.syncLayout === 'function') {
             global.RoyalArmiesAgeWorldPlanOverlay.syncLayout();
         }
+        global.dispatchEvent(new CustomEvent('royalarmies:age-map-overlay-layout'));
     }
 
     function syncMapViewBox() {

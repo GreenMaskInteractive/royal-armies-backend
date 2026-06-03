@@ -67,6 +67,8 @@
     let sonarTimers = [];
     let sonarCycleTimer = 0;
     let localSonarActive = false;
+    /** Frozen map coordinates where rescue sonar was activated (stays put when panning/zooming). */
+    let sonarMapAnchor = null;
     let escapeHandler = null;
     let eventsBound = false;
     let createInFlight = false;
@@ -275,6 +277,22 @@
         const rawId = global.RoyalArmiesAgeMovement?.getCatalogCityId?.() || '';
         if (!rawId) return null;
         return cities.find((city) => city.id === rawId) || null;
+    }
+
+    function resolveCatalogCityById(cityId) {
+        const catalog = global.RoyalArmiesAgeWorldMap?.getCatalog?.();
+        const cities = catalog?.cities;
+        if (!Array.isArray(cities)) return null;
+        const needle = String(cityId || '').trim();
+        if (!needle) return null;
+        return cities.find((city) => city.id === needle) || null;
+    }
+
+    function freezeSonarMapAnchor(city) {
+        const x = Number(city?.centroid?.x);
+        const y = Number(city?.centroid?.y);
+        if (!Number.isFinite(x) || !Number.isFinite(y)) return null;
+        return { mapX: x, mapY: y };
     }
 
     function escapeArmyHtml(value) {
@@ -1252,6 +1270,7 @@
             sonarCycleTimer = 0;
         }
         localSonarActive = false;
+        sonarMapAnchor = null;
         els.sonarBtn?.classList.remove('is-sonar-active');
         els.sonarBtn?.setAttribute('aria-pressed', 'false');
         els.sonarBtn?.setAttribute('title', 'Signal for rescue (sonar ping)');
@@ -1269,10 +1288,10 @@
         return { x: 0, y: 0 };
     }
 
-    function resolveSonarCenterPx(city) {
-        if (!city?.centroid) return null;
-        const center = mapPointToFrame(city.centroid.x, city.centroid.y);
-        const east = mapPointToFrame(city.centroid.x + 1, city.centroid.y);
+    function resolveSonarCenterPx(anchor) {
+        if (!anchor) return null;
+        const center = mapPointToFrame(anchor.mapX, anchor.mapY);
+        const east = mapPointToFrame(anchor.mapX + 1, anchor.mapY);
         const pxPerUnit = Math.hypot(east.x - center.x, east.y - center.y) || 1;
         return {
             x: center.x,
@@ -1281,10 +1300,29 @@
         };
     }
 
-    function syncSonarBeacon(city) {
-        if (!els.sonarLayer) return;
-        const centerPx = resolveSonarCenterPx(city);
+    function applySonarElementPosition(el, centerPx) {
+        if (!el || !centerPx) return;
+        el.style.left = `${centerPx.x}px`;
+        el.style.top = `${centerPx.y}px`;
+        el.style.setProperty('--sonar-max-radius', `${centerPx.maxRadiusPx}px`);
+    }
+
+    function syncSonarOverlayPositions() {
+        if (!els.sonarLayer || !sonarMapAnchor) return;
+        const centerPx = resolveSonarCenterPx(sonarMapAnchor);
         if (!centerPx) return;
+
+        const beacon = els.sonarLayer.querySelector('.age-army-groups-sonar-beacon');
+        if (beacon) applySonarElementPosition(beacon, centerPx);
+        els.sonarLayer.querySelectorAll('.age-army-groups-sonar-ring').forEach((ring) => {
+            applySonarElementPosition(ring, centerPx);
+        });
+        els.sonarLayer.style.setProperty('--sonar-beacon-x', `${centerPx.x}px`);
+        els.sonarLayer.style.setProperty('--sonar-beacon-y', `${centerPx.y}px`);
+    }
+
+    function syncSonarBeacon() {
+        if (!els.sonarLayer) return;
 
         let beacon = els.sonarLayer.querySelector('.age-army-groups-sonar-beacon');
         if (!beacon) {
@@ -1299,16 +1337,17 @@
             els.sonarLayer.appendChild(beacon);
         }
 
-        beacon.style.left = `${centerPx.x}px`;
-        beacon.style.top = `${centerPx.y}px`;
-        beacon.style.setProperty('--sonar-max-radius', `${centerPx.maxRadiusPx}px`);
-        els.sonarLayer.style.setProperty('--sonar-beacon-x', `${centerPx.x}px`);
-        els.sonarLayer.style.setProperty('--sonar-beacon-y', `${centerPx.y}px`);
+        syncSonarOverlayPositions();
     }
 
-    function emitSonarPing(city) {
-        if (!els.sonarLayer || !city?.centroid) return;
-        const centerPx = resolveSonarCenterPx(city);
+    function syncSonarMapLayout() {
+        if (!localSonarActive || !sonarMapAnchor) return;
+        syncSonarOverlayPositions();
+    }
+
+    function emitSonarPing() {
+        if (!els.sonarLayer || !sonarMapAnchor) return;
+        const centerPx = resolveSonarCenterPx(sonarMapAnchor);
         if (!centerPx) return;
 
         [0, 1, 2].forEach((wave) => {
@@ -1317,25 +1356,27 @@
                 ring.className = 'age-army-groups-sonar-ring';
                 if (wave === 1) ring.classList.add('age-army-groups-sonar-ring--echo');
                 if (wave === 2) ring.classList.add('age-army-groups-sonar-ring--echo-deep');
-                ring.style.left = `${centerPx.x}px`;
-                ring.style.top = `${centerPx.y}px`;
-                ring.style.setProperty('--sonar-max-radius', `${centerPx.maxRadiusPx}px`);
+                applySonarElementPosition(ring, centerPx);
                 els.sonarLayer.appendChild(ring);
                 sonarTimers.push(global.setTimeout(() => ring.remove(), SONAR_RING_LIFETIME_MS));
             }, wave * 220));
         });
     }
 
-    function runSonarBurst(city, timing) {
+    function runSonarBurst(timing) {
         const pingGapMs = timing?.pingGapMs || 900;
         const pingsPerCycle = timing?.pingsPerCycle || 3;
         for (let i = 0; i < pingsPerCycle; i += 1) {
-            sonarTimers.push(global.setTimeout(() => emitSonarPing(city), i * pingGapMs));
+            sonarTimers.push(global.setTimeout(() => emitSonarPing(), i * pingGapMs));
         }
     }
 
     function startLocalSonarSession(city, timing) {
+        const anchor = freezeSonarMapAnchor(city);
+        if (!anchor) return;
+
         clearSonarTimers();
+        sonarMapAnchor = anchor;
         localSonarActive = true;
         els.sonarBtn?.classList.add('is-sonar-active');
         els.sonarBtn?.setAttribute('aria-pressed', 'true');
@@ -1344,12 +1385,12 @@
             els.sonarLayer.classList.add('is-active');
             els.sonarLayer.setAttribute('aria-hidden', 'false');
         }
-        syncSonarBeacon(city);
+        syncSonarBeacon();
 
         const cycleMs = timing?.cycleMs || 8000;
         const sessionMs = timing?.sessionMs || (30 * 60 * 1000);
-        runSonarBurst(city, timing);
-        sonarCycleTimer = global.setInterval(() => runSonarBurst(city, timing), cycleMs);
+        runSonarBurst(timing);
+        sonarCycleTimer = global.setInterval(() => runSonarBurst(timing), cycleMs);
         sonarTimers.push(global.setTimeout(() => {
             clearSonarTimers();
             showFeedback('Rescue sonar ended.', false);
@@ -1362,7 +1403,7 @@
         const sessionIsSelf = Boolean(session && session.username === self);
 
         if (sessionIsSelf && !localSonarActive) {
-            const city = resolvePlayerCity();
+            const city = resolveCatalogCityById(session.cityId) || resolvePlayerCity();
             if (city) {
                 startLocalSonarSession(city, payload.sonarTiming);
             }
@@ -1459,6 +1500,8 @@
         global.addEventListener('royalarmies:age-movement-updated', () => {
             if (workspaceOpen) refreshRoster();
         });
+
+        global.addEventListener('royalarmies:age-map-overlay-layout', syncSonarMapLayout);
     }
 
     function startRefreshLoop() {
