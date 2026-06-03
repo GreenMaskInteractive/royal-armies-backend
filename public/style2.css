@@ -22911,7 +22911,9 @@ body.is-rift-discoveries-workspace-open {
 
 .age-army-groups-tab {
     position: relative;
+    order: 1;
     flex: 0 0 var(--war-room-tab-height);
+    flex-shrink: 0;
     align-self: flex-start;
     z-index: 3;
     pointer-events: auto;
@@ -22988,11 +22990,6 @@ body.is-rift-discoveries-workspace-open {
         opacity 0.34s ease,
         padding 0.4s ease,
         border-color 0.4s ease;
-}
-
-.age-army-groups-tab {
-    order: 1;
-    flex-shrink: 0;
 }
 
 .age-war-room-slide.is-open .age-army-groups-workspace,
