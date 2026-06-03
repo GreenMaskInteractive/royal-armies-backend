@@ -13400,10 +13400,14 @@ body.developer-maintenance-alert-active #page-landing {
     flex: 0 0 auto;
 }
 
-/* Reserve bottom-right corner so title/status and schedule do not crowd the edit control */
+/* Reserve top-right corner so title/status do not crowd the edit control */
 .age-council-board-header:has(.age-council-board-edit-btn:not([hidden])) {
-    padding-right: 50px;
-    padding-bottom: 44px;
+    padding-right: 58px;
+    padding-bottom: 18px;
+}
+
+.age-council-board-header:has(.age-council-board-edit-btn:not([hidden])) .age-council-board-title-row {
+    padding-right: 6px;
 }
 
 .age-council-board-title-row {
