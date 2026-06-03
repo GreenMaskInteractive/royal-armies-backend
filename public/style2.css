@@ -3609,13 +3609,15 @@ body.is-terms-gate-active #main-portal-dynamic-viewport {
     text-align: center !important;
 }
 
-#royal-armies-portal-alert-modal.is-update-underway {
+#royal-armies-portal-alert-modal.is-update-underway,
+#royal-armies-portal-alert-modal.is-update-complete {
     background:
         radial-gradient(ellipse at center, rgba(24, 18, 10, 0.5) 0%, rgba(0, 0, 0, 0.84) 72%) !important;
     backdrop-filter: blur(3px) !important;
 }
 
-#royal-armies-portal-alert-modal.is-update-underway .portal-alert-bezel--age-update {
+#royal-armies-portal-alert-modal.is-update-underway .portal-alert-bezel--age-update,
+#royal-armies-portal-alert-modal.is-update-complete .portal-alert-bezel--age-update {
     background-color: transparent !important;
     background-image: none !important;
     border: 1px solid rgba(184, 144, 48, 0.55) !important;
@@ -3630,9 +3632,29 @@ body.is-terms-gate-active #main-portal-dynamic-viewport {
         0 0 40px rgba(255, 190, 60, 0.08) !important;
 }
 
-#royal-armies-portal-alert-modal.is-update-underway .portal-alert-header--notice {
+#royal-armies-portal-alert-modal.is-update-underway .portal-alert-header--notice,
+#royal-armies-portal-alert-modal.is-update-complete .portal-alert-header--complete {
     font-family: 'Cinzel', serif !important;
     text-transform: uppercase !important;
+}
+
+#royal-armies-portal-alert-modal.is-update-complete .portal-alert-header--complete {
+    color: #9fe8a8 !important;
+    letter-spacing: 0.08em !important;
+}
+
+#royal-armies-portal-alert-modal.is-update-complete .portal-alert-bezel--age-update {
+    border-color: rgba(120, 200, 140, 0.55) !important;
+    box-shadow:
+        inset 0 1px 0 rgba(180, 255, 200, 0.14),
+        inset 0 0 0 1px rgba(120, 220, 150, 0.08),
+        0 22px 56px rgba(0, 0, 0, 0.72),
+        0 0 36px rgba(80, 200, 120, 0.12) !important;
+}
+
+#royal-armies-portal-alert-modal.is-update-complete .modal-alert-body {
+    color: #d8f0dc !important;
+    text-align: center !important;
 }
 
 #royal-armies-portal-alert-modal.is-update-underway .modal-alert-body {

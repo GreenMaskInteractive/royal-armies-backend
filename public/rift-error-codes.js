@@ -630,6 +630,12 @@
             title: 'NOTICE!',
             message: 'Update Underway. Site Disruption Imminent.',
             category: 'network'
+        },
+        'RIFT-NET-003': {
+            http: 0,
+            title: 'UPDATE COMPLETE',
+            message: 'Royal Armies is back online. Thank you for your patience.',
+            category: 'network'
         }
     };
 

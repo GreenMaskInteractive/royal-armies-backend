@@ -72,7 +72,7 @@
         modal.classList.add('main-portal-modal-hidden');
         modal.setAttribute('aria-hidden', 'true');
         modal.dataset.updateUnderway = 'false';
-        modal.classList.remove('is-update-underway');
+        modal.classList.remove('is-update-underway', 'is-update-complete');
 
         const countdownWrap = document.getElementById('portal-alert-update-countdown');
         if (countdownWrap) countdownWrap.hidden = true;
@@ -109,11 +109,14 @@
             modal.dataset.mode = isConfirm ? 'confirm' : 'alert';
 
             const isUpdateUnderway = config.updateUnderway === true;
+            const isUpdateComplete = config.updateComplete === true;
+            const useAgeUpdatePanel = isUpdateUnderway || isUpdateComplete;
             modal.classList.toggle('is-update-underway', isUpdateUnderway);
+            modal.classList.toggle('is-update-complete', isUpdateComplete);
 
             const bezel = modal.querySelector('.portal-alert-bezel');
             if (bezel) {
-                bezel.className = isUpdateUnderway
+                bezel.className = useAgeUpdatePanel
                     ? 'portal-alert-bezel portal-alert-bezel--age-update'
                     : 'portal-overlay-modal-bezel portal-alert-bezel bordered-modal-panel';
             }
@@ -122,7 +125,9 @@
             titleEl.className = `modal-alert-header ${
                 isConfirm
                     ? 'portal-alert-header--confirm'
-                    : (isUpdateUnderway ? 'portal-alert-header--notice' : 'portal-alert-header--info')
+                    : (isUpdateComplete
+                        ? 'portal-alert-header--complete'
+                        : (isUpdateUnderway ? 'portal-alert-header--notice' : 'portal-alert-header--info'))
             }`;
 
             const message = normalizePortalAlertMessage(config.message);
@@ -215,6 +220,25 @@
         if (countdownHint && opts.hint != null) countdownHint.textContent = String(opts.hint);
     }
 
+    function showPortalUpdateCompleteAlert(config) {
+        const opts = config && typeof config === 'object' ? config : {};
+        const title = opts.title || 'UPDATE COMPLETE';
+        const message = opts.message || 'Royal Armies is back online. Thank you for your patience.';
+
+        if (shouldSuppressPortalAlertPopup(message, title)) {
+            console.warn('[Royal Armies — local dev] Update complete suppressed:', title, message);
+            return Promise.resolve(undefined);
+        }
+
+        return openPortalAlertModal({
+            mode: 'alert',
+            updateComplete: true,
+            message,
+            title,
+            confirmLabel: opts.confirmLabel || 'Continue'
+        }).then(() => undefined);
+    }
+
     function showPortalUpdateUnderwayAlert(config) {
         const opts = config && typeof config === 'object' ? config : {};
         const title = opts.title || 'NOTICE!';
@@ -252,6 +276,7 @@
     window.showPortalAlert = showPortalAlert;
     window.showPortalConfirm = showPortalConfirm;
     window.showPortalUpdateUnderwayAlert = showPortalUpdateUnderwayAlert;
+    window.showPortalUpdateCompleteAlert = showPortalUpdateCompleteAlert;
     window.setPortalUpdateUnderwayCountdown = setPortalUpdateUnderwayCountdown;
     window.closePortalAlertModal = closePortalAlertModal;
 

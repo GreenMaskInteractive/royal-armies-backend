@@ -93,11 +93,43 @@
     const UPDATE_GATEWAY_HINT_ACTIVE = 'Estimated time until the 502 Bad Gateway page may appear.';
     const UPDATE_GATEWAY_HINT_NOW = 'The 502 Bad Gateway page may appear at any moment. The site will refresh automatically.';
 
+    const UPDATE_UNDERWAY_SESSION_KEY = 'riftUpdateUnderwayActive';
+
     let updateUnderwayNoticeShown = false;
+    let updateAwaitingRecoveryConfirm = false;
+    let updateCompleteNoticeShown = false;
     let updateUnderwayCountdownTimer = null;
     let updateUnderwayGatewayPollTimer = null;
     let updateUnderwayCountdownEndsAt = 0;
     let updateGatewayReloadTriggered = false;
+
+    function markUpdateUnderwaySessionActive() {
+        try {
+            global.sessionStorage.setItem(UPDATE_UNDERWAY_SESSION_KEY, '1');
+        } catch (_err) {
+            /* ignore */
+        }
+    }
+
+    function clearUpdateUnderwaySession() {
+        try {
+            global.sessionStorage.removeItem(UPDATE_UNDERWAY_SESSION_KEY);
+        } catch (_err) {
+            /* ignore */
+        }
+    }
+
+    function wasUpdateUnderwaySessionActive() {
+        try {
+            return global.sessionStorage.getItem(UPDATE_UNDERWAY_SESSION_KEY) === '1';
+        } catch (_err) {
+            return false;
+        }
+    }
+
+    function shouldTrackUpdateRecovery() {
+        return updateAwaitingRecoveryConfirm || wasUpdateUnderwaySessionActive();
+    }
 
     function isServerUpdateDowntime(response, payload, err) {
         if (typeof global.isLocalDevelopmentHost === 'function' && global.isLocalDevelopmentHost()) {
@@ -213,6 +245,7 @@
     function triggerUpdateGateway502Refresh() {
         if (updateGatewayReloadTriggered) return;
         updateGatewayReloadTriggered = true;
+        markUpdateUnderwaySessionActive();
         stopUpdateUnderwayWatchers();
         if (typeof global.closePortalAlertModal === 'function') {
             global.closePortalAlertModal(true);
@@ -252,8 +285,24 @@
 
         if (sawHealthyResponse) {
             markServerReachableAgain();
-            stopUpdateUnderwayWatchers();
         }
+    }
+
+    async function probeSiteHealthyOnce() {
+        const urls = resolveUpdateGatewayProbeUrls();
+        for (const url of urls) {
+            try {
+                const response = await global.fetch(url, {
+                    method: 'GET',
+                    cache: 'no-store',
+                    credentials: 'include'
+                });
+                if (response.ok) return true;
+            } catch (_err) {
+                /* try next probe */
+            }
+        }
+        return false;
     }
 
     function isStandalone502GatewayDocument() {
@@ -296,10 +345,77 @@
         probeUpdateGatewayState();
     }
 
-    function markServerReachableAgain() {
+    async function showRiftUpdateCompleteNotice() {
+        if (updateCompleteNoticeShown) return;
+
+        if (typeof global.isLocalDevelopmentHost === 'function' && global.isLocalDevelopmentHost()) {
+            clearUpdateUnderwaySession();
+            updateAwaitingRecoveryConfirm = false;
+            return;
+        }
+
+        if (shouldSuppressRiftErrorPopup()) {
+            console.warn('[RIFT — local dev] Update complete popup suppressed.');
+            clearUpdateUnderwaySession();
+            updateAwaitingRecoveryConfirm = false;
+            return;
+        }
+
+        const normalized = buildErrorPayload('RIFT-NET-003');
+        updateCompleteNoticeShown = true;
+        clearUpdateUnderwaySession();
+        updateAwaitingRecoveryConfirm = false;
         updateUnderwayNoticeShown = false;
-        updateGatewayReloadTriggered = false;
+
+        if (typeof global.closePortalAlertModal === 'function') {
+            global.closePortalAlertModal(true);
+        }
+
+        if (typeof global.showPortalUpdateCompleteAlert === 'function') {
+            await global.showPortalUpdateCompleteAlert({
+                title: normalized.title,
+                message: normalized.message,
+                confirmLabel: 'Continue'
+            });
+            return;
+        }
+
+        if (typeof global.showPortalAlert === 'function') {
+            await global.showPortalAlert(normalized.message, normalized.title);
+            return;
+        }
+
+        global.alert(`${normalized.title}\n\n${normalized.message}`);
+    }
+
+    function markServerReachableAgain() {
+        const shouldConfirmRecovery = shouldTrackUpdateRecovery();
         stopUpdateUnderwayWatchers();
+        updateGatewayReloadTriggered = false;
+
+        if (shouldConfirmRecovery) {
+            void showRiftUpdateCompleteNotice();
+            return;
+        }
+
+        updateUnderwayNoticeShown = false;
+        updateAwaitingRecoveryConfirm = false;
+        clearUpdateUnderwaySession();
+    }
+
+    async function checkUpdateRecoveryOnLoad() {
+        if (typeof global.isLocalDevelopmentHost === 'function' && global.isLocalDevelopmentHost()) {
+            return;
+        }
+        if (!wasUpdateUnderwaySessionActive()) return;
+
+        const healthy = await probeSiteHealthyOnce();
+        if (healthy) {
+            await showRiftUpdateCompleteNotice();
+        } else {
+            updateAwaitingRecoveryConfirm = true;
+            startUpdateUnderwayWatchers();
+        }
     }
 
     async function showRiftUpdateUnderwayNotice(fallbackTitle) {
@@ -314,6 +430,9 @@
         }
 
         updateUnderwayNoticeShown = true;
+        updateAwaitingRecoveryConfirm = true;
+        updateCompleteNoticeShown = false;
+        markUpdateUnderwaySessionActive();
 
         if (shouldSuppressRiftErrorPopup()) {
             console.warn('[RIFT — local dev] Update notice suppressed:', normalized.message);
@@ -390,4 +509,12 @@
     global.markRoyalArmiesServerReachableAgain = markServerReachableAgain;
 
     startStandalone502GatewayAutoRefresh();
+
+    if (global.document.readyState === 'loading') {
+        global.document.addEventListener('DOMContentLoaded', () => {
+            global.setTimeout(() => void checkUpdateRecoveryOnLoad(), 400);
+        }, { once: true });
+    } else {
+        global.setTimeout(() => void checkUpdateRecoveryOnLoad(), 400);
+    }
 })(window);
