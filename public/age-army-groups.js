@@ -414,12 +414,6 @@
             els.nameInput?.focus();
             return;
         }
-        if (name.length < 2) {
-            showFeedback('Army name must be at least 2 characters.', true);
-            els.nameInput?.focus();
-            return;
-        }
-
         const cityId = resolveCreateCityId();
         if (!cityId) {
             showFeedback('Place your commander on the map before creating an army group.', true);

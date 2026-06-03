@@ -226,8 +226,8 @@ function validateCreateArmyGroup({ type, name, access, existingGroups }) {
     if (!normalizedType) {
         return { errorCode: 'NEXUS-GAME-010', message: 'Army group type is required.' };
     }
-    if (!normalizedName || normalizedName.length < 2) {
-        return { errorCode: 'NEXUS-GAME-011', message: 'Army group name must be at least 2 characters.' };
+    if (!normalizedName || normalizedName.length < 1) {
+        return { errorCode: 'NEXUS-GAME-011', message: 'Army group name is required.' };
     }
     if (!canUseArmyGroupType(normalizedType, access)) {
         return { errorCode: 'NEXUS-GAME-005', message: 'You cannot create that army group type.' };
