@@ -12,12 +12,12 @@
     <link rel="stylesheet" href="mobile-responsive.css?v=council-room-premium-2">
     <link rel="stylesheet" href="dev-page-navigator.css">
     <link rel="stylesheet" href="custom-cursor.css?v=finger-press-7">
+    <link rel="stylesheet" href="style-age-map-only.css?v=age-map-only-1">
 </head>
-<body id="age-page-canvas" class="age-page-canvas game-page-canvas" data-age-slug="alpha">
+<body id="age-page-canvas" class="age-page-canvas game-page-canvas age-map-shell-only" data-age-slug="alpha" data-age-map-only="true" data-age-view="map">
 <script src="rift-viewport-metrics.js?v=rift-iife-fix-1"></script>
 <script src="rift-display-resolution.js?v=rift-iife-fix-1"></script>
 <script src="rift-page-loading-gate.js?v=page-loading-gate-1"></script>
-<script src="page-route-transition.js?v=route-fade-1"></script>
 
     <main class="age-page-main" aria-label="Age Alpha — World Map">
         <div class="age-map-shell" id="age-map-shell">
@@ -953,7 +953,7 @@
                     <div class="age-map-bottom-dock-controls">
                     <div class="portal-mobile-nav-bar-clip game-page-mobile-commander-clip age-page-mobile-commander-clip" id="game-mobile-commander-clip">
                         <div class="portal-mobile-commander-block game-page-mobile-commander-block" id="game-mobile-commander-block">
-                            <button type="button" class="portal-mobile-commander-trigger" id="game-mobile-commander-toggle" aria-expanded="false" aria-controls="game-mobile-commander-submenu" onclick="toggleGameMobileCommanderSubmenu(event)">
+                            <button type="button" class="portal-mobile-commander-trigger" id="game-mobile-commander-toggle" aria-expanded="false" aria-controls="game-mobile-commander-submenu">
                                 <img class="portal-mobile-commander-avatar" id="game-mobile-nav-avatar" src="images/avatars/commanderprofile01.png" alt="">
                                 <span class="portal-mobile-commander-identity">
                                     <strong class="portal-mobile-commander-name" id="game-mobile-nav-username">Loading...</strong>
@@ -961,16 +961,16 @@
                                 <span class="portal-mobile-nav-chevron portal-mobile-commander-chevron" aria-hidden="true">▾</span>
                             </button>
                             <div class="portal-mobile-commander-submenu" id="game-mobile-commander-submenu" hidden>
-                                <button type="button" class="portal-mobile-submenu-item" onclick="gameMobileNavCommanderAction('view-profile', event)">View Profile Card</button>
-                                <button type="button" class="portal-mobile-submenu-item" onclick="gameMobileNavCommanderAction('edit-profile', event)">Edit Profile</button>
-                                <button type="button" class="portal-mobile-submenu-item portal-mobile-submenu-item-messages" id="game-mobile-messages-btn" onclick="gameMobileNavCommanderAction('messages', event)">
+                                <button type="button" class="portal-mobile-submenu-item">View Profile Card</button>
+                                <button type="button" class="portal-mobile-submenu-item">Edit Profile</button>
+                                <button type="button" class="portal-mobile-submenu-item portal-mobile-submenu-item-messages" id="game-mobile-messages-btn">
                                     <span class="dropdown-messages-label">Messages</span>
                                     <span id="game-mobile-messages-unread" class="dropdown-messages-unread-count" hidden></span>
                                 </button>
-                                <button type="button" class="portal-mobile-submenu-item" onclick="gameMobileNavCommanderAction('settings', event)">Settings</button>
-                                <button type="button" class="portal-mobile-submenu-item" onclick="gameMobileNavCommanderAction('chronicles-battle-pass', event)">The Chronicles Battle Pass</button>
-                                <button type="button" id="game-mobile-dropdown-return-portal-btn" class="portal-mobile-submenu-item portal-mobile-submenu-item-return-portal" onclick="gameMobileNavCommanderAction('return-to-portal', event)">Return to Age Portal</button>
-                                <button type="button" id="game-mobile-dropdown-logout-btn" class="portal-mobile-submenu-item portal-mobile-submenu-item-logout" onclick="gameMobileNavCommanderAction('logout', event)">Log Out</button>
+                                <button type="button" class="portal-mobile-submenu-item">Settings</button>
+                                <button type="button" class="portal-mobile-submenu-item">The Chronicles Battle Pass</button>
+                                <button type="button" id="game-mobile-dropdown-return-portal-btn" class="portal-mobile-submenu-item portal-mobile-submenu-item-return-portal">Return to Age Portal</button>
+                                <button type="button" id="game-mobile-dropdown-logout-btn" class="portal-mobile-submenu-item portal-mobile-submenu-item-logout">Log Out</button>
                             </div>
                         </div>
                     </div>
@@ -1000,16 +1000,16 @@
                                     </div>
                                 </div>
                                 <div class="portal-commander-identity-menu" id="portal-desktop-commander-menu" role="menu" hidden>
-                                    <button type="button" class="dropdown-action-item dropdown-action-item-view-profile" role="menuitem" onclick="portalDesktopCommanderMenuAction('view-profile', event)">View Profile Card</button>
-                                    <button type="button" class="dropdown-action-item" role="menuitem" onclick="portalDesktopCommanderMenuAction('edit-profile', event)">Edit Profile</button>
-                                    <button type="button" id="nav-dropdown-messages-btn" class="dropdown-action-item dropdown-action-item-messages" role="menuitem" onclick="portalDesktopCommanderMenuAction('messages', event)">
+                                    <button type="button" class="dropdown-action-item dropdown-action-item-view-profile" role="menuitem">View Profile Card</button>
+                                    <button type="button" class="dropdown-action-item" role="menuitem">Edit Profile</button>
+                                    <button type="button" id="nav-dropdown-messages-btn" class="dropdown-action-item dropdown-action-item-messages" role="menuitem">
                                         <span class="dropdown-messages-label">Messages</span>
                                         <span id="nav-messages-unread-count" class="dropdown-messages-unread-count" hidden></span>
                                     </button>
-                                    <button type="button" class="dropdown-action-item" role="menuitem" onclick="portalDesktopCommanderMenuAction('settings', event)">Settings</button>
-                                    <button type="button" class="dropdown-action-item dropdown-action-item-chronicles-bp" role="menuitem" onclick="portalDesktopCommanderMenuAction('chronicles-battle-pass', event)">The Chronicles Battle Pass</button>
-                                    <button type="button" id="game-nav-dropdown-return-portal-btn" class="dropdown-action-item dropdown-action-item-return-portal" role="menuitem" onclick="portalDesktopCommanderMenuAction('return-to-portal', event)">Return to Age Portal</button>
-                                    <button type="button" id="game-nav-dropdown-logout-btn" class="dropdown-action-item dropdown-action-item-logout" role="menuitem" onclick="portalDesktopCommanderMenuAction('logout', event)">Log Out</button>
+                                    <button type="button" class="dropdown-action-item" role="menuitem">Settings</button>
+                                    <button type="button" class="dropdown-action-item dropdown-action-item-chronicles-bp" role="menuitem">The Chronicles Battle Pass</button>
+                                    <button type="button" id="game-nav-dropdown-return-portal-btn" class="dropdown-action-item dropdown-action-item-return-portal" role="menuitem">Return to Age Portal</button>
+                                    <button type="button" id="game-nav-dropdown-logout-btn" class="dropdown-action-item dropdown-action-item-logout" role="menuitem">Log Out</button>
                                 </div>
                             </div>
                         </div>
@@ -1543,9 +1543,9 @@
     <audio id="age-council-alert-sfx" src="audio/uiselect.wav" preload="auto"></audio>
 
     <!-- --- Section: Public Commander Profile Card (avatar menu -> View Profile) --- -->
-    <div id="public-commander-profile-overlay" class="public-profile-overlay" aria-hidden="true" onclick="closePublicCommanderProfileCard(event)">
-        <div class="public-profile-card-dialog" role="dialog" aria-modal="true" aria-labelledby="public-profile-card-title" onclick="event.stopPropagation()">
-            <button type="button" class="public-profile-close-btn" onclick="closePublicCommanderProfileCard(event)" aria-label="Close profile card">
+    <div id="public-commander-profile-overlay" class="public-profile-overlay" aria-hidden="true">
+        <div class="public-profile-card-dialog" role="dialog" aria-modal="true" aria-labelledby="public-profile-card-title">
+            <button type="button" class="public-profile-close-btn" aria-label="Close profile card">
                 <img src="images/closebtn.png" alt="" class="public-profile-close-icon">
             </button>
             <div class="public-profile-card-frame">
@@ -1557,14 +1557,14 @@
 
     <div id="commander-hub-modal" class="commander-hub-overlay" aria-hidden="true">
         <div class="commander-hub-dialog" role="dialog" aria-modal="true" aria-label="Account hub">
-            <button type="button" class="commander-hub-close-btn" onclick="closeCommanderHubModal()" aria-label="Close account hub">
+            <button type="button" class="commander-hub-close-btn" aria-label="Close account hub">
                 <img src="images/closebtn.png" alt="" class="commander-hub-close-icon">
             </button>
             <nav class="commander-hub-top-nav" aria-label="Account hub sections">
                 <div class="commander-hub-top-nav-bg" aria-hidden="true"></div>
-                <button type="button" class="commander-hub-top-tab active" data-hub-tab="profile" onclick="handleCommanderHubTopTabClick('profile', event)">Profile</button>
-                <button type="button" class="commander-hub-top-tab" data-hub-tab="messages" onclick="handleCommanderHubTopTabClick('messages', event)">Communication<span class="commander-hub-tab-unread-count" hidden></span></button>
-                <button type="button" class="commander-hub-top-tab" data-hub-tab="settings" onclick="handleCommanderHubTopTabClick('settings', event)">Settings</button>
+                <button type="button" class="commander-hub-top-tab active" data-hub-tab="profile">Profile</button>
+                <button type="button" class="commander-hub-top-tab" data-hub-tab="messages">Communication<span class="commander-hub-tab-unread-count" hidden></span></button>
+                <button type="button" class="commander-hub-top-tab" data-hub-tab="settings">Settings</button>
             </nav>
             <div id="portal-save-confirmation-toast" class="portal-save-confirmation-toast" aria-live="polite" hidden></div>
             <div class="commander-hub-body-frame">
@@ -1578,8 +1578,8 @@
                     <div id="commander-hub-body" class="commander-hub-body"></div>
                     <div id="commander-hub-profile-footer-host" class="commander-hub-profile-footer-host"></div>
                     <div id="commander-hub-settings-action-deck" class="commander-hub-settings-action-deck" hidden>
-                        <button type="button" class="confirm-btn" onclick="saveSettings()">Confirm Changes</button>
-                        <button type="button" class="revert-btn" onclick="revertSettings()">Revert to Defaults</button>
+                        <button type="button" class="confirm-btn">Confirm Changes</button>
+                        <button type="button" class="revert-btn">Revert to Defaults</button>
                     </div>
                 </div>
             </div>
@@ -1683,58 +1683,15 @@
         </div>
     </div>
 
-    <script src="rift-confirm-buttons.js?v=hub-action-btn-compact-1"></script>
+
     <script src="dev-environment.js"></script>
-    <script src="rift-error-codes.js?v=army-group-battle-1"></script>
-    <script src="portal-alerts.js?v=update-complete-notice-1"></script>
-    <script src="rift-error-display.js?v=local-dev-api-quiet-1"></script>
-    <script src="commander-dossier-sync.js?v=commander-rank-pills-1"></script>
-    <script src="rift-ui-sfx.js?v=discovery-wav-sync-1"></script>
-    <script src="rank-data.js?v=commander-rank-pills-1"></script>
-    <script src="rift-commander-rank-titles.js?v=commander-rank-roster-1"></script>
-    <script src="script.js?v=commander-rank-roster-1"></script>
-    <script src="commander-hub.js?v=commander-rank-pills-1"></script>
-    <script src="portal-commander-identity-menu.js?v=nametag-menu-anchor-1"></script>
-    <script src="rift-official-age.js?v=official-age-page-1"></script>
-    <script src="rift-chat-mentions.js?v=age-chat-mentions-1"></script>
-    <script src="rift-amnek-language-network.js?v=amnek-highlands-dialect-1"></script>
-    <script src="game-chat.js?v=local-dev-api-quiet-1"></script>
-    <script src="age-council-board.js?v=local-dev-api-quiet-1"></script>
-    <script src="nexus-player-report-catalog.js?v=report-categories-pbbg-1"></script>
-    <script src="rift-player-report.js?v=age-page-audit-fix-2"></script>
-    <script src="age-movement-panel.js?v=age-page-audit-fix-1"></script>
-    <script src="rift-nation-treasury.js?v=nation-treasury-tip-1"></script>
-    <script src="age-world-water-routes.js?v=cross-border-neighbors-2"></script>
-    <script src="rift-age-gold.js?v=age-gold-sync-1"></script>
-    <script src="rift-age-commander-rank.js?v=commander-rank-hud-1"></script>
-    <script src="rift-age-provisions.js?v=provisions-deplete-1"></script>
-    <script src="rift-age-recruitment.js?v=age-page-audit-fix-2"></script>
-    <script src="rift-player-loc-pins.js?v=player-loc-pins-1"></script>
-    <script src="age-world-map.js?v=age-page-audit-fix-1"></script>
-    <script src="rift-age-movement.js?v=age-page-audit-fix-1"></script>
-    <script src="age-army-groups.js?v=sonar-map-anchor-1"></script>
-    <script src="age-world-plan-overlay.js?v=hq-clear-plan-fix-1"></script>
-    <script src="age-view-tabs.js?v=age-page-audit-fix-1"></script>
-    <script src="age-nation-hub.js?v=age-page-audit-fix-2"></script>
-    <script src="age-headquarters-planning-map.js?v=hold-sf-mf-staging-1"></script>
-    <script src="age-headquarters.js?v=age-page-audit-fix-1"></script>
-    <script src="age-dispatch-alert.js?v=local-dev-api-quiet-1"></script>
-    <script src="age-chronicles-battle-pass.js?v=bp-premium-badge-1"></script>
-    <script src="age-left-reports-panel.js?v=age-page-audit-fix-1"></script>
-    <script src="age-quick-tips-panel.js?v=quick-tips-panel-1"></script>
-    <script src="age-music-flow.js?v=song-manuscript-catalog-1"></script>
-    <script src="rift-song-manuscript-catalog.js?v=discovery-song-lyrics-1"></script>
-    <script src="rift-discoveries-workspace.js?v=discovery-wav-sync-1"></script>
-    <script src="age-page.js?v=age-page-audit-fix-1"></script>
-    <script src="age-war-ledger.js?v=age-page-audit-fix-1"></script>
-    <script src="rift-unit-purchase-catalog.js?v=age-page-audit-fix-2"></script>
-    <script src="rift-age-guild-training.js?v=age-page-audit-fix-2"></script>
-    <script src="rift-age-unit-evolution.js?v=age-page-audit-fix-2"></script>
-    <script src="age-adventurers-guild.js?v=age-page-audit-fix-1"></script>
-    <script src="age-unit-evolution.js?v=age-page-audit-fix-1"></script>
-    <script src="age-barracks.js?v=age-page-audit-fix-1"></script>
-    <script src="age-records.js?v=age-page-audit-fix-1"></script>
-    <script src="dev-page-navigator.js?v=dev-discovery-toast-preview-1"></script>
-    <script src="custom-cursor.js?v=finger-press-hold-1"></script>
+    <script src="age-world-water-routes.js?v=age-map-only-1"></script>
+    <script src="rift-player-loc-pins.js?v=age-map-only-1"></script>
+    <script src="age-world-map.js?v=age-map-only-1"></script>
+    <script src="rift-age-movement.js?v=age-map-only-1"></script>
+    <script src="age-movement-panel.js?v=age-map-only-1"></script>
+    <script src="age-world-plan-overlay.js?v=age-map-only-1"></script>
+    <script src="age-map-only-page.js?v=age-map-only-1"></script>
+
 </body>
 </html>

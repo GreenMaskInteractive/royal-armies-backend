@@ -1,0 +1,76 @@
+/**
+ * FLEX — Age Alpha map-only shell (HUD/city layouts visible; only world map is interactive).
+ */
+
+body.age-map-shell-only {
+    overflow: hidden;
+}
+
+body.age-map-shell-only#age-page-canvas,
+body.age-map-shell-only[data-age-view="map"] {
+    --age-map-only-inert: none;
+}
+
+body.age-map-shell-only .age-map-hud--top,
+body.age-map-shell-only .age-map-hud--left,
+body.age-map-shell-only .age-map-hud--right,
+body.age-map-shell-only .age-map-hud--bottom,
+body.age-map-shell-only .age-mobile-hud-controls,
+body.age-map-shell-only .age-nation-hub,
+body.age-map-shell-only .age-city-info-panel,
+body.age-map-shell-only .age-left-reports-panel,
+body.age-map-shell-only .age-quick-tips-panel,
+body.age-map-shell-only .age-age-center-modal,
+body.age-map-shell-only .age-war-room-modal,
+body.age-map-shell-only .age-war-ledger-modal,
+body.age-map-shell-only .age-barracks-workspace,
+body.age-map-shell-only .age-unit-evolution-workspace,
+body.age-map-shell-only .age-guild-workspace,
+body.age-map-shell-only .commander-hub-overlay,
+body.age-map-shell-only .public-profile-overlay,
+body.age-map-shell-only .player-report-modal,
+body.age-map-shell-only .age-chronicles-battle-pass-modal,
+body.age-map-shell-only #age-rank-promotion-overlay,
+body.age-map-shell-only #age-council-board-editor-overlay {
+    pointer-events: none !important;
+}
+
+body.age-map-shell-only #age-world-map,
+body.age-map-shell-only #age-world-map * {
+    pointer-events: auto;
+}
+
+body.age-map-shell-only #age-world-map-settlement-bg {
+    display: none !important;
+}
+
+body.age-map-shell-only #age-world-map-svg,
+body.age-map-shell-only #age-world-map-canvas,
+body.age-map-shell-only #age-world-map-highlight-canvas,
+body.age-map-shell-only .age-world-map-labels-host,
+body.age-map-shell-only .age-world-map-player-pins,
+body.age-map-shell-only .age-world-map-terrain-controls,
+body.age-map-shell-only .age-world-map-continent-label,
+body.age-map-shell-only #age-world-map-plan-overlay {
+    display: revert;
+    visibility: visible;
+}
+
+body.age-map-shell-only .age-settlement-menu-panel,
+body.age-map-shell-only .age-city-info-panel {
+    pointer-events: none !important;
+}
+
+body.age-map-shell-only button,
+body.age-map-shell-only a[href],
+body.age-map-shell-only [role="button"],
+body.age-map-shell-only [role="menuitem"],
+body.age-map-shell-only [role="tab"] {
+    cursor: default;
+}
+
+body.age-map-shell-only #age-world-map button,
+body.age-map-shell-only #age-world-map [role="button"],
+body.age-map-shell-only .age-world-map-terrain-controls button {
+    cursor: pointer;
+}
