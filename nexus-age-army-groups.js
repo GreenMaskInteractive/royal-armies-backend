@@ -241,16 +241,104 @@ function validateCreateArmyGroup({ type, name, access, existingGroups }) {
     return { type: normalizedType, name: normalizedName };
 }
 
-function buildArmyGroupsApiPayload(state, access, username) {
+function findArmyGroupIndex(state, groupId) {
+    const normalized = normalizeNationArmyGroupsState(state);
+    const idx = normalized.groups.findIndex((group) => group.id === groupId);
+    if (idx < 0) {
+        return { errorCode: 'NEXUS-GAME-013', message: 'Army group not found.' };
+    }
+    return { normalized, idx, group: normalized.groups[idx] };
+}
+
+function validateRenameArmyGroup({ name, group, existingGroups }) {
+    const normalizedName = normalizeGroupName(name);
+    if (!normalizedName || normalizedName.length < 1) {
+        return { errorCode: 'NEXUS-GAME-011', message: 'Army group name is required.' };
+    }
+    const duplicate = (existingGroups || []).some(
+        (entry) => entry.id !== group.id
+            && entry.type === group.type
+            && entry.name.toLowerCase() === normalizedName.toLowerCase()
+    );
+    if (duplicate) {
+        return { errorCode: 'NEXUS-GAME-012', message: 'An army group with that name already exists for this category.' };
+    }
+    return { name: normalizedName };
+}
+
+function rebuildArmyGroupMembers(group, memberUsernames) {
+    const members = [];
+    const seen = new Set();
+    (memberUsernames || []).forEach((entry) => {
+        const member = normalizeUsername(entry);
+        if (!member || seen.has(member)) return;
+        seen.add(member);
+        members.push(member);
+    });
+    if (!members.length) return null;
+
+    let leaderUsername = normalizeUsername(group.leaderUsername);
+    if (!members.includes(leaderUsername)) {
+        leaderUsername = members[0];
+    }
+
+    const ordered = [leaderUsername, ...members.filter((member) => member !== leaderUsername)];
+    return {
+        ...group,
+        leaderUsername,
+        memberUsernames: ordered
+    };
+}
+
+function selectMergeEligibleMembers(memberUsernames, targetGroup, resolveRank) {
+    const targetLeaderRank = resolveRank(targetGroup.leaderUsername);
+    return (memberUsernames || []).filter((member) => resolveRank(member) <= targetLeaderRank);
+}
+
+function isNationCommandAccess(access) {
+    return Boolean(access?.leader || access?.viceLeader);
+}
+
+function isMainArmyType(type) {
+    return type === 'main' || type === 'temp-main';
+}
+
+function buildArmyGroupsApiPayload(state, access, username, options = {}) {
     const normalized = normalizeNationArmyGroupsState(state);
     const self = normalizeUsername(username);
+    const resolveRank = typeof options.resolveMemberRank === 'function'
+        ? options.resolveMemberRank
+        : () => 1;
+    const nationCommand = isNationCommandAccess(access);
+
     return {
-        groups: normalized.groups.map((group) => ({
-            ...group,
-            memberCount: group.memberUsernames.length,
-            isMember: self ? group.memberUsernames.includes(self) : false,
-            isLeader: self ? group.leaderUsername === self : false
-        })),
+        groups: normalized.groups.map((group) => {
+            const members = group.memberUsernames.map((memberUsername) => ({
+                username: memberUsername,
+                rank: resolveRank(memberUsername),
+                isLeader: memberUsername === group.leaderUsername,
+                isSelf: Boolean(self && memberUsername === self)
+            }));
+            const isGroupLeader = Boolean(self && group.leaderUsername === self);
+            return {
+                id: group.id,
+                type: group.type,
+                name: group.name,
+                cityId: group.cityId,
+                createdAt: group.createdAt,
+                leaderUsername: group.leaderUsername,
+                leaderRank: resolveRank(group.leaderUsername),
+                memberCount: group.memberUsernames.length,
+                members,
+                isMember: self ? group.memberUsernames.includes(self) : false,
+                isLeader: isGroupLeader,
+                canRename: isGroupLeader,
+                canDismiss: isGroupLeader,
+                canManageMembers: isGroupLeader,
+                canNationCommand: nationCommand,
+                isCommandPost: isMainArmyType(group.type)
+            };
+        }),
         sfLeadCandidates: normalized.sfLeadCandidates,
         sfLeadCandidate: self ? normalized.sfLeadCandidates.includes(self) : false,
         activeSonar: pickActiveSonarForNation(normalized.sonarSessions),
@@ -390,6 +478,280 @@ function applyStartSonar(state, { username, cityId, nowMs = Date.now() }) {
     };
 }
 
+function applyRenameArmyGroup(state, { groupId, username, name }) {
+    const self = normalizeUsername(username);
+    if (!self) return { errorCode: 'NEXUS-GEN-002' };
+
+    const lookup = findArmyGroupIndex(state, groupId);
+    if (lookup.errorCode) return lookup;
+
+    const { normalized, idx, group } = lookup;
+    if (group.leaderUsername !== self) {
+        return { errorCode: 'NEXUS-GEN-005', message: 'Only the army leader can rename this group.' };
+    }
+
+    const validation = validateRenameArmyGroup({
+        name,
+        group,
+        existingGroups: normalized.groups
+    });
+    if (validation.errorCode) return validation;
+
+    const groups = normalized.groups.slice();
+    groups[idx] = { ...group, name: validation.name };
+
+    return {
+        state: {
+            ...normalized,
+            groups: sortArmyGroups(groups),
+            updatedAt: new Date().toISOString()
+        },
+        group: groups[idx]
+    };
+}
+
+function applyDismissArmyGroup(state, { groupId, username }) {
+    const self = normalizeUsername(username);
+    if (!self) return { errorCode: 'NEXUS-GEN-002' };
+
+    const lookup = findArmyGroupIndex(state, groupId);
+    if (lookup.errorCode) return lookup;
+
+    const { normalized, group } = lookup;
+    if (group.leaderUsername !== self) {
+        return { errorCode: 'NEXUS-GEN-005', message: 'Only the army leader can dismiss this group.' };
+    }
+
+    return {
+        state: {
+            ...normalized,
+            groups: normalized.groups.filter((entry) => entry.id !== groupId),
+            updatedAt: new Date().toISOString()
+        },
+        dismissedGroupId: groupId
+    };
+}
+
+function applyKickArmyGroupMember(state, { groupId, username, targetUsername }) {
+    const self = normalizeUsername(username);
+    const target = normalizeUsername(targetUsername);
+    if (!self || !target) return { errorCode: 'NEXUS-GEN-002' };
+
+    const lookup = findArmyGroupIndex(state, groupId);
+    if (lookup.errorCode) return lookup;
+
+    const { normalized, idx, group } = lookup;
+    if (group.leaderUsername !== self) {
+        return { errorCode: 'NEXUS-GEN-005', message: 'Only the army leader can remove members.' };
+    }
+    if (target === group.leaderUsername) {
+        return { errorCode: 'NEXUS-GEN-005', message: 'The army leader cannot be removed while the group exists.' };
+    }
+    if (!group.memberUsernames.includes(target)) {
+        return { errorCode: 'NEXUS-GEN-005', message: 'That commander is not in this army group.' };
+    }
+
+    const remaining = group.memberUsernames.filter((member) => member !== target);
+    const updated = rebuildArmyGroupMembers(group, remaining);
+    const groups = normalized.groups.slice();
+    groups[idx] = updated;
+
+    return {
+        state: {
+            ...normalized,
+            groups: sortArmyGroups(groups),
+            updatedAt: new Date().toISOString()
+        },
+        group: updated,
+        removedUsername: target
+    };
+}
+
+function applyMergeArmyGroupInto(state, {
+    sourceGroupId,
+    targetGroupId,
+    username,
+    resolveRank = () => 1
+}) {
+    const self = normalizeUsername(username);
+    if (!self) return { errorCode: 'NEXUS-GEN-002' };
+    if (sourceGroupId === targetGroupId) {
+        return { errorCode: 'NEXUS-GEN-003', message: 'Choose a different army group to merge into.' };
+    }
+
+    const sourceLookup = findArmyGroupIndex(state, sourceGroupId);
+    if (sourceLookup.errorCode) return sourceLookup;
+    const targetLookup = findArmyGroupIndex(sourceLookup.normalized, targetGroupId);
+    if (targetLookup.errorCode) return targetLookup;
+
+    const source = sourceLookup.group;
+    const target = targetLookup.group;
+    if (source.leaderUsername !== self) {
+        return { errorCode: 'NEXUS-GEN-005', message: 'Only your army leader can merge this group into another.' };
+    }
+
+    const moving = selectMergeEligibleMembers(source.memberUsernames, target, resolveRank);
+    if (!moving.includes(self)) {
+        return {
+            errorCode: 'NEXUS-GEN-005',
+            message: 'Your rank is too high to merge into that army group.'
+        };
+    }
+    if (!moving.length) {
+        return { errorCode: 'NEXUS-GEN-005', message: 'No members qualify to merge into that army group.' };
+    }
+
+    const targetMembers = new Set(target.memberUsernames);
+    moving.forEach((member) => targetMembers.add(member));
+    const targetUpdated = rebuildArmyGroupMembers(target, [...targetMembers]);
+
+    const remaining = source.memberUsernames.filter((member) => !moving.includes(member));
+    let groups = sourceLookup.normalized.groups.slice();
+    groups[targetLookup.idx] = targetUpdated;
+
+    if (!remaining.length) {
+        groups = groups.filter((entry) => entry.id !== sourceGroupId);
+    } else {
+        const sourceUpdated = rebuildArmyGroupMembers(source, remaining);
+        groups[sourceLookup.idx] = sourceUpdated;
+    }
+
+    return {
+        state: {
+            ...sourceLookup.normalized,
+            groups: sortArmyGroups(groups),
+            updatedAt: new Date().toISOString()
+        },
+        movedCount: moving.length,
+        sourceRemoved: !remaining.length
+    };
+}
+
+function applyEscortMembersToCommandPost(state, {
+    sourceGroupId,
+    targetGroupId,
+    memberUsernames,
+    username,
+    access
+}) {
+    const self = normalizeUsername(username);
+    if (!self) return { errorCode: 'NEXUS-GEN-002' };
+    if (!isNationCommandAccess(access)) {
+        return { errorCode: 'NEXUS-GEN-005', message: 'Only the nation leader or vice leader can escort players.' };
+    }
+
+    const sourceLookup = findArmyGroupIndex(state, sourceGroupId);
+    if (sourceLookup.errorCode) return sourceLookup;
+    const targetLookup = findArmyGroupIndex(sourceLookup.normalized, targetGroupId);
+    if (targetLookup.errorCode) return targetLookup;
+
+    const source = sourceLookup.group;
+    const target = targetLookup.group;
+    if (!isMainArmyType(target.type)) {
+        return { errorCode: 'NEXUS-GEN-005', message: 'Players can only be escorted to Main or Temp Main.' };
+    }
+    if (source.id === target.id) {
+        return { errorCode: 'NEXUS-GEN-003', message: 'Choose a different source army group.' };
+    }
+
+    const requested = [];
+    const seen = new Set();
+    (Array.isArray(memberUsernames) ? memberUsernames : []).forEach((entry) => {
+        const member = normalizeUsername(entry);
+        if (!member || seen.has(member)) return;
+        if (!source.memberUsernames.includes(member)) return;
+        seen.add(member);
+        requested.push(member);
+    });
+    if (!requested.length) {
+        return { errorCode: 'NEXUS-GEN-003', message: 'Select at least one player to escort.' };
+    }
+
+    const targetMembers = new Set(target.memberUsernames);
+    requested.forEach((member) => targetMembers.add(member));
+    const targetUpdated = rebuildArmyGroupMembers(target, [...targetMembers]);
+
+    const remaining = source.memberUsernames.filter((member) => !requested.includes(member));
+    let groups = sourceLookup.normalized.groups.slice();
+    groups[targetLookup.idx] = targetUpdated;
+
+    if (!remaining.length) {
+        groups = groups.filter((entry) => entry.id !== sourceGroupId);
+    } else {
+        groups[sourceLookup.idx] = rebuildArmyGroupMembers(source, remaining);
+    }
+
+    return {
+        state: {
+            ...sourceLookup.normalized,
+            groups: sortArmyGroups(groups),
+            updatedAt: new Date().toISOString()
+        },
+        escortedCount: requested.length,
+        sourceRemoved: !remaining.length
+    };
+}
+
+function applyAbsorbArmyGroupInto(state, {
+    sourceGroupId,
+    targetGroupId,
+    username,
+    access,
+    resolveRank = () => 1
+}) {
+    const self = normalizeUsername(username);
+    if (!self) return { errorCode: 'NEXUS-GEN-002' };
+    if (!isNationCommandAccess(access)) {
+        return { errorCode: 'NEXUS-GEN-005', message: 'Only the nation leader or vice leader can absorb an army group.' };
+    }
+    if (sourceGroupId === targetGroupId) {
+        return { errorCode: 'NEXUS-GEN-003', message: 'Choose a different army group to absorb.' };
+    }
+
+    const sourceLookup = findArmyGroupIndex(state, sourceGroupId);
+    if (sourceLookup.errorCode) return sourceLookup;
+    const targetLookup = findArmyGroupIndex(sourceLookup.normalized, targetGroupId);
+    if (targetLookup.errorCode) return targetLookup;
+
+    const source = sourceLookup.group;
+    const target = targetLookup.group;
+    if (!isMainArmyType(target.type)) {
+        return { errorCode: 'NEXUS-GEN-005', message: 'Army groups can only be absorbed into Main or Temp Main.' };
+    }
+    if (target.leaderUsername !== self) {
+        return { errorCode: 'NEXUS-GEN-005', message: 'You must lead the Main or Temp Main army to absorb another group.' };
+    }
+
+    const moving = selectMergeEligibleMembers(source.memberUsernames, target, resolveRank);
+    if (!moving.length) {
+        return { errorCode: 'NEXUS-GEN-005', message: 'No members from that army qualify for absorption.' };
+    }
+
+    const targetMembers = new Set(target.memberUsernames);
+    moving.forEach((member) => targetMembers.add(member));
+    const targetUpdated = rebuildArmyGroupMembers(target, [...targetMembers]);
+
+    const remaining = source.memberUsernames.filter((member) => !moving.includes(member));
+    let groups = sourceLookup.normalized.groups.slice();
+    groups[targetLookup.idx] = targetUpdated;
+
+    if (!remaining.length) {
+        groups = groups.filter((entry) => entry.id !== sourceGroupId);
+    } else {
+        groups[sourceLookup.idx] = rebuildArmyGroupMembers(source, remaining);
+    }
+
+    return {
+        state: {
+            ...sourceLookup.normalized,
+            groups: sortArmyGroups(groups),
+            updatedAt: new Date().toISOString()
+        },
+        absorbedCount: moving.length,
+        sourceRemoved: !remaining.length
+    };
+}
+
 module.exports = {
     ARMY_GROUP_TYPES,
     ARMY_GROUP_TYPE_LABELS,
@@ -410,5 +772,15 @@ module.exports = {
     applyJoinArmyGroup,
     applyToggleSfLeadCandidate,
     applyStartSonar,
-    pruneSonarSessions
+    pruneSonarSessions,
+    findArmyGroupIndex,
+    validateRenameArmyGroup,
+    applyRenameArmyGroup,
+    applyDismissArmyGroup,
+    applyKickArmyGroupMember,
+    applyMergeArmyGroupInto,
+    applyEscortMembersToCommandPost,
+    applyAbsorbArmyGroupInto,
+    isMainArmyType,
+    isNationCommandAccess
 };

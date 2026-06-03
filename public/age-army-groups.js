@@ -60,6 +60,9 @@
     let escapeHandler = null;
     let eventsBound = false;
     let createInFlight = false;
+    const expandedGroupIds = new Set();
+    let editingNameGroupId = null;
+    let armyViewModalEl = null;
 
     function resolveUsername() {
         const saved = global.localStorage.getItem('activeCommanderUser');
@@ -255,6 +258,50 @@
         return cities.find((city) => city.id === rawId) || null;
     }
 
+    function escapeArmyHtml(value) {
+        return String(value ?? '')
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;');
+    }
+
+    function applyRosterPayload(payload) {
+        rosterPayload = payload;
+        renderRosterList(payload);
+        renderSfLeadVolunteers(payload);
+        updateSfLeadButton(payload);
+        syncDeploymentPinFromRoster(payload);
+    }
+
+    function buildTypePill(type) {
+        const pill = global.document.createElement('span');
+        pill.className = `age-army-groups-type-pill ${TYPE_CLASS[type] || TYPE_CLASS.sf}`;
+        pill.textContent = TYPE_LABELS[type] || type;
+        return pill;
+    }
+
+    function formatMemberLabel(member) {
+        const raw = String(member?.username || '').trim();
+        if (!raw) return '';
+        const display = raw.charAt(0).toUpperCase() + raw.slice(1);
+        if (member?.isSelf) return `${display} (you)`;
+        if (member?.isLeader) return `${display} (leader)`;
+        return display;
+    }
+
+    function listMergeTargetGroups(groups, sourceId) {
+        return (groups || []).filter((entry) => entry.id !== sourceId);
+    }
+
+    function listCommandPostGroups(groups) {
+        return (groups || []).filter((entry) => entry.type === 'main' || entry.type === 'temp-main');
+    }
+
+    function listAbsorbSourceGroups(groups, targetId) {
+        return (groups || []).filter((entry) => entry.id !== targetId && entry.type !== 'main' && entry.type !== 'temp-main');
+    }
+
     function syncDeploymentPinFromRoster(payload) {
         const pins = global.RoyalArmiesPlayerLocPins;
         if (!pins || typeof pins.setDeploymentFromGroupType !== 'function') return;
@@ -268,9 +315,201 @@
         }
     }
 
+    function buildGroupNameHead(group) {
+        const wrap = global.document.createElement('div');
+        wrap.className = 'age-army-groups-row-title-wrap';
+
+        if (editingNameGroupId === group.id) {
+            const input = global.document.createElement('input');
+            input.type = 'text';
+            input.className = 'age-army-groups-row-name-input';
+            input.maxLength = 48;
+            input.value = group.name;
+            input.dataset.armyNameInput = group.id;
+            wrap.appendChild(input);
+            return wrap;
+        }
+
+        const title = global.document.createElement('h3');
+        title.className = 'age-army-groups-row-title';
+        title.textContent = group.name;
+        wrap.appendChild(title);
+        return wrap;
+    }
+
+    function buildMemberPanel(group, allGroups) {
+        const panel = global.document.createElement('div');
+        panel.className = 'age-army-groups-members-panel';
+        panel.id = `age-army-members-${group.id}`;
+        panel.hidden = !expandedGroupIds.has(group.id);
+
+        const list = global.document.createElement('ul');
+        list.className = 'age-army-groups-members-list';
+
+        (group.members || []).forEach((member) => {
+            const item = global.document.createElement('li');
+            item.className = 'age-army-groups-member-item';
+            if (member.isSelf) item.classList.add('is-self');
+
+            const label = global.document.createElement('span');
+            label.className = 'age-army-groups-member-label';
+            label.textContent = `${formatMemberLabel(member)} · Rank ${member.rank || 1}`;
+            item.appendChild(label);
+
+            const actions = global.document.createElement('div');
+            actions.className = 'age-army-groups-member-actions';
+
+            if (group.canNationCommand && !group.isCommandPost && !member.isLeader) {
+                const escortCheck = global.document.createElement('input');
+                escortCheck.type = 'checkbox';
+                escortCheck.className = 'age-army-groups-escort-check';
+                escortCheck.dataset.escortMember = member.username;
+                escortCheck.dataset.escortSource = group.id;
+                escortCheck.setAttribute('aria-label', `Select ${member.username} for escort`);
+                actions.appendChild(escortCheck);
+            }
+
+            const viewBtn = global.document.createElement('button');
+            viewBtn.type = 'button';
+            viewBtn.className = 'age-army-groups-member-btn';
+            viewBtn.textContent = 'View army';
+            viewBtn.dataset.armyView = member.username;
+            actions.appendChild(viewBtn);
+
+            if (group.canManageMembers && !member.isLeader) {
+                const kickBtn = global.document.createElement('button');
+                kickBtn.type = 'button';
+                kickBtn.className = 'age-army-groups-member-btn age-army-groups-member-btn--danger';
+                kickBtn.textContent = 'Kick';
+                kickBtn.dataset.armyKick = group.id;
+                kickBtn.dataset.armyKickTarget = member.username;
+                actions.appendChild(kickBtn);
+            }
+
+            item.appendChild(actions);
+            list.appendChild(item);
+        });
+
+        panel.appendChild(list);
+
+        if (group.canManageMembers) {
+            const mergeBar = global.document.createElement('div');
+            mergeBar.className = 'age-army-groups-panel-bar';
+            const mergeLabel = global.document.createElement('span');
+            mergeLabel.className = 'age-army-groups-panel-bar-label';
+            mergeLabel.textContent = 'Merge this army into';
+            mergeBar.appendChild(mergeLabel);
+
+            const mergeSelect = global.document.createElement('select');
+            mergeSelect.className = 'age-army-groups-panel-select';
+            mergeSelect.dataset.mergeTargetFor = group.id;
+            const defaultOpt = global.document.createElement('option');
+            defaultOpt.value = '';
+            defaultOpt.textContent = 'Choose army…';
+            mergeSelect.appendChild(defaultOpt);
+            listMergeTargetGroups(allGroups, group.id).forEach((target) => {
+                const opt = global.document.createElement('option');
+                opt.value = target.id;
+                opt.textContent = `${TYPE_LABELS[target.type] || target.type} — ${target.name}`;
+                mergeSelect.appendChild(opt);
+            });
+            mergeBar.appendChild(mergeSelect);
+
+            const mergeBtn = global.document.createElement('button');
+            mergeBtn.type = 'button';
+            mergeBtn.className = 'age-army-groups-panel-btn';
+            mergeBtn.textContent = 'Merge';
+            mergeBtn.dataset.armyMerge = group.id;
+            mergeBar.appendChild(mergeBtn);
+            panel.appendChild(mergeBar);
+        }
+
+        if (group.canNationCommand && !group.isCommandPost) {
+            const escortBar = global.document.createElement('div');
+            escortBar.className = 'age-army-groups-panel-bar';
+            const escortLabel = global.document.createElement('span');
+            escortLabel.className = 'age-army-groups-panel-bar-label';
+            escortLabel.textContent = 'Escort selected to';
+            escortBar.appendChild(escortLabel);
+
+            const escortSelect = global.document.createElement('select');
+            escortSelect.className = 'age-army-groups-panel-select';
+            escortSelect.dataset.escortTargetFor = group.id;
+            listCommandPostGroups(allGroups).forEach((target) => {
+                const opt = global.document.createElement('option');
+                opt.value = target.id;
+                opt.textContent = `${TYPE_LABELS[target.type] || target.type} — ${target.name}`;
+                escortSelect.appendChild(opt);
+            });
+            escortBar.appendChild(escortSelect);
+
+            const escortBtn = global.document.createElement('button');
+            escortBtn.type = 'button';
+            escortBtn.className = 'age-army-groups-panel-btn';
+            escortBtn.textContent = 'Escort';
+            escortBtn.dataset.armyEscort = group.id;
+            escortBar.appendChild(escortBtn);
+            panel.appendChild(escortBar);
+        }
+
+        if (group.canNationCommand && group.isCommandPost && group.isLeader) {
+            const absorbBar = global.document.createElement('div');
+            absorbBar.className = 'age-army-groups-panel-bar';
+            const absorbLabel = global.document.createElement('span');
+            absorbLabel.className = 'age-army-groups-panel-bar-label';
+            absorbLabel.textContent = 'Absorb army';
+            absorbBar.appendChild(absorbLabel);
+
+            const absorbSelect = global.document.createElement('select');
+            absorbSelect.className = 'age-army-groups-panel-select';
+            absorbSelect.dataset.absorbSourceFor = group.id;
+            const defaultOpt = global.document.createElement('option');
+            defaultOpt.value = '';
+            defaultOpt.textContent = 'Choose army…';
+            absorbSelect.appendChild(defaultOpt);
+            listAbsorbSourceGroups(allGroups, group.id).forEach((source) => {
+                const opt = global.document.createElement('option');
+                opt.value = source.id;
+                opt.textContent = `${TYPE_LABELS[source.type] || source.type} — ${source.name}`;
+                absorbSelect.appendChild(opt);
+            });
+            absorbBar.appendChild(absorbSelect);
+
+            const absorbBtn = global.document.createElement('button');
+            absorbBtn.type = 'button';
+            absorbBtn.className = 'age-army-groups-panel-btn';
+            absorbBtn.textContent = 'Absorb';
+            absorbBtn.dataset.armyAbsorb = group.id;
+            absorbBar.appendChild(absorbBtn);
+            panel.appendChild(absorbBar);
+        }
+
+        if (group.canDismiss) {
+            const dismissBar = global.document.createElement('div');
+            dismissBar.className = 'age-army-groups-panel-bar age-army-groups-panel-bar--dismiss';
+            const dismissBtn = global.document.createElement('button');
+            dismissBtn.type = 'button';
+            dismissBtn.className = 'age-army-groups-panel-btn age-army-groups-panel-btn--danger';
+            dismissBtn.textContent = 'Dismiss group';
+            dismissBtn.dataset.armyDismiss = group.id;
+            dismissBar.appendChild(dismissBtn);
+            panel.appendChild(dismissBar);
+        }
+
+        return panel;
+    }
+
     function renderRosterList(payload) {
         if (!els.list) return;
         const groups = Array.isArray(payload?.groups) ? payload.groups : [];
+        const knownIds = new Set(groups.map((group) => group.id));
+        expandedGroupIds.forEach((id) => {
+            if (!knownIds.has(id)) expandedGroupIds.delete(id);
+        });
+        if (editingNameGroupId && !knownIds.has(editingNameGroupId)) {
+            editingNameGroupId = null;
+        }
+
         els.list.innerHTML = '';
 
         let previousType = '';
@@ -288,39 +527,75 @@
             const row = global.document.createElement('article');
             row.className = 'age-army-groups-row';
             row.setAttribute('role', 'listitem');
+            row.dataset.groupId = group.id;
             row.classList.add(`age-army-groups-row--${group.type}`);
             if (group.type === 'main') row.classList.add('age-army-groups-row--featured-main');
             if (group.type === 'temp-main') row.classList.add('age-army-groups-row--featured-temp-main');
             if (group.type === 'taxi') row.classList.add('age-army-groups-row--taxi');
+            if (expandedGroupIds.has(group.id)) row.classList.add('is-expanded');
 
-            const title = global.document.createElement('h3');
-            title.className = 'age-army-groups-row-title';
-            title.textContent = group.name;
+            const head = global.document.createElement('div');
+            head.className = 'age-army-groups-row-head';
 
-            const meta = global.document.createElement('p');
-            meta.className = 'age-army-groups-row-meta';
-            meta.textContent = `${TYPE_LABELS[group.type] || group.type} · ${group.memberCount} member${group.memberCount === 1 ? '' : 's'}`;
+            head.appendChild(buildTypePill(group.type));
+            head.appendChild(buildGroupNameHead(group));
 
-            const actions = global.document.createElement('div');
-            actions.className = 'age-army-groups-row-actions';
+            const tools = global.document.createElement('div');
+            tools.className = 'age-army-groups-row-tools';
 
             if (!group.isMember) {
                 const joinBtn = global.document.createElement('button');
                 joinBtn.type = 'button';
                 joinBtn.className = 'age-army-groups-join-btn';
                 joinBtn.textContent = 'Join';
-                joinBtn.addEventListener('click', () => joinArmyGroup(group.id));
-                actions.appendChild(joinBtn);
-            } else {
-                const badge = global.document.createElement('span');
-                badge.className = 'age-army-groups-member-badge';
-                badge.textContent = group.isLeader ? 'Leading' : 'Joined';
-                actions.appendChild(badge);
+                joinBtn.dataset.armyJoin = group.id;
+                tools.appendChild(joinBtn);
             }
 
-            row.appendChild(title);
+            if (group.canRename) {
+                if (editingNameGroupId === group.id) {
+                    const saveBtn = global.document.createElement('button');
+                    saveBtn.type = 'button';
+                    saveBtn.className = 'age-army-groups-icon-btn';
+                    saveBtn.textContent = 'Save';
+                    saveBtn.dataset.armySaveName = group.id;
+                    tools.appendChild(saveBtn);
+
+                    const cancelBtn = global.document.createElement('button');
+                    cancelBtn.type = 'button';
+                    cancelBtn.className = 'age-army-groups-icon-btn';
+                    cancelBtn.textContent = 'Cancel';
+                    cancelBtn.dataset.armyCancelName = group.id;
+                    tools.appendChild(cancelBtn);
+                } else {
+                    const editBtn = global.document.createElement('button');
+                    editBtn.type = 'button';
+                    editBtn.className = 'age-army-groups-icon-btn';
+                    editBtn.textContent = 'Edit';
+                    editBtn.dataset.armyEditName = group.id;
+                    tools.appendChild(editBtn);
+                }
+            }
+
+            const expandBtn = global.document.createElement('button');
+            expandBtn.type = 'button';
+            expandBtn.className = 'age-army-groups-expand-btn';
+            expandBtn.setAttribute('aria-expanded', expandedGroupIds.has(group.id) ? 'true' : 'false');
+            expandBtn.setAttribute('aria-controls', `age-army-members-${group.id}`);
+            expandBtn.dataset.armyExpand = group.id;
+            expandBtn.textContent = '▼';
+            tools.appendChild(expandBtn);
+
+            head.appendChild(tools);
+            row.appendChild(head);
+
+            const meta = global.document.createElement('p');
+            meta.className = 'age-army-groups-row-meta';
+            const count = group.memberCount || 0;
+            meta.textContent = `${count} player${count === 1 ? '' : 's'}`;
             row.appendChild(meta);
-            row.appendChild(actions);
+
+            row.appendChild(buildMemberPanel(group, groups));
             els.list.appendChild(row);
         });
 
@@ -329,6 +604,12 @@
             empty.className = 'age-army-groups-empty';
             empty.textContent = 'There are no army groups yet.';
             els.list.appendChild(empty);
+        }
+
+        if (editingNameGroupId) {
+            const input = els.list.querySelector(`[data-army-name-input="${editingNameGroupId}"]`);
+            input?.focus();
+            input?.select();
         }
     }
 
@@ -405,10 +686,7 @@
             };
             rebuildAllowedTypes();
             applyTypeCycleButton();
-            renderRosterList(payload);
-            renderSfLeadVolunteers(payload);
-            updateSfLeadButton(payload);
-            syncDeploymentPinFromRoster(payload);
+            applyRosterPayload(payload);
             syncSonarFromPayload(payload);
             showFeedback('', false);
         } catch (err) {
@@ -430,12 +708,11 @@
             showFeedback('Commander session required.', true);
             return null;
         }
-        const response = await fetch(resolveApiUrl(path), {
+        const response = await fetch(resolveApiUrl(path), resolveApiFetchInit({
             method: 'POST',
-            credentials: 'same-origin',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ username, ...body })
-        });
+        }));
         return parseResponse(response);
     }
 
@@ -454,6 +731,10 @@
             return;
         }
 
+        if (warnIfApiUnreachable()) {
+            return;
+        }
+
         setCreateSubmitBusy(true);
         showFeedback('Creating army group…', false);
 
@@ -466,11 +747,14 @@
             if (els.nameInput) els.nameInput.value = '';
             setCreatePanelOpen(false);
             showFeedback(`Created ${TYPE_LABELS[selectedType] || selectedType} army “${name}”.`, false);
-            rosterPayload = payload;
-            renderRosterList(payload);
-            syncDeploymentPinFromRoster(payload);
+            const createdId = payload?.group?.id
+                || (Array.isArray(payload?.groups)
+                    ? payload.groups.find((group) => group.name === name && group.type === selectedType)?.id
+                    : null);
+            if (createdId) expandedGroupIds.add(createdId);
+            applyRosterPayload(payload);
         } catch (err) {
-            showFeedback(err.message || 'Could not create army group.', true);
+            showFeedback(formatRosterError(err), true);
         } finally {
             setCreateSubmitBusy(false);
         }
@@ -479,12 +763,322 @@
     async function joinArmyGroup(groupId) {
         try {
             const payload = await postAction(`${API_BASE}/join`, { groupId });
-            rosterPayload = payload;
-            renderRosterList(payload);
-            syncDeploymentPinFromRoster(payload);
+            expandedGroupIds.add(groupId);
+            applyRosterPayload(payload);
             showFeedback('Joined army group.', false);
         } catch (err) {
             showFeedback(err.message || 'Could not join army group.', true);
+        }
+    }
+
+    function toggleGroupExpanded(groupId) {
+        if (expandedGroupIds.has(groupId)) {
+            expandedGroupIds.delete(groupId);
+        } else {
+            expandedGroupIds.add(groupId);
+        }
+        if (rosterPayload) renderRosterList(rosterPayload);
+    }
+
+    function startRenameGroup(groupId) {
+        editingNameGroupId = groupId;
+        if (rosterPayload) renderRosterList(rosterPayload);
+    }
+
+    function cancelRenameGroup() {
+        editingNameGroupId = null;
+        if (rosterPayload) renderRosterList(rosterPayload);
+    }
+
+    async function saveRenameGroup(groupId) {
+        const input = els.list?.querySelector(`[data-army-name-input="${groupId}"]`);
+        const name = String(input?.value || '').trim();
+        if (!name) {
+            showFeedback('Enter a name for this army group.', true);
+            return;
+        }
+        try {
+            const payload = await postAction(`${API_BASE}/rename`, { groupId, name });
+            editingNameGroupId = null;
+            applyRosterPayload(payload);
+            showFeedback('Army name updated.', false);
+        } catch (err) {
+            showFeedback(formatRosterError(err), true);
+        }
+    }
+
+    async function dismissArmyGroup(groupId) {
+        const confirmed = typeof global.showPortalConfirm === 'function'
+            ? await global.showPortalConfirm(
+                'Dismiss this army group? All members will be unassigned from the roster.',
+                { title: 'Dismiss army', confirmLabel: 'Dismiss', cancelLabel: 'Keep' }
+            )
+            : global.confirm('Dismiss this army group?');
+        if (!confirmed) return;
+
+        try {
+            const payload = await postAction(`${API_BASE}/dismiss`, { groupId });
+            expandedGroupIds.delete(groupId);
+            if (editingNameGroupId === groupId) editingNameGroupId = null;
+            applyRosterPayload(payload);
+            showFeedback('Army group dismissed.', false);
+        } catch (err) {
+            showFeedback(formatRosterError(err), true);
+        }
+    }
+
+    async function kickArmyMember(groupId, targetUsername) {
+        const confirmed = typeof global.showPortalConfirm === 'function'
+            ? await global.showPortalConfirm(
+                `Remove ${targetUsername} from this army group?`,
+                { title: 'Remove member', confirmLabel: 'Kick', cancelLabel: 'Cancel' }
+            )
+            : global.confirm(`Remove ${targetUsername}?`);
+        if (!confirmed) return;
+
+        try {
+            const payload = await postAction(`${API_BASE}/kick`, { groupId, targetUsername });
+            applyRosterPayload(payload);
+            showFeedback('Member removed from army group.', false);
+        } catch (err) {
+            showFeedback(formatRosterError(err), true);
+        }
+    }
+
+    function ensureArmyViewModal() {
+        if (armyViewModalEl) return armyViewModalEl;
+
+        armyViewModalEl = global.document.createElement('div');
+        armyViewModalEl.id = 'age-army-groups-army-modal';
+        armyViewModalEl.className = 'age-army-groups-army-modal main-portal-modal-hidden';
+        armyViewModalEl.hidden = true;
+        armyViewModalEl.setAttribute('role', 'dialog');
+        armyViewModalEl.setAttribute('aria-modal', 'true');
+        armyViewModalEl.innerHTML = `
+            <div class="portal-overlay-modal-bezel age-army-groups-army-bezel bordered-modal-panel">
+                <header class="age-army-groups-army-header">
+                    <h3 id="age-army-groups-army-title" class="age-army-groups-army-title">Commander army</h3>
+                    <button type="button" class="age-army-groups-army-close" data-army-view-close aria-label="Close">×</button>
+                </header>
+                <div id="age-army-groups-army-body" class="age-army-groups-army-body"></div>
+            </div>
+        `;
+        armyViewModalEl.addEventListener('click', (event) => {
+            if (event.target === armyViewModalEl) closeArmyViewModal();
+        });
+        armyViewModalEl.querySelector('[data-army-view-close]')?.addEventListener('click', closeArmyViewModal);
+        global.document.body.appendChild(armyViewModalEl);
+        return armyViewModalEl;
+    }
+
+    function closeArmyViewModal() {
+        if (!armyViewModalEl) return;
+        armyViewModalEl.hidden = true;
+        armyViewModalEl.classList.add('main-portal-modal-hidden');
+        armyViewModalEl.setAttribute('aria-hidden', 'true');
+    }
+
+    function renderArmyStacks(ageArmy) {
+        const stacks = Array.isArray(ageArmy) ? ageArmy : [];
+        if (!stacks.length) {
+            return '<p class="age-army-groups-army-empty">No units on record.</p>';
+        }
+        return `<ul class="age-army-groups-army-stacks">${stacks.map((stack) => {
+            const unitId = escapeArmyHtml(stack?.unitId || stack?.id || 'Unit');
+            const qty = Math.max(0, Math.floor(Number(stack?.qty) || 0));
+            const injured = Math.max(0, Math.floor(Number(stack?.injuredQty) || 0));
+            return `<li><span class="age-army-groups-army-unit">${unitId}</span> <span class="age-army-groups-army-qty">${qty} ready</span>${injured > 0 ? ` <span class="age-army-groups-army-injured">(${injured} injured)</span>` : ''}</li>`;
+        }).join('')}</ul>`;
+    }
+
+    function openArmyViewModal(data) {
+        const modal = ensureArmyViewModal();
+        const titleEl = modal.querySelector('#age-army-groups-army-title');
+        const bodyEl = modal.querySelector('#age-army-groups-army-body');
+        const displayName = formatMemberLabel({ username: data.username });
+        if (titleEl) {
+            titleEl.textContent = `${displayName} — Rank ${data.rank || 1}`;
+        }
+        if (bodyEl) {
+            bodyEl.innerHTML = `
+                <p class="age-army-groups-army-summary">${data.unitsTotal || 0} units · ${data.unitsUninjured || 0} ready for battle</p>
+                ${renderArmyStacks(data.ageArmy)}
+            `;
+        }
+        modal.hidden = false;
+        modal.classList.remove('main-portal-modal-hidden');
+        modal.setAttribute('aria-hidden', 'false');
+    }
+
+    async function viewMemberArmy(targetUsername) {
+        const username = resolveUsername();
+        if (!username || !targetUsername) return;
+        try {
+            const response = await fetch(
+                resolveApiUrl(`${API_BASE}/member-army?username=${encodeURIComponent(username)}&targetUsername=${encodeURIComponent(targetUsername)}`),
+                resolveApiFetchInit()
+            );
+            const data = await parseResponse(response);
+            openArmyViewModal(data);
+        } catch (err) {
+            showFeedback(formatRosterError(err), true);
+        }
+    }
+
+    async function mergeGroupInto(sourceGroupId) {
+        const select = els.list?.querySelector(`select[data-merge-target-for="${sourceGroupId}"]`);
+        const targetGroupId = String(select?.value || '').trim();
+        if (!targetGroupId) {
+            showFeedback('Choose an army group to merge into.', true);
+            return;
+        }
+        const confirmed = typeof global.showPortalConfirm === 'function'
+            ? await global.showPortalConfirm(
+                'Merge your army into the selected group? Members above the target leader\'s rank will stay behind.',
+                { title: 'Merge armies', confirmLabel: 'Merge', cancelLabel: 'Cancel' }
+            )
+            : global.confirm('Merge into selected army?');
+        if (!confirmed) return;
+
+        try {
+            const payload = await postAction(`${API_BASE}/merge-into`, { sourceGroupId, targetGroupId });
+            expandedGroupIds.delete(sourceGroupId);
+            expandedGroupIds.add(targetGroupId);
+            applyRosterPayload(payload);
+            showFeedback('Army merge completed.', false);
+        } catch (err) {
+            showFeedback(formatRosterError(err), true);
+        }
+    }
+
+    async function escortSelectedMembers(sourceGroupId) {
+        const targetSelect = els.list?.querySelector(`select[data-escort-target-for="${sourceGroupId}"]`);
+        const targetGroupId = String(targetSelect?.value || '').trim();
+        if (!targetGroupId) {
+            showFeedback('Choose Main or Temp Main to escort players into.', true);
+            return;
+        }
+        const checks = els.list?.querySelectorAll(`input[data-escort-source="${sourceGroupId}"]:checked`) || [];
+        const memberUsernames = [...checks].map((el) => el.dataset.escortMember).filter(Boolean);
+        if (!memberUsernames.length) {
+            showFeedback('Select at least one player to escort.', true);
+            return;
+        }
+
+        try {
+            const payload = await postAction(`${API_BASE}/escort`, {
+                sourceGroupId,
+                targetGroupId,
+                memberUsernames
+            });
+            applyRosterPayload(payload);
+            showFeedback('Players escorted to command post.', false);
+        } catch (err) {
+            showFeedback(formatRosterError(err), true);
+        }
+    }
+
+    async function absorbIntoCommandPost(targetGroupId) {
+        const select = els.list?.querySelector(`select[data-absorb-source-for="${targetGroupId}"]`);
+        const sourceGroupId = String(select?.value || '').trim();
+        if (!sourceGroupId) {
+            showFeedback('Choose an army group to absorb.', true);
+            return;
+        }
+        const confirmed = typeof global.showPortalConfirm === 'function'
+            ? await global.showPortalConfirm(
+                'Absorb the selected army into your command post? Eligible members transfer by rank.',
+                { title: 'Absorb army', confirmLabel: 'Absorb', cancelLabel: 'Cancel' }
+            )
+            : global.confirm('Absorb selected army?');
+        if (!confirmed) return;
+
+        try {
+            const payload = await postAction(`${API_BASE}/absorb`, { sourceGroupId, targetGroupId });
+            expandedGroupIds.delete(sourceGroupId);
+            expandedGroupIds.add(targetGroupId);
+            applyRosterPayload(payload);
+            showFeedback('Army absorbed into command post.', false);
+        } catch (err) {
+            showFeedback(formatRosterError(err), true);
+        }
+    }
+
+    function handleRosterListClick(event) {
+        const expandBtn = event.target.closest('[data-army-expand]');
+        if (expandBtn) {
+            event.preventDefault();
+            toggleGroupExpanded(expandBtn.dataset.armyExpand);
+            return;
+        }
+
+        const joinBtn = event.target.closest('[data-army-join]');
+        if (joinBtn) {
+            event.preventDefault();
+            void joinArmyGroup(joinBtn.dataset.armyJoin);
+            return;
+        }
+
+        const editBtn = event.target.closest('[data-army-edit-name]');
+        if (editBtn) {
+            event.preventDefault();
+            startRenameGroup(editBtn.dataset.armyEditName);
+            return;
+        }
+
+        const saveBtn = event.target.closest('[data-army-save-name]');
+        if (saveBtn) {
+            event.preventDefault();
+            void saveRenameGroup(saveBtn.dataset.armySaveName);
+            return;
+        }
+
+        const cancelBtn = event.target.closest('[data-army-cancel-name]');
+        if (cancelBtn) {
+            event.preventDefault();
+            cancelRenameGroup();
+            return;
+        }
+
+        const dismissBtn = event.target.closest('[data-army-dismiss]');
+        if (dismissBtn) {
+            event.preventDefault();
+            void dismissArmyGroup(dismissBtn.dataset.armyDismiss);
+            return;
+        }
+
+        const kickBtn = event.target.closest('[data-army-kick]');
+        if (kickBtn) {
+            event.preventDefault();
+            void kickArmyMember(kickBtn.dataset.armyKick, kickBtn.dataset.armyKickTarget);
+            return;
+        }
+
+        const viewBtn = event.target.closest('[data-army-view]');
+        if (viewBtn) {
+            event.preventDefault();
+            void viewMemberArmy(viewBtn.dataset.armyView);
+            return;
+        }
+
+        const mergeBtn = event.target.closest('[data-army-merge]');
+        if (mergeBtn) {
+            event.preventDefault();
+            void mergeGroupInto(mergeBtn.dataset.armyMerge);
+            return;
+        }
+
+        const escortBtn = event.target.closest('[data-army-escort]');
+        if (escortBtn) {
+            event.preventDefault();
+            void escortSelectedMembers(escortBtn.dataset.armyEscort);
+            return;
+        }
+
+        const absorbBtn = event.target.closest('[data-army-absorb]');
+        if (absorbBtn) {
+            event.preventDefault();
+            void absorbIntoCommandPost(absorbBtn.dataset.armyAbsorb);
         }
     }
 
@@ -646,6 +1240,13 @@
             void toggleSfLeadCandidate();
         });
         els.sonarBtn?.addEventListener('click', () => triggerSonar());
+        els.list?.addEventListener('click', handleRosterListClick);
+
+        global.document.addEventListener('keydown', (event) => {
+            if (event.key === 'Escape' && armyViewModalEl && !armyViewModalEl.hidden) {
+                closeArmyViewModal();
+            }
+        });
 
         global.addEventListener('royalarmies:age-movement-updated', () => {
             if (workspaceOpen) refreshRoster();

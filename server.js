@@ -101,7 +101,13 @@ const {
     applyJoinArmyGroup,
     applyToggleSfLeadCandidate,
     applyStartSonar,
-    pruneSonarSessions
+    pruneSonarSessions,
+    applyRenameArmyGroup,
+    applyDismissArmyGroup,
+    applyKickArmyGroupMember,
+    applyMergeArmyGroupInto,
+    applyEscortMembersToCommandPost,
+    applyAbsorbArmyGroupInto
 } = require('./nexus-age-army-groups');
 const {
     buildAgeRosterHudPayload,
@@ -5137,7 +5143,9 @@ app.get('/api/portal/age/army-groups', (req, res) => {
 
     const access = resolveHeadquartersAccessForCommander(commander);
     const state = readNationArmyGroupsForNation(gameNation);
-    const payload = buildArmyGroupsApiPayload(state, access, username);
+    const payload = buildArmyGroupsApiPayload(state, access, username, {
+        resolveMemberRank: resolveArmyGroupMemberRank
+    });
     const memberGroup = payload.groups.find((group) => group.isMember);
 
     res.json({
@@ -5147,6 +5155,36 @@ app.get('/api/portal/age/army-groups', (req, res) => {
         deploymentGroupType: memberGroup?.type || ''
     });
 });
+
+function resolveArmyGroupMemberRank(username) {
+    const normalized = resolveLedgerCommanderUsername(username);
+    if (!normalized) return 1;
+    const commander = db.get('commanders').find({ username: normalized }).value();
+    return Math.max(1, Math.floor(Number(commander?.rank) || 1));
+}
+
+function respondArmyGroupsPayload(res, gameNation, commander, username, state, extra = {}) {
+    const access = resolveHeadquartersAccessForCommander(commander);
+    const payload = buildArmyGroupsApiPayload(state, access, username, {
+        resolveMemberRank: resolveArmyGroupMemberRank
+    });
+    const memberGroup = payload.groups.find((group) => group.isMember);
+    res.json({
+        status: 'ok',
+        gameNation,
+        ...payload,
+        deploymentGroupType: memberGroup?.type || '',
+        ...extra
+    });
+}
+
+function writeArmyGroupsNationState(res, gameNation, commander, username, state, extra = {}) {
+    const writeResult = writeNationArmyGroupsForNation(gameNation, state);
+    if (writeResult.errorCode) {
+        return sendStoreError(res, writeResult);
+    }
+    return respondArmyGroupsPayload(res, gameNation, commander, username, writeResult.state, extra);
+}
 
 app.post('/api/portal/age/army-groups/create', (req, res) => {
     const username = resolveLedgerCommanderUsername(req.body?.username || '');
@@ -5202,12 +5240,8 @@ app.post('/api/portal/age/army-groups/create', (req, res) => {
         return sendStoreError(res, writeResult);
     }
 
-    const payload = buildArmyGroupsApiPayload(writeResult.state, access, username);
-    res.json({
-        status: 'ok',
-        gameNation,
-        group: createResult.group,
-        ...payload
+    respondArmyGroupsPayload(res, gameNation, commander, username, writeResult.state, {
+        group: createResult.group
     });
 });
 
@@ -5244,12 +5278,9 @@ app.post('/api/portal/age/army-groups/join', (req, res) => {
         return sendStoreError(res, writeResult);
     }
 
-    res.json({
-        status: 'ok',
-        gameNation,
+    respondArmyGroupsPayload(res, gameNation, commander, username, writeResult.state, {
         group: joinResult.group,
-        alreadyMember: Boolean(joinResult.alreadyMember),
-        ...buildArmyGroupsApiPayload(writeResult.state, access, username)
+        alreadyMember: Boolean(joinResult.alreadyMember)
     });
 });
 
@@ -5281,11 +5312,8 @@ app.post('/api/portal/age/army-groups/sf-lead-candidate', (req, res) => {
         return sendStoreError(res, writeResult);
     }
 
-    res.json({
-        status: 'ok',
-        gameNation,
-        sfLeadCandidate: toggleResult.listed,
-        ...buildArmyGroupsApiPayload(writeResult.state, access, username)
+    respondArmyGroupsPayload(res, gameNation, commander, username, writeResult.state, {
+        sfLeadCandidate: toggleResult.listed
     });
 });
 
@@ -5326,13 +5354,225 @@ app.post('/api/portal/age/army-groups/sonar', (req, res) => {
         return sendStoreError(res, writeResult);
     }
 
+    respondArmyGroupsPayload(res, gameNation, commander, username, writeResult.state, {
+        session: sonarResult.session,
+        alreadyActive: Boolean(sonarResult.alreadyActive)
+    });
+});
+
+app.post('/api/portal/age/army-groups/rename', (req, res) => {
+    const username = resolveLedgerCommanderUsername(req.body?.username || '');
+    if (!username) return sendApiError(res, 'NEXUS-GEN-002');
+
+    const commander = db.get('commanders').find({ username }).value();
+    if (!commander) return sendApiError(res, 'NEXUS-GEN-004');
+
+    const gameNation = getCouncilBoardStorageKey(resolveCouncilBoardNationKey(commander));
+    if (!gameNation) return sendApiError(res, 'GAME_NATION_REQUIRED');
+
+    const groupId = String(req.body?.groupId || '').trim();
+    if (!groupId) return sendApiError(res, 'NEXUS-GEN-003');
+
+    const current = readNationArmyGroupsForNation(gameNation);
+    const renameResult = applyRenameArmyGroup(current, {
+        groupId,
+        username,
+        name: req.body?.name
+    });
+    if (renameResult.errorCode) {
+        return sendApiError(res, renameResult.errorCode, renameResult.message);
+    }
+
+    writeArmyGroupsNationState(res, gameNation, commander, username, renameResult.state, {
+        group: renameResult.group
+    });
+});
+
+app.post('/api/portal/age/army-groups/dismiss', (req, res) => {
+    const username = resolveLedgerCommanderUsername(req.body?.username || '');
+    if (!username) return sendApiError(res, 'NEXUS-GEN-002');
+
+    const commander = db.get('commanders').find({ username }).value();
+    if (!commander) return sendApiError(res, 'NEXUS-GEN-004');
+
+    const gameNation = getCouncilBoardStorageKey(resolveCouncilBoardNationKey(commander));
+    if (!gameNation) return sendApiError(res, 'GAME_NATION_REQUIRED');
+
+    const groupId = String(req.body?.groupId || '').trim();
+    if (!groupId) return sendApiError(res, 'NEXUS-GEN-003');
+
+    const current = readNationArmyGroupsForNation(gameNation);
+    const dismissResult = applyDismissArmyGroup(current, { groupId, username });
+    if (dismissResult.errorCode) {
+        return sendApiError(res, dismissResult.errorCode, dismissResult.message);
+    }
+
+    writeArmyGroupsNationState(res, gameNation, commander, username, dismissResult.state, {
+        dismissedGroupId: dismissResult.dismissedGroupId
+    });
+});
+
+app.post('/api/portal/age/army-groups/kick', (req, res) => {
+    const username = resolveLedgerCommanderUsername(req.body?.username || '');
+    if (!username) return sendApiError(res, 'NEXUS-GEN-002');
+
+    const commander = db.get('commanders').find({ username }).value();
+    if (!commander) return sendApiError(res, 'NEXUS-GEN-004');
+
+    const gameNation = getCouncilBoardStorageKey(resolveCouncilBoardNationKey(commander));
+    if (!gameNation) return sendApiError(res, 'GAME_NATION_REQUIRED');
+
+    const groupId = String(req.body?.groupId || '').trim();
+    const targetUsername = String(req.body?.targetUsername || '').trim();
+    if (!groupId || !targetUsername) return sendApiError(res, 'NEXUS-GEN-003');
+
+    const current = readNationArmyGroupsForNation(gameNation);
+    const kickResult = applyKickArmyGroupMember(current, { groupId, username, targetUsername });
+    if (kickResult.errorCode) {
+        return sendApiError(res, kickResult.errorCode, kickResult.message);
+    }
+
+    writeArmyGroupsNationState(res, gameNation, commander, username, kickResult.state, {
+        group: kickResult.group,
+        removedUsername: kickResult.removedUsername
+    });
+});
+
+app.post('/api/portal/age/army-groups/merge-into', (req, res) => {
+    const username = resolveLedgerCommanderUsername(req.body?.username || '');
+    if (!username) return sendApiError(res, 'NEXUS-GEN-002');
+
+    const commander = db.get('commanders').find({ username }).value();
+    if (!commander) return sendApiError(res, 'NEXUS-GEN-004');
+
+    const gameNation = getCouncilBoardStorageKey(resolveCouncilBoardNationKey(commander));
+    if (!gameNation) return sendApiError(res, 'GAME_NATION_REQUIRED');
+
+    const sourceGroupId = String(req.body?.sourceGroupId || req.body?.groupId || '').trim();
+    const targetGroupId = String(req.body?.targetGroupId || '').trim();
+    if (!sourceGroupId || !targetGroupId) return sendApiError(res, 'NEXUS-GEN-003');
+
+    const current = readNationArmyGroupsForNation(gameNation);
+    const mergeResult = applyMergeArmyGroupInto(current, {
+        sourceGroupId,
+        targetGroupId,
+        username,
+        resolveRank: resolveArmyGroupMemberRank
+    });
+    if (mergeResult.errorCode) {
+        return sendApiError(res, mergeResult.errorCode, mergeResult.message);
+    }
+
+    writeArmyGroupsNationState(res, gameNation, commander, username, mergeResult.state, {
+        movedCount: mergeResult.movedCount,
+        sourceRemoved: mergeResult.sourceRemoved
+    });
+});
+
+app.post('/api/portal/age/army-groups/escort', (req, res) => {
+    const username = resolveLedgerCommanderUsername(req.body?.username || '');
+    if (!username) return sendApiError(res, 'NEXUS-GEN-002');
+
+    const commander = db.get('commanders').find({ username }).value();
+    if (!commander) return sendApiError(res, 'NEXUS-GEN-004');
+
+    const gameNation = getCouncilBoardStorageKey(resolveCouncilBoardNationKey(commander));
+    if (!gameNation) return sendApiError(res, 'GAME_NATION_REQUIRED');
+
+    const sourceGroupId = String(req.body?.sourceGroupId || '').trim();
+    const targetGroupId = String(req.body?.targetGroupId || '').trim();
+    if (!sourceGroupId || !targetGroupId) return sendApiError(res, 'NEXUS-GEN-003');
+
     const access = resolveHeadquartersAccessForCommander(commander);
+    const current = readNationArmyGroupsForNation(gameNation);
+    const escortResult = applyEscortMembersToCommandPost(current, {
+        sourceGroupId,
+        targetGroupId,
+        memberUsernames: req.body?.memberUsernames,
+        username,
+        access
+    });
+    if (escortResult.errorCode) {
+        return sendApiError(res, escortResult.errorCode, escortResult.message);
+    }
+
+    writeArmyGroupsNationState(res, gameNation, commander, username, escortResult.state, {
+        escortedCount: escortResult.escortedCount,
+        sourceRemoved: escortResult.sourceRemoved
+    });
+});
+
+app.post('/api/portal/age/army-groups/absorb', (req, res) => {
+    const username = resolveLedgerCommanderUsername(req.body?.username || '');
+    if (!username) return sendApiError(res, 'NEXUS-GEN-002');
+
+    const commander = db.get('commanders').find({ username }).value();
+    if (!commander) return sendApiError(res, 'NEXUS-GEN-004');
+
+    const gameNation = getCouncilBoardStorageKey(resolveCouncilBoardNationKey(commander));
+    if (!gameNation) return sendApiError(res, 'GAME_NATION_REQUIRED');
+
+    const sourceGroupId = String(req.body?.sourceGroupId || '').trim();
+    const targetGroupId = String(req.body?.targetGroupId || '').trim();
+    if (!sourceGroupId || !targetGroupId) return sendApiError(res, 'NEXUS-GEN-003');
+
+    const access = resolveHeadquartersAccessForCommander(commander);
+    const current = readNationArmyGroupsForNation(gameNation);
+    const absorbResult = applyAbsorbArmyGroupInto(current, {
+        sourceGroupId,
+        targetGroupId,
+        username,
+        access,
+        resolveRank: resolveArmyGroupMemberRank
+    });
+    if (absorbResult.errorCode) {
+        return sendApiError(res, absorbResult.errorCode, absorbResult.message);
+    }
+
+    writeArmyGroupsNationState(res, gameNation, commander, username, absorbResult.state, {
+        absorbedCount: absorbResult.absorbedCount,
+        sourceRemoved: absorbResult.sourceRemoved
+    });
+});
+
+app.get('/api/portal/age/army-groups/member-army', (req, res) => {
+    const username = resolveLedgerCommanderUsername(req.query?.username || '');
+    const targetUsername = resolveLedgerCommanderUsername(req.query?.targetUsername || '');
+    if (!username || !targetUsername) {
+        return sendApiError(res, 'NEXUS-GEN-002');
+    }
+
+    const commander = db.get('commanders').find({ username }).value();
+    if (!commander) return sendApiError(res, 'NEXUS-GEN-004');
+
+    const gameNation = getCouncilBoardStorageKey(resolveCouncilBoardNationKey(commander));
+    if (!gameNation) return sendApiError(res, 'GAME_NATION_REQUIRED');
+
+    const targetCommander = db.get('commanders').find({ username: targetUsername }).value();
+    if (!targetCommander) return sendApiError(res, 'NEXUS-GEN-004');
+
+    const state = readNationArmyGroupsForNation(gameNation);
+    const normalized = normalizeNationArmyGroupsState(state);
+    const access = resolveHeadquartersAccessForCommander(commander);
+    const nationCommand = Boolean(access?.leader || access?.viceLeader);
+    const sharedRoster = normalized.groups.some(
+        (group) => group.memberUsernames.includes(username)
+            && group.memberUsernames.includes(targetUsername)
+    );
+
+    if (!sharedRoster && !nationCommand) {
+        return sendApiError(res, 'NEXUS-GEN-005', 'You cannot view that commander\'s army.');
+    }
+
+    ensureCommanderAgeRoster(targetCommander);
+    const refreshed = db.get('commanders').find({ username: targetUsername }).value();
+    const roster = buildAgeRosterHudPayload(refreshed);
+
     res.json({
         status: 'ok',
-        gameNation,
-        session: sonarResult.session,
-        alreadyActive: Boolean(sonarResult.alreadyActive),
-        ...buildArmyGroupsApiPayload(writeResult.state, access, username)
+        username: targetUsername,
+        rank: resolveArmyGroupMemberRank(targetUsername),
+        ...roster
     });
 });
 
