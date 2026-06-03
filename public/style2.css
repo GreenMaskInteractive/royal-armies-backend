@@ -19661,13 +19661,47 @@ body.is-age-chronicles-battle-pass-open {
     flex-direction: column;
     width: min(920px, 92vw);
     height: min(640px, 82vh);
-    border: 1px solid rgba(184, 144, 48, 0.45);
+    border: 1px solid rgba(184, 144, 48, 0.52);
     border-radius: 10px;
     background:
+        linear-gradient(180deg, rgba(255, 215, 0, 0.05) 0%, transparent 18%),
         radial-gradient(circle at 10% 0%, rgba(255, 200, 96, 0.1) 0%, transparent 40%),
-        linear-gradient(180deg, rgba(24, 18, 12, 0.99) 0%, rgba(6, 5, 4, 0.99) 100%);
-    box-shadow: 0 24px 64px rgba(0, 0, 0, 0.55), inset 0 1px 0 rgba(255, 215, 0, 0.1);
+        linear-gradient(165deg, rgba(28, 22, 14, 0.96) 0%, rgba(6, 5, 4, 0.98) 100%);
+    background-image: none;
+    box-shadow:
+        inset 0 1px 0 rgba(255, 215, 0, 0.1),
+        0 24px 64px rgba(0, 0, 0, 0.55);
     overflow: hidden;
+}
+
+.rift-discoveries-workspace-dialog::before,
+.rift-discoveries-workspace-dialog::after {
+    content: '';
+    position: absolute;
+    width: 18px;
+    height: 18px;
+    border-color: rgba(255, 215, 0, 0.35);
+    border-style: solid;
+    pointer-events: none;
+    z-index: 2;
+}
+
+.rift-discoveries-workspace-dialog::before {
+    top: 8px;
+    left: 8px;
+    border-width: 1px 0 0 1px;
+}
+
+.rift-discoveries-workspace-dialog::after {
+    bottom: 8px;
+    right: 8px;
+    border-width: 0 1px 1px 0;
+}
+
+.rift-discoveries-workspace-header,
+.rift-discoveries-workspace-body {
+    position: relative;
+    z-index: 1;
 }
 
 .rift-discoveries-workspace-header {
@@ -20200,22 +20234,49 @@ body.is-age-chronicles-battle-pass-open {
     }
 }
 
-.rift-discovery-toast-panel {
+.rift-discovery-toast-panel,
+.rift-discovery-toast-panel.bordered-modal-panel {
     position: relative;
     overflow: hidden;
     min-width: min(380px, 100%);
     padding: 22px 26px 20px;
-    border: none !important;
-    border-radius: 0 !important;
-    background-color: rgba(10, 8, 5, 0.96) !important;
-    background-image: url('images/borderedcontainer_thin.png') !important;
-    background-size: 100% 100% !important;
+    border: 1px solid rgba(184, 144, 48, 0.52) !important;
+    border-radius: 10px !important;
+    background-color: transparent !important;
+    background-image:
+        linear-gradient(180deg, rgba(255, 215, 0, 0.06) 0%, transparent 20%),
+        linear-gradient(165deg, rgba(28, 22, 14, 0.97) 0%, rgba(6, 5, 4, 0.99) 100%) !important;
+    background-size: auto !important;
     background-repeat: no-repeat !important;
     box-shadow:
-        0 0 0 1px rgba(255, 215, 0, 0.12),
+        inset 0 1px 0 rgba(255, 215, 0, 0.12),
         0 24px 64px rgba(0, 0, 0, 0.82),
         0 0 48px rgba(255, 190, 60, 0.14) !important;
     text-align: center;
+}
+
+.rift-discovery-toast-panel::before,
+.rift-discovery-toast-panel::after {
+    content: '';
+    position: absolute;
+    width: 18px;
+    height: 18px;
+    border-color: rgba(255, 215, 0, 0.35);
+    border-style: solid;
+    pointer-events: none;
+    z-index: 2;
+}
+
+.rift-discovery-toast-panel::before {
+    top: 8px;
+    left: 8px;
+    border-width: 1px 0 0 1px;
+}
+
+.rift-discovery-toast-panel::after {
+    bottom: 8px;
+    right: 8px;
+    border-width: 0 1px 1px 0;
 }
 
 .rift-discovery-toast-glow {

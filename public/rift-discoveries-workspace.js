@@ -473,7 +473,7 @@
         toast.innerHTML = `
             <div class="rift-discovery-toast-scrim" id="rift-discovery-toast-scrim" aria-hidden="true"></div>
             <div class="rift-discovery-toast-stage" role="dialog" aria-modal="true" aria-labelledby="rift-discovery-toast-title">
-                <div class="rift-discovery-toast-panel bordered-modal-panel">
+                <div class="rift-discovery-toast-panel">
                     <div class="rift-discovery-toast-glow" aria-hidden="true"></div>
                     <div class="rift-discovery-toast-rays" aria-hidden="true"></div>
                     <button type="button" class="rift-discovery-toast-dismiss" id="rift-discovery-toast-dismiss" aria-label="Dismiss discovery notice">×</button>
