@@ -207,7 +207,9 @@
         }
 
         if (item.id === 'age-war-ledger-open') {
+            event.preventDefault();
             closeHub();
+            global.RoyalArmiesAgeViewTabs?.setActiveView?.('headquarters');
             return;
         }
 

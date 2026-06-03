@@ -1,35 +1,68 @@
 /**
- * RIFT — War Ledger panel (nation war history) opened from the Age bottom bar.
+ * RIFT — War Ledger (embedded in Headquarters; legacy modal retained for compatibility).
  */
 (function initAgeWarLedger(global) {
     'use strict';
 
-    const PLACEHOLDER_ENTRIES = [
-        {
-            type: 'notice',
-            title: 'No active wars logged',
-            detail: 'Formal declarations and campaign records will appear here once NEXUS war ledger sync is live.'
-        }
-    ];
-
     let bound = false;
     let escapeHandler = null;
+
+    function escapeHtml(value) {
+        return String(value ?? '')
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;');
+    }
+
+    function formatWarDate(iso) {
+        if (!iso) return '—';
+        const parsed = Date.parse(iso);
+        if (!Number.isFinite(parsed)) return '—';
+        return new Date(parsed).toLocaleString(undefined, {
+            month: 'short',
+            day: 'numeric',
+            year: 'numeric',
+            hour: 'numeric',
+            minute: '2-digit'
+        });
+    }
+
+    function buildWarLedgerMarkup(warLedger) {
+        const wars = Array.isArray(warLedger?.wars) ? warLedger.wars : [];
+        if (!wars.length) {
+            return '<li class="age-hq-war-ledger-empty">No recognized wars on record. Formal declarations are permanent once recorded.</li>';
+        }
+
+        return wars.map((war) => {
+            const opponent = escapeHtml(war.opponentNationName || war.opponentNationId || 'Unknown nation');
+            const declaredAt = formatWarDate(war.declaredAt);
+            const status = String(war.status || 'active').toLowerCase();
+            const statusLabel = status === 'active' ? 'Active' : status;
+            return (
+                `<li class="age-hq-war-ledger-item age-hq-war-ledger-item--${escapeHtml(status)}">`
+                + `<div class="age-hq-war-ledger-item-head">`
+                + `<strong class="age-hq-war-ledger-opponent">${opponent}</strong>`
+                + `<span class="age-hq-war-ledger-status">${escapeHtml(statusLabel)}</span>`
+                + `</div>`
+                + `<p class="age-hq-war-ledger-date">Declared ${escapeHtml(declaredAt)}</p>`
+                + `<p class="age-hq-war-ledger-rule">Ends only when a belligerent is eliminated.</p>`
+                + `</li>`
+            );
+        }).join('');
+    }
+
+    function renderIntoListElement(listEl, warLedger) {
+        if (!listEl) return;
+        listEl.innerHTML = buildWarLedgerMarkup(warLedger);
+    }
 
     function getModal() {
         return global.document.getElementById('age-war-ledger-modal');
     }
 
-    function renderWarLedgerList() {
-        const listEl = global.document.getElementById('age-war-ledger-list');
-        if (!listEl) return;
-
-        listEl.innerHTML = PLACEHOLDER_ENTRIES.map((entry) => (
-            `<li class="age-war-ledger-item age-war-ledger-item--${entry.type}">`
-            + `<span class="age-war-ledger-item-type">${entry.type}</span>`
-            + `<strong class="age-war-ledger-item-title">${entry.title}</strong>`
-            + `<p class="age-war-ledger-item-detail">${entry.detail}</p>`
-            + '</li>'
-        )).join('');
+    function renderWarLedgerList(warLedger) {
+        renderIntoListElement(global.document.getElementById('age-war-ledger-list'), warLedger);
     }
 
     function closeWarLedgerModal() {
@@ -71,6 +104,9 @@
         bound = true;
 
         global.document.getElementById('age-war-ledger-open')?.addEventListener('click', (event) => {
+            if (event.target.closest('[data-age-view-tab="headquarters"]')) {
+                return;
+            }
             event.preventDefault();
             openWarLedgerModal();
         });
@@ -87,7 +123,8 @@
     global.RoyalArmiesAgeWarLedger = {
         enable: enableWarLedger,
         open: openWarLedgerModal,
-        close: closeWarLedgerModal
+        close: closeWarLedgerModal,
+        renderInto: renderIntoListElement
     };
     global.enableAgeWarLedger = enableWarLedger;
 })(window);

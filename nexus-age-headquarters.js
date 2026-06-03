@@ -21,6 +21,10 @@ const MAX_PLANNING_STEPS = 64;
 const MAX_DIPLO_REQUESTS = 40;
 const LEADERSHIP_LOCK_DAYS = 7;
 const LEADERSHIP_LOCK_MS = LEADERSHIP_LOCK_DAYS * 24 * 60 * 60 * 1000;
+const MIN_NATION_ELECTION_PLAYERS = 10;
+const ELECTION_WINDOW_MS = 12 * 60 * 60 * 1000;
+const NATION_AUTHORITY_RANK = 14;
+const NATION_AUTHORITY_MIN_RANK14 = 7;
 
 function normalizeUsername(value) {
     return String(value || '').trim().toLowerCase();
@@ -36,6 +40,17 @@ function getDefaultPlanningState() {
     };
 }
 
+function getDefaultWarLedgerState() {
+    return {
+        wars: [],
+        relations: {
+            allies: [],
+            naps: [],
+            enemies: []
+        }
+    };
+}
+
 function getDefaultNationHeadquartersState() {
     return {
         planning: getDefaultPlanningState(),
@@ -47,6 +62,7 @@ function getDefaultNationHeadquartersState() {
         },
         votesByUsername: {},
         election: getDefaultElectionState(),
+        warLedger: getDefaultWarLedgerState(),
         dispatchAlert: null,
         updatedAt: null
     };
@@ -54,15 +70,69 @@ function getDefaultNationHeadquartersState() {
 
 function getDefaultElectionState() {
     return {
+        status: 'idle',
+        openedAt: null,
+        closesAt: null,
+        closedAt: null,
+        closedReason: null,
         lockedUntil: null,
         electedAt: null
     };
 }
 
 function normalizeElectionState(raw) {
-    const lockedUntil = String(raw?.lockedUntil || '').trim() || null;
-    const electedAt = String(raw?.electedAt || '').trim() || null;
-    return { lockedUntil, electedAt };
+    const statusRaw = String(raw?.status || '').trim().toLowerCase();
+    const status = statusRaw === 'open' || statusRaw === 'closed' ? statusRaw : 'idle';
+    return {
+        status,
+        openedAt: String(raw?.openedAt || '').trim() || null,
+        closesAt: String(raw?.closesAt || '').trim() || null,
+        closedAt: String(raw?.closedAt || '').trim() || null,
+        closedReason: String(raw?.closedReason || '').trim() || null,
+        lockedUntil: String(raw?.lockedUntil || '').trim() || null,
+        electedAt: String(raw?.electedAt || '').trim() || null
+    };
+}
+
+function normalizeWarLedgerEntry(raw) {
+    if (!raw || typeof raw !== 'object') return null;
+    const id = String(raw.id || '').trim().slice(0, 64);
+    const opponentNationId = resolveCatalogNationKey(raw.opponentNationId || raw.targetNationId);
+    const opponentNationName = String(raw.opponentNationName || raw.targetNationName || opponentNationId || '').trim().slice(0, 80);
+    const declaredAt = String(raw.declaredAt || '').trim() || null;
+    const status = String(raw.status || 'active').trim().toLowerCase() === 'ended' ? 'ended' : 'active';
+    if (!id || !opponentNationId || !declaredAt) return null;
+    return {
+        id,
+        opponentNationId,
+        opponentNationName: opponentNationName || opponentNationId,
+        declaredAt,
+        declaredBy: normalizeUsername(raw.declaredBy),
+        status,
+        endedAt: String(raw.endedAt || '').trim() || null,
+        endedReason: String(raw.endedReason || '').trim().slice(0, 120) || null
+    };
+}
+
+function normalizeRelationEntry(raw) {
+    if (!raw || typeof raw !== 'object') return null;
+    const nationId = resolveCatalogNationKey(raw.nationId || raw.id);
+    const nationName = String(raw.nationName || raw.nation || nationId || '').trim().slice(0, 80);
+    if (!nationId) return null;
+    return { nationId, nationName: nationName || nationId };
+}
+
+function normalizeWarLedgerState(raw) {
+    const wars = Array.isArray(raw?.wars) ? raw.wars : [];
+    const relations = raw?.relations && typeof raw.relations === 'object' ? raw.relations : {};
+    return {
+        wars: wars.map(normalizeWarLedgerEntry).filter(Boolean),
+        relations: {
+            allies: (Array.isArray(relations.allies) ? relations.allies : []).map(normalizeRelationEntry).filter(Boolean),
+            naps: (Array.isArray(relations.naps) ? relations.naps : []).map(normalizeRelationEntry).filter(Boolean),
+            enemies: (Array.isArray(relations.enemies) ? relations.enemies : []).map(normalizeRelationEntry).filter(Boolean)
+        }
+    };
 }
 
 function normalizeDiplomacyRequest(raw) {
@@ -281,8 +351,122 @@ function normalizeNationHeadquartersState(raw) {
         diplomacy: normalizeDiplomacyState(raw.diplomacy),
         votesByUsername,
         election: normalizeElectionState(raw.election),
+        warLedger: normalizeWarLedgerState(raw.warLedger),
         dispatchAlert: normalizeDispatchAlert(raw.dispatchAlert),
         updatedAt: raw.updatedAt || null
+    };
+}
+
+function countEligibleNationMembers(voteCandidates) {
+    return Array.isArray(voteCandidates) ? voteCandidates.length : 0;
+}
+
+function hasCompleteBallot(entry) {
+    return Boolean(entry?.leaderCandidateId && entry?.viceCandidateId);
+}
+
+function countCompleteBallots(votesByUsername) {
+    return Object.values(votesByUsername || {}).filter((entry) => hasCompleteBallot(entry)).length;
+}
+
+function syncWarLedgerRelations(warLedger, diplomacy) {
+    const ledger = normalizeWarLedgerState(warLedger);
+    const relationMap = {
+        allies: new Map(ledger.relations.allies.map((row) => [row.nationId, row])),
+        naps: new Map(ledger.relations.naps.map((row) => [row.nationId, row])),
+        enemies: new Map(ledger.relations.enemies.map((row) => [row.nationId, row]))
+    };
+
+    const ingest = (rows, bucket) => {
+        (rows || []).forEach((row) => {
+            const type = String(row?.type || '').toLowerCase();
+            const nationName = String(row?.nation || '').trim();
+            const nationId = resolveCatalogNationKey(row?.nationId || nationName);
+            if (!nationId) return;
+            if (type.includes('alliance') || type.includes('ally')) {
+                relationMap.allies.set(nationId, { nationId, nationName: nationName || nationId });
+            } else if (type.includes('nap') || type.includes('non-aggression') || type.includes('non aggression')) {
+                relationMap.naps.set(nationId, { nationId, nationName: nationName || nationId });
+            }
+        });
+    };
+
+    ingest(diplomacy?.incoming, 'incoming');
+    ingest(diplomacy?.outgoing, 'outgoing');
+
+    ledger.wars.forEach((war) => {
+        if (war.status !== 'active') return;
+        relationMap.enemies.set(war.opponentNationId, {
+            nationId: war.opponentNationId,
+            nationName: war.opponentNationName
+        });
+        relationMap.allies.delete(war.opponentNationId);
+        relationMap.naps.delete(war.opponentNationId);
+    });
+
+    return {
+        wars: ledger.wars,
+        relations: {
+            allies: Array.from(relationMap.allies.values()),
+            naps: Array.from(relationMap.naps.values()),
+            enemies: Array.from(relationMap.enemies.values())
+        }
+    };
+}
+
+function buildDiplomacyPublicSlice(diplomacy, warLedger) {
+    const ledger = syncWarLedgerRelations(warLedger, diplomacy);
+    return {
+        allies: ledger.relations.allies,
+        naps: ledger.relations.naps,
+        enemies: ledger.relations.enemies,
+        note: 'Alliances and non-aggression pacts apply only to neutral nations. Active enemies cannot become allies.'
+    };
+}
+
+function buildWarLedgerSlice(warLedger) {
+    const ledger = normalizeWarLedgerState(warLedger);
+    return {
+        wars: ledger.wars.slice().sort((a, b) => Date.parse(b.declaredAt) - Date.parse(a.declaredAt)),
+        relations: ledger.relations
+    };
+}
+
+function recordRecognizedWarDeclaration(nationState, payload) {
+    const targetNationId = resolveCatalogNationKey(payload?.targetNationId);
+    if (!targetNationId) {
+        return { errorCode: 'HQ_WAR_TARGET_REQUIRED' };
+    }
+
+    const ledger = normalizeWarLedgerState(nationState?.warLedger);
+    const alreadyActive = ledger.wars.some((war) => war.opponentNationId === targetNationId && war.status === 'active');
+    if (alreadyActive) {
+        return { errorCode: 'HQ_WAR_ALREADY_ACTIVE' };
+    }
+
+    const opponentNationName = String(payload?.targetNationName || targetNationId).trim().slice(0, 80);
+    const entry = {
+        id: `war-${Date.now()}`,
+        opponentNationId: targetNationId,
+        opponentNationName,
+        declaredAt: new Date().toISOString(),
+        declaredBy: normalizeUsername(payload?.declaredBy),
+        status: 'active',
+        endedAt: null,
+        endedReason: null
+    };
+
+    ledger.wars.push(entry);
+    ledger.relations.enemies = [
+        ...ledger.relations.enemies.filter((row) => row.nationId !== targetNationId),
+        { nationId: targetNationId, nationName: opponentNationName }
+    ];
+    ledger.relations.allies = ledger.relations.allies.filter((row) => row.nationId !== targetNationId);
+    ledger.relations.naps = ledger.relations.naps.filter((row) => row.nationId !== targetNationId);
+
+    return {
+        warLedger: ledger,
+        warRecord: entry
     };
 }
 
@@ -333,29 +517,105 @@ function tallyLeadershipVotes(votesByUsername) {
     };
 }
 
-function reconcileHeadquartersElection(nationState, leadership, nowMs = Date.now()) {
+function reconcileHeadquartersElection(nationState, leadership, voteCandidates, nowMs = Date.now()) {
     const election = normalizeElectionState(nationState?.election);
     let votesByUsername = { ...(nationState?.votesByUsername || {}) };
     let nextLeadership = leadership ? { ...leadership } : null;
     let changed = false;
+    const nationSize = countEligibleNationMembers(voteCandidates);
+    const canHoldElection = nationSize >= MIN_NATION_ELECTION_PLAYERS;
 
-    if (hasElectedLeadership(nextLeadership) && !election.lockedUntil && !election.electedAt) {
-        election.lockedUntil = new Date(nowMs + LEADERSHIP_LOCK_MS).toISOString();
+    if (hasElectedLeadership(nextLeadership) && !election.electedAt) {
         election.electedAt = new Date(nowMs).toISOString();
+        election.status = 'closed';
+        election.closedAt = election.electedAt;
+        election.closedReason = election.closedReason || 'results';
         changed = true;
     }
 
-    if (election.lockedUntil) {
-        const lockedUntilMs = Date.parse(election.lockedUntil);
-        if (Number.isFinite(lockedUntilMs) && lockedUntilMs <= nowMs) {
-            election.lockedUntil = null;
-            election.electedAt = null;
-            votesByUsername = {};
+    if (hasElectedLeadership(nextLeadership) && !election.lockedUntil) {
+        election.lockedUntil = new Date(nowMs + LEADERSHIP_LOCK_MS).toISOString();
+        changed = true;
+    }
+
+    if (!hasElectedLeadership(nextLeadership) && canHoldElection) {
+        if (election.status !== 'open') {
+            election.status = 'open';
+            election.openedAt = new Date(nowMs).toISOString();
+            election.closesAt = new Date(nowMs + ELECTION_WINDOW_MS).toISOString();
+            election.closedAt = null;
+            election.closedReason = null;
+            changed = true;
+        }
+    } else if (!canHoldElection && !hasElectedLeadership(nextLeadership)) {
+        if (election.status === 'open') {
+            election.status = 'idle';
+            election.openedAt = null;
+            election.closesAt = null;
             changed = true;
         }
     }
 
-    const isOpen = !(hasElectedLeadership(nextLeadership) && isVotingLocked(election, nowMs));
+    let shouldFinalize = false;
+    let finalizeReason = '';
+    if (election.status === 'open') {
+        const closesAtMs = Date.parse(election.closesAt || '');
+        const ballotsComplete = countCompleteBallots(votesByUsername);
+        const allVoted = nationSize > 0 && ballotsComplete >= nationSize;
+        const timedOut = Number.isFinite(closesAtMs) && closesAtMs <= nowMs;
+        if (allVoted) {
+            shouldFinalize = true;
+            finalizeReason = 'quorum';
+        } else if (timedOut) {
+            shouldFinalize = true;
+            finalizeReason = 'timeout';
+        }
+    }
+
+    if (shouldFinalize) {
+        const finalizeResult = tryFinalizeElectionFromVotes(
+            { ...nationState, votesByUsername, election },
+            nextLeadership,
+            voteCandidates
+        );
+        if (finalizeResult) {
+            nextLeadership = finalizeResult.leadership;
+            votesByUsername = finalizeResult.nationState.votesByUsername;
+            Object.assign(election, finalizeResult.nationState.election);
+            election.status = 'closed';
+            election.closedAt = election.electedAt || new Date(nowMs).toISOString();
+            election.closedReason = finalizeReason || 'results';
+            changed = true;
+        } else if (finalizeReason === 'timeout') {
+            election.status = 'closed';
+            election.closedAt = new Date(nowMs).toISOString();
+            election.closedReason = 'timeout';
+            changed = true;
+        }
+    }
+
+    if (election.lockedUntil) {
+        const lockedUntilMs = Date.parse(election.lockedUntil);
+        if (Number.isFinite(lockedUntilMs) && lockedUntilMs <= nowMs && hasElectedLeadership(nextLeadership)) {
+            election.lockedUntil = null;
+            election.electedAt = null;
+            votesByUsername = {};
+            election.status = canHoldElection ? 'open' : 'idle';
+            election.openedAt = canHoldElection ? new Date(nowMs).toISOString() : null;
+            election.closesAt = canHoldElection ? new Date(nowMs + ELECTION_WINDOW_MS).toISOString() : null;
+            election.closedAt = null;
+            election.closedReason = null;
+            nextLeadership = {
+                leaderUsername: '',
+                viceLeaderUsername: '',
+                councilUsernames: nextLeadership.councilUsernames || [],
+                plannerUsernames: nextLeadership.plannerUsernames || []
+            };
+            changed = true;
+        }
+    }
+
+    const isOpen = election.status === 'open' && canHoldElection && !hasElectedLeadership(nextLeadership);
 
     return {
         nationState: {
@@ -365,7 +625,8 @@ function reconcileHeadquartersElection(nationState, leadership, nowMs = Date.now
         },
         leadership: nextLeadership,
         isOpen,
-        changed
+        changed,
+        shouldPersistLeadership: Boolean(shouldFinalize && hasElectedLeadership(nextLeadership))
     };
 }
 
@@ -399,6 +660,11 @@ function tryFinalizeElectionFromVotes(nationState, leadership, voteCandidates) {
             ...nationState,
             votesByUsername: {},
             election: {
+                status: 'closed',
+                openedAt: nationState?.election?.openedAt || null,
+                closesAt: nationState?.election?.closesAt || null,
+                closedAt: electedAt,
+                closedReason: 'results',
                 lockedUntil,
                 electedAt
             }
@@ -461,11 +727,24 @@ function buildVoteWorkspaceSlice(options) {
     const leaderUsername = leadership?.leaderUsername || '';
     const viceLeaderUsername = leadership?.viceLeaderUsername || '';
 
+    const myVotes = resolveMyVotes(nationState?.votesByUsername, username);
+    const nationSize = countEligibleNationMembers(voteCandidates);
+    const ballotsComplete = countCompleteBallots(nationState?.votesByUsername);
+
     return {
         isOpen: Boolean(isOpen),
+        electionStatus: election.status,
         lockedUntil: election.lockedUntil,
         electedAt: election.electedAt,
+        openedAt: election.openedAt,
+        closesAt: election.closesAt,
+        closedAt: election.closedAt,
+        closedReason: election.closedReason,
         lockDays: LEADERSHIP_LOCK_DAYS,
+        minNationPlayers: MIN_NATION_ELECTION_PLAYERS,
+        nationPlayerCount: nationSize,
+        ballotsComplete,
+        anonymous: true,
         electedLeader: leaderUsername
             ? {
                 username: leaderUsername,
@@ -479,9 +758,23 @@ function buildVoteWorkspaceSlice(options) {
             }
             : null,
         candidates: isOpen ? voteCandidates : [],
-        myVotes: isOpen ? resolveMyVotes(nationState?.votesByUsername, username) : {
+        myVotes: isOpen ? myVotes : {
             leaderCandidateId: '',
             viceCandidateId: ''
+        },
+        polls: {
+            leader: {
+                role: 'leader',
+                title: 'Leader (LD)',
+                mySelectionId: isOpen ? myVotes.leaderCandidateId : '',
+                hasVoted: Boolean(myVotes.leaderCandidateId)
+            },
+            vice: {
+                role: 'vice',
+                title: 'Vice Leader (VLD)',
+                mySelectionId: isOpen ? myVotes.viceCandidateId : '',
+                hasVoted: Boolean(myVotes.viceCandidateId)
+            }
         }
     };
 }
@@ -573,12 +866,22 @@ function buildHeadquartersWorkspacePayload(options) {
     const mpBudget = planningMpBudget(planning);
     const isOpen = Boolean(votingOpen);
 
+    const warLedger = syncWarLedgerRelations(nationState?.warLedger, nationState?.diplomacy);
+
     return {
         gameNation: access.gameNation,
         access: {
             council: access.council,
             leader: access.leader,
-            viceLeader: access.viceLeader
+            viceLeader: access.viceLeader,
+            fullAuthority: Boolean(access.fullAuthority),
+            memberHub: Boolean(access.memberHub !== false)
+        },
+        nationAuthority: access.nationAuthority || {
+            established: false,
+            rank14Count: 0,
+            requiredCount: NATION_AUTHORITY_MIN_RANK14,
+            requiredRank: NATION_AUTHORITY_RANK
         },
         planning: {
             pills: planning.pills,
@@ -598,7 +901,9 @@ function buildHeadquartersWorkspacePayload(options) {
         }),
         cabinet: buildCabinetSlice(leadership, voteCandidates),
         warTargets,
-        fortifiedCities: listNationFortifiedCities(access.gameNation)
+        fortifiedCities: listNationFortifiedCities(access.gameNation),
+        diplomacyPublic: buildDiplomacyPublicSlice(nationState?.diplomacy, warLedger),
+        warLedger: buildWarLedgerSlice(warLedger)
     };
 }
 
@@ -727,8 +1032,14 @@ function applyVotePatch(currentState, patch, actorUsername, voteCandidates, opti
     }
 
     const allowedIds = new Set((voteCandidates || []).map((candidate) => candidate.id));
-    const leaderCandidateId = String(patch?.leaderCandidateId || '').trim();
-    const viceCandidateId = String(patch?.viceCandidateId || '').trim();
+    const actorKey = normalizeUsername(actorUsername);
+    const prior = currentState?.votesByUsername?.[actorKey] || {};
+    const leaderCandidateId = patch?.leaderCandidateId !== undefined
+        ? String(patch.leaderCandidateId || '').trim()
+        : String(prior.leaderCandidateId || '').trim();
+    const viceCandidateId = patch?.viceCandidateId !== undefined
+        ? String(patch.viceCandidateId || '').trim()
+        : String(prior.viceCandidateId || '').trim();
 
     if (leaderCandidateId && !allowedIds.has(normalizeUsername(leaderCandidateId))) {
         return { errorCode: 'HQ_VOTE_CANDIDATE_INVALID' };
@@ -743,7 +1054,7 @@ function applyVotePatch(currentState, patch, actorUsername, voteCandidates, opti
     const votesByUsername = {
         ...(currentState?.votesByUsername || {})
     };
-    votesByUsername[normalizeUsername(actorUsername)] = {
+    votesByUsername[actorKey] = {
         leaderCandidateId: leaderCandidateId ? normalizeUsername(leaderCandidateId) : '',
         viceCandidateId: viceCandidateId ? normalizeUsername(viceCandidateId) : '',
         updatedAt: new Date().toISOString()
@@ -795,6 +1106,15 @@ module.exports = {
     hasPublishedPlanContent,
     applyVotePatch,
     applyWarDeclarationDraft,
+    recordRecognizedWarDeclaration,
+    buildDiplomacyPublicSlice,
+    buildWarLedgerSlice,
+    countEligibleNationMembers,
+    syncWarLedgerRelations,
     normalizeUsername,
-    LEADERSHIP_LOCK_DAYS
+    LEADERSHIP_LOCK_DAYS,
+    MIN_NATION_ELECTION_PLAYERS,
+    ELECTION_WINDOW_MS,
+    NATION_AUTHORITY_RANK,
+    NATION_AUTHORITY_MIN_RANK14
 };

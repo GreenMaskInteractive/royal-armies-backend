@@ -528,6 +528,18 @@
             message: 'There is no confirmed plan on the world map to clear.',
             category: 'game'
         },
+        'NEXUS-HQ-014': {
+            http: 403,
+            title: 'Nation authority',
+            message: 'Full nation authority requires seven commanders at rank 14 before leadership may declare war or set diplomacy.',
+            category: 'game'
+        },
+        'NEXUS-HQ-015': {
+            http: 409,
+            title: 'War ledger',
+            message: 'A recognized war with that nation is already recorded.',
+            category: 'game'
+        },
 
         /* --- Age map movement --- */
         'NEXUS-AGE-001': {
@@ -816,7 +828,9 @@
         HQ_PLANNING_NOT_CONFIRMED: 'NEXUS-HQ-010',
         HQ_PLANNING_NO_PUBLISHED: 'NEXUS-HQ-013',
         HQ_DISPATCH_TYPE_INVALID: 'NEXUS-HQ-011',
-        HQ_DISPATCH_ACTIVE: 'NEXUS-HQ-012'
+        HQ_DISPATCH_ACTIVE: 'NEXUS-HQ-012',
+        HQ_AUTHORITY_REQUIRED: 'NEXUS-HQ-014',
+        HQ_WAR_ALREADY_ACTIVE: 'NEXUS-HQ-015'
     };
 
     function getErrorDefinition(code) {

@@ -17,6 +17,9 @@
     let planningSaveTimer = 0;
     let pendingPlanningSnapshot = null;
     let votingOpen = false;
+    let lastVoteState = null;
+    let fullAuthority = false;
+    let memberHubActive = false;
     let planningConfirmed = false;
     let hasPublishedPlan = false;
     let clearingPublishedPlan = false;
@@ -90,6 +93,14 @@
         return '';
     }
 
+    function escapeHtml(value) {
+        return String(value ?? '')
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;');
+    }
+
     function setCouncilAccessUI(hasAccess) {
         councilAccess = hasAccess;
         global.document.querySelectorAll('[data-hq-council-only]').forEach((node) => {
@@ -100,12 +111,150 @@
                 node.hidden = true;
             }
         });
-        const restricted = global.document.getElementById('age-hq-council-restricted-notice');
-        if (restricted) restricted.hidden = hasAccess;
-        const opsRail = global.document.querySelector('.age-headquarters-ops-rail');
-        if (opsRail) opsRail.hidden = hasAccess;
+        global.document.querySelectorAll('[data-hq-member-only]').forEach((node) => {
+            if (hasAccess) {
+                node.hidden = true;
+            } else {
+                node.hidden = false;
+                node.removeAttribute('hidden');
+            }
+        });
+        const memberDeck = global.document.getElementById('age-hq-member-deck');
+        if (memberDeck) {
+            memberDeck.hidden = hasAccess || !memberHubActive;
+            if (!hasAccess && memberHubActive) {
+                memberDeck.removeAttribute('hidden');
+            }
+        }
         const shell = global.document.querySelector('.age-headquarters-shell');
-        if (shell) shell.classList.toggle('age-headquarters-shell--member-view', !hasAccess);
+        if (shell) {
+            shell.classList.toggle('age-headquarters-shell--member-view', !hasAccess && memberHubActive);
+        }
+        setMemberPlanningLock(!hasAccess && memberHubActive);
+    }
+
+    function setMemberPlanningLock(locked) {
+        const lockEl = global.document.getElementById('age-hq-planning-lock');
+        const column = global.document.querySelector('.age-headquarters-planning-column');
+        if (lockEl) {
+            lockEl.hidden = !locked;
+            lockEl.setAttribute('aria-hidden', locked ? 'false' : 'true');
+        }
+        if (column) column.classList.toggle('is-planning-locked', locked);
+    }
+
+    function setAuthorityGates(workspace) {
+        const auth = workspace?.nationAuthority || {};
+        const banner = global.document.getElementById('age-hq-authority-banner');
+        const lockCopy = global.document.getElementById('age-hq-planning-lock-copy');
+        const pendingAuthority = Boolean(workspace?.access?.memberHub) && !workspace?.access?.fullAuthority;
+        const bannerText = pendingAuthority
+            ? `Nation authority pending: ${auth.rank14Count || 0} of ${auth.requiredCount || 7} commanders at rank ${auth.requiredRank || 14}. Planning, council appointments, and diplomacy unlock when authority is established.`
+            : '';
+
+        if (banner) {
+            banner.hidden = !pendingAuthority;
+            banner.textContent = bannerText;
+        }
+        if (lockCopy && pendingAuthority) {
+            lockCopy.textContent = bannerText;
+        }
+
+        const warBtn = global.document.getElementById('age-hq-war-declare-btn');
+        const composeBtn = global.document.getElementById('age-hq-diplo-compose-btn');
+        const councilLocked = !workspace?.access?.fullAuthority;
+        if (warBtn) warBtn.disabled = councilLocked || !workspace?.access?.leader;
+        if (composeBtn) composeBtn.disabled = councilLocked || !workspace?.access?.leader;
+    }
+
+    function formatElectionCountdown(closesAt) {
+        if (!closesAt) return '';
+        const remainingMs = Date.parse(closesAt) - Date.now();
+        if (!Number.isFinite(remainingMs) || remainingMs <= 0) {
+            return 'Poll closing soon.';
+        }
+        const hours = Math.floor(remainingMs / 3600000);
+        const minutes = Math.floor((remainingMs % 3600000) / 60000);
+        if (hours > 0) return `${hours}h ${minutes}m remaining`;
+        return `${minutes}m remaining`;
+    }
+
+    function renderDiplomacyPublicSlice(diplomacyPublic) {
+        const listEl = global.document.getElementById('age-hq-relations-list');
+        if (!listEl) return;
+
+        const rows = [];
+        (Array.isArray(diplomacyPublic?.allies) ? diplomacyPublic.allies : []).forEach((row) => {
+            rows.push({ type: 'Ally', name: row.nationName || row.nationId });
+        });
+        (Array.isArray(diplomacyPublic?.naps) ? diplomacyPublic.naps : []).forEach((row) => {
+            rows.push({ type: 'NAP', name: row.nationName || row.nationId });
+        });
+
+        if (!rows.length) {
+            listEl.innerHTML = '<li class="age-hq-relations-empty">No alliances or non-aggression pacts on record.</li>';
+            return;
+        }
+
+        listEl.innerHTML = rows.map((row) => (
+            `<li class="age-hq-relations-item">`
+            + `<span class="age-hq-relations-type">${escapeHtml(row.type)}</span>`
+            + `<strong class="age-hq-relations-name">${escapeHtml(row.name)}</strong>`
+            + `</li>`
+        )).join('');
+    }
+
+    function renderWarLedgerEmbed(warLedger) {
+        global.RoyalArmiesAgeWarLedger?.renderInto?.(
+            global.document.getElementById('age-hq-war-ledger-list'),
+            warLedger
+        );
+    }
+
+    function renderMemberHubPanels(workspace) {
+        renderDiplomacyPublicSlice(workspace?.diplomacyPublic || {});
+        renderWarLedgerEmbed(workspace?.warLedger || {});
+        setAuthorityGates(workspace);
+    }
+
+    function renderElectionPoll(role, voteState) {
+        const hostId = role === 'leader' ? 'age-hq-vote-leader-candidates' : 'age-hq-vote-vice-candidates';
+        const metaId = role === 'leader' ? 'age-hq-poll-leader-meta' : 'age-hq-poll-vice-meta';
+        const submitId = role === 'leader' ? 'age-hq-vote-leader-submit' : 'age-hq-vote-vice-submit';
+        const host = global.document.getElementById(hostId);
+        const selection = role === 'leader' ? leaderVote : viceVote;
+        const poll = voteState?.polls?.[role];
+        const hasVoted = Boolean(poll?.hasVoted);
+
+        if (!host) return;
+
+        if (!voteCandidates.length) {
+            host.innerHTML = '<p class="age-headquarters-request-empty">No eligible commanders found for this nation yet.</p>';
+            return;
+        }
+
+        host.innerHTML = voteCandidates.map((candidate) => {
+            const selected = selection === candidate.id;
+            const disabledAttr = votingOpen ? '' : ' disabled';
+            return (
+                `<button type="button" class="age-hq-vote-candidate-btn${selected ? ' is-selected' : ''}"`
+                + ` data-hq-poll="${role}" data-candidate-id="${escapeHtml(candidate.id)}"${disabledAttr}>`
+                + `${escapeHtml(candidate.name)}`
+                + `</button>`
+            );
+        }).join('');
+
+        const metaEl = global.document.getElementById(metaId);
+        if (metaEl) {
+            metaEl.textContent = hasVoted
+                ? 'Ballot recorded (anonymous).'
+                : 'Select one commander, then cast your vote.';
+        }
+
+        const submitEl = global.document.getElementById(submitId);
+        if (submitEl) {
+            submitEl.disabled = !votingOpen || !selection || hasVoted;
+        }
     }
 
     function waitForLayout() {
@@ -213,9 +362,23 @@
         const devLeader = { username: normalizedUsername(displayName), name: displayName };
 
         return {
-            access: { council: true, leader: true, viceLeader: true },
+            access: {
+                council: true,
+                leader: true,
+                viceLeader: true,
+                fullAuthority: true,
+                memberHub: true
+            },
+            nationAuthority: {
+                established: true,
+                rank14Count: 7,
+                requiredCount: 7,
+                requiredRank: 14
+            },
             planning: savedPlanning || getDefaultDevPlanningState(),
             diplomacy: { incoming: [], outgoing: [] },
+            diplomacyPublic: { allies: [], naps: [], enemies: [] },
+            warLedger: { wars: [], relations: { allies: [], naps: [], enemies: [] } },
             vote: {
                 isOpen: false,
                 candidates: [{
@@ -293,8 +456,13 @@
             access: {
                 council: true,
                 leader: true,
-                viceLeader: true
+                viceLeader: true,
+                fullAuthority: true,
+                memberHub: true
             },
+            nationAuthority: base.nationAuthority || fallback.nationAuthority,
+            diplomacyPublic: base.diplomacyPublic || fallback.diplomacyPublic,
+            warLedger: base.warLedger || fallback.warLedger,
             planning: {
                 ...getDefaultDevPlanningState(),
                 ...devPlanning,
@@ -404,34 +572,56 @@
     }
 
     function setVotingPanelUI(voteState) {
+        lastVoteState = voteState || null;
         votingOpen = Boolean(voteState?.isOpen) && !councilAccess;
-        const hasCouncilAccessNow = councilAccess;
+        const electionsClosed = !votingOpen;
+        const electionsHost = global.document.getElementById('age-hq-elections-host');
+        const closedOverlay = global.document.getElementById('age-hq-elections-closed-overlay');
 
-        global.document.querySelectorAll('[data-hq-vote-only]').forEach((node) => {
-            node.hidden = !votingOpen;
-        });
+        if (electionsHost) {
+            electionsHost.classList.toggle('is-elections-closed', electionsClosed);
+        }
+        if (closedOverlay) {
+            closedOverlay.hidden = !electionsClosed;
+            closedOverlay.setAttribute('aria-hidden', electionsClosed ? 'false' : 'true');
+        }
 
-        const summary = global.document.querySelector('[data-hq-leadership-summary]');
-        const showLeadershipSummary = !votingOpen && !hasCouncilAccessNow
-            && Boolean(voteState?.electedLeader || voteState?.electedViceLeader);
-        if (summary) summary.hidden = !showLeadershipSummary;
-
-        const restricted = global.document.getElementById('age-hq-council-restricted-notice');
-        if (restricted) {
-            if (hasCouncilAccessNow) {
-                restricted.hidden = true;
-            } else if (votingOpen) {
-                restricted.hidden = false;
-                restricted.querySelector('.age-headquarters-restricted-copy').textContent =
-                    'Council and Leader planning tools are restricted to appointed nation leadership. You can cast Leader and Vice Leader votes below.';
+        const voteMeta = global.document.getElementById('age-hq-vote-meta');
+        if (voteMeta) {
+            if (votingOpen) {
+                voteMeta.textContent = `Anonymous ballots · ${formatElectionCountdown(voteState?.closesAt) || 'Poll open'}`;
+            } else if (voteState?.electionStatus === 'idle') {
+                const minPlayers = voteState?.minNationPlayers || 10;
+                const count = voteState?.nationPlayerCount || 0;
+                voteMeta.textContent = `Elections open when ${minPlayers}+ commanders enlist (${count} now).`;
             } else {
-                restricted.hidden = showLeadershipSummary;
-                if (!restricted.hidden) {
-                    restricted.querySelector('.age-headquarters-restricted-copy').textContent =
-                        'Council and Leader planning tools are restricted to appointed nation leadership.';
-                }
+                voteMeta.textContent = 'Elections are currently closed.';
             }
         }
+
+        if (votingOpen) {
+            renderElectionPoll('leader', voteState);
+            renderElectionPoll('vice', voteState);
+        } else {
+            global.document.querySelectorAll('.age-hq-vote-candidate-btn, .age-hq-poll-submit').forEach((node) => {
+                node.disabled = true;
+            });
+        }
+
+        const statusEl = global.document.getElementById('age-hq-vote-status');
+        if (statusEl) {
+            if (votingOpen && voteState?.anonymous) {
+                statusEl.hidden = false;
+                statusEl.textContent = 'All votes are anonymous. Polls close when every commander has voted or after 12 hours.';
+            } else {
+                statusEl.hidden = true;
+            }
+        }
+
+        const summary = global.document.querySelector('[data-hq-leadership-summary]');
+        const showLeadershipSummary = !councilAccess
+            && Boolean(voteState?.electedLeader || voteState?.electedViceLeader);
+        if (summary) summary.hidden = !showLeadershipSummary;
 
         const leaderNameEl = global.document.getElementById('age-hq-elected-leader-name');
         const viceNameEl = global.document.getElementById('age-hq-elected-vice-name');
@@ -583,6 +773,8 @@
         workspace = mergeDevOwnerHeadquartersWorkspace(workspace, username);
         if (!workspace) return false;
 
+        fullAuthority = Boolean(workspace.access?.fullAuthority);
+        memberHubActive = Boolean(workspace.access?.memberHub);
         leaderAccess = Boolean(workspace.access?.leader);
         setCouncilAccessUI(Boolean(workspace.access?.council));
         setViceLeaderAccessUI(Boolean(workspace.access?.viceLeader));
@@ -596,6 +788,7 @@
         warTargets = Array.isArray(workspace.warTargets) ? workspace.warTargets : [];
 
         setVotingPanelUI(workspace.vote || {});
+        renderMemberHubPanels(workspace);
         lastCabinetState = workspace.cabinet || null;
         renderNationCabinet(lastCabinetState, workspace.vote || {});
         renderTreasuryFortifications(workspace.fortifiedCities || []);
@@ -605,12 +798,9 @@
         global.RoyalArmiesAgeHeadquartersPlanningMap?.setPlanningLocked?.(planningConfirmed);
         populateWarTargetSelect();
         renderDiploRequests();
-        if (votingOpen) {
-            renderLeaderVoteSlots();
-            updateVoteStatus();
-        } else {
-            leaderVote = '';
-            viceVote = '';
+        if (!votingOpen) {
+            leaderVote = String(workspace.vote?.myVotes?.leaderCandidateId || '');
+            viceVote = String(workspace.vote?.myVotes?.viceCandidateId || '');
         }
         syncToolbarState();
         void global.RoyalArmiesAgeWorldPlanOverlay?.refreshNationPlan?.();
@@ -923,36 +1113,33 @@
         }
     }
 
-    function renderLeaderVoteSlots() {
-        const host = global.document.getElementById('age-hq-leader-vote-slots');
-        if (!host) return;
+    function onElectionCandidateClick(event, role) {
+        const button = event.target.closest('[data-hq-poll]');
+        if (!button || button.disabled || !votingOpen) return;
+        if (button.getAttribute('data-hq-poll') !== role) return;
 
-        if (!voteCandidates.length) {
-            host.innerHTML = '<p class="age-headquarters-request-empty">No eligible commanders found for this nation yet.</p>';
-            return;
+        const candidateId = button.getAttribute('data-candidate-id') || '';
+        if (role === 'leader') {
+            leaderVote = candidateId;
+            if (viceVote === candidateId) viceVote = '';
+        } else {
+            viceVote = candidateId;
+            if (leaderVote === candidateId) leaderVote = '';
         }
 
-        host.innerHTML = voteCandidates.map((candidate) => (
-            `<article class="age-headquarters-vote-card" data-candidate-id="${candidate.id}">`
-            + `<header class="age-headquarters-vote-card-head">`
-            + `<h4 class="age-headquarters-vote-name">${candidate.name}</h4>`
-            + `<p class="age-headquarters-vote-role">${candidate.roleHint}</p>`
-            + `</header>`
-            + `<div class="age-headquarters-vote-actions">`
-            + `<button type="button" class="age-headquarters-vote-btn${leaderVote === candidate.id ? ' is-selected' : ''}" data-hq-vote-role="leader" data-candidate-id="${candidate.id}">Vote Leader</button>`
-            + `<button type="button" class="age-headquarters-vote-btn${viceVote === candidate.id ? ' is-selected' : ''}" data-hq-vote-role="vice" data-candidate-id="${candidate.id}">Vote Vice</button>`
-            + `</div>`
-            + `</article>`
-        )).join('');
+        renderElectionPoll('leader', lastVoteState);
+        renderElectionPoll('vice', lastVoteState);
     }
 
-    function updateVoteStatus() {
-        const statusEl = global.document.getElementById('age-hq-vote-status');
-        if (!statusEl) return;
+    async function submitElectionPoll(role) {
+        if (!votingOpen) return;
 
-        const leaderName = voteCandidates.find((c) => c.id === leaderVote)?.name || '—';
-        const viceName = voteCandidates.find((c) => c.id === viceVote)?.name || '—';
-        statusEl.textContent = `Leader: ${leaderName} · Vice Leader: ${viceName}`;
+        const patch = role === 'leader'
+            ? { vote: { leaderCandidateId: leaderVote } }
+            : { vote: { viceCandidateId: viceVote } };
+
+        await patchHeadquarters(patch);
+        await fetchHeadquartersWorkspace();
     }
 
     function syncToolbarState() {
@@ -994,7 +1181,9 @@
         const statusEl = global.document.getElementById('age-hq-planning-toolbar-status');
         if (statusEl) {
             if (!councilAccess) {
-                statusEl.textContent = 'Council access required';
+                statusEl.textContent = fullAuthority
+                    ? 'Council access required'
+                    : 'Nation authority required for SF Planning';
             } else if (planningConfirmed) {
                 statusEl.textContent = 'Plan live on world map';
             } else if (hasPublishedPlan) {
@@ -1149,18 +1338,20 @@
             }
 
             const result = await patchHeadquarters({
-                warDeclarationDraft: { targetNationId: target }
+                warDeclarationRecord: { targetNationId: target }
             });
 
             feedback.hidden = false;
-            if (!result?.warDeclarationDraft) {
-                feedback.textContent = 'Unable to prepare war declaration on the server.';
+            if (!result?.warRecord) {
+                feedback.textContent = 'Unable to record war declaration. Nation authority and Leader status are required.';
                 feedback.classList.add('is-error');
                 return;
             }
 
-            feedback.textContent = `Declaration draft prepared against ${result.warDeclarationDraft.targetNationName}. Server confirmation coming soon.`;
+            const opponent = result.warRecord.opponentNationName || target;
+            feedback.textContent = `War with ${opponent} is now permanently recorded in the War Ledger.`;
             feedback.classList.remove('is-error');
+            await fetchHeadquartersWorkspace();
         });
 
         global.document.getElementById('age-hq-planning-toolbar')?.addEventListener('click', (event) => {
@@ -1212,29 +1403,17 @@
             }
         });
 
-        global.document.getElementById('age-hq-leader-vote-slots')?.addEventListener('click', async (event) => {
-            const button = event.target.closest('[data-hq-vote-role]');
-            if (!button || !votingOpen) return;
-            const role = button.getAttribute('data-hq-vote-role');
-            const candidateId = button.getAttribute('data-candidate-id');
-
-            if (role === 'leader') {
-                leaderVote = candidateId;
-                if (viceVote === candidateId) viceVote = '';
-            } else if (role === 'vice') {
-                viceVote = candidateId;
-                if (leaderVote === candidateId) leaderVote = '';
-            }
-
-            renderLeaderVoteSlots();
-            updateVoteStatus();
-
-            await patchHeadquarters({
-                vote: {
-                    leaderCandidateId: leaderVote,
-                    viceCandidateId: viceVote
-                }
-            });
+        global.document.getElementById('age-hq-vote-leader-candidates')?.addEventListener('click', (event) => {
+            onElectionCandidateClick(event, 'leader');
+        });
+        global.document.getElementById('age-hq-vote-vice-candidates')?.addEventListener('click', (event) => {
+            onElectionCandidateClick(event, 'vice');
+        });
+        global.document.getElementById('age-hq-vote-leader-submit')?.addEventListener('click', () => {
+            submitElectionPoll('leader');
+        });
+        global.document.getElementById('age-hq-vote-vice-submit')?.addEventListener('click', () => {
+            submitElectionPoll('vice');
         });
 
         global.document.getElementById('age-hq-diplo-request-list')?.addEventListener('click', (event) => {
@@ -1276,20 +1455,19 @@
         bindUi();
         applyDevOwnerCouncilAccessUI();
         const hasCouncilAccess = await fetchHeadquartersWorkspace();
-        if (hasCouncilAccess) {
+        const canUsePlanningMap = hasCouncilAccess
+            || isLocalDevOwnerPortalView()
+            || memberHubActive;
+
+        if (canUsePlanningMap) {
             await ensurePlanningMap();
-            global.RoyalArmiesAgeHeadquartersPlanningMap?.setEnabled(true);
+            global.RoyalArmiesAgeHeadquartersPlanningMap?.setEnabled(hasCouncilAccess || isLocalDevOwnerPortalView());
             await waitForLayout();
             refreshPlanningMapLayout();
-            syncHeadquartersShellLayout();
-            global.RoyalArmiesAgeMovementPanel?.refreshCityPlayers?.();
-        } else if (isLocalDevOwnerPortalView()) {
-            await ensurePlanningMap();
-            global.RoyalArmiesAgeHeadquartersPlanningMap?.setEnabled(true);
-            await waitForLayout();
-            refreshPlanningMapLayout();
-            syncHeadquartersShellLayout();
-            global.RoyalArmiesAgeMovementPanel?.refreshCityPlayers?.();
+            if (hasCouncilAccess || isLocalDevOwnerPortalView()) {
+                syncHeadquartersShellLayout();
+                global.RoyalArmiesAgeMovementPanel?.refreshCityPlayers?.();
+            }
         } else {
             setActiveMarkerType('');
             global.RoyalArmiesAgeHeadquartersPlanningMap?.setEnabled(false);

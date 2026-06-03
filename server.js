@@ -91,7 +91,10 @@ const {
     listWarTargetNations,
     listNationVoteCandidates,
     reconcileHeadquartersElection,
-    tryFinalizeElectionFromVotes
+    tryFinalizeElectionFromVotes,
+    recordRecognizedWarDeclaration,
+    NATION_AUTHORITY_RANK,
+    NATION_AUTHORITY_MIN_RANK14
 } = require('./nexus-age-headquarters');
 const {
     applyDispatchAlertPatch,
@@ -1663,23 +1666,60 @@ function resolveHeadquartersAdminAccess(username, storageKey) {
     };
 }
 
+function countNationRank14Commanders(nationStorageKey) {
+    if (!nationStorageKey) return 0;
+
+    let count = 0;
+    (db.get('commanders').value() || []).forEach((commander) => {
+        const commanderNation = getCouncilBoardStorageKey(resolveCouncilBoardNationKey(commander));
+        if (commanderNation !== nationStorageKey) return;
+        const rank = Math.max(1, Math.floor(Number(commander?.rank) || 1));
+        if (rank >= NATION_AUTHORITY_RANK) count += 1;
+    });
+    return count;
+}
+
+function buildNationAuthoritySlice(nationStorageKey) {
+    const rank14Count = countNationRank14Commanders(nationStorageKey);
+    return {
+        established: rank14Count >= NATION_AUTHORITY_MIN_RANK14,
+        rank14Count,
+        requiredCount: NATION_AUTHORITY_MIN_RANK14,
+        requiredRank: NATION_AUTHORITY_RANK
+    };
+}
+
 function resolveHeadquartersAccessForCommander(commander) {
     const username = normalizeHeadquartersUsername(commander?.username);
     const gameNation = resolveCouncilBoardNationKey(commander);
     const storageKey = getCouncilBoardStorageKey(gameNation);
+    const nationAuthority = buildNationAuthoritySlice(storageKey);
 
     if (!username) {
         return {
             gameNation: storageKey || '',
             council: false,
             leader: false,
-            viceLeader: false
+            viceLeader: false,
+            fullAuthority: false,
+            memberHub: false,
+            nationAuthority
         };
     }
 
     const adminAccess = resolveHeadquartersAdminAccess(username, storageKey);
     if (adminAccess) {
-        return adminAccess;
+        return {
+            ...adminAccess,
+            fullAuthority: true,
+            memberHub: true,
+            nationAuthority: {
+                established: true,
+                rank14Count: NATION_AUTHORITY_MIN_RANK14,
+                requiredCount: NATION_AUTHORITY_MIN_RANK14,
+                requiredRank: NATION_AUTHORITY_RANK
+            }
+        };
     }
 
     if (!storageKey) {
@@ -1687,30 +1727,35 @@ function resolveHeadquartersAccessForCommander(commander) {
             gameNation: '',
             council: false,
             leader: false,
-            viceLeader: false
+            viceLeader: false,
+            fullAuthority: false,
+            memberHub: false,
+            nationAuthority
         };
     }
 
     const leadership = readNationLeadershipForNation(storageKey);
-    if (!leadership) {
-        return {
-            gameNation: storageKey,
-            council: false,
-            leader: false,
-            viceLeader: false
-        };
-    }
-
-    const isLeader = leadership.leaderUsername === username;
-    const isViceLeader = leadership.viceLeaderUsername === username;
-    const isCouncilMember = leadership.councilUsernames.includes(username);
-    const isPlanner = leadership.plannerUsernames.includes(username);
+    const fullAuthority = nationAuthority.established;
+    const isLeader = leadership?.leaderUsername === username;
+    const isViceLeader = leadership?.viceLeaderUsername === username;
+    const isCouncilMember = leadership?.councilUsernames?.includes(username);
+    const isPlanner = leadership?.plannerUsernames?.includes(username);
+    const inNation = Boolean(
+        listNationVoteCandidates(
+            db.get('commanders').value() || [],
+            storageKey,
+            (entry) => getCouncilBoardStorageKey(resolveCouncilBoardNationKey(entry))
+        ).some((row) => row.id === username)
+    );
 
     return {
         gameNation: storageKey,
-        council: isLeader || isViceLeader || isCouncilMember || isPlanner,
-        leader: isLeader,
-        viceLeader: isViceLeader
+        council: fullAuthority && (isLeader || isViceLeader || isCouncilMember || isPlanner),
+        leader: fullAuthority && isLeader,
+        viceLeader: fullAuthority && isViceLeader,
+        fullAuthority,
+        memberHub: inNation,
+        nationAuthority
     };
 }
 
@@ -1749,6 +1794,43 @@ function writeNationHeadquartersForNation(nationKey, nextState) {
     return { state: boards[storageKey] };
 }
 
+const NATION_LEADER_MEMBERSHIP_TITLE = 'Leader';
+const NATION_VICE_LEADER_MEMBERSHIP_TITLE = 'Vice Leader';
+
+function syncNationLeadershipMembershipTitles(previousLeadership, nextLeadership) {
+    const prevLeader = normalizeHeadquartersUsername(previousLeadership?.leaderUsername);
+    const prevVice = normalizeHeadquartersUsername(previousLeadership?.viceLeaderUsername);
+    const nextLeader = normalizeHeadquartersUsername(nextLeadership?.leaderUsername);
+    const nextVice = normalizeHeadquartersUsername(nextLeadership?.viceLeaderUsername);
+
+    const titleByUsername = new Map();
+    [prevLeader, prevVice].forEach((username) => {
+        if (!username || username === nextLeader || username === nextVice) return;
+        titleByUsername.set(username, 'Basic');
+    });
+    if (nextLeader) titleByUsername.set(nextLeader, NATION_LEADER_MEMBERSHIP_TITLE);
+    if (nextVice) titleByUsername.set(nextVice, NATION_VICE_LEADER_MEMBERSHIP_TITLE);
+
+    titleByUsername.forEach((nextTitle, username) => {
+        const commander = db.get('commanders').find({ username }).value();
+        if (!commander) return;
+
+        const currentTitle = String(commander.membershipTitle || '').trim();
+        if (nextTitle === 'Basic') {
+            const leadershipTitles = new Set([
+                NATION_LEADER_MEMBERSHIP_TITLE,
+                NATION_VICE_LEADER_MEMBERSHIP_TITLE
+            ]);
+            if (!leadershipTitles.has(currentTitle)) return;
+        }
+
+        db.get('commanders')
+            .find({ username })
+            .assign({ membershipTitle: nextTitle })
+            .write();
+    });
+}
+
 function writeNationLeadershipForNation(nationKey, leadership) {
     const storageKey = getCouncilBoardStorageKey(nationKey);
     if (!storageKey) {
@@ -1757,6 +1839,7 @@ function writeNationLeadershipForNation(nationKey, leadership) {
 
     const map = readNationLeadershipMap();
     const existing = map[storageKey] && typeof map[storageKey] === 'object' ? map[storageKey] : {};
+    const previousLeadership = { ...existing };
     map[storageKey] = {
         ...existing,
         leaderUsername: normalizeHeadquartersUsername(leadership?.leaderUsername),
@@ -1770,6 +1853,7 @@ function writeNationLeadershipForNation(nationKey, leadership) {
         updatedAt: new Date().toISOString()
     };
     db.set('portal.nationLeadership', map).write();
+    syncNationLeadershipMembershipTitles(previousLeadership, map[storageKey]);
     return { leadership: readNationLeadershipForNation(storageKey) };
 }
 
@@ -1786,10 +1870,18 @@ function resolveHeadquartersNationElectionState(nationKey) {
 
     const nationState = readNationHeadquartersForNation(storageKey);
     const leadership = readNationLeadershipForNation(storageKey);
-    const reconciled = reconcileHeadquartersElection(nationState, leadership);
+    const voteCandidates = listNationVoteCandidates(
+        db.get('commanders').value() || [],
+        storageKey,
+        (entry) => getCouncilBoardStorageKey(resolveCouncilBoardNationKey(entry))
+    );
+    const reconciled = reconcileHeadquartersElection(nationState, leadership, voteCandidates);
 
     if (reconciled.changed) {
         writeNationHeadquartersForNation(storageKey, reconciled.nationState);
+    }
+    if (reconciled.shouldPersistLeadership && reconciled.leadership) {
+        writeNationLeadershipForNation(storageKey, reconciled.leadership);
     }
 
     return {
@@ -4863,10 +4955,22 @@ app.patch('/api/portal/age/headquarters', (req, res) => {
     const body = req.body || {};
     let currentState = readNationHeadquartersForNation(gameNation);
     let currentLeadership = readNationLeadershipForNation(gameNation);
-    const electionSnapshot = reconcileHeadquartersElection(currentState, currentLeadership);
+    const voteCandidatesForElection = listNationVoteCandidates(
+        db.get('commanders').value() || [],
+        gameNation,
+        (entry) => getCouncilBoardStorageKey(resolveCouncilBoardNationKey(entry))
+    );
+    const electionSnapshot = reconcileHeadquartersElection(
+        currentState,
+        currentLeadership,
+        voteCandidatesForElection
+    );
     currentState = electionSnapshot.nationState;
     currentLeadership = electionSnapshot.leadership;
     let votingOpen = electionSnapshot.isOpen;
+    if (electionSnapshot.shouldPersistLeadership && electionSnapshot.leadership) {
+        writeNationLeadershipForNation(gameNation, electionSnapshot.leadership);
+    }
 
     if (electionSnapshot.changed) {
         writeNationHeadquartersForNation(gameNation, currentState);
@@ -4926,12 +5030,25 @@ app.patch('/api/portal/age/headquarters', (req, res) => {
             nextState = finalizeResult.nationState;
             votingOpen = false;
             writeNationLeadershipForNation(gameNation, finalizeResult.leadership);
+            currentLeadership = finalizeResult.leadership;
+        } else {
+            const postVoteElection = reconcileHeadquartersElection(
+                nextState,
+                currentLeadership,
+                voteCandidates
+            );
+            nextState = postVoteElection.nationState;
+            votingOpen = postVoteElection.isOpen;
+            if (postVoteElection.shouldPersistLeadership && postVoteElection.leadership) {
+                writeNationLeadershipForNation(gameNation, postVoteElection.leadership);
+                currentLeadership = postVoteElection.leadership;
+            }
         }
     }
 
     if (body.warDeclarationDraft && typeof body.warDeclarationDraft === 'object') {
-        if (!access.council) {
-            return sendApiError(res, 'HQ_COUNCIL_REQUIRED');
+        if (!access.fullAuthority || !access.leader) {
+            return sendApiError(res, 'HQ_AUTHORITY_REQUIRED');
         }
         const targetNationId = resolveCatalogNationKey(body.warDeclarationDraft.targetNationId);
         if (!targetNationId) {
@@ -4944,6 +5061,28 @@ app.patch('/api/portal/age/headquarters', (req, res) => {
             preparedAt: new Date().toISOString(),
             preparedBy: username
         };
+    }
+
+    if (body.warDeclarationRecord && typeof body.warDeclarationRecord === 'object') {
+        if (!access.fullAuthority || !access.leader) {
+            return sendApiError(res, 'HQ_AUTHORITY_REQUIRED');
+        }
+        const targetNationId = resolveCatalogNationKey(body.warDeclarationRecord.targetNationId);
+        const targetName = listWarTargetNations(gameNation).find((row) => row.id === targetNationId)?.name
+            || targetNationId;
+        const recordPatch = recordRecognizedWarDeclaration(nextState, {
+            targetNationId,
+            targetNationName: targetName,
+            declaredBy: username
+        });
+        if (recordPatch.errorCode) {
+            return sendApiError(res, recordPatch.errorCode);
+        }
+        nextState = {
+            ...nextState,
+            warLedger: recordPatch.warLedger
+        };
+        responseExtra.warRecord = recordPatch.warRecord;
     }
 
     const writeResult = writeNationHeadquartersForNation(gameNation, nextState);

@@ -6,7 +6,7 @@
     <title>Royal Armies — Age Alpha</title>
     <link rel="stylesheet" href="style.css?v=cursor-modal-layer-fix-1">
     <link rel="stylesheet" href="style2.css?v=hq-styles-extracted-1">
-    <link rel="stylesheet" href="style-age-headquarters.css?v=hq-rebuild-1">
+    <link rel="stylesheet" href="style-age-headquarters.css?v=hq-member-hub-1">
     <link rel="stylesheet" href="mobile-responsive.css?v=top-bar-logo-5px-1">
     <link rel="stylesheet" href="dev-page-navigator.css">
     <link rel="stylesheet" href="custom-cursor.css?v=finger-press-7">
@@ -86,8 +86,7 @@
                                         id="age-war-ledger-open"
                                         class="age-nation-hub-menu-item age-nation-hub-menu-item--war-ledger"
                                         role="menuitem"
-                                        aria-haspopup="dialog"
-                                        aria-controls="age-war-ledger-modal">
+                                        data-age-view-tab="headquarters">
                                         War Ledger
                                     </button>
                                     </div>
@@ -711,9 +710,11 @@
                 <div class="age-headquarters-shell" data-age-hq-shell>
                     <section
                         class="age-headquarters-planning-column"
-                        aria-label="Strike Force planning"
-                        data-hq-council-only
-                        hidden>
+                        aria-label="Strike Force planning">
+                        <div class="age-headquarters-planning-lock" id="age-hq-planning-lock" data-hq-member-only hidden aria-hidden="true">
+                            <p class="age-headquarters-planning-lock__title">Command functions locked</p>
+                            <p class="age-headquarters-planning-lock__copy" id="age-hq-planning-lock-copy">Seven commanders must reach rank 14 before the nation receives full authority.</p>
+                        </div>
                         <div class="age-hq-planning-stage">
                             <aside
                                 class="age-headquarters-players-rail"
@@ -801,7 +802,9 @@
                                 id="age-hq-planning-toolbar"
                                 class="age-hq-planning-toolbar age-hq-planning-toolbar--slim"
                                 role="toolbar"
-                                aria-label="Planning markers">
+                                aria-label="Planning markers"
+                                data-hq-council-only
+                                hidden>
                                 <header class="age-hq-planning-toolbar-head">
                                     <span class="age-hq-planning-toolbar-eyebrow">Tactical Orders</span>
                                     <span
@@ -906,39 +909,71 @@
                         <p id="age-hq-planning-hint" class="age-hq-planning-hint">Arm SF, MF, Move, or Taxi, or select a bordering city first for Hold.</p>
                     </section>
 
-                    <aside class="age-headquarters-ops-rail" aria-label="Nation membership">
-                        <section class="age-headquarters-ops-card age-headquarters-ops-card--voting" data-hq-vote-only data-hq-public hidden>
-                            <header class="age-headquarters-ops-card-head">
-                                <h3 class="age-headquarters-ops-card-title">Leader &amp; Vice Leader Vote</h3>
-                                <p class="age-headquarters-ops-card-sub">All nation members may vote for two commanders to lead the realm.</p>
-                            </header>
-                            <div class="age-headquarters-ops-card-body">
-                                <div id="age-hq-leader-vote-slots" class="age-headquarters-vote-slots"></div>
-                                <p id="age-hq-vote-status" class="age-headquarters-vote-status" aria-live="polite">Cast one vote for Leader and one for Vice Leader.</p>
-                            </div>
-                        </section>
+                    <aside class="age-headquarters-ops-rail age-headquarters-member-deck" id="age-hq-member-deck" data-hq-member-only aria-label="Nation membership" hidden>
+                        <div class="age-headquarters-member-deck__grid">
+                            <section class="age-headquarters-ops-card age-headquarters-ops-card--elections" aria-labelledby="age-hq-vote-title">
+                                <header class="age-headquarters-ops-card-head">
+                                    <h3 class="age-headquarters-ops-card-title" id="age-hq-vote-title">Nation Elections</h3>
+                                    <p class="age-headquarters-ops-card-sub" id="age-hq-vote-meta">Anonymous ballots · Leader (LD) and Vice Leader (VLD)</p>
+                                </header>
+                                <div class="age-headquarters-ops-card-body age-hq-elections-host" id="age-hq-elections-host">
+                                    <div class="age-hq-elections-closed-overlay" id="age-hq-elections-closed-overlay" hidden aria-hidden="true">
+                                        <p class="age-hq-elections-closed-overlay__text">Elections are currently closed</p>
+                                    </div>
+                                    <div class="age-hq-election-poll" data-hq-poll="leader" aria-labelledby="age-hq-poll-leader-title">
+                                        <h4 class="age-hq-election-poll__title" id="age-hq-poll-leader-title">Leader (LD)</h4>
+                                        <p class="age-hq-election-poll__meta" id="age-hq-poll-leader-meta" aria-live="polite"></p>
+                                        <div class="age-hq-vote-candidates" id="age-hq-vote-leader-candidates" role="list"></div>
+                                        <button type="button" class="age-headquarters-ops-action-btn age-hq-poll-submit" id="age-hq-vote-leader-submit" data-hq-poll-submit="leader" disabled>Cast Leader Vote</button>
+                                    </div>
+                                    <div class="age-hq-election-poll" data-hq-poll="vice" aria-labelledby="age-hq-poll-vice-title">
+                                        <h4 class="age-hq-election-poll__title" id="age-hq-poll-vice-title">Vice Leader (VLD)</h4>
+                                        <p class="age-hq-election-poll__meta" id="age-hq-poll-vice-meta" aria-live="polite"></p>
+                                        <div class="age-hq-vote-candidates" id="age-hq-vote-vice-candidates" role="list"></div>
+                                        <button type="button" class="age-headquarters-ops-action-btn age-hq-poll-submit" id="age-hq-vote-vice-submit" data-hq-poll-submit="vice" disabled>Cast Vice Leader Vote</button>
+                                    </div>
+                                    <p id="age-hq-vote-status" class="age-headquarters-vote-status" aria-live="polite" hidden></p>
+                                </div>
+                            </section>
+                            <section class="age-headquarters-ops-card age-headquarters-ops-card--relations" aria-labelledby="age-hq-relations-title">
+                                <header class="age-headquarters-ops-card-head">
+                                    <h3 class="age-headquarters-ops-card-title" id="age-hq-relations-title">Allied &amp; NAP</h3>
+                                    <p class="age-headquarters-ops-card-sub" id="age-hq-relations-meta">Accords with neutral nations — not at war.</p>
+                                </header>
+                                <div class="age-headquarters-ops-card-body">
+                                    <ul class="age-hq-relations-list" id="age-hq-relations-list" aria-live="polite"></ul>
+                                </div>
+                            </section>
+                            <section class="age-headquarters-ops-card age-headquarters-ops-card--ledger" aria-labelledby="age-hq-ledger-title">
+                                <header class="age-headquarters-ops-card-head">
+                                    <h3 class="age-headquarters-ops-card-title" id="age-hq-ledger-title">War Ledger</h3>
+                                    <p class="age-headquarters-ops-card-sub" id="age-hq-ledger-meta">Recognized wars are permanent until a belligerent is eliminated.</p>
+                                </header>
+                                <div class="age-headquarters-ops-card-body">
+                                    <ul class="age-hq-war-ledger-list" id="age-hq-war-ledger-list" aria-live="polite"></ul>
+                                </div>
+                            </section>
+                        </div>
                         <section class="age-headquarters-ops-card age-headquarters-ops-card--leadership" data-hq-leadership-summary data-hq-public hidden>
                             <header class="age-headquarters-ops-card-head">
-                                <h3 class="age-headquarters-ops-card-title">Nation Leadership</h3>
-                                <p class="age-headquarters-ops-card-sub">Leader and Vice Leader are locked in for this term.</p>
+                                <h3 class="age-headquarters-ops-card-title">Elected Leadership</h3>
+                                <p class="age-headquarters-ops-card-sub">Leader and Vice Leader for this term.</p>
                             </header>
                             <div class="age-headquarters-ops-card-body">
                                 <dl class="age-headquarters-leadership-roster">
                                     <div class="age-headquarters-leadership-row">
-                                        <dt class="age-headquarters-leadership-role">Leader</dt>
+                                        <dt class="age-headquarters-leadership-role">Leader (LD)</dt>
                                         <dd id="age-hq-elected-leader-name" class="age-headquarters-leadership-name">—</dd>
                                     </div>
                                     <div class="age-headquarters-leadership-row">
-                                        <dt class="age-headquarters-leadership-role">Vice Leader</dt>
+                                        <dt class="age-headquarters-leadership-role">Vice Leader (VLD)</dt>
                                         <dd id="age-hq-elected-vice-name" class="age-headquarters-leadership-name">—</dd>
                                     </div>
                                 </dl>
                                 <p id="age-hq-vote-reopens-at" class="age-headquarters-vote-status" aria-live="polite"></p>
                             </div>
                         </section>
-                        <section class="age-headquarters-ops-card age-headquarters-ops-card--restricted" id="age-hq-council-restricted-notice" hidden>
-                            <p class="age-headquarters-restricted-copy">Council and Leader planning tools are restricted to appointed nation leadership.</p>
-                        </section>
+                        <p class="age-headquarters-authority-banner" id="age-hq-authority-banner" hidden aria-live="polite"></p>
                     </aside>
 
                     <aside class="age-headquarters-treasury-rail" aria-label="Nation fortifications">
@@ -1702,7 +1737,7 @@
     <script src="age-view-tabs.js?v=garrison-menu-2"></script>
     <script src="age-nation-hub.js?v=nation-hub-menu-center-below-1"></script>
     <script src="age-headquarters-planning-map.js?v=hold-sf-mf-staging-1"></script>
-    <script src="age-headquarters.js?v=hq-rebuild-1"></script>
+    <script src="age-headquarters.js?v=hq-member-hub-1"></script>
     <script src="age-dispatch-alert.js?v=local-dev-api-quiet-1"></script>
     <script src="age-chronicles-battle-pass.js?v=bp-premium-badge-1"></script>
     <script src="age-left-reports-panel.js?v=quick-tips-panel-1"></script>
@@ -1711,7 +1746,7 @@
     <script src="rift-song-manuscript-catalog.js?v=discovery-song-lyrics-1"></script>
     <script src="rift-discoveries-workspace.js?v=discovery-wav-sync-1"></script>
     <script src="age-page.js?v=local-dev-api-quiet-1"></script>
-    <script src="age-war-ledger.js?v=war-ledger-bottom-bar-1"></script>
+    <script src="age-war-ledger.js?v=hq-war-ledger-embed-1"></script>
     <script src="rift-unit-purchase-catalog.js?v=swarm-recruit-1"></script>
     <script src="rift-age-guild-training.js?v=commander-rank-hud-1"></script>
     <script src="rift-age-unit-evolution.js?v=unit-evolution-qty-1"></script>

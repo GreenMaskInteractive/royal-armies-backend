@@ -685,7 +685,7 @@
 }
 
 .age-headquarters-shell.age-headquarters-shell--member-view {
-    grid-template-columns: minmax(280px, 420px) minmax(200px, 260px);
+    grid-template-columns: minmax(300px, 1fr) minmax(300px, 420px);
     justify-content: stretch;
     width: calc(100% - (2 * var(--age-hq-header-side-inset, 155px)));
     max-width: none;
@@ -2134,4 +2134,240 @@
 
 .age-hq-dispatch-panel[data-hq-council-only]:not([hidden]) {
     display: block;
+}
+
+/* --- Member headquarters deck (elections, diplomacy, war ledger) --- */
+
+.age-headquarters-member-deck {
+    min-width: 0;
+}
+
+.age-headquarters-member-deck__grid {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.age-headquarters-planning-column {
+    position: relative;
+}
+
+.age-headquarters-planning-column.is-planning-locked .age-hq-planning-map-host {
+    filter: grayscale(0.35) brightness(0.55);
+    pointer-events: none;
+}
+
+.age-headquarters-planning-lock {
+    position: absolute;
+    inset: 0;
+    z-index: 4;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 24px;
+    text-align: center;
+    background: rgba(4, 8, 14, 0.78);
+    border: 1px solid rgba(184, 144, 48, 0.28);
+    border-radius: 8px;
+    box-sizing: border-box;
+    pointer-events: none;
+}
+
+.age-headquarters-planning-lock[hidden] {
+    display: none !important;
+}
+
+.age-headquarters-planning-lock__title {
+    margin: 0;
+    font-family: 'Cinzel', serif;
+    font-size: 1rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: #f1e0ac;
+}
+
+.age-headquarters-planning-lock__copy {
+    margin: 0;
+    max-width: 36ch;
+    font-size: 0.82rem;
+    line-height: 1.5;
+    color: rgba(241, 224, 172, 0.82);
+}
+
+.age-hq-elections-host {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.age-hq-elections-closed-overlay {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 18px;
+    background: rgba(0, 0, 0, 0.74);
+    border-radius: 6px;
+    text-align: center;
+    pointer-events: all;
+}
+
+.age-hq-elections-closed-overlay[hidden] {
+    display: none !important;
+}
+
+.age-hq-elections-closed-overlay__text {
+    margin: 0;
+    font-family: 'Cinzel', serif;
+    font-size: 0.92rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: rgba(241, 224, 172, 0.92);
+}
+
+.age-hq-elections-host.is-elections-closed .age-hq-vote-candidate-btn,
+.age-hq-elections-host.is-elections-closed .age-hq-poll-submit {
+    opacity: 0.42;
+    pointer-events: none;
+}
+
+.age-hq-election-poll {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding-top: 4px;
+    border-top: 1px solid rgba(184, 144, 48, 0.18);
+}
+
+.age-hq-election-poll:first-of-type {
+    border-top: 0;
+    padding-top: 0;
+}
+
+.age-hq-election-poll__title {
+    margin: 0;
+    font-family: 'Cinzel', serif;
+    font-size: 0.78rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: #f6d998;
+}
+
+.age-hq-election-poll__meta {
+    margin: 0;
+    font-size: 0.72rem;
+    color: rgba(241, 224, 172, 0.68);
+}
+
+.age-hq-vote-candidates {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.age-hq-vote-candidate-btn {
+    border: 1px solid rgba(184, 144, 48, 0.32);
+    border-radius: 4px;
+    background: rgba(0, 0, 0, 0.28);
+    color: #f1e0ac;
+    font-size: 0.74rem;
+    padding: 6px 10px;
+    cursor: pointer;
+}
+
+.age-hq-vote-candidate-btn.is-selected {
+    border-color: rgba(255, 215, 128, 0.72);
+    background: rgba(255, 215, 128, 0.14);
+    color: #fff4d0;
+}
+
+.age-hq-vote-candidate-btn:disabled {
+    cursor: not-allowed;
+}
+
+.age-hq-poll-submit {
+    align-self: flex-start;
+}
+
+.age-hq-relations-list,
+.age-hq-war-ledger-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.age-hq-relations-item,
+.age-hq-war-ledger-item {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 8px 10px;
+    border: 1px solid rgba(184, 144, 48, 0.22);
+    border-radius: 4px;
+    background: rgba(0, 0, 0, 0.22);
+}
+
+.age-hq-relations-type {
+    font-size: 0.68rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: rgba(255, 215, 128, 0.72);
+}
+
+.age-hq-relations-name,
+.age-hq-war-ledger-opponent {
+    font-family: 'Cinzel', serif;
+    font-size: 0.8rem;
+    color: #ffe7b0;
+}
+
+.age-hq-relations-empty,
+.age-hq-war-ledger-empty {
+    margin: 0;
+    padding: 10px;
+    font-size: 0.78rem;
+    color: rgba(241, 224, 172, 0.7);
+}
+
+.age-hq-war-ledger-item-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    width: 100%;
+}
+
+.age-hq-war-ledger-status {
+    font-size: 0.65rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: #ffb0b0;
+}
+
+.age-hq-war-ledger-date,
+.age-hq-war-ledger-rule {
+    margin: 0;
+    width: 100%;
+    font-size: 0.7rem;
+    color: rgba(241, 224, 172, 0.65);
+}
+
+.age-headquarters-authority-banner {
+    margin: 0;
+    padding: 10px 12px;
+    border: 1px solid rgba(184, 144, 48, 0.28);
+    border-radius: 6px;
+    background: rgba(8, 12, 18, 0.72);
+    font-size: 0.76rem;
+    line-height: 1.45;
+    color: rgba(241, 224, 172, 0.88);
 }
