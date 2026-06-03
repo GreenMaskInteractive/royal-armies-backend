@@ -13916,38 +13916,42 @@ body.developer-maintenance-alert-active #page-landing {
     background: rgba(184, 144, 48, 0.35);
 }
 
-.age-council-board-editor-color-tools {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
+label.age-council-board-editor-tool {
+    appearance: none;
+    -webkit-appearance: none;
+    box-sizing: border-box;
 }
 
-.age-council-board-editor-toolbar .age-council-board-editor-tool.age-council-board-editor-tool--color-picker {
+.age-council-board-editor-toolbar .age-council-board-editor-tool--color-picker {
     position: relative;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    min-width: 34px;
-    width: 34px;
-    height: 28px;
+    min-width: 30px;
+    width: 30px;
     padding: 0;
-    box-sizing: border-box;
-    vertical-align: middle;
     overflow: hidden;
     cursor: pointer;
 }
 
-.age-council-board-editor-toolbar .age-council-board-editor-tool--color-picker .age-council-board-editor-tool-color-swatch {
+.age-council-board-editor-toolbar .age-council-board-editor-tool--color-picker .age-council-board-editor-tool-color-chip {
     display: block;
-    margin: 0;
-    padding: 0;
-    font-family: 'Segoe UI', Tahoma, sans-serif;
-    font-size: 1rem;
-    font-weight: 700;
-    line-height: 1;
-    color: #ffd978;
+    width: 14px;
+    height: 14px;
+    border-radius: 2px;
+    border: 1px solid rgba(184, 144, 48, 0.55);
+    background: #ffd978;
+    box-shadow:
+        inset 0 0 0 1px rgba(0, 0, 0, 0.4),
+        0 0 6px rgba(255, 215, 0, 0.12);
     pointer-events: none;
-    text-align: center;
+}
+
+.age-council-board-editor-toolbar .age-council-board-editor-tool--color-picker:hover .age-council-board-editor-tool-color-chip {
+    border-color: rgba(255, 217, 120, 0.72);
+    box-shadow:
+        inset 0 0 0 1px rgba(0, 0, 0, 0.35),
+        0 0 8px rgba(255, 215, 0, 0.22);
 }
 
 .age-council-board-editor-toolbar .age-council-board-editor-tool--color-picker .age-council-board-editor-color-input {
@@ -13962,12 +13966,6 @@ body.developer-maintenance-alert-active #page-landing {
     opacity: 0;
     cursor: pointer;
     pointer-events: auto;
-}
-
-.age-council-board-editor-tool[data-council-format="color"] {
-    min-width: 44px;
-    letter-spacing: 0.04em;
-    text-transform: capitalize;
 }
 
 .age-council-board-editor-tool {

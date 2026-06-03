@@ -868,12 +868,12 @@
             });
 
             const colorInput = global.document.getElementById('age-council-board-editor-color');
-            const colorSwatch = editor.querySelector('.age-council-board-editor-tool-color-swatch');
+            const colorChip = global.document.getElementById('age-council-board-editor-color-chip');
             if (colorInput && colorInput.dataset.councilColorBound !== 'true') {
                 colorInput.dataset.councilColorBound = 'true';
                 const syncColorSwatch = () => {
-                    if (colorSwatch) {
-                        colorSwatch.style.color = resolveCouncilNoticeColorInputValue();
+                    if (colorChip) {
+                        colorChip.style.backgroundColor = resolveCouncilNoticeColorInputValue();
                     }
                 };
                 colorInput.addEventListener('input', syncColorSwatch);
