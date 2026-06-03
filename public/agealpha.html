@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Royal Armies — Age Alpha</title>
     <link rel="stylesheet" href="style.css?v=cursor-modal-layer-fix-1">
-    <link rel="stylesheet" href="style2.css?v=army-group-type-square-1">
+    <link rel="stylesheet" href="style2.css?v=war-room-command-deck-1">
     <link rel="stylesheet" href="mobile-responsive.css?v=top-bar-logo-5px-1">
     <link rel="stylesheet" href="dev-page-navigator.css">
     <link rel="stylesheet" href="custom-cursor.css?v=finger-press-7">
@@ -1376,48 +1376,73 @@
         aria-labelledby="age-war-room-title">
         <div id="age-war-room-backdrop" class="age-war-room-backdrop" aria-hidden="true"></div>
         <div class="age-war-room-dialog">
+            <div class="age-war-room-atmosphere" aria-hidden="true"></div>
             <header class="age-war-room-header">
+                <div class="age-war-room-header-mark" aria-hidden="true"></div>
                 <div class="age-war-room-header-brand">
-                    <span class="age-war-room-header-eyebrow">Nation Command</span>
+                    <span class="age-war-room-header-eyebrow">Nation Command · Strategic Briefing</span>
                     <h2 id="age-war-room-title" class="age-war-room-title">War Room</h2>
+                    <p class="age-war-room-header-tagline">Formation orders, command posts, and battlefield signals</p>
+                </div>
+                <div class="age-war-room-header-status" aria-hidden="true">
+                    <span class="age-war-room-status-pill">Operational</span>
                 </div>
                 <button type="button" id="age-war-room-close" class="age-war-room-close" aria-label="Close War Room">×</button>
             </header>
-            <div id="age-army-groups-workspace-main" class="age-army-groups-workspace-main" aria-label="War Room workspace">
-                <header class="age-army-groups-toolbar" aria-label="Army group actions">
-                    <button
-                        type="button"
-                        id="age-army-groups-btn-create"
-                        class="age-army-groups-tool-btn"
-                        title="Create army group"
-                        aria-label="Create army group"
-                        aria-expanded="false"
-                        aria-controls="age-army-groups-create-row">
-                        <img src="images/units/unit-portrait-placeholder.svg" alt="" width="40" height="40" draggable="false">
-                    </button>
-                    <button
-                        type="button"
-                        id="age-army-groups-btn-sf-lead"
-                        class="age-army-groups-tool-btn"
-                        title="List as SF Lead candidate"
-                        aria-label="List as SF Lead candidate"
-                        aria-expanded="false"
-                        aria-controls="age-army-groups-volunteers-column">
-                        <img src="images/units/unit-portrait-placeholder.svg" alt="" width="40" height="40" draggable="false">
-                    </button>
-                    <button
-                        type="button"
-                        id="age-army-groups-btn-sonar"
-                        class="age-army-groups-tool-btn"
-                        title="Signal for rescue (sonar ping)"
-                        aria-label="Signal for rescue"
-                        aria-pressed="false">
-                        <img src="images/units/unit-portrait-placeholder.svg" alt="" width="40" height="40" draggable="false">
-                    </button>
-                </header>
+            <div class="age-war-room-command-deck">
+                <aside class="age-war-room-ops-panel" aria-label="War Room field operations">
+                    <p class="age-war-room-ops-title">Field Operations</p>
+                    <header class="age-army-groups-toolbar" aria-label="Army group actions">
+                        <button
+                            type="button"
+                            id="age-army-groups-btn-create"
+                            class="age-army-groups-tool-btn"
+                            title="Create army group"
+                            aria-label="Create army group"
+                            aria-expanded="false"
+                            aria-controls="age-army-groups-create-row">
+                            <span class="age-army-groups-tool-glyph" aria-hidden="true">⚔</span>
+                            <span class="age-army-groups-tool-copy">
+                                <span class="age-army-groups-tool-label">Deploy</span>
+                                <span class="age-army-groups-tool-hint">Raise formation</span>
+                            </span>
+                        </button>
+                        <button
+                            type="button"
+                            id="age-army-groups-btn-sf-lead"
+                            class="age-army-groups-tool-btn"
+                            title="List as SF Lead candidate"
+                            aria-label="List as SF Lead candidate"
+                            aria-expanded="false"
+                            aria-controls="age-army-groups-volunteers-column">
+                            <span class="age-army-groups-tool-glyph" aria-hidden="true">★</span>
+                            <span class="age-army-groups-tool-copy">
+                                <span class="age-army-groups-tool-label">SF Lead</span>
+                                <span class="age-army-groups-tool-hint">Volunteer pool</span>
+                            </span>
+                        </button>
+                        <button
+                            type="button"
+                            id="age-army-groups-btn-sonar"
+                            class="age-army-groups-tool-btn age-army-groups-tool-btn--sonar"
+                            title="Signal for rescue (sonar ping)"
+                            aria-label="Signal for rescue"
+                            aria-pressed="false">
+                            <span class="age-army-groups-tool-glyph" aria-hidden="true">◎</span>
+                            <span class="age-army-groups-tool-copy">
+                                <span class="age-army-groups-tool-label">Rescue</span>
+                                <span class="age-army-groups-tool-hint">Sonar ping</span>
+                            </span>
+                        </button>
+                    </header>
+                </aside>
+                <div id="age-army-groups-workspace-main" class="age-army-groups-workspace-main" aria-label="War Room workspace">
                 <div class="age-army-groups-body">
                     <section class="age-army-groups-roster-column" aria-label="Army groups">
-                        <h2 class="age-army-groups-list-heading">Armies</h2>
+                        <div class="age-army-groups-section-head">
+                            <h2 class="age-army-groups-list-heading">Active Formations</h2>
+                            <p class="age-army-groups-list-subheading">Nation armies currently mustered for the Age</p>
+                        </div>
                         <div class="age-army-groups-roster">
                             <div id="age-army-groups-create-row" class="age-army-groups-create-row" hidden>
                                 <button
@@ -1444,9 +1469,11 @@
                         class="age-army-groups-volunteers-column"
                         aria-label="SF lead volunteers"
                         aria-hidden="true">
-                        <h2 class="age-army-groups-volunteers-heading">Lead Volunteers</h2>
+                        <h2 class="age-army-groups-volunteers-heading">SF Lead Pool</h2>
+                        <p class="age-army-groups-volunteers-subheading">Commanders ready to take special forces groups</p>
                         <ul id="age-army-groups-sf-lead-list" class="age-army-groups-sf-lead-list" aria-live="polite"></ul>
                     </section>
+                </div>
                 </div>
             </div>
         </div>

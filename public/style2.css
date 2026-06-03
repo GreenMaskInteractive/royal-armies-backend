@@ -23392,8 +23392,9 @@ body.is-rift-discoveries-workspace-open {
     inset: 0;
     z-index: 0;
     background:
-        radial-gradient(ellipse at center, rgba(24, 18, 10, 0.42) 0%, rgba(0, 0, 0, 0.78) 72%);
-    backdrop-filter: blur(2px);
+        radial-gradient(ellipse 90% 70% at 50% 42%, rgba(88, 28, 18, 0.22) 0%, transparent 55%),
+        radial-gradient(ellipse at center, rgba(18, 14, 10, 0.5) 0%, rgba(0, 0, 0, 0.88) 78%);
+    backdrop-filter: blur(4px);
 }
 
 .age-war-room-dialog {
@@ -23402,23 +23403,58 @@ body.is-rift-discoveries-workspace-open {
     display: flex;
     flex-direction: column;
     pointer-events: auto;
-    width: 60vw;
-    height: 60vh;
-    max-width: calc(100vw - 48px);
-    max-height: calc(100vh - 48px);
+    width: min(920px, 72vw);
+    height: min(640px, 72vh);
+    max-width: calc(100vw - 40px);
+    max-height: calc(100vh - 40px);
     box-sizing: border-box;
-    border: 1px solid rgba(184, 144, 48, 0.55);
-    border-radius: 10px;
+    border: 1px solid rgba(184, 144, 48, 0.62);
+    border-radius: 4px;
     background:
-        linear-gradient(180deg, rgba(255, 215, 0, 0.08) 0%, transparent 18%),
-        linear-gradient(165deg, rgba(34, 28, 20, 0.98) 0%, rgba(10, 8, 6, 0.99) 58%, rgba(18, 14, 10, 0.98) 100%);
+        linear-gradient(90deg, rgba(255, 215, 0, 0.04) 0%, transparent 12%, transparent 88%, rgba(255, 215, 0, 0.04) 100%),
+        linear-gradient(180deg, rgba(255, 215, 0, 0.09) 0%, transparent 14%),
+        linear-gradient(165deg, rgba(42, 32, 22, 0.99) 0%, rgba(12, 9, 7, 0.99) 52%, rgba(22, 16, 12, 0.98) 100%);
     box-shadow:
-        inset 0 1px 0 rgba(255, 215, 0, 0.16),
-        inset 0 0 0 1px rgba(255, 215, 0, 0.06),
-        0 22px 56px rgba(0, 0, 0, 0.72),
-        0 0 40px rgba(255, 190, 60, 0.08);
+        inset 0 1px 0 rgba(255, 215, 0, 0.2),
+        inset 0 0 80px rgba(0, 0, 0, 0.45),
+        0 28px 64px rgba(0, 0, 0, 0.78),
+        0 0 48px rgba(180, 60, 20, 0.12);
     overflow: hidden;
     animation: age-war-room-dialog-in 0.34s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.age-war-room-dialog::before,
+.age-war-room-dialog::after {
+    content: '';
+    position: absolute;
+    pointer-events: none;
+    z-index: 0;
+}
+
+.age-war-room-dialog::before {
+    inset: 0;
+    opacity: 0.35;
+    background-image:
+        linear-gradient(rgba(255, 215, 0, 0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 215, 0, 0.04) 1px, transparent 1px);
+    background-size: 28px 28px;
+    mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.55) 0%, transparent 72%);
+}
+
+.age-war-room-dialog::after {
+    inset: 10px;
+    border: 1px solid rgba(255, 215, 0, 0.08);
+    border-radius: 2px;
+}
+
+.age-war-room-atmosphere {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    background:
+        radial-gradient(ellipse 55% 40% at 12% 0%, rgba(255, 120, 40, 0.08) 0%, transparent 70%),
+        radial-gradient(ellipse 40% 35% at 100% 100%, rgba(40, 80, 140, 0.1) 0%, transparent 65%);
 }
 
 @keyframes age-war-room-dialog-in {
@@ -23434,46 +23470,86 @@ body.is-rift-discoveries-workspace-open {
 }
 
 .age-war-room-header {
-    display: flex;
+    position: relative;
+    z-index: 2;
+    display: grid;
+    grid-template-columns: auto 1fr auto auto;
     align-items: center;
-    justify-content: space-between;
-    gap: 16px;
+    gap: 14px 18px;
     flex: 0 0 auto;
-    padding: 14px 18px 12px;
-    border-bottom: 1px solid var(--age-hud-rail-divider);
+    padding: 16px 20px 14px;
+    border-bottom: 1px solid rgba(184, 144, 48, 0.38);
     background:
-        linear-gradient(180deg, rgba(255, 215, 0, 0.07) 0%, transparent 100%),
-        rgba(0, 0, 0, 0.22);
+        linear-gradient(180deg, rgba(255, 215, 0, 0.1) 0%, transparent 100%),
+        linear-gradient(90deg, rgba(120, 32, 18, 0.22) 0%, transparent 28%, transparent 72%, rgba(40, 70, 120, 0.18) 100%),
+        rgba(0, 0, 0, 0.35);
+}
+
+.age-war-room-header-mark {
+    width: 4px;
+    height: 52px;
+    border-radius: 2px;
+    background: linear-gradient(180deg, #ffd978 0%, #b8860b 45%, #6b2010 100%);
+    box-shadow: 0 0 12px rgba(255, 190, 60, 0.35);
 }
 
 .age-war-room-header-brand {
     display: flex;
     flex-direction: column;
-    gap: 2px;
+    gap: 3px;
     min-width: 0;
 }
 
 .age-war-room-header-eyebrow {
-    font-size: 0.68rem;
+    font-size: 0.62rem;
     font-weight: 700;
-    letter-spacing: 0.14em;
+    letter-spacing: 0.16em;
     text-transform: uppercase;
-    color: rgba(216, 200, 154, 0.72);
+    color: rgba(216, 200, 154, 0.68);
 }
 
 .age-war-room-title {
     margin: 0;
     font-family: 'Cinzel', serif;
-    font-size: 1.12rem;
+    font-size: 1.45rem;
     font-weight: 700;
-    letter-spacing: 0.1em;
+    letter-spacing: 0.14em;
     text-transform: uppercase;
-    color: #ffd978;
-    text-shadow: 0 1px 4px rgba(0, 0, 0, 0.55);
+    color: #ffe6a0;
+    text-shadow:
+        0 0 18px rgba(255, 190, 60, 0.25),
+        0 2px 6px rgba(0, 0, 0, 0.65);
+}
+
+.age-war-room-header-tagline {
+    margin: 0;
+    font-size: 0.72rem;
+    letter-spacing: 0.04em;
+    color: rgba(216, 200, 154, 0.58);
+}
+
+.age-war-room-header-status {
+    display: flex;
+    align-items: center;
+}
+
+.age-war-room-status-pill {
+    padding: 5px 10px;
+    border: 1px solid rgba(120, 200, 120, 0.45);
+    border-radius: 3px;
+    background: rgba(18, 48, 28, 0.65);
+    font-size: 0.58rem;
+    font-weight: 800;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: #9fd4a8;
+    box-shadow: inset 0 0 12px rgba(80, 180, 100, 0.12);
 }
 
 .age-war-room-close {
     appearance: none;
+    position: relative;
+    z-index: 2;
     flex: 0 0 auto;
     width: 36px;
     height: 36px;
@@ -23502,6 +23578,39 @@ body.age-war-room-open {
     overflow: hidden;
 }
 
+.age-war-room-command-deck {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex: 1 1 auto;
+    align-items: stretch;
+    gap: 0;
+    min-height: 0;
+    overflow: hidden;
+}
+
+.age-war-room-ops-panel {
+    flex: 0 0 188px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 14px 12px 14px 16px;
+    border-right: 1px solid rgba(184, 144, 48, 0.28);
+    background:
+        linear-gradient(180deg, rgba(0, 0, 0, 0.38) 0%, rgba(0, 0, 0, 0.18) 100%),
+        linear-gradient(90deg, rgba(120, 32, 18, 0.12) 0%, transparent 100%);
+}
+
+.age-war-room-ops-title {
+    margin: 0;
+    font-family: 'Cinzel', serif;
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: rgba(232, 213, 163, 0.82);
+}
+
 .age-army-groups-workspace-main {
     display: flex;
     flex: 1 1 auto;
@@ -23515,37 +23624,72 @@ body.age-war-room-open {
 
 .age-army-groups-toolbar {
     display: flex;
-    flex-wrap: wrap;
-    align-items: flex-start;
-    gap: 10px;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
     margin: 0;
     padding: 0;
 }
 
 .age-army-groups-tool-btn {
-    width: 52px;
-    height: 52px;
-    padding: 4px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    min-height: 52px;
+    padding: 8px 10px;
     border: 1px solid rgba(72, 54, 28, 0.75);
     border-bottom-width: 3px;
-    border-radius: 8px;
+    border-radius: 4px;
     background: linear-gradient(180deg, rgba(36, 28, 16, 0.96) 0%, rgba(12, 8, 4, 0.98) 100%);
     cursor: pointer;
+    text-align: left;
     box-shadow:
         0 3px 0 rgba(0, 0, 0, 0.45),
-        0 5px 10px rgba(0, 0, 0, 0.28),
         inset 0 1px 0 rgba(255, 215, 0, 0.1);
     transition: border-color 0.14s ease, box-shadow 0.14s ease, transform 0.1s ease, filter 0.12s ease;
 }
 
-.age-army-groups-tool-btn img {
-    display: block;
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    border-radius: 4px;
-    opacity: 0.92;
-    pointer-events: none;
+.age-army-groups-tool-glyph {
+    flex: 0 0 auto;
+    width: 32px;
+    height: 32px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 3px;
+    border: 1px solid rgba(255, 215, 0, 0.18);
+    background: rgba(0, 0, 0, 0.35);
+    font-size: 1rem;
+    line-height: 1;
+    color: #ffd978;
+}
+
+.age-army-groups-tool-copy {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    min-width: 0;
+}
+
+.age-army-groups-tool-label {
+    font-family: 'Cinzel', serif;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #f1e0ac;
+}
+
+.age-army-groups-tool-hint {
+    font-size: 0.62rem;
+    letter-spacing: 0.03em;
+    color: rgba(216, 200, 154, 0.55);
+}
+
+.age-army-groups-tool-btn--sonar .age-army-groups-tool-glyph {
+    color: #9fd4ff;
+    border-color: rgba(96, 168, 255, 0.35);
 }
 
 .age-army-groups-tool-btn:hover,
@@ -23569,6 +23713,11 @@ body.age-war-room-open {
         inset 0 0 0 1px rgba(160, 210, 255, 0.25);
 }
 
+.age-army-groups-tool-btn.is-sonar-active {
+    border-color: rgba(96, 200, 255, 0.9);
+    background: linear-gradient(180deg, rgba(20, 48, 72, 0.95) 0%, rgba(8, 20, 36, 0.98) 100%);
+}
+
 .age-army-groups-body {
     flex: 1 1 auto;
     display: flex;
@@ -23587,46 +23736,65 @@ body.age-war-room-open {
 }
 
 .age-army-groups-volunteers-column {
-    flex: 0 0 min(38%, 280px);
-    min-width: 180px;
-    max-width: 42%;
+    flex: 0 0 min(34%, 260px);
+    min-width: 200px;
+    max-width: 40%;
     margin-left: auto;
     display: none;
     flex-direction: column;
     align-items: stretch;
     min-height: 0;
-    padding-left: 20px;
-    border-left: 1px solid rgba(197, 160, 89, 0.22);
+    padding: 4px 0 4px 18px;
+    border-left: 1px solid rgba(197, 160, 89, 0.28);
+    background: linear-gradient(90deg, rgba(0, 0, 0, 0.22) 0%, transparent 100%);
 }
 
 .age-army-groups-volunteers-column.is-visible {
     display: flex;
 }
 
-.age-army-groups-list-heading {
+.age-army-groups-section-head {
     flex: 0 0 auto;
-    margin: 12px 0 0;
-    padding: 0 0 8px;
-    border-bottom: 1px solid rgba(197, 160, 89, 0.28);
+    margin: 4px 0 0;
+    padding: 0 0 10px;
+    border-bottom: 1px solid rgba(197, 160, 89, 0.32);
+}
+
+.age-army-groups-list-heading {
+    margin: 0;
+    padding: 0;
+    border: none;
     font-family: 'Cinzel', serif;
-    font-size: 0.82rem;
+    font-size: 0.88rem;
     font-weight: 700;
     letter-spacing: 0.12em;
     text-transform: uppercase;
     color: #e8d5a3;
 }
 
+.age-army-groups-list-subheading,
+.age-army-groups-volunteers-subheading {
+    margin: 4px 0 0;
+    font-size: 0.68rem;
+    letter-spacing: 0.03em;
+    color: rgba(216, 200, 154, 0.52);
+}
+
 .age-army-groups-volunteers-heading {
     flex: 0 0 auto;
-    margin: 12px 0 0;
-    padding: 0 0 8px;
-    border-bottom: 1px solid rgba(197, 160, 89, 0.28);
+    margin: 4px 0 0;
+    padding: 0 0 0;
+    border: none;
     font-family: 'Cinzel', serif;
     font-size: 0.82rem;
     font-weight: 700;
     letter-spacing: 0.12em;
     text-transform: uppercase;
     color: #e8d5a3;
+    text-align: right;
+}
+
+.age-army-groups-volunteers-subheading {
     text-align: right;
 }
 
@@ -23686,12 +23854,16 @@ body.age-war-room-open {
     flex: 0 0 auto;
     align-items: stretch;
     justify-content: flex-start;
-    align-self: flex-start;
+    align-self: stretch;
     gap: 8px;
-    width: min(100%, 400px);
+    width: 100%;
     max-width: 100%;
-    margin: 28px 0 0 0;
-    padding: 0;
+    margin: 10px 0 0;
+    padding: 10px 12px;
+    border: 1px dashed rgba(197, 160, 89, 0.35);
+    border-radius: 4px;
+    background: rgba(0, 0, 0, 0.28);
+    box-sizing: border-box;
 }
 
 .age-army-groups-create-row.is-visible {
@@ -23875,10 +24047,11 @@ body.age-war-room-open {
 .age-army-groups-list {
     flex: 1 1 auto;
     min-height: 0;
-    margin-top: 12px;
-    padding-right: 4px;
+    margin-top: 10px;
+    padding: 4px 6px 4px 2px;
     overflow-y: auto;
     scrollbar-width: thin;
+    scrollbar-color: rgba(197, 160, 89, 0.45) rgba(0, 0, 0, 0.25);
 }
 
 .age-army-groups-roster:has(.age-army-groups-create-row.is-visible) .age-army-groups-list {
@@ -23897,12 +24070,23 @@ body.age-war-room-open {
     display: flex;
     flex-direction: column;
     gap: 4px;
-    padding: 10px 12px;
-    margin-bottom: 6px;
-    border-radius: 8px;
-    border: 1px solid rgba(197, 160, 89, 0.28);
-    background: rgba(0, 0, 0, 0.28);
+    padding: 10px 12px 10px 14px;
+    margin-bottom: 7px;
+    border-radius: 3px;
+    border: 1px solid rgba(197, 160, 89, 0.26);
+    border-left-width: 4px;
+    background:
+        linear-gradient(90deg, rgba(255, 255, 255, 0.03) 0%, transparent 18%),
+        rgba(0, 0, 0, 0.34);
+    box-shadow: inset 0 1px 0 rgba(255, 215, 0, 0.05);
 }
+
+.age-army-groups-row--sf { border-left-color: #b52828; }
+.age-army-groups-row--taxi { border-left-color: #c9a227; }
+.age-army-groups-row--rally { border-left-color: #5c3a8c; }
+.age-army-groups-row--hold { border-left-color: #6e6e6e; }
+.age-army-groups-row--main { border-left-color: #ffd978; }
+.age-army-groups-row--temp-main { border-left-color: #a8c0dc; }
 
 .age-army-groups-row-head {
     display: flex;
@@ -23959,17 +24143,21 @@ body.age-war-room-open {
 }
 
 .age-army-groups-row-meta {
-    margin: 0 0 0 60px;
-    font-size: 11px;
-    color: rgba(216, 200, 154, 0.82);
+    margin: 0 0 0 40px;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: rgba(216, 200, 154, 0.62);
 }
 
 .age-army-groups-members-panel {
-    margin: 4px 0 0 60px;
-    padding: 0;
+    margin: 4px 0 0 40px;
+    padding: 6px 0 2px;
     display: flex;
     flex-direction: column;
     gap: 8px;
+    border-top: 1px solid rgba(197, 160, 89, 0.14);
 }
 
 .age-army-groups-members-panel[hidden] {
@@ -24173,7 +24361,9 @@ body.age-war-room-open {
 
 .age-army-groups-row-title {
     margin: 0;
-    font-size: 14px;
+    font-family: 'Cinzel', serif;
+    font-size: 0.92rem;
+    letter-spacing: 0.04em;
     color: #f5ecd4;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -24391,6 +24581,42 @@ body.age-war-room-open {
 #age-page-canvas[data-age-view="map"] .age-world-map-canvas,
 #age-page-canvas[data-age-view="map"] .age-world-map-highlight-shell {
     z-index: 1;
+}
+
+@media (max-width: 760px) {
+    .age-war-room-dialog {
+        width: calc(100vw - 24px);
+        height: min(92vh, 720px);
+    }
+
+    .age-war-room-header {
+        grid-template-columns: auto 1fr auto;
+    }
+
+    .age-war-room-header-status {
+        display: none;
+    }
+
+    .age-war-room-command-deck {
+        flex-direction: column;
+    }
+
+    .age-war-room-ops-panel {
+        flex: 0 0 auto;
+        border-right: none;
+        border-bottom: 1px solid rgba(184, 144, 48, 0.28);
+        padding: 10px 14px;
+    }
+
+    .age-army-groups-toolbar {
+        flex-direction: row;
+        flex-wrap: wrap;
+    }
+
+    .age-army-groups-tool-btn {
+        flex: 1 1 140px;
+        width: auto;
+    }
 }
 
 @media (prefers-reduced-motion: reduce) {
