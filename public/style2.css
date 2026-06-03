@@ -6424,6 +6424,41 @@ body.is-terms-gate-active #main-portal-dynamic-viewport {
     box-shadow: inset 0 0 0 1px rgba(255, 215, 0, 0.18), 0 0 10px rgba(255, 215, 0, 0.12) !important;
 }
 
+.portal-commander-identity-menu .dropdown-action-item.dropdown-action-item-report-player,
+.avatar-hover-dropdown-menu .dropdown-action-item.dropdown-action-item-report-player,
+.portal-mobile-submenu-item.portal-mobile-submenu-item-report-player {
+    margin-top: 8px !important;
+    border: 1px solid rgba(220, 96, 72, 0.55) !important;
+    border-radius: 3px !important;
+    color: rgba(255, 176, 148, 0.98) !important;
+    background: linear-gradient(180deg, rgba(120, 28, 28, 0.88) 0%, rgba(48, 12, 10, 0.95) 100%) !important;
+    width: 100% !important;
+    flex: 0 0 auto !important;
+    text-align: center !important;
+    box-sizing: border-box !important;
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.06),
+        inset 0 0 0 1px rgba(255, 120, 90, 0.12),
+        0 0 10px rgba(180, 48, 32, 0.18) !important;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.85) !important;
+}
+
+.portal-commander-identity-menu .dropdown-action-item.dropdown-action-item-report-player:hover,
+.portal-commander-identity-menu .dropdown-action-item.dropdown-action-item-report-player:focus-visible,
+.avatar-hover-dropdown-menu .dropdown-action-item.dropdown-action-item-report-player:hover,
+.avatar-hover-dropdown-menu .dropdown-action-item.dropdown-action-item-report-player:focus-visible,
+.portal-mobile-submenu-item.portal-mobile-submenu-item-report-player:hover,
+.portal-mobile-submenu-item.portal-mobile-submenu-item-report-player:active,
+.portal-mobile-submenu-item.portal-mobile-submenu-item-report-player:focus-visible {
+    border-color: rgba(240, 112, 88, 0.85) !important;
+    color: rgba(255, 210, 188, 1) !important;
+    background: linear-gradient(180deg, rgba(148, 36, 32, 0.95) 0%, rgba(64, 14, 12, 0.98) 100%) !important;
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.1),
+        inset 0 0 0 1px rgba(255, 140, 110, 0.2),
+        0 0 14px rgba(220, 72, 48, 0.28) !important;
+}
+
 .dropdown-messages-unread-count[hidden] {
     display: none !important;
 }
