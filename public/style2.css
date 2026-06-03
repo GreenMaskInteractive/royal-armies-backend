@@ -24949,7 +24949,12 @@ body.player-report-modal-open {
     flex-direction: column;
     gap: 4px;
     padding: 18px 48px 14px 18px;
-    border-bottom: 1px solid rgba(255, 215, 0, 0.2);
+    border-bottom: 1px solid rgba(180, 48, 32, 0.55);
+    border-radius: 9px 9px 0 0;
+    background:
+        linear-gradient(180deg, rgba(255, 120, 90, 0.12) 0%, transparent 42%),
+        linear-gradient(165deg, rgba(108, 24, 24, 0.98) 0%, rgba(42, 10, 10, 0.99) 100%);
+    box-shadow: inset 0 1px 0 rgba(255, 180, 150, 0.14);
 }
 
 .player-report-modal-eyebrow {
@@ -24959,7 +24964,7 @@ body.player-report-modal-open {
     font-weight: 400;
     letter-spacing: 0.16em;
     text-transform: uppercase;
-    color: rgba(241, 224, 172, 0.72);
+    color: rgba(255, 196, 168, 0.82);
 }
 
 .player-report-modal-title {
@@ -24968,8 +24973,8 @@ body.player-report-modal-open {
     font-size: 1.05rem;
     font-weight: 700;
     letter-spacing: 0.06em;
-    color: #ffd978;
-    text-shadow: 0 2px 6px rgba(0, 0, 0, 0.85);
+    color: #ffc4b0;
+    text-shadow: 0 2px 6px rgba(0, 0, 0, 0.88), 0 0 12px rgba(220, 72, 48, 0.22);
 }
 
 .player-report-modal-close-btn {
@@ -24978,10 +24983,10 @@ body.player-report-modal-open {
     right: 14px;
     width: 32px;
     height: 32px;
-    border: 1px solid rgba(184, 144, 48, 0.38);
+    border: 1px solid rgba(255, 160, 130, 0.42);
     border-radius: 3px;
-    background: rgba(0, 0, 0, 0.42);
-    color: rgba(241, 224, 172, 0.88);
+    background: rgba(0, 0, 0, 0.35);
+    color: rgba(255, 220, 200, 0.92);
     font-size: 1.25rem;
     line-height: 1;
     cursor: pointer;
@@ -24989,9 +24994,9 @@ body.player-report-modal-open {
 }
 
 .player-report-modal-close-btn:hover {
-    color: #ffd700;
-    background: rgba(184, 144, 48, 0.18);
-    border-color: rgba(184, 144, 48, 0.55);
+    color: #fff;
+    background: rgba(120, 28, 28, 0.55);
+    border-color: rgba(255, 180, 150, 0.72);
 }
 
 .player-report-modal-body {

@@ -57,7 +57,6 @@
             categoryHint: global.document.getElementById('player-report-category-hint'),
             feedback: global.document.getElementById('player-report-feedback'),
             submitBtn: global.document.getElementById('player-report-submit-btn'),
-            cancelBtn: global.document.getElementById('player-report-cancel-btn'),
             closeBtn: global.document.getElementById('player-report-close-btn'),
             screenshotInput: global.document.getElementById('player-report-screenshot-input'),
             screenshotAddBtn: global.document.getElementById('player-report-screenshot-add-btn'),
@@ -528,7 +527,6 @@
             categoryGroupField,
             reasonField,
             submitBtn,
-            cancelBtn,
             closeBtn,
             screenshotInput,
             screenshotAddBtn,
@@ -539,7 +537,6 @@
         root.dataset.playerReportBound = 'true';
 
         scrim?.addEventListener('click', close);
-        cancelBtn?.addEventListener('click', close);
         closeBtn?.addEventListener('click', close);
         submitBtn?.addEventListener('click', submit);
         detailsField?.addEventListener('input', updateDetailsCounter);
