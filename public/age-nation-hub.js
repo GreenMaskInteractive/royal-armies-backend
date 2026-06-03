@@ -8,6 +8,7 @@
     let escapeHandler = null;
     let layoutHandler = null;
     const MENU_TOGGLE_GAP_PX = 8;
+    const MENU_OFFSET_RIGHT_PX = 50;
 
     function getHub() {
         return global.document.getElementById('age-nation-hub');
@@ -49,7 +50,7 @@
         menu.style.setProperty('--age-nation-hub-menu-top', `${Math.round(rect.bottom + MENU_TOGGLE_GAP_PX)}px`);
         menu.style.setProperty(
             '--age-nation-hub-menu-right',
-            `${Math.round(global.window.innerWidth - rect.right)}px`
+            `${Math.round(global.window.innerWidth - rect.right - MENU_OFFSET_RIGHT_PX)}px`
         );
         menu.style.setProperty(
             '--age-nation-hub-menu-min-width',
