@@ -23,7 +23,8 @@
         'temp-main': 'age-army-groups-type-cycle--temp-main'
     };
     const CATEGORY_GAP_TYPES = new Set(['temp-main', 'hold', 'rally', 'sf', 'taxi']);
-    const SONAR_MAX_RADIUS_MAP_UNITS = 42;
+    const SONAR_MAX_RADIUS_MAP_UNITS = 56;
+    const SONAR_RING_LIFETIME_MS = 2200;
     const REFRESH_MS = 12000;
 
     const els = {
@@ -1107,8 +1108,12 @@
             global.clearInterval(sonarCycleTimer);
             sonarCycleTimer = 0;
         }
+        localSonarActive = false;
+        els.sonarBtn?.classList.remove('is-sonar-active');
+        els.sonarLayer?.classList.remove('is-active');
         if (els.sonarLayer) {
             els.sonarLayer.innerHTML = '';
+            els.sonarLayer.setAttribute('aria-hidden', 'true');
         }
     }
 
@@ -1119,21 +1124,61 @@
         return { x: 0, y: 0 };
     }
 
-    function emitSonarPing(city) {
-        if (!els.sonarLayer || !city?.centroid) return;
+    function resolveSonarCenterPx(city) {
+        if (!city?.centroid) return null;
         const center = mapPointToFrame(city.centroid.x, city.centroid.y);
         const east = mapPointToFrame(city.centroid.x + 1, city.centroid.y);
         const pxPerUnit = Math.hypot(east.x - center.x, east.y - center.y) || 1;
-        const maxRadiusPx = SONAR_MAX_RADIUS_MAP_UNITS * pxPerUnit;
+        return {
+            x: center.x,
+            y: center.y,
+            maxRadiusPx: SONAR_MAX_RADIUS_MAP_UNITS * pxPerUnit
+        };
+    }
 
-        const ring = global.document.createElement('span');
-        ring.className = 'age-army-groups-sonar-ring';
-        ring.style.left = `${center.x}px`;
-        ring.style.top = `${center.y}px`;
-        ring.style.setProperty('--sonar-max-radius', `${maxRadiusPx}px`);
-        els.sonarLayer.appendChild(ring);
+    function syncSonarBeacon(city) {
+        if (!els.sonarLayer) return;
+        const centerPx = resolveSonarCenterPx(city);
+        if (!centerPx) return;
 
-        global.setTimeout(() => ring.remove(), 1600);
+        let beacon = els.sonarLayer.querySelector('.age-army-groups-sonar-beacon');
+        if (!beacon) {
+            beacon = global.document.createElement('div');
+            beacon.className = 'age-army-groups-sonar-beacon';
+            beacon.setAttribute('aria-hidden', 'true');
+            beacon.innerHTML = `
+                <span class="age-army-groups-sonar-beacon-core"></span>
+                <span class="age-army-groups-sonar-beacon-sweep"></span>
+                <span class="age-army-groups-sonar-beacon-label">RESCUE</span>
+            `;
+            els.sonarLayer.appendChild(beacon);
+        }
+
+        beacon.style.left = `${centerPx.x}px`;
+        beacon.style.top = `${centerPx.y}px`;
+        beacon.style.setProperty('--sonar-max-radius', `${centerPx.maxRadiusPx}px`);
+        els.sonarLayer.style.setProperty('--sonar-beacon-x', `${centerPx.x}px`);
+        els.sonarLayer.style.setProperty('--sonar-beacon-y', `${centerPx.y}px`);
+    }
+
+    function emitSonarPing(city) {
+        if (!els.sonarLayer || !city?.centroid) return;
+        const centerPx = resolveSonarCenterPx(city);
+        if (!centerPx) return;
+
+        [0, 1, 2].forEach((wave) => {
+            sonarTimers.push(global.setTimeout(() => {
+                const ring = global.document.createElement('span');
+                ring.className = 'age-army-groups-sonar-ring';
+                if (wave === 1) ring.classList.add('age-army-groups-sonar-ring--echo');
+                if (wave === 2) ring.classList.add('age-army-groups-sonar-ring--echo-deep');
+                ring.style.left = `${centerPx.x}px`;
+                ring.style.top = `${centerPx.y}px`;
+                ring.style.setProperty('--sonar-max-radius', `${centerPx.maxRadiusPx}px`);
+                els.sonarLayer.appendChild(ring);
+                sonarTimers.push(global.setTimeout(() => ring.remove(), SONAR_RING_LIFETIME_MS));
+            }, wave * 220));
+        });
     }
 
     function runSonarBurst(city, timing) {
@@ -1147,19 +1192,20 @@
     function startLocalSonarSession(city, timing) {
         clearSonarTimers();
         localSonarActive = true;
+        els.sonarBtn?.classList.add('is-sonar-active');
         if (els.sonarLayer) {
+            els.sonarLayer.classList.add('is-active');
             els.sonarLayer.setAttribute('aria-hidden', 'false');
         }
-        const cycleMs = timing?.cycleMs || 10000;
-        const sessionMs = timing?.sessionMs || 32000;
+        syncSonarBeacon(city);
+
+        const cycleMs = timing?.cycleMs || 8000;
+        const sessionMs = timing?.sessionMs || (30 * 60 * 1000);
         runSonarBurst(city, timing);
         sonarCycleTimer = global.setInterval(() => runSonarBurst(city, timing), cycleMs);
         sonarTimers.push(global.setTimeout(() => {
-            localSonarActive = false;
             clearSonarTimers();
-            if (els.sonarLayer) {
-                els.sonarLayer.setAttribute('aria-hidden', 'true');
-            }
+            showFeedback('Rescue sonar ended.', false);
         }, sessionMs));
     }
 
@@ -1180,10 +1226,11 @@
             if (city) {
                 startLocalSonarSession(city, payload.sonarTiming);
             }
+            const minutes = Math.max(1, Math.round((payload.sonarTiming?.sessionMs || 30 * 60 * 1000) / 60000));
             showFeedback(
                 payload.alreadyActive
-                    ? 'Rescue sonar already active.'
-                    : 'Rescue sonar broadcasting to leadership.',
+                    ? `Rescue sonar already active (${minutes} min session).`
+                    : `Rescue sonar broadcasting for ${minutes} minutes. Watch your position on the map.`,
                 false
             );
         } catch (err) {

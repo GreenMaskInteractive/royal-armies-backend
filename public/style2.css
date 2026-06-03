@@ -24162,37 +24162,182 @@ body.age-war-room-open {
     font-size: 13px;
 }
 
+.age-army-groups-tool-btn.is-sonar-active {
+    border-color: rgba(80, 220, 255, 0.95) !important;
+    box-shadow:
+        0 0 0 2px rgba(40, 160, 255, 0.45),
+        0 0 18px rgba(64, 200, 255, 0.65),
+        inset 0 0 12px rgba(96, 220, 255, 0.35) !important;
+    animation: age-army-groups-sonar-btn-pulse 1.4s ease-in-out infinite;
+}
+
+@keyframes age-army-groups-sonar-btn-pulse {
+    0%, 100% {
+        filter: brightness(1.05);
+    }
+
+    50% {
+        filter: brightness(1.35);
+    }
+}
+
 .age-world-map-frame > .age-army-groups-sonar-layer {
     position: absolute;
     inset: var(--game-region-map-bezel);
-    z-index: 5;
+    z-index: 48;
     pointer-events: none;
     overflow: hidden;
 }
 
-.age-army-groups-sonar-ring {
+.age-army-groups-sonar-layer.is-active::before {
+    content: '';
     position: absolute;
-    width: 12px;
-    height: 12px;
-    margin: -6px 0 0 -6px;
-    border-radius: 50%;
-    border: 2px solid rgba(120, 200, 255, 0.85);
-    box-shadow: 0 0 12px rgba(96, 180, 255, 0.55);
-    animation: age-army-groups-sonar-expand 1.4s ease-out forwards;
+    inset: 0;
+    background: radial-gradient(
+        circle at var(--sonar-beacon-x, 50%) var(--sonar-beacon-y, 50%),
+        rgba(64, 200, 255, 0.14) 0%,
+        rgba(32, 120, 220, 0.06) 28%,
+        transparent 62%
+    );
+    animation: age-army-groups-sonar-vignette 2.4s ease-in-out infinite;
+    pointer-events: none;
 }
 
-@keyframes age-army-groups-sonar-expand {
+@keyframes age-army-groups-sonar-vignette {
+    0%, 100% {
+        opacity: 0.55;
+    }
+
+    50% {
+        opacity: 1;
+    }
+}
+
+.age-army-groups-sonar-beacon {
+    position: absolute;
+    width: 0;
+    height: 0;
+    z-index: 3;
+    pointer-events: none;
+}
+
+.age-army-groups-sonar-beacon-core {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 22px;
+    height: 22px;
+    margin: -11px 0 0 -11px;
+    border-radius: 50%;
+    background: radial-gradient(circle, #ffffff 0%, #7ee8ff 35%, #1a8fd4 70%, transparent 100%);
+    box-shadow:
+        0 0 16px rgba(120, 230, 255, 1),
+        0 0 36px rgba(64, 180, 255, 0.85);
+    animation: age-army-groups-sonar-beacon-core 1.1s ease-in-out infinite;
+}
+
+.age-army-groups-sonar-beacon-sweep {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: min(var(--sonar-max-radius, 160px), 220px);
+    height: min(var(--sonar-max-radius, 160px), 220px);
+    margin: calc(min(var(--sonar-max-radius, 160px), 220px) / -2) 0 0 calc(min(var(--sonar-max-radius, 160px), 220px) / -2);
+    border-radius: 50%;
+    border: 3px solid rgba(120, 230, 255, 0.55);
+    box-shadow: inset 0 0 24px rgba(96, 200, 255, 0.35);
+    animation: age-army-groups-sonar-beacon-sweep 2.2s ease-out infinite;
+}
+
+.age-army-groups-sonar-beacon-label {
+    position: absolute;
+    left: 14px;
+    top: -10px;
+    padding: 3px 8px;
+    border-radius: 4px;
+    border: 1px solid rgba(120, 230, 255, 0.75);
+    background: rgba(8, 28, 52, 0.92);
+    color: #dff7ff;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    box-shadow: 0 0 14px rgba(64, 200, 255, 0.5);
+    animation: age-army-groups-sonar-label-blink 1.2s step-end infinite;
+}
+
+@keyframes age-army-groups-sonar-beacon-core {
+    0%, 100% {
+        transform: scale(1);
+    }
+
+    50% {
+        transform: scale(1.18);
+    }
+}
+
+@keyframes age-army-groups-sonar-beacon-sweep {
     0% {
-        width: 10px;
-        height: 10px;
-        margin: -5px 0 0 -5px;
+        transform: scale(0.15);
         opacity: 0.95;
     }
 
     100% {
-        width: var(--sonar-max-radius, 120px);
-        height: var(--sonar-max-radius, 120px);
-        margin: calc(var(--sonar-max-radius, 120px) / -2) 0 0 calc(var(--sonar-max-radius, 120px) / -2);
+        transform: scale(1);
+        opacity: 0.12;
+    }
+}
+
+@keyframes age-army-groups-sonar-label-blink {
+    0%, 100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.45;
+    }
+}
+
+.age-army-groups-sonar-ring {
+    position: absolute;
+    width: 14px;
+    height: 14px;
+    margin: -7px 0 0 -7px;
+    border-radius: 50%;
+    border: 3px solid rgba(140, 235, 255, 0.95);
+    box-shadow:
+        0 0 18px rgba(96, 220, 255, 0.9),
+        0 0 40px rgba(48, 160, 255, 0.55);
+    animation: age-army-groups-sonar-expand 2.2s ease-out forwards;
+    z-index: 2;
+}
+
+.age-army-groups-sonar-ring--echo {
+    border-color: rgba(255, 255, 255, 0.75);
+    animation-duration: 2.4s;
+    animation-delay: 0.08s;
+}
+
+.age-army-groups-sonar-ring--echo-deep {
+    border-width: 2px;
+    border-color: rgba(64, 180, 255, 0.65);
+    animation-duration: 2.6s;
+    animation-delay: 0.16s;
+}
+
+@keyframes age-army-groups-sonar-expand {
+    0% {
+        width: 14px;
+        height: 14px;
+        margin: -7px 0 0 -7px;
+        opacity: 1;
+    }
+
+    100% {
+        width: var(--sonar-max-radius, 160px);
+        height: var(--sonar-max-radius, 160px);
+        margin: calc(var(--sonar-max-radius, 160px) / -2) 0 0 calc(var(--sonar-max-radius, 160px) / -2);
         opacity: 0;
     }
 }
@@ -24225,6 +24370,17 @@ body.age-war-room-open {
 
     .age-army-groups-sonar-ring {
         animation-duration: 0.5s;
+    }
+
+    .age-army-groups-tool-btn.is-sonar-active {
+        animation: none;
+    }
+
+    .age-army-groups-sonar-layer.is-active::before,
+    .age-army-groups-sonar-beacon-core,
+    .age-army-groups-sonar-beacon-sweep,
+    .age-army-groups-sonar-beacon-label {
+        animation: none;
     }
 }
 

@@ -45,10 +45,11 @@ const SF_NUMBER_WORDS = Object.freeze({
     twelve: 12
 });
 
-const SONAR_SESSION_MS = 32000;
-const SONAR_CYCLE_MS = 10000;
-const SONAR_PINGS_PER_CYCLE = 3;
-const SONAR_PING_GAP_MS = 900;
+/** Rescue sonar broadcast duration (30 minutes). */
+const SONAR_SESSION_MS = 30 * 60 * 1000;
+const SONAR_CYCLE_MS = 8000;
+const SONAR_PINGS_PER_CYCLE = 4;
+const SONAR_PING_GAP_MS = 700;
 
 function normalizeArmyGroupType(value) {
     const type = String(value || '').trim().toLowerCase();
