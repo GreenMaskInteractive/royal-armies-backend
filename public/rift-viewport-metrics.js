@@ -219,4 +219,4 @@
         clientPointToDesign,
         clientRectToDesign
     };
-}(typeof window !== 'undefined' ? window : globalThis);
+})(typeof window !== 'undefined' ? window : globalThis);

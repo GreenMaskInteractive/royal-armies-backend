@@ -195,4 +195,4 @@
             layoutHeight: global.innerHeight
         });
     }
-}(typeof window !== 'undefined' ? window : globalThis);
+})(typeof window !== 'undefined' ? window : globalThis);
