@@ -26,14 +26,7 @@
         return Boolean(getHub()?.classList.contains('is-open'));
     }
 
-    function clearMenuPositionSync() {
-        const menu = getMenu();
-        if (menu) {
-            menu.classList.remove('is-menu-position-synced');
-            menu.style.removeProperty('--age-nation-hub-menu-top');
-            menu.style.removeProperty('--age-nation-hub-menu-right');
-            menu.style.removeProperty('--age-nation-hub-menu-min-width');
-        }
+    function clearMenuPositionWatch() {
         if (layoutHandler) {
             global.removeEventListener('resize', layoutHandler);
             global.removeEventListener('royalarmies:viewport-metrics-updated', layoutHandler);
@@ -44,7 +37,7 @@
     function syncMenuPosition() {
         const toggle = getToggle();
         const menu = getMenu();
-        if (!toggle || !menu || !isHubOpen()) return;
+        if (!toggle || !menu) return;
 
         const rect = toggle.getBoundingClientRect();
         menu.style.setProperty('--age-nation-hub-menu-top', `${Math.round(rect.bottom + MENU_TOGGLE_GAP_PX)}px`);
@@ -79,12 +72,10 @@
         toggle.setAttribute('aria-expanded', nextOpen ? 'true' : 'false');
         menu.setAttribute('aria-hidden', nextOpen ? 'false' : 'true');
 
+        syncMenuPosition();
         if (nextOpen) {
-            syncMenuPosition();
             ensureMenuPositionWatch();
-            global.requestAnimationFrame(() => {
-                syncMenuPosition();
-            });
+            global.requestAnimationFrame(syncMenuPosition);
             if (!escapeHandler) {
                 escapeHandler = (event) => {
                     if (event.key === 'Escape') {
@@ -94,7 +85,7 @@
                 global.document.addEventListener('keydown', escapeHandler);
             }
         } else {
-            clearMenuPositionSync();
+            clearMenuPositionWatch();
             if (escapeHandler) {
                 global.document.removeEventListener('keydown', escapeHandler);
                 escapeHandler = null;
@@ -161,6 +152,7 @@
 
     function enableNationHub() {
         bindNationHub();
+        syncMenuPosition();
     }
 
     function init() {

@@ -13163,9 +13163,7 @@ body.developer-maintenance-alert-active #page-landing {
     box-sizing: border-box;
     width: max-content;
     min-width: max(196px, 100%);
-    max-height: 0;
     overflow: hidden;
-    opacity: 0;
     pointer-events: none;
     border: 1px solid var(--age-hud-rail-border);
     border-radius: 6px;
@@ -13173,18 +13171,9 @@ body.developer-maintenance-alert-active #page-landing {
         var(--age-hud-rail-sheen),
         var(--age-hud-rail-bg);
     box-shadow: var(--age-hud-rail-inset), var(--age-hud-rail-shadow);
-    transition:
-        max-height 0.42s cubic-bezier(0.22, 1, 0.36, 1),
-        opacity 0.26s ease;
 }
 
-.age-nation-hub.is-open .age-nation-hub-menu {
-    max-height: 360px;
-    opacity: 1;
-    pointer-events: auto;
-}
-
-/* RIFT: pin menu right edge to Nation Hub toggle (set by age-nation-hub.js) */
+/* RIFT: fixed placement from age-nation-hub.js — transform open/close (no position swap on toggle) */
 .age-nation-hub-menu.is-menu-position-synced {
     position: fixed !important;
     top: var(--age-nation-hub-menu-top) !important;
@@ -13192,9 +13181,20 @@ body.developer-maintenance-alert-active #page-landing {
     left: auto !important;
     bottom: auto !important;
     margin: 0 !important;
-    transform: none !important;
     min-width: var(--age-nation-hub-menu-min-width) !important;
     z-index: 12040;
+    opacity: 0;
+    transform: scaleY(0);
+    transform-origin: top right;
+    transition:
+        transform 0.42s cubic-bezier(0.22, 1, 0.36, 1),
+        opacity 0.26s ease;
+}
+
+.age-nation-hub.is-open .age-nation-hub-menu.is-menu-position-synced {
+    opacity: 1;
+    transform: scaleY(1);
+    pointer-events: auto;
 }
 
 .age-nation-hub-view-tabs {
@@ -16227,8 +16227,8 @@ label.age-council-board-editor-tool {
 .game-chat-popout-toggle-icon {
     display: inline-flex;
     flex: 0 0 auto;
-    width: 16px;
-    height: 16px;
+    width: 11px;
+    height: 11px;
     background-color: currentColor;
     -webkit-mask-repeat: no-repeat;
     mask-repeat: no-repeat;
@@ -23641,7 +23641,7 @@ body.age-war-room-open {
         animation: none;
     }
 
-    .age-nation-hub-menu {
+    .age-nation-hub-menu.is-menu-position-synced {
         transition-duration: 0.2s;
     }
 
