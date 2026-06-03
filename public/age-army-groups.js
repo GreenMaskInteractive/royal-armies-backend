@@ -393,48 +393,23 @@
 
         panel.appendChild(list);
 
-        if (group.canManageMembers) {
-            const mergeBar = global.document.createElement('div');
-            mergeBar.className = 'age-army-groups-panel-bar';
-            const mergeLabel = global.document.createElement('span');
-            mergeLabel.className = 'age-army-groups-panel-bar-label';
-            mergeLabel.textContent = 'Merge this army into';
-            mergeBar.appendChild(mergeLabel);
-
-            const mergeSelect = global.document.createElement('select');
-            mergeSelect.className = 'age-army-groups-panel-select';
-            mergeSelect.dataset.mergeTargetFor = group.id;
-            const defaultOpt = global.document.createElement('option');
-            defaultOpt.value = '';
-            defaultOpt.textContent = 'Choose army…';
-            mergeSelect.appendChild(defaultOpt);
-            listMergeTargetGroups(allGroups, group.id).forEach((target) => {
-                const opt = global.document.createElement('option');
-                opt.value = target.id;
-                opt.textContent = `${TYPE_LABELS[target.type] || target.type} — ${target.name}`;
-                mergeSelect.appendChild(opt);
-            });
-            mergeBar.appendChild(mergeSelect);
-
-            const mergeBtn = global.document.createElement('button');
-            mergeBtn.type = 'button';
-            mergeBtn.className = 'age-army-groups-panel-btn';
-            mergeBtn.textContent = 'Merge';
-            mergeBtn.dataset.armyMerge = group.id;
-            mergeBar.appendChild(mergeBtn);
-            panel.appendChild(mergeBar);
+        if (group.isLeader) {
+            const attackHint = global.document.createElement('p');
+            attackHint.className = 'age-army-groups-attack-hint';
+            attackHint.textContent = 'Assault a neighboring city from the map to launch a group attack. The army disbands when the battle ends.';
+            panel.appendChild(attackHint);
         }
 
         if (group.canNationCommand && !group.isCommandPost) {
-            const escortBar = global.document.createElement('div');
-            escortBar.className = 'age-army-groups-panel-bar';
+            const escortRow = global.document.createElement('div');
+            escortRow.className = 'age-army-groups-expanded-row';
             const escortLabel = global.document.createElement('span');
-            escortLabel.className = 'age-army-groups-panel-bar-label';
+            escortLabel.className = 'age-army-groups-expanded-label';
             escortLabel.textContent = 'Escort selected to';
-            escortBar.appendChild(escortLabel);
+            escortRow.appendChild(escortLabel);
 
             const escortSelect = global.document.createElement('select');
-            escortSelect.className = 'age-army-groups-panel-select';
+            escortSelect.className = 'age-army-groups-inline-select';
             escortSelect.dataset.escortTargetFor = group.id;
             listCommandPostGroups(allGroups).forEach((target) => {
                 const opt = global.document.createElement('option');
@@ -442,27 +417,27 @@
                 opt.textContent = `${TYPE_LABELS[target.type] || target.type} — ${target.name}`;
                 escortSelect.appendChild(opt);
             });
-            escortBar.appendChild(escortSelect);
+            escortRow.appendChild(escortSelect);
 
             const escortBtn = global.document.createElement('button');
             escortBtn.type = 'button';
-            escortBtn.className = 'age-army-groups-panel-btn';
+            escortBtn.className = 'age-army-groups-inline-btn';
             escortBtn.textContent = 'Escort';
             escortBtn.dataset.armyEscort = group.id;
-            escortBar.appendChild(escortBtn);
-            panel.appendChild(escortBar);
+            escortRow.appendChild(escortBtn);
+            panel.appendChild(escortRow);
         }
 
         if (group.canNationCommand && group.isCommandPost && group.isLeader) {
-            const absorbBar = global.document.createElement('div');
-            absorbBar.className = 'age-army-groups-panel-bar';
+            const absorbRow = global.document.createElement('div');
+            absorbRow.className = 'age-army-groups-expanded-row';
             const absorbLabel = global.document.createElement('span');
-            absorbLabel.className = 'age-army-groups-panel-bar-label';
+            absorbLabel.className = 'age-army-groups-expanded-label';
             absorbLabel.textContent = 'Absorb army';
-            absorbBar.appendChild(absorbLabel);
+            absorbRow.appendChild(absorbLabel);
 
             const absorbSelect = global.document.createElement('select');
-            absorbSelect.className = 'age-army-groups-panel-select';
+            absorbSelect.className = 'age-army-groups-inline-select';
             absorbSelect.dataset.absorbSourceFor = group.id;
             const defaultOpt = global.document.createElement('option');
             defaultOpt.value = '';
@@ -474,34 +449,15 @@
                 opt.textContent = `${TYPE_LABELS[source.type] || source.type} — ${source.name}`;
                 absorbSelect.appendChild(opt);
             });
-            absorbBar.appendChild(absorbSelect);
+            absorbRow.appendChild(absorbSelect);
 
             const absorbBtn = global.document.createElement('button');
             absorbBtn.type = 'button';
-            absorbBtn.className = 'age-army-groups-panel-btn';
+            absorbBtn.className = 'age-army-groups-inline-btn';
             absorbBtn.textContent = 'Absorb';
             absorbBtn.dataset.armyAbsorb = group.id;
-            absorbBar.appendChild(absorbBtn);
-            panel.appendChild(absorbBar);
-        }
-
-        if (group.canDismiss) {
-            const dismissBar = global.document.createElement('div');
-            if (group.isLeader) {
-                const attackHint = global.document.createElement('p');
-                attackHint.className = 'age-army-groups-attack-hint';
-                attackHint.textContent = 'Assault a neighboring city from the map to launch a group attack. The army disbands when the battle ends.';
-                panel.appendChild(attackHint);
-            }
-
-            dismissBar.className = 'age-army-groups-panel-bar age-army-groups-panel-bar--dismiss';
-            const dismissBtn = global.document.createElement('button');
-            dismissBtn.type = 'button';
-            dismissBtn.className = 'age-army-groups-panel-btn age-army-groups-panel-btn--danger';
-            dismissBtn.textContent = 'Dismiss group';
-            dismissBtn.dataset.armyDismiss = group.id;
-            dismissBar.appendChild(dismissBtn);
-            panel.appendChild(dismissBar);
+            absorbRow.appendChild(absorbBtn);
+            panel.appendChild(absorbRow);
         }
 
         return panel;
@@ -519,6 +475,8 @@
         }
 
         els.list.innerHTML = '';
+
+        const ledMergeSource = groups.find((entry) => entry.isLeader && entry.canManageMembers) || null;
 
         let previousType = '';
         groups.forEach((group) => {
@@ -560,6 +518,18 @@
                 tools.appendChild(joinBtn);
             }
 
+            if (ledMergeSource && ledMergeSource.id !== group.id
+                && listMergeTargetGroups(groups, ledMergeSource.id).some((entry) => entry.id === group.id)) {
+                const mergeBtn = global.document.createElement('button');
+                mergeBtn.type = 'button';
+                mergeBtn.className = 'age-army-groups-inline-btn age-army-groups-merge-btn';
+                mergeBtn.textContent = 'Merge here';
+                mergeBtn.dataset.armyMergeSource = ledMergeSource.id;
+                mergeBtn.dataset.armyMergeTarget = group.id;
+                mergeBtn.title = `Merge ${ledMergeSource.name} into this army`;
+                tools.appendChild(mergeBtn);
+            }
+
             if (group.canRename) {
                 if (editingNameGroupId === group.id) {
                     const saveBtn = global.document.createElement('button');
@@ -583,6 +553,15 @@
                     editBtn.dataset.armyEditName = group.id;
                     tools.appendChild(editBtn);
                 }
+            }
+
+            if (group.canDismiss) {
+                const disbandBtn = global.document.createElement('button');
+                disbandBtn.type = 'button';
+                disbandBtn.className = 'age-army-groups-disband-btn';
+                disbandBtn.textContent = 'Disband';
+                disbandBtn.dataset.armyDismiss = group.id;
+                tools.appendChild(disbandBtn);
             }
 
             const expandBtn = global.document.createElement('button');
@@ -933,11 +912,11 @@
         }
     }
 
-    async function mergeGroupInto(sourceGroupId) {
-        const select = els.list?.querySelector(`select[data-merge-target-for="${sourceGroupId}"]`);
-        const targetGroupId = String(select?.value || '').trim();
-        if (!targetGroupId) {
-            showFeedback('Choose an army group to merge into.', true);
+    async function mergeGroupInto(sourceGroupId, targetGroupId) {
+        const sourceId = String(sourceGroupId || '').trim();
+        const targetId = String(targetGroupId || '').trim();
+        if (!sourceId || !targetId) {
+            showFeedback('Could not resolve armies to merge.', true);
             return;
         }
         const confirmed = typeof global.showPortalConfirm === 'function'
@@ -949,9 +928,12 @@
         if (!confirmed) return;
 
         try {
-            const payload = await postAction(`${API_BASE}/merge-into`, { sourceGroupId, targetGroupId });
-            expandedGroupIds.delete(sourceGroupId);
-            expandedGroupIds.add(targetGroupId);
+            const payload = await postAction(`${API_BASE}/merge-into`, {
+                sourceGroupId: sourceId,
+                targetGroupId: targetId
+            });
+            expandedGroupIds.delete(sourceId);
+            expandedGroupIds.add(targetId);
             applyRosterPayload(payload);
             showFeedback('Army merge completed.', false);
         } catch (err) {
@@ -1069,10 +1051,10 @@
             return;
         }
 
-        const mergeBtn = event.target.closest('[data-army-merge]');
+        const mergeBtn = event.target.closest('[data-army-merge-target]');
         if (mergeBtn) {
             event.preventDefault();
-            void mergeGroupInto(mergeBtn.dataset.armyMerge);
+            void mergeGroupInto(mergeBtn.dataset.armyMergeSource, mergeBtn.dataset.armyMergeTarget);
             return;
         }
 
