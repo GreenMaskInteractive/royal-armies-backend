@@ -13,6 +13,7 @@
     const JOIN_AGE_SELECT_AUDIO_ID = 'join-age-select-sound';
     const JOIN_AGE_SELECT_SRC = 'audio/joinagesfxselect.wav';
     const DISCOVERY_UNLOCK_VOLUME_SCALE = 0.68;
+    const DISCOVERY_SWOOSH_MAX_MS = 520;
     /** Animation delay in FLEX only (style2.css); audio has no matching wait. */
     const DISCOVERY_TOAST_REVEAL_DELAY_MS = 480;
     const DISCOVERY_TOAST_REVEAL_MS = 1100;
@@ -49,7 +50,8 @@
     let hoverAudio = null;
     let selectAudio = null;
     let discoverySwooshAudio = null;
-    let discoveryUnlockTimers = [];
+    let discoveryChimeTimers = [];
+    let discoverySwooshStopTimer = null;
     let listenersBound = false;
 
     function resolvePortalSfxVolume() {
@@ -85,9 +87,9 @@
         return ensureAudioElement(JOIN_AGE_SELECT_AUDIO_ID, JOIN_AGE_SELECT_SRC);
     }
 
-    function clearDiscoverySfxTimers() {
-        discoveryUnlockTimers.forEach((timerId) => global.clearTimeout(timerId));
-        discoveryUnlockTimers = [];
+    function clearDiscoveryChimeTimers() {
+        discoveryChimeTimers.forEach((timerId) => global.clearTimeout(timerId));
+        discoveryChimeTimers = [];
     }
 
     function playDiscoveryAudioElement(audio, volume) {
@@ -95,6 +97,26 @@
         audio.volume = volume;
         audio.currentTime = 0;
         audio.play().catch(() => {});
+    }
+
+    function playDiscoverySwooshClip(audio, volume, maxDurationMs) {
+        if (discoverySwooshStopTimer) {
+            global.clearTimeout(discoverySwooshStopTimer);
+            discoverySwooshStopTimer = null;
+        }
+
+        playDiscoveryAudioElement(audio, volume);
+
+        discoverySwooshStopTimer = global.setTimeout(() => {
+            discoverySwooshStopTimer = null;
+            if (audio.paused) return;
+            try {
+                audio.pause();
+            } catch (_err) {
+                /* ignore */
+            }
+            audio.currentTime = 0;
+        }, maxDurationMs);
     }
 
     function warmDiscoveryAudioElements() {
@@ -154,16 +176,17 @@
         if (volume <= 0) return;
 
         primeAudioElements();
-        playDiscoveryAudioElement(discoverySwooshAudio, volume);
+        playDiscoverySwooshClip(discoverySwooshAudio, volume, DISCOVERY_SWOOSH_MAX_MS);
     }
 
     function scheduleDiscoveryChimeSfx() {
         const volume = resolvePortalSfxVolume() * DISCOVERY_UNLOCK_VOLUME_SCALE;
         if (volume <= 0) return;
 
+        clearDiscoveryChimeTimers();
         const chimeAudio = resolveDiscoveryChimeAudio();
 
-        discoveryUnlockTimers.push(global.setTimeout(() => {
+        discoveryChimeTimers.push(global.setTimeout(() => {
             playDiscoveryAudioElement(chimeAudio, volume);
         }, DISCOVERY_CHIME_AT_MS));
     }
