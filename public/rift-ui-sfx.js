@@ -14,7 +14,7 @@
     const JOIN_AGE_SELECT_SRC = 'audio/joinagesfxselect.wav';
     const DISCOVERY_UNLOCK_VOLUME_SCALE = 0.68;
     /** Synced to FLEX `riftDiscoveryToastReveal` delay + duration (style2.css). */
-    const DISCOVERY_TOAST_REVEAL_DELAY_MS = 280;
+    const DISCOVERY_TOAST_REVEAL_DELAY_MS = 480;
     const DISCOVERY_TOAST_REVEAL_MS = 1100;
     const DISCOVERY_CHIME_AT_MS = DISCOVERY_TOAST_REVEAL_DELAY_MS + DISCOVERY_TOAST_REVEAL_MS;
     const DEFAULT_VOLUME = 0.2;
