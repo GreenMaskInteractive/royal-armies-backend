@@ -13925,15 +13925,30 @@ body.developer-maintenance-alert-active #page-landing {
 .age-council-board-editor-tool--color-picker {
     position: relative;
     overflow: hidden;
-    padding: 0 6px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 32px;
+    width: 32px;
+    height: 28px;
+    padding: 0;
+    box-sizing: border-box;
 }
 
 .age-council-board-editor-tool-color-swatch {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    margin: 0;
     font-family: 'Cinzel', serif;
-    font-size: 0.95rem;
+    font-size: 1.08rem;
     font-weight: 700;
     line-height: 1;
     color: #ffd978;
+    pointer-events: none;
+    transform: translateY(1px);
 }
 
 .age-council-board-editor-color-input {
