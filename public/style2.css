@@ -13394,9 +13394,16 @@ body.developer-maintenance-alert-active #page-landing {
     justify-content: space-between;
     gap: 8px;
     margin-bottom: 10px;
-    padding-right: 36px;
+    padding-right: 0;
+    padding-bottom: 0;
     position: relative;
     flex: 0 0 auto;
+}
+
+/* Reserve bottom-right corner so title/status and schedule do not crowd the edit control */
+.age-council-board-header:has(.age-council-board-edit-btn:not([hidden])) {
+    padding-right: 50px;
+    padding-bottom: 44px;
 }
 
 .age-council-board-title-row {
@@ -13467,9 +13474,9 @@ body.developer-maintenance-alert-active #page-landing {
 
 .age-council-board-edit-btn {
     position: absolute;
-    top: auto;
-    bottom: 8px;
-    right: 10px;
+    top: 2px;
+    right: 8px;
+    bottom: auto;
     display: flex;
     align-items: center;
     justify-content: center;
