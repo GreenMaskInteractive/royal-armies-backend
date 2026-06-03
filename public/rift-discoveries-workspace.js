@@ -620,7 +620,7 @@
     let suppressPortalSelectUntil = 0;
 
     function markDiscoveryToastUiSfxWindow() {
-        const chimeMs = (global.RoyalArmiesUiSfx && global.RoyalArmiesUiSfx.discoveryChimeAtMs) || 284;
+        const chimeMs = (global.RoyalArmiesUiSfx && global.RoyalArmiesUiSfx.discoveryChimeAtMs) || 1100;
         suppressPortalSelectUntil = Date.now() + chimeMs + 80;
     }
 
@@ -661,25 +661,9 @@
         });
     }
 
-    function beginDiscoveryToastSfx(options) {
-        const opts = options || {};
-        markDiscoveryToastUiSfxWindow();
-        if (typeof global.RoyalArmiesUiSfx?.warmDiscoveryAudio === 'function') {
-            global.RoyalArmiesUiSfx.warmDiscoveryAudio();
-        }
-        if (opts.swoosh !== false) {
-            playDiscoveryToastSwooshSfx();
-        }
-    }
-
-    function showDiscoveryToastForIds(discoveryIds, options) {
-        const opts = options || {};
+    function showDiscoveryToastForIds(discoveryIds) {
         const ids = discoveryIds.filter((id) => CATALOG_BY_ID[id]);
         if (!ids.length) return Promise.resolve();
-
-        if (!opts.skipSwoosh) {
-            beginDiscoveryToastSfx({ swoosh: true });
-        }
 
         ensureModalShell();
 
@@ -717,6 +701,11 @@
         toast.classList.remove('is-visible');
         void toast.offsetWidth;
         toast.classList.add('is-visible');
+        markDiscoveryToastUiSfxWindow();
+        if (typeof global.RoyalArmiesUiSfx?.warmDiscoveryAudio === 'function') {
+            global.RoyalArmiesUiSfx.warmDiscoveryAudio();
+        }
+        playDiscoveryToastSwooshSfx();
         scheduleDiscoveryToastChimeSfx();
 
         if (toastHideTimer) global.clearTimeout(toastHideTimer);
@@ -800,7 +789,7 @@
         while (toastQueue.length) {
             const batch = toastQueue.shift();
             if (!batch?.length) continue;
-            await showDiscoveryToastForIds(batch, { skipSwoosh: true });
+            await showDiscoveryToastForIds(batch);
             await new Promise((resolve) => {
                 global.setTimeout(resolve, 350);
             });
@@ -813,8 +802,6 @@
         const opts = options || {};
         const ids = discoveryIds.filter((id) => CATALOG_BY_ID[id]);
         if (!ids.length || opts.silentToast) return;
-
-        beginDiscoveryToastSfx({ swoosh: true });
 
         if (opts.sequential) {
             ids.forEach((id) => toastQueue.push([id]));
