@@ -9,7 +9,7 @@
     const HOVER_SRC = 'audio/uihover.wav';
     const SELECT_SRC = 'audio/uiselect.wav';
     const DISCOVERY_SWOOSH_AUDIO_ID = 'discovery-swoosh-sound';
-    const DISCOVERY_SWOOSH_SRC = 'audio/swoosh.wav';
+    const DISCOVERY_SWOOSH_SRC = 'audio/swoosh.wav?v=swoosh-short-1';
     const JOIN_AGE_SELECT_AUDIO_ID = 'join-age-select-sound';
     const JOIN_AGE_SELECT_SRC = 'audio/joinagesfxselect.wav';
     const DISCOVERY_UNLOCK_VOLUME_SCALE = 0.68;
