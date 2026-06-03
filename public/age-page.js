@@ -982,6 +982,10 @@
         canvas.classList.remove('is-age-hud-layout-pending');
         lastCouncilLayoutKey = `${top}|${width}|${councilHeight}|${leftPosition}`;
         syncHeadquartersPlanningLayout();
+
+        if (global.RoyalArmiesCouncilBoard?.syncEditorPreviewViewport) {
+            global.RoyalArmiesCouncilBoard.syncEditorPreviewViewport();
+        }
     }
 
     function clearHeadquartersPlanningLayoutVars(canvas) {

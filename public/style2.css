@@ -13949,17 +13949,87 @@ body.developer-maintenance-alert-active #page-landing {
     display: flex;
     flex-direction: column;
     gap: 6px;
+    width: fit-content;
+    max-width: 100%;
 }
 
-#age-page-canvas .age-council-board-editor-preview {
-    min-height: 110px;
-    max-height: 220px;
+/* Editor modal sits outside #age-page-canvas — mirror the live board notice viewport */
+.age-council-board-editor .age-council-board-editor-preview {
+    box-sizing: border-box;
+    flex: 0 0 auto;
+    width: var(--age-council-notice-viewport-width, 100%);
+    height: var(--age-council-notice-viewport-height, auto);
+    min-height: var(--age-council-notice-viewport-height, 120px);
+    max-height: var(--age-council-notice-viewport-height, none);
     overflow-y: auto;
     margin: 0;
     padding: 10px 12px;
     border-radius: 4px;
-    border: 1px solid rgba(184, 144, 48, 0.24);
-    background: rgba(0, 0, 0, 0.28);
+    border: 1px solid rgba(184, 144, 48, 0.22);
+    background: rgba(0, 0, 0, 0.38);
+    font-family: 'Segoe UI', Tahoma, sans-serif;
+    font-size: 0.8rem;
+    line-height: 1.45;
+    color: rgba(241, 224, 172, 0.94);
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
+.age-council-board-editor .age-council-board-editor-preview.is-empty {
+    color: rgba(236, 220, 180, 0.55);
+    font-style: italic;
+}
+
+.age-council-board-editor .age-council-board-editor-preview.age-council-board-notice--rich {
+    white-space: normal;
+}
+
+.age-council-board-editor .age-council-board-editor-preview.age-council-board-notice--rich .age-council-notice-heading {
+    margin: 0 0 6px;
+    font-family: 'Cinzel', serif;
+    font-size: 1.44rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: #ffd978;
+    line-height: 1.25;
+}
+
+.age-council-board-editor .age-council-board-editor-preview.age-council-board-notice--rich .age-council-notice-heading--sub {
+    margin-top: 8px;
+    font-size: 0.72rem;
+    color: rgba(255, 217, 120, 0.9);
+}
+
+.age-council-board-editor .age-council-board-editor-preview.age-council-board-notice--rich .age-council-notice-line,
+.age-council-board-editor .age-council-board-editor-preview.age-council-board-notice--rich .age-council-notice-bullet {
+    margin: 0 0 6px;
+}
+
+.age-council-board-editor .age-council-board-editor-preview.age-council-board-notice--rich .age-council-notice-bullet {
+    display: flex;
+    align-items: flex-start;
+    gap: 6px;
+}
+
+.age-council-board-editor .age-council-board-editor-preview.age-council-board-notice--rich .age-council-notice-bullet-mark {
+    flex: 0 0 auto;
+    color: rgba(255, 217, 120, 0.82);
+}
+
+.age-council-board-editor .age-council-board-editor-preview.age-council-board-notice--rich strong {
+    font-weight: 700;
+    color: #fff8dc;
+}
+
+.age-council-board-editor .age-council-board-editor-preview.age-council-board-notice--rich em {
+    font-style: italic;
+    color: rgba(241, 224, 172, 0.98);
+}
+
+.age-council-board-editor .age-council-board-editor-preview.age-council-board-notice--rich u {
+    text-decoration: underline;
+    text-underline-offset: 2px;
 }
 
 .age-council-board-editor-feedback {

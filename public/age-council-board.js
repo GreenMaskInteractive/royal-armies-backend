@@ -167,6 +167,85 @@
         const previewEl = global.document.getElementById('age-council-board-editor-preview');
         if (!previewEl) return;
         renderCouncilNoticeDisplay(previewEl, raw);
+        syncCouncilEditorPreviewViewport();
+    }
+
+    let councilNoticeResizeObserver = null;
+    let councilEditorLayoutListener = null;
+
+    function measureCouncilNoticeViewport() {
+        const noticeEl = global.document.getElementById('age-council-board-notice');
+        if (!noticeEl) return null;
+
+        const height = Math.round(noticeEl.clientHeight);
+        const width = Math.round(noticeEl.clientWidth);
+        if (height < 1 || width < 1) return null;
+
+        return { height, width };
+    }
+
+    function applyCouncilEditorPreviewViewport(size) {
+        const canvas = global.document.getElementById('age-page-canvas');
+        const previewEl = global.document.getElementById('age-council-board-editor-preview');
+        const previewShell = previewEl?.closest('.age-council-board-editor-preview-shell');
+        if (!size || !previewEl) return;
+
+        if (canvas) {
+            canvas.style.setProperty('--age-council-notice-viewport-height', `${size.height}px`);
+            canvas.style.setProperty('--age-council-notice-viewport-width', `${size.width}px`);
+        }
+
+        previewEl.style.width = `${size.width}px`;
+        previewEl.style.height = `${size.height}px`;
+        previewEl.style.minHeight = `${size.height}px`;
+        previewEl.style.maxHeight = `${size.height}px`;
+
+        if (previewShell) {
+            previewShell.style.width = `${size.width}px`;
+            previewShell.style.maxWidth = '100%';
+        }
+    }
+
+    function syncCouncilEditorPreviewViewport() {
+        const size = measureCouncilNoticeViewport();
+        if (size) applyCouncilEditorPreviewViewport(size);
+    }
+
+    function startCouncilEditorPreviewViewportSync() {
+        global.requestAnimationFrame(() => {
+            global.requestAnimationFrame(() => {
+                syncCouncilEditorPreviewViewport();
+            });
+        });
+
+        const noticeEl = global.document.getElementById('age-council-board-notice');
+        if (!noticeEl || typeof ResizeObserver === 'undefined') return;
+
+        if (councilNoticeResizeObserver) {
+            councilNoticeResizeObserver.disconnect();
+        }
+
+        councilNoticeResizeObserver = new ResizeObserver(() => {
+            syncCouncilEditorPreviewViewport();
+        });
+        councilNoticeResizeObserver.observe(noticeEl);
+
+        if (!councilEditorLayoutListener) {
+            councilEditorLayoutListener = () => syncCouncilEditorPreviewViewport();
+            global.addEventListener('resize', councilEditorLayoutListener);
+        }
+    }
+
+    function stopCouncilEditorPreviewViewportSync() {
+        if (councilNoticeResizeObserver) {
+            councilNoticeResizeObserver.disconnect();
+            councilNoticeResizeObserver = null;
+        }
+
+        if (councilEditorLayoutListener) {
+            global.removeEventListener('resize', councilEditorLayoutListener);
+            councilEditorLayoutListener = null;
+        }
     }
 
     function replaceCouncilNoticeTextareaValue(textarea, nextValue, selectionStart, selectionEnd) {
@@ -477,6 +556,7 @@
         editor.hidden = false;
         editor.classList.add('is-open');
         editor.setAttribute('aria-hidden', 'false');
+        startCouncilEditorPreviewViewportSync();
 
         const statusSelect = global.document.getElementById('age-council-board-editor-status');
         if (statusSelect) {
@@ -490,6 +570,7 @@
 
         setSaveInProgress(false);
         clearEditorFeedback();
+        stopCouncilEditorPreviewViewportSync();
         editor.hidden = true;
         editor.classList.remove('is-open');
         editor.setAttribute('aria-hidden', 'true');
@@ -756,6 +837,7 @@
 
     global.RoyalArmiesCouncilBoard = {
         refresh: fetchCouncilBoard,
+        syncEditorPreviewViewport: syncCouncilEditorPreviewViewport,
         setStatus: setCouncilStatus,
         notifyNationAttacked,
         notifyEnemyAtBorder,
