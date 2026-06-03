@@ -8,6 +8,9 @@
     const SELECT_AUDIO_ID = 'select-sound';
     const HOVER_SRC = 'audio/uihover.wav';
     const SELECT_SRC = 'audio/uiselect.wav';
+    const DISCOVERY_UNLOCK_AUDIO_ID = 'rift-discovery-unlock-sfx';
+    const DISCOVERY_UNLOCK_SRC = 'audio/joinagesfxselect.wav';
+    const DISCOVERY_UNLOCK_VOLUME_SCALE = 0.52;
     const DEFAULT_VOLUME = 0.2;
 
     const BUTTON_SELECTOR = [
@@ -34,6 +37,7 @@
 
     let hoverAudio = null;
     let selectAudio = null;
+    let discoveryUnlockAudio = null;
     let listenersBound = false;
 
     function resolvePortalSfxVolume() {
@@ -105,6 +109,18 @@
         selectAudio.play().catch(() => {});
     }
 
+    function playDiscoveryUnlockSfx() {
+        discoveryUnlockAudio = ensureAudioElement(DISCOVERY_UNLOCK_AUDIO_ID, DISCOVERY_UNLOCK_SRC);
+        if (!discoveryUnlockAudio) return;
+
+        const volume = resolvePortalSfxVolume() * DISCOVERY_UNLOCK_VOLUME_SCALE;
+        if (volume <= 0) return;
+
+        discoveryUnlockAudio.volume = Math.min(1, volume);
+        discoveryUnlockAudio.currentTime = 0;
+        discoveryUnlockAudio.play().catch(() => {});
+    }
+
     function onDocumentMouseOver(event) {
         const target = resolveButtonTarget(event.target);
         if (!target) return;
@@ -139,10 +155,12 @@
 
     global.playHoverSFX = playHoverSFX;
     global.playSelectSFX = playSelectSFX;
+    global.playDiscoveryUnlockSfx = playDiscoveryUnlockSfx;
 
     global.RoyalArmiesUiSfx = {
         playHover: playHoverSFX,
         playSelect: playSelectSFX,
+        playDiscoveryUnlock: playDiscoveryUnlockSfx,
         resolveButtonTarget,
         resolveInteractiveTarget: resolveButtonTarget
     };

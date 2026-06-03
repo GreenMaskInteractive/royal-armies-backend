@@ -617,6 +617,12 @@
         bindArticlePanelHandlers();
     }
 
+    function playDiscoveryToastAppearSfx() {
+        if (typeof global.playDiscoveryUnlockSfx === 'function') {
+            global.playDiscoveryUnlockSfx();
+        }
+    }
+
     function renderToastDiscoveryIndex(index) {
         const entry = CATALOG_BY_ID[activeToastDiscoveryIds[index]];
         if (!entry) return;
@@ -674,6 +680,7 @@
         toast.classList.remove('is-visible');
         void toast.offsetWidth;
         toast.classList.add('is-visible');
+        playDiscoveryToastAppearSfx();
 
         if (toastHideTimer) global.clearTimeout(toastHideTimer);
         if (toastAdvanceTimer) global.clearTimeout(toastAdvanceTimer);
