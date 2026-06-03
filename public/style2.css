@@ -13184,6 +13184,19 @@ body.developer-maintenance-alert-active #page-landing {
     pointer-events: auto;
 }
 
+/* RIFT: pin menu right edge to Nation Hub toggle (set by age-nation-hub.js) */
+.age-nation-hub-menu.is-menu-position-synced {
+    position: fixed !important;
+    top: var(--age-nation-hub-menu-top) !important;
+    right: var(--age-nation-hub-menu-right) !important;
+    left: auto !important;
+    bottom: auto !important;
+    margin: 0 !important;
+    transform: none !important;
+    min-width: var(--age-nation-hub-menu-min-width) !important;
+    z-index: 12040;
+}
+
 .age-nation-hub-view-tabs {
     display: flex;
     flex-direction: column;

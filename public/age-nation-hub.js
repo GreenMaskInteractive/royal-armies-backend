@@ -6,6 +6,8 @@
 
     let bound = false;
     let escapeHandler = null;
+    let layoutHandler = null;
+    const MENU_TOGGLE_GAP_PX = 8;
 
     function getHub() {
         return global.document.getElementById('age-nation-hub');
@@ -23,6 +25,48 @@
         return Boolean(getHub()?.classList.contains('is-open'));
     }
 
+    function clearMenuPositionSync() {
+        const menu = getMenu();
+        if (menu) {
+            menu.classList.remove('is-menu-position-synced');
+            menu.style.removeProperty('--age-nation-hub-menu-top');
+            menu.style.removeProperty('--age-nation-hub-menu-right');
+            menu.style.removeProperty('--age-nation-hub-menu-min-width');
+        }
+        if (layoutHandler) {
+            global.removeEventListener('resize', layoutHandler);
+            global.removeEventListener('royalarmies:viewport-metrics-updated', layoutHandler);
+            layoutHandler = null;
+        }
+    }
+
+    function syncMenuPosition() {
+        const toggle = getToggle();
+        const menu = getMenu();
+        if (!toggle || !menu || !isHubOpen()) return;
+
+        const rect = toggle.getBoundingClientRect();
+        menu.style.setProperty('--age-nation-hub-menu-top', `${Math.round(rect.bottom + MENU_TOGGLE_GAP_PX)}px`);
+        menu.style.setProperty(
+            '--age-nation-hub-menu-right',
+            `${Math.round(global.window.innerWidth - rect.right)}px`
+        );
+        menu.style.setProperty(
+            '--age-nation-hub-menu-min-width',
+            `${Math.max(196, Math.round(rect.width))}px`
+        );
+        menu.classList.add('is-menu-position-synced');
+    }
+
+    function ensureMenuPositionWatch() {
+        if (layoutHandler) return;
+        layoutHandler = () => {
+            syncMenuPosition();
+        };
+        global.addEventListener('resize', layoutHandler, { passive: true });
+        global.addEventListener('royalarmies:viewport-metrics-updated', layoutHandler, { passive: true });
+    }
+
     function setHubOpen(open) {
         const hub = getHub();
         const menu = getMenu();
@@ -34,16 +78,26 @@
         toggle.setAttribute('aria-expanded', nextOpen ? 'true' : 'false');
         menu.setAttribute('aria-hidden', nextOpen ? 'false' : 'true');
 
-        if (nextOpen && !escapeHandler) {
-            escapeHandler = (event) => {
-                if (event.key === 'Escape') {
-                    setHubOpen(false);
-                }
-            };
-            global.document.addEventListener('keydown', escapeHandler);
-        } else if (!nextOpen && escapeHandler) {
-            global.document.removeEventListener('keydown', escapeHandler);
-            escapeHandler = null;
+        if (nextOpen) {
+            syncMenuPosition();
+            ensureMenuPositionWatch();
+            global.requestAnimationFrame(() => {
+                syncMenuPosition();
+            });
+            if (!escapeHandler) {
+                escapeHandler = (event) => {
+                    if (event.key === 'Escape') {
+                        setHubOpen(false);
+                    }
+                };
+                global.document.addEventListener('keydown', escapeHandler);
+            }
+        } else {
+            clearMenuPositionSync();
+            if (escapeHandler) {
+                global.document.removeEventListener('keydown', escapeHandler);
+                escapeHandler = null;
+            }
         }
     }
 
