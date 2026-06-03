@@ -170,6 +170,8 @@
         if (!isDevOwnerHeadquartersBypass(username)) return null;
 
         const savedPlanning = readDevPlanningSnapshot(username);
+        const displayName = String(username || '').trim() || 'caleb_admin';
+        const devLeader = { username: normalizedUsername(displayName), name: displayName };
 
         return {
             access: { council: true, leader: true, viceLeader: true },
@@ -178,25 +180,112 @@
             vote: {
                 isOpen: false,
                 candidates: [{
-                    id: normalizedUsername(username),
-                    username,
-                    name: username,
+                    id: devLeader.username,
+                    username: displayName,
+                    name: displayName,
                     roleHint: 'Commander'
                 }],
                 myVotes: { leaderCandidateId: '', viceCandidateId: '' },
-                electedLeader: null,
+                electedLeader: devLeader,
                 electedViceLeader: null,
                 lockedUntil: null,
                 lockDays: 7
             },
             cabinet: {
-                leader: { username: normalizedUsername(username), name: username },
+                leader: devLeader,
                 viceLeader: null,
-                councilMembers: [],
+                councilMembers: [devLeader],
                 planners: []
             },
-            warTargets: [],
+            warTargets: resolveDevWarTargets(),
             fortifiedCities: []
+        };
+    }
+
+    function resolveDevWarTargets() {
+        const catalog = global.RoyalArmiesAgeWorldMap?.getCatalog?.();
+        const nations = new Map();
+        const playerNation = String(
+            global.RoyalArmiesAgeMovement?.getNationId?.()
+            || global.RoyalArmiesAgeWorldMap?.getPlayerNationId?.()
+            || ''
+        ).trim().toLowerCase();
+
+        (catalog?.cities || []).forEach((city) => {
+            const id = String(city?.nationId || '').trim().toLowerCase();
+            if (!id || id === playerNation) return;
+            if (!nations.has(id)) {
+                nations.set(id, String(city.nationName || city.nationId || id));
+            }
+        });
+
+        return Array.from(nations.entries())
+            .sort((a, b) => a[1].localeCompare(b[1]))
+            .map(([id, name]) => ({ id, name }));
+    }
+
+    /** Owner dev on :5500/:3000 — full HQ even when NEXUS returns member-level access. */
+    function mergeDevOwnerHeadquartersWorkspace(workspace, username) {
+        if (!isDevOwnerHeadquartersBypass(username)) {
+            return workspace;
+        }
+
+        const fallback = buildDevOwnerFallbackWorkspace(username);
+        if (!fallback) return workspace;
+
+        const base = workspace && typeof workspace === 'object' ? workspace : {};
+        const serverPlanning = base.planning && typeof base.planning === 'object' ? base.planning : {};
+        const devPlanning = fallback.planning || getDefaultDevPlanningState();
+        const serverCabinet = base.cabinet && typeof base.cabinet === 'object' ? base.cabinet : {};
+        const serverVote = base.vote && typeof base.vote === 'object' ? base.vote : {};
+
+        const mergedCabinet = {
+            leader: serverCabinet.leader || fallback.cabinet.leader,
+            viceLeader: serverCabinet.viceLeader ?? fallback.cabinet.viceLeader,
+            councilMembers: Array.isArray(serverCabinet.councilMembers) && serverCabinet.councilMembers.length
+                ? serverCabinet.councilMembers
+                : fallback.cabinet.councilMembers,
+            planners: Array.isArray(serverCabinet.planners) ? serverCabinet.planners : []
+        };
+
+        return {
+            ...fallback,
+            ...base,
+            access: {
+                council: true,
+                leader: true,
+                viceLeader: true
+            },
+            planning: {
+                ...getDefaultDevPlanningState(),
+                ...devPlanning,
+                ...serverPlanning,
+                pills: Array.isArray(serverPlanning.pills) && serverPlanning.pills.length
+                    ? serverPlanning.pills
+                    : (Array.isArray(devPlanning.pills) ? devPlanning.pills : []),
+                arrows: Array.isArray(serverPlanning.arrows) && serverPlanning.arrows.length
+                    ? serverPlanning.arrows
+                    : (Array.isArray(devPlanning.arrows) ? devPlanning.arrows : []),
+                tempMainCityId: serverPlanning.tempMainCityId || devPlanning.tempMainCityId || '',
+                confirmed: Boolean(serverPlanning.confirmed ?? devPlanning.confirmed),
+                hasPublishedPlan: Boolean(serverPlanning.hasPublishedPlan ?? devPlanning.hasPublishedPlan)
+            },
+            diplomacy: {
+                incoming: Array.isArray(base.diplomacy?.incoming) ? base.diplomacy.incoming : [],
+                outgoing: Array.isArray(base.diplomacy?.outgoing) ? base.diplomacy.outgoing : []
+            },
+            vote: {
+                ...fallback.vote,
+                ...serverVote,
+                isOpen: false,
+                electedLeader: serverVote.electedLeader || mergedCabinet.leader,
+                electedViceLeader: serverVote.electedViceLeader || mergedCabinet.viceLeader || null
+            },
+            cabinet: mergedCabinet,
+            warTargets: Array.isArray(base.warTargets) && base.warTargets.length
+                ? base.warTargets
+                : fallback.warTargets,
+            fortifiedCities: Array.isArray(base.fortifiedCities) ? base.fortifiedCities : fallback.fortifiedCities
         };
     }
 
@@ -451,6 +540,8 @@
     }
 
     function applyWorkspace(workspace) {
+        const username = resolveUsername();
+        workspace = mergeDevOwnerHeadquartersWorkspace(workspace, username);
         if (!workspace) return false;
 
         leaderAccess = Boolean(workspace.access?.leader);
