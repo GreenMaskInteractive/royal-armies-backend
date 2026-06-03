@@ -497,11 +497,10 @@
         const label = String(contextLabel || '').trim();
         if (!contextBlock || !contextText) return;
 
-        if (!label) {
-            contextBlock.hidden = true;
-            contextText.textContent = '';
-            return;
-        }
+        contextBlock.hidden = true;
+        contextText.textContent = '';
+
+        if (!label) return;
 
         contextBlock.hidden = false;
         contextText.textContent = label;
@@ -611,8 +610,7 @@
     function openFromCommanderMenu(event) {
         open({
             allowTargetEntry: true,
-            source: 'commander_menu',
-            contextLabel: 'Commander menu'
+            source: 'commander_menu'
         }, event);
     }
 
