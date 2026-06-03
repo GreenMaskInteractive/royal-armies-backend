@@ -2805,7 +2805,9 @@ body {
 
     #age-page-canvas[data-age-view="city"] [data-age-mobile-toggle="city-info"],
     #age-page-canvas[data-age-view="headquarters"] [data-age-mobile-toggle="city-info"],
-    #age-page-canvas[data-age-view="headquarters"] [data-age-mobile-toggle="reports"] {
+    #age-page-canvas[data-age-view="headquarters"] [data-age-mobile-toggle="reports"],
+    #age-page-canvas[data-age-view="council-room"] [data-age-mobile-toggle="city-info"],
+    #age-page-canvas[data-age-view="council-room"] [data-age-mobile-toggle="reports"] {
         display: none !important;
     }
 
@@ -2853,12 +2855,15 @@ body {
     }
 
     #age-page-canvas[data-age-view="headquarters"] #age-map-hud-left,
-    #age-page-canvas[data-age-view="headquarters"] #age-map-hud-right {
+    #age-page-canvas[data-age-view="headquarters"] #age-map-hud-right,
+    #age-page-canvas[data-age-view="council-room"] #age-map-hud-left,
+    #age-page-canvas[data-age-view="council-room"] #age-map-hud-right {
         display: none !important;
     }
 
     #age-page-canvas[data-age-view="city"] #age-map-hud-left,
-    #age-page-canvas[data-age-view="headquarters"] #age-map-hud-left {
+    #age-page-canvas[data-age-view="headquarters"] #age-map-hud-left,
+    #age-page-canvas[data-age-view="council-room"] #age-map-hud-left {
         display: none !important;
     }
 
