@@ -9,12 +9,12 @@
     const HOVER_SRC = 'audio/uihover.wav';
     const SELECT_SRC = 'audio/uiselect.wav';
     const DISCOVERY_SWOOSH_AUDIO_ID = 'discovery-swoosh-sound';
-    const DISCOVERY_SWOOSH_SRC = 'audio/swoosh.wav?v=swoosh-1400-1';
+    const DISCOVERY_SWOOSH_SRC = 'audio/swoosh.wav?v=swoosh-clean-1';
     const JOIN_AGE_SELECT_AUDIO_ID = 'join-age-select-sound';
     const JOIN_AGE_SELECT_SRC = 'audio/joinagesfxselect.wav';
     const DISCOVERY_UNLOCK_VOLUME_SCALE = 0.68;
     const DISCOVERY_SWOOSH_DURATION_MS = 1400;
-    const DISCOVERY_CHIME_AT_MS = 1400;
+    const DISCOVERY_CHIME_AT_MS = 1200;
     /** Animation delay in FLEX only (style2.css); audio has no matching wait. */
     const DISCOVERY_TOAST_REVEAL_DELAY_MS = 480;
     const DISCOVERY_TOAST_REVEAL_MS = 1100;
