@@ -13472,29 +13472,68 @@ body.developer-maintenance-alert-active #page-landing {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 32px;
-    height: 32px;
+    width: 34px;
+    height: 34px;
     margin: 0;
     padding: 0;
-    border: none;
-    border-radius: 4px;
-    background: transparent;
+    border: 1px solid rgba(184, 144, 48, 0.55);
+    border-radius: 6px;
+    background:
+        linear-gradient(180deg, rgba(48, 36, 18, 0.95) 0%, rgba(12, 10, 8, 0.98) 100%);
+    box-shadow:
+        inset 0 1px 0 rgba(255, 215, 0, 0.16),
+        0 2px 8px rgba(0, 0, 0, 0.55);
     cursor: pointer;
-    transition: opacity 140ms ease, transform 140ms ease;
+    transition: border-color 140ms ease, box-shadow 140ms ease, transform 140ms ease;
 }
 
 .age-council-board-edit-btn:hover {
-    opacity: 0.88;
-    transform: scale(1.05);
+    border-color: rgba(255, 215, 0, 0.72);
+    box-shadow:
+        inset 0 1px 0 rgba(255, 215, 0, 0.24),
+        0 0 14px rgba(255, 190, 60, 0.22),
+        0 2px 8px rgba(0, 0, 0, 0.55);
+    transform: translateY(-1px);
 }
 
-.age-council-board-edit-icon {
+.age-council-board-edit-btn:focus-visible {
+    outline: 2px solid rgba(255, 215, 0, 0.65);
+    outline-offset: 2px;
+}
+
+.age-council-board-edit-glyph {
+    position: relative;
     display: block;
-    width: 28px;
-    height: 28px;
-    object-fit: contain;
-    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.85));
+    width: 18px;
+    height: 18px;
     pointer-events: none;
+}
+
+.age-council-board-edit-glyph::before {
+    content: '';
+    position: absolute;
+    left: 2px;
+    bottom: 1px;
+    width: 11px;
+    height: 13px;
+    border: 1px solid rgba(255, 215, 0, 0.55);
+    border-radius: 2px 2px 1px 2px;
+    background: linear-gradient(145deg, rgba(255, 228, 150, 0.22) 0%, rgba(28, 22, 12, 0.5) 100%);
+    box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.35);
+}
+
+.age-council-board-edit-glyph::after {
+    content: '';
+    position: absolute;
+    right: 0;
+    top: 0;
+    width: 3px;
+    height: 14px;
+    border-radius: 1px;
+    background: linear-gradient(180deg, #f5e6b8 0%, #c9a227 55%, #8a6420 100%);
+    transform: rotate(38deg);
+    transform-origin: bottom right;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.65);
 }
 
 .age-council-board-schedule {

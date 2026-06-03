@@ -284,12 +284,20 @@
     }
 
     function canUseCouncilEditor() {
-        return Boolean(resolveUsername());
+        return Boolean(canEdit && resolveUsername());
+    }
+
+    function ensureCouncilBoardEditButtonMarkup() {
+        const editBtn = global.document.getElementById('age-council-board-edit-btn');
+        if (!editBtn || editBtn.dataset.councilEditGlyphReady === 'true') return;
+
+        editBtn.dataset.councilEditGlyphReady = 'true';
+        editBtn.innerHTML = '<span class="age-council-board-edit-glyph" aria-hidden="true"></span>';
     }
 
     function applyCouncilBoardFallback() {
         gameNation = '';
-        canEdit = canUseCouncilEditor();
+        canEdit = false;
         boardState = getDefaultBoardState();
         statusCatalog = buildStatusCatalog();
         renderBoard();
@@ -363,9 +371,13 @@
             editedByEl.hidden = !editedByLine;
         }
 
+        ensureCouncilBoardEditButtonMarkup();
+
         if (editBtn) {
-            editBtn.hidden = false;
-            editBtn.disabled = !canUseCouncilEditor();
+            const mayEdit = canUseCouncilEditor();
+            editBtn.hidden = !mayEdit;
+            editBtn.disabled = false;
+            editBtn.setAttribute('aria-hidden', mayEdit ? 'false' : 'true');
         }
     }
 
@@ -535,7 +547,7 @@
 
             const previousStatusId = boardState?.statusId;
             gameNation = String(payload.gameNation || '').trim();
-            canEdit = payload.canEdit !== false && canUseCouncilEditor();
+            canEdit = Boolean(payload.canEdit);
             statusCatalog = Array.isArray(payload.statusCatalog) ? payload.statusCatalog : buildStatusCatalog();
             boardState = payload.board || getDefaultBoardState();
 
@@ -552,7 +564,10 @@
 
     async function saveEditor() {
         if (!canUseCouncilEditor()) {
-            setEditorFeedback('Sign in is required to save the council board.', 'error');
+            setEditorFeedback(
+                'Only nation Leaders, Vice Leaders, Council members, and Planners can edit the council board.',
+                'error'
+            );
             return;
         }
 
@@ -716,7 +731,8 @@
 
     async function enableCouncilBoard() {
         bindUi();
-        canEdit = canUseCouncilEditor();
+        ensureCouncilBoardEditButtonMarkup();
+        canEdit = false;
         boardState = getDefaultBoardState();
         statusCatalog = buildStatusCatalog();
         renderBoard();
