@@ -13,6 +13,7 @@
     const JOIN_AGE_SELECT_AUDIO_ID = 'join-age-select-sound';
     const JOIN_AGE_SELECT_SRC = 'audio/joinagesfxselect.wav';
     const DISCOVERY_UNLOCK_VOLUME_SCALE = 0.68;
+    const DISCOVERY_SWOOSH_START_MS = 20;
     const DISCOVERY_SWOOSH_DURATION_MS = 1400;
     const DISCOVERY_CHIME_AT_MS = 1200;
     /** Animation delay in FLEX only (style2.css); audio has no matching wait. */
@@ -50,6 +51,7 @@
     let selectAudio = null;
     let discoverySwooshAudio = null;
     let discoveryChimeTimers = [];
+    let discoverySwooshStartTimer = null;
     let discoverySwooshStopTimer = null;
     let listenersBound = false;
 
@@ -98,24 +100,35 @@
         audio.play().catch(() => {});
     }
 
-    function playDiscoverySwooshClip(audio, volume, maxDurationMs) {
+    function clearDiscoverySwooshTimers() {
+        if (discoverySwooshStartTimer) {
+            global.clearTimeout(discoverySwooshStartTimer);
+            discoverySwooshStartTimer = null;
+        }
         if (discoverySwooshStopTimer) {
             global.clearTimeout(discoverySwooshStopTimer);
             discoverySwooshStopTimer = null;
         }
+    }
 
-        playDiscoveryAudioElement(audio, volume);
+    function playDiscoverySwooshClip(audio, volume, startDelayMs, durationMs) {
+        clearDiscoverySwooshTimers();
 
-        discoverySwooshStopTimer = global.setTimeout(() => {
-            discoverySwooshStopTimer = null;
-            if (audio.paused) return;
-            try {
-                audio.pause();
-            } catch (_err) {
-                /* ignore */
-            }
-            audio.currentTime = 0;
-        }, maxDurationMs);
+        discoverySwooshStartTimer = global.setTimeout(() => {
+            discoverySwooshStartTimer = null;
+            playDiscoveryAudioElement(audio, volume);
+
+            discoverySwooshStopTimer = global.setTimeout(() => {
+                discoverySwooshStopTimer = null;
+                if (audio.paused) return;
+                try {
+                    audio.pause();
+                } catch (_err) {
+                    /* ignore */
+                }
+                audio.currentTime = 0;
+            }, durationMs);
+        }, startDelayMs);
     }
 
     function warmDiscoveryAudioElements() {
@@ -183,7 +196,12 @@
         if (volume <= 0) return;
 
         primeAudioElements();
-        playDiscoverySwooshClip(discoverySwooshAudio, volume, DISCOVERY_SWOOSH_DURATION_MS);
+        playDiscoverySwooshClip(
+            discoverySwooshAudio,
+            volume,
+            DISCOVERY_SWOOSH_START_MS,
+            DISCOVERY_SWOOSH_DURATION_MS
+        );
     }
 
     function scheduleDiscoveryChimeSfx() {
@@ -257,6 +275,7 @@
         scheduleDiscoveryChime: scheduleDiscoveryChimeSfx,
         discoveryToastRevealDelayMs: DISCOVERY_TOAST_REVEAL_DELAY_MS,
         discoveryToastRevealMs: DISCOVERY_TOAST_REVEAL_MS,
+        discoverySwooshStartMs: DISCOVERY_SWOOSH_START_MS,
         discoverySwooshDurationMs: DISCOVERY_SWOOSH_DURATION_MS,
         discoveryChimeAtMs: DISCOVERY_CHIME_AT_MS,
         warmDiscoveryAudio: warmDiscoveryAudioElements,
