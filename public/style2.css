@@ -13167,14 +13167,19 @@ body.developer-maintenance-alert-active #page-landing {
     box-sizing: border-box;
     width: max-content;
     min-width: 0;
-    max-height: 0;
     overflow: hidden;
     pointer-events: none;
-    visibility: hidden;
     border: none;
     border-radius: 0;
     background: transparent;
     box-shadow: none;
+}
+
+/* Hidden until RIFT positions the menu (avoids pre-sync flash under the toggle) */
+.age-nation-hub-menu:not(.is-menu-position-synced) {
+    visibility: hidden;
+    max-height: 0;
+    opacity: 0;
 }
 
 /* RIFT: fixed placement from age-nation-hub.js — rungs slide down from behind toggle */
@@ -13187,11 +13192,14 @@ body.developer-maintenance-alert-active #page-landing {
     margin: 0 !important;
     width: auto !important;
     min-width: 0 !important;
+    max-height: none !important;
+    height: auto !important;
+    visibility: visible !important;
+    opacity: 1 !important;
     z-index: 199;
     display: grid !important;
     grid-template-rows: 0fr;
     overflow: hidden;
-    opacity: 1;
     transform: none;
     clip-path: none;
     -webkit-clip-path: none;
@@ -13206,22 +13214,7 @@ body.developer-maintenance-alert-active #page-landing {
 .age-nation-hub.is-open .age-nation-hub-menu.is-menu-position-synced {
     grid-template-rows: 1fr;
     min-width: var(--age-nation-hub-menu-min-width) !important;
-    visibility: visible;
     pointer-events: auto;
-}
-
-/* No panel chrome while closed — prevents the stray line under Nation Hub */
-.age-nation-hub:not(.is-open) .age-nation-hub-menu,
-.age-nation-hub:not(.is-open) .age-nation-hub-menu-ladder {
-    visibility: hidden !important;
-    pointer-events: none !important;
-    border: none !important;
-    box-shadow: none !important;
-    background: transparent !important;
-    min-width: 0 !important;
-    max-height: 0 !important;
-    height: 0 !important;
-    overflow: hidden !important;
 }
 
 .age-nation-hub-menu-ladder {
@@ -13245,11 +13238,6 @@ body.developer-maintenance-alert-active #page-landing {
         var(--age-hud-rail-sheen),
         var(--age-hud-rail-bg);
     box-shadow: var(--age-hud-rail-inset), var(--age-hud-rail-shadow);
-}
-
-.age-nation-hub:not(.is-open) .age-nation-hub-menu-ladder .age-map-view-tab,
-.age-nation-hub:not(.is-open) .age-nation-hub-menu-ladder > .age-nation-hub-menu-item {
-    border-bottom-color: transparent !important;
 }
 
 /* Hidden above/behind Nation Hub toggle until they slide into the panel */
