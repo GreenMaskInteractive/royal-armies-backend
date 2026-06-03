@@ -4,6 +4,9 @@
 (function initRiftProceduralSfx(global) {
     'use strict';
 
+    const SWOOSH_DURATION = 0.36;
+    const CHIME_START_OFFSET = 0.2;
+
     let audioContext = null;
 
     function getAudioContext() {
@@ -14,11 +17,14 @@
             audioContext = new Ctx();
         }
 
-        if (audioContext.state === 'suspended') {
-            audioContext.resume().catch(() => {});
-        }
-
         return audioContext;
+    }
+
+    function resumeAudioContext(ctx) {
+        if (!ctx || ctx.state !== 'suspended') {
+            return Promise.resolve(ctx);
+        }
+        return ctx.resume().then(() => ctx).catch(() => ctx);
     }
 
     function scheduleTone(ctx, destination, {
@@ -26,7 +32,7 @@
         startOffset,
         duration,
         peakGain,
-        type = 'triangle'
+        type = 'sine'
     }) {
         const now = ctx.currentTime;
         const start = now + startOffset;
@@ -39,53 +45,103 @@
         oscillator.frequency.setValueAtTime(frequency, start);
 
         gain.gain.setValueAtTime(0.0001, start);
-        gain.gain.exponentialRampToValueAtTime(Math.max(0.0001, peakGain), start + 0.018);
+        gain.gain.exponentialRampToValueAtTime(Math.max(0.0001, peakGain), start + 0.012);
         gain.gain.exponentialRampToValueAtTime(0.0001, end);
 
         oscillator.connect(gain);
         gain.connect(destination);
 
         oscillator.start(start);
-        oscillator.stop(end + 0.04);
+        oscillator.stop(end + 0.05);
     }
 
-    function scheduleShimmer(ctx, destination, volume, startOffset = 0) {
-        const duration = 0.38;
+    /** Rising band-pass noise sweep — cinematic swoosh in. */
+    function scheduleDiscoverySwoosh(ctx, destination, level, startOffset = 0) {
         const now = ctx.currentTime;
         const start = now + startOffset;
-        const end = start + duration;
-        const sampleCount = Math.max(1, Math.floor(ctx.sampleRate * duration));
+        const end = start + SWOOSH_DURATION;
+        const sampleCount = Math.max(1, Math.floor(ctx.sampleRate * SWOOSH_DURATION));
 
         const buffer = ctx.createBuffer(1, sampleCount, ctx.sampleRate);
         const samples = buffer.getChannelData(0);
         for (let i = 0; i < sampleCount; i += 1) {
-            const decay = 1 - (i / sampleCount);
-            samples[i] = (Math.random() * 2 - 1) * decay * decay;
+            const t = i / sampleCount;
+            const envelope = Math.sin(Math.PI * t);
+            samples[i] = (Math.random() * 2 - 1) * envelope;
         }
 
-        const source = ctx.createBufferSource();
-        source.buffer = buffer;
+        const noise = ctx.createBufferSource();
+        noise.buffer = buffer;
 
-        const filter = ctx.createBiquadFilter();
-        filter.type = 'bandpass';
-        filter.frequency.setValueAtTime(3200, start);
-        filter.Q.setValueAtTime(0.7, start);
+        const lowPass = ctx.createBiquadFilter();
+        lowPass.type = 'lowpass';
+        lowPass.Q.setValueAtTime(0.6, start);
+        lowPass.frequency.setValueAtTime(320, start);
+        lowPass.frequency.exponentialRampToValueAtTime(5200, start + SWOOSH_DURATION * 0.62);
+        lowPass.frequency.exponentialRampToValueAtTime(900, start + SWOOSH_DURATION);
+
+        const highPass = ctx.createBiquadFilter();
+        highPass.type = 'highpass';
+        highPass.frequency.setValueAtTime(180, start);
 
         const gain = ctx.createGain();
         gain.gain.setValueAtTime(0.0001, start);
-        gain.gain.exponentialRampToValueAtTime(Math.max(0.0001, volume * 0.1), start + 0.02);
+        gain.gain.exponentialRampToValueAtTime(Math.max(0.0001, level * 0.62), start + 0.028);
         gain.gain.exponentialRampToValueAtTime(0.0001, end);
 
-        source.connect(filter);
-        filter.connect(gain);
+        noise.connect(highPass);
+        highPass.connect(lowPass);
+        lowPass.connect(gain);
         gain.connect(destination);
 
-        source.start(start);
-        source.stop(end + 0.02);
+        noise.start(start);
+        noise.stop(end + 0.03);
+    }
+
+    /** Bright excited major chime after the swoosh. */
+    function scheduleDiscoveryChime(ctx, destination, level, startOffset = CHIME_START_OFFSET) {
+        const notes = [
+            { frequency: 783.99, delay: 0, duration: 0.11, gain: 0.42, type: 'sine' },
+            { frequency: 987.77, delay: 0.06, duration: 0.12, gain: 0.48, type: 'sine' },
+            { frequency: 1174.66, delay: 0.12, duration: 0.13, gain: 0.5, type: 'triangle' },
+            { frequency: 1567.98, delay: 0.19, duration: 0.16, gain: 0.54, type: 'sine' },
+            { frequency: 1975.53, delay: 0.28, duration: 0.22, gain: 0.5, type: 'triangle' },
+            { frequency: 2637.02, delay: 0.36, duration: 0.42, gain: 0.46, type: 'sine' }
+        ];
+
+        notes.forEach((note) => {
+            scheduleTone(ctx, destination, {
+                frequency: note.frequency,
+                startOffset: startOffset + note.delay,
+                duration: note.duration,
+                peakGain: level * note.gain,
+                type: note.type
+            });
+        });
+
+        scheduleTone(ctx, destination, {
+            frequency: 3135.96,
+            startOffset: startOffset + 0.44,
+            duration: 0.55,
+            peakGain: level * 0.28,
+            type: 'sine'
+        });
+    }
+
+    function playDiscoveryUnlockBus(ctx, level) {
+        const now = ctx.currentTime;
+        const bus = ctx.createGain();
+        bus.gain.setValueAtTime(0.0001, now);
+        bus.gain.exponentialRampToValueAtTime(1, now + 0.01);
+        bus.gain.exponentialRampToValueAtTime(0.0001, now + 1.35);
+        bus.connect(ctx.destination);
+
+        scheduleDiscoverySwoosh(ctx, bus, level, 0);
+        scheduleDiscoveryChime(ctx, bus, level, CHIME_START_OFFSET);
     }
 
     /**
-     * Ascending gold chime — discovery / lore unlock fanfare.
+     * Discovery popup — swoosh then excited chime.
      * @param {number} volume 0–1, already scaled by master/SFX mixer
      */
     function playDiscoveryUnlock(volume) {
@@ -95,32 +151,9 @@
         const ctx = getAudioContext();
         if (!ctx) return;
 
-        const now = ctx.currentTime;
-        const bus = ctx.createGain();
-        bus.gain.setValueAtTime(0.0001, now);
-        bus.gain.exponentialRampToValueAtTime(1, now + 0.015);
-        bus.gain.exponentialRampToValueAtTime(0.0001, now + 1.15);
-        bus.connect(ctx.destination);
-
-        scheduleShimmer(ctx, bus, level, 0);
-
-        const notes = [
-            { frequency: 523.25, startOffset: 0, duration: 0.2, peakGain: level * 0.5 },
-            { frequency: 659.25, startOffset: 0.085, duration: 0.22, peakGain: level * 0.46 },
-            { frequency: 783.99, startOffset: 0.17, duration: 0.26, peakGain: level * 0.48 },
-            { frequency: 1046.5, startOffset: 0.28, duration: 0.5, peakGain: level * 0.44 }
-        ];
-
-        notes.forEach((note) => {
-            scheduleTone(ctx, bus, note);
-        });
-
-        scheduleTone(ctx, bus, {
-            frequency: 1318.51,
-            startOffset: 0.34,
-            duration: 0.55,
-            peakGain: level * 0.22,
-            type: 'sine'
+        resumeAudioContext(ctx).then((activeCtx) => {
+            if (!activeCtx || activeCtx.state !== 'running') return;
+            playDiscoveryUnlockBus(activeCtx, level);
         });
     }
 

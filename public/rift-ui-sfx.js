@@ -8,7 +8,7 @@
     const SELECT_AUDIO_ID = 'select-sound';
     const HOVER_SRC = 'audio/uihover.wav';
     const SELECT_SRC = 'audio/uiselect.wav';
-    const DISCOVERY_UNLOCK_VOLUME_SCALE = 0.52;
+    const DISCOVERY_UNLOCK_VOLUME_SCALE = 0.68;
     const DEFAULT_VOLUME = 0.2;
 
     const BUTTON_SELECTOR = [
@@ -23,14 +23,18 @@
         '[data-ui-sfx-hover="off"]',
         '[role="tab"]',
         '.action-btn-aura-housing',
-        '.action-btn-aura-housing *'
+        '.action-btn-aura-housing *',
+        '.rift-discovery-toast',
+        '.rift-discovery-toast *'
     ].join(', ');
 
     const SELECT_SKIP_SELECTOR = [
         '[data-ui-sfx-select="off"]',
         '[role="tab"]',
         '.action-btn-aura-housing',
-        '.action-btn-aura-housing *'
+        '.action-btn-aura-housing *',
+        '.rift-discovery-toast',
+        '.rift-discovery-toast *'
     ].join(', ');
 
     let hoverAudio = null;
@@ -130,6 +134,11 @@
         const target = resolveButtonTarget(event.target);
         if (!target) return;
         if (matchesSkipSelector(target, SELECT_SKIP_SELECTOR)) return;
+        if (global.RoyalArmiesDiscoveries
+            && typeof global.RoyalArmiesDiscoveries.shouldSuppressPortalUiSelect === 'function'
+            && global.RoyalArmiesDiscoveries.shouldSuppressPortalUiSelect()) {
+            return;
+        }
 
         playSelectSFX();
     }

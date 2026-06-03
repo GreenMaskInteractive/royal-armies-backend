@@ -617,6 +617,16 @@
         bindArticlePanelHandlers();
     }
 
+    let suppressPortalSelectUntil = 0;
+
+    function markDiscoveryToastUiSfxWindow() {
+        suppressPortalSelectUntil = Date.now() + 320;
+    }
+
+    function shouldSuppressPortalUiSelect() {
+        return Date.now() < suppressPortalSelectUntil;
+    }
+
     function playDiscoveryToastAppearSfx() {
         if (typeof global.playDiscoveryUnlockSfx === 'function') {
             global.playDiscoveryUnlockSfx();
@@ -673,6 +683,7 @@
         });
 
         renderToastDiscoveryIndex(0);
+        markDiscoveryToastUiSfxWindow();
 
         toast.hidden = false;
         toast.classList.remove('is-exiting');
@@ -680,7 +691,9 @@
         toast.classList.remove('is-visible');
         void toast.offsetWidth;
         toast.classList.add('is-visible');
-        playDiscoveryToastAppearSfx();
+        global.setTimeout(() => {
+            playDiscoveryToastAppearSfx();
+        }, 40);
 
         if (toastHideTimer) global.clearTimeout(toastHideTimer);
         if (toastAdvanceTimer) global.clearTimeout(toastAdvanceTimer);
@@ -1064,6 +1077,7 @@
         runPendingStarterSongDiscoveries,
         registerMusicCatalog: registerMusicDiscoveryCatalog,
         previewToast: previewDiscoveryToast,
+        shouldSuppressPortalUiSelect,
         isLocalDevRevealAllSongDiscoveries,
         categories: CATEGORIES
     });
