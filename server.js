@@ -325,6 +325,12 @@ function isMailboxRecipientRosterAdmin(username) {
     return String(username || '').trim().toLowerCase() === 'caleb_admin';
 }
 
+/** Local NEXUS only — full nation leadership for portal owner QA (not on Render production). */
+function isLocalDevOwnerLeadershipBypass(username) {
+    if (isProduction) return false;
+    return isMailboxRecipientRosterAdmin(username);
+}
+
 /* --- Section: Community chat (ledger-backed, 100 active per channel, 15-day purge) --- */
 const COMMUNITY_CHAT_CHANNEL_IDS = ['general', 'bugs', 'gameplay', 'help', 'offtopic'];
 const COMMUNITY_CHAT_MAX_ACTIVE_PER_CHANNEL = 100;
@@ -1525,11 +1531,15 @@ function appendGameChatNationSystemEventToStore(store, nationKey, text) {
     return { entry };
 }
 
-/** Council board edit — elected/apponted leadership only (not mailbox roster admin). */
+/** Council board edit — elected leadership; local dev owner bypass for caleb_admin QA only. */
 function canEditNationCouncilBoard(commander) {
     const username = normalizeHeadquartersUsername(commander?.username);
     const storageKey = getCouncilBoardStorageKey(resolveCouncilBoardNationKey(commander));
     if (!username || !storageKey) return false;
+
+    if (isLocalDevOwnerLeadershipBypass(username)) {
+        return true;
+    }
 
     const leadership = readNationLeadershipForNation(storageKey);
     if (!leadership) return false;
@@ -1571,6 +1581,24 @@ function readNationLeadershipForNation(nationKey) {
     };
 }
 
+function resolveHeadquartersAdminAccess(username, storageKey) {
+    if (!isLocalDevOwnerLeadershipBypass(username)) {
+        return null;
+    }
+
+    const resolvedStorageKey = storageKey || getCouncilBoardStorageKey(`staging:${username}`);
+    if (!resolvedStorageKey) {
+        return null;
+    }
+
+    return {
+        gameNation: resolvedStorageKey,
+        council: true,
+        leader: true,
+        viceLeader: true
+    };
+}
+
 function resolveHeadquartersAccessForCommander(commander) {
     const username = normalizeHeadquartersUsername(commander?.username);
     const gameNation = resolveCouncilBoardNationKey(commander);
@@ -1583,6 +1611,11 @@ function resolveHeadquartersAccessForCommander(commander) {
             leader: false,
             viceLeader: false
         };
+    }
+
+    const adminAccess = resolveHeadquartersAdminAccess(username, storageKey);
+    if (adminAccess) {
+        return adminAccess;
     }
 
     if (!storageKey) {

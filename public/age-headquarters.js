@@ -108,9 +108,25 @@
         global.RoyalArmiesAgeHeadquartersPlanningMap?.refreshLayout?.();
     }
 
-    /** Disabled — leadership access comes only from nation election / appointments (NEXUS). */
-    function isDevOwnerHeadquartersBypass(_username) {
-        return false;
+    /** Local dev only (localhost / Live Server) — not royalarmies.com production. */
+    function isDevOwnerHeadquartersBypass(username) {
+        if (typeof global.isProductionRoyalArmiesHost === 'function' && global.isProductionRoyalArmiesHost()) {
+            return false;
+        }
+        if (typeof global.isLocalDevelopmentHost === 'function' && !global.isLocalDevelopmentHost()) {
+            return false;
+        }
+
+        const normalized = String(username || '').trim().toLowerCase();
+        if (normalized !== 'caleb_admin') return false;
+
+        const port = String(global.location?.port || '');
+        if (!['3000', '5500', ''].includes(port)) return false;
+
+        const devMode = typeof global.getLocalDevViewMode === 'function'
+            ? global.getLocalDevViewMode()
+            : 'owner';
+        return devMode === 'owner';
     }
 
     const DEV_PLANNING_STORAGE_PREFIX = 'ra-dev-hq-planning:';
