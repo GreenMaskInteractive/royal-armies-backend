@@ -1489,6 +1489,10 @@ function canEditNationCouncilBoard(commander) {
     const storageKey = getCouncilBoardStorageKey(resolveCouncilBoardNationKey(commander));
     if (!username || !storageKey) return false;
 
+    if (isMailboxRecipientRosterAdmin(username)) {
+        return true;
+    }
+
     const leadership = readNationLeadershipForNation(storageKey);
     if (!leadership) return false;
 

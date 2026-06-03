@@ -283,8 +283,21 @@
         }));
     }
 
+    function isDevPlayerPortalPersonaActive() {
+        return typeof global.isLocalDevPlayerBypassActive === 'function'
+            && global.isLocalDevPlayerBypassActive();
+    }
+
+    function isPortalOwnerCouncilEditor() {
+        if (isDevPlayerPortalPersonaActive()) return false;
+        const username = resolveUsername();
+        if (!username) return false;
+        return typeof global.isPortalSiteOwner === 'function' && global.isPortalSiteOwner(username);
+    }
+
     function canUseCouncilEditor() {
-        return Boolean(canEdit && resolveUsername());
+        if (!resolveUsername()) return false;
+        return Boolean(canEdit || isPortalOwnerCouncilEditor());
     }
 
     function ensureCouncilBoardEditButtonMarkup() {
