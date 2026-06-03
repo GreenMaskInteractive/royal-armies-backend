@@ -1,0 +1,219 @@
+<div id="age-barracks-workspace" class="age-barracks-workspace" hidden aria-hidden="true" aria-label="Garrison Registry recruitment">
+                <div class="age-barracks-shell">
+                    <header class="age-barracks-header">
+                        <div class="age-barracks-header-copy">
+                            <p class="age-barracks-eyebrow">Barracks</p>
+                            <h2 class="age-barracks-title">Garrison Registry</h2>
+                            <p class="age-barracks-subtitle">Recruit units, review promotion paths, and prepare your standing army.</p>
+                            <p id="age-barracks-commander-status" class="age-barracks-commander-status" aria-live="polite"></p>
+                        </div>
+                        <div class="age-barracks-header-actions">
+                            <div class="age-barracks-wallets">
+                                <div class="age-barracks-wallet" aria-label="Commander gold">
+                                    <span class="age-barracks-wallet-label">Gold</span>
+                                    <span id="age-barracks-commander-gold" class="age-barracks-wallet-value" aria-live="polite">—</span>
+                                </div>
+                                <div class="age-barracks-wallet" aria-label="Commander provisions">
+                                    <span class="age-barracks-wallet-label">Provisions</span>
+                                    <span id="age-barracks-commander-provisions" class="age-barracks-wallet-value" aria-live="polite">—</span>
+                                </div>
+                            </div>
+                            <button
+                                type="button"
+                                id="age-barracks-close"
+                                class="age-barracks-close"
+                                aria-label="Close barracks">
+                                Close
+                            </button>
+                        </div>
+                    </header>
+                    <div class="age-barracks-layout">
+                        <nav
+                            id="age-barracks-category-nav"
+                            class="age-barracks-category-nav"
+                            aria-label="Unit classes"></nav>
+                        <div class="age-barracks-main">
+                            <div class="age-barracks-main-head">
+                                <h3 id="age-barracks-active-category-label" class="age-barracks-active-category-label">Infantry</h3>
+                                <p class="age-barracks-main-hint">Select a unit to view stats, promotion costs, and recruit price.</p>
+                            </div>
+                            <div id="age-barracks-unit-grid" class="age-barracks-unit-grid" aria-live="polite"></div>
+                            <aside id="age-barracks-unit-detail" class="age-barracks-unit-detail" hidden aria-live="polite"></aside>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="age-rank-promotion-overlay" class="age-rank-promotion-overlay" hidden aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="age-rank-promotion-title">
+                <div class="age-rank-promotion-card">
+                    <p class="age-rank-promotion-eyebrow">Commander Promotion</p>
+                    <h2 id="age-rank-promotion-title" class="age-rank-promotion-title">Rank Up!</h2>
+                    <p class="age-rank-promotion-rank-line">You are now <strong id="age-rank-promotion-rank">—</strong></p>
+                    <p id="age-rank-promotion-detail" class="age-rank-promotion-detail"></p>
+                    <p id="age-rank-promotion-provisions" class="age-rank-promotion-provisions" hidden></p>
+                    <div class="age-rank-promotion-actions">
+                        <button type="button" id="age-rank-promotion-barracks" class="age-rank-promotion-btn age-rank-promotion-btn--primary">Garrison Registry</button>
+                        <button type="button" id="age-rank-promotion-evolution" class="age-rank-promotion-btn age-rank-promotion-btn--secondary">Unit Evolution Workspace</button>
+                        <button type="button" id="age-rank-promotion-dismiss" class="age-rank-promotion-btn age-rank-promotion-btn--ghost">Continue</button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="age-unit-evolution-workspace" class="age-unit-evolution-workspace" hidden aria-hidden="true" aria-label="Unit Evolution workspace">
+                <div class="age-unit-evolution-shell">
+                    <header class="age-unit-evolution-header">
+                        <div class="age-unit-evolution-header-copy">
+                            <p class="age-unit-evolution-eyebrow">Barracks</p>
+                            <h2 class="age-unit-evolution-title">Unit Evolution Workspace</h2>
+                            <p class="age-unit-evolution-subtitle">Spend provisions on rank promotions and tier evolutions when units are eligible.</p>
+                            <p id="age-unit-evolution-ready-count" class="age-unit-evolution-ready-count" aria-live="polite"></p>
+                        </div>
+                        <div class="age-unit-evolution-header-actions">
+                            <div class="age-unit-evolution-wallet" aria-label="Commander provisions">
+                                <span class="age-unit-evolution-wallet-label">Provisions</span>
+                                <span id="age-unit-evolution-provisions" class="age-unit-evolution-wallet-value">—</span>
+                            </div>
+                            <button type="button" id="age-unit-evolution-open-barracks" class="age-unit-evolution-link-btn">Garrison Registry</button>
+                            <button type="button" id="age-unit-evolution-close" class="age-unit-evolution-close" aria-label="Close Unit Evolution workspace">Close</button>
+                        </div>
+                    </header>
+                    <p id="age-unit-evolution-status" class="age-unit-evolution-status" hidden aria-live="polite"></p>
+                    <div id="age-unit-evolution-stack-list" class="age-unit-evolution-stack-list" aria-live="polite"></div>
+                </div>
+            </div>
+
+            <div id="age-guild-workspace" class="age-guild-workspace" hidden aria-hidden="true" aria-label="Adventurer's Guild job">
+                <div id="age-guild-training-arena" class="age-guild-job-arena age-guild-training-arena" hidden aria-hidden="true" aria-label="Guild training">
+                    <header class="age-guild-top-band" aria-label="Training header">
+                        <div class="age-guild-job-top-panel age-guild-job-top-panel--training">
+                            <div class="age-guild-training-title-row">
+                                <h2 id="age-guild-training-title" class="age-guild-training-title">Street Patrol</h2>
+                                <button
+                                    type="button"
+                                    id="age-guild-training-return-btn"
+                                    class="age-guild-training-return-btn"
+                                    data-age-guild-back>
+                                    ← Village
+                                </button>
+                            </div>
+                        </div>
+                    </header>
+
+                    <div class="age-guild-training-center" aria-label="Battle simulation">
+                        <aside class="age-guild-battle-panel" aria-label="Battle results">
+                            <div class="age-guild-battle-panel-inner">
+                                <div class="age-hud-rail-tabs age-guild-battle-tabs" role="tablist" aria-label="Battle report tabs">
+                                    <button type="button" class="age-hud-rail-tab age-guild-battle-tab is-active" data-guild-battle-tab="details" role="tab" aria-selected="true" aria-controls="age-guild-battle-tab-details" id="age-guild-battle-tab-btn-details">Battle Report</button>
+                                    <button type="button" class="age-hud-rail-tab age-guild-battle-tab" data-guild-battle-tab="loot" role="tab" aria-selected="false" aria-controls="age-guild-battle-tab-loot" id="age-guild-battle-tab-btn-loot" tabindex="-1">Loot</button>
+                                </div>
+                                <div id="age-guild-battle-tab-details" class="age-hud-rail-tabpanel age-guild-battle-tabpanel is-active" role="tabpanel" aria-labelledby="age-guild-battle-tab-btn-details" aria-live="polite">
+                                    <div class="age-guild-battle-report-toolbar">
+                                        <label class="age-guild-battle-log-toggle">
+                                            <input type="checkbox" id="age-guild-battle-log-extended-toggle" class="age-guild-battle-log-toggle-input">
+                                            <span class="age-guild-battle-log-toggle-label">Show full battle log</span>
+                                        </label>
+                                    </div>
+                                    <div id="age-guild-log" class="age-guild-log"></div>
+                                </div>
+                                <div id="age-guild-battle-tab-loot" class="age-hud-rail-tabpanel age-guild-battle-tabpanel" role="tabpanel" aria-labelledby="age-guild-battle-tab-btn-loot" hidden aria-live="polite">
+                                    <div id="age-guild-loot-log" class="age-guild-loot-log"></div>
+                                </div>
+                            </div>
+                        </aside>
+
+                        <aside class="age-guild-commander-gear-panel" aria-label="Commander equipment">
+                            <div class="age-guild-commander-gear-inner">
+                                <header class="age-guild-commander-gear-head">
+                                    <p class="age-guild-commander-gear-eyebrow">Commander</p>
+                                    <h3 id="age-guild-commander-name" class="age-guild-commander-gear-name">Commander</h3>
+                                    <p id="age-guild-commander-class" class="age-guild-commander-gear-class">Battlemaster · Rank 1</p>
+                                </header>
+                                <div id="age-guild-gear-sheet" class="age-guild-gear-sheet" aria-label="Equipped gear"></div>
+                                <section class="age-guild-gear-stats" aria-label="Equipment bonuses">
+                                    <h4 class="age-guild-gear-stats-title">Commander Bonuses</h4>
+                                    <ul id="age-guild-gear-stat-lines" class="age-guild-gear-stat-lines"></ul>
+                                </section>
+                            </div>
+                        </aside>
+
+                        <div class="age-guild-battle-controls-dock" aria-label="Battle controls">
+                            <div id="age-guild-xp-float-host" class="age-guild-xp-float-host" aria-live="polite" aria-atomic="true"></div>
+                            <div id="age-guild-battle-deck" class="age-guild-battle-board">
+                                <div class="age-guild-battle-board-slab" aria-hidden="true"></div>
+                                <div class="age-guild-battle-board-layout">
+                                    <div class="age-guild-battle-board-side age-guild-battle-board-side--left">
+                                        <button type="button" id="age-guild-heal-one" class="age-guild-board-pill age-guild-satellite-btn age-guild-satellite-btn--heal">Heal</button>
+                                        <button type="button" id="age-guild-heal-all" class="age-guild-board-pill age-guild-satellite-btn age-guild-satellite-btn--heal-all">Heal All</button>
+                                    </div>
+                                    <div class="age-guild-battle-board-war-hub">
+                                        <div class="age-guild-battle-board-war-pedestal" aria-hidden="true"></div>
+                                        <div id="age-guild-battle-wrap" class="age-guild-battle-btn-wrap">
+                                            <svg class="age-guild-charge-ring" viewBox="0 0 100 100" aria-hidden="true">
+                                                <circle class="age-guild-charge-ring-track" cx="50" cy="50" r="46" />
+                                                <circle class="age-guild-charge-ring-progress" cx="50" cy="50" r="46" />
+                                            </svg>
+                                            <button type="button" id="age-guild-battle-btn" class="age-guild-battle-circle" aria-label="Hold to battle">Battle</button>
+                                        </div>
+                                    </div>
+                                    <div class="age-guild-battle-board-side age-guild-battle-board-side--right">
+                                        <button type="button" id="age-guild-auto-heal" class="age-guild-board-pill age-guild-satellite-btn age-guild-satellite-btn--auto-heal" aria-pressed="false">Auto-heal</button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="age-guild-progress-stack age-guild-battle-progress-stack" aria-label="Guild progression">
+                                <div class="age-guild-xp-row">
+                                    <span class="age-guild-bar-label">Rank <strong id="age-guild-rank">1</strong></span>
+                                    <div class="age-guild-xp-bar-track" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="age-guild-xp-bar">
+                                        <div id="age-guild-xp-fill" class="age-guild-xp-bar-fill"></div>
+                                    </div>
+                                    <span id="age-guild-xp-text" class="age-guild-bar-meta">0 / 90 XP</span>
+                                </div>
+                                <div class="age-guild-units-row">
+                                    <span class="age-guild-bar-label">Units</span>
+                                    <div class="age-guild-units-bar-track" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="100" id="age-guild-units-bar">
+                                        <div id="age-guild-units-fill" class="age-guild-units-bar-fill"></div>
+                                    </div>
+                                    <span id="age-guild-units-text" class="age-guild-bar-meta">0 / 0</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="age-guild-trade-arena" class="age-guild-job-arena age-guild-trade-arena" hidden aria-hidden="true" aria-label="Trade convoy">
+                    <button type="button" class="age-guild-back age-guild-job-back" data-age-guild-back>← Jobs</button>
+                    <button type="button" class="age-guild-close age-guild-job-close" data-age-guild-close aria-label="Close job">Close</button>
+
+                    <header class="age-guild-top-band" aria-label="Trade convoy header">
+                        <div class="age-guild-job-top-panel">
+                            <h2 class="age-guild-hub-title">Trade Convoy</h2>
+                            <p class="age-guild-hub-subtitle">Purchase merchant goods on guild contracts. Resell at markets for profit.</p>
+                        </div>
+                    </header>
+
+                    <div class="age-guild-job-body">
+                        <div id="age-guild-trade-lots" class="age-guild-trade-lots"></div>
+                        <section class="age-guild-trade-inventory">
+                            <h3 class="age-guild-section-title">Your Merchandise</h3>
+                            <div id="age-guild-trade-inventory" class="age-guild-trade-inventory-list" aria-live="polite"></div>
+                        </section>
+                    </div>
+                </div>
+
+                <div id="age-guild-bounties-arena" class="age-guild-job-arena age-guild-bounties-arena" hidden aria-hidden="true" aria-label="Player bounties">
+                    <button type="button" class="age-guild-back age-guild-job-back" data-age-guild-back>← Jobs</button>
+                    <button type="button" class="age-guild-close age-guild-job-close" data-age-guild-close aria-label="Close job">Close</button>
+
+                    <header class="age-guild-top-band" aria-label="Player bounties header">
+                        <div class="age-guild-job-top-panel">
+                            <h2 class="age-guild-hub-title">Player Bounties</h2>
+                            <p class="age-guild-hub-subtitle">Seven marked contracts rotate every 24 hours. Accept one bounty at a time.</p>
+                        </div>
+                    </header>
+
+                    <div class="age-guild-job-body">
+                        <p id="age-guild-bounty-active-note" class="age-guild-bounty-active-note" hidden></p>
+                        <div id="age-guild-bounty-list" class="age-guild-bounty-list" aria-live="polite"></div>
+                    </div>
+                </div>
+            </div>

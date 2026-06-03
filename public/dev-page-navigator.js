@@ -23,7 +23,8 @@
             pages: [
                 { id: 'main', label: 'Age Portal', path: '/main', file: 'main.html' },
                 { id: 'game', label: 'Game (progression)', path: '/game', file: 'game.html' },
-                { id: 'agealpha', label: 'Age Alpha (live session)', path: '/agealpha', file: 'agealpha.html' }
+                { id: 'agealpha', label: 'Age Alpha (live session)', path: '/agealpha', file: 'agealpha.html' },
+                { id: 'settlement', label: 'Settlement (city dev)', path: '/settlement', file: 'settlement.html' }
             ]
         }
     ];
@@ -65,6 +66,7 @@
         return slug === 'main'
             || slug === 'game'
             || slug === 'agealpha'
+            || slug === 'settlement'
             || slug === 'season-age-of-war-preview'
             || slug === 'ageofwarcinematic'
             || slug === 'ageofwar-trailer'
@@ -104,7 +106,8 @@
             url.searchParams.set('riftProgressionReset', '1');
         }
 
-        if (page.id === 'agealpha' || page.id === 'season-age' || fileName === 'agealpha.html' || fileName === 'season-age-of-war-age.html') {
+        if (page.id === 'agealpha' || page.id === 'settlement' || page.id === 'season-age'
+            || fileName === 'agealpha.html' || fileName === 'settlement.html' || fileName === 'season-age-of-war-age.html') {
             url.searchParams.set('riftAgeDevBypass', '1');
         }
 

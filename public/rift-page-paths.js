@@ -8,6 +8,7 @@
         main: '/main',
         game: '/game',
         agealpha: '/agealpha',
+        settlement: '/settlement',
         terms: '/terms',
         resetPassword: '/reset-password',
         howDidYouGetHere: '/how-did-you-get-here'
@@ -30,9 +31,17 @@
         return query ? `${url.pathname}?${query}` : url.pathname;
     }
 
+    function buildSettlementUrl(options = {}) {
+        const url = new URL(PATHS.settlement, global.location?.origin || 'https://royalarmies.com');
+        if (options.riftAgeDevBypass) url.searchParams.set('riftAgeDevBypass', '1');
+        const query = url.searchParams.toString();
+        return query ? `${url.pathname}?${query}` : url.pathname;
+    }
+
     global.RoyalArmiesPagePaths = {
         ...PATHS,
         buildGameUrl,
-        buildAgeAlphaUrl
+        buildAgeAlphaUrl,
+        buildSettlementUrl
     };
 })(window);

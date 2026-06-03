@@ -1,0 +1,81 @@
+/**
+ * FLEX — settlement.html (city-only dev page).
+ */
+
+body.age-page-settlement-only {
+    overflow: hidden;
+}
+
+body.age-page-settlement-only #age-page-canvas {
+    --age-settlement-map-inset: 0;
+}
+
+body.age-page-settlement-only .age-map-anchor {
+    inset: var(--age-map-hud-top-height, 72px) var(--age-map-hud-right-width, 280px)
+        var(--age-map-hud-bottom-height, 88px) 0;
+}
+
+body.age-page-settlement-only .age-world-map-settlement-bg {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+body.age-page-settlement-only #age-settlement-menu-panel {
+    display: flex;
+    flex-direction: column;
+}
+
+body.age-page-settlement-only .age-settlement-dev-tier {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    margin-top: 0.65rem;
+    padding-top: 0.65rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+body.age-page-settlement-only .age-settlement-page-nav {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+}
+
+body.age-page-settlement-only .age-settlement-world-map-link {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.35rem 0.75rem;
+    border-radius: 6px;
+    border: 1px solid rgba(212, 175, 90, 0.45);
+    color: #f4e6c8;
+    font-size: 0.82rem;
+    font-weight: 600;
+    text-decoration: none;
+    letter-spacing: 0.02em;
+    background: rgba(12, 10, 8, 0.55);
+}
+
+body.age-page-settlement-only .age-settlement-world-map-link:hover {
+    border-color: rgba(240, 210, 140, 0.75);
+    background: rgba(24, 18, 12, 0.75);
+}
+
+body.age-page-settlement-only .age-map-bottom-dock-nav[hidden] {
+    display: none !important;
+}
+
+body.age-page-settlement-only .age-barracks-workspace:not([hidden]),
+body.age-page-settlement-only .age-unit-evolution-workspace:not([hidden]),
+body.age-page-settlement-only.age-guild-training-open .age-guild-workspace:not([hidden]) {
+    position: fixed;
+    inset: 0;
+    z-index: 120;
+}
+
+body.age-page-settlement-only.age-barracks-open #age-map-hud-right,
+body.age-page-settlement-only.age-unit-evolution-open #age-map-hud-right,
+body.age-page-settlement-only.age-guild-training-open #age-map-hud-right {
+    visibility: hidden;
+    pointer-events: none;
+}

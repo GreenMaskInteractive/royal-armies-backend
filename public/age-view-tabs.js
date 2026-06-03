@@ -289,7 +289,16 @@
         return SETTLEMENT_TIER_LABEL[tier] || 'Village';
     }
 
+    function isSettlementOnlyPage() {
+        return global.document.body?.dataset?.ageSettlementPage === 'true';
+    }
+
     function resolveSettlementTier() {
+        const override = global.RoyalArmiesSettlementPage?.getDevTierOverride?.();
+        if (override && SETTLEMENT_MAP_SRC[override]) {
+            return override;
+        }
+
         const city = resolveDisplayedCity();
         const tier = String(city?.settlementTier || 'village').trim().toLowerCase();
         if (SETTLEMENT_MAP_SRC[tier]) return tier;
@@ -360,7 +369,7 @@
         }
 
         if (settlementPanel) {
-            settlementPanel.hidden = !inSettlementView;
+            settlementPanel.hidden = isSettlementOnlyPage() ? false : !inSettlementView;
         }
 
         const guildWorkspace = global.document.getElementById('age-guild-workspace');
@@ -674,7 +683,11 @@
         }
 
         bindViewTabs();
-        setActiveView(VIEW_MAP, { force: true });
+        if (isSettlementOnlyPage()) {
+            setActiveView(VIEW_CITY, { force: true });
+        } else {
+            setActiveView(VIEW_MAP, { force: true });
+        }
     }
 
     function refreshAgeViewTabs() {

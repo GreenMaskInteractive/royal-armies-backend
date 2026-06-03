@@ -3307,7 +3307,8 @@ const PORTAL_HTML_PAGES = {
 };
 
 const OFFICIAL_AGE_HTML_PAGES = {
-    agealpha: 'agealpha.html'
+    agealpha: 'agealpha.html',
+    settlement: 'settlement.html'
 };
 
 const ALL_HTML_PAGE_ROUTES = {
