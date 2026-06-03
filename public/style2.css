@@ -22879,7 +22879,8 @@ body.is-rift-discoveries-workspace-open {
 }
 
 .age-war-room-slide {
-    --war-room-tab-height: calc(var(--age-map-hud-bottom-bar-height) + var(--age-map-slot-gap));
+    --war-room-tab-strip-height: 40px;
+    --war-room-tab-height: calc(var(--war-room-tab-strip-height) + var(--age-map-slot-gap));
     --war-room-open-lift: 20px;
     --war-room-open-top-stop: 50px;
     position: absolute;
@@ -22942,14 +22943,14 @@ body.is-rift-discoveries-workspace-open {
     flex-direction: column;
     align-items: stretch;
     justify-content: flex-start;
-    min-width: 132px;
+    min-width: 96px;
     height: var(--war-room-tab-height);
     margin: 0 0 calc(-1 * var(--age-map-slot-gap));
     padding: 0 0 var(--age-map-slot-gap);
     box-sizing: border-box;
     border: 1px solid var(--age-hud-rail-border);
     border-bottom: 1px solid var(--age-hud-rail-border);
-    border-radius: 6px 6px 0 0;
+    border-radius: 4px 4px 0 0;
     background:
         var(--age-hud-rail-sheen),
         var(--age-hud-rail-bg);
