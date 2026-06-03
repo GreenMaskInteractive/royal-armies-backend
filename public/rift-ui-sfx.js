@@ -13,9 +13,10 @@
     const JOIN_AGE_SELECT_AUDIO_ID = 'join-age-select-sound';
     const JOIN_AGE_SELECT_SRC = 'audio/joinagesfxselect.wav';
     const DISCOVERY_UNLOCK_VOLUME_SCALE = 0.68;
-    /** Synced to FLEX `riftDiscoveryToastReveal` delay + duration (style2.css). */
+    /** Animation delay in FLEX only (style2.css); audio has no matching wait. */
     const DISCOVERY_TOAST_REVEAL_DELAY_MS = 480;
     const DISCOVERY_TOAST_REVEAL_MS = 1100;
+    /** Chime when the delayed reveal finishes (delay + duration). */
     const DISCOVERY_CHIME_AT_MS = DISCOVERY_TOAST_REVEAL_DELAY_MS + DISCOVERY_TOAST_REVEAL_MS;
     const DEFAULT_VOLUME = 0.2;
 
@@ -152,12 +153,8 @@
         const volume = resolvePortalSfxVolume() * DISCOVERY_UNLOCK_VOLUME_SCALE;
         if (volume <= 0) return;
 
-        clearDiscoverySfxTimers();
         primeAudioElements();
-
-        discoveryUnlockTimers.push(global.setTimeout(() => {
-            playDiscoveryAudioElement(discoverySwooshAudio, volume);
-        }, DISCOVERY_TOAST_REVEAL_DELAY_MS));
+        playDiscoveryAudioElement(discoverySwooshAudio, volume);
     }
 
     function scheduleDiscoveryChimeSfx() {
