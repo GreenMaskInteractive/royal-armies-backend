@@ -1,5 +1,5 @@
 /**
- * RIFT — Age Headquarters (nation leadership workspace + SF planning).
+ * RIFT — Council Room (multipurpose nation workspace: elections, ledger, SF planning, council ops).
  */
 (function initAgeHeadquarters(global) {
     'use strict';
@@ -120,7 +120,7 @@
     function describeHeadquartersAccessGap(workspace) {
         if (!workspace) {
             return {
-                message: 'Headquarters data did not load. In F12 → Network, open the headquarters request and check status (200 = OK). Try signing out and back in, or hard-refresh (Ctrl+Shift+R).',
+                message: 'Council Room data did not load. In F12 → Network, open the headquarters request and check status (200 = OK). Try signing out and back in, or hard-refresh (Ctrl+Shift+R).',
                 tone: 'error'
             };
         }
@@ -131,7 +131,7 @@
 
         if (!workspace.gameNation) {
             return {
-                message: 'This commander has no nation assigned yet. Choose a nation on the Age map, then return to Headquarters.',
+                message: 'This commander has no nation assigned yet. Choose a nation on the Age map, then open the Council Room.',
                 tone: 'warn'
             };
         }
@@ -156,15 +156,15 @@
         });
     }
 
-    function isHeadquartersViewActive() {
-        return global.document.getElementById('age-page-canvas')?.dataset?.ageView === 'headquarters';
+    function isCouncilRoomViewActive() {
+        return global.document.getElementById('age-page-canvas')?.dataset?.ageView === 'council-room';
     }
 
-    function syncDispatchPanel(showOnHeadquartersView) {
+    function syncDispatchPanel(showOnCouncilRoomView) {
         const panel = global.document.getElementById('age-hq-dispatch-panel');
         if (!panel) return;
 
-        const shouldShow = Boolean(showOnHeadquartersView && councilAccess);
+        const shouldShow = Boolean(showOnCouncilRoomView && councilAccess);
         panel.hidden = !shouldShow;
         if (shouldShow) {
             panel.removeAttribute('hidden');
@@ -181,37 +181,40 @@
                 node.hidden = true;
             }
         });
-        syncDispatchPanel(isHeadquartersViewActive());
-        global.document.querySelectorAll('[data-hq-member-only]').forEach((node) => {
-            if (hasAccess) {
-                node.hidden = true;
-            } else {
-                node.hidden = false;
-                node.removeAttribute('hidden');
-            }
-        });
-        const memberDeck = global.document.getElementById('age-hq-member-deck');
-        if (memberDeck) {
-            memberDeck.hidden = hasAccess || !memberHubActive;
-            if (!hasAccess && memberHubActive) {
-                memberDeck.removeAttribute('hidden');
-            }
+        syncDispatchPanel(isCouncilRoomViewActive());
+
+        const workspace = global.document.getElementById('age-council-room-workspace');
+        const nationCol = global.document.getElementById('age-council-room-nation');
+        const commandCol = global.document.getElementById('age-council-room-command');
+        const hasNationAccess = Boolean(memberHubActive);
+
+        if (workspace) {
+            workspace.classList.toggle('is-access-denied', !hasNationAccess);
         }
-        const shell = global.document.querySelector('.age-headquarters-shell');
-        if (shell) {
-            shell.classList.toggle('age-headquarters-shell--member-view', !hasAccess && memberHubActive);
+        if (nationCol) {
+            nationCol.hidden = !hasNationAccess;
+            if (hasNationAccess) nationCol.removeAttribute('hidden');
         }
-        setMemberPlanningLock(!hasAccess && memberHubActive);
+        if (commandCol) {
+            commandCol.hidden = !hasNationAccess;
+            if (hasNationAccess) commandCol.removeAttribute('hidden');
+        }
+
+        const planningBlock = global.document.querySelector('.age-council-room-planning-block');
+        if (planningBlock) {
+            planningBlock.classList.toggle('is-planning-locked', hasNationAccess && !hasAccess);
+        }
+        setMemberPlanningLock(hasNationAccess && !hasAccess);
     }
 
     function setMemberPlanningLock(locked) {
         const lockEl = global.document.getElementById('age-hq-planning-lock');
-        const column = global.document.querySelector('.age-headquarters-planning-column');
+        const planningBlock = global.document.querySelector('.age-council-room-planning-block');
         if (lockEl) {
             lockEl.hidden = !locked;
             lockEl.setAttribute('aria-hidden', locked ? 'false' : 'true');
         }
-        if (column) column.classList.toggle('is-planning-locked', locked);
+        if (planningBlock) planningBlock.classList.toggle('is-planning-locked', locked);
     }
 
     function setAuthorityGates(workspace) {
@@ -850,6 +853,11 @@
         const accessGap = describeHeadquartersAccessGap(workspace);
         setHeadquartersLoadStatus(accessGap?.message || '', accessGap?.tone || 'info');
 
+        const councilWorkspace = global.document.getElementById('age-council-room-workspace');
+        if (councilWorkspace) {
+            councilWorkspace.classList.toggle('is-access-denied', !workspace.access?.memberHub && !workspace.access?.council);
+        }
+
         fullAuthority = Boolean(workspace.access?.fullAuthority);
         memberHubActive = Boolean(workspace.access?.memberHub);
         leaderAccess = Boolean(workspace.access?.leader);
@@ -913,7 +921,7 @@
             return false;
         }
 
-        setHeadquartersLoadStatus('Loading nation headquarters…', 'info');
+        setHeadquartersLoadStatus('Loading Council Room…', 'info');
 
         try {
             const response = await global.fetch(
@@ -1401,7 +1409,7 @@
         if (mounted) return;
         mounted = true;
 
-        workspaceEl = global.document.getElementById('age-headquarters-workspace');
+        workspaceEl = global.document.getElementById('age-council-room-workspace');
 
         global.document.getElementById('age-hq-treasury-fort-list')?.addEventListener('click', onTreasuryFortListClick);
 
@@ -1609,5 +1617,7 @@
         hasViceLeaderAccess: () => viceLeaderAccess
     };
 
+    global.RoyalArmiesAgeCouncilRoom = global.RoyalArmiesAgeHeadquarters;
     global.enableAgeHeadquarters = enable;
+    global.enableAgeCouncilRoom = enable;
 })(window);

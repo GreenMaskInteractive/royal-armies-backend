@@ -17559,6 +17559,7 @@ label.age-council-board-editor-tool {
 
 #age-page-canvas[data-age-view="records"] .age-map-anchor,
 #age-page-canvas[data-age-view="headquarters"] .age-map-anchor,
+#age-page-canvas[data-age-view="council-room"] .age-map-anchor,
 #age-page-canvas[data-age-view="guild-training"] .age-map-anchor {
     display: none;
 }
@@ -17567,6 +17568,8 @@ label.age-council-board-editor-tool {
 #age-page-canvas[data-age-view="records"] .age-map-hud--right,
 #age-page-canvas[data-age-view="headquarters"] .age-map-hud--left,
 #age-page-canvas[data-age-view="headquarters"] .age-map-hud--right,
+#age-page-canvas[data-age-view="council-room"] .age-map-hud--left,
+#age-page-canvas[data-age-view="council-room"] .age-map-hud--right,
 #age-page-canvas[data-age-view="guild-training"] .age-map-hud--left,
 #age-page-canvas[data-age-view="guild-training"] .age-map-hud--right {
     display: none !important;
@@ -17576,6 +17579,8 @@ label.age-council-board-editor-tool {
 #age-page-canvas[data-age-view="records"] [data-age-mobile-toggle="city-info"],
 #age-page-canvas[data-age-view="headquarters"] [data-age-mobile-toggle="reports"],
 #age-page-canvas[data-age-view="headquarters"] [data-age-mobile-toggle="city-info"],
+#age-page-canvas[data-age-view="council-room"] [data-age-mobile-toggle="reports"],
+#age-page-canvas[data-age-view="council-room"] [data-age-mobile-toggle="city-info"],
 #age-page-canvas[data-age-view="guild-training"] [data-age-mobile-toggle="reports"],
 #age-page-canvas[data-age-view="guild-training"] [data-age-mobile-toggle="city-info"] {
     display: none !important;
@@ -17587,6 +17592,9 @@ label.age-council-board-editor-tool {
 #age-page-canvas[data-age-view="headquarters"] #age-world-map-player-pins,
 #age-page-canvas[data-age-view="headquarters"] #age-world-map-terrain-controls,
 #age-page-canvas[data-age-view="headquarters"] #age-world-map-continent-label,
+#age-page-canvas[data-age-view="council-room"] #age-world-map-player-pins,
+#age-page-canvas[data-age-view="council-room"] #age-world-map-terrain-controls,
+#age-page-canvas[data-age-view="council-room"] #age-world-map-continent-label,
 #age-page-canvas[data-age-view="guild-training"] #age-world-map-player-pins,
 #age-page-canvas[data-age-view="guild-training"] #age-world-map-terrain-controls,
 #age-page-canvas[data-age-view="guild-training"] #age-world-map-continent-label {

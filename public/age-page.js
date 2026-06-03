@@ -997,7 +997,7 @@
 
     function syncHeadquartersPlanningLayout() {
         const canvas = global.document.getElementById('age-page-canvas');
-        if (!canvas || canvas.dataset.ageView !== 'headquarters') {
+        if (!canvas || canvas.dataset.ageView !== 'council-room') {
             clearHeadquartersPlanningLayoutVars(canvas);
             return;
         }
@@ -1007,8 +1007,8 @@
             return;
         }
 
-        const workspace = global.document.getElementById('age-headquarters-workspace');
-        const planningColumn = workspace?.querySelector('.age-headquarters-planning-column:not([hidden])');
+        const workspace = global.document.getElementById('age-council-room-workspace');
+        const planningColumn = workspace?.querySelector('.age-council-room-planning-block:not([hidden])');
         if (!workspace || !planningColumn) {
             clearHeadquartersPlanningLayoutVars(canvas);
             return;
@@ -1061,16 +1061,17 @@
 
     function syncHeadquartersCommandRailLayout() {
         const canvas = global.document.getElementById('age-page-canvas');
-        if (!canvas || canvas.dataset.ageView !== 'headquarters') {
+        if (!canvas || canvas.dataset.ageView !== 'council-room') {
             return;
         }
 
-        const commandRail = global.document.querySelector('.age-hq-command-rail:not([hidden])');
+        canvas.style.removeProperty('--age-hq-command-rail-translate-x');
+        canvas.style.removeProperty('--age-hq-command-rail-translate-y');
+
+        const commandRail = global.document.querySelector('.age-council-room-council-grid:not([hidden])');
         const toolbar = global.document.getElementById('age-hq-planning-toolbar');
-        const treasuryRail = global.document.querySelector('.age-headquarters-treasury-rail');
+        const treasuryRail = global.document.querySelector('.age-council-room-fortifications');
         if (!commandRail || !toolbar || !treasuryRail) {
-            canvas.style.removeProperty('--age-hq-command-rail-translate-x');
-            canvas.style.removeProperty('--age-hq-command-rail-translate-y');
             return;
         }
 
@@ -1179,11 +1180,11 @@
             if (reportsPanel) councilBoardLayoutObserver.observe(reportsPanel);
             if (cityInfoPanel) councilBoardLayoutObserver.observe(cityInfoPanel);
 
-            const hqWorkspace = global.document.getElementById('age-headquarters-workspace');
-            const hqPlanningColumn = hqWorkspace?.querySelector('.age-headquarters-planning-column');
-            const hqPlanningStage = hqWorkspace?.querySelector('.age-hq-planning-stage');
-            const hqCommandRail = hqWorkspace?.querySelector('.age-hq-command-rail');
-            const hqTreasuryRail = hqWorkspace?.querySelector('.age-headquarters-treasury-rail');
+            const hqWorkspace = global.document.getElementById('age-council-room-workspace');
+            const hqPlanningColumn = hqWorkspace?.querySelector('.age-council-room-planning-block');
+            const hqPlanningStage = hqWorkspace?.querySelector('.age-council-room-planning-stage');
+            const hqCommandRail = hqWorkspace?.querySelector('.age-council-room-council-grid');
+            const hqTreasuryRail = hqWorkspace?.querySelector('.age-council-room-fortifications');
             const hqToolbar = global.document.getElementById('age-hq-planning-toolbar');
             if (hqWorkspace) councilBoardLayoutObserver.observe(hqWorkspace);
             if (hqPlanningColumn) councilBoardLayoutObserver.observe(hqPlanningColumn);

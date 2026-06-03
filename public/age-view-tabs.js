@@ -1,12 +1,12 @@
 /**
- * RIFT — Age map view tabs (world map / settlement / headquarters / records).
+ * RIFT — Age map view tabs (world map / settlement / council room / records).
  */
 (function initAgeViewTabs(global) {
     'use strict';
 
     const VIEW_MAP = 'map';
     const VIEW_CITY = 'city';
-    const VIEW_HEADQUARTERS = 'headquarters';
+    const VIEW_COUNCIL_ROOM = 'council-room';
     const VIEW_RECORDS = 'records';
     const VIEW_GUILD_TRAINING = 'guild-training';
 
@@ -309,11 +309,11 @@
     }
 
     function isWorkspaceOverlayView(view) {
-        return view === VIEW_HEADQUARTERS || view === VIEW_RECORDS || view === VIEW_GUILD_TRAINING;
+        return view === VIEW_COUNCIL_ROOM || view === VIEW_RECORDS || view === VIEW_GUILD_TRAINING;
     }
 
     function normalizeView(view) {
-        if (view === VIEW_CITY || view === VIEW_HEADQUARTERS || view === VIEW_RECORDS || view === VIEW_GUILD_TRAINING) {
+        if (view === VIEW_CITY || view === VIEW_COUNCIL_ROOM || view === VIEW_RECORDS || view === VIEW_GUILD_TRAINING) {
             return view;
         }
         return VIEW_MAP;
@@ -337,7 +337,7 @@
         const rightHud = global.document.querySelector('#age-page-canvas .age-map-hud--right');
 
         const inSettlementView = activeView === VIEW_CITY;
-        const inHeadquartersView = activeView === VIEW_HEADQUARTERS;
+        const inCouncilRoomView = activeView === VIEW_COUNCIL_ROOM;
         const inRecordsView = activeView === VIEW_RECORDS;
         const inGuildTrainingView = activeView === VIEW_GUILD_TRAINING;
         const inWorkspaceOverlay = isWorkspaceOverlayView(activeView);
@@ -348,7 +348,7 @@
 
         if (rightHud) {
             rightHud.classList.toggle('is-settlement-view-open', inSettlementView);
-            rightHud.classList.toggle('is-headquarters-view-open', inHeadquartersView || inRecordsView);
+            rightHud.classList.toggle('is-headquarters-view-open', inCouncilRoomView || inRecordsView);
             if (inSettlementView) {
                 rightHud.classList.remove('is-city-info-players-open');
                 rightHud.setAttribute('aria-label', `${resolveSettlementTierDisplayLabel()} venues`);
@@ -365,10 +365,10 @@
             settlementPanel.hidden = !inSettlementView;
         }
 
-        const hqWorkspace = global.document.getElementById('age-headquarters-workspace');
-        if (hqWorkspace) {
-            hqWorkspace.hidden = !inHeadquartersView;
-            hqWorkspace.setAttribute('aria-hidden', inHeadquartersView ? 'false' : 'true');
+        const councilWorkspace = global.document.getElementById('age-council-room-workspace');
+        if (councilWorkspace) {
+            councilWorkspace.hidden = !inCouncilRoomView;
+            councilWorkspace.setAttribute('aria-hidden', inCouncilRoomView ? 'false' : 'true');
         }
 
         const recordsWorkspace = global.document.getElementById('age-records-workspace');
@@ -391,7 +391,7 @@
             guildTrainingArena.setAttribute('aria-hidden', inGuildTrainingView ? 'false' : 'true');
         }
 
-        global.RoyalArmiesAgeHeadquarters?.syncDispatchPanel?.(inHeadquartersView);
+        global.RoyalArmiesAgeHeadquarters?.syncDispatchPanel?.(inCouncilRoomView);
     }
 
     function syncMapStage() {
@@ -405,7 +405,7 @@
         const city = resolveDisplayedCity();
         const tier = resolveSettlementTier();
         const inSettlementView = activeView === VIEW_CITY;
-        const inHeadquartersView = activeView === VIEW_HEADQUARTERS;
+        const inCouncilRoomView = activeView === VIEW_COUNCIL_ROOM;
         const inRecordsView = activeView === VIEW_RECORDS;
         const inGuildTrainingView = activeView === VIEW_GUILD_TRAINING;
         const hideWorldMapLayers = isWorkspaceOverlayView(activeView);
@@ -450,7 +450,7 @@
             void global.RoyalArmiesAgeWorldPlanOverlay.refreshNationPlan();
         }
 
-        if (inHeadquartersView) {
+        if (inCouncilRoomView) {
             global.RoyalArmiesAgeHeadquarters?.onViewOpen?.();
         } else {
             global.RoyalArmiesAgeHeadquarters?.onViewClose?.();
@@ -479,8 +479,8 @@
                 'aria-label',
                 activeView === VIEW_CITY
                     ? `${city?.name || 'Settlement'} local map`
-                    : activeView === VIEW_HEADQUARTERS
-                        ? 'Nation headquarters'
+                    : activeView === VIEW_COUNCIL_ROOM
+                        ? 'Council Room'
                         : activeView === VIEW_RECORDS
                             ? 'Age records'
                             : activeView === VIEW_GUILD_TRAINING
@@ -628,7 +628,7 @@
         syncRightHudPanels();
         syncMapStage();
 
-        if (activeView === VIEW_HEADQUARTERS && typeof global.syncAgeHeadquartersPlanningLayout === 'function') {
+        if (activeView === VIEW_COUNCIL_ROOM && typeof global.syncAgeHeadquartersPlanningLayout === 'function') {
             global.requestAnimationFrame(() => {
                 global.syncAgeHeadquartersPlanningLayout();
                 global.RoyalArmiesAgeHeadquartersPlanningMap?.refreshLayout?.();
