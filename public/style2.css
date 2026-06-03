@@ -19702,6 +19702,22 @@ body.is-age-chronicles-battle-pass-open {
     margin-bottom: 4px;
 }
 
+.rift-discoveries-workspace-local-preview-banner {
+    margin: 0 0 12px;
+    padding: 10px 12px;
+    border: 1px solid rgba(120, 180, 255, 0.35);
+    border-radius: 5px;
+    background: rgba(40, 72, 120, 0.22);
+    font-size: 0.72rem;
+    line-height: 1.45;
+    color: rgba(200, 220, 255, 0.9);
+}
+
+.rift-discoveries-workspace-local-preview-banner strong {
+    color: rgba(220, 235, 255, 0.98);
+    font-weight: 700;
+}
+
 .rift-discoveries-workspace-nav-empty p {
     margin: 0 0 8px;
     font-size: 0.82rem;

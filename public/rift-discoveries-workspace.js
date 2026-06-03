@@ -143,6 +143,34 @@
         return readJsonStorage(STORAGE_DISCOVERED, []).filter((id) => typeof id === 'string' && CATALOG_BY_ID[id]);
     }
 
+    /** Local dev only: reveal every song manuscript in the journal for layout review. */
+    function isLocalDevRevealAllSongDiscoveries() {
+        if (typeof global.isLocalDevelopmentHost === 'function' && !global.isLocalDevelopmentHost()) {
+            return false;
+        }
+        if (global.RoyalArmiesDev?.isLocalDevelopmentHost && !global.RoyalArmiesDev.isLocalDevelopmentHost()) {
+            return false;
+        }
+        try {
+            if (global.localStorage.getItem('royalArmiesDevHideAllSongDiscoveries') === '1') return false;
+        } catch (_err) {
+            /* ignore */
+        }
+        return true;
+    }
+
+    function listSongManuscriptDiscoveryIds() {
+        return listCatalogEntries()
+            .filter((entry) => entry.kind === 'song-manuscript')
+            .map((entry) => entry.id);
+    }
+
+    function readWorkspaceVisibleDiscoveryIds() {
+        const discovered = readDiscoveredIds();
+        if (!isLocalDevRevealAllSongDiscoveries()) return discovered;
+        return [...new Set([...discovered, ...listSongManuscriptDiscoveryIds()])];
+    }
+
     function readUnreadIds() {
         return readJsonStorage(STORAGE_UNREAD, []).filter((id) => typeof id === 'string' && CATALOG_BY_ID[id]);
     }
@@ -475,7 +503,7 @@
         const nav = global.document.getElementById('rift-discoveries-workspace-nav');
         if (!nav) return;
 
-        const discovered = readDiscoveredIds();
+        const discovered = readWorkspaceVisibleDiscoveryIds();
         const unread = new Set(readUnreadIds());
 
         if (!selectedDiscoveryId || !discovered.includes(selectedDiscoveryId)) {
@@ -509,12 +537,17 @@
         }).filter(Boolean).join('');
 
         const emptyJournal = discovered.length === 0;
+        const localPreviewBanner = isLocalDevRevealAllSongDiscoveries()
+            ? `<div class="rift-discoveries-workspace-local-preview-banner" role="note">
+                    <strong>Local preview</strong> — all song manuscripts are visible here. Production only shows songs you have discovered.
+               </div>`
+            : '';
         nav.innerHTML = emptyJournal
             ? `<div class="rift-discoveries-workspace-nav-empty">
                     <p>You have not recorded any discoveries yet.</p>
                     <p class="rift-discoveries-workspace-nav-hint">Explore the Age map to uncover letters, archives, manuscripts, and songs.</p>
-               </div>${sections}`
-            : sections;
+               </div>${localPreviewBanner}${sections}`
+            : `${localPreviewBanner}${sections}`;
 
         nav.querySelectorAll('.rift-discoveries-workspace-tab').forEach((btn) => {
             btn.addEventListener('click', () => {
@@ -535,7 +568,7 @@
         if (!detail) return;
 
         const entry = selectedDiscoveryId ? CATALOG_BY_ID[selectedDiscoveryId] : null;
-        const discovered = readDiscoveredIds();
+        const discovered = readWorkspaceVisibleDiscoveryIds();
 
         if (!entry || !discovered.includes(entry.id)) {
             lastRenderedDiscoveryId = null;
@@ -960,6 +993,7 @@
         recordSong: recordSongDiscovery,
         runPendingStarterSongDiscoveries,
         registerMusicCatalog: registerMusicDiscoveryCatalog,
+        isLocalDevRevealAllSongDiscoveries,
         categories: CATEGORIES
     });
 
