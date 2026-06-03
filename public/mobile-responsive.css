@@ -2703,8 +2703,8 @@ body {
     #age-page-canvas .age-map-top-bar-brand {
         flex: 1 1 100% !important;
         max-width: none !important;
-        --age-top-bar-logo-slot-w: min(150px, 38vw) !important;
-        --age-top-bar-logo-slot-h: 42px !important;
+        --age-top-bar-logo-slot-w: min(145px, 38vw) !important;
+        --age-top-bar-logo-slot-h: 37px !important;
     }
 
     #age-page-canvas .age-map-top-bar-brand {
@@ -3002,7 +3002,7 @@ body {
     }
 
     #age-page-canvas .age-map-top-bar-brand {
-        --age-top-bar-logo-slot-w: min(128px, 42vw) !important;
+        --age-top-bar-logo-slot-w: min(123px, 42vw) !important;
     }
 
     #age-page-canvas.is-age-mobile-reports-open #age-map-hud-left,

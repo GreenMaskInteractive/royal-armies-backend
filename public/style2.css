@@ -12945,8 +12945,8 @@ body.developer-maintenance-alert-active #page-landing {
     min-width: 0;
     max-width: min(72vw, 820px);
     --age-top-bar-age-divider-gap: 20px;
-    --age-top-bar-logo-slot-h: calc((var(--age-map-hud-top-bar-height, 78px) - 22px) * 1.171875);
-    --age-top-bar-logo-slot-w: min(234px, 28.125vw);
+    --age-top-bar-logo-slot-h: calc((var(--age-map-hud-top-bar-height, 78px) - 22px) * 1.171875 - 5px);
+    --age-top-bar-logo-slot-w: min(229px, 28.125vw);
 }
 
 #age-page-canvas .age-map-top-bar-logo-wrap {
@@ -12965,7 +12965,7 @@ body.developer-maintenance-alert-active #page-landing {
     width: auto;
     height: auto;
     max-height: calc(var(--age-top-bar-logo-slot-h) * 0.9);
-    max-width: min(211px, 25.3125vw);
+    max-width: min(206px, 25.3125vw);
     object-fit: contain;
     object-position: center center;
 }
