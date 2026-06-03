@@ -22877,11 +22877,12 @@ body.is-rift-discoveries-workspace-open {
 
 .age-war-room-slide {
     --war-room-tab-height: 35px;
+    --war-room-tab-drop: 7px;
     position: absolute;
     left: var(--game-region-map-bezel, 12px);
     right: var(--game-region-map-bezel, 12px);
     top: var(--game-region-map-bezel, 12px);
-    bottom: var(--game-region-map-bezel, 12px);
+    bottom: calc(var(--game-region-map-bezel, 12px) - var(--war-room-tab-drop));
     display: flex;
     flex-direction: column;
     justify-content: flex-end;
@@ -22889,6 +22890,26 @@ body.is-rift-discoveries-workspace-open {
     box-sizing: border-box;
     pointer-events: none;
     z-index: 2;
+}
+
+.age-war-room-rise {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    align-items: flex-start;
+    width: 100%;
+    max-height: var(--war-room-tab-height);
+    overflow: hidden;
+    pointer-events: auto;
+    transform: translateY(var(--war-room-tab-drop));
+    transform-origin: bottom left;
+    transition: max-height 0.52s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.age-war-room-slide.is-open .age-war-room-rise {
+    max-height: 100%;
+    flex: 0 1 100%;
+    min-height: 0;
 }
 
 .age-army-groups-tab {
@@ -22949,8 +22970,7 @@ body.is-rift-discoveries-workspace-open {
 .age-army-groups-workspace {
     position: relative;
     width: 100%;
-    flex: 0 0 auto;
-    max-height: 0;
+    flex: 1 1 0;
     min-height: 0;
     display: flex;
     flex-direction: column;
@@ -22959,24 +22979,22 @@ body.is-rift-discoveries-workspace-open {
     margin-bottom: -1px;
     background:
         linear-gradient(180deg, rgba(16, 12, 8, 0.98) 0%, rgba(10, 8, 6, 1) 100%);
-    border: 1px solid rgba(197, 160, 89, 0.45);
+    border: 1px solid transparent;
     border-bottom: none;
     border-radius: 2px 2px 0 0;
     opacity: 0;
     pointer-events: none;
     overflow: hidden;
-    transform-origin: bottom center;
     transition:
-        max-height 0.52s cubic-bezier(0.22, 1, 0.36, 1),
         opacity 0.34s ease,
-        padding 0.52s cubic-bezier(0.22, 1, 0.36, 1);
+        padding 0.4s ease,
+        border-color 0.4s ease;
 }
 
 .age-war-room-slide.is-open .age-army-groups-workspace,
 .age-army-groups-workspace.is-open {
-    flex: 1 1 auto;
-    max-height: calc(100% - var(--war-room-tab-height));
     padding: 14px 16px 10px;
+    border-color: rgba(197, 160, 89, 0.45);
     opacity: 1;
     pointer-events: auto;
 }
@@ -23358,6 +23376,7 @@ body.is-rift-discoveries-workspace-open {
 }
 
 @media (prefers-reduced-motion: reduce) {
+    .age-war-room-rise,
     .age-army-groups-workspace {
         transition-duration: 0.2s;
     }

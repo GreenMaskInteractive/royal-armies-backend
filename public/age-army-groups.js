@@ -29,6 +29,7 @@
     const els = {
         dock: null,
         slide: null,
+        rise: null,
         tab: null,
         workspace: null,
         createBtn: null,
@@ -438,6 +439,7 @@
         els.dock?.addEventListener('pointerdown', dockPointerBlock);
         els.dock?.addEventListener('click', dockPointerBlock);
         els.slide?.addEventListener('pointerdown', dockPointerBlock);
+        els.rise?.addEventListener('pointerdown', dockPointerBlock);
 
         els.tab?.addEventListener('pointerdown', dockPointerBlock);
         els.tab?.addEventListener('click', (event) => {
