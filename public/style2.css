@@ -19663,15 +19663,16 @@ body.is-age-chronicles-battle-pass-open {
     height: min(640px, 82vh);
     border: 1px solid rgba(184, 144, 48, 0.52);
     border-radius: 10px;
-    background:
-        linear-gradient(180deg, rgba(255, 215, 0, 0.05) 0%, transparent 18%),
-        radial-gradient(circle at 10% 0%, rgba(255, 200, 96, 0.1) 0%, transparent 40%),
-        linear-gradient(165deg, rgba(28, 22, 14, 0.96) 0%, rgba(6, 5, 4, 0.98) 100%);
-    background-image: none;
+    background-color: #0a0806;
+    background-image:
+        linear-gradient(180deg, #221a12 0%, #0a0806 22%),
+        radial-gradient(circle at 12% 0%, #2a2014 0%, #0a0806 48%),
+        linear-gradient(165deg, #1a1410 0%, #060504 100%);
     box-shadow:
         inset 0 1px 0 rgba(255, 215, 0, 0.1),
         0 24px 64px rgba(0, 0, 0, 0.55);
     overflow: hidden;
+    isolation: isolate;
 }
 
 .rift-discoveries-workspace-dialog::before,
@@ -19711,6 +19712,7 @@ body.is-age-chronicles-battle-pass-open {
     gap: 16px;
     padding: 16px 18px 12px;
     border-bottom: 1px solid rgba(184, 144, 48, 0.28);
+    background-color: #0f0c09;
     flex: 0 0 auto;
 }
 
@@ -19734,7 +19736,7 @@ body.is-age-chronicles-battle-pass-open {
 .rift-discoveries-workspace-close {
     border: 1px solid rgba(184, 144, 48, 0.35);
     border-radius: 4px;
-    background: rgba(0, 0, 0, 0.35);
+    background: #14100c;
     color: #f0e4c8;
     width: 34px;
     height: 34px;
@@ -19754,6 +19756,7 @@ body.is-age-chronicles-battle-pass-open {
     grid-template-columns: minmax(220px, 34%) minmax(0, 1fr);
     flex: 1 1 auto;
     min-height: 0;
+    background-color: #0a0806;
 }
 
 .rift-discoveries-workspace-nav {
@@ -19763,6 +19766,7 @@ body.is-age-chronicles-battle-pass-open {
     display: flex;
     flex-direction: column;
     gap: 14px;
+    background-color: #080604;
 }
 
 .rift-discoveries-workspace-nav-empty {
@@ -19776,7 +19780,7 @@ body.is-age-chronicles-battle-pass-open {
     padding: 10px 12px;
     border: 1px solid rgba(120, 180, 255, 0.35);
     border-radius: 5px;
-    background: rgba(40, 72, 120, 0.22);
+    background: #142238;
     font-size: 0.72rem;
     line-height: 1.45;
     color: rgba(200, 220, 255, 0.9);
@@ -19832,7 +19836,7 @@ body.is-age-chronicles-battle-pass-open {
 .rift-discoveries-workspace-tab {
     border: 1px solid transparent;
     border-radius: 3px;
-    background: transparent;
+    background: #080604;
     color: rgba(210, 220, 230, 0.9);
     font-family: 'Segoe UI', sans-serif;
     font-size: 0.8rem;
@@ -19844,13 +19848,13 @@ body.is-age-chronicles-battle-pass-open {
 .rift-discoveries-workspace-tab:hover,
 .rift-discoveries-workspace-tab:focus-visible {
     border-color: rgba(184, 144, 48, 0.3);
-    background: rgba(184, 144, 48, 0.08);
+    background: #1a1410;
     outline: none;
 }
 
 .rift-discoveries-workspace-tab.is-active {
     border-color: rgba(255, 215, 0, 0.45);
-    background: rgba(184, 144, 48, 0.16);
+    background: #241c12;
     color: #ffe8a8;
 }
 
@@ -19866,6 +19870,7 @@ body.is-age-chronicles-battle-pass-open {
     padding: 16px 18px;
     overflow: auto;
     min-height: 0;
+    background-color: #0c0a08;
 }
 
 .rift-discoveries-workspace-empty {
@@ -19949,13 +19954,13 @@ body.is-age-chronicles-battle-pass-open {
     padding: 3px;
     border: 1px solid rgba(184, 144, 48, 0.28);
     border-radius: 5px;
-    background: rgba(0, 0, 0, 0.28);
+    background: #080604;
 }
 
 .rift-discovery-article-tab {
     border: 1px solid transparent;
     border-radius: 3px;
-    background: transparent;
+    background: #0c0a08;
     color: rgba(210, 200, 175, 0.82);
     font-family: 'Cinzel', serif;
     font-size: 0.72rem;
