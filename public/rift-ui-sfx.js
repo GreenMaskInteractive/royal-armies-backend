@@ -13,9 +13,10 @@
     const JOIN_AGE_SELECT_AUDIO_ID = 'join-age-select-sound';
     const JOIN_AGE_SELECT_SRC = 'audio/joinagesfxselect.wav';
     const DISCOVERY_UNLOCK_VOLUME_SCALE = 0.68;
-    /** Synced to FLEX `riftDiscoveryToastReveal` duration (style2.css). */
+    /** Synced to FLEX `riftDiscoveryToastReveal` delay + duration (style2.css). */
+    const DISCOVERY_TOAST_REVEAL_DELAY_MS = 120;
     const DISCOVERY_TOAST_REVEAL_MS = 1100;
-    const DISCOVERY_CHIME_AT_MS = DISCOVERY_TOAST_REVEAL_MS;
+    const DISCOVERY_CHIME_AT_MS = DISCOVERY_TOAST_REVEAL_DELAY_MS + DISCOVERY_TOAST_REVEAL_MS;
     const DEFAULT_VOLUME = 0.2;
 
     const BUTTON_SELECTOR = [
@@ -83,7 +84,7 @@
         return ensureAudioElement(JOIN_AGE_SELECT_AUDIO_ID, JOIN_AGE_SELECT_SRC);
     }
 
-    function clearDiscoveryChimeTimer() {
+    function clearDiscoverySfxTimers() {
         discoveryUnlockTimers.forEach((timerId) => global.clearTimeout(timerId));
         discoveryUnlockTimers = [];
     }
@@ -151,15 +152,18 @@
         const volume = resolvePortalSfxVolume() * DISCOVERY_UNLOCK_VOLUME_SCALE;
         if (volume <= 0) return;
 
+        clearDiscoverySfxTimers();
         primeAudioElements();
-        playDiscoveryAudioElement(discoverySwooshAudio, volume);
+
+        discoveryUnlockTimers.push(global.setTimeout(() => {
+            playDiscoveryAudioElement(discoverySwooshAudio, volume);
+        }, DISCOVERY_TOAST_REVEAL_DELAY_MS));
     }
 
     function scheduleDiscoveryChimeSfx() {
         const volume = resolvePortalSfxVolume() * DISCOVERY_UNLOCK_VOLUME_SCALE;
         if (volume <= 0) return;
 
-        clearDiscoveryChimeTimer();
         const chimeAudio = resolveDiscoveryChimeAudio();
 
         discoveryUnlockTimers.push(global.setTimeout(() => {
@@ -222,6 +226,7 @@
         playDiscoveryUnlock: playDiscoveryUnlockSfx,
         playDiscoverySwoosh: playDiscoverySwooshSfx,
         scheduleDiscoveryChime: scheduleDiscoveryChimeSfx,
+        discoveryToastRevealDelayMs: DISCOVERY_TOAST_REVEAL_DELAY_MS,
         discoveryToastRevealMs: DISCOVERY_TOAST_REVEAL_MS,
         discoveryChimeAtMs: DISCOVERY_CHIME_AT_MS,
         warmDiscoveryAudio: warmDiscoveryAudioElements,
