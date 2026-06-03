@@ -2132,10 +2132,6 @@
     display: flex;
 }
 
-.age-hq-dispatch-panel[data-hq-council-only]:not([hidden]) {
-    display: block;
-}
-
 /* --- Member headquarters deck (elections, diplomacy, war ledger) --- */
 
 .age-headquarters-member-deck {

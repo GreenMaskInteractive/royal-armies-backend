@@ -390,6 +390,8 @@
             guildTrainingArena.hidden = !inGuildTrainingView;
             guildTrainingArena.setAttribute('aria-hidden', inGuildTrainingView ? 'false' : 'true');
         }
+
+        global.RoyalArmiesAgeHeadquarters?.syncDispatchPanel?.(inHeadquartersView);
     }
 
     function syncMapStage() {

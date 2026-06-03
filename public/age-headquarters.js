@@ -101,6 +101,21 @@
             .replace(/"/g, '&quot;');
     }
 
+    function isHeadquartersViewActive() {
+        return global.document.getElementById('age-page-canvas')?.dataset?.ageView === 'headquarters';
+    }
+
+    function syncDispatchPanel(showOnHeadquartersView) {
+        const panel = global.document.getElementById('age-hq-dispatch-panel');
+        if (!panel) return;
+
+        const shouldShow = Boolean(showOnHeadquartersView && councilAccess);
+        panel.hidden = !shouldShow;
+        if (shouldShow) {
+            panel.removeAttribute('hidden');
+        }
+    }
+
     function setCouncilAccessUI(hasAccess) {
         councilAccess = hasAccess;
         global.document.querySelectorAll('[data-hq-council-only]').forEach((node) => {
@@ -111,6 +126,7 @@
                 node.hidden = true;
             }
         });
+        syncDispatchPanel(isHeadquartersViewActive());
         global.document.querySelectorAll('[data-hq-member-only]').forEach((node) => {
             if (hasAccess) {
                 node.hidden = true;
@@ -1475,6 +1491,7 @@
     }
 
     function onViewClose() {
+        syncDispatchPanel(false);
         if (planningSaveTimer) {
             global.clearTimeout(planningSaveTimer);
             planningSaveTimer = 0;
@@ -1493,6 +1510,7 @@
         onViewClose,
         refreshHeadquartersAccess,
         fetchHeadquartersWorkspace,
+        syncDispatchPanel,
         hasCouncilAccess: () => councilAccess,
         hasLeaderAccess: () => leaderAccess,
         hasViceLeaderAccess: () => viceLeaderAccess
