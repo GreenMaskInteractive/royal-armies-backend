@@ -66,10 +66,18 @@
     }
 
     function resolveApiUrl(path) {
-        if (typeof global.resolveApiUrl === 'function') {
-            return global.resolveApiUrl(path);
+        if (typeof global.resolveRoyalArmiesApiUrl === 'function') {
+            return global.resolveRoyalArmiesApiUrl(path);
         }
         return path;
+    }
+
+    function formatRosterError(err) {
+        const message = String(err?.message || '').trim();
+        if (!message || message === 'Failed to fetch') {
+            return 'Could not reach army groups. Check your connection and try again.';
+        }
+        return message;
     }
 
     function showFeedback(message, isError) {
@@ -244,7 +252,7 @@
         if (!groups.length) {
             const empty = global.document.createElement('p');
             empty.className = 'age-army-groups-empty';
-            empty.textContent = 'No army groups yet. Create one or signal for rescue.';
+            empty.textContent = 'There are no army groups yet.';
             els.list.appendChild(empty);
         }
     }
@@ -256,7 +264,8 @@
         els.sfLeadBtn.setAttribute('aria-pressed', listed ? 'true' : 'false');
     }
 
-    async function refreshRoster() {
+    async function refreshRoster(options = {}) {
+        const silent = Boolean(options.silent);
         const username = resolveUsername();
         if (!username) return;
 
@@ -277,8 +286,14 @@
             updateSfLeadButton(payload);
             syncDeploymentPinFromRoster(payload);
             syncSonarFromPayload(payload);
+            showFeedback('', false);
         } catch (err) {
-            showFeedback(err.message || 'Could not load army groups.', true);
+            if (workspaceOpen) {
+                renderRosterList({ groups: [] });
+            }
+            if (!silent && workspaceOpen) {
+                showFeedback(formatRosterError(err), true);
+            }
         }
     }
 
@@ -490,6 +505,7 @@
         els.rise = global.document.getElementById('age-war-room-rise');
         els.tab = global.document.getElementById('age-army-groups-tab');
         els.workspace = global.document.getElementById('age-army-groups-workspace');
+        els.workspaceMain = global.document.getElementById('age-army-groups-workspace-main');
         els.createBtn = global.document.getElementById('age-army-groups-btn-create');
         els.sfLeadBtn = global.document.getElementById('age-army-groups-btn-sf-lead');
         els.sonarBtn = global.document.getElementById('age-army-groups-btn-sonar');
@@ -508,7 +524,7 @@
         applyTypeCycleButton();
         bindEvents();
         startRefreshLoop();
-        refreshRoster();
+        refreshRoster({ silent: true });
         return true;
     }
 
