@@ -63,6 +63,33 @@
         return '';
     }
 
+    function resolveLocalDevOwnerUsername() {
+        return String(global.LOCAL_DEV_AUTO_LOGIN_USERNAME || 'caleb_admin').trim();
+    }
+
+    function isLocalDevOwnerPortalView() {
+        if (typeof global.isLocalDevOwnerPortalView === 'function') {
+            return global.isLocalDevOwnerPortalView();
+        }
+        if (typeof global.isProductionRoyalArmiesHost === 'function' && global.isProductionRoyalArmiesHost()) {
+            return false;
+        }
+        if (typeof global.isLocalDevelopmentHost === 'function' && !global.isLocalDevelopmentHost()) {
+            return false;
+        }
+        const devMode = typeof global.getLocalDevViewMode === 'function'
+            ? global.getLocalDevViewMode()
+            : 'owner';
+        return devMode === 'owner';
+    }
+
+    function resolveHeadquartersUsername() {
+        const username = resolveUsername();
+        if (username) return username;
+        if (isLocalDevOwnerPortalView()) return resolveLocalDevOwnerUsername();
+        return '';
+    }
+
     function setCouncilAccessUI(hasAccess) {
         councilAccess = hasAccess;
         global.document.querySelectorAll('[data-hq-council-only]').forEach((node) => {
@@ -108,25 +135,32 @@
         global.RoyalArmiesAgeHeadquartersPlanningMap?.refreshLayout?.();
     }
 
-    /** Local dev only (localhost / Live Server) — not royalarmies.com production. */
+    /** Local Owner dev persona (Live Server, localhost:3000, etc.) — not production. */
     function isDevOwnerHeadquartersBypass(username) {
-        if (typeof global.isProductionRoyalArmiesHost === 'function' && global.isProductionRoyalArmiesHost()) {
-            return false;
-        }
-        if (typeof global.isLocalDevelopmentHost === 'function' && !global.isLocalDevelopmentHost()) {
-            return false;
-        }
+        if (!isLocalDevOwnerPortalView()) return false;
 
         const normalized = String(username || '').trim().toLowerCase();
-        if (normalized !== 'caleb_admin') return false;
+        if (!normalized) return true;
 
-        const port = String(global.location?.port || '');
-        if (!['3000', '5500', ''].includes(port)) return false;
+        const ownerUser = resolveLocalDevOwnerUsername().toLowerCase();
+        return normalized === ownerUser;
+    }
 
-        const devMode = typeof global.getLocalDevViewMode === 'function'
-            ? global.getLocalDevViewMode()
-            : 'owner';
-        return devMode === 'owner';
+    function applyDevOwnerCouncilAccessUI() {
+        if (!isLocalDevOwnerPortalView()) return;
+        leaderAccess = true;
+        setCouncilAccessUI(true);
+        setViceLeaderAccessUI(true);
+    }
+
+    function syncHeadquartersShellLayout() {
+        if (typeof global.syncAgeHeadquartersPlanningLayout === 'function') {
+            global.requestAnimationFrame(() => {
+                global.syncAgeHeadquartersPlanningLayout();
+                global.syncAgeHeadquartersCommandRailLayout?.();
+                global.RoyalArmiesAgeHeadquartersPlanningMap?.refreshLayout?.();
+            });
+        }
     }
 
     const DEV_PLANNING_STORAGE_PREFIX = 'ra-dev-hq-planning:';
@@ -540,7 +574,7 @@
     }
 
     function applyWorkspace(workspace) {
-        const username = resolveUsername();
+        const username = resolveHeadquartersUsername();
         workspace = mergeDevOwnerHeadquartersWorkspace(workspace, username);
         if (!workspace) return false;
 
@@ -576,16 +610,22 @@
         syncToolbarState();
         void global.RoyalArmiesAgeWorldPlanOverlay?.refreshNationPlan?.();
 
+        if (workspace.access?.council) {
+            syncHeadquartersShellLayout();
+        }
+
         return Boolean(workspace.access?.council);
     }
 
     async function fetchHeadquartersWorkspace() {
-        const username = resolveUsername();
+        const username = resolveHeadquartersUsername();
         if (!username) {
-            applyWorkspace(null);
-            setCouncilAccessUI(false);
-            setViceLeaderAccessUI(false);
-            leaderAccess = false;
+            if (!isLocalDevOwnerPortalView()) {
+                applyWorkspace(null);
+                setCouncilAccessUI(false);
+                setViceLeaderAccessUI(false);
+                leaderAccess = false;
+            }
             return false;
         }
 
@@ -633,7 +673,7 @@
     }
 
     async function patchHeadquarters(body) {
-        const username = resolveUsername();
+        const username = resolveHeadquartersUsername();
         if (!username) return null;
 
         try {
@@ -782,7 +822,7 @@
             return;
         }
         await patchHeadquarters({ confirmPlanning: true });
-        global.RoyalArmiesAgeWorldPlanOverlay?.setDevMapPlanSuppressed?.(resolveUsername(), false);
+        global.RoyalArmiesAgeWorldPlanOverlay?.setDevMapPlanSuppressed?.(resolveHeadquartersUsername(), false);
     }
 
     async function editPlanning() {
@@ -1025,7 +1065,7 @@
         setActiveMarkerType('');
         global.RoyalArmiesAgeHeadquartersPlanningMap?.resetPlanningMap?.();
 
-        const username = resolveUsername();
+        const username = resolveHeadquartersUsername();
         if (isDevOwnerHeadquartersBypass(username)) {
             writeDevPlanningSnapshot(username, getEmptyDevPlanningSnapshot());
         }
@@ -1221,12 +1261,21 @@
 
     async function onViewOpen() {
         bindUi();
+        applyDevOwnerCouncilAccessUI();
         const hasCouncilAccess = await fetchHeadquartersWorkspace();
         if (hasCouncilAccess) {
             await ensurePlanningMap();
             global.RoyalArmiesAgeHeadquartersPlanningMap?.setEnabled(true);
             await waitForLayout();
             refreshPlanningMapLayout();
+            syncHeadquartersShellLayout();
+            global.RoyalArmiesAgeMovementPanel?.refreshCityPlayers?.();
+        } else if (isLocalDevOwnerPortalView()) {
+            await ensurePlanningMap();
+            global.RoyalArmiesAgeHeadquartersPlanningMap?.setEnabled(true);
+            await waitForLayout();
+            refreshPlanningMapLayout();
+            syncHeadquartersShellLayout();
             global.RoyalArmiesAgeMovementPanel?.refreshCityPlayers?.();
         } else {
             setActiveMarkerType('');

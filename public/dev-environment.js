@@ -245,6 +245,13 @@
         return isLocalDevAutoLoginEnabled() && getLocalDevViewMode() === LOCAL_DEV_VIEW_MODES.player;
     }
 
+    /** Owner persona on localhost / Live Server — not production. */
+    function isLocalDevOwnerPortalView() {
+        if (isProductionRoyalArmiesHost()) return false;
+        if (!isLocalDevelopmentHost()) return false;
+        return getLocalDevViewMode() === LOCAL_DEV_VIEW_MODES.owner;
+    }
+
     /** Unlocks guest-locked and preview-only nav while using a non-owner dev account. */
     function isPortalDevFullAccessBypass() {
         return isLocalDevPlayerBypassActive();
@@ -341,6 +348,7 @@
     global.getLocalDevViewMode = getLocalDevViewMode;
     global.setLocalDevViewMode = setLocalDevViewMode;
     global.isLocalDevPlayerBypassActive = isLocalDevPlayerBypassActive;
+    global.isLocalDevOwnerPortalView = isLocalDevOwnerPortalView;
     global.isPortalDevFullAccessBypass = isPortalDevFullAccessBypass;
     global.shouldAllowLocalGameProgressionPreview = shouldAllowLocalGameProgressionPreview;
     global.getRoyalArmiesApiOrigin = getRoyalArmiesApiOrigin;
@@ -366,6 +374,7 @@
         getLocalDevViewMode,
         setLocalDevViewMode,
         isLocalDevPlayerBypassActive,
+        isLocalDevOwnerPortalView,
         isPortalDevFullAccessBypass,
         shouldAllowLocalGameProgressionPreview,
         localDevAutoLoginUsername: LOCAL_DEV_AUTO_LOGIN_USERNAME,
