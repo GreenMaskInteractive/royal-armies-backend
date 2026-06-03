@@ -73,13 +73,6 @@
         return global.document.querySelector('.age-map-bottom-dock-chat-column');
     }
 
-    const AGE_CHAT_POPOUT_ICON_EXPAND =
-        '<svg class="game-chat-popout-toggle-svg" viewBox="0 0 24 24" aria-hidden="true" focusable="false">' +
-        '<path fill="currentColor" d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg>';
-    const AGE_CHAT_POPOUT_ICON_DOCK =
-        '<svg class="game-chat-popout-toggle-svg" viewBox="0 0 24 24" aria-hidden="true" focusable="false">' +
-        '<path fill="currentColor" d="M5 16h3v3h2v-5H5v2zm3-8H5v2h5V5H8v3zm6 11h2v-3h3v-2h-5v5zm2-11V5h-2v5h5V8h-3z"/></svg>';
-
     function buildAgeChatPopoutToggleMarkup() {
         return `
             <button
@@ -89,10 +82,18 @@
                 aria-pressed="false"
                 aria-label="Pop chat out to a larger window"
                 title="Pop out chat">
-                <span class="game-chat-popout-toggle-icon game-chat-popout-toggle-icon--popout">${AGE_CHAT_POPOUT_ICON_EXPAND}</span>
-                <span class="game-chat-popout-toggle-icon game-chat-popout-toggle-icon--dock">${AGE_CHAT_POPOUT_ICON_DOCK}</span>
+                <span class="game-chat-popout-toggle-icon game-chat-popout-toggle-icon--popout" aria-hidden="true"></span>
+                <span class="game-chat-popout-toggle-icon game-chat-popout-toggle-icon--dock" aria-hidden="true"></span>
             </button>
         `.trim();
+    }
+
+    function isAgeChatPopoutToggleLegacy(toggle) {
+        if (!toggle) return false;
+        return Boolean(
+            toggle.querySelector('.game-chat-popout-toggle-label')
+            || !toggle.querySelector('.game-chat-popout-toggle-icon')
+        );
     }
 
     function ensureAgeChatPopoutOverlay() {
@@ -212,7 +213,24 @@
         const header = global.document.querySelector(
             '.age-map-bottom-chat-messages-host .game-chat-module-header'
         );
-        if (!header || header.querySelector('#age-game-chat-popout-toggle')) return;
+        if (!header) return;
+
+        const existing = header.querySelector('#age-game-chat-popout-toggle');
+        if (existing) {
+            if (!isAgeChatPopoutToggleLegacy(existing)) {
+                updateAgeChatPopoutToggle();
+                return;
+            }
+            const pressed = existing.getAttribute('aria-pressed');
+            existing.remove();
+            header.insertAdjacentHTML('beforeend', buildAgeChatPopoutToggleMarkup());
+            const upgraded = header.querySelector('#age-game-chat-popout-toggle');
+            if (upgraded && pressed === 'true') {
+                upgraded.setAttribute('aria-pressed', 'true');
+            }
+            updateAgeChatPopoutToggle();
+            return;
+        }
 
         header.insertAdjacentHTML('beforeend', buildAgeChatPopoutToggleMarkup());
         updateAgeChatPopoutToggle();
