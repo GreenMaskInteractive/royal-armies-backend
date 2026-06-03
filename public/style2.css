@@ -13723,6 +13723,10 @@ body.developer-maintenance-alert-active #page-landing {
     text-underline-offset: 2px;
 }
 
+#age-page-canvas .age-council-board-notice--rich .age-council-notice-color {
+    font-weight: inherit;
+}
+
 #age-page-canvas .age-council-board-edited-by {
     position: absolute;
     right: 16px;
@@ -13912,6 +13916,44 @@ body.developer-maintenance-alert-active #page-landing {
     background: rgba(184, 144, 48, 0.35);
 }
 
+.age-council-board-editor-color-tools {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.age-council-board-editor-tool--color-picker {
+    position: relative;
+    overflow: hidden;
+    padding: 0 6px;
+}
+
+.age-council-board-editor-tool-color-swatch {
+    font-family: 'Cinzel', serif;
+    font-size: 0.95rem;
+    font-weight: 700;
+    line-height: 1;
+    color: #ffd978;
+}
+
+.age-council-board-editor-color-input {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    border: none;
+    opacity: 0;
+    cursor: pointer;
+}
+
+.age-council-board-editor-tool[data-council-format="color"] {
+    min-width: 44px;
+    letter-spacing: 0.04em;
+    text-transform: capitalize;
+}
+
 .age-council-board-editor-tool {
     flex: 0 0 auto;
     min-width: 30px;
@@ -14048,6 +14090,10 @@ body.developer-maintenance-alert-active #page-landing {
 .age-council-board-editor .age-council-board-editor-preview.age-council-board-notice--rich u {
     text-decoration: underline;
     text-underline-offset: 2px;
+}
+
+.age-council-board-editor .age-council-board-editor-preview.age-council-board-notice--rich .age-council-notice-color {
+    font-weight: inherit;
 }
 
 .age-council-board-editor-feedback {

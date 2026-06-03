@@ -100,12 +100,57 @@
             .replace(/"/g, '&quot;');
     }
 
-    function formatCouncilNoticeInlineMarkup(text) {
+    const COUNCIL_NOTICE_COLOR_TAG_RE = /\[color:(#[0-9a-fA-F]{3,8})\]([\s\S]*?)\[\/color\]/gi;
+
+    function normalizeCouncilNoticeColor(value) {
+        const raw = String(value || '').trim();
+        if (/^#[0-9a-fA-F]{6}$/i.test(raw)) return raw.toLowerCase();
+        if (/^#[0-9a-fA-F]{3}$/i.test(raw)) {
+            const hex = raw.slice(1);
+            return `#${hex[0]}${hex[0]}${hex[1]}${hex[1]}${hex[2]}${hex[2]}`.toLowerCase();
+        }
+        return '#ffd978';
+    }
+
+    function formatCouncilNoticeInlineInner(text) {
         let line = escapeCouncilNoticeHtml(text);
         line = line.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
         line = line.replace(/__(.+?)__/g, '<u>$1</u>');
         line = line.replace(/\*(.+?)\*/g, '<em>$1</em>');
         return line;
+    }
+
+    function formatCouncilNoticeInlineMarkup(text) {
+        const source = String(text || '');
+        if (!source) return '';
+
+        const parts = [];
+        let lastIndex = 0;
+        const colorPattern = new RegExp(COUNCIL_NOTICE_COLOR_TAG_RE.source, COUNCIL_NOTICE_COLOR_TAG_RE.flags);
+        let match = colorPattern.exec(source);
+
+        while (match) {
+            if (match.index > lastIndex) {
+                parts.push(formatCouncilNoticeInlineInner(source.slice(lastIndex, match.index)));
+            }
+
+            const safeColor = normalizeCouncilNoticeColor(match[1]);
+            parts.push(
+                `<span class="age-council-notice-color" style="color: ${safeColor}">${formatCouncilNoticeInlineInner(match[2])}</span>`
+            );
+            lastIndex = colorPattern.lastIndex;
+            match = colorPattern.exec(source);
+        }
+
+        if (lastIndex < source.length) {
+            parts.push(formatCouncilNoticeInlineInner(source.slice(lastIndex)));
+        }
+
+        if (!parts.length) {
+            return formatCouncilNoticeInlineInner(source);
+        }
+
+        return parts.join('');
     }
 
     function formatCouncilNoticeMarkup(raw) {
@@ -340,6 +385,16 @@
         );
     }
 
+    function applyCouncilNoticeColor(colorValue) {
+        const hex = normalizeCouncilNoticeColor(colorValue);
+        wrapCouncilNoticeSelection(`[color:${hex}]`, '[/color]');
+    }
+
+    function resolveCouncilNoticeColorInputValue() {
+        const input = global.document.getElementById('age-council-board-editor-color');
+        return normalizeCouncilNoticeColor(input?.value || '#ffd978');
+    }
+
     function applyCouncilNoticeFormat(formatId) {
         switch (formatId) {
             case 'bold':
@@ -350,6 +405,9 @@
                 break;
             case 'underline':
                 wrapCouncilNoticeSelection('__');
+                break;
+            case 'color':
+                applyCouncilNoticeColor(resolveCouncilNoticeColorInputValue());
                 break;
             case 'heading':
                 applyCouncilNoticeLinePrefix('## ');
@@ -808,6 +866,23 @@
                 if (!event.target.closest('#age-council-board-editor-notice')) return;
                 renderCouncilEditorPreview(event.target.value || '');
             });
+
+            const colorInput = global.document.getElementById('age-council-board-editor-color');
+            const colorSwatch = editor.querySelector('.age-council-board-editor-tool-color-swatch');
+            if (colorInput && colorInput.dataset.councilColorBound !== 'true') {
+                colorInput.dataset.councilColorBound = 'true';
+                const syncColorSwatch = () => {
+                    if (colorSwatch) {
+                        colorSwatch.style.color = resolveCouncilNoticeColorInputValue();
+                    }
+                };
+                colorInput.addEventListener('input', syncColorSwatch);
+                colorInput.addEventListener('change', () => {
+                    syncColorSwatch();
+                    applyCouncilNoticeColor(colorInput.value);
+                });
+                syncColorSwatch();
+            }
         }
 
         if (editBtn && editBtn.dataset.councilUiBound !== 'true') {
