@@ -22877,6 +22877,7 @@ body.is-rift-discoveries-workspace-open {
 
 .age-war-room-slide {
     --war-room-tab-height: 35px;
+    --war-room-open-lift: 20px;
     position: absolute;
     left: var(--game-region-map-bezel, 12px);
     right: var(--game-region-map-bezel, 12px);
@@ -22885,6 +22886,11 @@ body.is-rift-discoveries-workspace-open {
     box-sizing: border-box;
     pointer-events: none;
     z-index: 2;
+    transition: top 0.52s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.age-war-room-slide.is-open {
+    top: calc(var(--game-region-map-bezel, 12px) - var(--war-room-open-lift));
 }
 
 /* Bottom-anchored on frame inner edge (tab sits just above the gold border). */
