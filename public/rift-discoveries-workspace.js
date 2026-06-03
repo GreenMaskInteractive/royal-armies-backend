@@ -620,7 +620,7 @@
     let suppressPortalSelectUntil = 0;
 
     function markDiscoveryToastUiSfxWindow() {
-        const chimeMs = (global.RoyalArmiesUiSfx && global.RoyalArmiesUiSfx.discoveryChimeAtMs) || 1580;
+        const chimeMs = (global.RoyalArmiesUiSfx && global.RoyalArmiesUiSfx.discoveryChimeAtMs) || 1400;
         suppressPortalSelectUntil = Date.now() + chimeMs + 80;
     }
 

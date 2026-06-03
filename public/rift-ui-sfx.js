@@ -9,16 +9,15 @@
     const HOVER_SRC = 'audio/uihover.wav';
     const SELECT_SRC = 'audio/uiselect.wav';
     const DISCOVERY_SWOOSH_AUDIO_ID = 'discovery-swoosh-sound';
-    const DISCOVERY_SWOOSH_SRC = 'audio/swoosh.wav?v=swoosh-short-1';
+    const DISCOVERY_SWOOSH_SRC = 'audio/swoosh.wav?v=swoosh-1400-1';
     const JOIN_AGE_SELECT_AUDIO_ID = 'join-age-select-sound';
     const JOIN_AGE_SELECT_SRC = 'audio/joinagesfxselect.wav';
     const DISCOVERY_UNLOCK_VOLUME_SCALE = 0.68;
-    const DISCOVERY_SWOOSH_MAX_MS = 520;
+    const DISCOVERY_SWOOSH_DURATION_MS = 1400;
+    const DISCOVERY_CHIME_AT_MS = 1400;
     /** Animation delay in FLEX only (style2.css); audio has no matching wait. */
     const DISCOVERY_TOAST_REVEAL_DELAY_MS = 480;
     const DISCOVERY_TOAST_REVEAL_MS = 1100;
-    /** Join-age chime when the delayed reveal finishes (delay + duration). */
-    const DISCOVERY_CHIME_AT_MS = DISCOVERY_TOAST_REVEAL_DELAY_MS + DISCOVERY_TOAST_REVEAL_MS;
     const DEFAULT_VOLUME = 0.2;
 
     const BUTTON_SELECTOR = [
@@ -184,7 +183,7 @@
         if (volume <= 0) return;
 
         primeAudioElements();
-        playDiscoverySwooshClip(discoverySwooshAudio, volume, DISCOVERY_SWOOSH_MAX_MS);
+        playDiscoverySwooshClip(discoverySwooshAudio, volume, DISCOVERY_SWOOSH_DURATION_MS);
     }
 
     function scheduleDiscoveryChimeSfx() {
@@ -258,6 +257,7 @@
         scheduleDiscoveryChime: scheduleDiscoveryChimeSfx,
         discoveryToastRevealDelayMs: DISCOVERY_TOAST_REVEAL_DELAY_MS,
         discoveryToastRevealMs: DISCOVERY_TOAST_REVEAL_MS,
+        discoverySwooshDurationMs: DISCOVERY_SWOOSH_DURATION_MS,
         discoveryChimeAtMs: DISCOVERY_CHIME_AT_MS,
         warmDiscoveryAudio: warmDiscoveryAudioElements,
         resolveButtonTarget,
