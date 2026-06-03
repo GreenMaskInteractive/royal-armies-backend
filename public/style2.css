@@ -21572,7 +21572,7 @@ body.is-rift-discoveries-workspace-open {
 .age-war-room-modal {
     position: fixed;
     inset: 0;
-    z-index: 220;
+    z-index: 13060;
     padding: 24px;
     box-sizing: border-box;
 }

@@ -32,8 +32,8 @@
     let catalogCache = null;
 
     function resolveApiUrl(path) {
-        if (typeof global.resolveApiUrl === 'function') {
-            return global.resolveApiUrl(path);
+        if (typeof global.resolveRoyalArmiesApiUrl === 'function') {
+            return global.resolveRoyalArmiesApiUrl(path);
         }
         const origin = global.location?.origin || '';
         if (String(path || '').startsWith('http')) return path;

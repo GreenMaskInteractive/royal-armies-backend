@@ -10,10 +10,10 @@
         if (typeof global.resolveRoyalArmiesApiUrl === 'function') {
             return global.resolveRoyalArmiesApiUrl(path);
         }
-        if (typeof global.resolveApiUrl === 'function') {
-            return global.resolveApiUrl(path);
-        }
-        return path;
+        const origin = global.location?.origin || '';
+        if (String(path || '').startsWith('http')) return path;
+        if (String(path || '').startsWith('/')) return `${origin}${path}`;
+        return `${origin}/${path}`;
     }
 
     function resolveUsername() {

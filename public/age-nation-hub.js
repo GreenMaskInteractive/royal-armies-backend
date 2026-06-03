@@ -202,13 +202,20 @@
         if (item.id === 'age-war-room-open') {
             event.preventDefault();
             closeHub();
-            global.RoyalArmiesAgeArmyGroups?.openWorkspace?.();
+            global.RoyalArmiesAdventurersGuild?.dismissGuildWorkspacesForSettlementAction?.();
+            const warRoom = global.RoyalArmiesAgeArmyGroups;
+            if (warRoom?.isWorkspaceOpen?.()) {
+                warRoom?.closeWorkspace?.();
+            } else {
+                warRoom?.openWorkspace?.();
+            }
             return;
         }
 
         if (item.id === 'age-council-room-open') {
             event.preventDefault();
             closeHub();
+            global.RoyalArmiesAdventurersGuild?.dismissGuildWorkspacesForSettlementAction?.();
             const hq = global.RoyalArmiesAgeHeadquarters;
             if (hq?.isCouncilRoomOpen?.()) {
                 hq?.closeCouncilRoom?.();
@@ -221,6 +228,7 @@
         if (item.id === 'age-records-open') {
             event.preventDefault();
             closeHub();
+            global.RoyalArmiesAdventurersGuild?.dismissGuildWorkspacesForSettlementAction?.();
             const records = global.RoyalArmiesAgeRecords;
             if (records?.isWorkspaceOpen?.()) {
                 records?.closeWorkspace?.();
