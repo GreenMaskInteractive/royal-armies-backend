@@ -86,13 +86,18 @@
     }
 
     const UPDATE_DOWNTIME_HTTP_STATUSES = new Set([502, 503, 504, 521, 522, 523, 524]);
+    const UPDATE_GATEWAY_BAD_GATEWAY_STATUS = 502;
     const UPDATE_GATEWAY_POLL_MS = 1000;
     const UPDATE_GATEWAY_ESTIMATE_SEC = 45;
+    const UPDATE_GATEWAY_STANDALONE_RELOAD_MS = 6000;
+    const UPDATE_GATEWAY_HINT_ACTIVE = 'Estimated time until the 502 Bad Gateway page may appear.';
+    const UPDATE_GATEWAY_HINT_NOW = 'The 502 Bad Gateway page may appear at any moment. The site will refresh automatically.';
 
     let updateUnderwayNoticeShown = false;
     let updateUnderwayCountdownTimer = null;
     let updateUnderwayGatewayPollTimer = null;
     let updateUnderwayCountdownEndsAt = 0;
+    let updateGatewayReloadTriggered = false;
 
     function isServerUpdateDowntime(response, payload, err) {
         if (typeof global.isLocalDevelopmentHost === 'function' && global.isLocalDevelopmentHost()) {
@@ -120,35 +125,56 @@
         return false;
     }
 
-    function isUpdateGatewayHardDownResponse(response) {
-        if (!response) return false;
-        const status = Number(response.status) || 0;
-        if (!UPDATE_DOWNTIME_HTTP_STATUSES.has(status)) return false;
-
-        const contentType = String(response.headers?.get?.('content-type') || '').toLowerCase();
-        return contentType.includes('text/html');
+    function isUpdateGateway502Response(response) {
+        return Boolean(response) && Number(response.status) === UPDATE_GATEWAY_BAD_GATEWAY_STATUS;
     }
 
-    function resolveUpdateGatewayProbeUrl() {
-        if (typeof global.resolveRoyalArmiesApiUrl === 'function') {
-            return global.resolveRoyalArmiesApiUrl('/api/portal/metrics');
+    async function responseBodyLooksLike502Gateway(response) {
+        if (!isUpdateGateway502Response(response)) return false;
+
+        const contentType = String(response.headers?.get?.('content-type') || '').toLowerCase();
+        if (!contentType.includes('text/html') && !contentType.includes('text/plain')) {
+            return true;
         }
-        return '/api/portal/metrics';
+
+        try {
+            const snippet = String(await response.clone().text()).slice(0, 1200).toLowerCase();
+            if (!snippet.trim()) return true;
+            return snippet.includes('bad gateway')
+                || snippet.includes('502')
+                || snippet.includes('cloudflare')
+                || snippet.includes('render');
+        } catch (_err) {
+            return true;
+        }
+    }
+
+    function resolveUpdateGatewayProbeUrls() {
+        const urls = [];
+        const add = (path) => {
+            const resolved = typeof global.resolveRoyalArmiesApiUrl === 'function'
+                ? global.resolveRoyalArmiesApiUrl(path)
+                : path;
+            if (resolved && !urls.includes(resolved)) urls.push(resolved);
+        };
+
+        add('/api/portal/metrics');
+        add(global.location?.pathname || '/');
+        add('/');
+        return urls;
     }
 
     function formatUpdateCountdownDisplay(secondsRemaining) {
         const total = Math.max(0, Math.ceil(secondsRemaining));
-        const hintActive = 'Estimated time until the gateway outage page (502 or 504) may appear.';
-        const hintNow = 'The gateway outage page (502 or 504) may appear at any moment.';
 
         if (total <= 0) {
-            return { value: 'Now', unit: 'No time remaining on estimate', hint: hintNow };
+            return { value: 'Now', unit: 'No time remaining on estimate', hint: UPDATE_GATEWAY_HINT_NOW };
         }
         if (total < 60) {
             return {
                 value: String(total),
                 unit: total === 1 ? 'second remaining (estimate)' : 'seconds remaining (estimate)',
-                hint: hintActive
+                hint: UPDATE_GATEWAY_HINT_ACTIVE
             };
         }
         const minutes = Math.floor(total / 60);
@@ -156,7 +182,7 @@
         return {
             value: `${minutes}:${String(seconds).padStart(2, '0')}`,
             unit: 'minutes and seconds remaining (estimate)',
-            hint: hintActive
+            hint: UPDATE_GATEWAY_HINT_ACTIVE
         };
     }
 
@@ -178,9 +204,15 @@
         if (typeof global.setPortalUpdateUnderwayCountdown === 'function') {
             global.setPortalUpdateUnderwayCountdown(display);
         }
+
+        if (remaining <= 0) {
+            void probeUpdateGatewayState();
+        }
     }
 
-    function triggerUpdateGatewayHardDown() {
+    function triggerUpdateGateway502Refresh() {
+        if (updateGatewayReloadTriggered) return;
+        updateGatewayReloadTriggered = true;
         stopUpdateUnderwayWatchers();
         if (typeof global.closePortalAlertModal === 'function') {
             global.closePortalAlertModal(true);
@@ -188,30 +220,68 @@
         try {
             global.location.reload();
         } catch (_err) {
-            /* ignore */
+            updateGatewayReloadTriggered = false;
         }
     }
 
     async function probeUpdateGatewayState() {
-        try {
-            const response = await global.fetch(resolveUpdateGatewayProbeUrl(), {
-                method: 'GET',
-                cache: 'no-store',
-                credentials: 'include'
-            });
+        const urls = resolveUpdateGatewayProbeUrls();
+        let sawHealthyResponse = false;
 
-            if (response.ok) {
-                markServerReachableAgain();
-                stopUpdateUnderwayWatchers();
-                return;
-            }
+        for (const url of urls) {
+            try {
+                const response = await global.fetch(url, {
+                    method: 'GET',
+                    cache: 'no-store',
+                    credentials: 'include'
+                });
 
-            if (isUpdateGatewayHardDownResponse(response)) {
-                triggerUpdateGatewayHardDown();
+                if (response.ok) {
+                    sawHealthyResponse = true;
+                    continue;
+                }
+
+                if (isUpdateGateway502Response(response) && await responseBodyLooksLike502Gateway(response)) {
+                    triggerUpdateGateway502Refresh();
+                    return;
+                }
+            } catch (_err) {
+                /* soft outage — try other probe URLs */
             }
-        } catch (_err) {
-            /* soft outage — keep countdown and polling */
         }
+
+        if (sawHealthyResponse) {
+            markServerReachableAgain();
+            stopUpdateUnderwayWatchers();
+        }
+    }
+
+    function isStandalone502GatewayDocument() {
+        if (global.document.getElementById('age-page-canvas')
+            || global.document.getElementById('main-dashboard-canvas')
+            || global.document.getElementById('game-page-canvas')) {
+            return false;
+        }
+
+        const title = String(global.document.title || '').toLowerCase();
+        const body = String(global.document.body?.innerText || '').toLowerCase().slice(0, 2000);
+        return (title.includes('502') || body.includes('502'))
+            && body.includes('bad gateway');
+    }
+
+    function startStandalone502GatewayAutoRefresh() {
+        if (typeof global.isLocalDevelopmentHost === 'function' && global.isLocalDevelopmentHost()) {
+            return;
+        }
+        if (!isStandalone502GatewayDocument()) return;
+
+        global.setInterval(() => {
+            try {
+                global.location.reload();
+            } catch (_err) {
+                /* ignore */
+            }
+        }, UPDATE_GATEWAY_STANDALONE_RELOAD_MS);
     }
 
     function startUpdateUnderwayWatchers() {
@@ -228,6 +298,7 @@
 
     function markServerReachableAgain() {
         updateUnderwayNoticeShown = false;
+        updateGatewayReloadTriggered = false;
         stopUpdateUnderwayWatchers();
     }
 
@@ -275,7 +346,11 @@
 
     async function handleRiftApiFailure(response, payload, fallbackTitle) {
         if (isServerUpdateDowntime(response, payload, null)) {
-            return showRiftUpdateUnderwayNotice(fallbackTitle);
+            const normalized = await showRiftUpdateUnderwayNotice(fallbackTitle);
+            if (isUpdateGateway502Response(response)) {
+                triggerUpdateGateway502Refresh();
+            }
+            return normalized;
         }
 
         const merged = payload && typeof payload === 'object'
@@ -313,4 +388,6 @@
     global.isRoyalArmiesUpdateDowntime = isServerUpdateDowntime;
     global.showRoyalArmiesUpdateUnderwayNotice = showRiftUpdateUnderwayNotice;
     global.markRoyalArmiesServerReachableAgain = markServerReachableAgain;
+
+    startStandalone502GatewayAutoRefresh();
 })(window);

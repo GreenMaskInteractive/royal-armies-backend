@@ -138,7 +138,7 @@
                     countdownValue.textContent = config.countdownValue ?? config.countdownLabel ?? '--';
                     countdownUnit.textContent = config.countdownUnit || 'seconds remaining (estimate)';
                     countdownHint.textContent = config.countdownHint
-                        || 'Estimated time until the gateway outage page (502 or 504) may appear.';
+                        || 'Estimated time until the 502 Bad Gateway page may appear.';
                 } else {
                     countdownWrap.hidden = true;
                     countdownValue.textContent = '--';
