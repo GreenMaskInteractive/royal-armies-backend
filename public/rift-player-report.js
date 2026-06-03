@@ -8,6 +8,7 @@
     const DETAILS_MAX = 2000;
     const SCREENSHOT_MAX_BYTES = 2 * 1024 * 1024;
     const SCREENSHOT_ACCEPT = ['image/png', 'image/jpeg', 'image/webp', 'image/gif'];
+    const COMMANDER_SUGGEST_MAX = 8;
 
     const catalog = global.RoyalArmiesPlayerReportCatalog || {};
     const REPORT_CATEGORY_GROUPS = catalog.REPORT_CATEGORY_GROUPS || [];
@@ -19,6 +20,9 @@
     let pendingScreenshot = null;
     let screenshotPreviewUrl = '';
     let submitting = false;
+    let commanderRosterCache = [];
+    let commanderRosterLoadPromise = null;
+    let commanderSuggestState = null;
 
     function resolveApiUrl(path) {
         if (typeof global.resolveApiUrl === 'function') {
@@ -48,6 +52,7 @@
             root: global.document.getElementById('player-report-modal'),
             scrim: global.document.querySelector('#player-report-modal .player-report-modal-scrim'),
             targetField: global.document.getElementById('player-report-target'),
+            commanderSuggest: global.document.getElementById('player-report-commander-suggest'),
             categoryGroupField: global.document.getElementById('player-report-category-group'),
             reasonField: global.document.getElementById('player-report-reason'),
             detailsField: global.document.getElementById('player-report-details'),
@@ -103,6 +108,243 @@
 
     function getCategoryMeta(categoryId) {
         return REPORT_CATEGORIES_MAP[String(categoryId || '').trim().toLowerCase()] || null;
+    }
+
+    function normalizeCommanderName(name) {
+        return String(name || '').trim().toLowerCase();
+    }
+
+    function isBlockedCommanderName(name) {
+        const key = normalizeCommanderName(name);
+        return !key || key === 'testaccount' || key === 'royal guard bot';
+    }
+
+    function getCommanderCandidatePool() {
+        const selfName = normalizeCommanderName(getActiveUsername());
+        const seen = new Set();
+        const pool = [];
+
+        commanderRosterCache.forEach((name) => {
+            const trimmed = String(name || '').trim();
+            const key = normalizeCommanderName(trimmed);
+            if (isBlockedCommanderName(trimmed) || seen.has(key) || key === selfName) return;
+            seen.add(key);
+            pool.push(trimmed);
+        });
+
+        return pool.sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
+    }
+
+    async function loadCommanderRoster(forceReload) {
+        if (!forceReload && commanderRosterCache.length) {
+            return getCommanderCandidatePool();
+        }
+        if (!forceReload && commanderRosterLoadPromise) {
+            return commanderRosterLoadPromise;
+        }
+
+        commanderRosterLoadPromise = global.fetch(resolveApiUrl('/api/portal/community-chat/mention-roster'), {
+            credentials: 'same-origin',
+            cache: 'no-store'
+        })
+            .then((response) => (response.ok ? response.json() : null))
+            .then((payload) => {
+                if (payload?.status === 'ok' && Array.isArray(payload.usernames)) {
+                    commanderRosterCache = payload.usernames
+                        .map((name) => String(name || '').trim())
+                        .filter((name) => name && !isBlockedCommanderName(name));
+                }
+                return getCommanderCandidatePool();
+            })
+            .catch(() => getCommanderCandidatePool())
+            .finally(() => {
+                commanderRosterLoadPromise = null;
+            });
+
+        return commanderRosterLoadPromise;
+    }
+
+    function filterCommanderCandidates(query) {
+        const pool = getCommanderCandidatePool();
+        const normalizedQuery = normalizeCommanderName(query);
+
+        let matches = pool;
+        if (normalizedQuery) {
+            matches = pool.filter((name) => normalizeCommanderName(name).includes(normalizedQuery));
+        }
+
+        matches = matches.slice().sort((left, right) => {
+            const leftKey = normalizeCommanderName(left);
+            const rightKey = normalizeCommanderName(right);
+            const leftStarts = normalizedQuery && leftKey.startsWith(normalizedQuery) ? 0 : 1;
+            const rightStarts = normalizedQuery && rightKey.startsWith(normalizedQuery) ? 0 : 1;
+            if (leftStarts !== rightStarts) return leftStarts - rightStarts;
+            return left.localeCompare(right, undefined, { sensitivity: 'base' });
+        });
+
+        return matches.slice(0, COMMANDER_SUGGEST_MAX);
+    }
+
+    function setCommanderSuggestExpanded(field, expanded) {
+        if (!field) return;
+        field.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+    }
+
+    function hideCommanderSuggest() {
+        commanderSuggestState = null;
+        const { commanderSuggest, targetField } = getModalElements();
+        if (commanderSuggest) {
+            commanderSuggest.hidden = true;
+            commanderSuggest.innerHTML = '';
+        }
+        setCommanderSuggestExpanded(targetField, false);
+    }
+
+    function renderCommanderSuggest(matches, highlightIndex) {
+        const { commanderSuggest } = getModalElements();
+        if (!commanderSuggest) return;
+
+        if (!matches.length) {
+            commanderSuggest.innerHTML = '<p class="player-report-commander-suggest-empty">No matching commanders</p>';
+            commanderSuggest.hidden = false;
+            return;
+        }
+
+        commanderSuggest.innerHTML = matches.map((name, index) => {
+            const highlighted = index === highlightIndex ? ' is-highlighted' : '';
+            return (
+                `<button type="button"`
+                + ` class="player-report-commander-suggest-item${highlighted}"`
+                + ` role="option"`
+                + ` aria-selected="${index === highlightIndex ? 'true' : 'false'}"`
+                + ` data-commander-suggest="${escapeHtml(name)}"`
+                + `>${escapeHtml(name)}</button>`
+            );
+        }).join('');
+        commanderSuggest.hidden = false;
+    }
+
+    function applyCommanderSuggestion(name) {
+        const { targetField } = getModalElements();
+        if (!targetField) return;
+
+        targetField.value = String(name || '').trim();
+        hideCommanderSuggest();
+        targetField.focus();
+    }
+
+    function refreshCommanderSuggestFromField(field) {
+        if (!field || field.readOnly) {
+            hideCommanderSuggest();
+            return;
+        }
+
+        const query = String(field.value || '').trim();
+        const matches = filterCommanderCandidates(query);
+
+        if (!query && !matches.length) {
+            hideCommanderSuggest();
+            return;
+        }
+
+        commanderSuggestState = {
+            field,
+            matches,
+            highlightIndex: 0
+        };
+
+        renderCommanderSuggest(matches, 0);
+        setCommanderSuggestExpanded(field, true);
+    }
+
+    function isCommanderSuggestOpen() {
+        const { commanderSuggest } = getModalElements();
+        return Boolean(commanderSuggestState && commanderSuggest && !commanderSuggest.hidden);
+    }
+
+    function handleCommanderSuggestKeydown(event, field) {
+        if (!isCommanderSuggestOpen() || !commanderSuggestState || commanderSuggestState.field !== field) {
+            return false;
+        }
+
+        const { matches } = commanderSuggestState;
+        if (!matches.length) {
+            if (event.key === 'Escape') {
+                hideCommanderSuggest();
+                event.preventDefault();
+                return true;
+            }
+            return false;
+        }
+
+        if (event.key === 'ArrowDown') {
+            commanderSuggestState.highlightIndex = (commanderSuggestState.highlightIndex + 1) % matches.length;
+            renderCommanderSuggest(matches, commanderSuggestState.highlightIndex);
+            event.preventDefault();
+            return true;
+        }
+
+        if (event.key === 'ArrowUp') {
+            commanderSuggestState.highlightIndex = (
+                commanderSuggestState.highlightIndex - 1 + matches.length
+            ) % matches.length;
+            renderCommanderSuggest(matches, commanderSuggestState.highlightIndex);
+            event.preventDefault();
+            return true;
+        }
+
+        if (event.key === 'Enter' || event.key === 'Tab') {
+            const selected = matches[commanderSuggestState.highlightIndex];
+            if (selected) {
+                applyCommanderSuggestion(selected);
+                if (event.key === 'Enter') event.preventDefault();
+                return true;
+            }
+        }
+
+        if (event.key === 'Escape') {
+            hideCommanderSuggest();
+            event.preventDefault();
+            return true;
+        }
+
+        return false;
+    }
+
+    function bindCommanderAutocomplete(targetField) {
+        if (!targetField || targetField.dataset.playerReportAutocompleteBound === 'true') return;
+        targetField.dataset.playerReportAutocompleteBound = 'true';
+
+        const { commanderSuggest } = getModalElements();
+
+        targetField.addEventListener('input', () => {
+            refreshCommanderSuggestFromField(targetField);
+        });
+
+        targetField.addEventListener('focus', () => {
+            loadCommanderRoster().then(() => {
+                refreshCommanderSuggestFromField(targetField);
+            });
+        });
+
+        targetField.addEventListener('keydown', (event) => {
+            handleCommanderSuggestKeydown(event, targetField);
+        });
+
+        targetField.addEventListener('blur', () => {
+            global.setTimeout(() => {
+                const active = global.document.activeElement;
+                if (active === targetField || commanderSuggest?.contains(active)) return;
+                hideCommanderSuggest();
+            }, 120);
+        });
+
+        commanderSuggest?.addEventListener('mousedown', (event) => {
+            const option = event.target.closest('[data-commander-suggest]');
+            if (!option) return;
+            event.preventDefault();
+            applyCommanderSuggestion(option.getAttribute('data-commander-suggest'));
+        });
     }
 
     function findReportGroup(groupId) {
@@ -284,6 +526,7 @@
             targetField.value = targetUsername;
             targetField.setAttribute('aria-label', 'Commander');
             targetField.classList.remove('player-report-field-input--editable');
+            hideCommanderSuggest();
         }
     }
 
@@ -333,6 +576,10 @@
 
         populateGroupOptions('');
         configureTargetField(targetField, targetUsername, allowTargetEntry);
+        hideCommanderSuggest();
+        if (allowTargetEntry) {
+            loadCommanderRoster();
+        }
         detailsField.value = '';
         clearScreenshot();
         renderContextBlock(pendingContext.contextLabel);
@@ -381,6 +628,7 @@
         pendingContext = null;
         submitting = false;
         clearScreenshot();
+        hideCommanderSuggest();
         root.hidden = true;
         root.setAttribute('aria-hidden', 'true');
         global.document.body.classList.remove('player-report-modal-open');
@@ -511,8 +759,13 @@
     }
 
     function handleDocumentKeydown(event) {
-        const { root } = getModalElements();
+        const { root, targetField } = getModalElements();
         if (!root || root.hidden) return;
+
+        if (targetField && handleCommanderSuggestKeydown(event, targetField)) {
+            return;
+        }
+
         if (event.key === 'Escape') {
             event.preventDefault();
             close();
@@ -523,6 +776,7 @@
         const {
             root,
             scrim,
+            targetField,
             detailsField,
             categoryGroupField,
             reasonField,
@@ -539,6 +793,7 @@
         scrim?.addEventListener('click', close);
         closeBtn?.addEventListener('click', close);
         submitBtn?.addEventListener('click', submit);
+        bindCommanderAutocomplete(targetField);
         detailsField?.addEventListener('input', updateDetailsCounter);
 
         categoryGroupField?.addEventListener('change', () => {

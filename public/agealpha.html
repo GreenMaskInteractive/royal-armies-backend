@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Royal Armies — Age Alpha</title>
     <link rel="stylesheet" href="style.css?v=cursor-modal-layer-fix-1">
-    <link rel="stylesheet" href="style2.css?v=report-modal-red-header-1">
+    <link rel="stylesheet" href="style2.css?v=report-commander-autocomplete-1">
     <link rel="stylesheet" href="mobile-responsive.css?v=report-player-menu-red-1">
     <link rel="stylesheet" href="dev-page-navigator.css">
     <link rel="stylesheet" href="custom-cursor.css?v=scrollbar-cursor-3">
@@ -1486,9 +1486,12 @@
                         Reports go to the moderation team. False or abusive reports may result in account action under the
                         <a href="/terms" target="_blank" rel="noopener noreferrer">Terms of Service</a>.
                     </p>
-                    <label class="player-report-field" for="player-report-target">
+                    <label class="player-report-field player-report-commander-field" for="player-report-target">
                         <span class="player-report-field-label">Commander</span>
-                        <input type="text" id="player-report-target" class="player-report-field-input" readonly tabindex="-1">
+                        <div class="player-report-commander-autocomplete">
+                            <input type="text" id="player-report-target" class="player-report-field-input" readonly tabindex="-1" autocomplete="off" spellcheck="false" aria-autocomplete="list" aria-controls="player-report-commander-suggest" aria-expanded="false">
+                            <div id="player-report-commander-suggest" class="player-report-commander-suggest" role="listbox" hidden></div>
+                        </div>
                     </label>
                     <div id="player-report-context-block" class="player-report-context-block" hidden>
                         <span class="player-report-field-label">Context</span>
@@ -1555,7 +1558,7 @@
     <script src="game-chat.js?v=chat-music-tab-red-locked-1"></script>
     <script src="age-council-board.js?v=council-editor-preview-1"></script>
     <script src="nexus-player-report-catalog.js?v=report-categories-pbbg-1"></script>
-    <script src="rift-player-report.js?v=report-modal-red-header-1"></script>
+    <script src="rift-player-report.js?v=report-commander-autocomplete-1"></script>
     <script src="age-movement-panel.js?v=player-report-modal-1"></script>
     <script src="rift-nation-treasury.js?v=nation-treasury-tip-1"></script>
     <script src="age-world-water-routes.js?v=cross-border-neighbors-2"></script>
