@@ -12894,6 +12894,8 @@ body.developer-maintenance-alert-active #page-landing {
 }
 
 .age-map-hud--top {
+    position: relative;
+    z-index: 200;
     top: max(12px, env(safe-area-inset-top));
     left: max(16px, env(safe-area-inset-left));
     right: max(16px, env(safe-area-inset-right));
