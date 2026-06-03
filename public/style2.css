@@ -16182,21 +16182,44 @@ label.age-council-board-editor-tool {
 
 .game-chat-popout-toggle {
     flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
     margin-top: 1px;
-    padding: 5px 10px;
+    padding: 0;
     border: 1px solid rgba(184, 144, 48, 0.38);
     border-radius: 3px;
     background: rgba(0, 0, 0, 0.42);
     color: rgba(241, 224, 172, 0.88);
-    font-family: 'Cinzel', serif;
-    font-size: 0.62rem;
-    font-weight: 700;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    line-height: 1.2;
-    white-space: nowrap;
     cursor: pointer;
     transition: color 0.15s ease, background 0.15s ease, border-color 0.15s ease;
+}
+
+.game-chat-popout-toggle-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 0;
+}
+
+.game-chat-popout-toggle-icon--dock {
+    display: none;
+}
+
+.game-chat-popout-toggle[aria-pressed="true"] .game-chat-popout-toggle-icon--popout {
+    display: none;
+}
+
+.game-chat-popout-toggle[aria-pressed="true"] .game-chat-popout-toggle-icon--dock {
+    display: inline-flex;
+}
+
+.game-chat-popout-toggle-svg {
+    display: block;
+    width: 16px;
+    height: 16px;
 }
 
 .game-chat-popout-toggle:hover,
