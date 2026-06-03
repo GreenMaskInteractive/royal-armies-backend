@@ -8,7 +8,7 @@
     let escapeHandler = null;
     let layoutHandler = null;
     const MENU_TOGGLE_GAP_PX = 8;
-    const MENU_OFFSET_RIGHT_PX = 50;
+    const MENU_OFFSET_RIGHT_PX = 60;
 
     function getHub() {
         return global.document.getElementById('age-nation-hub');
