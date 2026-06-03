@@ -13038,7 +13038,7 @@ body.developer-maintenance-alert-active #page-landing {
     flex: 0 1 auto;
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 0;
     min-width: 0;
     max-width: none;
     margin-left: var(--age-top-bar-age-divider-gap, 20px);
@@ -13048,8 +13048,9 @@ body.developer-maintenance-alert-active #page-landing {
     display: flex;
     align-items: center;
     gap: 10px;
-    flex: 0 1 auto;
-    min-width: 0;
+    flex: 0 0 auto;
+    min-width: auto;
+    padding-right: 4px;
 }
 
 #age-page-canvas .age-map-top-bar-nation-crest {
@@ -13084,7 +13085,7 @@ body.developer-maintenance-alert-active #page-landing {
 .age-nation-hub {
     position: relative;
     flex: 0 0 auto;
-    margin-left: 4px;
+    margin-left: 28px;
 }
 
 .age-nation-hub-toggle {
