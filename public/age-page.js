@@ -791,7 +791,11 @@
         scheduleCouncilBoardLayoutUntilStable(24);
         await new Promise((resolve) => {
             global.requestAnimationFrame(() => {
-                syncCouncilBoardLayoutToMap();
+                try {
+                    syncCouncilBoardLayoutToMap();
+                } catch (err) {
+                    console.warn('[RIFT] Council board layout sync failed during boot release:', err);
+                }
                 global.requestAnimationFrame(resolve);
             });
         });
@@ -955,7 +959,7 @@
 
         if (rightHud && reportsPanel && !playersOpen && !settlementOpen) {
             const reportsContentHeight = measureReportsPanelHeightPx(reportsPanel);
-            const finalReportsHeight = Math.max(reportsHeight, reportsContentHeight);
+            const finalReportsHeight = Math.max(RIGHT_REPORTS_MIN_HEIGHT_PX, reportsContentHeight);
 
             canvas.style.setProperty('--age-right-reports-height', `${finalReportsHeight}px`);
         } else {
