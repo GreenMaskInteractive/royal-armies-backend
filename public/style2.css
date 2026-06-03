@@ -13188,8 +13188,8 @@ body.developer-maintenance-alert-active #page-landing {
 .age-nation-hub-menu.is-menu-position-synced {
     position: fixed !important;
     top: var(--age-nation-hub-menu-top) !important;
-    right: var(--age-nation-hub-menu-right) !important;
-    left: auto !important;
+    left: var(--age-nation-hub-menu-left) !important;
+    right: auto !important;
     bottom: auto !important;
     margin: 0 !important;
     width: auto !important;

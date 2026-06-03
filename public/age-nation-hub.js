@@ -9,7 +9,6 @@
     let layoutHandler = null;
     let closeFinishTimer = 0;
     const MENU_TOGGLE_GAP_PX = 0;
-    const MENU_OFFSET_RIGHT_PX = 60;
     const MENU_PANEL_MIN_WIDTH_PX = 196;
 
     function getHub() {
@@ -119,11 +118,12 @@
         void toggle.offsetWidth;
 
         const rect = toggle.getBoundingClientRect();
+        const toggleCenterX = rect.left + rect.width / 2;
+        const menuLeft = Math.round(toggleCenterX - panelWidthPx / 2);
+
         menu.style.setProperty('--age-nation-hub-menu-top', `${Math.round(rect.bottom + MENU_TOGGLE_GAP_PX)}px`);
-        menu.style.setProperty(
-            '--age-nation-hub-menu-right',
-            `${Math.round(global.window.innerWidth - rect.right - MENU_OFFSET_RIGHT_PX)}px`
-        );
+        menu.style.setProperty('--age-nation-hub-menu-left', `${menuLeft}px`);
+        menu.style.removeProperty('--age-nation-hub-menu-right');
         menu.classList.add('is-menu-position-synced');
     }
 
