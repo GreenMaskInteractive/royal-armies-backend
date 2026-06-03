@@ -22880,7 +22880,7 @@ body.is-rift-discoveries-workspace-open {
 
 .age-war-room-slide {
     --war-room-tab-height: 35px;
-    --war-room-open-lift: 20px;
+    --war-room-open-top-inset: 50px;
     position: absolute;
     left: 50%;
     bottom: 0;
@@ -22895,7 +22895,7 @@ body.is-rift-discoveries-workspace-open {
 }
 
 .age-war-room-slide.is-open {
-    top: calc(-1 * var(--war-room-open-lift));
+    top: var(--war-room-open-top-inset);
 }
 
 /* Bottom-anchored on the bottom HUD rail (tab flush with the top of the bottom bar). */
