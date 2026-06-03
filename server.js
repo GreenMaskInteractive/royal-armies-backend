@@ -1525,14 +1525,11 @@ function appendGameChatNationSystemEventToStore(store, nationKey, text) {
     return { entry };
 }
 
+/** Council board edit — elected/apponted leadership only (not mailbox roster admin). */
 function canEditNationCouncilBoard(commander) {
     const username = normalizeHeadquartersUsername(commander?.username);
     const storageKey = getCouncilBoardStorageKey(resolveCouncilBoardNationKey(commander));
     if (!username || !storageKey) return false;
-
-    if (isMailboxRecipientRosterAdmin(username)) {
-        return true;
-    }
 
     const leadership = readNationLeadershipForNation(storageKey);
     if (!leadership) return false;
@@ -1574,24 +1571,6 @@ function readNationLeadershipForNation(nationKey) {
     };
 }
 
-function resolveHeadquartersAdminAccess(username, storageKey) {
-    if (!username || !isMailboxRecipientRosterAdmin(username)) {
-        return null;
-    }
-
-    const resolvedStorageKey = storageKey || getCouncilBoardStorageKey(`staging:${username}`);
-    if (!resolvedStorageKey) {
-        return null;
-    }
-
-    return {
-        gameNation: resolvedStorageKey,
-        council: true,
-        leader: true,
-        viceLeader: true
-    };
-}
-
 function resolveHeadquartersAccessForCommander(commander) {
     const username = normalizeHeadquartersUsername(commander?.username);
     const gameNation = resolveCouncilBoardNationKey(commander);
@@ -1604,11 +1583,6 @@ function resolveHeadquartersAccessForCommander(commander) {
             leader: false,
             viceLeader: false
         };
-    }
-
-    const adminAccess = resolveHeadquartersAdminAccess(username, storageKey);
-    if (adminAccess) {
-        return adminAccess;
     }
 
     if (!storageKey) {
