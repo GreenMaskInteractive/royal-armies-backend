@@ -16194,7 +16194,7 @@ label.age-council-board-editor-tool {
     justify-content: center;
     width: 28px;
     height: 28px;
-    margin-top: 1px;
+    margin-top: -1px;
     padding: 0;
     border: 1px solid rgba(184, 144, 48, 0.38);
     border-radius: 3px;
