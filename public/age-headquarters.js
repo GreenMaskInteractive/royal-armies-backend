@@ -93,7 +93,12 @@
     function setCouncilAccessUI(hasAccess) {
         councilAccess = hasAccess;
         global.document.querySelectorAll('[data-hq-council-only]').forEach((node) => {
-            node.hidden = !hasAccess;
+            if (hasAccess) {
+                node.hidden = false;
+                node.removeAttribute('hidden');
+            } else {
+                node.hidden = true;
+            }
         });
         const restricted = global.document.getElementById('age-hq-council-restricted-notice');
         if (restricted) restricted.hidden = hasAccess;
