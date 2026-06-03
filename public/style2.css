@@ -19841,6 +19841,177 @@ body.is-age-chronicles-battle-pass-open {
     margin: 0 0 12px;
 }
 
+.rift-discovery-article-content {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    min-height: 0;
+    flex: 1 1 auto;
+}
+
+.rift-discovery-article-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.rift-discovery-article-tabs {
+    display: inline-flex;
+    align-items: stretch;
+    gap: 4px;
+    padding: 3px;
+    border: 1px solid rgba(184, 144, 48, 0.28);
+    border-radius: 5px;
+    background: rgba(0, 0, 0, 0.28);
+}
+
+.rift-discovery-article-tab {
+    border: 1px solid transparent;
+    border-radius: 3px;
+    background: transparent;
+    color: rgba(210, 200, 175, 0.82);
+    font-family: 'Cinzel', serif;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 7px 14px;
+    cursor: pointer;
+}
+
+.rift-discovery-article-tab:hover,
+.rift-discovery-article-tab:focus-visible {
+    color: #ffe8a8;
+    border-color: rgba(184, 144, 48, 0.35);
+    outline: none;
+}
+
+.rift-discovery-article-tab.is-active {
+    color: #1a1208;
+    background: linear-gradient(180deg, #ffd978 0%, #c5a059 100%);
+    border-color: rgba(255, 215, 0, 0.45);
+}
+
+.rift-discovery-article-toolbar-spacer {
+    flex: 1 1 auto;
+}
+
+.rift-discovery-lyrics-translate-btn {
+    margin-left: auto;
+    border: 1px solid rgba(184, 144, 48, 0.45);
+    border-radius: 4px;
+    background: rgba(184, 144, 48, 0.12);
+    color: #ffe8a8;
+    font-family: 'Cinzel', serif;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 7px 12px;
+    cursor: pointer;
+}
+
+.rift-discovery-lyrics-translate-btn:hover,
+.rift-discovery-lyrics-translate-btn:focus-visible {
+    border-color: rgba(255, 215, 0, 0.65);
+    background: rgba(184, 144, 48, 0.22);
+    outline: none;
+}
+
+.rift-discovery-lyrics-translate-btn[aria-pressed="true"] {
+    color: #1a1208;
+    background: linear-gradient(180deg, #ffd978 0%, #c5a059 100%);
+}
+
+.rift-discovery-article-panel {
+    min-height: 200px;
+}
+
+.rift-discovery-article-panel.is-hidden {
+    display: none !important;
+}
+
+.rift-discovery-lyrics-view {
+    position: relative;
+    min-height: 220px;
+}
+
+.rift-discovery-lyrics-parchment,
+.rift-discovery-lyrics-english {
+    transition: opacity 0.2s ease;
+}
+
+.rift-discovery-lyrics-parchment {
+    position: relative;
+    padding: 22px 24px 26px;
+    border-radius: 3px;
+    background:
+        linear-gradient(165deg, rgba(255, 248, 220, 0.08) 0%, transparent 42%),
+        linear-gradient(180deg, #d8c9a0 0%, #c4ad78 38%, #b89d68 100%);
+    border: 1px solid rgba(92, 68, 32, 0.45);
+    box-shadow:
+        inset 0 0 42px rgba(72, 48, 18, 0.22),
+        0 8px 22px rgba(0, 0, 0, 0.45),
+        2px 3px 0 rgba(40, 28, 10, 0.35);
+    transform: rotate(-0.35deg);
+}
+
+.rift-discovery-lyrics-parchment::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    pointer-events: none;
+    background:
+        repeating-linear-gradient(
+            0deg,
+            transparent,
+            transparent 27px,
+            rgba(92, 68, 32, 0.07) 28px
+        );
+    opacity: 0.65;
+}
+
+.rift-discovery-lyrics-parchment-inner {
+    position: relative;
+    z-index: 1;
+    font-family: 'Segoe Script', 'Brush Script MT', 'Lucida Handwriting', 'Apple Chancery', cursive;
+    font-size: 1.05rem;
+    line-height: 1.85;
+    letter-spacing: 0.02em;
+    color: rgba(38, 24, 10, 0.82);
+    text-shadow: 0 1px 0 rgba(255, 255, 255, 0.15);
+    word-break: break-word;
+}
+
+.rift-discovery-lyrics-english {
+    padding: 4px 2px;
+}
+
+.rift-discovery-lyrics-english-inner {
+    font-family: 'Segoe UI', sans-serif;
+    font-size: 0.92rem;
+    line-height: 1.65;
+    color: rgba(232, 226, 210, 0.94);
+}
+
+.rift-discovery-lyrics-view.is-original .rift-discovery-lyrics-english {
+    display: none;
+}
+
+.rift-discovery-lyrics-view.is-english .rift-discovery-lyrics-parchment {
+    display: none;
+}
+
+.rift-discoveries-workspace-article {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    height: 100%;
+}
+
 .rift-discovery-signatory {
     margin-top: 16px !important;
     font-style: italic;

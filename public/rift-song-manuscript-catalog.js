@@ -85,7 +85,39 @@
             body: `
                 <p>This raw oral history originated directly from the remote coastal fishing settlements within the nation of Vaelior, where the local seafaring families lived and maintained their ancient oral traditions. It was performed by a solitary, unpolished clan-woman of the gulf during the freezing seasonal migration, when the communities gathered around indoor fires to escape the coastal storms.</p>
                 <p>Singing entirely alone with an aggressive, biting accent and hard, rolling consonants, her voice carried a natural, imperfect strain through long, sweeping narrative lines. This ballad was brought to life to preserve the unbroken lineages and oral records of the maritime clans, serving as a gritty, un-amplified monument to ensure the history of the nation&apos;s coastal families would never be erased.</p>
-            `
+            `,
+            lyrics: {
+                original: `Ik-pek-rum. Tak-ti-kum.
+
+Ik-pek-rum tak-ti-kum vak-rok-um ker-ti-tas.
+Khaer-um taktiktas form tenzum ikpek-pru.
+Vak-rok-um kertis ikpek-rum tak-ti-kum.
+
+Myn-tas pru form vak-rok-um kertis.
+Ik-pek-rum tak-ti-kum vak-rok-um ker-ti-tas.
+Khaer-um taktiktas form tenzum ikpek-pru.
+
+Ik-pek-rum tak-ti-kum vak-rok-um ker-ti-tas.
+Khaer-um taktiktas form tenzum ikpek-pru.
+Vak-rok-um kertis ikpek-rum tak-ti-kum.
+
+Tak-ti-kum.`,
+                english: `The blood remembers. The tide returns.
+
+The blood remembers, the tide returns upon the stone shore.
+The elder forms the circle, the child at the breast.
+Upon the stone shore the names—the blood remembers, the tide returns.
+
+The names take form upon the stone shore.
+The blood remembers, the tide returns upon the stone shore.
+The elder forms the circle, the child at the breast.
+
+The blood remembers, the tide returns upon the stone shore.
+The elder forms the circle, the child at the breast.
+Upon the stone shore the names—the blood remembers, the tide returns.
+
+The tide returns.`
+            }
         },
         {
             trackId: 'a-warriors-pride',
@@ -94,7 +126,39 @@
             body: `
                 <p>This brutal military march originated from the heavy iron foundries and training grounds within the nation of Khaerant, where the elite forces of the autocracy lived and labored. Performed by a disciplined battalion of the imperial guard during their grueling multi-mile endurance marches through the industrial heartlands, the group delivered a harsh, unpolished unison chant.</p>
                 <p>Dropping their voices into a deep, guttural register with a heavy, rolling northern accent, the men bit down hard on every syllable without any complex studio harmonies or beautiful chords. This track was created to serve as a rigid psychological anchor, driving physical compliance and reinforcing absolute obedience to the nation&apos;s harsh imperial codes.</p>
-            `
+            `,
+            lyrics: {
+                original: `Ik-pek-rum. Tak-ti-kum.
+
+Ik-pek-rum tak-ti-kum vak-rok-um ker-ti-tas.
+Khaer-um taktiktas form tenzum ikpek-pru.
+Vak-rok-um kertis ikpek-rum tak-ti-kum.
+
+Myn-tas pru form vak-rok-um kertis.
+Ik-pek-rum tak-ti-kum vak-rok-um ker-ti-tas.
+Khaer-um taktiktas form tenzum ikpek-pru.
+
+Ik-pek-rum tak-ti-kum vak-rok-um ker-ti-tas.
+Khaer-um taktiktas form tenzum ikpek-pru.
+Vak-rok-um kertis ikpek-rum tak-ti-kum.
+
+Tak-ti-kum.`,
+                english: `Iron holds the line. Mark the step.
+
+Iron holds the step through smoke and sworn ash.
+The rank forms unbroken, no breath out of file.
+Through smoke and ash the oath—iron holds, mark the step.
+
+The oath takes form in smoke and ash.
+Iron holds the step through smoke and sworn ash.
+The rank forms unbroken, no breath out of file.
+
+Iron holds the step through smoke and sworn ash.
+The rank forms unbroken, no breath out of file.
+Through smoke and ash the oath—iron holds, mark the step.
+
+Mark the step.`
+            }
         },
         {
             trackId: 'drunken-thrunesian',
@@ -103,7 +167,33 @@
             body: `
                 <p>Originating from the rowdy, lawless public squares and crowded local halls within the nation of Thruun, this chaotic vocal piece was brought to life by the local laborers and agricultural workers who gathered to celebrate the end of the seasonal harvest. Performed by a boisterous, unpolished male crowd during the height of the chaotic autumn street festivals, the singers delivered a slurred, loud, and heavily rhythmic chant.</p>
                 <p>The performance was defined by random shouts, stomping feet, and out-of-time clapping that moved with a driving, un-orchestrated momentum. This song was created as a pure expression of communal release, capturing the rowdy, free-spirited, and lawless heartbeat of the nation&apos;s working people.</p>
-            `
+            `,
+            lyrics: {
+                original: `Zha! Zha! Zha!
+
+Thruu-khah! Agh-gora!
+Kha-kha-rah, zho-la-guz!
+Thruu-khah! Agh-gora!
+Thruu-ghuz!
+
+Thruu-khah! Agh-gora!
+Kha-kha-rah, zho-la-guz!
+Thruu-ghuz!
+
+ZHA!`,
+                english: `Hey! Hey! Hey!
+
+To Thruun—raise the cup!
+Laugh loud, drink deep, let the night loose!
+To Thruun—raise the cup!
+A cheer for Thruun!
+
+To Thruun—raise the cup!
+Laugh loud, drink deep, let the night loose!
+A cheer for Thruun!
+
+HEY!`
+            }
         },
         {
             trackId: 'rivers-of-blood',

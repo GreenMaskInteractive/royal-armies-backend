@@ -92,6 +92,10 @@
     /** @type {string[]} ids in the currently visible toast */
     let activeToastDiscoveryIds = [];
     let activeToastDiscoveryIndex = 0;
+    let selectedArticleTab = 'description';
+    let lyricsShowEnglish = false;
+    let lastRenderedDiscoveryId = null;
+    let articlePanelBindingsReady = false;
 
     LORE_DISCOVERY_CATALOG.forEach((entry) => {
         CATALOG_BY_ID[entry.id] = Object.freeze(entry);
@@ -173,7 +177,7 @@
         const displayTitle = formatSongTitle(spec.title || spec.trackId);
         const nation = String(spec.nation || '').trim() || 'Unknown';
         const id = `song-${spec.trackId}`;
-        return Object.freeze({
+        const entry = {
             id,
             category: 'manuscripts',
             kind: 'song-manuscript',
@@ -185,6 +189,104 @@
                 <p>A recovered musical manuscript titled <strong>${escapeHtml(displayTitle)}</strong> has been added to your journal.</p>
                 <p>You may replay this melody from the <strong>Music</strong> tab in game chat whenever you are in the Age.</p>
             `
+        };
+
+        if (spec.lyrics?.original) {
+            entry.lyrics = Object.freeze({
+                original: String(spec.lyrics.original),
+                english: String(spec.lyrics.english || '')
+            });
+        }
+
+        return Object.freeze(entry);
+    }
+
+    function formatLyricsPlaintext(text) {
+        return escapeHtml(String(text || '')).replace(/\r\n/g, '\n').replace(/\n/g, '<br>');
+    }
+
+    function buildArticlePanelMarkup(entry) {
+        const hasLyrics = Boolean(entry.lyrics?.original);
+        const showLyricsPanel = hasLyrics && selectedArticleTab === 'lyrics';
+        const translateVisible = hasLyrics && showLyricsPanel;
+        const showingEnglish = lyricsShowEnglish && translateVisible;
+
+        const tabBar = hasLyrics
+            ? `
+                <div class="rift-discovery-article-tabs" role="tablist" aria-label="Discovery content">
+                    <button type="button" class="rift-discovery-article-tab${selectedArticleTab === 'description' ? ' is-active' : ''}" role="tab" aria-selected="${selectedArticleTab === 'description' ? 'true' : 'false'}" data-discovery-article-tab="description">Description</button>
+                    <button type="button" class="rift-discovery-article-tab${selectedArticleTab === 'lyrics' ? ' is-active' : ''}" role="tab" aria-selected="${selectedArticleTab === 'lyrics' ? 'true' : 'false'}" data-discovery-article-tab="lyrics">Lyrics</button>
+                </div>
+            `
+            : '';
+
+        const descriptionPanel = `
+            <div class="rift-discovery-article-panel${showLyricsPanel ? ' is-hidden' : ''}" data-discovery-article-panel="description" role="tabpanel"${showLyricsPanel ? ' hidden' : ''}>
+                <div class="rift-discoveries-workspace-article-body">${entry.body}</div>
+            </div>
+        `;
+
+        const lyricsPanel = hasLyrics
+            ? `
+                <div class="rift-discovery-article-panel${showLyricsPanel ? '' : ' is-hidden'}" data-discovery-article-panel="lyrics" role="tabpanel"${showLyricsPanel ? '' : ' hidden'}>
+                    <div class="rift-discovery-lyrics-view${showingEnglish ? ' is-english' : ' is-original'}">
+                        <div class="rift-discovery-lyrics-parchment" aria-label="Original lyrics">
+                            <div class="rift-discovery-lyrics-parchment-inner">${formatLyricsPlaintext(entry.lyrics.original)}</div>
+                        </div>
+                        <div class="rift-discovery-lyrics-english" aria-label="English translation">
+                            <div class="rift-discovery-lyrics-english-inner">${formatLyricsPlaintext(entry.lyrics.english)}</div>
+                        </div>
+                    </div>
+                </div>
+            `
+            : '';
+
+        const toolbar = hasLyrics
+            ? `
+                <div class="rift-discovery-article-toolbar">
+                    ${tabBar}
+                    ${translateVisible ? `
+                        <button type="button" class="rift-discovery-lyrics-translate-btn" id="rift-discovery-lyrics-translate-btn" aria-pressed="${showingEnglish ? 'true' : 'false'}">
+                            ${showingEnglish ? 'Original' : 'English'}
+                        </button>
+                    ` : '<span class="rift-discovery-article-toolbar-spacer"></span>'}
+                </div>
+            `
+            : '';
+
+        return `
+            <div class="rift-discovery-article-content">
+                ${toolbar}
+                ${descriptionPanel}
+                ${lyricsPanel}
+            </div>
+        `;
+    }
+
+    function bindArticlePanelHandlers() {
+        if (articlePanelBindingsReady) return;
+        articlePanelBindingsReady = true;
+
+        const detail = global.document.getElementById('rift-discoveries-workspace-detail');
+        if (!detail) return;
+
+        detail.addEventListener('click', (event) => {
+            const tabBtn = event.target.closest('[data-discovery-article-tab]');
+            if (tabBtn) {
+                const tab = tabBtn.getAttribute('data-discovery-article-tab');
+                if (tab !== 'description' && tab !== 'lyrics') return;
+                selectedArticleTab = tab;
+                if (tab === 'description') {
+                    lyricsShowEnglish = false;
+                }
+                renderWorkspaceDetail();
+                return;
+            }
+
+            if (event.target.closest('#rift-discovery-lyrics-translate-btn')) {
+                lyricsShowEnglish = !lyricsShowEnglish;
+                renderWorkspaceDetail();
+            }
         });
     }
 
@@ -436,12 +538,25 @@
         const discovered = readDiscoveredIds();
 
         if (!entry || !discovered.includes(entry.id)) {
+            lastRenderedDiscoveryId = null;
+            selectedArticleTab = 'description';
+            lyricsShowEnglish = false;
             detail.innerHTML = `
                 <div class="rift-discoveries-workspace-empty">
                     <p>Select a discovery on the left to read it here.</p>
                 </div>
             `;
             return;
+        }
+
+        if (entry.id !== lastRenderedDiscoveryId) {
+            lastRenderedDiscoveryId = entry.id;
+            selectedArticleTab = 'description';
+            lyricsShowEnglish = false;
+        }
+
+        if (!entry.lyrics?.original && selectedArticleTab === 'lyrics') {
+            selectedArticleTab = 'description';
         }
 
         const category = getCategoryMeta(entry.category);
@@ -456,9 +571,11 @@
                     </div>
                 </header>
                 <p class="rift-discoveries-workspace-article-discovery-line">${escapeHtml(getDiscoveryLine(entry))}</p>
-                <div class="rift-discoveries-workspace-article-body">${entry.body}</div>
+                ${buildArticlePanelMarkup(entry)}
             </article>
         `;
+
+        bindArticlePanelHandlers();
     }
 
     function renderToastDiscoveryIndex(index) {
@@ -786,6 +903,7 @@
 
         ensureModalShell();
         injectDiscoveriesMenuItems();
+        bindArticlePanelHandlers();
 
         global.document.getElementById('rift-discoveries-workspace-close')
             ?.addEventListener('click', closeDiscoveriesWorkspace);
