@@ -1,5 +1,5 @@
 /**
- * RIFT — Age map army groups workspace (slide-up panel, roster, sonar rescue ping).
+ * RIFT — Age War Room workspace (center modal, army groups roster, sonar rescue ping).
  */
 (function initAgeArmyGroups(global) {
     'use strict';
@@ -27,11 +27,10 @@
     const REFRESH_MS = 12000;
 
     const els = {
-        dock: null,
-        slide: null,
-        rise: null,
-        tab: null,
-        workspace: null,
+        modal: null,
+        backdrop: null,
+        closeBtn: null,
+        openBtn: null,
         workspaceMain: null,
         createBtn: null,
         sfLeadBtn: null,
@@ -55,6 +54,7 @@
     let sonarTimers = [];
     let sonarCycleTimer = 0;
     let localSonarActive = false;
+    let escapeHandler = null;
 
     function resolveUsername() {
         const saved = global.localStorage.getItem('activeCommanderUser');
@@ -91,6 +91,12 @@
         els.feedback.hidden = false;
         els.feedback.textContent = message;
         els.feedback.classList.toggle('is-error', Boolean(isError));
+    }
+
+    function dispatchOpenChange() {
+        global.dispatchEvent(new CustomEvent('royalarmies:age-war-room-open-change', {
+            detail: { open: workspaceOpen }
+        }));
     }
 
     async function parseResponse(response) {
@@ -132,28 +138,34 @@
 
     function setWorkspaceOpen(open) {
         workspaceOpen = Boolean(open);
-        if (!els.workspace || !els.tab) return;
-        els.slide?.classList.toggle('is-open', workspaceOpen);
-        els.workspace.classList.toggle('is-open', workspaceOpen);
-        els.workspace.setAttribute('aria-hidden', 'false');
-        if (els.workspaceMain) {
-            els.workspaceMain.setAttribute('aria-hidden', workspaceOpen ? 'false' : 'true');
-        }
-        els.tab.setAttribute('aria-expanded', workspaceOpen ? 'true' : 'false');
-        els.tab.classList.toggle('is-active', workspaceOpen);
-        if (els.dock) {
-            els.dock.classList.toggle('is-workspace-open', workspaceOpen);
-        }
+        if (!els.modal) return;
+
+        els.modal.hidden = !workspaceOpen;
+        els.modal.setAttribute('aria-hidden', workspaceOpen ? 'false' : 'true');
+        els.openBtn?.setAttribute('aria-expanded', workspaceOpen ? 'true' : 'false');
+        els.openBtn?.classList.toggle('is-active', workspaceOpen);
+        global.document.body.classList.toggle('age-war-room-open', workspaceOpen);
+
         if (!workspaceOpen) {
             setCreatePanelOpen(false);
-        }
-        if (workspaceOpen) {
+            if (escapeHandler) {
+                global.document.removeEventListener('keydown', escapeHandler);
+                escapeHandler = null;
+            }
+        } else {
             refreshRoster();
+            els.closeBtn?.focus();
+            if (!escapeHandler) {
+                escapeHandler = (event) => {
+                    if (event.key === 'Escape') {
+                        setWorkspaceOpen(false);
+                    }
+                };
+                global.document.addEventListener('keydown', escapeHandler);
+            }
         }
-    }
 
-    function stopMapInteraction(event) {
-        event.stopPropagation();
+        dispatchOpenChange();
     }
 
     function setCreatePanelOpen(open) {
@@ -337,10 +349,10 @@
     async function joinArmyGroup(groupId) {
         try {
             const payload = await postAction(`${API_BASE}/join`, { groupId });
-            showFeedback('Joined army group.', false);
             rosterPayload = payload;
             renderRosterList(payload);
             syncDeploymentPinFromRoster(payload);
+            showFeedback('Joined army group.', false);
         } catch (err) {
             showFeedback(err.message || 'Could not join army group.', true);
         }
@@ -394,7 +406,8 @@
         ring.style.top = `${center.y}px`;
         ring.style.setProperty('--sonar-max-radius', `${maxRadiusPx}px`);
         els.sonarLayer.appendChild(ring);
-        ring.addEventListener('animationend', () => ring.remove(), { once: true });
+
+        global.setTimeout(() => ring.remove(), 1600);
     }
 
     function runSonarBurst(city, timing) {
@@ -453,20 +466,19 @@
     }
 
     function bindEvents() {
-        const dockPointerBlock = (event) => stopMapInteraction(event);
-
-        els.dock?.addEventListener('pointerdown', dockPointerBlock);
-        els.dock?.addEventListener('click', dockPointerBlock);
-        els.slide?.addEventListener('pointerdown', dockPointerBlock);
-        els.rise?.addEventListener('pointerdown', dockPointerBlock);
-
-        els.tab?.addEventListener('pointerdown', dockPointerBlock);
-        els.tab?.addEventListener('click', (event) => {
-            stopMapInteraction(event);
-            setWorkspaceOpen(!workspaceOpen);
+        els.openBtn?.addEventListener('click', (event) => {
+            event.preventDefault();
+            setWorkspaceOpen(true);
         });
 
-        els.workspace?.addEventListener('pointerdown', dockPointerBlock);
+        els.closeBtn?.addEventListener('click', (event) => {
+            event.preventDefault();
+            setWorkspaceOpen(false);
+        });
+
+        els.backdrop?.addEventListener('click', () => setWorkspaceOpen(false));
+
+        els.modal?.addEventListener('click', (event) => event.stopPropagation());
 
         els.createBtn?.addEventListener('click', () => {
             setCreatePanelOpen(!createPanelOpen);
@@ -500,11 +512,10 @@
     }
 
     function enable() {
-        els.dock = global.document.getElementById('age-war-room-dock');
-        els.slide = global.document.getElementById('age-war-room-slide');
-        els.rise = global.document.getElementById('age-war-room-rise');
-        els.tab = global.document.getElementById('age-army-groups-tab');
-        els.workspace = global.document.getElementById('age-army-groups-workspace');
+        els.modal = global.document.getElementById('age-war-room-modal');
+        els.backdrop = global.document.getElementById('age-war-room-backdrop');
+        els.closeBtn = global.document.getElementById('age-war-room-close');
+        els.openBtn = global.document.getElementById('age-war-room-open');
         els.workspaceMain = global.document.getElementById('age-army-groups-workspace-main');
         els.createBtn = global.document.getElementById('age-army-groups-btn-create');
         els.sfLeadBtn = global.document.getElementById('age-army-groups-btn-sf-lead');
@@ -517,9 +528,10 @@
         els.feedback = global.document.getElementById('age-army-groups-feedback');
         els.sonarLayer = global.document.getElementById('age-army-groups-sonar-layer');
 
-        if (!els.slide || !els.tab || !els.workspace) return false;
+        if (!els.modal || !els.workspaceMain) return false;
 
         setCreatePanelOpen(false);
+        setWorkspaceOpen(false);
 
         applyTypeCycleButton();
         bindEvents();
@@ -539,7 +551,10 @@
     global.RoyalArmiesAgeArmyGroups = {
         enable,
         refresh: refreshRoster,
-        isWorkspaceOpen: () => workspaceOpen
+        isWorkspaceOpen: () => workspaceOpen,
+        openWorkspace: () => setWorkspaceOpen(true),
+        closeWorkspace: () => setWorkspaceOpen(false),
+        toggleWorkspace: () => setWorkspaceOpen(!workspaceOpen)
     };
 
     init();

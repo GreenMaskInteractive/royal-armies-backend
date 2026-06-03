@@ -13034,12 +13034,13 @@ body.developer-maintenance-alert-active #page-landing {
 }
 
 #age-page-canvas .age-map-top-bar-nation {
+    position: relative;
     flex: 0 1 auto;
     display: flex;
     align-items: center;
     gap: 10px;
     min-width: 0;
-    max-width: min(280px, 34vw);
+    max-width: min(420px, 48vw);
     margin-left: var(--age-top-bar-age-divider-gap, 20px);
 }
 
@@ -13069,6 +13070,178 @@ body.developer-maintenance-alert-active #page-landing {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+}
+
+/* Nation Hub — top bar dropdown (views, War Room, War Ledger) */
+.age-nation-hub {
+    position: relative;
+    flex: 0 0 auto;
+    margin-left: 4px;
+}
+
+.age-nation-hub-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: 34px;
+    padding: 0 14px;
+    border: 1px solid var(--age-hud-rail-chip-border);
+    border-radius: 5px;
+    background: var(--age-hud-rail-chip-bg);
+    color: rgba(236, 220, 180, 0.9);
+    font-family: 'Cinzel', serif;
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    cursor: pointer;
+    box-shadow: inset 0 1px 0 rgba(255, 215, 0, 0.1);
+    transition:
+        border-color 0.14s ease,
+        background 0.14s ease,
+        color 0.14s ease,
+        box-shadow 0.14s ease;
+}
+
+.age-nation-hub-toggle:hover,
+.age-nation-hub-toggle:focus-visible {
+    border-color: rgba(255, 215, 0, 0.55);
+    color: #ffe9a8;
+    outline: none;
+    box-shadow: inset 0 1px 0 rgba(255, 215, 0, 0.16);
+}
+
+.age-nation-hub.is-open .age-nation-hub-toggle {
+    border-color: rgba(255, 215, 0, 0.62);
+    color: #ffd978;
+    background: linear-gradient(180deg, rgba(48, 40, 24, 0.96) 0%, rgba(16, 12, 8, 0.98) 100%);
+}
+
+.age-nation-hub-toggle-chevron {
+    display: block;
+    width: 0;
+    height: 0;
+    border-left: 4px solid transparent;
+    border-right: 4px solid transparent;
+    border-top: 5px solid currentColor;
+    transition: transform 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.age-nation-hub.is-open .age-nation-hub-toggle-chevron {
+    transform: rotate(180deg);
+}
+
+.age-nation-hub-menu {
+    position: absolute;
+    top: calc(100% + 8px);
+    left: 0;
+    z-index: 80;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0;
+    min-width: 196px;
+    max-height: 0;
+    overflow: hidden;
+    opacity: 0;
+    pointer-events: none;
+    border: 1px solid var(--age-hud-rail-border);
+    border-radius: 6px;
+    background:
+        var(--age-hud-rail-sheen),
+        var(--age-hud-rail-bg);
+    box-shadow: var(--age-hud-rail-inset), var(--age-hud-rail-shadow);
+    transition:
+        max-height 0.42s cubic-bezier(0.22, 1, 0.36, 1),
+        opacity 0.26s ease;
+}
+
+.age-nation-hub.is-open .age-nation-hub-menu {
+    max-height: 360px;
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.age-nation-hub-view-tabs {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0;
+    padding: 0;
+    margin: 0;
+}
+
+.age-nation-hub-menu-item,
+.age-nation-hub-view-tabs .age-map-view-tab {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    width: 100%;
+    margin: 0;
+    padding: 11px 16px;
+    border: none;
+    border-bottom: 1px solid var(--age-hud-rail-divider);
+    border-radius: 0;
+    background: transparent;
+    font-family: 'Cinzel', serif;
+    font-size: 0.82rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: rgba(236, 220, 180, 0.86);
+    text-align: left;
+    cursor: pointer;
+    box-shadow: none;
+    transition:
+        background 0.14s ease,
+        color 0.14s ease;
+}
+
+.age-nation-hub-view-tabs .age-map-view-tab:last-of-type {
+    border-bottom: 1px solid var(--age-hud-rail-divider);
+}
+
+.age-nation-hub-menu-item:hover,
+.age-nation-hub-menu-item:focus-visible,
+.age-nation-hub-view-tabs .age-map-view-tab:hover,
+.age-nation-hub-view-tabs .age-map-view-tab:focus-visible {
+    background: rgba(255, 215, 0, 0.08);
+    color: #fff6d8;
+    outline: none;
+}
+
+.age-nation-hub-view-tabs .age-map-view-tab.is-active {
+    border-color: transparent;
+    border-bottom-color: var(--age-hud-rail-divider);
+    background: linear-gradient(90deg, rgba(255, 215, 0, 0.14) 0%, transparent 100%);
+    color: #ffd978;
+    box-shadow: inset 3px 0 0 rgba(255, 215, 0, 0.72);
+}
+
+.age-nation-hub-menu-item--war-room {
+    border-bottom: 1px solid var(--age-hud-rail-divider);
+}
+
+.age-nation-hub-menu-item--war-room.is-active {
+    background: linear-gradient(90deg, rgba(255, 215, 0, 0.14) 0%, transparent 100%);
+    color: #ffd978;
+    box-shadow: inset 3px 0 0 rgba(255, 215, 0, 0.72);
+}
+
+.age-nation-hub-menu-item--war-ledger {
+    border-bottom: none;
+    color: rgba(255, 196, 196, 0.92);
+}
+
+.age-nation-hub-menu-item--war-ledger:hover,
+.age-nation-hub-menu-item--war-ledger:focus-visible {
+    background: linear-gradient(90deg, rgba(196, 72, 72, 0.22) 0%, transparent 100%);
+    color: #ffe0e0;
+}
+
+#age-page-canvas .age-map-bottom-dock-nav {
+    display: none !important;
 }
 
 .age-map-resource-strip {
@@ -22864,240 +23037,148 @@ body.is-rift-discoveries-workspace-open {
 }
 
 /* ==========================================================================
-   Age map — War Room slide-up workspace
+   Age — War Room center workspace modal
    ========================================================================== */
 
-.age-war-room-dock {
-    --war-room-tab-strip-height: 40px;
-    --war-room-tab-height: calc(var(--war-room-tab-strip-height) + var(--age-map-slot-gap));
-    --war-room-open-top-stop: 50px;
-    position: absolute;
-    left: 0;
-    right: 0;
-    top: auto;
-    bottom: calc(-1 * var(--age-map-slot-gap));
-    height: var(--war-room-tab-height);
-    z-index: 24;
-    pointer-events: none;
-    overflow: visible;
+.age-war-room-modal[hidden] {
+    display: none !important;
 }
 
-.age-war-room-dock.is-workspace-open {
-    top: var(--war-room-open-top-stop);
-    height: auto;
-}
-
-.age-war-room-slide {
-    position: absolute;
-    left: 50%;
-    bottom: 0;
-    width: min(1642px, 100cqw, 100cqh);
-    max-width: 100%;
-    top: auto;
-    height: 100%;
-    box-sizing: border-box;
-    pointer-events: none;
-    z-index: 2;
-    transform: translateX(-50%);
-    transition: top 0.52s cubic-bezier(0.22, 1, 0.36, 1);
-}
-
-.age-war-room-slide.is-open {
-    top: 0;
-}
-
-/* Bottom-anchored on the bottom HUD rail (tab flush with the top of the bottom bar). */
-.age-war-room-rise {
-    position: absolute;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    width: 100%;
-    height: var(--war-room-tab-height);
-    overflow: hidden;
-    pointer-events: auto;
-    transition: height 0.52s cubic-bezier(0.22, 1, 0.36, 1);
-}
-
-.age-war-room-slide.is-open .age-war-room-rise {
-    height: 100%;
-}
-
-.age-war-room-panel {
+.age-war-room-modal:not([hidden]) {
     display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: flex-end;
-    width: 100%;
-    height: 100%;
-    min-height: var(--war-room-tab-height);
-    box-sizing: border-box;
-}
-
-.age-war-room-slide.is-open .age-war-room-panel {
-    justify-content: flex-start;
-    align-items: stretch;
-}
-
-.age-army-groups-tab {
-    position: relative;
-    flex: 0 0 var(--war-room-tab-height);
-    align-self: center;
-    z-index: 2;
-    pointer-events: auto;
-    display: inline-flex;
-    flex-direction: column;
-    align-items: stretch;
-    justify-content: flex-start;
-    min-width: 96px;
-    height: var(--war-room-tab-height);
-    margin: 0 0 calc(-1 * var(--age-map-slot-gap));
-    padding: 0 0 var(--age-map-slot-gap);
-    box-sizing: border-box;
-    border: 1px solid var(--age-hud-rail-border);
-    border-bottom: 1px solid var(--age-hud-rail-border);
-    border-radius: 4px 4px 0 0;
-    background:
-        var(--age-hud-rail-sheen),
-        var(--age-hud-rail-bg);
-    color: rgba(236, 220, 180, 0.88);
-    font-family: 'Cinzel', serif;
-    font-size: 0.76rem;
-    font-weight: 700;
-    letter-spacing: 0.06em;
-    text-transform: none;
-    cursor: pointer;
-    box-shadow: var(--age-hud-rail-inset);
-    transition:
-        background 0.16s ease,
-        color 0.16s ease,
-        border-color 0.16s ease,
-        border-radius 0.34s ease,
-        box-shadow 0.16s ease;
-}
-
-.age-army-groups-tab-inner {
-    display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 6px;
-    flex: 1 1 auto;
-    min-height: var(--war-room-tab-strip-height);
-    padding: 0 10px;
+}
+
+.age-war-room-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 130;
+    padding: 24px;
     box-sizing: border-box;
 }
 
-.age-army-groups-tab-chevron {
-    display: block;
-    width: 0;
-    height: 0;
-    border-left: 4px solid transparent;
-    border-right: 4px solid transparent;
-    border-bottom: 5px solid currentColor;
-    opacity: 0.92;
-    flex-shrink: 0;
-}
-
-.age-army-groups-tab-label {
-    line-height: 1.1;
-    white-space: nowrap;
-}
-
-.age-army-groups-tab:hover,
-.age-army-groups-tab:focus-visible {
-    color: #fff6d8;
-    border-color: rgba(255, 215, 0, 0.48);
+.age-war-room-backdrop {
+    position: absolute;
+    inset: 0;
     background:
-        linear-gradient(180deg, rgba(255, 215, 0, 0.06) 0%, transparent 24%),
-        linear-gradient(180deg, rgba(48, 40, 24, 0.96) 0%, rgba(16, 12, 8, 0.98) 100%);
-    box-shadow: inset 0 1px 0 rgba(255, 215, 0, 0.14);
+        radial-gradient(ellipse at center, rgba(24, 18, 10, 0.42) 0%, rgba(0, 0, 0, 0.78) 72%);
+    backdrop-filter: blur(2px);
+}
+
+.age-war-room-dialog {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    width: 60vw;
+    height: 60vh;
+    max-width: calc(100vw - 48px);
+    max-height: calc(100vh - 48px);
+    box-sizing: border-box;
+    border: 1px solid rgba(184, 144, 48, 0.55);
+    border-radius: 10px;
+    background:
+        linear-gradient(180deg, rgba(255, 215, 0, 0.08) 0%, transparent 18%),
+        linear-gradient(165deg, rgba(34, 28, 20, 0.98) 0%, rgba(10, 8, 6, 0.99) 58%, rgba(18, 14, 10, 0.98) 100%);
+    box-shadow:
+        inset 0 1px 0 rgba(255, 215, 0, 0.16),
+        inset 0 0 0 1px rgba(255, 215, 0, 0.06),
+        0 22px 56px rgba(0, 0, 0, 0.72),
+        0 0 40px rgba(255, 190, 60, 0.08);
+    overflow: hidden;
+    animation: age-war-room-dialog-in 0.34s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@keyframes age-war-room-dialog-in {
+    from {
+        opacity: 0;
+        transform: translateY(14px) scale(0.98);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+.age-war-room-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex: 0 0 auto;
+    padding: 14px 18px 12px;
+    border-bottom: 1px solid var(--age-hud-rail-divider);
+    background:
+        linear-gradient(180deg, rgba(255, 215, 0, 0.07) 0%, transparent 100%),
+        rgba(0, 0, 0, 0.22);
+}
+
+.age-war-room-header-brand {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.age-war-room-header-eyebrow {
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: rgba(216, 200, 154, 0.72);
+}
+
+.age-war-room-title {
+    margin: 0;
+    font-family: 'Cinzel', serif;
+    font-size: 1.12rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: #ffd978;
+    text-shadow: 0 1px 4px rgba(0, 0, 0, 0.55);
+}
+
+.age-war-room-close {
+    appearance: none;
+    flex: 0 0 auto;
+    width: 36px;
+    height: 36px;
+    border: 1px solid rgba(184, 144, 48, 0.38);
+    border-radius: 6px;
+    background: rgba(0, 0, 0, 0.35);
+    color: rgba(236, 220, 180, 0.9);
+    font-size: 1.35rem;
+    line-height: 1;
+    cursor: pointer;
+    transition:
+        border-color 0.14s ease,
+        color 0.14s ease,
+        background 0.14s ease;
+}
+
+.age-war-room-close:hover,
+.age-war-room-close:focus-visible {
+    border-color: rgba(255, 215, 0, 0.55);
+    color: #fff6d8;
+    background: rgba(48, 36, 20, 0.65);
     outline: none;
 }
 
-.age-army-groups-tab.is-active {
-    border-color: rgba(255, 215, 0, 0.62);
-    color: #ffd978;
-    background:
-        linear-gradient(180deg, rgba(255, 215, 0, 0.08) 0%, transparent 22%),
-        linear-gradient(180deg, rgba(48, 40, 24, 0.96) 0%, rgba(16, 12, 8, 0.98) 100%);
-    box-shadow: inset 0 1px 0 rgba(255, 215, 0, 0.14);
-}
-
-.age-army-groups-workspace {
-    position: relative;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    box-sizing: border-box;
-    width: auto;
-    max-width: 100%;
-    flex: 0 0 auto;
-    min-height: 0;
-    margin: 0;
-    padding: 0;
-    background: transparent;
-    border: none;
-    overflow: visible;
-    pointer-events: auto;
-    transition:
-        width 0.4s ease,
-        flex 0.52s cubic-bezier(0.22, 1, 0.36, 1),
-        background 0.34s ease,
-        border-color 0.34s ease;
-}
-
-.age-war-room-slide.is-open .age-army-groups-workspace,
-.age-army-groups-workspace.is-open {
-    align-self: stretch;
-    width: 100%;
-    flex: 1 1 auto;
-    background:
-        var(--age-hud-rail-sheen),
-        linear-gradient(180deg, rgba(16, 12, 8, 0.98) 0%, rgba(10, 8, 6, 1) 100%);
-    border: 1px solid var(--age-hud-rail-border);
-    border-radius: 0;
+body.age-war-room-open {
     overflow: hidden;
-}
-
-.age-war-room-slide.is-open .age-army-groups-tab {
-    flex-shrink: 0;
-    height: var(--war-room-tab-strip-height);
-    margin: 0;
-    padding: 0;
-    border-color: var(--age-hud-rail-border);
-    border-top: none;
-    border-bottom: 1px solid var(--age-hud-rail-divider);
-    border-radius: 0;
-    box-shadow: var(--age-hud-rail-inset);
-}
-
-.age-war-room-slide.is-open .age-army-groups-tab-inner {
-    min-height: 0;
-    height: 100%;
-}
-
-.age-war-room-slide.is-open .age-army-groups-tab.is-active {
-    border-color: var(--age-hud-rail-border);
-    border-bottom-color: var(--age-hud-rail-divider);
 }
 
 .age-army-groups-workspace-main {
-    display: none;
+    display: flex;
     flex: 1 1 auto;
     flex-direction: column;
     min-height: 0;
     width: 100%;
     box-sizing: border-box;
-    padding: 10px 16px 10px;
+    padding: 12px 18px 14px;
     overflow: hidden;
-}
-
-.age-war-room-slide.is-open .age-army-groups-workspace-main {
-    display: flex;
-}
-
-.age-war-room-dock.is-workspace-open {
-    pointer-events: auto;
 }
 
 .age-army-groups-toolbar {
@@ -23478,38 +23559,17 @@ body.is-rift-discoveries-workspace-open {
     }
 }
 
-#age-page-canvas:not([data-age-view="map"]) .age-war-room-dock {
-    display: none !important;
-}
-
 #age-page-canvas[data-age-view="map"] .age-world-map-canvas,
 #age-page-canvas[data-age-view="map"] .age-world-map-highlight-shell {
     z-index: 1;
 }
 
-#age-page-canvas[data-age-view="map"] .age-map-anchor {
-    padding-bottom: var(--war-room-tab-height);
-    box-sizing: border-box;
-}
-
-#age-page-canvas[data-age-view="map"] .age-map-anchor:has(.age-war-room-dock.is-workspace-open) {
-    padding-bottom: 0;
-}
-
-#age-page-canvas[data-age-view="map"] .age-war-room-dock {
-    z-index: 24;
-}
-
-#age-page-canvas[data-age-view="map"] .age-map-anchor > .age-war-room-dock {
-    pointer-events: none;
-}
-
 @media (prefers-reduced-motion: reduce) {
-    .age-war-room-rise {
-        transition-duration: 0.2s;
+    .age-war-room-dialog {
+        animation: none;
     }
 
-    .age-army-groups-workspace {
+    .age-nation-hub-menu {
         transition-duration: 0.2s;
     }
 

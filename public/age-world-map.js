@@ -1655,10 +1655,8 @@
             || target.closest('.age-world-battle-report-modal')
             || target.closest('.age-world-city-hit-path')
             || target.closest('.age-world-map-terrain-controls')
-            || target.closest('.age-war-room-dock')
-            || target.closest('.age-war-room-slide')
-            || target.closest('.age-war-room-rise')
-            || target.closest('.age-war-room-panel')
+            || target.closest('.age-war-room-modal')
+            || target.closest('.age-nation-hub')
         );
     }
 
