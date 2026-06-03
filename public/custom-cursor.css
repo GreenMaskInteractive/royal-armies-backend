@@ -50,31 +50,31 @@ html.royal-armies-custom-cursor *::-webkit-scrollbar {
     pointer-events: none;
 }
 
-/* Palm + gauntlet body — fingertip region is drawn on the finger layer only. */
+/* Palm + gauntlet body — fingertip tip is drawn on the finger layer only. */
 .royal-armies-cursor-hand {
     clip-path: polygon(
-        22px 0,
+        18px 0,
         56px 0,
         56px 56px,
         0 56px,
-        0 26px,
-        22px 26px
+        0 14px,
+        18px 14px
     );
 }
 
-/* Index finger only — this layer animates on click. */
+/* Index fingertip only — small clip high on the sprite; subtle press on click. */
 .royal-armies-cursor-finger {
     position: absolute;
     left: 0;
     top: 0;
-    clip-path: inset(0 calc(100% - 22px) calc(100% - 26px) 0);
-    transform-origin: 4px 5px;
-    transition: transform 0.09s ease, filter 0.09s ease;
+    clip-path: inset(0 calc(100% - 18px) calc(100% - 14px) 0);
+    transform-origin: 3px 3px;
+    transition: transform 0.08s ease, filter 0.08s ease;
 }
 
 #royal-armies-custom-cursor.is-clicking .royal-armies-cursor-finger {
-    transform: translate(2px, 3px) scale(0.9);
-    filter: brightness(1.18);
+    transform: translate(1px, 1px) scale(0.96);
+    filter: brightness(1.06);
 }
 
 #cursor-click-fx-layer {
@@ -139,7 +139,7 @@ html.royal-armies-custom-cursor *::-webkit-scrollbar {
     }
 
     #royal-armies-custom-cursor.is-clicking .royal-armies-cursor-finger {
-        transform: translate(1px, 2px) scale(0.94);
+        transform: translate(0.5px, 1px) scale(0.97);
     }
 
     .cursor-fingertip-click-burst {
