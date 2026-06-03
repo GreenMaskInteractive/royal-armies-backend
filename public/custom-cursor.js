@@ -87,7 +87,6 @@
     let cursorShell = null;
     let clickFxLayer = null;
     let cursorVisible = false;
-    let clickPulseTimer = 0;
     let listenersBound = false;
     let pointerButtonHeld = false;
     let lastPointerX = 0;
@@ -144,13 +143,14 @@
         cursorVisible = false;
     }
 
-    function pulseCursorPress() {
+    function setCursorPressed(pressed) {
         if (!cursorShell) return;
-        cursorShell.classList.add('is-clicking');
-        window.clearTimeout(clickPulseTimer);
-        clickPulseTimer = window.setTimeout(() => {
-            cursorShell.classList.remove('is-clicking');
-        }, 130);
+        cursorShell.classList.toggle('is-clicking', Boolean(pressed));
+    }
+
+    function releasePointerPress() {
+        pointerButtonHeld = false;
+        setCursorPressed(false);
     }
 
     function spawnFingertipClickBurst(clientX, clientY) {
@@ -170,7 +170,7 @@
         if (!Number.isFinite(clientX) || !Number.isFinite(clientY)) return;
         positionCursor(clientX, clientY);
         spawnFingertipClickBurst(clientX, clientY);
-        pulseCursorPress();
+        setCursorPressed(true);
     }
 
     function trackPointer(clientX, clientY) {
@@ -204,8 +204,22 @@
 
         window.addEventListener('mouseup', (event) => {
             if (!shouldEnableCustomCursor()) return;
-            pointerButtonHeld = false;
+            if (event.button === 0) {
+                releasePointerPress();
+            }
             trackPointer(event.clientX, event.clientY);
+        }, true);
+
+        window.addEventListener('pointerup', (event) => {
+            if (!shouldEnableCustomCursor()) return;
+            if (event.button === 0) {
+                releasePointerPress();
+            }
+        }, true);
+
+        window.addEventListener('pointercancel', () => {
+            if (!shouldEnableCustomCursor()) return;
+            releasePointerPress();
         }, true);
 
         window.addEventListener('scroll', () => {
@@ -214,13 +228,14 @@
         }, true);
 
         document.documentElement.addEventListener('mouseleave', (event) => {
-            if (!shouldEnableCustomCursor() || pointerButtonHeld) return;
+            if (!shouldEnableCustomCursor()) return;
             if (event.relatedTarget instanceof Node) return;
+            releasePointerPress();
             hideCursor();
         }, { passive: true });
 
         window.addEventListener('blur', () => {
-            pointerButtonHeld = false;
+            releasePointerPress();
             hideCursor();
         }, { passive: true });
 
@@ -321,7 +336,7 @@
         syncNativeCursorHidden(enable);
 
         if (!enable) {
-            pointerButtonHeld = false;
+            releasePointerPress();
             hideCursor();
             return;
         }
