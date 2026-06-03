@@ -88,6 +88,9 @@
     const UPDATE_DOWNTIME_HTTP_STATUSES = new Set([502, 503, 504, 521, 522, 523, 524]);
     const UPDATE_GATEWAY_BAD_GATEWAY_STATUS = 502;
     const UPDATE_GATEWAY_POLL_MS = 1000;
+    const DEPLOY_WATCH_POLL_VISIBLE_MS = 2500;
+    const DEPLOY_WATCH_POLL_HIDDEN_MS = 8000;
+    const DEPLOY_WATCH_FAIL_STREAK_THRESHOLD = 2;
     const UPDATE_GATEWAY_ESTIMATE_SEC = 45;
     const UPDATE_GATEWAY_STANDALONE_RELOAD_MS = 6000;
     const UPDATE_GATEWAY_HINT_ACTIVE = 'Estimated time until the 502 Bad Gateway page may appear.';
@@ -102,6 +105,10 @@
     let updateUnderwayGatewayPollTimer = null;
     let updateUnderwayCountdownEndsAt = 0;
     let updateGatewayReloadTriggered = false;
+    let deployWatchTimer = null;
+    let deployWatchBaselineKey = '';
+    let deployWatchFailStreak = 0;
+    let deployWatchPrimed = false;
 
     function markUpdateUnderwaySessionActive() {
         try {
@@ -178,6 +185,130 @@
                 || snippet.includes('render');
         } catch (_err) {
             return true;
+        }
+    }
+
+    function resolveDeployWatchApiUrl(path) {
+        return typeof global.resolveRoyalArmiesApiUrl === 'function'
+            ? global.resolveRoyalArmiesApiUrl(path)
+            : path;
+    }
+
+    function isDeployWatchEnabled() {
+        if (typeof global.isLocalDevelopmentHost === 'function' && global.isLocalDevelopmentHost()) {
+            return false;
+        }
+        return true;
+    }
+
+    function buildDeployWatchKey(snapshot) {
+        const bootId = String(snapshot?.bootId || '').trim();
+        const revision = String(snapshot?.revision || '').trim();
+        if (!bootId && !revision) return '';
+        return `${bootId}::${revision}`;
+    }
+
+    async function fetchDeployWatchSnapshot() {
+        const response = await global.fetch(resolveDeployWatchApiUrl('/api/portal/metrics'), {
+            method: 'GET',
+            cache: 'no-store',
+            credentials: 'include'
+        });
+        if (!response.ok) {
+            throw new Error('deploy-watch-metrics-failed');
+        }
+        const payload = await response.json().catch(() => ({}));
+        const deploy = payload?.deploy && typeof payload.deploy === 'object' ? payload.deploy : {};
+        return {
+            bootId: String(deploy.bootId || '').trim(),
+            revision: String(deploy.revision || '').trim()
+        };
+    }
+
+    async function fetchMaintenanceUpdateImminent() {
+        const response = await global.fetch(resolveDeployWatchApiUrl('/api/portal/maintenance-alert'), {
+            method: 'GET',
+            cache: 'no-store',
+            credentials: 'include'
+        });
+        if (!response.ok) return false;
+        const payload = await response.json().catch(() => ({}));
+        return payload?.updateImminent === true;
+    }
+
+    function stopDeployWatch() {
+        if (deployWatchTimer) {
+            global.clearInterval(deployWatchTimer);
+            deployWatchTimer = null;
+        }
+    }
+
+    function scheduleDeployWatch() {
+        if (!isDeployWatchEnabled()) return;
+        stopDeployWatch();
+        const intervalMs = global.document?.hidden
+            ? DEPLOY_WATCH_POLL_HIDDEN_MS
+            : DEPLOY_WATCH_POLL_VISIBLE_MS;
+        deployWatchTimer = global.setInterval(() => {
+            void tickDeployWatch();
+        }, intervalMs);
+    }
+
+    async function tickDeployWatch() {
+        if (!isDeployWatchEnabled()) return;
+        if (updateUnderwayNoticeShown) return;
+
+        try {
+            if (await fetchMaintenanceUpdateImminent()) {
+                deployWatchFailStreak = 0;
+                await showRiftUpdateUnderwayNotice('Site update');
+                return;
+            }
+        } catch (_err) {
+            /* maintenance-alert probe failed — fall through to metrics */
+        }
+
+        try {
+            const snapshot = await fetchDeployWatchSnapshot();
+            const nextKey = buildDeployWatchKey(snapshot);
+            deployWatchFailStreak = 0;
+
+            if (!deployWatchPrimed) {
+                deployWatchPrimed = true;
+                deployWatchBaselineKey = nextKey;
+                return;
+            }
+
+            if (nextKey && deployWatchBaselineKey && nextKey !== deployWatchBaselineKey) {
+                deployWatchBaselineKey = nextKey;
+                await showRiftUpdateUnderwayNotice('Site update');
+                return;
+            }
+
+            if (nextKey) {
+                deployWatchBaselineKey = nextKey;
+            }
+        } catch (_err) {
+            if (!deployWatchPrimed) return;
+            deployWatchFailStreak += 1;
+            if (deployWatchFailStreak >= DEPLOY_WATCH_FAIL_STREAK_THRESHOLD) {
+                deployWatchFailStreak = 0;
+                await showRiftUpdateUnderwayNotice('Site update');
+            }
+        }
+    }
+
+    function startDeployWatch() {
+        if (!isDeployWatchEnabled()) return;
+        void tickDeployWatch();
+        scheduleDeployWatch();
+        if (!global.document?.deployWatchVisibilityBound) {
+            global.document.deployWatchVisibilityBound = true;
+            global.document.addEventListener('visibilitychange', () => {
+                if (!updateUnderwayNoticeShown) {
+                    scheduleDeployWatch();
+                }
+            });
         }
     }
 
@@ -510,11 +641,14 @@
 
     startStandalone502GatewayAutoRefresh();
 
-    if (global.document.readyState === 'loading') {
-        global.document.addEventListener('DOMContentLoaded', () => {
-            global.setTimeout(() => void checkUpdateRecoveryOnLoad(), 400);
-        }, { once: true });
-    } else {
+    function initUpdateNoticeRuntime() {
+        startDeployWatch();
         global.setTimeout(() => void checkUpdateRecoveryOnLoad(), 400);
+    }
+
+    if (global.document.readyState === 'loading') {
+        global.document.addEventListener('DOMContentLoaded', initUpdateNoticeRuntime, { once: true });
+    } else {
+        initUpdateNoticeRuntime();
     }
 })(window);

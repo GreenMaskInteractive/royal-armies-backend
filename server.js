@@ -33,6 +33,7 @@ const {
     savePlayerReportScreenshot
 } = require('./nexus-player-report-screenshot');
 const { listErrorCodes } = require('./nexus-error-codes');
+const { getDeployStatePayload } = require('./nexus-deploy-revision');
 const {
     calculateNationTreasuryCaptureReward,
     getDefaultNationTreasuryRecord,
@@ -255,7 +256,9 @@ function getPortalMaintenanceAlert() {
             active: false,
             title: String(stored.title || 'Scheduled maintenance').trim().slice(0, 120),
             message: '',
-            windowLabel: ''
+            windowLabel: '',
+            updateImminent: stored.updateImminent === true,
+            updateImminentAt: stored.updateImminentAt || null
         };
     }
 
@@ -266,8 +269,20 @@ function getPortalMaintenanceAlert() {
         active: true,
         title: String(stored.title || PORTAL_EARLY_ACCESS_MAINTENANCE.title).trim().slice(0, 120),
         message: (message || PORTAL_EARLY_ACCESS_MAINTENANCE.message).slice(0, 600),
-        windowLabel: (windowLabel || PORTAL_EARLY_ACCESS_MAINTENANCE.windowLabel).slice(0, 160)
+        windowLabel: (windowLabel || PORTAL_EARLY_ACCESS_MAINTENANCE.windowLabel).slice(0, 160),
+        updateImminent: stored.updateImminent === true,
+        updateImminentAt: stored.updateImminentAt || null
     };
+}
+
+function clearPortalUpdateImminentFlag() {
+    const stored = db.get('portal.maintenanceAlert').value() || {};
+    if (!stored.updateImminent) return;
+    db.set('portal.maintenanceAlert', {
+        ...stored,
+        updateImminent: false,
+        updateImminentAt: null
+    }).write();
 }
 
 function setPortalMaintenanceAlert(patch = {}) {
@@ -304,6 +319,14 @@ function setPortalMaintenanceAlert(patch = {}) {
     }
     if (patch.windowLabel !== undefined) {
         next.windowLabel = String(patch.windowLabel || '').trim().slice(0, 160);
+    }
+
+    if (patch.updateImminent === true) {
+        next.updateImminent = true;
+        next.updateImminentAt = new Date().toISOString();
+    } else if (patch.updateImminent === false) {
+        next.updateImminent = false;
+        next.updateImminentAt = null;
     }
 
     if (next.active && !next.message) {
@@ -2369,6 +2392,7 @@ function getPortalLiveMetricsPayload() {
     return {
         registeredCount: visibleCommanders.length,
         recentRegistrations,
+        deploy: getDeployStatePayload(),
         ...getAgeSessionMetrics(),
         ...getPortalBrowseMetrics()
     };
@@ -7355,6 +7379,7 @@ app.listen(PORT, () => {
     runAgeRosterResetMigrationOnce();
     backfillWelcomeSystemMessagesForAllCommanders();
     backfillFirstTimerAchievementForAllCommanders();
+    clearPortalUpdateImminentFlag();
     console.log(`========================================`);
     console.log(` NEXUS ENGINE ONLINE: Port ${PORT}`);
     console.log(` GREEN MASK INTERACTIVE: ALPHA 0.1.11`);

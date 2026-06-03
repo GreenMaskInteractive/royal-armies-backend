@@ -28,9 +28,10 @@ If staged files match the seasonal inventory in `age-of-war-season-hold.mdc`, do
 1. Run in parallel: `git status`, `git diff`, `git log -1 --oneline`
 2. Stage only relevant files; **do not commit** local test ledger data in `db.json` unless the user asked to
 3. Write a concise commit message focused on **why**
-4. Commit, then `git push origin main`
-5. Run `git status` after commit to verify success
-6. If pre-commit hook fails, fix and create a **new** commit (do not amend unless amend rules allow)
+4. Optionally run `node scripts/signal-update-imminent.js` before `git push` so live players get the update notice within a few seconds (requires `MAINTENANCE_ALERT_DEV_KEY` on production).
+5. Commit, then `git push origin main`
+6. Run `git status` after commit to verify success
+7. If pre-commit hook fails, fix and create a **new** commit (do not amend unless amend rules allow)
 
 ## Git safety (always)
 
