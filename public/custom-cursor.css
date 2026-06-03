@@ -74,8 +74,8 @@ html.royal-armies-custom-cursor *::-webkit-scrollbar {
 }
 
 #royal-armies-custom-cursor.is-clicking .royal-armies-cursor-finger {
-    transform: rotate(-7deg) scale(0.97);
-    filter: brightness(1.06);
+    transform: rotate(-13deg) translateY(3px) scale(0.94);
+    filter: brightness(1.08);
 }
 
 #cursor-click-fx-layer {
@@ -140,7 +140,7 @@ html.royal-armies-custom-cursor *::-webkit-scrollbar {
     }
 
     #royal-armies-custom-cursor.is-clicking .royal-armies-cursor-finger {
-        transform: rotate(-4deg) scale(0.98);
+        transform: rotate(-7deg) translateY(2px) scale(0.96);
     }
 
     .cursor-fingertip-click-burst {
