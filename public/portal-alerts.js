@@ -33,6 +33,10 @@
             <div class="portal-overlay-modal-bezel portal-alert-bezel bordered-modal-panel">
                 <h3 id="portal-alert-title" class="modal-alert-header portal-alert-header--info">Notice</h3>
                 <p id="portal-alert-body" class="modal-alert-body"></p>
+                <div id="portal-alert-update-countdown" class="portal-alert-update-countdown" hidden>
+                    <span id="portal-alert-update-countdown-value" class="portal-alert-update-countdown-value">--:--</span>
+                    <span id="portal-alert-update-countdown-hint" class="portal-alert-update-countdown-hint"></span>
+                </div>
                 <div id="portal-alert-actions" class="modal-action-btn-row"></div>
             </div>
         `;
@@ -57,6 +61,8 @@
         });
     }
 
+    let portalAlertOnClose = null;
+
     function closePortalAlertModal(result) {
         const modal = document.getElementById('royal-armies-portal-alert-modal');
         if (!modal) return;
@@ -64,6 +70,16 @@
         modal.style.setProperty('display', 'none', 'important');
         modal.classList.add('main-portal-modal-hidden');
         modal.setAttribute('aria-hidden', 'true');
+        modal.dataset.updateUnderway = 'false';
+
+        const countdownWrap = document.getElementById('portal-alert-update-countdown');
+        if (countdownWrap) countdownWrap.hidden = true;
+
+        if (typeof portalAlertOnClose === 'function') {
+            const onClose = portalAlertOnClose;
+            portalAlertOnClose = null;
+            onClose(result);
+        }
 
         if (portalAlertResolve) {
             const resolve = portalAlertResolve;
@@ -90,11 +106,35 @@
             const isConfirm = config.mode === 'confirm';
             modal.dataset.mode = isConfirm ? 'confirm' : 'alert';
 
+            const isUpdateUnderway = config.updateUnderway === true;
             titleEl.textContent = config.title || (isConfirm ? 'Confirm' : 'Notice');
-            titleEl.className = `modal-alert-header ${isConfirm ? 'portal-alert-header--confirm' : 'portal-alert-header--info'}`;
+            titleEl.className = `modal-alert-header ${
+                isConfirm
+                    ? 'portal-alert-header--confirm'
+                    : (isUpdateUnderway ? 'portal-alert-header--notice' : 'portal-alert-header--info')
+            }`;
 
             const message = normalizePortalAlertMessage(config.message);
             bodyEl.textContent = message;
+
+            const countdownWrap = document.getElementById('portal-alert-update-countdown');
+            const countdownValue = document.getElementById('portal-alert-update-countdown-value');
+            const countdownHint = document.getElementById('portal-alert-update-countdown-hint');
+            if (countdownWrap && countdownValue && countdownHint) {
+                if (isUpdateUnderway) {
+                    countdownWrap.hidden = false;
+                    countdownValue.textContent = config.countdownLabel || '--:--';
+                    countdownHint.textContent = config.countdownHint
+                        || 'Estimated until the gateway outage page (502 or 504) may appear.';
+                } else {
+                    countdownWrap.hidden = true;
+                    countdownValue.textContent = '--:--';
+                    countdownHint.textContent = '';
+                }
+            }
+
+            modal.dataset.updateUnderway = isUpdateUnderway ? 'true' : 'false';
+            portalAlertOnClose = typeof config.onClose === 'function' ? config.onClose : null;
 
             if (isConfirm) {
                 actionsEl.innerHTML = `
@@ -147,6 +187,39 @@
         }).then(() => undefined);
     }
 
+    function setPortalUpdateUnderwayCountdown(label, hint) {
+        const modal = document.getElementById('royal-armies-portal-alert-modal');
+        if (!modal || modal.dataset.updateUnderway !== 'true') return;
+        if (modal.style.display === 'none' || modal.classList.contains('main-portal-modal-hidden')) return;
+
+        const countdownValue = document.getElementById('portal-alert-update-countdown-value');
+        const countdownHint = document.getElementById('portal-alert-update-countdown-hint');
+        if (countdownValue && label) countdownValue.textContent = label;
+        if (countdownHint && hint) countdownHint.textContent = hint;
+    }
+
+    function showPortalUpdateUnderwayAlert(config) {
+        const opts = config && typeof config === 'object' ? config : {};
+        const title = opts.title || 'NOTICE!';
+        const message = opts.message || 'Update Underway. Site Disruption Imminent.';
+
+        if (shouldSuppressPortalAlertPopup(message, title)) {
+            console.warn('[Royal Armies — local dev] Update notice suppressed:', title, message);
+            return Promise.resolve(undefined);
+        }
+
+        return openPortalAlertModal({
+            mode: 'alert',
+            updateUnderway: true,
+            message,
+            title,
+            confirmLabel: opts.confirmLabel || 'OK',
+            countdownLabel: opts.countdownLabel || '--:--',
+            countdownHint: opts.countdownHint,
+            onClose: opts.onClose
+        }).then(() => undefined);
+    }
+
     function showPortalConfirm(message, options) {
         const opts = options && typeof options === 'object' ? options : {};
         return openPortalAlertModal({
@@ -160,6 +233,8 @@
 
     window.showPortalAlert = showPortalAlert;
     window.showPortalConfirm = showPortalConfirm;
+    window.showPortalUpdateUnderwayAlert = showPortalUpdateUnderwayAlert;
+    window.setPortalUpdateUnderwayCountdown = setPortalUpdateUnderwayCountdown;
     window.closePortalAlertModal = closePortalAlertModal;
 
     if (document.readyState === 'loading') {

@@ -740,8 +740,8 @@
         },
         'RIFT-NET-002': {
             http: 0,
-            title: 'Update in progress',
-            message: 'An update is underway. Expect a moment of downtime.',
+            title: 'NOTICE!',
+            message: 'Update Underway. Site Disruption Imminent.',
             category: 'network'
         }
     };

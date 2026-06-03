@@ -624,6 +624,12 @@
             title: 'Connection error',
             message: 'Cannot reach the Royal Armies server. Check your connection and try again.',
             category: 'network'
+        },
+        'RIFT-NET-002': {
+            http: 0,
+            title: 'NOTICE!',
+            message: 'Update Underway. Site Disruption Imminent.',
+            category: 'network'
         }
     };
 
