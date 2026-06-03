@@ -13252,11 +13252,9 @@ body.developer-maintenance-alert-active #page-landing {
 .age-nation-hub-menu.is-menu-position-synced .age-nation-hub-menu-ladder > .age-nation-hub-menu-item {
     opacity: 0;
     transform: translate3d(0, calc(-1 * var(--age-nation-hub-rung-travel, 40px)), 0);
-    transition:
-        transform 0.36s cubic-bezier(0.22, 1, 0.36, 1),
-        opacity 0.28s ease,
-        background 0.14s ease,
-        color 0.14s ease;
+    transition-property: transform, opacity;
+    transition-duration: 0.36s, 0.28s;
+    transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1), ease;
     transition-delay: 0s;
 }
 
@@ -13271,7 +13269,8 @@ body.developer-maintenance-alert-active #page-landing {
 .age-nation-hub.is-hub-closing .age-nation-hub-menu.is-menu-position-synced .age-nation-hub-menu-ladder > .age-nation-hub-menu-item {
     opacity: 0;
     transform: translate3d(0, calc(-1 * var(--age-nation-hub-rung-travel, 40px)), 0);
-    transition-duration: 0.24s;
+    transition-property: transform, opacity;
+    transition-duration: 0.24s, 0.2s;
 }
 
 .age-nation-hub.is-hub-closing .age-nation-hub-menu.is-menu-position-synced .age-nation-hub-menu-ladder > .age-nation-hub-menu-item--war-ledger {
@@ -13365,9 +13364,38 @@ body.developer-maintenance-alert-active #page-landing {
 .age-nation-hub-menu-item:focus-visible,
 .age-nation-hub-view-tabs .age-map-view-tab:hover,
 .age-nation-hub-view-tabs .age-map-view-tab:focus-visible {
-    background: rgba(255, 215, 0, 0.08);
+    background: rgba(255, 215, 0, 0.14);
     color: #fff6d8;
     outline: none;
+}
+
+/* Beat #age-page-canvas .age-map-view-tab chip styles — view tabs must hover like menu items */
+#age-page-canvas .age-nation-hub-menu-ladder .age-nation-hub-view-tabs .age-map-view-tab {
+    border-color: transparent;
+    background: transparent;
+    box-shadow: none;
+}
+
+#age-page-canvas .age-nation-hub-menu-ladder .age-nation-hub-view-tabs .age-map-view-tab:hover,
+#age-page-canvas .age-nation-hub-menu-ladder .age-nation-hub-view-tabs .age-map-view-tab:focus-visible {
+    border-color: transparent;
+    background: rgba(255, 215, 0, 0.16);
+    color: #fff6d8;
+    box-shadow: none;
+}
+
+#age-page-canvas .age-nation-hub-menu-ladder .age-nation-hub-view-tabs .age-map-view-tab.is-active {
+    border-color: transparent;
+    border-bottom-color: var(--age-hud-rail-divider);
+    background: linear-gradient(90deg, rgba(255, 215, 0, 0.2) 0%, transparent 100%);
+    color: #ffd978;
+    box-shadow: inset 3px 0 0 rgba(255, 215, 0, 0.72);
+}
+
+#age-page-canvas .age-nation-hub-menu-ladder .age-nation-hub-view-tabs .age-map-view-tab.is-active:hover,
+#age-page-canvas .age-nation-hub-menu-ladder .age-nation-hub-view-tabs .age-map-view-tab.is-active:focus-visible {
+    background: linear-gradient(90deg, rgba(255, 215, 0, 0.28) 0%, rgba(255, 215, 0, 0.06) 100%);
+    color: #fff0c0;
 }
 
 .age-nation-hub-view-tabs .age-map-view-tab.is-active {
@@ -13376,6 +13404,12 @@ body.developer-maintenance-alert-active #page-landing {
     background: linear-gradient(90deg, rgba(255, 215, 0, 0.14) 0%, transparent 100%);
     color: #ffd978;
     box-shadow: inset 3px 0 0 rgba(255, 215, 0, 0.72);
+}
+
+#age-page-canvas .age-nation-hub-menu-ladder > .age-nation-hub-menu-item--war-room:hover,
+#age-page-canvas .age-nation-hub-menu-ladder > .age-nation-hub-menu-item--war-room:focus-visible {
+    background: rgba(255, 215, 0, 0.16);
+    color: #fff6d8;
 }
 
 .age-nation-hub-menu-item--war-room {
