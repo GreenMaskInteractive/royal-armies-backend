@@ -13086,6 +13086,9 @@ body.developer-maintenance-alert-active #page-landing {
     position: relative;
     flex: 0 0 auto;
     margin-left: 28px;
+    display: inline-flex;
+    flex-direction: column;
+    align-items: flex-end;
 }
 
 .age-nation-hub-toggle {
@@ -13144,13 +13147,15 @@ body.developer-maintenance-alert-active #page-landing {
 .age-nation-hub-menu {
     position: absolute;
     top: calc(100% + 8px);
-    left: 0;
+    left: auto;
+    right: 0;
     z-index: 80;
     display: flex;
     flex-direction: column;
     align-items: stretch;
     gap: 0;
-    min-width: 196px;
+    width: max(196px, 100%);
+    min-width: max(196px, 100%);
     max-height: 0;
     overflow: hidden;
     opacity: 0;
@@ -15622,12 +15627,12 @@ label.age-council-board-editor-tool {
 
 #age-page-canvas .age-map-bottom-dock-chat-column {
     position: absolute;
-    left: calc(var(--age-council-board-left, 16px) - max(16px, env(safe-area-inset-left)));
+    left: 0;
     bottom: 0;
     flex: none;
-    width: var(--age-council-board-width, var(--age-chat-messages-width));
-    min-width: var(--age-council-board-width, var(--age-chat-messages-width));
-    max-width: var(--age-council-board-width, var(--age-chat-messages-width));
+    width: var(--age-chat-messages-width);
+    min-width: var(--age-chat-messages-width);
+    max-width: var(--age-chat-messages-width);
     min-height: var(--age-map-hud-bottom-bar-height);
     box-sizing: border-box;
     border: none;
