@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Royal Armies — Age Alpha</title>
     <link rel="stylesheet" href="style.css?v=cursor-modal-layer-fix-1">
-    <link rel="stylesheet" href="style2.css?v=war-room-tab-center-1">
+    <link rel="stylesheet" href="style2.css?v=war-room-tab-inset-1">
     <link rel="stylesheet" href="mobile-responsive.css?v=top-bar-logo-5px-1">
     <link rel="stylesheet" href="dev-page-navigator.css">
     <link rel="stylesheet" href="custom-cursor.css?v=finger-press-7">
@@ -634,12 +634,17 @@
                             <div id="age-war-room-slide" class="age-war-room-slide">
                             <div id="age-war-room-rise" class="age-war-room-rise">
                             <div class="age-war-room-panel">
+                            <section
+                                id="age-army-groups-workspace"
+                                class="age-army-groups-workspace"
+                                aria-label="War Room workspace"
+                                aria-hidden="true">
                             <button
                                 type="button"
                                 id="age-army-groups-tab"
                                 class="age-army-groups-tab"
                                 aria-expanded="false"
-                                aria-controls="age-army-groups-workspace"
+                                aria-controls="age-army-groups-workspace-main"
                                 title="War Room">
                                 <span class="age-army-groups-tab-inner">
                                     <span class="age-army-groups-tab-chevron" aria-hidden="true"></span>
@@ -647,11 +652,7 @@
                                     <span class="age-army-groups-tab-chevron" aria-hidden="true"></span>
                                 </span>
                             </button>
-                            <section
-                                id="age-army-groups-workspace"
-                                class="age-army-groups-workspace"
-                                aria-label="War Room workspace"
-                                aria-hidden="true">
+                            <div id="age-army-groups-workspace-main" class="age-army-groups-workspace-main">
                             <header class="age-army-groups-toolbar" aria-label="Army group actions">
                                 <button
                                     type="button"
@@ -697,6 +698,7 @@
                             </div>
                             <p id="age-army-groups-feedback" class="age-army-groups-feedback" hidden role="status"></p>
                             <div id="age-army-groups-list" class="age-army-groups-list" role="list" aria-live="polite"></div>
+                            </div>
                             </section>
                             </div>
                             </div>
