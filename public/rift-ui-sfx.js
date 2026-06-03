@@ -13,9 +13,9 @@
     const JOIN_AGE_SELECT_AUDIO_ID = 'join-age-select-sound';
     const JOIN_AGE_SELECT_SRC = 'audio/joinagesfxselect.wav';
     const DISCOVERY_UNLOCK_VOLUME_SCALE = 0.68;
-    /** Synced to FLEX `riftDiscoveryToastReveal` duration (style2.css). */
+    /** Synced to FLEX `riftDiscoveryToastReveal` (style2.css, 0.72s; chime ~52% overshoot). */
     const DISCOVERY_TOAST_REVEAL_MS = 720;
-    const DISCOVERY_CHIME_AT_MS = DISCOVERY_TOAST_REVEAL_MS;
+    const DISCOVERY_CHIME_AT_MS = Math.max(0, Math.round(DISCOVERY_TOAST_REVEAL_MS * 0.52) - 90);
     const DEFAULT_VOLUME = 0.2;
 
     const BUTTON_SELECTOR = [
@@ -47,7 +47,9 @@
     let hoverAudio = null;
     let selectAudio = null;
     let discoverySwooshAudio = null;
+    let discoveryChimeAudio = null;
     let discoveryUnlockTimers = [];
+    let discoveryAudioGesturePrimed = false;
     let listenersBound = false;
 
     function resolvePortalSfxVolume() {
@@ -75,6 +77,7 @@
         hoverAudio = ensureAudioElement(HOVER_AUDIO_ID, HOVER_SRC);
         selectAudio = ensureAudioElement(SELECT_AUDIO_ID, SELECT_SRC);
         discoverySwooshAudio = ensureAudioElement(DISCOVERY_SWOOSH_AUDIO_ID, DISCOVERY_SWOOSH_SRC);
+        discoveryChimeAudio = resolveDiscoveryChimeAudio();
     }
 
     function resolveDiscoveryChimeAudio() {
@@ -89,17 +92,55 @@
 
     function playDiscoveryAudioElement(audio, volume) {
         if (!audio) return;
+        try {
+            audio.pause();
+        } catch (_err) {
+            /* ignore */
+        }
         audio.volume = volume;
         audio.currentTime = 0;
-        audio.play().catch(() => {});
+        const playPromise = audio.play();
+        if (playPromise && typeof playPromise.catch === 'function') {
+            playPromise.catch(() => {});
+        }
     }
 
     function warmDiscoveryAudioElements() {
         primeAudioElements();
-        const chimeAudio = resolveDiscoveryChimeAudio();
-        [discoverySwooshAudio, chimeAudio].forEach((audio) => {
-            if (!audio || audio.readyState >= 2) return;
-            audio.load();
+        [discoverySwooshAudio, discoveryChimeAudio].forEach((audio) => {
+            if (!audio) return;
+            if (audio.readyState < 2) audio.load();
+        });
+    }
+
+    function primeDiscoveryAudioOnGesture() {
+        if (discoveryAudioGesturePrimed) return;
+        discoveryAudioGesturePrimed = true;
+
+        primeAudioElements();
+        warmDiscoveryAudioElements();
+
+        const silentVolume = 0.001;
+        [discoverySwooshAudio, discoveryChimeAudio].forEach((audio) => {
+            if (!audio) return;
+            const priorVolume = audio.volume;
+            audio.volume = silentVolume;
+            audio.currentTime = 0;
+            const playPromise = audio.play();
+            const reset = () => {
+                try {
+                    audio.pause();
+                } catch (_err) {
+                    /* ignore */
+                }
+                audio.currentTime = 0;
+                audio.volume = priorVolume;
+            };
+            if (playPromise && typeof playPromise.then === 'function') {
+                playPromise.then(reset).catch(reset);
+            } else {
+                reset();
+            }
         });
     }
 
@@ -206,6 +247,11 @@
 
         global.document.addEventListener('mouseover', onDocumentMouseOver, true);
         global.document.addEventListener('click', onDocumentClick, true);
+        global.document.addEventListener('pointerdown', primeDiscoveryAudioOnGesture, {
+            once: true,
+            capture: true,
+            passive: true
+        });
     }
 
     function init() {
