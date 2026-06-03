@@ -997,7 +997,7 @@
 
     function syncHeadquartersPlanningLayout() {
         const canvas = global.document.getElementById('age-page-canvas');
-        if (!canvas || canvas.dataset.ageView !== 'council-room') {
+        if (!canvas || !global.RoyalArmiesAgeHeadquarters?.isCouncilRoomOpen?.()) {
             clearHeadquartersPlanningLayoutVars(canvas);
             return;
         }
@@ -1061,7 +1061,7 @@
 
     function syncHeadquartersCommandRailLayout() {
         const canvas = global.document.getElementById('age-page-canvas');
-        if (!canvas || canvas.dataset.ageView !== 'council-room') {
+        if (!canvas || !global.RoyalArmiesAgeHeadquarters?.isCouncilRoomOpen?.()) {
             return;
         }
 

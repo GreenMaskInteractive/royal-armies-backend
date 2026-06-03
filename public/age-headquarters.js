@@ -48,6 +48,8 @@
     let councilAccess = false;
     let leaderAccess = false;
     let viceLeaderAccess = false;
+    let councilRoomModalOpen = false;
+    let councilRoomEscapeHandler = null;
     let lastCabinetState = null;
 
     function resolveApiUrl(path) {
@@ -156,8 +158,12 @@
         });
     }
 
+    function getCouncilRoomModal() {
+        return global.document.getElementById('age-council-room-modal');
+    }
+
     function isCouncilRoomViewActive() {
-        return global.document.getElementById('age-page-canvas')?.dataset?.ageView === 'council-room';
+        return councilRoomModalOpen;
     }
 
     function syncDispatchPanel(showOnCouncilRoomView) {
@@ -1404,6 +1410,21 @@
 
         global.document.getElementById('age-hq-treasury-fort-list')?.addEventListener('click', onTreasuryFortListClick);
 
+        global.document.getElementById('age-council-room-close')?.addEventListener('click', (event) => {
+            event.preventDefault();
+            setCouncilRoomModalOpen(false);
+        });
+        global.document.getElementById('age-council-room-backdrop')?.addEventListener('click', () => {
+            setCouncilRoomModalOpen(false);
+        });
+        global.document.getElementById('age-council-room-open')?.addEventListener('click', (event) => {
+            event.preventDefault();
+            setCouncilRoomModalOpen(!councilRoomModalOpen);
+        });
+        getCouncilRoomModal()?.querySelector('.age-council-room-dialog')?.addEventListener('click', (event) => {
+            event.stopPropagation();
+        });
+
         global.addEventListener('royalarmies:nation-plan-cleared', () => {
             fetchHeadquartersWorkspace();
         });
@@ -1559,6 +1580,40 @@
         return true;
     }
 
+    function setCouncilRoomModalOpen(open) {
+        const modal = getCouncilRoomModal();
+        const nextOpen = Boolean(open);
+        if (!modal) return;
+
+        councilRoomModalOpen = nextOpen;
+        modal.hidden = !nextOpen;
+        modal.setAttribute('aria-hidden', nextOpen ? 'false' : 'true');
+        global.document.getElementById('age-council-room-open')?.classList.toggle('is-active', nextOpen);
+        global.document.body.classList.toggle('age-council-room-open', nextOpen);
+
+        if (!nextOpen) {
+            onViewClose();
+            if (councilRoomEscapeHandler) {
+                global.document.removeEventListener('keydown', councilRoomEscapeHandler);
+                councilRoomEscapeHandler = null;
+            }
+            return;
+        }
+
+        void onViewOpen();
+        global.document.getElementById('age-council-room-close')?.focus?.()
+            || modal.querySelector('.age-age-center-modal-close')?.focus?.();
+
+        if (!councilRoomEscapeHandler) {
+            councilRoomEscapeHandler = (event) => {
+                if (event.key === 'Escape') {
+                    setCouncilRoomModalOpen(false);
+                }
+            };
+            global.document.addEventListener('keydown', councilRoomEscapeHandler);
+        }
+    }
+
     async function onViewOpen() {
         bindUi();
         applyDevOwnerCouncilAccessUI();
@@ -1600,6 +1655,9 @@
         enable,
         onViewOpen,
         onViewClose,
+        openCouncilRoom: () => setCouncilRoomModalOpen(true),
+        closeCouncilRoom: () => setCouncilRoomModalOpen(false),
+        isCouncilRoomOpen: () => councilRoomModalOpen,
         refreshHeadquartersAccess,
         fetchHeadquartersWorkspace,
         syncDispatchPanel,

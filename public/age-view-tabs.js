@@ -309,11 +309,11 @@
     }
 
     function isWorkspaceOverlayView(view) {
-        return view === VIEW_COUNCIL_ROOM || view === VIEW_RECORDS || view === VIEW_GUILD_TRAINING;
+        return view === VIEW_GUILD_TRAINING;
     }
 
     function normalizeView(view) {
-        if (view === VIEW_CITY || view === VIEW_COUNCIL_ROOM || view === VIEW_RECORDS || view === VIEW_GUILD_TRAINING) {
+        if (view === VIEW_CITY || view === VIEW_GUILD_TRAINING) {
             return view;
         }
         return VIEW_MAP;
@@ -337,8 +337,6 @@
         const rightHud = global.document.querySelector('#age-page-canvas .age-map-hud--right');
 
         const inSettlementView = activeView === VIEW_CITY;
-        const inCouncilRoomView = activeView === VIEW_COUNCIL_ROOM;
-        const inRecordsView = activeView === VIEW_RECORDS;
         const inGuildTrainingView = activeView === VIEW_GUILD_TRAINING;
         const inWorkspaceOverlay = isWorkspaceOverlayView(activeView);
 
@@ -348,7 +346,7 @@
 
         if (rightHud) {
             rightHud.classList.toggle('is-settlement-view-open', inSettlementView);
-            rightHud.classList.toggle('is-headquarters-view-open', inCouncilRoomView || inRecordsView);
+            rightHud.classList.remove('is-headquarters-view-open');
             if (inSettlementView) {
                 rightHud.classList.remove('is-city-info-players-open');
                 rightHud.setAttribute('aria-label', `${resolveSettlementTierDisplayLabel()} venues`);
@@ -365,25 +363,6 @@
             settlementPanel.hidden = !inSettlementView;
         }
 
-        const councilWorkspace = global.document.getElementById('age-council-room-workspace');
-        if (councilWorkspace) {
-            if (inCouncilRoomView) {
-                councilWorkspace.hidden = false;
-                councilWorkspace.removeAttribute('hidden');
-                councilWorkspace.setAttribute('aria-hidden', 'false');
-            } else {
-                councilWorkspace.hidden = true;
-                councilWorkspace.setAttribute('hidden', '');
-                councilWorkspace.setAttribute('aria-hidden', 'true');
-            }
-        }
-
-        const recordsWorkspace = global.document.getElementById('age-records-workspace');
-        if (recordsWorkspace) {
-            recordsWorkspace.hidden = !inRecordsView;
-            recordsWorkspace.setAttribute('aria-hidden', inRecordsView ? 'false' : 'true');
-        }
-
         const guildWorkspace = global.document.getElementById('age-guild-workspace');
         const guildTrainingArena = global.document.getElementById('age-guild-training-arena');
         const guildOverlayOpen = typeof global.RoyalArmiesAdventurersGuild?.isOverlayOpen === 'function'
@@ -398,7 +377,6 @@
             guildTrainingArena.setAttribute('aria-hidden', inGuildTrainingView ? 'false' : 'true');
         }
 
-        global.RoyalArmiesAgeHeadquarters?.syncDispatchPanel?.(inCouncilRoomView);
     }
 
     function syncMapStage() {
@@ -412,8 +390,6 @@
         const city = resolveDisplayedCity();
         const tier = resolveSettlementTier();
         const inSettlementView = activeView === VIEW_CITY;
-        const inCouncilRoomView = activeView === VIEW_COUNCIL_ROOM;
-        const inRecordsView = activeView === VIEW_RECORDS;
         const inGuildTrainingView = activeView === VIEW_GUILD_TRAINING;
         const hideWorldMapLayers = isWorkspaceOverlayView(activeView);
 
@@ -457,18 +433,6 @@
             void global.RoyalArmiesAgeWorldPlanOverlay.refreshNationPlan();
         }
 
-        if (inCouncilRoomView) {
-            global.RoyalArmiesAgeHeadquarters?.onViewOpen?.();
-        } else {
-            global.RoyalArmiesAgeHeadquarters?.onViewClose?.();
-        }
-
-        if (inRecordsView) {
-            global.RoyalArmiesAgeRecords?.onViewOpen?.();
-        } else {
-            global.RoyalArmiesAgeRecords?.onViewClose?.();
-        }
-
         if (inGuildTrainingView) {
             global.RoyalArmiesAdventurersGuild?.onTrainingViewOpen?.();
         } else {
@@ -486,11 +450,7 @@
                 'aria-label',
                 activeView === VIEW_CITY
                     ? `${city?.name || 'Settlement'} local map`
-                    : activeView === VIEW_COUNCIL_ROOM
-                        ? 'Council Room'
-                        : activeView === VIEW_RECORDS
-                            ? 'Age records'
-                            : activeView === VIEW_GUILD_TRAINING
+                    : activeView === VIEW_GUILD_TRAINING
                                 ? 'Guild training battle'
                                 : 'Amnek world map'
             );
@@ -620,6 +580,15 @@
     }
 
     function setActiveView(view, options = {}) {
+        if (view === VIEW_COUNCIL_ROOM) {
+            global.RoyalArmiesAgeHeadquarters?.openCouncilRoom?.();
+            return;
+        }
+        if (view === VIEW_RECORDS) {
+            global.RoyalArmiesAgeRecords?.openWorkspace?.();
+            return;
+        }
+
         const nextView = normalizeView(view);
         if (!options.force && nextView === activeView) {
             syncViewTabButtons();
@@ -634,13 +603,6 @@
         syncViewTabButtons();
         syncRightHudPanels();
         syncMapStage();
-
-        if (activeView === VIEW_COUNCIL_ROOM && typeof global.syncAgeHeadquartersPlanningLayout === 'function') {
-            global.requestAnimationFrame(() => {
-                global.syncAgeHeadquartersPlanningLayout();
-                global.RoyalArmiesAgeHeadquartersPlanningMap?.refreshLayout?.();
-            });
-        }
 
         if (activeView === VIEW_CITY) {
             renderSettlementMenu();

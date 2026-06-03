@@ -206,6 +206,20 @@
             return;
         }
 
+        if (item.id === 'age-council-room-open') {
+            event.preventDefault();
+            closeHub();
+            global.RoyalArmiesAgeHeadquarters?.openCouncilRoom?.();
+            return;
+        }
+
+        if (item.id === 'age-records-open') {
+            event.preventDefault();
+            closeHub();
+            global.RoyalArmiesAgeRecords?.openWorkspace?.();
+            return;
+        }
+
         if (item.hasAttribute('data-age-view-tab')) {
             event.preventDefault();
             const view = item.getAttribute('data-age-view-tab');

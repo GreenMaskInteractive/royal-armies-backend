@@ -406,6 +406,9 @@
         }
     }
 
+    let recordsModalOpen = false;
+    let recordsEscapeHandler = null;
+
     function onViewOpen() {
         loadPromise = null;
         setActiveTab(activeTab);
@@ -416,9 +419,57 @@
         loadPromise = null;
     }
 
+    function setRecordsModalOpen(open) {
+        const modal = global.document.getElementById('age-records-modal');
+        const nextOpen = Boolean(open);
+        if (!modal) return;
+
+        recordsModalOpen = nextOpen;
+        modal.hidden = !nextOpen;
+        modal.setAttribute('aria-hidden', nextOpen ? 'false' : 'true');
+        global.document.getElementById('age-records-open')?.classList.toggle('is-active', nextOpen);
+        global.document.body.classList.toggle('age-records-open', nextOpen);
+
+        if (!nextOpen) {
+            onViewClose();
+            if (recordsEscapeHandler) {
+                global.document.removeEventListener('keydown', recordsEscapeHandler);
+                recordsEscapeHandler = null;
+            }
+            return;
+        }
+
+        onViewOpen();
+        global.document.getElementById('age-records-close')?.focus?.();
+
+        if (!recordsEscapeHandler) {
+            recordsEscapeHandler = (event) => {
+                if (event.key === 'Escape') {
+                    setRecordsModalOpen(false);
+                }
+            };
+            global.document.addEventListener('keydown', recordsEscapeHandler);
+        }
+    }
+
     function bindRecords() {
         if (bound) return;
         bound = true;
+
+        global.document.getElementById('age-records-close')?.addEventListener('click', (event) => {
+            event.preventDefault();
+            setRecordsModalOpen(false);
+        });
+        global.document.getElementById('age-records-backdrop')?.addEventListener('click', () => {
+            setRecordsModalOpen(false);
+        });
+        global.document.getElementById('age-records-open')?.addEventListener('click', (event) => {
+            event.preventDefault();
+            setRecordsModalOpen(!recordsModalOpen);
+        });
+        global.document.getElementById('age-records-modal')?.querySelector('.age-records-dialog')?.addEventListener('click', (event) => {
+            event.stopPropagation();
+        });
 
         global.document.querySelectorAll('[data-age-records-tab]').forEach((button) => {
             button.addEventListener('click', (event) => {
@@ -437,6 +488,9 @@
         enable: enableRecords,
         onViewOpen,
         onViewClose,
+        openWorkspace: () => setRecordsModalOpen(true),
+        closeWorkspace: () => setRecordsModalOpen(false),
+        isWorkspaceOpen: () => recordsModalOpen,
         refresh: () => {
             loadPromise = null;
             return renderRecordsPanels();

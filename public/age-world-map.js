@@ -1657,6 +1657,7 @@
             || target.closest('.age-world-city-hit-path')
             || target.closest('.age-world-map-terrain-controls')
             || target.closest('.age-war-room-modal')
+            || target.closest('.age-age-center-modal')
             || target.closest('.age-nation-hub')
         );
     }
