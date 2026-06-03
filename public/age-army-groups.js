@@ -77,12 +77,46 @@
         return path;
     }
 
+    function usesCrossOriginApi() {
+        return typeof global.isLiveStaticPreviewHost === 'function' && global.isLiveStaticPreviewHost();
+    }
+
+    function resolveApiFetchInit(overrides) {
+        return {
+            credentials: usesCrossOriginApi() ? 'include' : 'same-origin',
+            cache: 'no-store',
+            ...overrides
+        };
+    }
+
     function formatRosterError(err) {
+        if (typeof global.isRoyalArmiesApiReachable === 'function' && !global.isRoyalArmiesApiReachable()) {
+            return 'Could not reach the game server. Run node server.js on port 3000 while using Live Server (:5500).';
+        }
+
         const message = String(err?.message || '').trim();
-        if (!message || message === 'Failed to fetch') {
+        const isNetworkFailure = !message
+            || message === 'Failed to fetch'
+            || /networkerror|load failed|connection refused/i.test(message);
+
+        if (isNetworkFailure) {
+            if (usesCrossOriginApi()) {
+                return 'Could not reach the game server. Run node server.js on port 3000 while using Live Server (:5500).';
+            }
+            if (typeof global.isLocalDevelopmentHost === 'function' && global.isLocalDevelopmentHost()) {
+                return 'Could not reach the game server. Start it with node server.js.';
+            }
             return 'Could not reach army groups. Check your connection and try again.';
         }
         return message;
+    }
+
+    function warnIfApiUnreachable() {
+        if (typeof global.isRoyalArmiesApiReachable === 'function' && !global.isRoyalArmiesApiReachable()) {
+            showFeedback(formatRosterError(new Error('Failed to fetch')), true);
+            return true;
+        }
+        return false;
     }
 
     function resolveCreateCityId() {
@@ -361,7 +395,7 @@
         try {
             const response = await fetch(
                 resolveApiUrl(`${API_BASE}?username=${encodeURIComponent(username)}`),
-                { credentials: 'same-origin' }
+                resolveApiFetchInit()
             );
             const payload = await parseResponse(response);
             rosterPayload = payload;
