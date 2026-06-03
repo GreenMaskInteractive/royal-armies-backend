@@ -68,12 +68,13 @@ html.royal-armies-custom-cursor *::-webkit-scrollbar {
     left: 0;
     top: 0;
     clip-path: inset(0 calc(100% - 18px) calc(100% - 14px) 0);
-    transform-origin: 3px 3px;
+    /* Pivot near the knuckle so the tip dips downward on click, not the palm end. */
+    transform-origin: 14px 11px;
     transition: transform 0.08s ease, filter 0.08s ease;
 }
 
 #royal-armies-custom-cursor.is-clicking .royal-armies-cursor-finger {
-    transform: translate(1px, 2px) scale(0.96) rotate(5deg);
+    transform: rotate(7deg) scale(0.97);
     filter: brightness(1.06);
 }
 
@@ -139,7 +140,7 @@ html.royal-armies-custom-cursor *::-webkit-scrollbar {
     }
 
     #royal-armies-custom-cursor.is-clicking .royal-armies-cursor-finger {
-        transform: translate(0.5px, 1px) scale(0.97) rotate(3deg);
+        transform: rotate(4deg) scale(0.98);
     }
 
     .cursor-fingertip-click-burst {
