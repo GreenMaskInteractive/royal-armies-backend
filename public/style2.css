@@ -13092,8 +13092,8 @@ body.developer-maintenance-alert-active #page-landing {
 .age-nation-hub-anchor {
     position: relative;
     display: inline-block;
-    width: max-content;
-    max-width: max-content;
+    width: var(--age-nation-hub-menu-min-width, max-content);
+    max-width: none;
     vertical-align: middle;
 }
 
@@ -13103,6 +13103,8 @@ body.developer-maintenance-alert-active #page-landing {
     display: inline-flex;
     align-items: center;
     justify-content: center;
+    box-sizing: border-box;
+    width: 100%;
     gap: 8px;
     min-height: 34px;
     padding: 0 14px;

@@ -10,6 +10,7 @@
     let closeFinishTimer = 0;
     const MENU_TOGGLE_GAP_PX = 0;
     const MENU_OFFSET_RIGHT_PX = 60;
+    const MENU_PANEL_MIN_WIDTH_PX = 196;
 
     function getHub() {
         return global.document.getElementById('age-nation-hub');
@@ -78,20 +79,50 @@
         }
     }
 
+    function measureNationHubPanelWidthPx(toggle, menu) {
+        const ladder = menu.querySelector('.age-nation-hub-menu-ladder');
+        const toggleWidth = Math.round(toggle.getBoundingClientRect().width) || 0;
+        if (!ladder) {
+            return Math.max(MENU_PANEL_MIN_WIDTH_PX, toggleWidth);
+        }
+
+        const widthBefore = ladder.style.width;
+        const minWidthBefore = ladder.style.minWidth;
+        ladder.style.width = 'max-content';
+        ladder.style.minWidth = `${MENU_PANEL_MIN_WIDTH_PX}px`;
+        const ladderWidth = Math.ceil(ladder.getBoundingClientRect().width);
+        ladder.style.width = widthBefore;
+        ladder.style.minWidth = minWidthBefore;
+
+        return Math.max(MENU_PANEL_MIN_WIDTH_PX, toggleWidth, ladderWidth);
+    }
+
+    function applyNationHubPanelWidth(panelWidthPx) {
+        const menu = getMenu();
+        const anchor = getToggle()?.closest('.age-nation-hub-anchor');
+        const widthToken = `${panelWidthPx}px`;
+        if (menu) {
+            menu.style.setProperty('--age-nation-hub-menu-min-width', widthToken);
+        }
+        if (anchor) {
+            anchor.style.setProperty('--age-nation-hub-menu-min-width', widthToken);
+        }
+    }
+
     function syncMenuPosition() {
         const toggle = getToggle();
         const menu = getMenu();
         if (!toggle || !menu) return;
+
+        const panelWidthPx = measureNationHubPanelWidthPx(toggle, menu);
+        applyNationHubPanelWidth(panelWidthPx);
+        void toggle.offsetWidth;
 
         const rect = toggle.getBoundingClientRect();
         menu.style.setProperty('--age-nation-hub-menu-top', `${Math.round(rect.bottom + MENU_TOGGLE_GAP_PX)}px`);
         menu.style.setProperty(
             '--age-nation-hub-menu-right',
             `${Math.round(global.window.innerWidth - rect.right - MENU_OFFSET_RIGHT_PX)}px`
-        );
-        menu.style.setProperty(
-            '--age-nation-hub-menu-min-width',
-            `${Math.max(196, Math.round(rect.width))}px`
         );
         menu.classList.add('is-menu-position-synced');
     }
