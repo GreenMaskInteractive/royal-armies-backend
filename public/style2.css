@@ -13038,10 +13038,18 @@ body.developer-maintenance-alert-active #page-landing {
     flex: 0 1 auto;
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 12px;
     min-width: 0;
-    max-width: min(420px, 48vw);
+    max-width: none;
     margin-left: var(--age-top-bar-age-divider-gap, 20px);
+}
+
+.age-nation-welcome-identity {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex: 0 1 auto;
+    min-width: 0;
 }
 
 #age-page-canvas .age-map-top-bar-nation-crest {
@@ -13058,7 +13066,8 @@ body.developer-maintenance-alert-active #page-landing {
 
 #age-page-canvas .age-map-top-bar-nation-text {
     margin: 0;
-    min-width: 0;
+    flex: 0 0 auto;
+    min-width: max-content;
     font-family: 'Cinzel', serif;
     font-size: 0.92rem;
     font-weight: 700;
@@ -13068,8 +13077,7 @@ body.developer-maintenance-alert-active #page-landing {
     color: #ffd978;
     text-shadow: 0 1px 3px rgba(0, 0, 0, 0.65);
     white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    overflow: visible;
 }
 
 /* Nation Hub — top bar dropdown (views, War Room, War Ledger) */
