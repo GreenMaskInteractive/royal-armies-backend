@@ -653,6 +653,32 @@
     border-top: none;
 }
 
+.age-hq-load-status {
+    margin: 10px auto 0;
+    max-width: 52ch;
+    padding: 8px 12px;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    line-height: 1.45;
+    color: rgba(241, 224, 172, 0.9);
+    background: rgba(0, 0, 0, 0.35);
+    border: 1px solid rgba(184, 144, 48, 0.28);
+}
+
+.age-hq-load-status[hidden] {
+    display: none !important;
+}
+
+.age-hq-load-status--warn {
+    border-color: rgba(255, 196, 96, 0.45);
+    color: #ffe7b0;
+}
+
+.age-hq-load-status--error {
+    border-color: rgba(255, 120, 120, 0.45);
+    color: #ffc9c9;
+}
+
 .age-headquarters-page-title {
     margin: 0;
     font-family: 'Cinzel', serif;

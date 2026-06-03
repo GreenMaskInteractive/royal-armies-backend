@@ -101,6 +101,61 @@
             .replace(/"/g, '&quot;');
     }
 
+    function setHeadquartersLoadStatus(message, tone = 'info') {
+        const el = global.document.getElementById('age-hq-load-status');
+        if (!el) return;
+
+        if (!message) {
+            el.hidden = true;
+            el.textContent = '';
+            el.className = 'age-hq-load-status';
+            return;
+        }
+
+        el.hidden = false;
+        el.textContent = message;
+        el.className = `age-hq-load-status age-hq-load-status--${tone}`;
+    }
+
+    function describeHeadquartersAccessGap(workspace) {
+        if (!workspace) {
+            return {
+                message: 'Headquarters data did not load. In F12 → Network, open the headquarters request and check status (200 = OK). Try signing out and back in, or hard-refresh (Ctrl+Shift+R).',
+                tone: 'error'
+            };
+        }
+
+        if (workspace.access?.memberHub || workspace.access?.council) {
+            return null;
+        }
+
+        if (!workspace.gameNation) {
+            return {
+                message: 'This commander has no nation assigned yet. Choose a nation on the Age map, then return to Headquarters.',
+                tone: 'warn'
+            };
+        }
+
+        return {
+            message: 'You are not on this nation\'s member roster yet. If you already enlisted, wait a moment and refresh — otherwise contact nation staff.',
+            tone: 'warn'
+        };
+    }
+
+    function logHeadquartersWorkspaceSummary(workspace, source) {
+        if (!workspace) {
+            console.info(`[RIFT] Headquarters workspace empty (${source})`);
+            return;
+        }
+
+        console.info(`[RIFT] Headquarters workspace loaded (${source})`, {
+            gameNation: workspace.gameNation || '',
+            access: workspace.access || {},
+            voteOpen: Boolean(workspace.vote?.isOpen),
+            nationPlayers: workspace.vote?.nationPlayerCount ?? null
+        });
+    }
+
     function isHeadquartersViewActive() {
         return global.document.getElementById('age-page-canvas')?.dataset?.ageView === 'headquarters';
     }
@@ -787,7 +842,13 @@
     function applyWorkspace(workspace) {
         const username = resolveHeadquartersUsername();
         workspace = mergeDevOwnerHeadquartersWorkspace(workspace, username);
-        if (!workspace) return false;
+        if (!workspace) {
+            setHeadquartersLoadStatus(describeHeadquartersAccessGap(null)?.message || '', 'error');
+            return false;
+        }
+
+        const accessGap = describeHeadquartersAccessGap(workspace);
+        setHeadquartersLoadStatus(accessGap?.message || '', accessGap?.tone || 'info');
 
         fullAuthority = Boolean(workspace.access?.fullAuthority);
         memberHubActive = Boolean(workspace.access?.memberHub);
@@ -840,6 +901,10 @@
         const username = resolveHeadquartersUsername();
         if (!username) {
             if (!isLocalDevOwnerPortalView()) {
+                setHeadquartersLoadStatus(
+                    'No active commander session. Sign in from the portal, then open Headquarters again.',
+                    'warn'
+                );
                 applyWorkspace(null);
                 setCouncilAccessUI(false);
                 setViceLeaderAccessUI(false);
@@ -848,26 +913,47 @@
             return false;
         }
 
+        setHeadquartersLoadStatus('Loading nation headquarters…', 'info');
+
         try {
             const response = await global.fetch(
                 resolveApiUrl(`/api/portal/age/headquarters?username=${encodeURIComponent(username)}`),
                 { credentials: 'same-origin' }
             );
+            const payload = await response.json().catch(() => ({}));
+
             if (!response.ok) {
+                if (typeof global.showRiftError === 'function') {
+                    await global.showRiftError(payload, 'Headquarters');
+                }
                 throw new Error(`headquarters workspace ${response.status}`);
             }
 
-            const payload = await response.json();
-            return applyWorkspace(payload?.workspace || null);
+            if (!payload?.workspace) {
+                setHeadquartersLoadStatus(
+                    'Server responded but returned no headquarters workspace. Check F12 → Network → headquarters.',
+                    'error'
+                );
+                logHeadquartersWorkspaceSummary(null, 'missing-workspace');
+                return applyWorkspace(null);
+            }
+
+            logHeadquartersWorkspaceSummary(payload.workspace, 'api');
+            return applyWorkspace(payload.workspace);
         } catch (err) {
             console.warn('[RIFT] Headquarters workspace load failed:', err.message);
 
             const fallback = buildDevOwnerFallbackWorkspace(username);
             if (fallback) {
                 console.warn('[RIFT] Using dev owner Headquarters fallback. Restart NEXUS (node server.js) if server sync is missing.');
+                logHeadquartersWorkspaceSummary(fallback, 'dev-fallback');
                 return applyWorkspace(fallback);
             }
 
+            setHeadquartersLoadStatus(
+                `Headquarters request failed (${err.message}). Open F12 → Network and inspect /api/portal/age/headquarters.`,
+                'error'
+            );
             setCouncilAccessUI(false);
             setViceLeaderAccessUI(false);
             leaderAccess = false;
@@ -1455,7 +1541,14 @@
         if (host.dataset.hqMapMounted !== 'true') {
             await waitForLayout();
             const ok = await planningMap.mount(host);
-            if (!ok) return false;
+            if (!ok) {
+                console.warn('[RIFT] Headquarters planning map failed to mount.');
+                setHeadquartersLoadStatus(
+                    'SF planning map could not initialize. Hard-refresh the page (Ctrl+Shift+R) to load the latest scripts.',
+                    'warn'
+                );
+                return false;
+            }
             host.dataset.hqMapMounted = 'true';
         }
 

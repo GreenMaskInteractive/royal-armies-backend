@@ -1740,13 +1740,14 @@ function resolveHeadquartersAccessForCommander(commander) {
     const isViceLeader = leadership?.viceLeaderUsername === username;
     const isCouncilMember = leadership?.councilUsernames?.includes(username);
     const isPlanner = leadership?.plannerUsernames?.includes(username);
-    const inNation = Boolean(
-        listNationVoteCandidates(
-            db.get('commanders').value() || [],
-            storageKey,
-            (entry) => getCouncilBoardStorageKey(resolveCouncilBoardNationKey(entry))
-        ).some((row) => row.id === username)
+    const commanderNationKey = getCouncilBoardStorageKey(resolveCouncilBoardNationKey(commander));
+    const nationRoster = listNationVoteCandidates(
+        db.get('commanders').value() || [],
+        storageKey,
+        (entry) => getCouncilBoardStorageKey(resolveCouncilBoardNationKey(entry))
     );
+    const inNation = nationRoster.some((row) => row.id === username)
+        || (Boolean(storageKey) && commanderNationKey === storageKey);
 
     return {
         gameNation: storageKey,
