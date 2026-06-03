@@ -13185,8 +13185,9 @@ body.developer-maintenance-alert-active #page-landing {
     left: auto !important;
     bottom: auto !important;
     margin: 0 !important;
-    min-width: var(--age-nation-hub-menu-min-width) !important;
-    z-index: 12030;
+    width: auto !important;
+    min-width: 0 !important;
+    z-index: 199;
     display: grid !important;
     grid-template-rows: 0fr;
     overflow: hidden;
@@ -13194,20 +13195,33 @@ body.developer-maintenance-alert-active #page-landing {
     transform: none;
     clip-path: none;
     -webkit-clip-path: none;
+    border: none;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
     transition: grid-template-rows 0.44s cubic-bezier(0.22, 1, 0.36, 1);
     pointer-events: none;
 }
 
 .age-nation-hub.is-open .age-nation-hub-menu.is-menu-position-synced {
     grid-template-rows: 1fr;
+    min-width: var(--age-nation-hub-menu-min-width) !important;
     pointer-events: auto;
 }
 
 .age-nation-hub-menu-ladder {
     min-height: 0;
+    min-width: var(--age-nation-hub-menu-min-width, 196px);
     display: flex;
     flex-direction: column;
     align-items: stretch;
+    border: 1px solid var(--age-hud-rail-border);
+    border-radius: 6px;
+    background:
+        var(--age-hud-rail-sheen),
+        var(--age-hud-rail-bg);
+    box-shadow: var(--age-hud-rail-inset), var(--age-hud-rail-shadow);
+    overflow: hidden;
 }
 
 /* Hidden above/behind Nation Hub toggle until they slide into the panel */
