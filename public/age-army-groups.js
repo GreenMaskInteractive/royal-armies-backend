@@ -206,6 +206,7 @@
         global.document.body.classList.toggle('age-war-room-open', workspaceOpen);
 
         if (!workspaceOpen) {
+            expandedGroupIds.clear();
             setCreatePanelOpen(false);
             setSfLeadPanelOpen(false);
             if (escapeHandler) {
@@ -213,6 +214,7 @@
                 escapeHandler = null;
             }
         } else {
+            expandedGroupIds.clear();
             refreshRoster();
             els.closeBtn?.focus();
             if (!escapeHandler) {
