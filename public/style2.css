@@ -16374,6 +16374,22 @@ label.age-council-board-editor-tool {
     z-index: 248110 !important;
 }
 
+/* Age map — commander menu portaled to body so it clears left HUD / bottom dock stacking */
+.portal-commander-identity-menu.portal-commander-identity-menu--age-floating {
+    position: fixed !important;
+    top: auto !important;
+    left: auto !important;
+    z-index: 300100 !important;
+    transform: translateY(6px) scale(0.98) !important;
+}
+
+.portal-commander-identity-menu.portal-commander-identity-menu--age-floating:not([hidden]) {
+    opacity: 1 !important;
+    visibility: visible !important;
+    transform: translateY(0) scale(1) !important;
+    pointer-events: auto !important;
+}
+
 #age-page-canvas .age-map-bottom-chat-messages-host .game-chat-module-header {
     flex-shrink: 0 !important;
     padding: 6px 8px 0 8px !important;
