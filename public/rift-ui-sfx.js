@@ -15,7 +15,7 @@
     const DISCOVERY_UNLOCK_VOLUME_SCALE = 0.68;
     const DISCOVERY_SWOOSH_START_MS = 20;
     const DISCOVERY_SWOOSH_DURATION_MS = 1400;
-    const DISCOVERY_CHIME_AT_MS = 1200;
+    const DISCOVERY_CHIME_AT_MS = 1150;
     /** Animation delay in FLEX only (style2.css); audio has no matching wait. */
     const DISCOVERY_TOAST_REVEAL_DELAY_MS = 480;
     const DISCOVERY_TOAST_REVEAL_MS = 1100;

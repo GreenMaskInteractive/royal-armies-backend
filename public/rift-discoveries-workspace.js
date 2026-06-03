@@ -83,8 +83,7 @@
     const CATALOG_BY_ID = Object.create(null);
 
     let selectedDiscoveryId = null;
-    let toastHideTimer = null;
-    let toastAdvanceTimer = null;
+    let toastDismissResolver = null;
     let menuBindingsReady = false;
     /** @type {string[][]} batches of discovery ids for sequential toast display */
     const toastQueue = [];
@@ -620,7 +619,7 @@
     let suppressPortalSelectUntil = 0;
 
     function markDiscoveryToastUiSfxWindow() {
-        const chimeMs = (global.RoyalArmiesUiSfx && global.RoyalArmiesUiSfx.discoveryChimeAtMs) || 1200;
+        const chimeMs = (global.RoyalArmiesUiSfx && global.RoyalArmiesUiSfx.discoveryChimeAtMs) || 1150;
         suppressPortalSelectUntil = Date.now() + chimeMs + 80;
     }
 
@@ -708,15 +707,16 @@
         playDiscoveryToastSwooshSfx();
         scheduleDiscoveryToastChimeSfx();
 
-        if (toastHideTimer) global.clearTimeout(toastHideTimer);
-        if (toastAdvanceTimer) global.clearTimeout(toastAdvanceTimer);
-
         return new Promise((resolve) => {
-            toastAdvanceTimer = global.setTimeout(() => {
-                hideDiscoveryToast();
-                resolve();
-            }, ids.length > 1 ? 14000 : 11000);
+            toastDismissResolver = resolve;
         });
+    }
+
+    function resolveDiscoveryToastDismissed() {
+        if (!toastDismissResolver) return;
+        const resolve = toastDismissResolver;
+        toastDismissResolver = null;
+        resolve();
     }
 
     function finalizeDiscoveryToastHide() {
@@ -728,15 +728,7 @@
         global.document.body.classList.remove('is-rift-discovery-toast-open');
         activeToastDiscoveryIds = [];
         activeToastDiscoveryIndex = 0;
-
-        if (toastHideTimer) {
-            global.clearTimeout(toastHideTimer);
-            toastHideTimer = null;
-        }
-        if (toastAdvanceTimer) {
-            global.clearTimeout(toastAdvanceTimer);
-            toastAdvanceTimer = null;
-        }
+        resolveDiscoveryToastDismissed();
     }
 
     function hideDiscoveryToast() {
@@ -1039,14 +1031,11 @@
             });
         global.document.getElementById('rift-discovery-toast-dismiss')
             ?.addEventListener('click', hideDiscoveryToast);
-        global.document.getElementById('rift-discovery-toast-scrim')
-            ?.addEventListener('click', hideDiscoveryToast);
 
         global.document.addEventListener('keydown', (event) => {
             if (event.key !== 'Escape') return;
             const toast = global.document.getElementById('rift-discovery-toast');
             if (toast && !toast.hidden && (toast.classList.contains('is-visible') || toast.classList.contains('is-exiting'))) {
-                hideDiscoveryToast();
                 return;
             }
             const modal = global.document.getElementById('rift-discoveries-workspace-modal');
