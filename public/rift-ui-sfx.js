@@ -17,8 +17,8 @@
     /** Animation delay in FLEX only (style2.css); audio has no matching wait. */
     const DISCOVERY_TOAST_REVEAL_DELAY_MS = 480;
     const DISCOVERY_TOAST_REVEAL_MS = 1100;
-    /** Join-age chime fires when the swoosh clip ends. */
-    const DISCOVERY_CHIME_AT_MS = DISCOVERY_SWOOSH_MAX_MS;
+    /** Join-age chime when the delayed reveal finishes (delay + duration). */
+    const DISCOVERY_CHIME_AT_MS = DISCOVERY_TOAST_REVEAL_DELAY_MS + DISCOVERY_TOAST_REVEAL_MS;
     const DEFAULT_VOLUME = 0.2;
 
     const BUTTON_SELECTOR = [
@@ -99,7 +99,7 @@
         audio.play().catch(() => {});
     }
 
-    function playDiscoverySwooshClip(audio, volume, maxDurationMs, onClipEnd) {
+    function playDiscoverySwooshClip(audio, volume, maxDurationMs) {
         if (discoverySwooshStopTimer) {
             global.clearTimeout(discoverySwooshStopTimer);
             discoverySwooshStopTimer = null;
@@ -109,17 +109,13 @@
 
         discoverySwooshStopTimer = global.setTimeout(() => {
             discoverySwooshStopTimer = null;
-            if (!audio.paused) {
-                try {
-                    audio.pause();
-                } catch (_err) {
-                    /* ignore */
-                }
-                audio.currentTime = 0;
+            if (audio.paused) return;
+            try {
+                audio.pause();
+            } catch (_err) {
+                /* ignore */
             }
-            if (typeof onClipEnd === 'function') {
-                onClipEnd();
-            }
+            audio.currentTime = 0;
         }, maxDurationMs);
     }
 
@@ -187,19 +183,25 @@
         const volume = resolvePortalSfxVolume() * DISCOVERY_UNLOCK_VOLUME_SCALE;
         if (volume <= 0) return;
 
-        clearDiscoveryChimeTimers();
         primeAudioElements();
-        playDiscoverySwooshClip(discoverySwooshAudio, volume, DISCOVERY_SWOOSH_MAX_MS, () => {
-            playDiscoveryChimeSfx();
-        });
+        playDiscoverySwooshClip(discoverySwooshAudio, volume, DISCOVERY_SWOOSH_MAX_MS);
     }
 
     function scheduleDiscoveryChimeSfx() {
-        /* Chime is chained from playDiscoverySwooshSfx when the swoosh clip ends. */
+        const volume = resolvePortalSfxVolume() * DISCOVERY_UNLOCK_VOLUME_SCALE;
+        if (volume <= 0) return;
+
+        clearDiscoveryChimeTimers();
+        primeAudioElements();
+
+        discoveryChimeTimers.push(global.setTimeout(() => {
+            playDiscoveryChimeSfx();
+        }, DISCOVERY_CHIME_AT_MS));
     }
 
     function playDiscoveryUnlockSfx() {
         playDiscoverySwooshSfx();
+        scheduleDiscoveryChimeSfx();
     }
 
     function onDocumentMouseOver(event) {
