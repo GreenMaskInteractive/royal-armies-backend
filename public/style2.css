@@ -23283,7 +23283,7 @@ body.is-rift-discoveries-workspace-open {
 .age-war-room-modal {
     position: fixed;
     inset: 0;
-    z-index: 130;
+    z-index: 220;
     padding: 24px;
     box-sizing: border-box;
 }
@@ -23291,6 +23291,7 @@ body.is-rift-discoveries-workspace-open {
 .age-war-room-backdrop {
     position: absolute;
     inset: 0;
+    z-index: 0;
     background:
         radial-gradient(ellipse at center, rgba(24, 18, 10, 0.42) 0%, rgba(0, 0, 0, 0.78) 72%);
     backdrop-filter: blur(2px);
@@ -23298,8 +23299,10 @@ body.is-rift-discoveries-workspace-open {
 
 .age-war-room-dialog {
     position: relative;
+    z-index: 1;
     display: flex;
     flex-direction: column;
+    pointer-events: auto;
     width: 60vw;
     height: 60vh;
     max-width: calc(100vw - 48px);
@@ -23443,6 +23446,7 @@ body.age-war-room-open {
     object-fit: cover;
     border-radius: 4px;
     opacity: 0.92;
+    pointer-events: none;
 }
 
 .age-army-groups-tool-btn:hover,
@@ -23641,6 +23645,13 @@ body.age-war-room-open {
     box-shadow:
         0 1px 0 rgba(0, 0, 0, 0.42),
         inset 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.age-army-groups-create-submit:disabled {
+    opacity: 0.62;
+    cursor: wait;
+    filter: none;
+    transform: none;
 }
 
 .age-army-groups-feedback {

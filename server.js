@@ -5170,7 +5170,12 @@ app.post('/api/portal/age/army-groups/create', (req, res) => {
     }
 
     const movement = readCommanderMovementRecord(username, gameNation);
-    const cityId = String(movement.catalogCityId || req.body?.cityId || '').trim();
+    const cityId = String(
+        movement.catalogCityId
+        || req.body?.cityId
+        || resolveDefaultCapitalCityId(gameNation)
+        || ''
+    ).trim();
     if (!cityId) {
         return sendApiError(res, 'NEXUS-GAME-014', 'A map city is required before creating an army group.');
     }

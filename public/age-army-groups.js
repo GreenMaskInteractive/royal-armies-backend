@@ -55,6 +55,8 @@
     let sonarCycleTimer = 0;
     let localSonarActive = false;
     let escapeHandler = null;
+    let eventsBound = false;
+    let createInFlight = false;
 
     function resolveUsername() {
         const saved = global.localStorage.getItem('activeCommanderUser');
@@ -78,6 +80,22 @@
             return 'Could not reach army groups. Check your connection and try again.';
         }
         return message;
+    }
+
+    function resolveCreateCityId() {
+        const fromMovement = global.RoyalArmiesAgeMovement?.getCatalogCityId?.();
+        if (fromMovement) return String(fromMovement).trim();
+
+        const city = resolvePlayerCity();
+        return String(city?.id || '').trim();
+    }
+
+    function setCreateSubmitBusy(busy) {
+        createInFlight = Boolean(busy);
+        if (!els.createSubmit) return;
+        els.createSubmit.disabled = createInFlight;
+        els.createSubmit.setAttribute('aria-busy', createInFlight ? 'true' : 'false');
+        els.createSubmit.textContent = createInFlight ? 'Creating…' : 'Create';
     }
 
     function showFeedback(message, isError) {
@@ -171,14 +189,21 @@
     function setCreatePanelOpen(open) {
         createPanelOpen = Boolean(open);
         if (!els.createRow) return;
-        els.createRow.hidden = !createPanelOpen;
-        els.createRow.classList.toggle('is-visible', createPanelOpen);
+        if (createPanelOpen) {
+            els.createRow.removeAttribute('hidden');
+            els.createRow.classList.add('is-visible');
+        } else {
+            els.createRow.setAttribute('hidden', '');
+            els.createRow.classList.remove('is-visible');
+            setCreateSubmitBusy(false);
+        }
         els.createBtn?.classList.toggle('is-active', createPanelOpen);
+        els.createBtn?.setAttribute('aria-expanded', createPanelOpen ? 'true' : 'false');
         if (!createPanelOpen && els.nameInput) {
             els.nameInput.value = '';
         }
         if (createPanelOpen && els.nameInput) {
-            els.nameInput.focus();
+            global.requestAnimationFrame(() => els.nameInput.focus());
         }
     }
 
@@ -325,15 +350,34 @@
     }
 
     async function createArmyGroup() {
+        if (createInFlight) return;
+
         const name = String(els.nameInput?.value || '').trim();
         if (!name) {
             showFeedback('Enter a unique army name.', true);
+            els.nameInput?.focus();
             return;
         }
+        if (name.length < 2) {
+            showFeedback('Army name must be at least 2 characters.', true);
+            els.nameInput?.focus();
+            return;
+        }
+
+        const cityId = resolveCreateCityId();
+        if (!cityId) {
+            showFeedback('Place your commander on the map before creating an army group.', true);
+            return;
+        }
+
+        setCreateSubmitBusy(true);
+        showFeedback('Creating army group…', false);
+
         try {
             const payload = await postAction(`${API_BASE}/create`, {
                 type: selectedType,
-                name
+                name,
+                cityId
             });
             if (els.nameInput) els.nameInput.value = '';
             setCreatePanelOpen(false);
@@ -343,6 +387,8 @@
             syncDeploymentPinFromRoster(payload);
         } catch (err) {
             showFeedback(err.message || 'Could not create army group.', true);
+        } finally {
+            setCreateSubmitBusy(false);
         }
     }
 
@@ -466,6 +512,9 @@
     }
 
     function bindEvents() {
+        if (eventsBound) return;
+        eventsBound = true;
+
         els.openBtn?.addEventListener('click', (event) => {
             event.preventDefault();
             setWorkspaceOpen(true);
@@ -478,21 +527,31 @@
 
         els.backdrop?.addEventListener('click', () => setWorkspaceOpen(false));
 
-        els.modal?.addEventListener('click', (event) => event.stopPropagation());
+        const dialog = els.modal?.querySelector('.age-war-room-dialog');
+        dialog?.addEventListener('click', (event) => event.stopPropagation());
 
-        els.createBtn?.addEventListener('click', () => {
-            setCreatePanelOpen(!createPanelOpen);
-            showFeedback('', false);
+        els.workspaceMain?.addEventListener('click', (event) => {
+            if (event.target.closest('#age-army-groups-btn-create')) {
+                event.preventDefault();
+                setCreatePanelOpen(!createPanelOpen);
+                showFeedback('', false);
+                return;
+            }
+            if (event.target.closest('#age-army-groups-create-submit')) {
+                event.preventDefault();
+                void createArmyGroup();
+                return;
+            }
+            if (event.target.closest('#age-army-groups-type-cycle')) {
+                event.preventDefault();
+                cycleSelectedType(1);
+            }
         });
-
-        els.typeCycle?.addEventListener('click', () => cycleSelectedType(1));
-
-        els.createSubmit?.addEventListener('click', () => createArmyGroup());
 
         els.nameInput?.addEventListener('keydown', (event) => {
             if (event.key === 'Enter') {
                 event.preventDefault();
-                createArmyGroup();
+                void createArmyGroup();
             }
         });
 
