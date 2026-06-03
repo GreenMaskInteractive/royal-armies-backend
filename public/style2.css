@@ -22868,27 +22868,33 @@ body.is-rift-discoveries-workspace-open {
    ========================================================================== */
 
 .age-war-room-dock {
+    --war-room-tab-strip-height: 40px;
+    --war-room-tab-height: calc(var(--war-room-tab-strip-height) + var(--age-map-slot-gap));
+    --war-room-open-top-stop: 50px;
     position: absolute;
     left: 0;
     right: 0;
-    top: 0;
+    top: auto;
     bottom: calc(-1 * var(--age-map-slot-gap));
+    height: var(--war-room-tab-height);
     z-index: 24;
     pointer-events: none;
     overflow: visible;
 }
 
+.age-war-room-dock.is-workspace-open {
+    top: var(--war-room-open-top-stop);
+    height: auto;
+}
+
 .age-war-room-slide {
-    --war-room-tab-strip-height: 40px;
-    --war-room-tab-height: calc(var(--war-room-tab-strip-height) + var(--age-map-slot-gap));
-    --war-room-open-lift: 20px;
-    --war-room-open-top-stop: 50px;
     position: absolute;
     left: 50%;
     bottom: 0;
     width: min(1642px, 100cqw, 100cqh);
     max-width: 100%;
-    top: 0;
+    top: auto;
+    height: 100%;
     box-sizing: border-box;
     pointer-events: none;
     z-index: 2;
@@ -22897,7 +22903,7 @@ body.is-rift-discoveries-workspace-open {
 }
 
 .age-war-room-slide.is-open {
-    top: calc(-1 * var(--war-room-open-lift) + var(--war-room-open-top-stop));
+    top: 0;
 }
 
 /* Bottom-anchored on the bottom HUD rail (tab flush with the top of the bottom bar). */
@@ -23479,6 +23485,15 @@ body.is-rift-discoveries-workspace-open {
 #age-page-canvas[data-age-view="map"] .age-world-map-canvas,
 #age-page-canvas[data-age-view="map"] .age-world-map-highlight-shell {
     z-index: 1;
+}
+
+#age-page-canvas[data-age-view="map"] .age-map-anchor {
+    padding-bottom: var(--war-room-tab-height);
+    box-sizing: border-box;
+}
+
+#age-page-canvas[data-age-view="map"] .age-map-anchor:has(.age-war-room-dock.is-workspace-open) {
+    padding-bottom: 0;
 }
 
 #age-page-canvas[data-age-view="map"] .age-war-room-dock {
