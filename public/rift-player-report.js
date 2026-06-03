@@ -6,6 +6,8 @@
 
     const DETAILS_MIN = 20;
     const DETAILS_MAX = 2000;
+    const SCREENSHOT_MAX_BYTES = 2 * 1024 * 1024;
+    const SCREENSHOT_ACCEPT = ['image/png', 'image/jpeg', 'image/webp', 'image/gif'];
 
     const catalog = global.RoyalArmiesPlayerReportCatalog || {};
     const REPORT_CATEGORY_GROUPS = catalog.REPORT_CATEGORY_GROUPS || [];
@@ -14,6 +16,8 @@
         || 'Describe the incident with enough detail for moderators to investigate (dates, channels, quotes, etc.).';
 
     let pendingContext = null;
+    let pendingScreenshot = null;
+    let screenshotPreviewUrl = '';
     let submitting = false;
 
     function resolveApiUrl(path) {
@@ -44,7 +48,8 @@
             root: global.document.getElementById('player-report-modal'),
             scrim: global.document.querySelector('#player-report-modal .player-report-modal-scrim'),
             targetField: global.document.getElementById('player-report-target'),
-            categoryField: global.document.getElementById('player-report-category'),
+            categoryGroupField: global.document.getElementById('player-report-category-group'),
+            reasonField: global.document.getElementById('player-report-reason'),
             detailsField: global.document.getElementById('player-report-details'),
             contextBlock: global.document.getElementById('player-report-context-block'),
             contextText: global.document.getElementById('player-report-context-text'),
@@ -53,7 +58,12 @@
             feedback: global.document.getElementById('player-report-feedback'),
             submitBtn: global.document.getElementById('player-report-submit-btn'),
             cancelBtn: global.document.getElementById('player-report-cancel-btn'),
-            closeBtn: global.document.getElementById('player-report-close-btn')
+            closeBtn: global.document.getElementById('player-report-close-btn'),
+            screenshotInput: global.document.getElementById('player-report-screenshot-input'),
+            screenshotAddBtn: global.document.getElementById('player-report-screenshot-add-btn'),
+            screenshotClearBtn: global.document.getElementById('player-report-screenshot-clear-btn'),
+            screenshotPreview: global.document.getElementById('player-report-screenshot-preview'),
+            screenshotPreviewImg: global.document.getElementById('player-report-screenshot-preview-img')
         };
     }
 
@@ -72,18 +82,22 @@
         feedback.classList.toggle('is-success', !isError);
     }
 
+    function getSelectedReasonId() {
+        return String(getModalElements().reasonField?.value || '').trim();
+    }
+
     function updateDetailsCounter() {
         const { detailsField, counter, submitBtn } = getModalElements();
         if (!detailsField || !counter) return;
 
         const length = String(detailsField.value || '').trim().length;
+        const reason = getSelectedReasonId();
         counter.textContent = `${length} / ${DETAILS_MAX} (minimum ${DETAILS_MIN})`;
         counter.classList.toggle('is-valid', length >= DETAILS_MIN);
         counter.classList.toggle('is-invalid', length > 0 && length < DETAILS_MIN);
 
         if (submitBtn) {
-            const category = String(getModalElements().categoryField?.value || '').trim();
-            submitBtn.disabled = submitting || !category || length < DETAILS_MIN;
+            submitBtn.disabled = submitting || !reason || length < DETAILS_MIN;
             submitBtn.setAttribute('aria-disabled', submitBtn.disabled ? 'true' : 'false');
         }
     }
@@ -92,24 +106,56 @@
         return REPORT_CATEGORIES_MAP[String(categoryId || '').trim().toLowerCase()] || null;
     }
 
-    function populateCategoryOptions(selectedId) {
-        const { categoryField } = getModalElements();
-        if (!categoryField) return;
+    function findReportGroup(groupId) {
+        const id = String(groupId || '').trim();
+        return REPORT_CATEGORY_GROUPS.find((group) => group.id === id) || null;
+    }
 
-        const groupMarkup = REPORT_CATEGORY_GROUPS.map((group) => {
-            const options = (group.categories || []).map((entry) => (
-                `<option value="${escapeHtml(entry.id)}"${entry.id === selectedId ? ' selected' : ''}>${escapeHtml(entry.label)}</option>`
-            )).join('');
-            return `<optgroup label="${escapeHtml(group.label)}">${options}</optgroup>`;
-        }).join('');
+    function populateGroupOptions(selectedGroupId) {
+        const { categoryGroupField } = getModalElements();
+        if (!categoryGroupField) return;
 
-        categoryField.innerHTML = `<option value="">Select a reason…</option>${groupMarkup}`;
-        updateCategoryHint(selectedId);
+        categoryGroupField.innerHTML = [
+            '<option value="">Select a category…</option>',
+            ...REPORT_CATEGORY_GROUPS.map((group) => (
+                `<option value="${escapeHtml(group.id)}"${group.id === selectedGroupId ? ' selected' : ''}>${escapeHtml(group.label)}</option>`
+            ))
+        ].join('');
+
+        populateReasonOptions(selectedGroupId, '');
+    }
+
+    function populateReasonOptions(groupId, selectedReasonId) {
+        const { reasonField } = getModalElements();
+        if (!reasonField) return;
+
+        const group = findReportGroup(groupId);
+        if (!group) {
+            reasonField.innerHTML = '<option value="">Select a reason…</option>';
+            reasonField.value = '';
+            reasonField.disabled = true;
+            updateCategoryHint('');
+            return;
+        }
+
+        reasonField.disabled = false;
+        reasonField.innerHTML = [
+            '<option value="">Select a reason…</option>',
+            ...(group.categories || []).map((entry) => (
+                `<option value="${escapeHtml(entry.id)}"${entry.id === selectedReasonId ? ' selected' : ''}>${escapeHtml(entry.label)}</option>`
+            ))
+        ].join('');
+
+        if (selectedReasonId) {
+            reasonField.value = selectedReasonId;
+        }
+
+        updateCategoryHint(selectedReasonId || reasonField.value);
     }
 
     function updateCategoryHint(categoryId) {
-        const { categoryField, categoryHint, detailsField } = getModalElements();
-        const selectedId = categoryId || String(categoryField?.value || '').trim();
+        const { categoryHint, detailsField } = getModalElements();
+        const selectedId = categoryId || getSelectedReasonId();
         const meta = getCategoryMeta(selectedId);
 
         if (categoryHint) {
@@ -122,6 +168,86 @@
             detailsField.placeholder = meta?.hint
                 ? `${DEFAULT_DETAILS_PLACEHOLDER} ${meta.hint}`
                 : DEFAULT_DETAILS_PLACEHOLDER;
+        }
+    }
+
+    function revokeScreenshotPreviewUrl() {
+        if (screenshotPreviewUrl) {
+            URL.revokeObjectURL(screenshotPreviewUrl);
+            screenshotPreviewUrl = '';
+        }
+    }
+
+    function renderScreenshotPreview() {
+        const {
+            screenshotPreview,
+            screenshotPreviewImg,
+            screenshotClearBtn,
+            screenshotAddBtn
+        } = getModalElements();
+
+        if (!screenshotPreview || !screenshotPreviewImg) return;
+
+        if (!pendingScreenshot?.previewUrl) {
+            screenshotPreview.hidden = true;
+            screenshotPreviewImg.removeAttribute('src');
+            if (screenshotClearBtn) screenshotClearBtn.hidden = true;
+            if (screenshotAddBtn) screenshotAddBtn.textContent = 'Attach screenshot';
+            return;
+        }
+
+        screenshotPreview.hidden = false;
+        screenshotPreviewImg.src = pendingScreenshot.previewUrl;
+        if (screenshotClearBtn) screenshotClearBtn.hidden = false;
+        if (screenshotAddBtn) screenshotAddBtn.textContent = 'Replace screenshot';
+    }
+
+    function clearScreenshot() {
+        pendingScreenshot = null;
+        revokeScreenshotPreviewUrl();
+
+        const { screenshotInput } = getModalElements();
+        if (screenshotInput) screenshotInput.value = '';
+        renderScreenshotPreview();
+    }
+
+    function readFileAsDataUrl(file) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(String(reader.result || ''));
+            reader.onerror = () => reject(new Error('read_failed'));
+            reader.readAsDataURL(file);
+        });
+    }
+
+    async function attachScreenshotFile(file) {
+        if (!file) return;
+
+        const mimeType = String(file.type || '').toLowerCase();
+        if (!SCREENSHOT_ACCEPT.includes(mimeType)) {
+            setFeedback('Screenshot must be PNG, JPG, WebP, or GIF.', true);
+            return;
+        }
+        if (file.size > SCREENSHOT_MAX_BYTES) {
+            setFeedback('Screenshot must be 2 MB or smaller.', true);
+            return;
+        }
+
+        try {
+            const dataUrl = await readFileAsDataUrl(file);
+            revokeScreenshotPreviewUrl();
+            screenshotPreviewUrl = URL.createObjectURL(file);
+            pendingScreenshot = {
+                dataUrl,
+                mimeType: mimeType === 'image/jpg' ? 'image/jpeg' : mimeType,
+                name: String(file.name || 'screenshot').slice(0, 120),
+                byteSize: file.size,
+                previewUrl: screenshotPreviewUrl
+            };
+            setFeedback('', false);
+            renderScreenshotPreview();
+        } catch (_err) {
+            setFeedback('Could not read that image file. Try another screenshot.', true);
         }
     }
 
@@ -206,9 +332,10 @@
                 : {}
         };
 
-        populateCategoryOptions('');
+        populateGroupOptions('');
         configureTargetField(targetField, targetUsername, allowTargetEntry);
         detailsField.value = '';
+        clearScreenshot();
         renderContextBlock(pendingContext.contextLabel);
         setFeedback('', false);
         submitting = false;
@@ -226,12 +353,12 @@
         updateDetailsCounter();
 
         global.setTimeout(() => {
-            const { categoryField } = getModalElements();
+            const { categoryGroupField } = getModalElements();
             if (allowTargetEntry && targetField) {
                 targetField.focus();
                 return;
             }
-            if (categoryField) categoryField.focus();
+            if (categoryGroupField) categoryGroupField.focus();
         }, 0);
     }
 
@@ -254,6 +381,7 @@
 
         pendingContext = null;
         submitting = false;
+        clearScreenshot();
         root.hidden = true;
         root.setAttribute('aria-hidden', 'true');
         global.document.body.classList.remove('player-report-modal-open');
@@ -273,7 +401,7 @@
             return;
         }
 
-        const { targetField, categoryField, detailsField, submitBtn } = getModalElements();
+        const { targetField, detailsField, submitBtn } = getModalElements();
         const targetUsername = pendingContext.allowTargetEntry
             ? String(targetField?.value || '').trim()
             : String(pendingContext.targetUsername || '').trim();
@@ -295,11 +423,11 @@
 
         pendingContext.targetUsername = targetUsername;
 
-        const category = String(categoryField?.value || '').trim();
+        const category = getSelectedReasonId();
         const details = String(detailsField?.value || '').trim();
 
         if (!category) {
-            setFeedback('Choose a report reason.', true);
+            setFeedback('Choose a category and reason.', true);
             return;
         }
         if (details.length < DETAILS_MIN) {
@@ -315,29 +443,39 @@
         }
         setFeedback('', false);
 
+        const payload = {
+            username,
+            targetUsername: pendingContext.targetUsername,
+            category,
+            details,
+            source: pendingContext.source,
+            contextLabel: pendingContext.contextLabel,
+            contextMeta: pendingContext.contextMeta
+        };
+
+        if (pendingScreenshot?.dataUrl) {
+            payload.screenshot = {
+                dataUrl: pendingScreenshot.dataUrl,
+                mimeType: pendingScreenshot.mimeType,
+                name: pendingScreenshot.name
+            };
+        }
+
         try {
             const response = await global.fetch(resolveApiUrl('/api/portal/player-reports'), {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 credentials: 'same-origin',
-                body: JSON.stringify({
-                    username,
-                    targetUsername: pendingContext.targetUsername,
-                    category,
-                    details,
-                    source: pendingContext.source,
-                    contextLabel: pendingContext.contextLabel,
-                    contextMeta: pendingContext.contextMeta
-                })
+                body: JSON.stringify(payload)
             });
 
-            const payload = await response.json().catch(() => ({}));
+            const responsePayload = await response.json().catch(() => ({}));
 
-            if (!response.ok || payload.status === 'error') {
+            if (!response.ok || responsePayload.status === 'error') {
                 if (typeof global.showRiftError === 'function') {
-                    await global.showRiftError(payload, 'Report a commander');
+                    await global.showRiftError(responsePayload, 'Report a commander');
                 } else {
-                    setFeedback(payload.message || 'Could not submit report.', true);
+                    setFeedback(responsePayload.message || 'Could not submit report.', true);
                 }
                 submitting = false;
                 if (submitBtn) {
@@ -387,10 +525,14 @@
             root,
             scrim,
             detailsField,
-            categoryField,
+            categoryGroupField,
+            reasonField,
             submitBtn,
             cancelBtn,
-            closeBtn
+            closeBtn,
+            screenshotInput,
+            screenshotAddBtn,
+            screenshotClearBtn
         } = getModalElements();
 
         if (!root || root.dataset.playerReportBound === 'true') return;
@@ -401,9 +543,30 @@
         closeBtn?.addEventListener('click', close);
         submitBtn?.addEventListener('click', submit);
         detailsField?.addEventListener('input', updateDetailsCounter);
-        categoryField?.addEventListener('change', () => {
+
+        categoryGroupField?.addEventListener('change', () => {
+            populateReasonOptions(String(categoryGroupField.value || '').trim(), '');
+            updateDetailsCounter();
+        });
+
+        reasonField?.addEventListener('change', () => {
             updateCategoryHint();
             updateDetailsCounter();
+        });
+
+        screenshotAddBtn?.addEventListener('click', (event) => {
+            event.preventDefault();
+            screenshotInput?.click();
+        });
+
+        screenshotClearBtn?.addEventListener('click', (event) => {
+            event.preventDefault();
+            clearScreenshot();
+        });
+
+        screenshotInput?.addEventListener('change', () => {
+            const file = screenshotInput.files && screenshotInput.files[0];
+            if (file) attachScreenshotFile(file);
         });
 
         global.document.addEventListener('keydown', handleDocumentKeydown);

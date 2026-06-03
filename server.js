@@ -28,6 +28,10 @@ const {
     validatePlayerReportSubmission,
     buildPlayerReportAdminMailBody
 } = require('./nexus-player-reports');
+const {
+    parseScreenshotPayload,
+    savePlayerReportScreenshot
+} = require('./nexus-player-report-screenshot');
 const { listErrorCodes } = require('./nexus-error-codes');
 const {
     calculateNationTreasuryCaptureReward,
@@ -1969,7 +1973,8 @@ function serializePlayerReportForClient(report) {
         category: report.category,
         source: report.source,
         status: report.status || 'open',
-        createdAt: report.createdAt
+        createdAt: report.createdAt,
+        hasScreenshot: Boolean(report.screenshot?.filename)
     };
 }
 
@@ -2928,7 +2933,10 @@ if (isProduction) {
 
 /* Block 6: Compression & Body Parsers */
 app.use(compression());
-app.use(express.json());
+app.use((req, res, next) => {
+    const isPlayerReportPost = req.method === 'POST' && req.path === '/api/portal/player-reports';
+    return express.json({ limit: isPlayerReportPost ? '3mb' : '100kb' })(req, res, next);
+});
 app.use(express.urlencoded({ extended: true }));
 
 const PORTAL_SESSION_MAX_AGE_MS = 30 * 24 * 60 * 60 * 1000;
@@ -4460,6 +4468,18 @@ app.post('/api/portal/player-reports', (req, res) => {
         clientIp: resolveClientIp(req),
         userAgent: resolveClientUserAgent(req)
     });
+
+    const screenshotPayload = parseScreenshotPayload(req.body?.screenshot);
+    if (screenshotPayload) {
+        const saved = savePlayerReportScreenshot(__dirname, report.id, screenshotPayload);
+        if (!saved.ok) {
+            if (saved.message) {
+                return sendApiError(res, saved.errorCode || 'NEXUS-REPORT-006', { message: saved.message });
+            }
+            return sendApiError(res, saved.errorCode || 'NEXUS-REPORT-006');
+        }
+        report.screenshot = saved.screenshot;
+    }
 
     reports.push(report);
     writePlayerReportStore(reports);

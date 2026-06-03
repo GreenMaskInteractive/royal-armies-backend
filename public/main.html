@@ -15,7 +15,7 @@
     <!-- Block 2: Page Title & Stylesheet Bridge -->
     <title>Royal Armies - An MMOHFT Medieval-Fantasy Strategy Game</title>
     <link rel="stylesheet" href="style.css?v=display-resolution-1">
-    <link rel="stylesheet" href="style2.css?v=report-player-menu-red-1">
+    <link rel="stylesheet" href="style2.css?v=report-modal-screenshot-1">
     <link rel="stylesheet" href="mobile-responsive.css?v=report-player-menu-red-1">
     <link rel="stylesheet" href="dev-page-navigator.css">
     <link rel="stylesheet" href="custom-cursor.css?v=design-scale-cursor-fix-1">
@@ -647,40 +647,66 @@
     <div id="player-report-modal" class="player-report-modal" hidden aria-modal="true" aria-labelledby="player-report-modal-title" aria-hidden="true">
         <div class="player-report-modal-scrim" aria-hidden="true"></div>
         <div class="player-report-modal-panel" role="document">
-            <header class="player-report-modal-header">
-                <p class="player-report-modal-eyebrow">Community safety</p>
-                <h3 id="player-report-modal-title" class="player-report-modal-title">Report a Commander</h3>
-                <button type="button" id="player-report-close-btn" class="player-report-modal-close-btn" aria-label="Close report dialog">×</button>
-            </header>
-            <div class="player-report-modal-body">
-                <p class="player-report-modal-lead">
-                    Reports go to the moderation team. False or abusive reports may result in account action under the
-                    <a href="/terms" target="_blank" rel="noopener noreferrer">Terms of Service</a>.
-                </p>
-                <label class="player-report-field" for="player-report-target">
-                    <span class="player-report-field-label">Commander</span>
-                    <input type="text" id="player-report-target" class="player-report-field-input" readonly tabindex="-1">
-                </label>
-                <div id="player-report-context-block" class="player-report-context-block" hidden>
-                    <span class="player-report-field-label">Context</span>
-                    <p id="player-report-context-text" class="player-report-context-text"></p>
-                </div>
-                <label class="player-report-field" for="player-report-category">
-                    <span class="player-report-field-label">Reason</span>
-                    <select id="player-report-category" class="player-report-field-select" required>
-                        <option value="">Select a reason…</option>
-                    </select>
-                </label>
-                <p id="player-report-category-hint" class="player-report-category-hint" hidden></p>
-                <label class="player-report-field" for="player-report-details">
-                    <span class="player-report-field-label">What happened?</span>
-                    <textarea id="player-report-details" class="player-report-field-textarea" rows="5" maxlength="2000" placeholder="Describe the incident with enough detail for moderators to investigate (dates, channels, quotes, etc.)." required></textarea>
-                </label>
-                <p id="player-report-details-counter" class="player-report-details-counter">0 / 2000 (minimum 20)</p>
-                <p id="player-report-feedback" class="player-report-feedback" hidden role="alert"></p>
-                <div class="player-report-modal-actions modal-action-btn-row">
-                    <button type="button" id="player-report-submit-btn" class="portal-rejoin-age-btn confirm-btn" disabled aria-disabled="true">Submit report</button>
-                    <button type="button" id="player-report-cancel-btn" class="cancel-btn modal-action-btn cancel main-portal-auth-secondary-btn">Cancel</button>
+            <div class="player-report-modal-surface">
+                <header class="player-report-modal-header">
+                    <p class="player-report-modal-eyebrow">Community safety</p>
+                    <h3 id="player-report-modal-title" class="player-report-modal-title">Report a Commander</h3>
+                    <button type="button" id="player-report-close-btn" class="player-report-modal-close-btn" aria-label="Close report dialog">×</button>
+                </header>
+                <div class="player-report-modal-body">
+                    <p class="player-report-modal-lead">
+                        Reports go to the moderation team. False or abusive reports may result in account action under the
+                        <a href="/terms" target="_blank" rel="noopener noreferrer">Terms of Service</a>.
+                    </p>
+                    <label class="player-report-field" for="player-report-target">
+                        <span class="player-report-field-label">Commander</span>
+                        <input type="text" id="player-report-target" class="player-report-field-input" readonly tabindex="-1">
+                    </label>
+                    <div id="player-report-context-block" class="player-report-context-block" hidden>
+                        <span class="player-report-field-label">Context</span>
+                        <p id="player-report-context-text" class="player-report-context-text"></p>
+                    </div>
+                    <div class="player-report-select-row">
+                        <label class="player-report-field" for="player-report-category-group">
+                            <span class="player-report-field-label">Category</span>
+                            <div class="player-report-select-shell">
+                                <select id="player-report-category-group" class="player-report-field-select" required>
+                                    <option value="">Select a category…</option>
+                                </select>
+                            </div>
+                        </label>
+                        <label class="player-report-field" for="player-report-reason">
+                            <span class="player-report-field-label">Reason</span>
+                            <div class="player-report-select-shell">
+                                <select id="player-report-reason" class="player-report-field-select" required disabled>
+                                    <option value="">Select a reason…</option>
+                                </select>
+                            </div>
+                        </label>
+                    </div>
+                    <p id="player-report-category-hint" class="player-report-category-hint" hidden></p>
+                    <label class="player-report-field" for="player-report-details">
+                        <span class="player-report-field-label">What happened?</span>
+                        <textarea id="player-report-details" class="player-report-field-textarea" rows="5" maxlength="2000" placeholder="Describe the incident with enough detail for moderators to investigate (dates, channels, quotes, etc.)." required></textarea>
+                    </label>
+                    <p id="player-report-details-counter" class="player-report-details-counter">0 / 2000 (minimum 20)</p>
+                    <div class="player-report-field player-report-screenshot-field">
+                        <span class="player-report-field-label">Screenshot (optional)</span>
+                        <div class="player-report-screenshot-controls">
+                            <input type="file" id="player-report-screenshot-input" class="player-report-screenshot-input" accept="image/png,image/jpeg,image/webp,image/gif" hidden>
+                            <button type="button" id="player-report-screenshot-add-btn" class="player-report-screenshot-add-btn">Attach screenshot</button>
+                            <button type="button" id="player-report-screenshot-clear-btn" class="player-report-screenshot-clear-btn" hidden>Remove</button>
+                        </div>
+                        <p class="player-report-screenshot-hint">PNG, JPG, WebP, or GIF — up to 2 MB.</p>
+                        <figure id="player-report-screenshot-preview" class="player-report-screenshot-preview" hidden>
+                            <img id="player-report-screenshot-preview-img" class="player-report-screenshot-preview-img" alt="Attached screenshot preview">
+                        </figure>
+                    </div>
+                    <p id="player-report-feedback" class="player-report-feedback" hidden role="alert"></p>
+                    <div class="player-report-modal-actions modal-action-btn-row">
+                        <button type="button" id="player-report-submit-btn" class="portal-rejoin-age-btn confirm-btn" disabled aria-disabled="true">Submit report</button>
+                        <button type="button" id="player-report-cancel-btn" class="cancel-btn modal-action-btn cancel main-portal-auth-secondary-btn">Cancel</button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -727,7 +753,7 @@
     <script src="commander-hub.js?v=hub-action-btn-compact-1"></script>
     <script src="maintenance-alert.js?v=local-api-reachability-1"></script>
     <script src="nexus-player-report-catalog.js?v=report-categories-pbbg-1"></script>
-    <script src="rift-player-report.js?v=report-categories-pbbg-1"></script>
+    <script src="rift-player-report.js?v=report-modal-screenshot-1"></script>
     <script src="age-music-flow.js?v=age-soundtrack-wandering-soul-1"></script>
     <script src="script2.js?v=report-player-commander-menu-1"></script>
     <script src="custom-cursor.js?v=design-scale-hud-fix-1"></script>

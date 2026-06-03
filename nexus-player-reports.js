@@ -40,11 +40,12 @@ function buildPlayerReportRecord({
     source,
     contextLabel,
     contextMeta,
+    screenshot,
     clientIp,
     userAgent
 }) {
     const createdAt = new Date().toISOString();
-    return {
+    const record = {
         id: `${REPORT_ID_PREFIX}${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
         reporterUsername,
         targetUsername,
@@ -58,6 +59,17 @@ function buildPlayerReportRecord({
         clientIp: clientIp || '',
         userAgent: userAgent || ''
     };
+
+    if (screenshot && screenshot.filename) {
+        record.screenshot = {
+            filename: screenshot.filename,
+            mimeType: screenshot.mimeType || '',
+            byteSize: Number(screenshot.byteSize) || 0,
+            storagePath: screenshot.storagePath || ''
+        };
+    }
+
+    return record;
 }
 
 function findRecentReporterReports(reports, reporterUsername, sinceMs) {
@@ -149,6 +161,15 @@ function buildPlayerReportAdminMailBody(report) {
     }
 
     lines.push('', 'Details:', report.details);
+
+    if (report.screenshot?.filename) {
+        lines.push(
+            '',
+            'Screenshot:',
+            report.screenshot.storagePath || report.screenshot.filename
+        );
+    }
+
     return lines.join('\n');
 }
 

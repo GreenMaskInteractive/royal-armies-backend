@@ -611,6 +611,12 @@
             message: 'That commander could not be found.',
             category: 'moderation'
         },
+        'NEXUS-REPORT-006': {
+            http: 400,
+            title: 'Report a commander',
+            message: 'The screenshot could not be attached. Use PNG, JPG, WebP, or GIF up to 2 MB.',
+            category: 'moderation'
+        },
 
         /* --- Client-only network --- */
         'RIFT-NET-001': {
