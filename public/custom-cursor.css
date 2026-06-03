@@ -73,7 +73,7 @@ html.royal-armies-custom-cursor *::-webkit-scrollbar {
 }
 
 #royal-armies-custom-cursor.is-clicking .royal-armies-cursor-finger {
-    transform: translate(1px, 1px) scale(0.96);
+    transform: translate(1px, 2px) scale(0.96) rotate(5deg);
     filter: brightness(1.06);
 }
 
@@ -139,7 +139,7 @@ html.royal-armies-custom-cursor *::-webkit-scrollbar {
     }
 
     #royal-armies-custom-cursor.is-clicking .royal-armies-cursor-finger {
-        transform: translate(0.5px, 1px) scale(0.97);
+        transform: translate(0.5px, 1px) scale(0.97) rotate(3deg);
     }
 
     .cursor-fingertip-click-burst {
