@@ -22883,16 +22883,17 @@ body.is-rift-discoveries-workspace-open {
     right: var(--game-region-map-bezel, 12px);
     top: var(--game-region-map-bezel, 12px);
     bottom: calc(var(--game-region-map-bezel, 12px) - var(--war-room-tab-drop));
-    display: flex;
-    flex-direction: column;
-    justify-content: flex-end;
-    align-items: flex-start;
     box-sizing: border-box;
     pointer-events: none;
     z-index: 2;
 }
 
+/* Bottom-anchored stack: workspace grows up and lifts the tab above it. */
 .age-war-room-rise {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: var(--war-room-tab-drop);
     display: flex;
     flex-direction: column;
     justify-content: flex-end;
@@ -22901,15 +22902,11 @@ body.is-rift-discoveries-workspace-open {
     max-height: var(--war-room-tab-height);
     overflow: hidden;
     pointer-events: auto;
-    transform: translateY(var(--war-room-tab-drop));
-    transform-origin: bottom left;
     transition: max-height 0.52s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .age-war-room-slide.is-open .age-war-room-rise {
     max-height: 100%;
-    flex: 0 1 100%;
-    min-height: 0;
 }
 
 .age-army-groups-tab {
@@ -22970,13 +22967,14 @@ body.is-rift-discoveries-workspace-open {
 .age-army-groups-workspace {
     position: relative;
     width: 100%;
-    flex: 1 1 0;
+    flex: 0 0 0;
     min-height: 0;
+    order: 2;
     display: flex;
     flex-direction: column;
     box-sizing: border-box;
     padding: 0 16px;
-    margin-bottom: -1px;
+    margin-top: -1px;
     background:
         linear-gradient(180deg, rgba(16, 12, 8, 0.98) 0%, rgba(10, 8, 6, 1) 100%);
     border: 1px solid transparent;
@@ -22986,13 +22984,20 @@ body.is-rift-discoveries-workspace-open {
     pointer-events: none;
     overflow: hidden;
     transition:
+        flex-grow 0.52s cubic-bezier(0.22, 1, 0.36, 1),
         opacity 0.34s ease,
         padding 0.4s ease,
         border-color 0.4s ease;
 }
 
+.age-army-groups-tab {
+    order: 1;
+    flex-shrink: 0;
+}
+
 .age-war-room-slide.is-open .age-army-groups-workspace,
 .age-army-groups-workspace.is-open {
+    flex: 1 1 auto;
     padding: 14px 16px 10px;
     border-color: rgba(197, 160, 89, 0.45);
     opacity: 1;
