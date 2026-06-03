@@ -32,6 +32,7 @@
         rise: null,
         tab: null,
         workspace: null,
+        workspaceMain: null,
         createBtn: null,
         sfLeadBtn: null,
         sonarBtn: null,
@@ -126,7 +127,10 @@
         if (!els.workspace || !els.tab) return;
         els.slide?.classList.toggle('is-open', workspaceOpen);
         els.workspace.classList.toggle('is-open', workspaceOpen);
-        els.workspace.setAttribute('aria-hidden', workspaceOpen ? 'false' : 'true');
+        els.workspace.setAttribute('aria-hidden', 'false');
+        if (els.workspaceMain) {
+            els.workspaceMain.setAttribute('aria-hidden', workspaceOpen ? 'false' : 'true');
+        }
         els.tab.setAttribute('aria-expanded', workspaceOpen ? 'true' : 'false');
         els.tab.classList.toggle('is-active', workspaceOpen);
         if (els.dock) {
@@ -483,6 +487,7 @@
     function enable() {
         els.dock = global.document.getElementById('age-war-room-dock');
         els.slide = global.document.getElementById('age-war-room-slide');
+        els.rise = global.document.getElementById('age-war-room-rise');
         els.tab = global.document.getElementById('age-army-groups-tab');
         els.workspace = global.document.getElementById('age-army-groups-workspace');
         els.createBtn = global.document.getElementById('age-army-groups-btn-create');
