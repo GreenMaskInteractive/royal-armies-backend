@@ -2707,8 +2707,12 @@ body {
         --age-top-bar-logo-slot-h: 42px !important;
     }
 
-    #age-page-canvas .age-map-top-bar-separator {
-        margin: 0 8px !important;
+    #age-page-canvas .age-map-top-bar-brand {
+        --age-top-bar-age-divider-gap: 14px !important;
+    }
+
+    #age-page-canvas .age-map-top-bar-separator:not(.age-map-top-bar-separator--nation) {
+        margin: 0 var(--age-top-bar-age-divider-gap, 14px) 0 8px !important;
         height: 36px !important;
     }
 
@@ -2717,7 +2721,7 @@ body {
     }
 
     #age-page-canvas .age-map-top-bar-separator--nation {
-        margin: 0 8px !important;
+        margin: 0 0 0 var(--age-top-bar-age-divider-gap, 14px) !important;
         height: 36px !important;
     }
 
@@ -2725,6 +2729,7 @@ body {
         flex: 1 1 auto !important;
         max-width: none !important;
         gap: 8px !important;
+        margin-left: var(--age-top-bar-age-divider-gap, 14px) !important;
     }
 
     #age-page-canvas .age-map-top-bar-nation-crest {

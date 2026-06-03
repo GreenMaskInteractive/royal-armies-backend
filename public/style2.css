@@ -12944,6 +12944,7 @@ body.developer-maintenance-alert-active #page-landing {
     align-items: center;
     min-width: 0;
     max-width: min(72vw, 820px);
+    --age-top-bar-age-divider-gap: 20px;
     --age-top-bar-logo-slot-h: calc((var(--age-map-hud-top-bar-height, 78px) - 22px) * 1.171875);
     --age-top-bar-logo-slot-w: min(234px, 28.125vw);
 }
@@ -12969,12 +12970,12 @@ body.developer-maintenance-alert-active #page-landing {
     object-position: center center;
 }
 
-#age-page-canvas .age-map-top-bar-separator {
+#age-page-canvas .age-map-top-bar-separator:not(.age-map-top-bar-separator--nation) {
     flex: 0 0 auto;
     align-self: center;
     width: 1px;
     height: calc(var(--age-map-hud-top-bar-height, 78px) - 26px);
-    margin: 0 14px 0 37px;
+    margin: 0 var(--age-top-bar-age-divider-gap, 20px) 0 37px;
     background: linear-gradient(
         180deg,
         rgba(184, 144, 48, 0) 0%,
@@ -13020,7 +13021,7 @@ body.developer-maintenance-alert-active #page-landing {
     align-self: center;
     width: 1px;
     height: calc(var(--age-map-hud-top-bar-height, 78px) - 26px);
-    margin: 0 12px 0 16px;
+    margin: 0 0 0 var(--age-top-bar-age-divider-gap, 20px);
     background: linear-gradient(
         180deg,
         rgba(184, 144, 48, 0) 0%,
@@ -13039,6 +13040,7 @@ body.developer-maintenance-alert-active #page-landing {
     gap: 10px;
     min-width: 0;
     max-width: min(280px, 34vw);
+    margin-left: var(--age-top-bar-age-divider-gap, 20px);
 }
 
 #age-page-canvas .age-map-top-bar-nation-crest {
