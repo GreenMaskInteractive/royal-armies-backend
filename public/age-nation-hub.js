@@ -9,7 +9,7 @@
     let layoutHandler = null;
     let closeFinishTimer = 0;
     const MENU_TOGGLE_GAP_PX = 0;
-    const MENU_PANEL_MIN_WIDTH_PX = 196;
+    const MENU_PANEL_MIN_WIDTH_PX = 208;
 
     function getHub() {
         return global.document.getElementById('age-nation-hub');
