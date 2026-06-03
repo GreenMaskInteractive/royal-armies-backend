@@ -7,14 +7,11 @@
     const DETAILS_MIN = 20;
     const DETAILS_MAX = 2000;
 
-    const REPORT_CATEGORIES = [
-        { id: 'harassment', label: 'Harassment or bullying' },
-        { id: 'hate_speech', label: 'Hate speech or slurs' },
-        { id: 'cheating', label: 'Cheating or exploits' },
-        { id: 'spam', label: 'Spam or scam attempts' },
-        { id: 'impersonation', label: 'Impersonation or fraud' },
-        { id: 'other', label: 'Other rule violation' }
-    ];
+    const catalog = global.RoyalArmiesPlayerReportCatalog || {};
+    const REPORT_CATEGORY_GROUPS = catalog.REPORT_CATEGORY_GROUPS || [];
+    const REPORT_CATEGORIES_MAP = catalog.REPORT_CATEGORIES || {};
+    const DEFAULT_DETAILS_PLACEHOLDER = catalog.DEFAULT_DETAILS_PLACEHOLDER
+        || 'Describe the incident with enough detail for moderators to investigate (dates, channels, quotes, etc.).';
 
     let pendingContext = null;
     let submitting = false;
@@ -52,6 +49,7 @@
             contextBlock: global.document.getElementById('player-report-context-block'),
             contextText: global.document.getElementById('player-report-context-text'),
             counter: global.document.getElementById('player-report-details-counter'),
+            categoryHint: global.document.getElementById('player-report-category-hint'),
             feedback: global.document.getElementById('player-report-feedback'),
             submitBtn: global.document.getElementById('player-report-submit-btn'),
             cancelBtn: global.document.getElementById('player-report-cancel-btn'),
@@ -90,16 +88,41 @@
         }
     }
 
+    function getCategoryMeta(categoryId) {
+        return REPORT_CATEGORIES_MAP[String(categoryId || '').trim().toLowerCase()] || null;
+    }
+
     function populateCategoryOptions(selectedId) {
         const { categoryField } = getModalElements();
         if (!categoryField) return;
 
-        categoryField.innerHTML = [
-            '<option value="">Select a category…</option>',
-            ...REPORT_CATEGORIES.map((entry) => (
+        const groupMarkup = REPORT_CATEGORY_GROUPS.map((group) => {
+            const options = (group.categories || []).map((entry) => (
                 `<option value="${escapeHtml(entry.id)}"${entry.id === selectedId ? ' selected' : ''}>${escapeHtml(entry.label)}</option>`
-            ))
-        ].join('');
+            )).join('');
+            return `<optgroup label="${escapeHtml(group.label)}">${options}</optgroup>`;
+        }).join('');
+
+        categoryField.innerHTML = `<option value="">Select a reason…</option>${groupMarkup}`;
+        updateCategoryHint(selectedId);
+    }
+
+    function updateCategoryHint(categoryId) {
+        const { categoryField, categoryHint, detailsField } = getModalElements();
+        const selectedId = categoryId || String(categoryField?.value || '').trim();
+        const meta = getCategoryMeta(selectedId);
+
+        if (categoryHint) {
+            const hint = String(meta?.hint || '').trim();
+            categoryHint.hidden = !hint;
+            categoryHint.textContent = hint;
+        }
+
+        if (detailsField && !String(detailsField.value || '').trim()) {
+            detailsField.placeholder = meta?.hint
+                ? `${DEFAULT_DETAILS_PLACEHOLDER} ${meta.hint}`
+                : DEFAULT_DETAILS_PLACEHOLDER;
+        }
     }
 
     function renderContextBlock(contextLabel) {
@@ -276,7 +299,7 @@
         const details = String(detailsField?.value || '').trim();
 
         if (!category) {
-            setFeedback('Choose a report category.', true);
+            setFeedback('Choose a report reason.', true);
             return;
         }
         if (details.length < DETAILS_MIN) {
@@ -378,7 +401,10 @@
         closeBtn?.addEventListener('click', close);
         submitBtn?.addEventListener('click', submit);
         detailsField?.addEventListener('input', updateDetailsCounter);
-        categoryField?.addEventListener('change', updateDetailsCounter);
+        categoryField?.addEventListener('change', () => {
+            updateCategoryHint();
+            updateDetailsCounter();
+        });
 
         global.document.addEventListener('keydown', handleDocumentKeydown);
         global.document.addEventListener('click', (event) => {
@@ -475,7 +501,8 @@
         injectReportPlayerMenuItems,
         DETAILS_MIN,
         DETAILS_MAX,
-        REPORT_CATEGORIES
+        REPORT_CATEGORY_GROUPS,
+        REPORT_CATEGORIES: REPORT_CATEGORIES_MAP
     };
 
     global.RoyalArmiesPlayerReport = api;

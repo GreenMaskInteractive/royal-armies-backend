@@ -24936,6 +24936,14 @@ body.player-report-modal-open {
     color: rgba(184, 144, 48, 0.86);
 }
 
+.player-report-category-hint {
+    margin: -4px 0 0;
+    font-family: 'Segoe UI', Tahoma, sans-serif;
+    font-size: 0.78rem;
+    line-height: 1.45;
+    color: rgba(196, 178, 140, 0.9);
+}
+
 .player-report-field-input,
 .player-report-field-select,
 .player-report-field-textarea {

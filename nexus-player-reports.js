@@ -2,32 +2,10 @@
  * NEXUS — Player conduct reports (ledger-backed moderation queue).
  */
 
-const REPORT_CATEGORIES = {
-    harassment: {
-        id: 'harassment',
-        label: 'Harassment or bullying'
-    },
-    hate_speech: {
-        id: 'hate_speech',
-        label: 'Hate speech or slurs'
-    },
-    cheating: {
-        id: 'cheating',
-        label: 'Cheating or exploits'
-    },
-    spam: {
-        id: 'spam',
-        label: 'Spam or scam attempts'
-    },
-    impersonation: {
-        id: 'impersonation',
-        label: 'Impersonation or fraud'
-    },
-    other: {
-        id: 'other',
-        label: 'Other rule violation'
-    }
-};
+const {
+    REPORT_CATEGORIES,
+    normalizeReportCategory: normalizeReportCategoryFromCatalog
+} = require('./public/nexus-player-report-catalog.js');
 
 const REPORT_SOURCES = new Set([
     'profile',
@@ -46,8 +24,7 @@ const REPORT_DUPLICATE_WINDOW_MS = 6 * 60 * 60 * 1000;
 const REPORT_ID_PREFIX = 'rpt_';
 
 function normalizeReportCategory(value) {
-    const key = String(value || '').trim().toLowerCase();
-    return REPORT_CATEGORIES[key] ? key : '';
+    return normalizeReportCategoryFromCatalog(value);
 }
 
 function normalizeReportSource(value) {
