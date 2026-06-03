@@ -693,6 +693,38 @@
         }
     }
 
+    const DEV_PREVIEW_TOAST_DISCOVERY_IDS = Object.freeze([
+        'song-cascading-skies',
+        'song-kindred',
+        'song-wandering-soul'
+    ]);
+
+    /** Dev-only: show discovery toast without recording discoveries. */
+    async function previewDiscoveryToast(options) {
+        const opts = options || {};
+        registerMusicDiscoveryCatalog();
+        bindHandlers();
+        ensureModalShell();
+
+        let ids = Array.isArray(opts.ids) && opts.ids.length
+            ? opts.ids.filter((id) => CATALOG_BY_ID[id])
+            : DEV_PREVIEW_TOAST_DISCOVERY_IDS.filter((id) => CATALOG_BY_ID[id]);
+
+        if (opts.single && ids.length > 1) {
+            ids = [ids[0]];
+        }
+
+        if (!ids.length) {
+            return false;
+        }
+
+        toastQueue.length = 0;
+        toastQueueProcessing = false;
+        hideDiscoveryToast();
+        await showDiscoveryToastForIds(ids);
+        return true;
+    }
+
     async function processToastQueue() {
         if (toastQueueProcessing) return;
         toastQueueProcessing = true;
@@ -986,6 +1018,8 @@
     global.markDiscoveryRead = markDiscoveryRead;
     global.getDiscoveryCatalog = () => Object.keys(CATALOG_BY_ID).map((id) => CATALOG_BY_ID[id]);
 
+    global.previewDiscoveryToast = previewDiscoveryToast;
+
     global.RoyalArmiesDiscoveries = Object.freeze({
         open: openDiscoveriesWorkspace,
         close: closeDiscoveriesWorkspace,
@@ -993,6 +1027,7 @@
         recordSong: recordSongDiscovery,
         runPendingStarterSongDiscoveries,
         registerMusicCatalog: registerMusicDiscoveryCatalog,
+        previewToast: previewDiscoveryToast,
         isLocalDevRevealAllSongDiscoveries,
         categories: CATEGORIES
     });

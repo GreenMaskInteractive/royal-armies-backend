@@ -221,6 +221,8 @@
             ? '<button type="button" id="dev-achievement-popup-test" class="dev-page-navigator-go dev-page-navigator-go--secondary" title="Preview the Whoa Slow Down achievement popup">Achievement</button>'
             : '';
 
+        const discoveryToastTestBtn = '<button type="button" id="dev-discovery-toast-test" class="dev-page-navigator-go dev-page-navigator-go--secondary" title="Preview discovery popup (3 starter songs). Shift+click: one song.">Discovery</button>';
+
         return `
             <div id="dev-page-navigator" class="dev-page-navigator" role="navigation" aria-label="Developer page bypass">
                 <button
@@ -241,6 +243,7 @@
                 </label>
                 ${personaBlock}
                 <button type="button" id="dev-page-navigator-go" class="dev-page-navigator-go">Go</button>
+                ${discoveryToastTestBtn}
                 ${achievementTestBtn}
             </div>
         `;
@@ -464,6 +467,27 @@
                     return;
                 }
                 preview({ grantIfMissing: true });
+            });
+        }
+
+        const discoveryToastBtn = global.document.getElementById('dev-discovery-toast-test');
+        if (discoveryToastBtn) {
+            discoveryToastBtn.addEventListener('click', (event) => {
+                const preview = typeof global.previewDiscoveryToast === 'function'
+                    ? global.previewDiscoveryToast
+                    : (global.RoyalArmiesDiscoveries && typeof global.RoyalArmiesDiscoveries.previewToast === 'function'
+                        ? global.RoyalArmiesDiscoveries.previewToast
+                        : null);
+                if (!preview) {
+                    global.alert('Discovery toast preview needs rift-discoveries-workspace.js — open main, game, or agealpha.');
+                    return;
+                }
+                const single = Boolean(event.shiftKey);
+                preview({ single }).then((ok) => {
+                    if (!ok) {
+                        global.alert('Discovery catalog is empty — ensure rift-song-manuscript-catalog.js and age-music-flow.js are loaded.');
+                    }
+                });
             });
         }
     }
