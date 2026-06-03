@@ -108,25 +108,28 @@
         {
             trackId: 'rivers-of-blood',
             title: 'Rivers of Blood',
-            nation: 'Unknown',
+            nation: 'Krall',
             body: `
-                <p>A recovered song manuscript from the Age archives. Its provenance has not yet been matched to a single nation or composer—only the melody survives, preserved for commanders who uncover it on campaign.</p>
+                <p>Originating from the jagged, wave-battered coastal strongholds within the nation of Krall, this intense instrumental piece was forged by the clan raiders and frontline skirmishers who claimed the frozen shorelines as their home. Conceived in the dark, freezing weeks of the winter raiding season when the longships were prepared for sea expeditions, the local war-musicians constructed a heavy, relentless, and deeply threatening acoustic rhythm.</p>
+                <p>The pacing was engineered to mirror the steady, intimidating surge of ocean oars and the cold adrenaline of a midnight shoreline assault. This track was crafted as a deliberate psychological weapon of absolute intimidation, designed to stoke the aggressive fire of the raiding parties and project raw, unyielding physical dominance over any who dared approach the nation&apos;s borders.</p>
             `
         },
         {
             trackId: 'dravic-fortitude',
             title: 'Dravic Fortitude',
-            nation: 'Dravic',
+            nation: 'Khaerant',
             body: `
-                <p>A recovered song manuscript associated with the Dravic territories. Full chronicle text has not yet been transcribed; the arrangement is catalogued here until field scholars confirm its origin.</p>
+                <p>Born within the inner, iron-fortified garrisons within the nation of Khaerant, this rigid instrumental arrangement was commissioned by the central high-command and the senior tacticians of the autocracy. Executed with absolute precision during the formal military reviews held for the imperial officer corps, the state&apos;s professional court musicians delivered a highly formulaic, tense, and chillingly pristine movement.</p>
+                <p>The arrangement was calculated to embody the unyielding, mechanical efficiency of an empire built on absolute law and defensive structural dominance. It was crafted as a psychological anchor for the leadership, projecting total imperial poise and reminding the elite that the nation&apos;s survival relies entirely on strict, unbreakable discipline.</p>
             `
         },
         {
             trackId: 'awakened',
             title: 'Awakened',
-            nation: 'Unknown',
+            nation: 'Aesthene',
             body: `
-                <p>A recovered song manuscript held in the Lost Manuscripts vault. Its binding is intact but the opening pages are missing—only the performance notation remains for those who discover it in the Age.</p>
+                <p>This hypnotic instrumental piece originated deep within the central, isolated sanctuary vaults within the nation of Aesthene, where the senior ritual-keepers and arcane scholars dedicated their lives to studying ancient cosmic phenomena. Composed during the exact midnight hour of the seasonal solstice—a period when raw magical currents are notoriously volatile—the enclave&apos;s master-theorists constructed a highly complex, spellbinding, and progressively layered rhythmic structure.</p>
+                <p>The track was intentionally crafted to embody the awakening of dormant arcane focus and the precise geometry of high-tier mental expansion. It was designed out of critical necessity to act as an auditory focal point, giving the nation&apos;s researchers the absolute mental clarity needed to unlock volatile ancient scripts without losing their cognitive poise.</p>
             `
         }
     ]);
