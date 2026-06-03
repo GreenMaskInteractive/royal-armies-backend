@@ -228,6 +228,10 @@
     async function sendPresenceHeartbeat() {
         const username = resolvePageUsername();
         if (!username || username.toLowerCase() === 'testaccount') return;
+        if (typeof global.shouldSuppressRepeatedLocalDevApiWarnings === 'function'
+            && global.shouldSuppressRepeatedLocalDevApiWarnings()) {
+            return;
+        }
 
         try {
             await global.fetch(resolveApiUrl('/api/portal/presence'), {
@@ -238,7 +242,10 @@
                 credentials: 'include'
             });
         } catch (err) {
-            console.warn('Age presence heartbeat failed:', err);
+            if (typeof global.shouldSuppressRepeatedLocalDevApiWarnings !== 'function'
+                || !global.shouldSuppressRepeatedLocalDevApiWarnings()) {
+                console.warn('Age presence heartbeat failed:', err);
+            }
         }
     }
 

@@ -333,6 +333,10 @@
         if (!username || !isAgePageActive()) {
             return null;
         }
+        if (typeof global.shouldSuppressRepeatedLocalDevApiWarnings === 'function'
+            && global.shouldSuppressRepeatedLocalDevApiWarnings()) {
+            return null;
+        }
 
         try {
             const response = await global.fetch(
@@ -352,7 +356,10 @@
             handleIncomingAlert(payload.alert || null);
             return payload.alert || null;
         } catch (error) {
-            console.warn('[RIFT] Dispatch alert sync failed:', error.message);
+            if (typeof global.shouldSuppressRepeatedLocalDevApiWarnings !== 'function'
+                || !global.shouldSuppressRepeatedLocalDevApiWarnings()) {
+                console.warn('[RIFT] Dispatch alert sync failed:', error.message);
+            }
             return null;
         }
     }

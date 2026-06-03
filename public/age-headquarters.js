@@ -618,6 +618,14 @@
     }
 
     async function fetchHeadquartersWorkspace() {
+        if (typeof global.shouldSuppressRepeatedLocalDevApiWarnings === 'function'
+            && global.shouldSuppressRepeatedLocalDevApiWarnings()) {
+            const fallback = buildDevOwnerFallbackWorkspace(resolveHeadquartersUsername());
+            if (fallback) {
+                return applyWorkspace(fallback);
+            }
+        }
+
         const username = resolveHeadquartersUsername();
         if (!username) {
             if (!isLocalDevOwnerPortalView()) {

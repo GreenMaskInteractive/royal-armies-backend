@@ -615,6 +615,10 @@
     }
 
     async function showRiftNetworkError(fallbackTitle) {
+        if (typeof global.shouldSuppressRepeatedLocalDevApiWarnings === 'function'
+            && global.shouldSuppressRepeatedLocalDevApiWarnings()) {
+            return normalizeErrorPayload({ code: 'RIFT-NET-001' }, fallbackTitle || 'Connection error');
+        }
         if (typeof global.isLocalDevelopmentHost === 'function' && global.isLocalDevelopmentHost()) {
             return showRiftError({ code: 'RIFT-NET-001' }, fallbackTitle || 'Connection error');
         }

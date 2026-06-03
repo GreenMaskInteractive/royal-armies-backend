@@ -612,6 +612,10 @@
     async function fetchGameChatFromServer() {
         const username = resolveUsername();
         if (!username || !chatSessionEnabled) return false;
+        if (typeof global.shouldSuppressRepeatedLocalDevApiWarnings === 'function'
+            && global.shouldSuppressRepeatedLocalDevApiWarnings()) {
+            return false;
+        }
         if (chatPollInFlight) return false;
 
         chatPollInFlight = true;
@@ -634,6 +638,10 @@
             }
             return applyServerPayload(payload);
         } catch (err) {
+            if (typeof global.shouldSuppressRepeatedLocalDevApiWarnings === 'function'
+                && global.shouldSuppressRepeatedLocalDevApiWarnings()) {
+                return false;
+            }
             console.warn('Game chat sync failed:', err);
             if (typeof global.isServerUpdateDowntime === 'function'
                 && global.isServerUpdateDowntime(null, null, err)) {

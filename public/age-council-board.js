@@ -696,6 +696,11 @@
     async function fetchCouncilBoard() {
         const username = resolveUsername();
         if (!username) return;
+        if (typeof global.shouldSuppressRepeatedLocalDevApiWarnings === 'function'
+            && global.shouldSuppressRepeatedLocalDevApiWarnings()) {
+            applyCouncilBoardFallback();
+            return;
+        }
 
         try {
             const response = await global.fetch(
@@ -720,7 +725,10 @@
                 applyStatusSideEffects(previousStatusId, boardState.statusId);
             }
         } catch (err) {
-            console.warn('[RIFT] Council board fetch failed:', err);
+            if (typeof global.shouldSuppressRepeatedLocalDevApiWarnings !== 'function'
+                || !global.shouldSuppressRepeatedLocalDevApiWarnings()) {
+                console.warn('[RIFT] Council board fetch failed:', err);
+            }
             applyCouncilBoardFallback();
         }
     }
