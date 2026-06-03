@@ -177,8 +177,8 @@
         const noticeEl = global.document.getElementById('age-council-board-notice');
         if (!noticeEl) return null;
 
-        const height = Math.round(noticeEl.clientHeight);
         const width = Math.round(noticeEl.clientWidth);
+        const height = Math.round(Math.max(noticeEl.clientHeight, noticeEl.scrollHeight));
         if (height < 1 || width < 1) return null;
 
         return { height, width };
@@ -196,9 +196,9 @@
         }
 
         previewEl.style.width = `${size.width}px`;
-        previewEl.style.height = `${size.height}px`;
         previewEl.style.minHeight = `${size.height}px`;
-        previewEl.style.maxHeight = `${size.height}px`;
+        previewEl.style.height = 'auto';
+        previewEl.style.maxHeight = 'none';
 
         if (previewShell) {
             previewShell.style.width = `${size.width}px`;
@@ -208,7 +208,17 @@
 
     function syncCouncilEditorPreviewViewport() {
         const size = measureCouncilNoticeViewport();
-        if (size) applyCouncilEditorPreviewViewport(size);
+        if (!size) return;
+
+        applyCouncilEditorPreviewViewport(size);
+
+        const previewEl = global.document.getElementById('age-council-board-editor-preview');
+        if (!previewEl) return;
+
+        const contentHeight = Math.round(Math.max(size.height, previewEl.scrollHeight));
+        if (contentHeight > size.height) {
+            applyCouncilEditorPreviewViewport({ width: size.width, height: contentHeight });
+        }
     }
 
     function startCouncilEditorPreviewViewportSync() {
