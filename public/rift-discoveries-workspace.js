@@ -620,7 +620,8 @@
     let suppressPortalSelectUntil = 0;
 
     function markDiscoveryToastUiSfxWindow() {
-        suppressPortalSelectUntil = Date.now() + 320;
+        const revealMs = (global.RoyalArmiesUiSfx && global.RoyalArmiesUiSfx.discoveryToastRevealMs) || 720;
+        suppressPortalSelectUntil = Date.now() + revealMs + 80;
     }
 
     function shouldSuppressPortalUiSelect() {
@@ -691,9 +692,7 @@
         toast.classList.remove('is-visible');
         void toast.offsetWidth;
         toast.classList.add('is-visible');
-        global.setTimeout(() => {
-            playDiscoveryToastAppearSfx();
-        }, 40);
+        playDiscoveryToastAppearSfx();
 
         if (toastHideTimer) global.clearTimeout(toastHideTimer);
         if (toastAdvanceTimer) global.clearTimeout(toastAdvanceTimer);

@@ -8,7 +8,15 @@
     const SELECT_AUDIO_ID = 'select-sound';
     const HOVER_SRC = 'audio/uihover.wav';
     const SELECT_SRC = 'audio/uiselect.wav';
+    const DISCOVERY_SWOOSH_AUDIO_ID = 'discovery-swoosh-sound';
+    const DISCOVERY_SWOOSH_SRC = 'audio/swoosh.wav';
+    const JOIN_AGE_SELECT_AUDIO_ID = 'join-age-select-sound';
+    const JOIN_AGE_SELECT_SRC = 'audio/joinagesfxselect.wav';
     const DISCOVERY_UNLOCK_VOLUME_SCALE = 0.68;
+    /** Synced to FLEX `riftDiscoveryToastReveal` duration (style2.css). */
+    const DISCOVERY_TOAST_REVEAL_MS = 720;
+    const DISCOVERY_SWOOSH_AT_MS = 0;
+    const DISCOVERY_CHIME_AT_MS = DISCOVERY_TOAST_REVEAL_MS;
     const DEFAULT_VOLUME = 0.2;
 
     const BUTTON_SELECTOR = [
@@ -39,6 +47,8 @@
 
     let hoverAudio = null;
     let selectAudio = null;
+    let discoverySwooshAudio = null;
+    let discoveryUnlockTimers = [];
     let listenersBound = false;
 
     function resolvePortalSfxVolume() {
@@ -65,6 +75,25 @@
     function primeAudioElements() {
         hoverAudio = ensureAudioElement(HOVER_AUDIO_ID, HOVER_SRC);
         selectAudio = ensureAudioElement(SELECT_AUDIO_ID, SELECT_SRC);
+        discoverySwooshAudio = ensureAudioElement(DISCOVERY_SWOOSH_AUDIO_ID, DISCOVERY_SWOOSH_SRC);
+    }
+
+    function resolveDiscoveryChimeAudio() {
+        const existing = global.document.getElementById(JOIN_AGE_SELECT_AUDIO_ID);
+        if (existing) return existing;
+        return ensureAudioElement(JOIN_AGE_SELECT_AUDIO_ID, JOIN_AGE_SELECT_SRC);
+    }
+
+    function clearDiscoveryUnlockTimers() {
+        discoveryUnlockTimers.forEach((timerId) => global.clearTimeout(timerId));
+        discoveryUnlockTimers = [];
+    }
+
+    function playDiscoveryAudioElement(audio, volume) {
+        if (!audio) return;
+        audio.volume = volume;
+        audio.currentTime = 0;
+        audio.play().catch(() => {});
     }
 
     function isDisabledButton(element) {
@@ -114,9 +143,18 @@
         const volume = resolvePortalSfxVolume() * DISCOVERY_UNLOCK_VOLUME_SCALE;
         if (volume <= 0) return;
 
-        if (global.RiftProceduralSfx && typeof global.RiftProceduralSfx.playDiscoveryUnlock === 'function') {
-            global.RiftProceduralSfx.playDiscoveryUnlock(volume);
-        }
+        primeAudioElements();
+        clearDiscoveryUnlockTimers();
+
+        const chimeAudio = resolveDiscoveryChimeAudio();
+
+        discoveryUnlockTimers.push(global.setTimeout(() => {
+            playDiscoveryAudioElement(discoverySwooshAudio, volume);
+        }, DISCOVERY_SWOOSH_AT_MS));
+
+        discoveryUnlockTimers.push(global.setTimeout(() => {
+            playDiscoveryAudioElement(chimeAudio, volume);
+        }, DISCOVERY_CHIME_AT_MS));
     }
 
     function onDocumentMouseOver(event) {
@@ -164,6 +202,9 @@
         playHover: playHoverSFX,
         playSelect: playSelectSFX,
         playDiscoveryUnlock: playDiscoveryUnlockSfx,
+        discoveryToastRevealMs: DISCOVERY_TOAST_REVEAL_MS,
+        discoverySwooshAtMs: DISCOVERY_SWOOSH_AT_MS,
+        discoveryChimeAtMs: DISCOVERY_CHIME_AT_MS,
         resolveButtonTarget,
         resolveInteractiveTarget: resolveButtonTarget
     };
