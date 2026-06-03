@@ -1658,6 +1658,7 @@
             || target.closest('.age-war-room-dock')
             || target.closest('.age-war-room-slide')
             || target.closest('.age-war-room-rise')
+            || target.closest('.age-war-room-panel')
         );
     }
 
