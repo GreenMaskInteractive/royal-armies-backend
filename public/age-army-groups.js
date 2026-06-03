@@ -277,10 +277,40 @@
         syncDeploymentPinFromRoster(payload);
     }
 
-    function buildTypePill(type) {
+    function resolveLeaderAllowedTypes(payload) {
+        const access = payload?.access || rosterPayload?.access || {};
+        const types = ['sf', 'taxi', 'rally', 'hold'];
+        if (access.canCreateMain) types.push('main');
+        if (access.canCreateTempMain) types.push('temp-main');
+        return types.filter((entry) => TYPE_ORDER.includes(entry));
+    }
+
+    function resolveNextArmyGroupType(currentType, allowedTypes) {
+        const allowed = Array.isArray(allowedTypes) ? allowedTypes : [];
+        if (!allowed.length) return currentType;
+        const current = String(currentType || '').trim();
+        const idx = Math.max(0, allowed.indexOf(current));
+        return allowed[(idx + 1) % allowed.length];
+    }
+
+    function buildTypePill(type, group) {
+        const label = TYPE_LABELS[type] || type;
+        const className = `age-army-groups-type-pill ${TYPE_CLASS[type] || TYPE_CLASS.sf}`;
+
+        if (group?.canChangeType) {
+            const btn = global.document.createElement('button');
+            btn.type = 'button';
+            btn.className = `${className} age-army-groups-type-pill--cycle`;
+            btn.textContent = label;
+            btn.dataset.armyTypeCycle = group.id;
+            btn.setAttribute('aria-label', `Army type ${label}. Click to change.`);
+            btn.title = 'Change army type';
+            return btn;
+        }
+
         const pill = global.document.createElement('span');
-        pill.className = `age-army-groups-type-pill ${TYPE_CLASS[type] || TYPE_CLASS.sf}`;
-        pill.textContent = TYPE_LABELS[type] || type;
+        pill.className = className;
+        pill.textContent = label;
         return pill;
     }
 
@@ -505,7 +535,7 @@
             const head = global.document.createElement('div');
             head.className = 'age-army-groups-row-head';
 
-            head.appendChild(buildTypePill(group.type));
+            head.appendChild(buildTypePill(group.type, group));
             head.appendChild(buildGroupNameHead(group));
 
             const tools = global.document.createElement('div');
@@ -796,6 +826,24 @@
         }
     }
 
+    async function cycleArmyGroupType(groupId) {
+        const group = (rosterPayload?.groups || []).find((entry) => entry.id === groupId);
+        if (!group?.canChangeType) return;
+
+        const allowed = resolveLeaderAllowedTypes(rosterPayload);
+        const nextType = resolveNextArmyGroupType(group.type, allowed);
+        if (!nextType || nextType === group.type) return;
+
+        try {
+            const payload = await postAction(`${API_BASE}/set-type`, { groupId, type: nextType });
+            applyRosterPayload(payload);
+            const label = TYPE_LABELS[nextType] || nextType;
+            showFeedback(`Army type set to ${label}.`, false);
+        } catch (err) {
+            showFeedback(formatRosterError(err), true);
+        }
+    }
+
     async function dismissArmyGroup(groupId) {
         const confirmed = typeof global.showPortalConfirm === 'function'
             ? await global.showPortalConfirm(
@@ -1008,6 +1056,13 @@
         if (joinBtn) {
             event.preventDefault();
             void joinArmyGroup(joinBtn.dataset.armyJoin);
+            return;
+        }
+
+        const typeCycleBtn = event.target.closest('[data-army-type-cycle]');
+        if (typeCycleBtn) {
+            event.preventDefault();
+            void cycleArmyGroupType(typeCycleBtn.dataset.armyTypeCycle);
             return;
         }
 

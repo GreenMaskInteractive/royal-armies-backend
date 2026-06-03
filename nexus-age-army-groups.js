@@ -305,6 +305,31 @@ function validateRenameArmyGroup({ name, group, existingGroups }) {
     return { name: normalizedName };
 }
 
+function validateSetArmyGroupType({ type, group, access, existingGroups }) {
+    const normalizedType = normalizeArmyGroupType(type);
+    if (!normalizedType) {
+        return { errorCode: 'NEXUS-GAME-010', message: 'Army group type is required.' };
+    }
+    if (!canUseArmyGroupType(normalizedType, access)) {
+        return { errorCode: 'NEXUS-GAME-005', message: 'You cannot assign that army group type.' };
+    }
+    if (normalizedType === group.type) {
+        return { type: normalizedType, unchanged: true };
+    }
+    const duplicate = (existingGroups || []).some(
+        (entry) => entry.id !== group.id
+            && entry.type === normalizedType
+            && entry.name.toLowerCase() === group.name.toLowerCase()
+    );
+    if (duplicate) {
+        return {
+            errorCode: 'NEXUS-GAME-012',
+            message: 'An army group with that name already exists for this category.'
+        };
+    }
+    return { type: normalizedType };
+}
+
 function rebuildArmyGroupMembers(group, memberUsernames) {
     const members = [];
     const seen = new Set();
@@ -372,6 +397,7 @@ function buildArmyGroupsApiPayload(state, access, username, options = {}) {
                 isMember: self ? group.memberUsernames.includes(self) : false,
                 isLeader: isGroupLeader,
                 canRename: isGroupLeader,
+                canChangeType: isGroupLeader,
                 canDismiss: isGroupLeader,
                 canManageMembers: isGroupLeader,
                 canNationCommand: nationCommand,
@@ -547,6 +573,43 @@ function applyRenameArmyGroup(state, { groupId, username, name }) {
 
     const groups = normalized.groups.slice();
     groups[idx] = { ...group, name: validation.name };
+
+    return {
+        state: {
+            ...normalized,
+            groups: sortArmyGroups(groups),
+            updatedAt: new Date().toISOString()
+        },
+        group: groups[idx]
+    };
+}
+
+function applySetArmyGroupType(state, { groupId, username, type, access }) {
+    const self = normalizeUsername(username);
+    if (!self) return { errorCode: 'NEXUS-GEN-002' };
+
+    const lookup = findArmyGroupIndex(state, groupId);
+    if (lookup.errorCode) return lookup;
+
+    const { normalized, idx, group } = lookup;
+    if (group.leaderUsername !== self) {
+        return { errorCode: 'NEXUS-GEN-005', message: 'Only the army leader can change this group type.' };
+    }
+
+    const validation = validateSetArmyGroupType({
+        type,
+        group,
+        access,
+        existingGroups: normalized.groups
+    });
+    if (validation.errorCode) return validation;
+
+    if (validation.unchanged) {
+        return { state: normalized, group, unchanged: true };
+    }
+
+    const groups = normalized.groups.slice();
+    groups[idx] = { ...group, type: validation.type };
 
     return {
         state: {
@@ -823,7 +886,9 @@ module.exports = {
     pruneSonarSessions,
     findArmyGroupIndex,
     validateRenameArmyGroup,
+    validateSetArmyGroupType,
     applyRenameArmyGroup,
+    applySetArmyGroupType,
     applyDismissArmyGroup,
     applyKickArmyGroupMember,
     applyMergeArmyGroupInto,
