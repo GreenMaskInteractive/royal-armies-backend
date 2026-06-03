@@ -41,11 +41,14 @@
         createSubmit: null,
         list: null,
         feedback: null,
-        sonarLayer: null
+        sonarLayer: null,
+        volunteersColumn: null,
+        sfLeadList: null
     };
 
     let workspaceOpen = false;
     let createPanelOpen = false;
+    let sfLeadPanelOpen = false;
     let selectedType = 'sf';
     let allowedTypes = ['sf', 'taxi', 'rally', 'hold'];
     let accessFlags = { canCreateMain: false, canCreateTempMain: false };
@@ -166,6 +169,7 @@
 
         if (!workspaceOpen) {
             setCreatePanelOpen(false);
+            setSfLeadPanelOpen(false);
             if (escapeHandler) {
                 global.document.removeEventListener('keydown', escapeHandler);
                 escapeHandler = null;
@@ -294,6 +298,54 @@
         }
     }
 
+    function setSfLeadPanelOpen(open) {
+        sfLeadPanelOpen = Boolean(open);
+        if (!els.volunteersColumn) return;
+        els.volunteersColumn.classList.toggle('is-visible', sfLeadPanelOpen);
+        els.volunteersColumn.setAttribute('aria-hidden', sfLeadPanelOpen ? 'false' : 'true');
+        els.sfLeadBtn?.setAttribute('aria-expanded', sfLeadPanelOpen ? 'true' : 'false');
+        els.sfLeadBtn?.setAttribute('aria-controls', 'age-army-groups-volunteers-column');
+    }
+
+    function formatVolunteerDisplayName(username) {
+        const raw = String(username || '').trim();
+        if (!raw) return '';
+        return raw.charAt(0).toUpperCase() + raw.slice(1);
+    }
+
+    function renderSfLeadVolunteers(payload) {
+        if (!els.sfLeadList) return;
+        const candidates = Array.isArray(payload?.sfLeadCandidates) ? payload.sfLeadCandidates : [];
+        const self = resolveUsername().toLowerCase();
+        els.sfLeadList.innerHTML = '';
+
+        if (!candidates.length) {
+            const empty = global.document.createElement('li');
+            empty.className = 'age-army-groups-sf-lead-empty';
+            empty.textContent = 'No lead volunteers yet.';
+            els.sfLeadList.appendChild(empty);
+            return;
+        }
+
+        candidates.forEach((username) => {
+            const normalized = String(username || '').trim().toLowerCase();
+            if (!normalized) return;
+
+            const item = global.document.createElement('li');
+            item.className = 'age-army-groups-sf-lead-item';
+            if (normalized === self) {
+                item.classList.add('is-self');
+            }
+
+            const label = global.document.createElement('span');
+            label.className = 'age-army-groups-sf-lead-name';
+            const display = formatVolunteerDisplayName(username);
+            label.textContent = normalized === self ? `${display} (you)` : display;
+            item.appendChild(label);
+            els.sfLeadList.appendChild(item);
+        });
+    }
+
     function updateSfLeadButton(payload) {
         if (!els.sfLeadBtn) return;
         const listed = Boolean(payload?.sfLeadCandidate);
@@ -320,6 +372,7 @@
             rebuildAllowedTypes();
             applyTypeCycleButton();
             renderRosterList(payload);
+            renderSfLeadVolunteers(payload);
             updateSfLeadButton(payload);
             syncDeploymentPinFromRoster(payload);
             syncSonarFromPayload(payload);
@@ -327,6 +380,9 @@
         } catch (err) {
             if (workspaceOpen) {
                 renderRosterList({ groups: [] });
+                if (sfLeadPanelOpen) {
+                    renderSfLeadVolunteers({ sfLeadCandidates: [] });
+                }
             }
             if (!silent && workspaceOpen) {
                 showFeedback(formatRosterError(err), true);
@@ -405,9 +461,11 @@
     }
 
     async function toggleSfLeadCandidate() {
+        setSfLeadPanelOpen(true);
         try {
             const payload = await postAction(`${API_BASE}/sf-lead-candidate`, {});
             rosterPayload = payload;
+            renderSfLeadVolunteers(payload);
             updateSfLeadButton(payload);
             showFeedback(
                 payload.sfLeadCandidate
@@ -555,7 +613,10 @@
             }
         });
 
-        els.sfLeadBtn?.addEventListener('click', () => toggleSfLeadCandidate());
+        els.sfLeadBtn?.addEventListener('click', (event) => {
+            event.preventDefault();
+            void toggleSfLeadCandidate();
+        });
         els.sonarBtn?.addEventListener('click', () => triggerSonar());
 
         global.addEventListener('royalarmies:age-movement-updated', () => {
@@ -586,10 +647,13 @@
         els.list = global.document.getElementById('age-army-groups-list');
         els.feedback = global.document.getElementById('age-army-groups-feedback');
         els.sonarLayer = global.document.getElementById('age-army-groups-sonar-layer');
+        els.volunteersColumn = global.document.getElementById('age-army-groups-volunteers-column');
+        els.sfLeadList = global.document.getElementById('age-army-groups-sf-lead-list');
 
         if (!els.modal || !els.workspaceMain) return false;
 
         setCreatePanelOpen(false);
+        setSfLeadPanelOpen(false);
         setWorkspaceOpen(false);
 
         applyTypeCycleButton();

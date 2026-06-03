@@ -23470,6 +23470,40 @@ body.age-war-room-open {
         inset 0 0 0 1px rgba(160, 210, 255, 0.25);
 }
 
+.age-army-groups-body {
+    flex: 1 1 auto;
+    display: flex;
+    align-items: stretch;
+    gap: 24px;
+    min-height: 0;
+    margin-top: 4px;
+}
+
+.age-army-groups-roster-column {
+    flex: 1 1 58%;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+}
+
+.age-army-groups-volunteers-column {
+    flex: 0 0 min(38%, 280px);
+    min-width: 180px;
+    max-width: 42%;
+    margin-left: auto;
+    display: none;
+    flex-direction: column;
+    align-items: stretch;
+    min-height: 0;
+    padding-left: 20px;
+    border-left: 1px solid rgba(197, 160, 89, 0.22);
+}
+
+.age-army-groups-volunteers-column.is-visible {
+    display: flex;
+}
+
 .age-army-groups-list-heading {
     flex: 0 0 auto;
     margin: 12px 0 0;
@@ -23481,6 +23515,62 @@ body.age-war-room-open {
     letter-spacing: 0.12em;
     text-transform: uppercase;
     color: #e8d5a3;
+}
+
+.age-army-groups-volunteers-heading {
+    flex: 0 0 auto;
+    margin: 12px 0 0;
+    padding: 0 0 8px;
+    border-bottom: 1px solid rgba(197, 160, 89, 0.28);
+    font-family: 'Cinzel', serif;
+    font-size: 0.82rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #e8d5a3;
+    text-align: right;
+}
+
+.age-army-groups-sf-lead-list {
+    flex: 1 1 auto;
+    list-style: none;
+    margin: 12px 0 0;
+    padding: 0 4px 4px 0;
+    min-height: 0;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 8px;
+    scrollbar-width: thin;
+}
+
+.age-army-groups-sf-lead-item {
+    width: 100%;
+    display: flex;
+    justify-content: flex-end;
+}
+
+.age-army-groups-sf-lead-name {
+    font-family: 'Segoe UI', Tahoma, sans-serif;
+    font-size: 0.88rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    color: rgba(236, 220, 180, 0.92);
+    text-align: right;
+}
+
+.age-army-groups-sf-lead-item.is-self .age-army-groups-sf-lead-name {
+    color: #b8dcff;
+}
+
+.age-army-groups-sf-lead-empty {
+    width: 100%;
+    font-family: 'Segoe UI', Tahoma, sans-serif;
+    font-size: 0.78rem;
+    color: rgba(236, 220, 180, 0.52);
+    text-align: right;
+    font-style: italic;
 }
 
 .age-army-groups-roster {
