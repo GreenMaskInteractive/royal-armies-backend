@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Royal Armies — Age Alpha</title>
     <link rel="stylesheet" href="style.css?v=cursor-modal-layer-fix-1">
-    <link rel="stylesheet" href="style2.css?v=council-edit-access-6">
-    <link rel="stylesheet" href="mobile-responsive.css?v=report-player-menu-red-1">
+    <link rel="stylesheet" href="style2.css?v=nation-top-bar-1">
+    <link rel="stylesheet" href="mobile-responsive.css?v=nation-top-bar-1">
     <link rel="stylesheet" href="dev-page-navigator.css">
     <link rel="stylesheet" href="custom-cursor.css?v=scrollbar-cursor-3">
 </head>
@@ -33,6 +33,19 @@
                         <div class="age-map-age-badge">
                             <span class="age-map-age-badge-eyebrow">Current Age</span>
                             <h1 id="age-map-age-title" class="age-map-age-badge-title">Age Alpha</h1>
+                        </div>
+                        <div class="age-map-top-bar-separator age-map-top-bar-separator--nation" aria-hidden="true"></div>
+                        <div class="age-map-top-bar-nation" id="age-nation-welcome-panel" aria-label="Nation welcome">
+                            <img
+                                src="images/aesthenecrest.png"
+                                alt=""
+                                id="age-nation-welcome-crest"
+                                class="age-map-top-bar-nation-crest"
+                                width="52"
+                                height="52"
+                                decoding="async"
+                                aria-hidden="true">
+                            <p id="age-nation-welcome-text" class="age-map-top-bar-nation-text">Welcome to Aesthine</p>
                         </div>
                     </div>
                     <ul class="age-map-resource-strip" aria-label="Realm resources">
@@ -137,18 +150,6 @@
                         </div>
                         <div id="age-council-board-notice" class="age-council-board-notice is-empty" aria-live="polite">No council notice posted yet.</div>
                         <p id="age-council-board-edited-by" class="age-council-board-edited-by" hidden></p>
-                    </section>
-
-                    <section class="age-nation-welcome-panel" id="age-nation-welcome-panel" aria-label="Nation welcome">
-                        <img
-                            src="images/aesthenecrest.png"
-                            alt=""
-                            class="age-nation-welcome-crest"
-                            width="240"
-                            height="240"
-                            decoding="async"
-                            aria-hidden="true">
-                        <p class="age-nation-welcome-text">Welcome to Aesthine</p>
                     </section>
                 </div>
             </aside>
@@ -1581,7 +1582,7 @@
     <script src="age-music-flow.js?v=song-manuscript-catalog-1"></script>
     <script src="rift-song-manuscript-catalog.js?v=discovery-song-lyrics-1"></script>
     <script src="rift-discoveries-workspace.js?v=discovery-wav-sync-1"></script>
-    <script src="age-page.js?v=council-editor-preview-1"></script>
+    <script src="age-page.js?v=nation-top-bar-1"></script>
     <script src="age-war-ledger.js?v=war-ledger-bottom-bar-1"></script>
     <script src="rift-unit-purchase-catalog.js?v=swarm-recruit-1"></script>
     <script src="rift-age-guild-training.js?v=commander-rank-hud-1"></script>

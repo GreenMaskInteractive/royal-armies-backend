@@ -12943,7 +12943,7 @@ body.developer-maintenance-alert-active #page-landing {
     display: flex;
     align-items: center;
     min-width: 0;
-    max-width: min(52vw, 520px);
+    max-width: min(72vw, 820px);
     --age-top-bar-logo-slot-h: calc((var(--age-map-hud-top-bar-height, 78px) - 22px) * 1.171875);
     --age-top-bar-logo-slot-w: min(234px, 28.125vw);
 }
@@ -13013,6 +13013,60 @@ body.developer-maintenance-alert-active #page-landing {
     text-transform: uppercase;
     color: #ffd978;
     text-shadow: 0 0 14px rgba(255, 215, 0, 0.22);
+}
+
+#age-page-canvas .age-map-top-bar-separator--nation {
+    flex: 0 0 auto;
+    align-self: center;
+    width: 1px;
+    height: calc(var(--age-map-hud-top-bar-height, 78px) - 26px);
+    margin: 0 12px 0 16px;
+    background: linear-gradient(
+        180deg,
+        rgba(184, 144, 48, 0) 0%,
+        rgba(184, 144, 48, 0.55) 18%,
+        rgba(255, 217, 120, 0.72) 50%,
+        rgba(184, 144, 48, 0.55) 82%,
+        rgba(184, 144, 48, 0) 100%
+    );
+    box-shadow: 0 0 10px rgba(255, 215, 0, 0.12);
+}
+
+#age-page-canvas .age-map-top-bar-nation {
+    flex: 0 1 auto;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+    max-width: min(280px, 34vw);
+}
+
+#age-page-canvas .age-map-top-bar-nation-crest {
+    flex: 0 0 auto;
+    display: block;
+    width: auto;
+    height: calc(var(--age-map-hud-top-bar-height, 78px) - 24px);
+    max-height: 52px;
+    max-width: 52px;
+    object-fit: contain;
+    object-position: center center;
+    filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.55));
+}
+
+#age-page-canvas .age-map-top-bar-nation-text {
+    margin: 0;
+    min-width: 0;
+    font-family: 'Cinzel', serif;
+    font-size: 0.92rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    line-height: 1.2;
+    color: #ffd978;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.65);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .age-map-resource-strip {
@@ -13691,47 +13745,6 @@ body.developer-maintenance-alert-active #page-landing {
 
 #age-page-canvas .age-council-board:has(.age-council-board-edited-by:not([hidden])) .age-council-board-notice {
     padding-bottom: 18px;
-}
-
-/* Nation welcome crest below council board */
-#age-page-canvas .age-nation-welcome-panel {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    flex: 0 0 auto;
-    width: 100%;
-    min-height: var(--age-left-reports-height, 300px);
-    box-sizing: border-box;
-    padding: 24px 14px 22px;
-    border-radius: 6px;
-    border: 1px solid var(--age-hud-rail-border);
-    background:
-        var(--age-hud-rail-sheen),
-        var(--age-hud-rail-bg);
-    box-shadow: var(--age-hud-rail-inset), var(--age-hud-rail-shadow);
-    text-align: center;
-    gap: 16px;
-}
-
-#age-page-canvas .age-nation-welcome-crest {
-    display: block;
-    width: min(224px, 92%);
-    height: auto;
-    max-height: 240px;
-    object-fit: contain;
-    filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.65));
-}
-
-#age-page-canvas .age-nation-welcome-text {
-    margin: 0;
-    font-family: 'Cinzel', serif;
-    font-size: 1.64rem;
-    font-weight: 700;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    color: #ffd978;
-    text-shadow: 0 1px 4px rgba(0, 0, 0, 0.75);
 }
 
 /* Council board editor */

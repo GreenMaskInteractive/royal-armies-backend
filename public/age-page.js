@@ -11,8 +11,6 @@
     const COUNCIL_BOARD_RIGHT_INSET_EXTRA_PX = 20;
     const COUNCIL_BOARD_MIN_WIDTH_PX = 220;
     const COUNCIL_BOARD_MIN_HEIGHT_PX = 160;
-    const LEFT_HUD_STACK_GAP_PX = 10;
-    const LEFT_REPORTS_MIN_HEIGHT_PX = 300;
     const RIGHT_REPORTS_MIN_HEIGHT_PX = 150;
     const LEFT_COLUMN_CHAT_CLEARANCE_PX = 10;
     const AGE_MOBILE_LAYOUT_MQ = '(max-width: 1024px)';
@@ -915,7 +913,6 @@
                 '--age-council-board-width',
                 '--age-council-board-height',
                 '--age-left-column-height',
-                '--age-left-reports-height',
                 '--age-right-hud-height',
                 '--age-right-reports-height'
             ].forEach((prop) => canvas.style.removeProperty(prop));
@@ -939,30 +936,17 @@
         );
         const top = mapRect.top + gap;
         const bottomLimit = resolveLeftColumnBottomLimitPx();
-        const availableHeight = Math.max(
-            COUNCIL_BOARD_MIN_HEIGHT_PX + LEFT_HUD_STACK_GAP_PX + LEFT_REPORTS_MIN_HEIGHT_PX,
-            bottomLimit - top
-        );
+        const availableHeight = Math.max(COUNCIL_BOARD_MIN_HEIGHT_PX, bottomLimit - top);
         const councilHeight = Math.max(
             COUNCIL_BOARD_MIN_HEIGHT_PX,
-            Math.min(
-                availableHeight - LEFT_HUD_STACK_GAP_PX - LEFT_REPORTS_MIN_HEIGHT_PX,
-                availableHeight * 0.5
-            )
-        );
-        const reportsHeight = Math.max(
-            LEFT_REPORTS_MIN_HEIGHT_PX,
-            availableHeight - councilHeight - LEFT_HUD_STACK_GAP_PX
+            Math.min(availableHeight, availableHeight * 0.62)
         );
 
         canvas.style.setProperty('--age-council-board-top', `${top}px`);
         canvas.style.setProperty('--age-council-board-width', `${width}px`);
         canvas.style.setProperty('--age-council-board-height', `${councilHeight}px`);
-        canvas.style.setProperty('--age-left-reports-height', `${reportsHeight}px`);
-        canvas.style.setProperty(
-            '--age-left-column-height',
-            `${councilHeight + LEFT_HUD_STACK_GAP_PX + reportsHeight}px`
-        );
+        canvas.style.removeProperty('--age-left-reports-height');
+        canvas.style.setProperty('--age-left-column-height', `${councilHeight}px`);
 
         const rightHud = global.document.getElementById('age-map-hud-right');
         const reportsPanel = rightHud?.querySelector('.age-left-reports-panel');
