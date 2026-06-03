@@ -23403,8 +23403,8 @@ body.is-rift-discoveries-workspace-open {
     display: flex;
     flex-direction: column;
     pointer-events: auto;
-    width: min(920px, 72vw);
-    height: min(640px, 72vh);
+    width: min(1380px, 90vw);
+    height: min(960px, 90vh);
     max-width: calc(100vw - 40px);
     max-height: calc(100vh - 40px);
     box-sizing: border-box;

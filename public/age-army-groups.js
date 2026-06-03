@@ -1323,22 +1323,20 @@
         const dialog = els.modal?.querySelector('.age-war-room-dialog');
         dialog?.addEventListener('click', (event) => event.stopPropagation());
 
-        els.workspaceMain?.addEventListener('click', (event) => {
-            if (event.target.closest('#age-army-groups-btn-create')) {
-                event.preventDefault();
-                setCreatePanelOpen(!createPanelOpen);
-                showFeedback('', false);
-                return;
-            }
-            if (event.target.closest('#age-army-groups-create-submit')) {
-                event.preventDefault();
-                void createArmyGroup();
-                return;
-            }
-            if (event.target.closest('#age-army-groups-type-cycle')) {
-                event.preventDefault();
-                cycleSelectedType(1);
-            }
+        els.createBtn?.addEventListener('click', (event) => {
+            event.preventDefault();
+            setCreatePanelOpen(!createPanelOpen);
+            showFeedback('', false);
+        });
+
+        els.createSubmit?.addEventListener('click', (event) => {
+            event.preventDefault();
+            void createArmyGroup();
+        });
+
+        els.typeCycle?.addEventListener('click', (event) => {
+            event.preventDefault();
+            cycleSelectedType(1);
         });
 
         els.nameInput?.addEventListener('keydown', (event) => {
