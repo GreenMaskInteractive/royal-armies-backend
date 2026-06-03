@@ -630,6 +630,9 @@
         const workspace = resolveWorkspace();
         if (!workspace) return;
 
+        global.RoyalArmiesAdventurersGuild?.dismissGuildWorkspacesForSettlementAction?.();
+        global.RoyalArmiesAgeUnitEvolution?.close?.();
+
         try {
             await ensureCatalogLoaded();
         } catch (error) {

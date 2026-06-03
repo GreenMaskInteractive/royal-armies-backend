@@ -1443,10 +1443,6 @@
         global.document.getElementById('age-council-room-backdrop')?.addEventListener('click', () => {
             setCouncilRoomModalOpen(false);
         });
-        global.document.getElementById('age-council-room-open')?.addEventListener('click', (event) => {
-            event.preventDefault();
-            setCouncilRoomModalOpen(!councilRoomModalOpen);
-        });
         getCouncilRoomModal()?.querySelector('.age-council-room-dialog')?.addEventListener('click', (event) => {
             event.stopPropagation();
         });

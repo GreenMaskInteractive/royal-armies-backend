@@ -73,8 +73,8 @@
     let loadPromise = null;
 
     function resolveApiUrl(path) {
-        if (typeof global.resolveApiUrl === 'function') {
-            return global.resolveApiUrl(path);
+        if (typeof global.resolveRoyalArmiesApiUrl === 'function') {
+            return global.resolveRoyalArmiesApiUrl(path);
         }
         const origin = global.location?.origin || '';
         if (String(path || '').startsWith('http')) return path;
@@ -462,10 +462,6 @@
         });
         global.document.getElementById('age-records-backdrop')?.addEventListener('click', () => {
             setRecordsModalOpen(false);
-        });
-        global.document.getElementById('age-records-open')?.addEventListener('click', (event) => {
-            event.preventDefault();
-            setRecordsModalOpen(!recordsModalOpen);
         });
         global.document.getElementById('age-records-modal')?.querySelector('.age-records-dialog')?.addEventListener('click', (event) => {
             event.stopPropagation();

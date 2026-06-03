@@ -6,6 +6,7 @@
 
     let bound = false;
     let escapeHandler = null;
+    let lastWarLedgerSnapshot = null;
 
     function escapeHtml(value) {
         return String(value ?? '')
@@ -54,6 +55,9 @@
 
     function renderIntoListElement(listEl, warLedger) {
         if (!listEl) return;
+        if (warLedger !== undefined) {
+            lastWarLedgerSnapshot = warLedger;
+        }
         listEl.innerHTML = buildWarLedgerMarkup(warLedger);
     }
 
@@ -83,7 +87,7 @@
         const modal = getModal();
         if (!modal) return;
 
-        renderWarLedgerList();
+        renderWarLedgerList(lastWarLedgerSnapshot);
         modal.hidden = false;
         modal.setAttribute('aria-hidden', 'false');
         global.document.getElementById('age-war-ledger-open')?.setAttribute('aria-expanded', 'true');
@@ -117,7 +121,6 @@
 
     function enableWarLedger() {
         bindWarLedger();
-        renderWarLedgerList();
     }
 
     global.RoyalArmiesAgeWarLedger = {

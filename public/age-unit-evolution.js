@@ -415,6 +415,9 @@
         const workspace = resolveWorkspace();
         if (!workspace) return;
 
+        global.RoyalArmiesAdventurersGuild?.dismissGuildWorkspacesForSettlementAction?.();
+        global.RoyalArmiesAgeBarracks?.close?.();
+
         workspace.hidden = false;
         workspace.setAttribute('aria-hidden', 'false');
         global.document.body.classList.add('age-unit-evolution-open');

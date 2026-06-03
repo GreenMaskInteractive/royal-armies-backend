@@ -22938,7 +22938,8 @@ body.age-barracks-open {
 
 body.age-barracks-open #age-map-hud-left,
 body.age-unit-evolution-open #age-map-hud-left,
-body.age-guild-training-open #age-map-hud-left {
+body.age-guild-training-open #age-map-hud-left,
+body.age-guild-overlay-open #age-map-hud-left {
     display: none !important;
 }
 

@@ -209,14 +209,24 @@
         if (item.id === 'age-council-room-open') {
             event.preventDefault();
             closeHub();
-            global.RoyalArmiesAgeHeadquarters?.openCouncilRoom?.();
+            const hq = global.RoyalArmiesAgeHeadquarters;
+            if (hq?.isCouncilRoomOpen?.()) {
+                hq?.closeCouncilRoom?.();
+            } else {
+                hq?.openCouncilRoom?.();
+            }
             return;
         }
 
         if (item.id === 'age-records-open') {
             event.preventDefault();
             closeHub();
-            global.RoyalArmiesAgeRecords?.openWorkspace?.();
+            const records = global.RoyalArmiesAgeRecords;
+            if (records?.isWorkspaceOpen?.()) {
+                records?.closeWorkspace?.();
+            } else {
+                records?.openWorkspace?.();
+            }
             return;
         }
 

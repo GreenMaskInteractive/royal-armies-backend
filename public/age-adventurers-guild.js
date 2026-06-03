@@ -170,6 +170,16 @@
         refreshGuildWorkspaceVisibility();
     }
 
+    function dismissGuildWorkspacesForSettlementAction() {
+        if (trainingViewActive || overlayJobActive) {
+            closeTrainingView({ skipViewRestore: true });
+            closeJobWorkspace();
+        }
+        if (global.RoyalArmiesAgeViewTabs?.getActiveView?.() === 'guild-training') {
+            global.RoyalArmiesAgeViewTabs.setActiveView('city');
+        }
+    }
+
     function closeTrainingView(options = {}) {
         battleControlsReset();
         hideAllJobArenas();
@@ -762,17 +772,13 @@
 
     function openBarracksFromRankPopup() {
         dismissCommanderRankPromotionPopup();
-        if (global.RoyalArmiesAgeViewTabs?.getActiveView?.() === 'guild-training') {
-            global.RoyalArmiesAgeViewTabs.setActiveView('city');
-        }
+        dismissGuildWorkspacesForSettlementAction();
         global.RoyalArmiesAgeBarracks?.open();
     }
 
     function openUnitEvolutionFromRankPopup() {
         dismissCommanderRankPromotionPopup();
-        if (global.RoyalArmiesAgeViewTabs?.getActiveView?.() === 'guild-training') {
-            global.RoyalArmiesAgeViewTabs.setActiveView('city');
-        }
+        dismissGuildWorkspacesForSettlementAction();
         global.RoyalArmiesAgeUnitEvolution?.open({ highlightReady: true });
     }
 
@@ -1464,6 +1470,7 @@
         ensureSettlementGuildHubLoaded,
         openJob,
         closeJobWorkspace,
+        dismissGuildWorkspacesForSettlementAction,
         closeTrainingView,
         onTrainingViewOpen,
         onTrainingViewClose,

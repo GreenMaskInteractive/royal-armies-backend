@@ -917,6 +917,7 @@
             body?.classList.contains('age-barracks-open')
             || body?.classList.contains('age-unit-evolution-open')
             || body?.classList.contains('age-guild-training-open')
+            || body?.classList.contains('age-guild-overlay-open')
             || body?.classList.contains('age-council-room-open')
             || body?.classList.contains('age-records-open')
             || body?.classList.contains('age-war-room-open')

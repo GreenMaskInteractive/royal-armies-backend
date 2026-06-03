@@ -1,5 +1,6 @@
 /**
- * RIFT — Age map view tabs (world map / settlement / council room / records).
+ * RIFT — Age map view tabs (world map, settlement city, guild training).
+ * Council Room, Records, and War Room open via Nation Hub center modals.
  */
 (function initAgeViewTabs(global) {
     'use strict';
