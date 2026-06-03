@@ -22956,9 +22956,9 @@ body.is-rift-discoveries-workspace-open {
         var(--age-hud-rail-bg);
     color: rgba(236, 220, 180, 0.88);
     font-family: 'Cinzel', serif;
-    font-size: 0.884rem;
+    font-size: 0.76rem;
     font-weight: 700;
-    letter-spacing: 0.08em;
+    letter-spacing: 0.06em;
     text-transform: none;
     cursor: pointer;
     box-shadow: var(--age-hud-rail-inset);
@@ -22974,10 +22974,10 @@ body.is-rift-discoveries-workspace-open {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 10px;
+    gap: 6px;
     flex: 1 1 auto;
-    min-height: var(--age-map-hud-bottom-bar-height);
-    padding: 0 18px;
+    min-height: var(--war-room-tab-strip-height);
+    padding: 0 10px;
     box-sizing: border-box;
 }
 
@@ -22985,9 +22985,9 @@ body.is-rift-discoveries-workspace-open {
     display: block;
     width: 0;
     height: 0;
-    border-left: 5px solid transparent;
-    border-right: 5px solid transparent;
-    border-bottom: 7px solid currentColor;
+    border-left: 4px solid transparent;
+    border-right: 4px solid transparent;
+    border-bottom: 5px solid currentColor;
     opacity: 0.92;
     flex-shrink: 0;
 }
@@ -23055,7 +23055,7 @@ body.is-rift-discoveries-workspace-open {
 
 .age-war-room-slide.is-open .age-army-groups-tab {
     flex-shrink: 0;
-    height: var(--age-map-hud-bottom-bar-height);
+    height: var(--war-room-tab-strip-height);
     margin: 0;
     padding: 0;
     border-color: var(--age-hud-rail-border);
