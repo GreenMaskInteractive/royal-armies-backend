@@ -27,6 +27,7 @@
     const REFRESH_MS = 12000;
 
     const els = {
+        dock: null,
         tab: null,
         workspace: null,
         createBtn: null,
@@ -121,14 +122,20 @@
     function setWorkspaceOpen(open) {
         workspaceOpen = Boolean(open);
         if (!els.workspace || !els.tab) return;
-        els.workspace.hidden = !workspaceOpen;
         els.workspace.classList.toggle('is-open', workspaceOpen);
         els.workspace.setAttribute('aria-hidden', workspaceOpen ? 'false' : 'true');
         els.tab.setAttribute('aria-expanded', workspaceOpen ? 'true' : 'false');
         els.tab.classList.toggle('is-active', workspaceOpen);
+        if (els.dock) {
+            els.dock.classList.toggle('is-workspace-open', workspaceOpen);
+        }
         if (workspaceOpen) {
             refreshRoster();
         }
+    }
+
+    function stopMapInteraction(event) {
+        event.stopPropagation();
     }
 
     function setCreatePanelOpen(open) {
@@ -416,7 +423,18 @@
     }
 
     function bindEvents() {
-        els.tab?.addEventListener('click', () => setWorkspaceOpen(!workspaceOpen));
+        const dockPointerBlock = (event) => stopMapInteraction(event);
+
+        els.dock?.addEventListener('pointerdown', dockPointerBlock);
+        els.dock?.addEventListener('click', dockPointerBlock);
+
+        els.tab?.addEventListener('pointerdown', dockPointerBlock);
+        els.tab?.addEventListener('click', (event) => {
+            stopMapInteraction(event);
+            setWorkspaceOpen(!workspaceOpen);
+        });
+
+        els.workspace?.addEventListener('pointerdown', dockPointerBlock);
 
         els.createBtn?.addEventListener('click', () => {
             setCreatePanelOpen(!createPanelOpen);
@@ -450,6 +468,7 @@
     }
 
     function enable() {
+        els.dock = global.document.getElementById('age-war-room-dock');
         els.tab = global.document.getElementById('age-army-groups-tab');
         els.workspace = global.document.getElementById('age-army-groups-workspace');
         els.createBtn = global.document.getElementById('age-army-groups-btn-create');

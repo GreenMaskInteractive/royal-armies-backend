@@ -1655,6 +1655,7 @@
             || target.closest('.age-world-battle-report-modal')
             || target.closest('.age-world-city-hit-path')
             || target.closest('.age-world-map-terrain-controls')
+            || target.closest('.age-war-room-dock')
         );
     }
 
