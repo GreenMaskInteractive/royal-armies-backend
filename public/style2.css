@@ -13467,8 +13467,9 @@ body.developer-maintenance-alert-active #page-landing {
 
 .age-council-board-edit-btn {
     position: absolute;
-    top: 0;
-    right: 0;
+    top: auto;
+    bottom: 8px;
+    right: 10px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -13742,9 +13743,18 @@ body.developer-maintenance-alert-active #page-landing {
     display: flex !important;
 }
 
+.age-council-board-edit-btn[hidden] {
+    display: none !important;
+}
+
 #age-page-canvas .age-council-board-edit-btn {
     z-index: 2;
     pointer-events: auto;
+}
+
+#age-page-canvas .age-council-board-edit-btn[hidden] {
+    display: none !important;
+    pointer-events: none;
 }
 
 .age-council-board-editor-backdrop {

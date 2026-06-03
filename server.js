@@ -1485,7 +1485,17 @@ function appendGameChatNationSystemEventToStore(store, nationKey, text) {
 }
 
 function canEditNationCouncilBoard(commander) {
-    return resolveHeadquartersAccessForCommander(commander).council;
+    const username = normalizeHeadquartersUsername(commander?.username);
+    const storageKey = getCouncilBoardStorageKey(resolveCouncilBoardNationKey(commander));
+    if (!username || !storageKey) return false;
+
+    const leadership = readNationLeadershipForNation(storageKey);
+    if (!leadership) return false;
+
+    return leadership.leaderUsername === username
+        || leadership.viceLeaderUsername === username
+        || leadership.councilUsernames.includes(username)
+        || leadership.plannerUsernames.includes(username);
 }
 
 function normalizeHeadquartersUsername(value) {

@@ -376,8 +376,9 @@
         if (editBtn) {
             const mayEdit = canUseCouncilEditor();
             editBtn.hidden = !mayEdit;
-            editBtn.disabled = false;
+            editBtn.disabled = !mayEdit;
             editBtn.setAttribute('aria-hidden', mayEdit ? 'false' : 'true');
+            editBtn.classList.toggle('is-council-edit-allowed', mayEdit);
         }
     }
 
