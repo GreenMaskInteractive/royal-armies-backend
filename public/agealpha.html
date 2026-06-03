@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Royal Armies — Age Alpha</title>
     <link rel="stylesheet" href="style.css?v=cursor-modal-layer-fix-1">
-    <link rel="stylesheet" href="style2.css?v=nametag-menu-float-1">
+    <link rel="stylesheet" href="style2.css?v=war-room-ops-cleanup-1">
     <link rel="stylesheet" href="mobile-responsive.css?v=top-bar-logo-5px-1">
     <link rel="stylesheet" href="dev-page-navigator.css">
     <link rel="stylesheet" href="custom-cursor.css?v=finger-press-7">
@@ -1384,14 +1384,10 @@
                     <h2 id="age-war-room-title" class="age-war-room-title">War Room</h2>
                     <p class="age-war-room-header-tagline">Formation orders, command posts, and battlefield signals</p>
                 </div>
-                <div class="age-war-room-header-status" aria-hidden="true">
-                    <span class="age-war-room-status-pill">Operational</span>
-                </div>
                 <button type="button" id="age-war-room-close" class="age-war-room-close" aria-label="Close War Room">×</button>
             </header>
             <div class="age-war-room-command-deck">
-                <aside class="age-war-room-ops-panel" aria-label="War Room field operations">
-                    <p class="age-war-room-ops-title">Field Operations</p>
+                <div id="age-army-groups-workspace-main" class="age-army-groups-workspace-main" aria-label="War Room workspace">
                     <header class="age-army-groups-toolbar" aria-label="Army group actions">
                         <button
                             type="button"
@@ -1435,8 +1431,6 @@
                             </span>
                         </button>
                     </header>
-                </aside>
-                <div id="age-army-groups-workspace-main" class="age-army-groups-workspace-main" aria-label="War Room workspace">
                 <div class="age-army-groups-body">
                     <section class="age-army-groups-roster-column" aria-label="Army groups">
                         <div class="age-army-groups-section-head">
@@ -1718,7 +1712,7 @@
     <script src="rift-commander-rank-titles.js?v=commander-rank-roster-1"></script>
     <script src="script.js?v=commander-rank-roster-1"></script>
     <script src="commander-hub.js?v=commander-rank-pills-1"></script>
-    <script src="portal-commander-identity-menu.js?v=nametag-menu-float-1"></script>
+    <script src="portal-commander-identity-menu.js?v=nametag-menu-anchor-1"></script>
     <script src="rift-official-age.js?v=official-age-page-1"></script>
     <script src="rift-chat-mentions.js?v=age-chat-mentions-1"></script>
     <script src="rift-amnek-language-network.js?v=amnek-highlands-dialect-1"></script>

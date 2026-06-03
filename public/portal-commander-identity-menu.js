@@ -24,15 +24,17 @@
 
     function clearAgeFloatingMenuInlinePosition(menu) {
         if (!menu) return;
-        menu.style.removeProperty('position');
-        menu.style.removeProperty('top');
-        menu.style.removeProperty('bottom');
-        menu.style.removeProperty('left');
-        menu.style.removeProperty('right');
-        menu.style.removeProperty('width');
-        menu.style.removeProperty('min-width');
-        menu.style.removeProperty('max-width');
-        menu.style.removeProperty('transform');
+        [
+            'position',
+            'top',
+            'bottom',
+            'left',
+            'right',
+            'width',
+            'min-width',
+            'max-width',
+            'transform'
+        ].forEach((prop) => menu.style.removeProperty(prop));
     }
 
     function positionAgeFloatingCommanderMenu(menu) {
@@ -42,19 +44,23 @@
         const rect = anchor.getBoundingClientRect();
         const viewportPadding = 12;
         const menuWidth = Math.min(340, Math.max(268, rect.width), global.innerWidth - viewportPadding * 2);
-        const rightOffset = Math.max(
+        const left = Math.max(
             viewportPadding,
-            global.innerWidth - rect.right
+            Math.min(rect.right - menuWidth, global.innerWidth - menuWidth - viewportPadding)
+        );
+        const bottom = Math.max(
+            viewportPadding,
+            global.innerHeight - rect.top + AGE_FLOATING_MENU_GAP_PX
         );
 
-        menu.style.position = 'fixed';
-        menu.style.top = 'auto';
-        menu.style.left = 'auto';
-        menu.style.bottom = `${Math.max(viewportPadding, global.innerHeight - rect.top + AGE_FLOATING_MENU_GAP_PX)}px`;
-        menu.style.right = `${rightOffset}px`;
-        menu.style.width = `${menuWidth}px`;
-        menu.style.minWidth = '268px';
-        menu.style.maxWidth = `${global.innerWidth - viewportPadding * 2}px`;
+        menu.style.setProperty('position', 'fixed', 'important');
+        menu.style.setProperty('top', 'auto', 'important');
+        menu.style.setProperty('right', 'auto', 'important');
+        menu.style.setProperty('left', `${left}px`, 'important');
+        menu.style.setProperty('bottom', `${bottom}px`, 'important');
+        menu.style.setProperty('width', `${menuWidth}px`, 'important');
+        menu.style.setProperty('min-width', '268px', 'important');
+        menu.style.setProperty('max-width', `${global.innerWidth - viewportPadding * 2}px`, 'important');
     }
 
     function bindAgeFloatingMenuReposition() {
