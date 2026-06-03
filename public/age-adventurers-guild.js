@@ -122,6 +122,7 @@
     function setTrainingViewOpen(isOpen) {
         trainingViewActive = isOpen;
         global.document.getElementById('age-page-canvas')?.classList.toggle('age-guild-training-view-open', isOpen);
+        global.document.body.classList.toggle('age-guild-training-open', isOpen);
     }
 
     function setOverlayJobOpen(isOpen) {
@@ -183,6 +184,8 @@
 
     function onTrainingViewOpen() {
         setTrainingViewOpen(true);
+        openJobWorkspace();
+        showJobArena('training');
         battleControlsBind();
         renderGuildPanel();
     }
@@ -759,11 +762,17 @@
 
     function openBarracksFromRankPopup() {
         dismissCommanderRankPromotionPopup();
+        if (global.RoyalArmiesAgeViewTabs?.getActiveView?.() === 'guild-training') {
+            global.RoyalArmiesAgeViewTabs.setActiveView('city');
+        }
         global.RoyalArmiesAgeBarracks?.open();
     }
 
     function openUnitEvolutionFromRankPopup() {
         dismissCommanderRankPromotionPopup();
+        if (global.RoyalArmiesAgeViewTabs?.getActiveView?.() === 'guild-training') {
+            global.RoyalArmiesAgeViewTabs.setActiveView('city');
+        }
         global.RoyalArmiesAgeUnitEvolution?.open({ highlightReady: true });
     }
 
@@ -1220,12 +1229,11 @@
         lootTabAlert = false;
 
         void loadGuildState().then(() => {
+            openJobWorkspace();
+            showJobArena('training');
+            setTrainingViewOpen(true);
             if (global.RoyalArmiesAgeViewTabs?.setActiveView) {
                 global.RoyalArmiesAgeViewTabs.setActiveView('guild-training');
-            } else {
-                openJobWorkspace();
-                showJobArena('training');
-                setTrainingViewOpen(true);
             }
             renderGuildPanel();
             battleControlsBind();

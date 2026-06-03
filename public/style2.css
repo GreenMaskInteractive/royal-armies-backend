@@ -22936,6 +22936,12 @@ body.age-barracks-open {
     overflow: hidden;
 }
 
+body.age-barracks-open #age-map-hud-left,
+body.age-unit-evolution-open #age-map-hud-left,
+body.age-guild-training-open #age-map-hud-left {
+    display: none !important;
+}
+
 .age-barracks-workspace {
     position: fixed;
     inset: 0;
@@ -23518,8 +23524,17 @@ body.age-barracks-open {
     box-sizing: border-box;
 }
 
+body.age-guild-training-open .age-guild-workspace:not([hidden]),
 #age-page-canvas[data-age-view="guild-training"] .age-guild-workspace:not([hidden]) {
+    inset: 0;
+    top: 0;
+    bottom: 0;
+    z-index: 12035;
     pointer-events: auto;
+    display: block;
+    background:
+        radial-gradient(circle at 50% 0%, rgba(255, 215, 0, 0.06), transparent 42%),
+        rgba(4, 3, 2, 0.92);
 }
 
 #age-page-canvas[data-age-view="guild-training"] .age-guild-workspace {

@@ -911,10 +911,34 @@
         );
     }
 
+    function isAgeMapWorkspaceOverlayActive() {
+        const body = global.document.body;
+        if (
+            body?.classList.contains('age-barracks-open')
+            || body?.classList.contains('age-unit-evolution-open')
+            || body?.classList.contains('age-guild-training-open')
+            || body?.classList.contains('age-council-room-open')
+            || body?.classList.contains('age-records-open')
+            || body?.classList.contains('age-war-room-open')
+        ) {
+            return true;
+        }
+
+        return Boolean(
+            global.RoyalArmiesAgeHeadquarters?.isCouncilRoomOpen?.()
+            || global.RoyalArmiesAgeRecords?.isWorkspaceOpen?.()
+            || global.RoyalArmiesAgeArmyGroups?.isWorkspaceOpen?.()
+        );
+    }
+
     function syncCouncilBoardLayoutToMap() {
         const canvas = global.document.getElementById('age-page-canvas');
         const mapFrame = global.document.querySelector('#age-page-canvas .age-map-frame');
         if (!canvas || !mapFrame) return;
+
+        if (isAgeMapWorkspaceOverlayActive()) {
+            return;
+        }
 
         if (isAgeMobileLayout()) {
             canvas.classList.remove('is-age-hud-layout-pending');
