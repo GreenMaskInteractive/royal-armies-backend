@@ -276,14 +276,31 @@
             cursorShell.id = 'royal-armies-custom-cursor';
             cursorShell.setAttribute('aria-hidden', 'true');
 
-            const cursorImage = document.createElement('img');
-            cursorImage.src = CURSOR_IMAGE_SRC;
-            cursorImage.width = CURSOR_DISPLAY_PX;
-            cursorImage.height = CURSOR_DISPLAY_PX;
-            cursorImage.alt = '';
-            cursorImage.draggable = false;
-            cursorImage.decoding = 'async';
-            cursorShell.appendChild(cursorImage);
+            const cursorStack = document.createElement('div');
+            cursorStack.className = 'royal-armies-cursor-stack';
+
+            const cursorHand = document.createElement('img');
+            cursorHand.className = 'royal-armies-cursor-hand';
+            cursorHand.src = CURSOR_IMAGE_SRC;
+            cursorHand.width = CURSOR_DISPLAY_PX;
+            cursorHand.height = CURSOR_DISPLAY_PX;
+            cursorHand.alt = '';
+            cursorHand.draggable = false;
+            cursorHand.decoding = 'async';
+
+            const cursorFinger = document.createElement('img');
+            cursorFinger.className = 'royal-armies-cursor-finger';
+            cursorFinger.src = CURSOR_IMAGE_SRC;
+            cursorFinger.width = CURSOR_DISPLAY_PX;
+            cursorFinger.height = CURSOR_DISPLAY_PX;
+            cursorFinger.alt = '';
+            cursorFinger.draggable = false;
+            cursorFinger.decoding = 'async';
+            cursorFinger.setAttribute('aria-hidden', 'true');
+
+            cursorStack.appendChild(cursorHand);
+            cursorStack.appendChild(cursorFinger);
+            cursorShell.appendChild(cursorStack);
         }
 
         if (!clickFxLayer) {

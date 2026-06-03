@@ -26,14 +26,21 @@ html.royal-armies-custom-cursor *::-webkit-scrollbar {
     z-index: 2147483647;
     opacity: 0;
     transition: opacity 0.08s ease;
-    will-change: transform;
+    will-change: left, top;
 }
 
 #royal-armies-custom-cursor.is-visible {
     opacity: 1;
 }
 
-#royal-armies-custom-cursor img {
+.royal-armies-cursor-stack {
+    position: relative;
+    width: 56px;
+    height: 56px;
+}
+
+.royal-armies-cursor-hand,
+.royal-armies-cursor-finger {
     display: block;
     width: 56px;
     height: 56px;
@@ -41,12 +48,33 @@ html.royal-armies-custom-cursor *::-webkit-scrollbar {
     user-select: none;
     -webkit-user-drag: none;
     pointer-events: none;
-    transition: transform 0.1s ease, filter 0.1s ease;
 }
 
-#royal-armies-custom-cursor.is-clicking img {
-    transform: scale(0.92);
-    filter: brightness(1.2);
+/* Palm + gauntlet body — fingertip region is drawn on the finger layer only. */
+.royal-armies-cursor-hand {
+    clip-path: polygon(
+        22px 0,
+        56px 0,
+        56px 56px,
+        0 56px,
+        0 26px,
+        22px 26px
+    );
+}
+
+/* Index finger only — this layer animates on click. */
+.royal-armies-cursor-finger {
+    position: absolute;
+    left: 0;
+    top: 0;
+    clip-path: inset(0 calc(100% - 22px) calc(100% - 26px) 0);
+    transform-origin: 4px 5px;
+    transition: transform 0.09s ease, filter 0.09s ease;
+}
+
+#royal-armies-custom-cursor.is-clicking .royal-armies-cursor-finger {
+    transform: translate(2px, 3px) scale(0.9);
+    filter: brightness(1.18);
 }
 
 #cursor-click-fx-layer {
@@ -106,8 +134,12 @@ html.royal-armies-custom-cursor *::-webkit-scrollbar {
 }
 
 @media (prefers-reduced-motion: reduce) {
-    #royal-armies-custom-cursor img {
+    .royal-armies-cursor-finger {
         transition: none;
+    }
+
+    #royal-armies-custom-cursor.is-clicking .royal-armies-cursor-finger {
+        transform: translate(1px, 2px) scale(0.94);
     }
 
     .cursor-fingertip-click-burst {
