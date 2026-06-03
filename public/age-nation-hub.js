@@ -7,6 +7,7 @@
     let bound = false;
     let escapeHandler = null;
     let layoutHandler = null;
+    let closeFinishTimer = 0;
     const MENU_TOGGLE_GAP_PX = 0;
     const MENU_OFFSET_RIGHT_PX = 60;
 
@@ -24,6 +25,49 @@
 
     function isHubOpen() {
         return Boolean(getHub()?.classList.contains('is-open'));
+    }
+
+    function isHubClosing() {
+        return Boolean(getHub()?.classList.contains('is-hub-closing'));
+    }
+
+    function finishHubClose() {
+        const hub = getHub();
+        if (!hub) return;
+        hub.classList.remove('is-hub-closing');
+        if (closeFinishTimer) {
+            global.clearTimeout(closeFinishTimer);
+            closeFinishTimer = 0;
+        }
+    }
+
+    function beginHubClose() {
+        const hub = getHub();
+        const menu = getMenu();
+        const toggle = getToggle();
+        if (!hub || !menu || !toggle) return;
+
+        hub.classList.remove('is-open');
+        hub.classList.add('is-hub-closing');
+        toggle.setAttribute('aria-expanded', 'false');
+        menu.setAttribute('aria-hidden', 'true');
+
+        clearMenuPositionWatch();
+        if (escapeHandler) {
+            global.document.removeEventListener('keydown', escapeHandler);
+            escapeHandler = null;
+        }
+
+        const onTransitionEnd = (event) => {
+            if (event.target !== menu || event.propertyName !== 'grid-template-rows') return;
+            menu.removeEventListener('transitionend', onTransitionEnd);
+            finishHubClose();
+        };
+        menu.addEventListener('transitionend', onTransitionEnd);
+        if (closeFinishTimer) {
+            global.clearTimeout(closeFinishTimer);
+        }
+        closeFinishTimer = global.setTimeout(finishHubClose, 520);
     }
 
     function clearMenuPositionWatch() {
@@ -68,12 +112,14 @@
         if (!hub || !menu || !toggle) return;
 
         const nextOpen = Boolean(open);
-        hub.classList.toggle('is-open', nextOpen);
-        toggle.setAttribute('aria-expanded', nextOpen ? 'true' : 'false');
-        menu.setAttribute('aria-hidden', nextOpen ? 'false' : 'true');
-
         syncMenuPosition();
+
         if (nextOpen) {
+            finishHubClose();
+            hub.classList.remove('is-hub-closing');
+            hub.classList.add('is-open');
+            toggle.setAttribute('aria-expanded', 'true');
+            menu.setAttribute('aria-hidden', 'false');
             ensureMenuPositionWatch();
             global.requestAnimationFrame(syncMenuPosition);
             if (!escapeHandler) {
@@ -84,13 +130,22 @@
                 };
                 global.document.addEventListener('keydown', escapeHandler);
             }
-        } else {
-            clearMenuPositionWatch();
-            if (escapeHandler) {
-                global.document.removeEventListener('keydown', escapeHandler);
-                escapeHandler = null;
-            }
+            return;
         }
+
+        if (isHubClosing()) {
+            return;
+        }
+
+        if (isHubOpen()) {
+            beginHubClose();
+            return;
+        }
+
+        finishHubClose();
+        hub.classList.remove('is-open', 'is-hub-closing');
+        toggle.setAttribute('aria-expanded', 'false');
+        menu.setAttribute('aria-hidden', 'true');
     }
 
     function closeHub() {
@@ -98,11 +153,12 @@
     }
 
     function toggleHub() {
+        if (isHubClosing()) return;
         setHubOpen(!isHubOpen());
     }
 
     function onDocumentPointerDown(event) {
-        if (!isHubOpen()) return;
+        if (!isHubOpen() && !isHubClosing()) return;
         const hub = getHub();
         if (!hub || hub.contains(event.target)) return;
         closeHub();

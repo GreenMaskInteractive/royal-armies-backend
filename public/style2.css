@@ -13191,7 +13191,7 @@ body.developer-maintenance-alert-active #page-landing {
     bottom: auto !important;
     margin: 0 !important;
     width: auto !important;
-    min-width: 0 !important;
+    min-width: var(--age-nation-hub-menu-min-width, 196px) !important;
     max-height: none !important;
     height: auto !important;
     visibility: visible !important;
@@ -13213,13 +13213,18 @@ body.developer-maintenance-alert-active #page-landing {
 
 .age-nation-hub.is-open .age-nation-hub-menu.is-menu-position-synced {
     grid-template-rows: 1fr;
-    min-width: var(--age-nation-hub-menu-min-width) !important;
     pointer-events: auto;
+}
+
+.age-nation-hub.is-hub-closing .age-nation-hub-menu.is-menu-position-synced {
+    grid-template-rows: 0fr;
+    pointer-events: none;
 }
 
 .age-nation-hub-menu-ladder {
     min-height: 0;
-    min-width: 0;
+    width: 100%;
+    min-width: 100%;
     display: flex;
     flex-direction: column;
     align-items: stretch;
@@ -13230,8 +13235,8 @@ body.developer-maintenance-alert-active #page-landing {
     overflow: hidden;
 }
 
-.age-nation-hub.is-open .age-nation-hub-menu-ladder {
-    min-width: var(--age-nation-hub-menu-min-width, 196px);
+.age-nation-hub.is-open .age-nation-hub-menu-ladder,
+.age-nation-hub.is-hub-closing .age-nation-hub-menu-ladder {
     border: 1px solid var(--age-hud-rail-border);
     border-radius: 6px;
     background:
@@ -13244,7 +13249,7 @@ body.developer-maintenance-alert-active #page-landing {
 .age-nation-hub-menu.is-menu-position-synced .age-nation-hub-menu-ladder .age-map-view-tab,
 .age-nation-hub-menu.is-menu-position-synced .age-nation-hub-menu-ladder > .age-nation-hub-menu-item {
     opacity: 0;
-    transform: translateY(calc(-1 * var(--age-nation-hub-rung-travel, 40px)));
+    transform: translate3d(0, calc(-1 * var(--age-nation-hub-rung-travel, 40px)), 0);
     transition:
         transform 0.36s cubic-bezier(0.22, 1, 0.36, 1),
         opacity 0.28s ease,
@@ -13256,7 +13261,39 @@ body.developer-maintenance-alert-active #page-landing {
 .age-nation-hub.is-open .age-nation-hub-menu.is-menu-position-synced .age-nation-hub-menu-ladder .age-map-view-tab,
 .age-nation-hub.is-open .age-nation-hub-menu.is-menu-position-synced .age-nation-hub-menu-ladder > .age-nation-hub-menu-item {
     opacity: 1;
-    transform: translateY(0);
+    transform: translate3d(0, 0, 0);
+}
+
+/* Close: slide rungs back up (no width change — avoids fling to the right) */
+.age-nation-hub.is-hub-closing .age-nation-hub-menu.is-menu-position-synced .age-nation-hub-menu-ladder .age-map-view-tab,
+.age-nation-hub.is-hub-closing .age-nation-hub-menu.is-menu-position-synced .age-nation-hub-menu-ladder > .age-nation-hub-menu-item {
+    opacity: 0;
+    transform: translate3d(0, calc(-1 * var(--age-nation-hub-rung-travel, 40px)), 0);
+    transition-duration: 0.24s;
+}
+
+.age-nation-hub.is-hub-closing .age-nation-hub-menu.is-menu-position-synced .age-nation-hub-menu-ladder > .age-nation-hub-menu-item--war-ledger {
+    transition-delay: 0s;
+}
+
+.age-nation-hub.is-hub-closing .age-nation-hub-menu.is-menu-position-synced .age-nation-hub-menu-ladder > .age-nation-hub-menu-item--war-room {
+    transition-delay: 0.04s;
+}
+
+.age-nation-hub.is-hub-closing .age-nation-hub-menu.is-menu-position-synced .age-nation-hub-menu-ladder .age-map-view-tab:nth-child(4) {
+    transition-delay: 0.08s;
+}
+
+.age-nation-hub.is-hub-closing .age-nation-hub-menu.is-menu-position-synced .age-nation-hub-menu-ladder .age-map-view-tab:nth-child(3) {
+    transition-delay: 0.12s;
+}
+
+.age-nation-hub.is-hub-closing .age-nation-hub-menu.is-menu-position-synced .age-nation-hub-menu-ladder .age-map-view-tab:nth-child(2) {
+    transition-delay: 0.16s;
+}
+
+.age-nation-hub.is-hub-closing .age-nation-hub-menu.is-menu-position-synced .age-nation-hub-menu-ladder .age-map-view-tab:nth-child(1) {
+    transition-delay: 0.2s;
 }
 
 .age-nation-hub.is-open .age-nation-hub-menu.is-menu-position-synced .age-nation-hub-menu-ladder .age-map-view-tab:nth-child(1) {
