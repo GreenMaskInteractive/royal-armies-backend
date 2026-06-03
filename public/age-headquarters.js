@@ -359,22 +359,42 @@
         global.RoyalArmiesAgeHeadquartersPlanningMap?.refreshLayout?.();
     }
 
-    /** Local Owner dev persona (Live Server, localhost:3000, etc.) — not production. */
+    function isHeadquartersOwnerBypass(username) {
+        return String(username || '').trim().toLowerCase() === 'caleb_admin';
+    }
+
+    /** Portal owner (production + local) or local Owner dev persona. */
     function isDevOwnerHeadquartersBypass(username) {
-        if (!isLocalDevOwnerPortalView()) return false;
-
         const normalized = String(username || '').trim().toLowerCase();
+        if (isHeadquartersOwnerBypass(normalized)) return true;
+        if (!isLocalDevOwnerPortalView()) return false;
         if (!normalized) return true;
-
-        const ownerUser = resolveLocalDevOwnerUsername().toLowerCase();
-        return normalized === ownerUser;
+        return normalized === resolveLocalDevOwnerUsername().toLowerCase();
     }
 
     function applyDevOwnerCouncilAccessUI() {
-        if (!isLocalDevOwnerPortalView()) return;
+        const username = resolveHeadquartersUsername();
+        if (!isDevOwnerHeadquartersBypass(username)) return;
+
+        memberHubActive = true;
+        fullAuthority = true;
         leaderAccess = true;
         setCouncilAccessUI(true);
         setViceLeaderAccessUI(true);
+        setMemberPlanningLock(false);
+
+        const workspace = global.document.getElementById('age-council-room-workspace');
+        if (workspace) {
+            workspace.classList.remove('is-access-denied');
+        }
+        const planningBlock = global.document.querySelector('.age-council-room-planning-block');
+        if (planningBlock) {
+            planningBlock.classList.remove('is-planning-locked');
+        }
+        const banner = global.document.getElementById('age-hq-authority-banner');
+        if (banner) {
+            banner.hidden = true;
+        }
     }
 
     function syncHeadquartersShellLayout() {
@@ -889,6 +909,12 @@
 
         if (workspace.access?.council) {
             syncHeadquartersShellLayout();
+        }
+
+        if (isDevOwnerHeadquartersBypass(username)) {
+            applyDevOwnerCouncilAccessUI();
+            setAuthorityGates(workspace);
+            return true;
         }
 
         return Boolean(workspace.access?.council);
@@ -1617,17 +1643,19 @@
     async function onViewOpen() {
         bindUi();
         applyDevOwnerCouncilAccessUI();
+        const ownerBypass = isDevOwnerHeadquartersBypass(resolveHeadquartersUsername());
         const hasCouncilAccess = await fetchHeadquartersWorkspace();
-        const canUsePlanningMap = hasCouncilAccess
-            || isLocalDevOwnerPortalView()
-            || memberHubActive;
+        if (ownerBypass) {
+            applyDevOwnerCouncilAccessUI();
+        }
+        const canUsePlanningMap = hasCouncilAccess || ownerBypass || memberHubActive;
 
         if (canUsePlanningMap) {
             await ensurePlanningMap();
-            global.RoyalArmiesAgeHeadquartersPlanningMap?.setEnabled(hasCouncilAccess || isLocalDevOwnerPortalView());
+            global.RoyalArmiesAgeHeadquartersPlanningMap?.setEnabled(hasCouncilAccess || ownerBypass);
             await waitForLayout();
             refreshPlanningMapLayout();
-            if (hasCouncilAccess || isLocalDevOwnerPortalView()) {
+            if (hasCouncilAccess || ownerBypass) {
                 syncHeadquartersShellLayout();
                 global.RoyalArmiesAgeMovementPanel?.refreshCityPlayers?.();
             }

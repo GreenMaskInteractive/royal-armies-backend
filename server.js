@@ -369,10 +369,14 @@ function isMailboxRecipientRosterAdmin(username) {
     return String(username || '').trim().toLowerCase() === 'caleb_admin';
 }
 
-/** Local NEXUS only — full nation leadership for portal owner QA (not on Render production). */
-function isLocalDevOwnerLeadershipBypass(username) {
-    if (isProduction) return false;
+/** Portal owner — full Council Room / HQ access in every environment. */
+function isHeadquartersOwnerBypass(username) {
     return isMailboxRecipientRosterAdmin(username);
+}
+
+/** @deprecated Use isHeadquartersOwnerBypass — kept for call-site clarity. */
+function isLocalDevOwnerLeadershipBypass(username) {
+    return isHeadquartersOwnerBypass(username);
 }
 
 /* --- Section: Community chat (ledger-backed, 100 active per channel, 15-day purge) --- */
@@ -1649,7 +1653,7 @@ function readNationLeadershipForNation(nationKey) {
 }
 
 function resolveHeadquartersAdminAccess(username, storageKey) {
-    if (!isLocalDevOwnerLeadershipBypass(username)) {
+    if (!isHeadquartersOwnerBypass(username)) {
         return null;
     }
 
