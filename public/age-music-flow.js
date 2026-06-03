@@ -849,6 +849,10 @@
         shouldSuppressPortalMainMusic,
         prepareJoinAgeLaunch,
         getStarterPlaylistTrackIds: () => PLAYLIST_TRACK_IDS.slice(),
+        getAllAgeSoundtrackTrackIds: () => [
+            ...PLAYLIST_TRACK_IDS,
+            ...DISCOVERABLE_TRACKS.map((track) => track.id)
+        ],
         getTrackDefinitionById: resolveTrackById,
         getDiscoverableTracks: () => DISCOVERABLE_TRACKS.slice(),
         markProgressionPhaseStart,

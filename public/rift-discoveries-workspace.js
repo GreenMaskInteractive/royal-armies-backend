@@ -168,19 +168,39 @@
             .join(' ');
     }
 
-    function buildSongManuscriptEntry(track) {
-        if (!track?.id) return null;
-        const displayTitle = formatSongTitle(track.title);
-        const id = `song-${track.id}`;
+    function buildSongManuscriptEntryFromSpec(spec) {
+        if (!spec?.trackId) return null;
+        const displayTitle = formatSongTitle(spec.title || spec.trackId);
+        const nation = String(spec.nation || '').trim() || 'Unknown';
+        const id = `song-${spec.trackId}`;
         return Object.freeze({
             id,
             category: 'manuscripts',
             kind: 'song-manuscript',
+            trackId: spec.trackId,
             title: displayTitle,
-            subtitle: 'Song manuscript',
+            subtitle: `Song manuscript · ${nation}`,
             discoveryLine: `You discovered a song manuscript: ${displayTitle}`,
-            body: `
+            body: String(spec.body || '').trim() || `
                 <p>A recovered musical manuscript titled <strong>${escapeHtml(displayTitle)}</strong> has been added to your journal.</p>
+                <p>You may replay this melody from the <strong>Music</strong> tab in game chat whenever you are in the Age.</p>
+            `
+        });
+    }
+
+    function buildSongManuscriptEntry(track) {
+        if (!track?.id) return null;
+        const catalog = global.RoyalArmiesSongManuscriptCatalog;
+        const spec = catalog?.getEntry?.(track.id);
+        if (spec) {
+            return buildSongManuscriptEntryFromSpec(spec);
+        }
+        return buildSongManuscriptEntryFromSpec({
+            trackId: track.id,
+            title: track.title,
+            nation: 'Unknown',
+            body: `
+                <p>A recovered musical manuscript titled <strong>${escapeHtml(formatSongTitle(track.title))}</strong> has been added to your journal.</p>
                 <p>You may replay this melody from the <strong>Music</strong> tab in game chat whenever you are in the Age.</p>
             `
         });
@@ -191,19 +211,46 @@
         CATALOG_BY_ID[entry.id] = Object.freeze(entry);
     }
 
-    function registerMusicDiscoveryCatalog() {
+    function collectAllSoundtrackTrackIds() {
+        const ids = new Set();
+
+        const catalog = global.RoyalArmiesSongManuscriptCatalog;
+        if (catalog?.allTrackIds) {
+            catalog.allTrackIds.forEach((trackId) => ids.add(trackId));
+        }
+
         const flow = global.RoyalArmiesMusicFlow;
-        if (!flow || typeof flow.getTrackDefinitionById !== 'function') return;
+        if (flow) {
+            if (typeof flow.getAllAgeSoundtrackTrackIds === 'function') {
+                flow.getAllAgeSoundtrackTrackIds().forEach((trackId) => ids.add(trackId));
+            } else {
+                if (typeof flow.getStarterPlaylistTrackIds === 'function') {
+                    flow.getStarterPlaylistTrackIds().forEach((trackId) => ids.add(trackId));
+                }
+                if (typeof flow.getDiscoverableTracks === 'function') {
+                    flow.getDiscoverableTracks().forEach((track) => ids.add(track.id));
+                }
+            }
+        }
 
-        const starterIds = typeof flow.getStarterPlaylistTrackIds === 'function'
-            ? flow.getStarterPlaylistTrackIds()
-            : [];
-        const cityIds = typeof flow.getDiscoverableTracks === 'function'
-            ? flow.getDiscoverableTracks().map((track) => track.id)
-            : [];
+        return [...ids];
+    }
 
-        [...new Set([...starterIds, ...cityIds])].forEach((trackId) => {
-            const track = flow.getTrackDefinitionById(trackId);
+    function registerMusicDiscoveryCatalog() {
+        const catalog = global.RoyalArmiesSongManuscriptCatalog;
+        const flow = global.RoyalArmiesMusicFlow;
+
+        if (catalog?.entries) {
+            catalog.entries.forEach((spec) => {
+                registerCatalogEntry(buildSongManuscriptEntryFromSpec(spec));
+            });
+        }
+
+        collectAllSoundtrackTrackIds().forEach((trackId) => {
+            const catalogId = `song-${trackId}`;
+            if (CATALOG_BY_ID[catalogId]) return;
+
+            const track = flow?.getTrackDefinitionById?.(trackId) || { id: trackId, title: trackId };
             const entry = buildSongManuscriptEntry(track);
             if (entry) registerCatalogEntry(entry);
         });
@@ -334,16 +381,19 @@
         }
 
         const sections = CATEGORIES.map((category) => {
-            const items = listCatalogEntries().filter(
-                (entry) => entry.category === category.id && discovered.includes(entry.id)
-            );
-            const tabs = items.length
-                ? items.map((entry) => buildWorkspaceTabMarkup(
-                    entry,
-                    entry.id === selectedDiscoveryId,
-                    unread.has(entry.id)
-                )).join('')
-                : '<p class="rift-discoveries-workspace-category-empty">No entries yet.</p>';
+            const items = listCatalogEntries()
+                .filter((entry) => entry.category === category.id && discovered.includes(entry.id))
+                .sort((a, b) => a.title.localeCompare(b.title, undefined, { sensitivity: 'base' }));
+
+            if (!items.length) {
+                return '';
+            }
+
+            const tabs = items.map((entry) => buildWorkspaceTabMarkup(
+                entry,
+                entry.id === selectedDiscoveryId,
+                unread.has(entry.id)
+            )).join('');
 
             return `
                 <section class="rift-discoveries-workspace-category" data-category-id="${escapeHtml(category.id)}">
@@ -354,7 +404,7 @@
                     <div class="rift-discoveries-workspace-tab-list">${tabs}</div>
                 </section>
             `;
-        }).join('');
+        }).filter(Boolean).join('');
 
         const emptyJournal = discovered.length === 0;
         nav.innerHTML = emptyJournal
