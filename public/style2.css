@@ -20798,7 +20798,7 @@ body.is-age-chronicles-battle-pass-open {
 .rift-discovery-toast-stage {
     position: relative;
     z-index: 1;
-    width: min(480px, 100%);
+    width: min(540px, 100%);
     max-width: 100%;
     transform: scale(0.82) translateY(28px);
     opacity: 0;
@@ -21049,15 +21049,15 @@ body.is-age-chronicles-battle-pass-open {
     align-items: center;
     justify-content: center;
     flex-wrap: wrap;
-    gap: 12px;
-    margin-bottom: 14px;
+    gap: 16px;
+    margin-bottom: 16px;
 }
 
 .rift-discovery-toast-icon-btn {
     border: 1px solid rgba(184, 144, 48, 0.45);
-    border-radius: 8px;
+    border-radius: 10px;
     background: linear-gradient(180deg, rgba(36, 28, 16, 0.95) 0%, rgba(8, 6, 4, 0.98) 100%);
-    padding: 8px;
+    padding: 12px;
     cursor: pointer;
     box-shadow: 0 6px 16px rgba(0, 0, 0, 0.45);
     transition: border-color 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease;
@@ -21074,11 +21074,11 @@ body.is-age-chronicles-battle-pass-open {
 .rift-discovery-toast.is-visible .rift-discovery-toast-icon-btn:nth-child(5) { animation-delay: 1.4s; }
 
 .rift-discovery-toast-icon-btn img {
-    width: 48px;
-    height: 48px;
+    width: 76px;
+    height: 76px;
     object-fit: contain;
     display: block;
-    filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.5));
+    filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.55));
 }
 
 .rift-discovery-toast-icon-btn.is-active,
