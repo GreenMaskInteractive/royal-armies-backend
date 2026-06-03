@@ -123,7 +123,8 @@
         const tier = getCommanderRankPillTier(rank);
         if (!tier || !title) return '';
         const compact = options?.compact ? ' commander-rank-pill--compact' : '';
-        return `<span class="commander-rank-pill commander-rank-pill--tier-${tier}${compact}" title="${escapeRankHtml(title)}">${escapeRankHtml(title)}</span>`;
+        const nametag = options?.nametag ? ' commander-rank-pill--nametag' : '';
+        return `<span class="commander-rank-pill commander-rank-pill--tier-${tier}${compact}${nametag}" title="${escapeRankHtml(title)}">${escapeRankHtml(title)}</span>`;
     }
 
     function buildCommanderIdentityNameHtml(name, options) {

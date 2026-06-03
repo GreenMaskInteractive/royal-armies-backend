@@ -154,16 +154,30 @@ function getCommanderRankPillTier(rank) {
     return 0;
 }
 
-function buildChatSenderRankMeta(commander) {
-    if (!commander || typeof commander !== 'object') return {};
-    const rank = Math.min(
-        COMMANDER_RANK_TITLE_MAX,
-        Math.max(1, Math.floor(Number(commander.rank) || 1))
-    );
+function buildCommanderRankMeta(commander) {
+    if (!commander || typeof commander !== 'object') {
+        return {
+            rank: 1,
+            path: 'PHYS',
+            rankTitleGender: 'male'
+        };
+    }
     return {
-        senderRank: rank,
-        senderPath: String(commander.path || 'PHYS').trim().slice(0, 16) || 'PHYS',
-        senderRankTitleGender: resolveCommanderRankTitleGender(commander.preferences?.rankTitleGender)
+        rank: Math.min(
+            COMMANDER_RANK_TITLE_MAX,
+            Math.max(1, Math.floor(Number(commander.rank) || 1))
+        ),
+        path: String(commander.path || 'PHYS').trim().slice(0, 16) || 'PHYS',
+        rankTitleGender: resolveCommanderRankTitleGender(commander.preferences?.rankTitleGender)
+    };
+}
+
+function buildChatSenderRankMeta(commander) {
+    const meta = buildCommanderRankMeta(commander);
+    return {
+        senderRank: meta.rank,
+        senderPath: meta.path,
+        senderRankTitleGender: meta.rankTitleGender
     };
 }
 
@@ -179,5 +193,6 @@ module.exports = {
     getCommanderRankTitleTable,
     getCommanderRankDisplayTitle,
     getCommanderRankPillTier,
+    buildCommanderRankMeta,
     buildChatSenderRankMeta
 };

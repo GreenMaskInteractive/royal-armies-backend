@@ -348,6 +348,37 @@
         return display;
     }
 
+    function buildArmyGroupMemberIdentity(member) {
+        const label = formatMemberLabel(member);
+        const identity = global.document.createElement('span');
+        identity.className = 'age-army-groups-member-identity';
+
+        const rankTitles = global.RoyalArmiesCommanderRankTitles;
+        const rank = Number(member?.rank);
+        if (
+            rankTitles
+            && Number.isFinite(rank)
+            && rank >= 1
+            && rankTitles.shouldShowCommanderRankPill(rank, { inAge: true })
+            && typeof rankTitles.buildCommanderIdentityNameHtml === 'function'
+        ) {
+            identity.innerHTML = rankTitles.buildCommanderIdentityNameHtml(label, {
+                rank,
+                path: member.path,
+                rankTitleGender: member.rankTitleGender,
+                compact: true,
+                inAge: true
+            });
+            return identity;
+        }
+
+        const name = global.document.createElement('span');
+        name.className = 'age-army-groups-member-name';
+        name.textContent = label;
+        identity.appendChild(name);
+        return identity;
+    }
+
     function listMergeTargetGroups(groups, sourceId) {
         return (groups || []).filter((entry) => entry.id !== sourceId);
     }
@@ -409,9 +440,9 @@
             item.className = 'age-army-groups-member-item';
             if (member.isSelf) item.classList.add('is-self');
 
-            const label = global.document.createElement('span');
+            const label = global.document.createElement('div');
             label.className = 'age-army-groups-member-label';
-            label.textContent = `${formatMemberLabel(member)} · Rank ${member.rank || 1}`;
+            label.appendChild(buildArmyGroupMemberIdentity(member));
             item.appendChild(label);
 
             const actions = global.document.createElement('div');

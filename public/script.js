@@ -683,8 +683,26 @@ function refreshProfileCommanderNameDisplay() {
     });
 }
 
+function ensureLoggedUserTagRankPillHost() {
+    const tag = document.getElementById('logged-user-tag');
+    if (!tag) return null;
+    const stack = tag.closest('.nav-account-identity-stack');
+    if (!stack) return null;
+    let pillHost = stack.querySelector('#logged-user-tag-rank-pill');
+    if (!pillHost) {
+        pillHost = document.createElement('span');
+        pillHost.id = 'logged-user-tag-rank-pill';
+        pillHost.className = 'logged-user-tag-rank-pill';
+        pillHost.setAttribute('aria-hidden', 'true');
+        stack.appendChild(pillHost);
+    }
+    stack.classList.add('nav-account-identity-stack--rank-pill');
+    return pillHost;
+}
+
 function refreshLoggedUserTagDisplay() {
     const tag = document.getElementById('logged-user-tag');
+    const pillHost = ensureLoggedUserTagRankPillHost();
     const mobileName = document.getElementById('portal-mobile-nav-username');
     const gameMobileName = document.getElementById('game-mobile-nav-username');
     const authed = isPortalUserAuthenticated();
@@ -694,6 +712,7 @@ function refreshLoggedUserTagDisplay() {
             tag.textContent = '';
             tag.classList.remove('commander-identity-name-row-host');
         }
+        if (pillHost) pillHost.innerHTML = '';
         if (mobileName) mobileName.textContent = '';
         if (gameMobileName) gameMobileName.textContent = '';
         return;
@@ -708,16 +727,23 @@ function refreshLoggedUserTagDisplay() {
         && rankTitles.shouldShowCommanderRankPill(player.rank, { inAge: true });
 
     if (tag) {
-        if (canRenderPill && typeof rankTitles.buildCommanderIdentityNameHtml === 'function') {
-            tag.classList.add('commander-identity-name-row-host');
-            tag.innerHTML = rankTitles.buildCommanderIdentityNameHtml(displayLabel, {
-                rank: player.rank,
-                path: player.path,
-                rankTitleGender: confirmedRankTitleGender
+        tag.classList.remove('commander-identity-name-row-host');
+        tag.textContent = displayLabel;
+    }
+
+    if (pillHost) {
+        if (canRenderPill && typeof rankTitles.buildCommanderRankPillHtml === 'function') {
+            const title = rankTitles.getCommanderRankDisplayTitle(
+                player.rank,
+                player.path,
+                confirmedRankTitleGender
+            );
+            pillHost.innerHTML = rankTitles.buildCommanderRankPillHtml(title, player.rank, {
+                nametag: true,
+                compact: true
             });
         } else {
-            tag.classList.remove('commander-identity-name-row-host');
-            tag.textContent = displayLabel;
+            pillHost.innerHTML = '';
         }
     }
 

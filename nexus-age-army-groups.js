@@ -373,16 +373,28 @@ function buildArmyGroupsApiPayload(state, access, username, options = {}) {
     const resolveRank = typeof options.resolveMemberRank === 'function'
         ? options.resolveMemberRank
         : () => 1;
+    const resolveMemberProfile = typeof options.resolveMemberProfile === 'function'
+        ? options.resolveMemberProfile
+        : (memberUsername) => ({
+            rank: resolveRank(memberUsername),
+            path: 'PHYS',
+            rankTitleGender: 'male'
+        });
     const nationCommand = isNationCommandAccess(access);
 
     return {
         groups: normalized.groups.map((group) => {
-            const members = group.memberUsernames.map((memberUsername) => ({
-                username: memberUsername,
-                rank: resolveRank(memberUsername),
-                isLeader: memberUsername === group.leaderUsername,
-                isSelf: Boolean(self && memberUsername === self)
-            }));
+            const members = group.memberUsernames.map((memberUsername) => {
+                const profile = resolveMemberProfile(memberUsername);
+                return {
+                    username: memberUsername,
+                    rank: profile.rank,
+                    path: profile.path,
+                    rankTitleGender: profile.rankTitleGender,
+                    isLeader: memberUsername === group.leaderUsername,
+                    isSelf: Boolean(self && memberUsername === self)
+                };
+            });
             const isGroupLeader = Boolean(self && group.leaderUsername === self);
             return {
                 id: group.id,

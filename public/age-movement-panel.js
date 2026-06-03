@@ -452,6 +452,27 @@
             .replace(/"/g, '&quot;');
     }
 
+    function buildCityPlayerIdentityHtml(displayName, player) {
+        const rankTitles = global.RoyalArmiesCommanderRankTitles;
+        const rank = Number(player?.rank);
+        if (!rankTitles || !Number.isFinite(rank) || rank < 1) {
+            return `<span class="commander-identity-name">${escapePlayerHtml(displayName)}</span>`;
+        }
+        if (!rankTitles.shouldShowCommanderRankPill(rank, { inAge: true })) {
+            return `<span class="commander-identity-name">${escapePlayerHtml(displayName)}</span>`;
+        }
+        if (typeof rankTitles.buildCommanderIdentityNameHtml !== 'function') {
+            return `<span class="commander-identity-name">${escapePlayerHtml(displayName)}</span>`;
+        }
+        return rankTitles.buildCommanderIdentityNameHtml(displayName, {
+            rank,
+            path: player.path,
+            rankTitleGender: player.rankTitleGender,
+            compact: true,
+            inAge: true
+        });
+    }
+
     function isRoyaltyMembershipTitle(title) {
         const normalized = String(title || '').trim().toLowerCase();
         return normalized === 'royalty' || normalized === 'premium';
@@ -853,7 +874,7 @@
                         + (isRoyaltyMembershipTitle(player.membershipTitle)
                             ? '<img class="age-city-info-player-royalty-badge" src="images/royaltybadge.png" alt="Royalty premium member" loading="lazy" decoding="async">'
                             : '')
-                        + `<span class="age-city-info-player-name">${escapePlayerHtml(displayName)}</span>`
+                        + `<span class="age-city-info-player-identity">${buildCityPlayerIdentityHtml(displayName, player)}</span>`
                         + (showArmyBadge ? formatArmyFocusBadgeHtml(player) : '')
                         + `<span class="age-city-info-player-move-points" title="Move points" aria-label="${escapePlayerHtml(movePointsAria)}">${escapePlayerHtml(movePointsLabel)}</span>`
                         + `<span class="age-city-info-player-presence">${player.online ? 'Online' : 'Offline'}</span>`

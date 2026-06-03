@@ -3861,6 +3861,34 @@ body.is-terms-gate-active #main-portal-dynamic-viewport {
     max-width: min(180px, 36vw) !important;
 }
 
+.commander-rank-pill--nametag {
+    font-size: 0.5rem !important;
+    padding: 1px 5px !important;
+    max-width: min(132px, 28vw) !important;
+    letter-spacing: 0.01em !important;
+}
+
+.nav-account-identity-stack--rank-pill {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+}
+
+.logged-user-tag-rank-pill,
+#logged-user-tag-rank-pill {
+    display: inline-flex !important;
+    align-items: center !important;
+    flex: 0 0 auto !important;
+    min-width: 0 !important;
+    overflow: visible !important;
+}
+
+.portal-commander-identity-card-body .nav-account-identity-stack--rank-pill #logged-user-tag {
+    flex: 0 1 auto !important;
+}
+
 .commander-rank-pill--tier-1 {
     color: #e8e8e8 !important;
     background: rgba(120, 120, 120, 0.35) !important;
@@ -3915,19 +3943,12 @@ body.is-terms-gate-active #main-portal-dynamic-viewport {
     font-size: inherit !important;
 }
 
-#age-page-canvas .age-map-bottom-commander-nametag #logged-user-tag.commander-identity-name-row-host {
-    display: inline-flex !important;
-    align-items: center !important;
-    gap: 14px !important;
-    max-width: 100% !important;
+#age-page-canvas .age-map-bottom-commander-nametag .nav-account-identity-stack--rank-pill {
+    gap: 10px !important;
 }
 
-#age-page-canvas .age-map-bottom-commander-nametag .commander-identity-name-row {
-    gap: 14px !important;
-}
-
-#age-page-canvas .age-map-bottom-commander-nametag .commander-rank-pill {
-    margin-left: 2px !important;
+#age-page-canvas .age-map-bottom-commander-nametag .logged-user-tag-rank-pill .commander-rank-pill,
+#age-page-canvas .age-map-bottom-commander-nametag #logged-user-tag-rank-pill .commander-rank-pill {
     flex-shrink: 0 !important;
 }
 
@@ -15815,7 +15836,8 @@ label.age-council-board-editor-tool {
     background: rgba(0, 0, 0, 0.34);
 }
 
-#age-page-canvas .age-city-info-player-name {
+#age-page-canvas .age-city-info-player-name,
+#age-page-canvas .age-city-info-player-identity {
     flex: 1 1 auto;
     min-width: 0;
     font-family: 'Segoe UI', Tahoma, sans-serif;
@@ -15825,6 +15847,38 @@ label.age-council-board-editor-tool {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+}
+
+#age-page-canvas .age-city-info-player-identity {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+    white-space: nowrap !important;
+}
+
+#age-page-canvas .age-city-info-player-identity .commander-identity-name-row {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    overflow: hidden !important;
+}
+
+#age-page-canvas .age-city-info-player-identity .commander-identity-name {
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+    min-width: 0 !important;
+    flex: 1 1 auto !important;
+    color: rgba(241, 224, 172, 0.92) !important;
+    font-weight: 600 !important;
+}
+
+#age-page-canvas .age-city-info-player-identity .commander-rank-pill {
+    font-size: 0.5rem !important;
+    padding: 1px 5px !important;
+    flex-shrink: 0 !important;
 }
 
 #age-page-canvas .age-city-info-player-move-points {
@@ -24354,8 +24408,35 @@ body.age-war-room-open {
 }
 
 .age-army-groups-member-label {
+    flex: 1 1 auto;
+    min-width: 0;
     font-size: 12px;
     color: rgba(236, 220, 180, 0.92);
+}
+
+.age-army-groups-member-identity {
+    display: inline-flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 6px;
+    min-width: 0;
+}
+
+.age-army-groups-member-identity .commander-identity-name-row {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+.age-army-groups-member-identity .commander-identity-name,
+.age-army-groups-member-name {
+    color: rgba(236, 220, 180, 0.92);
+}
+
+.age-army-groups-member-identity .commander-rank-pill {
+    font-size: 0.5rem !important;
+    padding: 1px 5px !important;
 }
 
 .age-army-groups-member-actions {

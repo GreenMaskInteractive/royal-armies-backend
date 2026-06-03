@@ -36,6 +36,7 @@ const { listErrorCodes } = require('./nexus-error-codes');
 const { getDeployStatePayload } = require('./nexus-deploy-revision');
 const {
     buildChatSenderRankMeta,
+    buildCommanderRankMeta,
     resolveCommanderRankTitleGender
 } = require('./nexus-commander-rank-titles');
 const {
@@ -1501,6 +1502,7 @@ function buildAgeCityPlayersPayload(catalogCityId, viewerUsername) {
         const movement = readCommanderMovementRecord(username, mapNation);
         const armyFocus = resolveCommanderArmyFocus(commander, movement);
 
+        const rankMeta = buildCommanderRankMeta(commander);
         players.push({
             username,
             displayName: username,
@@ -1510,7 +1512,10 @@ function buildAgeCityPlayersPayload(catalogCityId, viewerUsername) {
             membershipTitle: String(commander.membershipTitle || 'Basic').trim() || 'Basic',
             movePoints: movePoints.movePoints,
             armyFocus: armyFocus || null,
-            isSelf: Boolean(viewerLower && username.toLowerCase() === viewerLower)
+            isSelf: Boolean(viewerLower && username.toLowerCase() === viewerLower),
+            rank: rankMeta.rank,
+            path: rankMeta.path,
+            rankTitleGender: rankMeta.rankTitleGender
         });
         seenUsernames.add(username.toLowerCase());
     });
@@ -1522,6 +1527,7 @@ function buildAgeCityPlayersPayload(catalogCityId, viewerUsername) {
             const movePoints = resolveCommanderMovePointsPayload(viewerCommander);
             const movement = readCommanderMovementRecord(viewerCommander.username, viewerNation);
             const armyFocus = resolveCommanderArmyFocus(viewerCommander, movement);
+            const viewerRankMeta = buildCommanderRankMeta(viewerCommander);
             players.push({
                 username: viewerCommander.username,
                 displayName: viewerCommander.username,
@@ -1531,7 +1537,10 @@ function buildAgeCityPlayersPayload(catalogCityId, viewerUsername) {
                 membershipTitle: String(viewerCommander.membershipTitle || 'Basic').trim() || 'Basic',
                 movePoints: movePoints.movePoints,
                 armyFocus: armyFocus || null,
-                isSelf: true
+                isSelf: true,
+                rank: viewerRankMeta.rank,
+                path: viewerRankMeta.path,
+                rankTitleGender: viewerRankMeta.rankTitleGender
             });
         }
     }
@@ -5201,7 +5210,8 @@ app.get('/api/portal/age/army-groups', (req, res) => {
     const access = resolveHeadquartersAccessForCommander(commander);
     const state = readNationArmyGroupsForNation(gameNation);
     const payload = buildArmyGroupsApiPayload(state, access, username, {
-        resolveMemberRank: resolveArmyGroupMemberRank
+        resolveMemberRank: resolveArmyGroupMemberRank,
+        resolveMemberProfile: resolveArmyGroupMemberProfile
     });
     const memberGroup = payload.groups.find((group) => group.isMember);
 
@@ -5215,7 +5225,12 @@ app.get('/api/portal/age/army-groups', (req, res) => {
 
 function resolveArmyGroupMemberRank(username) {
     const commander = findCommanderByUsername(username);
-    return Math.max(1, Math.floor(Number(commander?.rank) || 1));
+    return buildCommanderRankMeta(commander).rank;
+}
+
+function resolveArmyGroupMemberProfile(username) {
+    const commander = findCommanderByUsername(username);
+    return buildCommanderRankMeta(commander);
 }
 
 function armyGroupRosterIncludesMember(memberUsernames, username) {
@@ -5229,7 +5244,8 @@ function armyGroupRosterIncludesMember(memberUsernames, username) {
 function respondArmyGroupsPayload(res, gameNation, commander, username, state, extra = {}) {
     const access = resolveHeadquartersAccessForCommander(commander);
     const payload = buildArmyGroupsApiPayload(state, access, username, {
-        resolveMemberRank: resolveArmyGroupMemberRank
+        resolveMemberRank: resolveArmyGroupMemberRank,
+        resolveMemberProfile: resolveArmyGroupMemberProfile
     });
     const memberGroup = payload.groups.find((group) => group.isMember);
     res.json({
