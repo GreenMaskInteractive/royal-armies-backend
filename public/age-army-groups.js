@@ -14,6 +14,15 @@
         main: 'Main',
         'temp-main': 'TMain'
     };
+    /** SF = Strike Force (not Special Forces). */
+    const TYPE_FULL_NAMES = {
+        sf: 'Strike Force',
+        taxi: 'Taxi',
+        rally: 'Rally',
+        hold: 'Hold',
+        main: 'Main',
+        'temp-main': 'Temp Main'
+    };
     const TYPE_CLASS = {
         sf: 'age-army-groups-type-cycle--sf',
         taxi: 'age-army-groups-type-cycle--taxi',
@@ -182,9 +191,16 @@
         if (!els.typeCycle) return;
         Object.values(TYPE_CLASS).forEach((cls) => els.typeCycle.classList.remove(cls));
         const label = TYPE_LABELS[selectedType] || 'SF';
+        const fullName = TYPE_FULL_NAMES[selectedType] || label;
         els.typeCycle.textContent = label;
         els.typeCycle.classList.add(TYPE_CLASS[selectedType] || TYPE_CLASS.sf);
-        els.typeCycle.setAttribute('aria-label', `Army group type: ${label}. Click to change.`);
+        els.typeCycle.title = fullName;
+        els.typeCycle.setAttribute(
+            'aria-label',
+            fullName === label
+                ? `Army group type: ${label}. Click to change.`
+                : `Army group type: ${fullName} (${label}). Click to change.`
+        );
     }
 
     function cycleSelectedType(direction) {
@@ -295,6 +311,7 @@
 
     function buildTypePill(type, group) {
         const label = TYPE_LABELS[type] || type;
+        const fullName = TYPE_FULL_NAMES[type] || label;
         const className = `age-army-groups-type-pill ${TYPE_CLASS[type] || TYPE_CLASS.sf}`;
 
         if (group?.canChangeType) {
@@ -303,14 +320,22 @@
             btn.className = `${className} age-army-groups-type-pill--cycle`;
             btn.textContent = label;
             btn.dataset.armyTypeCycle = group.id;
-            btn.setAttribute('aria-label', `Army type ${label}. Click to change.`);
-            btn.title = 'Change army type';
+            btn.setAttribute(
+                'aria-label',
+                fullName === label
+                    ? `Army type ${label}. Click to change.`
+                    : `Army type ${fullName} (${label}). Click to change.`
+            );
+            btn.title = fullName === label ? 'Change army type' : `${fullName} — change army type`;
             return btn;
         }
 
         const pill = global.document.createElement('span');
         pill.className = className;
         pill.textContent = label;
+        if (fullName !== label) {
+            pill.title = fullName;
+        }
         return pill;
     }
 

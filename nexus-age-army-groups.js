@@ -1,5 +1,5 @@
 /**
- * NEXUS — Nation army group roster (Main, Temp Main, Hold, Rally, SF, Taxi).
+ * NEXUS — Nation army group roster (Main, Temp Main, Hold, Rally, SF [Strike Force], Taxi).
  */
 'use strict';
 
