@@ -24365,7 +24365,71 @@ body.age-war-room-open {
 }
 
 .age-army-groups-row-meta {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px 12px;
     margin: 0 0 0 40px;
+    font-size: 10px;
+    font-weight: 600;
+    color: rgba(216, 200, 154, 0.62);
+}
+
+.age-army-groups-row-leader {
+    display: inline-flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 6px;
+    min-width: 0;
+    text-transform: none;
+    letter-spacing: normal;
+}
+
+.age-army-groups-row-leader.is-self .age-army-groups-member-name,
+.age-army-groups-row-leader.is-self .commander-identity-name {
+    color: #b8dcff;
+}
+
+.age-army-groups-row-leader-prefix {
+    flex: 0 0 auto;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: rgba(216, 200, 154, 0.52);
+}
+
+.age-army-groups-row-leader-identity {
+    display: inline-flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 6px;
+    min-width: 0;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: none;
+    letter-spacing: normal;
+}
+
+.age-army-groups-row-leader-identity .commander-identity-name-row {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+.age-army-groups-row-leader-identity .commander-identity-name,
+.age-army-groups-row-leader-identity .age-army-groups-member-name {
+    color: rgba(236, 220, 180, 0.92);
+}
+
+.age-army-groups-row-leader-identity .commander-rank-pill {
+    font-size: 0.5rem !important;
+    padding: 1px 5px !important;
+}
+
+.age-army-groups-row-count {
+    flex: 0 0 auto;
     font-size: 10px;
     font-weight: 600;
     letter-spacing: 0.06em;

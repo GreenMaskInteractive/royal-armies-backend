@@ -348,13 +348,12 @@
         return display;
     }
 
-    function buildArmyGroupMemberIdentity(member) {
-        const label = formatMemberLabel(member);
+    function buildArmyGroupIdentityHtml(label, profile, hostClass) {
         const identity = global.document.createElement('span');
-        identity.className = 'age-army-groups-member-identity';
+        identity.className = hostClass || 'age-army-groups-member-identity';
 
         const rankTitles = global.RoyalArmiesCommanderRankTitles;
-        const rank = Number(member?.rank);
+        const rank = Number(profile?.rank);
         if (
             rankTitles
             && Number.isFinite(rank)
@@ -364,8 +363,8 @@
         ) {
             identity.innerHTML = rankTitles.buildCommanderIdentityNameHtml(label, {
                 rank,
-                path: member.path,
-                rankTitleGender: member.rankTitleGender,
+                path: profile.path,
+                rankTitleGender: profile.rankTitleGender,
                 compact: true,
                 inAge: true
             });
@@ -377,6 +376,24 @@
         name.textContent = label;
         identity.appendChild(name);
         return identity;
+    }
+
+    function buildArmyGroupMemberIdentity(member) {
+        return buildArmyGroupIdentityHtml(formatMemberLabel(member), member);
+    }
+
+    function buildGroupRowLeaderLabel(group) {
+        const label = formatVolunteerDisplayName(group.leaderUsername);
+        if (group.isLeader) return `${label} (you)`;
+        return label;
+    }
+
+    function buildGroupRowLeaderIdentity(group) {
+        return buildArmyGroupIdentityHtml(buildGroupRowLeaderLabel(group), {
+            rank: group.leaderRank,
+            path: group.leaderPath,
+            rankTitleGender: group.leaderRankTitleGender
+        }, 'age-army-groups-row-leader-identity');
     }
 
     function listMergeTargetGroups(groups, sourceId) {
@@ -666,10 +683,24 @@
             head.appendChild(tools);
             row.appendChild(head);
 
-            const meta = global.document.createElement('p');
+            const meta = global.document.createElement('div');
             meta.className = 'age-army-groups-row-meta';
+            if (group.leaderUsername) {
+                const leaderWrap = global.document.createElement('div');
+                leaderWrap.className = 'age-army-groups-row-leader';
+                if (group.isLeader) leaderWrap.classList.add('is-self');
+                const leaderPrefix = global.document.createElement('span');
+                leaderPrefix.className = 'age-army-groups-row-leader-prefix';
+                leaderPrefix.textContent = 'Leader';
+                leaderWrap.appendChild(leaderPrefix);
+                leaderWrap.appendChild(buildGroupRowLeaderIdentity(group));
+                meta.appendChild(leaderWrap);
+            }
             const count = group.memberCount || 0;
-            meta.textContent = `${count} player${count === 1 ? '' : 's'}`;
+            const countEl = global.document.createElement('span');
+            countEl.className = 'age-army-groups-row-count';
+            countEl.textContent = `${count} player${count === 1 ? '' : 's'}`;
+            meta.appendChild(countEl);
             row.appendChild(meta);
 
             row.appendChild(buildMemberPanel(group, groups));

@@ -396,6 +396,7 @@ function buildArmyGroupsApiPayload(state, access, username, options = {}) {
                 };
             });
             const isGroupLeader = Boolean(self && group.leaderUsername === self);
+            const leaderProfile = resolveMemberProfile(group.leaderUsername);
             return {
                 id: group.id,
                 type: group.type,
@@ -403,7 +404,9 @@ function buildArmyGroupsApiPayload(state, access, username, options = {}) {
                 cityId: group.cityId,
                 createdAt: group.createdAt,
                 leaderUsername: group.leaderUsername,
-                leaderRank: resolveRank(group.leaderUsername),
+                leaderRank: leaderProfile.rank,
+                leaderPath: leaderProfile.path,
+                leaderRankTitleGender: leaderProfile.rankTitleGender,
                 memberCount: group.memberUsernames.length,
                 members,
                 isMember: self ? group.memberUsernames.includes(self) : false,
