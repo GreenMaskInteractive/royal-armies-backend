@@ -3915,6 +3915,22 @@ body.is-terms-gate-active #main-portal-dynamic-viewport {
     font-size: inherit !important;
 }
 
+#age-page-canvas .age-map-bottom-commander-nametag #logged-user-tag.commander-identity-name-row-host {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 14px !important;
+    max-width: 100% !important;
+}
+
+#age-page-canvas .age-map-bottom-commander-nametag .commander-identity-name-row {
+    gap: 14px !important;
+}
+
+#age-page-canvas .age-map-bottom-commander-nametag .commander-rank-pill {
+    margin-left: 2px !important;
+    flex-shrink: 0 !important;
+}
+
 .public-profile-commander-name-row {
     display: flex !important;
     align-items: center !important;
@@ -16007,6 +16023,15 @@ label.age-council-board-editor-tool {
     box-sizing: border-box;
 }
 
+/* Bottom HUD + commander menu must stack above the left council column */
+#age-page-canvas .age-map-hud--bottom {
+    z-index: 80 !important;
+}
+
+#age-page-canvas .age-map-hud--left {
+    z-index: 24 !important;
+}
+
 .age-map-bottom-dock {
     padding: 0;
     overflow: visible;
@@ -16147,7 +16172,7 @@ label.age-council-board-editor-tool {
     gap: 0;
     min-width: 0;
     max-width: min(520px, 42vw);
-    z-index: 40;
+    z-index: 90;
     overflow: visible;
     pointer-events: none;
 }
@@ -16169,7 +16194,7 @@ label.age-council-board-editor-tool {
     border-left: none;
     border-radius: 0 5px 5px 0;
     background: linear-gradient(90deg, rgba(0, 0, 0, 0.12) 0%, rgba(0, 0, 0, 0.28) 100%);
-    z-index: 1;
+    z-index: 92;
     overflow: visible;
     pointer-events: none;
 }
@@ -16187,11 +16212,14 @@ label.age-council-board-editor-tool {
     flex-direction: column;
     align-items: flex-end;
     justify-content: center;
+    z-index: 91;
+    overflow: visible !important;
 }
 
 #age-page-canvas .age-map-bottom-commander-nametag .portal-commander-identity-card {
     position: relative;
-    z-index: 1;
+    z-index: 93;
+    overflow: visible !important;
 }
 
 #age-page-canvas .age-map-bottom-commander-nametag .portal-commander-identity-card-body {
@@ -16281,6 +16309,7 @@ label.age-council-board-editor-tool {
     left: auto !important;
     right: 0 !important;
     transform: translateY(-6px) scale(0.98) !important;
+    z-index: 248120 !important;
 }
 
 #age-page-canvas .age-map-bottom-commander-nametag .portal-commander-identity-card.is-commander-menu-open .portal-commander-identity-menu:not([hidden]) {
@@ -16288,7 +16317,7 @@ label.age-council-board-editor-tool {
 }
 
 #age-page-canvas .age-map-bottom-commander-nametag .portal-commander-identity-card.is-commander-menu-open {
-    z-index: 100010 !important;
+    z-index: 248110 !important;
 }
 
 #age-page-canvas .age-map-bottom-chat-messages-host .game-chat-module-header {
