@@ -7,6 +7,8 @@
     const GAME_PRESENCE_HEARTBEAT_MS = 20000;
     const ACTIVE_AGE_STORAGE_KEY = 'savedCommanderInActiveAge';
     const COUNCIL_BOARD_MAP_GAP_PX = 10;
+    const COUNCIL_BOARD_LEFT_OFFSET_PX = 100;
+    const COUNCIL_BOARD_RIGHT_TRIM_PX = 10;
     const COUNCIL_BOARD_LEFT_POSITION_PX = 16;
     const COUNCIL_BOARD_MIN_WIDTH_PX = 220;
     const COUNCIL_BOARD_MIN_HEIGHT_PX = 160;
@@ -955,11 +957,11 @@
             return;
         }
 
-        const gap = COUNCIL_BOARD_MAP_GAP_PX;
+        const gap = COUNCIL_BOARD_MAP_GAP_PX + COUNCIL_BOARD_RIGHT_TRIM_PX;
         const leftPosition = Math.max(
             COUNCIL_BOARD_LEFT_POSITION_PX,
             parseFloat(global.getComputedStyle(canvas).getPropertyValue('padding-left')) || 0
-        );
+        ) + COUNCIL_BOARD_LEFT_OFFSET_PX;
         canvas.style.setProperty('--age-council-board-left', `${leftPosition}px`);
 
         const mapRect = resolveMapFrameLayoutRect(mapFrame);

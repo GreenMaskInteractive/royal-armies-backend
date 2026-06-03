@@ -13,6 +13,8 @@
     ].join(', ');
 
     const COUNCIL_BOARD_MAP_GAP_PX = 10;
+    const COUNCIL_BOARD_LEFT_OFFSET_PX = 100;
+    const COUNCIL_BOARD_RIGHT_TRIM_PX = 10;
     const COUNCIL_BOARD_MIN_WIDTH_PX = 220;
     const COUNCIL_BOARD_MIN_HEIGHT_PX = 160;
     const MAP_FRAME_LAYOUT_MAX_EDGE = 1642;
@@ -151,8 +153,8 @@
             return;
         }
 
-        const gap = COUNCIL_BOARD_MAP_GAP_PX;
-        const leftPosition = resolveCouncilBoardLeftPx();
+        const gap = COUNCIL_BOARD_MAP_GAP_PX + COUNCIL_BOARD_RIGHT_TRIM_PX;
+        const leftPosition = resolveCouncilBoardLeftPx() + COUNCIL_BOARD_LEFT_OFFSET_PX;
         canvas.style.setProperty('--age-council-board-left', `${leftPosition}px`);
 
         const mapRect = resolveMapFrameLayoutRect(mapFrame);
