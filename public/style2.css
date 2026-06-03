@@ -13922,45 +13922,41 @@ body.developer-maintenance-alert-active #page-landing {
     gap: 4px;
 }
 
-.age-council-board-editor-tool--color-picker {
-    position: relative;
-    overflow: hidden;
+.age-council-board-editor-toolbar .age-council-board-editor-tool.age-council-board-editor-tool--color-picker {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    min-width: 32px;
-    width: 32px;
+    min-width: 34px;
+    width: 34px;
     height: 28px;
     padding: 0;
     box-sizing: border-box;
+    vertical-align: middle;
 }
 
-.age-council-board-editor-tool-color-swatch {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 100%;
-    height: 100%;
+.age-council-board-editor-toolbar .age-council-board-editor-tool--color-picker .age-council-board-editor-tool-color-swatch {
+    display: block;
     margin: 0;
-    font-family: 'Cinzel', serif;
-    font-size: 1.08rem;
+    padding: 0;
+    font-family: 'Segoe UI', Tahoma, sans-serif;
+    font-size: 1rem;
     font-weight: 700;
     line-height: 1;
     color: #ffd978;
     pointer-events: none;
-    transform: translateY(1px);
+    text-align: center;
 }
 
 .age-council-board-editor-color-input {
-    position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
+    position: fixed;
+    left: -9999px;
+    width: 1px;
+    height: 1px;
     margin: 0;
     padding: 0;
     border: none;
     opacity: 0;
-    cursor: pointer;
+    pointer-events: none;
 }
 
 .age-council-board-editor-tool[data-council-format="color"] {

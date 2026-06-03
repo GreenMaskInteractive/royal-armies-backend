@@ -868,6 +868,7 @@
             });
 
             const colorInput = global.document.getElementById('age-council-board-editor-color');
+            const colorOpenBtn = global.document.getElementById('age-council-board-editor-color-open');
             const colorSwatch = editor.querySelector('.age-council-board-editor-tool-color-swatch');
             if (colorInput && colorInput.dataset.councilColorBound !== 'true') {
                 colorInput.dataset.councilColorBound = 'true';
@@ -882,6 +883,15 @@
                     applyCouncilNoticeColor(colorInput.value);
                 });
                 syncColorSwatch();
+            }
+
+            if (colorOpenBtn && colorInput && colorOpenBtn.dataset.councilColorOpenBound !== 'true') {
+                colorOpenBtn.dataset.councilColorOpenBound = 'true';
+                colorOpenBtn.addEventListener('click', (event) => {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    colorInput.click();
+                });
             }
         }
 
