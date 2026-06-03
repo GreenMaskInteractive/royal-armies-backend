@@ -162,7 +162,8 @@
                 portalMusicVol: parseFloat(global.localStorage.getItem('savedPortalMusicVol')) || 0.5,
                 portalNarrationVol: parseFloat(global.localStorage.getItem('savedPortalNarrationVol')) || 1,
                 portalSfxVol: parseFloat(global.localStorage.getItem('savedPortalSfxVol')) || 0.2,
-                gameChatOpacity: parseFloat(global.localStorage.getItem('savedGameChatOpacity')) || 85
+                gameChatOpacity: parseFloat(global.localStorage.getItem('savedGameChatOpacity')) || 85,
+                rankTitleGender: global.localStorage.getItem('savedRankTitleGender') === 'female' ? 'female' : 'male'
             };
         } catch (_err) {
             /* ignore malformed legacy cache */
@@ -260,6 +261,9 @@
                 });
             }
         }
+        if (preferences.rankTitleGender && typeof global.applyRankTitleGenderPreference === 'function') {
+            global.applyRankTitleGenderPreference(preferences.rankTitleGender);
+        }
     }
 
     function applyCommanderDossierToClient(dossier) {
@@ -337,7 +341,10 @@
             portalSfxVol: Number(global.localStorage.getItem('savedPortalSfxVol')) || 0.2,
             gameChatOpacity: typeof global.confirmedGameChatOpacity !== 'undefined'
                 ? global.confirmedGameChatOpacity
-                : (Number(global.localStorage.getItem('savedGameChatOpacity')) || 85)
+                : (Number(global.localStorage.getItem('savedGameChatOpacity')) || 85),
+            rankTitleGender: typeof global.confirmedRankTitleGender !== 'undefined'
+                ? global.confirmedRankTitleGender
+                : (global.localStorage.getItem('savedRankTitleGender') === 'female' ? 'female' : 'male')
         };
     }
 

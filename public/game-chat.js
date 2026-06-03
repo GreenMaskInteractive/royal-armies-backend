@@ -369,7 +369,10 @@
             author: String(raw.sender || 'Commander').trim(),
             text: String(raw.text || '').trim(),
             sentAt,
-            displayTime: String(raw.time || '').trim() || formatClockTime(sentAt)
+            displayTime: String(raw.time || '').trim() || formatClockTime(sentAt),
+            senderRank: Number(raw.senderRank) || null,
+            senderPath: String(raw.senderPath || '').trim() || null,
+            senderRankTitleGender: String(raw.senderRankTitleGender || '').trim() || null
         };
     }
 
@@ -392,7 +395,10 @@
             displayTime: String(raw.time || '').trim() || formatClockTime(sentAt),
             communityChannel,
             visible: raw.visible !== false,
-            recipientAlertOnly: raw.recipientAlertOnly === true
+            recipientAlertOnly: raw.recipientAlertOnly === true,
+            senderRank: Number(raw.senderRank) || null,
+            senderPath: String(raw.senderPath || '').trim() || null,
+            senderRankTitleGender: String(raw.senderRankTitleGender || '').trim() || null
         };
     }
 
@@ -778,12 +784,30 @@
             return escapeHtml(entry.text);
         }
 
-        const authorLabel = escapeHtml(entry.author || 'Commander');
+        const authorName = entry.author || 'Commander';
+        const rankTitles = global.RoyalArmiesCommanderRankTitles;
+        const senderRank = Number(entry.senderRank);
+        let authorHtml = escapeHtml(authorName);
+        if (
+            rankTitles
+            && Number.isFinite(senderRank)
+            && senderRank >= 1
+            && senderRank <= rankTitles.COMMANDER_RANK_TITLE_MAX
+            && typeof rankTitles.buildCommanderIdentityNameHtml === 'function'
+        ) {
+            authorHtml = rankTitles.buildCommanderIdentityNameHtml(authorName, {
+                rank: senderRank,
+                path: entry.senderPath,
+                rankTitleGender: entry.senderRankTitleGender,
+                inAge: true,
+                compact: true
+            });
+        }
         const textHtml = global.RoyalArmiesChatMentions?.formatChatMentionBodyHtml
             ? global.RoyalArmiesChatMentions.formatChatMentionBodyHtml(entry.text)
             : escapeHtml(entry.text);
 
-        return `<strong class="game-chat-msg-author">${authorLabel}</strong> ${textHtml}`;
+        return `<span class="game-chat-msg-author-row"><strong class="game-chat-msg-author">${authorHtml}</strong></span> ${textHtml}`;
     }
 
     function processMentionAlertsForEntries(entries, channelLabel, channelId) {
@@ -1325,7 +1349,8 @@
         enableForOfficialAge: enableGameChatForOfficialAge,
         isAgeChatPoppedOut: () => ageChatPoppedOut,
         setAgeChatPoppedOut,
-        toggleAgeChatPopout
+        toggleAgeChatPopout,
+        renderActiveChatStream
     };
 
     if (global.document.readyState === 'loading') {

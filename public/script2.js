@@ -1878,6 +1878,14 @@ function getChatRosterDisplayRank(name, isSelf) {
     if (staffRole === 'owner') return 'Site Owner';
     if (staffRole === 'moderator') return 'Moderator';
     if (isSelf && typeof player !== 'undefined' && Number.isFinite(player.rank)) {
+        if (window.RoyalArmiesCommanderRankTitles) {
+            const title = window.RoyalArmiesCommanderRankTitles.getCommanderRankDisplayTitle(
+                player.rank,
+                player.path,
+                typeof confirmedRankTitleGender !== 'undefined' ? confirmedRankTitleGender : player.rankTitleGender
+            );
+            if (title) return title;
+        }
         const maxRankIndex = (typeof CHRONICLE_MAX_RANK === 'number' ? CHRONICLE_MAX_RANK : 50) - 1;
         const rankIndex = Math.max(0, Math.min(player.rank - 1, maxRankIndex));
         if (typeof groundTitles !== 'undefined' && groundTitles[rankIndex]) {
@@ -1916,18 +1924,46 @@ function getChatRosterStaffBadgeMarkup(name) {
     return '';
 }
 
-function formatCommunityChatSenderMarkup(sender) {
+function formatCommunityChatSenderMarkup(sender, messageMeta) {
     if (isRoyalGuardBotUsername(sender)) {
         const safeName = escapeMetricRosterHtml(getRoyalGuardBotDisplayName());
         return `<span class="chat-message-sender-name chat-message-sender-name--royal-guard-bot"><span class="chat-sender-staff-badge chat-sender-staff-badge--royal-guard-bot" title="Automated chat monitor" aria-hidden="true">🛡</span><strong>${safeName}:</strong></span>`;
     }
     const safeName = escapeMetricRosterHtml(sender);
     const staffRole = typeof getPortalStaffRole === 'function' ? getPortalStaffRole(sender) : null;
+    const badgePrefix = staffRole === 'owner'
+        ? '<span class="chat-sender-staff-badge chat-sender-staff-badge--owner" title="Site owner" aria-hidden="true">👑</span>'
+        : (staffRole === 'moderator'
+            ? '<span class="chat-sender-staff-badge chat-sender-staff-badge--moderator" title="Moderator" aria-hidden="true">🛡</span>'
+            : '');
+    const staffClass = staffRole === 'owner'
+        ? ' chat-message-sender-name--owner'
+        : (staffRole === 'moderator' ? ' chat-message-sender-name--moderator' : '');
+
+    const rankTitles = window.RoyalArmiesCommanderRankTitles;
+    const senderRank = Number(messageMeta?.senderRank);
+    if (
+        rankTitles
+        && Number.isFinite(senderRank)
+        && senderRank >= 1
+        && senderRank <= rankTitles.COMMANDER_RANK_TITLE_MAX
+        && typeof rankTitles.buildCommanderIdentityNameHtml === 'function'
+    ) {
+        const identityHtml = rankTitles.buildCommanderIdentityNameHtml(sender, {
+            rank: senderRank,
+            path: messageMeta?.senderPath,
+            rankTitleGender: messageMeta?.senderRankTitleGender,
+            inAge: true,
+            compact: true
+        });
+        return `<span class="chat-message-sender-name${staffClass}">${badgePrefix}<strong class="chat-message-sender-identity">${identityHtml}:</strong></span>`;
+    }
+
     if (staffRole === 'owner') {
-        return `<span class="chat-message-sender-name chat-message-sender-name--owner"><span class="chat-sender-staff-badge chat-sender-staff-badge--owner" title="Site owner" aria-hidden="true">👑</span><strong>${safeName}:</strong></span>`;
+        return `<span class="chat-message-sender-name chat-message-sender-name--owner">${badgePrefix}<strong>${safeName}:</strong></span>`;
     }
     if (staffRole === 'moderator') {
-        return `<span class="chat-message-sender-name chat-message-sender-name--moderator"><span class="chat-sender-staff-badge chat-sender-staff-badge--moderator" title="Moderator" aria-hidden="true">🛡</span><strong>${safeName}:</strong></span>`;
+        return `<span class="chat-message-sender-name chat-message-sender-name--moderator">${badgePrefix}<strong>${safeName}:</strong></span>`;
     }
     return `<span class="chat-message-sender-name"><strong>${safeName}:</strong></span>`;
 }
@@ -2160,7 +2196,15 @@ function buildCommunityChatRosterCardMarkup(name, selfLower, playingSet, presenc
                 <div class="chat-roster-commander-topline">
                     <span class="chat-roster-name-row">
                         <span class="chat-roster-presence-ring ${presenceRingClass}" aria-hidden="true" title="${escapeMetricRosterHtml(status.label)}"></span>
-                        <span class="chat-roster-name" title="${escapeMetricRosterHtml(name)}">${escapeMetricRosterHtml(name)}</span>
+                        <span class="chat-roster-name" title="${escapeMetricRosterHtml(name)}">${isSelf && window.RoyalArmiesCommanderRankTitles && typeof player !== 'undefined'
+        ? window.RoyalArmiesCommanderRankTitles.buildCommanderIdentityNameHtml(name, {
+            rank: player.rank,
+            path: player.path,
+            rankTitleGender: typeof confirmedRankTitleGender !== 'undefined' ? confirmedRankTitleGender : player.rankTitleGender,
+            inAge: true,
+            compact: true
+        })
+        : escapeMetricRosterHtml(name)}</span>
                     </span>
                     <span class="chat-roster-status-pill ${status.pillClass}"><span class="chat-roster-status-pill-icon" aria-hidden="true">${status.icon}</span>${escapeMetricRosterHtml(status.label)}</span>
                     ${expandButtonMarkup}
@@ -3693,7 +3737,7 @@ function executeCompileActiveChannelMessageStrips() {
  <div class="chat-message-content-stack">
  <div class="chat-message-meta-left">
  <span class="chat-message-timestamp">[${log.time}]</span>
- ${formatCommunityChatSenderMarkup(log.sender)}
+ ${formatCommunityChatSenderMarkup(log.sender, log)}
  ${editedTag}
  </div>
  ${buildCommunityChatReplyQuoteMarkup(log.replyTo)}

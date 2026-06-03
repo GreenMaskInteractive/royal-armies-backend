@@ -86,6 +86,12 @@
             });
         }
 
+        if (typeof global.refreshCommanderRankTitleDisplays === 'function') {
+            global.refreshCommanderRankTitleDisplays();
+        } else if (typeof global.refreshLoggedUserTagDisplay === 'function') {
+            global.refreshLoggedUserTagDisplay();
+        }
+
         return normalized;
     }
 

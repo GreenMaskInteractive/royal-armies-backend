@@ -402,11 +402,20 @@ function isViewingCommanderInActiveAge() {
     return localStorage.getItem('savedCommanderInActiveAge') === 'true';
 }
 
-function getCommanderRankTitle(rankNum, pathCode) {
+function getCommanderRankTitle(rankNum, pathCode, gender) {
     if (!isViewingCommanderInActiveAge()) return 'N/A';
 
     const rank = parseInt(rankNum, 10);
     if (!Number.isFinite(rank) || rank < 1) return 'N/A';
+
+    if (window.RoyalArmiesCommanderRankTitles) {
+        const displayTitle = window.RoyalArmiesCommanderRankTitles.getCommanderRankDisplayTitle(
+            rank,
+            pathCode,
+            gender
+        );
+        if (displayTitle) return displayTitle;
+    }
 
     const magicPath = pathCode === 'MAG' || pathCode === 'MAGIC';
     const rankTable = magicPath
@@ -547,6 +556,7 @@ function buildSubjectPlayerFromPublicProfilePayload(data) {
         privacy: data.privacy === 'Private' ? 'Private' : 'Public',
         rank: Number(data.rank) || 1,
         path: String(data.path || ''),
+        rankTitleGender: data.rankTitleGender === 'female' ? 'female' : 'male',
         ageHistory: Array.isArray(data.ageHistory) ? data.ageHistory : [],
         medals: Array.isArray(data.medals) ? data.medals : [],
         awards: Array.isArray(data.awards) ? data.awards : []
@@ -602,6 +612,11 @@ function getPublicProfileSnapshot(subjectPlayer) {
         privacy,
         rank: source.rank ?? 1,
         path: source.path || '',
+        rankTitleGender: source.rankTitleGender === 'female'
+            ? 'female'
+            : (typeof confirmedRankTitleGender !== 'undefined' && viewingSelf
+                ? confirmedRankTitleGender
+                : 'male'),
         ageHistory: loadCommanderAgeHistoryRecords(source),
         medals: loadCommanderMedalRecords(source),
         awards: loadCommanderAwardRecords(source)
@@ -706,8 +721,17 @@ function renderPublicProfileCardContent(snapshot, options) {
         })
         : `<span class="public-profile-membership tier-${String(snapshot.membershipTitle).toLowerCase()}">${escapePublicProfileHtml(snapshot.membershipTitle)} Member</span>`;
     const royaltyNameBadgeMarkup = buildRoyaltyProfileNameBadgeMarkup(snapshot.membershipTitle);
-    const rankTitle = getCommanderRankTitle(snapshot.rank, snapshot.path);
+    const rankTitle = getCommanderRankTitle(snapshot.rank, snapshot.path, snapshot.rankTitleGender);
     const classTitle = getCommanderClassTitle(snapshot.path);
+    const nameIdentityHtml = window.RoyalArmiesCommanderRankTitles
+        && typeof window.RoyalArmiesCommanderRankTitles.buildCommanderIdentityNameHtml === 'function'
+        ? window.RoyalArmiesCommanderRankTitles.buildCommanderIdentityNameHtml(snapshot.name, {
+            rank: snapshot.rank,
+            path: snapshot.path,
+            rankTitleGender: snapshot.rankTitleGender,
+            inAge: true
+        })
+        : escapePublicProfileHtml(snapshot.name);
 
     const bioColumnContent = snapshot.description
         ? `<p class="public-profile-bio-text">${escapePublicProfileHtml(snapshot.description)}</p>`
@@ -774,7 +798,7 @@ function renderPublicProfileCardContent(snapshot, options) {
                     <img class="public-profile-avatar-img" src="${escapePublicProfileHtml(snapshot.avatarUrl)}" alt="${escapePublicProfileHtml(snapshot.name)} emblem">
                 </div>
                 <div class="public-profile-identity-copy">
-                    <h2 id="public-profile-card-title" class="public-profile-commander-name">${royaltyNameBadgeMarkup}${escapePublicProfileHtml(snapshot.name)}</h2>
+                    <h2 id="public-profile-card-title" class="public-profile-commander-name public-profile-commander-name-row">${royaltyNameBadgeMarkup}${nameIdentityHtml}</h2>
                 </div>
             </header>
             ${splitBodySection}
@@ -789,7 +813,7 @@ function renderPublicProfileCardContent(snapshot, options) {
             </div>
             <div class="public-profile-identity-copy">
                 <p class="public-profile-eyebrow">Player profile</p>
-                <h2 id="public-profile-card-title" class="public-profile-commander-name">${royaltyNameBadgeMarkup}${escapePublicProfileHtml(snapshot.name)}</h2>
+                <h2 id="public-profile-card-title" class="public-profile-commander-name public-profile-commander-name-row">${royaltyNameBadgeMarkup}${nameIdentityHtml}</h2>
                 <div class="public-profile-badge-row commander-membership-badge-row">
                     ${membershipBadgeRowMarkup}
                 </div>

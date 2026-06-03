@@ -35,6 +35,10 @@ const {
 const { listErrorCodes } = require('./nexus-error-codes');
 const { getDeployStatePayload } = require('./nexus-deploy-revision');
 const {
+    buildChatSenderRankMeta,
+    resolveCommanderRankTitleGender
+} = require('./nexus-commander-rank-titles');
+const {
     calculateNationTreasuryCaptureReward,
     getDefaultNationTreasuryRecord,
     getNationTreasuryRewardRules,
@@ -420,7 +424,20 @@ function sanitizeCommunityChatMessageEntry(raw = {}) {
         recipientAlertOnly: raw.recipientAlertOnly === true,
         replyTo: normalizeCommunityChatReplyTo(raw.replyTo),
         isEdited: raw.isEdited === true,
-        editedAt: raw.editedAt ? String(raw.editedAt).slice(0, 32) : null
+        editedAt: raw.editedAt ? String(raw.editedAt).slice(0, 32) : null,
+        ...sanitizeChatSenderRankMeta(raw)
+    };
+}
+
+function sanitizeChatSenderRankMeta(raw = {}) {
+    const rank = Math.floor(Number(raw.senderRank));
+    if (!Number.isFinite(rank) || rank < 1 || rank > 22) {
+        return {};
+    }
+    return {
+        senderRank: rank,
+        senderPath: String(raw.senderPath || 'PHYS').trim().slice(0, 16) || 'PHYS',
+        senderRankTitleGender: resolveCommanderRankTitleGender(raw.senderRankTitleGender)
     };
 }
 
@@ -670,7 +687,8 @@ function appendCommunityChatMessageToStore(store, payload) {
         recipientAlertOnly: isDisciplinaryNotice && payload.recipientAlertOnly === true,
         replyTo,
         isEdited: false,
-        editedAt: null
+        editedAt: null,
+        ...sanitizeChatSenderRankMeta(payload)
     });
 
     store.channels[channel].push(entry);
@@ -736,7 +754,8 @@ function sanitizeGameChatMessageEntry(raw = {}) {
         sentAt,
         source: raw.source === 'system' ? 'system' : 'game',
         nationKey: String(raw.nationKey || '').trim().slice(0, 80) || null,
-        allianceId: String(raw.allianceId || '').trim().slice(0, 80) || null
+        allianceId: String(raw.allianceId || '').trim().slice(0, 80) || null,
+        ...sanitizeChatSenderRankMeta(raw)
     };
 }
 
@@ -1870,7 +1889,8 @@ function appendGameChatMessageToStore(store, payload, commander) {
         sentAt: new Date().toISOString(),
         source: 'game',
         nationKey: channel === 'country' ? gameNation : null,
-        allianceId: channel === 'alliance' ? allianceId : null
+        allianceId: channel === 'alliance' ? allianceId : null,
+        ...buildChatSenderRankMeta(commander)
     });
 
     store.channels[channel].push(entry);
@@ -2676,7 +2696,8 @@ function normalizeCommanderPreferences(raw) {
         gameChatPanelHeight: clampNumber(source.gameChatPanelHeight, 200, 840, defaults.gameChatPanelHeight),
         gameChatActiveTab: GAME_CHAT_UI_TABS.has(String(source.gameChatActiveTab || '').trim())
             ? String(source.gameChatActiveTab).trim()
-            : defaults.gameChatActiveTab
+            : defaults.gameChatActiveTab,
+        rankTitleGender: resolveCommanderRankTitleGender(source.rankTitleGender)
     };
 }
 
@@ -3769,10 +3790,12 @@ app.get('/api/portal/commanders/:username/public-profile', (req, res) => {
     }
 
     const dossier = serializeCommanderDossierForClient(commander);
+    const prefs = normalizeCommanderPreferences(commander.preferences);
     res.status(200).json({
         ...dossier,
         rank: Number(commander.rank) || 1,
         path: String(commander.path || '').slice(0, 16),
+        rankTitleGender: prefs.rankTitleGender,
         country: String(commander.country || '—').slice(0, 120),
         timezone: String(commander.timezone || '—').slice(0, 120)
     });
@@ -4461,9 +4484,11 @@ app.post('/api/portal/community-chat/messages', (req, res) => {
     let store = readCommunityChatStore();
     store = maybeRunScheduledCommunityChatPurge(store);
 
+    const posterCommander = findCommanderByUsername(posterUsername);
     const result = appendCommunityChatMessageToStore(store, {
         ...req.body,
-        posterUsername
+        posterUsername,
+        ...buildChatSenderRankMeta(posterCommander)
     });
 
     if (result.errorCode || result.error) {
@@ -4708,7 +4733,8 @@ app.post('/api/portal/game-chat/messages', (req, res) => {
             channel: GAME_CHAT_GLOBAL_COMMUNITY_CHANNEL,
             sender: posterUsername,
             text: req.body?.text,
-            posterUsername
+            posterUsername,
+            ...buildChatSenderRankMeta(commander)
         });
     } else {
         result = appendGameChatMessageToStore(store, {

@@ -81,6 +81,12 @@ function getDisplayResolutionLayoutFrame() {
 
 let confirmedDisplayResolution = readDisplayResolutionPresetId();
 let stagedDisplayResolution = confirmedDisplayResolution;
+let confirmedRankTitleGender = localStorage.getItem('savedRankTitleGender') === 'female' ? 'female' : 'male';
+let stagedRankTitleGender = confirmedRankTitleGender;
+if (typeof appRuntimeGlobal !== 'undefined') {
+    appRuntimeGlobal.confirmedRankTitleGender = confirmedRankTitleGender;
+    appRuntimeGlobal.stagedRankTitleGender = stagedRankTitleGender;
+}
 if (typeof window !== 'undefined') {
     window.confirmedDisplayResolution = confirmedDisplayResolution;
     window.stagedDisplayResolution = stagedDisplayResolution;
@@ -680,18 +686,113 @@ function refreshProfileCommanderNameDisplay() {
 function refreshLoggedUserTagDisplay() {
     const tag = document.getElementById('logged-user-tag');
     const mobileName = document.getElementById('portal-mobile-nav-username');
+    const gameMobileName = document.getElementById('game-mobile-nav-username');
     const authed = isPortalUserAuthenticated();
 
     if (!authed && isMainPortalHub()) {
-        if (tag) tag.textContent = '';
+        if (tag) {
+            tag.textContent = '';
+            tag.classList.remove('commander-identity-name-row-host');
+        }
         if (mobileName) mobileName.textContent = '';
+        if (gameMobileName) gameMobileName.textContent = '';
         return;
     }
 
     const name = getActiveCommanderUsername();
     const displayLabel = name || (isMainPortalHub() ? '' : 'Loading...');
-    if (tag) tag.textContent = displayLabel;
+    const rankTitles = window.RoyalArmiesCommanderRankTitles;
+    const canRenderPill = rankTitles
+        && typeof player !== 'undefined'
+        && displayLabel
+        && rankTitles.shouldShowCommanderRankPill(player.rank, { inAge: true });
+
+    if (tag) {
+        if (canRenderPill && typeof rankTitles.buildCommanderIdentityNameHtml === 'function') {
+            tag.classList.add('commander-identity-name-row-host');
+            tag.innerHTML = rankTitles.buildCommanderIdentityNameHtml(displayLabel, {
+                rank: player.rank,
+                path: player.path,
+                rankTitleGender: confirmedRankTitleGender
+            });
+        } else {
+            tag.classList.remove('commander-identity-name-row-host');
+            tag.textContent = displayLabel;
+        }
+    }
+
     if (mobileName) mobileName.textContent = displayLabel;
+    if (gameMobileName) gameMobileName.textContent = displayLabel;
+}
+
+function applyRankTitleGenderPreference(gender) {
+    const normalized = gender === 'female' ? 'female' : 'male';
+    confirmedRankTitleGender = normalized;
+    stagedRankTitleGender = normalized;
+    if (typeof player !== 'undefined') {
+        player.rankTitleGender = normalized;
+    }
+    try {
+        localStorage.setItem('savedRankTitleGender', normalized);
+    } catch (_err) {
+        /* ignore */
+    }
+    if (typeof appRuntimeGlobal !== 'undefined') {
+        appRuntimeGlobal.confirmedRankTitleGender = normalized;
+        appRuntimeGlobal.stagedRankTitleGender = normalized;
+    }
+    if (typeof refreshCommanderRankTitleDisplays === 'function') {
+        refreshCommanderRankTitleDisplays();
+    } else if (typeof refreshLoggedUserTagDisplay === 'function') {
+        refreshLoggedUserTagDisplay();
+    }
+}
+
+function buildRankTitleGenderProfileMarkup() {
+    const maleActive = stagedRankTitleGender !== 'female' ? ' is-active' : '';
+    const femaleActive = stagedRankTitleGender === 'female' ? ' is-active' : '';
+    return `
+        <div class="profile-section-box">
+            <label class="settings-label">Commander Rank Titles</label>
+            <p class="profile-rank-title-setting-copy">Choose male or female rank titles shown beside your name during an Age.</p>
+            <div class="profile-rank-title-gender-options">
+                <button type="button" class="settings-btn profile-rank-title-gender-btn${maleActive}" data-rank-title-gender="male">Male titles</button>
+                <button type="button" class="settings-btn profile-rank-title-gender-btn${femaleActive}" data-rank-title-gender="female">Female titles</button>
+            </div>
+            <p id="profile-rank-title-preview" class="profile-rank-title-preview" aria-live="polite"></p>
+        </div>
+    `;
+}
+
+function syncRankTitleGenderProfileUi() {
+    document.querySelectorAll('[data-rank-title-gender]').forEach((btn) => {
+        btn.classList.toggle('is-active', btn.getAttribute('data-rank-title-gender') === stagedRankTitleGender);
+    });
+    const preview = document.getElementById('profile-rank-title-preview');
+    if (!preview || !window.RoyalArmiesCommanderRankTitles || typeof player === 'undefined') return;
+    const title = window.RoyalArmiesCommanderRankTitles.getCommanderRankDisplayTitle(
+        player.rank,
+        player.path,
+        stagedRankTitleGender
+    );
+    preview.textContent = title ? `Preview: ${title}` : '';
+}
+
+function bindRankTitleGenderProfileControls() {
+    document.querySelectorAll('[data-rank-title-gender]').forEach((btn) => {
+        btn.addEventListener('click', (event) => {
+            event.preventDefault();
+            const next = btn.getAttribute('data-rank-title-gender') === 'female' ? 'female' : 'male';
+            if (next === stagedRankTitleGender) return;
+            stagedRankTitleGender = next;
+            if (typeof appRuntimeGlobal !== 'undefined') {
+                appRuntimeGlobal.stagedRankTitleGender = stagedRankTitleGender;
+            }
+            hasUnsavedChanges = true;
+            syncRankTitleGenderProfileUi();
+        });
+    });
+    syncRankTitleGenderProfileUi();
 }
 
 var player = { 
@@ -700,7 +801,8 @@ var player = {
         return saved && saved.trim() !== '' ? saved.trim() : 'testaccount';
     })(),
     rank: 1, 
-    path: "PHYS", 
+    path: "PHYS",
+    rankTitleGender: confirmedRankTitleGender, 
     gold: 1000, 
     xp: 0, 
     terrain: "Standard", 
@@ -2989,6 +3091,7 @@ const nationLore = {
                                         </label>
                                     </div>
                                 </div>
+                                \${typeof buildRankTitleGenderProfileMarkup === 'function' ? buildRankTitleGenderProfileMarkup() : ''}
                             </div>
                             
                             <div class="profile-split-panel-half">
@@ -3826,6 +3929,7 @@ function loadLore(type, customMount) {
                                     </label>
                                 </div>
                             </div>
+                            ${buildRankTitleGenderProfileMarkup()}
                         </div>
                         <div class="profile-split-panel-half">
                             <div class="profile-double-row-expanded">
@@ -3870,6 +3974,7 @@ function loadLore(type, customMount) {
             if (footerHost) footerHost.appendChild(profileFooter);
             captureProfileEditorBaseline();
             bindProfileEditorFooterActions(profileFooter);
+            bindRankTitleGenderProfileControls();
             applyProfileRankResetButtonState();
             return;
         }
@@ -4373,7 +4478,8 @@ function captureProfileEditorBaseline() {
     profileEditorBaseline = {
         bio: cached.bio,
         privacy: cached.privacy,
-        avatarUrl: savedAvatar && savedAvatar.trim() ? savedAvatar.trim() : player.avatarUrl
+        avatarUrl: savedAvatar && savedAvatar.trim() ? savedAvatar.trim() : player.avatarUrl,
+        rankTitleGender: confirmedRankTitleGender
     };
 }
 
@@ -4415,6 +4521,10 @@ function revertProfileEditorChanges() {
     player.description = baseline.bio ?? '';
     player.privacy = baseline.privacy === 'Private' ? 'Private' : 'Public';
     player.avatarUrl = avatarUrl;
+    stagedRankTitleGender = baseline.rankTitleGender === 'female' ? 'female' : 'male';
+    if (typeof appRuntimeGlobal !== 'undefined') {
+        appRuntimeGlobal.stagedRankTitleGender = stagedRankTitleGender;
+    }
 
     try {
         localStorage.setItem('savedProfileAvatarUrl', avatarUrl);
@@ -4443,6 +4553,8 @@ function revertProfileEditorChanges() {
     if (typeof setAvatarArmorySelectorVisible === 'function') {
         setAvatarArmorySelectorVisible(false);
     }
+
+    syncRankTitleGenderProfileUi();
 
     if (typeof refreshLoggedUserTagDisplay === 'function') {
         refreshLoggedUserTagDisplay();
@@ -4484,6 +4596,7 @@ function saveSettings() {
         confirmedSafetyLock = stagedSafetyLock; 
         confirmedGameChatOpacity = stagedGameChatOpacity;
         confirmedDisplayResolution = stagedDisplayResolution;
+        applyRankTitleGenderPreference(stagedRankTitleGender);
 
         if (appRuntimeGlobal.RoyalArmiesDisplayResolution && typeof appRuntimeGlobal.RoyalArmiesDisplayResolution.confirmPreset === 'function') {
             appRuntimeGlobal.RoyalArmiesDisplayResolution.confirmPreset(confirmedDisplayResolution, getDisplayResolutionLayoutFrame());
@@ -4699,6 +4812,10 @@ window.canUseCommanderReset = canUseCommanderReset;
 window.syncPlayerFromActiveCommanderStorage = syncPlayerFromActiveCommanderStorage;
 window.refreshProfileCommanderNameDisplay = refreshProfileCommanderNameDisplay;
 window.refreshLoggedUserTagDisplay = refreshLoggedUserTagDisplay;
+window.applyRankTitleGenderPreference = applyRankTitleGenderPreference;
+window.buildRankTitleGenderProfileMarkup = buildRankTitleGenderProfileMarkup;
+window.bindRankTitleGenderProfileControls = bindRankTitleGenderProfileControls;
+window.syncRankTitleGenderProfileUi = syncRankTitleGenderProfileUi;
 window.refreshMainPortalAuthChrome = refreshMainPortalAuthChrome;
 window.openMainPortalGuestRegister = openMainPortalGuestRegister;
 window.handleHeaderAuthAction = handleHeaderAuthAction;

@@ -3821,6 +3821,145 @@ body.is-terms-gate-active #main-portal-dynamic-viewport {
     color: #ffd700 !important;
 }
 
+/* Commander rank title pills (ranks 1–22, beside player name) */
+.commander-identity-name-row {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    flex-wrap: wrap !important;
+    max-width: 100% !important;
+}
+
+.commander-identity-name {
+    color: inherit !important;
+    font-weight: inherit !important;
+}
+
+.commander-rank-pill {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    max-width: min(220px, 42vw) !important;
+    padding: 2px 8px !important;
+    border-radius: 999px !important;
+    border: 1px solid rgba(255, 255, 255, 0.14) !important;
+    font-family: 'Cinzel', serif !important;
+    font-size: 0.62rem !important;
+    font-weight: 700 !important;
+    line-height: 1.25 !important;
+    letter-spacing: 0.02em !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    vertical-align: middle !important;
+    flex-shrink: 1 !important;
+}
+
+.commander-rank-pill--compact {
+    font-size: 0.58rem !important;
+    padding: 1px 6px !important;
+    max-width: min(180px, 36vw) !important;
+}
+
+.commander-rank-pill--tier-1 {
+    color: #e8e8e8 !important;
+    background: rgba(120, 120, 120, 0.35) !important;
+    border-color: rgba(180, 180, 180, 0.35) !important;
+}
+
+.commander-rank-pill--tier-2 {
+    color: #d8ecff !important;
+    background: rgba(96, 168, 220, 0.32) !important;
+    border-color: rgba(140, 200, 255, 0.45) !important;
+}
+
+.commander-rank-pill--tier-3 {
+    color: #d8f5d0 !important;
+    background: rgba(72, 150, 72, 0.34) !important;
+    border-color: rgba(120, 200, 110, 0.45) !important;
+}
+
+.commander-rank-pill--tier-4 {
+    color: #ffd4d0 !important;
+    background: rgba(170, 56, 48, 0.38) !important;
+    border-color: rgba(220, 90, 80, 0.5) !important;
+}
+
+.commander-rank-pill--tier-5 {
+    color: #c8f0c4 !important;
+    background: rgba(28, 88, 42, 0.55) !important;
+    border-color: rgba(60, 130, 72, 0.55) !important;
+}
+
+.commander-rank-pill--tier-6 {
+    color: #c8dcff !important;
+    background: rgba(24, 52, 110, 0.58) !important;
+    border-color: rgba(70, 110, 190, 0.55) !important;
+}
+
+.commander-rank-pill--tier-7 {
+    color: #fff2c8 !important;
+    background: rgba(120, 88, 16, 0.62) !important;
+    border-color: rgba(212, 175, 55, 0.65) !important;
+    text-shadow: 0 0 6px rgba(255, 215, 0, 0.25) !important;
+}
+
+.commander-rank-pill--tier-8 {
+    color: #f0dcff !important;
+    background: rgba(72, 36, 110, 0.62) !important;
+    border-color: rgba(150, 90, 210, 0.58) !important;
+}
+
+#logged-user-tag.commander-identity-name-row-host,
+.portal-commander-identity-stack .commander-identity-name-row {
+    font-size: inherit !important;
+}
+
+.public-profile-commander-name-row {
+    display: flex !important;
+    align-items: center !important;
+    flex-wrap: wrap !important;
+    gap: 10px !important;
+}
+
+.chat-message-sender-name .commander-identity-name-row,
+.chat-roster-name-row .commander-identity-name-row {
+    gap: 6px !important;
+}
+
+.game-chat-msg-author-row {
+    display: inline-flex !important;
+    align-items: center !important;
+    flex-wrap: wrap !important;
+    gap: 6px !important;
+    margin-right: 4px !important;
+}
+
+.game-chat-msg-author-row .commander-rank-pill {
+    font-size: 0.58rem !important;
+}
+
+.profile-rank-title-gender-options {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 8px !important;
+}
+
+.profile-rank-title-gender-btn {
+    min-width: 108px !important;
+}
+
+.profile-rank-title-gender-btn.is-active {
+    border-color: rgba(212, 175, 55, 0.75) !important;
+    box-shadow: 0 0 0 1px rgba(212, 175, 55, 0.35) !important;
+}
+
+.profile-rank-title-preview {
+    margin: 8px 0 0 !important;
+    font-size: 0.78rem !important;
+    color: rgba(241, 224, 172, 0.82) !important;
+}
+
 /* ============================================================
    SECTION 10: ALIGNMENT | Block 20: Fullscreen Tavern Chat Skins
    ============================================================ */
@@ -23580,7 +23719,7 @@ body.age-war-room-open {
 
 .age-war-room-command-deck {
     position: relative;
-    z-index: 1;
+    z-index: 2;
     display: flex;
     flex: 1 1 auto;
     align-items: stretch;

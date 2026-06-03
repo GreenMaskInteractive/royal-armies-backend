@@ -39,13 +39,13 @@ var calculateAuthority = function(rank) {
     return 250;
 };
 
-// 3. TITLE ARRAYS
+// 3. TITLE ARRAYS (ranks 1–22: full Battlemaster Commander titles; 23+ Chronicle ladder)
 var groundTitles = [
-    "Vintenary", "Decurion", "Warden", "Serjeant", "Provost", 
-    "Centenary", "Herald", "Bachelor", "Banneret", "Castellan", 
-    "Seneschal", "Constable", "Millenary", "Baronial", "Comital", 
-    "Marcher", "Palatine", "Marshal", "Duchal", "Viceroy", 
-    "Grand-Magister", "Lord-High",
+    "Vintenary Commander", "Decurion Commander", "Warden Commander", "Serjeant Commander", "Provost Commander",
+    "Centenary Commander", "Herald Commander", "Bachelor Commander", "Banneret Commander", "Castellan Commander",
+    "Seneschal Commander", "Constable Commander", "Millenary Commander", "Baronial Commander", "Comital Commander",
+    "Marcher Commander", "Palatine Commander", "Marshal Commander", "Duchal Commander", "Viceroy Commander",
+    "Sovereign Commander", "Lord-High Commander",
     "Legate", "Prefect", "Tribune", "Proconsul", "Primarch",
     "Exarch", "Crown-Warden", "War-Prince", "High Exarch", "Imperial Knight",
     "Grand Legate", "Sovereign Knight", "Marshal-Supreme", "Arch-Castellan", "Grand Constable",
@@ -55,11 +55,11 @@ var groundTitles = [
 ];
 
 var magicTitles = [
-    "Initiate", "Apprentice", "Acolyte", "Evoker", "Channeler",
-    "Circle", "Signifier", "Scholastic", "Weaver", "Warden",
-    "Preceptor", "High Magus", "Grand Magus", "Arcanist", "Archmagus",
-    "Sorcerer-General", "Coven-Lord", "Master of Spheres", "Nexus-Thane",
-    "Void-Exarch", "Hierophant", "Aether-Sovereign",
+    "Initiate Magus", "Apprentice Magus", "Acolyte Magus", "Evoker Magus", "Channeler Magus",
+    "Circle Magus", "Signifier Magus", "Scholastic Magus", "Weaver Magus", "Warden Magus",
+    "Preceptor Magus", "High Magus", "Grand Magus", "Arcanist Magus", "Archmagus",
+    "Sorcerer-General", "Coven-Lord", "Master of Spheres", "Nexus-Thane Magus",
+    "Void-Exarch Magus", "Hierophant Magus", "Aether-Sovereign Magus",
     "Lumen Adept", "Spellwarden", "Arc-Light", "Mystic Vanguard", "Ether Knight",
     "Rune Praetor", "Void Legate", "Starweaver", "Astral Tribune", "Crown Channeler",
     "High Evoker", "Grand Signifier", "Nexus Warden", "Sphere Lord", "Arch Channeler",
