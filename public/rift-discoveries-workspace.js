@@ -471,16 +471,22 @@
         toast.setAttribute('role', 'status');
         toast.setAttribute('aria-live', 'polite');
         toast.innerHTML = `
-            <div class="rift-discovery-toast-panel">
-                <p class="rift-discovery-toast-kicker">You just made a discovery!</p>
-                <div class="rift-discovery-toast-divider" aria-hidden="true"></div>
-                <div class="rift-discovery-toast-icon-row" id="rift-discovery-toast-icon-row"></div>
-                <p class="rift-discovery-toast-category" id="rift-discovery-toast-category"></p>
-                <p class="rift-discovery-toast-line" id="rift-discovery-toast-line"></p>
-                <p class="rift-discovery-toast-footnote">
-                    Visit the <button type="button" class="rift-discovery-toast-link" id="rift-discovery-toast-open-link">Discoveries</button> page
-                </p>
-                <button type="button" class="rift-discovery-toast-dismiss" id="rift-discovery-toast-dismiss" aria-label="Dismiss discovery notice">×</button>
+            <div class="rift-discovery-toast-scrim" id="rift-discovery-toast-scrim" aria-hidden="true"></div>
+            <div class="rift-discovery-toast-stage" role="dialog" aria-modal="true" aria-labelledby="rift-discovery-toast-title">
+                <div class="rift-discovery-toast-panel bordered-modal-panel">
+                    <div class="rift-discovery-toast-glow" aria-hidden="true"></div>
+                    <div class="rift-discovery-toast-rays" aria-hidden="true"></div>
+                    <button type="button" class="rift-discovery-toast-dismiss" id="rift-discovery-toast-dismiss" aria-label="Dismiss discovery notice">×</button>
+                    <p class="rift-discovery-toast-eyebrow">Discovery unlocked</p>
+                    <h2 id="rift-discovery-toast-title" class="rift-discovery-toast-kicker">You just made a discovery!</h2>
+                    <div class="rift-discovery-toast-divider" aria-hidden="true"></div>
+                    <div class="rift-discovery-toast-icon-row" id="rift-discovery-toast-icon-row"></div>
+                    <p class="rift-discovery-toast-category" id="rift-discovery-toast-category"></p>
+                    <p class="rift-discovery-toast-line" id="rift-discovery-toast-line"></p>
+                    <p class="rift-discovery-toast-footnote">
+                        Visit the <button type="button" class="rift-discovery-toast-link" id="rift-discovery-toast-open-link">Discoveries</button> page
+                    </p>
+                </div>
             </div>
         `;
         global.document.body.appendChild(toast);
@@ -663,6 +669,10 @@
         renderToastDiscoveryIndex(0);
 
         toast.hidden = false;
+        toast.classList.remove('is-exiting');
+        global.document.body.classList.add('is-rift-discovery-toast-open');
+        toast.classList.remove('is-visible');
+        void toast.offsetWidth;
         toast.classList.add('is-visible');
 
         if (toastHideTimer) global.clearTimeout(toastHideTimer);
@@ -676,13 +686,16 @@
         });
     }
 
-    function hideDiscoveryToast() {
+    function finalizeDiscoveryToastHide() {
         const toast = global.document.getElementById('rift-discovery-toast');
         if (!toast) return;
-        toast.classList.remove('is-visible');
+
+        toast.classList.remove('is-visible', 'is-exiting');
         toast.hidden = true;
+        global.document.body.classList.remove('is-rift-discovery-toast-open');
         activeToastDiscoveryIds = [];
         activeToastDiscoveryIndex = 0;
+
         if (toastHideTimer) {
             global.clearTimeout(toastHideTimer);
             toastHideTimer = null;
@@ -691,6 +704,17 @@
             global.clearTimeout(toastAdvanceTimer);
             toastAdvanceTimer = null;
         }
+    }
+
+    function hideDiscoveryToast() {
+        const toast = global.document.getElementById('rift-discovery-toast');
+        if (!toast || toast.hidden) return;
+        if (toast.classList.contains('is-exiting')) return;
+
+        toast.classList.remove('is-visible');
+        toast.classList.add('is-exiting');
+
+        global.setTimeout(finalizeDiscoveryToastHide, 320);
     }
 
     const DEV_PREVIEW_TOAST_DISCOVERY_IDS = Object.freeze([
@@ -982,15 +1006,20 @@
             });
         global.document.getElementById('rift-discovery-toast-dismiss')
             ?.addEventListener('click', hideDiscoveryToast);
+        global.document.getElementById('rift-discovery-toast-scrim')
+            ?.addEventListener('click', hideDiscoveryToast);
 
         global.document.addEventListener('keydown', (event) => {
             if (event.key !== 'Escape') return;
+            const toast = global.document.getElementById('rift-discovery-toast');
+            if (toast && !toast.hidden && (toast.classList.contains('is-visible') || toast.classList.contains('is-exiting'))) {
+                hideDiscoveryToast();
+                return;
+            }
             const modal = global.document.getElementById('rift-discoveries-workspace-modal');
             if (modal && !modal.hidden) {
                 closeDiscoveriesWorkspace();
-                return;
             }
-            hideDiscoveryToast();
         });
     }
 

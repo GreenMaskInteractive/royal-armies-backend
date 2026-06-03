@@ -20034,133 +20034,349 @@ body.is-age-chronicles-battle-pass-open {
     color: rgba(255, 217, 120, 0.75) !important;
 }
 
+/* Discovery unlock — centered cinematic overlay */
 .rift-discovery-toast {
     position: fixed;
-    top: 18px;
-    left: 50%;
-    transform: translateX(-50%) translateY(-12px);
+    inset: 0;
     z-index: 12100;
-    opacity: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: clamp(16px, 4vw, 32px);
+    box-sizing: border-box;
     pointer-events: none;
-    transition: opacity 0.22s ease, transform 0.22s ease;
-}
-
-.rift-discovery-toast.is-visible {
-    opacity: 1;
-    pointer-events: auto;
-    transform: translateX(-50%) translateY(0);
 }
 
 .rift-discovery-toast[hidden] {
-    display: block !important;
+    display: none !important;
 }
 
-.rift-discovery-toast:not(.is-visible)[hidden] {
-    display: none !important;
+.rift-discovery-toast:not([hidden]) {
+    display: flex !important;
+}
+
+.rift-discovery-toast.is-visible,
+.rift-discovery-toast.is-exiting {
+    pointer-events: auto;
+}
+
+.rift-discovery-toast-scrim {
+    position: absolute;
+    inset: 0;
+    background:
+        radial-gradient(ellipse 70% 55% at 50% 42%, rgba(255, 200, 80, 0.07) 0%, transparent 58%),
+        rgba(2, 2, 3, 0.78);
+    backdrop-filter: blur(3px);
+    opacity: 0;
+    transition: opacity 0.38s ease;
+}
+
+.rift-discovery-toast.is-visible .rift-discovery-toast-scrim {
+    opacity: 1;
+}
+
+.rift-discovery-toast.is-exiting .rift-discovery-toast-scrim {
+    opacity: 0;
+    transition-duration: 0.28s;
+}
+
+.rift-discovery-toast-stage {
+    position: relative;
+    z-index: 1;
+    width: min(480px, 100%);
+    max-width: 100%;
+    transform: scale(0.82) translateY(28px);
+    opacity: 0;
+    filter: blur(8px);
+    will-change: transform, opacity, filter;
+}
+
+.rift-discovery-toast.is-visible .rift-discovery-toast-stage {
+    animation: riftDiscoveryToastReveal 0.72s cubic-bezier(0.2, 1.12, 0.34, 1) forwards;
+}
+
+.rift-discovery-toast.is-exiting .rift-discovery-toast-stage {
+    animation: riftDiscoveryToastHide 0.3s cubic-bezier(0.55, 0.06, 0.68, 0.19) forwards;
+}
+
+@keyframes riftDiscoveryToastReveal {
+    0% {
+        transform: scale(0.76) translateY(32px);
+        opacity: 0;
+        filter: blur(10px);
+    }
+    52% {
+        transform: scale(1.05) translateY(-6px);
+        opacity: 1;
+        filter: blur(0);
+    }
+    72% {
+        transform: scale(0.98) translateY(3px);
+    }
+    100% {
+        transform: scale(1) translateY(0);
+        opacity: 1;
+        filter: blur(0);
+    }
+}
+
+@keyframes riftDiscoveryToastHide {
+    0% {
+        transform: scale(1) translateY(0);
+        opacity: 1;
+        filter: blur(0);
+    }
+    100% {
+        transform: scale(0.88) translateY(18px);
+        opacity: 0;
+        filter: blur(6px);
+    }
+}
+
+@keyframes riftDiscoveryToastGlowPulse {
+    0%, 100% {
+        opacity: 0.55;
+    }
+    50% {
+        opacity: 1;
+    }
+}
+
+@keyframes riftDiscoveryToastRaysSpin {
+    from {
+        transform: translate(-50%, -50%) rotate(0deg);
+    }
+    to {
+        transform: translate(-50%, -50%) rotate(360deg);
+    }
+}
+
+@keyframes riftDiscoveryToastIconPop {
+    0% {
+        transform: scale(0.6);
+        opacity: 0;
+    }
+    70% {
+        transform: scale(1.08);
+    }
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
 }
 
 .rift-discovery-toast-panel {
     position: relative;
-    min-width: min(380px, 92vw);
-    max-width: 440px;
-    padding: 16px 18px 14px;
-    border: 1px solid rgba(201, 162, 72, 0.55);
-    border-radius: 8px;
-    background: linear-gradient(180deg, rgba(30, 24, 16, 0.98) 0%, rgba(8, 6, 4, 0.99) 100%);
-    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.55);
+    overflow: hidden;
+    min-width: min(380px, 100%);
+    padding: 22px 26px 20px;
+    border: none !important;
+    border-radius: 0 !important;
+    background-color: rgba(10, 8, 5, 0.96) !important;
+    background-image: url('images/borderedcontainer_thin.png') !important;
+    background-size: 100% 100% !important;
+    background-repeat: no-repeat !important;
+    box-shadow:
+        0 0 0 1px rgba(255, 215, 0, 0.12),
+        0 24px 64px rgba(0, 0, 0, 0.82),
+        0 0 48px rgba(255, 190, 60, 0.14) !important;
     text-align: center;
+}
+
+.rift-discovery-toast-glow {
+    position: absolute;
+    inset: -20%;
+    pointer-events: none;
+    z-index: 0;
+    background:
+        radial-gradient(ellipse 50% 42% at 50% 38%, rgba(255, 215, 0, 0.22) 0%, transparent 62%),
+        radial-gradient(ellipse 80% 50% at 50% 100%, rgba(184, 144, 48, 0.1) 0%, transparent 70%);
+    opacity: 0.7;
+}
+
+.rift-discovery-toast.is-visible .rift-discovery-toast-glow {
+    animation: riftDiscoveryToastGlowPulse 2.6s ease-in-out infinite;
+}
+
+.rift-discovery-toast-rays {
+    position: absolute;
+    top: 42%;
+    left: 50%;
+    width: 140%;
+    aspect-ratio: 1;
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0;
+    background: conic-gradient(
+        from 0deg,
+        transparent 0deg 28deg,
+        rgba(255, 215, 0, 0.07) 28deg 32deg,
+        transparent 32deg 88deg,
+        rgba(255, 215, 0, 0.05) 88deg 92deg,
+        transparent 92deg 148deg,
+        rgba(255, 215, 0, 0.07) 148deg 152deg,
+        transparent 152deg 208deg,
+        rgba(255, 215, 0, 0.05) 208deg 212deg,
+        transparent 212deg 268deg,
+        rgba(255, 215, 0, 0.07) 268deg 272deg,
+        transparent 272deg 328deg,
+        rgba(255, 215, 0, 0.05) 328deg 332deg,
+        transparent 332deg 360deg
+    );
+    transform: translate(-50%, -50%);
+}
+
+.rift-discovery-toast.is-visible .rift-discovery-toast-rays {
+    opacity: 1;
+    animation: riftDiscoveryToastRaysSpin 18s linear infinite;
 }
 
 .rift-discovery-toast-dismiss {
     position: absolute;
-    top: 8px;
-    right: 8px;
-    width: 28px;
-    height: 28px;
-    border: 1px solid rgba(184, 144, 48, 0.35);
+    top: 12px;
+    right: 12px;
+    z-index: 3;
+    width: 30px;
+    height: 30px;
+    border: 1px solid rgba(184, 144, 48, 0.45);
     border-radius: 4px;
-    background: rgba(0, 0, 0, 0.35);
+    background: rgba(0, 0, 0, 0.45);
     color: #f0e4c8;
-    font-size: 1.1rem;
+    font-size: 1.15rem;
     line-height: 1;
     cursor: pointer;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
 }
 
 .rift-discovery-toast-dismiss:hover,
 .rift-discovery-toast-dismiss:focus-visible {
-    border-color: rgba(255, 215, 0, 0.55);
+    border-color: rgba(255, 215, 0, 0.7);
+    background: rgba(40, 30, 12, 0.65);
+    box-shadow: 0 0 14px rgba(255, 215, 0, 0.25);
     outline: none;
 }
 
-.rift-discovery-toast-kicker {
-    margin: 0 0 10px;
+.rift-discovery-toast-eyebrow {
+    position: relative;
+    z-index: 1;
+    margin: 0 0 6px;
     font-family: 'Cinzel', serif;
-    font-size: 0.86rem;
-    letter-spacing: 0.08em;
-    color: #ffd978;
+    font-size: 0.68rem;
+    font-weight: 600;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: rgba(255, 224, 150, 0.82);
+}
+
+.rift-discovery-toast-kicker {
+    position: relative;
+    z-index: 1;
+    margin: 0 0 12px;
+    font-family: 'Cinzel', serif;
+    font-size: clamp(1.05rem, 2.4vw, 1.28rem);
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    line-height: 1.25;
+    color: #ffe9a0;
+    text-shadow:
+        0 0 24px rgba(255, 200, 60, 0.35),
+        0 2px 8px rgba(0, 0, 0, 0.65);
 }
 
 .rift-discovery-toast-divider {
-    height: 1px;
-    margin: 0 0 14px;
-    background: linear-gradient(90deg, transparent, rgba(201, 162, 72, 0.55), transparent);
+    position: relative;
+    z-index: 1;
+    height: 2px;
+    margin: 0 0 16px;
+    background: linear-gradient(
+        90deg,
+        transparent 0%,
+        rgba(201, 162, 72, 0.25) 12%,
+        rgba(255, 230, 140, 0.85) 50%,
+        rgba(201, 162, 72, 0.25) 88%,
+        transparent 100%
+    );
+    box-shadow: 0 0 12px rgba(255, 215, 0, 0.35);
 }
 
 .rift-discovery-toast-icon-row {
+    position: relative;
+    z-index: 1;
     display: flex;
     align-items: center;
     justify-content: center;
     flex-wrap: wrap;
-    gap: 10px;
-    margin-bottom: 10px;
+    gap: 12px;
+    margin-bottom: 14px;
 }
 
 .rift-discovery-toast-icon-btn {
-    border: 1px solid rgba(184, 144, 48, 0.35);
-    border-radius: 6px;
-    background: rgba(0, 0, 0, 0.25);
-    padding: 6px;
+    border: 1px solid rgba(184, 144, 48, 0.45);
+    border-radius: 8px;
+    background: linear-gradient(180deg, rgba(36, 28, 16, 0.95) 0%, rgba(8, 6, 4, 0.98) 100%);
+    padding: 8px;
     cursor: pointer;
-    transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.45);
+    transition: border-color 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease;
 }
 
+.rift-discovery-toast.is-visible .rift-discovery-toast-icon-btn {
+    animation: riftDiscoveryToastIconPop 0.5s cubic-bezier(0.22, 1.1, 0.36, 1) backwards;
+}
+
+.rift-discovery-toast.is-visible .rift-discovery-toast-icon-btn:nth-child(1) { animation-delay: 0.28s; }
+.rift-discovery-toast.is-visible .rift-discovery-toast-icon-btn:nth-child(2) { animation-delay: 0.36s; }
+.rift-discovery-toast.is-visible .rift-discovery-toast-icon-btn:nth-child(3) { animation-delay: 0.44s; }
+.rift-discovery-toast.is-visible .rift-discovery-toast-icon-btn:nth-child(4) { animation-delay: 0.52s; }
+.rift-discovery-toast.is-visible .rift-discovery-toast-icon-btn:nth-child(5) { animation-delay: 0.6s; }
+
 .rift-discovery-toast-icon-btn img {
-    width: 40px;
-    height: 40px;
+    width: 48px;
+    height: 48px;
     object-fit: contain;
     display: block;
-    filter: drop-shadow(0 3px 8px rgba(0, 0, 0, 0.45));
+    filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.5));
 }
 
 .rift-discovery-toast-icon-btn.is-active,
 .rift-discovery-toast-icon-btn:hover,
 .rift-discovery-toast-icon-btn:focus-visible {
-    border-color: rgba(255, 215, 0, 0.65);
-    box-shadow: 0 0 12px rgba(255, 215, 0, 0.2);
+    border-color: rgba(255, 215, 0, 0.85);
+    box-shadow:
+        0 0 18px rgba(255, 215, 0, 0.35),
+        0 8px 20px rgba(0, 0, 0, 0.5);
     outline: none;
-    transform: translateY(-1px);
+    transform: translateY(-2px) scale(1.04);
 }
 
 .rift-discovery-toast-category {
+    position: relative;
+    z-index: 1;
     margin: 0 0 8px;
     font-family: 'Cinzel', serif;
-    font-size: 0.74rem;
-    letter-spacing: 0.06em;
-    color: rgba(255, 224, 160, 0.88);
+    font-size: 0.78rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: rgba(255, 224, 160, 0.9);
 }
 
 .rift-discovery-toast-line {
-    margin: 0 0 12px;
-    font-size: 0.9rem;
-    line-height: 1.45;
-    color: #f5ecd4;
+    position: relative;
+    z-index: 1;
+    margin: 0 0 14px;
+    font-size: 0.95rem;
+    line-height: 1.5;
+    color: #f8efd8;
+    text-shadow: 0 1px 4px rgba(0, 0, 0, 0.45);
 }
 
 .rift-discovery-toast-footnote {
+    position: relative;
+    z-index: 1;
     margin: 0;
-    font-size: 0.72rem;
+    font-size: 0.74rem;
     line-height: 1.5;
-    color: rgba(200, 190, 170, 0.82);
+    color: rgba(200, 190, 170, 0.88);
 }
 
 .rift-discovery-toast-link {
@@ -20185,8 +20401,33 @@ body.is-age-chronicles-battle-pass-open {
     outline: none;
 }
 
+body.is-rift-discovery-toast-open {
+    overflow: hidden;
+}
+
 body.is-rift-discoveries-workspace-open {
     overflow: hidden;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .rift-discovery-toast-stage,
+    .rift-discovery-toast-scrim,
+    .rift-discovery-toast-glow,
+    .rift-discovery-toast-rays,
+    .rift-discovery-toast-icon-btn {
+        animation: none !important;
+        transition: none !important;
+    }
+
+    .rift-discovery-toast.is-visible .rift-discovery-toast-stage {
+        transform: none;
+        opacity: 1;
+        filter: none;
+    }
+
+    .rift-discovery-toast.is-visible .rift-discovery-toast-scrim {
+        opacity: 1;
+    }
 }
 
 /* Age — Headquarters nation leadership workspace */
