@@ -8,8 +8,6 @@
     const SELECT_AUDIO_ID = 'select-sound';
     const HOVER_SRC = 'audio/uihover.wav';
     const SELECT_SRC = 'audio/uiselect.wav';
-    const DISCOVERY_UNLOCK_AUDIO_ID = 'rift-discovery-unlock-sfx';
-    const DISCOVERY_UNLOCK_SRC = 'audio/joinagesfxselect.wav';
     const DISCOVERY_UNLOCK_VOLUME_SCALE = 0.52;
     const DEFAULT_VOLUME = 0.2;
 
@@ -37,7 +35,6 @@
 
     let hoverAudio = null;
     let selectAudio = null;
-    let discoveryUnlockAudio = null;
     let listenersBound = false;
 
     function resolvePortalSfxVolume() {
@@ -110,15 +107,12 @@
     }
 
     function playDiscoveryUnlockSfx() {
-        discoveryUnlockAudio = ensureAudioElement(DISCOVERY_UNLOCK_AUDIO_ID, DISCOVERY_UNLOCK_SRC);
-        if (!discoveryUnlockAudio) return;
-
         const volume = resolvePortalSfxVolume() * DISCOVERY_UNLOCK_VOLUME_SCALE;
         if (volume <= 0) return;
 
-        discoveryUnlockAudio.volume = Math.min(1, volume);
-        discoveryUnlockAudio.currentTime = 0;
-        discoveryUnlockAudio.play().catch(() => {});
+        if (global.RiftProceduralSfx && typeof global.RiftProceduralSfx.playDiscoveryUnlock === 'function') {
+            global.RiftProceduralSfx.playDiscoveryUnlock(volume);
+        }
     }
 
     function onDocumentMouseOver(event) {
