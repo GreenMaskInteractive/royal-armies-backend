@@ -17,8 +17,8 @@
     /** Animation delay in FLEX only (style2.css); audio has no matching wait. */
     const DISCOVERY_TOAST_REVEAL_DELAY_MS = 480;
     const DISCOVERY_TOAST_REVEAL_MS = 1100;
-    /** Chime when the delayed reveal finishes (delay + duration). */
-    const DISCOVERY_CHIME_AT_MS = DISCOVERY_TOAST_REVEAL_DELAY_MS + DISCOVERY_TOAST_REVEAL_MS;
+    /** Join-age chime fires when the swoosh clip ends. */
+    const DISCOVERY_CHIME_AT_MS = DISCOVERY_SWOOSH_MAX_MS;
     const DEFAULT_VOLUME = 0.2;
 
     const BUTTON_SELECTOR = [
@@ -99,7 +99,7 @@
         audio.play().catch(() => {});
     }
 
-    function playDiscoverySwooshClip(audio, volume, maxDurationMs) {
+    function playDiscoverySwooshClip(audio, volume, maxDurationMs, onClipEnd) {
         if (discoverySwooshStopTimer) {
             global.clearTimeout(discoverySwooshStopTimer);
             discoverySwooshStopTimer = null;
@@ -109,13 +109,17 @@
 
         discoverySwooshStopTimer = global.setTimeout(() => {
             discoverySwooshStopTimer = null;
-            if (audio.paused) return;
-            try {
-                audio.pause();
-            } catch (_err) {
-                /* ignore */
+            if (!audio.paused) {
+                try {
+                    audio.pause();
+                } catch (_err) {
+                    /* ignore */
+                }
+                audio.currentTime = 0;
             }
-            audio.currentTime = 0;
+            if (typeof onClipEnd === 'function') {
+                onClipEnd();
+            }
         }, maxDurationMs);
     }
 
@@ -171,29 +175,31 @@
         selectAudio.play().catch(() => {});
     }
 
-    function playDiscoverySwooshSfx() {
+    function playDiscoveryChimeSfx() {
         const volume = resolvePortalSfxVolume() * DISCOVERY_UNLOCK_VOLUME_SCALE;
         if (volume <= 0) return;
 
         primeAudioElements();
-        playDiscoverySwooshClip(discoverySwooshAudio, volume, DISCOVERY_SWOOSH_MAX_MS);
+        playDiscoveryAudioElement(resolveDiscoveryChimeAudio(), volume);
     }
 
-    function scheduleDiscoveryChimeSfx() {
+    function playDiscoverySwooshSfx() {
         const volume = resolvePortalSfxVolume() * DISCOVERY_UNLOCK_VOLUME_SCALE;
         if (volume <= 0) return;
 
         clearDiscoveryChimeTimers();
-        const chimeAudio = resolveDiscoveryChimeAudio();
+        primeAudioElements();
+        playDiscoverySwooshClip(discoverySwooshAudio, volume, DISCOVERY_SWOOSH_MAX_MS, () => {
+            playDiscoveryChimeSfx();
+        });
+    }
 
-        discoveryChimeTimers.push(global.setTimeout(() => {
-            playDiscoveryAudioElement(chimeAudio, volume);
-        }, DISCOVERY_CHIME_AT_MS));
+    function scheduleDiscoveryChimeSfx() {
+        /* Chime is chained from playDiscoverySwooshSfx when the swoosh clip ends. */
     }
 
     function playDiscoveryUnlockSfx() {
         playDiscoverySwooshSfx();
-        scheduleDiscoveryChimeSfx();
     }
 
     function onDocumentMouseOver(event) {
@@ -238,6 +244,7 @@
     global.playSelectSFX = playSelectSFX;
     global.playDiscoveryUnlockSfx = playDiscoveryUnlockSfx;
     global.playDiscoverySwooshSfx = playDiscoverySwooshSfx;
+    global.playDiscoveryChimeSfx = playDiscoveryChimeSfx;
     global.scheduleDiscoveryChimeSfx = scheduleDiscoveryChimeSfx;
 
     global.RoyalArmiesUiSfx = {
@@ -245,6 +252,7 @@
         playSelect: playSelectSFX,
         playDiscoveryUnlock: playDiscoveryUnlockSfx,
         playDiscoverySwoosh: playDiscoverySwooshSfx,
+        playDiscoveryChime: playDiscoveryChimeSfx,
         scheduleDiscoveryChime: scheduleDiscoveryChimeSfx,
         discoveryToastRevealDelayMs: DISCOVERY_TOAST_REVEAL_DELAY_MS,
         discoveryToastRevealMs: DISCOVERY_TOAST_REVEAL_MS,

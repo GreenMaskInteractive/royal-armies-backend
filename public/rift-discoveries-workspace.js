@@ -620,7 +620,7 @@
     let suppressPortalSelectUntil = 0;
 
     function markDiscoveryToastUiSfxWindow() {
-        const chimeMs = (global.RoyalArmiesUiSfx && global.RoyalArmiesUiSfx.discoveryChimeAtMs) || 1580;
+        const chimeMs = (global.RoyalArmiesUiSfx && global.RoyalArmiesUiSfx.discoveryChimeAtMs) || 520;
         suppressPortalSelectUntil = Date.now() + chimeMs + 80;
     }
 
@@ -635,12 +635,6 @@
         }
         if (typeof global.playDiscoveryUnlockSfx === 'function') {
             global.playDiscoveryUnlockSfx();
-        }
-    }
-
-    function scheduleDiscoveryToastChimeSfx() {
-        if (typeof global.scheduleDiscoveryChimeSfx === 'function') {
-            global.scheduleDiscoveryChimeSfx();
         }
     }
 
