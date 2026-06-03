@@ -1,5 +1,5 @@
 /**
- * RIFT — Nation Hub dropdown (views, War Room, War Ledger) on the Age top bar.
+ * RIFT — Nation Hub dropdown (views, War Room) on the Age top bar.
  */
 (function initAgeNationHub(global) {
     'use strict';
@@ -203,13 +203,6 @@
             event.preventDefault();
             closeHub();
             global.RoyalArmiesAgeArmyGroups?.openWorkspace?.();
-            return;
-        }
-
-        if (item.id === 'age-war-ledger-open') {
-            event.preventDefault();
-            closeHub();
-            global.RoyalArmiesAgeViewTabs?.setActiveView?.('headquarters');
             return;
         }
 
