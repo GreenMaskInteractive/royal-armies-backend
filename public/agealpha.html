@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Royal Armies — Age Alpha</title>
     <link rel="stylesheet" href="style.css?v=cursor-modal-layer-fix-1">
-    <link rel="stylesheet" href="style2.css?v=war-room-tab-border-swap-1">
+    <link rel="stylesheet" href="style2.css?v=war-room-tab-bottom-bar-1">
     <link rel="stylesheet" href="mobile-responsive.css?v=top-bar-logo-5px-1">
     <link rel="stylesheet" href="dev-page-navigator.css">
     <link rel="stylesheet" href="custom-cursor.css?v=finger-press-7">
@@ -626,86 +626,11 @@
                                 </div>
                             </div>
                         </aside>
-                        <div id="age-war-room-dock" class="age-war-room-dock" aria-label="War Room">
-                            <div
-                                id="age-army-groups-sonar-layer"
-                                class="age-army-groups-sonar-layer"
-                                aria-hidden="true"></div>
-                            <div id="age-war-room-slide" class="age-war-room-slide">
-                            <div id="age-war-room-rise" class="age-war-room-rise">
-                            <div class="age-war-room-panel">
-                            <section
-                                id="age-army-groups-workspace"
-                                class="age-army-groups-workspace"
-                                aria-label="War Room workspace"
-                                aria-hidden="true">
-                            <button
-                                type="button"
-                                id="age-army-groups-tab"
-                                class="age-army-groups-tab"
-                                aria-expanded="false"
-                                aria-controls="age-army-groups-workspace-main"
-                                title="War Room">
-                                <span class="age-army-groups-tab-inner">
-                                    <span class="age-army-groups-tab-chevron" aria-hidden="true"></span>
-                                    <span class="age-army-groups-tab-label">War Room</span>
-                                    <span class="age-army-groups-tab-chevron" aria-hidden="true"></span>
-                                </span>
-                            </button>
-                            <div id="age-army-groups-workspace-main" class="age-army-groups-workspace-main">
-                            <header class="age-army-groups-toolbar" aria-label="Army group actions">
-                                <button
-                                    type="button"
-                                    id="age-army-groups-btn-create"
-                                    class="age-army-groups-tool-btn"
-                                    title="Create army group"
-                                    aria-label="Create army group">
-                                    <img src="images/units/unit-portrait-placeholder.svg" alt="" width="40" height="40" draggable="false">
-                                </button>
-                                <button
-                                    type="button"
-                                    id="age-army-groups-btn-sf-lead"
-                                    class="age-army-groups-tool-btn"
-                                    title="List as SF Lead candidate"
-                                    aria-label="List as SF Lead candidate">
-                                    <img src="images/units/unit-portrait-placeholder.svg" alt="" width="40" height="40" draggable="false">
-                                </button>
-                                <button
-                                    type="button"
-                                    id="age-army-groups-btn-sonar"
-                                    class="age-army-groups-tool-btn"
-                                    title="Signal for rescue (sonar ping)"
-                                    aria-label="Signal for rescue">
-                                    <img src="images/units/unit-portrait-placeholder.svg" alt="" width="40" height="40" draggable="false">
-                                </button>
-                            </header>
-                            <h2 class="age-army-groups-list-heading">Armies</h2>
-                            <div id="age-army-groups-create-row" class="age-army-groups-create-row" hidden>
-                                <button
-                                    type="button"
-                                    id="age-army-groups-type-cycle"
-                                    class="age-army-groups-type-cycle"
-                                    aria-label="Army group type">SF</button>
-                                <input
-                                    type="text"
-                                    id="age-army-groups-name-input"
-                                    class="age-army-groups-name-input"
-                                    maxlength="48"
-                                    placeholder="Unique army name"
-                                    autocomplete="off"
-                                    spellcheck="false">
-                                <button type="button" id="age-army-groups-create-submit" class="age-army-groups-create-submit">Create</button>
-                            </div>
-                            <p id="age-army-groups-feedback" class="age-army-groups-feedback" hidden role="status"></p>
-                            <div id="age-army-groups-list" class="age-army-groups-list" role="list" aria-live="polite"></div>
-                            </div>
-                            </section>
-                            </div>
-                            </div>
-                            </div>
-                        </div>
+                        <div
+                            id="age-army-groups-sonar-layer"
+                            class="age-army-groups-sonar-layer"
+                            aria-hidden="true"></div>
                     </div>
-                </div>
                 <div id="age-world-battle-report-modal" class="age-world-battle-report-modal" hidden aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="age-world-battle-report-title">
                     <div id="age-world-battle-report-backdrop" class="age-world-battle-report-backdrop" aria-hidden="true"></div>
                     <div class="age-world-battle-report-dialog">
@@ -725,6 +650,81 @@
                         </header>
                         <p class="age-war-ledger-intro">Nation campaigns, declarations, and battle outcomes for the current Age.</p>
                         <ul id="age-war-ledger-list" class="age-war-ledger-list" aria-live="polite"></ul>
+                    </div>
+                </div>
+            </div>
+
+            <div id="age-war-room-dock" class="age-war-room-dock" aria-label="War Room">
+                <div id="age-war-room-slide" class="age-war-room-slide">
+                    <div id="age-war-room-rise" class="age-war-room-rise">
+                        <div class="age-war-room-panel">
+                            <section
+                                id="age-army-groups-workspace"
+                                class="age-army-groups-workspace"
+                                aria-label="War Room workspace"
+                                aria-hidden="true">
+                                <button
+                                    type="button"
+                                    id="age-army-groups-tab"
+                                    class="age-army-groups-tab"
+                                    aria-expanded="false"
+                                    aria-controls="age-army-groups-workspace-main"
+                                    title="War Room">
+                                    <span class="age-army-groups-tab-inner">
+                                        <span class="age-army-groups-tab-chevron" aria-hidden="true"></span>
+                                        <span class="age-army-groups-tab-label">War Room</span>
+                                        <span class="age-army-groups-tab-chevron" aria-hidden="true"></span>
+                                    </span>
+                                </button>
+                                <div id="age-army-groups-workspace-main" class="age-army-groups-workspace-main">
+                                    <header class="age-army-groups-toolbar" aria-label="Army group actions">
+                                        <button
+                                            type="button"
+                                            id="age-army-groups-btn-create"
+                                            class="age-army-groups-tool-btn"
+                                            title="Create army group"
+                                            aria-label="Create army group">
+                                            <img src="images/units/unit-portrait-placeholder.svg" alt="" width="40" height="40" draggable="false">
+                                        </button>
+                                        <button
+                                            type="button"
+                                            id="age-army-groups-btn-sf-lead"
+                                            class="age-army-groups-tool-btn"
+                                            title="List as SF Lead candidate"
+                                            aria-label="List as SF Lead candidate">
+                                            <img src="images/units/unit-portrait-placeholder.svg" alt="" width="40" height="40" draggable="false">
+                                        </button>
+                                        <button
+                                            type="button"
+                                            id="age-army-groups-btn-sonar"
+                                            class="age-army-groups-tool-btn"
+                                            title="Signal for rescue (sonar ping)"
+                                            aria-label="Signal for rescue">
+                                            <img src="images/units/unit-portrait-placeholder.svg" alt="" width="40" height="40" draggable="false">
+                                        </button>
+                                    </header>
+                                    <h2 class="age-army-groups-list-heading">Armies</h2>
+                                    <div id="age-army-groups-create-row" class="age-army-groups-create-row" hidden>
+                                        <button
+                                            type="button"
+                                            id="age-army-groups-type-cycle"
+                                            class="age-army-groups-type-cycle"
+                                            aria-label="Army group type">SF</button>
+                                        <input
+                                            type="text"
+                                            id="age-army-groups-name-input"
+                                            class="age-army-groups-name-input"
+                                            maxlength="48"
+                                            placeholder="Unique army name"
+                                            autocomplete="off"
+                                            spellcheck="false">
+                                        <button type="button" id="age-army-groups-create-submit" class="age-army-groups-create-submit">Create</button>
+                                    </div>
+                                    <p id="age-army-groups-feedback" class="age-army-groups-feedback" hidden role="status"></p>
+                                    <div id="age-army-groups-list" class="age-army-groups-list" role="list" aria-live="polite"></div>
+                                </div>
+                            </section>
+                        </div>
                     </div>
                 </div>
             </div>

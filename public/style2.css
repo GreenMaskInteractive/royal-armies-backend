@@ -22869,7 +22869,10 @@ body.is-rift-discoveries-workspace-open {
 
 .age-war-room-dock {
     position: absolute;
-    inset: 0;
+    left: 0;
+    right: 0;
+    top: 0;
+    bottom: calc(-1 * var(--age-map-slot-gap));
     z-index: 24;
     pointer-events: none;
     overflow: visible;
@@ -22879,21 +22882,23 @@ body.is-rift-discoveries-workspace-open {
     --war-room-tab-height: 35px;
     --war-room-open-lift: 20px;
     position: absolute;
-    left: var(--game-region-map-bezel, 12px);
-    right: var(--game-region-map-bezel, 12px);
-    top: var(--game-region-map-bezel, 12px);
+    left: 50%;
     bottom: 0;
+    width: min(1642px, 100cqw, 100cqh);
+    max-width: 100%;
+    top: 0;
     box-sizing: border-box;
     pointer-events: none;
     z-index: 2;
+    transform: translateX(-50%);
     transition: top 0.52s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .age-war-room-slide.is-open {
-    top: calc(var(--game-region-map-bezel, 12px) - var(--war-room-open-lift));
+    top: calc(-1 * var(--war-room-open-lift));
 }
 
-/* Bottom-anchored on frame inner edge (tab sits just above the gold border). */
+/* Bottom-anchored on the bottom HUD rail (tab flush with the top of the bottom bar). */
 .age-war-room-rise {
     position: absolute;
     left: 0;
@@ -23410,10 +23415,10 @@ body.is-rift-discoveries-workspace-open {
     font-size: 13px;
 }
 
-.age-army-groups-sonar-layer {
+.age-world-map-frame > .age-army-groups-sonar-layer {
     position: absolute;
     inset: var(--game-region-map-bezel);
-    z-index: 1;
+    z-index: 5;
     pointer-events: none;
     overflow: hidden;
 }
@@ -23456,6 +23461,10 @@ body.is-rift-discoveries-workspace-open {
 
 #age-page-canvas[data-age-view="map"] .age-war-room-dock {
     z-index: 24;
+}
+
+#age-page-canvas[data-age-view="map"] .age-map-anchor > .age-war-room-dock {
+    pointer-events: none;
 }
 
 @media (prefers-reduced-motion: reduce) {
