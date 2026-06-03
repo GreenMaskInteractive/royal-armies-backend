@@ -3609,12 +3609,58 @@ body.is-terms-gate-active #main-portal-dynamic-viewport {
     text-align: center !important;
 }
 
+#royal-armies-portal-alert-modal.is-update-underway {
+    background:
+        radial-gradient(ellipse at center, rgba(24, 18, 10, 0.5) 0%, rgba(0, 0, 0, 0.84) 72%) !important;
+    backdrop-filter: blur(3px) !important;
+}
+
+#royal-armies-portal-alert-modal.is-update-underway .portal-alert-bezel--age-update {
+    background-color: transparent !important;
+    background-image: none !important;
+    border: 1px solid rgba(184, 144, 48, 0.55) !important;
+    border-radius: 10px !important;
+    background:
+        linear-gradient(180deg, rgba(255, 215, 0, 0.08) 0%, transparent 18%),
+        linear-gradient(165deg, rgba(34, 28, 20, 0.98) 0%, rgba(10, 8, 6, 0.99) 58%, rgba(18, 14, 10, 0.98) 100%) !important;
+    box-shadow:
+        inset 0 1px 0 rgba(255, 215, 0, 0.16),
+        inset 0 0 0 1px rgba(255, 215, 0, 0.06),
+        0 22px 56px rgba(0, 0, 0, 0.72),
+        0 0 40px rgba(255, 190, 60, 0.08) !important;
+}
+
+#royal-armies-portal-alert-modal.is-update-underway .portal-alert-header--notice {
+    font-family: 'Cinzel', serif !important;
+    text-transform: uppercase !important;
+}
+
+#royal-armies-portal-alert-modal.is-update-underway .modal-alert-body {
+    color: #e8d5a3 !important;
+    text-align: center !important;
+}
+
+#royal-armies-portal-alert-modal.is-update-underway .portal-alert-update-countdown {
+    border-color: rgba(197, 160, 89, 0.42) !important;
+    background: rgba(0, 0, 0, 0.38) !important;
+}
+
 #royal-armies-portal-alert-modal .portal-alert-update-countdown-value {
     display: block !important;
-    font-size: 1.65rem !important;
+    font-size: 2rem !important;
     font-variant-numeric: tabular-nums !important;
     color: #ffd700 !important;
-    line-height: 1.2 !important;
+    line-height: 1.15 !important;
+}
+
+#royal-armies-portal-alert-modal .portal-alert-update-countdown-unit {
+    display: block !important;
+    margin-top: 4px !important;
+    font-size: 0.82rem !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.04em !important;
+    text-transform: uppercase !important;
+    color: rgba(241, 224, 172, 0.9) !important;
 }
 
 #royal-armies-portal-alert-modal .portal-alert-update-countdown-hint {

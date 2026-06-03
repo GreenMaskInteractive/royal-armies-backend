@@ -136,15 +136,28 @@
         return '/api/portal/metrics';
     }
 
-    function formatUpdateCountdownLabel(secondsRemaining) {
+    function formatUpdateCountdownDisplay(secondsRemaining) {
         const total = Math.max(0, Math.ceil(secondsRemaining));
-        if (total <= 0) return 'Now';
+        const hintActive = 'Estimated time until the gateway outage page (502 or 504) may appear.';
+        const hintNow = 'The gateway outage page (502 or 504) may appear at any moment.';
+
+        if (total <= 0) {
+            return { value: 'Now', unit: 'No time remaining on estimate', hint: hintNow };
+        }
+        if (total < 60) {
+            return {
+                value: String(total),
+                unit: total === 1 ? 'second remaining (estimate)' : 'seconds remaining (estimate)',
+                hint: hintActive
+            };
+        }
         const minutes = Math.floor(total / 60);
         const seconds = total % 60;
-        if (minutes > 0) {
-            return `${minutes}:${String(seconds).padStart(2, '0')}`;
-        }
-        return String(total);
+        return {
+            value: `${minutes}:${String(seconds).padStart(2, '0')}`,
+            unit: 'minutes and seconds remaining (estimate)',
+            hint: hintActive
+        };
     }
 
     function stopUpdateUnderwayWatchers() {
@@ -160,13 +173,10 @@
 
     function tickUpdateUnderwayCountdown() {
         const remaining = (updateUnderwayCountdownEndsAt - Date.now()) / 1000;
-        const label = formatUpdateCountdownLabel(remaining);
-        const hint = remaining > 0
-            ? 'Estimated until the gateway outage page (502 or 504) may appear.'
-            : 'Gateway outage page may appear at any moment.';
+        const display = formatUpdateCountdownDisplay(remaining);
 
         if (typeof global.setPortalUpdateUnderwayCountdown === 'function') {
-            global.setPortalUpdateUnderwayCountdown(label, hint);
+            global.setPortalUpdateUnderwayCountdown(display);
         }
     }
 
@@ -239,29 +249,27 @@
             return normalized;
         }
 
-        const onClose = () => {
-            stopUpdateUnderwayWatchers();
-        };
+        startUpdateUnderwayWatchers();
+
+        const initialCountdown = formatUpdateCountdownDisplay(UPDATE_GATEWAY_ESTIMATE_SEC);
 
         if (typeof global.showPortalUpdateUnderwayAlert === 'function') {
-            await global.showPortalUpdateUnderwayAlert({
+            void global.showPortalUpdateUnderwayAlert({
                 title: normalized.title,
                 message: normalized.message,
-                countdownLabel: formatUpdateCountdownLabel(UPDATE_GATEWAY_ESTIMATE_SEC),
-                onClose
+                countdownValue: initialCountdown.value,
+                countdownUnit: initialCountdown.unit,
+                countdownHint: initialCountdown.hint
             });
-            startUpdateUnderwayWatchers();
             return normalized;
         }
 
         if (typeof global.showPortalAlert === 'function') {
-            await global.showPortalAlert(normalized.message, normalized.title);
-            startUpdateUnderwayWatchers();
+            void global.showPortalAlert(normalized.message, normalized.title);
             return normalized;
         }
 
         global.alert(`${normalized.title}\n\n${normalized.message}`);
-        startUpdateUnderwayWatchers();
         return normalized;
     }
 
