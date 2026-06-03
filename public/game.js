@@ -771,6 +771,13 @@
                     global.openCommanderHubModal('settings', event);
                 }
                 break;
+            case 'report-player':
+                if (typeof global.openReportPlayerFromCommanderMenu === 'function') {
+                    global.openReportPlayerFromCommanderMenu(event);
+                } else if (global.RoyalArmiesPlayerReport?.openFromCommanderMenu) {
+                    global.RoyalArmiesPlayerReport.openFromCommanderMenu(event);
+                }
+                break;
             case 'return-to-portal':
                 returnToAgePortal();
                 break;

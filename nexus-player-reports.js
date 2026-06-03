@@ -34,6 +34,7 @@ const REPORT_SOURCES = new Set([
     'community_chat',
     'age_city_roster',
     'game_chat',
+    'commander_menu',
     'other'
 ]);
 

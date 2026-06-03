@@ -87,6 +87,13 @@
                     global.returnToGameAgePortal();
                 }
                 break;
+            case 'report-player':
+                if (typeof global.openReportPlayerFromCommanderMenu === 'function') {
+                    global.openReportPlayerFromCommanderMenu(event);
+                } else if (global.RoyalArmiesPlayerReport?.openFromCommanderMenu) {
+                    global.RoyalArmiesPlayerReport.openFromCommanderMenu(event);
+                }
+                break;
             case 'logout':
                 if (typeof global.handleHeaderAuthAction === 'function') {
                     global.handleHeaderAuthAction();

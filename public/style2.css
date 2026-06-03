@@ -24714,6 +24714,10 @@ body.player-report-modal-open {
     cursor: default;
 }
 
+.player-report-field-input--editable {
+    cursor: text;
+}
+
 .player-report-field-textarea {
     min-height: 120px;
     resize: vertical;

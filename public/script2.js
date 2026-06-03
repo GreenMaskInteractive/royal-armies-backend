@@ -788,6 +788,13 @@ function portalMobileNavCommanderAction(action, event) {
                 openDiscoveriesWorkspace(event);
             }
             break;
+        case 'report-player':
+            if (typeof openReportPlayerFromCommanderMenu === 'function') {
+                openReportPlayerFromCommanderMenu(event);
+            } else if (typeof RoyalArmiesPlayerReport !== 'undefined' && typeof RoyalArmiesPlayerReport.openFromCommanderMenu === 'function') {
+                RoyalArmiesPlayerReport.openFromCommanderMenu(event);
+            }
+            break;
         case 'logout':
             if (typeof handleHeaderAuthAction === 'function') {
                 handleHeaderAuthAction();

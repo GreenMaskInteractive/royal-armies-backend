@@ -117,6 +117,28 @@
         contextText.textContent = label;
     }
 
+    function configureTargetField(targetField, targetUsername, allowTargetEntry) {
+        if (!targetField) return;
+
+        if (allowTargetEntry) {
+            targetField.readOnly = false;
+            targetField.removeAttribute('readonly');
+            targetField.tabIndex = 0;
+            targetField.placeholder = 'Commander username';
+            targetField.value = targetUsername;
+            targetField.setAttribute('aria-label', 'Commander to report');
+            targetField.classList.add('player-report-field-input--editable');
+        } else {
+            targetField.readOnly = true;
+            targetField.setAttribute('readonly', 'readonly');
+            targetField.tabIndex = -1;
+            targetField.removeAttribute('placeholder');
+            targetField.value = targetUsername;
+            targetField.setAttribute('aria-label', 'Commander');
+            targetField.classList.remove('player-report-field-input--editable');
+        }
+    }
+
     function open(options = {}, clickEvent) {
         if (clickEvent) {
             clickEvent.preventDefault();
@@ -131,15 +153,17 @@
             return;
         }
 
+        const allowTargetEntry = Boolean(options.allowTargetEntry);
         const targetUsername = String(options.targetUsername || '').trim();
-        if (!targetUsername) {
+
+        if (!allowTargetEntry && !targetUsername) {
             if (typeof global.showPortalAlert === 'function') {
                 global.showPortalAlert('No commander was selected for this report.', 'Report a commander');
             }
             return;
         }
 
-        if (targetUsername.toLowerCase() === username.toLowerCase()) {
+        if (targetUsername && targetUsername.toLowerCase() === username.toLowerCase()) {
             if (typeof global.showRiftError === 'function') {
                 global.showRiftError({ code: 'NEXUS-REPORT-002' });
             }
@@ -151,6 +175,7 @@
 
         pendingContext = {
             targetUsername,
+            allowTargetEntry,
             source: String(options.source || 'other').trim() || 'other',
             contextLabel: String(options.contextLabel || '').trim(),
             contextMeta: options.contextMeta && typeof options.contextMeta === 'object'
@@ -159,7 +184,7 @@
         };
 
         populateCategoryOptions('');
-        targetField.value = targetUsername;
+        configureTargetField(targetField, targetUsername, allowTargetEntry);
         detailsField.value = '';
         renderContextBlock(pendingContext.contextLabel);
         setFeedback('', false);
@@ -179,8 +204,20 @@
 
         global.setTimeout(() => {
             const { categoryField } = getModalElements();
+            if (allowTargetEntry && targetField) {
+                targetField.focus();
+                return;
+            }
             if (categoryField) categoryField.focus();
         }, 0);
+    }
+
+    function openFromCommanderMenu(event) {
+        open({
+            allowTargetEntry: true,
+            source: 'commander_menu',
+            contextLabel: 'Commander menu'
+        }, event);
     }
 
     function close(clickEvent) {
@@ -213,7 +250,28 @@
             return;
         }
 
-        const { categoryField, detailsField, submitBtn } = getModalElements();
+        const { targetField, categoryField, detailsField, submitBtn } = getModalElements();
+        const targetUsername = pendingContext.allowTargetEntry
+            ? String(targetField?.value || '').trim()
+            : String(pendingContext.targetUsername || '').trim();
+
+        if (!targetUsername) {
+            setFeedback('Enter the commander you are reporting.', true);
+            if (targetField) targetField.focus();
+            return;
+        }
+
+        if (targetUsername.toLowerCase() === username.toLowerCase()) {
+            if (typeof global.showRiftError === 'function') {
+                global.showRiftError({ code: 'NEXUS-REPORT-002' });
+            } else {
+                setFeedback('You cannot report your own account.', true);
+            }
+            return;
+        }
+
+        pendingContext.targetUsername = targetUsername;
+
         const category = String(categoryField?.value || '').trim();
         const details = String(detailsField?.value || '').trim();
 
@@ -343,8 +401,64 @@
         });
     }
 
+    function buildReportPlayerMenuButton(className, actionHandlerName) {
+        const btn = global.document.createElement('button');
+        btn.type = 'button';
+        btn.className = className;
+        btn.setAttribute('role', 'menuitem');
+        btn.setAttribute('data-commander-menu-action', 'report-player');
+        btn.textContent = 'Report a Player';
+        btn.addEventListener('click', (event) => {
+            if (actionHandlerName && typeof global[actionHandlerName] === 'function') {
+                global[actionHandlerName]('report-player', event);
+                return;
+            }
+            if (typeof global.portalDesktopCommanderMenuAction === 'function') {
+                global.portalDesktopCommanderMenuAction('report-player', event);
+            } else {
+                openFromCommanderMenu(event);
+            }
+        });
+        return btn;
+    }
+
+    function findCommanderMenuLogoutButton(menu) {
+        if (!menu) return null;
+        return menu.querySelector(
+            '.dropdown-action-item-logout, .portal-mobile-submenu-item-logout, [id*="logout"][role="menuitem"], [onclick*="logout"]'
+        );
+    }
+
+    function injectReportPlayerMenuItems() {
+        if (!global.document.getElementById('player-report-modal')) return;
+
+        global.document.querySelectorAll('#portal-desktop-commander-menu').forEach((menu) => {
+            if (menu.querySelector('[data-commander-menu-action="report-player"]')) return;
+            const logoutBtn = findCommanderMenuLogoutButton(menu);
+            if (!logoutBtn) return;
+            logoutBtn.insertAdjacentElement('beforebegin', buildReportPlayerMenuButton(
+                'dropdown-action-item dropdown-action-item-report-player'
+            ));
+        });
+
+        [
+            { id: 'portal-mobile-commander-submenu', handler: 'portalMobileNavCommanderAction' },
+            { id: 'game-mobile-commander-submenu', handler: 'gameMobileNavCommanderAction' }
+        ].forEach(({ id, handler }) => {
+            const submenu = global.document.getElementById(id);
+            if (!submenu || submenu.querySelector('[data-commander-menu-action="report-player"]')) return;
+            const logoutBtn = findCommanderMenuLogoutButton(submenu);
+            if (!logoutBtn) return;
+            logoutBtn.insertAdjacentElement('beforebegin', buildReportPlayerMenuButton(
+                'portal-mobile-submenu-item portal-mobile-submenu-item-report-player',
+                handler
+            ));
+        });
+    }
+
     function boot() {
         bindModalControls();
+        injectReportPlayerMenuItems();
     }
 
     if (global.document.readyState === 'loading') {
@@ -355,8 +469,10 @@
 
     const api = {
         open,
+        openFromCommanderMenu,
         close,
         submit,
+        injectReportPlayerMenuItems,
         DETAILS_MIN,
         DETAILS_MAX,
         REPORT_CATEGORIES
@@ -364,4 +480,5 @@
 
     global.RoyalArmiesPlayerReport = api;
     global.openPlayerReportDialog = open;
+    global.openReportPlayerFromCommanderMenu = openFromCommanderMenu;
 }(typeof window !== 'undefined' ? window : globalThis));
