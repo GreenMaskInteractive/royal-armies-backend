@@ -11,6 +11,10 @@ body.age-map-shell-only[data-age-view="map"] {
     --age-map-only-inert: none;
 }
 
+body.age-map-shell-only .age-map-hud--left {
+    visibility: visible !important;
+}
+
 body.age-map-shell-only .age-map-hud--top,
 body.age-map-shell-only .age-map-hud--left,
 body.age-map-shell-only .age-map-hud--right,

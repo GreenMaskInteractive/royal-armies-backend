@@ -12,6 +12,16 @@
         '#age-world-map-frame *'
     ].join(', ');
 
+    const COUNCIL_BOARD_MAP_GAP_PX = 10;
+    const COUNCIL_BOARD_MIN_WIDTH_PX = 220;
+    const COUNCIL_BOARD_MIN_HEIGHT_PX = 160;
+    const MAP_FRAME_LAYOUT_MAX_EDGE = 1642;
+    const AGE_MOBILE_LAYOUT_MQ = '(max-width: 1024px)';
+
+    let councilLayoutObserver = null;
+    let councilLayoutStabilizeRaf = 0;
+    let lastCouncilLayoutKey = '';
+
     function isMapOnlyPage() {
         return global.document.body?.dataset?.ageMapOnly === 'true';
     }
@@ -29,9 +39,174 @@
     }
 
     async function releaseLoadingGate() {
+        scheduleCouncilBoardLayoutUntilStable(24);
+        await new Promise((resolve) => {
+            global.requestAnimationFrame(() => {
+                syncCouncilBoardLayoutToMap();
+                global.requestAnimationFrame(resolve);
+            });
+        });
         const gate = global.RoyalArmiesPageLoadingGate;
         if (gate && typeof gate.release === 'function') {
             await gate.release('age-map-only');
+        }
+    }
+
+    function mapViewportRectToLayoutSpace(rect) {
+        if (!rect) return rect;
+        if (typeof global.RoyalArmiesViewportMetrics?.clientRectToDesign === 'function') {
+            return global.RoyalArmiesViewportMetrics.clientRectToDesign(rect);
+        }
+        return rect;
+    }
+
+    function readAgeMapSlotTopPx(canvas) {
+        if (!canvas) return 0;
+        const parsed = parseFloat(global.getComputedStyle(canvas).getPropertyValue('--age-map-slot-top'));
+        return Number.isFinite(parsed) ? parsed : 0;
+    }
+
+    function resolveMapFrameLayoutRect(mapFrame) {
+        const anchor = mapFrame.closest('.age-map-anchor');
+        const measured = mapFrame.getBoundingClientRect();
+        if (!anchor) {
+            return measured.width >= 8 && measured.height >= 8
+                ? mapViewportRectToLayoutSpace(measured)
+                : null;
+        }
+
+        const anchorRect = anchor.getBoundingClientRect();
+        if (anchorRect.width < 8 || anchorRect.height < 8) {
+            return measured.width >= 8 && measured.height >= 8
+                ? mapViewportRectToLayoutSpace(measured)
+                : null;
+        }
+
+        const mapSize = Math.min(MAP_FRAME_LAYOUT_MAX_EDGE, anchorRect.width, anchorRect.height);
+        const estimated = {
+            left: anchorRect.left + ((anchorRect.width - mapSize) / 2),
+            top: anchorRect.top + ((anchorRect.height - mapSize) / 2),
+            width: mapSize,
+            height: mapSize
+        };
+
+        if (measured.width < 8 || measured.height < 8) {
+            return mapViewportRectToLayoutSpace(estimated);
+        }
+
+        const canvas = global.document.getElementById('age-page-canvas');
+        const slotTop = readAgeMapSlotTopPx(canvas);
+        const layoutMeasured = mapViewportRectToLayoutSpace(measured);
+        const minTop = slotTop > 0 ? slotTop - 12 : layoutMeasured.top;
+        const layoutEstimated = mapViewportRectToLayoutSpace(estimated);
+        const measuredLooksStaged = layoutMeasured.top < minTop
+            || (
+                measured.width >= anchorRect.width * 0.94
+                && measured.height >= anchorRect.height * 0.94
+                && Math.abs(measured.left - anchorRect.left) < 3
+            );
+
+        if (measuredLooksStaged) {
+            return layoutEstimated;
+        }
+
+        const deltaLeft = Math.abs(layoutMeasured.left - layoutEstimated.left);
+        const deltaTop = Math.abs(layoutMeasured.top - layoutEstimated.top);
+        const deltaSize = Math.abs(layoutMeasured.width - layoutEstimated.width);
+        if (deltaLeft > 48 || deltaTop > 48 || deltaSize > 48) {
+            return layoutEstimated;
+        }
+
+        return layoutMeasured;
+    }
+
+    function resolveCouncilBoardLeftPx() {
+        const canvas = global.document.getElementById('age-page-canvas');
+        if (!canvas) return 16;
+        const styles = global.getComputedStyle(canvas);
+        const safeLeft = parseFloat(styles.getPropertyValue('padding-left')) || 0;
+        const envInset = 16;
+        return Math.max(envInset, safeLeft, 0);
+    }
+
+    function isAgeMobileLayout() {
+        return global.matchMedia(AGE_MOBILE_LAYOUT_MQ).matches;
+    }
+
+    function syncCouncilBoardLayoutToMap() {
+        const canvas = global.document.getElementById('age-page-canvas');
+        const mapFrame = global.document.querySelector('#age-page-canvas .age-map-frame');
+        if (!canvas || !mapFrame) return;
+
+        if (isAgeMobileLayout()) {
+            canvas.classList.remove('is-age-hud-layout-pending');
+            [
+                '--age-council-board-top',
+                '--age-council-board-left',
+                '--age-council-board-width',
+                '--age-council-board-height',
+                '--age-left-column-height'
+            ].forEach((prop) => canvas.style.removeProperty(prop));
+            lastCouncilLayoutKey = '';
+            return;
+        }
+
+        const gap = COUNCIL_BOARD_MAP_GAP_PX;
+        const leftPosition = resolveCouncilBoardLeftPx();
+        canvas.style.setProperty('--age-council-board-left', `${leftPosition}px`);
+
+        const mapRect = resolveMapFrameLayoutRect(mapFrame);
+        if (!mapRect || mapRect.width < 8 || mapRect.height < 8) {
+            canvas.classList.add('is-age-hud-layout-pending');
+            return;
+        }
+
+        const width = Math.max(
+            COUNCIL_BOARD_MIN_WIDTH_PX,
+            mapRect.left - gap - leftPosition
+        );
+        const top = mapRect.top;
+        const councilHeight = Math.max(COUNCIL_BOARD_MIN_HEIGHT_PX, mapRect.height);
+
+        canvas.style.setProperty('--age-council-board-top', `${top}px`);
+        canvas.style.setProperty('--age-council-board-width', `${width}px`);
+        canvas.style.setProperty('--age-council-board-height', `${councilHeight}px`);
+        canvas.style.setProperty('--age-left-column-height', `${councilHeight}px`);
+        canvas.classList.remove('is-age-hud-layout-pending');
+        lastCouncilLayoutKey = `${top}|${width}|${councilHeight}|${leftPosition}`;
+    }
+
+    function scheduleCouncilBoardLayoutUntilStable(maxFrames = 48) {
+        if (councilLayoutStabilizeRaf) {
+            global.cancelAnimationFrame(councilLayoutStabilizeRaf);
+        }
+
+        let frames = 0;
+        const tick = () => {
+            councilLayoutStabilizeRaf = 0;
+            frames += 1;
+            const before = lastCouncilLayoutKey;
+            syncCouncilBoardLayoutToMap();
+            const stable = Boolean(before) && before === lastCouncilLayoutKey;
+            if (stable && frames >= 2 || frames >= maxFrames) return;
+            councilLayoutStabilizeRaf = global.requestAnimationFrame(tick);
+        };
+
+        councilLayoutStabilizeRaf = global.requestAnimationFrame(tick);
+    }
+
+    function bindCouncilBoardLayoutSync() {
+        const mapFrame = global.document.querySelector('#age-page-canvas .age-map-frame');
+        const anchor = mapFrame?.closest('.age-map-anchor');
+        if (!mapFrame) return;
+
+        global.addEventListener('resize', () => scheduleCouncilBoardLayoutUntilStable(12));
+        global.addEventListener('royalarmies:viewport-metrics-updated', () => scheduleCouncilBoardLayoutUntilStable(12));
+
+        if (typeof global.ResizeObserver === 'function') {
+            councilLayoutObserver = new global.ResizeObserver(() => scheduleCouncilBoardLayoutUntilStable(8));
+            councilLayoutObserver.observe(mapFrame);
+            if (anchor) councilLayoutObserver.observe(anchor);
         }
     }
 
@@ -154,6 +329,8 @@
                 global.RoyalArmiesAgeWorldMap?.refreshPlayerCity?.();
             }
             global.RoyalArmiesAgeWorldMap?.refreshNationCityHighlights?.();
+            bindCouncilBoardLayoutSync();
+            scheduleCouncilBoardLayoutUntilStable(32);
         } finally {
             await releaseLoadingGate();
         }
@@ -161,7 +338,8 @@
 
     global.RoyalArmiesAgeMapOnlyPage = {
         isMapOnlyPage,
-        boot: bootMapOnlyPage
+        boot: bootMapOnlyPage,
+        syncCouncilBoardLayoutToMap
     };
 
     if (global.document.readyState === 'loading') {

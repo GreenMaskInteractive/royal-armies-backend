@@ -7,8 +7,7 @@
     const GAME_PRESENCE_HEARTBEAT_MS = 20000;
     const ACTIVE_AGE_STORAGE_KEY = 'savedCommanderInActiveAge';
     const COUNCIL_BOARD_MAP_GAP_PX = 10;
-    const COUNCIL_BOARD_LEFT_POSITION_PX = 166;
-    const COUNCIL_BOARD_RIGHT_INSET_EXTRA_PX = 20;
+    const COUNCIL_BOARD_LEFT_POSITION_PX = 16;
     const COUNCIL_BOARD_MIN_WIDTH_PX = 220;
     const COUNCIL_BOARD_MIN_HEIGHT_PX = 160;
     const RIGHT_REPORTS_MIN_HEIGHT_PX = 150;
@@ -957,7 +956,10 @@
         }
 
         const gap = COUNCIL_BOARD_MAP_GAP_PX;
-        const leftPosition = COUNCIL_BOARD_LEFT_POSITION_PX;
+        const leftPosition = Math.max(
+            COUNCIL_BOARD_LEFT_POSITION_PX,
+            parseFloat(global.getComputedStyle(canvas).getPropertyValue('padding-left')) || 0
+        );
         canvas.style.setProperty('--age-council-board-left', `${leftPosition}px`);
 
         const mapRect = resolveMapFrameLayoutRect(mapFrame);
@@ -968,15 +970,10 @@
 
         const width = Math.max(
             COUNCIL_BOARD_MIN_WIDTH_PX,
-            mapRect.left - gap - COUNCIL_BOARD_RIGHT_INSET_EXTRA_PX - leftPosition
+            mapRect.left - gap - leftPosition
         );
-        const top = mapRect.top + gap;
-        const bottomLimit = resolveLeftColumnBottomLimitPx();
-        const availableHeight = Math.max(COUNCIL_BOARD_MIN_HEIGHT_PX, bottomLimit - top);
-        const councilHeight = Math.max(
-            COUNCIL_BOARD_MIN_HEIGHT_PX,
-            Math.min(availableHeight, availableHeight * 0.62)
-        );
+        const top = mapRect.top;
+        const councilHeight = Math.max(COUNCIL_BOARD_MIN_HEIGHT_PX, mapRect.height);
 
         canvas.style.setProperty('--age-council-board-top', `${top}px`);
         canvas.style.setProperty('--age-council-board-width', `${width}px`);
