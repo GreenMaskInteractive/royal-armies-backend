@@ -22880,13 +22880,13 @@ body.is-rift-discoveries-workspace-open {
     position: absolute;
     left: var(--game-region-map-bezel, 12px);
     right: var(--game-region-map-bezel, 12px);
-    bottom: calc(var(--game-region-map-bezel, 12px) - 5px);
-    height: calc(100% - (2 * var(--game-region-map-bezel, 12px)) + 5px);
+    bottom: var(--game-region-map-bezel, 12px);
+    height: calc(100% - (2 * var(--game-region-map-bezel, 12px)));
     display: flex;
     flex-direction: column;
-    justify-content: flex-end;
     box-sizing: border-box;
-    transform: translate3d(0, calc(100% - var(--war-room-tab-height)), 0);
+    /* Closed: shift up so only the bottom tab strip remains visible. */
+    transform: translate3d(0, calc(var(--war-room-tab-height) - 100%), 0);
     transition: transform 0.52s cubic-bezier(0.22, 1, 0.36, 1);
     pointer-events: auto;
     z-index: 2;
@@ -22899,8 +22899,10 @@ body.is-rift-discoveries-workspace-open {
 
 .age-army-groups-tab {
     position: relative;
-    flex: 0 0 auto;
+    flex: 0 0 var(--war-room-tab-height);
+    order: 2;
     align-self: flex-start;
+    z-index: 2;
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -22954,6 +22956,7 @@ body.is-rift-discoveries-workspace-open {
     position: relative;
     flex: 1 1 auto;
     min-height: 0;
+    order: 1;
     display: flex;
     flex-direction: column;
     box-sizing: border-box;
