@@ -184,20 +184,10 @@
         syncDispatchPanel(isCouncilRoomViewActive());
 
         const workspace = global.document.getElementById('age-council-room-workspace');
-        const nationCol = global.document.getElementById('age-council-room-nation');
-        const commandCol = global.document.getElementById('age-council-room-command');
         const hasNationAccess = Boolean(memberHubActive);
 
         if (workspace) {
-            workspace.classList.toggle('is-access-denied', !hasNationAccess);
-        }
-        if (nationCol) {
-            nationCol.hidden = !hasNationAccess;
-            if (hasNationAccess) nationCol.removeAttribute('hidden');
-        }
-        if (commandCol) {
-            commandCol.hidden = !hasNationAccess;
-            if (hasNationAccess) commandCol.removeAttribute('hidden');
+            workspace.classList.toggle('is-access-denied', !hasNationAccess && !councilAccess);
         }
 
         const planningBlock = global.document.querySelector('.age-council-room-planning-block');
@@ -854,8 +844,9 @@
         setHeadquartersLoadStatus(accessGap?.message || '', accessGap?.tone || 'info');
 
         const councilWorkspace = global.document.getElementById('age-council-room-workspace');
+        const hasCouncilRoomAccess = Boolean(workspace.access?.memberHub || workspace.access?.council);
         if (councilWorkspace) {
-            councilWorkspace.classList.toggle('is-access-denied', !workspace.access?.memberHub && !workspace.access?.council);
+            councilWorkspace.classList.toggle('is-access-denied', !hasCouncilRoomAccess);
         }
 
         fullAuthority = Boolean(workspace.access?.fullAuthority);

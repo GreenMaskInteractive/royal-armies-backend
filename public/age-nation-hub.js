@@ -207,7 +207,13 @@
         }
 
         if (item.hasAttribute('data-age-view-tab')) {
+            event.preventDefault();
+            const view = item.getAttribute('data-age-view-tab');
             closeHub();
+            if (typeof global.RoyalArmiesAgeViewTabs?.setActiveView === 'function') {
+                global.RoyalArmiesAgeViewTabs.setActiveView(view);
+            }
+            return;
         }
     }
 

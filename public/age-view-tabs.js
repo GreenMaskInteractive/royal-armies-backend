@@ -367,8 +367,15 @@
 
         const councilWorkspace = global.document.getElementById('age-council-room-workspace');
         if (councilWorkspace) {
-            councilWorkspace.hidden = !inCouncilRoomView;
-            councilWorkspace.setAttribute('aria-hidden', inCouncilRoomView ? 'false' : 'true');
+            if (inCouncilRoomView) {
+                councilWorkspace.hidden = false;
+                councilWorkspace.removeAttribute('hidden');
+                councilWorkspace.setAttribute('aria-hidden', 'false');
+            } else {
+                councilWorkspace.hidden = true;
+                councilWorkspace.setAttribute('hidden', '');
+                councilWorkspace.setAttribute('aria-hidden', 'true');
+            }
         }
 
         const recordsWorkspace = global.document.getElementById('age-records-workspace');

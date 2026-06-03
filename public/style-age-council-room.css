@@ -55,10 +55,11 @@
     left: 8px;
     right: 8px;
     top: calc(var(--age-map-slot-top, 56px) + 2px);
-    bottom: calc(var(--age-map-slot-bottom, 72px) + var(--age-cr-workspace-bottom-reserve, 118px));
-    z-index: 3;
+    bottom: var(--age-map-slot-bottom, 72px);
+    z-index: 40;
     display: none;
     flex-direction: column;
+    visibility: hidden;
     box-sizing: border-box;
     pointer-events: auto;
     overflow: hidden;
@@ -98,17 +99,41 @@
     border-top: none;
 }
 
+.age-council-room-workspace[hidden] {
+    display: none !important;
+    visibility: hidden !important;
+}
+
 #age-page-canvas[data-age-view="council-room"] .age-council-room-workspace:not([hidden]) {
-    display: flex;
+    display: flex !important;
+    visibility: visible !important;
 }
 
 .age-council-room-workspace.is-access-denied .age-council-room-shell {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+}
+
+.age-council-room-workspace.is-access-denied .age-council-room-nation-stack,
+.age-council-room-workspace.is-access-denied .age-council-room-command-stack,
+.age-council-room-workspace.is-access-denied .age-council-room-column-head {
     display: none;
 }
 
 .age-council-room-workspace.is-access-denied .age-council-room-header {
     border-bottom: none;
     padding-bottom: 24px;
+}
+
+.age-council-room-access-empty {
+    margin: 0;
+    max-width: 42ch;
+    text-align: center;
+    font-size: 0.84rem;
+    line-height: 1.5;
+    color: rgba(241, 224, 172, 0.78);
 }
 
 /* --- Header --- */
