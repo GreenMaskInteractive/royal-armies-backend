@@ -487,6 +487,13 @@
 
         if (group.canDismiss) {
             const dismissBar = global.document.createElement('div');
+            if (group.isLeader) {
+                const attackHint = global.document.createElement('p');
+                attackHint.className = 'age-army-groups-attack-hint';
+                attackHint.textContent = 'Assault a neighboring city from the map to launch a group attack. The army disbands when the battle ends.';
+                panel.appendChild(attackHint);
+            }
+
             dismissBar.className = 'age-army-groups-panel-bar age-army-groups-panel-bar--dismiss';
             const dismissBtn = global.document.createElement('button');
             dismissBtn.type = 'button';
@@ -1367,9 +1374,16 @@
         }
     }
 
+    function getLedArmyGroup() {
+        const self = resolveUsername().toLowerCase();
+        if (!self || !rosterPayload?.groups) return null;
+        return rosterPayload.groups.find((group) => group.isLeader) || null;
+    }
+
     global.RoyalArmiesAgeArmyGroups = {
         enable,
         refresh: refreshRoster,
+        getLedArmyGroup,
         isWorkspaceOpen: () => workspaceOpen,
         openWorkspace: () => setWorkspaceOpen(true),
         closeWorkspace: () => setWorkspaceOpen(false),

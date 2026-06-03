@@ -372,6 +372,37 @@
     }
 
     async function assault(targetCityId, options = {}) {
+        const ledGroup = typeof global.RoyalArmiesAgeArmyGroups?.getLedArmyGroup === 'function'
+            ? global.RoyalArmiesAgeArmyGroups.getLedArmyGroup()
+            : null;
+        if (ledGroup?.id) {
+            const username = resolveUsername();
+            if (!username) {
+                const err = new Error('Commander session required.');
+                err.code = 'NEXUS-GEN-002';
+                throw err;
+            }
+
+            const response = await fetch(resolveApiUrl('/api/portal/age/army-groups/attack'), {
+                method: 'POST',
+                credentials: 'same-origin',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    username,
+                    groupId: ledGroup.id,
+                    targetCityId,
+                    playersInCity: options.playersInCity
+                })
+            });
+
+            const payload = await parseResponse(response);
+            applyStatePayload(payload);
+            if (typeof global.RoyalArmiesAgeArmyGroups?.refresh === 'function') {
+                global.RoyalArmiesAgeArmyGroups.refresh({ silent: true });
+            }
+            return payload;
+        }
+
         return postAction('/api/portal/age/assault', targetCityId, {
             playersInCity: options.playersInCity
         });

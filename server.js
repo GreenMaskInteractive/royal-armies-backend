@@ -107,8 +107,14 @@ const {
     applyKickArmyGroupMember,
     applyMergeArmyGroupInto,
     applyEscortMembersToCommandPost,
-    applyAbsorbArmyGroupInto
+    applyAbsorbArmyGroupInto,
+    validateNotAlreadyLeadingGroup,
+    findArmyGroupLedBy
 } = require('./nexus-age-army-groups');
+const {
+    prepareArmyGroupAttack,
+    prepareArmyGroupDefeatForMember
+} = require('./nexus-age-army-group-battle');
 const {
     buildAgeRosterHudPayload,
     buildCommanderAgeRosterSeedPatch,
@@ -5186,6 +5192,48 @@ function writeArmyGroupsNationState(res, gameNation, commander, username, state,
     return respondArmyGroupsPayload(res, gameNation, commander, username, writeResult.state, extra);
 }
 
+function loadArmyGroupMemberCommanders(memberUsernames) {
+    return (memberUsernames || []).map((entry) => {
+        const memberUsername = String(entry || '').trim().toLowerCase();
+        if (!memberUsername) return null;
+        return db.get('commanders').find({ username: memberUsername }).value();
+    }).filter(Boolean);
+}
+
+function applyArmyGroupCasualtyUpdates(casualtyUpdates) {
+    (casualtyUpdates || []).forEach((entry) => {
+        if (!entry?.username) return;
+        persistCommanderGuildLedger(entry.username, { ageArmy: entry.ageArmy });
+    });
+}
+
+function applyArmyGroupRelocationAssignments(assignments, nationKey, leaderMovePatch = null) {
+    const relocations = [];
+    Object.entries(assignments || {}).forEach(([memberUsername, catalogCityId]) => {
+        const username = String(memberUsername || '').trim().toLowerCase();
+        const cityId = String(catalogCityId || '').trim();
+        if (!username || !cityId) return;
+
+        const movement = readCommanderMovementRecord(username, nationKey);
+        const nextRecord = {
+            catalogCityId: cityId,
+            movePoints: movement.movePoints,
+            lastMovePointRegenAt: movement.lastMovePointRegenAt
+        };
+        if (leaderMovePatch && leaderMovePatch.username === username) {
+            nextRecord.movePoints = leaderMovePatch.movePoints;
+            nextRecord.lastMovePointRegenAt = leaderMovePatch.lastMovePointRegenAt;
+        }
+        writeCommanderMovementRecord(username, nextRecord);
+        relocations.push({ username, catalogCityId: cityId });
+    });
+    return relocations;
+}
+
+function resolveArmyGroupsStorageNation(commander) {
+    return getCouncilBoardStorageKey(resolveCouncilBoardNationKey(commander));
+}
+
 app.post('/api/portal/age/army-groups/create', (req, res) => {
     const username = resolveLedgerCommanderUsername(req.body?.username || '');
     if (!username) {
@@ -5204,6 +5252,11 @@ app.post('/api/portal/age/army-groups/create', (req, res) => {
 
     const access = resolveHeadquartersAccessForCommander(commander);
     const current = readNationArmyGroupsForNation(gameNation);
+    const leaderLimit = validateNotAlreadyLeadingGroup(current, username);
+    if (leaderLimit) {
+        return sendApiError(res, leaderLimit.errorCode, leaderLimit.message);
+    }
+
     const validation = validateCreateArmyGroup({
         type: req.body?.type,
         name: req.body?.name,
@@ -5267,6 +5320,11 @@ app.post('/api/portal/age/army-groups/join', (req, res) => {
     }
 
     const current = readNationArmyGroupsForNation(gameNation);
+    const leaderLimit = validateNotAlreadyLeadingGroup(current, username);
+    if (leaderLimit) {
+        return sendApiError(res, leaderLimit.errorCode, leaderLimit.message);
+    }
+
     const joinResult = applyJoinArmyGroup(current, { groupId, username });
     if (joinResult.errorCode) {
         return sendApiError(res, joinResult.errorCode, joinResult.message);
@@ -5411,6 +5469,171 @@ app.post('/api/portal/age/army-groups/dismiss', (req, res) => {
 
     writeArmyGroupsNationState(res, gameNation, commander, username, dismissResult.state, {
         dismissedGroupId: dismissResult.dismissedGroupId
+    });
+});
+
+app.post('/api/portal/age/army-groups/attack', (req, res) => {
+    const username = resolveLedgerCommanderUsername(req.body?.username || '');
+    if (!username) {
+        return sendApiError(res, 'NEXUS-GEN-002');
+    }
+
+    let commander = db.get('commanders').find({ username }).value();
+    if (!commander) {
+        return sendApiError(res, 'NEXUS-GEN-004');
+    }
+
+    const storageNation = resolveArmyGroupsStorageNation(commander);
+    if (!storageNation) {
+        return sendApiError(res, 'GAME_NATION_REQUIRED');
+    }
+
+    const mapNation = resolveCommanderMapNationKey(commander);
+    const groupId = String(req.body?.groupId || '').trim();
+    const targetCityId = String(req.body?.targetCityId || '').trim();
+    if (!groupId || !targetCityId) {
+        return sendApiError(res, 'NEXUS-GEN-003');
+    }
+
+    const current = readNationArmyGroupsForNation(storageNation);
+    const lookup = current.groups.find((group) => group.id === groupId);
+    if (!lookup) {
+        return sendApiError(res, 'NEXUS-GAME-013');
+    }
+
+    const movement = readCommanderMovementRecord(username, mapNation);
+    const store = readAgeMovementStore();
+    const playersInCity = normalizePlayersInCityCount(req.body?.playersInCity);
+    const memberCommanders = loadArmyGroupMemberCommanders(lookup.memberUsernames);
+
+    const assaultValidation = validateAssault(
+        mapNation,
+        movement.catalogCityId,
+        targetCityId,
+        store.cityHolders,
+        areNationsAllied
+    );
+    if (assaultValidation.errorCode) {
+        return sendApiError(res, assaultValidation.errorCode);
+    }
+
+    const spend = spendMovePoints(movement, assaultValidation.connection?.movePointCost || 1);
+    if (spend.errorCode) {
+        return sendApiError(res, spend.errorCode);
+    }
+
+    ensureCommanderAgeRoster(commander);
+    commander = db.get('commanders').find({ username }).value();
+
+    const attackResult = prepareArmyGroupAttack({
+        state: current,
+        groupId,
+        leaderUsername: username,
+        leaderCommander: commander,
+        memberCommanders,
+        nationKey: mapNation,
+        originCityId: movement.catalogCityId,
+        targetCityId,
+        cityHolders: store.cityHolders,
+        isAlliedFn: areNationsAllied,
+        playersInCity
+    });
+    if (attackResult.errorCode) {
+        return sendApiError(res, attackResult.errorCode, attackResult.message);
+    }
+
+    const battleResult = attackResult.battleResult;
+    persistCommanderGuildLedger(username, {
+        rank: battleResult.rank,
+        ageGuildXp: battleResult.ageGuildXp,
+        ageProvisions: Math.max(
+            0,
+            Math.floor(Number(resolveCommanderAgeProvisions(commander)) || 0) + (battleResult.provisionsGranted || 0)
+        )
+    });
+
+    applyArmyGroupCasualtyUpdates(attackResult.casualtyUpdates);
+
+    let captureReward = null;
+    const targetCity = attackResult.targetCity;
+    const previousHolder = resolveCityHolder(targetCity, store.cityHolders);
+
+    if (attackResult.assaultVictory) {
+        store.cityHolders[targetCityId] = getCouncilBoardStorageKey(mapNation);
+        store.cityLosers[targetCityId] = previousHolder;
+        writeAgeMovementStore(store);
+
+        captureReward = awardNationTreasuryForCaptureEvent(
+            mapNation,
+            'city-capture',
+            playersInCity,
+            {
+                cityId: targetCityId,
+                cityName: targetCity.name,
+                awardedBy: username
+            }
+        );
+    }
+
+    const leaderMovePatch = {
+        username,
+        movePoints: spend.movePoints,
+        lastMovePointRegenAt: spend.lastMovePointRegenAt
+    };
+    const relocations = applyArmyGroupRelocationAssignments(
+        attackResult.relocationPlan.assignments,
+        mapNation,
+        leaderMovePatch
+    );
+
+    const writeResult = writeNationArmyGroupsForNation(storageNation, attackResult.normalizedState);
+    if (writeResult.errorCode) {
+        return sendStoreError(res, writeResult);
+    }
+
+    commander = db.get('commanders').find({ username }).value();
+
+    respondArmyGroupsPayload(res, storageNation, commander, username, writeResult.state, {
+        action: 'army-group-attack',
+        assaultVictory: attackResult.assaultVictory,
+        winner: battleResult.winner,
+        endReason: battleResult.endReason,
+        dismissedGroupId: attackResult.dismissedGroupId,
+        groupType: attackResult.groupType,
+        relocationMode: attackResult.relocationPlan.mode,
+        evacuationCityId: attackResult.relocationPlan.evacuationCityId || null,
+        relocations,
+        roundsPlayed: battleResult.roundsPlayed,
+        infantryRounds: battleResult.infantryRounds,
+        log: battleResult.log,
+        xpGain: battleResult.xpGain,
+        xpBreakdown: battleResult.xpBreakdown || null,
+        rank: battleResult.rank,
+        rankPromoted: battleResult.rankPromoted,
+        rankPromotions: battleResult.rankPromotions,
+        provisionsGranted: battleResult.provisionsGranted,
+        ageGuildXp: battleResult.ageGuildXp,
+        ageGuildXpRequired: battleResult.ageGuildXpRequired,
+        ageGuildXpProgress: battleResult.ageGuildXpProgress,
+        targetCityId,
+        previousHolderNationId: previousHolder,
+        newHolderNationId: attackResult.assaultVictory
+            ? getCouncilBoardStorageKey(mapNation)
+            : previousHolder,
+        cityHolders: store.cityHolders,
+        cityLosers: store.cityLosers,
+        captureReward: captureReward && !captureReward.errorCode ? {
+            grantedRsd: captureReward.grantedRsd,
+            treasury: captureReward.treasury
+        } : null,
+        rules: getMovePointRules(),
+        catalogCityId: relocations.find((entry) => entry.username === username)?.catalogCityId
+            || movement.catalogCityId,
+        movePoints: spend.movePoints,
+        movePointsMax: getMovePointRules().movePointsMax,
+        lastMovePointRegenAt: spend.lastMovePointRegenAt,
+        ...buildGuildStatePayload(commander),
+        ...buildAgeMovementStatePayload(username, commander)
     });
 });
 
@@ -6599,6 +6822,18 @@ app.post('/api/portal/age/assault', (req, res) => {
         return sendApiError(res, 'NEXUS-AGE-008');
     }
 
+    const storageNation = resolveArmyGroupsStorageNation(commander);
+    const armyGroupsState = storageNation
+        ? readNationArmyGroupsForNation(storageNation)
+        : null;
+    if (armyGroupsState && findArmyGroupLedBy(armyGroupsState, username)) {
+        return sendApiError(
+            res,
+            'NEXUS-AGE-030',
+            'Launch assaults from the map while leading an army group — your group attacks together and disbands afterward.'
+        );
+    }
+
     const targetCityId = String(req.body?.targetCityId || '').trim();
     const movement = readCommanderMovementRecord(username, gameNation);
     const store = readAgeMovementStore();
@@ -6650,6 +6885,7 @@ app.post('/api/portal/age/assault', (req, res) => {
 
     let captureReward = null;
     const assaultVictory = battleResult.winner === 'commander';
+    let armyGroupDefeat = null;
 
     if (assaultVictory) {
         store.cityHolders[targetCityId] = getCouncilBoardStorageKey(gameNation);
@@ -6672,12 +6908,45 @@ app.post('/api/portal/age/assault', (req, res) => {
                 awardedBy: username
             }
         );
+    } else if (storageNation && armyGroupsState) {
+        const defeatPrep = prepareArmyGroupDefeatForMember({
+            state: armyGroupsState,
+            defeatedUsername: username,
+            nationKey: gameNation,
+            cityHolders: store.cityHolders,
+            isAlliedFn: areNationsAllied
+        });
+        if (defeatPrep.ok && !defeatPrep.skipped) {
+            const writeGroups = writeNationArmyGroupsForNation(storageNation, defeatPrep.normalizedState);
+            if (!writeGroups.errorCode) {
+                const relocations = applyArmyGroupRelocationAssignments(
+                    defeatPrep.relocationPlan.assignments,
+                    gameNation
+                );
+                armyGroupDefeat = {
+                    dismissedGroupId: defeatPrep.dismissedGroupId,
+                    groupType: defeatPrep.groupType,
+                    relocationMode: defeatPrep.relocationPlan.mode,
+                    evacuationCityId: defeatPrep.relocationPlan.evacuationCityId || null,
+                    relocations
+                };
+                const selfRelocation = relocations.find((entry) => entry.username === username);
+                if (selfRelocation) {
+                    nextRecord = writeCommanderMovementRecord(username, {
+                        catalogCityId: selfRelocation.catalogCityId,
+                        movePoints: spend.movePoints,
+                        lastMovePointRegenAt: spend.lastMovePointRegenAt
+                    });
+                }
+            }
+        }
     }
 
     res.json({
         status: 'ok',
         action: 'assault',
         assaultVictory,
+        armyGroupDefeat,
         winner: battleResult.winner,
         endReason: battleResult.endReason,
         roundsPlayed: battleResult.roundsPlayed,

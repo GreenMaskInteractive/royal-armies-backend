@@ -24067,6 +24067,17 @@ body.age-war-room-open {
     border-top: 1px solid rgba(197, 160, 89, 0.18);
 }
 
+.age-army-groups-attack-hint {
+    margin: 0 0 10px;
+    padding: 8px 10px;
+    font-size: 12px;
+    line-height: 1.45;
+    color: rgba(220, 198, 140, 0.92);
+    background: rgba(12, 10, 8, 0.45);
+    border: 1px solid rgba(180, 150, 90, 0.28);
+    border-radius: 4px;
+}
+
 .age-army-groups-panel-bar--dismiss {
     justify-content: flex-end;
 }

@@ -692,6 +692,24 @@
             message: 'This unit stack has not earned enough experience for the next promotion rank.',
             category: 'game'
         },
+        'NEXUS-AGE-028': {
+            http: 409,
+            title: 'Army group',
+            message: 'You already lead an army group. Dismiss it before creating or leading another.',
+            category: 'game'
+        },
+        'NEXUS-AGE-029': {
+            http: 403,
+            title: 'Army group attack',
+            message: 'Only the army group leader can launch a group attack.',
+            category: 'game'
+        },
+        'NEXUS-AGE-030': {
+            http: 403,
+            title: 'Army group assault',
+            message: 'Launch assaults from the map while leading an army group — your group attacks together and disbands afterward.',
+            category: 'game'
+        },
 
         /* --- Player conduct reports --- */
         'NEXUS-REPORT-001': {

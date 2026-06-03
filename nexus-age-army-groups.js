@@ -251,6 +251,44 @@ function findArmyGroupIndex(state, groupId) {
     return { normalized, idx, group: normalized.groups[idx] };
 }
 
+function findArmyGroupContainingMember(state, groupId, memberUsername) {
+    const normalized = normalizeNationArmyGroupsState(state);
+    const member = normalizeUsername(memberUsername);
+
+    if (groupId) {
+        return findArmyGroupIndex(state, groupId);
+    }
+
+    if (!member) {
+        return { errorCode: 'NEXUS-GEN-002' };
+    }
+
+    const idx = normalized.groups.findIndex((group) => group.memberUsernames.includes(member));
+    if (idx < 0) {
+        return { errorCode: 'NEXUS-GAME-013', message: 'Army group not found.' };
+    }
+
+    return { normalized, idx, group: normalized.groups[idx] };
+}
+
+function findArmyGroupLedBy(state, leaderUsername) {
+    const normalized = normalizeNationArmyGroupsState(state);
+    const leader = normalizeUsername(leaderUsername);
+    if (!leader) return null;
+    return normalized.groups.find((group) => group.leaderUsername === leader) || null;
+}
+
+function validateNotAlreadyLeadingGroup(state, leaderUsername) {
+    const existing = findArmyGroupLedBy(state, leaderUsername);
+    if (existing) {
+        return {
+            errorCode: 'NEXUS-AGE-028',
+            message: 'You already lead an army group. Dismiss it before creating or leading another.'
+        };
+    }
+    return null;
+}
+
 function validateRenameArmyGroup({ name, group, existingGroups }) {
     const normalizedName = normalizeGroupName(name);
     if (!normalizedName || normalizedName.length < 1) {
@@ -792,5 +830,8 @@ module.exports = {
     applyEscortMembersToCommandPost,
     applyAbsorbArmyGroupInto,
     isMainArmyType,
-    isNationCommandAccess
+    isNationCommandAccess,
+    findArmyGroupContainingMember,
+    findArmyGroupLedBy,
+    validateNotAlreadyLeadingGroup
 };
