@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Royal Armies — Age Alpha</title>
     <link rel="stylesheet" href="style.css?v=cursor-modal-layer-fix-1">
-    <link rel="stylesheet" href="style2.css?v=war-room-tab-slim-1">
+    <link rel="stylesheet" href="style2.css?v=war-room-create-roster-1">
     <link rel="stylesheet" href="mobile-responsive.css?v=top-bar-logo-5px-1">
     <link rel="stylesheet" href="dev-page-navigator.css">
     <link rel="stylesheet" href="custom-cursor.css?v=finger-press-7">
@@ -704,24 +704,26 @@
                                         </button>
                                     </header>
                                     <h2 class="age-army-groups-list-heading">Armies</h2>
-                                    <div id="age-army-groups-create-row" class="age-army-groups-create-row" hidden>
-                                        <button
-                                            type="button"
-                                            id="age-army-groups-type-cycle"
-                                            class="age-army-groups-type-cycle"
-                                            aria-label="Army group type">SF</button>
-                                        <input
-                                            type="text"
-                                            id="age-army-groups-name-input"
-                                            class="age-army-groups-name-input"
-                                            maxlength="48"
-                                            placeholder="Unique army name"
-                                            autocomplete="off"
-                                            spellcheck="false">
-                                        <button type="button" id="age-army-groups-create-submit" class="age-army-groups-create-submit">Create</button>
+                                    <div class="age-army-groups-roster">
+                                        <div id="age-army-groups-create-row" class="age-army-groups-create-row" hidden>
+                                            <button
+                                                type="button"
+                                                id="age-army-groups-type-cycle"
+                                                class="age-army-groups-type-cycle"
+                                                aria-label="Army group type">SF</button>
+                                            <input
+                                                type="text"
+                                                id="age-army-groups-name-input"
+                                                class="age-army-groups-name-input"
+                                                maxlength="48"
+                                                placeholder="Unique army name"
+                                                autocomplete="off"
+                                                spellcheck="false">
+                                            <button type="button" id="age-army-groups-create-submit" class="age-army-groups-create-submit">Create</button>
+                                        </div>
+                                        <p id="age-army-groups-feedback" class="age-army-groups-feedback" hidden role="status"></p>
+                                        <div id="age-army-groups-list" class="age-army-groups-list" role="list" aria-live="polite"></div>
                                     </div>
-                                    <p id="age-army-groups-feedback" class="age-army-groups-feedback" hidden role="status"></p>
-                                    <div id="age-army-groups-list" class="age-army-groups-list" role="list" aria-live="polite"></div>
                                 </div>
                             </section>
                         </div>

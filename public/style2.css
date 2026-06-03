@@ -23150,6 +23150,7 @@ body.is-rift-discoveries-workspace-open {
 }
 
 .age-army-groups-list-heading {
+    flex: 0 0 auto;
     margin: 12px 0 0;
     padding: 0 0 8px;
     border-bottom: 1px solid rgba(197, 160, 89, 0.28);
@@ -23161,14 +23162,26 @@ body.is-rift-discoveries-workspace-open {
     color: #e8d5a3;
 }
 
+.age-army-groups-roster {
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    min-height: 0;
+    margin-top: 4px;
+}
+
 .age-army-groups-create-row {
     display: none;
+    flex: 0 0 auto;
     align-items: stretch;
-    justify-content: flex-end;
+    justify-content: flex-start;
+    align-self: flex-start;
     gap: 8px;
-    width: min(100%, 420px);
-    margin: 15px 0 0 auto;
-    padding-right: 2px;
+    width: min(100%, 400px);
+    max-width: 100%;
+    margin: 28px 0 0 0;
+    padding: 0;
 }
 
 .age-army-groups-create-row.is-visible {
@@ -23314,7 +23327,9 @@ body.is-rift-discoveries-workspace-open {
 }
 
 .age-army-groups-feedback {
-    margin: 10px 0 0;
+    flex: 0 0 auto;
+    align-self: flex-start;
+    margin: 8px 0 0;
     font-size: 12px;
     color: #d8c89a;
 }
@@ -23326,10 +23341,14 @@ body.is-rift-discoveries-workspace-open {
 .age-army-groups-list {
     flex: 1 1 auto;
     min-height: 0;
-    margin-top: 8px;
+    margin-top: 12px;
     padding-right: 4px;
     overflow-y: auto;
     scrollbar-width: thin;
+}
+
+.age-army-groups-roster:has(.age-army-groups-create-row.is-visible) .age-army-groups-list {
+    margin-top: 14px;
 }
 
 .age-army-groups-category-gap {
@@ -23412,8 +23431,8 @@ body.is-rift-discoveries-workspace-open {
 }
 
 .age-army-groups-empty {
-    margin: 24px 8px;
-    text-align: center;
+    margin: 16px 0 0;
+    text-align: left;
     color: rgba(216, 200, 154, 0.75);
     font-size: 13px;
 }
