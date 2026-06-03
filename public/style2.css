@@ -21753,20 +21753,21 @@ body.age-war-room-open {
     overflow: hidden;
 }
 
-.age-war-room-command-deck .age-army-groups-toolbar {
-    flex: 0 0 auto;
-    flex-direction: row;
-    flex-wrap: wrap;
-    align-items: stretch;
-    gap: 8px;
-    padding-bottom: 10px;
-    margin-bottom: 4px;
-    border-bottom: 1px solid rgba(184, 144, 48, 0.22);
+.age-war-room-ops-panel {
+    flex: 0 0 188px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 14px 12px 14px 16px;
+    border-right: 1px solid rgba(184, 144, 48, 0.28);
+    background:
+        linear-gradient(180deg, rgba(0, 0, 0, 0.38) 0%, rgba(0, 0, 0, 0.18) 100%),
+        linear-gradient(90deg, rgba(120, 32, 18, 0.12) 0%, transparent 100%);
 }
 
-.age-war-room-command-deck .age-army-groups-tool-btn {
-    flex: 1 1 140px;
-    width: auto;
+.age-war-room-ops-panel .age-army-groups-toolbar {
+    flex: 1 1 auto;
+    min-height: 0;
 }
 
 .age-army-groups-workspace-main {
@@ -22844,6 +22845,23 @@ body.age-war-room-open {
 
     .age-war-room-command-deck {
         flex-direction: column;
+    }
+
+    .age-war-room-ops-panel {
+        flex: 0 0 auto;
+        border-right: none;
+        border-bottom: 1px solid rgba(184, 144, 48, 0.28);
+        padding: 10px 14px;
+    }
+
+    .age-war-room-ops-panel .age-army-groups-toolbar {
+        flex-direction: row;
+        flex-wrap: wrap;
+    }
+
+    .age-war-room-ops-panel .age-army-groups-tool-btn {
+        flex: 1 1 140px;
+        width: auto;
     }
 }
 
