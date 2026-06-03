@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Royal Armies — Age Alpha</title>
     <link rel="stylesheet" href="style.css?v=cursor-modal-layer-fix-1">
-    <link rel="stylesheet" href="style2.css?v=war-room-dock-1">
+    <link rel="stylesheet" href="style2.css?v=war-room-slide-1">
     <link rel="stylesheet" href="mobile-responsive.css?v=top-bar-logo-5px-1">
     <link rel="stylesheet" href="dev-page-navigator.css">
     <link rel="stylesheet" href="custom-cursor.css?v=finger-press-7">
@@ -627,19 +627,11 @@
                             </div>
                         </aside>
                         <div id="age-war-room-dock" class="age-war-room-dock" aria-label="War Room">
-                            <button
-                                type="button"
-                                id="age-army-groups-tab"
-                                class="age-army-groups-tab"
-                                aria-expanded="false"
-                                aria-controls="age-army-groups-workspace"
-                                title="War Room">
-                                <span class="age-army-groups-tab-label">War Room</span>
-                            </button>
                             <div
                                 id="age-army-groups-sonar-layer"
                                 class="age-army-groups-sonar-layer"
                                 aria-hidden="true"></div>
+                            <div id="age-war-room-slide" class="age-war-room-slide">
                             <section
                                 id="age-army-groups-workspace"
                                 class="age-army-groups-workspace"
@@ -671,6 +663,7 @@
                                     <img src="images/units/unit-portrait-placeholder.svg" alt="" width="40" height="40" draggable="false">
                                 </button>
                             </header>
+                            <h2 class="age-army-groups-list-heading">Armies</h2>
                             <div id="age-army-groups-create-row" class="age-army-groups-create-row" hidden>
                                 <button
                                     type="button"
@@ -690,6 +683,16 @@
                             <p id="age-army-groups-feedback" class="age-army-groups-feedback" hidden role="status"></p>
                             <div id="age-army-groups-list" class="age-army-groups-list" role="list" aria-live="polite"></div>
                             </section>
+                            <button
+                                type="button"
+                                id="age-army-groups-tab"
+                                class="age-army-groups-tab"
+                                aria-expanded="false"
+                                aria-controls="age-army-groups-workspace"
+                                title="War Room">
+                                <span class="age-army-groups-tab-label">War Room</span>
+                            </button>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -1651,7 +1654,7 @@
     <script src="rift-age-recruitment.js?v=swarm-recruit-1"></script>
     <script src="rift-player-loc-pins.js?v=player-loc-pins-1"></script>
     <script src="age-world-map.js?v=war-room-chrome-1"></script>
-    <script src="age-army-groups.js?v=war-room-dock-1"></script>
+    <script src="age-army-groups.js?v=war-room-slide-1"></script>
     <script src="age-world-plan-overlay.js?v=hq-clear-plan-fix-1"></script>
     <script src="age-view-tabs.js?v=garrison-menu-2"></script>
     <script src="age-headquarters-planning-map.js?v=hold-sf-mf-staging-1"></script>

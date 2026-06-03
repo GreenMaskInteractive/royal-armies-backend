@@ -28,6 +28,7 @@
 
     const els = {
         dock: null,
+        slide: null,
         tab: null,
         workspace: null,
         createBtn: null,
@@ -122,12 +123,16 @@
     function setWorkspaceOpen(open) {
         workspaceOpen = Boolean(open);
         if (!els.workspace || !els.tab) return;
+        els.slide?.classList.toggle('is-open', workspaceOpen);
         els.workspace.classList.toggle('is-open', workspaceOpen);
         els.workspace.setAttribute('aria-hidden', workspaceOpen ? 'false' : 'true');
         els.tab.setAttribute('aria-expanded', workspaceOpen ? 'true' : 'false');
         els.tab.classList.toggle('is-active', workspaceOpen);
         if (els.dock) {
             els.dock.classList.toggle('is-workspace-open', workspaceOpen);
+        }
+        if (!workspaceOpen) {
+            setCreatePanelOpen(false);
         }
         if (workspaceOpen) {
             refreshRoster();
@@ -142,6 +147,11 @@
         createPanelOpen = Boolean(open);
         if (!els.createRow) return;
         els.createRow.hidden = !createPanelOpen;
+        els.createRow.classList.toggle('is-visible', createPanelOpen);
+        els.createBtn?.classList.toggle('is-active', createPanelOpen);
+        if (!createPanelOpen && els.nameInput) {
+            els.nameInput.value = '';
+        }
         if (createPanelOpen && els.nameInput) {
             els.nameInput.focus();
         }
@@ -427,6 +437,7 @@
 
         els.dock?.addEventListener('pointerdown', dockPointerBlock);
         els.dock?.addEventListener('click', dockPointerBlock);
+        els.slide?.addEventListener('pointerdown', dockPointerBlock);
 
         els.tab?.addEventListener('pointerdown', dockPointerBlock);
         els.tab?.addEventListener('click', (event) => {
@@ -469,6 +480,7 @@
 
     function enable() {
         els.dock = global.document.getElementById('age-war-room-dock');
+        els.slide = global.document.getElementById('age-war-room-slide');
         els.tab = global.document.getElementById('age-army-groups-tab');
         els.workspace = global.document.getElementById('age-army-groups-workspace');
         els.createBtn = global.document.getElementById('age-army-groups-btn-create');
@@ -482,7 +494,9 @@
         els.feedback = global.document.getElementById('age-army-groups-feedback');
         els.sonarLayer = global.document.getElementById('age-army-groups-sonar-layer');
 
-        if (!els.tab || !els.workspace) return false;
+        if (!els.slide || !els.tab || !els.workspace) return false;
+
+        setCreatePanelOpen(false);
 
         applyTypeCycleButton();
         bindEvents();

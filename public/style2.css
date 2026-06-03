@@ -22875,17 +22875,38 @@ body.is-rift-discoveries-workspace-open {
     overflow: visible;
 }
 
-.age-army-groups-tab {
+.age-war-room-slide {
+    --war-room-tab-height: 35px;
     position: absolute;
-    left: 6px;
-    bottom: 0;
-    transform: translateY(5px);
-    z-index: 3;
+    left: var(--game-region-map-bezel, 12px);
+    right: var(--game-region-map-bezel, 12px);
+    bottom: calc(var(--game-region-map-bezel, 12px) - 5px);
+    height: calc(100% - (2 * var(--game-region-map-bezel, 12px)) + 5px);
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    box-sizing: border-box;
+    transform: translate3d(0, calc(100% - var(--war-room-tab-height)), 0);
+    transition: transform 0.52s cubic-bezier(0.22, 1, 0.36, 1);
+    pointer-events: auto;
+    z-index: 2;
+    will-change: transform;
+}
+
+.age-war-room-slide.is-open {
+    transform: translate3d(0, 0, 0);
+}
+
+.age-army-groups-tab {
+    position: relative;
+    flex: 0 0 auto;
+    align-self: flex-start;
     display: inline-flex;
     align-items: center;
     justify-content: center;
     min-width: 88px;
-    height: 30px;
+    height: var(--war-room-tab-height);
+    margin: 0;
     padding: 0 14px 0 12px;
     border: 1px solid rgba(197, 160, 89, 0.82);
     border-bottom: none;
@@ -22901,7 +22922,7 @@ body.is-rift-discoveries-workspace-open {
     box-shadow:
         0 -4px 14px rgba(0, 0, 0, 0.55),
         inset 0 1px 0 rgba(255, 215, 0, 0.12);
-    transition: background 0.16s ease, color 0.16s ease, transform 0.16s ease, border-color 0.16s ease;
+    transition: background 0.16s ease, color 0.16s ease, border-color 0.16s ease, box-shadow 0.16s ease;
 }
 
 .age-army-groups-tab::before {
@@ -22922,35 +22943,32 @@ body.is-rift-discoveries-workspace-open {
 }
 
 .age-army-groups-tab.is-active {
-    transform: translateY(2px);
     border-color: rgba(255, 215, 0, 0.82);
     color: #ffe9a8;
-}
-
-.age-war-room-dock.is-workspace-open .age-army-groups-tab {
-    z-index: 4;
+    box-shadow:
+        0 -5px 16px rgba(0, 0, 0, 0.6),
+        inset 0 1px 0 rgba(255, 230, 160, 0.2);
 }
 
 .age-army-groups-workspace {
-    position: absolute;
-    inset: var(--game-region-map-bezel);
-    z-index: 2;
+    position: relative;
+    flex: 1 1 auto;
+    min-height: 0;
     display: flex;
     flex-direction: column;
     box-sizing: border-box;
-    padding: 14px 16px 18px;
+    padding: 14px 16px 10px;
+    margin-bottom: -1px;
     background:
         linear-gradient(180deg, rgba(16, 12, 8, 0.98) 0%, rgba(10, 8, 6, 1) 100%);
-    border-radius: 2px;
-    transform: translate3d(0, 100%, 0);
-    transition: transform 0.52s cubic-bezier(0.22, 1, 0.36, 1);
+    border: 1px solid rgba(197, 160, 89, 0.45);
+    border-bottom: none;
+    border-radius: 2px 2px 0 0;
     pointer-events: none;
     overflow: hidden;
-    will-change: transform;
 }
 
 .age-army-groups-workspace.is-open {
-    transform: translate3d(0, 0, 0);
     pointer-events: auto;
 }
 
@@ -22971,12 +22989,16 @@ body.is-rift-discoveries-workspace-open {
     width: 52px;
     height: 52px;
     padding: 4px;
-    border: 1px solid rgba(197, 160, 89, 0.5);
+    border: 1px solid rgba(72, 54, 28, 0.75);
+    border-bottom-width: 3px;
     border-radius: 8px;
-    background: rgba(8, 6, 4, 0.88);
+    background: linear-gradient(180deg, rgba(36, 28, 16, 0.96) 0%, rgba(12, 8, 4, 0.98) 100%);
     cursor: pointer;
-    box-shadow: inset 0 0 0 1px rgba(255, 215, 0, 0.08);
-    transition: border-color 0.14s ease, box-shadow 0.14s ease, transform 0.14s ease;
+    box-shadow:
+        0 3px 0 rgba(0, 0, 0, 0.45),
+        0 5px 10px rgba(0, 0, 0, 0.28),
+        inset 0 1px 0 rgba(255, 215, 0, 0.1);
+    transition: border-color 0.14s ease, box-shadow 0.14s ease, transform 0.1s ease, filter 0.12s ease;
 }
 
 .age-army-groups-tool-btn img {
@@ -22991,16 +23013,38 @@ body.is-rift-discoveries-workspace-open {
 .age-army-groups-tool-btn:hover,
 .age-army-groups-tool-btn:focus-visible {
     border-color: rgba(255, 215, 0, 0.72);
-    transform: translateY(-1px);
+    filter: brightness(1.06);
+}
+
+.age-army-groups-tool-btn:active {
+    transform: translateY(2px);
+    border-bottom-width: 1px;
+    box-shadow:
+        0 1px 0 rgba(0, 0, 0, 0.4),
+        inset 0 2px 4px rgba(0, 0, 0, 0.35);
 }
 
 .age-army-groups-tool-btn.is-active {
     border-color: rgba(120, 200, 255, 0.85);
-    box-shadow: 0 0 12px rgba(96, 168, 255, 0.35);
+    box-shadow:
+        0 0 12px rgba(96, 168, 255, 0.35),
+        inset 0 0 0 1px rgba(160, 210, 255, 0.25);
+}
+
+.age-army-groups-list-heading {
+    margin: 12px 0 0;
+    padding: 0 0 8px;
+    border-bottom: 1px solid rgba(197, 160, 89, 0.28);
+    font-family: 'Cinzel', serif;
+    font-size: 0.82rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #e8d5a3;
 }
 
 .age-army-groups-create-row {
-    display: flex;
+    display: none;
     align-items: stretch;
     justify-content: flex-end;
     gap: 8px;
@@ -23009,54 +23053,90 @@ body.is-rift-discoveries-workspace-open {
     padding-right: 2px;
 }
 
+.age-army-groups-create-row.is-visible {
+    display: flex;
+}
+
+.age-army-groups-create-row[hidden] {
+    display: none !important;
+}
+
 .age-army-groups-type-cycle {
     flex: 0 0 auto;
     min-width: 58px;
     height: 36px;
-    padding: 0 10px;
-    border-radius: 6px;
-    border: 1px solid rgba(160, 40, 40, 0.85);
-    background: #8b1f1f;
-    color: #fff;
+    padding: 0 12px;
+    border-radius: 7px;
+    border: 1px solid rgba(0, 0, 0, 0.45);
+    border-bottom-width: 3px;
     font-size: 12px;
     font-weight: 800;
     letter-spacing: 0.04em;
     cursor: pointer;
+    box-shadow:
+        0 3px 0 rgba(0, 0, 0, 0.5),
+        0 5px 10px rgba(0, 0, 0, 0.35),
+        inset 0 1px 0 rgba(255, 255, 255, 0.22);
+    transition: transform 0.1s ease, box-shadow 0.1s ease, filter 0.12s ease;
+}
+
+.age-army-groups-type-cycle:hover {
+    filter: brightness(1.08);
+}
+
+.age-army-groups-type-cycle:active {
+    transform: translateY(2px);
+    border-bottom-width: 1px;
+    box-shadow:
+        0 1px 0 rgba(0, 0, 0, 0.45),
+        inset 0 2px 4px rgba(0, 0, 0, 0.35);
 }
 
 .age-army-groups-type-cycle--sf {
-    background: #8b1f1f;
-    border-color: rgba(160, 40, 40, 0.85);
+    background: linear-gradient(180deg, #b52828 0%, #7a1616 55%, #5c1010 100%);
+    border-color: rgba(92, 18, 18, 0.95);
     color: #fff;
 }
 
 .age-army-groups-type-cycle--taxi {
-    background: linear-gradient(180deg, #c9a227 0%, #8a6d12 100%);
-    border-color: rgba(255, 220, 120, 0.75);
+    background: linear-gradient(180deg, #e4c04a 0%, #a88418 55%, #7a6010 100%);
+    border-color: rgba(122, 88, 8, 0.95);
     color: #1a1408;
 }
 
 .age-army-groups-type-cycle--rally {
-    background: linear-gradient(180deg, #4a2f72 0%, #2a1848 100%);
-    border-color: rgba(168, 128, 220, 0.7);
+    background: linear-gradient(180deg, #5c3a8c 0%, #3a2258 55%, #261438 100%);
+    border-color: rgba(30, 14, 48, 0.95);
     color: #f2e8ff;
 }
 
 .age-army-groups-type-cycle--hold {
-    background: linear-gradient(180deg, #5a5a5a 0%, #343434 100%);
-    border-color: rgba(210, 210, 210, 0.55);
+    background: linear-gradient(180deg, #6e6e6e 0%, #444 55%, #2a2a2a 100%);
+    border-color: rgba(20, 20, 20, 0.9);
     color: #f5f5f5;
 }
 
 .age-army-groups-type-cycle--main {
-    background: linear-gradient(180deg, #1f4f9c 0%, #12356b 100%);
-    border: 2px solid rgba(255, 215, 0, 0.85);
+    background: linear-gradient(180deg, #2a62b8 0%, #163d78 55%, #0f2a52 100%);
+    border: 1px solid rgba(120, 90, 12, 0.95);
+    border-bottom-width: 3px;
+    box-shadow:
+        0 3px 0 rgba(0, 0, 0, 0.5),
+        0 5px 10px rgba(0, 0, 0, 0.35),
+        0 0 0 1px rgba(255, 215, 0, 0.55),
+        inset 0 1px 0 rgba(255, 255, 255, 0.22);
     color: #fff;
 }
 
 .age-army-groups-type-cycle--temp-main {
-    background: linear-gradient(180deg, #1f4f9c 0%, #12356b 100%);
-    border: 2px solid rgba(192, 208, 224, 0.9);
+    background: linear-gradient(180deg, #2a62b8 0%, #163d78 55%, #0f2a52 100%);
+    border: 1px solid rgba(148, 168, 192, 0.92);
+    border-bottom-width: 3px;
+    box-shadow:
+        0 3px 0 rgba(0, 0, 0, 0.5),
+        0 5px 10px rgba(0, 0, 0, 0.35),
+        0 0 0 1px rgba(192, 208, 224, 0.45),
+        inset 0 1px 0 rgba(255, 255, 255, 0.22);
     color: #fff;
 }
 
@@ -23065,24 +23145,54 @@ body.is-rift-discoveries-workspace-open {
     min-width: 0;
     height: 36px;
     padding: 0 10px;
-    border-radius: 6px;
-    border: 1px solid rgba(197, 160, 89, 0.45);
-    background: rgba(0, 0, 0, 0.35);
+    border-radius: 7px;
+    border: 1px solid rgba(0, 0, 0, 0.4);
+    border-top-color: rgba(0, 0, 0, 0.55);
+    background: linear-gradient(180deg, rgba(0, 0, 0, 0.55) 0%, rgba(0, 0, 0, 0.32) 100%);
     color: #f5ecd4;
     font-size: 13px;
+    box-shadow:
+        inset 0 2px 5px rgba(0, 0, 0, 0.55),
+        0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+.age-army-groups-name-input:focus {
+    outline: none;
+    border-color: rgba(197, 160, 89, 0.65);
+    box-shadow:
+        inset 0 2px 5px rgba(0, 0, 0, 0.5),
+        0 0 0 1px rgba(255, 215, 0, 0.25);
 }
 
 .age-army-groups-create-submit {
     flex: 0 0 auto;
     height: 36px;
     padding: 0 14px;
-    border-radius: 6px;
-    border: 1px solid rgba(197, 160, 89, 0.55);
-    background: linear-gradient(180deg, rgba(72, 54, 28, 0.95) 0%, rgba(42, 30, 14, 0.98) 100%);
+    border-radius: 7px;
+    border: 1px solid rgba(72, 52, 20, 0.95);
+    border-bottom-width: 3px;
+    background: linear-gradient(180deg, rgba(96, 72, 36, 0.98) 0%, rgba(52, 36, 16, 1) 100%);
     color: #f1e0ac;
     font-size: 12px;
     font-weight: 700;
     cursor: pointer;
+    box-shadow:
+        0 3px 0 rgba(0, 0, 0, 0.48),
+        0 5px 10px rgba(0, 0, 0, 0.32),
+        inset 0 1px 0 rgba(255, 255, 255, 0.18);
+    transition: transform 0.1s ease, box-shadow 0.1s ease;
+}
+
+.age-army-groups-create-submit:hover {
+    filter: brightness(1.06);
+}
+
+.age-army-groups-create-submit:active {
+    transform: translateY(2px);
+    border-bottom-width: 1px;
+    box-shadow:
+        0 1px 0 rgba(0, 0, 0, 0.42),
+        inset 0 2px 4px rgba(0, 0, 0, 0.3);
 }
 
 .age-army-groups-feedback {
@@ -23098,7 +23208,7 @@ body.is-rift-discoveries-workspace-open {
 .age-army-groups-list {
     flex: 1 1 auto;
     min-height: 0;
-    margin-top: 14px;
+    margin-top: 8px;
     padding-right: 4px;
     overflow-y: auto;
     scrollbar-width: thin;
@@ -23239,7 +23349,7 @@ body.is-rift-discoveries-workspace-open {
 }
 
 @media (prefers-reduced-motion: reduce) {
-    .age-army-groups-workspace {
+    .age-war-room-slide {
         transition-duration: 0.2s;
     }
 
