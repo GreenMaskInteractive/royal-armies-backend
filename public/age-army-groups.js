@@ -1110,6 +1110,8 @@
         }
         localSonarActive = false;
         els.sonarBtn?.classList.remove('is-sonar-active');
+        els.sonarBtn?.setAttribute('aria-pressed', 'false');
+        els.sonarBtn?.setAttribute('title', 'Signal for rescue (sonar ping)');
         els.sonarLayer?.classList.remove('is-active');
         if (els.sonarLayer) {
             els.sonarLayer.innerHTML = '';
@@ -1193,6 +1195,8 @@
         clearSonarTimers();
         localSonarActive = true;
         els.sonarBtn?.classList.add('is-sonar-active');
+        els.sonarBtn?.setAttribute('aria-pressed', 'true');
+        els.sonarBtn?.setAttribute('title', 'Cancel rescue sonar ping');
         if (els.sonarLayer) {
             els.sonarLayer.classList.add('is-active');
             els.sonarLayer.setAttribute('aria-hidden', 'false');
@@ -1212,25 +1216,41 @@
     function syncSonarFromPayload(payload) {
         const session = payload?.activeSonar;
         const self = resolveUsername().toLowerCase();
-        if (!session || session.username !== self || localSonarActive) return;
-        const city = resolvePlayerCity();
-        if (city) {
-            startLocalSonarSession(city, payload.sonarTiming);
+        const sessionIsSelf = Boolean(session && session.username === self);
+
+        if (sessionIsSelf && !localSonarActive) {
+            const city = resolvePlayerCity();
+            if (city) {
+                startLocalSonarSession(city, payload.sonarTiming);
+            }
+            return;
+        }
+
+        if (localSonarActive && !sessionIsSelf) {
+            clearSonarTimers();
         }
     }
 
     async function triggerSonar() {
         try {
             const payload = await postAction(`${API_BASE}/sonar`, {});
+
+            if (payload.deactivated) {
+                clearSonarTimers();
+                if (payload.groups) {
+                    rosterPayload = payload;
+                }
+                showFeedback('Rescue sonar cancelled.', false);
+                return;
+            }
+
             const city = resolvePlayerCity();
             if (city) {
                 startLocalSonarSession(city, payload.sonarTiming);
             }
             const minutes = Math.max(1, Math.round((payload.sonarTiming?.sessionMs || 30 * 60 * 1000) / 60000));
             showFeedback(
-                payload.alreadyActive
-                    ? `Rescue sonar already active (${minutes} min session).`
-                    : `Rescue sonar broadcasting for ${minutes} minutes. Watch your position on the map.`,
+                `Rescue sonar broadcasting for ${minutes} minutes. Click ping again to cancel.`,
                 false
             );
         } catch (err) {

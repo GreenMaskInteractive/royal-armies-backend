@@ -454,7 +454,15 @@ function applyStartSonar(state, { username, cityId, nowMs = Date.now() }) {
 
     const activeForUser = normalized.sonarSessions.find((session) => session.username === self);
     if (activeForUser) {
-        return { state: normalized, session: activeForUser, alreadyActive: true };
+        return {
+            state: {
+                ...normalized,
+                sonarSessions: normalized.sonarSessions.filter((entry) => entry.username !== self),
+                updatedAt: new Date().toISOString()
+            },
+            deactivated: true,
+            session: null
+        };
     }
 
     const session = {
@@ -475,7 +483,8 @@ function applyStartSonar(state, { username, cityId, nowMs = Date.now() }) {
             sonarSessions: pruneSonarSessions(sonarSessions, nowMs),
             updatedAt: new Date().toISOString()
         },
-        session
+        session,
+        activated: true
     };
 }
 

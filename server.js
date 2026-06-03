@@ -5355,8 +5355,10 @@ app.post('/api/portal/age/army-groups/sonar', (req, res) => {
     }
 
     respondArmyGroupsPayload(res, gameNation, commander, username, writeResult.state, {
-        session: sonarResult.session,
-        alreadyActive: Boolean(sonarResult.alreadyActive)
+        session: sonarResult.session || null,
+        sonarActive: Boolean(sonarResult.session),
+        deactivated: Boolean(sonarResult.deactivated),
+        activated: Boolean(sonarResult.activated)
     });
 });
 
