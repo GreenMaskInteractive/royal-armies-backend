@@ -620,17 +620,27 @@
     let suppressPortalSelectUntil = 0;
 
     function markDiscoveryToastUiSfxWindow() {
-        const revealMs = (global.RoyalArmiesUiSfx && global.RoyalArmiesUiSfx.discoveryToastRevealMs) || 720;
-        suppressPortalSelectUntil = Date.now() + revealMs + 80;
+        const chimeMs = (global.RoyalArmiesUiSfx && global.RoyalArmiesUiSfx.discoveryChimeAtMs) || 720;
+        suppressPortalSelectUntil = Date.now() + chimeMs + 80;
     }
 
     function shouldSuppressPortalUiSelect() {
         return Date.now() < suppressPortalSelectUntil;
     }
 
-    function playDiscoveryToastAppearSfx() {
+    function playDiscoveryToastSwooshSfx() {
+        if (typeof global.playDiscoverySwooshSfx === 'function') {
+            global.playDiscoverySwooshSfx();
+            return;
+        }
         if (typeof global.playDiscoveryUnlockSfx === 'function') {
             global.playDiscoveryUnlockSfx();
+        }
+    }
+
+    function scheduleDiscoveryToastChimeSfx() {
+        if (typeof global.scheduleDiscoveryChimeSfx === 'function') {
+            global.scheduleDiscoveryChimeSfx();
         }
     }
 
@@ -661,6 +671,12 @@
         const iconRow = global.document.getElementById('rift-discovery-toast-icon-row');
         if (!toast || !iconRow) return Promise.resolve();
 
+        markDiscoveryToastUiSfxWindow();
+        if (typeof global.RoyalArmiesUiSfx?.warmDiscoveryAudio === 'function') {
+            global.RoyalArmiesUiSfx.warmDiscoveryAudio();
+        }
+        playDiscoveryToastSwooshSfx();
+
         activeToastDiscoveryIds = ids;
         activeToastDiscoveryIndex = 0;
 
@@ -684,7 +700,6 @@
         });
 
         renderToastDiscoveryIndex(0);
-        markDiscoveryToastUiSfxWindow();
 
         toast.hidden = false;
         toast.classList.remove('is-exiting');
@@ -692,7 +707,7 @@
         toast.classList.remove('is-visible');
         void toast.offsetWidth;
         toast.classList.add('is-visible');
-        playDiscoveryToastAppearSfx();
+        scheduleDiscoveryToastChimeSfx();
 
         if (toastHideTimer) global.clearTimeout(toastHideTimer);
         if (toastAdvanceTimer) global.clearTimeout(toastAdvanceTimer);

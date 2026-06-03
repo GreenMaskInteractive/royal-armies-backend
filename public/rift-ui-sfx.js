@@ -15,7 +15,6 @@
     const DISCOVERY_UNLOCK_VOLUME_SCALE = 0.68;
     /** Synced to FLEX `riftDiscoveryToastReveal` duration (style2.css). */
     const DISCOVERY_TOAST_REVEAL_MS = 720;
-    const DISCOVERY_SWOOSH_AT_MS = 0;
     const DISCOVERY_CHIME_AT_MS = DISCOVERY_TOAST_REVEAL_MS;
     const DEFAULT_VOLUME = 0.2;
 
@@ -85,8 +84,7 @@
     }
 
     function clearDiscoveryUnlockTimers() {
-        discoveryUnlockTimers.forEach((timerId) => global.clearTimeout(timerId));
-        discoveryUnlockTimers = [];
+        clearDiscoveryChimeTimer();
     }
 
     function playDiscoveryAudioElement(audio, volume) {
@@ -94,6 +92,15 @@
         audio.volume = volume;
         audio.currentTime = 0;
         audio.play().catch(() => {});
+    }
+
+    function warmDiscoveryAudioElements() {
+        primeAudioElements();
+        const chimeAudio = resolveDiscoveryChimeAudio();
+        [discoverySwooshAudio, chimeAudio].forEach((audio) => {
+            if (!audio || audio.readyState >= 2) return;
+            audio.load();
+        });
     }
 
     function isDisabledButton(element) {
@@ -139,22 +146,34 @@
         selectAudio.play().catch(() => {});
     }
 
-    function playDiscoveryUnlockSfx() {
+    function clearDiscoveryChimeTimer() {
+        discoveryUnlockTimers.forEach((timerId) => global.clearTimeout(timerId));
+        discoveryUnlockTimers = [];
+    }
+
+    function playDiscoverySwooshSfx() {
         const volume = resolvePortalSfxVolume() * DISCOVERY_UNLOCK_VOLUME_SCALE;
         if (volume <= 0) return;
 
         primeAudioElements();
-        clearDiscoveryUnlockTimers();
+        playDiscoveryAudioElement(discoverySwooshAudio, volume);
+    }
 
+    function scheduleDiscoveryChimeSfx() {
+        const volume = resolvePortalSfxVolume() * DISCOVERY_UNLOCK_VOLUME_SCALE;
+        if (volume <= 0) return;
+
+        clearDiscoveryChimeTimer();
         const chimeAudio = resolveDiscoveryChimeAudio();
-
-        discoveryUnlockTimers.push(global.setTimeout(() => {
-            playDiscoveryAudioElement(discoverySwooshAudio, volume);
-        }, DISCOVERY_SWOOSH_AT_MS));
 
         discoveryUnlockTimers.push(global.setTimeout(() => {
             playDiscoveryAudioElement(chimeAudio, volume);
         }, DISCOVERY_CHIME_AT_MS));
+    }
+
+    function playDiscoveryUnlockSfx() {
+        playDiscoverySwooshSfx();
+        scheduleDiscoveryChimeSfx();
     }
 
     function onDocumentMouseOver(event) {
@@ -191,20 +210,25 @@
 
     function init() {
         primeAudioElements();
+        warmDiscoveryAudioElements();
         bindDocumentListeners();
     }
 
     global.playHoverSFX = playHoverSFX;
     global.playSelectSFX = playSelectSFX;
     global.playDiscoveryUnlockSfx = playDiscoveryUnlockSfx;
+    global.playDiscoverySwooshSfx = playDiscoverySwooshSfx;
+    global.scheduleDiscoveryChimeSfx = scheduleDiscoveryChimeSfx;
 
     global.RoyalArmiesUiSfx = {
         playHover: playHoverSFX,
         playSelect: playSelectSFX,
         playDiscoveryUnlock: playDiscoveryUnlockSfx,
+        playDiscoverySwoosh: playDiscoverySwooshSfx,
+        scheduleDiscoveryChime: scheduleDiscoveryChimeSfx,
         discoveryToastRevealMs: DISCOVERY_TOAST_REVEAL_MS,
-        discoverySwooshAtMs: DISCOVERY_SWOOSH_AT_MS,
         discoveryChimeAtMs: DISCOVERY_CHIME_AT_MS,
+        warmDiscoveryAudio: warmDiscoveryAudioElements,
         resolveButtonTarget,
         resolveInteractiveTarget: resolveButtonTarget
     };
