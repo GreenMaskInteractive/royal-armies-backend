@@ -37,6 +37,9 @@ html.royal-armies-custom-cursor *::-webkit-scrollbar {
     position: relative;
     width: 56px;
     height: 56px;
+    /* Shared knuckle pivot — palm and fingertip layer rotate together on click. */
+    transform-origin: 14px 11px;
+    transition: transform 0.08s ease;
 }
 
 .royal-armies-cursor-hand,
@@ -48,6 +51,10 @@ html.royal-armies-custom-cursor *::-webkit-scrollbar {
     user-select: none;
     -webkit-user-drag: none;
     pointer-events: none;
+}
+
+#royal-armies-custom-cursor.is-clicking .royal-armies-cursor-stack {
+    transform: rotate(-4deg);
 }
 
 /* Palm + gauntlet body — fingertip tip is drawn on the finger layer only. */
@@ -135,8 +142,13 @@ html.royal-armies-custom-cursor *::-webkit-scrollbar {
 }
 
 @media (prefers-reduced-motion: reduce) {
+    .royal-armies-cursor-stack,
     .royal-armies-cursor-finger {
         transition: none;
+    }
+
+    #royal-armies-custom-cursor.is-clicking .royal-armies-cursor-stack {
+        transform: rotate(-2deg);
     }
 
     #royal-armies-custom-cursor.is-clicking .royal-armies-cursor-finger {
