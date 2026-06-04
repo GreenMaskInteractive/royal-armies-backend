@@ -2,8 +2,28 @@
  * FLEX — Nation Hub radial menu (Age map top bar).
  */
 
+/* Space between welcome line and MENU control */
+#age-page-canvas .age-map-top-bar-nation {
+    gap: 32px;
+}
+
+#age-page-canvas .age-nation-welcome-identity {
+    padding-right: 0;
+}
+
 #age-page-canvas .age-nation-hub {
-    margin-left: 38px;
+    margin-left: 0;
+}
+
+/* MENU label — clear gap from the gold vertical mark inside the button */
+#age-page-canvas .age-nation-hub-toggle {
+    column-gap: 18px;
+    padding: 8px 16px 8px 14px;
+}
+
+#age-page-canvas .age-nation-hub-toggle-body {
+    margin-left: 0;
+    padding-left: 6px;
 }
 
 .age-nation-hub-anchor {
