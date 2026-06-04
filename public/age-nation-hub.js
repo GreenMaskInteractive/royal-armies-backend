@@ -18,7 +18,6 @@
 
     let bound = false;
     let escapeHandler = null;
-    let layoutHandler = null;
 
     function getHub() {
         return global.document.getElementById('age-nation-hub');
@@ -67,8 +66,6 @@
 
         if (nextOpen) {
             ensureRadialPortal();
-            syncRadialAnchorPosition();
-            ensureRadialPositionWatch();
             hub.classList.add('is-open');
             radial.classList.add('is-open');
             toggle.setAttribute('aria-expanded', 'true');
@@ -85,7 +82,6 @@
                 };
                 global.document.addEventListener('keydown', escapeHandler);
             }
-            global.requestAnimationFrame(syncRadialAnchorPosition);
             return;
         }
 
@@ -96,7 +92,6 @@
         radial.setAttribute('hidden', '');
         radial.setAttribute('aria-hidden', 'true');
         setCenterLabel(DEFAULT_CENTER_LABEL);
-        clearRadialPositionWatch();
 
         if (escapeHandler) {
             global.document.removeEventListener('keydown', escapeHandler);
@@ -307,7 +302,6 @@
 
     function enableNationHub() {
         bindNationHub();
-        syncRadialAnchorPosition();
         global.enableAgeRecords?.();
     }
 
