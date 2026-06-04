@@ -58,6 +58,8 @@
     let hqLiveRefreshTimer = 0;
 
     const HQ_LIVE_REFRESH_MS = 4000;
+    const HQ_MANAGER_LABEL_OPEN = 'Open HQ Manager';
+    const HQ_MANAGER_LABEL_CLOSE = 'Close HQ Manager';
 
     function resolveApiUrl(path) {
         if (typeof global.resolveRoyalArmiesApiUrl === 'function') {
@@ -279,11 +281,14 @@
         if (managerBtn) {
             setNodeHidden(managerBtn, !hqManagerEligible);
             const managerOpen = isHqManagerToggleActive();
+            const label = managerOpen ? HQ_MANAGER_LABEL_CLOSE : HQ_MANAGER_LABEL_OPEN;
+            managerBtn.textContent = label;
+            managerBtn.setAttribute('aria-label', label);
             managerBtn.setAttribute('aria-pressed', managerOpen ? 'true' : 'false');
             managerBtn.classList.toggle('is-active', managerOpen);
             managerBtn.title = managerOpen
-                ? 'Close HQ Manager controls'
-                : 'Open HQ Manager — council planning, diplomacy, and dispatch';
+                ? 'Close council planning, diplomacy, and dispatch controls'
+                : 'Open council planning, diplomacy, and dispatch controls';
         }
 
         syncDispatchPanel(isCouncilRoomViewActive());

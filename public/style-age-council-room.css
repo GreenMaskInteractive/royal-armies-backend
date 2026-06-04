@@ -26,10 +26,11 @@
 }
 
 .age-council-room-header:has(.age-age-center-modal-close) {
-    grid-template-columns: auto minmax(0, 1fr) minmax(0, max-content) auto auto;
+    grid-template-columns: auto minmax(0, 1fr) auto auto;
+    column-gap: 12px;
 }
 
-.age-council-room-header:has(.age-hq-manager-btn:not([hidden])):has(.age-age-center-modal-close) {
+.age-council-room-header:has(.age-hq-dispatch-panel:not([hidden])):has(.age-age-center-modal-close) {
     grid-template-columns: auto minmax(0, 1fr) minmax(0, max-content) auto auto;
 }
 
@@ -39,7 +40,7 @@
     justify-self: end;
     align-self: center;
     margin: 0;
-    padding: 8px 14px;
+    padding: 8px 12px;
     border: 1px solid rgba(184, 144, 48, 0.55);
     border-radius: 4px;
     background:
@@ -47,10 +48,12 @@
         linear-gradient(165deg, rgba(48, 36, 18, 0.95) 0%, rgba(8, 6, 4, 0.98) 100%);
     color: #f6d998;
     font-family: 'Cinzel', serif;
-    font-size: 0.68rem;
+    font-size: 0.62rem;
     font-weight: 700;
-    letter-spacing: 0.1em;
+    letter-spacing: 0.06em;
     text-transform: uppercase;
+    white-space: nowrap;
+    flex-shrink: 0;
     cursor: pointer;
 }
 
@@ -62,19 +65,12 @@
 }
 
 .age-council-room-header .age-hq-dispatch-panel:not([hidden]) ~ .age-hq-manager-btn {
-    grid-column: 3;
-}
-
-.age-council-room-header .age-hq-manager-btn ~ .age-age-center-modal-close {
-    grid-column: 5;
-}
-
-.age-council-room-header .age-hq-dispatch-panel:not([hidden]) ~ .age-hq-manager-btn ~ .age-age-center-modal-close {
-    grid-column: 5;
-}
-
-.age-council-room-header .age-hq-manager-btn:not([hidden]) ~ .age-age-center-modal-close {
     grid-column: 4;
+}
+
+.age-council-room-header .age-hq-dispatch-panel:not([hidden]) ~ .age-age-center-modal-close,
+.age-council-room-header .age-hq-manager-btn:not([hidden]) ~ .age-age-center-modal-close {
+    grid-column: -1;
 }
 
 .age-council-room-workspace:not(.is-hq-manager-open) #age-council-room-command {
@@ -148,10 +144,11 @@
 }
 
 .age-council-room-header .age-age-center-modal-close {
-    grid-column: 4;
+    grid-column: -1;
     grid-row: 1;
     justify-self: end;
     align-self: center;
+    flex-shrink: 0;
 }
 
 /* Nation Alert Controls — top-right, same row as Council Room title */
