@@ -248,7 +248,10 @@
             try {
                 const workspace = await patchHeadquarters({ deleteSpyLogId: deleteBtn.getAttribute('data-hq-spy-delete') });
                 if (workspace) {
-                    global.RoyalArmiesAgeHeadquarters?.applyWorkspace?.(workspace, { silent: true });
+                    global.RoyalArmiesAgeHeadquarters?.applyWorkspace?.(workspace, {
+                        silent: true,
+                        mergeWithPrevious: true
+                    });
                 }
             } catch (err) {
                 console.warn('[RIFT] Spy log delete failed:', err);
@@ -266,7 +269,10 @@
                     forwardSpyNationId: nationId
                 });
                 if (workspace) {
-                    global.RoyalArmiesAgeHeadquarters?.applyWorkspace?.(workspace, { silent: true });
+                    global.RoyalArmiesAgeHeadquarters?.applyWorkspace?.(workspace, {
+                        silent: true,
+                        mergeWithPrevious: true
+                    });
                 }
             } catch (err) {
                 console.warn('[RIFT] Spy log forward failed:', err);

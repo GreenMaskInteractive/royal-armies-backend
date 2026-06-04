@@ -52,6 +52,7 @@
     let hqManagerModeOpen = false;
     let hqManagerOpenRequested = false;
     let hqViewOpenGeneration = 0;
+    let hqWorkspaceFetchGeneration = 0;
     let councilRoomModalOpen = false;
     let councilRoomEscapeHandler = null;
     let lastCabinetState = null;
@@ -200,14 +201,86 @@
 
     function applyPendingHqManagerMode() {
         if (!hqManagerEligible) {
-            if (!hqManagerOpenRequested) {
-                hqManagerModeOpen = false;
-            }
             return;
         }
-        if (hqManagerOpenRequested) {
+        if (hqManagerOpenRequested || hqManagerModeOpen) {
             hqManagerModeOpen = true;
             hqManagerOpenRequested = false;
+        }
+    }
+
+    function hasMeaningfulWorkspaceAccess(access) {
+        if (!access || typeof access !== 'object') return false;
+        return Boolean(
+            access.council
+            || access.leader
+            || access.viceLeader
+            || access.fullAuthority
+            || access.memberHub
+        );
+    }
+
+    function coalesceHeadquartersWorkspace(incoming, options = {}) {
+        const previous = lastAppliedWorkspace;
+        if (!incoming || !previous) return incoming;
+        if (!options.silent && !options.mergeWithPrevious) return incoming;
+
+        const merged = {
+            ...previous,
+            ...incoming,
+            access: {
+                ...(previous.access || {}),
+                ...(incoming.access || {})
+            },
+            vote: incoming.vote && typeof incoming.vote === 'object'
+                ? { ...previous.vote, ...incoming.vote }
+                : previous.vote,
+            cabinet: incoming.cabinet && typeof incoming.cabinet === 'object'
+                ? { ...previous.cabinet, ...incoming.cabinet }
+                : previous.cabinet,
+            planning: incoming.planning && typeof incoming.planning === 'object'
+                ? { ...previous.planning, ...incoming.planning }
+                : previous.planning,
+            diplomacy: incoming.diplomacy && typeof incoming.diplomacy === 'object'
+                ? { ...previous.diplomacy, ...incoming.diplomacy }
+                : previous.diplomacy,
+            diplomacyPublic: incoming.diplomacyPublic || previous.diplomacyPublic,
+            warLedger: incoming.warLedger || previous.warLedger,
+            threatMatrix: incoming.threatMatrix ?? previous.threatMatrix,
+            spyLogs: incoming.spyLogs ?? previous.spyLogs,
+            hqBounties: incoming.hqBounties ?? previous.hqBounties,
+            gameNation: incoming.gameNation || previous.gameNation,
+            fortifiedCities: incoming.fortifiedCities ?? previous.fortifiedCities,
+            warTargets: incoming.warTargets ?? previous.warTargets
+        };
+
+        if (!hasMeaningfulWorkspaceAccess(incoming.access) && hasMeaningfulWorkspaceAccess(previous.access)) {
+            merged.access = { ...(previous.access || {}) };
+        }
+
+        return merged;
+    }
+
+    function shouldIgnoreWorkspaceApply(options = {}) {
+        if (options.fetchId != null && options.fetchId !== hqWorkspaceFetchGeneration) {
+            return true;
+        }
+        if (options.fetchId != null && !isCouncilRoomViewActive()) {
+            return true;
+        }
+        return false;
+    }
+
+    function reconcileHqManagerViewState() {
+        if (isDevOwnerHeadquartersBypass(resolveHeadquartersUsername())) {
+            applyDevOwnerCouncilAccessUI();
+        }
+        applyPendingHqManagerMode();
+        if (hasActiveManagerControls() || isHqManagerOpenPending()) {
+            flushHeadquartersViewMode();
+        }
+        if (hasActiveManagerControls()) {
+            void ensureManagerPlanningSurface();
         }
     }
 
@@ -1070,8 +1143,14 @@
     }
 
     function applyWorkspace(workspace, options = {}) {
+        if (shouldIgnoreWorkspaceApply(options)) {
+            return false;
+        }
+
         const silent = Boolean(options?.silent);
         const username = resolveHeadquartersUsername();
+        const preserveManagerOpen = Boolean(silent && hqManagerModeOpen);
+        workspace = coalesceHeadquartersWorkspace(workspace, options);
         workspace = mergeDevOwnerHeadquartersWorkspace(workspace, username);
         if (!workspace) {
             if (!silent) {
@@ -1102,16 +1181,17 @@
         if (isDevOwnerHeadquartersBypass(username)) {
             applyDevOwnerCouncilAccessUI();
         } else if (!hqManagerEligible) {
-            resetHeadquartersManagerMode();
+            if (preserveManagerOpen) {
+                hqManagerOpenRequested = true;
+            } else {
+                resetHeadquartersManagerMode();
+            }
         } else {
             applyPendingHqManagerMode();
         }
         setCouncilAccessUI(Boolean(workspace.access?.council || isDevOwnerHeadquartersBypass(username)));
         setViceLeaderAccessUI(Boolean(workspace.access?.viceLeader));
         syncHeadquartersViewMode(workspace);
-        if (hqManagerModeOpen) {
-            flushHeadquartersViewMode();
-        }
 
         voteCandidates = Array.isArray(workspace.vote?.candidates) ? workspace.vote.candidates : [];
         leaderVote = String(workspace.vote?.myVotes?.leaderCandidateId || '');
@@ -1141,10 +1221,9 @@
 
         if (hasActiveManagerControls()) {
             syncHeadquartersShellLayout();
-            if (revisionChanged) {
-                void ensureManagerPlanningSurface();
-            }
         }
+
+        reconcileHqManagerViewState();
 
         if (isDevOwnerHeadquartersBypass(username)) {
             setAuthorityGates(workspace);
@@ -1156,12 +1235,13 @@
 
     async function fetchHeadquartersWorkspace(options = {}) {
         const silent = Boolean(options?.silent);
+        const fetchId = ++hqWorkspaceFetchGeneration;
 
         if (typeof global.shouldSuppressRepeatedLocalDevApiWarnings === 'function'
             && global.shouldSuppressRepeatedLocalDevApiWarnings()) {
             const fallback = buildDevOwnerFallbackWorkspace(resolveHeadquartersUsername());
             if (fallback) {
-                return applyWorkspace(fallback, options);
+                return applyWorkspace(fallback, { ...options, fetchId });
             }
         }
 
@@ -1174,7 +1254,7 @@
                         'warn'
                     );
                 }
-                applyWorkspace(null, options);
+                applyWorkspace(null, { ...options, fetchId });
                 setCouncilAccessUI(false);
                 setViceLeaderAccessUI(false);
                 leaderAccess = false;
@@ -1211,19 +1291,23 @@
                     );
                 }
                 logHeadquartersWorkspaceSummary(null, 'missing-workspace');
-                return applyWorkspace(null, options);
+                return applyWorkspace(null, { ...options, fetchId });
             }
 
             logHeadquartersWorkspaceSummary(payload.workspace, silent ? 'api-poll' : 'api');
-            return applyWorkspace(payload.workspace, { silent });
+            return applyWorkspace(payload.workspace, { silent, fetchId });
         } catch (err) {
             console.warn('[RIFT] Headquarters workspace load failed:', err.message);
+
+            if (silent && (hqManagerModeOpen || hqManagerOpenRequested)) {
+                return false;
+            }
 
             const fallback = buildDevOwnerFallbackWorkspace(username);
             if (fallback) {
                 console.warn('[RIFT] Using dev owner Headquarters fallback. Restart NEXUS (node server.js) if server sync is missing.');
                 logHeadquartersWorkspaceSummary(fallback, 'dev-fallback');
-                return applyWorkspace(fallback, options);
+                return applyWorkspace(fallback, { ...options, fetchId });
             }
 
             if (!silent) {
@@ -1345,7 +1429,7 @@
             }
 
             if (payload?.workspace) {
-                applyWorkspace(payload.workspace);
+                applyWorkspace(payload.workspace, { mergeWithPrevious: true });
             }
 
             if (isClearPublishedPlanPatch(body)) {
@@ -1359,7 +1443,7 @@
                                 confirmed: false,
                                 hasPublishedPlan: false
                             }
-                        });
+                        }, { mergeWithPrevious: true });
                         await global.RoyalArmiesAgeWorldPlanOverlay?.refreshNationPlan?.();
                         return {
                             ...payload,
@@ -1994,13 +2078,10 @@
         if (ownerBypass) {
             applyDevOwnerCouncilAccessUI();
         }
-        applyPendingHqManagerMode();
-        flushHeadquartersViewMode();
+        reconcileHqManagerViewState();
         startHeadquartersLiveRefresh();
 
-        if (hasActiveManagerControls() || ownerBypass) {
-            await ensureManagerPlanningSurface();
-        } else {
+        if (!hasActiveManagerControls() && !ownerBypass) {
             setActiveMarkerType('');
             global.RoyalArmiesAgeHeadquartersPlanningMap?.setEnabled(false);
         }
@@ -2008,6 +2089,7 @@
 
     function onViewClose() {
         hqViewOpenGeneration += 1;
+        hqWorkspaceFetchGeneration += 1;
         stopHeadquartersLiveRefresh();
         resetHeadquartersManagerMode();
         syncHeadquartersViewMode(lastAppliedWorkspace);
