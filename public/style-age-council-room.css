@@ -64,6 +64,11 @@
     color: #ffe7b0;
 }
 
+.age-hq-manager-btn.is-pending {
+    opacity: 0.82;
+    cursor: wait;
+}
+
 .age-council-room-header .age-hq-dispatch-panel:not([hidden]) ~ .age-hq-manager-btn {
     grid-column: 4;
 }

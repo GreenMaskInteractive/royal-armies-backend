@@ -50,6 +50,8 @@
     let viceLeaderAccess = false;
     let hqManagerEligible = false;
     let hqManagerModeOpen = false;
+    let hqManagerOpenRequested = false;
+    let hqViewOpenGeneration = 0;
     let councilRoomModalOpen = false;
     let councilRoomEscapeHandler = null;
     let lastCabinetState = null;
@@ -184,7 +186,38 @@
     }
 
     function isHqManagerToggleActive() {
-        return Boolean(hqManagerEligible && hqManagerModeOpen);
+        return hasActiveManagerControls();
+    }
+
+    function isHqManagerOpenPending() {
+        return Boolean(hqManagerOpenRequested && !hqManagerModeOpen);
+    }
+
+    function resetHeadquartersManagerMode() {
+        hqManagerModeOpen = false;
+        hqManagerOpenRequested = false;
+    }
+
+    function applyPendingHqManagerMode() {
+        if (!hqManagerEligible) {
+            if (!hqManagerOpenRequested) {
+                hqManagerModeOpen = false;
+            }
+            return;
+        }
+        if (hqManagerOpenRequested) {
+            hqManagerModeOpen = true;
+            hqManagerOpenRequested = false;
+        }
+    }
+
+    function flushHeadquartersViewMode() {
+        syncHeadquartersViewMode(lastAppliedWorkspace);
+        global.requestAnimationFrame(() => {
+            syncHeadquartersViewMode(lastAppliedWorkspace);
+            syncDispatchPanel(isCouncilRoomViewActive());
+            syncHeadquartersShellLayout();
+        });
     }
 
     function resolveHqManagerEligible(access) {
@@ -281,14 +314,19 @@
         if (managerBtn) {
             setNodeHidden(managerBtn, !hqManagerEligible);
             const managerOpen = isHqManagerToggleActive();
+            const managerPending = isHqManagerOpenPending();
             const label = managerOpen ? HQ_MANAGER_LABEL_CLOSE : HQ_MANAGER_LABEL_OPEN;
             managerBtn.textContent = label;
             managerBtn.setAttribute('aria-label', label);
             managerBtn.setAttribute('aria-pressed', managerOpen ? 'true' : 'false');
             managerBtn.classList.toggle('is-active', managerOpen);
-            managerBtn.title = managerOpen
-                ? 'Close council planning, diplomacy, and dispatch controls'
-                : 'Open council planning, diplomacy, and dispatch controls';
+            managerBtn.classList.toggle('is-pending', managerPending);
+            managerBtn.disabled = managerPending;
+            managerBtn.title = managerPending
+                ? 'Opening HQ Manager…'
+                : managerOpen
+                    ? 'Close council planning, diplomacy, and dispatch controls'
+                    : 'Open council planning, diplomacy, and dispatch controls';
         }
 
         syncDispatchPanel(isCouncilRoomViewActive());
@@ -307,17 +345,39 @@
     }
 
     function setHqManagerModeOpen(open) {
-        if (open && !hqManagerEligible) return;
-        hqManagerModeOpen = Boolean(open);
-        syncHeadquartersViewMode(lastAppliedWorkspace);
-        syncDispatchPanel(isCouncilRoomViewActive());
+        const wantOpen = Boolean(open);
 
-        if (hqManagerModeOpen && hqManagerEligible) {
-            void ensureManagerPlanningSurface();
-        } else {
+        if (!wantOpen) {
+            resetHeadquartersManagerMode();
+            flushHeadquartersViewMode();
             setActiveMarkerType('');
             global.RoyalArmiesAgeHeadquartersPlanningMap?.setEnabled(false);
+            return;
         }
+
+        if (!hqManagerEligible) {
+            hqManagerOpenRequested = true;
+            flushHeadquartersViewMode();
+            return;
+        }
+
+        hqManagerOpenRequested = false;
+        hqManagerModeOpen = true;
+        flushHeadquartersViewMode();
+        void ensureManagerPlanningSurface();
+    }
+
+    function toggleHqManagerMode() {
+        if (hasActiveManagerControls()) {
+            setHqManagerModeOpen(false);
+            return;
+        }
+        if (isHqManagerOpenPending()) {
+            resetHeadquartersManagerMode();
+            flushHeadquartersViewMode();
+            return;
+        }
+        setHqManagerModeOpen(true);
     }
 
     function startHeadquartersLiveRefresh() {
@@ -1034,11 +1094,16 @@
         leaderAccess = Boolean(workspace.access?.leader);
         hqManagerEligible = resolveHqManagerEligible(workspace.access);
         if (!hqManagerEligible) {
-            hqManagerModeOpen = false;
+            resetHeadquartersManagerMode();
+        } else {
+            applyPendingHqManagerMode();
         }
         setCouncilAccessUI(Boolean(workspace.access?.council));
         setViceLeaderAccessUI(Boolean(workspace.access?.viceLeader));
         syncHeadquartersViewMode(workspace);
+        if (hqManagerModeOpen) {
+            flushHeadquartersViewMode();
+        }
 
         voteCandidates = Array.isArray(workspace.vote?.candidates) ? workspace.vote.candidates : [];
         leaderVote = String(workspace.vote?.myVotes?.leaderCandidateId || '');
@@ -1107,7 +1172,7 @@
                 setViceLeaderAccessUI(false);
                 leaderAccess = false;
                 hqManagerEligible = false;
-                hqManagerModeOpen = false;
+                resetHeadquartersManagerMode();
                 syncHeadquartersViewMode(null);
             }
             return false;
@@ -1164,10 +1229,22 @@
             setViceLeaderAccessUI(false);
             leaderAccess = false;
             hqManagerEligible = false;
-            hqManagerModeOpen = false;
+            resetHeadquartersManagerMode();
             syncHeadquartersViewMode(null);
             return false;
         }
+    }
+
+    function activateHeadquartersView() {
+        bindUi();
+        bindCouncilRoomModalChrome();
+        applyDevOwnerCouncilAccessUI();
+        syncHeadquartersViewMode(lastAppliedWorkspace);
+        startHeadquartersLiveRefresh();
+        if (hasActiveManagerControls()) {
+            void ensureManagerPlanningSurface();
+        }
+        void fetchHeadquartersWorkspace({ silent: true });
     }
 
     function isResetPlanningPatch(body) {
@@ -1617,7 +1694,7 @@
             managerBtn.addEventListener('click', (event) => {
                 event.preventDefault();
                 event.stopPropagation();
-                setHqManagerModeOpen(!hqManagerModeOpen);
+                toggleHqManagerMode();
             });
         }
 
@@ -1815,6 +1892,7 @@
     async function openCouncilRoomPageView() {
         if (!isCouncilRoomPage()) return;
 
+        resetHeadquartersManagerMode();
         councilRoomModalOpen = true;
         global.document.body.classList.add('age-council-room-open');
 
@@ -1839,6 +1917,11 @@
         const modal = getCouncilRoomModal();
         const nextOpen = Boolean(open);
         if (!modal) return;
+
+        const wasOpen = councilRoomModalOpen;
+        if (nextOpen && !wasOpen) {
+            resetHeadquartersManagerMode();
+        }
 
         councilRoomModalOpen = nextOpen;
         modal.hidden = !nextOpen;
@@ -1893,16 +1976,19 @@
     }
 
     async function onViewOpen() {
+        const generation = ++hqViewOpenGeneration;
         bindUi();
         bindCouncilRoomModalChrome();
-        hqManagerModeOpen = false;
         applyDevOwnerCouncilAccessUI();
         const ownerBypass = isDevOwnerHeadquartersBypass(resolveHeadquartersUsername());
         await fetchHeadquartersWorkspace();
+        if (generation !== hqViewOpenGeneration) return;
+
         if (ownerBypass) {
             applyDevOwnerCouncilAccessUI();
         }
-        syncHeadquartersViewMode(lastAppliedWorkspace);
+        applyPendingHqManagerMode();
+        flushHeadquartersViewMode();
         startHeadquartersLiveRefresh();
 
         if (hasActiveManagerControls() || ownerBypass) {
@@ -1914,8 +2000,9 @@
     }
 
     function onViewClose() {
+        hqViewOpenGeneration += 1;
         stopHeadquartersLiveRefresh();
-        hqManagerModeOpen = false;
+        resetHeadquartersManagerMode();
         syncHeadquartersViewMode(lastAppliedWorkspace);
         syncDispatchPanel(false);
         if (planningSaveTimer) {
@@ -1935,6 +2022,7 @@
         applyWorkspace,
         onViewOpen,
         onViewClose,
+        activateHeadquartersView,
         openCouncilRoom: () => setCouncilRoomModalOpen(true),
         openCouncilRoomPageView,
         closeCouncilRoom: () => setCouncilRoomModalOpen(false),
