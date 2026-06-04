@@ -832,7 +832,7 @@
                 empty: global.document.getElementById('age-hq-players-empty')
             },
             {
-                variant: 'hq',
+                variant: 'war-room',
                 cityLabel: global.document.getElementById('age-war-room-players-city'),
                 summary: global.document.getElementById('age-war-room-players-summary'),
                 list: global.document.getElementById('age-war-room-players-list'),
@@ -840,6 +840,67 @@
             }
         ];
         return hosts.filter((host) => host.list || host.empty || host.summary || host.cityLabel);
+    }
+
+    function buildCityPlayerRowMarkup(player, options) {
+        const {
+            cityName,
+            variant,
+            showArmyBadge
+        } = options;
+        const isWarRoom = variant === 'war-room';
+        const displayName = player.isSelf
+            ? `${player.displayName} (you)`
+            : player.displayName;
+        const movePointsLabel = formatPlayerMovePointsLabel(player);
+        const movePointsAria = formatPlayerMovePointsAria(player);
+        const reportButtonMarkup = !player.isSelf
+            ? (
+                `<button type="button" class="${isWarRoom ? 'age-war-room-player-report-btn' : 'age-city-info-player-report-btn'}" data-player-report-open`
+                + ` data-age-player-report="${escapePlayerHtml(player.username)}"`
+                + ` data-player-report-target="${escapePlayerHtml(player.username)}"`
+                + ` data-player-report-source="age_city_roster"`
+                + ` data-player-report-context="${escapePlayerHtml(`City roster — ${cityName || 'current city'}`)}"`
+                + ` title="Report commander" aria-label="Report ${escapePlayerHtml(player.displayName)}">Report</button>`
+            )
+            : '';
+        const royaltyMarkup = isRoyaltyMembershipTitle(player.membershipTitle)
+            ? `<img class="${isWarRoom ? 'age-war-room-player-royalty-badge' : 'age-city-info-player-royalty-badge'}" src="images/royaltybadge.png" alt="Royalty premium member" loading="lazy" decoding="async">`
+            : '';
+        const armyBadgeMarkup = showArmyBadge ? formatArmyFocusBadgeHtml(player) : '';
+        const presenceLabel = player.online ? 'Online' : 'Offline';
+
+        if (isWarRoom) {
+            const armyBadgeWarRoom = armyBadgeMarkup
+                ? armyBadgeMarkup
+                    .replace(/age-city-info-player-army-focus/g, 'age-war-room-player-army-focus')
+                : '';
+            return (
+                `<li class="age-war-room-player-row${player.online ? ' is-online' : ''}${player.isSelf ? ' is-self' : ''}">`
+                + '<div class="age-war-room-player-row-head">'
+                + royaltyMarkup
+                + `<span class="age-war-room-player-identity">${buildCityPlayerIdentityHtml(displayName, player)}</span>`
+                + `<span class="age-war-room-player-mp" title="Move points" aria-label="${escapePlayerHtml(movePointsAria)}">${escapePlayerHtml(movePointsLabel)}</span>`
+                + '</div>'
+                + '<div class="age-war-room-player-row-meta">'
+                + `<span class="age-war-room-player-presence">${presenceLabel}</span>`
+                + armyBadgeWarRoom
+                + reportButtonMarkup
+                + '</div>'
+                + '</li>'
+            );
+        }
+
+        return (
+            `<li class="age-city-info-player-row${player.online ? ' is-online' : ''}${player.isSelf ? ' is-self' : ''}">`
+            + royaltyMarkup
+            + `<span class="age-city-info-player-identity">${buildCityPlayerIdentityHtml(displayName, player)}</span>`
+            + armyBadgeMarkup
+            + `<span class="age-city-info-player-move-points" title="Move points" aria-label="${escapePlayerHtml(movePointsAria)}">${escapePlayerHtml(movePointsLabel)}</span>`
+            + `<span class="age-city-info-player-presence">${presenceLabel}</span>`
+            + reportButtonMarkup
+            + '</li>'
+        );
     }
 
     function renderPlayersIntoHost(host, state) {
@@ -851,7 +912,7 @@
             filters,
             variant
         } = state;
-        const showArmyBadge = variant === 'hq';
+        const showArmyBadge = variant === 'hq' || variant === 'war-room';
 
         if (host.cityLabel) {
             if (cityName) {
@@ -895,35 +956,11 @@
                 host.list.hidden = true;
             } else {
                 host.list.hidden = false;
-                host.list.innerHTML = visiblePlayers.map((player) => {
-                    const displayName = player.isSelf
-                        ? `${player.displayName} (you)`
-                        : player.displayName;
-                    const movePointsLabel = formatPlayerMovePointsLabel(player);
-                    const movePointsAria = formatPlayerMovePointsAria(player);
-                    const reportButtonMarkup = !player.isSelf
-                        ? (
-                            `<button type="button" class="age-city-info-player-report-btn" data-player-report-open`
-                            + ` data-age-player-report="${escapePlayerHtml(player.username)}"`
-                            + ` data-player-report-target="${escapePlayerHtml(player.username)}"`
-                            + ` data-player-report-source="age_city_roster"`
-                            + ` data-player-report-context="${escapePlayerHtml(`City roster — ${cityName || 'current city'}`)}"`
-                            + ` title="Report commander" aria-label="Report ${escapePlayerHtml(player.displayName)}">Report</button>`
-                        )
-                        : '';
-                    return (
-                        `<li class="age-city-info-player-row${player.online ? ' is-online' : ''}${player.isSelf ? ' is-self' : ''}">`
-                        + (isRoyaltyMembershipTitle(player.membershipTitle)
-                            ? '<img class="age-city-info-player-royalty-badge" src="images/royaltybadge.png" alt="Royalty premium member" loading="lazy" decoding="async">'
-                            : '')
-                        + `<span class="age-city-info-player-identity">${buildCityPlayerIdentityHtml(displayName, player)}</span>`
-                        + (showArmyBadge ? formatArmyFocusBadgeHtml(player) : '')
-                        + `<span class="age-city-info-player-move-points" title="Move points" aria-label="${escapePlayerHtml(movePointsAria)}">${escapePlayerHtml(movePointsLabel)}</span>`
-                        + `<span class="age-city-info-player-presence">${player.online ? 'Online' : 'Offline'}</span>`
-                        + reportButtonMarkup
-                        + '</li>'
-                    );
-                }).join('');
+                host.list.innerHTML = visiblePlayers.map((player) => buildCityPlayerRowMarkup(player, {
+                    cityName,
+                    variant,
+                    showArmyBadge
+                })).join('');
             }
         }
 
@@ -949,7 +986,9 @@
         const allPlayers = getCityPlayers();
 
         resolvePlayersRenderHosts().forEach((host) => {
-            const variant = host.variant === 'hq' ? 'hq' : 'map';
+            const variant = host.variant === 'war-room'
+                ? 'war-room'
+                : (host.variant === 'hq' ? 'hq' : 'map');
             const filters = getPlayersFilterState(variant);
             const visiblePlayers = sortCityPlayers(filterCityPlayers(allPlayers, filters), filters);
             renderPlayersIntoHost(host, {

@@ -22785,7 +22785,7 @@ body.age-war-room-open {
     width: var(--age-war-room-players-panel-width);
     min-width: 0;
     box-sizing: border-box;
-    padding: 12px 14px 12px 16px;
+    padding: 0;
     border: 1px solid rgba(184, 144, 48, 0.62);
     border-radius: 4px;
     background:
@@ -22870,32 +22870,389 @@ body.age-war-room-open {
     min-height: 0;
 }
 
-.age-war-room-players-panel .age-war-room-players-rail {
+.age-war-room-players-shell {
     position: relative;
     z-index: 1;
+    display: flex;
+    flex-direction: column;
     flex: 1 1 auto;
     width: 100%;
-    max-width: 100%;
     min-width: 0;
     min-height: 0;
     height: 100%;
-    --age-hq-planning-scale: 1;
-    --age-hq-panel-text-scale: 0.88;
+    overflow: hidden;
 }
 
-.age-war-room-players-panel .age-headquarters-players-body {
+.age-war-room-players-header {
+    position: relative;
+    z-index: 2;
+    display: grid;
+    grid-template-columns: auto 1fr;
+    align-items: center;
+    gap: 12px 14px;
+    flex: 0 0 auto;
+    padding: 14px 16px 12px;
+    border-bottom: 1px solid rgba(184, 144, 48, 0.38);
+    background:
+        linear-gradient(180deg, rgba(255, 215, 0, 0.1) 0%, transparent 100%),
+        linear-gradient(90deg, rgba(120, 32, 18, 0.22) 0%, transparent 28%, transparent 72%, rgba(40, 70, 120, 0.18) 100%),
+        rgba(0, 0, 0, 0.35);
+}
+
+.age-war-room-players-header-mark {
+    width: 4px;
+    height: 44px;
+    border-radius: 2px;
+    background: linear-gradient(180deg, #ffd978 0%, #b8860b 45%, #6b2010 100%);
+    box-shadow: 0 0 12px rgba(255, 190, 60, 0.35);
+}
+
+.age-war-room-players-header-brand {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.age-war-room-players-eyebrow {
+    font-size: 0.58rem;
+    font-weight: 700;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: rgba(216, 200, 154, 0.68);
+}
+
+.age-war-room-players-title {
+    margin: 0;
+    font-family: 'Cinzel', serif;
+    font-size: 1.02rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #ffe6a0;
+    text-shadow:
+        0 0 14px rgba(255, 190, 60, 0.2),
+        0 2px 5px rgba(0, 0, 0, 0.6);
+}
+
+.age-war-room-players-city {
+    margin: 0;
+    font-size: 0.68rem;
+    letter-spacing: 0.04em;
+    line-height: 1.35;
+    color: rgba(216, 200, 154, 0.58);
+}
+
+.age-war-room-players-city[hidden] {
+    display: none !important;
+}
+
+.age-war-room-players-body {
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-height: 0;
+    padding: 10px 12px 12px;
+    overflow: hidden;
+}
+
+.age-war-room-players-filters {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    flex: 0 0 auto;
+    margin: 0;
+    padding: 8px;
+    border: 1px solid rgba(184, 144, 48, 0.28);
+    border-radius: 4px;
+    background:
+        linear-gradient(180deg, rgba(0, 0, 0, 0.38) 0%, rgba(0, 0, 0, 0.18) 100%),
+        linear-gradient(90deg, rgba(120, 32, 18, 0.1) 0%, transparent 100%);
+}
+
+.age-war-room-players-filter-group {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+}
+
+.age-war-room-players-filter-label {
+    font-family: 'Cinzel', serif;
+    font-size: 0.56rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: rgba(216, 200, 154, 0.62);
+}
+
+.age-war-room-players-filter-toggle {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    padding: 3px;
+    border-radius: 4px;
+    border: 1px solid rgba(72, 54, 28, 0.75);
+    background: rgba(0, 0, 0, 0.28);
+}
+
+.age-war-room-players-filter-btn {
+    flex: 1 1 auto;
+    min-width: 0;
+    min-height: 28px;
+    padding: 4px 6px;
+    border: 1px solid rgba(72, 54, 28, 0.75);
+    border-bottom-width: 2px;
+    border-radius: 3px;
+    background: linear-gradient(180deg, rgba(36, 28, 16, 0.96) 0%, rgba(12, 8, 4, 0.98) 100%);
+    font-family: 'Cinzel', serif;
+    font-size: 0.58rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: rgba(216, 200, 154, 0.72);
+    cursor: pointer;
+    box-shadow:
+        0 2px 0 rgba(0, 0, 0, 0.4),
+        inset 0 1px 0 rgba(255, 215, 0, 0.08);
+    transition: border-color 0.14s ease, color 0.14s ease, box-shadow 0.14s ease;
+}
+
+.age-war-room-players-filter-btn:hover,
+.age-war-room-players-filter-btn:focus-visible {
+    border-color: rgba(255, 215, 0, 0.55);
+    color: #fff6d8;
+    outline: none;
+}
+
+.age-war-room-players-filter-btn.is-active {
+    border-color: rgba(255, 215, 0, 0.72);
+    color: #ffe6a0;
+    box-shadow:
+        0 0 10px rgba(255, 190, 60, 0.18),
+        inset 0 0 0 1px rgba(255, 215, 0, 0.14);
+}
+
+.age-war-room-players-summary {
+    flex: 0 0 auto;
+    margin: 0;
+    padding: 0 2px;
+    font-size: 0.64rem;
+    letter-spacing: 0.03em;
+    line-height: 1.4;
+    color: rgba(216, 200, 154, 0.58);
+}
+
+.age-war-room-players-summary[hidden] {
+    display: none !important;
+}
+
+.age-war-room-players-list {
+    list-style: none;
+    margin: 0;
+    padding: 2px 4px 2px 2px;
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
     flex: 1 1 auto;
     min-height: 0;
     overflow-y: auto;
-    overflow-x: hidden;
     scrollbar-width: thin;
-    scrollbar-color: rgba(184, 144, 48, 0.45) rgba(0, 0, 0, 0.2);
+    scrollbar-color: rgba(197, 160, 89, 0.45) rgba(0, 0, 0, 0.25);
 }
 
-.age-war-room-players-panel .age-hq-players-list {
+.age-war-room-players-list[hidden] {
+    display: none !important;
+}
+
+.age-war-room-player-row {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    padding: 9px 10px 9px 12px;
+    border-radius: 3px;
+    border: 1px solid rgba(197, 160, 89, 0.26);
+    border-left-width: 4px;
+    border-left-color: rgba(110, 110, 110, 0.85);
+    background:
+        linear-gradient(90deg, rgba(255, 255, 255, 0.03) 0%, transparent 18%),
+        rgba(0, 0, 0, 0.34);
+    box-shadow: inset 0 1px 0 rgba(255, 215, 0, 0.05);
+}
+
+.age-war-room-player-row.is-online {
+    border-left-color: #5fa86a;
+}
+
+.age-war-room-player-row.is-self {
+    border-color: rgba(255, 215, 0, 0.42);
+    border-left-color: #ffd978;
+    background:
+        linear-gradient(90deg, rgba(255, 215, 0, 0.08) 0%, transparent 22%),
+        rgba(0, 0, 0, 0.34);
+}
+
+.age-war-room-player-row-head {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+}
+
+.age-war-room-player-identity {
     flex: 1 1 auto;
-    min-height: 0;
-    overflow-y: auto;
+    min-width: 0;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+    overflow: hidden;
+    white-space: nowrap !important;
+}
+
+.age-war-room-player-identity .commander-identity-name-row {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    overflow: hidden !important;
+}
+
+.age-war-room-player-identity .commander-identity-name {
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+    min-width: 0 !important;
+    flex: 1 1 auto !important;
+    font-family: 'Cinzel', serif;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    color: #f1e0ac !important;
+}
+
+.age-war-room-player-identity .commander-rank-pill {
+    font-size: 0.48rem !important;
+    padding: 1px 5px !important;
+    flex-shrink: 0 !important;
+}
+
+.age-war-room-player-mp {
+    flex: 0 0 auto;
+    font-family: 'Cinzel', serif;
+    font-size: 0.82rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    font-variant-numeric: tabular-nums;
+    color: #ffd978;
+    white-space: nowrap;
+    text-shadow: 0 0 10px rgba(255, 190, 60, 0.2);
+}
+
+.age-war-room-player-row-meta {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 6px 8px;
+    margin-left: 0;
+    padding-left: 2px;
+}
+
+.age-war-room-player-presence {
+    flex: 0 0 auto;
+    padding: 2px 7px;
+    border-radius: 3px;
+    border: 1px solid rgba(110, 110, 110, 0.45);
+    background: rgba(0, 0, 0, 0.32);
+    font-size: 0.56rem;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: rgba(160, 150, 130, 0.82);
+}
+
+.age-war-room-player-row.is-online .age-war-room-player-presence {
+    border-color: rgba(120, 200, 120, 0.45);
+    background: rgba(18, 48, 28, 0.65);
+    color: #9fd4a8;
+    box-shadow: inset 0 0 10px rgba(80, 180, 100, 0.1);
+}
+
+.age-war-room-player-army-focus {
+    flex: 0 0 auto;
+    padding: 2px 6px;
+    border-radius: 3px;
+    border: 1px solid rgba(184, 144, 48, 0.34);
+    font-size: 0.56rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    line-height: 1.35;
+    white-space: nowrap;
+}
+
+.age-war-room-player-army-focus--ranking {
+    color: rgba(168, 214, 255, 0.92);
+    border-color: rgba(96, 168, 240, 0.42);
+    background: rgba(24, 56, 96, 0.42);
+}
+
+.age-war-room-player-army-focus--pvp {
+    color: rgba(255, 176, 148, 0.94);
+    border-color: rgba(220, 96, 72, 0.42);
+    background: rgba(96, 24, 16, 0.42);
+}
+
+.age-war-room-player-royalty-badge {
+    flex: 0 0 auto;
+    width: 22px;
+    height: 22px;
+    object-fit: contain;
+    animation: age-player-royalty-badge-spin3d 6s linear infinite;
+    transform-origin: 50% 50%;
+    filter: sepia(1) saturate(3.1) hue-rotate(8deg) brightness(1.03) contrast(1.04);
+}
+
+.age-war-room-player-report-btn {
+    margin-left: auto;
+    padding: 3px 8px;
+    border-radius: 3px;
+    border: 1px solid rgba(197, 160, 89, 0.45);
+    background: rgba(42, 30, 14, 0.9);
+    font-family: 'Cinzel', serif;
+    font-size: 0.54rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: rgba(216, 200, 154, 0.78);
+    cursor: pointer;
+}
+
+.age-war-room-player-report-btn:hover,
+.age-war-room-player-report-btn:focus-visible {
+    border-color: rgba(255, 215, 0, 0.55);
+    color: #fff6d8;
+    outline: none;
+}
+
+.age-war-room-players-empty {
+    flex: 1 1 auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0;
+    padding: 16px 10px;
+    text-align: center;
+    font-size: 0.72rem;
+    letter-spacing: 0.03em;
+    line-height: 1.45;
+    color: rgba(216, 200, 154, 0.52);
+    font-style: italic;
+}
+
+.age-war-room-players-empty[hidden] {
+    display: none !important;
 }
 
 .age-army-groups-workspace-main {
