@@ -86,8 +86,9 @@
     --age-radial-slot-radius: 208px;
     --age-radial-slot-well-w: 122px;
     --age-radial-slot-well-h: 130px;
-    --age-radial-slot-size-w: 102px;
-    --age-radial-slot-size-h: 88px;
+    /* Enlarged from 90×82 — width:height ratio locked at 90:82 */
+    --age-radial-slot-size-w: 104px;
+    --age-radial-slot-size-h: calc(var(--age-radial-slot-size-w) * 82 / 90);
     /* Wheel SVG inner hole ≈ 184px — keep octagon hub inset within it */
     --age-radial-center-size: 132px;
     position: relative;
