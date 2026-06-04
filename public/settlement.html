@@ -5,8 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Royal Armies — Settlement</title>
     <link rel="stylesheet" href="style.css?v=cursor-modal-layer-fix-1">
-    <link rel="stylesheet" href="style2.css?v=settlement-page-1">
-    <link rel="stylesheet" href="style-settlement.css?v=settlement-page-1">
+    <link rel="stylesheet" href="style2.css?v=settlement-war-room-slot-2">
+    <link rel="stylesheet" href="style-age-area-shell.css?v=age-area-shell-1">
+    <link rel="stylesheet" href="style-settlement.css?v=settlement-war-room-slot-1">
     <link rel="stylesheet" href="mobile-responsive.css?v=settlement-page-1">
     <link rel="stylesheet" href="dev-page-navigator.css">
     <link rel="stylesheet" href="custom-cursor.css?v=finger-press-7">
@@ -16,7 +17,9 @@
     class="age-page-canvas game-page-canvas age-page-settlement-only"
     data-age-slug="alpha"
     data-age-settlement-page="true"
-    data-age-view="city">
+    data-age-view="city"
+    data-age-area-shell="true"
+    data-age-area-active-hub="settlement">
 <script src="rift-viewport-metrics.js?v=rift-iife-fix-1"></script>
 <script src="rift-display-resolution.js?v=rift-iife-fix-1"></script>
 <script src="rift-page-loading-gate.js?v=page-loading-gate-1"></script>
@@ -24,77 +27,10 @@
 
     <main class="age-page-main" aria-label="Age Alpha — Settlement">
         <div class="age-map-shell" id="age-map-shell">
-            <header class="age-map-hud age-map-hud--top" aria-label="Settlement overview">
-                <div class="age-map-hud-panel age-map-hud-top-bar">
-                    <div class="age-map-top-bar-brand">
-                        <div class="age-map-top-bar-logo-wrap">
-                            <img
-                                src="images/royalarmiestitle.png?v=logo-trim-gimp-1"
-                                alt="Royal Armies"
-                                class="age-map-top-bar-logo"
-                                width="320"
-                                height="64">
-                        </div>
-                        <div class="age-map-top-bar-separator" aria-hidden="true"></div>
-                        <div class="age-map-age-badge">
-                            <span class="age-map-age-badge-eyebrow">Current Age</span>
-                            <h1 id="age-map-age-title" class="age-map-age-badge-title">Age Alpha</h1>
-                        </div>
-                        <div class="age-map-top-bar-separator age-map-top-bar-separator--nation" aria-hidden="true"></div>
-                        <div class="age-map-top-bar-nation" id="age-nation-welcome-panel" aria-label="Nation welcome">
-                            <div class="age-nation-welcome-identity">
-                                <img
-                                    src="images/aesthenecrest.png"
-                                    alt=""
-                                    id="age-nation-welcome-crest"
-                                    class="age-map-top-bar-nation-crest"
-                                    width="52"
-                                    height="52"
-                                    decoding="async"
-                                    aria-hidden="true">
-                                <p id="age-nation-welcome-text" class="age-map-top-bar-nation-text">Welcome to Aesthine</p>
-                            </div>
-                        </div>
-                        <div class="age-settlement-page-nav" aria-label="Settlement navigation">
-                            <a
-                                id="age-settlement-world-map-link"
-                                class="age-settlement-world-map-link"
-                                href="agealpha.html?riftAgeDevBypass=1">World Map</a>
-                        </div>
-                    </div>
-                    <ul class="age-map-resource-strip" aria-label="Realm resources">
-                        <li class="age-map-resource-item age-map-resource-item--commander-rank" id="age-hud-commander-rank-item" title="Commander rank">
-                            <span class="age-map-resource-label">Rank</span>
-                            <span class="age-map-resource-value" id="age-hud-commander-rank" aria-live="polite">1</span>
-                        </li>
-                        <li class="age-map-resource-item">
-                            <span class="age-map-resource-label">Gold</span>
-                            <span class="age-map-resource-value" id="age-hud-gold">—</span>
-                        </li>
-                        <li class="age-map-resource-item">
-                            <span class="age-map-resource-label">Provisions</span>
-                            <span class="age-map-resource-value" id="age-hud-provisions">—</span>
-                        </li>
-                        <li class="age-map-resource-item age-map-resource-item--units" id="age-hud-units-item">
-                            <span class="age-map-resource-label">Units</span>
-                            <span class="age-map-resource-value age-map-resource-value--units" id="age-hud-units" aria-label="Units">
-                                <span class="age-hud-units-uninjured" id="age-hud-units-uninjured">0</span><span class="age-hud-units-separator" aria-hidden="true">|</span><span class="age-hud-units-total" id="age-hud-units-total">0</span>
-                            </span>
-                        </li>
-                        <li class="age-map-resource-item age-map-resource-item--move-points" id="age-hud-move-points-item">
-                            <span class="age-map-resource-label">Move Points</span>
-                            <span class="age-map-resource-value" id="age-hud-move-points">—</span>
-                        </li>
-                    </ul>
-                </div>
-                <div class="age-map-top-bar-clock-cluster portal-desktop-nav-only" aria-label="Game time">
-                    <div id="portal-universal-game-time-panel" class="portal-universal-game-time-panel" aria-label="Game time">
-                        <div id="portal-universal-game-time-display" class="portal-universal-game-time-display" aria-live="polite">--:--:--</div>
-                    </div>
-                </div>
-            </header>
+            <div data-age-area-shell-top></div>
+            <div class="age-area-main" id="age-settlement-area-main">
 
-            <aside class="age-map-hud age-map-hud--right is-settlement-view-open" id="age-map-hud-right" aria-label="Settlement venues">
+                <aside class="age-map-hud age-map-hud--right is-settlement-view-open" id="age-map-hud-right" aria-label="Settlement venues">
                 <div class="age-map-hud-panel-inner age-map-hud-panel-inner--right">
                     <section
                         id="age-settlement-menu-panel"
@@ -116,16 +52,26 @@
                                 </select>
                             </div>
                         </header>
-                        <nav
-                            id="age-settlement-menu-list"
-                            class="age-settlement-menu-list"
-                            aria-label="Settlement locations"></nav>
+                        <div class="age-settlement-menu-body">
+                            <nav
+                                id="age-settlement-menu-list"
+                                class="age-settlement-menu-list"
+                                aria-label="Settlement locations"></nav>
+                            <div
+                                id="age-settlement-menu-war-room-slot"
+                                class="age-settlement-menu-war-room-slot"
+                                aria-label="Nation command"></div>
+                        </div>
                     </section>
                 </div>
             </aside>
 
             <div class="age-map-anchor">
                 <div id="age-world-map" class="game-region-map-stage" role="application" aria-label="Settlement map">
+                    <div
+                        id="age-army-groups-sonar-layer"
+                        class="age-army-groups-sonar-layer"
+                        aria-hidden="true"></div>
                     <div id="age-world-map-frame" class="game-region-map-frame age-map-frame age-world-map-frame is-settlement-map-frame">
                         <img
                             id="age-world-map-settlement-bg"
@@ -342,6 +288,21 @@
                     </div>
                 </div>
 
+                <div id="age-guild-jobs-arena" class="age-guild-job-arena age-guild-jobs-hub-arena" hidden aria-hidden="true" aria-label="Adventurer's Guild jobs">
+                    <button type="button" class="age-guild-close age-guild-job-close" data-age-guild-close aria-label="Close guild workspace">Close</button>
+
+                    <header class="age-guild-top-band" aria-label="Guild jobs header">
+                        <div class="age-guild-job-top-panel">
+                            <h2 class="age-guild-hub-title">Adventurer's Guild</h2>
+                            <p class="age-guild-hub-subtitle">Select a contract to open its workspace.</p>
+                        </div>
+                    </header>
+
+                    <div class="age-guild-job-body">
+                        <div id="age-guild-hub-jobs-host" class="age-guild-hub-jobs-host age-settlement-guild-jobs" aria-live="polite"></div>
+                    </div>
+                </div>
+
                 <div id="age-guild-bounties-arena" class="age-guild-job-arena age-guild-bounties-arena" hidden aria-hidden="true" aria-label="Player bounties">
                     <button type="button" class="age-guild-back age-guild-job-back" data-age-guild-back>← Jobs</button>
                     <button type="button" class="age-guild-close age-guild-job-close" data-age-guild-close aria-label="Close job">Close</button>
@@ -359,6 +320,207 @@
                     </div>
                 </div>
             </div>
+            <div id="age-settlement-venue-workspace" class="age-settlement-venue-workspace" hidden aria-hidden="true" aria-label="Settlement venue workspace">
+                <div class="age-settlement-venue-shell">
+                    <header class="age-settlement-venue-header">
+                        <div class="age-settlement-venue-header-copy">
+                            <p id="age-settlement-venue-eyebrow" class="age-settlement-venue-eyebrow">Settlement</p>
+                            <h2 id="age-settlement-venue-title" class="age-settlement-venue-title">Venue</h2>
+                            <p id="age-settlement-venue-subtitle" class="age-settlement-venue-subtitle" hidden></p>
+                        </div>
+                        <button
+                            type="button"
+                            id="age-settlement-venue-close"
+                            class="age-settlement-venue-close"
+                            aria-label="Close venue workspace">
+                            Close
+                        </button>
+                    </header>
+                    <div id="age-settlement-venue-body" class="age-settlement-venue-body" aria-live="polite"></div>
+                </div>
+            </div>
+
+            <div
+                id="age-war-room-modal"
+                class="age-war-room-modal"
+                hidden
+                aria-hidden="true"
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="age-war-room-title">
+                <div id="age-war-room-backdrop" class="age-war-room-backdrop" aria-hidden="true"></div>
+                <div class="age-war-room-dialog">
+                    <div class="age-war-room-atmosphere" aria-hidden="true"></div>
+                    <header class="age-war-room-header">
+                        <div class="age-war-room-header-mark" aria-hidden="true"></div>
+                        <div class="age-war-room-header-brand">
+                            <span class="age-war-room-header-eyebrow">Nation Command · Strategic Briefing</span>
+                            <h2 id="age-war-room-title" class="age-war-room-title">War Room</h2>
+                            <p class="age-war-room-header-tagline">Formation orders, command posts, and battlefield signals</p>
+                        </div>
+                        <button type="button" id="age-war-room-close" class="age-war-room-close" aria-label="Close War Room">×</button>
+                    </header>
+                    <div class="age-war-room-command-deck">
+                        <aside class="age-war-room-ops-panel" aria-label="War Room actions">
+                            <header class="age-army-groups-toolbar" aria-label="Army group actions">
+                                <button
+                                    type="button"
+                                    id="age-army-groups-btn-create"
+                                    class="age-army-groups-tool-btn"
+                                    title="Create army group"
+                                    aria-label="Create army group"
+                                    aria-expanded="false"
+                                    aria-controls="age-army-groups-create-row">
+                                    <span class="age-army-groups-tool-glyph" aria-hidden="true">⚔</span>
+                                    <span class="age-army-groups-tool-copy">
+                                        <span class="age-army-groups-tool-label">Deploy</span>
+                                        <span class="age-army-groups-tool-hint">Raise formation</span>
+                                    </span>
+                                </button>
+                                <button
+                                    type="button"
+                                    id="age-army-groups-btn-sf-lead"
+                                    class="age-army-groups-tool-btn"
+                                    title="List as SF Lead candidate"
+                                    aria-label="List as SF Lead candidate"
+                                    aria-expanded="false"
+                                    aria-controls="age-army-groups-volunteers-column">
+                                    <span class="age-army-groups-tool-glyph" aria-hidden="true">★</span>
+                                    <span class="age-army-groups-tool-copy">
+                                        <span class="age-army-groups-tool-label">SF Lead</span>
+                                        <span class="age-army-groups-tool-hint">Volunteer pool</span>
+                                    </span>
+                                </button>
+                                <button
+                                    type="button"
+                                    id="age-army-groups-btn-sonar"
+                                    class="age-army-groups-tool-btn age-army-groups-tool-btn--sonar"
+                                    title="Signal for rescue (sonar ping)"
+                                    aria-label="Signal for rescue"
+                                    aria-pressed="false">
+                                    <span class="age-army-groups-tool-glyph" aria-hidden="true">◎</span>
+                                    <span class="age-army-groups-tool-copy">
+                                        <span class="age-army-groups-tool-label">Rescue</span>
+                                        <span class="age-army-groups-tool-hint">Sonar ping</span>
+                                    </span>
+                                </button>
+                            </header>
+                            <aside
+                                class="age-headquarters-players-rail age-war-room-players-rail"
+                                aria-label="Commanders in current city">
+                                <header class="age-hq-planning-toolbar-head age-headquarters-players-head">
+                                    <span class="age-hq-planning-toolbar-eyebrow">Players</span>
+                                    <span
+                                        class="age-hq-planning-toolbar-status"
+                                        id="age-war-room-players-city"
+                                        aria-live="polite"
+                                        hidden></span>
+                                </header>
+                                <div class="age-headquarters-players-body" data-age-hq-players-sync>
+                                    <div class="age-hq-players-filters" aria-label="Player list filters">
+                                        <div
+                                            class="age-hq-players-filter-toggle age-city-info-players-filter-toggle"
+                                            role="group"
+                                            aria-label="Commander presence filter">
+                                            <button
+                                                type="button"
+                                                class="age-city-info-players-filter-btn is-active"
+                                                data-age-players-filter="all"
+                                                aria-pressed="true">All</button>
+                                            <button
+                                                type="button"
+                                                class="age-city-info-players-filter-btn"
+                                                data-age-players-filter="online"
+                                                aria-pressed="false">Online</button>
+                                        </div>
+                                        <div
+                                            class="age-hq-players-filter-toggle age-city-info-players-filter-toggle"
+                                            role="group"
+                                            aria-label="Commander move points sort">
+                                            <button
+                                                type="button"
+                                                class="age-city-info-players-filter-btn is-active"
+                                                data-age-players-mp-sort="default"
+                                                aria-pressed="true">Default</button>
+                                            <button
+                                                type="button"
+                                                class="age-city-info-players-filter-btn"
+                                                data-age-players-mp-sort="desc"
+                                                aria-pressed="false">Top MP</button>
+                                        </div>
+                                        <div
+                                            class="age-hq-players-filter-toggle age-city-info-players-filter-toggle"
+                                            role="group"
+                                            aria-label="Commander army focus filter">
+                                            <button
+                                                type="button"
+                                                class="age-city-info-players-filter-btn is-active"
+                                                data-age-players-army-filter="all"
+                                                aria-pressed="true">All</button>
+                                            <button
+                                                type="button"
+                                                class="age-city-info-players-filter-btn"
+                                                data-age-players-army-filter="ranking"
+                                                aria-pressed="false">Rank</button>
+                                            <button
+                                                type="button"
+                                                class="age-city-info-players-filter-btn"
+                                                data-age-players-army-filter="pvp"
+                                                aria-pressed="false">PvP</button>
+                                        </div>
+                                    </div>
+                                    <p id="age-war-room-players-summary" class="age-hq-players-summary" hidden></p>
+                                    <ul
+                                        id="age-war-room-players-list"
+                                        class="age-city-info-players-list age-hq-players-list"
+                                        hidden></ul>
+                                    <p id="age-war-room-players-empty" class="age-city-info-players-empty">No commanders in this city yet.</p>
+                                </div>
+                            </aside>
+                        </aside>
+                        <div id="age-army-groups-workspace-main" class="age-army-groups-workspace-main" aria-label="War Room workspace">
+                            <div class="age-army-groups-body">
+                                <section class="age-army-groups-roster-column" aria-label="Army groups">
+                                    <div class="age-army-groups-section-head">
+                                        <h2 class="age-army-groups-list-heading">Active Formations</h2>
+                                        <p class="age-army-groups-list-subheading">Nation armies currently mustered for the Age</p>
+                                    </div>
+                                    <div class="age-army-groups-roster">
+                                        <div id="age-army-groups-create-row" class="age-army-groups-create-row" hidden>
+                                            <button
+                                                type="button"
+                                                id="age-army-groups-type-cycle"
+                                                class="age-army-groups-type-cycle"
+                                                aria-label="Army group type">SF</button>
+                                            <input
+                                                type="text"
+                                                id="age-army-groups-name-input"
+                                                class="age-army-groups-name-input"
+                                                maxlength="48"
+                                                placeholder="Unique army name"
+                                                autocomplete="off"
+                                                spellcheck="false">
+                                            <button type="button" id="age-army-groups-create-submit" class="age-army-groups-create-submit">Create</button>
+                                        </div>
+                                        <p id="age-army-groups-feedback" class="age-army-groups-feedback" hidden role="status"></p>
+                                        <div id="age-army-groups-list" class="age-army-groups-list" role="list" aria-live="polite"></div>
+                                    </div>
+                                </section>
+                                <section
+                                    id="age-army-groups-volunteers-column"
+                                    class="age-army-groups-volunteers-column"
+                                    aria-label="SF lead volunteers"
+                                    aria-hidden="true">
+                                    <h2 class="age-army-groups-volunteers-heading">SF Lead Pool</h2>
+                                    <p class="age-army-groups-volunteers-subheading">Commanders ready to lead Strike Force groups</p>
+                                    <ul id="age-army-groups-sf-lead-list" class="age-army-groups-sf-lead-list" aria-live="polite"></ul>
+                                </section>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <div id="age-dispatch-alert-border" class="age-dispatch-alert-border" hidden aria-hidden="true">
                 <button
                     type="button"
@@ -369,88 +531,12 @@
                     Dismiss Alert
                 </button>
             </div>
-
-<footer class="age-map-hud age-map-hud--bottom age-map-bottom-dock" aria-label="Map controls and chat">
-                <div class="age-map-bottom-dock-shell age-map-hud-panel">
-                    <div class="age-map-bottom-dock-chat-column" aria-label="In-game chat">
-                        <div id="age-map-bottom-chat-messages-host" class="age-map-bottom-chat-messages-host" hidden></div>
-                        <div id="age-map-bottom-chat-compose-host" class="age-map-bottom-chat-compose-host" hidden></div>
-                    </div>
-                    <div class="age-map-bottom-dock-nav" aria-label="Map navigation" hidden></div>
-                    <div class="age-map-bottom-dock-controls">
-                    <div class="portal-mobile-nav-bar-clip game-page-mobile-commander-clip age-page-mobile-commander-clip" id="game-mobile-commander-clip">
-                        <div class="portal-mobile-commander-block game-page-mobile-commander-block" id="game-mobile-commander-block">
-                            <button type="button" class="portal-mobile-commander-trigger" id="game-mobile-commander-toggle" aria-expanded="false" aria-controls="game-mobile-commander-submenu" onclick="toggleGameMobileCommanderSubmenu(event)">
-                                <img class="portal-mobile-commander-avatar" id="game-mobile-nav-avatar" src="images/avatars/commanderprofile01.png" alt="">
-                                <span class="portal-mobile-commander-identity">
-                                    <strong class="portal-mobile-commander-name" id="game-mobile-nav-username">Loading...</strong>
-                                </span>
-                                <span class="portal-mobile-nav-chevron portal-mobile-commander-chevron" aria-hidden="true">▾</span>
-                            </button>
-                            <div class="portal-mobile-commander-submenu" id="game-mobile-commander-submenu" hidden>
-                                <button type="button" class="portal-mobile-submenu-item" onclick="gameMobileNavCommanderAction('view-profile', event)">View Profile Card</button>
-                                <button type="button" class="portal-mobile-submenu-item" onclick="gameMobileNavCommanderAction('edit-profile', event)">Edit Profile</button>
-                                <button type="button" class="portal-mobile-submenu-item portal-mobile-submenu-item-messages" id="game-mobile-messages-btn" onclick="gameMobileNavCommanderAction('messages', event)">
-                                    <span class="dropdown-messages-label">Messages</span>
-                                    <span id="game-mobile-messages-unread" class="dropdown-messages-unread-count" hidden></span>
-                                </button>
-                                <button type="button" class="portal-mobile-submenu-item" onclick="gameMobileNavCommanderAction('settings', event)">Settings</button>
-                                <button type="button" class="portal-mobile-submenu-item" onclick="gameMobileNavCommanderAction('chronicles-battle-pass', event)">The Chronicles Battle Pass</button>
-                                <button type="button" id="game-mobile-dropdown-return-portal-btn" class="portal-mobile-submenu-item portal-mobile-submenu-item-return-portal" onclick="gameMobileNavCommanderAction('return-to-portal', event)">Return to Age Portal</button>
-                                <button type="button" id="game-mobile-dropdown-logout-btn" class="portal-mobile-submenu-item portal-mobile-submenu-item-logout" onclick="gameMobileNavCommanderAction('logout', event)">Log Out</button>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="age-map-bottom-dock-tray portal-desktop-nav-only" aria-label="Commander">
-                    <div class="age-map-bottom-commander-nametag" aria-label="Commander">
-                        <div class="portal-commander-identity-shell" id="portal-commander-identity-shell">
-                            <button type="button" class="portal-commander-new-messages-bar" id="portal-commander-new-messages-bar" hidden aria-live="polite" aria-label="You have new messages. Open messages.">
-                                <span class="portal-commander-new-messages-bar-text">You have new messages</span>
-                            </button>
-                            <div class="portal-commander-identity-card" id="portal-commander-identity-card">
-                                <div class="portal-commander-identity-card-body portal-commander-identity-trigger"
-                                    id="portal-commander-identity-trigger"
-                                    role="button"
-                                    tabindex="0"
-                                    aria-expanded="false"
-                                    aria-controls="portal-desktop-commander-menu"
-                                    aria-label="Open commander menu"
-                                    title="Commander menu">
-                                    <div class="nav-avatar-hub-wrapper">
-                                        <img id="nav-embedded-avatar-crest" src="images/avatars/commanderprofile01.png" alt="Commander avatar" class="nav-bar-embedded-avatar-thumbnail">
-                                    </div>
-                                    <div class="nav-account-identity-cluster">
-                                        <div class="nav-account-identity-stack">
-                                            <strong id="logged-user-tag">Loading...</strong>
-                                        </div>
-                                        <div id="nav-commander-membership-badge-row" class="commander-membership-badge-row nav-commander-membership-badge-row nav-commander-membership-tab" hidden></div>
-                                    </div>
-                                </div>
-                                <div class="portal-commander-identity-menu" id="portal-desktop-commander-menu" role="menu" hidden>
-                                    <button type="button" class="dropdown-action-item dropdown-action-item-view-profile" role="menuitem" onclick="portalDesktopCommanderMenuAction('view-profile', event)">View Profile Card</button>
-                                    <button type="button" class="dropdown-action-item" role="menuitem" onclick="portalDesktopCommanderMenuAction('edit-profile', event)">Edit Profile</button>
-                                    <button type="button" id="nav-dropdown-messages-btn" class="dropdown-action-item dropdown-action-item-messages" role="menuitem" onclick="portalDesktopCommanderMenuAction('messages', event)">
-                                        <span class="dropdown-messages-label">Messages</span>
-                                        <span id="nav-messages-unread-count" class="dropdown-messages-unread-count" hidden></span>
-                                    </button>
-                                    <button type="button" class="dropdown-action-item" role="menuitem" onclick="portalDesktopCommanderMenuAction('settings', event)">Settings</button>
-                                    <button type="button" class="dropdown-action-item dropdown-action-item-chronicles-bp" role="menuitem" onclick="portalDesktopCommanderMenuAction('chronicles-battle-pass', event)">The Chronicles Battle Pass</button>
-                                    <button type="button" id="game-nav-dropdown-return-portal-btn" class="dropdown-action-item dropdown-action-item-return-portal" role="menuitem" onclick="portalDesktopCommanderMenuAction('return-to-portal', event)">Return to Age Portal</button>
-                                    <button type="button" id="game-nav-dropdown-logout-btn" class="dropdown-action-item dropdown-action-item-logout" role="menuitem" onclick="portalDesktopCommanderMenuAction('logout', event)">Log Out</button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    </div>
-                    </div>
-                </div>
-            </footer>
-        </div>
+            <div data-age-area-shell-bottom></div>
         </div>
     </main>
 
 
-    <script src="rift-confirm-buttons.js?v=hub-action-btn-compact-1"></script>
+<script src="rift-confirm-buttons.js?v=hub-action-btn-compact-1"></script>
     <script src="dev-environment.js"></script>
     <script src="rift-page-paths.js?v=settlement-page-1"></script>
     <script src="rift-error-codes.js?v=army-group-battle-1"></script>
@@ -471,14 +557,19 @@
     <script src="rift-age-commander-rank.js?v=commander-rank-hud-1"></script>
     <script src="rift-age-provisions.js?v=provisions-deplete-1"></script>
     <script src="rift-age-recruitment.js?v=swarm-recruit-1"></script>
-    <script src="age-view-tabs.js?v=settlement-page-1"></script>
+    <script src="age-view-tabs.js?v=settlement-war-room-link-1"></script>
+    <script src="age-army-groups.js?v=settlement-war-room-link-1"></script>
     <script src="rift-unit-purchase-catalog.js?v=swarm-recruit-1"></script>
     <script src="rift-age-guild-training.js?v=settlement-page-1"></script>
     <script src="rift-age-unit-evolution.js?v=unit-evolution-qty-1"></script>
-    <script src="age-adventurers-guild.js?v=settlement-page-1"></script>
-    <script src="age-unit-evolution.js?v=settlement-page-1"></script>
-    <script src="age-barracks.js?v=settlement-page-1"></script>
-    <script src="age-settlement-page.js?v=settlement-page-1"></script>
+    <script src="age-adventurers-guild.js?v=settlement-venue-workspaces-1"></script>
+    <script src="age-settlement-venue-workspaces.js?v=settlement-war-room-link-1"></script>
+    <script src="age-unit-evolution.js?v=settlement-venue-workspaces-1"></script>
+    <script src="age-barracks.js?v=settlement-venue-workspaces-1"></script>
+    <script src="age-nation-hub.js?v=age-area-shell-1"></script>
+    <script src="rift-nation-treasury.js?v=age-area-shell-1"></script>
+    <script src="age-area-shell.js?v=age-area-shell-1"></script>
+    <script src="age-settlement-page.js?v=age-area-shell-1"></script>
     <script src="dev-page-navigator.js?v=settlement-page-1"></script>
     <script src="custom-cursor.js?v=finger-press-hold-1"></script>
 </body>

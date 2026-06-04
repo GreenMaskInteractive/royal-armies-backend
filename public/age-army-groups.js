@@ -234,6 +234,7 @@
         } else {
             expandedGroupIds.clear();
             refreshRoster();
+            global.RoyalArmiesAgeMovementPanel?.refreshCityPlayers?.();
             els.closeBtn?.focus();
             if (!escapeHandler) {
                 escapeHandler = (event) => {
@@ -951,13 +952,19 @@
         }
     }
 
+    async function portalArmyGroupConfirm(message, options) {
+        if (typeof global.showPortalConfirm !== 'function') {
+            console.warn('[RIFT] Army group confirm unavailable:', message);
+            return false;
+        }
+        return global.showPortalConfirm(message, options);
+    }
+
     async function dismissArmyGroup(groupId) {
-        const confirmed = typeof global.showPortalConfirm === 'function'
-            ? await global.showPortalConfirm(
-                'Dismiss this army group? All members will be unassigned from the roster.',
-                { title: 'Dismiss army', confirmLabel: 'Dismiss', cancelLabel: 'Keep' }
-            )
-            : global.confirm('Dismiss this army group?');
+        const confirmed = await portalArmyGroupConfirm(
+            'Dismiss this army group? All members will be unassigned from the roster.',
+            { title: 'Dismiss army', confirmLabel: 'Dismiss', cancelLabel: 'Keep' }
+        );
         if (!confirmed) return;
 
         try {
@@ -972,12 +979,10 @@
     }
 
     async function kickArmyMember(groupId, targetUsername) {
-        const confirmed = typeof global.showPortalConfirm === 'function'
-            ? await global.showPortalConfirm(
-                `Remove ${targetUsername} from this army group?`,
-                { title: 'Remove member', confirmLabel: 'Kick', cancelLabel: 'Cancel' }
-            )
-            : global.confirm(`Remove ${targetUsername}?`);
+        const confirmed = await portalArmyGroupConfirm(
+            `Remove ${targetUsername} from this army group?`,
+            { title: 'Remove member', confirmLabel: 'Kick', cancelLabel: 'Cancel' }
+        );
         if (!confirmed) return;
 
         try {
@@ -1084,12 +1089,10 @@
             showFeedback('Could not resolve armies to merge.', true);
             return;
         }
-        const confirmed = typeof global.showPortalConfirm === 'function'
-            ? await global.showPortalConfirm(
-                'Merge your army into the selected group? Members above the target leader\'s rank will stay behind.',
-                { title: 'Merge armies', confirmLabel: 'Merge', cancelLabel: 'Cancel' }
-            )
-            : global.confirm('Merge into selected army?');
+        const confirmed = await portalArmyGroupConfirm(
+            'Merge your army into the selected group? Members above the target leader\'s rank will stay behind.',
+            { title: 'Merge armies', confirmLabel: 'Merge', cancelLabel: 'Cancel' }
+        );
         if (!confirmed) return;
 
         try {
@@ -1140,12 +1143,10 @@
             showFeedback('Choose an army group to absorb.', true);
             return;
         }
-        const confirmed = typeof global.showPortalConfirm === 'function'
-            ? await global.showPortalConfirm(
-                'Absorb the selected army into your command post? Eligible members transfer by rank.',
-                { title: 'Absorb army', confirmLabel: 'Absorb', cancelLabel: 'Cancel' }
-            )
-            : global.confirm('Absorb selected army?');
+        const confirmed = await portalArmyGroupConfirm(
+            'Absorb the selected army into your command post? Eligible members transfer by rank.',
+            { title: 'Absorb army', confirmLabel: 'Absorb', cancelLabel: 'Cancel' }
+        );
         if (!confirmed) return;
 
         try {

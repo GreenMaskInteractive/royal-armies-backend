@@ -16,6 +16,29 @@
                             <h2 class="age-council-room-column-title">Nation Affairs</h2>
                         </div>
                         <div id="age-hq-member-deck" class="age-council-room-nation-stack">
+                            <aside id="age-hq-nation-cabinet" class="age-hq-nation-cabinet age-council-room-panel age-council-room-panel--cabinet" aria-label="National cabinet" data-hq-council-only hidden>
+                                <header class="age-hq-nation-cabinet-head">
+                                    <span class="age-hq-planning-toolbar-eyebrow">National Cabinet</span>
+                                </header>
+                                <div class="age-hq-nation-cabinet-body">
+                                    <section class="age-hq-cabinet-section" aria-label="Nation leader">
+                                        <h3 class="age-hq-cabinet-role">Leader</h3>
+                                        <p id="age-hq-cabinet-leader-name" class="age-hq-cabinet-name">—</p>
+                                    </section>
+                                    <section class="age-hq-cabinet-section" aria-label="Vice leader">
+                                        <h3 class="age-hq-cabinet-role">Vice Leader</h3>
+                                        <p id="age-hq-cabinet-vice-name" class="age-hq-cabinet-name">—</p>
+                                    </section>
+                                    <section class="age-hq-cabinet-section" aria-label="Council members">
+                                        <h3 class="age-hq-cabinet-role">Council</h3>
+                                        <ul id="age-hq-cabinet-council-list" class="age-hq-cabinet-list" aria-live="polite"></ul>
+                                    </section>
+                                    <section class="age-hq-cabinet-section" aria-label="Planners">
+                                        <h3 class="age-hq-cabinet-role">Planners</h3>
+                                        <ul id="age-hq-cabinet-planners-list" class="age-hq-cabinet-list" aria-live="polite"></ul>
+                                    </section>
+                                </div>
+                            </aside>
                             <section class="age-headquarters-ops-card age-headquarters-ops-card--elections age-council-room-panel" aria-labelledby="age-hq-vote-title">
                                 <header class="age-headquarters-ops-card-head">
                                     <h3 class="age-headquarters-ops-card-title" id="age-hq-vote-title">Nation Elections</h3>
@@ -102,7 +125,7 @@
                                             <span class="age-hq-planning-toolbar-eyebrow">Players</span>
                                             <span class="age-hq-planning-toolbar-status" id="age-hq-players-city" aria-live="polite" hidden></span>
                                         </header>
-                                        <div class="age-headquarters-players-body">
+                                        <div class="age-headquarters-players-body" data-age-hq-players-sync>
                                             <div class="age-hq-players-filters" aria-label="Player list filters">
                                                 <div class="age-hq-players-filter-toggle age-city-info-players-filter-toggle" role="group" aria-label="Commander presence filter">
                                                     <button type="button" id="age-hq-players-filter-all" class="age-city-info-players-filter-btn is-active" data-age-players-filter="all" aria-pressed="true">All</button>
@@ -149,31 +172,7 @@
                                 <p id="age-hq-planning-hint" class="age-hq-planning-hint age-council-room-planning-hint">Arm SF, MF, Move, or Taxi, or select a bordering city first for Hold.</p>
                             </div>
 
-                            <div class="age-council-room-council-grid" data-hq-council-only hidden>
-                                <aside id="age-hq-nation-cabinet" class="age-hq-nation-cabinet age-council-room-panel age-council-room-panel--cabinet" aria-label="National cabinet">
-                                    <header class="age-hq-nation-cabinet-head">
-                                        <span class="age-hq-planning-toolbar-eyebrow">National Cabinet</span>
-                                    </header>
-                                    <div class="age-hq-nation-cabinet-body">
-                                        <section class="age-hq-cabinet-section" aria-label="Nation leader">
-                                            <h3 class="age-hq-cabinet-role">Leader</h3>
-                                            <p id="age-hq-cabinet-leader-name" class="age-hq-cabinet-name">—</p>
-                                        </section>
-                                        <section class="age-hq-cabinet-section" aria-label="Vice leader">
-                                            <h3 class="age-hq-cabinet-role">Vice Leader</h3>
-                                            <p id="age-hq-cabinet-vice-name" class="age-hq-cabinet-name">—</p>
-                                        </section>
-                                        <section class="age-hq-cabinet-section" aria-label="Council members">
-                                            <h3 class="age-hq-cabinet-role">Council</h3>
-                                            <ul id="age-hq-cabinet-council-list" class="age-hq-cabinet-list" aria-live="polite"></ul>
-                                        </section>
-                                        <section class="age-hq-cabinet-section" aria-label="Planners">
-                                            <h3 class="age-hq-cabinet-role">Planners</h3>
-                                            <ul id="age-hq-cabinet-planners-list" class="age-hq-cabinet-list" aria-live="polite"></ul>
-                                        </section>
-                                    </div>
-                                </aside>
-                                <div class="age-hq-command-ops-stack age-council-room-diplo-stack" aria-label="Nation diplomacy operations">
+                            <div class="age-hq-command-ops-stack age-council-room-diplo-stack" data-hq-council-only hidden aria-label="Nation diplomacy operations">
                                     <section class="age-headquarters-ops-card age-headquarters-ops-card--council age-council-room-panel">
                                         <header class="age-headquarters-ops-card-head">
                                             <h3 class="age-headquarters-ops-card-title">Alliance &amp; NAP</h3>
@@ -204,7 +203,6 @@
                                             <p id="age-hq-war-feedback" class="age-headquarters-feedback" role="status" aria-live="polite" hidden></p>
                                         </div>
                                     </section>
-                                </div>
                             </div>
 
                             <section class="age-headquarters-ops-card age-headquarters-ops-card--treasury age-council-room-panel age-council-room-fortifications" aria-label="Nation fortifications">

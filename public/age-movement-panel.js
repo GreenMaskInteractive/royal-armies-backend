@@ -715,9 +715,13 @@
         });
     }
 
+    function queryHqPlayersFilterRoots() {
+        return Array.from(global.document.querySelectorAll('[data-age-hq-players-sync]'));
+    }
+
     function syncPlayersFilterControls() {
         syncMapPlayersFilterControls(global.document.querySelector('#age-city-info-tab-players .age-city-info-players-body'));
-        syncHqPlayersFilterControls(global.document.querySelector('.age-headquarters-players-body'));
+        queryHqPlayersFilterRoots().forEach((root) => syncHqPlayersFilterControls(root));
     }
 
     function bindMapPlayersFilterControls(root) {
@@ -774,7 +778,7 @@
 
     function bindPlayersTabControls() {
         bindMapPlayersFilterControls(global.document.querySelector('#age-city-info-tab-players .age-city-info-players-body'));
-        bindHqPlayersFilterControls(global.document.querySelector('.age-headquarters-players-body'));
+        queryHqPlayersFilterRoots().forEach((root) => bindHqPlayersFilterControls(root));
         syncPlayersFilterControls();
     }
 
@@ -826,6 +830,13 @@
                 summary: global.document.getElementById('age-hq-players-summary'),
                 list: global.document.getElementById('age-hq-players-list'),
                 empty: global.document.getElementById('age-hq-players-empty')
+            },
+            {
+                variant: 'hq',
+                cityLabel: global.document.getElementById('age-war-room-players-city'),
+                summary: global.document.getElementById('age-war-room-players-summary'),
+                list: global.document.getElementById('age-war-room-players-list'),
+                empty: global.document.getElementById('age-war-room-players-empty')
             }
         ];
         return hosts.filter((host) => host.list || host.empty || host.summary || host.cityLabel);
