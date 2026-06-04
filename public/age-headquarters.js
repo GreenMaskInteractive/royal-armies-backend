@@ -435,8 +435,8 @@
         if (!panel) return;
 
         const canView = canViewHeadquartersPublic(lastAppliedWorkspace);
-        const leadershipEligible = hqManagerEligible;
-        const shouldShow = Boolean(showOnCouncilRoomView && canView && leadershipEligible);
+        const showPublicWorkspace = Boolean(canView && !hasActiveManagerControls());
+        const shouldShow = Boolean(showOnCouncilRoomView && showPublicWorkspace && hqManagerEligible);
         setNodeHidden(panel, !shouldShow);
     }
 
