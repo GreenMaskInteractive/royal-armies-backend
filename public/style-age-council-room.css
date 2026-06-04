@@ -338,7 +338,7 @@
 }
 
 .age-council-room-workspace.is-hq-public-view .age-council-room-nation-records {
-    row-gap: 35px;
+    row-gap: 100px;
     column-gap: 8px;
 }
 
@@ -417,11 +417,6 @@
     border-right: none;
     border-bottom: 1px solid rgba(184, 144, 48, 0.2);
     gap: 5px;
-}
-
-/* ~35px between Leader/Vice and Council/Planners (12px flex gap + 23px) */
-.age-council-room-workspace.is-hq-public-view .age-council-room-nation-deck > .age-hq-nation-cabinet .age-hq-cabinet-section:nth-child(3) {
-    margin-top: 23px;
 }
 
 .age-council-room-nation-deck > .age-hq-nation-cabinet .age-hq-cabinet-section:last-child {
