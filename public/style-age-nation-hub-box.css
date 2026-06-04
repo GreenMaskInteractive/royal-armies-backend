@@ -2,32 +2,48 @@
  * FLEX — Nation Hub box menu (dual column, active UI).
  */
 
-.age-nation-hub-menu--box {
+#age-page-canvas .age-nation-hub-menu.age-nation-hub-menu--box {
     position: absolute;
     top: calc(100% + 8px);
     right: 0;
     left: auto;
-    z-index: 12040;
+    z-index: 12050;
     display: none;
-    box-sizing: border-box;
+    visibility: visible;
+    max-height: none;
+    width: max-content;
     min-width: 320px;
     max-width: min(420px, 92vw);
+    overflow: visible;
     pointer-events: none;
     opacity: 0;
+    border: none;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
     transform: translateY(-6px);
     transition:
         opacity 0.2s ease,
         transform 0.24s cubic-bezier(0.16, 1, 0.28, 1);
 }
 
-.age-nation-hub.is-open .age-nation-hub-menu--box {
-    display: block;
-    pointer-events: auto;
-    opacity: 1;
+#age-page-canvas .age-nation-hub-menu.age-nation-hub-menu--box.is-box-menu-portaled {
+    position: fixed;
+    top: var(--age-nation-hub-box-top, 0);
+    left: var(--age-nation-hub-box-left, 0);
+    right: auto;
+}
+
+#age-page-canvas .age-nation-hub-menu.age-nation-hub-menu--box.is-box-menu-open:not([hidden]) {
+    display: block !important;
+    visibility: visible !important;
+    max-height: none !important;
+    opacity: 1 !important;
+    pointer-events: auto !important;
     transform: translateY(0);
 }
 
-.age-nation-hub-menu--box[hidden] {
+#age-page-canvas .age-nation-hub-menu.age-nation-hub-menu--box[hidden] {
     display: none !important;
 }
 
@@ -95,7 +111,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-    .age-nation-hub-menu--box {
+    #age-page-canvas .age-nation-hub-menu.age-nation-hub-menu--box {
         transition-duration: 0.01ms !important;
     }
 

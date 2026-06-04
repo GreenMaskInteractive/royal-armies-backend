@@ -7,7 +7,7 @@
     /** Set true to restore full-screen radial menu (go-to design in style-age-nation-hub-radial.css). */
     const ENABLE_RADIAL_HUB_MENU = false;
 
-    const BOX_BUILD_VERSION = 'nation-hub-box-1';
+    const BOX_BUILD_VERSION = 'nation-hub-box-2';
     const RADIAL_MENU_IMAGE = 'images/radialmenu.png?v=radialmenu-accent-3';
     const RADIAL_BUILD_VERSION = 'radialmenu-accent-3';
     const RADIAL_WEDGE_ANGLES_DEG = Object.freeze([-67.5, -22.5, 22.5, 67.5, 112.5]);
@@ -24,6 +24,7 @@
 
     let bound = false;
     let escapeHandler = null;
+    let boxMenuLayoutHandler = null;
 
     function getHub() {
         return global.document.getElementById('age-nation-hub');
@@ -58,6 +59,35 @@
         if (!radial || radial.dataset.ageRadialPortaled === 'true') return;
         global.document.body.appendChild(radial);
         radial.dataset.ageRadialPortaled = 'true';
+    }
+
+    function ensureBoxMenuPortal() {
+        const menu = getMenu();
+        if (!menu || menu.dataset.ageBoxPortaled === 'true') return;
+        global.document.body.appendChild(menu);
+        menu.classList.add('is-box-menu-portaled');
+        menu.dataset.ageBoxPortaled = 'true';
+    }
+
+    function syncBoxMenuPosition() {
+        const menu = getMenu();
+        const toggle = getToggle();
+        if (!menu || !toggle) return;
+
+        const rect = toggle.getBoundingClientRect();
+        const gapPx = 8;
+        menu.style.setProperty('--age-nation-hub-box-top', `${Math.round(rect.bottom + gapPx)}px`);
+        menu.style.setProperty('--age-nation-hub-box-left', `${Math.round(rect.left)}px`);
+    }
+
+    function bindBoxMenuLayoutSync() {
+        if (boxMenuLayoutHandler) return;
+        boxMenuLayoutHandler = () => {
+            if (!isHubOpen()) return;
+            syncBoxMenuPosition();
+        };
+        global.addEventListener('resize', boxMenuLayoutHandler);
+        global.addEventListener('scroll', boxMenuLayoutHandler, true);
     }
 
     function setHubOpen(open) {
@@ -100,14 +130,20 @@
 
         if (!menu) return;
 
-        menu.hidden = !nextOpen;
         if (nextOpen) {
+            ensureBoxMenuPortal();
+            syncBoxMenuPosition();
+            menu.classList.add('is-box-menu-open');
+            menu.hidden = false;
             menu.removeAttribute('hidden');
             menu.setAttribute('aria-hidden', 'false');
-        } else {
-            menu.setAttribute('hidden', '');
-            menu.setAttribute('aria-hidden', 'true');
+            return;
         }
+
+        menu.classList.remove('is-box-menu-open');
+        menu.hidden = true;
+        menu.setAttribute('hidden', '');
+        menu.setAttribute('aria-hidden', 'true');
     }
 
     function setHubOpenRadial(open, hub, toggle) {
@@ -149,6 +185,7 @@
         const radial = getRadial();
         if (!hub) return;
         if (hub.contains(event.target)) return;
+        if (getMenu()?.contains(event.target)) return;
         if (ENABLE_RADIAL_HUB_MENU && radial?.contains(event.target)) return;
         closeHub();
     }
@@ -318,7 +355,9 @@
             });
             getDial()?.addEventListener('click', onRadialActivate);
         } else {
+            ensureBoxMenuPortal();
             renderBoxMenu();
+            bindBoxMenuLayoutSync();
         }
 
         getToggle()?.addEventListener('click', (event) => {
