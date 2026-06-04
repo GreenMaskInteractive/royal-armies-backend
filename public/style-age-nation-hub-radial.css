@@ -84,9 +84,9 @@
 .age-nation-hub-radial-dial {
     --age-radial-track-size: 520px;
     --age-radial-slot-radius: 208px;
-    --age-radial-slot-well-w: 118px;
+    --age-radial-slot-well-w: 114px;
     --age-radial-slot-well-h: 128px;
-    --age-radial-slot-size-w: 96px;
+    --age-radial-slot-size-w: 90px;
     --age-radial-slot-size-h: 82px;
     /* Wheel SVG inner hole ≈ 184px — keep octagon hub inset within it */
     --age-radial-center-size: 132px;
