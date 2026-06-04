@@ -31,8 +31,8 @@
     display: none !important;
 }
 
-.age-nation-hub.is-open .age-nation-hub-radial {
-    display: flex;
+.age-nation-hub-radial.is-open {
+    display: flex !important;
     pointer-events: auto;
     visibility: visible;
     opacity: 1;

@@ -96,11 +96,14 @@
         const nextOpen = Boolean(open);
 
         if (nextOpen) {
+            ensureRadialPortal();
             syncRadialAnchorPosition();
             ensureRadialPositionWatch();
             hub.classList.add('is-open');
+            radial.classList.add('is-open');
             toggle.setAttribute('aria-expanded', 'true');
             radial.hidden = false;
+            radial.removeAttribute('hidden');
             radial.setAttribute('aria-hidden', 'false');
             setCenterLabel(DEFAULT_CENTER_LABEL);
 
@@ -305,6 +308,7 @@
         if (bound) return;
         bound = true;
 
+        ensureRadialPortal();
         renderRadialSlots();
 
         getToggle()?.addEventListener('click', (event) => {
