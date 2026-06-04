@@ -25,7 +25,7 @@
                 { id: 'game', label: 'Game (progression)', path: '/game', file: 'game.html' },
                 { id: 'agealpha', label: 'Age Alpha (live session)', path: '/agealpha', file: 'agealpha.html' },
                 { id: 'settlement', label: 'Age Alpha (settlement tab)', path: '/agealpha?openSettlement=1', file: 'agealpha.html' },
-                { id: 'council-room', label: 'Council Room (HQ dev)', path: '/council-room', file: 'council-room.html' }
+                { id: 'headquarters', label: 'Headquarters (HQ dev)', path: '/headquarters', file: 'headquarters.html' }
             ]
         }
     ];
@@ -68,6 +68,7 @@
             || slug === 'game'
             || slug === 'agealpha'
             || slug === 'settlement'
+            || slug === 'headquarters'
             || slug === 'council-room'
             || slug === 'season-age-of-war-preview'
             || slug === 'ageofwarcinematic'
@@ -108,8 +109,8 @@
             url.searchParams.set('riftProgressionReset', '1');
         }
 
-        if (page.id === 'agealpha' || page.id === 'settlement' || page.id === 'council-room' || page.id === 'season-age'
-            || fileName === 'agealpha.html' || fileName === 'council-room.html'
+        if (page.id === 'agealpha' || page.id === 'settlement' || page.id === 'headquarters' || page.id === 'season-age'
+            || fileName === 'agealpha.html' || fileName === 'headquarters.html'
             || fileName === 'season-age-of-war-age.html') {
             url.searchParams.set('riftAgeDevBypass', '1');
         }

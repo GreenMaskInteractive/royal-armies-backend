@@ -9,7 +9,8 @@
         game: '/game',
         agealpha: '/agealpha',
         settlement: '/settlement',
-        'council-room': '/council-room',
+        headquarters: '/headquarters',
+        'council-room': '/headquarters',
         terms: '/terms',
         resetPassword: '/reset-password',
         howDidYouGetHere: '/how-did-you-get-here'
@@ -40,15 +41,19 @@
         });
     }
 
-    function buildCouncilRoomUrl(options = {}) {
-        const url = new URL(PATHS['council-room'], global.location?.origin || 'https://royalarmies.com');
+    function buildHeadquartersUrl(options = {}) {
+        const url = new URL(PATHS.headquarters, global.location?.origin || 'https://royalarmies.com');
         if (options.riftAgeDevBypass) url.searchParams.set('riftAgeDevBypass', '1');
         const query = url.searchParams.toString();
         return query ? `${url.pathname}?${query}` : url.pathname;
     }
 
-    function navigateToCouncilRoomPage(options = {}) {
-        const target = buildCouncilRoomUrl({
+    function buildCouncilRoomUrl(options = {}) {
+        return buildHeadquartersUrl(options);
+    }
+
+    function navigateToHeadquartersPage(options = {}) {
+        const target = buildHeadquartersUrl({
             riftAgeDevBypass: options.riftAgeDevBypass !== false
         });
         if (global.RoyalArmiesPageRouteTransition?.navigateTo) {
@@ -56,6 +61,10 @@
         }
         global.location.href = target;
         return Promise.resolve();
+    }
+
+    function navigateToCouncilRoomPage(options = {}) {
+        return navigateToHeadquartersPage(options);
     }
 
     function navigateToSettlementPage(options = {}) {
@@ -75,7 +84,9 @@
         buildGameUrl,
         buildAgeAlphaUrl,
         buildSettlementUrl,
+        buildHeadquartersUrl,
         buildCouncilRoomUrl,
+        navigateToHeadquartersPage,
         navigateToCouncilRoomPage,
         navigateToSettlementPage
     };

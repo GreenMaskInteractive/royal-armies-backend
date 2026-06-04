@@ -3308,7 +3308,7 @@ const PORTAL_HTML_PAGES = {
 
 const OFFICIAL_AGE_HTML_PAGES = {
     agealpha: 'agealpha.html',
-    'council-room': 'council-room.html'
+    headquarters: 'headquarters.html'
 };
 
 const ALL_HTML_PAGE_ROUTES = {
@@ -3344,6 +3344,10 @@ app.get(['/settlement', '/settlement.html'], (req, res) => {
     }
     const nextQuery = params.toString();
     res.redirect(301, `/agealpha${nextQuery ? `?${nextQuery}` : ''}`);
+});
+
+app.get(['/council-room', '/council-room.html'], (req, res) => {
+    redirectWithQuery(req, res, '/headquarters');
 });
 
 Object.entries(ALL_HTML_PAGE_ROUTES).forEach(([slug, fileName]) => {
