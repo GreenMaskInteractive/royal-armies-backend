@@ -84,10 +84,11 @@
 .age-nation-hub-radial-dial {
     --age-radial-track-size: 520px;
     --age-radial-slot-radius: 208px;
-    --age-radial-slot-well-w: 108px;
+    --age-radial-slot-well-w: 118px;
     --age-radial-slot-well-h: 128px;
-    --age-radial-slot-size: 76px;
-    --age-radial-center-size: 156px;
+    --age-radial-slot-size-w: 96px;
+    --age-radial-slot-size-h: 82px;
+    --age-radial-center-size: 176px;
     position: relative;
     flex-shrink: 0;
     width: 0;
@@ -217,9 +218,9 @@
     position: absolute;
     top: 18px;
     left: 50%;
-    width: 92px;
+    width: 100px;
     height: 52px;
-    margin-left: -46px;
+    margin-left: -50px;
     background:
         linear-gradient(180deg, hsla(var(--age-radial-slot-accent), 35%, 28%, 0.5) 0%, rgba(8, 6, 4, 0.85) 100%);
     clip-path: polygon(12% 0%, 88% 0%, 100% 100%, 0% 100%);
@@ -271,7 +272,7 @@
     inset: 4px;
     background:
         linear-gradient(160deg, #3d3224 0%, #120e0a 55%, #080604 100%);
-    clip-path: polygon(30% 0%, 70% 0%, 100% 30%, 100% 70%, 70% 100%, 30% 100%, 0% 70%, 0% 30%);
+    clip-path: polygon(18% 0%, 82% 0%, 100% 18%, 100% 82%, 82% 100%, 18% 100%, 0% 82%, 0% 18%);
     border: none;
     box-shadow:
         inset 0 2px 0 rgba(255, 215, 128, 0.2),
@@ -283,15 +284,15 @@
     content: '';
     position: absolute;
     inset: 6px;
-    clip-path: polygon(30% 0%, 70% 0%, 100% 30%, 100% 70%, 70% 100%, 30% 100%, 0% 70%, 0% 30%);
+    clip-path: polygon(18% 0%, 82% 0%, 100% 18%, 100% 82%, 82% 100%, 18% 100%, 0% 82%, 0% 18%);
     border: 2px solid rgba(201, 162, 72, 0.55);
     box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.4);
 }
 
 .age-nation-hub-radial-center-core {
     position: absolute;
-    inset: 22px;
-    clip-path: polygon(30% 0%, 70% 0%, 100% 30%, 100% 70%, 70% 100%, 30% 100%, 0% 70%, 0% 30%);
+    inset: 16px;
+    clip-path: polygon(18% 0%, 82% 0%, 100% 18%, 100% 82%, 82% 100%, 18% 100%, 0% 82%, 0% 18%);
     background:
         radial-gradient(circle at 50% 35%, rgba(72, 58, 36, 0.95) 0%, rgba(14, 11, 8, 0.99) 72%);
     box-shadow: inset 0 0 18px rgba(0, 0, 0, 0.5);
@@ -300,11 +301,13 @@
 .age-nation-hub-radial-center-label {
     position: relative;
     z-index: 2;
-    max-width: 100px;
+    box-sizing: border-box;
+    max-width: 88%;
+    padding: 0 8px;
     font-family: 'Cinzel', serif;
-    font-size: 1rem;
+    font-size: 0.9rem;
     font-weight: 700;
-    letter-spacing: 0.16em;
+    letter-spacing: 0.1em;
     text-transform: uppercase;
     text-align: center;
     line-height: 1.2;
@@ -312,7 +315,16 @@
     text-shadow:
         0 0 14px rgba(255, 215, 128, 0.35),
         0 2px 6px rgba(0, 0, 0, 0.8);
-    transition: letter-spacing 0.2s ease, color 0.18s ease;
+    overflow-wrap: break-word;
+    word-break: break-word;
+    hyphens: auto;
+    transition: letter-spacing 0.2s ease, color 0.18s ease, font-size 0.18s ease;
+}
+
+.age-nation-hub-radial-center.is-long-label .age-nation-hub-radial-center-label {
+    font-size: 0.68rem;
+    letter-spacing: 0.05em;
+    line-height: 1.15;
 }
 
 /* Hex ability gems */
@@ -321,8 +333,8 @@
     position: relative;
     z-index: 2;
     flex-shrink: 0;
-    width: var(--age-radial-slot-size);
-    height: var(--age-radial-slot-size);
+    width: var(--age-radial-slot-size-w);
+    height: var(--age-radial-slot-size-h);
     margin-top: 8px;
     padding: 0;
     border: none;
@@ -365,7 +377,9 @@
 }
 
 .age-nation-hub-radial-slot-frame {
-    display: block;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     width: 100%;
     height: 100%;
     filter: drop-shadow(0 6px 14px rgba(0, 0, 0, 0.5));
@@ -376,6 +390,8 @@
     display: block;
     width: 100%;
     height: 100%;
+    max-width: 100%;
+    max-height: 100%;
     object-fit: contain;
 }
 

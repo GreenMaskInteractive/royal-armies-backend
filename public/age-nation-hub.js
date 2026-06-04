@@ -5,7 +5,7 @@
     'use strict';
 
     const DEFAULT_CENTER_LABEL = 'MENU';
-    const RADIAL_BUILD_VERSION = 'rpg-wheel-1';
+    const RADIAL_BUILD_VERSION = 'rpg-wheel-2';
     const SLOT_COUNT = 5;
     const SLOT_START_ANGLE_DEG = -90;
 
@@ -46,8 +46,13 @@
 
     function setCenterLabel(text) {
         const el = getCenterLabelEl();
+        const center = el?.closest('.age-nation-hub-radial-center');
         if (!el) return;
-        el.textContent = String(text || DEFAULT_CENTER_LABEL).trim() || DEFAULT_CENTER_LABEL;
+        const label = String(text || DEFAULT_CENTER_LABEL).trim() || DEFAULT_CENTER_LABEL;
+        el.textContent = label;
+        if (center) {
+            center.classList.toggle('is-long-label', label.length > 8);
+        }
     }
 
     function ensureRadialPortal() {
@@ -315,7 +320,7 @@
         const glyph = RADIAL_SLOT_ICONS[itemId] || '';
         const safeLabel = String(label || 'Slot').slice(0, 14);
         const svg = (
-            `<svg xmlns="http://www.w3.org/2000/svg" width="80" height="80" viewBox="0 0 64 64">`
+            `<svg xmlns="http://www.w3.org/2000/svg" width="96" height="80" viewBox="0 0 72 64">`
             + `<defs>`
             + `<linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">`
             + `<stop offset="0%" stop-color="hsl(${hue} 28% 32%)"/>`
@@ -325,9 +330,9 @@
             + `<stop offset="0%" stop-color="#ffe9a8"/><stop offset="100%" stop-color="#8a6d2e"/>`
             + `</linearGradient>`
             + `</defs>`
-            + `<path d="M32 6 L52 18 V46 L32 58 L12 46 V18 Z" fill="url(#bg)" stroke="url(#rim)" stroke-width="2"/>`
-            + `<path d="M32 12 L46 21 V43 L32 52 L18 43 V21 Z" fill="none" stroke="hsl(${hue} 50% 55%)" stroke-width="1" opacity="0.5"/>`
-            + `<g color="hsl(${hue} 58% 82%)" transform="translate(0 -2)">${glyph}</g>`
+            + `<path d="M36 10 L58 21 V43 L36 54 L14 43 V21 Z" fill="url(#bg)" stroke="url(#rim)" stroke-width="2"/>`
+            + `<path d="M36 16 L52 24 V40 L36 48 L20 40 V24 Z" fill="none" stroke="hsl(${hue} 50% 55%)" stroke-width="1" opacity="0.5"/>`
+            + `<g color="hsl(${hue} 58% 82%)" transform="translate(36 31) scale(0.52) translate(-32 -30)">${glyph}</g>`
             + '</svg>'
         );
         return `data:image/svg+xml,${encodeURIComponent(svg)}`;
