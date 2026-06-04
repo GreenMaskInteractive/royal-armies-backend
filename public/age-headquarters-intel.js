@@ -219,7 +219,7 @@
                 + `<span>${escapeHtml(entry.message)}</span>`
                 + `</article>`
             )).join('')
-            : '<p class="age-hq-intel-empty">Bounty feed awaiting the next cycle.</p>';
+            : '';
     }
 
     function applyWorkspace(workspace) {
