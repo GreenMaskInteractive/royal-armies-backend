@@ -416,6 +416,16 @@
     grid-column: 1;
     grid-row: 1;
     min-width: 0;
+    border: none;
+    outline: none;
+    box-shadow: none;
+    background: transparent;
+}
+
+.age-council-room-map-stack::before,
+.age-council-room-map-stack::after {
+    content: none;
+    display: none;
 }
 
 .age-council-room-map-stack .age-hq-planning-map-host {

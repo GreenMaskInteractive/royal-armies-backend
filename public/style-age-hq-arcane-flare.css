@@ -452,38 +452,6 @@ body[data-age-council-room-page="true"] .is-hq-arcane-themed > *:not(.hq-arcane-
     color: #b8e8dc;
 }
 
-/* —— Planning map frame —— */
-.is-hq-arcane-themed .age-council-room-map-stack {
-    position: relative;
-    outline: 1px solid rgba(112, 200, 184, 0.48);
-    outline-offset: 2px;
-    box-shadow:
-        0 0 24px rgba(88, 200, 180, 0.22),
-        inset 0 0 60px rgba(32, 96, 88, 0.16);
-}
-
-.is-hq-arcane-themed .age-council-room-map-stack::before {
-    content: '';
-    position: absolute;
-    inset: -6px;
-    pointer-events: none;
-    z-index: 3;
-    border: 1px solid rgba(255, 210, 140, 0.38);
-    box-shadow: inset 0 0 32px rgba(88, 188, 172, 0.14);
-}
-
-.is-hq-arcane-themed .age-council-room-map-stack::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    pointer-events: none;
-    z-index: 2;
-    background:
-        linear-gradient(180deg, rgba(88, 188, 172, 0.12) 0%, transparent 22%),
-        linear-gradient(0deg, rgba(255, 188, 96, 0.08) 0%, transparent 20%);
-    box-shadow: inset 0 0 72px rgba(16, 48, 44, 0.38);
-}
-
 .is-hq-arcane-themed .age-hq-manager-btn.is-active,
 .is-hq-arcane-themed .age-hq-manager-btn[aria-pressed="true"] {
     border-color: rgba(255, 220, 140, 0.85);
