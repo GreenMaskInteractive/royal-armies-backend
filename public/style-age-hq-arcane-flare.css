@@ -251,10 +251,53 @@ body[data-age-council-room-page="true"] .is-hq-arcane-themed::after {
         linear-gradient(0deg, var(--hq-arcane-rim-alt), transparent 18%) bottom right / 2px 130px no-repeat;
 }
 
-.age-council-room-modal .is-hq-arcane-themed > *,
-body[data-age-council-room-page="true"] .is-hq-arcane-themed > *:not(.hq-arcane-chrome) {
+.age-council-room-modal .is-hq-arcane-themed > *:not(.hq-arcane-border-light),
+body[data-age-council-room-page="true"] .is-hq-arcane-themed > *:not(.hq-arcane-chrome):not(.hq-arcane-border-light) {
     position: relative;
     z-index: 1;
+}
+
+/* —— Workspace outer border — slow traveling light —— */
+.is-hq-arcane-themed > .hq-arcane-border-light {
+    position: absolute;
+    inset: 0;
+    z-index: 3;
+    pointer-events: none;
+    border-radius: 2px;
+    padding: 2px;
+    overflow: hidden;
+    -webkit-mask:
+        linear-gradient(#fff 0 0) content-box,
+        linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask:
+        linear-gradient(#fff 0 0) content-box,
+        linear-gradient(#fff 0 0);
+    mask-composite: exclude;
+    filter: drop-shadow(0 0 10px rgba(40, 88, 78, 0.35));
+}
+
+.is-hq-arcane-themed > .hq-arcane-border-light::before {
+    content: '';
+    position: absolute;
+    inset: -130%;
+    background: conic-gradient(
+        from 0deg,
+        transparent 0deg 298deg,
+        rgba(40, 88, 78, 0.45) 310deg,
+        rgba(255, 210, 140, 0.82) 322deg,
+        rgba(255, 242, 196, 1) 334deg,
+        rgba(54, 108, 98, 0.92) 346deg,
+        rgba(40, 88, 78, 0.45) 354deg,
+        transparent 360deg
+    );
+    animation: hq-arcane-border-light-spin 20s linear infinite;
+}
+
+@keyframes hq-arcane-border-light-spin {
+    to {
+        transform: rotate(360deg);
+    }
 }
 
 /* —— Header & crest sigil —— */
@@ -497,7 +540,8 @@ body[data-age-council-room-page="true"] .is-hq-arcane-themed > *:not(.hq-arcane-
     body[data-age-council-room-page="true"] .is-hq-arcane-themed::before,
     .hq-arcane-crest-sigil,
     .hq-arcane-corner,
-    .hq-arcane-sigil-rail {
+    .hq-arcane-sigil-rail,
+    .is-hq-arcane-themed > .hq-arcane-border-light::before {
         animation: none;
     }
 }
