@@ -446,17 +446,18 @@
         markGameSessionStarted();
         consumeAgeDevBypassQuery();
 
-        wireWorldMapLink();
         bindPageNavigation();
         registerUnloadHandlers();
-        initializeGameTimeClock();
         bindDevTierSelect();
+        wireWorldMapLink();
 
         const gate = global.RoyalArmiesPageLoadingGate;
         if (gate?.retain) gate.retain('settlement-page');
 
         try {
+            await global.RoyalArmiesAgeAreaShell?.ensureAreaShellMounted?.();
             await bootstrapSettlementSession();
+            global.RoyalArmiesAgeAreaShell?.refreshCommanderNavChrome?.();
 
             if (typeof global.enableAgeMovementPanel === 'function') {
                 global.enableAgeMovementPanel();
@@ -475,10 +476,10 @@
             if (typeof global.enableAgeUnitEvolution === 'function') {
                 global.enableAgeUnitEvolution();
             }
-
-            if (typeof global.bindPortalNewMessagesBarNavigation === 'function') {
-                global.bindPortalNewMessagesBarNavigation();
+            if (typeof global.enableAgeSettlementVenueWorkspaces === 'function') {
+                global.enableAgeSettlementVenueWorkspaces();
             }
+
             if (typeof global.fetchCommanderMailboxFromServer === 'function') {
                 await global.fetchCommanderMailboxFromServer();
             }

@@ -24,7 +24,8 @@
                 { id: 'main', label: 'Age Portal', path: '/main', file: 'main.html' },
                 { id: 'game', label: 'Game (progression)', path: '/game', file: 'game.html' },
                 { id: 'agealpha', label: 'Age Alpha (live session)', path: '/agealpha', file: 'agealpha.html' },
-                { id: 'settlement', label: 'Age Alpha (settlement tab)', path: '/agealpha?openSettlement=1', file: 'agealpha.html' },
+                { id: 'settlement-tab', label: 'Age Alpha (settlement tab)', path: '/agealpha?openSettlement=1', file: 'agealpha.html' },
+                { id: 'settlement-page', label: 'Settlement (dev page)', path: '/settlement', file: 'settlement.html' },
                 { id: 'headquarters', label: 'Headquarters (HQ dev)', path: '/headquarters', file: 'headquarters.html' }
             ]
         }
@@ -109,8 +110,9 @@
             url.searchParams.set('riftProgressionReset', '1');
         }
 
-        if (page.id === 'agealpha' || page.id === 'settlement' || page.id === 'headquarters' || page.id === 'season-age'
-            || fileName === 'agealpha.html' || fileName === 'headquarters.html'
+        if (page.id === 'agealpha' || page.id === 'settlement-tab' || page.id === 'settlement-page'
+            || page.id === 'headquarters' || page.id === 'season-age'
+            || fileName === 'agealpha.html' || fileName === 'headquarters.html' || fileName === 'settlement.html'
             || fileName === 'season-age-of-war-age.html') {
             url.searchParams.set('riftAgeDevBypass', '1');
         }
@@ -139,10 +141,21 @@
 
     function getCurrentPageId() {
         const slug = getPathSlug();
+        try {
+            const params = new URLSearchParams(global.location.search);
+            if (slug === 'agealpha' && params.get('openSettlement') === '1') {
+                return 'settlement-tab';
+            }
+        } catch (_err) {
+            /* ignore */
+        }
+
         const match = DEV_SITE_PAGES.find((page) => {
-            const pageSlug = (page.path || '').replace(/^\//, '').replace(/\.html$/i, '').toLowerCase();
             const fileSlug = (page.file || '').replace(/\.html$/i, '').toLowerCase();
-            return slug === pageSlug || slug === fileSlug;
+            const pathSlug = String((page.path || '').split('?')[0] || '')
+                .replace(/^\//, '')
+                .toLowerCase();
+            return slug === fileSlug || slug === pathSlug;
         });
         return match ? match.id : '';
     }

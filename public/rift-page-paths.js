@@ -35,10 +35,19 @@
     }
 
     function buildSettlementUrl(options = {}) {
-        return buildAgeAlphaUrl({
-            riftAgeDevBypass: options.riftAgeDevBypass !== false,
-            openSettlement: options.openSettlement !== false
-        });
+        if (options.useAgeAlphaTab === true) {
+            return buildAgeAlphaUrl({
+                riftAgeDevBypass: options.riftAgeDevBypass !== false,
+                openSettlement: options.openSettlement !== false
+            });
+        }
+
+        const url = new URL(PATHS.settlement, global.location?.origin || 'https://royalarmies.com');
+        if (options.riftAgeDevBypass !== false) {
+            url.searchParams.set('riftAgeDevBypass', '1');
+        }
+        const query = url.searchParams.toString();
+        return query ? `${url.pathname}?${query}` : url.pathname;
     }
 
     function buildHeadquartersUrl(options = {}) {
@@ -70,6 +79,7 @@
     function navigateToSettlementPage(options = {}) {
         const target = buildSettlementUrl({
             riftAgeDevBypass: options.riftAgeDevBypass !== false,
+            useAgeAlphaTab: options.useAgeAlphaTab === true,
             openSettlement: options.openSettlement !== false
         });
         if (global.RoyalArmiesPageRouteTransition?.navigateTo) {
