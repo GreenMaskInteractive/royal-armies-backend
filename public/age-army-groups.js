@@ -47,6 +47,7 @@
         openBtn: null,
         playersPanel: null,
         warRoomDialog: null,
+        warRoomHeader: null,
         warRoomWorkspace: null,
         workspaceMain: null,
         createBtn: null,
@@ -245,31 +246,31 @@
 
     function connectWarRoomPlayersPanelLayoutObserver() {
         disconnectWarRoomPlayersPanelLayoutObserver();
-        const workspace = els.warRoomWorkspace;
+        const header = els.warRoomHeader;
         const dialog = els.warRoomDialog;
-        if (!workspace || !dialog || typeof ResizeObserver === 'undefined') return;
+        if (!header || !dialog || typeof ResizeObserver === 'undefined') return;
 
         warRoomPlayersPanelLayoutObserver = new ResizeObserver(() => {
             if (workspaceOpen) syncWarRoomPlayersPanelPosition();
         });
-        warRoomPlayersPanelLayoutObserver.observe(workspace);
+        warRoomPlayersPanelLayoutObserver.observe(header);
         warRoomPlayersPanelLayoutObserver.observe(dialog);
     }
 
     function syncWarRoomPlayersPanelPosition() {
         const panel = els.playersPanel;
         const dialog = els.warRoomDialog;
-        const workspace = els.warRoomWorkspace;
-        if (!panel || !dialog || !workspace || !workspaceOpen || panel.hidden) return;
+        const header = els.warRoomHeader;
+        if (!panel || !dialog || !header || !workspaceOpen || panel.hidden) return;
 
         const dialogRect = dialog.getBoundingClientRect();
-        const workspaceRect = workspace.getBoundingClientRect();
+        const headerRect = header.getBoundingClientRect();
         const panelWidth = panel.offsetWidth || WAR_ROOM_PLAYERS_PANEL_WIDTH_PX;
         const left = Math.max(12, dialogRect.left - panelWidth - WAR_ROOM_PLAYERS_PANEL_GAP_PX);
         const viewportHeight = global.innerHeight || global.document.documentElement.clientHeight;
 
-        panel.style.top = `${workspaceRect.top}px`;
-        panel.style.bottom = `${Math.max(0, viewportHeight - workspaceRect.bottom)}px`;
+        panel.style.top = `${headerRect.top}px`;
+        panel.style.bottom = `${Math.max(0, viewportHeight - dialogRect.bottom)}px`;
         panel.style.left = `${left}px`;
         panel.style.height = '';
         panel.style.maxHeight = '';
@@ -1622,6 +1623,7 @@
     function enable() {
         els.modal = global.document.getElementById('age-war-room-modal');
         els.warRoomDialog = els.modal?.querySelector('.age-war-room-dialog') || null;
+        els.warRoomHeader = els.warRoomDialog?.querySelector('.age-war-room-header') || null;
         els.warRoomWorkspace = els.warRoomDialog?.querySelector('.age-war-room-workspace-shell') || null;
         els.backdrop = global.document.getElementById('age-war-room-backdrop');
         els.closeBtn = global.document.getElementById('age-war-room-close');
