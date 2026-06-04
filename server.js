@@ -95,6 +95,7 @@ const {
     reconcileHeadquartersElection,
     tryFinalizeElectionFromVotes,
     recordRecognizedWarDeclaration,
+    syncWarLedgerRelations,
     NATION_AUTHORITY_RANK,
     NATION_AUTHORITY_MIN_RANK14
 } = require('./nexus-age-headquarters');
