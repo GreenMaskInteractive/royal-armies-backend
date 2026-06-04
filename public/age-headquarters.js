@@ -434,7 +434,9 @@
         const panel = global.document.getElementById('age-hq-dispatch-panel');
         if (!panel) return;
 
-        const shouldShow = Boolean(showOnCouncilRoomView && hasActiveManagerControls());
+        const canView = canViewHeadquartersPublic(lastAppliedWorkspace);
+        const leadershipEligible = hqManagerEligible;
+        const shouldShow = Boolean(showOnCouncilRoomView && canView && leadershipEligible);
         setNodeHidden(panel, !shouldShow);
     }
 
