@@ -5,6 +5,7 @@
     'use strict';
 
     const DEFAULT_CENTER_LABEL = 'MENU';
+    const RADIAL_BUILD_VERSION = 'premium-1';
     const SLOT_COUNT = 5;
     const SLOT_START_ANGLE_DEG = -90;
 
@@ -218,14 +219,28 @@
         activateRadialItem(itemId, event);
     }
 
-    function buildPlaceholderSvgDataUri(label, index) {
-        const hue = 38 + index * 14;
-        const safeLabel = String(label || 'Slot').slice(0, 12);
+    const RADIAL_SLOT_ICONS = Object.freeze({
+        nation: '<path d="M32 14l14 8v16l-14 8-14-8V22z" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="32" cy="32" r="5" fill="currentColor" opacity="0.85"/>',
+        records: '<path d="M22 18h20v28H22z" fill="none" stroke="currentColor" stroke-width="2"/><path d="M26 24h12M26 30h12M26 36h8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>',
+        discoveries: '<path d="M32 16l4 10h10l-8 6 3 10-9-7-9 7 3-10-8-6h10z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>',
+        banner: '<path d="M20 20h8v24h-8zM36 20v24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M28 20c8 0 12 4 12 12s-4 12-12 12" fill="none" stroke="currentColor" stroke-width="2"/>',
+        'battle-pass': '<path d="M18 40c6-10 22-10 28 0" fill="none" stroke="currentColor" stroke-width="2"/><path d="M24 26h16v8H24z" fill="none" stroke="currentColor" stroke-width="2"/><path d="M28 22h8v4h-8z" fill="currentColor" opacity="0.7"/>'
+    });
+
+    function buildPlaceholderSvgDataUri(itemId, label, index) {
+        const hue = 38 + index * 16;
+        const glyph = RADIAL_SLOT_ICONS[itemId] || '';
+        const safeLabel = String(label || 'Slot').slice(0, 14);
         const svg = (
-            `<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64">`
-            + `<rect width="64" height="64" rx="10" fill="hsl(${hue} 28% 18%)"/>`
-            + `<rect x="6" y="6" width="52" height="52" rx="8" fill="none" stroke="hsl(${hue} 55% 52%)" stroke-width="2" stroke-dasharray="5 4"/>`
-            + `<text x="32" y="36" text-anchor="middle" font-family="Cinzel,serif" font-size="9" fill="hsl(${hue} 40% 78%)">${safeLabel}</text>`
+            `<svg xmlns="http://www.w3.org/2000/svg" width="72" height="72" viewBox="0 0 64 64">`
+            + `<defs><linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">`
+            + `<stop offset="0%" stop-color="hsl(${hue} 32% 24%)"/>`
+            + `<stop offset="100%" stop-color="hsl(${hue} 22% 10%)"/>`
+            + `</linearGradient></defs>`
+            + `<rect width="64" height="64" rx="12" fill="url(#bg)"/>`
+            + `<rect x="5" y="5" width="54" height="54" rx="10" fill="none" stroke="hsl(${hue} 62% 58%)" stroke-width="1.5" opacity="0.55"/>`
+            + `<g color="hsl(${hue} 55% 78%)" transform="translate(0 2)">${glyph}</g>`
+            + `<text x="32" y="54" text-anchor="middle" font-family="Cinzel,serif" font-size="7" letter-spacing="0.08em" fill="hsl(${hue} 35% 82%)" opacity="0.92">${safeLabel}</text>`
             + '</svg>'
         );
         return `data:image/svg+xml,${encodeURIComponent(svg)}`;
@@ -233,12 +248,20 @@
 
     function renderRadialSlots() {
         const dial = getDial();
-        if (!dial || dial.dataset.ageRadialBuilt === 'true') return;
+        if (!dial || dial.dataset.ageRadialVersion === RADIAL_BUILD_VERSION) return;
 
-        const trackHtml = '<div class="age-nation-hub-radial-track" aria-hidden="true"></div>';
+        const trackHtml = (
+            '<div class="age-nation-hub-radial-track" aria-hidden="true">'
+            + '<div class="age-nation-hub-radial-track-aura"></div>'
+            + '<div class="age-nation-hub-radial-track-ring"></div>'
+            + '<div class="age-nation-hub-radial-track-ticks"></div>'
+            + '</div>'
+        );
 
         const centerHtml = (
             '<div class="age-nation-hub-radial-center" aria-live="polite">'
+            + '<div class="age-nation-hub-radial-center-halo" aria-hidden="true"></div>'
+            + '<div class="age-nation-hub-radial-center-ring" aria-hidden="true"></div>'
             + `<span id="age-nation-hub-radial-label" class="age-nation-hub-radial-center-label">${DEFAULT_CENTER_LABEL}</span>`
             + '</div>'
         );
@@ -246,11 +269,11 @@
         const stepDeg = 360 / SLOT_COUNT;
         const slotsHtml = RADIAL_ITEMS.map((item, index) => {
             const angleDeg = SLOT_START_ANGLE_DEG + stepDeg * index;
-            const placeholderSrc = buildPlaceholderSvgDataUri(item.label, index);
-            const delaySec = (0.03 * index).toFixed(2);
+            const placeholderSrc = buildPlaceholderSvgDataUri(item.id, item.label, index);
+            const delaySec = (0.07 + 0.055 * index).toFixed(3);
             return (
                 `<div class="age-nation-hub-radial-slot-well age-nation-hub-radial-slot-well--${item.id}"`
-                + ` style="--age-radial-slot-angle: ${angleDeg}deg; --age-radial-slot-delay: ${delaySec}s;" aria-hidden="true">`
+                + ` style="--age-radial-slot-angle: ${angleDeg}deg; --age-radial-slot-delay: ${delaySec}s; --age-radial-slot-index: ${index};" aria-hidden="true">`
                 + `<button type="button" class="age-nation-hub-radial-slot age-nation-hub-radial-slot--${item.id}"`
                 + ` data-age-hub-radial="${item.id}"`
                 + ` data-age-hub-radial-label="${item.label}"`
@@ -265,7 +288,7 @@
         }).join('');
 
         dial.innerHTML = trackHtml + slotsHtml + centerHtml;
-        dial.dataset.ageRadialBuilt = 'true';
+        dial.dataset.ageRadialVersion = RADIAL_BUILD_VERSION;
 
         dial.querySelectorAll('[data-age-hub-radial]').forEach((slot) => {
             slot.addEventListener('pointerenter', onRadialSlotPointerEnter);

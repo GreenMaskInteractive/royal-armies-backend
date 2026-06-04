@@ -38,7 +38,14 @@
     display: none;
 }
 
+/* -------------------------------------------------------------------------- */
+/* Radial overlay                                                             */
+/* -------------------------------------------------------------------------- */
+
 .age-nation-hub-radial {
+    --age-radial-gold: #ffd978;
+    --age-radial-gold-dim: rgba(212, 175, 90, 0.55);
+    --age-radial-gold-glow: rgba(255, 215, 128, 0.42);
     position: fixed;
     inset: 0;
     z-index: 12050;
@@ -48,7 +55,7 @@
     pointer-events: none;
     visibility: hidden;
     opacity: 0;
-    transition: opacity 0.22s ease, visibility 0.22s ease;
+    transition: opacity 0.32s ease, visibility 0.32s ease;
 }
 
 .age-nation-hub-radial[hidden] {
@@ -68,9 +75,17 @@
     border: 0;
     padding: 0;
     margin: 0;
-    background: rgba(4, 6, 10, 0.42);
-    backdrop-filter: blur(3px);
+    background:
+        radial-gradient(ellipse 72% 58% at 50% 48%, rgba(8, 10, 16, 0.2) 0%, rgba(4, 6, 10, 0.72) 68%),
+        rgba(2, 4, 8, 0.55);
+    backdrop-filter: blur(6px) saturate(1.15);
     cursor: default;
+    animation: age-radial-backdrop-in 0.42s ease both;
+}
+
+@keyframes age-radial-backdrop-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
 }
 
 .age-nation-hub-radial-dial {
@@ -84,9 +99,13 @@
     width: 0;
     height: 0;
     pointer-events: none;
+    filter: drop-shadow(0 24px 48px rgba(0, 0, 0, 0.55));
 }
 
-/* Outer ring — buttons orbit and rest in wells on this circle */
+/* -------------------------------------------------------------------------- */
+/* Outer track ring                                                           */
+/* -------------------------------------------------------------------------- */
+
 .age-nation-hub-radial-track {
     position: absolute;
     left: 50%;
@@ -96,45 +115,108 @@
     height: var(--age-radial-track-size);
     margin: calc(-0.5 * var(--age-radial-track-size)) 0 0 calc(-0.5 * var(--age-radial-track-size));
     border-radius: 50%;
-    border: 2px solid rgba(212, 175, 90, 0.32);
-    background:
-        radial-gradient(
-            circle at 50% 42%,
-            rgba(52, 42, 28, 0.55) 0%,
-            rgba(14, 11, 8, 0.92) 58%,
-            rgba(6, 5, 4, 0.98) 100%
-        );
-    box-shadow:
-        inset 0 0 48px rgba(0, 0, 0, 0.55),
-        inset 0 2px 0 rgba(255, 215, 128, 0.1),
-        0 16px 40px rgba(0, 0, 0, 0.48);
     pointer-events: none;
     opacity: 0;
-    transform: scale(0.88);
+    transform: scale(0.82) rotate(-18deg);
     transition:
-        opacity 0.28s ease,
-        transform 0.36s cubic-bezier(0.22, 1, 0.36, 1);
+        opacity 0.38s ease,
+        transform 0.52s cubic-bezier(0.16, 1, 0.28, 1);
 }
 
 .age-nation-hub-radial.is-open .age-nation-hub-radial-track {
     opacity: 1;
-    transform: scale(1);
+    transform: scale(1) rotate(0deg);
 }
 
-.age-nation-hub-radial-track::after {
+.age-nation-hub-radial-track-aura {
+    position: absolute;
+    inset: -18px;
+    border-radius: 50%;
+    background:
+        radial-gradient(circle, rgba(255, 200, 96, 0.14) 0%, transparent 62%);
+    opacity: 0;
+    animation: age-radial-aura-pulse 3.6s ease-in-out infinite;
+}
+
+.age-nation-hub-radial.is-open .age-nation-hub-radial-track-aura {
+    opacity: 1;
+}
+
+@keyframes age-radial-aura-pulse {
+    0%, 100% { transform: scale(0.98); opacity: 0.55; }
+    50% { transform: scale(1.04); opacity: 1; }
+}
+
+.age-nation-hub-radial-track-ring {
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    border: 2px solid var(--age-radial-gold-dim);
+    background:
+        conic-gradient(
+            from -90deg,
+            rgba(255, 215, 128, 0.22) 0deg,
+            rgba(14, 11, 8, 0.15) 36deg,
+            rgba(255, 215, 128, 0.18) 72deg,
+            rgba(14, 11, 8, 0.15) 108deg,
+            rgba(255, 215, 128, 0.22) 144deg,
+            rgba(14, 11, 8, 0.15) 180deg,
+            rgba(255, 215, 128, 0.18) 216deg,
+            rgba(14, 11, 8, 0.15) 252deg,
+            rgba(255, 215, 128, 0.22) 288deg,
+            rgba(14, 11, 8, 0.15) 324deg,
+            rgba(255, 215, 128, 0.22) 360deg
+        ),
+        radial-gradient(
+            circle at 50% 40%,
+            rgba(58, 46, 28, 0.72) 0%,
+            rgba(12, 10, 7, 0.96) 55%,
+            rgba(4, 3, 2, 0.99) 100%
+        );
+    box-shadow:
+        inset 0 0 64px rgba(0, 0, 0, 0.62),
+        inset 0 2px 0 rgba(255, 215, 128, 0.14),
+        0 0 48px rgba(255, 180, 60, 0.12),
+        0 20px 44px rgba(0, 0, 0, 0.5);
+}
+
+.age-nation-hub-radial-track-ring::before {
     content: '';
     position: absolute;
-    inset: 14px;
+    inset: 10px;
     border-radius: 50%;
-    border: 1px solid rgba(212, 175, 90, 0.14);
-    box-shadow: inset 0 0 24px rgba(0, 0, 0, 0.35);
-    pointer-events: none;
+    border: 1px solid rgba(255, 215, 128, 0.12);
+    box-shadow: inset 0 0 32px rgba(0, 0, 0, 0.45);
 }
 
-/* Recessed slot pocket on the track ring */
+.age-nation-hub-radial-track-ticks {
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    background: repeating-conic-gradient(
+        from -90deg,
+        rgba(255, 217, 120, 0.75) 0deg 1.5deg,
+        transparent 1.5deg 72deg
+    );
+    -webkit-mask: radial-gradient(circle, transparent 59%, #000 60% 64%, transparent 65%);
+    mask: radial-gradient(circle, transparent 59%, #000 60% 64%, transparent 65%);
+    opacity: 0.55;
+    animation: age-radial-ticks-drift 90s linear infinite;
+}
+
+@keyframes age-radial-ticks-drift {
+    to { transform: rotate(360deg); }
+}
+
+/* -------------------------------------------------------------------------- */
+/* Slot wells + buttons                                                       */
+/* -------------------------------------------------------------------------- */
+
 .age-nation-hub-radial-slot-well {
     --age-radial-slot-angle: 0deg;
     --age-radial-slot-delay: 0s;
+    --age-radial-slot-index: 0;
+    --age-radial-slot-accent: 42;
     position: absolute;
     left: 50%;
     top: 50%;
@@ -145,30 +227,38 @@
     width: var(--age-radial-slot-well-size);
     height: var(--age-radial-slot-well-size);
     margin: calc(-0.5 * var(--age-radial-slot-well-size)) 0 0 calc(-0.5 * var(--age-radial-slot-well-size));
-    border-radius: 22px;
-    border: 1px solid rgba(120, 98, 58, 0.55);
+    border-radius: 24px;
+    border: 1px solid hsla(var(--age-radial-slot-accent), 45%, 48%, 0.45);
     background:
         radial-gradient(
-            circle at 50% 35%,
-            rgba(22, 18, 12, 0.95) 0%,
-            rgba(8, 7, 5, 0.98) 72%
+            circle at 50% 28%,
+            hsla(var(--age-radial-slot-accent), 32%, 22%, 0.95) 0%,
+            rgba(6, 5, 4, 0.98) 74%
         );
     box-shadow:
-        inset 0 3px 10px rgba(0, 0, 0, 0.65),
-        inset 0 -1px 0 rgba(255, 215, 128, 0.06),
-        0 2px 0 rgba(212, 175, 90, 0.12);
+        inset 0 4px 14px rgba(0, 0, 0, 0.7),
+        inset 0 -1px 0 hsla(var(--age-radial-slot-accent), 70%, 68%, 0.12),
+        0 0 0 1px rgba(0, 0, 0, 0.35);
     pointer-events: none;
     transform:
         rotate(var(--age-radial-slot-angle))
-        translateY(calc(-1 * var(--age-radial-slot-radius)))
+        translateY(calc(-1 * var(--age-radial-slot-radius) + 28px))
         rotate(calc(-1 * var(--age-radial-slot-angle)))
-        scale(0.72);
+        scale(0.5);
     opacity: 0;
     transition:
-        transform 0.34s cubic-bezier(0.22, 1, 0.36, 1),
-        opacity 0.24s ease;
+        transform 0.48s cubic-bezier(0.16, 1, 0.24, 1),
+        opacity 0.32s ease,
+        border-color 0.2s ease,
+        box-shadow 0.2s ease;
     transition-delay: var(--age-radial-slot-delay);
 }
+
+.age-nation-hub-radial-slot-well--nation { --age-radial-slot-accent: 42; }
+.age-nation-hub-radial-slot-well--records { --age-radial-slot-accent: 210; }
+.age-nation-hub-radial-slot-well--discoveries { --age-radial-slot-accent: 268; }
+.age-nation-hub-radial-slot-well--banner { --age-radial-slot-accent: 4; }
+.age-nation-hub-radial-slot-well--battle-pass { --age-radial-slot-accent: 145; }
 
 .age-nation-hub-radial.is-open .age-nation-hub-radial-slot-well {
     opacity: 1;
@@ -178,6 +268,19 @@
         rotate(calc(-1 * var(--age-radial-slot-angle)))
         scale(1);
 }
+
+.age-nation-hub-radial-slot-well:has(.age-nation-hub-radial-slot:hover),
+.age-nation-hub-radial-slot-well:has(.age-nation-hub-radial-slot:focus-visible) {
+    border-color: hsla(var(--age-radial-slot-accent), 72%, 62%, 0.85);
+    box-shadow:
+        inset 0 4px 14px rgba(0, 0, 0, 0.55),
+        0 0 22px hsla(var(--age-radial-slot-accent), 80%, 55%, 0.35),
+        0 0 0 1px hsla(var(--age-radial-slot-accent), 70%, 58%, 0.4);
+}
+
+/* -------------------------------------------------------------------------- */
+/* Center hub                                                                 */
+/* -------------------------------------------------------------------------- */
 
 .age-nation-hub-radial-center {
     position: absolute;
@@ -191,27 +294,87 @@
     height: var(--age-radial-center-size);
     margin: calc(-0.5 * var(--age-radial-center-size)) 0 0 calc(-0.5 * var(--age-radial-center-size));
     border-radius: 50%;
-    border: 1px solid rgba(212, 175, 90, 0.45);
-    background:
-        radial-gradient(circle at 50% 38%, rgba(48, 38, 24, 0.98) 0%, rgba(10, 8, 6, 0.98) 72%);
-    box-shadow:
-        inset 0 1px 0 rgba(255, 215, 128, 0.16),
-        0 12px 32px rgba(0, 0, 0, 0.45);
     pointer-events: none;
+    opacity: 0;
+    transform: scale(0.65);
+    transition:
+        opacity 0.36s ease 0.12s,
+        transform 0.44s cubic-bezier(0.16, 1, 0.28, 1) 0.12s;
+}
+
+.age-nation-hub-radial.is-open .age-nation-hub-radial-center {
+    opacity: 1;
+    transform: scale(1);
+}
+
+.age-nation-hub-radial-center-halo {
+    position: absolute;
+    inset: -12px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(255, 215, 128, 0.2) 0%, transparent 70%);
+    animation: age-radial-center-halo 2.8s ease-in-out infinite;
+}
+
+@keyframes age-radial-center-halo {
+    0%, 100% { opacity: 0.45; transform: scale(0.96); }
+    50% { opacity: 1; transform: scale(1.05); }
+}
+
+.age-nation-hub-radial-center-ring {
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    border: 2px solid rgba(255, 215, 128, 0.5);
+    background:
+        radial-gradient(circle at 50% 32%, rgba(54, 42, 24, 0.98) 0%, rgba(8, 6, 4, 0.99) 70%);
+    box-shadow:
+        inset 0 1px 0 rgba(255, 215, 128, 0.22),
+        inset 0 0 28px rgba(0, 0, 0, 0.45),
+        0 0 32px rgba(255, 190, 60, 0.18),
+        0 14px 36px rgba(0, 0, 0, 0.48);
+}
+
+.age-nation-hub-radial-center-ring::after {
+    content: '';
+    position: absolute;
+    inset: 8px;
+    border-radius: 50%;
+    border: 1px dashed rgba(255, 215, 128, 0.22);
 }
 
 .age-nation-hub-radial-center-label {
-    max-width: 130px;
+    position: relative;
+    z-index: 1;
+    max-width: 118px;
     font-family: 'Cinzel', serif;
-    font-size: 0.92rem;
+    font-size: 0.98rem;
     font-weight: 700;
-    letter-spacing: 0.08em;
+    letter-spacing: 0.14em;
     text-transform: uppercase;
     text-align: center;
-    line-height: 1.25;
-    color: #f4e6c8;
-    text-shadow: 0 1px 6px rgba(0, 0, 0, 0.55);
+    line-height: 1.2;
+    color: var(--age-radial-gold);
+    text-shadow:
+        0 0 18px rgba(255, 215, 128, 0.45),
+        0 2px 8px rgba(0, 0, 0, 0.65);
+    transition:
+        color 0.18s ease,
+        letter-spacing 0.22s ease,
+        transform 0.22s ease;
 }
+
+.age-nation-hub-radial.is-open .age-nation-hub-radial-center-label {
+    animation: age-radial-label-glow 2.4s ease-in-out infinite;
+}
+
+@keyframes age-radial-label-glow {
+    0%, 100% { text-shadow: 0 0 12px rgba(255, 215, 128, 0.32), 0 2px 8px rgba(0, 0, 0, 0.65); }
+    50% { text-shadow: 0 0 22px rgba(255, 215, 128, 0.55), 0 2px 8px rgba(0, 0, 0, 0.65); }
+}
+
+/* -------------------------------------------------------------------------- */
+/* Slot buttons                                                               */
+/* -------------------------------------------------------------------------- */
 
 .age-nation-hub-radial-slot {
     position: relative;
@@ -219,25 +382,32 @@
     flex-shrink: 0;
     width: var(--age-radial-slot-size);
     height: var(--age-radial-slot-size);
-    padding: 5px;
-    border: 1px solid rgba(212, 175, 90, 0.42);
-    border-radius: 16px;
+    padding: 4px;
+    border: 1px solid hsla(var(--age-radial-slot-accent), 55%, 58%, 0.55);
+    border-radius: 18px;
     background:
-        linear-gradient(145deg, rgba(44, 34, 22, 0.98) 0%, rgba(14, 11, 8, 0.98) 100%);
+        linear-gradient(155deg, hsla(var(--age-radial-slot-accent), 28%, 28%, 0.95) 0%, rgba(10, 8, 6, 0.98) 100%);
     box-shadow:
-        inset 0 1px 0 rgba(255, 215, 128, 0.14),
-        0 4px 12px rgba(0, 0, 0, 0.35);
+        inset 0 1px 0 rgba(255, 255, 255, 0.1),
+        0 6px 16px rgba(0, 0, 0, 0.4);
     cursor: pointer;
     pointer-events: none;
-    transform: scale(0.92);
+    transform: scale(0.88);
     opacity: 0;
     transition:
-        transform 0.28s cubic-bezier(0.22, 1, 0.36, 1),
-        opacity 0.22s ease,
-        border-color 0.14s ease,
-        box-shadow 0.14s ease;
+        transform 0.32s cubic-bezier(0.16, 1, 0.28, 1),
+        opacity 0.26s ease,
+        border-color 0.16s ease,
+        box-shadow 0.16s ease,
+        filter 0.16s ease;
     transition-delay: var(--age-radial-slot-delay);
 }
+
+.age-nation-hub-radial-slot--nation { --age-radial-slot-accent: 42; }
+.age-nation-hub-radial-slot--records { --age-radial-slot-accent: 210; }
+.age-nation-hub-radial-slot--discoveries { --age-radial-slot-accent: 268; }
+.age-nation-hub-radial-slot--banner { --age-radial-slot-accent: 4; }
+.age-nation-hub-radial-slot--battle-pass { --age-radial-slot-accent: 145; }
 
 .age-nation-hub-radial.is-open .age-nation-hub-radial-slot {
     opacity: 1;
@@ -245,31 +415,44 @@
     transform: scale(1);
 }
 
+.age-nation-hub-radial-slot::before {
+    content: '';
+    position: absolute;
+    inset: -3px;
+    border-radius: 20px;
+    background: radial-gradient(circle at 50% 0%, hsla(var(--age-radial-slot-accent), 80%, 62%, 0.35), transparent 68%);
+    opacity: 0;
+    transition: opacity 0.18s ease;
+    pointer-events: none;
+}
+
 .age-nation-hub-radial-slot:hover,
 .age-nation-hub-radial-slot:focus-visible {
-    border-color: rgba(255, 215, 128, 0.72);
+    border-color: hsla(var(--age-radial-slot-accent), 75%, 68%, 0.9);
     outline: none;
+    filter: brightness(1.12);
     box-shadow:
-        inset 0 1px 0 rgba(255, 215, 128, 0.22),
-        0 0 0 2px rgba(255, 215, 128, 0.18),
-        0 8px 18px rgba(0, 0, 0, 0.42);
-    transform: scale(1.06);
+        inset 0 1px 0 rgba(255, 255, 255, 0.18),
+        0 0 0 2px hsla(var(--age-radial-slot-accent), 70%, 55%, 0.28),
+        0 10px 24px rgba(0, 0, 0, 0.45),
+        0 0 28px hsla(var(--age-radial-slot-accent), 75%, 52%, 0.32);
+    transform: scale(1.08) translateY(-2px);
+}
+
+.age-nation-hub-radial-slot:hover::before,
+.age-nation-hub-radial-slot:focus-visible::before {
+    opacity: 1;
 }
 
 .age-nation-hub-radial-slot-frame {
     display: block;
     width: 100%;
     height: 100%;
-    border-radius: 10px;
+    border-radius: 12px;
     overflow: hidden;
     background:
-        repeating-linear-gradient(
-            -45deg,
-            rgba(255, 215, 128, 0.07) 0,
-            rgba(255, 215, 128, 0.07) 6px,
-            rgba(8, 10, 14, 0.55) 6px,
-            rgba(8, 10, 14, 0.55) 12px
-        );
+        radial-gradient(circle at 50% 0%, hsla(var(--age-radial-slot-accent), 40%, 32%, 0.4), rgba(6, 8, 12, 0.75));
+    box-shadow: inset 0 0 12px rgba(0, 0, 0, 0.35);
 }
 
 .age-nation-hub-radial-slot-img {
@@ -277,8 +460,37 @@
     width: 100%;
     height: 100%;
     object-fit: cover;
-    border-radius: 10px;
-    opacity: 0.88;
+    border-radius: 12px;
+    opacity: 0.94;
+    transition: transform 0.28s ease, opacity 0.2s ease;
+}
+
+.age-nation-hub-radial-slot:hover .age-nation-hub-radial-slot-img,
+.age-nation-hub-radial-slot:focus-visible .age-nation-hub-radial-slot-img {
+    transform: scale(1.06);
+    opacity: 1;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Reduced motion                                                             */
+/* -------------------------------------------------------------------------- */
+
+@media (prefers-reduced-motion: reduce) {
+    .age-nation-hub-radial-backdrop,
+    .age-nation-hub-radial-track,
+    .age-nation-hub-radial-track-aura,
+    .age-nation-hub-radial-track-ticks,
+    .age-nation-hub-radial-center-halo,
+    .age-nation-hub-radial-center-label {
+        animation: none !important;
+    }
+
+    .age-nation-hub-radial-track,
+    .age-nation-hub-radial-slot-well,
+    .age-nation-hub-radial-center,
+    .age-nation-hub-radial-slot {
+        transition-duration: 0.01ms !important;
+    }
 }
 
 body.age-map-shell-only .age-nation-hub-radial[hidden] {
