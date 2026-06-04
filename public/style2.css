@@ -13358,7 +13358,7 @@ body.developer-maintenance-alert-active #page-landing {
     overflow: visible;
 }
 
-/* Nation Hub — top bar dropdown (views, War Room) */
+/* Game Hub — top bar dropdown (views, War Room) */
 .age-nation-hub {
     flex: 0 0 auto;
     align-self: center;
@@ -13607,7 +13607,7 @@ body.developer-maintenance-alert-active #page-landing {
     box-shadow: var(--age-hud-rail-inset), var(--age-hud-rail-shadow);
 }
 
-/* Hidden above/behind Nation Hub toggle until they slide into the panel */
+/* Hidden above/behind Game Hub toggle until they slide into the panel */
 .age-nation-hub-menu.is-menu-position-synced .age-nation-hub-menu-ladder > .age-nation-hub-menu-item {
     opacity: 0;
     transform: translate3d(0, calc(-1 * var(--age-nation-hub-rung-travel, 40px)), 0);

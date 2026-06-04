@@ -1,4 +1,4 @@
-/* FLEX — Age Nation Hub center modals (Council Room, Records; War Room uses .age-war-room-modal)
+/* FLEX — Age Game Hub center modals (Council Room, Records; War Room uses .age-war-room-modal)
    Stack above settlement workspaces (barracks/guild/evolution ~12035–12050). */
 
 .age-age-center-modal[hidden] {
@@ -95,20 +95,7 @@
     outline: none;
 }
 
-.age-age-center-modal-dialog > .age-hq-dispatch-panel {
-    flex: 0 0 auto;
-    position: relative;
-    left: auto;
-    right: auto;
-    bottom: auto;
-    width: 100%;
-    max-width: none;
-    margin: 0;
-}
-
-.age-age-center-modal-dialog > .age-hq-dispatch-panel:not([hidden]) {
-    display: block;
-}
+/* Dispatch panel lives in .age-council-room-header (see style-age-council-room.css) */
 
 @keyframes age-age-center-modal-in {
     from {

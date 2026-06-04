@@ -1,5 +1,5 @@
 /**
- * RIFT — Nation Hub menu on the Age top bar (box menu active; radial saved for restore).
+ * RIFT — Game Hub menu on the Age top bar (box menu active; radial saved for restore).
  */
 (function initAgeNationHub(global) {
     'use strict';

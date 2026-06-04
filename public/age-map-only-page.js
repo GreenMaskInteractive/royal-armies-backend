@@ -43,7 +43,7 @@
         );
     }
 
-    /** Modals opened from Nation Hub menu — must stay clickable on map-only shell */
+    /** Modals opened from Game Hub menu — must stay clickable on map-only shell */
     function isNationHubDestinationModal(target) {
         if (!target || typeof target.closest !== 'function') return false;
         return Boolean(
