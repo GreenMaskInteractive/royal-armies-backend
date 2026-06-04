@@ -1043,14 +1043,11 @@
             return;
         }
 
-        const sectionHead = planningColumn.querySelector('.age-council-room-section-head');
         const columnRect = planningColumn.getBoundingClientRect();
         const columnStyles = global.getComputedStyle(planningColumn);
         const padTop = parseFloat(columnStyles.paddingTop) || 0;
         const padBottom = parseFloat(columnStyles.paddingBottom) || 0;
-        const columnGap = parseFloat(columnStyles.gap) || 0;
-        const headHeight = sectionHead ? Math.ceil(sectionHead.getBoundingClientRect().height) : 0;
-        const headBlock = headHeight > 0 ? headHeight + columnGap : 0;
+        const headBlock = 0;
 
         const workspaceRect = workspace.getBoundingClientRect();
         const bottomLimit = Math.min(
