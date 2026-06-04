@@ -91,8 +91,25 @@
     grid-template-columns: minmax(0, 1fr);
 }
 
+.age-council-room-workspace.is-hq-manager-open .age-council-room-shell {
+    grid-template-columns: minmax(0, 1fr);
+}
+
+.age-council-room-workspace.is-hq-manager-open #age-council-room-nation {
+    display: none !important;
+}
+
+.age-council-room-workspace.is-hq-manager-open .age-council-room-column--command {
+    border-right: none;
+    background: rgba(0, 0, 0, 0.18);
+}
+
 .age-council-room-workspace.is-hq-public-view .age-council-room-column--nation {
     border-right: none;
+}
+
+.age-council-room-workspace.is-hq-public-view #age-council-room-command {
+    display: none !important;
 }
 
 .age-council-room-header__crest {
@@ -522,7 +539,7 @@
         grid-template-columns: 1fr;
     }
 
-    .age-council-room-column--nation {
+    .age-council-room-workspace:not(.is-hq-manager-open) .age-council-room-column--nation {
         border-right: 0;
         border-bottom: 1px solid rgba(184, 144, 48, 0.28);
         max-height: 40vh;

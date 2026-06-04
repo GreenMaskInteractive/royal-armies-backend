@@ -442,17 +442,23 @@
         const root = global.document.getElementById('age-council-room-workspace');
         const canViewPublic = canViewHeadquartersPublic(workspace);
         const showManagerControls = hasActiveManagerControls();
-        const showMemberElections = Boolean(memberHubActive && !councilAccess);
+        const showPublicWorkspace = Boolean(canViewPublic && !showManagerControls);
+        const showMemberElections = Boolean(memberHubActive && !councilAccess && showPublicWorkspace);
 
         if (root) {
             root.classList.toggle('is-access-denied', !canViewPublic);
             root.classList.toggle('is-hq-manager-open', showManagerControls);
             root.classList.toggle('has-hq-manager-access', hqManagerEligible);
-            root.classList.toggle('is-hq-public-view', canViewPublic && !showManagerControls);
+            root.classList.toggle('is-hq-public-view', showPublicWorkspace);
+        }
+
+        const nationColumn = global.document.getElementById('age-council-room-nation');
+        if (nationColumn) {
+            setNodeHidden(nationColumn, !showPublicWorkspace);
         }
 
         global.document.querySelectorAll('[data-hq-public]').forEach((node) => {
-            setNodeHidden(node, !canViewPublic);
+            setNodeHidden(node, !showPublicWorkspace);
         });
 
         global.document.querySelectorAll('[data-hq-member-only]').forEach((node) => {
