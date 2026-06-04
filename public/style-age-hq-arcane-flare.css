@@ -235,7 +235,7 @@ body[data-age-council-room-page="true"] .is-hq-arcane-themed::before {
 body[data-age-council-room-page="true"] .is-hq-arcane-themed::after {
     content: '';
     position: absolute;
-    inset: 14px;
+    inset: var(--hq-content-inset-x, 25px);
     pointer-events: none;
     z-index: 0;
     border-radius: 2px;
@@ -278,8 +278,8 @@ body[data-age-council-room-page="true"] .is-hq-arcane-themed > *:not(.hq-arcane-
     content: '';
     display: block;
     position: absolute;
-    left: 18px;
-    right: 18px;
+    left: var(--hq-content-inset-x, 25px);
+    right: var(--hq-content-inset-x, 25px);
     bottom: 0;
     height: 1px;
     background: linear-gradient(
