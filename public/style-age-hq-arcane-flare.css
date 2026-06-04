@@ -1,34 +1,178 @@
-/* FLEX — Arcane flare for Headquarters workspace popup (Age map modal + HQ page).
-   Gold war-room chrome stays primary; violet/teal arcane accents on veil, rims, and panels. */
+/* FLEX — Arcane Headquarters chrome (visible magical frame, sigils, glow).
+   Scoped to council-room modal + standalone HQ page. Gold war-room base remains. */
 
-.age-council-room-modal {
-    --hq-arcane-violet: rgba(148, 118, 220, 0.22);
-    --hq-arcane-violet-soft: rgba(148, 118, 220, 0.1);
-    --hq-arcane-teal: rgba(88, 188, 176, 0.18);
-    --hq-arcane-teal-soft: rgba(88, 188, 176, 0.09);
-    --hq-arcane-ember: rgba(200, 140, 255, 0.12);
-    --hq-arcane-rim: rgba(168, 132, 230, 0.38);
-    --hq-arcane-rim-teal: rgba(104, 200, 188, 0.32);
+.age-council-room-modal,
+body[data-age-council-room-page="true"] {
+    --hq-arcane-violet: rgba(168, 132, 255, 0.55);
+    --hq-arcane-violet-deep: rgba(108, 72, 188, 0.75);
+    --hq-arcane-teal: rgba(96, 220, 204, 0.5);
+    --hq-arcane-ember: rgba(220, 168, 255, 0.45);
+    --hq-arcane-rim: rgba(186, 148, 255, 0.85);
+    --hq-arcane-rim-teal: rgba(112, 228, 210, 0.75);
+    --hq-arcane-glow: rgba(148, 118, 220, 0.55);
 }
 
-/* Backdrop — faint arcane haze behind the dialog */
+/* —— Decorative chrome layer (corners + side rails) —— */
+.hq-arcane-chrome {
+    position: absolute;
+    inset: 0;
+    z-index: 4;
+    pointer-events: none;
+    overflow: hidden;
+}
+
+.age-council-room-modal .age-age-center-modal-dialog > .hq-arcane-chrome {
+    border-radius: inherit;
+}
+
+.is-hq-arcane-themed {
+    position: relative;
+}
+
+.hq-arcane-chrome--page {
+    position: fixed;
+    inset: var(--age-map-slot-top, 0) 0 var(--age-map-slot-bottom, 0) 0;
+    z-index: 3;
+}
+
+.hq-arcane-corner {
+    position: absolute;
+    width: 44px;
+    height: 44px;
+    box-sizing: border-box;
+    border: 2px solid var(--hq-arcane-rim);
+    box-shadow:
+        0 0 10px var(--hq-arcane-glow),
+        0 0 22px rgba(104, 200, 188, 0.35),
+        inset 0 0 14px rgba(148, 118, 220, 0.25);
+}
+
+.hq-arcane-corner--tl {
+    top: 12px;
+    left: 12px;
+    border-right: none;
+    border-bottom: none;
+}
+
+.hq-arcane-corner--tr {
+    top: 12px;
+    right: 12px;
+    border-left: none;
+    border-bottom: none;
+}
+
+.hq-arcane-corner--bl {
+    bottom: 12px;
+    left: 12px;
+    border-right: none;
+    border-top: none;
+}
+
+.hq-arcane-corner--br {
+    bottom: 12px;
+    right: 12px;
+    border-left: none;
+    border-top: none;
+}
+
+.hq-arcane-corner::after {
+    content: '';
+    position: absolute;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: radial-gradient(circle, #e8d4ff 0%, var(--hq-arcane-violet-deep) 55%, transparent 100%);
+    box-shadow: 0 0 12px var(--hq-arcane-glow);
+}
+
+.hq-arcane-corner--tl::after {
+    top: -4px;
+    left: -4px;
+}
+
+.hq-arcane-corner--tr::after {
+    top: -4px;
+    right: -4px;
+}
+
+.hq-arcane-corner--bl::after {
+    bottom: -4px;
+    left: -4px;
+}
+
+.hq-arcane-corner--br::after {
+    bottom: -4px;
+    right: -4px;
+}
+
+.hq-arcane-sigil-rail {
+    position: absolute;
+    top: 72px;
+    bottom: 72px;
+    width: 3px;
+    border-radius: 2px;
+    background: linear-gradient(
+        180deg,
+        transparent 0%,
+        var(--hq-arcane-rim) 12%,
+        var(--hq-arcane-rim-teal) 50%,
+        var(--hq-arcane-rim) 88%,
+        transparent 100%
+    );
+    box-shadow:
+        0 0 14px var(--hq-arcane-glow),
+        0 0 28px rgba(104, 200, 188, 0.3);
+    opacity: 0.88;
+}
+
+.hq-arcane-sigil-rail--left {
+    left: 22px;
+}
+
+.hq-arcane-sigil-rail--right {
+    right: 22px;
+}
+
+.hq-arcane-sigil-rail::before,
+.hq-arcane-sigil-rail::after {
+    content: '◆';
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 10px;
+    line-height: 1;
+    color: #e4ccff;
+    text-shadow: 0 0 10px var(--hq-arcane-glow);
+}
+
+.hq-arcane-sigil-rail::before {
+    top: -6px;
+}
+
+.hq-arcane-sigil-rail::after {
+    bottom: -6px;
+}
+
+/* —— Modal backdrop & shell —— */
 .age-council-room-modal .age-age-center-modal-backdrop {
     background:
-        radial-gradient(ellipse 85% 70% at 50% 42%, rgba(124, 92, 196, 0.14) 0%, transparent 62%),
-        radial-gradient(ellipse 60% 50% at 18% 78%, rgba(72, 168, 158, 0.08) 0%, transparent 55%),
-        rgba(4, 2, 8, 0.72);
+        radial-gradient(ellipse 90% 75% at 50% 40%, rgba(124, 92, 196, 0.38) 0%, transparent 58%),
+        radial-gradient(ellipse 55% 45% at 12% 82%, rgba(72, 168, 158, 0.22) 0%, transparent 52%),
+        rgba(6, 2, 14, 0.82);
 }
 
-/* Dialog shell — gold frame + arcane outer glow */
 .age-council-room-modal .age-age-center-modal-dialog {
     position: relative;
-    border-color: rgba(184, 144, 48, 0.58);
+    border: 1px solid rgba(200, 168, 255, 0.55);
+    outline: 1px solid rgba(104, 200, 188, 0.28);
+    outline-offset: 3px;
     box-shadow:
-        inset 0 1px 0 rgba(255, 215, 0, 0.22),
-        inset 0 0 88px rgba(0, 0, 0, 0.48),
-        0 28px 64px rgba(0, 0, 0, 0.8),
-        0 0 48px rgba(124, 88, 200, 0.12),
-        0 0 72px rgba(72, 168, 158, 0.07);
+        inset 0 0 0 1px rgba(255, 215, 128, 0.18),
+        inset 0 0 100px rgba(88, 48, 160, 0.22),
+        inset 0 0 140px rgba(0, 0, 0, 0.5),
+        0 28px 64px rgba(0, 0, 0, 0.82),
+        0 0 56px rgba(124, 88, 200, 0.35),
+        0 0 90px rgba(72, 168, 158, 0.18);
 }
 
 .age-council-room-modal .age-age-center-modal-dialog::before {
@@ -38,375 +182,378 @@
     pointer-events: none;
     z-index: 0;
     border-radius: inherit;
+    opacity: 1;
     background:
-        linear-gradient(135deg, rgba(148, 112, 220, 0.09) 0%, transparent 24%),
-        linear-gradient(225deg, rgba(88, 196, 184, 0.07) 0%, transparent 26%),
-        linear-gradient(315deg, rgba(148, 112, 220, 0.08) 0%, transparent 22%),
-        linear-gradient(45deg, rgba(200, 160, 255, 0.05) 0%, transparent 20%);
-    opacity: 0.95;
+        linear-gradient(135deg, rgba(148, 112, 220, 0.18) 0%, transparent 28%),
+        linear-gradient(225deg, rgba(88, 196, 184, 0.14) 0%, transparent 30%),
+        linear-gradient(315deg, rgba(148, 112, 220, 0.16) 0%, transparent 26%),
+        radial-gradient(ellipse 80% 50% at 50% 0%, rgba(200, 160, 255, 0.12) 0%, transparent 55%);
 }
 
 .age-council-room-modal .age-age-center-modal-dialog::after {
     content: '';
     position: absolute;
-    inset: -1px;
+    inset: 6px;
     pointer-events: none;
     z-index: 0;
-    border-radius: inherit;
-    padding: 1px;
-    background: linear-gradient(
-        135deg,
-        var(--hq-arcane-rim) 0%,
-        rgba(184, 144, 48, 0.35) 22%,
-        var(--hq-arcane-rim-teal) 50%,
-        rgba(184, 144, 48, 0.35) 78%,
-        var(--hq-arcane-rim) 100%
-    );
-    -webkit-mask:
-        linear-gradient(#fff 0 0) content-box,
-        linear-gradient(#fff 0 0);
-    mask:
-        linear-gradient(#fff 0 0) content-box,
-        linear-gradient(#fff 0 0);
-    -webkit-mask-composite: xor;
-    mask-composite: exclude;
-    opacity: 0.42;
+    border-radius: 2px;
+    border: 1px solid rgba(168, 132, 230, 0.35);
+    box-shadow: inset 0 0 40px rgba(124, 88, 200, 0.15);
+    opacity: 1;
 }
 
-.age-council-room-modal .age-age-center-modal-dialog > * {
+.age-council-room-modal .age-age-center-modal-dialog > *:not(.hq-arcane-chrome) {
     position: relative;
     z-index: 1;
 }
 
-/* Workspace interior veil + corner rune lines (modal + standalone HQ page) */
-.age-council-room-modal .age-council-room-workspace,
-body[data-age-council-room-page="true"] .age-council-room-workspace {
+/* —— Workspace interior —— */
+.age-council-room-modal .is-hq-arcane-themed,
+body[data-age-council-room-page="true"] .is-hq-arcane-themed {
     isolation: isolate;
+    box-shadow:
+        inset 0 0 0 1px rgba(168, 132, 230, 0.32),
+        inset 0 0 80px rgba(108, 72, 188, 0.18);
 }
 
-.age-council-room-modal .age-council-room-workspace::before,
-body[data-age-council-room-page="true"] .age-council-room-workspace::before {
+.age-council-room-modal .is-hq-arcane-themed::before,
+body[data-age-council-room-page="true"] .is-hq-arcane-themed::before {
     content: '';
     position: absolute;
     inset: 0;
     pointer-events: none;
     z-index: 0;
+    opacity: 0.85;
     background:
-        radial-gradient(ellipse 72% 44% at 10% 6%, var(--hq-arcane-violet) 0%, transparent 58%),
-        radial-gradient(ellipse 58% 40% at 94% 12%, var(--hq-arcane-teal) 0%, transparent 54%),
-        radial-gradient(ellipse 50% 38% at 50% 100%, var(--hq-arcane-ember) 0%, transparent 54%);
-    opacity: 0.62;
-    mix-blend-mode: screen;
+        radial-gradient(ellipse 75% 48% at 8% 4%, var(--hq-arcane-violet) 0%, transparent 58%),
+        radial-gradient(ellipse 62% 42% at 96% 10%, var(--hq-arcane-teal) 0%, transparent 54%),
+        radial-gradient(ellipse 55% 40% at 50% 100%, var(--hq-arcane-ember) 0%, transparent 52%),
+        repeating-radial-gradient(circle at 20% 30%, rgba(200, 168, 255, 0.07) 0 1px, transparent 1px 48px);
 }
 
-.age-council-room-modal .age-council-room-workspace::after,
-body[data-age-council-room-page="true"] .age-council-room-workspace::after {
+.age-council-room-modal .is-hq-arcane-themed::after,
+body[data-age-council-room-page="true"] .is-hq-arcane-themed::after {
     content: '';
     position: absolute;
-    inset: 8px;
+    inset: 14px;
     pointer-events: none;
     z-index: 0;
     border-radius: 2px;
-    opacity: 0.5;
+    opacity: 0.75;
     background:
-        linear-gradient(90deg, rgba(168, 132, 230, 0.28), transparent 12%) top left / 140px 1px no-repeat,
-        linear-gradient(180deg, rgba(168, 132, 230, 0.22), transparent 12%) top left / 1px 140px no-repeat,
-        linear-gradient(270deg, rgba(104, 200, 188, 0.26), transparent 12%) top right / 140px 1px no-repeat,
-        linear-gradient(180deg, rgba(104, 200, 188, 0.2), transparent 12%) top right / 1px 140px no-repeat,
-        linear-gradient(90deg, rgba(168, 132, 230, 0.2), transparent 12%) bottom left / 110px 1px no-repeat,
-        linear-gradient(0deg, rgba(168, 132, 230, 0.18), transparent 12%) bottom left / 1px 110px no-repeat,
-        linear-gradient(270deg, rgba(104, 200, 188, 0.22), transparent 12%) bottom right / 110px 1px no-repeat,
-        linear-gradient(0deg, rgba(104, 200, 188, 0.18), transparent 12%) bottom right / 1px 110px no-repeat;
+        linear-gradient(90deg, var(--hq-arcane-rim), transparent 18%) top left / 160px 2px no-repeat,
+        linear-gradient(180deg, var(--hq-arcane-rim), transparent 18%) top left / 2px 160px no-repeat,
+        linear-gradient(270deg, var(--hq-arcane-rim-teal), transparent 18%) top right / 160px 2px no-repeat,
+        linear-gradient(180deg, var(--hq-arcane-rim-teal), transparent 18%) top right / 2px 160px no-repeat,
+        linear-gradient(90deg, var(--hq-arcane-rim), transparent 18%) bottom left / 130px 2px no-repeat,
+        linear-gradient(0deg, var(--hq-arcane-rim), transparent 18%) bottom left / 2px 130px no-repeat,
+        linear-gradient(270deg, var(--hq-arcane-rim-teal), transparent 18%) bottom right / 130px 2px no-repeat,
+        linear-gradient(0deg, var(--hq-arcane-rim-teal), transparent 18%) bottom right / 2px 130px no-repeat;
 }
 
-.age-council-room-modal .age-council-room-workspace > *,
-body[data-age-council-room-page="true"] .age-council-room-workspace > * {
+.age-council-room-modal .is-hq-arcane-themed > *,
+body[data-age-council-room-page="true"] .is-hq-arcane-themed > *:not(.hq-arcane-chrome) {
     position: relative;
     z-index: 1;
 }
 
-/* Header */
-.age-council-room-header {
+/* —— Header & crest sigil —— */
+.is-hq-arcane-themed .age-council-room-header {
     background:
-        linear-gradient(180deg, rgba(255, 215, 128, 0.09) 0%, transparent 48%),
-        linear-gradient(90deg, rgba(0, 0, 0, 0.38) 0%, transparent 100%),
-        linear-gradient(90deg, rgba(124, 92, 196, 0.08) 0%, transparent 46%);
-    border-bottom-color: rgba(184, 144, 48, 0.34);
+        linear-gradient(180deg, rgba(255, 215, 128, 0.12) 0%, transparent 50%),
+        linear-gradient(90deg, rgba(108, 72, 188, 0.22) 0%, transparent 55%),
+        linear-gradient(90deg, rgba(0, 0, 0, 0.42) 0%, transparent 100%);
+    border-bottom: 1px solid rgba(168, 132, 230, 0.45);
     box-shadow:
-        inset 0 -1px 0 rgba(148, 118, 220, 0.16),
-        inset 0 1px 0 rgba(104, 200, 188, 0.06);
+        inset 0 -2px 0 rgba(148, 118, 220, 0.22),
+        inset 0 1px 0 rgba(104, 200, 188, 0.12),
+        0 8px 24px rgba(88, 48, 160, 0.15);
 }
 
-.age-council-room-header__crest {
-    position: relative;
-    background:
-        linear-gradient(135deg, rgba(255, 215, 128, 0.22) 0%, transparent 52%),
-        linear-gradient(225deg, rgba(148, 118, 220, 0.14) 0%, transparent 48%),
-        repeating-linear-gradient(
-            -45deg,
-            rgba(184, 144, 48, 0.14) 0,
-            rgba(184, 144, 48, 0.14) 2px,
-            transparent 2px,
-            transparent 6px
-        );
-    box-shadow:
-        inset 0 0 24px rgba(255, 215, 128, 0.12),
-        0 4px 14px rgba(0, 0, 0, 0.38),
-        0 0 22px rgba(148, 118, 220, 0.2);
-}
-
-.age-council-room-header__crest::after {
+.is-hq-arcane-themed .age-council-room-header::after {
     content: '';
+    display: block;
     position: absolute;
-    inset: -3px;
-    border-radius: 6px;
+    left: 18px;
+    right: 18px;
+    bottom: 0;
+    height: 1px;
+    background: linear-gradient(
+        90deg,
+        transparent 0%,
+        rgba(168, 132, 230, 0.7) 15%,
+        rgba(104, 200, 188, 0.65) 50%,
+        rgba(168, 132, 230, 0.7) 85%,
+        transparent 100%
+    );
+    box-shadow: 0 0 12px rgba(148, 118, 220, 0.4);
     pointer-events: none;
-    border: 1px solid rgba(168, 132, 230, 0.28);
-    box-shadow:
-        0 0 16px rgba(104, 200, 188, 0.14),
-        inset 0 0 12px rgba(148, 118, 220, 0.08);
-    opacity: 0.82;
 }
 
-.age-council-room-eyebrow {
-    color: rgba(228, 206, 255, 0.68);
-    text-shadow: 0 0 14px rgba(148, 118, 220, 0.16);
-}
-
-.age-council-room-title {
-    color: #f8e4b8;
-    text-shadow:
-        0 2px 14px rgba(0, 0, 0, 0.5),
-        0 0 28px rgba(148, 118, 220, 0.18),
-        0 0 12px rgba(104, 200, 188, 0.08);
-}
-
-.age-council-room-subtitle {
-    color: rgba(228, 214, 255, 0.58);
-}
-
-.age-council-room-header .age-age-center-modal-close {
-    border-color: rgba(168, 132, 230, 0.32);
-    box-shadow: 0 0 12px rgba(148, 118, 220, 0.06);
-}
-
-.age-council-room-header .age-age-center-modal-close:hover,
-.age-council-room-header .age-age-center-modal-close:focus-visible {
-    border-color: rgba(200, 168, 255, 0.55);
-    background: rgba(48, 32, 64, 0.55);
-    box-shadow: 0 0 18px rgba(148, 118, 220, 0.14);
-}
-
-/* Columns */
-.age-council-room-column--nation {
-    border-right-color: rgba(148, 118, 220, 0.22);
-    background:
-        linear-gradient(180deg, rgba(148, 118, 220, 0.04) 0%, transparent 28%),
-        rgba(0, 0, 0, 0.24);
-}
-
-.age-council-room-column--command {
-    background:
-        radial-gradient(ellipse 80% 50% at 88% 0%, rgba(88, 188, 176, 0.06) 0%, transparent 58%),
-        rgba(0, 0, 0, 0.14);
-}
-
-.age-council-room-column-eyebrow {
-    color: rgba(228, 206, 255, 0.62);
-    text-shadow: 0 0 12px rgba(148, 118, 220, 0.12);
-}
-
-.age-council-room-column-head {
-    border-bottom-color: rgba(148, 118, 220, 0.2);
-    background:
-        linear-gradient(180deg, rgba(148, 118, 220, 0.07) 0%, transparent 74%);
-}
-
-.age-council-room-column-title {
-    text-shadow: 0 0 18px rgba(148, 118, 220, 0.12);
-}
-
-.age-council-room-workspace.is-hq-manager-open .age-council-room-column--command {
-    background:
-        radial-gradient(ellipse 90% 60% at 80% 18%, rgba(148, 118, 220, 0.08) 0%, transparent 58%),
-        radial-gradient(ellipse 70% 45% at 12% 88%, rgba(88, 188, 176, 0.05) 0%, transparent 52%),
-        rgba(0, 0, 0, 0.14);
-}
-
-/* Scroll areas */
-.age-council-room-nation-stack,
-.age-council-room-command-stack {
-    scrollbar-color: rgba(168, 132, 230, 0.42) rgba(0, 0, 0, 0.38);
-}
-
-/* Ops panels + cabinet */
-.age-council-room-panel.age-headquarters-ops-card,
-.age-council-room-panel.age-hq-nation-cabinet,
-.age-council-room-panel {
+.is-hq-arcane-themed .age-council-room-header {
     position: relative;
-    overflow: hidden;
-    border-color: rgba(184, 144, 48, 0.32);
-    box-shadow:
-        inset 0 1px 0 rgba(255, 215, 128, 0.1),
-        inset 0 1px 0 rgba(168, 132, 230, 0.1),
-        0 6px 20px rgba(0, 0, 0, 0.3),
-        0 0 24px rgba(124, 88, 200, 0.05);
 }
 
-.age-council-room-panel.age-headquarters-ops-card::before,
-.age-council-room-panel.age-hq-nation-cabinet::before,
-.age-council-room-panel::before {
+.is-hq-arcane-themed .age-council-room-header__crest {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background:
+        radial-gradient(circle at 50% 35%, rgba(220, 180, 255, 0.35) 0%, transparent 58%),
+        linear-gradient(145deg, rgba(88, 56, 140, 0.95) 0%, rgba(18, 10, 32, 0.98) 100%);
+    border: 2px solid rgba(186, 148, 255, 0.72);
+    box-shadow:
+        inset 0 0 28px rgba(148, 118, 220, 0.35),
+        0 0 24px rgba(148, 118, 220, 0.45),
+        0 0 40px rgba(104, 200, 188, 0.2);
+}
+
+.hq-arcane-crest-sigil {
+    font-size: 1.65rem;
+    line-height: 1;
+    color: #f0e0ff;
+    text-shadow:
+        0 0 16px rgba(200, 160, 255, 0.95),
+        0 0 32px rgba(148, 118, 220, 0.75),
+        0 0 8px rgba(104, 200, 188, 0.5);
+}
+
+.is-hq-arcane-themed .age-council-room-header__crest::after {
+    inset: -5px;
+    border: 1px solid rgba(200, 168, 255, 0.55);
+    border-radius: 6px;
+    box-shadow:
+        0 0 20px rgba(148, 118, 220, 0.45),
+        inset 0 0 16px rgba(104, 200, 188, 0.2);
+    opacity: 1;
+}
+
+.is-hq-arcane-themed .age-council-room-eyebrow {
+    color: #dcc8ff;
+    letter-spacing: 0.24em;
+    text-shadow: 0 0 18px rgba(168, 132, 255, 0.55);
+}
+
+.is-hq-arcane-themed .age-council-room-title {
+    color: #fff0c8;
+    text-shadow:
+        0 2px 16px rgba(0, 0, 0, 0.55),
+        0 0 32px rgba(168, 132, 255, 0.45),
+        0 0 14px rgba(104, 200, 188, 0.25);
+}
+
+.is-hq-arcane-themed .age-council-room-title::after {
+    content: '';
+    display: block;
+    width: min(280px, 72%);
+    height: 2px;
+    margin: 6px auto 0 0;
+    background: linear-gradient(90deg, var(--hq-arcane-rim) 0%, var(--hq-arcane-rim-teal) 48%, transparent 100%);
+    box-shadow: 0 0 10px var(--hq-arcane-glow);
+}
+
+.is-hq-arcane-themed .age-council-room-subtitle {
+    color: rgba(228, 214, 255, 0.78);
+}
+
+/* —— Columns —— */
+.is-hq-arcane-themed .age-council-room-column--nation {
+    border-right: 1px solid rgba(168, 132, 230, 0.42);
+    box-shadow: inset -8px 0 24px rgba(108, 72, 188, 0.12);
+    background:
+        linear-gradient(180deg, rgba(148, 118, 220, 0.1) 0%, transparent 32%),
+        rgba(0, 0, 0, 0.26);
+}
+
+.is-hq-arcane-themed .age-council-room-column--command {
+    background:
+        radial-gradient(ellipse 85% 55% at 90% 8%, rgba(88, 188, 176, 0.14) 0%, transparent 58%),
+        radial-gradient(ellipse 70% 50% at 6% 92%, rgba(148, 118, 220, 0.1) 0%, transparent 55%),
+        rgba(0, 0, 0, 0.16);
+}
+
+.is-hq-arcane-themed .age-council-room-column-head {
+    border-bottom: 1px solid rgba(168, 132, 230, 0.38);
+    background: linear-gradient(180deg, rgba(124, 92, 196, 0.16) 0%, transparent 78%);
+}
+
+.is-hq-arcane-themed .age-council-room-column-eyebrow {
+    color: #d8c4ff;
+    text-shadow: 0 0 14px rgba(148, 118, 220, 0.35);
+}
+
+.is-hq-arcane-themed .age-council-room-column-title::before {
+    content: '◇ ';
+    color: rgba(186, 148, 255, 0.9);
+    text-shadow: 0 0 10px rgba(148, 118, 220, 0.5);
+}
+
+/* —— Panels —— */
+.is-hq-arcane-themed .age-council-room-panel {
+    border: 1px solid rgba(168, 132, 230, 0.42);
+    border-left: 3px solid rgba(186, 148, 255, 0.75);
+    background:
+        linear-gradient(105deg, rgba(88, 56, 140, 0.2) 0%, transparent 22%),
+        linear-gradient(165deg, rgba(32, 26, 16, 0.98) 0%, rgba(10, 8, 6, 0.99) 100%);
+    box-shadow:
+        inset 0 1px 0 rgba(255, 215, 128, 0.12),
+        inset 4px 0 16px rgba(148, 118, 220, 0.12),
+        0 8px 22px rgba(0, 0, 0, 0.35),
+        0 0 28px rgba(124, 88, 200, 0.12);
+}
+
+.is-hq-arcane-themed .age-council-room-panel::before {
     content: '';
     position: absolute;
     top: 0;
-    left: 8%;
-    right: 8%;
-    height: 1px;
+    left: 0;
+    right: 0;
+    height: 2px;
     pointer-events: none;
     z-index: 2;
     background: linear-gradient(
         90deg,
-        transparent 0%,
-        rgba(168, 132, 230, 0.4) 20%,
-        rgba(104, 200, 188, 0.32) 50%,
-        rgba(168, 132, 230, 0.4) 80%,
-        transparent 100%
+        rgba(186, 148, 255, 0.85) 0%,
+        rgba(104, 200, 188, 0.7) 50%,
+        rgba(186, 148, 255, 0.85) 100%
     );
-    opacity: 0.72;
+    box-shadow: 0 0 14px rgba(148, 118, 220, 0.45);
+    opacity: 1;
 }
 
-.age-council-room-panel.age-headquarters-ops-card::after,
-.age-council-room-panel.age-hq-nation-cabinet::after,
-.age-council-room-panel::after {
+.is-hq-arcane-themed .age-council-room-panel::after {
     content: '';
     position: absolute;
     inset: 0;
     pointer-events: none;
     z-index: 0;
-    background: radial-gradient(ellipse 85% 58% at 50% -8%, rgba(148, 118, 220, 0.09) 0%, transparent 64%);
-    opacity: 0.85;
+    background: radial-gradient(ellipse 90% 60% at 50% -12%, rgba(148, 118, 220, 0.16) 0%, transparent 62%);
+    opacity: 1;
 }
 
-.age-council-room-panel .age-headquarters-ops-card-head,
-.age-council-room-panel .age-hq-nation-cabinet-head,
-.age-council-room-panel .age-headquarters-ops-card-body,
-.age-council-room-panel .age-hq-nation-cabinet-body {
+.is-hq-arcane-themed .age-headquarters-ops-card-title,
+.is-hq-arcane-themed .age-hq-cabinet-role,
+.is-hq-arcane-themed .age-headquarters-section-title {
+    color: #f4e8c8;
+    text-shadow: 0 0 20px rgba(148, 118, 220, 0.25);
+}
+
+.is-hq-arcane-themed .age-headquarters-section-eyebrow,
+.is-hq-arcane-themed .age-hq-planning-toolbar-eyebrow {
+    color: #d4bcff;
+}
+
+/* —— Planning map frame —— */
+.is-hq-arcane-themed .age-council-room-map-stack {
     position: relative;
-    z-index: 1;
+    outline: 1px solid rgba(168, 132, 230, 0.45);
+    outline-offset: 2px;
+    box-shadow:
+        0 0 24px rgba(148, 118, 220, 0.2),
+        inset 0 0 60px rgba(108, 72, 188, 0.15);
 }
 
-.age-headquarters-ops-card-title,
-.age-hq-cabinet-role,
-.age-headquarters-section-title {
-    text-shadow: 0 0 16px rgba(148, 118, 220, 0.1);
+.is-hq-arcane-themed .age-council-room-map-stack::before {
+    content: '';
+    position: absolute;
+    inset: -6px;
+    pointer-events: none;
+    z-index: 3;
+    border: 1px solid rgba(104, 200, 188, 0.35);
+    box-shadow: inset 0 0 32px rgba(148, 118, 220, 0.12);
 }
 
-.age-headquarters-section-eyebrow,
-.age-hq-planning-toolbar-eyebrow {
-    color: rgba(228, 206, 255, 0.58);
-}
-
-/* SF planning map — soft arcane vignette on map stack */
-.age-council-room-map-stack {
-    position: relative;
-}
-
-.age-council-room-map-stack::after {
+.is-hq-arcane-themed .age-council-room-map-stack::after {
     content: '';
     position: absolute;
     inset: 0;
     pointer-events: none;
     z-index: 2;
-    border-radius: 2px;
-    box-shadow:
-        inset 0 0 48px rgba(148, 118, 220, 0.06),
-        inset 0 0 80px rgba(0, 0, 0, 0.35);
     background:
-        linear-gradient(180deg, rgba(148, 118, 220, 0.05) 0%, transparent 18%),
-        linear-gradient(0deg, rgba(88, 188, 176, 0.04) 0%, transparent 16%);
+        linear-gradient(180deg, rgba(148, 118, 220, 0.12) 0%, transparent 22%),
+        linear-gradient(0deg, rgba(88, 188, 176, 0.1) 0%, transparent 20%);
+    box-shadow: inset 0 0 72px rgba(48, 24, 80, 0.35);
 }
 
-.age-council-room-planning-hint {
-    color: rgba(220, 208, 255, 0.52);
-}
-
-.age-council-room-planning-lock {
+.is-hq-arcane-themed .age-hq-manager-btn.is-active,
+.is-hq-arcane-themed .age-hq-manager-btn[aria-pressed="true"] {
+    border-color: rgba(220, 188, 255, 0.85);
     background:
-        linear-gradient(165deg, rgba(28, 18, 42, 0.94) 0%, rgba(8, 6, 12, 0.97) 100%);
-    border: 1px solid rgba(168, 132, 230, 0.28);
-    box-shadow: 0 0 32px rgba(148, 118, 220, 0.12);
-}
-
-/* Toolbar + manager */
-.age-council-room-toolbar .age-hq-marker-btn:not(:disabled):hover {
-    border-color: rgba(168, 132, 230, 0.45);
-    box-shadow: 0 0 14px rgba(148, 118, 220, 0.1);
-}
-
-.age-hq-manager-btn {
-    border-color: rgba(168, 132, 230, 0.28);
-    box-shadow: 0 0 0 1px rgba(148, 118, 220, 0.1);
-}
-
-.age-hq-manager-btn.is-active,
-.age-hq-manager-btn[aria-pressed="true"] {
-    border-color: rgba(200, 168, 255, 0.58);
+        linear-gradient(180deg, rgba(148, 118, 220, 0.35) 0%, rgba(48, 32, 72, 0.95) 100%);
     box-shadow:
-        0 0 0 1px rgba(255, 215, 128, 0.24),
-        0 8px 20px rgba(0, 0, 0, 0.44),
-        0 0 24px rgba(148, 118, 220, 0.22);
-    color: #ffecc8;
+        0 0 0 1px rgba(255, 215, 128, 0.3),
+        0 0 28px rgba(148, 118, 220, 0.45);
 }
 
-.age-headquarters-diplo-tab.is-active {
-    border-color: rgba(168, 132, 230, 0.42);
-    box-shadow: inset 0 0 18px rgba(148, 118, 220, 0.08);
+.is-hq-arcane-themed .age-council-room-nation-stack,
+.is-hq-arcane-themed .age-council-room-command-stack {
+    scrollbar-color: rgba(186, 148, 255, 0.65) rgba(24, 16, 36, 0.9);
 }
 
-.age-council-room-authority-banner {
-    border-color: rgba(168, 132, 230, 0.28);
-    background: linear-gradient(90deg, rgba(148, 118, 220, 0.1) 0%, rgba(0, 0, 0, 0.35) 100%);
-}
-
-@keyframes hq-arcane-crest-pulse {
-    0%,
-    100% {
-        opacity: 0.6;
-        transform: scale(1);
+@keyframes hq-arcane-crest-spin {
+    0% {
+        filter: hue-rotate(0deg);
+        opacity: 0.88;
     }
 
     50% {
-        opacity: 0.95;
-        transform: scale(1.02);
+        filter: hue-rotate(18deg);
+        opacity: 1;
+    }
+
+    100% {
+        filter: hue-rotate(0deg);
+        opacity: 0.88;
     }
 }
 
 @keyframes hq-arcane-veil-drift {
     0%,
     100% {
-        opacity: 0.52;
+        opacity: 0.72;
     }
 
     50% {
-        opacity: 0.68;
+        opacity: 0.92;
+    }
+}
+
+@keyframes hq-arcane-rim-shimmer {
+    0%,
+    100% {
+        opacity: 0.75;
+    }
+
+    50% {
+        opacity: 1;
     }
 }
 
 @media (prefers-reduced-motion: no-preference) {
-    .age-council-room-modal .age-council-room-workspace::before,
-    body[data-age-council-room-page="true"] .age-council-room-workspace::before {
-        animation: hq-arcane-veil-drift 14s ease-in-out infinite;
+    .age-council-room-modal .is-hq-arcane-themed::before,
+    body[data-age-council-room-page="true"] .is-hq-arcane-themed::before {
+        animation: hq-arcane-veil-drift 12s ease-in-out infinite;
     }
 
-    .age-council-room-header__crest::after {
-        animation: hq-arcane-crest-pulse 8s ease-in-out infinite;
+    .hq-arcane-crest-sigil {
+        animation: hq-arcane-crest-spin 6s ease-in-out infinite;
+    }
+
+    .hq-arcane-corner {
+        animation: hq-arcane-rim-shimmer 5s ease-in-out infinite;
+    }
+
+    .hq-arcane-sigil-rail {
+        animation: hq-arcane-rim-shimmer 7s ease-in-out infinite;
     }
 }
 
 @media (prefers-reduced-motion: reduce) {
-    .age-council-room-modal .age-council-room-workspace::before,
-    body[data-age-council-room-page="true"] .age-council-room-workspace::before,
-    .age-council-room-header__crest::after {
+    .age-council-room-modal .is-hq-arcane-themed::before,
+    body[data-age-council-room-page="true"] .is-hq-arcane-themed::before,
+    .hq-arcane-crest-sigil,
+    .hq-arcane-corner,
+    .hq-arcane-sigil-rail {
         animation: none;
     }
 }

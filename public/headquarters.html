@@ -9,7 +9,7 @@
     <link rel="stylesheet" href="style-age-area-shell.css?v=age-area-shell-1">
     <link rel="stylesheet" href="style-age-headquarters.css?v=hq-planning-chromeless-1">
     <link rel="stylesheet" href="style-age-council-room.css?v=hq-manager-public-view-1">
-    <link rel="stylesheet" href="style-age-hq-arcane-flare.css?v=hq-arcane-flare-2">
+    <link rel="stylesheet" href="style-age-hq-arcane-flare.css?v=hq-arcane-flare-3">
     <link rel="stylesheet" href="style-council-room-page.css?v=dispatch-header-inline-1">
     <link rel="stylesheet" href="mobile-responsive.css?v=council-room-premium-2">
     <link rel="stylesheet" href="dev-page-navigator.css">
@@ -33,9 +33,19 @@
             <div class="age-area-main" id="age-council-room-area-main">
                 <div class="age-area-main__scroll">
 
-                    <div id="age-council-room-workspace" class="age-council-room-workspace" aria-label="Headquarters workspace">
+                    <div id="age-council-room-workspace" class="age-council-room-workspace is-hq-arcane-themed" aria-label="Headquarters workspace">
+                <div class="hq-arcane-chrome hq-arcane-chrome--page" aria-hidden="true">
+                    <span class="hq-arcane-corner hq-arcane-corner--tl"></span>
+                    <span class="hq-arcane-corner hq-arcane-corner--tr"></span>
+                    <span class="hq-arcane-corner hq-arcane-corner--bl"></span>
+                    <span class="hq-arcane-corner hq-arcane-corner--br"></span>
+                    <span class="hq-arcane-sigil-rail hq-arcane-sigil-rail--left"></span>
+                    <span class="hq-arcane-sigil-rail hq-arcane-sigil-rail--right"></span>
+                </div>
                 <header class="age-council-room-header age-headquarters-header" aria-label="Headquarters">
-                    <div class="age-council-room-header__crest age-headquarters-header__crest" aria-hidden="true"></div>
+                    <div class="age-council-room-header__crest age-headquarters-header__crest" aria-hidden="true">
+                        <span class="hq-arcane-crest-sigil" aria-hidden="true">✦</span>
+                    </div>
                     <div class="age-council-room-header__copy">
                         <p class="age-council-room-eyebrow">Arcane Command</p>
                         <h1 id="age-council-room-title" class="age-council-room-title">Headquarters</h1>
