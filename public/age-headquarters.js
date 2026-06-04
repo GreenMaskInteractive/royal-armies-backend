@@ -1733,40 +1733,7 @@
     function syncPlanningStatusLine() {
         const statusEl = getPlanningStatusEl();
         if (!statusEl || statusEl.dataset.errorLock === '1') return;
-
-        const planningMap = global.RoyalArmiesAgeHeadquartersPlanningMap;
-        const steps = planningMap?.getPlanningSteps?.() || [];
-        const mpBudget = planningMap?.getMoveMfMpBudget?.() || { used: 0, max: 3, remaining: 3 };
-        const hasSteps = steps.length > 0;
-        const hasSelection = Boolean(planningMap?.getSelectedBorderCityId?.());
-        const canPlacePill = Boolean(planningMap?.isSelectedCityPlannable?.());
-        let line = '';
-
-        if (!hasActiveManagerControls()) {
-            line = hqManagerEligible
-                ? 'Open HQ Manager to edit SF Planning.'
-                : 'Council access required for SF Planning.';
-        } else if (planningConfirmed) {
-            line = 'Plan live on world map.';
-        } else if (hasPublishedPlan) {
-            line = 'Published plan on world map — clear when complete.';
-        } else if (activeMarkerType === 'move' || activeMarkerType === 'mf') {
-            line = `${markerTypeLabel(activeMarkerType)} · ${mpBudget.used}/${mpBudget.max} MP`;
-        } else if (activeMarkerType && isArrowMarkerType(activeMarkerType)) {
-            line = `Placing ${markerTypeLabel(activeMarkerType)}`;
-        } else if (activeMarkerType === 'hold') {
-            line = `${markerTypeLabel(activeMarkerType)} armed`;
-        } else if (hasSteps) {
-            line = `${steps.length} order${steps.length === 1 ? '' : 's'} placed`;
-        } else if (canPlacePill) {
-            line = 'Border city selected';
-        } else if (hasSelection) {
-            line = 'Invalid chain target';
-        } else {
-            line = 'Select a border city or arm a marker';
-        }
-
-        statusEl.textContent = line;
+        statusEl.textContent = '';
     }
 
     function syncToolbarState() {

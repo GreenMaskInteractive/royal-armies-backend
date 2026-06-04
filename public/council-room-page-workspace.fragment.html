@@ -1,9 +1,9 @@
-            <div id="age-council-room-workspace" class="age-council-room-workspace" hidden aria-hidden="true">
+            <div id="age-council-room-workspace" class="age-council-room-workspace" aria-label="Council Room workspace">
                 <header class="age-council-room-header" aria-label="Council Room">
                     <div class="age-council-room-header__crest" aria-hidden="true"></div>
                     <div class="age-council-room-header__copy">
                         <p class="age-council-room-eyebrow">Nation Command</p>
-                        <h1 class="age-council-room-title">Council Room</h1>
+                        <h1 id="age-council-room-title" class="age-council-room-title">Council Room</h1>
                         <p class="age-council-room-subtitle">Nation affairs, elections, and war council operations</p>
                     </div>
                     <p id="age-hq-load-status" class="age-hq-load-status" hidden aria-live="polite"></p>
@@ -16,7 +16,7 @@
                             <h2 class="age-council-room-column-title">Nation Affairs</h2>
                         </div>
                         <div id="age-hq-member-deck" class="age-council-room-nation-stack">
-                            <aside id="age-hq-nation-cabinet" class="age-hq-nation-cabinet age-council-room-panel age-council-room-panel--cabinet" aria-label="National cabinet" data-hq-public hidden>
+                            <aside id="age-hq-nation-cabinet" class="age-hq-nation-cabinet age-council-room-panel age-council-room-panel--cabinet" aria-label="National cabinet" data-hq-council-only hidden>
                                 <header class="age-hq-nation-cabinet-head">
                                     <span class="age-hq-planning-toolbar-eyebrow">National Cabinet</span>
                                 </header>
@@ -39,7 +39,7 @@
                                     </section>
                                 </div>
                             </aside>
-                            <section class="age-headquarters-ops-card age-headquarters-ops-card--elections age-council-room-panel" data-hq-member-only hidden aria-labelledby="age-hq-vote-title">
+                            <section class="age-headquarters-ops-card age-headquarters-ops-card--elections age-council-room-panel" aria-labelledby="age-hq-vote-title">
                                 <header class="age-headquarters-ops-card-head">
                                     <h3 class="age-headquarters-ops-card-title" id="age-hq-vote-title">Nation Elections</h3>
                                     <p class="age-headquarters-ops-card-sub" id="age-hq-vote-meta">Anonymous ballots · Leader (LD) and Vice Leader (VLD)</p>
@@ -63,7 +63,7 @@
                                     <p id="age-hq-vote-status" class="age-headquarters-vote-status" aria-live="polite" hidden></p>
                                 </div>
                             </section>
-                            <section class="age-headquarters-ops-card age-headquarters-ops-card--relations age-council-room-panel" data-hq-public hidden aria-labelledby="age-hq-relations-title">
+                            <section class="age-headquarters-ops-card age-headquarters-ops-card--relations age-council-room-panel" aria-labelledby="age-hq-relations-title">
                                 <header class="age-headquarters-ops-card-head">
                                     <h3 class="age-headquarters-ops-card-title" id="age-hq-relations-title">Allied &amp; NAP</h3>
                                     <p class="age-headquarters-ops-card-sub" id="age-hq-relations-meta">Accords with neutral nations — not at war.</p>
@@ -72,7 +72,7 @@
                                     <ul class="age-hq-relations-list" id="age-hq-relations-list" aria-live="polite"></ul>
                                 </div>
                             </section>
-                            <section class="age-headquarters-ops-card age-headquarters-ops-card--ledger age-council-room-panel" data-hq-public hidden aria-labelledby="age-hq-ledger-title">
+                            <section class="age-headquarters-ops-card age-headquarters-ops-card--ledger age-council-room-panel" aria-labelledby="age-hq-ledger-title">
                                 <header class="age-headquarters-ops-card-head">
                                     <h3 class="age-headquarters-ops-card-title" id="age-hq-ledger-title">War Ledger</h3>
                                     <p class="age-headquarters-ops-card-sub" id="age-hq-ledger-meta">Recognized wars are permanent until a belligerent is eliminated.</p>
@@ -90,24 +90,14 @@
                                     <dl class="age-headquarters-leadership-roster">
                                         <div class="age-headquarters-leadership-row">
                                             <dt class="age-headquarters-leadership-role">Leader (LD)</dt>
-                                            <dd class="age-headquarters-leadership-name" data-hq-elected-leader-display>—</dd>
+                                            <dd id="age-hq-elected-leader-name" class="age-headquarters-leadership-name">—</dd>
                                         </div>
                                         <div class="age-headquarters-leadership-row">
                                             <dt class="age-headquarters-leadership-role">Vice Leader (VLD)</dt>
-                                            <dd class="age-headquarters-leadership-name" data-hq-elected-vice-display>—</dd>
+                                            <dd id="age-hq-elected-vice-name" class="age-headquarters-leadership-name">—</dd>
                                         </div>
                                     </dl>
-                                    <p class="age-headquarters-vote-status" data-hq-vote-reopens-display aria-live="polite"></p>
-                                </div>
-                            </section>
-                            <section class="age-headquarters-ops-card age-headquarters-ops-card--treasury age-council-room-panel age-council-room-fortifications" data-hq-public hidden aria-label="Nation fortifications">
-                                <header class="age-headquarters-ops-card-head">
-                                    <h3 class="age-headquarters-ops-card-title">Fortifications</h3>
-                                    <p class="age-headquarters-ops-card-sub">Cities with active defensive fortifications.</p>
-                                </header>
-                                <div class="age-headquarters-ops-card-body">
-                                    <ul id="age-hq-treasury-fort-list" class="age-hq-treasury-fort-list" aria-live="polite"></ul>
-                                    <p id="age-hq-treasury-fort-empty" class="age-hq-treasury-empty">No fortified cities on record.</p>
+                                    <p id="age-hq-vote-reopens-at" class="age-headquarters-vote-status" aria-live="polite"></p>
                                 </div>
                             </section>
                             <p class="age-headquarters-authority-banner age-council-room-authority-banner" id="age-hq-authority-banner" hidden aria-live="polite"></p>
@@ -116,19 +106,6 @@
 
                     <section id="age-council-room-command" class="age-council-room-column age-council-room-column--command" aria-label="War council command">
                         <div class="age-council-room-command-stack">
-                            <div class="age-council-room-planning-block age-headquarters-planning-column" aria-label="Strike Force planning">
-                                <div class="age-headquarters-planning-lock age-council-room-planning-lock" id="age-hq-planning-lock" hidden aria-hidden="true">
-                                    <p class="age-headquarters-planning-lock__title">Command functions locked</p>
-                                    <p class="age-headquarters-planning-lock__copy" id="age-hq-planning-lock-copy">Seven commanders must reach rank 14 before the nation receives full authority.</p>
-                                </div>
-                                <div class="age-hq-planning-stage age-council-room-planning-stage">
-                                    <div class="age-hq-planning-map-stack age-council-room-map-stack">
-                                        <div id="age-hq-planning-map-host" class="age-hq-planning-map-host" aria-label="Planning map"></div>
-                                        <p id="age-hq-planning-status" class="age-council-room-planning-status" aria-live="polite"></p>
-                                    </div>
-                                </div>
-                            </div>
-
                             <div class="age-hq-command-ops-stack age-council-room-diplo-stack" data-hq-council-only hidden aria-label="Nation diplomacy operations">
                                     <section class="age-headquarters-ops-card age-headquarters-ops-card--council age-council-room-panel">
                                         <header class="age-headquarters-ops-card-head">
@@ -161,6 +138,17 @@
                                         </div>
                                     </section>
                             </div>
+
+                            <section class="age-headquarters-ops-card age-headquarters-ops-card--treasury age-council-room-panel age-council-room-fortifications" aria-label="Nation fortifications">
+                                <header class="age-headquarters-ops-card-head">
+                                    <h3 class="age-headquarters-ops-card-title">Fortifications</h3>
+                                    <p class="age-headquarters-ops-card-sub">Cities with active defensive fortifications.</p>
+                                </header>
+                                <div class="age-headquarters-ops-card-body">
+                                    <ul id="age-hq-treasury-fort-list" class="age-hq-treasury-fort-list" aria-live="polite"></ul>
+                                    <p id="age-hq-treasury-fort-empty" class="age-hq-treasury-empty">No fortified cities on record.</p>
+                                </div>
+                            </section>
                         </div>
                     </section>
                 </div>
