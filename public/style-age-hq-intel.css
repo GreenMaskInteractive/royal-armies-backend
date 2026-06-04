@@ -186,61 +186,86 @@
     color: rgba(241, 224, 172, 0.58);
 }
 
-.age-hq-spy-detail {
-    position: fixed;
-    inset: 0;
-    z-index: 13100;
+.age-hq-spy-logs-body {
     display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 24px;
-    background: rgba(4, 8, 10, 0.72);
+    flex-direction: column;
+    gap: 10px;
 }
 
-.age-hq-spy-detail__panel {
-    width: min(520px, 96vw);
-    max-height: min(70vh, 560px);
-    overflow: auto;
-    border: 1px solid rgba(112, 200, 184, 0.45);
-    background: linear-gradient(165deg, rgba(24, 48, 44, 0.98) 0%, rgba(8, 12, 14, 0.99) 100%);
-    box-shadow: 0 20px 48px rgba(0, 0, 0, 0.65);
+.age-hq-spy-log-btn.is-selected {
+    border-color: rgba(144, 255, 220, 0.9);
+    box-shadow:
+        inset 0 1px 0 rgba(168, 255, 220, 0.28),
+        0 0 14px rgba(72, 200, 160, 0.32);
 }
 
-.age-hq-spy-detail__head {
+.age-hq-spy-detail-panel {
+    margin-top: 2px;
+    border: 1px solid rgba(72, 168, 120, 0.55);
+    border-radius: 4px;
+    background: linear-gradient(180deg, rgba(20, 56, 44, 0.88) 0%, rgba(8, 16, 12, 0.96) 100%);
+    box-shadow: inset 0 1px 0 rgba(144, 220, 180, 0.12);
+}
+
+.age-hq-spy-detail-panel[hidden] {
+    display: none;
+}
+
+.age-hq-spy-detail-panel__head {
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: 12px;
-    padding: 10px 14px;
-    border-bottom: 1px solid rgba(112, 200, 184, 0.32);
+    padding: 8px 12px;
+    border-bottom: 1px solid rgba(72, 168, 120, 0.35);
 }
 
-.age-hq-spy-detail__title {
+.age-hq-spy-detail-panel__title {
     margin: 0;
     font-family: 'Cinzel', serif;
-    font-size: 0.95rem;
-    color: #f6e8c8;
-}
-
-.age-hq-spy-detail__body {
-    padding: 14px 16px 16px;
     font-size: 0.78rem;
-    color: rgba(228, 236, 232, 0.9);
+    letter-spacing: 0.06em;
+    color: #e8fff0;
 }
 
-.age-hq-spy-detail__body dl {
+.age-hq-spy-detail-panel__close {
+    flex: 0 0 auto;
+    width: 24px;
+    height: 24px;
+    padding: 0;
+    border: 1px solid rgba(255, 210, 140, 0.4);
+    border-radius: 3px;
+    background: rgba(0, 0, 0, 0.35);
+    color: #f6e8c8;
+    font-size: 1rem;
+    line-height: 1;
+    cursor: pointer;
+}
+
+.age-hq-spy-detail-panel__close:hover {
+    border-color: rgba(255, 228, 160, 0.75);
+    background: rgba(40, 32, 16, 0.55);
+}
+
+.age-hq-spy-detail-panel__body {
+    padding: 10px 12px 12px;
+    font-size: 0.74rem;
+    color: rgba(228, 244, 236, 0.92);
+}
+
+.age-hq-spy-detail-panel__body dl {
     margin: 0;
     display: grid;
     gap: 8px;
 }
 
-.age-hq-spy-detail__body dt {
-    font-size: 0.62rem;
+.age-hq-spy-detail-panel__body dt {
+    font-size: 0.6rem;
     letter-spacing: 0.12em;
     text-transform: uppercase;
-    color: rgba(184, 220, 210, 0.72);
+    color: rgba(168, 220, 196, 0.72);
 }
 
-.age-hq-spy-detail__body dd {
+.age-hq-spy-detail-panel__body dd {
     margin: 0;
 }

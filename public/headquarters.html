@@ -10,7 +10,7 @@
     <link rel="stylesheet" href="style-age-headquarters.css?v=hq-planning-chromeless-1">
     <link rel="stylesheet" href="style-age-council-room.css?v=hq-content-inset-25-1">
     <link rel="stylesheet" href="style-age-hq-arcane-flare.css?v=hq-arcane-teal-gold-1">
-    <link rel="stylesheet" href="style-age-hq-intel.css?v=hq-intel-2">
+    <link rel="stylesheet" href="style-age-hq-intel.css?v=hq-spy-panel-inline-1">
     <link rel="stylesheet" href="style-council-room-page.css?v=dispatch-header-inline-1">
     <link rel="stylesheet" href="mobile-responsive.css?v=council-room-premium-2">
     <link rel="stylesheet" href="dev-page-navigator.css">
@@ -194,9 +194,20 @@
                                     <h3 class="age-headquarters-ops-card-title" id="age-hq-spy-title">Spy Logs</h3>
                                     <p class="age-headquarters-ops-card-sub">Public army intel (3 max). Reports stale after +10% enemy growth.</p>
                                 </header>
-                                <div class="age-headquarters-ops-card-body">
+                                <div class="age-headquarters-ops-card-body age-hq-spy-logs-body">
                                     <div id="age-hq-spy-log-list" class="age-hq-spy-log-list" aria-live="polite"></div>
                                     <p id="age-hq-spy-log-empty" class="age-hq-intel-empty" hidden>No spy reports on file. Scout a bordering city on the world map.</p>
+                                    <section
+                                        id="age-hq-spy-detail"
+                                        class="age-hq-spy-detail-panel"
+                                        hidden
+                                        aria-labelledby="age-hq-spy-detail-title">
+                                        <header class="age-hq-spy-detail-panel__head">
+                                            <h4 id="age-hq-spy-detail-title" class="age-hq-spy-detail-panel__title">Spy Report</h4>
+                                            <button type="button" id="age-hq-spy-detail-close" class="age-hq-spy-detail-panel__close" aria-label="Close spy report">×</button>
+                                        </header>
+                                        <div id="age-hq-spy-detail-body" class="age-hq-spy-detail-panel__body"></div>
+                                    </section>
                                 </div>
                             </section>
                             <section class="age-headquarters-ops-card age-council-room-panel age-hq-intel-card age-hq-intel-card--bounties" data-hq-public hidden aria-labelledby="age-hq-bounty-title">
@@ -209,15 +220,6 @@
                                     <div id="age-hq-bounty-feed" class="age-hq-bounty-feed" aria-live="polite"></div>
                                 </div>
                             </section>
-                            <div id="age-hq-spy-detail" class="age-hq-spy-detail" hidden role="dialog" aria-modal="true" aria-labelledby="age-hq-spy-detail-title">
-                                <div class="age-hq-spy-detail__panel">
-                                    <header class="age-hq-spy-detail__head">
-                                        <h4 id="age-hq-spy-detail-title" class="age-hq-spy-detail__title">Spy Report</h4>
-                                        <button type="button" id="age-hq-spy-detail-close" class="age-age-center-modal-close" aria-label="Close spy report">×</button>
-                                    </header>
-                                    <div id="age-hq-spy-detail-body" class="age-hq-spy-detail__body"></div>
-                                </div>
-                            </div>
                             <p class="age-headquarters-authority-banner age-council-room-authority-banner" id="age-hq-authority-banner" hidden aria-live="polite"></p>
                         </div>
                     </aside>

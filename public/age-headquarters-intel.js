@@ -14,6 +14,7 @@
 
     let lastWorkspace = null;
     let lastAllies = [];
+    let activeSpyLogId = '';
 
     function escapeHtml(value) {
         return String(value ?? '')
@@ -93,12 +94,23 @@
         return logs.find((entry) => entry.id === logId) || null;
     }
 
+    function setSpyDetailPanelVisible(panel, visible) {
+        if (!panel) return;
+        panel.hidden = !visible;
+        if (visible) {
+            panel.removeAttribute('hidden');
+        } else {
+            panel.setAttribute('hidden', '');
+        }
+    }
+
     function openSpyDetail(log) {
-        const modal = global.document.getElementById('age-hq-spy-detail');
+        const panel = global.document.getElementById('age-hq-spy-detail');
         const body = global.document.getElementById('age-hq-spy-detail-body');
         const title = global.document.getElementById('age-hq-spy-detail-title');
-        if (!modal || !body || !log) return;
+        if (!panel || !body || !log) return;
 
+        activeSpyLogId = log.id;
         if (title) {
             title.textContent = `Spy Report — ${log.subjectUsername}`;
         }
@@ -113,15 +125,16 @@
             + `<div><dt>Captured</dt><dd>${escapeHtml(new Date(log.createdAt).toLocaleString())}</dd></div>`
             + '</dl>'
         );
-        modal.hidden = false;
-        modal.setAttribute('aria-hidden', 'false');
+        setSpyDetailPanelVisible(panel, true);
+        renderSpyLogs(lastWorkspace?.spyLogs);
+        panel.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
     }
 
     function closeSpyDetail() {
-        const modal = global.document.getElementById('age-hq-spy-detail');
-        if (!modal) return;
-        modal.hidden = true;
-        modal.setAttribute('aria-hidden', 'true');
+        const panel = global.document.getElementById('age-hq-spy-detail');
+        activeSpyLogId = '';
+        setSpyDetailPanelVisible(panel, false);
+        renderSpyLogs(lastWorkspace?.spyLogs);
     }
 
     function renderSpyLogs(logs) {
@@ -133,7 +146,12 @@
         if (emptyEl) emptyEl.hidden = rows.length > 0;
         if (!rows.length) {
             listEl.innerHTML = '';
+            closeSpyDetail();
             return;
+        }
+
+        if (activeSpyLogId && !rows.some((log) => log.id === activeSpyLogId)) {
+            closeSpyDetail();
         }
 
         const allyOptions = lastAllies
@@ -154,8 +172,9 @@
                     + allyOptions
                     + '</select>'
                 );
+            const selected = log.id === activeSpyLogId;
             return (
-                `<div class="age-hq-spy-log-btn${outdated ? ' is-outdated' : ''}" data-hq-spy-id="${escapeHtml(log.id)}">`
+                `<div class="age-hq-spy-log-btn${outdated ? ' is-outdated' : ''}${selected ? ' is-selected' : ''}" data-hq-spy-id="${escapeHtml(log.id)}">`
                 + `<span class="age-hq-spy-log-btn__copy"><strong>${escapeHtml(log.subjectUsername)}</strong> · ${escapeHtml(log.subjectNationName)} · Power ${formatNumber(log.snapshotPower)}</span>`
                 + `<span class="age-hq-spy-log-btn__actions">${reviewBtn}<button type="button" class="age-hq-spy-log-mini-btn" data-hq-spy-delete="${escapeHtml(log.id)}">Delete</button>${forwardSelect}</span>`
                 + stamp
@@ -261,14 +280,6 @@
         if (closeBtn && closeBtn.dataset.hqIntelBound !== '1') {
             closeBtn.dataset.hqIntelBound = '1';
             closeBtn.addEventListener('click', closeSpyDetail);
-        }
-
-        const detailModal = global.document.getElementById('age-hq-spy-detail');
-        if (detailModal && detailModal.dataset.hqIntelBound !== '1') {
-            detailModal.dataset.hqIntelBound = '1';
-            detailModal.addEventListener('click', (event) => {
-                if (event.target === detailModal) closeSpyDetail();
-            });
         }
     }
 
