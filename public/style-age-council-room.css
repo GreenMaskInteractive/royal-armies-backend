@@ -13,8 +13,8 @@
 .age-council-room-header {
     flex: 0 0 auto;
     display: grid;
-    grid-template-columns: auto 1fr auto;
-    gap: 14px 18px;
+    grid-template-columns: auto minmax(0, 1fr) minmax(0, max-content);
+    gap: 12px 16px;
     align-items: center;
     margin: 0;
     padding: 12px 18px 11px;
@@ -22,6 +22,10 @@
     background:
         linear-gradient(180deg, rgba(255, 215, 128, 0.08) 0%, transparent 46%),
         linear-gradient(90deg, rgba(0, 0, 0, 0.35) 0%, transparent 100%);
+}
+
+.age-council-room-header:has(.age-age-center-modal-close) {
+    grid-template-columns: auto minmax(0, 1fr) minmax(0, max-content) auto;
 }
 
 .age-council-room-header__crest {
@@ -76,9 +80,80 @@
 
 .age-council-room-header .age-hq-load-status {
     grid-column: 1 / -1;
+    grid-row: 2;
     margin: 0;
     max-width: none;
     text-align: left;
+}
+
+.age-council-room-header .age-age-center-modal-close {
+    grid-column: 4;
+    grid-row: 1;
+    justify-self: end;
+    align-self: center;
+}
+
+/* Nation Alert Controls — top-right, same row as Council Room title */
+.age-council-room-header .age-hq-dispatch-panel,
+.age-council-room-header .age-council-room-header-dispatch {
+    position: relative;
+    left: auto;
+    right: auto;
+    bottom: auto;
+    grid-column: 3;
+    grid-row: 1;
+    justify-self: end;
+    align-self: center;
+    width: auto;
+    max-width: min(520px, 46vw);
+    margin: 0;
+    z-index: 1;
+}
+
+.age-council-room-header .age-hq-dispatch-panel:not([hidden]) {
+    display: block;
+}
+
+.age-council-room-header .age-hq-dispatch-panel-shell {
+    min-height: 0;
+    padding: 6px 10px;
+    gap: 8px;
+}
+
+.age-council-room-header .age-hq-dispatch-panel-head {
+    flex: 0 0 auto;
+    width: auto;
+    max-width: 118px;
+}
+
+.age-council-room-header .age-hq-dispatch-panel-note {
+    display: none;
+}
+
+.age-council-room-header .age-hq-dispatch-panel-eyebrow {
+    font-size: 8px;
+    letter-spacing: 0.14em;
+}
+
+.age-council-room-header .age-hq-dispatch-panel-title {
+    font-size: 0.62rem;
+    letter-spacing: 0.06em;
+}
+
+.age-council-room-header .age-hq-dispatch-panel-actions {
+    gap: 6px;
+}
+
+.age-council-room-header .age-hq-dispatch-btn {
+    min-height: 34px;
+    padding: 5px 8px;
+    font-size: 0.52rem;
+    letter-spacing: 0.07em;
+    gap: 5px;
+}
+
+.age-council-room-header .age-hq-dispatch-btn-glyph {
+    font-size: 0.82rem;
 }
 
 .age-council-room-shell {
@@ -167,36 +242,90 @@
         0 6px 18px rgba(0, 0, 0, 0.28);
 }
 
+/* National Cabinet — Nation Affairs column (stacked, readable type) */
+.age-council-room-nation-stack > .age-hq-nation-cabinet {
+    flex: 0 0 auto;
+}
+
+.age-council-room-nation-stack > .age-hq-nation-cabinet .age-hq-nation-cabinet-head {
+    padding: 10px 14px;
+}
+
+.age-council-room-nation-stack > .age-hq-nation-cabinet .age-hq-planning-toolbar-eyebrow {
+    font-size: 0.72rem;
+    letter-spacing: 0.16em;
+}
+
+.age-council-room-nation-stack > .age-hq-nation-cabinet .age-hq-nation-cabinet-body {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 12px 14px 14px;
+}
+
+.age-council-room-nation-stack > .age-hq-nation-cabinet .age-hq-cabinet-section {
+    padding-right: 0;
+    padding-bottom: 11px;
+    border-right: none;
+    border-bottom: 1px solid rgba(184, 144, 48, 0.2);
+    gap: 5px;
+}
+
+.age-council-room-nation-stack > .age-hq-nation-cabinet .age-hq-cabinet-section:last-child {
+    padding-bottom: 0;
+    border-bottom: none;
+}
+
+.age-council-room-nation-stack > .age-hq-nation-cabinet .age-hq-cabinet-role {
+    font-size: 0.72rem;
+    letter-spacing: 0.12em;
+    color: rgba(255, 215, 128, 0.82);
+}
+
+.age-council-room-nation-stack > .age-hq-nation-cabinet .age-hq-cabinet-name {
+    font-size: 0.98rem;
+    line-height: 1.4;
+}
+
+.age-council-room-nation-stack > .age-hq-nation-cabinet .age-hq-cabinet-list {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+}
+
+.age-council-room-nation-stack > .age-hq-nation-cabinet .age-hq-cabinet-list-item,
+.age-council-room-nation-stack > .age-hq-nation-cabinet .age-hq-cabinet-list-empty {
+    font-size: 0.9rem;
+    line-height: 1.4;
+}
+
+.age-council-room-nation-stack > .age-hq-nation-cabinet .age-hq-cabinet-list-item {
+    padding: 4px 10px;
+}
+
 .age-council-room-planning-block {
     position: relative;
     display: flex;
     flex-direction: column;
     gap: 8px;
-    padding: 12px;
-    border: 1px solid rgba(184, 144, 48, 0.3);
-    border-radius: 6px;
-    background: rgba(0, 0, 0, 0.28);
+    padding: 0;
+    border: none;
+    border-radius: 0;
+    background: transparent;
 }
 
 .age-council-room-planning-stage {
     display: grid;
-    grid-template-columns: 176px minmax(0, 1fr) minmax(148px, 188px);
+    grid-template-columns: minmax(0, 1fr) minmax(148px, 188px);
     grid-template-rows: auto auto;
     gap: 10px;
     align-items: start;
     width: 100%;
-    min-height: 420px;
-}
-
-.age-council-room-players-rail {
-    grid-column: 1;
-    grid-row: 1 / span 2;
-    align-self: stretch;
-    min-height: 420px;
+    min-height: 0;
 }
 
 .age-council-room-map-stack {
-    grid-column: 2;
+    grid-column: 1;
     grid-row: 1;
     min-width: 0;
 }
@@ -205,15 +334,37 @@
     width: 100%;
     height: 420px;
     min-height: 320px;
-    border: 1px solid rgba(184, 144, 48, 0.38);
-    border-radius: 4px;
+    border: none;
+    border-radius: 0;
     box-sizing: border-box;
 }
 
+.age-council-room-planning-block .age-hq-planning-map-frame {
+    border: none;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+    padding: 0;
+}
+
 .age-council-room-toolbar {
-    grid-column: 3;
-    grid-row: 1 / span 2;
+    grid-column: 2;
+    grid-row: 1;
     align-self: stretch;
+}
+
+.age-council-room-toolbar.age-hq-planning-toolbar {
+    border: none;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+}
+
+.age-council-room-toolbar .age-hq-planning-toolbar-head {
+    border-bottom: none;
+    background: transparent;
+    padding-left: 0;
+    padding-right: 0;
 }
 
 .age-council-room-planning-hint {
@@ -225,8 +376,7 @@
 }
 
 .age-council-room-planning-block.is-planning-locked .age-council-room-map-stack,
-.age-council-room-planning-block.is-planning-locked .age-council-room-toolbar,
-.age-council-room-planning-block.is-planning-locked .age-council-room-players-rail {
+.age-council-room-planning-block.is-planning-locked .age-council-room-toolbar {
     filter: grayscale(0.4) brightness(0.5);
     pointer-events: none;
 }
@@ -281,13 +431,13 @@
     }
 
     .age-council-room-planning-stage {
-        grid-template-columns: 164px minmax(0, 1fr);
-        grid-template-rows: auto auto auto;
+        grid-template-columns: minmax(0, 1fr);
+        grid-template-rows: auto auto;
     }
 
     .age-council-room-toolbar {
-        grid-column: 1 / -1;
-        grid-row: 3;
+        grid-column: 1;
+        grid-row: 2;
     }
 
     .age-council-room-council-grid {

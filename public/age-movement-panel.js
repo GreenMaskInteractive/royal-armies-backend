@@ -825,13 +825,6 @@
                 empty: global.document.getElementById('age-city-info-players-empty')
             },
             {
-                variant: 'hq',
-                cityLabel: global.document.getElementById('age-hq-players-city'),
-                summary: global.document.getElementById('age-hq-players-summary'),
-                list: global.document.getElementById('age-hq-players-list'),
-                empty: global.document.getElementById('age-hq-players-empty')
-            },
-            {
                 variant: 'war-room',
                 cityLabel: global.document.getElementById('age-war-room-players-city'),
                 summary: global.document.getElementById('age-war-room-players-summary'),

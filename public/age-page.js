@@ -16,7 +16,6 @@
     const LEFT_COLUMN_CHAT_CLEARANCE_PX = 10;
     const AGE_MOBILE_LAYOUT_MQ = '(max-width: 1024px)';
     const HQ_PLANNING_BASE_MAP_PX = 480;
-    const HQ_PLANNING_BASE_RAIL_PX = 168;
     const HQ_PLANNING_BASE_TOOLBAR_PX = 148;
     const HQ_PLANNING_BASE_COMMAND_RAIL_PX = 292;
     const HQ_PLANNING_BASE_GAP_PX = 12;
@@ -1058,10 +1057,9 @@
                 - HQ_PLANNING_LAYOUT_CLEARANCE_PX - HQ_PLANNING_EDGE_BLEED_PX
         );
 
-        const chromeBase = HQ_PLANNING_BASE_RAIL_PX
-            + HQ_PLANNING_BASE_TOOLBAR_PX
+        const chromeBase = HQ_PLANNING_BASE_TOOLBAR_PX
             + HQ_PLANNING_BASE_COMMAND_RAIL_PX
-            + (HQ_PLANNING_BASE_GAP_PX * 3);
+            + (HQ_PLANNING_BASE_GAP_PX * 2);
         const widthDenominator = chromeBase + HQ_PLANNING_BASE_MAP_PX;
         const availableWidth = Math.max(widthDenominator, planningColumn.clientWidth);
 
