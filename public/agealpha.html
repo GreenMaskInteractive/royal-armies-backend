@@ -8,7 +8,7 @@
     <link rel="stylesheet" href="style2.css?v=border-casualty-risk-1">
     <link rel="stylesheet" href="style-age-headquarters.css?v=hq-planning-chromeless-1">
     <link rel="stylesheet" href="style-age-center-modals.css?v=age-modal-stack-fix-1">
-    <link rel="stylesheet" href="style-age-council-room.css?v=hq-manager-toggle-reliable-1">
+    <link rel="stylesheet" href="style-age-council-room.css?v=hq-planning-toolbar-removed-1">
     <link rel="stylesheet" href="style-age-hq-arcane-flare.css?v=hq-chrome-click-fix-1">
     <link rel="stylesheet" href="style-age-hq-intel.css?v=hq-chrome-click-fix-1">
     <link rel="stylesheet" href="mobile-responsive.css?v=council-room-premium-2">
@@ -1608,27 +1608,8 @@
                                     <div class="age-hq-planning-map-stack age-council-room-map-stack">
                                         <div id="age-hq-planning-map-host" class="age-hq-planning-map-host" aria-label="Planning map"></div>
                                     </div>
-                                    <div id="age-hq-planning-toolbar" class="age-hq-planning-toolbar age-hq-planning-toolbar--slim age-council-room-toolbar" role="toolbar" aria-label="Planning markers" data-hq-council-only hidden>
-                                        <header class="age-hq-planning-toolbar-head">
-                                            <span class="age-hq-planning-toolbar-eyebrow">Tactical Orders</span>
-                                            <span class="age-hq-planning-toolbar-status" id="age-hq-planning-toolbar-status" aria-live="polite">Awaiting border city</span>
-                                        </header>
-                                        <div class="age-hq-planning-toolbar-body">
-                                            <div class="age-hq-planning-toolbar-group" role="group" aria-label="Marker tools">
-                                                <button type="button" class="age-hq-marker-btn age-hq-marker-btn--hold age-hq-marker-btn--compact" data-hq-marker="hold" disabled title="Hold"><span class="age-hq-marker-btn-glyph" aria-hidden="true">H</span><span class="age-hq-marker-btn-copy"><span class="age-hq-marker-btn-title">Hold</span></span></button>
-                                                <button type="button" class="age-hq-marker-btn age-hq-marker-btn--sf age-hq-marker-btn--compact" data-hq-marker="sf" disabled title="Strike Force"><span class="age-hq-marker-btn-glyph" aria-hidden="true">SF</span><span class="age-hq-marker-btn-copy"><span class="age-hq-marker-btn-title">SF</span></span></button>
-                                                <button type="button" class="age-hq-marker-btn age-hq-marker-btn--taxi age-hq-marker-btn--compact" data-hq-marker="taxi" disabled title="Taxi"><span class="age-hq-marker-btn-glyph" aria-hidden="true">TX</span><span class="age-hq-marker-btn-copy"><span class="age-hq-marker-btn-title">Taxi</span></span></button>
-                                                <button type="button" class="age-hq-marker-btn age-hq-marker-btn--mf age-hq-marker-btn--compact" data-hq-marker="mf" disabled title="Main Force"><span class="age-hq-marker-btn-glyph" aria-hidden="true">MF</span><span class="age-hq-marker-btn-copy"><span class="age-hq-marker-btn-title">MF</span></span></button>
-                                                <button type="button" class="age-hq-marker-btn age-hq-marker-btn--move age-hq-marker-btn--compact" data-hq-marker="move" disabled title="Move"><span class="age-hq-marker-btn-glyph" aria-hidden="true">MV</span><span class="age-hq-marker-btn-copy"><span class="age-hq-marker-btn-title">Move</span></span></button>
-                                                <button type="button" class="age-hq-marker-btn age-hq-marker-btn--temp-main age-hq-marker-btn--compact" data-hq-marker="temp-main" data-hq-vice-only hidden title="Temp Main"><span class="age-hq-marker-btn-glyph" aria-hidden="true">TM</span><span class="age-hq-marker-btn-copy"><span class="age-hq-marker-btn-title">Temp</span></span></button>
-                                            </div>
-                                            <button type="button" class="age-hq-marker-btn age-hq-marker-btn--reset age-hq-marker-btn--compact" id="age-hq-planning-reset-btn" data-hq-planning-reset disabled title="Reset Plan"><span class="age-hq-marker-btn-glyph age-hq-marker-btn-glyph--reset" aria-hidden="true">↺</span><span class="age-hq-marker-btn-copy"><span class="age-hq-marker-btn-title">Reset</span></span></button>
-                                            <button type="button" id="age-hq-planning-confirm-btn" class="confirm-btn age-hq-planning-confirm-btn" data-hq-planning-confirm disabled>Confirm Plan</button>
-                                            <button type="button" id="age-hq-planning-clear-btn" class="cancel-btn age-hq-planning-clear-btn" data-hq-planning-clear hidden>Clear Plan</button>
-                                        </div>
-                                    </div>
                                 </div>
-                                <p id="age-hq-planning-hint" class="age-hq-planning-hint age-council-room-planning-hint">Arm SF, MF, Move, or Taxi, or select a bordering city first for Hold.</p>
+                                <p id="age-hq-planning-hint" class="age-hq-planning-hint age-council-room-planning-hint">Use the planning map to place orders on border cities.</p>
                             </div>
 
                             <div class="age-hq-command-ops-stack age-council-room-diplo-stack" data-hq-council-only hidden aria-label="Nation diplomacy operations">

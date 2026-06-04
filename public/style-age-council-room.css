@@ -78,6 +78,11 @@
     grid-column: -1;
 }
 
+/* SF Planning marker toolbar removed — map-only planning in HQ Manager */
+#age-hq-planning-toolbar {
+    display: none !important;
+}
+
 .age-council-room-workspace:not(.is-hq-manager-open) #age-council-room-command {
     display: none;
 }
