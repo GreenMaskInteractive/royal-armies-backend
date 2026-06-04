@@ -221,6 +221,9 @@
     }
 
     function resolveHqManagerEligible(access) {
+        if (isDevOwnerHeadquartersBypass(resolveHeadquartersUsername())) {
+            return true;
+        }
         if (!access) return false;
         return Boolean(access.council || access.leader || access.viceLeader);
     }
@@ -353,6 +356,10 @@
             setActiveMarkerType('');
             global.RoyalArmiesAgeHeadquartersPlanningMap?.setEnabled(false);
             return;
+        }
+
+        if (isDevOwnerHeadquartersBypass(resolveHeadquartersUsername())) {
+            applyDevOwnerCouncilAccessUI();
         }
 
         if (!hqManagerEligible) {
@@ -565,13 +572,12 @@
         return String(username || '').trim().toLowerCase() === 'caleb_admin';
     }
 
-    /** Portal owner (production + local) or local Owner dev persona. */
+    /** Portal owner (production + local) or local Owner dev view (any logged-in commander). */
     function isDevOwnerHeadquartersBypass(username) {
         const normalized = String(username || '').trim().toLowerCase();
         if (isHeadquartersOwnerBypass(normalized)) return true;
-        if (!isLocalDevOwnerPortalView()) return false;
-        if (!normalized) return true;
-        return normalized === resolveLocalDevOwnerUsername().toLowerCase();
+        if (isLocalDevOwnerPortalView()) return true;
+        return false;
     }
 
     function applyDevOwnerCouncilAccessUI() {
@@ -1093,12 +1099,14 @@
         memberHubActive = Boolean(workspace.access?.memberHub);
         leaderAccess = Boolean(workspace.access?.leader);
         hqManagerEligible = resolveHqManagerEligible(workspace.access);
-        if (!hqManagerEligible) {
+        if (isDevOwnerHeadquartersBypass(username)) {
+            applyDevOwnerCouncilAccessUI();
+        } else if (!hqManagerEligible) {
             resetHeadquartersManagerMode();
         } else {
             applyPendingHqManagerMode();
         }
-        setCouncilAccessUI(Boolean(workspace.access?.council));
+        setCouncilAccessUI(Boolean(workspace.access?.council || isDevOwnerHeadquartersBypass(username)));
         setViceLeaderAccessUI(Boolean(workspace.access?.viceLeader));
         syncHeadquartersViewMode(workspace);
         if (hqManagerModeOpen) {
@@ -1139,7 +1147,6 @@
         }
 
         if (isDevOwnerHeadquartersBypass(username)) {
-            applyDevOwnerCouncilAccessUI();
             setAuthorityGates(workspace);
             return true;
         }
