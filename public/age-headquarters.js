@@ -1103,26 +1103,6 @@
             }
         }
 
-        const summary = global.document.querySelector('[data-hq-leadership-summary]');
-        const showLeadershipSummary = Boolean(voteState?.electedLeader || voteState?.electedViceLeader);
-        if (summary) {
-            setNodeHidden(summary, !showLeadershipSummary);
-        }
-
-        const leaderName = voteState?.electedLeader?.name || '—';
-        const viceName = voteState?.electedViceLeader?.name || '—';
-        global.document.querySelectorAll('[data-hq-elected-leader-display]').forEach((node) => {
-            node.textContent = leaderName;
-        });
-        global.document.querySelectorAll('[data-hq-elected-vice-display]').forEach((node) => {
-            node.textContent = viceName;
-        });
-        global.document.querySelectorAll('[data-hq-vote-reopens-display]').forEach((reopenEl) => {
-            const reopenText = formatVoteReopenLabel(voteState?.lockedUntil);
-            reopenEl.textContent = reopenText;
-            setNodeHidden(reopenEl, !reopenText);
-        });
-
         renderNationCabinet(lastCabinetState, voteState);
     }
 
