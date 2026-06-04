@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Royal Armies — Age Alpha</title>
     <link rel="stylesheet" href="style.css?v=cursor-modal-layer-fix-1">
-    <link rel="stylesheet" href="style2.css?v=war-room-players-rail-1">
+    <link rel="stylesheet" href="style2.css?v=war-room-players-split-1">
     <link rel="stylesheet" href="style-age-headquarters.css?v=hq-load-status-1">
     <link rel="stylesheet" href="style-age-center-modals.css?v=age-modal-stack-fix-1">
     <link rel="stylesheet" href="style-age-council-room.css?v=age-hub-center-modals-1">
@@ -1702,51 +1702,8 @@
                 </div>
                 <button type="button" id="age-war-room-close" class="age-war-room-close" aria-label="Close War Room">×</button>
             </header>
-            <div class="age-war-room-command-deck">
-                <aside class="age-war-room-ops-panel" aria-label="War Room actions">
-                    <header class="age-army-groups-toolbar" aria-label="Army group actions">
-                        <button
-                            type="button"
-                            id="age-army-groups-btn-create"
-                            class="age-army-groups-tool-btn"
-                            title="Create army group"
-                            aria-label="Create army group"
-                            aria-expanded="false"
-                            aria-controls="age-army-groups-create-row">
-                            <span class="age-army-groups-tool-glyph" aria-hidden="true">⚔</span>
-                            <span class="age-army-groups-tool-copy">
-                                <span class="age-army-groups-tool-label">Deploy</span>
-                                <span class="age-army-groups-tool-hint">Raise formation</span>
-                            </span>
-                        </button>
-                        <button
-                            type="button"
-                            id="age-army-groups-btn-sf-lead"
-                            class="age-army-groups-tool-btn"
-                            title="List as SF Lead candidate"
-                            aria-label="List as SF Lead candidate"
-                            aria-expanded="false"
-                            aria-controls="age-army-groups-volunteers-column">
-                            <span class="age-army-groups-tool-glyph" aria-hidden="true">★</span>
-                            <span class="age-army-groups-tool-copy">
-                                <span class="age-army-groups-tool-label">SF Lead</span>
-                                <span class="age-army-groups-tool-hint">Volunteer pool</span>
-                            </span>
-                        </button>
-                        <button
-                            type="button"
-                            id="age-army-groups-btn-sonar"
-                            class="age-army-groups-tool-btn age-army-groups-tool-btn--sonar"
-                            title="Signal for rescue (sonar ping)"
-                            aria-label="Signal for rescue"
-                            aria-pressed="false">
-                            <span class="age-army-groups-tool-glyph" aria-hidden="true">◎</span>
-                            <span class="age-army-groups-tool-copy">
-                                <span class="age-army-groups-tool-label">Rescue</span>
-                                <span class="age-army-groups-tool-hint">Sonar ping</span>
-                            </span>
-                        </button>
-                    </header>
+            <div class="age-war-room-body">
+                <aside class="age-war-room-players-panel" aria-label="City commanders">
                     <aside
                         class="age-headquarters-players-rail age-war-room-players-rail"
                         aria-label="Commanders in current city">
@@ -1820,7 +1777,54 @@
                         </div>
                     </aside>
                 </aside>
-                <div id="age-army-groups-workspace-main" class="age-army-groups-workspace-main" aria-label="War Room workspace">
+                <div class="age-war-room-workspace-shell" aria-label="War Room workspace">
+            <div class="age-war-room-command-deck">
+                <aside class="age-war-room-ops-panel" aria-label="War Room actions">
+                    <header class="age-army-groups-toolbar" aria-label="Army group actions">
+                        <button
+                            type="button"
+                            id="age-army-groups-btn-create"
+                            class="age-army-groups-tool-btn"
+                            title="Create army group"
+                            aria-label="Create army group"
+                            aria-expanded="false"
+                            aria-controls="age-army-groups-create-row">
+                            <span class="age-army-groups-tool-glyph" aria-hidden="true">⚔</span>
+                            <span class="age-army-groups-tool-copy">
+                                <span class="age-army-groups-tool-label">Deploy</span>
+                                <span class="age-army-groups-tool-hint">Raise formation</span>
+                            </span>
+                        </button>
+                        <button
+                            type="button"
+                            id="age-army-groups-btn-sf-lead"
+                            class="age-army-groups-tool-btn"
+                            title="List as SF Lead candidate"
+                            aria-label="List as SF Lead candidate"
+                            aria-expanded="false"
+                            aria-controls="age-army-groups-volunteers-column">
+                            <span class="age-army-groups-tool-glyph" aria-hidden="true">★</span>
+                            <span class="age-army-groups-tool-copy">
+                                <span class="age-army-groups-tool-label">SF Lead</span>
+                                <span class="age-army-groups-tool-hint">Volunteer pool</span>
+                            </span>
+                        </button>
+                        <button
+                            type="button"
+                            id="age-army-groups-btn-sonar"
+                            class="age-army-groups-tool-btn age-army-groups-tool-btn--sonar"
+                            title="Signal for rescue (sonar ping)"
+                            aria-label="Signal for rescue"
+                            aria-pressed="false">
+                            <span class="age-army-groups-tool-glyph" aria-hidden="true">◎</span>
+                            <span class="age-army-groups-tool-copy">
+                                <span class="age-army-groups-tool-label">Rescue</span>
+                                <span class="age-army-groups-tool-hint">Sonar ping</span>
+                            </span>
+                        </button>
+                    </header>
+                </aside>
+                <div id="age-army-groups-workspace-main" class="age-army-groups-workspace-main" aria-label="War Room formations">
                 <div class="age-army-groups-body">
                     <section class="age-army-groups-roster-column" aria-label="Army groups">
                         <div class="age-army-groups-section-head">
@@ -1858,6 +1862,8 @@
                         <ul id="age-army-groups-sf-lead-list" class="age-army-groups-sf-lead-list" aria-live="polite"></ul>
                     </section>
                 </div>
+                </div>
+            </div>
                 </div>
             </div>
         </div>

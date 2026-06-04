@@ -22597,7 +22597,7 @@ body.is-rift-discoveries-workspace-open {
     display: flex;
     flex-direction: column;
     pointer-events: auto;
-    width: min(1380px, 90vw);
+    width: min(1520px, 94vw);
     height: min(960px, 90vh);
     max-width: calc(100vw - 40px);
     max-height: calc(100vh - 40px);
@@ -22772,7 +22772,7 @@ body.age-war-room-open {
     overflow: hidden;
 }
 
-.age-war-room-command-deck {
+.age-war-room-body {
     position: relative;
     z-index: 2;
     display: flex;
@@ -22783,12 +22783,47 @@ body.age-war-room-open {
     overflow: hidden;
 }
 
+.age-war-room-players-panel {
+    flex: 0 0 204px;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    min-height: 0;
+    padding: 12px 10px 12px 12px;
+    border-right: 1px solid rgba(184, 144, 48, 0.34);
+    background:
+        linear-gradient(180deg, rgba(0, 0, 0, 0.42) 0%, rgba(0, 0, 0, 0.2) 100%),
+        linear-gradient(90deg, rgba(40, 90, 140, 0.1) 0%, transparent 100%);
+    box-sizing: border-box;
+}
+
+.age-war-room-workspace-shell {
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    min-height: 0;
+    overflow: hidden;
+    border-left: 1px solid rgba(184, 144, 48, 0.14);
+}
+
+.age-war-room-command-deck {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex: 1 1 auto;
+    align-items: stretch;
+    gap: 0;
+    min-height: 0;
+    overflow: hidden;
+}
+
 .age-war-room-ops-panel {
-    flex: 0 0 220px;
+    flex: 0 0 188px;
     display: flex;
     flex-direction: column;
     gap: 10px;
-    padding: 14px 10px 14px 12px;
+    padding: 14px 12px 14px 16px;
     border-right: 1px solid rgba(184, 144, 48, 0.28);
     background:
         linear-gradient(180deg, rgba(0, 0, 0, 0.38) 0%, rgba(0, 0, 0, 0.18) 100%),
@@ -22802,24 +22837,27 @@ body.age-war-room-open {
     min-height: 0;
 }
 
-.age-war-room-players-rail {
+.age-war-room-players-panel .age-war-room-players-rail {
     flex: 1 1 auto;
     width: 100%;
     max-width: 100%;
     min-width: 0;
     min-height: 0;
+    height: 100%;
     --age-hq-planning-scale: 1;
     --age-hq-panel-text-scale: 0.88;
 }
 
-.age-war-room-players-rail .age-headquarters-players-body {
+.age-war-room-players-panel .age-headquarters-players-body {
+    flex: 1 1 auto;
+    min-height: 0;
     overflow-y: auto;
     overflow-x: hidden;
     scrollbar-width: thin;
     scrollbar-color: rgba(184, 144, 48, 0.45) rgba(0, 0, 0, 0.2);
 }
 
-.age-war-room-players-rail .age-hq-players-list {
+.age-war-room-players-panel .age-hq-players-list {
     flex: 1 1 auto;
     min-height: 0;
     overflow-y: auto;
@@ -23896,6 +23934,21 @@ body.age-war-room-open {
 
     .age-war-room-header {
         grid-template-columns: auto 1fr auto;
+    }
+
+    .age-war-room-body {
+        flex-direction: column;
+    }
+
+    .age-war-room-players-panel {
+        flex: 0 0 auto;
+        max-height: 38vh;
+        border-right: none;
+        border-bottom: 1px solid rgba(184, 144, 48, 0.28);
+    }
+
+    .age-war-room-workspace-shell {
+        border-left: none;
     }
 
     .age-war-room-command-deck {
