@@ -22777,7 +22777,7 @@ body.age-war-room-open {
 }
 
 .age-war-room-players-panel.is-open {
-    --age-war-room-players-panel-width: 255px;
+    --age-war-room-players-panel-width: 357px;
     position: fixed;
     z-index: 13061;
     display: flex;
@@ -22831,7 +22831,8 @@ body.age-war-room-open {
 .age-war-room-workspace-shell {
     position: relative;
     z-index: 2;
-    flex: 1 1 auto;
+    flex: 1 1 0%;
+    align-self: stretch;
     display: flex;
     flex-direction: column;
     min-width: 0;
@@ -23971,7 +23972,7 @@ body.age-war-room-open {
     }
 
     .age-war-room-players-panel.is-open {
-        width: min(var(--age-war-room-players-panel-width, 255px), calc(100vw - 24px));
+        width: min(var(--age-war-room-players-panel-width, 357px), calc(100vw - 24px));
     }
 
     .age-war-room-command-deck {

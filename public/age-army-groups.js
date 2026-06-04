@@ -37,7 +37,8 @@
     const REFRESH_MS = 12000;
     const WAR_ROOM_PLAYERS_PANEL_ID = 'age-war-room-players-panel';
     const WAR_ROOM_PLAYERS_PANEL_GAP_PX = 12;
-    const WAR_ROOM_PLAYERS_PANEL_WIDTH_PX = 255;
+    const WAR_ROOM_PLAYERS_PANEL_WIDTH_PX = 357;
+    const WAR_ROOM_DIALOG_ANIM_MS = 400;
 
     const els = {
         modal: null,
@@ -46,6 +47,7 @@
         openBtn: null,
         playersPanel: null,
         warRoomDialog: null,
+        warRoomWorkspace: null,
         workspaceMain: null,
         createBtn: null,
         sfLeadBtn: null,
@@ -80,6 +82,8 @@
     const expandedGroupIds = new Set();
     let editingNameGroupId = null;
     let armyViewModalEl = null;
+    let warRoomPlayersPanelLayoutObserver = null;
+    let warRoomPlayersPanelLayoutTimer = 0;
 
     function resolveUsername() {
         const saved = global.localStorage.getItem('activeCommanderUser');
@@ -228,21 +232,60 @@
         return panel;
     }
 
+    function disconnectWarRoomPlayersPanelLayoutObserver() {
+        if (warRoomPlayersPanelLayoutObserver) {
+            warRoomPlayersPanelLayoutObserver.disconnect();
+            warRoomPlayersPanelLayoutObserver = null;
+        }
+        if (warRoomPlayersPanelLayoutTimer) {
+            global.clearTimeout(warRoomPlayersPanelLayoutTimer);
+            warRoomPlayersPanelLayoutTimer = 0;
+        }
+    }
+
+    function connectWarRoomPlayersPanelLayoutObserver() {
+        disconnectWarRoomPlayersPanelLayoutObserver();
+        const workspace = els.warRoomWorkspace;
+        const dialog = els.warRoomDialog;
+        if (!workspace || !dialog || typeof ResizeObserver === 'undefined') return;
+
+        warRoomPlayersPanelLayoutObserver = new ResizeObserver(() => {
+            if (workspaceOpen) syncWarRoomPlayersPanelPosition();
+        });
+        warRoomPlayersPanelLayoutObserver.observe(workspace);
+        warRoomPlayersPanelLayoutObserver.observe(dialog);
+    }
+
     function syncWarRoomPlayersPanelPosition() {
         const panel = els.playersPanel;
         const dialog = els.warRoomDialog;
-        if (!panel || !dialog || !workspaceOpen || panel.hidden) return;
+        const workspace = els.warRoomWorkspace;
+        if (!panel || !dialog || !workspace || !workspaceOpen || panel.hidden) return;
 
-        const workspace = dialog.querySelector('.age-war-room-workspace-shell');
-        const heightAnchor = workspace || dialog;
         const dialogRect = dialog.getBoundingClientRect();
-        const anchorRect = heightAnchor.getBoundingClientRect();
+        const workspaceRect = workspace.getBoundingClientRect();
         const panelWidth = panel.offsetWidth || WAR_ROOM_PLAYERS_PANEL_WIDTH_PX;
         const left = Math.max(12, dialogRect.left - panelWidth - WAR_ROOM_PLAYERS_PANEL_GAP_PX);
+        const viewportHeight = global.innerHeight || global.document.documentElement.clientHeight;
 
-        panel.style.top = `${Math.round(anchorRect.top)}px`;
-        panel.style.left = `${Math.round(left)}px`;
-        panel.style.height = `${Math.round(anchorRect.height)}px`;
+        panel.style.top = `${workspaceRect.top}px`;
+        panel.style.bottom = `${Math.max(0, viewportHeight - workspaceRect.bottom)}px`;
+        panel.style.left = `${left}px`;
+        panel.style.height = '';
+        panel.style.maxHeight = '';
+    }
+
+    function scheduleWarRoomPlayersPanelSync() {
+        syncWarRoomPlayersPanelPosition();
+        global.requestAnimationFrame(() => {
+            syncWarRoomPlayersPanelPosition();
+            global.requestAnimationFrame(syncWarRoomPlayersPanelPosition);
+        });
+        if (warRoomPlayersPanelLayoutTimer) global.clearTimeout(warRoomPlayersPanelLayoutTimer);
+        warRoomPlayersPanelLayoutTimer = global.setTimeout(() => {
+            warRoomPlayersPanelLayoutTimer = 0;
+            syncWarRoomPlayersPanelPosition();
+        }, WAR_ROOM_DIALOG_ANIM_MS);
     }
 
     function setWarRoomPlayersPanelOpen(open) {
@@ -255,16 +298,17 @@
         panel.classList.toggle('is-open', isOpen);
 
         if (!isOpen) {
+            disconnectWarRoomPlayersPanelLayoutObserver();
             panel.style.top = '';
             panel.style.left = '';
+            panel.style.bottom = '';
             panel.style.height = '';
+            panel.style.maxHeight = '';
             return;
         }
 
-        global.requestAnimationFrame(() => {
-            syncWarRoomPlayersPanelPosition();
-            global.requestAnimationFrame(syncWarRoomPlayersPanelPosition);
-        });
+        connectWarRoomPlayersPanelLayoutObserver();
+        scheduleWarRoomPlayersPanelSync();
     }
 
     function setWorkspaceOpen(open) {
@@ -1578,6 +1622,7 @@
     function enable() {
         els.modal = global.document.getElementById('age-war-room-modal');
         els.warRoomDialog = els.modal?.querySelector('.age-war-room-dialog') || null;
+        els.warRoomWorkspace = els.warRoomDialog?.querySelector('.age-war-room-workspace-shell') || null;
         els.backdrop = global.document.getElementById('age-war-room-backdrop');
         els.closeBtn = global.document.getElementById('age-war-room-close');
         ensureWarRoomPlayersPanelPortaled();
