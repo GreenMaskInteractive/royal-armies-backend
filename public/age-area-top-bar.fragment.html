@@ -1,0 +1,162 @@
+            <header class="age-map-hud age-map-hud--top" aria-label="Realm overview">
+                <div class="age-map-hud-panel age-map-hud-top-bar">
+                    <div class="age-map-top-bar-brand">
+                        <div class="age-map-top-bar-logo-wrap">
+                            <img
+                                src="images/royalarmiestitle.png?v=logo-trim-gimp-1"
+                                alt="Royal Armies"
+                                class="age-map-top-bar-logo"
+                                width="320"
+                                height="64">
+                        </div>
+                        <div class="age-map-top-bar-separator" aria-hidden="true"></div>
+                        <div class="age-map-age-badge">
+                            <span class="age-map-age-badge-eyebrow">Current Age</span>
+                            <h1 id="age-map-age-title" class="age-map-age-badge-title">Age Alpha</h1>
+                        </div>
+                        <div class="age-map-top-bar-separator age-map-top-bar-separator--nation" aria-hidden="true"></div>
+                        <div class="age-map-top-bar-nation" id="age-nation-welcome-panel" aria-label="Nation welcome">
+                            <div class="age-nation-welcome-identity">
+                                <img
+                                    src="images/aesthenecrest.png"
+                                    alt=""
+                                    id="age-nation-welcome-crest"
+                                    class="age-map-top-bar-nation-crest"
+                                    width="52"
+                                    height="52"
+                                    decoding="async"
+                                    aria-hidden="true">
+                                <p id="age-nation-welcome-text" class="age-map-top-bar-nation-text">Welcome to Aesthine</p>
+                            </div>
+                            <div class="age-nation-hub" id="age-nation-hub">
+                                <div class="age-nation-hub-anchor">
+                                <button
+                                    type="button"
+                                    id="age-nation-hub-toggle"
+                                    class="age-nation-hub-toggle"
+                                    aria-expanded="false"
+                                    aria-controls="age-nation-hub-menu"
+                                    aria-haspopup="menu"
+                                    aria-label="Open menu">
+                                    <span class="age-nation-hub-toggle-mark" aria-hidden="true"></span>
+                                    <span class="age-nation-hub-toggle-body">
+                                        <span class="age-nation-hub-toggle-label">MENU</span>
+                                    </span>
+                                    <span class="age-nation-hub-toggle-chevron" aria-hidden="true"></span>
+                                </button>
+                                <div
+                                    id="age-nation-hub-menu"
+                                    class="age-nation-hub-menu"
+                                    role="menu"
+                                    aria-label="Nation Hub"
+                                    aria-hidden="true">
+                                    <div class="age-nation-hub-menu-ladder" role="group" aria-label="Nation Hub destinations">
+                                        <button
+                                            type="button"
+                                            id="age-nation-hub-item-map"
+                                            class="age-nation-hub-menu-item age-nation-hub-menu-item--map"
+                                            role="menuitem"
+                                            data-age-hub-item="map"
+                                            data-age-view-tab="map">
+                                            Map
+                                        </button>
+                                        <button
+                                            type="button"
+                                            id="age-council-room-open"
+                                            class="age-nation-hub-menu-item age-nation-hub-menu-item--council-room"
+                                            role="menuitem"
+                                            data-age-hub-item="council-room">
+                                            Council Room
+                                        </button>
+                                        <button
+                                            type="button"
+                                            id="age-map-view-tab-city"
+                                            class="age-nation-hub-menu-item age-nation-hub-menu-item--settlement"
+                                            role="menuitem"
+                                            data-age-hub-item="settlement"
+                                            data-age-view-tab="city">
+                                            Settlement
+                                        </button>
+                                        <button
+                                            type="button"
+                                            id="age-war-room-open"
+                                            class="age-nation-hub-menu-item age-nation-hub-menu-item--war-room"
+                                            role="menuitem"
+                                            data-age-hub-item="war-room">
+                                            War Room
+                                        </button>
+                                    </div>
+                                </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <ul class="age-map-resource-strip" aria-label="Realm resources">
+                        <li
+                            class="age-map-resource-item age-map-resource-item--commander-rank"
+                            id="age-hud-commander-rank-item"
+                            title="Commander rank from Adventurer's Guild training and battles.">
+                            <span class="age-map-resource-label">Rank</span>
+                            <span class="age-map-resource-value" id="age-hud-commander-rank" aria-live="polite" aria-label="Commander rank 1">1</span>
+                        </li>
+                        <li class="age-map-resource-item">
+                            <span class="age-map-resource-label">Gold</span>
+                            <span class="age-map-resource-value" id="age-hud-gold">—</span>
+                        </li>
+                        <li
+                            class="age-map-resource-item age-map-resource-item--treasury age-map-resource-item--has-tip"
+                            id="age-hud-nation-treasury-item">
+                            <span class="age-map-resource-label">Nation Treasury</span>
+                            <span
+                                class="age-map-resource-value age-map-resource-value--rsd"
+                                id="age-hud-nation-treasury"
+                                aria-live="polite">
+                                <span id="age-hud-nation-treasury-amount">0</span><span class="age-hud-rsd-unit" aria-hidden="true"> RSD</span>
+                            </span>
+                            <span class="age-map-resource-tip" id="age-hud-nation-treasury-tip" role="tooltip">Royal Silver Dollar</span>
+                        </li>
+                        <li class="age-map-resource-item">
+                            <span class="age-map-resource-label">Provisions</span>
+                            <span class="age-map-resource-value" id="age-hud-provisions">—</span>
+                        </li>
+                        <li class="age-map-resource-item age-map-resource-item--units" id="age-hud-units-item">
+                            <span class="age-map-resource-label">Units</span>
+                            <span
+                                class="age-map-resource-value age-map-resource-value--units"
+                                id="age-hud-units"
+                                aria-label="Units">
+                                <span class="age-hud-units-uninjured" id="age-hud-units-uninjured">0</span><span class="age-hud-units-separator" aria-hidden="true">|</span><span class="age-hud-units-total" id="age-hud-units-total">0</span>
+                            </span>
+                        </li>
+                        <li class="age-map-resource-item age-map-resource-item--move-points" id="age-hud-move-points-item" title="Regain 1 move point at every :00 and :30 on the game clock (max 3).">
+                            <span class="age-map-resource-label">Move Points</span>
+                            <span class="age-map-resource-value" id="age-hud-move-points">—</span>
+                        </li>
+                    </ul>
+                    <div class="age-mobile-hud-controls age-mobile-only" aria-label="Mobile panel shortcuts">
+                        <button
+                            type="button"
+                            class="age-mobile-hud-toggle-btn"
+                            id="age-mobile-toggle-reports"
+                            data-age-mobile-toggle="reports"
+                            aria-expanded="false"
+                            aria-controls="age-map-hud-left">
+                            Nation
+                        </button>
+                        <button
+                            type="button"
+                            class="age-mobile-hud-toggle-btn"
+                            id="age-mobile-toggle-city-info"
+                            data-age-mobile-toggle="city-info"
+                            aria-expanded="false"
+                            aria-controls="age-map-hud-right">
+                            City Info
+                        </button>
+                    </div>
+                </div>
+                <div class="age-map-top-bar-clock-cluster portal-desktop-nav-only" aria-label="Game time">
+                    <div id="portal-universal-game-time-panel" class="portal-universal-game-time-panel" aria-label="Game time">
+                        <div id="portal-universal-game-time-display" class="portal-universal-game-time-display" aria-live="polite">--:--:--</div>
+                    </div>
+                </div>
+            </header>

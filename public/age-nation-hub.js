@@ -4,7 +4,7 @@
 (function initAgeNationHub(global) {
     'use strict';
 
-    const DEFAULT_CENTER_LABEL = 'Nation Hub';
+    const DEFAULT_CENTER_LABEL = 'MENU';
     const SLOT_COUNT = 5;
     const SLOT_START_ANGLE_DEG = -90;
 
@@ -120,8 +120,10 @@
         }
 
         hub.classList.remove('is-open');
+        radial.classList.remove('is-open');
         toggle.setAttribute('aria-expanded', 'false');
         radial.hidden = true;
+        radial.setAttribute('hidden', '');
         radial.setAttribute('aria-hidden', 'true');
         setCenterLabel(DEFAULT_CENTER_LABEL);
         clearRadialPositionWatch();
