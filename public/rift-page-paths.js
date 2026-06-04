@@ -9,6 +9,7 @@
         game: '/game',
         agealpha: '/agealpha',
         settlement: '/settlement',
+        'council-room': '/council-room',
         terms: '/terms',
         resetPassword: '/reset-password',
         howDidYouGetHere: '/how-did-you-get-here'
@@ -27,21 +28,55 @@
     function buildAgeAlphaUrl(options = {}) {
         const url = new URL(PATHS.agealpha, global.location?.origin || 'https://royalarmies.com');
         if (options.riftAgeDevBypass) url.searchParams.set('riftAgeDevBypass', '1');
+        if (options.openSettlement) url.searchParams.set('openSettlement', '1');
         const query = url.searchParams.toString();
         return query ? `${url.pathname}?${query}` : url.pathname;
     }
 
     function buildSettlementUrl(options = {}) {
-        const url = new URL(PATHS.settlement, global.location?.origin || 'https://royalarmies.com');
+        return buildAgeAlphaUrl({
+            riftAgeDevBypass: options.riftAgeDevBypass !== false,
+            openSettlement: options.openSettlement !== false
+        });
+    }
+
+    function buildCouncilRoomUrl(options = {}) {
+        const url = new URL(PATHS['council-room'], global.location?.origin || 'https://royalarmies.com');
         if (options.riftAgeDevBypass) url.searchParams.set('riftAgeDevBypass', '1');
         const query = url.searchParams.toString();
         return query ? `${url.pathname}?${query}` : url.pathname;
+    }
+
+    function navigateToCouncilRoomPage(options = {}) {
+        const target = buildCouncilRoomUrl({
+            riftAgeDevBypass: options.riftAgeDevBypass !== false
+        });
+        if (global.RoyalArmiesPageRouteTransition?.navigateTo) {
+            return global.RoyalArmiesPageRouteTransition.navigateTo(target);
+        }
+        global.location.href = target;
+        return Promise.resolve();
+    }
+
+    function navigateToSettlementPage(options = {}) {
+        const target = buildSettlementUrl({
+            riftAgeDevBypass: options.riftAgeDevBypass !== false,
+            openSettlement: options.openSettlement !== false
+        });
+        if (global.RoyalArmiesPageRouteTransition?.navigateTo) {
+            return global.RoyalArmiesPageRouteTransition.navigateTo(target);
+        }
+        global.location.href = target;
+        return Promise.resolve();
     }
 
     global.RoyalArmiesPagePaths = {
         ...PATHS,
         buildGameUrl,
         buildAgeAlphaUrl,
-        buildSettlementUrl
+        buildSettlementUrl,
+        buildCouncilRoomUrl,
+        navigateToCouncilRoomPage,
+        navigateToSettlementPage
     };
 })(window);

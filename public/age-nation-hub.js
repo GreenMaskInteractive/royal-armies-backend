@@ -196,7 +196,7 @@
     }
 
     function onMenuItemActivate(event) {
-        const item = event.target.closest('.age-nation-hub-menu-item, [data-age-view-tab]');
+        const item = event.target.closest('.age-nation-hub-menu-ladder .age-nation-hub-menu-item');
         if (!item || !getMenu()?.contains(item)) return;
 
         if (item.id === 'age-war-room-open') {
@@ -212,28 +212,68 @@
             return;
         }
 
-        if (item.id === 'age-council-room-open') {
+        if (item.id === 'age-council-room-open' || item.getAttribute('data-age-hub-item') === 'council-room') {
             event.preventDefault();
             closeHub();
             global.RoyalArmiesAdventurersGuild?.dismissGuildWorkspacesForSettlementAction?.();
-            const hq = global.RoyalArmiesAgeHeadquarters;
-            if (hq?.isCouncilRoomOpen?.()) {
-                hq?.closeCouncilRoom?.();
+
+            if (global.document.body?.dataset?.ageCouncilRoomPage === 'true') {
+                return;
+            }
+
+            if (typeof global.RoyalArmiesPagePaths?.navigateToCouncilRoomPage === 'function') {
+                void global.RoyalArmiesPagePaths.navigateToCouncilRoomPage();
+                return;
+            }
+
+            const fallback = typeof global.resolveRoyalArmiesPageUrl === 'function'
+                ? `${global.resolveRoyalArmiesPageUrl('council-room')}?riftAgeDevBypass=1`
+                : '/council-room?riftAgeDevBypass=1';
+            global.location.href = fallback;
+            return;
+        }
+
+        if (item.id === 'age-map-view-tab-city' || item.getAttribute('data-age-hub-item') === 'settlement') {
+            event.preventDefault();
+            closeHub();
+            global.RoyalArmiesAdventurersGuild?.dismissGuildWorkspacesForSettlementAction?.();
+
+            if (global.document.body?.dataset?.ageMapOnly === 'true') {
+                global.RoyalArmiesAgeViewTabs?.openMapSettlementPanel?.();
+                return;
+            }
+
+            if (typeof global.RoyalArmiesPagePaths?.navigateToSettlementPage === 'function') {
+                void global.RoyalArmiesPagePaths.navigateToSettlementPage();
+                return;
+            }
+
+            const fallback = typeof global.RoyalArmiesPagePaths?.buildAgeAlphaUrl === 'function'
+                ? global.RoyalArmiesPagePaths.buildAgeAlphaUrl({ riftAgeDevBypass: true, openSettlement: true })
+                : '/agealpha?riftAgeDevBypass=1&openSettlement=1';
+            if (global.RoyalArmiesPageRouteTransition?.navigateTo) {
+                void global.RoyalArmiesPageRouteTransition.navigateTo(fallback);
             } else {
-                hq?.openCouncilRoom?.();
+                global.location.href = fallback;
             }
             return;
         }
 
-        if (item.id === 'age-records-open') {
+        if (item.id === 'age-nation-hub-item-map' || item.getAttribute('data-age-hub-item') === 'map') {
             event.preventDefault();
             closeHub();
-            global.RoyalArmiesAdventurersGuild?.dismissGuildWorkspacesForSettlementAction?.();
-            const records = global.RoyalArmiesAgeRecords;
-            if (records?.isWorkspaceOpen?.()) {
-                records?.closeWorkspace?.();
+            if (global.document.body?.dataset?.ageMapOnly === 'true') {
+                return;
+            }
+            const target = typeof global.RoyalArmiesPagePaths?.buildAgeAlphaUrl === 'function'
+                ? global.RoyalArmiesPagePaths.buildAgeAlphaUrl({ riftAgeDevBypass: true })
+                : (typeof global.resolveRoyalArmiesPageUrl === 'function'
+                    ? `${global.resolveRoyalArmiesPageUrl('agealpha')}?riftAgeDevBypass=1`
+                    : '/agealpha?riftAgeDevBypass=1');
+            if (global.RoyalArmiesPageRouteTransition?.navigateTo) {
+                void global.RoyalArmiesPageRouteTransition.navigateTo(target);
             } else {
-                records?.openWorkspace?.();
+                global.location.href = target;
             }
             return;
         }

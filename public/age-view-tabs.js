@@ -57,8 +57,15 @@
         blacksmith: '⚒',
         armory: '⧉',
         arenas: '⚜',
-        border: '⌁'
+        border: '⌁',
+        'war-room': '⚔'
     };
+
+    const SETTLEMENT_WAR_ROOM_VENUE = Object.freeze({
+        id: 'war-room',
+        label: 'WARROOM',
+        description: 'Nation formations, SF Lead pool, and rescue signals.'
+    });
 
     function resolveVenueMark(venueId) {
         return VENUE_MARKS[venueId] || '•';
@@ -294,6 +301,46 @@
         return global.document.body?.dataset?.ageSettlementPage === 'true';
     }
 
+    function isMapOnlyPage() {
+        return global.document.body?.dataset?.ageMapOnly === 'true';
+    }
+
+    function isCityInfoSettlementTabOpen() {
+        return Boolean(
+            global.document.querySelector('#age-page-canvas .age-map-hud--right')
+                ?.classList.contains('is-city-info-settlement-open')
+        );
+    }
+
+    function hasSettlementVenueWorkspace() {
+        return Boolean(global.document.getElementById('age-settlement-venue-workspace'));
+    }
+
+    function openMapSettlementPanel() {
+        global.RoyalArmiesSettlementVenueWorkspaces?.dismissAll?.();
+        global.RoyalArmiesAdventurersGuild?.dismissGuildWorkspacesForSettlementAction?.();
+
+        if (activeView === VIEW_GUILD_TRAINING) {
+            global.RoyalArmiesAdventurersGuild?.closeTrainingView?.({ skipViewRestore: true });
+        }
+
+        if (activeView !== VIEW_MAP) {
+            activeView = VIEW_MAP;
+            syncViewTabButtons();
+            syncRightHudPanels();
+            syncMapStage();
+        }
+
+        if (typeof global.RoyalArmiesAgeMovementPanel?.activateCityInfoTab === 'function') {
+            global.RoyalArmiesAgeMovementPanel.activateCityInfoTab('settlement');
+        }
+
+        renderSettlementMenu();
+        void global.RoyalArmiesAdventurersGuild?.ensureSettlementGuildHubLoaded?.({
+            settlementTier: resolveSettlementTier()
+        });
+    }
+
     function resolveSettlementTier() {
         const override = global.RoyalArmiesSettlementPage?.getDevTierOverride?.();
         if (override && SETTLEMENT_MAP_SRC[override]) {
@@ -314,7 +361,26 @@
         return SETTLEMENT_VENUES[tier] || SETTLEMENT_VENUES.village;
     }
 
+    function resolveSettlementVenueMeta(venueId, tier) {
+        const normalizedId = String(venueId || '').trim().toLowerCase();
+        if (normalizedId === SETTLEMENT_WAR_ROOM_VENUE.id) {
+            return { ...SETTLEMENT_WAR_ROOM_VENUE };
+        }
+        const venues = resolveVenuesForTier(tier);
+        return venues.find((venue) => venue.id === normalizedId) || {
+            id: normalizedId,
+            label: normalizedId || 'Venue',
+            description: ''
+        };
+    }
+
     function getViewTabs() {
+        const hubItems = global.document.querySelectorAll(
+            '.age-nation-hub-menu-ladder [data-age-view-tab]'
+        );
+        if (hubItems.length) {
+            return Array.from(hubItems);
+        }
         return Array.from(global.document.querySelectorAll('[data-age-view-tab]'));
     }
 
@@ -330,12 +396,24 @@
     }
 
     function syncViewTabButtons() {
+        const settlementTabOpen = isCityInfoSettlementTabOpen();
         getViewTabs().forEach((tab) => {
             const view = tab.getAttribute('data-age-view-tab');
             const isActive = view === activeView
-                || (activeView === VIEW_GUILD_TRAINING && view === VIEW_CITY);
+                || (activeView === VIEW_GUILD_TRAINING && view === VIEW_CITY)
+                || (view === VIEW_CITY && activeView === VIEW_MAP && settlementTabOpen);
             tab.classList.toggle('is-active', isActive);
-            tab.setAttribute('aria-selected', isActive ? 'true' : 'false');
+            if (tab.getAttribute('role') === 'menuitem') {
+                if (isActive) {
+                    tab.setAttribute('aria-current', 'true');
+                } else {
+                    tab.removeAttribute('aria-current');
+                }
+                tab.removeAttribute('aria-selected');
+            } else {
+                tab.setAttribute('aria-selected', isActive ? 'true' : 'false');
+                tab.removeAttribute('aria-current');
+            }
             tab.tabIndex = isActive ? 0 : -1;
         });
     }
@@ -346,12 +424,15 @@
         const settlementPanel = global.document.getElementById('age-settlement-menu-panel');
         const rightHud = global.document.querySelector('#age-page-canvas .age-map-hud--right');
 
-        const inSettlementView = activeView === VIEW_CITY;
+        const inSettlementView = activeView === VIEW_CITY && !isMapOnlyPage();
         const inGuildTrainingView = activeView === VIEW_GUILD_TRAINING;
         const inWorkspaceOverlay = isWorkspaceOverlayView(activeView);
 
         if (canvas) {
             canvas.dataset.ageView = activeView;
+            global.dispatchEvent(new CustomEvent('royalarmies:age-map-view-change', {
+                detail: { view: activeView }
+            }));
         }
 
         if (rightHud) {
@@ -359,6 +440,7 @@
             rightHud.classList.remove('is-headquarters-view-open');
             if (inSettlementView) {
                 rightHud.classList.remove('is-city-info-players-open');
+                rightHud.classList.remove('is-city-info-settlement-open');
                 rightHud.setAttribute('aria-label', `${resolveSettlementTierDisplayLabel()} venues`);
             } else if (!inWorkspaceOverlay) {
                 global.RoyalArmiesAgeMovementPanel?.refreshCityInfoPanelHeader?.();
@@ -370,7 +452,8 @@
         }
 
         if (settlementPanel) {
-            settlementPanel.hidden = isSettlementOnlyPage() ? false : !inSettlementView;
+            const embeddedInCityInfo = Boolean(global.document.getElementById('age-city-info-tab-settlement'));
+            settlementPanel.hidden = embeddedInCityInfo || (isSettlementOnlyPage() ? false : !inSettlementView);
         }
 
         const guildWorkspace = global.document.getElementById('age-guild-workspace');
@@ -399,7 +482,7 @@
         const mapFrame = global.document.querySelector('#age-page-canvas .age-map-frame');
         const city = resolveDisplayedCity();
         const tier = resolveSettlementTier();
-        const inSettlementView = activeView === VIEW_CITY;
+        const inSettlementView = activeView === VIEW_CITY && !isMapOnlyPage();
         const inGuildTrainingView = activeView === VIEW_GUILD_TRAINING;
         const hideWorldMapLayers = isWorkspaceOverlayView(activeView);
 
@@ -467,6 +550,11 @@
         }
     }
 
+    function isSettlementMenuFlatLayout() {
+        return isSettlementOnlyPage()
+            || Boolean(global.document.getElementById('age-city-info-tab-settlement'));
+    }
+
     function buildSettlementMenuHtml(tier) {
         const venues = resolveVenuesForTier(tier);
 
@@ -477,12 +565,11 @@
             const borderClass = venue.id === 'border'
                 ? ' age-settlement-menu-item--border'
                 : '';
-            const description = venue.description
-                ? `<span class="age-settlement-menu-item-desc">${escapeSettlementMenuHtml(venue.description)}</span>`
-                : '';
             const mark = escapeSettlementMenuHtml(resolveVenueMark(venue.id));
             const label = escapeSettlementMenuHtml(venue.label);
-            const isExpandable = venue.id === 'adventurers-guild' || venue.id === 'barracks';
+            const settlementFlatMenu = isSettlementMenuFlatLayout();
+            const isExpandable = !settlementFlatMenu
+                && (venue.id === 'adventurers-guild' || venue.id === 'barracks');
             const subPanelId = venue.id === 'adventurers-guild'
                 ? 'age-settlement-guild-jobs'
                 : (venue.id === 'barracks' ? 'age-settlement-garrison-options' : '');
@@ -496,11 +583,30 @@
                 + `<span class="age-settlement-menu-item-mark" aria-hidden="true">${mark}</span>`
                 + `<span class="age-settlement-menu-item-body">`
                 + `<span class="age-settlement-menu-item-label">${label}</span>`
-                + description
                 + '</span>'
                 + `<span class="age-settlement-menu-item-chevron" aria-hidden="true">${isExpandable ? '▾' : '›'}</span>`
                 + '</button>'
             );
+
+            if (settlementFlatMenu) {
+                if (venue.id === 'adventurers-guild') {
+                    return (
+                        `<div class="${wrapClass}">`
+                        + itemHtml
+                        + '<div id="age-settlement-guild-jobs" class="age-settlement-guild-jobs" hidden></div>'
+                        + '</div>'
+                    );
+                }
+                if (venue.id === 'barracks') {
+                    return (
+                        `<div class="${wrapClass}">`
+                        + itemHtml
+                        + '<div id="age-settlement-garrison-options" class="age-settlement-garrison-options" hidden></div>'
+                        + '</div>'
+                    );
+                }
+                return itemHtml;
+            }
 
             if (venue.id === 'adventurers-guild') {
                 return (
@@ -524,23 +630,76 @@
         }).join('');
     }
 
+    function buildSettlementWarRoomSlotHtml() {
+        const mark = escapeSettlementMenuHtml(resolveVenueMark(SETTLEMENT_WAR_ROOM_VENUE.id));
+        const label = escapeSettlementMenuHtml(SETTLEMENT_WAR_ROOM_VENUE.label);
+        return (
+            '<p class="age-settlement-menu-war-room-eyebrow">Nation Command</p>'
+            + '<button type="button"'
+            + ' class="age-settlement-menu-item age-settlement-menu-item--war-room"'
+            + ` data-settlement-venue="${escapeSettlementMenuHtml(SETTLEMENT_WAR_ROOM_VENUE.id)}"`
+            + ' aria-label="Open War Room">'
+            + `<span class="age-settlement-menu-item-mark age-settlement-menu-item-mark--war-room" aria-hidden="true">${mark}</span>`
+            + '<span class="age-settlement-menu-item-body">'
+            + `<span class="age-settlement-menu-item-label">${label}</span>`
+            + '<span class="age-settlement-menu-item-tagline">Formations · SF Lead · Rescue</span>'
+            + '</span>'
+            + '<span class="age-settlement-menu-item-chevron" aria-hidden="true">›</span>'
+            + '</button>'
+        );
+    }
+
+    function shouldShowSettlementWarRoomSlot() {
+        if (!global.document.getElementById('age-settlement-menu-war-room-slot')) {
+            return false;
+        }
+        return isSettlementOnlyPage() || isSettlementMenuFlatLayout();
+    }
+
+    function renderSettlementWarRoomSlot() {
+        const slotEl = global.document.getElementById('age-settlement-menu-war-room-slot');
+        if (!slotEl) return;
+
+        if (!shouldShowSettlementWarRoomSlot()) {
+            slotEl.hidden = true;
+            slotEl.innerHTML = '';
+            return;
+        }
+
+        const nextHtml = buildSettlementWarRoomSlotHtml();
+        slotEl.hidden = false;
+        if (slotEl.innerHTML !== nextHtml) {
+            slotEl.innerHTML = nextHtml;
+        }
+    }
+
     function renderSettlementMenu() {
         const titleEl = global.document.getElementById('age-settlement-menu-title');
+        const settlementTabBtn = global.document.getElementById('age-city-info-tab-btn-settlement');
         const tierEl = global.document.getElementById('age-settlement-menu-tier-label');
         const listEl = global.document.getElementById('age-settlement-menu-list');
 
         const city = resolveDisplayedCity();
         const tier = resolveSettlementTier();
+        const settlementName = city?.name || 'Settlement';
 
         if (titleEl) {
-            titleEl.textContent = city?.name || 'Settlement';
+            titleEl.textContent = settlementName;
+        }
+
+        if (settlementTabBtn) {
+            settlementTabBtn.textContent = settlementName;
+            settlementTabBtn.setAttribute('title', settlementName);
         }
 
         if (tierEl) {
             tierEl.textContent = resolveSettlementTierDisplayLabel();
         }
 
-        if (!listEl) return;
+        if (!listEl) {
+            renderSettlementWarRoomSlot();
+            return;
+        }
 
         const nextHtml = buildSettlementMenuHtml(tier);
         if (listEl.innerHTML !== nextHtml) {
@@ -554,10 +713,61 @@
         if (typeof global.RoyalArmiesAgeBarracks?.syncSettlementMenuGarrison === 'function') {
             global.RoyalArmiesAgeBarracks.syncSettlementMenuGarrison();
         }
+
+        renderSettlementWarRoomSlot();
+    }
+
+    function openSettlementWarRoom() {
+        global.RoyalArmiesSettlementVenueWorkspaces?.dismissAll?.();
+        global.RoyalArmiesAdventurersGuild?.dismissGuildWorkspacesForSettlementAction?.();
+        global.RoyalArmiesAgeNationHub?.close?.();
+
+        const warRoom = global.RoyalArmiesAgeArmyGroups;
+        if (!warRoom) {
+            if (typeof global.showPortalAlert === 'function') {
+                void global.showPortalAlert('War Room is unavailable in this session.', 'War Room');
+            }
+            return;
+        }
+
+        if (typeof warRoom.enable === 'function') {
+            warRoom.enable();
+        }
+
+        if (warRoom.isWorkspaceOpen?.()) {
+            warRoom.closeWorkspace?.();
+            return;
+        }
+
+        if (typeof warRoom.openWorkspace === 'function') {
+            warRoom.openWorkspace();
+            return;
+        }
+
+        if (typeof global.showPortalAlert === 'function') {
+            void global.showPortalAlert('War Room is unavailable in this session.', 'War Room');
+        }
     }
 
     function handleVenueClick(venueId) {
+        const normalizedVenueId = String(venueId || '').trim().toLowerCase();
+        if (normalizedVenueId === 'war-room') {
+            openSettlementWarRoom();
+            return;
+        }
+
         const tier = resolveSettlementTier();
+        const detail = {
+            venueId: normalizedVenueId,
+            settlementTier: tier,
+            city: resolveCurrentCity(),
+            venue: resolveSettlementVenueMeta(normalizedVenueId, tier)
+        };
+
+        if (hasSettlementVenueWorkspace() && typeof global.RoyalArmiesSettlementVenueWorkspaces?.open === 'function') {
+            void global.RoyalArmiesSettlementVenueWorkspaces.open(detail);
+            return;
+        }
 
         if (venueId === 'adventurers-guild') {
             if (typeof global.RoyalArmiesAdventurersGuild?.toggleSettlementJobs === 'function') {
@@ -576,13 +786,7 @@
             return;
         }
 
-        global.dispatchEvent(new CustomEvent('royal-armies-settlement-venue-open', {
-            detail: {
-                venueId,
-                settlementTier: tier,
-                city: resolveCurrentCity()
-            }
-        }));
+        global.dispatchEvent(new CustomEvent('royal-armies-settlement-venue-open', { detail }));
 
         if (venueId === 'border') {
             global.console.info('[RIFT] Border selected — battle training (coming soon).');
@@ -590,7 +794,19 @@
     }
 
     function setActiveView(view, options = {}) {
+        if (view === VIEW_CITY && (isMapOnlyPage() || hasSettlementVenueWorkspace())) {
+            openMapSettlementPanel();
+            return;
+        }
+
         if (view === VIEW_COUNCIL_ROOM) {
+            if (global.document.body?.dataset?.ageCouncilRoomPage === 'true') {
+                return;
+            }
+            if (typeof global.RoyalArmiesPagePaths?.navigateToCouncilRoomPage === 'function') {
+                void global.RoyalArmiesPagePaths.navigateToCouncilRoomPage();
+                return;
+            }
             global.RoyalArmiesAgeHeadquarters?.openCouncilRoom?.();
             return;
         }
@@ -630,15 +846,20 @@
     }
 
     function onViewTabKeydown(event) {
-        if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return;
+        const isHubLadder = event.currentTarget.classList.contains('age-nation-hub-menu-ladder');
+        const prevKey = isHubLadder ? 'ArrowUp' : 'ArrowLeft';
+        const nextKey = isHubLadder ? 'ArrowDown' : 'ArrowRight';
+        if (event.key !== prevKey && event.key !== nextKey) return;
 
         const tablist = event.currentTarget;
-        const tabs = Array.from(tablist.querySelectorAll('[data-age-view-tab]'));
+        const tabs = Array.from(
+            tablist.querySelectorAll(isHubLadder ? '.age-nation-hub-menu-item' : '[data-age-view-tab]')
+        );
         const currentIndex = tabs.findIndex((tab) => tab.classList.contains('is-active'));
         if (currentIndex < 0) return;
 
         event.preventDefault();
-        const delta = event.key === 'ArrowRight' ? 1 : -1;
+        const delta = (event.key === nextKey) ? 1 : -1;
         const nextIndex = (currentIndex + delta + tabs.length) % tabs.length;
         const nextTab = tabs[nextIndex];
         if (!nextTab) return;
@@ -659,21 +880,30 @@
         handleVenueClick(button.getAttribute('data-settlement-venue'));
     }
 
+    function bindSettlementMenuClicks(host) {
+        if (!host || host.dataset.ageSettlementMenuBound === 'true') return;
+        host.dataset.ageSettlementMenuBound = 'true';
+        host.addEventListener('click', onSettlementMenuClick);
+    }
+
     function bindViewTabs() {
         if (bound) return;
         bound = true;
 
-        const tablist = global.document.querySelector('.age-map-view-tabs');
-        const menuList = global.document.getElementById('age-settlement-menu-list');
+        const hubLadder = global.document.querySelector('.age-nation-hub-menu-ladder');
+        const tablist = hubLadder || global.document.querySelector('.age-map-view-tabs');
 
         if (tablist) {
             tablist.addEventListener('click', onViewTabClick);
             tablist.addEventListener('keydown', onViewTabKeydown);
         }
 
-        if (menuList) {
-            menuList.addEventListener('click', onSettlementMenuClick);
-        }
+        [
+            global.document.getElementById('age-settlement-menu-panel'),
+            global.document.getElementById('age-city-info-tab-settlement'),
+            global.document.querySelector('.age-city-info-settlement-shell'),
+            global.document.getElementById('age-settlement-menu-war-room-slot')
+        ].forEach(bindSettlementMenuClicks);
     }
 
     function enableAgeViewTabs() {
@@ -692,8 +922,11 @@
     }
 
     function refreshAgeViewTabs() {
-        if (activeView === VIEW_CITY) {
+        if (global.document.getElementById('age-settlement-menu-list')
+            || global.document.getElementById('age-settlement-menu-war-room-slot')) {
             renderSettlementMenu();
+        }
+        if (activeView === VIEW_CITY) {
             syncMapStage();
         }
     }
@@ -701,6 +934,9 @@
     global.RoyalArmiesAgeViewTabs = {
         enable: enableAgeViewTabs,
         refresh: refreshAgeViewTabs,
+        renderSettlementMenu,
+        openMapSettlementPanel,
+        openSettlementWarRoom,
         setActiveView,
         getActiveView: () => activeView,
         getSettlementVenues: resolveVenuesForTier,

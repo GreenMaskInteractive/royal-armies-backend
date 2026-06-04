@@ -1,5 +1,5 @@
 /**
- * FLEX — Age Alpha map-only shell (HUD/city layouts visible; only world map is interactive).
+ * FLEX — Age Alpha map-only shell (world map, plan tools, and map HUD city/nation tab panels).
  */
 
 body.age-map-shell-only {
@@ -21,11 +21,8 @@ body.age-map-shell-only .age-map-hud--right,
 body.age-map-shell-only .age-map-hud--bottom,
 body.age-map-shell-only .age-mobile-hud-controls,
 body.age-map-shell-only .age-nation-hub,
-body.age-map-shell-only .age-city-info-panel,
-body.age-map-shell-only .age-left-reports-panel,
 body.age-map-shell-only .age-quick-tips-panel,
 body.age-map-shell-only .age-age-center-modal,
-body.age-map-shell-only .age-war-room-modal,
 body.age-map-shell-only .age-war-ledger-modal,
 body.age-map-shell-only .age-barracks-workspace,
 body.age-map-shell-only .age-unit-evolution-workspace,
@@ -44,6 +41,41 @@ body.age-map-shell-only #age-world-map * {
     pointer-events: auto;
 }
 
+body.age-map-shell-only .age-nation-hub,
+body.age-map-shell-only .age-nation-hub * {
+    pointer-events: auto !important;
+}
+
+body.age-map-shell-only .age-war-room-modal:not([hidden]) {
+    pointer-events: auto !important;
+    z-index: 2147483642 !important;
+}
+
+body.age-map-shell-only .age-war-room-modal:not([hidden]) * {
+    pointer-events: auto !important;
+}
+
+body.age-map-shell-only.age-settlement-venue-open .age-settlement-venue-workspace:not([hidden]),
+body.age-map-shell-only.age-settlement-venue-open .age-settlement-venue-workspace:not([hidden]) * {
+    pointer-events: auto !important;
+}
+
+body.age-map-shell-only.age-barracks-open .age-barracks-workspace,
+body.age-map-shell-only.age-barracks-open .age-barracks-workspace * {
+    pointer-events: auto !important;
+}
+
+body.age-map-shell-only.age-guild-training-open .age-guild-workspace,
+body.age-map-shell-only.age-guild-training-open .age-guild-workspace * {
+    pointer-events: auto !important;
+}
+
+body.age-map-shell-only .age-map-top-bar-clock-cluster,
+body.age-map-shell-only .age-map-top-bar-clock-cluster .portal-universal-game-time-panel {
+    visibility: visible !important;
+    opacity: 1 !important;
+}
+
 body.age-map-shell-only #age-world-map-settlement-bg {
     display: none !important;
 }
@@ -55,14 +87,27 @@ body.age-map-shell-only .age-world-map-labels-host,
 body.age-map-shell-only .age-world-map-player-pins,
 body.age-map-shell-only .age-world-map-terrain-controls,
 body.age-map-shell-only .age-world-map-continent-label,
-body.age-map-shell-only #age-world-map-plan-overlay {
+body.age-map-shell-only #age-world-map-plan-overlay,
+body.age-map-shell-only #age-world-map-plan-draft-overlay,
+body.age-map-shell-only #age-world-map-plan-tool-dock {
     display: revert;
     visibility: visible;
 }
 
-body.age-map-shell-only .age-settlement-menu-panel,
-body.age-map-shell-only .age-city-info-panel {
+body.age-map-shell-only #age-world-map-plan-tool-dock,
+body.age-map-shell-only #age-world-map-plan-tool-dock * {
+    pointer-events: auto !important;
+}
+
+body.age-map-shell-only .age-settlement-menu-panel {
     pointer-events: none !important;
+}
+
+body.age-map-shell-only .age-city-info-panel,
+body.age-map-shell-only .age-city-info-panel *,
+body.age-map-shell-only .age-left-reports-panel,
+body.age-map-shell-only .age-left-reports-panel * {
+    pointer-events: auto !important;
 }
 
 body.age-map-shell-only button,
@@ -76,5 +121,140 @@ body.age-map-shell-only [role="tab"] {
 body.age-map-shell-only #age-world-map button,
 body.age-map-shell-only #age-world-map [role="button"],
 body.age-map-shell-only .age-world-map-terrain-controls button {
+    cursor: pointer;
+}
+
+body.age-map-shell-only .age-world-map-terrain-controls {
+    z-index: 2147483641 !important;
+    pointer-events: auto !important;
+}
+
+body.age-map-shell-only .age-world-map-terrain-controls button,
+body.age-map-shell-only #age-world-map-plan-add,
+body.age-map-shell-only #age-world-map-plan-post,
+body.age-map-shell-only #age-world-map-plan-toggle {
+    pointer-events: auto !important;
+    cursor: pointer !important;
+}
+
+body.age-map-shell-only .age-city-info-panel button,
+body.age-map-shell-only .age-city-info-panel [role="tab"],
+body.age-map-shell-only .age-left-reports-panel button,
+body.age-map-shell-only .age-left-reports-panel [role="tab"],
+body.age-map-shell-only .age-intelligence-enemy-tabs button {
+    pointer-events: auto !important;
+    cursor: pointer !important;
+}
+
+body.age-map-shell-only #age-world-map-plan-tool-dock {
+    z-index: 2147483641 !important;
+}
+
+body.age-map-shell-only .age-barracks-workspace:not([hidden]),
+body.age-map-shell-only .age-unit-evolution-workspace:not([hidden]),
+body.age-map-shell-only .age-settlement-venue-workspace:not([hidden]),
+body.age-map-shell-only.age-guild-hub-open .age-guild-workspace:not([hidden]),
+body.age-map-shell-only.age-guild-overlay-open .age-guild-workspace:not([hidden]),
+body.age-map-shell-only.age-guild-training-open .age-guild-workspace:not([hidden]) {
+    position: fixed;
+    inset: 0;
+    z-index: 2147483640 !important;
+}
+
+body.age-map-shell-only.age-settlement-venue-open .age-map-hud--right,
+body.age-map-shell-only.age-barracks-open .age-map-hud--right,
+body.age-map-shell-only.age-unit-evolution-open .age-map-hud--right,
+body.age-map-shell-only.age-guild-hub-open .age-map-hud--right,
+body.age-map-shell-only.age-guild-overlay-open .age-map-hud--right,
+body.age-map-shell-only.age-guild-training-open .age-map-hud--right {
+    visibility: hidden;
+    pointer-events: none !important;
+}
+
+body.age-map-shell-only .age-settlement-venue-workspace {
+    display: flex;
+    align-items: stretch;
+    justify-content: center;
+    background: rgba(4, 6, 10, 0.92);
+    backdrop-filter: blur(6px);
+}
+
+body.age-map-shell-only .age-settlement-venue-shell {
+    display: flex;
+    flex-direction: column;
+    width: min(920px, calc(100vw - 3rem));
+    max-height: calc(100vh - 3rem);
+    margin: 1.5rem;
+    border: 1px solid rgba(212, 175, 90, 0.35);
+    border-radius: 12px;
+    background: linear-gradient(180deg, rgba(22, 18, 14, 0.98), rgba(10, 8, 6, 0.98));
+    box-shadow: 0 24px 64px rgba(0, 0, 0, 0.55);
+    overflow: hidden;
+}
+
+body.age-map-shell-only .age-settlement-venue-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 1.25rem 1.5rem 1rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+body.age-map-shell-only .age-settlement-venue-eyebrow {
+    margin: 0 0 0.35rem;
+    font-size: 0.78rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: rgba(212, 175, 90, 0.85);
+}
+
+body.age-map-shell-only .age-settlement-venue-title {
+    margin: 0;
+    font-size: 1.65rem;
+    color: #f4e6c8;
+}
+
+body.age-map-shell-only .age-settlement-venue-subtitle {
+    margin: 0.55rem 0 0;
+    max-width: 52ch;
+    color: rgba(244, 230, 200, 0.78);
+    line-height: 1.45;
+}
+
+body.age-map-shell-only .age-settlement-venue-close {
+    flex-shrink: 0;
+    padding: 0.45rem 0.9rem;
+    border-radius: 6px;
+    border: 1px solid rgba(212, 175, 90, 0.45);
+    background: rgba(12, 10, 8, 0.65);
+    color: #f4e6c8;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+body.age-map-shell-only .age-settlement-venue-body {
+    flex: 1;
+    overflow: auto;
+    padding: 1.25rem 1.5rem 1.5rem;
+}
+
+body.age-map-shell-only .age-settlement-venue-action-hub {
+    display: grid;
+    gap: 0.85rem;
+}
+
+body.age-map-shell-only .age-settlement-venue-action {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.35rem;
+    width: 100%;
+    padding: 1rem 1.1rem;
+    border-radius: 8px;
+    border: 1px solid rgba(212, 175, 90, 0.28);
+    background: rgba(8, 10, 14, 0.55);
+    color: #f4e6c8;
+    text-align: left;
     cursor: pointer;
 }

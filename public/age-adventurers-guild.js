@@ -48,6 +48,7 @@
     let lootTabAlert = false;
     let trainingViewActive = false;
     let overlayJobActive = false;
+    let hubViewActive = false;
 
     function escapeHtml(value) {
         return String(value ?? '')
@@ -66,7 +67,7 @@
     }
 
     function isOpen() {
-        return trainingViewActive || overlayJobActive;
+        return trainingViewActive || overlayJobActive || hubViewActive;
     }
 
     function isOverlayOpen() {
@@ -116,7 +117,13 @@
         if (viewId === 'training') return global.document.getElementById('age-guild-training-arena');
         if (viewId === 'trade') return global.document.getElementById('age-guild-trade-arena');
         if (viewId === 'bounties') return global.document.getElementById('age-guild-bounties-arena');
+        if (viewId === 'hub') return global.document.getElementById('age-guild-jobs-arena');
         return null;
+    }
+
+    function setHubViewOpen(isOpen) {
+        hubViewActive = isOpen;
+        global.document.body.classList.toggle('age-guild-hub-open', isOpen);
     }
 
     function setTrainingViewOpen(isOpen) {
@@ -132,7 +139,7 @@
     }
 
     function hideAllJobArenas() {
-        ['training', 'trade', 'bounties'].forEach((viewId) => {
+        ['training', 'trade', 'bounties', 'hub'].forEach((viewId) => {
             const arena = resolveJobArena(viewId);
             if (!arena) return;
             arena.hidden = true;
@@ -165,19 +172,86 @@
             workspace.setAttribute('aria-hidden', 'true');
         }
         setOverlayJobOpen(false);
+        setHubViewOpen(false);
         hideAllJobArenas();
         activeView = null;
         refreshGuildWorkspaceVisibility();
     }
 
     function dismissGuildWorkspacesForSettlementAction() {
-        if (trainingViewActive || overlayJobActive) {
+        guildJobsExpanded = false;
+        syncSettlementMenuGuild();
+        if (trainingViewActive || overlayJobActive || hubViewActive) {
             closeTrainingView({ skipViewRestore: true });
             closeJobWorkspace();
         }
         if (global.RoyalArmiesAgeViewTabs?.getActiveView?.() === 'guild-training') {
-            global.RoyalArmiesAgeViewTabs.setActiveView('city');
+            global.RoyalArmiesAgeViewTabs.openMapSettlementPanel?.()
+                || global.RoyalArmiesAgeViewTabs.setActiveView('city');
         }
+    }
+
+    function resolveGuildHubJobsHost() {
+        return global.document.getElementById('age-guild-hub-jobs-host');
+    }
+
+    function renderGuildHubJobOption(job) {
+        const lockedClass = job.available ? '' : ' is-locked';
+        const featuredClass = job.featured ? ' is-featured' : '';
+        const lockLine = job.available
+            ? ''
+            : `<span class="age-settlement-guild-job-lock">${escapeHtml(job.lockReason || 'Unavailable')}</span>`;
+        const featuredTag = job.featured ? '<span class="age-settlement-guild-job-tag">Primary</span>' : '';
+
+        return (
+            `<button type="button" class="age-settlement-guild-job age-guild-hub-job${lockedClass}${featuredClass}"`
+            + ` data-guild-job="${escapeHtml(job.id)}"`
+            + `${job.available ? '' : ' disabled'}>`
+            + `<span class="age-settlement-guild-job-label">${escapeHtml(job.label)}</span>`
+            + featuredTag
+            + `<span class="age-settlement-guild-job-desc">${escapeHtml(job.description)}</span>`
+            + lockLine
+            + '</button>'
+        );
+    }
+
+    function renderGuildHubJobs(options = {}) {
+        const host = resolveGuildHubJobsHost();
+        const hub = hubManifest || { jobs: [], settlementTierLabel: 'Settlement', rank: 1 };
+        if (!host) return;
+
+        const jobs = Array.isArray(hub.jobs) ? hub.jobs : [];
+        let nextHtml;
+        if (!jobs.length && options.loading) {
+            nextHtml = '<p class="age-settlement-guild-jobs-empty">Loading guild contracts…</p>';
+        } else if (!jobs.length) {
+            nextHtml = '<p class="age-settlement-guild-jobs-empty">No guild jobs are configured for this settlement.</p>';
+        } else {
+            nextHtml = jobs.map((job) => renderGuildHubJobOption(job)).join('');
+        }
+
+        if (host.innerHTML !== nextHtml) {
+            host.innerHTML = nextHtml;
+        }
+    }
+
+    async function openSettlementHub(detail = {}) {
+        global.RoyalArmiesSettlementVenueWorkspaces?.close?.();
+        guildJobsExpanded = false;
+        syncSettlementMenuGuild();
+        settlementTier = String(detail?.settlementTier || settlementTier || 'village').trim().toLowerCase();
+        resolveApi()?.setSettlementTier?.(settlementTier);
+
+        renderGuildHubJobs({ loading: true });
+        await ensureSettlementGuildHubLoaded({ settlementTier });
+        renderGuildHubJobs();
+
+        openJobWorkspace();
+        setHubViewOpen(true);
+        setOverlayJobOpen(false);
+        setTrainingViewOpen(false);
+        showJobArena('hub');
+        refreshGuildWorkspaceVisibility();
     }
 
     function closeTrainingView(options = {}) {
@@ -188,7 +262,8 @@
         closeJobWorkspace();
 
         if (!options.skipViewRestore && global.RoyalArmiesAgeViewTabs?.getActiveView?.() === 'guild-training') {
-            global.RoyalArmiesAgeViewTabs.setActiveView('city');
+            global.RoyalArmiesAgeViewTabs.openMapSettlementPanel?.()
+                || global.RoyalArmiesAgeViewTabs.setActiveView('city');
         }
     }
 
@@ -1266,6 +1341,10 @@
         const job = (hub.jobs || []).find((entry) => entry.id === jobId);
         if (!job || !job.available) return;
 
+        if (hubViewActive) {
+            setHubViewOpen(false);
+        }
+
         if (job.kind === 'training') {
             openTrainingJob(job);
             return;
@@ -1468,6 +1547,7 @@
         toggleSettlementJobs,
         syncSettlementMenuGuild,
         ensureSettlementGuildHubLoaded,
+        openSettlementHub,
         openJob,
         closeJobWorkspace,
         dismissGuildWorkspacesForSettlementAction,

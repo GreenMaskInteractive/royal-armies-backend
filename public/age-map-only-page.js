@@ -1,5 +1,5 @@
 /**
- * RIFT — Age Alpha map-only shell (visual HUD retained; interaction limited to world map).
+ * RIFT — Age Alpha map-only shell (world map + plan tools + map HUD report/city-info tabs).
  */
 (function initAgeMapOnlyPage(global) {
     'use strict';
@@ -13,8 +13,9 @@
     ].join(', ');
 
     const COUNCIL_BOARD_MAP_GAP_PX = 10;
-    const COUNCIL_BOARD_LEFT_OFFSET_PX = 125;
+    const COUNCIL_BOARD_LEFT_OFFSET_PX = 150;
     const COUNCIL_BOARD_RIGHT_TRIM_PX = 10;
+    const COUNCIL_BOARD_BOTTOM_TRIM_PX = 500;
     const COUNCIL_BOARD_MIN_WIDTH_PX = 220;
     const COUNCIL_BOARD_MIN_HEIGHT_PX = 160;
     const MAP_FRAME_LAYOUT_MAX_EDGE = 1642;
@@ -31,6 +32,75 @@
     function isInsideMap(target) {
         if (!target || typeof target.closest !== 'function') return false;
         return Boolean(target.closest(`#${MAP_ROOT_ID}`));
+    }
+
+    function isInsideNationHub(target) {
+        if (!target || typeof target.closest !== 'function') return false;
+        return Boolean(target.closest('.age-nation-hub'));
+    }
+
+    function isMapPlanToolTarget(target) {
+        if (!target || typeof target.closest !== 'function') return false;
+        return Boolean(
+            target.closest('.age-world-map-terrain-controls')
+            || target.closest('.age-world-map-plan-tool-dock')
+            || target.closest('#age-world-map-plan-add')
+            || target.closest('#age-world-map-plan-post')
+            || target.closest('#age-world-map-plan-toggle')
+        );
+    }
+
+    function isInsideMapHudSidePanels(target) {
+        if (!target || typeof target.closest !== 'function') return false;
+        return Boolean(
+            target.closest('.age-city-info-panel')
+            || target.closest('.age-left-reports-panel')
+        );
+    }
+
+    function isWarRoomModalTarget(target) {
+        if (!target || typeof target.closest !== 'function') return false;
+        return Boolean(target.closest('.age-war-room-modal:not([hidden])'));
+    }
+
+    function isSettlementOverlayTarget(target) {
+        if (!target || typeof target.closest !== 'function') return false;
+        const body = global.document.body;
+        if (body?.classList.contains('age-settlement-venue-open')) {
+            if (target.closest('.age-settlement-venue-workspace:not([hidden])')) return true;
+        }
+        if (body?.classList.contains('age-barracks-open') && target.closest('.age-barracks-workspace')) {
+            return true;
+        }
+        if (body?.classList.contains('age-guild-training-open') && target.closest('.age-guild-workspace')) {
+            return true;
+        }
+        return false;
+    }
+
+    function isMapInteractionAllowed(target) {
+        return isInsideMap(target)
+            || isInsideNationHub(target)
+            || isMapPlanToolTarget(target)
+            || isInsideMapHudSidePanels(target)
+            || isWarRoomModalTarget(target)
+            || isSettlementOverlayTarget(target);
+    }
+
+    function maybeOpenSettlementFromQuery() {
+        try {
+            const params = new URLSearchParams(global.location.search);
+            if (params.get('openSettlement') !== '1') return;
+            global.RoyalArmiesAgeViewTabs?.openMapSettlementPanel?.();
+        } catch (_err) {
+            /* ignore */
+        }
+    }
+
+    function enableMapSettlementModules() {
+        global.enableAgeSettlementVenueWorkspaces?.();
+        global.enableAgeBarracks?.();
+        global.enableAgeAdventurersGuild?.();
     }
 
     function retainLoadingGate() {
@@ -168,12 +238,29 @@
             mapRect.left - gap - leftPosition
         );
         const top = mapRect.top;
-        const councilHeight = Math.max(COUNCIL_BOARD_MIN_HEIGHT_PX, mapRect.height);
+        const totalColumnHeight = Math.max(
+            COUNCIL_BOARD_MIN_HEIGHT_PX,
+            mapRect.height - COUNCIL_BOARD_BOTTOM_TRIM_PX
+        );
+        const quickTipsPanel = global.document.getElementById('age-quick-tips-panel');
+        const quickTipsStyle = quickTipsPanel ? global.getComputedStyle(quickTipsPanel) : null;
+        const quickTipsVisible = quickTipsPanel
+            && quickTipsStyle
+            && quickTipsStyle.display !== 'none'
+            && quickTipsStyle.visibility !== 'hidden';
+        const quickTipsHeight = quickTipsVisible
+            ? Math.max(88, Math.ceil(quickTipsPanel.getBoundingClientRect().height) || 88)
+            : 0;
+        const quickTipsStack = quickTipsHeight > 0 ? quickTipsHeight + 10 : 0;
+        const councilHeight = Math.max(
+            COUNCIL_BOARD_MIN_HEIGHT_PX,
+            totalColumnHeight - quickTipsStack
+        );
 
         canvas.style.setProperty('--age-council-board-top', `${top}px`);
         canvas.style.setProperty('--age-council-board-width', `${width}px`);
         canvas.style.setProperty('--age-council-board-height', `${councilHeight}px`);
-        canvas.style.setProperty('--age-left-column-height', `${councilHeight}px`);
+        canvas.style.setProperty('--age-left-column-height', `${totalColumnHeight}px`);
         canvas.classList.remove('is-age-hud-layout-pending');
         lastCouncilLayoutKey = `${top}|${width}|${councilHeight}|${leftPosition}`;
     }
@@ -220,7 +307,7 @@
 
         global.document.querySelectorAll(
             '.age-barracks-workspace, .age-unit-evolution-workspace, .age-guild-workspace,'
-            + ' .age-age-center-modal, .age-war-room-modal, .age-war-ledger-modal,'
+            + ' .age-age-center-modal, .age-war-ledger-modal,'
             + ' .commander-hub-overlay, .public-profile-overlay, .player-report-modal,'
             + ' .age-chronicles-battle-pass-modal, #age-rank-promotion-overlay'
         ).forEach((node) => {
@@ -249,7 +336,7 @@
     function blockNonMapInteraction() {
         const block = (event) => {
             if (!isMapOnlyPage()) return;
-            if (isInsideMap(event.target)) return;
+            if (isMapInteractionAllowed(event.target)) return;
             const tag = String(event.target?.tagName || '').toLowerCase();
             if (tag === 'input' || tag === 'textarea' || tag === 'select') {
                 event.preventDefault();
@@ -263,17 +350,23 @@
         };
 
         global.document.addEventListener('click', block, true);
+        global.document.addEventListener('pointerdown', block, true);
         global.document.addEventListener('keydown', (event) => {
             if (!isMapOnlyPage()) return;
-            if (isInsideMap(event.target)) return;
+            if (isMapInteractionAllowed(event.target)) return;
             if (event.key === 'Enter' || event.key === ' ') {
                 const interactive = event.target?.closest?.('button, a[href], [role="button"], [role="menuitem"], [role="tab"]');
-                if (interactive && !isInsideMap(interactive)) {
+                if (interactive && !isMapInteractionAllowed(interactive)) {
                     event.preventDefault();
                     event.stopPropagation();
                 }
             }
         }, true);
+    }
+
+    function enableMapPlanToolsEarly() {
+        global.RoyalArmiesUniversalGameTimeClock?.enable?.();
+        global.enableAgeWorldMapPlanEditor?.();
     }
 
     async function bootstrapMapSession() {
@@ -304,6 +397,8 @@
     async function bootMapOnlyPage() {
         if (!isMapOnlyPage()) return;
 
+        enableMapPlanToolsEarly();
+
         applyMapOnlyShellState();
         stripNonMapInlineHandlers();
         blockNonMapInteraction();
@@ -333,6 +428,21 @@
             global.RoyalArmiesAgeWorldMap?.refreshNationCityHighlights?.();
             bindCouncilBoardLayoutSync();
             scheduleCouncilBoardLayoutUntilStable(32);
+
+            if (typeof global.enableAgeViewTabs === 'function') {
+                global.enableAgeViewTabs();
+            }
+            enableMapSettlementModules();
+            maybeOpenSettlementFromQuery();
+            if (typeof global.enableAgeLeftReportsPanel === 'function') {
+                global.enableAgeLeftReportsPanel();
+            }
+            if (typeof global.enableAgeQuickTipsPanel === 'function') {
+                global.enableAgeQuickTipsPanel();
+            }
+            global.RoyalArmiesAgeNationHub?.enable?.();
+            global.enableAgeWorldMapPlanEditor?.();
+            global.RoyalArmiesAgeWorldMapPlanEditor?.enable?.();
         } finally {
             await releaseLoadingGate();
         }

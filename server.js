@@ -3308,7 +3308,7 @@ const PORTAL_HTML_PAGES = {
 
 const OFFICIAL_AGE_HTML_PAGES = {
     agealpha: 'agealpha.html',
-    settlement: 'settlement.html'
+    'council-room': 'council-room.html'
 };
 
 const ALL_HTML_PAGE_ROUTES = {
@@ -3333,6 +3333,17 @@ app.get(['/legal', '/legal.html'], (req, res) => {
 
 app.get(['/how-did-you-get-here', '/how-did-you-get-here.html'], (req, res) => {
     redirectWithQuery(req, res, '/game');
+});
+
+app.get(['/settlement', '/settlement.html'], (req, res) => {
+    const queryIndex = req.url.indexOf('?');
+    const query = queryIndex >= 0 ? req.url.slice(queryIndex + 1) : '';
+    const params = new URLSearchParams(query);
+    if (!params.has('openSettlement')) {
+        params.set('openSettlement', '1');
+    }
+    const nextQuery = params.toString();
+    res.redirect(301, `/agealpha${nextQuery ? `?${nextQuery}` : ''}`);
 });
 
 Object.entries(ALL_HTML_PAGE_ROUTES).forEach(([slug, fileName]) => {

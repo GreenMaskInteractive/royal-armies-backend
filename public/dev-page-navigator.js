@@ -24,7 +24,8 @@
                 { id: 'main', label: 'Age Portal', path: '/main', file: 'main.html' },
                 { id: 'game', label: 'Game (progression)', path: '/game', file: 'game.html' },
                 { id: 'agealpha', label: 'Age Alpha (live session)', path: '/agealpha', file: 'agealpha.html' },
-                { id: 'settlement', label: 'Settlement (city dev)', path: '/settlement', file: 'settlement.html' }
+                { id: 'settlement', label: 'Age Alpha (settlement tab)', path: '/agealpha?openSettlement=1', file: 'agealpha.html' },
+                { id: 'council-room', label: 'Council Room (HQ dev)', path: '/council-room', file: 'council-room.html' }
             ]
         }
     ];
@@ -67,6 +68,7 @@
             || slug === 'game'
             || slug === 'agealpha'
             || slug === 'settlement'
+            || slug === 'council-room'
             || slug === 'season-age-of-war-preview'
             || slug === 'ageofwarcinematic'
             || slug === 'ageofwar-trailer'
@@ -106,8 +108,9 @@
             url.searchParams.set('riftProgressionReset', '1');
         }
 
-        if (page.id === 'agealpha' || page.id === 'settlement' || page.id === 'season-age'
-            || fileName === 'agealpha.html' || fileName === 'settlement.html' || fileName === 'season-age-of-war-age.html') {
+        if (page.id === 'agealpha' || page.id === 'settlement' || page.id === 'council-room' || page.id === 'season-age'
+            || fileName === 'agealpha.html' || fileName === 'council-room.html'
+            || fileName === 'season-age-of-war-age.html') {
             url.searchParams.set('riftAgeDevBypass', '1');
         }
 
@@ -466,7 +469,12 @@
                         ? global.RoyalArmiesAchievements.previewWhoaSlowDownPopup.bind(global.RoyalArmiesAchievements)
                         : null);
                 if (!preview) {
-                    global.alert('Achievement preview is unavailable — reload with achievement-system.js loaded.');
+                    void (typeof global.showPortalAlert === 'function'
+                        ? global.showPortalAlert(
+                            'Achievement preview is unavailable — reload with achievement-system.js loaded.',
+                            'Dev tools'
+                        )
+                        : Promise.resolve(console.warn('[RIFT] Dev: achievement preview unavailable')));
                     return;
                 }
                 preview({ grantIfMissing: true });
@@ -482,13 +490,23 @@
                         ? global.RoyalArmiesDiscoveries.previewToast
                         : null);
                 if (!preview) {
-                    global.alert('Discovery toast preview needs rift-discoveries-workspace.js — open main, game, or agealpha.');
+                    void (typeof global.showPortalAlert === 'function'
+                        ? global.showPortalAlert(
+                            'Discovery toast preview needs rift-discoveries-workspace.js — open main, game, or agealpha.',
+                            'Dev tools'
+                        )
+                        : Promise.resolve(console.warn('[RIFT] Dev: discovery toast preview unavailable')));
                     return;
                 }
                 const single = Boolean(event.shiftKey);
                 preview({ single }).then((ok) => {
                     if (!ok) {
-                        global.alert('Discovery catalog is empty — ensure rift-song-manuscript-catalog.js and age-music-flow.js are loaded.');
+                        void (typeof global.showPortalAlert === 'function'
+                            ? global.showPortalAlert(
+                                'Discovery catalog is empty — ensure rift-song-manuscript-catalog.js and age-music-flow.js are loaded.',
+                                'Dev tools'
+                            )
+                            : Promise.resolve(console.warn('[RIFT] Dev: discovery catalog empty')));
                     }
                 });
             });

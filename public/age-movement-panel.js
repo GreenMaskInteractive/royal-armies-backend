@@ -76,6 +76,15 @@
         citadel: 'Citadel'
     };
 
+    const SETTLEMENT_TERRAIN_STYLE_CLASS = {
+        mountains: 'mountains',
+        marshlands: 'marshlands',
+        forest: 'forest',
+        plains: 'plains',
+        desert: 'desert',
+        snow: 'snow'
+    };
+
     let currentCityId = '';
     let mapPlayersOnlineOnly = false;
     let hqPlayersOnlineOnly = false;
@@ -184,11 +193,18 @@
 
     function syncCityInfoPanelHeader(city) {
         const tier = formatSettlementTier(city?.settlementTier);
-        const infoTabLabel = `${tier} Info`;
+        const settlementName = String(city?.name || '').trim() || 'Settlement';
+        const infoTabLabel = 'Settlement Info';
 
         const tabBtn = global.document.getElementById('age-city-info-tab-btn-city');
         if (tabBtn) {
             tabBtn.textContent = infoTabLabel;
+        }
+
+        const settlementTabBtn = global.document.getElementById('age-city-info-tab-btn-settlement');
+        if (settlementTabBtn) {
+            settlementTabBtn.textContent = settlementName;
+            settlementTabBtn.setAttribute('title', settlementName);
         }
 
         const kindLabel = global.document.getElementById('age-movement-settlement-kind-label');
@@ -198,17 +214,17 @@
 
         const cityInfoPanel = global.document.querySelector('#age-page-canvas .age-city-info-panel');
         if (cityInfoPanel) {
-            cityInfoPanel.setAttribute('aria-label', `${tier} and players`);
+            cityInfoPanel.setAttribute('aria-label', 'Settlement info, venues, and players');
         }
 
         const tablist = global.document.querySelector('.age-city-info-tabs');
         if (tablist) {
-            tablist.setAttribute('aria-label', `${tier} info views`);
+            tablist.setAttribute('aria-label', 'Settlement panel views');
         }
 
         const hudRight = global.document.getElementById('age-map-hud-right');
         if (hudRight && !hudRight.classList.contains('is-settlement-view-open')) {
-            hudRight.setAttribute('aria-label', `${tier} info`);
+            hudRight.setAttribute('aria-label', `${settlementName} — settlement panel`);
         }
 
         const viewTabCity = global.document.getElementById('age-map-view-tab-city');
@@ -258,27 +274,41 @@
         return findCityById(currentCityId) || resolveDefaultCity();
     }
 
-    function renderTerrainTypesList(region) {
-        const list = global.document.getElementById('age-movement-terrain-types');
-        if (!list) return;
+    function resolveSettlementTerrainName(city, region) {
+        const fromCity = String(city?.terrain || '').trim();
+        if (fromCity) return fromCity;
 
         const types = Array.isArray(region?.terrainTypes) ? region.terrainTypes : [];
-        if (!types.length) {
-            list.innerHTML = '';
-            list.hidden = true;
-            return;
-        }
+        if (types.length) return String(types[0] || '').trim();
 
-        list.hidden = false;
-        list.innerHTML = types.map((terrainName, index) => (
-            `<li class="age-movement-terrain-type${index === 0 ? ' age-movement-terrain-type--primary' : ''}">${terrainName}</li>`
-        )).join('');
+        return '';
+    }
+
+    function resolveSettlementTerrainStyleClass(terrainName) {
+        const key = String(terrainName || '').trim().toLowerCase();
+        return SETTLEMENT_TERRAIN_STYLE_CLASS[key] || '';
+    }
+
+    function applySettlementTerrainNameStyle(terrainEl, terrainName) {
+        if (!terrainEl) return;
+
+        [...terrainEl.classList].forEach((className) => {
+            if (className.startsWith('age-movement-terrain-name--')) {
+                terrainEl.classList.remove(className);
+            }
+        });
+
+        const styleClass = resolveSettlementTerrainStyleClass(terrainName);
+        if (styleClass) {
+            terrainEl.classList.add(`age-movement-terrain-name--${styleClass}`);
+        }
     }
 
     function renderMovementPanel() {
         const cityEl = global.document.getElementById('age-movement-city-name');
         const regionEl = global.document.getElementById('age-movement-region-name');
-        const terrainEl = global.document.getElementById('age-movement-terrain-copy');
+        const terrainEl = global.document.getElementById('age-movement-terrain-name')
+            || global.document.getElementById('age-movement-terrain-copy');
         const capitalHud = global.document.getElementById('age-hud-capital');
 
         const city = resolveDisplayedCity();
@@ -295,12 +325,11 @@
         }
 
         if (terrainEl) {
-            const terrainCopy = String(region?.terrain || '').trim();
-            terrainEl.textContent = terrainCopy || 'Terrain data unavailable for this location.';
-            terrainEl.classList.toggle('is-empty', !terrainCopy);
+            const terrainName = resolveSettlementTerrainName(city, region);
+            terrainEl.textContent = terrainName || 'Terrain data unavailable for this location.';
+            terrainEl.classList.toggle('is-empty', !terrainName);
+            applySettlementTerrainNameStyle(terrainEl, terrainName);
         }
-
-        renderTerrainTypesList(region);
 
         if (capitalHud && city?.name) {
             capitalHud.textContent = city.name;
@@ -333,6 +362,7 @@
         if (!hud) return;
         const target = String(tabId || 'city').trim().toLowerCase();
         hud.classList.toggle('is-city-info-players-open', target === 'players');
+        hud.classList.toggle('is-city-info-settlement-open', target === 'settlement');
         if (typeof global.syncAgeMapHudLayout === 'function') {
             global.requestAnimationFrame(global.syncAgeMapHudLayout);
         }
@@ -351,10 +381,7 @@
         });
 
         panels.forEach((panel) => {
-            const panelId = panel.id || '';
-            const isCity = panelId === 'age-city-info-tab-city';
-            const isPlayers = panelId === 'age-city-info-tab-players';
-            const isActive = (target === 'city' && isCity) || (target === 'players' && isPlayers);
+            const isActive = panel.id === `age-city-info-tab-${target}`;
             panel.classList.toggle('is-active', isActive);
             panel.hidden = !isActive;
         });
@@ -362,6 +389,10 @@
         syncCityInfoPanelLayoutMode(target);
         if (target === 'players') {
             refreshCityPlayersFromServer();
+        } else         if (target === 'settlement') {
+            if (typeof global.RoyalArmiesAgeViewTabs?.renderSettlementMenu === 'function') {
+                global.RoyalArmiesAgeViewTabs.renderSettlementMenu();
+            }
         }
     }
 
@@ -963,6 +994,7 @@
         setCurrentCityByNationId,
         getCurrentCity,
         getDisplayedCity: resolveDisplayedCity,
+        activateCityInfoTab,
         formatSettlementTier,
         refreshCityInfoPanelHeader,
         getCommanderNationId: resolveCommanderNationId,
