@@ -5,7 +5,7 @@
     'use strict';
 
     const DEFAULT_CENTER_LABEL = 'MENU';
-    const RADIAL_BUILD_VERSION = 'rpg-wheel-5';
+    const RADIAL_BUILD_VERSION = 'rpg-wheel-6';
     const SLOT_COUNT = 5;
     const SLOT_START_ANGLE_DEG = -90;
 
@@ -330,8 +330,8 @@
             + `<stop offset="0%" stop-color="#ffe9a8"/><stop offset="100%" stop-color="#8a6d2e"/>`
             + `</linearGradient>`
             + `</defs>`
-            + `<path d="M36 10 L56 21 V43 L36 54 L16 43 V21 Z" fill="url(#bg)" stroke="url(#rim)" stroke-width="2"/>`
-            + `<path d="M36 16 L51 24 V40 L36 48 L21 40 V24 Z" fill="none" stroke="hsl(${hue} 50% 55%)" stroke-width="1" opacity="0.5"/>`
+            + `<path d="M36 9 L59 20 V44 L36 55 L13 44 V20 Z" fill="url(#bg)" stroke="url(#rim)" stroke-width="2"/>`
+            + `<path d="M36 15 L53 23 V41 L36 49 L19 41 V23 Z" fill="none" stroke="hsl(${hue} 50% 55%)" stroke-width="1" opacity="0.5"/>`
             + `<g color="hsl(${hue} 58% 82%)" transform="translate(36 31) scale(0.52) translate(-32 -30)">${glyph}</g>`
             + '</svg>'
         );
