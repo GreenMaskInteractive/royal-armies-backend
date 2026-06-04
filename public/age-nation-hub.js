@@ -1,158 +1,102 @@
 /**
- * RIFT — Nation Hub dropdown (views, War Room) on the Age top bar.
+ * RIFT — Nation Hub radial menu on the Age top bar.
  */
 (function initAgeNationHub(global) {
     'use strict';
 
+    const DEFAULT_CENTER_LABEL = 'Nation Hub';
+    const SLOT_COUNT = 5;
+    const SLOT_START_ANGLE_DEG = -90;
+
+    const RADIAL_ITEMS = Object.freeze([
+        { id: 'nation', label: 'Nation' },
+        { id: 'records', label: 'Records' },
+        { id: 'discoveries', label: 'Discoveries' },
+        { id: 'banner', label: 'Banner' },
+        { id: 'battle-pass', label: 'Battle Pass' }
+    ]);
+
     let bound = false;
     let escapeHandler = null;
     let layoutHandler = null;
-    let closeFinishTimer = 0;
-    const MENU_TOGGLE_GAP_PX = 0;
-    const MENU_PANEL_MIN_WIDTH_PX = 208;
 
     function getHub() {
         return global.document.getElementById('age-nation-hub');
     }
 
-    function getMenu() {
-        return global.document.getElementById('age-nation-hub-menu');
+    function getRadial() {
+        return global.document.getElementById('age-nation-hub-radial');
+    }
+
+    function getDial() {
+        return global.document.getElementById('age-nation-hub-radial-dial');
     }
 
     function getToggle() {
         return global.document.getElementById('age-nation-hub-toggle');
     }
 
+    function getCenterLabelEl() {
+        return global.document.getElementById('age-nation-hub-radial-label');
+    }
+
     function isHubOpen() {
         return Boolean(getHub()?.classList.contains('is-open'));
     }
 
-    function isHubClosing() {
-        return Boolean(getHub()?.classList.contains('is-hub-closing'));
+    function setCenterLabel(text) {
+        const el = getCenterLabelEl();
+        if (!el) return;
+        el.textContent = String(text || DEFAULT_CENTER_LABEL).trim() || DEFAULT_CENTER_LABEL;
     }
 
-    function finishHubClose() {
-        const hub = getHub();
-        if (!hub) return;
-        hub.classList.remove('is-hub-closing');
-        if (closeFinishTimer) {
-            global.clearTimeout(closeFinishTimer);
-            closeFinishTimer = 0;
-        }
-    }
-
-    function beginHubClose() {
-        const hub = getHub();
-        const menu = getMenu();
+    function syncRadialAnchorPosition() {
         const toggle = getToggle();
-        if (!hub || !menu || !toggle) return;
-
-        hub.classList.remove('is-open');
-        hub.classList.add('is-hub-closing');
-        toggle.setAttribute('aria-expanded', 'false');
-        menu.setAttribute('aria-hidden', 'true');
-
-        clearMenuPositionWatch();
-        if (escapeHandler) {
-            global.document.removeEventListener('keydown', escapeHandler);
-            escapeHandler = null;
-        }
-
-        const onTransitionEnd = (event) => {
-            if (event.target !== menu || event.propertyName !== 'grid-template-rows') return;
-            menu.removeEventListener('transitionend', onTransitionEnd);
-            finishHubClose();
-        };
-        menu.addEventListener('transitionend', onTransitionEnd);
-        if (closeFinishTimer) {
-            global.clearTimeout(closeFinishTimer);
-        }
-        closeFinishTimer = global.setTimeout(finishHubClose, 520);
-    }
-
-    function clearMenuPositionWatch() {
-        if (layoutHandler) {
-            global.removeEventListener('resize', layoutHandler);
-            global.removeEventListener('royalarmies:viewport-metrics-updated', layoutHandler);
-            layoutHandler = null;
-        }
-    }
-
-    function measureNationHubPanelWidthPx(toggle, menu) {
-        const ladder = menu.querySelector('.age-nation-hub-menu-ladder');
-        const toggleWidth = Math.round(toggle.getBoundingClientRect().width) || 0;
-        if (!ladder) {
-            return Math.max(MENU_PANEL_MIN_WIDTH_PX, toggleWidth);
-        }
-
-        const widthBefore = ladder.style.width;
-        const minWidthBefore = ladder.style.minWidth;
-        ladder.style.width = 'max-content';
-        ladder.style.minWidth = `${MENU_PANEL_MIN_WIDTH_PX}px`;
-        const ladderWidth = Math.ceil(ladder.getBoundingClientRect().width);
-        ladder.style.width = widthBefore;
-        ladder.style.minWidth = minWidthBefore;
-
-        return Math.max(MENU_PANEL_MIN_WIDTH_PX, toggleWidth, ladderWidth);
-    }
-
-    function applyNationHubPanelWidth(panelWidthPx) {
-        const menu = getMenu();
-        const anchor = getToggle()?.closest('.age-nation-hub-anchor');
-        const widthToken = `${panelWidthPx}px`;
-        if (menu) {
-            menu.style.setProperty('--age-nation-hub-menu-min-width', widthToken);
-        }
-        if (anchor) {
-            anchor.style.setProperty('--age-nation-hub-menu-min-width', widthToken);
-        }
-    }
-
-    function syncMenuPosition() {
-        const toggle = getToggle();
-        const menu = getMenu();
-        if (!toggle || !menu) return;
-
-        const panelWidthPx = measureNationHubPanelWidthPx(toggle, menu);
-        applyNationHubPanelWidth(panelWidthPx);
-        void toggle.offsetWidth;
+        const radial = getRadial();
+        if (!toggle || !radial) return;
 
         const rect = toggle.getBoundingClientRect();
-        const toggleCenterX = rect.left + rect.width / 2;
-        const menuLeft = Math.round(toggleCenterX - panelWidthPx / 2);
-
-        menu.style.setProperty('--age-nation-hub-menu-top', `${Math.round(rect.bottom + MENU_TOGGLE_GAP_PX)}px`);
-        menu.style.setProperty('--age-nation-hub-menu-left', `${menuLeft}px`);
-        menu.style.removeProperty('--age-nation-hub-menu-right');
-        menu.classList.add('is-menu-position-synced');
+        const centerX = rect.left + rect.width / 2;
+        const centerY = rect.top + rect.height / 2;
+        radial.style.setProperty('--age-nation-hub-radial-x', `${centerX}px`);
+        radial.style.setProperty('--age-nation-hub-radial-y', `${centerY}px`);
     }
 
-    function ensureMenuPositionWatch() {
+    function ensureRadialPositionWatch() {
         if (layoutHandler) return;
         layoutHandler = () => {
-            syncMenuPosition();
+            if (isHubOpen()) {
+                syncRadialAnchorPosition();
+            }
         };
         global.addEventListener('resize', layoutHandler, { passive: true });
         global.addEventListener('royalarmies:viewport-metrics-updated', layoutHandler, { passive: true });
     }
 
+    function clearRadialPositionWatch() {
+        if (!layoutHandler) return;
+        global.removeEventListener('resize', layoutHandler);
+        global.removeEventListener('royalarmies:viewport-metrics-updated', layoutHandler);
+        layoutHandler = null;
+    }
+
     function setHubOpen(open) {
         const hub = getHub();
-        const menu = getMenu();
+        const radial = getRadial();
         const toggle = getToggle();
-        if (!hub || !menu || !toggle) return;
+        if (!hub || !radial || !toggle) return;
 
         const nextOpen = Boolean(open);
-        syncMenuPosition();
 
         if (nextOpen) {
-            finishHubClose();
-            hub.classList.remove('is-hub-closing');
+            syncRadialAnchorPosition();
+            ensureRadialPositionWatch();
             hub.classList.add('is-open');
             toggle.setAttribute('aria-expanded', 'true');
-            menu.setAttribute('aria-hidden', 'false');
-            ensureMenuPositionWatch();
-            global.requestAnimationFrame(syncMenuPosition);
+            radial.hidden = false;
+            radial.setAttribute('aria-hidden', 'false');
+            setCenterLabel(DEFAULT_CENTER_LABEL);
+
             if (!escapeHandler) {
                 escapeHandler = (event) => {
                     if (event.key === 'Escape') {
@@ -161,22 +105,21 @@
                 };
                 global.document.addEventListener('keydown', escapeHandler);
             }
+            global.requestAnimationFrame(syncRadialAnchorPosition);
             return;
         }
 
-        if (isHubClosing()) {
-            return;
-        }
-
-        if (isHubOpen()) {
-            beginHubClose();
-            return;
-        }
-
-        finishHubClose();
-        hub.classList.remove('is-open', 'is-hub-closing');
+        hub.classList.remove('is-open');
         toggle.setAttribute('aria-expanded', 'false');
-        menu.setAttribute('aria-hidden', 'true');
+        radial.hidden = true;
+        radial.setAttribute('aria-hidden', 'true');
+        setCenterLabel(DEFAULT_CENTER_LABEL);
+        clearRadialPositionWatch();
+
+        if (escapeHandler) {
+            global.document.removeEventListener('keydown', escapeHandler);
+            escapeHandler = null;
+        }
     }
 
     function closeHub() {
@@ -184,114 +127,178 @@
     }
 
     function toggleHub() {
-        if (isHubClosing()) return;
         setHubOpen(!isHubOpen());
     }
 
     function onDocumentPointerDown(event) {
-        if (!isHubOpen() && !isHubClosing()) return;
+        if (!isHubOpen()) return;
         const hub = getHub();
-        if (!hub || hub.contains(event.target)) return;
+        const radial = getRadial();
+        if (!hub) return;
+        if (hub.contains(event.target) || radial?.contains(event.target)) return;
         closeHub();
     }
 
-    function onMenuItemActivate(event) {
-        const item = event.target.closest('.age-nation-hub-menu-ladder .age-nation-hub-menu-item');
-        if (!item || !getMenu()?.contains(item)) return;
+    function openNationCouncilRoom() {
+        global.RoyalArmiesAdventurersGuild?.dismissGuildWorkspacesForSettlementAction?.();
 
-        if (item.id === 'age-war-room-open') {
-            event.preventDefault();
-            closeHub();
-            global.RoyalArmiesAdventurersGuild?.dismissGuildWorkspacesForSettlementAction?.();
-            const warRoom = global.RoyalArmiesAgeArmyGroups;
-            if (warRoom?.isWorkspaceOpen?.()) {
-                warRoom?.closeWorkspace?.();
-            } else {
-                warRoom?.openWorkspace?.();
-            }
+        if (global.document.body?.dataset?.ageCouncilRoomPage === 'true') {
             return;
         }
 
-        if (item.id === 'age-council-room-open' || item.getAttribute('data-age-hub-item') === 'council-room') {
-            event.preventDefault();
-            closeHub();
-            global.RoyalArmiesAdventurersGuild?.dismissGuildWorkspacesForSettlementAction?.();
-
-            if (global.document.body?.dataset?.ageCouncilRoomPage === 'true') {
-                return;
-            }
-
-            if (typeof global.RoyalArmiesPagePaths?.navigateToCouncilRoomPage === 'function') {
-                void global.RoyalArmiesPagePaths.navigateToCouncilRoomPage();
-                return;
-            }
-
-            const fallback = typeof global.resolveRoyalArmiesPageUrl === 'function'
-                ? `${global.resolveRoyalArmiesPageUrl('council-room')}?riftAgeDevBypass=1`
-                : '/council-room?riftAgeDevBypass=1';
-            global.location.href = fallback;
+        if (typeof global.RoyalArmiesPagePaths?.navigateToCouncilRoomPage === 'function') {
+            void global.RoyalArmiesPagePaths.navigateToCouncilRoomPage();
             return;
         }
 
-        if (item.id === 'age-map-view-tab-city' || item.getAttribute('data-age-hub-item') === 'settlement') {
-            event.preventDefault();
-            closeHub();
-            global.RoyalArmiesAdventurersGuild?.dismissGuildWorkspacesForSettlementAction?.();
-
-            if (global.document.body?.dataset?.ageMapOnly === 'true') {
-                global.RoyalArmiesAgeViewTabs?.openMapSettlementPanel?.();
-                return;
-            }
-
-            if (typeof global.RoyalArmiesPagePaths?.navigateToSettlementPage === 'function') {
-                void global.RoyalArmiesPagePaths.navigateToSettlementPage();
-                return;
-            }
-
-            const fallback = typeof global.RoyalArmiesPagePaths?.buildAgeAlphaUrl === 'function'
-                ? global.RoyalArmiesPagePaths.buildAgeAlphaUrl({ riftAgeDevBypass: true, openSettlement: true })
-                : '/agealpha?riftAgeDevBypass=1&openSettlement=1';
-            if (global.RoyalArmiesPageRouteTransition?.navigateTo) {
-                void global.RoyalArmiesPageRouteTransition.navigateTo(fallback);
-            } else {
-                global.location.href = fallback;
-            }
+        if (typeof global.RoyalArmiesAgeHeadquarters?.openCouncilRoom === 'function') {
+            global.RoyalArmiesAgeHeadquarters.openCouncilRoom();
             return;
         }
 
-        if (item.id === 'age-nation-hub-item-map' || item.getAttribute('data-age-hub-item') === 'map') {
-            event.preventDefault();
-            closeHub();
-            if (global.document.body?.dataset?.ageMapOnly === 'true') {
-                return;
-            }
-            const target = typeof global.RoyalArmiesPagePaths?.buildAgeAlphaUrl === 'function'
-                ? global.RoyalArmiesPagePaths.buildAgeAlphaUrl({ riftAgeDevBypass: true })
-                : (typeof global.resolveRoyalArmiesPageUrl === 'function'
-                    ? `${global.resolveRoyalArmiesPageUrl('agealpha')}?riftAgeDevBypass=1`
-                    : '/agealpha?riftAgeDevBypass=1');
-            if (global.RoyalArmiesPageRouteTransition?.navigateTo) {
-                void global.RoyalArmiesPageRouteTransition.navigateTo(target);
-            } else {
-                global.location.href = target;
-            }
-            return;
+        if (typeof global.RoyalArmiesAgeViewTabs?.setActiveView === 'function') {
+            global.RoyalArmiesAgeViewTabs.setActiveView('council-room');
         }
+    }
 
-        if (item.hasAttribute('data-age-view-tab')) {
-            event.preventDefault();
-            const view = item.getAttribute('data-age-view-tab');
-            closeHub();
-            if (typeof global.RoyalArmiesAgeViewTabs?.setActiveView === 'function') {
-                global.RoyalArmiesAgeViewTabs.setActiveView(view);
-            }
+    function openRecordsWorkspace() {
+        if (typeof global.enableAgeRecords === 'function') {
+            global.enableAgeRecords();
+        }
+        global.RoyalArmiesAgeRecords?.openWorkspace?.();
+    }
+
+    function openDiscoveriesWorkspace(event) {
+        if (typeof global.openDiscoveriesWorkspace === 'function') {
+            global.openDiscoveriesWorkspace(event);
             return;
         }
+        if (typeof global.showPortalAlert === 'function') {
+            void global.showPortalAlert('Discoveries is unavailable in this session.', 'Discoveries');
+        }
+    }
+
+    function openBannerWorkspace() {
+        if (typeof global.showPortalAlert === 'function') {
+            void global.showPortalAlert('Banner management is coming soon.', 'Banner');
+            return;
+        }
+        global.console.info('[RIFT] Banner workspace (coming soon).');
+    }
+
+    function openBattlePassWorkspace(event) {
+        if (typeof global.openAgeChroniclesBattlePassModal === 'function') {
+            global.openAgeChroniclesBattlePassModal(event);
+            return;
+        }
+        if (typeof global.showPortalAlert === 'function') {
+            void global.showPortalAlert('Battle Pass is unavailable in this session.', 'Battle Pass');
+        }
+    }
+
+    function activateRadialItem(itemId, event) {
+        const normalizedId = String(itemId || '').trim().toLowerCase();
+
+        switch (normalizedId) {
+            case 'nation':
+                openNationCouncilRoom();
+                break;
+            case 'records':
+                openRecordsWorkspace();
+                break;
+            case 'discoveries':
+                openDiscoveriesWorkspace(event);
+                break;
+            case 'banner':
+                openBannerWorkspace();
+                break;
+            case 'battle-pass':
+                openBattlePassWorkspace(event);
+                break;
+            default:
+                break;
+        }
+    }
+
+    function onRadialSlotPointerEnter(event) {
+        const slot = event.currentTarget;
+        if (!slot) return;
+        setCenterLabel(slot.getAttribute('data-age-hub-radial-label') || DEFAULT_CENTER_LABEL);
+    }
+
+    function onRadialSlotPointerLeave() {
+        if (!isHubOpen()) return;
+        setCenterLabel(DEFAULT_CENTER_LABEL);
+    }
+
+    function onRadialActivate(event) {
+        const slot = event.target.closest('[data-age-hub-radial]');
+        if (!slot || !getDial()?.contains(slot)) return;
+
+        event.preventDefault();
+        const itemId = slot.getAttribute('data-age-hub-radial');
+        closeHub();
+        activateRadialItem(itemId, event);
+    }
+
+    function buildPlaceholderSvgDataUri(label, index) {
+        const hue = 38 + index * 14;
+        const safeLabel = String(label || 'Slot').slice(0, 12);
+        const svg = (
+            `<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64">`
+            + `<rect width="64" height="64" rx="10" fill="hsl(${hue} 28% 18%)"/>`
+            + `<rect x="6" y="6" width="52" height="52" rx="8" fill="none" stroke="hsl(${hue} 55% 52%)" stroke-width="2" stroke-dasharray="5 4"/>`
+            + `<text x="32" y="36" text-anchor="middle" font-family="Cinzel,serif" font-size="9" fill="hsl(${hue} 40% 78%)">${safeLabel}</text>`
+            + '</svg>'
+        );
+        return `data:image/svg+xml,${encodeURIComponent(svg)}`;
+    }
+
+    function renderRadialSlots() {
+        const dial = getDial();
+        if (!dial || dial.dataset.ageRadialBuilt === 'true') return;
+
+        const centerHtml = (
+            '<div class="age-nation-hub-radial-center" aria-live="polite">'
+            + `<span id="age-nation-hub-radial-label" class="age-nation-hub-radial-center-label">${DEFAULT_CENTER_LABEL}</span>`
+            + '</div>'
+        );
+
+        const stepDeg = 360 / SLOT_COUNT;
+        const slotsHtml = RADIAL_ITEMS.map((item, index) => {
+            const angleDeg = SLOT_START_ANGLE_DEG + stepDeg * index;
+            const placeholderSrc = buildPlaceholderSvgDataUri(item.label, index);
+            const delaySec = (0.03 * index).toFixed(2);
+            return (
+                `<button type="button" class="age-nation-hub-radial-slot age-nation-hub-radial-slot--${item.id}"`
+                + ` data-age-hub-radial="${item.id}"`
+                + ` data-age-hub-radial-label="${item.label}"`
+                + ` style="--age-radial-slot-angle: ${angleDeg}deg; transition-delay: ${delaySec}s;"`
+                + ` role="menuitem"`
+                + ` aria-label="${item.label}">`
+                + '<span class="age-nation-hub-radial-slot-frame">'
+                + `<img class="age-nation-hub-radial-slot-img" src="${placeholderSrc}" alt="" decoding="async">`
+                + '</span>'
+                + '</button>'
+            );
+        }).join('');
+
+        dial.innerHTML = centerHtml + slotsHtml;
+        dial.dataset.ageRadialBuilt = 'true';
+
+        dial.querySelectorAll('[data-age-hub-radial]').forEach((slot) => {
+            slot.addEventListener('pointerenter', onRadialSlotPointerEnter);
+            slot.addEventListener('pointerleave', onRadialSlotPointerLeave);
+            slot.addEventListener('focus', onRadialSlotPointerEnter);
+            slot.addEventListener('blur', onRadialSlotPointerLeave);
+        });
     }
 
     function bindNationHub() {
         if (bound) return;
         bound = true;
+
+        renderRadialSlots();
 
         getToggle()?.addEventListener('click', (event) => {
             event.preventDefault();
@@ -299,7 +306,12 @@
             toggleHub();
         });
 
-        getMenu()?.addEventListener('click', onMenuItemActivate);
+        getRadial()?.querySelector('.age-nation-hub-radial-backdrop')?.addEventListener('click', (event) => {
+            event.preventDefault();
+            closeHub();
+        });
+
+        getDial()?.addEventListener('click', onRadialActivate);
 
         global.document.addEventListener('pointerdown', onDocumentPointerDown, true);
 
@@ -312,7 +324,8 @@
 
     function enableNationHub() {
         bindNationHub();
-        syncMenuPosition();
+        syncRadialAnchorPosition();
+        global.enableAgeRecords?.();
     }
 
     function init() {

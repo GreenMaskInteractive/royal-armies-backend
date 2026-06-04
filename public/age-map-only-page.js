@@ -101,6 +101,7 @@
         global.enableAgeSettlementVenueWorkspaces?.();
         global.enableAgeBarracks?.();
         global.enableAgeAdventurersGuild?.();
+        global.enableAgeRecords?.();
     }
 
     function retainLoadingGate() {
@@ -309,7 +310,7 @@
             '.age-barracks-workspace, .age-unit-evolution-workspace, .age-guild-workspace,'
             + ' .age-age-center-modal, .age-war-ledger-modal,'
             + ' .commander-hub-overlay, .public-profile-overlay, .player-report-modal,'
-            + ' .age-chronicles-battle-pass-modal, #age-rank-promotion-overlay'
+            + ' .age-chronicles-battle-pass-modal, .rift-discoveries-workspace-modal, #age-rank-promotion-overlay'
         ).forEach((node) => {
             node.hidden = true;
             node.setAttribute('aria-hidden', 'true');
