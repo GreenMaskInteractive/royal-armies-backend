@@ -57,36 +57,6 @@
         radial.dataset.ageRadialPortaled = 'true';
     }
 
-    function syncRadialAnchorPosition() {
-        const toggle = getToggle();
-        const radial = getRadial();
-        if (!toggle || !radial) return;
-
-        const rect = toggle.getBoundingClientRect();
-        const centerX = rect.left + rect.width / 2;
-        const centerY = rect.top + rect.height / 2;
-        radial.style.setProperty('--age-nation-hub-radial-x', `${centerX}px`);
-        radial.style.setProperty('--age-nation-hub-radial-y', `${centerY}px`);
-    }
-
-    function ensureRadialPositionWatch() {
-        if (layoutHandler) return;
-        layoutHandler = () => {
-            if (isHubOpen()) {
-                syncRadialAnchorPosition();
-            }
-        };
-        global.addEventListener('resize', layoutHandler, { passive: true });
-        global.addEventListener('royalarmies:viewport-metrics-updated', layoutHandler, { passive: true });
-    }
-
-    function clearRadialPositionWatch() {
-        if (!layoutHandler) return;
-        global.removeEventListener('resize', layoutHandler);
-        global.removeEventListener('royalarmies:viewport-metrics-updated', layoutHandler);
-        layoutHandler = null;
-    }
-
     function setHubOpen(open) {
         const hub = getHub();
         const radial = getRadial();

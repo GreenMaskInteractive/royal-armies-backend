@@ -50,12 +50,13 @@
 }
 
 .age-nation-hub-radial-dial {
-    position: absolute;
-    left: var(--age-nation-hub-radial-x, 50%);
-    top: var(--age-nation-hub-radial-y, 50%);
+    --age-radial-slot-radius: 200px;
+    --age-radial-slot-size: 96px;
+    --age-radial-center-size: 160px;
+    position: relative;
+    flex-shrink: 0;
     width: 0;
     height: 0;
-    transform: translate(-50%, -50%);
     pointer-events: none;
 }
 
@@ -67,9 +68,9 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 108px;
-    height: 108px;
-    margin: -54px 0 0 -54px;
+    width: var(--age-radial-center-size);
+    height: var(--age-radial-center-size);
+    margin: calc(-0.5 * var(--age-radial-center-size)) 0 0 calc(-0.5 * var(--age-radial-center-size));
     border-radius: 50%;
     border: 1px solid rgba(212, 175, 90, 0.45);
     background:
@@ -126,7 +127,7 @@
         box-shadow 0.14s ease;
 }
 
-.age-nation-hub.is-open .age-nation-hub-radial-slot {
+.age-nation-hub-radial.is-open .age-nation-hub-radial-slot {
     opacity: 1;
     pointer-events: auto;
     transform:
