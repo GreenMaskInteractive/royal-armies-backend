@@ -54,9 +54,11 @@
 }
 
 .age-nation-hub-radial-dial {
-    --age-radial-slot-radius: 200px;
-    --age-radial-slot-size: 96px;
-    --age-radial-center-size: 160px;
+    --age-radial-track-size: 520px;
+    --age-radial-slot-radius: 210px;
+    --age-radial-slot-well-size: 112px;
+    --age-radial-slot-size: 88px;
+    --age-radial-center-size: 148px;
     position: relative;
     flex-shrink: 0;
     width: 0;
@@ -64,11 +66,104 @@
     pointer-events: none;
 }
 
+/* Outer ring — buttons orbit and rest in wells on this circle */
+.age-nation-hub-radial-track {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    z-index: 0;
+    width: var(--age-radial-track-size);
+    height: var(--age-radial-track-size);
+    margin: calc(-0.5 * var(--age-radial-track-size)) 0 0 calc(-0.5 * var(--age-radial-track-size));
+    border-radius: 50%;
+    border: 2px solid rgba(212, 175, 90, 0.32);
+    background:
+        radial-gradient(
+            circle at 50% 42%,
+            rgba(52, 42, 28, 0.55) 0%,
+            rgba(14, 11, 8, 0.92) 58%,
+            rgba(6, 5, 4, 0.98) 100%
+        );
+    box-shadow:
+        inset 0 0 48px rgba(0, 0, 0, 0.55),
+        inset 0 2px 0 rgba(255, 215, 128, 0.1),
+        0 16px 40px rgba(0, 0, 0, 0.48);
+    pointer-events: none;
+    opacity: 0;
+    transform: scale(0.88);
+    transition:
+        opacity 0.28s ease,
+        transform 0.36s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.age-nation-hub-radial.is-open .age-nation-hub-radial-track {
+    opacity: 1;
+    transform: scale(1);
+}
+
+.age-nation-hub-radial-track::after {
+    content: '';
+    position: absolute;
+    inset: 14px;
+    border-radius: 50%;
+    border: 1px solid rgba(212, 175, 90, 0.14);
+    box-shadow: inset 0 0 24px rgba(0, 0, 0, 0.35);
+    pointer-events: none;
+}
+
+/* Recessed slot pocket on the track ring */
+.age-nation-hub-radial-slot-well {
+    --age-radial-slot-angle: 0deg;
+    --age-radial-slot-delay: 0s;
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: var(--age-radial-slot-well-size);
+    height: var(--age-radial-slot-well-size);
+    margin: calc(-0.5 * var(--age-radial-slot-well-size)) 0 0 calc(-0.5 * var(--age-radial-slot-well-size));
+    border-radius: 22px;
+    border: 1px solid rgba(120, 98, 58, 0.55);
+    background:
+        radial-gradient(
+            circle at 50% 35%,
+            rgba(22, 18, 12, 0.95) 0%,
+            rgba(8, 7, 5, 0.98) 72%
+        );
+    box-shadow:
+        inset 0 3px 10px rgba(0, 0, 0, 0.65),
+        inset 0 -1px 0 rgba(255, 215, 128, 0.06),
+        0 2px 0 rgba(212, 175, 90, 0.12);
+    pointer-events: none;
+    transform:
+        rotate(var(--age-radial-slot-angle))
+        translateY(calc(-1 * var(--age-radial-slot-radius)))
+        rotate(calc(-1 * var(--age-radial-slot-angle)))
+        scale(0.72);
+    opacity: 0;
+    transition:
+        transform 0.34s cubic-bezier(0.22, 1, 0.36, 1),
+        opacity 0.24s ease;
+    transition-delay: var(--age-radial-slot-delay);
+}
+
+.age-nation-hub-radial.is-open .age-nation-hub-radial-slot-well {
+    opacity: 1;
+    transform:
+        rotate(var(--age-radial-slot-angle))
+        translateY(calc(-1 * var(--age-radial-slot-radius)))
+        rotate(calc(-1 * var(--age-radial-slot-angle)))
+        scale(1);
+}
+
 .age-nation-hub-radial-center {
     position: absolute;
     left: 50%;
     top: 50%;
-    z-index: 2;
+    z-index: 3;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -99,45 +194,35 @@
 }
 
 .age-nation-hub-radial-slot {
-    --age-radial-slot-angle: 0deg;
-    position: absolute;
-    left: 50%;
-    top: 50%;
-    z-index: 1;
+    position: relative;
+    z-index: 2;
+    flex-shrink: 0;
     width: var(--age-radial-slot-size);
     height: var(--age-radial-slot-size);
-    margin: calc(-0.5 * var(--age-radial-slot-size)) 0 0 calc(-0.5 * var(--age-radial-slot-size));
-    padding: 6px;
-    border: 1px solid rgba(212, 175, 90, 0.38);
-    border-radius: 18px;
+    padding: 5px;
+    border: 1px solid rgba(212, 175, 90, 0.42);
+    border-radius: 16px;
     background:
-        linear-gradient(145deg, rgba(36, 28, 18, 0.98) 0%, rgba(12, 10, 8, 0.98) 100%);
+        linear-gradient(145deg, rgba(44, 34, 22, 0.98) 0%, rgba(14, 11, 8, 0.98) 100%);
     box-shadow:
-        inset 0 1px 0 rgba(255, 215, 128, 0.12),
-        0 8px 20px rgba(0, 0, 0, 0.38);
+        inset 0 1px 0 rgba(255, 215, 128, 0.14),
+        0 4px 12px rgba(0, 0, 0, 0.35);
     cursor: pointer;
     pointer-events: none;
-    transform:
-        rotate(var(--age-radial-slot-angle))
-        translateY(calc(-1 * var(--age-radial-slot-radius)))
-        rotate(calc(-1 * var(--age-radial-slot-angle)))
-        scale(0.72);
+    transform: scale(0.92);
     opacity: 0;
     transition:
-        transform 0.34s cubic-bezier(0.22, 1, 0.36, 1),
-        opacity 0.24s ease,
+        transform 0.28s cubic-bezier(0.22, 1, 0.36, 1),
+        opacity 0.22s ease,
         border-color 0.14s ease,
         box-shadow 0.14s ease;
+    transition-delay: var(--age-radial-slot-delay);
 }
 
 .age-nation-hub-radial.is-open .age-nation-hub-radial-slot {
     opacity: 1;
     pointer-events: auto;
-    transform:
-        rotate(var(--age-radial-slot-angle))
-        translateY(calc(-1 * var(--age-radial-slot-radius)))
-        rotate(calc(-1 * var(--age-radial-slot-angle)))
-        scale(1);
+    transform: scale(1);
 }
 
 .age-nation-hub-radial-slot:hover,
@@ -147,12 +232,8 @@
     box-shadow:
         inset 0 1px 0 rgba(255, 215, 128, 0.22),
         0 0 0 2px rgba(255, 215, 128, 0.18),
-        0 10px 24px rgba(0, 0, 0, 0.42);
-    transform:
-        rotate(var(--age-radial-slot-angle))
-        translateY(calc(-1 * var(--age-radial-slot-radius)))
-        rotate(calc(-1 * var(--age-radial-slot-angle)))
-        scale(1.08);
+        0 8px 18px rgba(0, 0, 0, 0.42);
+    transform: scale(1.06);
 }
 
 .age-nation-hub-radial-slot-frame {

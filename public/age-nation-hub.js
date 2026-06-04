@@ -235,6 +235,8 @@
         const dial = getDial();
         if (!dial || dial.dataset.ageRadialBuilt === 'true') return;
 
+        const trackHtml = '<div class="age-nation-hub-radial-track" aria-hidden="true"></div>';
+
         const centerHtml = (
             '<div class="age-nation-hub-radial-center" aria-live="polite">'
             + `<span id="age-nation-hub-radial-label" class="age-nation-hub-radial-center-label">${DEFAULT_CENTER_LABEL}</span>`
@@ -247,20 +249,22 @@
             const placeholderSrc = buildPlaceholderSvgDataUri(item.label, index);
             const delaySec = (0.03 * index).toFixed(2);
             return (
-                `<button type="button" class="age-nation-hub-radial-slot age-nation-hub-radial-slot--${item.id}"`
+                `<div class="age-nation-hub-radial-slot-well age-nation-hub-radial-slot-well--${item.id}"`
+                + ` style="--age-radial-slot-angle: ${angleDeg}deg; --age-radial-slot-delay: ${delaySec}s;" aria-hidden="true">`
+                + `<button type="button" class="age-nation-hub-radial-slot age-nation-hub-radial-slot--${item.id}"`
                 + ` data-age-hub-radial="${item.id}"`
                 + ` data-age-hub-radial-label="${item.label}"`
-                + ` style="--age-radial-slot-angle: ${angleDeg}deg; transition-delay: ${delaySec}s;"`
                 + ` role="menuitem"`
                 + ` aria-label="${item.label}">`
                 + '<span class="age-nation-hub-radial-slot-frame">'
                 + `<img class="age-nation-hub-radial-slot-img" src="${placeholderSrc}" alt="" decoding="async">`
                 + '</span>'
                 + '</button>'
+                + '</div>'
             );
         }).join('');
 
-        dial.innerHTML = centerHtml + slotsHtml;
+        dial.innerHTML = trackHtml + slotsHtml + centerHtml;
         dial.dataset.ageRadialBuilt = 'true';
 
         dial.querySelectorAll('[data-age-hub-radial]').forEach((slot) => {
