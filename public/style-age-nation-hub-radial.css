@@ -80,6 +80,7 @@
 }
 
 .age-nation-hub-radial-dial {
+    --age-radial-accent: var(--accent, #d4af37);
     --age-radial-track-size: min(640px, 72vmin);
     --age-radial-wedge-size: min(300px, 34vmin);
     --age-radial-inner-hole: 26%;
@@ -88,7 +89,9 @@
     width: 0;
     height: 0;
     pointer-events: none;
-    filter: drop-shadow(0 24px 48px rgba(0, 0, 0, 0.75));
+    filter:
+        drop-shadow(0 24px 48px rgba(0, 0, 0, 0.75))
+        drop-shadow(0 0 28px color-mix(in srgb, var(--age-radial-accent) 28%, transparent));
 }
 
 /* Ornate wheel plate (SVG wedges + gold rings) */
@@ -113,6 +116,15 @@
     transform: scale(1);
 }
 
+/* Recolor metallic plate to site Aether Gold (--accent) */
+.age-nation-hub-radial-wheel-tint {
+    position: relative;
+    display: block;
+    width: 100%;
+    isolation: isolate;
+    line-height: 0;
+}
+
 .age-nation-hub-radial-wheel-plate {
     display: block;
     width: 100%;
@@ -122,6 +134,16 @@
     pointer-events: none;
     user-select: none;
     -webkit-user-drag: none;
+    filter: grayscale(1) contrast(1.12) brightness(0.88);
+}
+
+.age-nation-hub-radial-wheel-tint::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: var(--age-radial-accent);
+    mix-blend-mode: color;
+    pointer-events: none;
 }
 
 /* Wedge hit zones — 45° slices aligned to radialmenu.png segments */
@@ -161,8 +183,8 @@
 .age-nation-hub-radial-wedge:hover,
 .age-nation-hub-radial-wedge:focus-visible {
     outline: none;
-    background: rgba(255, 255, 255, 0.1);
-    box-shadow: inset 0 0 36px rgba(255, 255, 255, 0.12);
+    background: color-mix(in srgb, var(--age-radial-accent) 16%, transparent);
+    box-shadow: inset 0 0 36px color-mix(in srgb, var(--age-radial-accent) 22%, transparent);
 }
 
 @media (prefers-reduced-motion: reduce) {

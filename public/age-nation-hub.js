@@ -5,8 +5,8 @@
     'use strict';
 
     const DEFAULT_CENTER_LABEL = 'MENU';
-    const RADIAL_MENU_IMAGE = 'images/radialmenu.png?v=radialmenu-png-1';
-    const RADIAL_BUILD_VERSION = 'radialmenu-png-1';
+    const RADIAL_MENU_IMAGE = 'images/radialmenu.png?v=radialmenu-accent-1';
+    const RADIAL_BUILD_VERSION = 'radialmenu-accent-1';
     const SLOT_COUNT = 5;
     /** Centers for 5 of 8 segments on radialmenu.png (45° each, from top clockwise). */
     const RADIAL_WEDGE_ANGLES_DEG = Object.freeze([-67.5, -22.5, 22.5, 67.5, 112.5]);
@@ -225,8 +225,9 @@
 
         const trackHtml = (
             '<div class="age-nation-hub-radial-track" aria-hidden="true">'
+            + '<div class="age-nation-hub-radial-wheel-tint">'
             + `<img class="age-nation-hub-radial-wheel-plate" src="${RADIAL_MENU_IMAGE}" alt="" decoding="async">`
-            + '</div>'
+            + '</div></div>'
         );
 
         const slotsHtml = RADIAL_ITEMS.map((item, index) => {
