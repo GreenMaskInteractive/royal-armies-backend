@@ -48,9 +48,16 @@
     let councilAccess = false;
     let leaderAccess = false;
     let viceLeaderAccess = false;
+    let hqManagerEligible = false;
+    let hqManagerModeOpen = false;
     let councilRoomModalOpen = false;
     let councilRoomEscapeHandler = null;
     let lastCabinetState = null;
+    let lastAppliedWorkspace = null;
+    let lastWorkspaceRevision = '';
+    let hqLiveRefreshTimer = 0;
+
+    const HQ_LIVE_REFRESH_MS = 4000;
 
     function resolveApiUrl(path) {
         if (typeof global.resolveRoyalArmiesApiUrl === 'function') {
@@ -127,7 +134,7 @@
             };
         }
 
-        if (workspace.access?.memberHub || workspace.access?.council) {
+        if (workspace.gameNation) {
             return null;
         }
 
@@ -162,45 +169,151 @@
         return global.document.getElementById('age-council-room-modal');
     }
 
+    function isCouncilRoomPage() {
+        return global.document.body?.dataset?.ageCouncilRoomPage === 'true';
+    }
+
     function isCouncilRoomViewActive() {
-        return councilRoomModalOpen;
+        return councilRoomModalOpen || isCouncilRoomPage();
+    }
+
+    function hasActiveManagerControls() {
+        return Boolean(councilAccess && hqManagerModeOpen);
+    }
+
+    function resolveHqManagerEligible(access) {
+        if (!access) return false;
+        return Boolean(access.council || access.leader || access.viceLeader);
+    }
+
+    function buildWorkspaceRevision(workspace) {
+        if (!workspace) return '';
+        return JSON.stringify({
+            gameNation: workspace.gameNation || '',
+            access: workspace.access || {},
+            diplomacyPublic: workspace.diplomacyPublic || {},
+            warLedger: workspace.warLedger || {},
+            cabinet: workspace.cabinet || {},
+            vote: {
+                isOpen: Boolean(workspace.vote?.isOpen),
+                electionStatus: workspace.vote?.electionStatus || '',
+                electedLeader: workspace.vote?.electedLeader?.id || '',
+                electedViceLeader: workspace.vote?.electedViceLeader?.id || '',
+                nationPlayerCount: workspace.vote?.nationPlayerCount || 0
+            },
+            planning: {
+                confirmed: Boolean(workspace.planning?.confirmed),
+                hasPublishedPlan: Boolean(workspace.planning?.hasPublishedPlan),
+                pills: workspace.planning?.pills?.length || 0,
+                arrows: workspace.planning?.arrows?.length || 0
+            },
+            diplomacy: {
+                incoming: workspace.diplomacy?.incoming?.length || 0,
+                outgoing: workspace.diplomacy?.outgoing?.length || 0
+            },
+            fortifiedCities: workspace.fortifiedCities?.length || 0
+        });
+    }
+
+    function setNodeHidden(node, hidden) {
+        if (!node) return;
+        node.hidden = hidden;
+        if (hidden) {
+            node.setAttribute('hidden', '');
+        } else {
+            node.removeAttribute('hidden');
+        }
     }
 
     function syncDispatchPanel(showOnCouncilRoomView) {
         const panel = global.document.getElementById('age-hq-dispatch-panel');
         if (!panel) return;
 
-        const shouldShow = Boolean(showOnCouncilRoomView && councilAccess);
-        panel.hidden = !shouldShow;
-        if (shouldShow) {
-            panel.removeAttribute('hidden');
+        const shouldShow = Boolean(showOnCouncilRoomView && hasActiveManagerControls());
+        setNodeHidden(panel, !shouldShow);
+    }
+
+    function syncHeadquartersViewMode(workspace) {
+        const root = global.document.getElementById('age-council-room-workspace');
+        const canViewPublic = Boolean(workspace?.gameNation);
+        const showManagerControls = hasActiveManagerControls();
+        const showMemberElections = Boolean(memberHubActive && !councilAccess);
+
+        if (root) {
+            root.classList.toggle('is-access-denied', !canViewPublic);
+            root.classList.toggle('is-hq-manager-open', showManagerControls);
+            root.classList.toggle('has-hq-manager-access', hqManagerEligible);
+            root.classList.toggle('is-hq-public-view', canViewPublic && !showManagerControls);
         }
+
+        global.document.querySelectorAll('[data-hq-public]').forEach((node) => {
+            setNodeHidden(node, !canViewPublic);
+        });
+
+        global.document.querySelectorAll('[data-hq-member-only]').forEach((node) => {
+            setNodeHidden(node, !showMemberElections);
+        });
+
+        global.document.querySelectorAll('[data-hq-council-only]').forEach((node) => {
+            setNodeHidden(node, !showManagerControls);
+        });
+
+        const managerBtn = global.document.getElementById('age-hq-manager-toggle');
+        if (managerBtn) {
+            setNodeHidden(managerBtn, !hqManagerEligible);
+            managerBtn.setAttribute('aria-pressed', showManagerControls ? 'true' : 'false');
+            managerBtn.classList.toggle('is-active', showManagerControls);
+            managerBtn.title = showManagerControls
+                ? 'Close HQ Manager controls'
+                : 'Open HQ Manager — council planning, diplomacy, and dispatch';
+        }
+
+        syncDispatchPanel(isCouncilRoomViewActive());
+
+        const planningBlock = global.document.querySelector('.age-council-room-planning-block');
+        const lockForMembers = Boolean(memberHubActive && !councilAccess && showManagerControls);
+        if (planningBlock) {
+            planningBlock.classList.toggle('is-planning-locked', lockForMembers);
+        }
+        setMemberPlanningLock(lockForMembers);
     }
 
     function setCouncilAccessUI(hasAccess) {
         councilAccess = hasAccess;
-        global.document.querySelectorAll('[data-hq-council-only]').forEach((node) => {
-            if (hasAccess) {
-                node.hidden = false;
-                node.removeAttribute('hidden');
-            } else {
-                node.hidden = true;
-            }
-        });
+        syncHeadquartersViewMode(lastAppliedWorkspace);
+    }
+
+    function setHqManagerModeOpen(open) {
+        if (open && !hqManagerEligible) return;
+        hqManagerModeOpen = Boolean(open);
+        syncHeadquartersViewMode(lastAppliedWorkspace);
         syncDispatchPanel(isCouncilRoomViewActive());
 
-        const workspace = global.document.getElementById('age-council-room-workspace');
-        const hasNationAccess = Boolean(memberHubActive);
-
-        if (workspace) {
-            workspace.classList.toggle('is-access-denied', !hasNationAccess && !councilAccess);
+        if (hqManagerModeOpen && councilAccess) {
+            void ensureManagerPlanningSurface();
+        } else {
+            setActiveMarkerType('');
+            global.RoyalArmiesAgeHeadquartersPlanningMap?.setEnabled(false);
         }
+    }
 
-        const planningBlock = global.document.querySelector('.age-council-room-planning-block');
-        if (planningBlock) {
-            planningBlock.classList.toggle('is-planning-locked', hasNationAccess && !hasAccess);
-        }
-        setMemberPlanningLock(hasNationAccess && !hasAccess);
+    function startHeadquartersLiveRefresh() {
+        stopHeadquartersLiveRefresh();
+        if (!isCouncilRoomViewActive()) return;
+
+        hqLiveRefreshTimer = global.setInterval(() => {
+            if (!isCouncilRoomViewActive()) {
+                stopHeadquartersLiveRefresh();
+                return;
+            }
+            void fetchHeadquartersWorkspace({ silent: true });
+        }, HQ_LIVE_REFRESH_MS);
+    }
+
+    function stopHeadquartersLiveRefresh() {
+        if (!hqLiveRefreshTimer) return;
+        global.clearInterval(hqLiveRefreshTimer);
+        hqLiveRefreshTimer = 0;
     }
 
     function setMemberPlanningLock(locked) {
@@ -250,6 +363,11 @@
     }
 
     function renderDiplomacyPublicSlice(diplomacyPublic) {
+        if (typeof global.RoyalArmiesAgeLeftReportsPanel?.renderDiplomacyAccordsLists === 'function') {
+            global.RoyalArmiesAgeLeftReportsPanel.renderDiplomacyAccordsLists(diplomacyPublic);
+            return;
+        }
+
         const listEl = global.document.getElementById('age-hq-relations-list');
         if (!listEl) return;
 
@@ -379,9 +497,11 @@
         memberHubActive = true;
         fullAuthority = true;
         leaderAccess = true;
+        hqManagerEligible = true;
         setCouncilAccessUI(true);
         setViceLeaderAccessUI(true);
         setMemberPlanningLock(false);
+        syncHeadquartersViewMode(lastAppliedWorkspace);
 
         const workspace = global.document.getElementById('age-council-room-workspace');
         if (workspace) {
@@ -615,25 +735,26 @@
     }
 
     async function showHeadquartersAlert(message, title) {
-        if (typeof global.showPortalAlert === 'function') {
-            await global.showPortalAlert(message, title || 'Headquarters');
+        if (typeof global.showPortalAlert !== 'function') {
+            console.warn('[RIFT] Headquarters notice (portal alert unavailable):', title || 'Headquarters', message);
             return;
         }
-        global.alert(message);
+        await global.showPortalAlert(message, title || 'Headquarters');
     }
 
     async function showClearPlanConfirm() {
-        if (typeof global.showPortalConfirm === 'function') {
-            return global.showPortalConfirm(
-                'Remove the confirmed nation plan from the world map?',
-                {
-                    title: 'Clear Plan',
-                    confirmLabel: 'Clear Plan',
-                    cancelLabel: 'Keep Plan'
-                }
-            );
+        if (typeof global.showPortalConfirm !== 'function') {
+            console.warn('[RIFT] Clear Plan confirm unavailable — portal-alerts.js must load before headquarters.');
+            return false;
         }
-        return global.confirm('Remove the confirmed nation plan from the world map?');
+        return global.showPortalConfirm(
+            'Remove the confirmed nation plan from the world map?',
+            {
+                title: 'Clear Plan',
+                confirmLabel: 'Clear Plan',
+                cancelLabel: 'Keep Plan'
+            }
+        );
     }
 
     function normalizedUsername(value) {
@@ -709,24 +830,24 @@
         }
 
         const summary = global.document.querySelector('[data-hq-leadership-summary]');
-        const showLeadershipSummary = !councilAccess
-            && Boolean(voteState?.electedLeader || voteState?.electedViceLeader);
-        if (summary) summary.hidden = !showLeadershipSummary;
+        const showLeadershipSummary = Boolean(voteState?.electedLeader || voteState?.electedViceLeader);
+        if (summary) {
+            setNodeHidden(summary, !showLeadershipSummary);
+        }
 
-        const leaderNameEl = global.document.getElementById('age-hq-elected-leader-name');
-        const viceNameEl = global.document.getElementById('age-hq-elected-vice-name');
-        const reopenEl = global.document.getElementById('age-hq-vote-reopens-at');
-        if (leaderNameEl) {
-            leaderNameEl.textContent = voteState?.electedLeader?.name || '—';
-        }
-        if (viceNameEl) {
-            viceNameEl.textContent = voteState?.electedViceLeader?.name || '—';
-        }
-        if (reopenEl) {
+        const leaderName = voteState?.electedLeader?.name || '—';
+        const viceName = voteState?.electedViceLeader?.name || '—';
+        global.document.querySelectorAll('[data-hq-elected-leader-display]').forEach((node) => {
+            node.textContent = leaderName;
+        });
+        global.document.querySelectorAll('[data-hq-elected-vice-display]').forEach((node) => {
+            node.textContent = viceName;
+        });
+        global.document.querySelectorAll('[data-hq-vote-reopens-display]').forEach((reopenEl) => {
             const reopenText = formatVoteReopenLabel(voteState?.lockedUntil);
             reopenEl.textContent = reopenText;
-            reopenEl.hidden = !reopenText;
-        }
+            setNodeHidden(reopenEl, !reopenText);
+        });
 
         renderNationCabinet(lastCabinetState, voteState);
     }
@@ -858,28 +979,42 @@
         item?.classList.toggle('is-expanded', !expanded);
     }
 
-    function applyWorkspace(workspace) {
+    function applyWorkspace(workspace, options = {}) {
+        const silent = Boolean(options?.silent);
         const username = resolveHeadquartersUsername();
         workspace = mergeDevOwnerHeadquartersWorkspace(workspace, username);
         if (!workspace) {
-            setHeadquartersLoadStatus(describeHeadquartersAccessGap(null)?.message || '', 'error');
+            if (!silent) {
+                setHeadquartersLoadStatus(describeHeadquartersAccessGap(null)?.message || '', 'error');
+            }
+            lastAppliedWorkspace = null;
+            lastWorkspaceRevision = '';
+            syncHeadquartersViewMode(null);
             return false;
         }
 
-        const accessGap = describeHeadquartersAccessGap(workspace);
-        setHeadquartersLoadStatus(accessGap?.message || '', accessGap?.tone || 'info');
-
-        const councilWorkspace = global.document.getElementById('age-council-room-workspace');
-        const hasCouncilRoomAccess = Boolean(workspace.access?.memberHub || workspace.access?.council);
-        if (councilWorkspace) {
-            councilWorkspace.classList.toggle('is-access-denied', !hasCouncilRoomAccess);
+        if (!silent) {
+            const accessGap = describeHeadquartersAccessGap(workspace);
+            setHeadquartersLoadStatus(accessGap?.message || '', accessGap?.tone || 'info');
         }
+
+        const previousRevision = lastWorkspaceRevision;
+        const nextRevision = buildWorkspaceRevision(workspace);
+        const revisionChanged = Boolean(nextRevision && nextRevision !== previousRevision);
+
+        lastAppliedWorkspace = workspace;
+        lastWorkspaceRevision = nextRevision;
 
         fullAuthority = Boolean(workspace.access?.fullAuthority);
         memberHubActive = Boolean(workspace.access?.memberHub);
         leaderAccess = Boolean(workspace.access?.leader);
+        hqManagerEligible = resolveHqManagerEligible(workspace.access);
+        if (!hqManagerEligible) {
+            hqManagerModeOpen = false;
+        }
         setCouncilAccessUI(Boolean(workspace.access?.council));
         setViceLeaderAccessUI(Boolean(workspace.access?.viceLeader));
+        syncHeadquartersViewMode(workspace);
 
         voteCandidates = Array.isArray(workspace.vote?.candidates) ? workspace.vote.candidates : [];
         leaderVote = String(workspace.vote?.myVotes?.leaderCandidateId || '');
@@ -907,8 +1042,11 @@
         syncToolbarState();
         void global.RoyalArmiesAgeWorldPlanOverlay?.refreshNationPlan?.();
 
-        if (workspace.access?.council) {
+        if (hasActiveManagerControls()) {
             syncHeadquartersShellLayout();
+            if (revisionChanged) {
+                void ensureManagerPlanningSurface();
+            }
         }
 
         if (isDevOwnerHeadquartersBypass(username)) {
@@ -920,31 +1058,40 @@
         return Boolean(workspace.access?.council);
     }
 
-    async function fetchHeadquartersWorkspace() {
+    async function fetchHeadquartersWorkspace(options = {}) {
+        const silent = Boolean(options?.silent);
+
         if (typeof global.shouldSuppressRepeatedLocalDevApiWarnings === 'function'
             && global.shouldSuppressRepeatedLocalDevApiWarnings()) {
             const fallback = buildDevOwnerFallbackWorkspace(resolveHeadquartersUsername());
             if (fallback) {
-                return applyWorkspace(fallback);
+                return applyWorkspace(fallback, options);
             }
         }
 
         const username = resolveHeadquartersUsername();
         if (!username) {
             if (!isLocalDevOwnerPortalView()) {
-                setHeadquartersLoadStatus(
-                    'No active commander session. Sign in from the portal, then open Headquarters again.',
-                    'warn'
-                );
-                applyWorkspace(null);
+                if (!silent) {
+                    setHeadquartersLoadStatus(
+                        'No active commander session. Sign in from the portal, then open Headquarters again.',
+                        'warn'
+                    );
+                }
+                applyWorkspace(null, options);
                 setCouncilAccessUI(false);
                 setViceLeaderAccessUI(false);
                 leaderAccess = false;
+                hqManagerEligible = false;
+                hqManagerModeOpen = false;
+                syncHeadquartersViewMode(null);
             }
             return false;
         }
 
-        setHeadquartersLoadStatus('Loading Council Room…', 'info');
+        if (!silent) {
+            setHeadquartersLoadStatus('Loading Council Room…', 'info');
+        }
 
         try {
             const response = await global.fetch(
@@ -954,23 +1101,25 @@
             const payload = await response.json().catch(() => ({}));
 
             if (!response.ok) {
-                if (typeof global.showRiftError === 'function') {
+                if (!silent && typeof global.showRiftError === 'function') {
                     await global.showRiftError(payload, 'Headquarters');
                 }
                 throw new Error(`headquarters workspace ${response.status}`);
             }
 
             if (!payload?.workspace) {
-                setHeadquartersLoadStatus(
-                    'Server responded but returned no headquarters workspace. Check F12 → Network → headquarters.',
-                    'error'
-                );
+                if (!silent) {
+                    setHeadquartersLoadStatus(
+                        'Server responded but returned no headquarters workspace. Check F12 → Network → headquarters.',
+                        'error'
+                    );
+                }
                 logHeadquartersWorkspaceSummary(null, 'missing-workspace');
-                return applyWorkspace(null);
+                return applyWorkspace(null, options);
             }
 
-            logHeadquartersWorkspaceSummary(payload.workspace, 'api');
-            return applyWorkspace(payload.workspace);
+            logHeadquartersWorkspaceSummary(payload.workspace, silent ? 'api-poll' : 'api');
+            return applyWorkspace(payload.workspace, { silent });
         } catch (err) {
             console.warn('[RIFT] Headquarters workspace load failed:', err.message);
 
@@ -978,16 +1127,21 @@
             if (fallback) {
                 console.warn('[RIFT] Using dev owner Headquarters fallback. Restart NEXUS (node server.js) if server sync is missing.');
                 logHeadquartersWorkspaceSummary(fallback, 'dev-fallback');
-                return applyWorkspace(fallback);
+                return applyWorkspace(fallback, options);
             }
 
-            setHeadquartersLoadStatus(
-                `Headquarters request failed (${err.message}). Open F12 → Network and inspect /api/portal/age/headquarters.`,
-                'error'
-            );
+            if (!silent) {
+                setHeadquartersLoadStatus(
+                    `Headquarters request failed (${err.message}). Open F12 → Network and inspect /api/portal/age/headquarters.`,
+                    'error'
+                );
+            }
             setCouncilAccessUI(false);
             setViceLeaderAccessUI(false);
             leaderAccess = false;
+            hqManagerEligible = false;
+            hqManagerModeOpen = false;
+            syncHeadquartersViewMode(null);
             return false;
         }
     }
@@ -1125,7 +1279,7 @@
     }
 
     function schedulePlanningSave(snapshot) {
-        if (!councilAccess || !snapshot || planningConfirmed) return;
+        if (!hasActiveManagerControls() || !snapshot || planningConfirmed) return;
         if (planningSaveTimer) {
             global.clearTimeout(planningSaveTimer);
         }
@@ -1147,7 +1301,7 @@
     }
 
     async function confirmPlanning() {
-        if (!councilAccess || planningConfirmed) return;
+        if (!hasActiveManagerControls() || planningConfirmed) return;
         await flushPlanningSave();
         const steps = global.RoyalArmiesAgeHeadquartersPlanningMap?.getPlanningSteps?.() || [];
         if (!steps.length) {
@@ -1162,13 +1316,13 @@
     }
 
     async function editPlanning() {
-        if (!councilAccess || !planningConfirmed) return;
+        if (!hasActiveManagerControls() || !planningConfirmed) return;
         setActiveMarkerType('');
         await patchHeadquarters({ editPlanning: true });
     }
 
     async function clearPublishedPlanFromMap() {
-        if (!councilAccess || !hasPublishedPlan || clearingPublishedPlan) return;
+        if (!hasActiveManagerControls() || !hasPublishedPlan || clearingPublishedPlan) return;
 
         const confirmed = await showClearPlanConfirm();
         if (!confirmed) {
@@ -1286,7 +1440,7 @@
         const hasSelection = Boolean(planningMap?.getSelectedBorderCityId?.());
         const canPlacePill = Boolean(planningMap?.isSelectedCityPlannable?.());
         const hasTempMain = Boolean(planningMap?.getTempMainCityId?.());
-        const canReset = councilAccess && !planningConfirmed && (hasSteps || hasSelection || activeMarkerType || hasTempMain);
+        const canReset = hasActiveManagerControls() && !planningConfirmed && (hasSteps || hasSelection || activeMarkerType || hasTempMain);
 
         toolbar.querySelectorAll('[data-hq-marker]').forEach((button) => {
             const type = button.getAttribute('data-hq-marker') || '';
@@ -1299,9 +1453,9 @@
             } else if (isViceOnly) {
                 enabled = viceLeaderAccess;
             } else if (type === 'hold') {
-                enabled = councilAccess && canPlacePill;
+                enabled = hasActiveManagerControls() && canPlacePill;
             } else {
-                enabled = councilAccess && isArrowTool;
+                enabled = hasActiveManagerControls() && isArrowTool;
             }
 
             button.disabled = !enabled;
@@ -1313,10 +1467,12 @@
 
         const statusEl = global.document.getElementById('age-hq-planning-toolbar-status');
         if (statusEl) {
-            if (!councilAccess) {
-                statusEl.textContent = fullAuthority
-                    ? 'Council access required'
-                    : 'Nation authority required for SF Planning';
+            if (!hasActiveManagerControls()) {
+                statusEl.textContent = !hqManagerModeOpen && hqManagerEligible
+                    ? 'Open HQ Manager to edit SF Planning'
+                    : fullAuthority
+                        ? 'Council access required'
+                        : 'Nation authority required for SF Planning';
             } else if (planningConfirmed) {
                 statusEl.textContent = 'Plan live on world map';
             } else if (hasPublishedPlan) {
@@ -1340,8 +1496,10 @@
 
         const hint = global.document.getElementById('age-hq-planning-hint');
         if (hint && !hint.classList.contains('is-error')) {
-            if (!councilAccess) {
-                hint.textContent = 'SF Planning markers require Council or Leader access.';
+            if (!hasActiveManagerControls()) {
+                hint.textContent = hqManagerEligible
+                    ? 'Open HQ Manager to place SF Planning orders.'
+                    : 'SF Planning markers require Council access.';
             } else if (planningConfirmed) {
                 hint.textContent = 'Plan is live on the world map. Edit Plan to adjust orders, or Clear Plan when the operation is complete.';
             } else if (hasPublishedPlan) {
@@ -1375,8 +1533,8 @@
 
         const confirmBtn = global.document.getElementById('age-hq-planning-confirm-btn');
         if (confirmBtn) {
-            const canConfirm = councilAccess && !planningConfirmed && hasSteps;
-            const canEdit = councilAccess && planningConfirmed;
+            const canConfirm = hasActiveManagerControls() && !planningConfirmed && hasSteps;
+            const canEdit = hasActiveManagerControls() && planningConfirmed;
             confirmBtn.disabled = !(canConfirm || canEdit);
             confirmBtn.textContent = planningConfirmed ? 'Edit Plan' : 'Confirm Plan';
             confirmBtn.classList.toggle('is-edit-mode', planningConfirmed);
@@ -1385,7 +1543,7 @@
 
         const clearBtn = global.document.getElementById('age-hq-planning-clear-btn');
         if (clearBtn) {
-            const showClear = councilAccess && hasPublishedPlan;
+            const showClear = hasActiveManagerControls() && hasPublishedPlan;
             clearBtn.hidden = !showClear;
             clearBtn.disabled = !showClear || clearingPublishedPlan;
         }
@@ -1435,6 +1593,11 @@
         workspaceEl = global.document.getElementById('age-council-room-workspace');
 
         global.document.getElementById('age-hq-treasury-fort-list')?.addEventListener('click', onTreasuryFortListClick);
+
+        global.document.getElementById('age-hq-manager-toggle')?.addEventListener('click', (event) => {
+            event.preventDefault();
+            setHqManagerModeOpen(!hqManagerModeOpen);
+        });
 
         global.document.getElementById('age-council-room-close')?.addEventListener('click', (event) => {
             event.preventDefault();
@@ -1602,7 +1765,30 @@
         return true;
     }
 
+    async function openCouncilRoomPageView() {
+        if (!isCouncilRoomPage()) return;
+
+        councilRoomModalOpen = true;
+        global.document.body.classList.add('age-council-room-open');
+
+        const workspace = global.document.getElementById('age-council-room-workspace');
+        if (workspace) {
+            workspace.hidden = false;
+            workspace.removeAttribute('hidden');
+            workspace.setAttribute('aria-hidden', 'false');
+        }
+
+        await onViewOpen();
+    }
+
     function setCouncilRoomModalOpen(open) {
+        if (isCouncilRoomPage()) {
+            if (open) {
+                void openCouncilRoomPageView();
+            }
+            return;
+        }
+
         const modal = getCouncilRoomModal();
         const nextOpen = Boolean(open);
         if (!modal) return;
@@ -1636,25 +1822,43 @@
         }
     }
 
+    async function ensureManagerPlanningSurface() {
+        const planningHost = global.document.getElementById('age-hq-planning-map-host');
+        if (!planningHost || !hasActiveManagerControls()) {
+            global.RoyalArmiesAgeHeadquartersPlanningMap?.setEnabled(false);
+            return;
+        }
+
+        const ownerBypass = isDevOwnerHeadquartersBypass(resolveHeadquartersUsername());
+        const canMountPlanningMap = !isCouncilRoomPage() || hasActiveManagerControls() || ownerBypass;
+        if (!canMountPlanningMap) {
+            global.RoyalArmiesAgeHeadquartersPlanningMap?.setEnabled(false);
+            return;
+        }
+
+        await ensurePlanningMap();
+        global.RoyalArmiesAgeHeadquartersPlanningMap?.setEnabled(true);
+        await waitForLayout();
+        refreshPlanningMapLayout();
+        syncHeadquartersShellLayout();
+        global.RoyalArmiesAgeMovementPanel?.refreshCityPlayers?.();
+        syncToolbarState();
+    }
+
     async function onViewOpen() {
         bindUi();
+        hqManagerModeOpen = false;
         applyDevOwnerCouncilAccessUI();
         const ownerBypass = isDevOwnerHeadquartersBypass(resolveHeadquartersUsername());
-        const hasCouncilAccess = await fetchHeadquartersWorkspace();
+        await fetchHeadquartersWorkspace();
         if (ownerBypass) {
             applyDevOwnerCouncilAccessUI();
         }
-        const canUsePlanningMap = hasCouncilAccess || ownerBypass || memberHubActive;
+        syncHeadquartersViewMode(lastAppliedWorkspace);
+        startHeadquartersLiveRefresh();
 
-        if (canUsePlanningMap) {
-            await ensurePlanningMap();
-            global.RoyalArmiesAgeHeadquartersPlanningMap?.setEnabled(hasCouncilAccess || ownerBypass);
-            await waitForLayout();
-            refreshPlanningMapLayout();
-            if (hasCouncilAccess || ownerBypass) {
-                syncHeadquartersShellLayout();
-                global.RoyalArmiesAgeMovementPanel?.refreshCityPlayers?.();
-            }
+        if (hasActiveManagerControls() || ownerBypass) {
+            await ensureManagerPlanningSurface();
         } else {
             setActiveMarkerType('');
             global.RoyalArmiesAgeHeadquartersPlanningMap?.setEnabled(false);
@@ -1662,6 +1866,9 @@
     }
 
     function onViewClose() {
+        stopHeadquartersLiveRefresh();
+        hqManagerModeOpen = false;
+        syncHeadquartersViewMode(lastAppliedWorkspace);
         syncDispatchPanel(false);
         if (planningSaveTimer) {
             global.clearTimeout(planningSaveTimer);
@@ -1680,14 +1887,19 @@
         onViewOpen,
         onViewClose,
         openCouncilRoom: () => setCouncilRoomModalOpen(true),
+        openCouncilRoomPageView,
         closeCouncilRoom: () => setCouncilRoomModalOpen(false),
-        isCouncilRoomOpen: () => councilRoomModalOpen,
+        isCouncilRoomOpen: () => isCouncilRoomViewActive(),
         refreshHeadquartersAccess,
         fetchHeadquartersWorkspace,
         syncDispatchPanel,
         hasCouncilAccess: () => councilAccess,
         hasLeaderAccess: () => leaderAccess,
-        hasViceLeaderAccess: () => viceLeaderAccess
+        hasViceLeaderAccess: () => viceLeaderAccess,
+        hasActiveManagerControls,
+        isHqManagerOpen: () => hqManagerModeOpen,
+        setHqManagerModeOpen,
+        refreshHeadquartersWorkspace: () => fetchHeadquartersWorkspace({ silent: true })
     };
 
     global.RoyalArmiesAgeCouncilRoom = global.RoyalArmiesAgeHeadquarters;

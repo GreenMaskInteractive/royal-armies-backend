@@ -25,7 +25,67 @@
 }
 
 .age-council-room-header:has(.age-age-center-modal-close) {
-    grid-template-columns: auto minmax(0, 1fr) minmax(0, max-content) auto;
+    grid-template-columns: auto minmax(0, 1fr) minmax(0, max-content) auto auto;
+}
+
+.age-council-room-header:has(.age-hq-manager-btn:not([hidden])):has(.age-age-center-modal-close) {
+    grid-template-columns: auto minmax(0, 1fr) minmax(0, max-content) auto auto;
+}
+
+.age-hq-manager-btn {
+    grid-column: 3;
+    grid-row: 1;
+    justify-self: end;
+    align-self: center;
+    margin: 0;
+    padding: 8px 14px;
+    border: 1px solid rgba(184, 144, 48, 0.55);
+    border-radius: 4px;
+    background:
+        linear-gradient(180deg, rgba(255, 215, 128, 0.12) 0%, rgba(0, 0, 0, 0.5) 100%),
+        linear-gradient(165deg, rgba(48, 36, 18, 0.95) 0%, rgba(8, 6, 4, 0.98) 100%);
+    color: #f6d998;
+    font-family: 'Cinzel', serif;
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    cursor: pointer;
+}
+
+.age-hq-manager-btn.is-active,
+.age-hq-manager-btn[aria-pressed="true"] {
+    border-color: rgba(255, 215, 128, 0.78);
+    box-shadow: 0 0 0 1px rgba(255, 215, 128, 0.22), 0 8px 18px rgba(0, 0, 0, 0.42);
+    color: #ffe7b0;
+}
+
+.age-council-room-header .age-hq-dispatch-panel:not([hidden]) ~ .age-hq-manager-btn {
+    grid-column: 3;
+}
+
+.age-council-room-header .age-hq-manager-btn ~ .age-age-center-modal-close {
+    grid-column: 5;
+}
+
+.age-council-room-header .age-hq-dispatch-panel:not([hidden]) ~ .age-hq-manager-btn ~ .age-age-center-modal-close {
+    grid-column: 5;
+}
+
+.age-council-room-header .age-hq-manager-btn:not([hidden]) ~ .age-age-center-modal-close {
+    grid-column: 4;
+}
+
+.age-council-room-workspace:not(.is-hq-manager-open) #age-council-room-command {
+    display: none;
+}
+
+.age-council-room-workspace:not(.is-hq-manager-open) .age-council-room-shell {
+    grid-template-columns: minmax(0, 1fr);
+}
+
+.age-council-room-workspace.is-hq-public-view .age-council-room-column--nation {
+    border-right: none;
 }
 
 .age-council-room-header__crest {

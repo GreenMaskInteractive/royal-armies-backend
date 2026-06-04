@@ -8,7 +8,7 @@
     <link rel="stylesheet" href="style2.css?v=war-room-stage-centered-1">
     <link rel="stylesheet" href="style-age-headquarters.css?v=hq-planning-chromeless-1">
     <link rel="stylesheet" href="style-age-center-modals.css?v=age-modal-stack-fix-1">
-    <link rel="stylesheet" href="style-age-council-room.css?v=hq-planning-chromeless-1">
+    <link rel="stylesheet" href="style-age-council-room.css?v=hq-manager-public-view-1">
     <link rel="stylesheet" href="mobile-responsive.css?v=council-room-premium-2">
     <link rel="stylesheet" href="dev-page-navigator.css">
     <link rel="stylesheet" href="custom-cursor.css?v=finger-press-7">
@@ -546,14 +546,14 @@
                                         <dl class="age-headquarters-leadership-roster">
                                             <div class="age-headquarters-leadership-row">
                                                 <dt class="age-headquarters-leadership-role">Leader (LD)</dt>
-                                                <dd id="age-hq-elected-leader-name" class="age-headquarters-leadership-name">—</dd>
+                                                <dd class="age-headquarters-leadership-name" data-hq-elected-leader-display>—</dd>
                                             </div>
                                             <div class="age-headquarters-leadership-row">
                                                 <dt class="age-headquarters-leadership-role">Vice Leader (VLD)</dt>
-                                                <dd id="age-hq-elected-vice-name" class="age-headquarters-leadership-name">—</dd>
+                                                <dd class="age-headquarters-leadership-name" data-hq-elected-vice-display>—</dd>
                                             </div>
                                         </dl>
-                                        <p id="age-hq-vote-reopens-at" class="age-headquarters-vote-status" aria-live="polite"></p>
+                                        <p class="age-headquarters-vote-status" data-hq-vote-reopens-display aria-live="polite"></p>
                                     </div>
                                 </section>
                             </div>
@@ -1421,7 +1421,7 @@
                     <div class="age-council-room-header__copy">
                         <p class="age-council-room-eyebrow">Nation Command</p>
                         <h1 id="age-council-room-title" class="age-council-room-title">Council Room</h1>
-                        <p class="age-council-room-subtitle">Nation affairs, elections, and war council operations</p>
+                        <p class="age-council-room-subtitle">Public nation record — leadership opens HQ Manager for council controls</p>
                     </div>
                     <div id="age-hq-dispatch-panel" class="age-hq-dispatch-panel age-council-room-header-dispatch" hidden aria-label="Emergency Dispatch Alert">
                         <div class="age-hq-dispatch-panel-shell age-map-hud-panel">
@@ -1446,6 +1446,7 @@
                             </div>
                         </div>
                     </div>
+                    <button type="button" id="age-hq-manager-toggle" class="age-hq-manager-btn" hidden aria-pressed="false">HQ Manager</button>
                     <button type="button" id="age-council-room-close" class="age-age-center-modal-close" aria-label="Close Council Room">×</button>
                     <p id="age-hq-load-status" class="age-hq-load-status" hidden aria-live="polite"></p>
                 </header>
@@ -1457,7 +1458,7 @@
                             <h2 class="age-council-room-column-title">Nation Affairs</h2>
                         </div>
                         <div id="age-hq-member-deck" class="age-council-room-nation-stack">
-                            <aside id="age-hq-nation-cabinet" class="age-hq-nation-cabinet age-council-room-panel age-council-room-panel--cabinet" aria-label="National cabinet" data-hq-council-only hidden>
+                            <aside id="age-hq-nation-cabinet" class="age-hq-nation-cabinet age-council-room-panel age-council-room-panel--cabinet" aria-label="National cabinet" data-hq-public hidden>
                                 <header class="age-hq-nation-cabinet-head">
                                     <span class="age-hq-planning-toolbar-eyebrow">National Cabinet</span>
                                 </header>
@@ -1480,7 +1481,26 @@
                                     </section>
                                 </div>
                             </aside>
-                            <section class="age-headquarters-ops-card age-headquarters-ops-card--relations age-council-room-panel" aria-labelledby="age-hq-relations-title">
+                            <section class="age-headquarters-ops-card age-headquarters-ops-card--leadership age-council-room-panel" data-hq-leadership-summary data-hq-public hidden>
+                                <header class="age-headquarters-ops-card-head">
+                                    <h3 class="age-headquarters-ops-card-title">Elected Leadership</h3>
+                                    <p class="age-headquarters-ops-card-sub">Leader and Vice Leader for this term.</p>
+                                </header>
+                                <div class="age-headquarters-ops-card-body">
+                                    <dl class="age-headquarters-leadership-roster">
+                                        <div class="age-headquarters-leadership-row">
+                                            <dt class="age-headquarters-leadership-role">Leader (LD)</dt>
+                                            <dd class="age-headquarters-leadership-name" data-hq-elected-leader-display>—</dd>
+                                        </div>
+                                        <div class="age-headquarters-leadership-row">
+                                            <dt class="age-headquarters-leadership-role">Vice Leader (VLD)</dt>
+                                            <dd class="age-headquarters-leadership-name" data-hq-elected-vice-display>—</dd>
+                                        </div>
+                                    </dl>
+                                    <p class="age-headquarters-vote-status" data-hq-vote-reopens-display aria-live="polite"></p>
+                                </div>
+                            </section>
+                            <section class="age-headquarters-ops-card age-headquarters-ops-card--relations age-council-room-panel" data-hq-public hidden aria-labelledby="age-hq-relations-title">
                                 <header class="age-headquarters-ops-card-head">
                                     <h3 class="age-headquarters-ops-card-title" id="age-hq-relations-title">Allied &amp; NAP</h3>
                                     <p class="age-headquarters-ops-card-sub" id="age-hq-relations-meta">Accords with neutral nations — not at war.</p>
@@ -1489,13 +1509,23 @@
                                     <ul class="age-hq-relations-list" id="age-hq-relations-list" aria-live="polite"></ul>
                                 </div>
                             </section>
-                            <section class="age-headquarters-ops-card age-headquarters-ops-card--ledger age-council-room-panel" aria-labelledby="age-hq-ledger-title">
+                            <section class="age-headquarters-ops-card age-headquarters-ops-card--ledger age-council-room-panel" data-hq-public hidden aria-labelledby="age-hq-ledger-title">
                                 <header class="age-headquarters-ops-card-head">
                                     <h3 class="age-headquarters-ops-card-title" id="age-hq-ledger-title">War Ledger</h3>
                                     <p class="age-headquarters-ops-card-sub" id="age-hq-ledger-meta">Recognized wars are permanent until a belligerent is eliminated.</p>
                                 </header>
                                 <div class="age-headquarters-ops-card-body">
                                     <ul class="age-hq-war-ledger-list" id="age-hq-war-ledger-list" aria-live="polite"></ul>
+                                </div>
+                            </section>
+                            <section class="age-headquarters-ops-card age-headquarters-ops-card--treasury age-council-room-panel age-council-room-fortifications" data-hq-public hidden aria-label="Nation fortifications">
+                                <header class="age-headquarters-ops-card-head">
+                                    <h3 class="age-headquarters-ops-card-title">Fortifications</h3>
+                                    <p class="age-headquarters-ops-card-sub">Cities with active defensive fortifications.</p>
+                                </header>
+                                <div class="age-headquarters-ops-card-body">
+                                    <ul id="age-hq-treasury-fort-list" class="age-hq-treasury-fort-list" aria-live="polite"></ul>
+                                    <p id="age-hq-treasury-fort-empty" class="age-hq-treasury-empty">No fortified cities on record.</p>
                                 </div>
                             </section>
                             <p class="age-headquarters-authority-banner age-council-room-authority-banner" id="age-hq-authority-banner" hidden aria-live="polite"></p>
@@ -1576,17 +1606,6 @@
                                         </div>
                                     </section>
                             </div>
-
-                            <section class="age-headquarters-ops-card age-headquarters-ops-card--treasury age-council-room-panel age-council-room-fortifications" aria-label="Nation fortifications">
-                                <header class="age-headquarters-ops-card-head">
-                                    <h3 class="age-headquarters-ops-card-title">Fortifications</h3>
-                                    <p class="age-headquarters-ops-card-sub">Cities with active defensive fortifications.</p>
-                                </header>
-                                <div class="age-headquarters-ops-card-body">
-                                    <ul id="age-hq-treasury-fort-list" class="age-hq-treasury-fort-list" aria-live="polite"></ul>
-                                    <p id="age-hq-treasury-fort-empty" class="age-hq-treasury-empty">No fortified cities on record.</p>
-                                </div>
-                            </section>
                         </div>
                     </section>
                 </div>
@@ -2104,7 +2123,7 @@
     <script src="age-chronicles-battle-pass.js?v=nation-hub-radial-1"></script>
     <script src="age-nation-hub.js?v=nation-hub-same-page-workspaces-1"></script>
     <script src="rift-official-age.js?v=nation-terrain-status-1"></script>
-    <script src="age-headquarters.js?v=left-reports-elections-tab-1"></script>
+    <script src="age-headquarters.js?v=hq-manager-public-view-1"></script>
     <script src="age-left-reports-panel.js?v=left-reports-elections-tab-1"></script>
     <script src="age-quick-tips-panel.js?v=quick-tips-left-hud-1"></script>
     <script src="age-map-only-page.js?v=war-room-players-external-1"></script>
