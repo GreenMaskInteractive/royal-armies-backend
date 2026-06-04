@@ -365,91 +365,62 @@ body[data-age-council-room-page="true"] .is-hq-arcane-themed > *:not(.hq-arcane-
     color: rgba(118, 146, 138, 0.82);
 }
 
-/* —— Columns —— */
+/* —— Columns (neutral shell; arcane palette stays on header/chrome only) —— */
 .is-hq-arcane-themed .age-council-room-column--nation {
-    border-right: 1px solid rgba(50, 96, 88, 0.44);
-    box-shadow: inset -8px 0 24px rgba(14, 44, 40, 0.14);
-    background:
-        linear-gradient(180deg, rgba(34, 78, 70, 0.1) 0%, transparent 32%),
-        rgba(0, 0, 0, 0.26);
+    border-right: 1px solid rgba(184, 144, 48, 0.28);
+    box-shadow: none;
+    background: rgba(0, 0, 0, 0.22);
 }
 
 .is-hq-arcane-themed .age-council-room-column--command {
-    background:
-        radial-gradient(ellipse 85% 55% at 90% 8%, rgba(34, 76, 68, 0.14) 0%, transparent 58%),
-        radial-gradient(ellipse 70% 50% at 6% 92%, rgba(255, 188, 96, 0.08) 0%, transparent 55%),
-        rgba(0, 0, 0, 0.16);
+    background: rgba(0, 0, 0, 0.12);
 }
 
 .is-hq-arcane-themed .age-council-room-column-head {
-    border-bottom: 1px solid rgba(50, 96, 88, 0.4);
-    background: linear-gradient(180deg, rgba(20, 54, 48, 0.18) 0%, transparent 78%);
+    border-bottom: 1px solid rgba(184, 144, 48, 0.22);
+    background: transparent;
 }
 
 .is-hq-arcane-themed .age-council-room-column-eyebrow {
-    color: #648880;
-    text-shadow: 0 0 14px rgba(40, 86, 76, 0.35);
+    color: rgba(255, 215, 128, 0.55);
+    text-shadow: none;
 }
 
 .is-hq-arcane-themed .age-council-room-column-title::before {
     content: '◇ ';
     color: rgba(255, 210, 140, 0.92);
-    text-shadow: 0 0 10px rgba(42, 96, 86, 0.45);
+    text-shadow: none;
 }
 
-/* —— Panels —— */
+/* —— Panels: gold council-room cards — not arcane teal —— */
 .is-hq-arcane-themed .age-council-room-panel {
-    border: 1px solid rgba(50, 96, 88, 0.44);
-    border-left: 3px solid rgba(255, 210, 140, 0.78);
-    background:
-        linear-gradient(105deg, rgba(48, 120, 108, 0.22) 0%, transparent 22%),
-        linear-gradient(165deg, rgba(32, 26, 16, 0.98) 0%, rgba(10, 8, 6, 0.99) 100%);
+    position: relative;
+    border: 1px solid rgba(184, 144, 48, 0.34);
+    border-left-width: 1px;
+    border-radius: 5px;
+    background: linear-gradient(165deg, rgba(32, 26, 16, 0.98) 0%, rgba(10, 8, 6, 0.99) 100%);
     box-shadow:
-        inset 0 1px 0 rgba(255, 215, 128, 0.12),
-        inset 4px 0 16px rgba(34, 78, 70, 0.14),
-        0 8px 22px rgba(0, 0, 0, 0.35),
-        0 0 28px rgba(30, 68, 60, 0.12);
+        inset 0 1px 0 rgba(255, 215, 128, 0.09),
+        0 6px 18px rgba(0, 0, 0, 0.28);
 }
 
-.is-hq-arcane-themed .age-council-room-panel::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 2px;
-    pointer-events: none;
-    z-index: 2;
-    background: linear-gradient(
-        90deg,
-        rgba(255, 210, 140, 0.88) 0%,
-        rgba(54, 108, 98, 0.75) 50%,
-        rgba(255, 210, 140, 0.88) 100%
-    );
-    box-shadow: 0 0 14px rgba(40, 86, 76, 0.42);
-    opacity: 1;
-}
-
+.is-hq-arcane-themed .age-council-room-panel::before,
 .is-hq-arcane-themed .age-council-room-panel::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    pointer-events: none;
-    z-index: 0;
-    background: radial-gradient(ellipse 90% 60% at 50% -12%, rgba(34, 78, 70, 0.16) 0%, transparent 62%);
-    opacity: 1;
+    content: none;
+    display: none;
 }
 
-.is-hq-arcane-themed .age-headquarters-ops-card-title,
-.is-hq-arcane-themed .age-hq-cabinet-role,
-.is-hq-arcane-themed .age-headquarters-section-title {
-    color: #f4e8c8;
-    text-shadow: 0 0 20px rgba(40, 86, 76, 0.22);
+.is-hq-arcane-themed .age-council-room-panel .age-headquarters-ops-card-title,
+.is-hq-arcane-themed .age-council-room-panel .age-hq-cabinet-role,
+.is-hq-arcane-themed .age-council-room-panel .age-headquarters-section-title {
+    color: #ffe7b0;
+    text-shadow: none;
 }
 
-.is-hq-arcane-themed .age-headquarters-section-eyebrow,
-.is-hq-arcane-themed .age-hq-planning-toolbar-eyebrow {
-    color: #648880;
+.is-hq-arcane-themed .age-council-room-panel .age-headquarters-section-eyebrow,
+.is-hq-arcane-themed .age-council-room-panel .age-hq-planning-toolbar-eyebrow {
+    color: rgba(255, 215, 128, 0.82);
+    text-shadow: none;
 }
 
 .is-hq-arcane-themed .age-hq-manager-btn.is-active,
@@ -464,7 +435,7 @@ body[data-age-council-room-page="true"] .is-hq-arcane-themed > *:not(.hq-arcane-
 
 .is-hq-arcane-themed .age-council-room-nation-stack,
 .is-hq-arcane-themed .age-council-room-command-stack {
-    scrollbar-color: rgba(54, 108, 98, 0.65) rgba(16, 32, 30, 0.9);
+    scrollbar-color: rgba(184, 144, 48, 0.45) rgba(0, 0, 0, 0.35);
 }
 
 @keyframes hq-arcane-crest-pulse {
