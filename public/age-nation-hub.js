@@ -181,10 +181,25 @@
         closeHub();
     }
 
+    function hasHeadquartersWorkspaceOnPage() {
+        return Boolean(global.document.getElementById('age-council-room-modal'));
+    }
+
     function openNationCouncilRoom() {
         global.RoyalArmiesAdventurersGuild?.dismissGuildWorkspacesForSettlementAction?.();
 
         if (global.document.body?.dataset?.ageCouncilRoomPage === 'true') {
+            return;
+        }
+
+        if (hasHeadquartersWorkspaceOnPage()
+            && typeof global.RoyalArmiesAgeHeadquarters?.openCouncilRoom === 'function') {
+            global.RoyalArmiesAgeHeadquarters.openCouncilRoom();
+            return;
+        }
+
+        if (typeof global.RoyalArmiesPagePaths?.navigateToHeadquartersPage === 'function') {
+            void global.RoyalArmiesPagePaths.navigateToHeadquartersPage();
             return;
         }
 

@@ -803,6 +803,15 @@
             if (global.document.body?.dataset?.ageCouncilRoomPage === 'true') {
                 return;
             }
+            if (global.document.getElementById('age-council-room-modal')
+                && typeof global.RoyalArmiesAgeHeadquarters?.openCouncilRoom === 'function') {
+                global.RoyalArmiesAgeHeadquarters.openCouncilRoom();
+                return;
+            }
+            if (typeof global.RoyalArmiesPagePaths?.navigateToHeadquartersPage === 'function') {
+                void global.RoyalArmiesPagePaths.navigateToHeadquartersPage();
+                return;
+            }
             if (typeof global.RoyalArmiesPagePaths?.navigateToCouncilRoomPage === 'function') {
                 void global.RoyalArmiesPagePaths.navigateToCouncilRoomPage();
                 return;
