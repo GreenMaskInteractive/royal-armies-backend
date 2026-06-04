@@ -117,30 +117,22 @@
     transform: scale(1);
 }
 
-/* Wheel fill — PNG alpha mask keeps transparent areas clear */
+/* Wheel art — img + filter keeps PNG transparency; avoids mask-on-var breakage */
 .age-nation-hub-radial-wheel-plate {
     display: block;
     width: 100%;
+    height: auto;
     aspect-ratio: 731 / 725;
+    object-fit: contain;
     pointer-events: none;
     user-select: none;
-    background:
-        linear-gradient(
-            168deg,
-            color-mix(in srgb, var(--age-radial-accent) 72%, #1a1408) 0%,
-            var(--age-radial-accent) 42%,
-            color-mix(in srgb, var(--age-radial-accent) 88%, #000000) 100%
-        );
-    -webkit-mask-image: var(--age-radial-mask-url);
-    mask-image: var(--age-radial-mask-url);
-    -webkit-mask-size: contain;
-    mask-size: contain;
-    -webkit-mask-repeat: no-repeat;
-    mask-repeat: no-repeat;
-    -webkit-mask-position: center;
-    mask-position: center;
-    -webkit-mask-mode: alpha;
-    mask-mode: alpha;
+    -webkit-user-drag: none;
+    filter:
+        brightness(0.58)
+        sepia(1)
+        hue-rotate(6deg)
+        saturate(2.15)
+        contrast(1.12);
 }
 
 /* Wedge hit zones — 45° slices aligned to radialmenu.png segments */

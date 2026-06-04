@@ -5,8 +5,8 @@
     'use strict';
 
     const DEFAULT_CENTER_LABEL = 'MENU';
-    const RADIAL_MENU_IMAGE = 'images/radialmenu.png?v=radialmenu-accent-2';
-    const RADIAL_BUILD_VERSION = 'radialmenu-accent-2';
+    const RADIAL_MENU_IMAGE = 'images/radialmenu.png?v=radialmenu-accent-3';
+    const RADIAL_BUILD_VERSION = 'radialmenu-accent-3';
     const SLOT_COUNT = 5;
     /** Centers for 5 of 8 segments on radialmenu.png (45° each, from top clockwise). */
     const RADIAL_WEDGE_ANGLES_DEG = Object.freeze([-67.5, -22.5, 22.5, 67.5, 112.5]);
@@ -223,10 +223,9 @@
         const dial = getDial();
         if (!dial || dial.dataset.ageRadialVersion === RADIAL_BUILD_VERSION) return;
 
-        const maskUrl = `url("${RADIAL_MENU_IMAGE}")`;
         const trackHtml = (
             '<div class="age-nation-hub-radial-track" aria-hidden="true">'
-            + `<div class="age-nation-hub-radial-wheel-plate" style="--age-radial-mask-url: ${maskUrl}" role="presentation"></div>`
+            + `<img class="age-nation-hub-radial-wheel-plate" src="${RADIAL_MENU_IMAGE}" alt="" decoding="async">`
             + '</div>'
         );
 
