@@ -102,6 +102,11 @@
         return false;
     }
 
+    function isDevPageNavigatorTarget(target) {
+        if (!target || typeof target.closest !== 'function') return false;
+        return Boolean(target.closest('#dev-page-navigator, .dev-page-navigator'));
+    }
+
     function isMapInteractionAllowed(target) {
         return isInsideMap(target)
             || isInsideNationHub(target)
@@ -110,7 +115,8 @@
             || isMapPlanToolTarget(target)
             || isInsideMapHudSidePanels(target)
             || isWarRoomModalTarget(target)
-            || isSettlementOverlayTarget(target);
+            || isSettlementOverlayTarget(target)
+            || isDevPageNavigatorTarget(target);
     }
 
     function maybeOpenSettlementFromQuery() {

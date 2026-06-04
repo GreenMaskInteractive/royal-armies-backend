@@ -331,6 +331,7 @@
         global.requestAnimationFrame(() => {
             const pos = getDefaultDevNavPosition(bar);
             applyDevNavPosition(bar, pos.x, pos.y);
+            saveDevNavPosition(pos.x, pos.y);
         });
     }
 
@@ -387,8 +388,7 @@
 
         const startDrag = (event, handleEl) => {
             if (event.button !== 0) return;
-            if (!handleEl && isDevNavDragExcludedTarget(event.target)) return;
-            if (handleEl && !bar.contains(handleEl)) return;
+            if (!handleEl || !bar.contains(handleEl)) return;
 
             event.preventDefault();
             event.stopPropagation();
@@ -415,18 +415,11 @@
 
         const moveHandle = bar.querySelector('#dev-page-navigator-move-handle');
         if (moveHandle) {
-            moveHandle.addEventListener('pointerdown', (event) => {
+            const onHandlePointerDown = (event) => {
                 startDrag(event, moveHandle);
-            });
+            };
+            moveHandle.addEventListener('pointerdown', onHandlePointerDown);
         }
-
-        bar.addEventListener('pointerdown', (event) => {
-            if (event.target.closest('#dev-page-navigator-move-handle')) return;
-            if (event.target.closest('.dev-page-navigator-go, .dev-page-navigator-select, #dev-portal-persona-select')) {
-                return;
-            }
-            startDrag(event, null);
-        });
 
         global.addEventListener('resize', () => {
             if (!bar.classList.contains('is-drag-positioned')) return;
