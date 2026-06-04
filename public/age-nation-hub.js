@@ -5,7 +5,7 @@
     'use strict';
 
     const DEFAULT_CENTER_LABEL = 'MENU';
-    const RADIAL_BUILD_VERSION = 'rpg-wheel-2';
+    const RADIAL_BUILD_VERSION = 'rpg-wheel-3';
     const SLOT_COUNT = 5;
     const SLOT_START_ANGLE_DEG = -90;
 
@@ -373,13 +373,11 @@
             return (
                 `<div class="age-nation-hub-radial-slot-well age-nation-hub-radial-slot-well--${item.id}"`
                 + ` style="--age-radial-slot-angle: ${angleDeg}deg; --age-radial-slot-delay: ${delaySec}s; --age-radial-slot-index: ${index};">`
-                + '<span class="age-nation-hub-radial-slot-pedestal" aria-hidden="true"></span>'
                 + `<button type="button" class="age-nation-hub-radial-slot age-nation-hub-radial-slot--${item.id}"`
                 + ` data-age-hub-radial="${item.id}"`
                 + ` data-age-hub-radial-label="${item.label}"`
                 + ` role="menuitem"`
                 + ` aria-label="${item.label}">`
-                + '<span class="age-nation-hub-radial-slot-crown" aria-hidden="true"></span>'
                 + '<span class="age-nation-hub-radial-slot-frame">'
                 + `<img class="age-nation-hub-radial-slot-img" src="${placeholderSrc}" alt="" decoding="async">`
                 + '</span>'

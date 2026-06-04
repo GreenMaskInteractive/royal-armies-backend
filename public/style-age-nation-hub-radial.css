@@ -214,27 +214,6 @@
         scale(1);
 }
 
-.age-nation-hub-radial-slot-pedestal {
-    position: absolute;
-    top: 18px;
-    left: 50%;
-    width: 100px;
-    height: 52px;
-    margin-left: -50px;
-    background:
-        linear-gradient(180deg, hsla(var(--age-radial-slot-accent), 35%, 28%, 0.5) 0%, rgba(8, 6, 4, 0.85) 100%);
-    clip-path: polygon(12% 0%, 88% 0%, 100% 100%, 0% 100%);
-    border-bottom: 2px solid hsla(var(--age-radial-slot-accent), 60%, 50%, 0.45);
-    opacity: 0.85;
-    pointer-events: none;
-}
-
-.age-nation-hub-radial-slot-well:has(.age-nation-hub-radial-slot:hover) .age-nation-hub-radial-slot-pedestal,
-.age-nation-hub-radial-slot-well:has(.age-nation-hub-radial-slot:focus-visible) .age-nation-hub-radial-slot-pedestal {
-    border-bottom-color: hsla(var(--age-radial-slot-accent), 75%, 62%, 0.9);
-    box-shadow: 0 8px 24px hsla(var(--age-radial-slot-accent), 70%, 45%, 0.35);
-}
-
 /* Center medallion — octagonal RPG hub */
 .age-nation-hub-radial-center {
     position: absolute;
@@ -362,20 +341,6 @@
     transform: translateY(0) scale(1);
 }
 
-.age-nation-hub-radial-slot-crown {
-    position: absolute;
-    top: -6px;
-    left: 50%;
-    width: 28px;
-    height: 8px;
-    margin-left: -14px;
-    background: linear-gradient(90deg, transparent, #c9a227, #ffe9a8, #c9a227, transparent);
-    clip-path: polygon(0% 100%, 15% 0%, 35% 70%, 50% 0%, 65% 70%, 85% 0%, 100% 100%);
-    opacity: 0.85;
-    pointer-events: none;
-    transition: opacity 0.16s ease;
-}
-
 .age-nation-hub-radial-slot-frame {
     display: flex;
     align-items: center;
@@ -400,11 +365,6 @@
     outline: none;
     filter: brightness(1.15);
     transform: translateY(-4px) scale(1.06);
-}
-
-.age-nation-hub-radial-slot:hover .age-nation-hub-radial-slot-crown,
-.age-nation-hub-radial-slot:focus-visible .age-nation-hub-radial-slot-crown {
-    opacity: 1;
 }
 
 .age-nation-hub-radial-slot:hover .age-nation-hub-radial-slot-frame,
