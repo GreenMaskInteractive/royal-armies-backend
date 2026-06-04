@@ -58,7 +58,7 @@
     z-index: 1;
     flex-shrink: 0;
     box-sizing: border-box;
-    width: min(560px, 94vw);
+    width: min(380px, 94vw);
     pointer-events: auto;
     opacity: 0;
     transform: translateY(16px) scale(0.96);
@@ -193,28 +193,10 @@
 }
 
 .age-nation-hub-menu-columns {
-    display: grid;
-    grid-template-columns: 1.15fr 0.85fr;
-    gap: 14px;
-}
-
-.age-nation-hub-menu-col {
     display: flex;
     flex-direction: column;
     gap: 8px;
     min-width: 0;
-}
-
-.age-nation-hub-menu-col-heading {
-    margin: 0 0 4px;
-    padding: 0 2px 6px;
-    border-bottom: 1px solid rgba(184, 144, 48, 0.28);
-    font-family: 'Cinzel', serif;
-    font-size: 0.62rem;
-    font-weight: 700;
-    letter-spacing: 0.18em;
-    text-transform: uppercase;
-    color: rgba(255, 215, 128, 0.52);
 }
 
 .age-nation-hub-menu-item {
@@ -374,12 +356,6 @@
     background: rgba(255, 190, 60, 0.25);
     transform: rotate(45deg);
     box-shadow: 0 0 8px rgba(255, 190, 60, 0.25);
-}
-
-@media (max-width: 520px) {
-    .age-nation-hub-menu-columns {
-        grid-template-columns: 1fr;
-    }
 }
 
 @media (prefers-reduced-motion: reduce) {

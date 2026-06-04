@@ -7,12 +7,7 @@
     /** Set true to restore full-screen radial menu (go-to design in style-age-nation-hub-radial.css). */
     const ENABLE_RADIAL_HUB_MENU = false;
 
-    const BOX_BUILD_VERSION = 'nation-hub-box-premium-2';
-
-    const BOX_MENU_COLUMNS = Object.freeze([
-        { heading: 'Realm', itemIds: ['nation', 'records', 'discoveries'] },
-        { heading: 'Campaign', itemIds: ['banner', 'battle-pass'] }
-    ]);
+    const BOX_BUILD_VERSION = 'nation-hub-box-vertical-list-1';
 
     const BOX_ITEM_META = Object.freeze({
         nation: { glyph: '◆', hint: 'Council & command' },
@@ -322,22 +317,9 @@
         const colsRoot = getMenuColumns();
         if (!colsRoot || colsRoot.dataset.ageMenuVersion === BOX_BUILD_VERSION) return;
 
-        let itemIndex = 0;
-        colsRoot.innerHTML = BOX_MENU_COLUMNS.map((column) => {
-            const items = column.itemIds
-                .map((itemId) => getHubItem(itemId))
-                .filter(Boolean);
-            return (
-                '<div class="age-nation-hub-menu-col">'
-                + `<p class="age-nation-hub-menu-col-heading">${column.heading}</p>`
-                + items.map((item) => {
-                    const html = renderBoxMenuItem(item, itemIndex);
-                    itemIndex += 1;
-                    return html;
-                }).join('')
-                + '</div>'
-            );
-        }).join('');
+        colsRoot.innerHTML = HUB_ITEMS.map((item, itemIndex) => (
+            renderBoxMenuItem(item, itemIndex)
+        )).join('');
 
         colsRoot.dataset.ageMenuVersion = BOX_BUILD_VERSION;
 
