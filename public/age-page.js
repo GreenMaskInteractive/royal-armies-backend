@@ -1025,14 +1025,20 @@
             return;
         }
 
+        if (!global.RoyalArmiesAgeHeadquarters?.hasActiveManagerControls?.()) {
+            clearHeadquartersPlanningLayoutVars(canvas);
+            return;
+        }
+
         if (isAgeMobileLayout()) {
             clearHeadquartersPlanningLayoutVars(canvas);
             return;
         }
 
         const workspace = global.document.getElementById('age-council-room-workspace');
+        const commandSection = global.document.getElementById('age-council-room-command');
         const planningColumn = workspace?.querySelector('.age-council-room-planning-block:not([hidden])');
-        if (!workspace || !planningColumn) {
+        if (!workspace || !planningColumn || commandSection?.hidden) {
             clearHeadquartersPlanningLayoutVars(canvas);
             return;
         }
@@ -1142,6 +1148,9 @@
 
     global.syncAgeMapHudLayout = syncCouncilBoardLayoutToMap;
     global.syncAgeHeadquartersPlanningLayout = syncHeadquartersPlanningLayout;
+    global.clearAgeHeadquartersPlanningLayout = function clearAgeHeadquartersPlanningLayout() {
+        clearHeadquartersPlanningLayoutVars(global.document.getElementById('age-page-canvas'));
+    };
 
     function bindCouncilBoardLayoutSync() {
         const mapFrame = global.document.querySelector('#age-page-canvas .age-map-frame');

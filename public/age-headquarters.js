@@ -53,6 +53,7 @@
     let hqManagerOpenRequested = false;
     let hqViewOpenGeneration = 0;
     let hqWorkspaceFetchGeneration = 0;
+    let hqManagerSurfaceGeneration = 0;
     let councilRoomModalOpen = false;
     let councilRoomEscapeHandler = null;
     let lastCabinetState = null;
@@ -278,10 +279,35 @@
         applyPendingHqManagerMode();
         if (hasActiveManagerControls() || isHqManagerOpenPending()) {
             flushHeadquartersViewMode();
+            if (hasActiveManagerControls()) {
+                void ensureManagerPlanningSurface();
+            }
+        } else {
+            syncPublicHeadquartersViewNow();
         }
-        if (hasActiveManagerControls()) {
-            void ensureManagerPlanningSurface();
+    }
+
+    function clearHeadquartersPlanningLayoutVarsLocal() {
+        if (typeof global.clearAgeHeadquartersPlanningLayout === 'function') {
+            global.clearAgeHeadquartersPlanningLayout();
+            return;
         }
+        const canvas = global.document.getElementById('age-page-canvas');
+        if (!canvas) return;
+        [
+            '--age-hq-planning-scale',
+            '--age-hq-planning-map-size',
+            '--age-hq-planning-stage-height',
+            '--age-hq-planning-hint-block',
+            '--age-hq-command-rail-translate-x',
+            '--age-hq-command-rail-translate-y'
+        ].forEach((prop) => canvas.style.removeProperty(prop));
+    }
+
+    function syncPublicHeadquartersViewNow() {
+        syncHeadquartersViewMode(lastAppliedWorkspace);
+        syncDispatchPanel(isCouncilRoomViewActive());
+        clearHeadquartersPlanningLayoutVarsLocal();
     }
 
     function flushHeadquartersViewMode() {
@@ -289,7 +315,11 @@
         global.requestAnimationFrame(() => {
             syncHeadquartersViewMode(lastAppliedWorkspace);
             syncDispatchPanel(isCouncilRoomViewActive());
-            syncHeadquartersShellLayout();
+            if (hasActiveManagerControls()) {
+                syncHeadquartersShellLayout();
+            } else {
+                clearHeadquartersPlanningLayoutVarsLocal();
+            }
         });
     }
 
@@ -386,6 +416,11 @@
             setNodeHidden(node, !showManagerControls);
         });
 
+        const commandSection = global.document.getElementById('age-council-room-command');
+        if (commandSection) {
+            setNodeHidden(commandSection, !showManagerControls);
+        }
+
         const managerBtn = global.document.getElementById('age-hq-manager-toggle');
         if (managerBtn) {
             setNodeHidden(managerBtn, !hqManagerEligible);
@@ -424,8 +459,9 @@
         const wantOpen = Boolean(open);
 
         if (!wantOpen) {
+            hqManagerSurfaceGeneration += 1;
             resetHeadquartersManagerMode();
-            flushHeadquartersViewMode();
+            syncPublicHeadquartersViewNow();
             setActiveMarkerType('');
             global.RoyalArmiesAgeHeadquartersPlanningMap?.setEnabled(false);
             return;
@@ -453,8 +489,9 @@
             return;
         }
         if (isHqManagerOpenPending()) {
+            hqManagerSurfaceGeneration += 1;
             resetHeadquartersManagerMode();
-            flushHeadquartersViewMode();
+            syncPublicHeadquartersViewNow();
             return;
         }
         setHqManagerModeOpen(true);
@@ -2044,22 +2081,38 @@
     }
 
     async function ensureManagerPlanningSurface() {
+        const surfaceGen = ++hqManagerSurfaceGeneration;
         const planningHost = global.document.getElementById('age-hq-planning-map-host');
-        if (!planningHost || !hasActiveManagerControls()) {
+
+        function abortSurfaceSetup() {
             global.RoyalArmiesAgeHeadquartersPlanningMap?.setEnabled(false);
+        }
+
+        if (!planningHost || !hasActiveManagerControls()) {
+            abortSurfaceSetup();
             return;
         }
 
         const ownerBypass = isDevOwnerHeadquartersBypass(resolveHeadquartersUsername());
         const canMountPlanningMap = !isCouncilRoomPage() || hasActiveManagerControls() || ownerBypass;
         if (!canMountPlanningMap) {
-            global.RoyalArmiesAgeHeadquartersPlanningMap?.setEnabled(false);
+            abortSurfaceSetup();
             return;
         }
 
         await ensurePlanningMap();
+        if (surfaceGen !== hqManagerSurfaceGeneration || !hasActiveManagerControls()) {
+            abortSurfaceSetup();
+            return;
+        }
+
         global.RoyalArmiesAgeHeadquartersPlanningMap?.setEnabled(true);
         await waitForLayout();
+        if (surfaceGen !== hqManagerSurfaceGeneration || !hasActiveManagerControls()) {
+            abortSurfaceSetup();
+            return;
+        }
+
         refreshPlanningMapLayout();
         syncHeadquartersShellLayout();
         global.RoyalArmiesAgeMovementPanel?.refreshCityPlayers?.();
