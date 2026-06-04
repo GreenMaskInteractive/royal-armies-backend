@@ -5,6 +5,8 @@
 
 const { loadCityCatalog, resolveCatalogNationKey, resolveCityHolder } = require('./nexus-age-movement');
 
+const DEFAULT_NATION_TOTAL_CITIES = 15;
+
 function numberOrNull(value) {
     if (value === null || value === undefined || value === '') return null;
     const numeric = Number(value);
@@ -82,6 +84,18 @@ function buildNationCitiesOwnedMap(cityHolders) {
         const holderKey = resolveCatalogNationKey(resolveCityHolder(city, holders));
         if (!holderKey) return;
         counts.set(holderKey, (counts.get(holderKey) || 0) + 1);
+    });
+
+    return counts;
+}
+
+function buildNationTotalCitiesMap(catalog) {
+    const counts = new Map();
+
+    (catalog?.cities || []).forEach((city) => {
+        const nationKey = resolveCatalogNationKey(city?.nationId);
+        if (!nationKey) return;
+        counts.set(nationKey, (counts.get(nationKey) || 0) + 1);
     });
 
     return counts;

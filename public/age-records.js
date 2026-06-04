@@ -45,6 +45,7 @@
         { key: 'rank', label: 'Rank', kind: 'number', alwaysShow: true },
         { key: 'points', label: 'Points', kind: 'number', alwaysShow: true, defaultValue: 0 },
         { key: 'citiesOwned', label: 'Cities (Owned)', kind: 'number', alwaysShow: true, defaultValue: 0 },
+        { key: 'totalCities', label: 'Cities (Total)', kind: 'number', alwaysShow: true, defaultValue: 15 },
         { key: 'playersInNation', label: 'Players', kind: 'number', alwaysShow: true, defaultValue: 0 },
         { key: 'cityCaptures', label: 'Captures', kind: 'number', alwaysShow: true, defaultValue: 0 },
         { key: 'overallStrength', label: 'Strength', kind: 'text', alwaysShow: true, defaultValue: 'N/A' },
