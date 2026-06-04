@@ -80,7 +80,8 @@
 }
 
 .age-nation-hub-radial-dial {
-    --age-radial-accent: var(--accent, #d4af37);
+    /* Darker Aether Gold — only painted where the PNG mask is opaque */
+    --age-radial-accent: color-mix(in srgb, var(--accent, #d4af37) 52%, #000000);
     --age-radial-track-size: min(640px, 72vmin);
     --age-radial-wedge-size: min(300px, 34vmin);
     --age-radial-inner-hole: 26%;
@@ -91,7 +92,7 @@
     pointer-events: none;
     filter:
         drop-shadow(0 24px 48px rgba(0, 0, 0, 0.75))
-        drop-shadow(0 0 28px color-mix(in srgb, var(--age-radial-accent) 28%, transparent));
+        drop-shadow(0 0 22px color-mix(in srgb, var(--age-radial-accent) 20%, transparent));
 }
 
 /* Ornate wheel plate (SVG wedges + gold rings) */
@@ -116,34 +117,30 @@
     transform: scale(1);
 }
 
-/* Recolor metallic plate to site Aether Gold (--accent) */
-.age-nation-hub-radial-wheel-tint {
-    position: relative;
-    display: block;
-    width: 100%;
-    isolation: isolate;
-    line-height: 0;
-}
-
+/* Wheel fill — PNG alpha mask keeps transparent areas clear */
 .age-nation-hub-radial-wheel-plate {
     display: block;
     width: 100%;
-    height: auto;
     aspect-ratio: 731 / 725;
-    object-fit: contain;
     pointer-events: none;
     user-select: none;
-    -webkit-user-drag: none;
-    filter: grayscale(1) contrast(1.12) brightness(0.88);
-}
-
-.age-nation-hub-radial-wheel-tint::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: var(--age-radial-accent);
-    mix-blend-mode: color;
-    pointer-events: none;
+    background:
+        linear-gradient(
+            168deg,
+            color-mix(in srgb, var(--age-radial-accent) 72%, #1a1408) 0%,
+            var(--age-radial-accent) 42%,
+            color-mix(in srgb, var(--age-radial-accent) 88%, #000000) 100%
+        );
+    -webkit-mask-image: var(--age-radial-mask-url);
+    mask-image: var(--age-radial-mask-url);
+    -webkit-mask-size: contain;
+    mask-size: contain;
+    -webkit-mask-repeat: no-repeat;
+    mask-repeat: no-repeat;
+    -webkit-mask-position: center;
+    mask-position: center;
+    -webkit-mask-mode: alpha;
+    mask-mode: alpha;
 }
 
 /* Wedge hit zones — 45° slices aligned to radialmenu.png segments */
