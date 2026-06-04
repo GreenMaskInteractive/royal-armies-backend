@@ -625,17 +625,23 @@
 
 .age-council-room-workspace.is-hq-manager-open .age-council-room-command-stack {
     display: grid;
-    grid-template-rows: minmax(0, 1fr) auto;
+    grid-template-rows: auto minmax(0, 1fr);
     gap: 8px;
 }
 
 .age-council-room-workspace.is-hq-manager-open .age-council-room-diplo-stack {
+    grid-row: 1;
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 8px;
     align-content: start;
     min-height: 0;
     overflow: hidden;
+}
+
+.age-council-room-workspace.is-hq-manager-open .age-council-room-planning-block {
+    grid-row: 2;
+    min-height: 0;
 }
 
 .age-council-room-workspace.is-hq-manager-open .age-council-room-diplo-stack .age-headquarters-ops-card-body {
