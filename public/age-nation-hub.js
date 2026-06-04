@@ -5,7 +5,7 @@
     'use strict';
 
     const DEFAULT_CENTER_LABEL = 'MENU';
-    const RADIAL_BUILD_VERSION = 'rpg-wheel-7';
+    const RADIAL_BUILD_VERSION = 'rpg-wheel-8';
     const SLOT_COUNT = 5;
     const SLOT_START_ANGLE_DEG = -90;
 
@@ -301,15 +301,6 @@
             + '<circle cx="260" cy="260" r="218" fill="none" stroke="#3d3018" stroke-width="2"/>'
             + '<circle cx="260" cy="260" r="92" fill="#120e0a" stroke="url(#gold-ring)" stroke-width="3"/>'
             + '<circle cx="260" cy="260" r="84" fill="none" stroke="rgba(255,215,128,0.2)" stroke-width="1" stroke-dasharray="4 6"/>'
-            + '<g fill="#c9a227" opacity="0.85">'
-            + '<polygon points="260,18 266,32 260,28 254,32"/>'
-            + '<polygon points="498,260 484,266 488,260 484,254"/>'
-            + '<polygon points="260,502 254,488 260,492 266,488"/>'
-            + '<polygon points="22,260 36,254 32,260 36,266"/>'
-            + '</g>'
-            + '<g stroke="rgba(255,215,128,0.35)" stroke-width="1.5" fill="none">'
-            + '<path d="M260 32 L260 52 M498 260 L478 260 M260 488 L260 468 M22 260 L42 260"/>'
-            + '</g>'
             + '</svg>'
         );
         return `data:image/svg+xml,${encodeURIComponent(svg)}`;
@@ -347,12 +338,6 @@
             '<div class="age-nation-hub-radial-track" aria-hidden="true">'
             + `<img class="age-nation-hub-radial-wheel-plate" src="${wheelSrc}" alt="" decoding="async">`
             + '<div class="age-nation-hub-radial-wheel-rim" aria-hidden="true"></div>'
-            + '<div class="age-nation-hub-radial-wheel-gems" aria-hidden="true">'
-            + '<span class="age-nation-hub-radial-wheel-gem age-nation-hub-radial-wheel-gem--n"></span>'
-            + '<span class="age-nation-hub-radial-wheel-gem age-nation-hub-radial-wheel-gem--e"></span>'
-            + '<span class="age-nation-hub-radial-wheel-gem age-nation-hub-radial-wheel-gem--s"></span>'
-            + '<span class="age-nation-hub-radial-wheel-gem age-nation-hub-radial-wheel-gem--w"></span>'
-            + '</div>'
             + '</div>'
         );
 

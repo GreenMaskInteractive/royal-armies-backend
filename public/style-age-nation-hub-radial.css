@@ -151,28 +151,7 @@
     pointer-events: none;
 }
 
-.age-nation-hub-radial-wheel-gems {
-    position: absolute;
-    inset: 0;
-    pointer-events: none;
-}
-
-.age-nation-hub-radial-wheel-gem {
-    position: absolute;
-    width: 14px;
-    height: 14px;
-    background:
-        radial-gradient(circle at 35% 30%, #fff6c8 0%, #c9a227 45%, #5c4218 100%);
-    transform: rotate(45deg);
-    box-shadow: 0 0 12px rgba(255, 215, 128, 0.45);
-}
-
-.age-nation-hub-radial-wheel-gem--n { left: 50%; top: 2px; margin-left: -7px; }
-.age-nation-hub-radial-wheel-gem--e { right: 2px; top: 50%; margin-top: -7px; }
-.age-nation-hub-radial-wheel-gem--s { left: 50%; bottom: 2px; margin-left: -7px; }
-.age-nation-hub-radial-wheel-gem--w { left: 2px; top: 50%; margin-top: -7px; }
-
-/* Slot cluster — pedestal + hex icon + caption */
+/* Slot cluster — hex icon + caption */
 .age-nation-hub-radial-slot-well {
     --age-radial-slot-angle: 0deg;
     --age-radial-slot-delay: 0s;
