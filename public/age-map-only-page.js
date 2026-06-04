@@ -53,6 +53,13 @@
         );
     }
 
+    function isPortalAlertModal(target) {
+        if (!target || typeof target.closest !== 'function') return false;
+        return Boolean(
+            target.closest('#royal-armies-portal-alert-modal:not(.main-portal-modal-hidden)')
+        );
+    }
+
     function isMapPlanToolTarget(target) {
         if (!target || typeof target.closest !== 'function') return false;
         return Boolean(
@@ -96,6 +103,7 @@
         return isInsideMap(target)
             || isInsideNationHub(target)
             || isNationHubDestinationModal(target)
+            || isPortalAlertModal(target)
             || isMapPlanToolTarget(target)
             || isInsideMapHudSidePanels(target)
             || isWarRoomModalTarget(target)
