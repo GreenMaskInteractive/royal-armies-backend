@@ -5,7 +5,7 @@
     'use strict';
 
     const DEFAULT_CENTER_LABEL = 'MENU';
-    const RADIAL_BUILD_VERSION = 'rpg-wheel-9';
+    const RADIAL_BUILD_VERSION = 'rpg-wheel-10';
     const SLOT_COUNT = 5;
     const SLOT_START_ANGLE_DEG = -90;
 
@@ -44,15 +44,8 @@
         return Boolean(getHub()?.classList.contains('is-open'));
     }
 
-    function setCenterLabel(text) {
-        const el = getCenterLabelEl();
-        const center = el?.closest('.age-nation-hub-radial-center');
-        if (!el) return;
-        const label = String(text || DEFAULT_CENTER_LABEL).trim() || DEFAULT_CENTER_LABEL;
-        el.textContent = label;
-        if (center) {
-            center.classList.toggle('is-long-label', label.length > 8);
-        }
+    function setCenterLabel(_text) {
+        /* Center label hidden — slots use aria-label only */
     }
 
     function ensureRadialPortal() {
@@ -339,11 +332,10 @@
         );
 
         const centerHtml = (
-            '<div class="age-nation-hub-radial-center" aria-live="polite">'
+            '<div class="age-nation-hub-radial-center" aria-hidden="true">'
             + '<div class="age-nation-hub-radial-center-plate" aria-hidden="true"></div>'
             + '<div class="age-nation-hub-radial-center-octagon" aria-hidden="true"></div>'
             + '<div class="age-nation-hub-radial-center-core" aria-hidden="true"></div>'
-            + `<span id="age-nation-hub-radial-label" class="age-nation-hub-radial-center-label">${DEFAULT_CENTER_LABEL}</span>`
             + '</div>'
         );
 
