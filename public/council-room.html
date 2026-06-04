@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Royal Armies — Council Room</title>
+    <link rel="stylesheet" href="style.css?v=cursor-modal-layer-fix-1">
+    <link rel="stylesheet" href="style2.css?v=age-area-shell-1">
+    <link rel="stylesheet" href="style-age-area-shell.css?v=age-area-shell-1">
+    <link rel="stylesheet" href="style-age-headquarters.css?v=dispatch-panel-compact-1">
+    <link rel="stylesheet" href="style-age-council-room.css?v=dispatch-header-inline-1">
+    <link rel="stylesheet" href="style-council-room-page.css?v=dispatch-header-inline-1">
+    <link rel="stylesheet" href="mobile-responsive.css?v=council-room-premium-2">
+    <link rel="stylesheet" href="dev-page-navigator.css">
+    <link rel="stylesheet" href="custom-cursor.css?v=finger-press-7">
+</head>
+<body
+    id="age-page-canvas"
+    class="age-page-canvas game-page-canvas age-page-council-room-only age-council-room-open"
+    data-age-slug="alpha"
+    data-age-council-room-page="true"
+    data-age-area-shell="true"
+    data-age-area-active-hub="council-room">
+<script src="rift-viewport-metrics.js?v=rift-iife-fix-1"></script>
+<script src="rift-display-resolution.js?v=rift-iife-fix-1"></script>
+<script src="rift-page-loading-gate.js?v=page-loading-gate-1"></script>
+<script src="page-route-transition.js?v=route-fade-1"></script>
+
+    <main class="age-page-main" aria-label="Age Alpha — Council Room">
+        <div class="age-map-shell" id="age-map-shell">
+            <div data-age-area-shell-top></div>
+            <div class="age-area-main" id="age-council-room-area-main">
+                <div class="age-area-main__scroll">
+
+                    <div id="age-council-room-workspace" class="age-council-room-workspace" aria-label="Council Room workspace">
+                <header class="age-council-room-header" aria-label="Council Room">
+                    <div class="age-council-room-header__crest" aria-hidden="true"></div>
+                    <div class="age-council-room-header__copy">
+                        <p class="age-council-room-eyebrow">Nation Command</p>
+                        <h1 id="age-council-room-title" class="age-council-room-title">Council Room</h1>
+                        <p class="age-council-room-subtitle">Nation affairs, elections, and war council operations</p>
+                    </div>
+                    <div id="age-hq-dispatch-panel" class="age-hq-dispatch-panel age-council-room-header-dispatch" hidden aria-label="Emergency Dispatch Alert">
+                        <div class="age-hq-dispatch-panel-shell age-map-hud-panel">
+                            <header class="age-hq-dispatch-panel-head">
+                                <span class="age-hq-dispatch-panel-eyebrow">Emergency Dispatch</span>
+                                <h2 class="age-hq-dispatch-panel-title">Nation Alert Controls</h2>
+                                <p id="age-hq-dispatch-panel-note" class="age-hq-dispatch-panel-note">Triggers a 60-second nation-wide alert on all Age views.</p>
+                            </header>
+                            <div class="age-hq-dispatch-panel-actions" role="group" aria-label="Dispatch alerts">
+                                <button type="button" class="age-hq-dispatch-btn age-hq-dispatch-btn--rally" data-dispatch-alert="rally">
+                                    <span class="age-hq-dispatch-btn-glyph" aria-hidden="true">⚔</span>
+                                    <span class="age-hq-dispatch-btn-label">Rally Troops</span>
+                                </button>
+                                <button type="button" class="age-hq-dispatch-btn age-hq-dispatch-btn--border" data-dispatch-alert="border">
+                                    <span class="age-hq-dispatch-btn-glyph" aria-hidden="true">⚠</span>
+                                    <span class="age-hq-dispatch-btn-label">PvP Alert</span>
+                                </button>
+                                <button type="button" class="age-hq-dispatch-btn age-hq-dispatch-btn--drop" data-dispatch-alert="drop">
+                                    <span class="age-hq-dispatch-btn-glyph" aria-hidden="true">☠</span>
+                                    <span class="age-hq-dispatch-btn-label">Drop Alert</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <p id="age-hq-load-status" class="age-hq-load-status" hidden aria-live="polite"></p>
+                </header>
+
+                <div class="age-council-room-shell" data-age-council-shell>
+                    <aside id="age-council-room-nation" class="age-council-room-column age-council-room-column--nation" aria-label="Nation affairs">
+                        <div class="age-council-room-column-head">
+                            <span class="age-council-room-column-eyebrow">Public Record</span>
+                            <h2 class="age-council-room-column-title">Nation Affairs</h2>
+                        </div>
+                        <div id="age-hq-member-deck" class="age-council-room-nation-stack">
+                            <aside id="age-hq-nation-cabinet" class="age-hq-nation-cabinet age-council-room-panel age-council-room-panel--cabinet" aria-label="National cabinet" data-hq-council-only hidden>
+                                <header class="age-hq-nation-cabinet-head">
+                                    <span class="age-hq-planning-toolbar-eyebrow">National Cabinet</span>
+                                </header>
+                                <div class="age-hq-nation-cabinet-body">
+                                    <section class="age-hq-cabinet-section" aria-label="Nation leader">
+                                        <h3 class="age-hq-cabinet-role">Leader</h3>
+                                        <p id="age-hq-cabinet-leader-name" class="age-hq-cabinet-name">—</p>
+                                    </section>
+                                    <section class="age-hq-cabinet-section" aria-label="Vice leader">
+                                        <h3 class="age-hq-cabinet-role">Vice Leader</h3>
+                                        <p id="age-hq-cabinet-vice-name" class="age-hq-cabinet-name">—</p>
+                                    </section>
+                                    <section class="age-hq-cabinet-section" aria-label="Council members">
+                                        <h3 class="age-hq-cabinet-role">Council</h3>
+                                        <ul id="age-hq-cabinet-council-list" class="age-hq-cabinet-list" aria-live="polite"></ul>
+                                    </section>
+                                    <section class="age-hq-cabinet-section" aria-label="Planners">
+                                        <h3 class="age-hq-cabinet-role">Planners</h3>
+                                        <ul id="age-hq-cabinet-planners-list" class="age-hq-cabinet-list" aria-live="polite"></ul>
+                                    </section>
+                                </div>
+                            </aside>
+                            <section class="age-headquarters-ops-card age-headquarters-ops-card--elections age-council-room-panel" aria-labelledby="age-hq-vote-title">
+                                <header class="age-headquarters-ops-card-head">
+                                    <h3 class="age-headquarters-ops-card-title" id="age-hq-vote-title">Nation Elections</h3>
+                                    <p class="age-headquarters-ops-card-sub" id="age-hq-vote-meta">Anonymous ballots Â· Leader (LD) and Vice Leader (VLD)</p>
+                                </header>
+                                <div class="age-headquarters-ops-card-body age-hq-elections-host" id="age-hq-elections-host">
+                                    <div class="age-hq-elections-closed-overlay" id="age-hq-elections-closed-overlay" hidden aria-hidden="true">
+                                        <p class="age-hq-elections-closed-overlay__text">Elections are currently closed</p>
+                                    </div>
+                                    <div class="age-hq-election-poll" data-hq-poll="leader" aria-labelledby="age-hq-poll-leader-title">
+                                        <h4 class="age-hq-election-poll__title" id="age-hq-poll-leader-title">Leader (LD)</h4>
+                                        <p class="age-hq-election-poll__meta" id="age-hq-poll-leader-meta" aria-live="polite"></p>
+                                        <div class="age-hq-vote-candidates" id="age-hq-vote-leader-candidates" role="list"></div>
+                                        <button type="button" class="age-headquarters-ops-action-btn age-hq-poll-submit" id="age-hq-vote-leader-submit" data-hq-poll-submit="leader" disabled>Cast Leader Vote</button>
+                                    </div>
+                                    <div class="age-hq-election-poll" data-hq-poll="vice" aria-labelledby="age-hq-poll-vice-title">
+                                        <h4 class="age-hq-election-poll__title" id="age-hq-poll-vice-title">Vice Leader (VLD)</h4>
+                                        <p class="age-hq-election-poll__meta" id="age-hq-poll-vice-meta" aria-live="polite"></p>
+                                        <div class="age-hq-vote-candidates" id="age-hq-vote-vice-candidates" role="list"></div>
+                                        <button type="button" class="age-headquarters-ops-action-btn age-hq-poll-submit" id="age-hq-vote-vice-submit" data-hq-poll-submit="vice" disabled>Cast Vice Leader Vote</button>
+                                    </div>
+                                    <p id="age-hq-vote-status" class="age-headquarters-vote-status" aria-live="polite" hidden></p>
+                                </div>
+                            </section>
+                            <section class="age-headquarters-ops-card age-headquarters-ops-card--relations age-council-room-panel" aria-labelledby="age-hq-relations-title">
+                                <header class="age-headquarters-ops-card-head">
+                                    <h3 class="age-headquarters-ops-card-title" id="age-hq-relations-title">Allied &amp; NAP</h3>
+                                    <p class="age-headquarters-ops-card-sub" id="age-hq-relations-meta">Accords with neutral nations â€” not at war.</p>
+                                </header>
+                                <div class="age-headquarters-ops-card-body">
+                                    <ul class="age-hq-relations-list" id="age-hq-relations-list" aria-live="polite"></ul>
+                                </div>
+                            </section>
+                            <section class="age-headquarters-ops-card age-headquarters-ops-card--ledger age-council-room-panel" aria-labelledby="age-hq-ledger-title">
+                                <header class="age-headquarters-ops-card-head">
+                                    <h3 class="age-headquarters-ops-card-title" id="age-hq-ledger-title">War Ledger</h3>
+                                    <p class="age-headquarters-ops-card-sub" id="age-hq-ledger-meta">Recognized wars are permanent until a belligerent is eliminated.</p>
+                                </header>
+                                <div class="age-headquarters-ops-card-body">
+                                    <ul class="age-hq-war-ledger-list" id="age-hq-war-ledger-list" aria-live="polite"></ul>
+                                </div>
+                            </section>
+                            <section class="age-headquarters-ops-card age-headquarters-ops-card--leadership age-council-room-panel" data-hq-leadership-summary data-hq-public hidden>
+                                <header class="age-headquarters-ops-card-head">
+                                    <h3 class="age-headquarters-ops-card-title">Elected Leadership</h3>
+                                    <p class="age-headquarters-ops-card-sub">Leader and Vice Leader for this term.</p>
+                                </header>
+                                <div class="age-headquarters-ops-card-body">
+                                    <dl class="age-headquarters-leadership-roster">
+                                        <div class="age-headquarters-leadership-row">
+                                            <dt class="age-headquarters-leadership-role">Leader (LD)</dt>
+                                            <dd id="age-hq-elected-leader-name" class="age-headquarters-leadership-name">â€”</dd>
+                                        </div>
+                                        <div class="age-headquarters-leadership-row">
+                                            <dt class="age-headquarters-leadership-role">Vice Leader (VLD)</dt>
+                                            <dd id="age-hq-elected-vice-name" class="age-headquarters-leadership-name">â€”</dd>
+                                        </div>
+                                    </dl>
+                                    <p id="age-hq-vote-reopens-at" class="age-headquarters-vote-status" aria-live="polite"></p>
+                                </div>
+                            </section>
+                            <p class="age-headquarters-authority-banner age-council-room-authority-banner" id="age-hq-authority-banner" hidden aria-live="polite"></p>
+                        </div>
+                    </aside>
+
+                    <section id="age-council-room-command" class="age-council-room-column age-council-room-column--command" aria-label="War council command">
+                        <div class="age-council-room-column-head">
+                            <span class="age-council-room-column-eyebrow">Restricted Access</span>
+                            <h2 class="age-council-room-column-title">War Council</h2>
+                        </div>
+                        <div class="age-council-room-command-stack">
+                            <div class="age-hq-command-ops-stack age-council-room-diplo-stack" data-hq-council-only hidden aria-label="Nation diplomacy operations">
+                                    <section class="age-headquarters-ops-card age-headquarters-ops-card--council age-council-room-panel">
+                                        <header class="age-headquarters-ops-card-head">
+                                            <h3 class="age-headquarters-ops-card-title">Alliance &amp; NAP</h3>
+                                            <p class="age-headquarters-ops-card-sub">Send and review alliance or non-aggression requests.</p>
+                                        </header>
+                                        <div class="age-headquarters-ops-card-body">
+                                            <div class="age-headquarters-diplo-tabs" role="tablist" aria-label="Diplomacy request types">
+                                                <button type="button" class="age-headquarters-diplo-tab is-active" data-hq-diplo-tab="incoming" role="tab" aria-selected="true">Incoming</button>
+                                                <button type="button" class="age-headquarters-diplo-tab" data-hq-diplo-tab="outgoing" role="tab" aria-selected="false" tabindex="-1">Outgoing</button>
+                                            </div>
+                                            <ul id="age-hq-diplo-request-list" class="age-headquarters-request-list" aria-live="polite"></ul>
+                                            <button type="button" id="age-hq-diplo-compose-btn" class="age-headquarters-ops-action-btn">Draft Alliance Request</button>
+                                        </div>
+                                    </section>
+                                    <section class="age-headquarters-ops-card age-headquarters-ops-card--council age-council-room-panel">
+                                        <header class="age-headquarters-ops-card-head">
+                                            <h3 class="age-headquarters-ops-card-title">Declaration of War</h3>
+                                            <p class="age-headquarters-ops-card-sub">Issue a formal war declaration against an opposing nation.</p>
+                                        </header>
+                                        <div class="age-headquarters-ops-card-body">
+                                            <label class="age-headquarters-field">
+                                                <span class="age-headquarters-field-label">Target nation</span>
+                                                <select id="age-hq-war-target-select" class="age-headquarters-select">
+                                                    <option value="">Select nationâ€¦</option>
+                                                </select>
+                                            </label>
+                                            <button type="button" id="age-hq-war-declare-btn" class="age-headquarters-ops-action-btn age-headquarters-ops-action-btn--danger">Send Declaration</button>
+                                            <p id="age-hq-war-feedback" class="age-headquarters-feedback" role="status" aria-live="polite" hidden></p>
+                                        </div>
+                                    </section>
+                            </div>
+
+                            <section class="age-headquarters-ops-card age-headquarters-ops-card--treasury age-council-room-panel age-council-room-fortifications" aria-label="Nation fortifications">
+                                <header class="age-headquarters-ops-card-head">
+                                    <h3 class="age-headquarters-ops-card-title">Fortifications</h3>
+                                    <p class="age-headquarters-ops-card-sub">Cities with active defensive fortifications.</p>
+                                </header>
+                                <div class="age-headquarters-ops-card-body">
+                                    <ul id="age-hq-treasury-fort-list" class="age-hq-treasury-fort-list" aria-live="polite"></ul>
+                                    <p id="age-hq-treasury-fort-empty" class="age-hq-treasury-empty">No fortified cities on record.</p>
+                                </div>
+                            </section>
+                        </div>
+                    </section>
+                </div>
+            </div>
+                </div>
+            </div>
+            <div data-age-area-shell-bottom></div>
+        </div>
+    </main>
+
+    <div id="age-dispatch-alert-border" class="age-dispatch-alert-border" hidden aria-hidden="true">
+        <button
+            type="button"
+            id="age-dispatch-alert-dismiss"
+            class="age-dispatch-alert-dismiss"
+            hidden
+            aria-label="Dismiss emergency dispatch alert">
+            Dismiss Alert
+        </button>
+    </div>
+
+<script src="rift-confirm-buttons.js?v=hub-action-btn-compact-1"></script>
+    <script src="dev-environment.js"></script>
+    <script src="rift-page-paths.js?v=council-room-page-1"></script>
+    <script src="rift-error-codes.js?v=army-group-battle-1"></script>
+    <script src="portal-alerts.js?v=update-complete-notice-1"></script>
+    <script src="rift-error-display.js?v=local-dev-api-quiet-1"></script>
+    <script src="commander-dossier-sync.js?v=commander-rank-pills-1"></script>
+    <script src="rank-data.js?v=commander-rank-pills-1"></script>
+    <script src="rift-commander-rank-titles.js?v=commander-rank-roster-1"></script>
+    <script src="script.js?v=commander-rank-roster-1"></script>
+    <script src="rift-official-age.js?v=official-age-page-1"></script>
+    <script src="age-movement-panel.js?v=council-room-page-1"></script>
+    <script src="rift-age-movement.js?v=council-room-page-1"></script>
+    <script src="rift-age-gold.js?v=age-gold-sync-1"></script>
+    <script src="rift-age-commander-rank.js?v=commander-rank-hud-1"></script>
+    <script src="rift-age-provisions.js?v=provisions-deplete-1"></script>
+    <script src="age-headquarters.js?v=council-room-page-1"></script>
+    <script src="age-dispatch-alert.js?v=council-room-page-1"></script>
+    <script src="commander-hub.js?v=commander-rank-pills-1"></script>
+    <script src="portal-commander-identity-menu.js?v=nametag-menu-anchor-1"></script>
+    <script src="age-nation-hub.js?v=nation-hub-headquarters-label-1"></script>
+    <script src="rift-nation-treasury.js?v=age-area-shell-1"></script>
+    <script src="game-chat.js?v=local-dev-api-quiet-1"></script>
+    <script src="age-area-shell.js?v=age-area-shell-1"></script>
+    <script src="age-council-room-page.js?v=age-area-shell-1"></script>
+    <script src="dev-page-navigator.js?v=council-room-page-1"></script>
+    <script src="custom-cursor.js?v=finger-press-hold-1"></script>
+</body>
+</html>

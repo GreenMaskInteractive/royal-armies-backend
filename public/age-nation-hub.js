@@ -26,7 +26,7 @@
     const RADIAL_WEDGE_ANGLES_DEG = Object.freeze([-67.5, -22.5, 22.5, 67.5, 112.5]);
 
     const HUB_ITEMS = Object.freeze([
-        { id: 'nation', label: 'Nation' },
+        { id: 'nation', label: 'Headquarters' },
         { id: 'records', label: 'Records' },
         { id: 'discoveries', label: 'Discoveries' },
         { id: 'banner', label: 'Banner' },
