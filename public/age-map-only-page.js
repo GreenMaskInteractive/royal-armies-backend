@@ -38,8 +38,18 @@
         if (!target || typeof target.closest !== 'function') return false;
         return Boolean(
             target.closest('.age-nation-hub')
-            || target.closest('#age-nation-hub-menu')
-            || target.closest('#age-nation-hub-radial')
+            || target.closest('#age-nation-hub-menu:not([hidden])')
+            || target.closest('#age-nation-hub-radial.is-open')
+        );
+    }
+
+    /** Modals opened from Nation Hub menu — must stay clickable on map-only shell */
+    function isNationHubDestinationModal(target) {
+        if (!target || typeof target.closest !== 'function') return false;
+        return Boolean(
+            target.closest('.age-age-center-modal:not([hidden])')
+            || target.closest('.rift-discoveries-workspace-modal:not([hidden])')
+            || target.closest('.age-chronicles-battle-pass-modal:not([hidden])')
         );
     }
 
@@ -85,6 +95,7 @@
     function isMapInteractionAllowed(target) {
         return isInsideMap(target)
             || isInsideNationHub(target)
+            || isNationHubDestinationModal(target)
             || isMapPlanToolTarget(target)
             || isInsideMapHudSidePanels(target)
             || isWarRoomModalTarget(target)

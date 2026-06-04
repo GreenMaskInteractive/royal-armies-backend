@@ -45,7 +45,13 @@ body.age-map-shell-only .age-nation-hub-toggle,
 body.age-map-shell-only .age-nation-hub-menu--box.is-open,
 body.age-map-shell-only .age-nation-hub-menu--box.is-open *,
 body.age-map-shell-only .age-nation-hub-radial.is-open,
-body.age-map-shell-only .age-nation-hub-radial.is-open * {
+body.age-map-shell-only .age-nation-hub-radial.is-open *,
+body.age-map-shell-only .age-age-center-modal:not([hidden]),
+body.age-map-shell-only .age-age-center-modal:not([hidden]) *,
+body.age-map-shell-only .rift-discoveries-workspace-modal:not([hidden]),
+body.age-map-shell-only .rift-discoveries-workspace-modal:not([hidden]) *,
+body.age-map-shell-only .age-chronicles-battle-pass-modal:not([hidden]),
+body.age-map-shell-only .age-chronicles-battle-pass-modal:not([hidden]) * {
     pointer-events: auto !important;
 }
 

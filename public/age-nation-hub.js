@@ -7,7 +7,7 @@
     /** Set true to restore full-screen radial menu (go-to design in style-age-nation-hub-radial.css). */
     const ENABLE_RADIAL_HUB_MENU = false;
 
-    const BOX_BUILD_VERSION = 'nation-hub-box-premium-1';
+    const BOX_BUILD_VERSION = 'nation-hub-box-premium-2';
 
     const BOX_MENU_COLUMNS = Object.freeze([
         { heading: 'Realm', itemIds: ['nation', 'records', 'discoveries'] },
@@ -61,7 +61,11 @@
     }
 
     function isHubOpen() {
-        return Boolean(getHub()?.classList.contains('is-open'));
+        if (ENABLE_RADIAL_HUB_MENU) {
+            return Boolean(getRadial()?.classList.contains('is-open'));
+        }
+        const menu = getMenu();
+        return Boolean(menu && !menu.hidden && menu.classList.contains('is-open'));
     }
 
     function ensureRadialPortal() {
@@ -369,12 +373,12 @@
         } else {
             ensureBoxMenuPortal();
             renderBoxMenu();
-            getMenu()?.querySelector('.age-nation-hub-menu-backdrop')?.addEventListener('click', (event) => {
+            getMenu()?.addEventListener('click', (event) => {
+                if (!event.target.closest('.age-nation-hub-menu-backdrop, .age-nation-hub-menu-close')) {
+                    return;
+                }
                 event.preventDefault();
-                closeHub();
-            });
-            getMenu()?.querySelector('.age-nation-hub-menu-close')?.addEventListener('click', (event) => {
-                event.preventDefault();
+                event.stopPropagation();
                 closeHub();
             });
         }
