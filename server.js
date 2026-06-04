@@ -1968,18 +1968,24 @@ function resolveHeadquartersNationElectionState(nationKey) {
 }
 
 function buildHeadquartersWorkspaceForCommander(commander) {
-    const access = resolveHeadquartersAccessForCommander(commander);
-    const electionState = resolveHeadquartersNationElectionState(access.gameNation);
-    const refreshedAccess = resolveHeadquartersAccessForCommander(commander);
+    const resolvedAccess = resolveHeadquartersAccessForCommander(commander);
+    const gameNation = String(resolvedAccess.gameNation || '').trim()
+        || getCouncilBoardStorageKey(resolveCouncilBoardNationKey(commander));
+    const access = {
+        ...resolvedAccess,
+        gameNation,
+        memberHub: resolvedAccess.memberHub !== false
+    };
+    const electionState = resolveHeadquartersNationElectionState(gameNation);
     const voteCandidates = listNationVoteCandidates(
         db.get('commanders').value() || [],
-        access.gameNation,
+        gameNation,
         (entry) => getCouncilBoardStorageKey(resolveCouncilBoardNationKey(entry))
     );
-    const warTargets = listWarTargetNations(access.gameNation);
+    const warTargets = listWarTargetNations(gameNation);
 
     const workspace = buildHeadquartersWorkspacePayload({
-        access: refreshedAccess,
+        access,
         nationState: electionState.nationState,
         voteCandidates,
         warTargets,

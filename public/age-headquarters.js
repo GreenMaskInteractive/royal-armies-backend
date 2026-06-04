@@ -140,11 +140,11 @@
             };
         }
 
-        if (workspace.gameNation) {
+        if (canViewHeadquartersPublic(workspace)) {
             return null;
         }
 
-        if (!workspace.gameNation) {
+        if (!String(workspace.gameNation || '').trim()) {
             return {
                 message: 'This commander has no nation assigned yet. Choose a nation on the Age map, then open the Council Room.',
                 tone: 'warn'
@@ -250,7 +250,7 @@
             threatMatrix: incoming.threatMatrix ?? previous.threatMatrix,
             spyLogs: incoming.spyLogs ?? previous.spyLogs,
             hqBounties: incoming.hqBounties ?? previous.hqBounties,
-            gameNation: incoming.gameNation || previous.gameNation,
+            gameNation: String(incoming.gameNation || '').trim() || String(previous.gameNation || '').trim(),
             fortifiedCities: incoming.fortifiedCities ?? previous.fortifiedCities,
             warTargets: incoming.warTargets ?? previous.warTargets
         };
@@ -331,6 +331,53 @@
         return Boolean(access.council || access.leader || access.viceLeader);
     }
 
+    function resolveHeadquartersGameNation(workspace, username) {
+        const fromWorkspace = String(workspace?.gameNation || '').trim();
+        if (fromWorkspace) return fromWorkspace;
+
+        const movementNation = String(
+            global.RoyalArmiesAgeMovement?.resolvePlayerNationId?.()
+            || global.RoyalArmiesAgeWorldMap?.getPlayerNationId?.()
+            || ''
+        ).trim();
+        if (movementNation) return movementNation.toLowerCase();
+
+        const activeUser = String(username || resolveHeadquartersUsername() || '').trim();
+        if (activeUser) {
+            return `staging:${normalizedUsername(activeUser)}`;
+        }
+
+        return '';
+    }
+
+    function canViewHeadquartersPublic(workspace) {
+        if (!workspace) return false;
+        if (String(workspace.gameNation || '').trim()) return true;
+        if (isDevOwnerHeadquartersBypass(resolveHeadquartersUsername())) return true;
+        return Boolean(workspace.access?.memberHub);
+    }
+
+    function finalizeHeadquartersWorkspace(workspace, username) {
+        if (!workspace || typeof workspace !== 'object') return workspace;
+
+        const gameNation = resolveHeadquartersGameNation(workspace, username);
+        if (!gameNation) return workspace;
+
+        const devBypass = isDevOwnerHeadquartersBypass(username);
+        return {
+            ...workspace,
+            gameNation,
+            access: {
+                ...(workspace.access || {}),
+                memberHub: workspace.access?.memberHub !== false,
+                council: Boolean(workspace.access?.council || devBypass),
+                leader: Boolean(workspace.access?.leader || devBypass),
+                viceLeader: Boolean(workspace.access?.viceLeader || devBypass),
+                fullAuthority: Boolean(workspace.access?.fullAuthority || devBypass)
+            }
+        };
+    }
+
     function buildWorkspaceRevision(workspace) {
         if (!workspace) return '';
         return JSON.stringify({
@@ -393,7 +440,7 @@
 
     function syncHeadquartersViewMode(workspace) {
         const root = global.document.getElementById('age-council-room-workspace');
-        const canViewPublic = Boolean(workspace?.gameNation);
+        const canViewPublic = canViewHeadquartersPublic(workspace);
         const showManagerControls = hasActiveManagerControls();
         const showMemberElections = Boolean(memberHubActive && !councilAccess);
 
@@ -770,8 +817,10 @@
         const savedPlanning = readDevPlanningSnapshot(username);
         const displayName = String(username || '').trim() || 'caleb_admin';
         const devLeader = { username: normalizedUsername(displayName), name: displayName };
+        const gameNation = resolveHeadquartersGameNation({}, username);
 
         return {
+            gameNation,
             access: {
                 council: true,
                 leader: true,
@@ -902,7 +951,10 @@
             warTargets: Array.isArray(base.warTargets) && base.warTargets.length
                 ? base.warTargets
                 : fallback.warTargets,
-            fortifiedCities: Array.isArray(base.fortifiedCities) ? base.fortifiedCities : fallback.fortifiedCities
+            fortifiedCities: Array.isArray(base.fortifiedCities) ? base.fortifiedCities : fallback.fortifiedCities,
+            gameNation: resolveHeadquartersGameNation(base, username)
+                || fallback.gameNation
+                || resolveHeadquartersGameNation({}, username)
         };
     }
 
@@ -1189,6 +1241,7 @@
         const preserveManagerOpen = Boolean(silent && hqManagerModeOpen);
         workspace = coalesceHeadquartersWorkspace(workspace, options);
         workspace = mergeDevOwnerHeadquartersWorkspace(workspace, username);
+        workspace = finalizeHeadquartersWorkspace(workspace, username);
         if (!workspace) {
             if (!silent) {
                 setHeadquartersLoadStatus(describeHeadquartersAccessGap(null)?.message || '', 'error');
@@ -2123,7 +2176,6 @@
         const generation = ++hqViewOpenGeneration;
         bindUi();
         bindCouncilRoomModalChrome();
-        applyDevOwnerCouncilAccessUI();
         const ownerBypass = isDevOwnerHeadquartersBypass(resolveHeadquartersUsername());
         await fetchHeadquartersWorkspace();
         if (generation !== hqViewOpenGeneration) return;
