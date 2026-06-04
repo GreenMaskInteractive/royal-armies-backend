@@ -481,7 +481,8 @@
     display: none;
 }
 
-.age-headquarters-workspace {
+/* Legacy full-screen HQ shell on the Age map (replaced by council-room modal). */
+#age-headquarters-workspace.age-headquarters-workspace {
     display: none !important;
 }
 
