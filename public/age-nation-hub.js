@@ -5,7 +5,7 @@
     'use strict';
 
     const DEFAULT_CENTER_LABEL = 'MENU';
-    const RADIAL_BUILD_VERSION = 'premium-1';
+    const RADIAL_BUILD_VERSION = 'rpg-wheel-1';
     const SLOT_COUNT = 5;
     const SLOT_START_ANGLE_DEG = -90;
 
@@ -227,20 +227,107 @@
         'battle-pass': '<path d="M18 40c6-10 22-10 28 0" fill="none" stroke="currentColor" stroke-width="2"/><path d="M24 26h16v8H24z" fill="none" stroke="currentColor" stroke-width="2"/><path d="M28 22h8v4h-8z" fill="currentColor" opacity="0.7"/>'
     });
 
+    function polarPoint(cx, cy, radius, angleDeg) {
+        const rad = ((angleDeg - 90) * Math.PI) / 180;
+        return {
+            x: cx + radius * Math.cos(rad),
+            y: cy + radius * Math.sin(rad)
+        };
+    }
+
+    function buildWedgePath(cx, cy, innerR, outerR, startDeg, endDeg) {
+        const startOuter = polarPoint(cx, cy, outerR, startDeg);
+        const endOuter = polarPoint(cx, cy, outerR, endDeg);
+        const endInner = polarPoint(cx, cy, innerR, endDeg);
+        const startInner = polarPoint(cx, cy, innerR, startDeg);
+        const largeArc = endDeg - startDeg > 180 ? 1 : 0;
+        return [
+            `M ${startInner.x.toFixed(1)} ${startInner.y.toFixed(1)}`,
+            `L ${startOuter.x.toFixed(1)} ${startOuter.y.toFixed(1)}`,
+            `A ${outerR} ${outerR} 0 ${largeArc} 1 ${endOuter.x.toFixed(1)} ${endOuter.y.toFixed(1)}`,
+            `L ${endInner.x.toFixed(1)} ${endInner.y.toFixed(1)}`,
+            `A ${innerR} ${innerR} 0 ${largeArc} 0 ${startInner.x.toFixed(1)} ${startInner.y.toFixed(1)}`,
+            'Z'
+        ].join(' ');
+    }
+
+    function buildOrnateWheelSvg() {
+        const cx = 260;
+        const cy = 260;
+        const step = 360 / SLOT_COUNT;
+        const wedgeDefs = [];
+        const wedgePaths = [];
+        RADIAL_ITEMS.forEach((item, index) => {
+            const start = SLOT_START_ANGLE_DEG + step * index + 1.2;
+            const end = SLOT_START_ANGLE_DEG + step * (index + 1) - 1.2;
+            const fillA = index % 2 === 0 ? '#2a2218' : '#1e1812';
+            const fillB = index % 2 === 0 ? '#342a1e' : '#261f16';
+            const path = buildWedgePath(cx, cy, 92, 228, start, end);
+            const mid = (start + end) / 2;
+            const rune = polarPoint(cx, cy, 178, mid);
+            wedgeDefs.push(
+                `<linearGradient id="wedge-${index}" x1="0" y1="0" x2="1" y2="1">`
+                + `<stop offset="0%" stop-color="${fillB}"/><stop offset="100%" stop-color="${fillA}"/>`
+                + '</linearGradient>'
+            );
+            wedgePaths.push(
+                `<path d="${path}" fill="url(#wedge-${index})" stroke="#5c4a28" stroke-width="1.2"/>`
+                + `<path d="${path}" fill="none" stroke="rgba(255,215,128,0.18)" stroke-width="0.8"/>`
+                + `<circle cx="${rune.x.toFixed(1)}" cy="${rune.y.toFixed(1)}" r="4" fill="#c9a227" opacity="0.7"/>`
+                + `<circle cx="${rune.x.toFixed(1)}" cy="${rune.y.toFixed(1)}" r="6" fill="none" stroke="rgba(255,215,128,0.25)" stroke-width="1"/>`
+            );
+        });
+
+        const svg = (
+            '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 520" width="520" height="520">'
+            + '<defs>'
+            + '<radialGradient id="wheel-bg" cx="50%" cy="42%" r="58%">'
+            + '<stop offset="0%" stop-color="#3d3224"/><stop offset="55%" stop-color="#16120c"/><stop offset="100%" stop-color="#080604"/>'
+            + '</radialGradient>'
+            + '<linearGradient id="gold-ring" x1="0" y1="0" x2="0" y2="1">'
+            + '<stop offset="0%" stop-color="#ffe9a8"/><stop offset="45%" stop-color="#c9a227"/><stop offset="100%" stop-color="#6b4e18"/>'
+            + '</linearGradient>'
+            + '<filter id="wheel-shadow"><feDropShadow dx="0" dy="8" stdDeviation="12" flood-color="#000" flood-opacity="0.65"/></filter>'
+            + wedgeDefs.join('')
+            + '</defs>'
+            + '<circle cx="260" cy="260" r="250" fill="url(#wheel-bg)" filter="url(#wheel-shadow)"/>'
+            + wedgePaths.join('')
+            + '<circle cx="260" cy="260" r="228" fill="none" stroke="url(#gold-ring)" stroke-width="5" opacity="0.95"/>'
+            + '<circle cx="260" cy="260" r="218" fill="none" stroke="#3d3018" stroke-width="2"/>'
+            + '<circle cx="260" cy="260" r="92" fill="#120e0a" stroke="url(#gold-ring)" stroke-width="3"/>'
+            + '<circle cx="260" cy="260" r="84" fill="none" stroke="rgba(255,215,128,0.2)" stroke-width="1" stroke-dasharray="4 6"/>'
+            + '<g fill="#c9a227" opacity="0.85">'
+            + '<polygon points="260,18 266,32 260,28 254,32"/>'
+            + '<polygon points="498,260 484,266 488,260 484,254"/>'
+            + '<polygon points="260,502 254,488 260,492 266,488"/>'
+            + '<polygon points="22,260 36,254 32,260 36,266"/>'
+            + '</g>'
+            + '<g stroke="rgba(255,215,128,0.35)" stroke-width="1.5" fill="none">'
+            + '<path d="M260 32 L260 52 M498 260 L478 260 M260 488 L260 468 M22 260 L42 260"/>'
+            + '</g>'
+            + '</svg>'
+        );
+        return `data:image/svg+xml,${encodeURIComponent(svg)}`;
+    }
+
     function buildPlaceholderSvgDataUri(itemId, label, index) {
         const hue = 38 + index * 16;
         const glyph = RADIAL_SLOT_ICONS[itemId] || '';
         const safeLabel = String(label || 'Slot').slice(0, 14);
         const svg = (
-            `<svg xmlns="http://www.w3.org/2000/svg" width="72" height="72" viewBox="0 0 64 64">`
-            + `<defs><linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">`
-            + `<stop offset="0%" stop-color="hsl(${hue} 32% 24%)"/>`
-            + `<stop offset="100%" stop-color="hsl(${hue} 22% 10%)"/>`
-            + `</linearGradient></defs>`
-            + `<rect width="64" height="64" rx="12" fill="url(#bg)"/>`
-            + `<rect x="5" y="5" width="54" height="54" rx="10" fill="none" stroke="hsl(${hue} 62% 58%)" stroke-width="1.5" opacity="0.55"/>`
-            + `<g color="hsl(${hue} 55% 78%)" transform="translate(0 2)">${glyph}</g>`
-            + `<text x="32" y="54" text-anchor="middle" font-family="Cinzel,serif" font-size="7" letter-spacing="0.08em" fill="hsl(${hue} 35% 82%)" opacity="0.92">${safeLabel}</text>`
+            `<svg xmlns="http://www.w3.org/2000/svg" width="80" height="80" viewBox="0 0 64 64">`
+            + `<defs>`
+            + `<linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">`
+            + `<stop offset="0%" stop-color="hsl(${hue} 28% 32%)"/>`
+            + `<stop offset="100%" stop-color="hsl(${hue} 22% 12%)"/>`
+            + `</linearGradient>`
+            + `<linearGradient id="rim" x1="0" y1="0" x2="1" y2="1">`
+            + `<stop offset="0%" stop-color="#ffe9a8"/><stop offset="100%" stop-color="#8a6d2e"/>`
+            + `</linearGradient>`
+            + `</defs>`
+            + `<path d="M32 6 L52 18 V46 L32 58 L12 46 V18 Z" fill="url(#bg)" stroke="url(#rim)" stroke-width="2"/>`
+            + `<path d="M32 12 L46 21 V43 L32 52 L18 43 V21 Z" fill="none" stroke="hsl(${hue} 50% 55%)" stroke-width="1" opacity="0.5"/>`
+            + `<g color="hsl(${hue} 58% 82%)" transform="translate(0 -2)">${glyph}</g>`
             + '</svg>'
         );
         return `data:image/svg+xml,${encodeURIComponent(svg)}`;
@@ -250,18 +337,25 @@
         const dial = getDial();
         if (!dial || dial.dataset.ageRadialVersion === RADIAL_BUILD_VERSION) return;
 
+        const wheelSrc = buildOrnateWheelSvg();
         const trackHtml = (
             '<div class="age-nation-hub-radial-track" aria-hidden="true">'
-            + '<div class="age-nation-hub-radial-track-aura"></div>'
-            + '<div class="age-nation-hub-radial-track-ring"></div>'
-            + '<div class="age-nation-hub-radial-track-ticks"></div>'
+            + `<img class="age-nation-hub-radial-wheel-plate" src="${wheelSrc}" alt="" decoding="async">`
+            + '<div class="age-nation-hub-radial-wheel-rim" aria-hidden="true"></div>'
+            + '<div class="age-nation-hub-radial-wheel-gems" aria-hidden="true">'
+            + '<span class="age-nation-hub-radial-wheel-gem age-nation-hub-radial-wheel-gem--n"></span>'
+            + '<span class="age-nation-hub-radial-wheel-gem age-nation-hub-radial-wheel-gem--e"></span>'
+            + '<span class="age-nation-hub-radial-wheel-gem age-nation-hub-radial-wheel-gem--s"></span>'
+            + '<span class="age-nation-hub-radial-wheel-gem age-nation-hub-radial-wheel-gem--w"></span>'
+            + '</div>'
             + '</div>'
         );
 
         const centerHtml = (
             '<div class="age-nation-hub-radial-center" aria-live="polite">'
-            + '<div class="age-nation-hub-radial-center-halo" aria-hidden="true"></div>'
-            + '<div class="age-nation-hub-radial-center-ring" aria-hidden="true"></div>'
+            + '<div class="age-nation-hub-radial-center-plate" aria-hidden="true"></div>'
+            + '<div class="age-nation-hub-radial-center-octagon" aria-hidden="true"></div>'
+            + '<div class="age-nation-hub-radial-center-core" aria-hidden="true"></div>'
             + `<span id="age-nation-hub-radial-label" class="age-nation-hub-radial-center-label">${DEFAULT_CENTER_LABEL}</span>`
             + '</div>'
         );
@@ -273,16 +367,19 @@
             const delaySec = (0.07 + 0.055 * index).toFixed(3);
             return (
                 `<div class="age-nation-hub-radial-slot-well age-nation-hub-radial-slot-well--${item.id}"`
-                + ` style="--age-radial-slot-angle: ${angleDeg}deg; --age-radial-slot-delay: ${delaySec}s; --age-radial-slot-index: ${index};" aria-hidden="true">`
+                + ` style="--age-radial-slot-angle: ${angleDeg}deg; --age-radial-slot-delay: ${delaySec}s; --age-radial-slot-index: ${index};">`
+                + '<span class="age-nation-hub-radial-slot-pedestal" aria-hidden="true"></span>'
                 + `<button type="button" class="age-nation-hub-radial-slot age-nation-hub-radial-slot--${item.id}"`
                 + ` data-age-hub-radial="${item.id}"`
                 + ` data-age-hub-radial-label="${item.label}"`
                 + ` role="menuitem"`
                 + ` aria-label="${item.label}">`
+                + '<span class="age-nation-hub-radial-slot-crown" aria-hidden="true"></span>'
                 + '<span class="age-nation-hub-radial-slot-frame">'
                 + `<img class="age-nation-hub-radial-slot-img" src="${placeholderSrc}" alt="" decoding="async">`
                 + '</span>'
                 + '</button>'
+                + `<span class="age-nation-hub-radial-slot-caption">${item.label}</span>`
                 + '</div>'
             );
         }).join('');
