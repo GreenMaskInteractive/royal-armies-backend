@@ -7,7 +7,7 @@
     /** Set true to restore full-screen radial menu (go-to design in style-age-nation-hub-radial.css). */
     const ENABLE_RADIAL_HUB_MENU = false;
 
-    const BOX_BUILD_VERSION = 'nation-hub-box-2';
+    const BOX_BUILD_VERSION = 'nation-hub-box-popup-1';
     const RADIAL_MENU_IMAGE = 'images/radialmenu.png?v=radialmenu-accent-3';
     const RADIAL_BUILD_VERSION = 'radialmenu-accent-3';
     const RADIAL_WEDGE_ANGLES_DEG = Object.freeze([-67.5, -22.5, 22.5, 67.5, 112.5]);
@@ -24,7 +24,6 @@
 
     let bound = false;
     let escapeHandler = null;
-    let boxMenuLayoutHandler = null;
 
     function getHub() {
         return global.document.getElementById('age-nation-hub');
@@ -65,29 +64,7 @@
         const menu = getMenu();
         if (!menu || menu.dataset.ageBoxPortaled === 'true') return;
         global.document.body.appendChild(menu);
-        menu.classList.add('is-box-menu-portaled');
         menu.dataset.ageBoxPortaled = 'true';
-    }
-
-    function syncBoxMenuPosition() {
-        const menu = getMenu();
-        const toggle = getToggle();
-        if (!menu || !toggle) return;
-
-        const rect = toggle.getBoundingClientRect();
-        const gapPx = 8;
-        menu.style.setProperty('--age-nation-hub-box-top', `${Math.round(rect.bottom + gapPx)}px`);
-        menu.style.setProperty('--age-nation-hub-box-left', `${Math.round(rect.left)}px`);
-    }
-
-    function bindBoxMenuLayoutSync() {
-        if (boxMenuLayoutHandler) return;
-        boxMenuLayoutHandler = () => {
-            if (!isHubOpen()) return;
-            syncBoxMenuPosition();
-        };
-        global.addEventListener('resize', boxMenuLayoutHandler);
-        global.addEventListener('scroll', boxMenuLayoutHandler, true);
     }
 
     function setHubOpen(open) {
@@ -132,15 +109,14 @@
 
         if (nextOpen) {
             ensureBoxMenuPortal();
-            syncBoxMenuPosition();
-            menu.classList.add('is-box-menu-open');
+            menu.classList.add('is-open');
             menu.hidden = false;
             menu.removeAttribute('hidden');
             menu.setAttribute('aria-hidden', 'false');
             return;
         }
 
-        menu.classList.remove('is-box-menu-open');
+        menu.classList.remove('is-open');
         menu.hidden = true;
         menu.setAttribute('hidden', '');
         menu.setAttribute('aria-hidden', 'true');
@@ -357,7 +333,10 @@
         } else {
             ensureBoxMenuPortal();
             renderBoxMenu();
-            bindBoxMenuLayoutSync();
+            getMenu()?.querySelector('.age-nation-hub-menu-backdrop')?.addEventListener('click', (event) => {
+                event.preventDefault();
+                closeHub();
+            });
         }
 
         getToggle()?.addEventListener('click', (event) => {

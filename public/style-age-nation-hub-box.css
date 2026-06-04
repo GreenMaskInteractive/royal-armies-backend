@@ -1,50 +1,74 @@
 /**
- * FLEX — Nation Hub box menu (dual column, active UI).
+ * FLEX — Nation Hub box menu (centered popup + dual columns, like radial overlay).
  */
 
 #age-page-canvas .age-nation-hub-menu.age-nation-hub-menu--box {
-    position: absolute;
-    top: calc(100% + 8px);
-    right: 0;
-    left: auto;
+    position: fixed;
+    inset: 0;
     z-index: 12050;
     display: none;
-    visibility: visible;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+    width: auto;
+    min-width: 0;
+    max-width: none;
     max-height: none;
-    width: max-content;
-    min-width: 320px;
-    max-width: min(420px, 92vw);
     overflow: visible;
     pointer-events: none;
+    visibility: hidden;
     opacity: 0;
     border: none;
     border-radius: 0;
     background: transparent;
     box-shadow: none;
-    transform: translateY(-6px);
-    transition:
-        opacity 0.2s ease,
-        transform 0.24s cubic-bezier(0.16, 1, 0.28, 1);
-}
-
-#age-page-canvas .age-nation-hub-menu.age-nation-hub-menu--box.is-box-menu-portaled {
-    position: fixed;
-    top: var(--age-nation-hub-box-top, 0);
-    left: var(--age-nation-hub-box-left, 0);
-    right: auto;
-}
-
-#age-page-canvas .age-nation-hub-menu.age-nation-hub-menu--box.is-box-menu-open:not([hidden]) {
-    display: block !important;
-    visibility: visible !important;
-    max-height: none !important;
-    opacity: 1 !important;
-    pointer-events: auto !important;
-    transform: translateY(0);
+    transform: none;
+    transition: opacity 0.28s ease, visibility 0.28s ease;
 }
 
 #age-page-canvas .age-nation-hub-menu.age-nation-hub-menu--box[hidden] {
     display: none !important;
+}
+
+#age-page-canvas .age-nation-hub-menu.age-nation-hub-menu--box.is-open {
+    display: flex !important;
+    visibility: visible !important;
+    max-height: none !important;
+    opacity: 1 !important;
+    pointer-events: auto !important;
+}
+
+.age-nation-hub-menu-backdrop {
+    position: absolute;
+    inset: 0;
+    border: 0;
+    padding: 0;
+    margin: 0;
+    background:
+        radial-gradient(ellipse 50% 45% at 50% 50%, rgba(0, 0, 0, 0.15) 0%, transparent 55%),
+        rgba(0, 0, 0, 0.72);
+    backdrop-filter: blur(6px);
+    cursor: default;
+}
+
+.age-nation-hub-menu-dialog {
+    position: relative;
+    z-index: 1;
+    flex-shrink: 0;
+    box-sizing: border-box;
+    width: min(480px, 92vw);
+    pointer-events: auto;
+    opacity: 0;
+    transform: scale(0.92);
+    transition:
+        opacity 0.36s ease,
+        transform 0.44s cubic-bezier(0.16, 1, 0.28, 1);
+    filter: drop-shadow(0 24px 48px rgba(0, 0, 0, 0.75));
+}
+
+#age-page-canvas .age-nation-hub-menu.age-nation-hub-menu--box.is-open .age-nation-hub-menu-dialog {
+    opacity: 1;
+    transform: scale(1);
 }
 
 .age-nation-hub-menu-panel {
@@ -62,14 +86,14 @@
 .age-nation-hub-menu-columns {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 8px;
-    padding: 10px;
+    gap: 10px;
+    padding: 14px;
 }
 
 .age-nation-hub-menu-col {
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: 8px;
     min-width: 0;
 }
 
@@ -78,14 +102,14 @@
     align-items: center;
     justify-content: flex-start;
     width: 100%;
-    min-height: 40px;
+    min-height: 44px;
     margin: 0;
-    padding: 10px 12px;
+    padding: 11px 14px;
     border: 1px solid rgba(184, 144, 48, 0.28);
     border-radius: 4px;
     background: rgba(0, 0, 0, 0.28);
     font-family: 'Cinzel', serif;
-    font-size: 0.78rem;
+    font-size: 0.8rem;
     font-weight: 700;
     letter-spacing: 0.08em;
     text-transform: uppercase;
@@ -111,11 +135,14 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-    #age-page-canvas .age-nation-hub-menu.age-nation-hub-menu--box {
-        transition-duration: 0.01ms !important;
-    }
-
+    #age-page-canvas .age-nation-hub-menu.age-nation-hub-menu--box,
+    .age-nation-hub-menu-dialog,
     .age-nation-hub-menu-item {
         transition-duration: 0.01ms !important;
     }
+}
+
+body.age-map-shell-only .age-nation-hub-menu--box[hidden] {
+    display: none !important;
+    pointer-events: none !important;
 }
