@@ -39,13 +39,10 @@
 }
 
 /* -------------------------------------------------------------------------- */
-/* Steampunk command wheel (bronze + cyan, wedge segments)                    */
+/* Radial menu — images/radialmenu.png (8-segment plate, 5 hit wedges)        */
 /* -------------------------------------------------------------------------- */
 
 .age-nation-hub-radial {
-    --age-radial-cyan: #4de8d4;
-    --age-radial-cyan-dim: rgba(61, 217, 196, 0.45);
-    --age-radial-bronze: #5a4a32;
     position: fixed;
     inset: 0;
     z-index: 12050;
@@ -76,24 +73,22 @@
     padding: 0;
     margin: 0;
     background:
-        radial-gradient(ellipse 48% 42% at 50% 50%, rgba(61, 217, 196, 0.1) 0%, transparent 58%),
-        radial-gradient(ellipse 95% 90% at 50% 50%, rgba(6, 10, 14, 0.4) 0%, rgba(2, 4, 8, 0.88) 100%);
-    backdrop-filter: blur(10px) saturate(1.15);
+        radial-gradient(ellipse 50% 45% at 50% 50%, rgba(0, 0, 0, 0.15) 0%, transparent 55%),
+        rgba(0, 0, 0, 0.72);
+    backdrop-filter: blur(6px);
     cursor: default;
 }
 
 .age-nation-hub-radial-dial {
-    --age-radial-track-size: 560px;
-    --age-radial-center-size: 168px;
-    --age-radial-wedge-size: 280px;
+    --age-radial-track-size: min(640px, 72vmin);
+    --age-radial-wedge-size: min(300px, 34vmin);
+    --age-radial-inner-hole: 26%;
     position: relative;
     flex-shrink: 0;
     width: 0;
     height: 0;
     pointer-events: none;
-    filter:
-        drop-shadow(0 32px 64px rgba(0, 0, 0, 0.72))
-        drop-shadow(0 0 48px rgba(61, 217, 196, 0.12));
+    filter: drop-shadow(0 24px 48px rgba(0, 0, 0, 0.75));
 }
 
 /* Ornate wheel plate (SVG wedges + gold rings) */
@@ -121,44 +116,15 @@
 .age-nation-hub-radial-wheel-plate {
     display: block;
     width: 100%;
-    height: 100%;
-    border-radius: 50%;
+    height: auto;
+    aspect-ratio: 731 / 725;
+    object-fit: contain;
     pointer-events: none;
     user-select: none;
+    -webkit-user-drag: none;
 }
 
-/* Center nexus — hex frame + gear art (no label) */
-.age-nation-hub-radial-center {
-    position: absolute;
-    left: 50%;
-    top: 50%;
-    z-index: 4;
-    width: var(--age-radial-center-size);
-    height: var(--age-radial-center-size);
-    margin: calc(-0.5 * var(--age-radial-center-size)) 0 0 calc(-0.5 * var(--age-radial-center-size));
-    pointer-events: none;
-    opacity: 0;
-    transform: scale(0.75);
-    transition:
-        opacity 0.36s ease 0.08s,
-        transform 0.44s cubic-bezier(0.16, 1, 0.28, 1) 0.08s;
-}
-
-.age-nation-hub-radial.is-open .age-nation-hub-radial-center {
-    opacity: 1;
-    transform: scale(1);
-}
-
-.age-nation-hub-radial-center-art {
-    display: block;
-    width: 100%;
-    height: 100%;
-    filter: drop-shadow(0 0 20px rgba(61, 217, 196, 0.35));
-    pointer-events: none;
-    user-select: none;
-}
-
-/* Wedge hit zones — align with wheel segments */
+/* Wedge hit zones — 45° slices aligned to radialmenu.png segments */
 .age-nation-hub-radial-wedge {
     --age-radial-wedge-angle: 0deg;
     --age-radial-wedge-delay: 0s;
@@ -177,7 +143,7 @@
     opacity: 0;
     transform: rotate(var(--age-radial-wedge-angle)) scale(0.92);
     transform-origin: center center;
-    clip-path: polygon(50% 50%, 50% 2%, 97% 34%, 82% 97%, 18% 97%, 3% 34%);
+    clip-path: polygon(50% 50%, 50% 4%, 88% 16%, 97% 50%, 88% 84%, 50% 96%, 12% 84%, 12% 16%);
     transition:
         opacity 0.32s ease,
         transform 0.4s cubic-bezier(0.16, 1, 0.28, 1),
@@ -195,16 +161,13 @@
 .age-nation-hub-radial-wedge:hover,
 .age-nation-hub-radial-wedge:focus-visible {
     outline: none;
-    background: rgba(61, 217, 196, 0.14);
-    box-shadow:
-        inset 0 0 32px rgba(61, 217, 196, 0.18),
-        0 0 28px rgba(61, 217, 196, 0.22);
+    background: rgba(255, 255, 255, 0.1);
+    box-shadow: inset 0 0 36px rgba(255, 255, 255, 0.12);
 }
 
 @media (prefers-reduced-motion: reduce) {
     .age-nation-hub-radial-track,
-    .age-nation-hub-radial-wedge,
-    .age-nation-hub-radial-center {
+    .age-nation-hub-radial-wedge {
         transition-duration: 0.01ms !important;
     }
 }
