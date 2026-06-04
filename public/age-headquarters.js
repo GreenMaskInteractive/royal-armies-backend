@@ -178,7 +178,11 @@
     }
 
     function hasActiveManagerControls() {
-        return Boolean(councilAccess && hqManagerModeOpen);
+        return Boolean(hqManagerEligible && hqManagerModeOpen);
+    }
+
+    function isHqManagerToggleActive() {
+        return Boolean(hqManagerEligible && hqManagerModeOpen);
     }
 
     function resolveHqManagerEligible(access) {
@@ -274,9 +278,10 @@
         const managerBtn = global.document.getElementById('age-hq-manager-toggle');
         if (managerBtn) {
             setNodeHidden(managerBtn, !hqManagerEligible);
-            managerBtn.setAttribute('aria-pressed', showManagerControls ? 'true' : 'false');
-            managerBtn.classList.toggle('is-active', showManagerControls);
-            managerBtn.title = showManagerControls
+            const managerOpen = isHqManagerToggleActive();
+            managerBtn.setAttribute('aria-pressed', managerOpen ? 'true' : 'false');
+            managerBtn.classList.toggle('is-active', managerOpen);
+            managerBtn.title = managerOpen
                 ? 'Close HQ Manager controls'
                 : 'Open HQ Manager — council planning, diplomacy, and dispatch';
         }
@@ -302,7 +307,7 @@
         syncHeadquartersViewMode(lastAppliedWorkspace);
         syncDispatchPanel(isCouncilRoomViewActive());
 
-        if (hqManagerModeOpen && councilAccess) {
+        if (hqManagerModeOpen && hqManagerEligible) {
             void ensureManagerPlanningSurface();
         } else {
             setActiveMarkerType('');
@@ -1600,29 +1605,52 @@
         syncToolbarState();
     }
 
+    function bindCouncilRoomModalChrome() {
+        const managerBtn = global.document.getElementById('age-hq-manager-toggle');
+        if (managerBtn && managerBtn.dataset.hqModalChromeBound !== '1') {
+            managerBtn.dataset.hqModalChromeBound = '1';
+            managerBtn.addEventListener('click', (event) => {
+                event.preventDefault();
+                event.stopPropagation();
+                setHqManagerModeOpen(!hqManagerModeOpen);
+            });
+        }
+
+        const closeBtn = global.document.getElementById('age-council-room-close');
+        if (closeBtn && closeBtn.dataset.hqModalChromeBound !== '1') {
+            closeBtn.dataset.hqModalChromeBound = '1';
+            closeBtn.addEventListener('click', (event) => {
+                event.preventDefault();
+                event.stopPropagation();
+                setCouncilRoomModalOpen(false);
+            });
+        }
+
+        const backdrop = global.document.getElementById('age-council-room-backdrop');
+        if (backdrop && backdrop.dataset.hqModalChromeBound !== '1') {
+            backdrop.dataset.hqModalChromeBound = '1';
+            backdrop.addEventListener('click', () => {
+                setCouncilRoomModalOpen(false);
+            });
+        }
+
+        const dialog = getCouncilRoomModal()?.querySelector('.age-council-room-dialog');
+        if (dialog && dialog.dataset.hqModalChromeBound !== '1') {
+            dialog.dataset.hqModalChromeBound = '1';
+            dialog.addEventListener('click', (event) => {
+                event.stopPropagation();
+            });
+        }
+    }
+
     function bindUi() {
         if (mounted) return;
         mounted = true;
 
         workspaceEl = global.document.getElementById('age-council-room-workspace');
+        bindCouncilRoomModalChrome();
 
         global.document.getElementById('age-hq-treasury-fort-list')?.addEventListener('click', onTreasuryFortListClick);
-
-        global.document.getElementById('age-hq-manager-toggle')?.addEventListener('click', (event) => {
-            event.preventDefault();
-            setHqManagerModeOpen(!hqManagerModeOpen);
-        });
-
-        global.document.getElementById('age-council-room-close')?.addEventListener('click', (event) => {
-            event.preventDefault();
-            setCouncilRoomModalOpen(false);
-        });
-        global.document.getElementById('age-council-room-backdrop')?.addEventListener('click', () => {
-            setCouncilRoomModalOpen(false);
-        });
-        getCouncilRoomModal()?.querySelector('.age-council-room-dialog')?.addEventListener('click', (event) => {
-            event.stopPropagation();
-        });
 
         global.addEventListener('royalarmies:nation-plan-cleared', () => {
             fetchHeadquartersWorkspace();
@@ -1861,6 +1889,7 @@
 
     async function onViewOpen() {
         bindUi();
+        bindCouncilRoomModalChrome();
         hqManagerModeOpen = false;
         applyDevOwnerCouncilAccessUI();
         const ownerBypass = isDevOwnerHeadquartersBypass(resolveHeadquartersUsername());

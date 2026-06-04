@@ -16,7 +16,7 @@ body[data-age-council-room-page="true"] {
 .hq-arcane-chrome {
     position: absolute;
     inset: 0;
-    z-index: 4;
+    z-index: 0;
     pointer-events: none;
     overflow: hidden;
 }
@@ -272,6 +272,15 @@ body[data-age-council-room-page="true"] .is-hq-arcane-themed > *:not(.hq-arcane-
 
 .is-hq-arcane-themed .age-council-room-header {
     position: relative;
+    z-index: 3;
+}
+
+.is-hq-arcane-themed .age-council-room-header .age-hq-manager-btn,
+.is-hq-arcane-themed .age-council-room-header .age-age-center-modal-close,
+.is-hq-arcane-themed .age-council-room-header .age-hq-dispatch-panel {
+    position: relative;
+    z-index: 4;
+    pointer-events: auto;
 }
 
 .is-hq-arcane-themed .age-council-room-header::after {

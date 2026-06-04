@@ -199,6 +199,23 @@
         0 0 14px rgba(72, 200, 160, 0.32);
 }
 
+/* Never allow legacy fullscreen spy overlay rules to block Headquarters chrome */
+#age-hq-spy-detail {
+    position: static !important;
+    inset: auto !important;
+    z-index: auto !important;
+    background: transparent !important;
+    padding: 0 !important;
+}
+
+#age-hq-spy-detail[hidden] {
+    display: none !important;
+}
+
+.age-hq-spy-detail:not(.age-hq-spy-detail-panel) {
+    display: none !important;
+}
+
 .age-hq-spy-detail-panel {
     margin-top: 2px;
     border: 1px solid rgba(72, 168, 120, 0.55);

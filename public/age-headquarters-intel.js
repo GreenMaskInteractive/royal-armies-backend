@@ -126,18 +126,20 @@
             + '</dl>'
         );
         setSpyDetailPanelVisible(panel, true);
-        renderSpyLogs(lastWorkspace?.spyLogs);
+        renderSpyLogs(lastWorkspace?.spyLogs, { skipClose: true });
         panel.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
     }
 
-    function closeSpyDetail() {
+    function closeSpyDetail(options = {}) {
         const panel = global.document.getElementById('age-hq-spy-detail');
         activeSpyLogId = '';
         setSpyDetailPanelVisible(panel, false);
-        renderSpyLogs(lastWorkspace?.spyLogs);
+        if (!options.skipRender) {
+            renderSpyLogs(lastWorkspace?.spyLogs, { skipClose: true });
+        }
     }
 
-    function renderSpyLogs(logs) {
+    function renderSpyLogs(logs, options = {}) {
         const listEl = global.document.getElementById('age-hq-spy-log-list');
         const emptyEl = global.document.getElementById('age-hq-spy-log-empty');
         if (!listEl) return;
@@ -146,12 +148,17 @@
         if (emptyEl) emptyEl.hidden = rows.length > 0;
         if (!rows.length) {
             listEl.innerHTML = '';
-            closeSpyDetail();
+            if (!options.skipClose) {
+                closeSpyDetail({ skipRender: true });
+            } else {
+                const panel = global.document.getElementById('age-hq-spy-detail');
+                setSpyDetailPanelVisible(panel, false);
+            }
             return;
         }
 
-        if (activeSpyLogId && !rows.some((log) => log.id === activeSpyLogId)) {
-            closeSpyDetail();
+        if (!options.skipClose && activeSpyLogId && !rows.some((log) => log.id === activeSpyLogId)) {
+            closeSpyDetail({ skipRender: true });
         }
 
         const allyOptions = lastAllies
