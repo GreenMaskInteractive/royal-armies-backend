@@ -37,6 +37,7 @@
     const REFRESH_MS = 12000;
     const WAR_ROOM_PLAYERS_PANEL_ID = 'age-war-room-players-panel';
     const WAR_ROOM_PLAYERS_PANEL_GAP_PX = 12;
+    const WAR_ROOM_PLAYERS_PANEL_WIDTH_PX = 255;
 
     const els = {
         modal: null,
@@ -232,13 +233,16 @@
         const dialog = els.warRoomDialog;
         if (!panel || !dialog || !workspaceOpen || panel.hidden) return;
 
-        const rect = dialog.getBoundingClientRect();
-        const panelWidth = panel.offsetWidth || 204;
-        const left = Math.max(12, rect.left - panelWidth - WAR_ROOM_PLAYERS_PANEL_GAP_PX);
+        const workspace = dialog.querySelector('.age-war-room-workspace-shell');
+        const heightAnchor = workspace || dialog;
+        const dialogRect = dialog.getBoundingClientRect();
+        const anchorRect = heightAnchor.getBoundingClientRect();
+        const panelWidth = panel.offsetWidth || WAR_ROOM_PLAYERS_PANEL_WIDTH_PX;
+        const left = Math.max(12, dialogRect.left - panelWidth - WAR_ROOM_PLAYERS_PANEL_GAP_PX);
 
-        panel.style.top = `${Math.round(rect.top)}px`;
+        panel.style.top = `${Math.round(anchorRect.top)}px`;
         panel.style.left = `${Math.round(left)}px`;
-        panel.style.height = `${Math.round(rect.height)}px`;
+        panel.style.height = `${Math.round(anchorRect.height)}px`;
     }
 
     function setWarRoomPlayersPanelOpen(open) {
