@@ -59,14 +59,20 @@
 }
 
 .age-records-dialog {
-    width: min(1180px, 88vw);
-    height: min(820px, 86vh);
+    width: min(1520px, 96vw);
+    height: min(960px, 94vh);
     max-width: calc(100vw - 40px);
     max-height: calc(100vh - 40px);
 }
 
 .age-records-dialog .age-records-shell {
     margin: 0 14px 14px;
+}
+
+/* Nations ledger — room for all 15 nations plus header without inner vertical scroll */
+.age-records-dialog #age-records-panel-nations .age-records-table-scroll {
+    min-height: min(700px, calc(94vh - 240px));
+    overflow-y: auto;
 }
 
 .age-age-center-modal-close {
