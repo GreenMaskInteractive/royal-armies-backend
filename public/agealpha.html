@@ -13,7 +13,8 @@
     <link rel="stylesheet" href="dev-page-navigator.css">
     <link rel="stylesheet" href="custom-cursor.css?v=finger-press-7">
     <link rel="stylesheet" href="style-age-map-only.css?v=nation-hub-radial-open-1">
-    <link rel="stylesheet" href="style-age-nation-hub-radial.css?v=radialmenu-accent-3">
+    <link rel="stylesheet" href="style-age-nation-hub-radial.css?v=radialmenu-saved-1">
+    <link rel="stylesheet" href="style-age-nation-hub-box.css?v=nation-hub-box-1">
 </head>
 <body id="age-page-canvas" class="age-page-canvas game-page-canvas age-map-shell-only" data-age-slug="alpha" data-age-map-only="true" data-age-view="map">
 <script src="rift-viewport-metrics.js?v=rift-iife-fix-1"></script>
@@ -60,8 +61,8 @@
                                         id="age-nation-hub-toggle"
                                         class="age-nation-hub-toggle"
                                         aria-expanded="false"
-                                        aria-controls="age-nation-hub-radial"
-                                        aria-haspopup="dialog"
+                                        aria-controls="age-nation-hub-menu"
+                                        aria-haspopup="menu"
                                         aria-label="Open menu">
                                         <span class="age-nation-hub-toggle-mark" aria-hidden="true"></span>
                                         <span class="age-nation-hub-toggle-body">
@@ -69,8 +70,21 @@
                                         </span>
                                     </button>
                                     <div
+                                        id="age-nation-hub-menu"
+                                        class="age-nation-hub-menu age-nation-hub-menu--box"
+                                        role="menu"
+                                        aria-label="Menu destinations"
+                                        hidden
+                                        aria-hidden="true">
+                                        <div class="age-nation-hub-menu-panel">
+                                            <div
+                                                id="age-nation-hub-menu-columns"
+                                                class="age-nation-hub-menu-columns"></div>
+                                        </div>
+                                    </div>
+                                    <div
                                         id="age-nation-hub-radial"
-                                        class="age-nation-hub-radial"
+                                        class="age-nation-hub-radial age-nation-hub-radial--saved-design"
                                         hidden
                                         aria-hidden="true">
                                         <button
@@ -82,7 +96,7 @@
                                             id="age-nation-hub-radial-dial"
                                             class="age-nation-hub-radial-dial"
                                             role="menu"
-                                            aria-label="Menu destinations"></div>
+                                            aria-label="Menu destinations (radial)"></div>
                                     </div>
                                 </div>
                             </div>
@@ -2007,7 +2021,7 @@
     <script src="rift-song-manuscript-catalog.js?v=nation-hub-radial-1"></script>
     <script src="rift-discoveries-workspace.js?v=nation-hub-radial-1"></script>
     <script src="age-chronicles-battle-pass.js?v=nation-hub-radial-1"></script>
-    <script src="age-nation-hub.js?v=radialmenu-accent-3"></script>
+    <script src="age-nation-hub.js?v=nation-hub-box-1"></script>
     <script src="rift-official-age.js?v=nation-terrain-status-1"></script>
     <script src="age-headquarters.js?v=left-reports-elections-tab-1"></script>
     <script src="age-left-reports-panel.js?v=left-reports-elections-tab-1"></script>

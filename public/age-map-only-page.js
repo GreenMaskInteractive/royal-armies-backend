@@ -38,6 +38,7 @@
         if (!target || typeof target.closest !== 'function') return false;
         return Boolean(
             target.closest('.age-nation-hub')
+            || target.closest('#age-nation-hub-menu')
             || target.closest('#age-nation-hub-radial')
         );
     }

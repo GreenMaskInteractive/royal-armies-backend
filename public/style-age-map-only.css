@@ -42,6 +42,8 @@ body.age-map-shell-only #age-world-map * {
 }
 
 body.age-map-shell-only .age-nation-hub-toggle,
+body.age-map-shell-only .age-nation-hub.is-open .age-nation-hub-menu,
+body.age-map-shell-only .age-nation-hub.is-open .age-nation-hub-menu *,
 body.age-map-shell-only .age-nation-hub-radial.is-open,
 body.age-map-shell-only .age-nation-hub-radial.is-open * {
     pointer-events: auto !important;

@@ -1,17 +1,18 @@
 /**
- * RIFT — Nation Hub radial menu on the Age top bar.
+ * RIFT — Nation Hub menu on the Age top bar (box menu active; radial saved for restore).
  */
 (function initAgeNationHub(global) {
     'use strict';
 
-    const DEFAULT_CENTER_LABEL = 'MENU';
+    /** Set true to restore full-screen radial menu (go-to design in style-age-nation-hub-radial.css). */
+    const ENABLE_RADIAL_HUB_MENU = false;
+
+    const BOX_BUILD_VERSION = 'nation-hub-box-1';
     const RADIAL_MENU_IMAGE = 'images/radialmenu.png?v=radialmenu-accent-3';
     const RADIAL_BUILD_VERSION = 'radialmenu-accent-3';
-    const SLOT_COUNT = 5;
-    /** Centers for 5 of 8 segments on radialmenu.png (45° each, from top clockwise). */
     const RADIAL_WEDGE_ANGLES_DEG = Object.freeze([-67.5, -22.5, 22.5, 67.5, 112.5]);
 
-    const RADIAL_ITEMS = Object.freeze([
+    const HUB_ITEMS = Object.freeze([
         { id: 'nation', label: 'Nation' },
         { id: 'records', label: 'Records' },
         { id: 'discoveries', label: 'Discoveries' },
@@ -19,11 +20,21 @@
         { id: 'battle-pass', label: 'Battle Pass' }
     ]);
 
+    const BOX_MENU_COLUMN_SPLIT = 3;
+
     let bound = false;
     let escapeHandler = null;
 
     function getHub() {
         return global.document.getElementById('age-nation-hub');
+    }
+
+    function getMenu() {
+        return global.document.getElementById('age-nation-hub-menu');
+    }
+
+    function getMenuColumns() {
+        return global.document.getElementById('age-nation-hub-menu-columns');
     }
 
     function getRadial() {
@@ -38,16 +49,8 @@
         return global.document.getElementById('age-nation-hub-toggle');
     }
 
-    function getCenterLabelEl() {
-        return global.document.getElementById('age-nation-hub-radial-label');
-    }
-
     function isHubOpen() {
         return Boolean(getHub()?.classList.contains('is-open'));
-    }
-
-    function setCenterLabel(_text) {
-        /* Center label hidden — slots use aria-label only */
     }
 
     function ensureRadialPortal() {
@@ -59,22 +62,18 @@
 
     function setHubOpen(open) {
         const hub = getHub();
-        const radial = getRadial();
         const toggle = getToggle();
-        if (!hub || !radial || !toggle) return;
+        if (!hub || !toggle) return;
 
         const nextOpen = Boolean(open);
 
-        if (nextOpen) {
-            ensureRadialPortal();
-            hub.classList.add('is-open');
-            radial.classList.add('is-open');
-            toggle.setAttribute('aria-expanded', 'true');
-            radial.hidden = false;
-            radial.removeAttribute('hidden');
-            radial.setAttribute('aria-hidden', 'false');
-            setCenterLabel(DEFAULT_CENTER_LABEL);
+        if (ENABLE_RADIAL_HUB_MENU) {
+            setHubOpenRadial(nextOpen, hub, toggle);
+        } else {
+            setHubOpenBox(nextOpen, hub, toggle);
+        }
 
+        if (nextOpen) {
             if (!escapeHandler) {
                 escapeHandler = (event) => {
                     if (event.key === 'Escape') {
@@ -86,18 +85,54 @@
             return;
         }
 
+        if (escapeHandler) {
+            global.document.removeEventListener('keydown', escapeHandler);
+            escapeHandler = null;
+        }
+    }
+
+    function setHubOpenBox(open, hub, toggle) {
+        const menu = getMenu();
+        const nextOpen = Boolean(open);
+
+        hub.classList.toggle('is-open', nextOpen);
+        toggle.setAttribute('aria-expanded', nextOpen ? 'true' : 'false');
+
+        if (!menu) return;
+
+        menu.hidden = !nextOpen;
+        if (nextOpen) {
+            menu.removeAttribute('hidden');
+            menu.setAttribute('aria-hidden', 'false');
+        } else {
+            menu.setAttribute('hidden', '');
+            menu.setAttribute('aria-hidden', 'true');
+        }
+    }
+
+    function setHubOpenRadial(open, hub, toggle) {
+        const radial = getRadial();
+        if (!radial) return;
+
+        const nextOpen = Boolean(open);
+
+        if (nextOpen) {
+            ensureRadialPortal();
+            hub.classList.add('is-open');
+            radial.classList.add('is-open');
+            toggle.setAttribute('aria-expanded', 'true');
+            radial.hidden = false;
+            radial.removeAttribute('hidden');
+            radial.setAttribute('aria-hidden', 'false');
+            return;
+        }
+
         hub.classList.remove('is-open');
         radial.classList.remove('is-open');
         toggle.setAttribute('aria-expanded', 'false');
         radial.hidden = true;
         radial.setAttribute('hidden', '');
         radial.setAttribute('aria-hidden', 'true');
-        setCenterLabel(DEFAULT_CENTER_LABEL);
-
-        if (escapeHandler) {
-            global.document.removeEventListener('keydown', escapeHandler);
-            escapeHandler = null;
-        }
     }
 
     function closeHub() {
@@ -113,7 +148,8 @@
         const hub = getHub();
         const radial = getRadial();
         if (!hub) return;
-        if (hub.contains(event.target) || radial?.contains(event.target)) return;
+        if (hub.contains(event.target)) return;
+        if (ENABLE_RADIAL_HUB_MENU && radial?.contains(event.target)) return;
         closeHub();
     }
 
@@ -174,7 +210,7 @@
         }
     }
 
-    function activateRadialItem(itemId, event) {
+    function activateHubItem(itemId, event) {
         const normalizedId = String(itemId || '').trim().toLowerCase();
 
         switch (normalizedId) {
@@ -198,15 +234,14 @@
         }
     }
 
-    function onRadialSlotPointerEnter(event) {
-        const slot = event.currentTarget;
-        if (!slot) return;
-        setCenterLabel(slot.getAttribute('data-age-hub-radial-label') || DEFAULT_CENTER_LABEL);
-    }
+    function onMenuActivate(event) {
+        const item = event.target.closest('[data-age-hub-menu]');
+        if (!item || !getMenu()?.contains(item)) return;
 
-    function onRadialSlotPointerLeave() {
-        if (!isHubOpen()) return;
-        setCenterLabel(DEFAULT_CENTER_LABEL);
+        event.preventDefault();
+        const itemId = item.getAttribute('data-age-hub-menu');
+        closeHub();
+        activateHubItem(itemId, event);
     }
 
     function onRadialActivate(event) {
@@ -216,7 +251,31 @@
         event.preventDefault();
         const itemId = slot.getAttribute('data-age-hub-radial');
         closeHub();
-        activateRadialItem(itemId, event);
+        activateHubItem(itemId, event);
+    }
+
+    function renderBoxMenu() {
+        const colsRoot = getMenuColumns();
+        if (!colsRoot || colsRoot.dataset.ageMenuVersion === BOX_BUILD_VERSION) return;
+
+        const leftItems = HUB_ITEMS.slice(0, BOX_MENU_COLUMN_SPLIT);
+        const rightItems = HUB_ITEMS.slice(BOX_MENU_COLUMN_SPLIT);
+
+        const renderCol = (items) => (
+            '<div class="age-nation-hub-menu-col">'
+            + items.map((item) => (
+                `<button type="button" class="age-nation-hub-menu-item age-nation-hub-menu-item--${item.id}"`
+                + ` data-age-hub-menu="${item.id}" role="menuitem">${item.label}</button>`
+            )).join('')
+            + '</div>'
+        );
+
+        colsRoot.innerHTML = renderCol(leftItems) + renderCol(rightItems);
+        colsRoot.dataset.ageMenuVersion = BOX_BUILD_VERSION;
+
+        colsRoot.querySelectorAll('[data-age-hub-menu]').forEach((btn) => {
+            btn.addEventListener('click', onMenuActivate);
+        });
     }
 
     function renderRadialSlots() {
@@ -229,7 +288,7 @@
             + '</div>'
         );
 
-        const slotsHtml = RADIAL_ITEMS.map((item, index) => {
+        const slotsHtml = HUB_ITEMS.map((item, index) => {
             const angleDeg = RADIAL_WEDGE_ANGLES_DEG[index] ?? -67.5;
             const delaySec = (0.06 + 0.05 * index).toFixed(3);
             return (
@@ -244,34 +303,29 @@
 
         dial.innerHTML = trackHtml + slotsHtml;
         dial.dataset.ageRadialVersion = RADIAL_BUILD_VERSION;
-
-        dial.querySelectorAll('.age-nation-hub-radial-wedge[data-age-hub-radial]').forEach((slot) => {
-            slot.addEventListener('pointerenter', onRadialSlotPointerEnter);
-            slot.addEventListener('pointerleave', onRadialSlotPointerLeave);
-            slot.addEventListener('focus', onRadialSlotPointerEnter);
-            slot.addEventListener('blur', onRadialSlotPointerLeave);
-        });
     }
 
     function bindNationHub() {
         if (bound) return;
         bound = true;
 
-        ensureRadialPortal();
-        renderRadialSlots();
+        if (ENABLE_RADIAL_HUB_MENU) {
+            ensureRadialPortal();
+            renderRadialSlots();
+            getRadial()?.querySelector('.age-nation-hub-radial-backdrop')?.addEventListener('click', (event) => {
+                event.preventDefault();
+                closeHub();
+            });
+            getDial()?.addEventListener('click', onRadialActivate);
+        } else {
+            renderBoxMenu();
+        }
 
         getToggle()?.addEventListener('click', (event) => {
             event.preventDefault();
             event.stopPropagation();
             toggleHub();
         });
-
-        getRadial()?.querySelector('.age-nation-hub-radial-backdrop')?.addEventListener('click', (event) => {
-            event.preventDefault();
-            closeHub();
-        });
-
-        getDial()?.addEventListener('click', onRadialActivate);
 
         global.document.addEventListener('pointerdown', onDocumentPointerDown, true);
 
@@ -300,7 +354,8 @@
         open: () => setHubOpen(true),
         close: closeHub,
         toggle: toggleHub,
-        isOpen: isHubOpen
+        isOpen: isHubOpen,
+        useRadialMenu: ENABLE_RADIAL_HUB_MENU
     };
 
     init();

@@ -1,0 +1,105 @@
+/**
+ * FLEX — Nation Hub box menu (dual column, active UI).
+ */
+
+.age-nation-hub-menu--box {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    left: auto;
+    z-index: 12040;
+    display: none;
+    box-sizing: border-box;
+    min-width: 320px;
+    max-width: min(420px, 92vw);
+    pointer-events: none;
+    opacity: 0;
+    transform: translateY(-6px);
+    transition:
+        opacity 0.2s ease,
+        transform 0.24s cubic-bezier(0.16, 1, 0.28, 1);
+}
+
+.age-nation-hub.is-open .age-nation-hub-menu--box {
+    display: block;
+    pointer-events: auto;
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.age-nation-hub-menu--box[hidden] {
+    display: none !important;
+}
+
+.age-nation-hub-menu-panel {
+    border: 1px solid var(--age-hud-rail-border, rgba(184, 144, 48, 0.4));
+    border-radius: 6px;
+    background:
+        var(--age-hud-rail-sheen, linear-gradient(180deg, rgba(255, 215, 0, 0.07) 0%, transparent 20%)),
+        var(--age-hud-rail-bg, linear-gradient(165deg, rgba(34, 28, 20, 0.97) 0%, rgba(12, 10, 8, 0.99) 100%));
+    box-shadow:
+        var(--age-hud-rail-inset, inset 0 1px 0 rgba(255, 215, 0, 0.12)),
+        var(--age-hud-rail-shadow, 0 8px 22px rgba(0, 0, 0, 0.52));
+    overflow: hidden;
+}
+
+.age-nation-hub-menu-columns {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    padding: 10px;
+}
+
+.age-nation-hub-menu-col {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 0;
+}
+
+.age-nation-hub-menu-item {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    width: 100%;
+    min-height: 40px;
+    margin: 0;
+    padding: 10px 12px;
+    border: 1px solid rgba(184, 144, 48, 0.28);
+    border-radius: 4px;
+    background: rgba(0, 0, 0, 0.28);
+    font-family: 'Cinzel', serif;
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    line-height: 1.2;
+    color: rgba(236, 220, 180, 0.9);
+    text-align: left;
+    cursor: pointer;
+    box-shadow: inset 0 1px 0 rgba(255, 215, 128, 0.08);
+    transition:
+        background 0.14s ease,
+        border-color 0.14s ease,
+        color 0.14s ease,
+        transform 0.12s ease;
+}
+
+.age-nation-hub-menu-item:hover,
+.age-nation-hub-menu-item:focus-visible {
+    border-color: rgba(255, 215, 0, 0.55);
+    background: rgba(255, 215, 0, 0.14);
+    color: #fff6d8;
+    outline: none;
+    transform: translateY(-1px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .age-nation-hub-menu--box {
+        transition-duration: 0.01ms !important;
+    }
+
+    .age-nation-hub-menu-item {
+        transition-duration: 0.01ms !important;
+    }
+}
