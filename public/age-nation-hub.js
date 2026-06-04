@@ -5,7 +5,7 @@
     'use strict';
 
     const DEFAULT_CENTER_LABEL = 'MENU';
-    const RADIAL_BUILD_VERSION = 'rpg-wheel-8';
+    const RADIAL_BUILD_VERSION = 'rpg-wheel-9';
     const SLOT_COUNT = 5;
     const SLOT_START_ANGLE_DEG = -90;
 
@@ -308,8 +308,6 @@
 
     function buildPlaceholderSvgDataUri(itemId, label, index) {
         const hue = 38 + index * 16;
-        const glyph = RADIAL_SLOT_ICONS[itemId] || '';
-        const safeLabel = String(label || 'Slot').slice(0, 14);
         const svg = (
             `<svg xmlns="http://www.w3.org/2000/svg" width="96" height="80" viewBox="0 0 72 64">`
             + `<defs>`
@@ -323,7 +321,6 @@
             + `</defs>`
             + `<path d="M36 10 L56 21 V43 L36 54 L16 43 V21 Z" fill="url(#bg)" stroke="url(#rim)" stroke-width="2"/>`
             + `<path d="M36 16 L51 24 V40 L36 48 L21 40 V24 Z" fill="none" stroke="hsl(${hue} 50% 55%)" stroke-width="1" opacity="0.5"/>`
-            + `<g color="hsl(${hue} 58% 82%)" transform="translate(36 31) scale(0.52) translate(-32 -30)">${glyph}</g>`
             + '</svg>'
         );
         return `data:image/svg+xml,${encodeURIComponent(svg)}`;
