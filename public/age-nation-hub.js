@@ -50,6 +50,13 @@
         el.textContent = String(text || DEFAULT_CENTER_LABEL).trim() || DEFAULT_CENTER_LABEL;
     }
 
+    function ensureRadialPortal() {
+        const radial = getRadial();
+        if (!radial || radial.dataset.ageRadialPortaled === 'true') return;
+        global.document.body.appendChild(radial);
+        radial.dataset.ageRadialPortaled = 'true';
+    }
+
     function syncRadialAnchorPosition() {
         const toggle = getToggle();
         const radial = getRadial();

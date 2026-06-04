@@ -41,8 +41,9 @@ body.age-map-shell-only #age-world-map * {
     pointer-events: auto;
 }
 
-body.age-map-shell-only .age-nation-hub,
-body.age-map-shell-only .age-nation-hub * {
+body.age-map-shell-only .age-nation-hub-toggle,
+body.age-map-shell-only .age-nation-hub.is-open .age-nation-hub-radial,
+body.age-map-shell-only .age-nation-hub.is-open .age-nation-hub-radial * {
     pointer-events: auto !important;
 }
 
@@ -180,7 +181,7 @@ body.age-map-shell-only.age-guild-training-open .age-map-hud--right {
     pointer-events: none !important;
 }
 
-body.age-map-shell-only .age-settlement-venue-workspace {
+body.age-map-shell-only .age-settlement-venue-workspace:not([hidden]) {
     display: flex;
     align-items: stretch;
     justify-content: center;
