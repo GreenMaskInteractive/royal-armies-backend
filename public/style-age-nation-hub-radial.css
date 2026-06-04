@@ -88,7 +88,8 @@
     --age-radial-slot-well-h: 128px;
     --age-radial-slot-size-w: 96px;
     --age-radial-slot-size-h: 82px;
-    --age-radial-center-size: 176px;
+    /* Wheel SVG inner hole ≈ 184px — keep octagon hub inset within it */
+    --age-radial-center-size: 132px;
     position: relative;
     flex-shrink: 0;
     width: 0;
@@ -241,7 +242,7 @@
 
 .age-nation-hub-radial-center-plate {
     position: absolute;
-    inset: -16px;
+    inset: -10px;
     background: radial-gradient(circle, rgba(255, 200, 96, 0.12) 0%, transparent 68%);
     pointer-events: none;
 }
@@ -270,7 +271,7 @@
 
 .age-nation-hub-radial-center-core {
     position: absolute;
-    inset: 16px;
+    inset: 14px;
     clip-path: polygon(18% 0%, 82% 0%, 100% 18%, 100% 82%, 82% 100%, 18% 100%, 0% 82%, 0% 18%);
     background:
         radial-gradient(circle at 50% 35%, rgba(72, 58, 36, 0.95) 0%, rgba(14, 11, 8, 0.99) 72%);
@@ -284,7 +285,7 @@
     max-width: 88%;
     padding: 0 8px;
     font-family: 'Cinzel', serif;
-    font-size: 0.9rem;
+    font-size: 0.82rem;
     font-weight: 700;
     letter-spacing: 0.1em;
     text-transform: uppercase;
@@ -301,7 +302,7 @@
 }
 
 .age-nation-hub-radial-center.is-long-label .age-nation-hub-radial-center-label {
-    font-size: 0.68rem;
+    font-size: 0.6rem;
     letter-spacing: 0.05em;
     line-height: 1.15;
 }
