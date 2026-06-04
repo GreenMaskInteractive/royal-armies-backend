@@ -2,6 +2,10 @@
  * FLEX — Nation Hub radial menu (Age map top bar).
  */
 
+#age-page-canvas .age-nation-hub {
+    margin-left: 38px;
+}
+
 .age-nation-hub-anchor {
     position: relative;
     display: inline-block;
@@ -82,9 +86,9 @@
 }
 
 .age-nation-hub-radial-center-label {
-    max-width: 92px;
+    max-width: 130px;
     font-family: 'Cinzel', serif;
-    font-size: 0.72rem;
+    font-size: 0.92rem;
     font-weight: 700;
     letter-spacing: 0.08em;
     text-transform: uppercase;
@@ -95,18 +99,17 @@
 }
 
 .age-nation-hub-radial-slot {
-    --age-radial-slot-radius: 118px;
     --age-radial-slot-angle: 0deg;
     position: absolute;
     left: 50%;
     top: 50%;
     z-index: 1;
-    width: 72px;
-    height: 72px;
-    margin: -36px 0 0 -36px;
-    padding: 4px;
+    width: var(--age-radial-slot-size);
+    height: var(--age-radial-slot-size);
+    margin: calc(-0.5 * var(--age-radial-slot-size)) 0 0 calc(-0.5 * var(--age-radial-slot-size));
+    padding: 6px;
     border: 1px solid rgba(212, 175, 90, 0.38);
-    border-radius: 14px;
+    border-radius: 18px;
     background:
         linear-gradient(145deg, rgba(36, 28, 18, 0.98) 0%, rgba(12, 10, 8, 0.98) 100%);
     box-shadow:
