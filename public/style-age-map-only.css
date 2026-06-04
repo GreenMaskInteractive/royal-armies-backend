@@ -51,7 +51,9 @@ body.age-map-shell-only .age-age-center-modal:not([hidden]) *,
 body.age-map-shell-only .rift-discoveries-workspace-modal:not([hidden]),
 body.age-map-shell-only .rift-discoveries-workspace-modal:not([hidden]) *,
 body.age-map-shell-only .age-chronicles-battle-pass-modal:not([hidden]),
-body.age-map-shell-only .age-chronicles-battle-pass-modal:not([hidden]) * {
+body.age-map-shell-only .age-chronicles-battle-pass-modal:not([hidden]) *,
+body.age-map-shell-only #royal-armies-portal-alert-modal:not(.main-portal-modal-hidden),
+body.age-map-shell-only #royal-armies-portal-alert-modal:not(.main-portal-modal-hidden) * {
     pointer-events: auto !important;
 }
 
