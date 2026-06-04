@@ -7,7 +7,20 @@
     /** Set true to restore full-screen radial menu (go-to design in style-age-nation-hub-radial.css). */
     const ENABLE_RADIAL_HUB_MENU = false;
 
-    const BOX_BUILD_VERSION = 'nation-hub-box-popup-1';
+    const BOX_BUILD_VERSION = 'nation-hub-box-premium-1';
+
+    const BOX_MENU_COLUMNS = Object.freeze([
+        { heading: 'Realm', itemIds: ['nation', 'records', 'discoveries'] },
+        { heading: 'Campaign', itemIds: ['banner', 'battle-pass'] }
+    ]);
+
+    const BOX_ITEM_META = Object.freeze({
+        nation: { glyph: '◆', hint: 'Council & command' },
+        records: { glyph: '☰', hint: 'Archives & ledgers' },
+        discoveries: { glyph: '✦', hint: 'Relics & mysteries' },
+        banner: { glyph: '⚑', hint: 'Heraldry & colors' },
+        'battle-pass': { glyph: '◈', hint: 'Chronicles rewards' }
+    });
     const RADIAL_MENU_IMAGE = 'images/radialmenu.png?v=radialmenu-accent-3';
     const RADIAL_BUILD_VERSION = 'radialmenu-accent-3';
     const RADIAL_WEDGE_ANGLES_DEG = Object.freeze([-67.5, -22.5, 22.5, 67.5, 112.5]);
@@ -19,8 +32,6 @@
         { id: 'banner', label: 'Banner' },
         { id: 'battle-pass', label: 'Battle Pass' }
     ]);
-
-    const BOX_MENU_COLUMN_SPLIT = 3;
 
     let bound = false;
     let escapeHandler = null;
@@ -267,23 +278,48 @@
         activateHubItem(itemId, event);
     }
 
+    function getHubItem(itemId) {
+        return HUB_ITEMS.find((item) => item.id === itemId);
+    }
+
+    function renderBoxMenuItem(item, itemIndex) {
+        const meta = BOX_ITEM_META[item.id] || { glyph: '•', hint: '' };
+        const delaySec = (0.04 + 0.05 * itemIndex).toFixed(2);
+        return (
+            `<button type="button" class="age-nation-hub-menu-item age-nation-hub-menu-item--${item.id}"`
+            + ` data-age-hub-menu="${item.id}" role="menuitem"`
+            + ` style="--age-hub-menu-item-delay: ${delaySec}s;">`
+            + `<span class="age-nation-hub-menu-item-glyph" aria-hidden="true">${meta.glyph}</span>`
+            + '<span class="age-nation-hub-menu-item-copy">'
+            + `<span class="age-nation-hub-menu-item-label">${item.label}</span>`
+            + `<span class="age-nation-hub-menu-item-hint">${meta.hint}</span>`
+            + '</span>'
+            + '<span class="age-nation-hub-menu-item-chevron" aria-hidden="true"></span>'
+            + '</button>'
+        );
+    }
+
     function renderBoxMenu() {
         const colsRoot = getMenuColumns();
         if (!colsRoot || colsRoot.dataset.ageMenuVersion === BOX_BUILD_VERSION) return;
 
-        const leftItems = HUB_ITEMS.slice(0, BOX_MENU_COLUMN_SPLIT);
-        const rightItems = HUB_ITEMS.slice(BOX_MENU_COLUMN_SPLIT);
+        let itemIndex = 0;
+        colsRoot.innerHTML = BOX_MENU_COLUMNS.map((column) => {
+            const items = column.itemIds
+                .map((itemId) => getHubItem(itemId))
+                .filter(Boolean);
+            return (
+                '<div class="age-nation-hub-menu-col">'
+                + `<p class="age-nation-hub-menu-col-heading">${column.heading}</p>`
+                + items.map((item) => {
+                    const html = renderBoxMenuItem(item, itemIndex);
+                    itemIndex += 1;
+                    return html;
+                }).join('')
+                + '</div>'
+            );
+        }).join('');
 
-        const renderCol = (items) => (
-            '<div class="age-nation-hub-menu-col">'
-            + items.map((item) => (
-                `<button type="button" class="age-nation-hub-menu-item age-nation-hub-menu-item--${item.id}"`
-                + ` data-age-hub-menu="${item.id}" role="menuitem">${item.label}</button>`
-            )).join('')
-            + '</div>'
-        );
-
-        colsRoot.innerHTML = renderCol(leftItems) + renderCol(rightItems);
         colsRoot.dataset.ageMenuVersion = BOX_BUILD_VERSION;
 
         colsRoot.querySelectorAll('[data-age-hub-menu]').forEach((btn) => {
@@ -334,6 +370,10 @@
             ensureBoxMenuPortal();
             renderBoxMenu();
             getMenu()?.querySelector('.age-nation-hub-menu-backdrop')?.addEventListener('click', (event) => {
+                event.preventDefault();
+                closeHub();
+            });
+            getMenu()?.querySelector('.age-nation-hub-menu-close')?.addEventListener('click', (event) => {
                 event.preventDefault();
                 closeHub();
             });
