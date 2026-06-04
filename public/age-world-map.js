@@ -1770,6 +1770,74 @@
         );
     }
 
+    async function resolveEnemyPlayersInCityCount(cityId) {
+        const username = typeof global.resolveActiveCommanderUsername === 'function'
+            ? global.resolveActiveCommanderUsername()
+            : '';
+        if (!username || !cityId) return 1;
+
+        try {
+            const query = new URLSearchParams({
+                username,
+                catalogCityId: String(cityId)
+            });
+            const apiUrl = typeof global.resolveApiUrl === 'function'
+                ? global.resolveApiUrl(`/api/portal/age/city-players?${query.toString()}`)
+                : `/api/portal/age/city-players?${query.toString()}`;
+            const response = await global.fetch(apiUrl, { credentials: 'same-origin' });
+            const payload = await response.json().catch(() => ({}));
+            if (!response.ok) return 1;
+
+            const playerNation = global.RoyalArmiesAgeMovement?.resolvePlayerNationId?.() || '';
+            const allied = global.RoyalArmiesAgeMovement?.getAlliedNationIds?.() || [];
+            const enemies = (payload.players || []).filter((player) => {
+                if (player.isSelf) return false;
+                const nation = String(player.nationId || '').trim().toLowerCase();
+                if (!nation || nation === playerNation) return false;
+                return !allied.includes(nation);
+            });
+            return Math.max(1, enemies.length);
+        } catch (_err) {
+            return 1;
+        }
+    }
+
+    async function refreshDrawerAssaultRisk(city, hints) {
+        if (!els.drawerAssaultRisk || !city) return;
+
+        const ledGroup = global.RoyalArmiesAgeArmyGroups?.getLedArmyGroup?.();
+        const canPreview = Boolean(hints?.canAssault && ledGroup?.id && global.RoyalArmiesAgeAssaultRisk);
+
+        if (!canPreview) {
+            els.drawerAssaultRisk.hidden = true;
+            els.drawerAssaultRisk.innerHTML = '';
+            return;
+        }
+
+        els.drawerAssaultRisk.hidden = false;
+        els.drawerAssaultRisk.innerHTML = '<p class="age-assault-risk-copy">Calculating casualty pressure…</p>';
+
+        try {
+            const playersInCity = await resolveEnemyPlayersInCityCount(city.id);
+            const payload = await global.RoyalArmiesAgeAssaultRisk.fetchAssaultCasualtyEstimate(city.id, {
+                playersInCity,
+                forceRefresh: true
+            });
+            els.drawerAssaultRisk.innerHTML = global.RoyalArmiesAgeAssaultRisk.formatRiskMarkup(payload);
+
+            const assaultBtn = els.drawerMovementActions?.querySelector('[data-age-city-action="assault"]');
+            if (assaultBtn && payload?.casualtyRisk?.injuryPercent?.label) {
+                const injury = payload.casualtyRisk.injuryPercent.label;
+                const death = payload.casualtyRisk.deathPercent?.label || '';
+                assaultBtn.title = `Casualty pressure (not win odds): injuries ${injury}, deaths ${death}. Launch group assault.`;
+            }
+        } catch (err) {
+            els.drawerAssaultRisk.innerHTML = (
+                `<p class="age-assault-risk-copy">${String(err?.message || 'Could not estimate casualties.')}</p>`
+            );
+        }
+    }
+
     function refreshDrawerScoutIntel(city, hints) {
         if (!els.drawerScoutIntel || !city) return;
 
@@ -2004,6 +2072,7 @@
         refreshDrawerMovementActions(city);
         const borderHints = global.RoyalArmiesAgeMovement?.getBorderActionHints?.(city, playerMapCityId) || {};
         refreshDrawerScoutIntel(city, borderHints);
+        void refreshDrawerAssaultRisk(city, borderHints);
         setCityDrawerTab('info');
 
         const canScout = playerBordersCity(city);
@@ -2310,6 +2379,7 @@
                     refreshDrawerMovementActions(city);
                     const borderHints = global.RoyalArmiesAgeMovement?.getBorderActionHints?.(city, playerMapCityId) || {};
                     refreshDrawerScoutIntel(city, borderHints);
+                    void refreshDrawerAssaultRisk(city, borderHints);
                 }
             }
         });
@@ -2351,6 +2421,7 @@
         els.drawerCapitalBadge = global.document.getElementById('age-world-city-drawer-capital-badge');
         els.drawerMovementActions = global.document.getElementById('age-world-city-drawer-movement-actions');
         els.drawerScoutIntel = global.document.getElementById('age-world-city-drawer-scout-intel');
+        els.drawerAssaultRisk = global.document.getElementById('age-world-city-drawer-assault-risk');
         els.drawerSideTabs = global.document.getElementById('age-world-city-drawer-side-tabs');
         els.drawerPanelInfo = global.document.getElementById('age-world-city-drawer-panel-info');
         els.drawerPanelDefenses = global.document.getElementById('age-world-city-drawer-panel-defenses');

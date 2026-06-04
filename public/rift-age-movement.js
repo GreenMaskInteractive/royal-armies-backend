@@ -397,6 +397,7 @@
 
             const payload = await parseResponse(response);
             applyStatePayload(payload);
+            global.RoyalArmiesAgeAssaultRisk?.clearAssaultCasualtyCache?.();
             if (typeof global.RoyalArmiesAgeArmyGroups?.refresh === 'function') {
                 global.RoyalArmiesAgeArmyGroups.refresh({ silent: true });
             }

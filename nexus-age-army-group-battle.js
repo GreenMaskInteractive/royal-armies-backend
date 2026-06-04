@@ -11,6 +11,13 @@ const {
     validateAssault
 } = require('./nexus-age-movement');
 const { executeCityAssaultBattleWithLedger } = require('./nexus-age-guild');
+const {
+    buildAssaultCasualtyContext,
+    estimateAssaultCasualtyRisk,
+    resolveAssaultCasualtiesForMembers,
+    filterEnemyCommandersInCity
+} = require('./nexus-age-border-assault-casualty');
+const { loadUnitPurchaseCatalog } = require('./nexus-age-recruitment');
 const { resolveCommanderAgeArmy, normalizeAgeArmy } = require('./nexus-age-roster');
 const {
     applyDismissArmyGroup,
@@ -242,6 +249,44 @@ function buildVictoryRelocationPlan(group, targetCityId) {
     return { mode: 'capture', assignments };
 }
 
+function buildArmyGroupAssaultCasualtyEstimate({
+    memberCommanders,
+    targetCity,
+    nationKey,
+    playersInCity = 1,
+    allCommanders = null,
+    isAlliedFn = null,
+    resolveCommanderCityId = null
+}) {
+    const catalog = loadUnitPurchaseCatalog();
+    const enemyCommanders = filterEnemyCommandersInCity(
+        allCommanders || memberCommanders,
+        targetCity?.id,
+        nationKey,
+        isAlliedFn,
+        resolveCommanderCityId
+    );
+    const context = buildAssaultCasualtyContext({
+        memberCommanders,
+        targetCity,
+        enemyCommanders,
+        playersInCity,
+        catalog,
+        commanderRankHint: Math.max(1, Math.floor(Number(leaderCommanderRank(memberCommanders)) || 1))
+    });
+    const risk = estimateAssaultCasualtyRisk(context);
+    return {
+        context,
+        risk,
+        enemyCommanders: enemyCommanders.map((commander) => String(commander.username || '').trim()).filter(Boolean)
+    };
+}
+
+function leaderCommanderRank(memberCommanders) {
+    const leader = (memberCommanders || []).find(Boolean);
+    return Math.max(1, Math.floor(Number(leader?.rank) || 1));
+}
+
 function prepareArmyGroupAttack({
     state,
     groupId,
@@ -253,7 +298,9 @@ function prepareArmyGroupAttack({
     targetCityId,
     cityHolders,
     isAlliedFn,
-    playersInCity = 1
+    playersInCity = 1,
+    allCommanders = null,
+    resolveCommanderCityId = null
 }) {
     const self = normalizeUsername(leaderUsername);
     if (!self) {
@@ -301,12 +348,26 @@ function prepareArmyGroupAttack({
         return battleResult;
     }
 
-    const survivalRatio = resolveBattleSurvivalRatio(battleResult);
     const memberSnapshots = (memberCommanders || []).map((commander) => ({
         username: normalizeUsername(commander?.username),
         army: resolveCommanderAgeArmy(commander)
     }));
-    const casualtyUpdates = applyCasualtiesToMemberArmies(memberSnapshots, survivalRatio);
+
+    const casualtyEstimate = buildArmyGroupAssaultCasualtyEstimate({
+        memberCommanders,
+        targetCity: validation.targetCity,
+        nationKey,
+        playersInCity,
+        allCommanders,
+        isAlliedFn,
+        resolveCommanderCityId
+    });
+    const casualtyUpdates = resolveAssaultCasualtiesForMembers(
+        memberSnapshots,
+        casualtyEstimate.risk,
+        battleResult,
+        casualtyEstimate.context.catalog
+    );
     const assaultVictory = battleResult.winner === 'commander';
 
     let relocationPlan;
@@ -335,6 +396,13 @@ function prepareArmyGroupAttack({
         assaultVictory,
         relocationPlan,
         casualtyUpdates,
+        casualtyRisk: casualtyEstimate.risk,
+        casualtyContext: {
+            hasEnemyPlayers: casualtyEstimate.context.hasEnemyPlayers,
+            enemyCommanderCount: casualtyEstimate.enemyCommanders.length,
+            attackerHp: casualtyEstimate.context.attacker.hp,
+            defenderHp: casualtyEstimate.context.defender.hp
+        },
         targetCity: validation.targetCity,
         connection: validation.connection
     };
@@ -389,6 +457,7 @@ module.exports = {
     pickFurthestEvacuationCityId,
     buildDefeatRelocationPlan,
     buildVictoryRelocationPlan,
+    buildArmyGroupAssaultCasualtyEstimate,
     prepareArmyGroupAttack,
     prepareArmyGroupDefeatForMember
 };

@@ -136,7 +136,8 @@ const {
 } = require('./nexus-age-army-groups');
 const {
     prepareArmyGroupAttack,
-    prepareArmyGroupDefeatForMember
+    prepareArmyGroupDefeatForMember,
+    buildArmyGroupAssaultCasualtyEstimate
 } = require('./nexus-age-army-group-battle');
 const {
     buildAgeRosterHudPayload,
@@ -5900,6 +5901,91 @@ app.post('/api/portal/age/army-groups/dismiss', (req, res) => {
     });
 });
 
+app.post('/api/portal/age/assault-casualty-estimate', (req, res) => {
+    const username = resolveLedgerCommanderUsername(req.body?.username || '');
+    if (!username) {
+        return sendApiError(res, 'NEXUS-GEN-002');
+    }
+
+    const commander = db.get('commanders').find({ username }).value();
+    if (!commander) {
+        return sendApiError(res, 'NEXUS-GEN-004');
+    }
+
+    const mapNation = resolveCommanderMapNationKey(commander);
+    if (!mapNation) {
+        return sendApiError(res, 'GAME_NATION_REQUIRED');
+    }
+
+    const targetCityId = String(req.body?.targetCityId || '').trim();
+    const movement = readCommanderMovementRecord(username, mapNation);
+    const store = readAgeMovementStore();
+    const validation = validateAssault(
+        mapNation,
+        movement.catalogCityId,
+        targetCityId,
+        store.cityHolders,
+        areNationsAllied
+    );
+    if (validation.errorCode) {
+        return sendApiError(res, validation.errorCode);
+    }
+
+    const storageNation = resolveArmyGroupsStorageNation(commander);
+    const groupId = String(req.body?.groupId || '').trim();
+    let memberCommanders = [commander];
+
+    if (groupId && storageNation) {
+        const groupsState = readNationArmyGroupsForNation(storageNation);
+        const lookup = groupsState.groups.find((group) => group.id === groupId);
+        if (!lookup) {
+            return sendApiError(res, 'NEXUS-GAME-013');
+        }
+        if (String(lookup.leaderUsername || '').trim().toLowerCase() !== username) {
+            return sendApiError(res, 'NEXUS-AGE-029');
+        }
+        memberCommanders = loadArmyGroupMemberCommanders(lookup.memberUsernames);
+        if (!memberCommanders.length) {
+            memberCommanders = [commander];
+        }
+    }
+
+    const playersInCity = normalizePlayersInCityCount(req.body?.playersInCity);
+    const allCommanders = db.get('commanders').value() || [];
+    const estimate = buildArmyGroupAssaultCasualtyEstimate({
+        memberCommanders,
+        targetCity: validation.targetCity,
+        nationKey: mapNation,
+        playersInCity,
+        allCommanders,
+        isAlliedFn: areNationsAllied,
+        resolveCommanderCityId: resolveCommanderCatalogCityId
+    });
+
+    res.set('Cache-Control', 'no-store');
+    res.json({
+        status: 'ok',
+        targetCityId,
+        targetCityName: validation.targetCity?.name || '',
+        playersInCity,
+        hasEnemyPlayers: estimate.context.hasEnemyPlayers,
+        enemyCommanders: estimate.enemyCommanders,
+        attacker: {
+            hp: estimate.context.attacker.hp,
+            units: estimate.context.attacker.units,
+            commanders: estimate.context.attacker.commanders
+        },
+        defender: {
+            hp: estimate.context.defender.hp,
+            units: estimate.context.defender.units,
+            garrisonUnits: estimate.context.defender.garrisonUnits,
+            enemyCommanders: estimate.context.defender.enemyCommanders,
+            playersInCity: estimate.context.defender.playersInCity
+        },
+        casualtyRisk: estimate.risk
+    });
+});
+
 app.post('/api/portal/age/army-groups/attack', (req, res) => {
     const username = resolveLedgerCommanderUsername(req.body?.username || '');
     if (!username) {
@@ -5953,6 +6039,7 @@ app.post('/api/portal/age/army-groups/attack', (req, res) => {
     ensureCommanderAgeRoster(commander);
     commander = db.get('commanders').find({ username }).value();
 
+    const allCommanders = db.get('commanders').value() || [];
     const attackResult = prepareArmyGroupAttack({
         state: current,
         groupId,
@@ -5964,7 +6051,9 @@ app.post('/api/portal/age/army-groups/attack', (req, res) => {
         targetCityId,
         cityHolders: store.cityHolders,
         isAlliedFn: areNationsAllied,
-        playersInCity
+        playersInCity,
+        allCommanders,
+        resolveCommanderCityId: resolveCommanderCatalogCityId
     });
     if (attackResult.errorCode) {
         return sendApiError(res, attackResult.errorCode, attackResult.message);
@@ -6060,6 +6149,8 @@ app.post('/api/portal/age/army-groups/attack', (req, res) => {
         movePoints: spend.movePoints,
         movePointsMax: getMovePointRules().movePointsMax,
         lastMovePointRegenAt: spend.lastMovePointRegenAt,
+        casualtyRisk: attackResult.casualtyRisk || null,
+        casualtyContext: attackResult.casualtyContext || null,
         ...buildGuildStatePayload(commander),
         ...buildAgeMovementStatePayload(username, commander)
     });

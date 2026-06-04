@@ -552,8 +552,14 @@
         if (group.isLeader) {
             const attackHint = global.document.createElement('p');
             attackHint.className = 'age-army-groups-attack-hint';
-            attackHint.textContent = 'Assault a neighboring city from the map to launch a group attack. The army disbands when the battle ends.';
+            attackHint.textContent = 'Assault a bordering hostile city from the world map. The drawer shows injury and death risk ranges (not victory odds) before you commit.';
             panel.appendChild(attackHint);
+
+            const riskHost = global.document.createElement('div');
+            riskHost.className = 'age-army-groups-assault-risk';
+            riskHost.dataset.armyGroupAssaultRisk = group.id;
+            riskHost.textContent = 'Select a bordering city on the map to preview combined casualty pressure for your army group.';
+            panel.appendChild(riskHost);
         }
 
         if (group.canNationCommand && !group.isCommandPost) {

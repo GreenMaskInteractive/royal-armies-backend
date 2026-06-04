@@ -97,5 +97,6 @@ module.exports = {
     SETTLEMENT_GARRISON_SCALE,
     executeCityAssaultBattle,
     buildCityGarrisonArmy,
+    buildHealthyBattleStacks,
     normalizePlayersInCityCount
 };
