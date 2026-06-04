@@ -21,6 +21,7 @@
     const REGION_BORDER_FADE_OUT_END = CITY_FADE_START + 0.18;
     const SMALL_CITY_SPAN = 26;
     const SMALL_CITY_HIT_RADIUS = 14;
+    const PLAN_CITY_PICK_NEAR_PX = 38;
     const PLAYER_PIN_HIT_PAD_PX = 6;
     const SETTLEMENT_TIER_PRIORITY = {
         kingdom: 5,
@@ -114,6 +115,9 @@
     let labelsNationMounted = false;
     let labelsCityMounted = false;
     let hoveredCityId = '';
+    let planCityPickMode = false;
+    let planPressCityId = '';
+    let planClickHandledSeq = 0;
     let layoutBaseW = 0;
     let layoutBaseH = 0;
     let terrainOverlayOn = false;
@@ -308,6 +312,7 @@
             global.RoyalArmiesAgeWorldPlanOverlay.syncLayout();
         }
         global.dispatchEvent(new CustomEvent('royalarmies:age-map-overlay-layout'));
+        global.dispatchEvent(new CustomEvent('royalarmies:age-map-transform'));
     }
 
     function syncMapViewBox() {
@@ -718,6 +723,48 @@
         requestTick();
     }
 
+    function focusOnMapCoordinates(mapX, mapY, options = {}) {
+        if (!els.frame || !Number.isFinite(mapX) || !Number.isFinite(mapY)) {
+            return false;
+        }
+
+        measureLayoutBase();
+        const nextScale = options.zoomToMax
+            ? maxScale
+            : clamp(
+                (Number.isFinite(Number(options.zoomScale)) && Number(options.zoomScale) > 0
+                    ? Number(options.zoomScale)
+                    : 2.15) * baseScale,
+                minScale,
+                maxScale
+            );
+        const vp = mapViewportMetrics();
+        const vbW = NATIVE_SIZE / nextScale;
+        const vbH = NATIVE_SIZE / nextScale;
+        const maxVbX = Math.max(0, NATIVE_SIZE - vbW);
+        const maxVbY = Math.max(0, NATIVE_SIZE - vbH);
+        const vbX = clamp(mapX - vbW / 2, 0, maxVbX);
+        const vbY = clamp(mapY - vbH / 2, 0, maxVbY);
+
+        targetScale = nextScale;
+        targetTx = -targetScale * (vp.meetScale * vbX + vp.offsetX);
+        targetTy = -targetScale * (vp.meetScale * vbY + vp.offsetY);
+        clampTargets();
+        requestTick();
+        return true;
+    }
+
+    function focusOnPlannerLocation(options = {}) {
+        const cityId = global.RoyalArmiesAgeMovement?.getCatalogCityId?.()
+            || playerMapCityId
+            || resolvePlayerMapCityId();
+        const city = cityId ? cityById.get(cityId) : null;
+        if (!city?.centroid) {
+            return false;
+        }
+        return focusOnMapCoordinates(city.centroid.x, city.centroid.y, options);
+    }
+
     function ensureLabelLayersMounted() {
         if (!catalog) return;
 
@@ -971,6 +1018,287 @@
         return node?.dataset.cityId || '';
     }
 
+    function resolveCityIdAtClientPoint(clientX, clientY) {
+        if (!Number.isFinite(clientX) || !Number.isFinite(clientY)) return '';
+
+        if (els.hitLayer) {
+            const stack = global.document.elementsFromPoint(clientX, clientY);
+            for (let i = 0; i < stack.length; i += 1) {
+                const node = stack[i];
+                if (!node || !els.hitLayer.contains(node)) continue;
+                const hitNode = node.closest?.('.age-world-city-hit-path[data-city-id]');
+                if (hitNode?.dataset?.cityId) {
+                    return hitNode.dataset.cityId;
+                }
+            }
+        }
+
+        return resolveCityIdNearClientPoint(clientX, clientY, PLAN_CITY_PICK_NEAR_PX);
+    }
+
+    function resolveCityIdNearClientPoint(clientX, clientY, maxPx) {
+        if (!els.frame || !Number.isFinite(clientX) || !Number.isFinite(clientY)) return '';
+
+        const radius = Number.isFinite(maxPx) && maxPx > 0 ? maxPx : PLAN_CITY_PICK_NEAR_PX;
+        const hostRect = mapOverlayHostRect();
+        const localX = clientX - hostRect.left;
+        const localY = clientY - hostRect.top;
+
+        let bestId = '';
+        let bestDist = radius;
+
+        cityById.forEach((city) => {
+            if (!city?.id || !city.centroid) return;
+
+            const point = mapPointToFramePixels(city.centroid.x, city.centroid.y);
+            const pxPerUnit = mapPixelsPerMapUnit(city.centroid.x, city.centroid.y);
+            const pickRadius = Math.max(radius, pxPerUnit * SMALL_CITY_HIT_RADIUS * 1.2);
+
+            const dist = Math.hypot(point.x - localX, point.y - localY);
+            if (dist <= pickRadius && dist < bestDist) {
+                bestDist = dist;
+                bestId = city.id;
+            }
+        });
+
+        return bestId;
+    }
+
+    function resolveCityIdAtPointer(event) {
+        let cityId = resolveCityHitTarget(event?.target);
+        if (cityId) return cityId;
+        if (!event || !Number.isFinite(event.clientX)) return '';
+        return resolveCityIdAtClientPoint(event.clientX, event.clientY);
+    }
+
+    function cancelActiveMapPan(event) {
+        if (!dragging && global.document.pointerLockElement !== els.frame) return;
+        endMapPan(event);
+    }
+
+    function syncPlanEditorHighlights(anchorCityId, armedCityId) {
+        if (!els.highlightLayer) return;
+
+        els.highlightLayer.querySelectorAll(
+            '.age-world-city-highlight-path, .age-world-city-highlight-boost'
+        ).forEach((node) => {
+            const cityId = node.getAttribute('data-city-id') || '';
+            node.classList.remove('is-plan-anchor', 'is-plan-armed', 'is-plan-anchor-flash');
+            if (anchorCityId && cityId === anchorCityId) {
+                node.classList.add('is-plan-anchor');
+            } else if (armedCityId && cityId === armedCityId) {
+                node.classList.add('is-plan-armed');
+            }
+        });
+
+        if (anchorCityId) {
+            showCityHighlight(anchorCityId);
+        } else if (!armedCityId) {
+            clearCityHighlight();
+        }
+    }
+
+    function clearPlanEditorHighlights() {
+        syncPlanEditorHighlights('', '');
+    }
+
+    function flashPlanAnchorFeedback(cityId) {
+        if (!cityId || !els.highlightLayer) return;
+        els.highlightLayer.querySelectorAll(
+            `.age-world-city-highlight-path[data-city-id="${cityId}"], `
+            + `.age-world-city-highlight-boost[data-city-id="${cityId}"]`
+        ).forEach((node) => {
+            node.classList.remove('is-plan-anchor-flash');
+            void node.offsetWidth;
+            node.classList.add('is-plan-anchor-flash');
+        });
+    }
+
+    function isPlanCityPickActive() {
+        return planCityPickMode || Boolean(global.RoyalArmiesAgeWorldMapPlanDraft?.isSessionActive?.());
+    }
+
+    function isAssigningPlanRoute() {
+        return Boolean(global.RoyalArmiesAgeWorldMapPlanEditor?.getActiveRouteType?.())
+            || Boolean(global.RoyalArmiesAgeWorldMapPlanEditor?.isClearArrowMode?.());
+    }
+
+    function resolveDraftArrowIdAtClientPoint(clientX, clientY) {
+        if (!Number.isFinite(clientX) || !Number.isFinite(clientY)) return '';
+
+        const overlay = global.document.getElementById('age-world-map-plan-draft-overlay');
+        if (!overlay || overlay.hidden) return '';
+
+        const stack = global.document.elementsFromPoint(clientX, clientY);
+        for (let i = 0; i < stack.length; i += 1) {
+            const node = stack[i];
+            if (!overlay.contains(node)) continue;
+            const path = node.closest?.('[data-draft-arrow-id]');
+            const arrowId = path?.getAttribute('data-draft-arrow-id') || '';
+            if (arrowId) return arrowId;
+        }
+
+        return '';
+    }
+
+    function isPlanArrowInteractionTarget(event) {
+        if (!event) return false;
+        return Boolean(
+            event.target?.closest?.('[data-draft-arrow-id]')
+            || event.target?.closest?.('.age-world-map-plan-arrow-hit')
+            || resolveDraftArrowIdAtClientPoint(event.clientX, event.clientY)
+        );
+    }
+
+    function shouldAcceptPlanCityPick(event) {
+        if (!isPlanCityPickActive()) return false;
+        if (isAssigningPlanRoute()) return false;
+        if (isPlanArrowInteractionTarget(event)) return false;
+        return true;
+    }
+
+    function processPlanDraftArrowPick(event) {
+        if (!event || event.button !== 0) return false;
+        if (!global.RoyalArmiesAgeWorldMapPlanDraft?.isSessionActive?.()) return false;
+        if (!isAssigningPlanRoute()) return false;
+
+        const arrowId = resolveDraftArrowIdAtClientPoint(event.clientX, event.clientY)
+            || event.target?.closest?.('[data-draft-arrow-id]')?.getAttribute('data-draft-arrow-id')
+            || '';
+        if (!arrowId) return false;
+
+        if (global.RoyalArmiesAgeWorldMapPlanDraft?.handleArrowPointerUp?.(event, arrowId)) {
+            event.preventDefault();
+            event.stopPropagation();
+            event.stopImmediatePropagation?.();
+            planPressCityId = '';
+            planClickHandledSeq += 1;
+            return true;
+        }
+
+        return false;
+    }
+
+    function syncPlanRouteAssignChrome() {
+        const armed = isAssigningPlanRoute();
+        els.frame?.classList.toggle('is-plan-route-assign', armed);
+    }
+
+    function processPlanCityPick(cityId, event) {
+        if (!cityId || !shouldAcceptPlanCityPick(event)) return false;
+
+        cancelActiveMapPan(event);
+
+        if (global.RoyalArmiesAgeWorldMapPlanDraft?.handleCityClick?.(cityId)) {
+            if (event) {
+                event.preventDefault();
+                event.stopPropagation();
+                event.stopImmediatePropagation?.();
+            }
+            flashPlanAnchorFeedback(cityId);
+            return true;
+        }
+
+        return false;
+    }
+
+    function setPlanCityPickMode(active) {
+        planCityPickMode = Boolean(active);
+        if (!planCityPickMode) {
+            planPressCityId = '';
+            planClickHandledSeq = 0;
+            cancelActiveMapPan();
+        } else {
+            cancelActiveMapPan();
+        }
+        els.frame?.classList.toggle('is-plan-city-pick', planCityPickMode);
+        els.hitLayer?.classList.toggle('is-plan-city-pick', planCityPickMode);
+    }
+
+    function onPlanHitPointerDown(event) {
+        if (!shouldAcceptPlanCityPick(event) || event.button !== 0) return;
+        cancelActiveMapPan(event);
+        planPressCityId = resolveCityIdAtPointer(event) || '';
+        event.preventDefault();
+        event.stopPropagation();
+        event.stopImmediatePropagation?.();
+    }
+
+    function onPlanHitClick(event) {
+        if (!shouldAcceptPlanCityPick(event)) return;
+
+        const cityId = resolveCityHitTarget(event.target) || planPressCityId;
+        if (!cityId) return;
+
+        if (processPlanCityPick(cityId, event)) {
+            planClickHandledSeq += 1;
+            planPressCityId = '';
+        }
+    }
+
+    function onPlanHitPointerUp(event) {
+        if (!shouldAcceptPlanCityPick(event) || event.button !== 0) return false;
+
+        cancelActiveMapPan(event);
+
+        const pressId = planPressCityId;
+        const cityId = pressId || resolveCityIdAtPointer(event);
+        planPressCityId = '';
+
+        if (cityId && !panMoved && processPlanCityPick(cityId, event)) {
+            planClickHandledSeq += 1;
+            return true;
+        }
+
+        const seqAtStart = planClickHandledSeq;
+        const clientX = event.clientX;
+        const clientY = event.clientY;
+        const target = event.target;
+
+        global.requestAnimationFrame(() => {
+            if (planClickHandledSeq !== seqAtStart) return;
+
+            const fallbackId = resolveCityHitTarget(target)
+                || resolveCityIdAtClientPoint(clientX, clientY);
+            if (!fallbackId || panMoved) return;
+            if (processPlanCityPick(fallbackId, event)) {
+                planClickHandledSeq += 1;
+            }
+        });
+
+        return true;
+    }
+
+    function bindPlanMapClickFallback() {
+        if (els.frame?.dataset.planMapFallbackBound === '1') return;
+        if (!els.frame) return;
+        els.frame.dataset.planMapFallbackBound = '1';
+
+        els.frame.addEventListener('pointerup', (event) => {
+            if (processPlanDraftArrowPick(event)) return;
+        }, true);
+
+        els.frame.addEventListener('click', (event) => {
+            if (processPlanDraftArrowPick(event)) return;
+            if (!shouldAcceptPlanCityPick(event)) return;
+            if (event.target?.closest?.('.age-world-city-hit-path[data-city-id]')) return;
+            if (event.target?.closest?.('.age-world-map-plan-tool-dock, #age-world-map-plan-add, #age-world-map-plan-post')) {
+                return;
+            }
+
+            const cityId = resolveCityIdAtClientPoint(event.clientX, event.clientY);
+            if (!cityId) return;
+            processPlanCityPick(cityId, event);
+        }, true);
+
+        global.addEventListener('royalarmies:age-map-plan-route-armed', () => {
+            syncPlanRouteAssignChrome();
+        });
+        global.addEventListener('royalarmies:age-map-plan-draft-changed', () => {
+            syncPlanRouteAssignChrome();
+        });
+    }
+
     function bindCityHitDelegation() {
         if (!els.hitLayer || els.hitLayer.dataset.hitBound === '1') return;
         els.hitLayer.dataset.hitBound = '1';
@@ -989,11 +1317,30 @@
             if (hoveredCityId === leavingId) clearCityHighlight();
         });
 
+        els.hitLayer.addEventListener('pointerdown', onPlanHitPointerDown, true);
+        els.hitLayer.addEventListener('click', onPlanHitClick, true);
+
         els.hitLayer.addEventListener('pointerup', (event) => {
-            if (event.button !== 0 || dragging || panMoved) return;
+            if (event.button !== 0) return;
+            if (dragging) {
+                endMapPan(event);
+            }
+            if (processPlanDraftArrowPick(event)) {
+                return;
+            }
+
+            if (isPlanCityPickActive()) {
+                if (onPlanHitPointerUp(event)) {
+                    event.preventDefault();
+                }
+                return;
+            }
+
             const cityId = resolveCityHitTarget(event.target);
-            if (cityId) openCityDrawer(cityId, event.clientX, event.clientY);
-        });
+            if (!cityId) return;
+            if (panMoved) return;
+            openCityDrawer(cityId, event.clientX, event.clientY);
+        }, true);
     }
 
     function appendSmallCityHitBoost(city, outlineD, hitFrag, highlightFrag, ownershipFrag) {
@@ -1443,7 +1790,51 @@
         els.drawerScoutIntel.innerHTML = reportHtml;
     }
 
-    function handleDrawerScoutAction() {
+    function resolveScoutApiUrl(path) {
+        if (typeof global.resolveApiUrl === 'function') {
+            return global.resolveApiUrl(path);
+        }
+        return path;
+    }
+
+    function resolveScoutUsername() {
+        if (typeof global.resolveActiveCommanderUsername === 'function') {
+            return global.resolveActiveCommanderUsername() || '';
+        }
+        try {
+            return String(global.localStorage.getItem('activeCommanderUser') || '').trim();
+        } catch (_err) {
+            return '';
+        }
+    }
+
+    function buildScoutResultMarkup(city, payload, errorMessage) {
+        const nationName = resolveNationName(city.nationId);
+        if (errorMessage) {
+            return (
+                `<p class="age-world-city-drawer-scout-intel-title">Border Scout — ${city.name}</p>`
+                + `<p class="age-world-city-drawer-scout-intel-copy">${errorMessage}</p>`
+            );
+        }
+
+        const added = Number(payload?.addedCount) || 0;
+        const partial = Boolean(payload?.partial);
+        let copy = `Scout returned from ${nationName} at ${city.name}. `;
+        if (!added) {
+            copy += 'No new intel was filed (spy log may be full — delete a report at Headquarters).';
+        } else {
+            copy += `${added} army report${added === 1 ? '' : 's'} posted to Headquarters Spy Logs.`;
+            if (partial) {
+                copy += ' Log was full — only some reports were saved.';
+            }
+        }
+        return (
+            `<p class="age-world-city-drawer-scout-intel-title">Border Scout Report — ${city.name}</p>`
+            + `<p class="age-world-city-drawer-scout-intel-copy">${copy}</p>`
+        );
+    }
+
+    async function handleDrawerScoutAction() {
         const city = cityById.get(selectedCityId);
         const movement = global.RoyalArmiesAgeMovement;
         if (!city || !movement) return;
@@ -1451,12 +1842,12 @@
         const hints = movement.getBorderActionHints?.(city, playerMapCityId) || {};
         if (!hints.canScout) return;
 
-        const reportHtml = buildScoutIntelMarkup(city);
-        scoutedCityReports.set(city.id, reportHtml);
-
+        const username = resolveScoutUsername();
+        const pendingHtml = buildScoutIntelMarkup(city);
+        scoutedCityReports.set(city.id, pendingHtml);
         if (els.drawerScoutIntel) {
             els.drawerScoutIntel.hidden = false;
-            els.drawerScoutIntel.innerHTML = reportHtml;
+            els.drawerScoutIntel.innerHTML = pendingHtml;
         }
 
         global.dispatchEvent(new CustomEvent('royal-armies-city-scout-request', {
@@ -1468,6 +1859,41 @@
                 playerCityId: playerMapCityId
             }
         }));
+
+        if (!username) {
+            const errorHtml = buildScoutResultMarkup(city, null, 'Sign in as a commander to file spy reports.');
+            scoutedCityReports.set(city.id, errorHtml);
+            if (els.drawerScoutIntel) els.drawerScoutIntel.innerHTML = errorHtml;
+            return;
+        }
+
+        try {
+            const response = await global.fetch(resolveScoutApiUrl('/api/portal/age/scout-city'), {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, cityId: city.id })
+            });
+            const payload = await response.json().catch(() => ({}));
+            if (!response.ok) {
+                const message = payload?.message || payload?.code || `Scout failed (${response.status})`;
+                const errorHtml = buildScoutResultMarkup(city, null, message);
+                scoutedCityReports.set(city.id, errorHtml);
+                if (els.drawerScoutIntel) els.drawerScoutIntel.innerHTML = errorHtml;
+                return;
+            }
+
+            const resultHtml = buildScoutResultMarkup(city, payload);
+            scoutedCityReports.set(city.id, resultHtml);
+            if (els.drawerScoutIntel) els.drawerScoutIntel.innerHTML = resultHtml;
+
+            if (payload?.workspace) {
+                global.RoyalArmiesAgeHeadquarters?.applyWorkspace?.(payload.workspace, { silent: true });
+            }
+        } catch (err) {
+            const errorHtml = buildScoutResultMarkup(city, null, err?.message || 'Scout request failed.');
+            scoutedCityReports.set(city.id, errorHtml);
+            if (els.drawerScoutIntel) els.drawerScoutIntel.innerHTML = errorHtml;
+        }
     }
 
     let drawerMovementBusy = false;
@@ -1656,6 +2082,11 @@
             || target.closest('.age-world-battle-report-modal')
             || target.closest('.age-world-city-hit-path')
             || target.closest('.age-world-map-terrain-controls')
+            || target.closest('.age-world-map-plan-tool-dock')
+            || target.closest('#age-world-map-plan-add')
+            || target.closest('#age-world-map-plan-post')
+            || target.closest('#age-world-map-plan-draft-overlay')
+            || target.closest('#age-world-map-plan-toggle')
             || target.closest('.age-war-room-modal')
             || target.closest('.age-age-center-modal')
             || target.closest('.age-nation-hub')
@@ -1733,7 +2164,9 @@
         els.frame.classList.add('is-dragging');
         setMapPanLockChrome(true);
         els.frame.setPointerCapture(event.pointerId);
-        requestMapPointerLock();
+        if (!isPlanCityPickActive() && !global.RoyalArmiesAgeWorldMapPlanDraft?.isSessionActive?.()) {
+            requestMapPointerLock();
+        }
     }
 
     function endMapPan(event) {
@@ -1765,10 +2198,30 @@
 
         els.frame.addEventListener('pointerdown', (event) => {
             if (event.button !== 0) return;
+            if (!isPlanCityPickActive()) return;
+            const planCityId = resolveCityIdAtPointer(event);
+            if (planCityId) {
+                planPressCityId = planCityId;
+                cancelActiveMapPan(event);
+            }
+        }, true);
+
+        els.frame.addEventListener('pointerdown', (event) => {
+            if (event.button !== 0) return;
             if (isMapChromeTarget(event.target)) return;
+            if (isPlanCityPickActive()) {
+                if (resolveCityIdAtPointer(event) || planPressCityId) {
+                    return;
+                }
+                if (!event.shiftKey) {
+                    return;
+                }
+            }
             event.preventDefault();
             startMapPan(event);
         });
+
+        bindPlanMapClickFallback();
 
         els.frame.addEventListener('pointermove', (event) => {
             if (!dragging || !dragStart) return;
@@ -1997,7 +2450,15 @@
         },
         refreshNationCityHighlights,
         getCatalog: () => catalog,
-        mapPointToFramePixels
+        getCityById: (cityId) => cityById.get(cityId) || null,
+        getPlayerMapCityId: () => playerMapCityId,
+        mapPointToFramePixels,
+        focusOnMapCoordinates,
+        focusOnPlannerLocation,
+        resolveCityIdAtClientPoint,
+        setPlanCityPickMode,
+        syncPlanEditorHighlights,
+        clearPlanEditorHighlights
     };
     global.enableAgeWorldMap = enableAgeWorldMap;
 })(window);

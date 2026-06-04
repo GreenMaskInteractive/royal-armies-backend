@@ -10,6 +10,7 @@
     <link rel="stylesheet" href="style-age-center-modals.css?v=age-modal-stack-fix-1">
     <link rel="stylesheet" href="style-age-council-room.css?v=hq-content-inset-25-1">
     <link rel="stylesheet" href="style-age-hq-arcane-flare.css?v=hq-arcane-teal-gold-1">
+    <link rel="stylesheet" href="style-age-hq-intel.css?v=hq-intel-2">
     <link rel="stylesheet" href="mobile-responsive.css?v=council-room-premium-2">
     <link rel="stylesheet" href="dev-page-navigator.css?v=dev-nav-drag-handle-1">
     <link rel="stylesheet" href="custom-cursor.css?v=finger-press-7">
@@ -1539,6 +1540,44 @@
                                     <p id="age-hq-treasury-fort-empty" class="age-hq-treasury-empty">No fortified cities on record.</p>
                                 </div>
                             </section>
+                            <section class="age-headquarters-ops-card age-council-room-panel age-hq-intel-card" data-hq-public hidden aria-labelledby="age-hq-threat-title">
+                                <header class="age-headquarters-ops-card-head">
+                                    <h3 class="age-headquarters-ops-card-title" id="age-hq-threat-title">Threat Assessment Matrix</h3>
+                                    <p class="age-headquarters-ops-card-sub">Bordering nations ranked by military power, hostility, and distance.</p>
+                                </header>
+                                <div class="age-headquarters-ops-card-body">
+                                    <div id="age-hq-threat-matrix" class="age-hq-threat-matrix" aria-live="polite"></div>
+                                </div>
+                            </section>
+                            <section class="age-headquarters-ops-card age-council-room-panel age-hq-intel-card" data-hq-public hidden aria-labelledby="age-hq-spy-title">
+                                <header class="age-headquarters-ops-card-head">
+                                    <h3 class="age-headquarters-ops-card-title" id="age-hq-spy-title">Spy Logs</h3>
+                                    <p class="age-headquarters-ops-card-sub">Public army intel (3 max). Reports stale after +10% enemy growth.</p>
+                                </header>
+                                <div class="age-headquarters-ops-card-body">
+                                    <div id="age-hq-spy-log-list" class="age-hq-spy-log-list" aria-live="polite"></div>
+                                    <p id="age-hq-spy-log-empty" class="age-hq-intel-empty" hidden>No spy reports on file. Scout a bordering city on the world map.</p>
+                                </div>
+                            </section>
+                            <section class="age-headquarters-ops-card age-council-room-panel age-hq-intel-card age-hq-intel-card--bounties" data-hq-public hidden aria-labelledby="age-hq-bounty-title">
+                                <header class="age-headquarters-ops-card-head">
+                                    <h3 class="age-headquarters-ops-card-title" id="age-hq-bounty-title">Nation Bounties</h3>
+                                    <p class="age-headquarters-ops-card-sub" id="age-hq-bounty-meta">Live feed · 24-hour hunt window per cycle.</p>
+                                </header>
+                                <div class="age-headquarters-ops-card-body">
+                                    <div id="age-hq-bounty-targets" class="age-hq-bounty-targets" aria-live="polite"></div>
+                                    <div id="age-hq-bounty-feed" class="age-hq-bounty-feed" aria-live="polite"></div>
+                                </div>
+                            </section>
+                            <div id="age-hq-spy-detail" class="age-hq-spy-detail" hidden role="dialog" aria-modal="true" aria-labelledby="age-hq-spy-detail-title">
+                                <div class="age-hq-spy-detail__panel">
+                                    <header class="age-hq-spy-detail__head">
+                                        <h4 id="age-hq-spy-detail-title" class="age-hq-spy-detail__title">Spy Report</h4>
+                                        <button type="button" id="age-hq-spy-detail-close" class="age-age-center-modal-close" aria-label="Close spy report">×</button>
+                                    </header>
+                                    <div id="age-hq-spy-detail-body" class="age-hq-spy-detail__body"></div>
+                                </div>
+                            </div>
                             <p class="age-headquarters-authority-banner age-council-room-authority-banner" id="age-hq-authority-banner" hidden aria-live="polite"></p>
                         </div>
                     </aside>
@@ -2110,7 +2149,7 @@
     <script src="dev-environment.js"></script>
     <script src="age-world-water-routes.js?v=age-map-only-1"></script>
     <script src="rift-player-loc-pins.js?v=age-map-only-1"></script>
-    <script src="age-world-map.js?v=age-map-plan-city-pick-fix-2"></script>
+    <script src="age-world-map.js?v=hq-border-scout-api-1"></script>
     <script src="rift-age-movement.js?v=age-map-only-1"></script>
     <script src="age-movement-panel.js?v=hq-planning-chromeless-1"></script>
     <script src="age-world-map-plan-arrow-geometry.js?v=age-map-plan-routes-v2-1"></script>
@@ -2134,7 +2173,8 @@
     <script src="age-chronicles-battle-pass.js?v=nation-hub-radial-1"></script>
     <script src="age-nation-hub.js?v=nation-hub-same-page-workspaces-1"></script>
     <script src="rift-official-age.js?v=nation-terrain-status-1"></script>
-    <script src="age-headquarters.js?v=hq-manager-public-view-1"></script>
+    <script src="age-headquarters-intel.js?v=hq-intel-2"></script>
+    <script src="age-headquarters.js?v=hq-intel-panels-2"></script>
     <script src="age-left-reports-panel.js?v=left-reports-elections-tab-1"></script>
     <script src="age-quick-tips-panel.js?v=quick-tips-left-hud-1"></script>
     <script src="age-map-only-page.js?v=dev-nav-drag-1"></script>

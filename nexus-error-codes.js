@@ -540,6 +540,30 @@
             message: 'A recognized war with that nation is already recorded.',
             category: 'game'
         },
+        'NEXUS-HQ-016': {
+            http: 409,
+            title: 'Spy log full',
+            message: 'Headquarters spy log is full (3 reports). Delete one to archive a new report.',
+            category: 'game'
+        },
+        'NEXUS-HQ-017': {
+            http: 200,
+            title: 'Spy log partial',
+            message: 'Only some scout reports were saved because the spy log is nearly full.',
+            category: 'game'
+        },
+        'NEXUS-HQ-018': {
+            http: 404,
+            title: 'Spy log',
+            message: 'That spy report was not found.',
+            category: 'game'
+        },
+        'NEXUS-HQ-019': {
+            http: 400,
+            title: 'Spy forward',
+            message: 'Select an allied nation to forward this spy report.',
+            category: 'game'
+        },
 
         /* --- Age map movement --- */
         'NEXUS-AGE-001': {
@@ -830,7 +854,11 @@
         HQ_DISPATCH_TYPE_INVALID: 'NEXUS-HQ-011',
         HQ_DISPATCH_ACTIVE: 'NEXUS-HQ-012',
         HQ_AUTHORITY_REQUIRED: 'NEXUS-HQ-014',
-        HQ_WAR_ALREADY_ACTIVE: 'NEXUS-HQ-015'
+        HQ_WAR_ALREADY_ACTIVE: 'NEXUS-HQ-015',
+        HQ_SPY_LOG_FULL: 'NEXUS-HQ-016',
+        HQ_SPY_LOG_PARTIAL: 'NEXUS-HQ-017',
+        HQ_SPY_LOG_NOT_FOUND: 'NEXUS-HQ-018',
+        HQ_SPY_ALLY_REQUIRED: 'NEXUS-HQ-019'
     };
 
     function getErrorDefinition(code) {

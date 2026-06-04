@@ -55,6 +55,8 @@ const {
     validateTravel,
     validateAssault,
     validateTransfer,
+    validateBorderTarget,
+    classifyBorderRelationship,
     resolveCityHolder,
     resolveCityLoser,
     resolveDefaultCapitalCityId,
@@ -96,6 +98,17 @@ const {
     NATION_AUTHORITY_RANK,
     NATION_AUTHORITY_MIN_RANK14
 } = require('./nexus-age-headquarters');
+const {
+    buildThreatAssessmentMatrix,
+    buildSpyLogsWorkspaceSlice,
+    buildHqBountyWorkspaceSlice,
+    appendSpyLogs,
+    deleteSpyLog,
+    forwardSpyLog,
+    buildSpyLogsFromCityScouts,
+    resolveHqBountyCycle,
+    claimHqBountyPvpVictory
+} = require('./nexus-age-hq-intel');
 const {
     applyDispatchAlertPatch,
     getActiveDispatchAlert
@@ -1799,6 +1812,61 @@ function writeNationHeadquartersForNation(nationKey, nextState) {
     return { state: boards[storageKey] };
 }
 
+function readHqBountyProgram() {
+    const stored = db.get('portal.hqBountyProgram').value();
+    return stored && typeof stored === 'object' && !Array.isArray(stored) ? stored : {};
+}
+
+function writeHqBountyProgram(program) {
+    db.set('portal.hqBountyProgram', program && typeof program === 'object' ? program : {}).write();
+}
+
+function buildHeadquartersIntelSlices(commander, nationState) {
+    const access = resolveHeadquartersAccessForCommander(commander);
+    const gameNation = access.gameNation;
+    if (!gameNation) {
+        return {
+            threatMatrix: [],
+            spyLogs: [],
+            hqBounties: buildHqBountyWorkspaceSlice({}, '')
+        };
+    }
+
+    const commanders = db.get('commanders').value() || [];
+    const movementStore = readAgeMovementStore();
+    const warLedger = syncWarLedgerRelations(nationState?.warLedger, nationState?.diplomacy);
+    const nationRecordsMap = readNationAgeRecordsMap();
+    const ledgerRelations = warLedger?.relations || {};
+    const allyNationIds = [
+        ...(Array.isArray(ledgerRelations.allies) ? ledgerRelations.allies : []),
+        ...(Array.isArray(ledgerRelations.naps) ? ledgerRelations.naps : [])
+    ].map((row) => resolveCatalogNationKey(row?.nationId || row?.id)).filter(Boolean);
+
+    const bountyProgram = resolveHqBountyCycle(
+        readHqBountyProgram(),
+        commanders,
+        movementStore.cityHolders,
+        resolveCatalogNationDisplayName
+    );
+    writeHqBountyProgram(bountyProgram);
+
+    return {
+        threatMatrix: buildThreatAssessmentMatrix({
+            viewerNation: gameNation,
+            cityHolders: movementStore.cityHolders,
+            warLedger,
+            commanders,
+            nationRecordsMap,
+            resolveCatalogNationDisplayName
+        }),
+        spyLogs: buildSpyLogsWorkspaceSlice(nationState?.spyLogs, {
+            commanders,
+            allyNationIds
+        }),
+        hqBounties: buildHqBountyWorkspaceSlice(bountyProgram, gameNation)
+    };
+}
+
 const NATION_LEADER_MEMBERSHIP_TITLE = 'Leader';
 const NATION_VICE_LEADER_MEMBERSHIP_TITLE = 'Vice Leader';
 
@@ -1908,7 +1976,7 @@ function buildHeadquartersWorkspaceForCommander(commander) {
     );
     const warTargets = listWarTargetNations(access.gameNation);
 
-    return buildHeadquartersWorkspacePayload({
+    const workspace = buildHeadquartersWorkspacePayload({
         access: refreshedAccess,
         nationState: electionState.nationState,
         voteCandidates,
@@ -1917,6 +1985,12 @@ function buildHeadquartersWorkspaceForCommander(commander) {
         leadership: electionState.leadership,
         votingOpen: electionState.isOpen
     });
+    const intel = buildHeadquartersIntelSlices(commander, electionState.nationState);
+
+    return {
+        ...workspace,
+        ...intel
+    };
 }
 
 function resolveNationLeadershipDisplayName(username) {
@@ -4950,8 +5024,78 @@ app.get('/api/portal/age/headquarters', (req, res) => {
         return sendApiError(res, 'NEXUS-GEN-004');
     }
 
+    res.set('Cache-Control', 'no-store');
     res.json({
         status: 'ok',
+        workspace: buildHeadquartersWorkspaceForCommander(commander)
+    });
+});
+
+app.post('/api/portal/age/scout-city', (req, res) => {
+    const username = resolveLedgerCommanderUsername(req.body?.username || '');
+    if (!username) {
+        return sendApiError(res, 'NEXUS-GEN-002');
+    }
+
+    const commander = db.get('commanders').find({ username }).value();
+    if (!commander) {
+        return sendApiError(res, 'NEXUS-GEN-004');
+    }
+
+    const gameNation = resolveCommanderMapNationKey(commander);
+    if (!gameNation) {
+        return sendApiError(res, 'GAME_NATION_REQUIRED');
+    }
+
+    const targetCityId = String(req.body?.cityId || '').trim();
+    const movement = readCommanderMovementRecord(username, gameNation);
+    const store = readAgeMovementStore();
+    const border = validateBorderTarget(movement.catalogCityId, targetCityId);
+    if (border?.errorCode) {
+        return sendApiError(res, border.errorCode);
+    }
+    const relationship = classifyBorderRelationship(
+        gameNation,
+        border.targetCity,
+        store.cityHolders,
+        areNationsAllied
+    );
+    if (relationship === 'own') {
+        return sendApiError(res, 'NEXUS-AGE-010');
+    }
+
+    const city = getCatalogCity(targetCityId);
+    if (!city) {
+        return sendApiError(res, 'NEXUS-AGE-003');
+    }
+
+    let nationState = readNationHeadquartersForNation(gameNation);
+    const commanders = db.get('commanders').value() || [];
+    const reports = buildSpyLogsFromCityScouts(
+        commanders,
+        targetCityId,
+        city.name || '',
+        username,
+        resolveCommanderCatalogCityId
+    );
+    const appendResult = appendSpyLogs(nationState.spyLogs, reports);
+    if (appendResult.errorCode === 'HQ_SPY_LOG_FULL' && !appendResult.added.length) {
+        return sendApiError(res, appendResult.errorCode);
+    }
+
+    nationState = { ...nationState, spyLogs: appendResult.logs };
+    const writeResult = writeNationHeadquartersForNation(gameNation, nationState);
+    if (writeResult.errorCode) {
+        return sendApiError(res, writeResult.errorCode);
+    }
+
+    res.json({
+        status: 'ok',
+        action: 'scout-city',
+        cityId: targetCityId,
+        cityName: city.name || '',
+        addedCount: appendResult.added.length,
+        partial: appendResult.errorCode === 'HQ_SPY_LOG_PARTIAL',
         workspace: buildHeadquartersWorkspaceForCommander(commander)
     });
 });
@@ -5104,6 +5248,26 @@ app.patch('/api/portal/age/headquarters', (req, res) => {
             warLedger: recordPatch.warLedger
         };
         responseExtra.warRecord = recordPatch.warRecord;
+    }
+
+    if (body.deleteSpyLogId) {
+        const deleteResult = deleteSpyLog(nextState.spyLogs, body.deleteSpyLogId);
+        if (deleteResult.errorCode) {
+            return sendApiError(res, deleteResult.errorCode);
+        }
+        nextState = { ...nextState, spyLogs: deleteResult.logs };
+    }
+
+    if (body.forwardSpyLogId) {
+        const forwardResult = forwardSpyLog(
+            nextState.spyLogs,
+            body.forwardSpyLogId,
+            body.forwardSpyNationId || body.allyNationId
+        );
+        if (forwardResult.errorCode) {
+            return sendApiError(res, forwardResult.errorCode);
+        }
+        nextState = { ...nextState, spyLogs: forwardResult.logs };
     }
 
     const writeResult = writeNationHeadquartersForNation(gameNation, nextState);
@@ -6990,35 +7154,51 @@ app.post('/api/portal/age/guild/bounties/claim-pvp', (req, res) => {
     }
 
     const targetUsername = String(req.body?.targetUsername || '').trim();
-    const state = readGuildBountyState();
-    const result = claimBountyPvpVictory(state, commander, targetUsername);
-    if (!result.ok) {
-        return sendApiError(res, result.errorCode || 'NEXUS-AGE-023');
+    const guildState = readGuildBountyState();
+    const guildResult = claimBountyPvpVictory(guildState, commander, targetUsername);
+    const hqResult = claimHqBountyPvpVictory(readHqBountyProgram(), commander, targetUsername);
+
+    if (!guildResult.ok && !hqResult.ok) {
+        return sendApiError(res, guildResult.errorCode || hqResult.errorCode || 'NEXUS-AGE-023');
     }
 
-    writeGuildBountyState(result.state);
-    persistCommanderGuildLedger(username, {
-        ageGuildAcceptedBountyId: null,
-        ageGold: resolveCommanderAgeGold(commander) + result.rewards.hunterGold
-    });
+    if (guildResult.ok) {
+        writeGuildBountyState(guildResult.state);
+    }
+    if (hqResult.ok) {
+        writeHqBountyProgram(hqResult.program);
+    }
 
-    grantCommanderChronicleXp(username, result.rewards.hunterChronicleXp, 'pvpAttacks');
+    const responseExtra = {
+        hqBountyCollected: Boolean(hqResult.ok),
+        hqBountyTarget: hqResult.ok ? hqResult.target : null
+    };
 
-    const hunterNation = resolveCouncilBoardNationKey(commander);
-    if (hunterNation) {
-        awardNationTreasuryRsd(hunterNation, result.rewards.hunterNationRsd, {
-            eventType: 'main-drop',
-            awardedBy: 'guild-bounty-claim'
+    if (guildResult.ok) {
+        persistCommanderGuildLedger(username, {
+            ageGuildAcceptedBountyId: null,
+            ageGold: resolveCommanderAgeGold(commander) + guildResult.rewards.hunterGold
         });
+
+        grantCommanderChronicleXp(username, guildResult.rewards.hunterChronicleXp, 'pvpAttacks');
+
+        const hunterNation = resolveCouncilBoardNationKey(commander);
+        if (hunterNation) {
+            awardNationTreasuryRsd(hunterNation, guildResult.rewards.hunterNationRsd, {
+                eventType: 'main-drop',
+                awardedBy: 'guild-bounty-claim'
+            });
+        }
     }
 
     commander = db.get('commanders').find({ username }).value();
 
     res.json({
         status: 'ok',
-        action: 'guild-bounty-claim-pvp',
-        rewards: result.rewards,
-        bounty: result.bounty,
+        action: guildResult.ok ? 'guild-bounty-claim-pvp' : 'hq-bounty-claim-pvp',
+        rewards: guildResult.ok ? guildResult.rewards : null,
+        bounty: guildResult.ok ? guildResult.bounty : null,
+        ...responseExtra,
         ageGold: resolveCommanderAgeGold(commander),
         chronicleXp: normalizeCommanderChronicleXp(commander.chronicleXp),
         ...buildGuildStatePayload(commander),

@@ -12,6 +12,7 @@ const {
     classifyBorderRelationship
 } = require('./nexus-age-movement');
 const { normalizeDispatchAlert } = require('./nexus-age-dispatch-alert');
+const { normalizeSpyLogs } = require('./nexus-age-hq-intel');
 
 const PILL_MARKER_TYPES = new Set(['hold']);
 const ARROW_MARKER_TYPES = new Set(['sf', 'mf', 'move', 'taxi', 'temp-main']);
@@ -64,6 +65,7 @@ function getDefaultNationHeadquartersState() {
         election: getDefaultElectionState(),
         warLedger: getDefaultWarLedgerState(),
         dispatchAlert: null,
+        spyLogs: [],
         updatedAt: null
     };
 }
@@ -353,6 +355,7 @@ function normalizeNationHeadquartersState(raw) {
         election: normalizeElectionState(raw.election),
         warLedger: normalizeWarLedgerState(raw.warLedger),
         dispatchAlert: normalizeDispatchAlert(raw.dispatchAlert),
+        spyLogs: normalizeSpyLogs(raw.spyLogs),
         updatedAt: raw.updatedAt || null
     };
 }

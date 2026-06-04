@@ -529,6 +529,7 @@ module.exports = {
     resolveCityLoser,
     areCitiesAdjacent,
     classifyBorderRelationship,
+    validateBorderTarget,
     validateTravel,
     validateAssault,
     validateTransfer,

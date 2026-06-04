@@ -1,0 +1,246 @@
+/* FLEX — Headquarters intel panels (threat matrix, spy logs, nation bounties). */
+
+.age-hq-threat-matrix {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.age-hq-threat-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1.4fr) 72px 88px 52px;
+    gap: 8px;
+    align-items: center;
+    padding: 7px 10px;
+    border: 1px solid rgba(112, 200, 184, 0.28);
+    background: rgba(0, 0, 0, 0.28);
+    font-size: 0.72rem;
+}
+
+.age-hq-threat-row__nation {
+    font-weight: 700;
+    color: #f4e8c8;
+}
+
+.age-hq-threat-row__power {
+    text-align: right;
+    color: #b8f0e4;
+}
+
+.age-hq-threat-row__hostility {
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-size: 0.62rem;
+    text-align: center;
+}
+
+.age-hq-threat-row__hostility--at_war {
+    color: #ff9a88;
+}
+
+.age-hq-threat-row__hostility--hostile {
+    color: #ffb878;
+}
+
+.age-hq-threat-row__hostility--allied {
+    color: #88e8c8;
+}
+
+.age-hq-threat-row__hostility--neutral {
+    color: rgba(228, 214, 255, 0.72);
+}
+
+.age-hq-threat-row__distance {
+    text-align: right;
+    color: rgba(241, 224, 172, 0.68);
+}
+
+.age-hq-spy-log-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.age-hq-spy-log-btn {
+    position: relative;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    width: 100%;
+    min-height: 44px;
+    padding: 8px 12px;
+    border: 1px solid rgba(72, 168, 96, 0.72);
+    border-radius: 4px;
+    background: linear-gradient(180deg, rgba(56, 140, 88, 0.55) 0%, rgba(20, 72, 48, 0.92) 100%);
+    color: #e8fff0;
+    font-size: 0.72rem;
+    cursor: pointer;
+    text-align: left;
+    box-shadow:
+        inset 0 1px 0 rgba(168, 255, 196, 0.22),
+        0 4px 12px rgba(0, 0, 0, 0.28);
+}
+
+.age-hq-spy-log-btn:hover:not(:disabled) {
+    border-color: rgba(144, 255, 184, 0.85);
+    box-shadow: 0 0 16px rgba(88, 200, 120, 0.28);
+}
+
+.age-hq-spy-log-btn.is-outdated {
+    border-color: rgba(196, 72, 56, 0.75);
+    background: linear-gradient(180deg, rgba(120, 36, 28, 0.72) 0%, rgba(48, 12, 8, 0.95) 100%);
+    color: #ffd0c8;
+    cursor: default;
+}
+
+.age-hq-spy-log-btn.is-outdated .age-hq-spy-log-btn__copy {
+    opacity: 0.55;
+}
+
+.age-hq-spy-log-btn__stamp {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    font-weight: 800;
+    letter-spacing: 0.22em;
+    color: rgba(255, 120, 96, 0.92);
+    text-shadow: 0 0 12px rgba(0, 0, 0, 0.8);
+    pointer-events: none;
+}
+
+.age-hq-spy-log-btn__actions {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    flex-direction: row;
+    gap: 6px;
+    flex: 0 0 auto;
+}
+
+.age-hq-spy-log-mini-btn {
+    padding: 4px 8px;
+    border: 1px solid rgba(255, 210, 140, 0.45);
+    border-radius: 3px;
+    background: rgba(0, 0, 0, 0.35);
+    color: #f6e8c8;
+    font-size: 0.62rem;
+    cursor: pointer;
+}
+
+.age-hq-bounty-targets {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-bottom: 10px;
+}
+
+.age-hq-bounty-target-row {
+    padding: 7px 10px;
+    border: 1px solid rgba(184, 144, 48, 0.35);
+    background: rgba(0, 0, 0, 0.3);
+    font-size: 0.72rem;
+    color: #f4e8c8;
+}
+
+.age-hq-bounty-feed {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    max-height: 220px;
+    overflow-y: auto;
+}
+
+.age-hq-bounty-feed-item {
+    padding: 8px 10px;
+    border: 1px solid rgba(112, 200, 184, 0.28);
+    background: rgba(0, 0, 0, 0.32);
+    font-size: 0.7rem;
+    color: rgba(228, 236, 232, 0.9);
+}
+
+.age-hq-bounty-feed-item.is-nation-highlight {
+    border-color: rgba(255, 210, 140, 0.72);
+    box-shadow:
+        0 0 0 1px rgba(255, 215, 128, 0.18),
+        0 0 18px rgba(255, 200, 96, 0.22);
+    background: linear-gradient(180deg, rgba(72, 56, 24, 0.35) 0%, rgba(0, 0, 0, 0.38) 100%);
+}
+
+.age-hq-bounty-feed-item__type {
+    display: block;
+    margin-bottom: 3px;
+    font-size: 0.6rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: rgba(255, 210, 140, 0.78);
+}
+
+.age-hq-intel-empty {
+    margin: 0;
+    font-size: 0.72rem;
+    color: rgba(241, 224, 172, 0.58);
+}
+
+.age-hq-spy-detail {
+    position: fixed;
+    inset: 0;
+    z-index: 13100;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    background: rgba(4, 8, 10, 0.72);
+}
+
+.age-hq-spy-detail__panel {
+    width: min(520px, 96vw);
+    max-height: min(70vh, 560px);
+    overflow: auto;
+    border: 1px solid rgba(112, 200, 184, 0.45);
+    background: linear-gradient(165deg, rgba(24, 48, 44, 0.98) 0%, rgba(8, 12, 14, 0.99) 100%);
+    box-shadow: 0 20px 48px rgba(0, 0, 0, 0.65);
+}
+
+.age-hq-spy-detail__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 10px 14px;
+    border-bottom: 1px solid rgba(112, 200, 184, 0.32);
+}
+
+.age-hq-spy-detail__title {
+    margin: 0;
+    font-family: 'Cinzel', serif;
+    font-size: 0.95rem;
+    color: #f6e8c8;
+}
+
+.age-hq-spy-detail__body {
+    padding: 14px 16px 16px;
+    font-size: 0.78rem;
+    color: rgba(228, 236, 232, 0.9);
+}
+
+.age-hq-spy-detail__body dl {
+    margin: 0;
+    display: grid;
+    gap: 8px;
+}
+
+.age-hq-spy-detail__body dt {
+    font-size: 0.62rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: rgba(184, 220, 210, 0.72);
+}
+
+.age-hq-spy-detail__body dd {
+    margin: 0;
+}

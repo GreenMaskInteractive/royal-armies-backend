@@ -211,7 +211,20 @@
                 incoming: workspace.diplomacy?.incoming?.length || 0,
                 outgoing: workspace.diplomacy?.outgoing?.length || 0
             },
-            fortifiedCities: workspace.fortifiedCities?.length || 0
+            fortifiedCities: workspace.fortifiedCities?.length || 0,
+            threatMatrix: (workspace.threatMatrix || []).map((row) => (
+                `${row.nationId}:${row.militaryPower}:${row.hostility}`
+            )).join('|'),
+            spyLogs: (workspace.spyLogs || []).map((log) => (
+                `${log.id}:${log.outdated ? 1 : 0}:${log.currentPower}`
+            )).join('|'),
+            hqBounties: {
+                cycleId: workspace.hqBounties?.cycleId || '',
+                feed: (workspace.hqBounties?.feed || []).length,
+                targets: (workspace.hqBounties?.targets || []).map((row) => (
+                    `${row.targetUsername}:${row.resolved ? 1 : 0}`
+                )).join('|')
+            }
         });
     }
 
@@ -403,6 +416,7 @@
         renderDiplomacyPublicSlice(workspace?.diplomacyPublic || {});
         renderWarLedgerEmbed(workspace?.warLedger || {});
         setAuthorityGates(workspace);
+        global.RoyalArmiesAgeHeadquartersIntel?.applyWorkspace?.(workspace);
     }
 
     function renderElectionPoll(role, voteState) {
@@ -1884,6 +1898,7 @@
 
     global.RoyalArmiesAgeHeadquarters = {
         enable,
+        applyWorkspace,
         onViewOpen,
         onViewClose,
         openCouncilRoom: () => setCouncilRoomModalOpen(true),
