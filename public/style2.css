@@ -22597,7 +22597,7 @@ body.is-rift-discoveries-workspace-open {
     display: flex;
     flex-direction: column;
     pointer-events: auto;
-    width: min(1520px, 94vw);
+    width: min(1380px, 90vw);
     height: min(960px, 90vh);
     max-width: calc(100vw - 40px);
     max-height: calc(100vh - 40px);
@@ -22772,39 +22772,43 @@ body.age-war-room-open {
     overflow: hidden;
 }
 
-.age-war-room-body {
-    position: relative;
-    z-index: 2;
-    display: flex;
-    flex: 1 1 auto;
-    align-items: stretch;
-    gap: 0;
-    min-height: 0;
-    overflow: hidden;
+.age-war-room-players-panel[hidden] {
+    display: none !important;
 }
 
-.age-war-room-players-panel {
-    flex: 0 0 204px;
+.age-war-room-players-panel.is-open {
+    position: fixed;
+    z-index: 13061;
     display: flex;
     flex-direction: column;
+    width: 204px;
     min-width: 0;
-    min-height: 0;
-    padding: 12px 10px 12px 12px;
-    border-right: 1px solid rgba(184, 144, 48, 0.34);
-    background:
-        linear-gradient(180deg, rgba(0, 0, 0, 0.42) 0%, rgba(0, 0, 0, 0.2) 100%),
-        linear-gradient(90deg, rgba(40, 90, 140, 0.1) 0%, transparent 100%);
     box-sizing: border-box;
+    padding: 12px 10px 12px 12px;
+    border: 1px solid rgba(184, 144, 48, 0.62);
+    border-radius: 4px;
+    background:
+        linear-gradient(90deg, rgba(255, 215, 0, 0.04) 0%, transparent 12%, transparent 88%, rgba(255, 215, 0, 0.04) 100%),
+        linear-gradient(180deg, rgba(255, 215, 0, 0.06) 0%, transparent 14%),
+        linear-gradient(180deg, rgba(0, 0, 0, 0.42) 0%, rgba(0, 0, 0, 0.2) 100%),
+        linear-gradient(90deg, rgba(40, 90, 140, 0.1) 0%, transparent 100%),
+        linear-gradient(165deg, rgba(42, 32, 22, 0.99) 0%, rgba(12, 9, 7, 0.99) 52%, rgba(22, 16, 12, 0.98) 100%);
+    box-shadow:
+        inset 0 1px 0 rgba(255, 215, 0, 0.16),
+        0 20px 48px rgba(0, 0, 0, 0.72);
+    pointer-events: auto;
+    overflow: hidden;
 }
 
 .age-war-room-workspace-shell {
+    position: relative;
+    z-index: 2;
     flex: 1 1 auto;
     display: flex;
     flex-direction: column;
     min-width: 0;
     min-height: 0;
     overflow: hidden;
-    border-left: 1px solid rgba(184, 144, 48, 0.14);
 }
 
 .age-war-room-command-deck {
@@ -23936,19 +23940,9 @@ body.age-war-room-open {
         grid-template-columns: auto 1fr auto;
     }
 
-    .age-war-room-body {
-        flex-direction: column;
-    }
-
-    .age-war-room-players-panel {
-        flex: 0 0 auto;
+    .age-war-room-players-panel.is-open {
+        width: min(204px, calc(100vw - 24px));
         max-height: 38vh;
-        border-right: none;
-        border-bottom: 1px solid rgba(184, 144, 48, 0.28);
-    }
-
-    .age-war-room-workspace-shell {
-        border-left: none;
     }
 
     .age-war-room-command-deck {

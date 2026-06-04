@@ -35,12 +35,16 @@
     const SONAR_MAX_RADIUS_MAP_UNITS = 56;
     const SONAR_RING_LIFETIME_MS = 2200;
     const REFRESH_MS = 12000;
+    const WAR_ROOM_PLAYERS_PANEL_ID = 'age-war-room-players-panel';
+    const WAR_ROOM_PLAYERS_PANEL_GAP_PX = 12;
 
     const els = {
         modal: null,
         backdrop: null,
         closeBtn: null,
         openBtn: null,
+        playersPanel: null,
+        warRoomDialog: null,
         workspaceMain: null,
         createBtn: null,
         sfLeadBtn: null,
@@ -213,6 +217,52 @@
         applyTypeCycleButton();
     }
 
+    function ensureWarRoomPlayersPanelPortaled() {
+        const panel = els.playersPanel || global.document.getElementById(WAR_ROOM_PLAYERS_PANEL_ID);
+        if (!panel) return null;
+        if (panel.parentElement !== global.document.body) {
+            global.document.body.appendChild(panel);
+        }
+        els.playersPanel = panel;
+        return panel;
+    }
+
+    function syncWarRoomPlayersPanelPosition() {
+        const panel = els.playersPanel;
+        const dialog = els.warRoomDialog;
+        if (!panel || !dialog || !workspaceOpen || panel.hidden) return;
+
+        const rect = dialog.getBoundingClientRect();
+        const panelWidth = panel.offsetWidth || 204;
+        const left = Math.max(12, rect.left - panelWidth - WAR_ROOM_PLAYERS_PANEL_GAP_PX);
+
+        panel.style.top = `${Math.round(rect.top)}px`;
+        panel.style.left = `${Math.round(left)}px`;
+        panel.style.height = `${Math.round(rect.height)}px`;
+    }
+
+    function setWarRoomPlayersPanelOpen(open) {
+        const panel = ensureWarRoomPlayersPanelPortaled();
+        if (!panel) return;
+
+        const isOpen = Boolean(open);
+        panel.hidden = !isOpen;
+        panel.setAttribute('aria-hidden', isOpen ? 'false' : 'true');
+        panel.classList.toggle('is-open', isOpen);
+
+        if (!isOpen) {
+            panel.style.top = '';
+            panel.style.left = '';
+            panel.style.height = '';
+            return;
+        }
+
+        global.requestAnimationFrame(() => {
+            syncWarRoomPlayersPanelPosition();
+            global.requestAnimationFrame(syncWarRoomPlayersPanelPosition);
+        });
+    }
+
     function setWorkspaceOpen(open) {
         workspaceOpen = Boolean(open);
         if (!els.modal) return;
@@ -222,6 +272,7 @@
         els.openBtn?.setAttribute('aria-expanded', workspaceOpen ? 'true' : 'false');
         els.openBtn?.classList.toggle('is-active', workspaceOpen);
         global.document.body.classList.toggle('age-war-room-open', workspaceOpen);
+        setWarRoomPlayersPanelOpen(workspaceOpen);
 
         if (!workspaceOpen) {
             expandedGroupIds.clear();
@@ -1459,8 +1510,13 @@
 
         els.backdrop?.addEventListener('click', () => setWorkspaceOpen(false));
 
-        const dialog = els.modal?.querySelector('.age-war-room-dialog');
+        const dialog = els.warRoomDialog || els.modal?.querySelector('.age-war-room-dialog');
         dialog?.addEventListener('click', (event) => event.stopPropagation());
+        els.playersPanel?.addEventListener('click', (event) => event.stopPropagation());
+
+        global.addEventListener('resize', () => {
+            if (workspaceOpen) syncWarRoomPlayersPanelPosition();
+        });
 
         els.createBtn?.addEventListener('click', (event) => {
             event.preventDefault();
@@ -1502,7 +1558,10 @@
             if (workspaceOpen) refreshRoster();
         });
 
-        global.addEventListener('royalarmies:age-map-overlay-layout', syncSonarMapLayout);
+        global.addEventListener('royalarmies:age-map-overlay-layout', () => {
+            syncSonarMapLayout();
+            if (workspaceOpen) syncWarRoomPlayersPanelPosition();
+        });
     }
 
     function startRefreshLoop() {
@@ -1514,8 +1573,10 @@
 
     function enable() {
         els.modal = global.document.getElementById('age-war-room-modal');
+        els.warRoomDialog = els.modal?.querySelector('.age-war-room-dialog') || null;
         els.backdrop = global.document.getElementById('age-war-room-backdrop');
         els.closeBtn = global.document.getElementById('age-war-room-close');
+        ensureWarRoomPlayersPanelPortaled();
         els.openBtn = global.document.getElementById('age-war-room-open');
         els.workspaceMain = global.document.getElementById('age-army-groups-workspace-main');
         els.createBtn = global.document.getElementById('age-army-groups-btn-create');

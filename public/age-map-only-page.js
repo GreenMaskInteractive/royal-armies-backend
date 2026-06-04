@@ -81,7 +81,10 @@
 
     function isWarRoomModalTarget(target) {
         if (!target || typeof target.closest !== 'function') return false;
-        return Boolean(target.closest('.age-war-room-modal:not([hidden])'));
+        return Boolean(
+            target.closest('.age-war-room-modal:not([hidden])')
+            || target.closest('#age-war-room-players-panel.is-open')
+        );
     }
 
     function isSettlementOverlayTarget(target) {
