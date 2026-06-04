@@ -337,9 +337,9 @@
     grid-column: 1 / -1;
 }
 
-/* ~35px between top record pair (Allied/NAP + War Ledger) and next row */
-.age-council-room-workspace.is-hq-public-view .age-council-room-nation-records > .age-council-room-fortifications {
-    margin-top: 27px;
+.age-council-room-workspace.is-hq-public-view .age-council-room-nation-records {
+    row-gap: 35px;
+    column-gap: 8px;
 }
 
 .age-council-room-command-stack {
