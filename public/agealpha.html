@@ -8,7 +8,7 @@
     <link rel="stylesheet" href="style2.css?v=border-casualty-risk-1">
     <link rel="stylesheet" href="style-age-headquarters.css?v=hq-planning-chromeless-1">
     <link rel="stylesheet" href="style-age-center-modals.css?v=age-modal-stack-fix-1">
-    <link rel="stylesheet" href="style-age-council-room.css?v=hq-map-chromeless-1">
+    <link rel="stylesheet" href="style-age-council-room.css?v=hq-council-fit-layout-1">
     <link rel="stylesheet" href="style-age-hq-arcane-flare.css?v=hq-map-chromeless-1">
     <link rel="stylesheet" href="style-age-hq-intel.css?v=hq-chrome-click-fix-1">
     <link rel="stylesheet" href="mobile-responsive.css?v=council-room-premium-2">
@@ -1601,15 +1601,17 @@
                                     <p class="age-headquarters-planning-lock__copy" id="age-hq-planning-lock-copy">Seven commanders must reach rank 14 before the nation receives full authority.</p>
                                 </div>
                                 <header class="age-headquarters-section-head age-council-room-section-head">
-                                    <p class="age-headquarters-section-eyebrow">Operations</p>
-                                    <h3 class="age-headquarters-section-title">SF Planning</h3>
+                                    <div class="age-council-room-section-head__titles">
+                                        <p class="age-headquarters-section-eyebrow">Operations</p>
+                                        <h3 class="age-headquarters-section-title">SF Planning</h3>
+                                    </div>
+                                    <p id="age-hq-planning-status" class="age-council-room-planning-status" aria-live="polite"></p>
                                 </header>
                                 <div class="age-hq-planning-stage age-council-room-planning-stage">
                                     <div class="age-hq-planning-map-stack age-council-room-map-stack">
                                         <div id="age-hq-planning-map-host" class="age-hq-planning-map-host" aria-label="Planning map"></div>
                                     </div>
                                 </div>
-                                <p id="age-hq-planning-hint" class="age-hq-planning-hint age-council-room-planning-hint">Use the planning map to place orders on border cities.</p>
                             </div>
 
                             <div class="age-hq-command-ops-stack age-council-room-diplo-stack" data-hq-council-only hidden aria-label="Nation diplomacy operations">
@@ -2163,7 +2165,7 @@
     <script src="age-nation-hub.js?v=nation-hub-vertical-stack-1"></script>
     <script src="rift-official-age.js?v=nation-terrain-status-1"></script>
     <script src="age-headquarters-intel.js?v=hq-manager-stable-2"></script>
-    <script src="age-headquarters.js?v=hq-manager-fullspace-swap-1"></script>
+    <script src="age-headquarters.js?v=hq-council-fit-layout-1"></script>
     <script src="age-left-reports-panel.js?v=left-reports-elections-tab-1"></script>
     <script src="age-quick-tips-panel.js?v=quick-tips-left-hud-1"></script>
     <script src="age-map-only-page.js?v=dev-nav-drag-1"></script>

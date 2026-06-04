@@ -1043,14 +1043,14 @@
             return;
         }
 
-        const hint = planningColumn.querySelector('.age-hq-planning-hint');
+        const sectionHead = planningColumn.querySelector('.age-council-room-section-head');
         const columnRect = planningColumn.getBoundingClientRect();
         const columnStyles = global.getComputedStyle(planningColumn);
         const padTop = parseFloat(columnStyles.paddingTop) || 0;
         const padBottom = parseFloat(columnStyles.paddingBottom) || 0;
         const columnGap = parseFloat(columnStyles.gap) || 0;
-        const hintHeight = hint ? Math.ceil(hint.getBoundingClientRect().height) : 0;
-        const hintBlock = hintHeight > 0 ? hintHeight + columnGap : 0;
+        const headHeight = sectionHead ? Math.ceil(sectionHead.getBoundingClientRect().height) : 0;
+        const headBlock = headHeight > 0 ? headHeight + columnGap : 0;
 
         const workspaceRect = workspace.getBoundingClientRect();
         const bottomLimit = Math.min(
@@ -1059,7 +1059,7 @@
         );
         const availableHeight = Math.max(
             HQ_PLANNING_BASE_MAP_PX,
-            bottomLimit - columnRect.top - padTop - padBottom - hintBlock
+            bottomLimit - columnRect.top - padTop - padBottom - headBlock
                 - HQ_PLANNING_LAYOUT_CLEARANCE_PX - HQ_PLANNING_EDGE_BLEED_PX
         );
 
@@ -1077,7 +1077,7 @@
         canvas.style.setProperty('--age-hq-planning-scale', scale.toFixed(4));
         canvas.style.setProperty('--age-hq-planning-map-size', `${mapSize}px`);
         canvas.style.setProperty('--age-hq-planning-stage-height', `${mapSize}px`);
-        canvas.style.setProperty('--age-hq-planning-hint-block', `${hintBlock + padBottom}px`);
+        canvas.style.setProperty('--age-hq-planning-hint-block', '0px');
         global.requestAnimationFrame(syncHeadquartersCommandRailLayout);
     }
 

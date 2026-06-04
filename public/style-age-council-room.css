@@ -272,7 +272,7 @@
 
 .age-council-room-column-head {
     flex: 0 0 auto;
-    padding: 11px 0 9px;
+    padding: 8px 0 6px;
     border-bottom: 1px solid rgba(184, 144, 48, 0.22);
 }
 
@@ -300,24 +300,30 @@
 .age-council-room-command-stack {
     flex: 1 1 auto;
     min-height: 0;
-    overflow-y: auto;
-    overflow-x: hidden;
-    scrollbar-width: thin;
-    scrollbar-color: rgba(184, 144, 48, 0.45) rgba(0, 0, 0, 0.35);
+    overflow: hidden;
 }
 
 .age-council-room-nation-stack {
-    padding: 12px 0 16px;
-    display: flex;
-    flex-direction: column;
-    gap: 11px;
+    padding: 8px 0 10px;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-auto-rows: minmax(0, auto);
+    align-content: start;
+    gap: 8px;
+}
+
+.age-council-room-nation-stack > .age-hq-nation-cabinet,
+.age-council-room-nation-stack > .age-headquarters-ops-card--elections,
+.age-council-room-nation-stack > .age-council-room-authority-banner {
+    grid-column: 1 / -1;
 }
 
 .age-council-room-command-stack {
-    padding: 12px 0 16px;
+    padding: 8px 0 10px;
     display: flex;
     flex-direction: column;
-    gap: 13px;
+    gap: 8px;
+    min-height: 0;
 }
 
 .age-council-room-panel.age-headquarters-ops-card,
@@ -328,6 +334,40 @@
     box-shadow:
         inset 0 1px 0 rgba(255, 215, 128, 0.09),
         0 6px 18px rgba(0, 0, 0, 0.28);
+    min-height: 0;
+}
+
+.age-council-room-workspace .age-headquarters-ops-card-head {
+    padding: 6px 10px 0;
+}
+
+.age-council-room-workspace .age-headquarters-ops-card-body {
+    padding: 6px 10px 8px;
+}
+
+.age-council-room-workspace.is-hq-public-view .age-headquarters-ops-card-sub {
+    display: none;
+}
+
+.age-council-room-workspace.is-hq-public-view .age-headquarters-ops-card-title {
+    font-size: 0.76rem;
+}
+
+.age-council-room-workspace.is-hq-public-view .age-hq-elections-host {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+}
+
+.age-council-room-workspace.is-hq-public-view .age-hq-election-poll {
+    border-top: none;
+    padding-top: 0;
+}
+
+.age-council-room-workspace.is-hq-public-view .age-hq-intel-card .age-headquarters-ops-card-body {
+    max-height: min(132px, 18vh);
+    overflow-y: auto;
+    scrollbar-width: thin;
 }
 
 /* National Cabinet — Nation Affairs column (stacked, readable type) */
@@ -391,31 +431,75 @@
     padding: 4px 10px;
 }
 
+.age-council-room-section-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 10px 16px;
+    flex-wrap: wrap;
+    margin: 0 0 4px;
+}
+
+.age-council-room-section-head__titles {
+    min-width: 0;
+}
+
+.age-council-room-section-head .age-headquarters-section-title {
+    font-size: 1rem;
+}
+
+.age-council-room-planning-status {
+    margin: 0;
+    flex: 1 1 auto;
+    min-width: 12ch;
+    max-width: 100%;
+    font-size: 0.68rem;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    line-height: 1.35;
+    text-align: right;
+    color: rgba(241, 224, 172, 0.58);
+}
+
+.age-council-room-planning-status.is-error {
+    color: #ffb8a8;
+}
+
+.age-council-room-planning-status:empty {
+    display: none;
+}
+
 .age-council-room-planning-block {
     position: relative;
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 6px;
     padding: 0;
     border: none;
     border-radius: 0;
     background: transparent;
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: hidden;
 }
 
 .age-council-room-planning-stage {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(148px, 188px);
-    grid-template-rows: auto auto;
-    gap: 10px;
-    align-items: start;
+    display: flex;
+    flex: 1 1 auto;
+    align-items: stretch;
     width: 100%;
     min-height: 0;
 }
 
 .age-council-room-map-stack {
-    grid-column: 1;
-    grid-row: 1;
+    flex: 1 1 auto;
     min-width: 0;
+    min-height: 0;
+    width: 100%;
+    max-width: 100%;
+    height: auto;
+    max-height: 100%;
     border: none;
     outline: none;
     box-shadow: none;
@@ -430,11 +514,40 @@
 
 .age-council-room-map-stack .age-hq-planning-map-host {
     width: 100%;
-    height: 420px;
-    min-height: 320px;
+    height: 100%;
+    min-height: 0;
+    flex: 1 1 auto;
     border: none;
     border-radius: 0;
     box-sizing: border-box;
+}
+
+.age-council-room-workspace.is-hq-manager-open .age-hq-planning-map-stack {
+    width: 100%;
+    height: 100%;
+    max-width: 100%;
+    max-height: 100%;
+}
+
+.age-council-room-workspace.is-hq-manager-open .age-council-room-command-stack {
+    display: grid;
+    grid-template-rows: minmax(0, 1fr) auto;
+    gap: 8px;
+}
+
+.age-council-room-workspace.is-hq-manager-open .age-council-room-diplo-stack {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+    align-content: start;
+    min-height: 0;
+    overflow: hidden;
+}
+
+.age-council-room-workspace.is-hq-manager-open .age-council-room-diplo-stack .age-headquarters-ops-card-body {
+    max-height: min(148px, 22vh);
+    overflow-y: auto;
+    scrollbar-width: thin;
 }
 
 .age-council-room-planning-block .age-hq-planning-map-frame {
@@ -463,14 +576,6 @@
     background: transparent;
     padding-left: 0;
     padding-right: 0;
-}
-
-.age-council-room-planning-hint {
-    margin: 0;
-    grid-column: 1 / -1;
-    font-size: 0.72rem;
-    color: rgba(241, 224, 172, 0.55);
-    text-align: center;
 }
 
 .age-council-room-planning-block.is-planning-locked .age-council-room-map-stack,
@@ -552,6 +657,9 @@
     .age-council-room-workspace:not(.is-hq-manager-open) .age-council-room-column--nation {
         border-right: 0;
         border-bottom: 1px solid rgba(184, 144, 48, 0.28);
-        max-height: 40vh;
+    }
+
+    .age-council-room-nation-stack {
+        grid-template-columns: 1fr;
     }
 }

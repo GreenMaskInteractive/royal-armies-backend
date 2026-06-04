@@ -970,11 +970,25 @@
         return keys.length === 1 && keys[0] === 'planning';
     }
 
+    function getPlanningStatusEl() {
+        return global.document.getElementById('age-hq-planning-status');
+    }
+
     function setPlanningPlacementHint(message, isError) {
-        const hint = global.document.getElementById('age-hq-planning-hint');
-        if (!hint) return;
-        hint.textContent = message;
-        hint.classList.toggle('is-error', Boolean(isError));
+        const statusEl = getPlanningStatusEl();
+        if (!statusEl) return;
+        const text = String(message || '').trim();
+        if (!text) {
+            delete statusEl.dataset.errorLock;
+            statusEl.classList.remove('is-error');
+            syncPlanningStatusLine();
+            return;
+        }
+        statusEl.textContent = text;
+        statusEl.classList.toggle('is-error', Boolean(isError));
+        if (isError) {
+            statusEl.dataset.errorLock = '1';
+        }
     }
 
     function onPlanningPlacementBlocked(reason) {
@@ -987,9 +1001,11 @@
     }
 
     function clearPlanningSaveError() {
-        const hint = global.document.getElementById('age-hq-planning-hint');
-        if (!hint) return;
-        hint.classList.remove('is-error');
+        const statusEl = getPlanningStatusEl();
+        if (!statusEl) return;
+        delete statusEl.dataset.errorLock;
+        statusEl.classList.remove('is-error');
+        syncPlanningStatusLine();
     }
 
     async function showHeadquartersAlert(message, title) {
@@ -1593,10 +1609,7 @@
         await flushPlanningSave();
         const steps = global.RoyalArmiesAgeHeadquartersPlanningMap?.getPlanningSteps?.() || [];
         if (!steps.length) {
-            const hint = global.document.getElementById('age-hq-planning-hint');
-            if (hint) {
-                hint.textContent = 'Place at least one order before confirming the plan.';
-            }
+            setPlanningPlacementHint('Place at least one order before confirming the plan.', true);
             return;
         }
         await patchHeadquarters({ confirmPlanning: true });
@@ -1717,10 +1730,47 @@
         await fetchHeadquartersWorkspace();
     }
 
+    function syncPlanningStatusLine() {
+        const statusEl = getPlanningStatusEl();
+        if (!statusEl || statusEl.dataset.errorLock === '1') return;
+
+        const planningMap = global.RoyalArmiesAgeHeadquartersPlanningMap;
+        const steps = planningMap?.getPlanningSteps?.() || [];
+        const mpBudget = planningMap?.getMoveMfMpBudget?.() || { used: 0, max: 3, remaining: 3 };
+        const hasSteps = steps.length > 0;
+        const hasSelection = Boolean(planningMap?.getSelectedBorderCityId?.());
+        const canPlacePill = Boolean(planningMap?.isSelectedCityPlannable?.());
+        let line = '';
+
+        if (!hasActiveManagerControls()) {
+            line = hqManagerEligible
+                ? 'Open HQ Manager to edit SF Planning.'
+                : 'Council access required for SF Planning.';
+        } else if (planningConfirmed) {
+            line = 'Plan live on world map.';
+        } else if (hasPublishedPlan) {
+            line = 'Published plan on world map — clear when complete.';
+        } else if (activeMarkerType === 'move' || activeMarkerType === 'mf') {
+            line = `${markerTypeLabel(activeMarkerType)} · ${mpBudget.used}/${mpBudget.max} MP`;
+        } else if (activeMarkerType && isArrowMarkerType(activeMarkerType)) {
+            line = `Placing ${markerTypeLabel(activeMarkerType)}`;
+        } else if (activeMarkerType === 'hold') {
+            line = `${markerTypeLabel(activeMarkerType)} armed`;
+        } else if (hasSteps) {
+            line = `${steps.length} order${steps.length === 1 ? '' : 's'} placed`;
+        } else if (canPlacePill) {
+            line = 'Border city selected';
+        } else if (hasSelection) {
+            line = 'Invalid chain target';
+        } else {
+            line = 'Select a border city or arm a marker';
+        }
+
+        statusEl.textContent = line;
+    }
+
     function syncToolbarState() {
         const toolbar = global.document.getElementById('age-hq-planning-toolbar');
-        if (!toolbar) return;
-
         const planningMap = global.RoyalArmiesAgeHeadquartersPlanningMap;
         const steps = planningMap?.getPlanningSteps?.() || [];
         const mpBudget = planningMap?.getMoveMfMpBudget?.() || { used: 0, max: 3, remaining: 3 };
@@ -1729,6 +1779,11 @@
         const canPlacePill = Boolean(planningMap?.isSelectedCityPlannable?.());
         const hasTempMain = Boolean(planningMap?.getTempMainCityId?.());
         const canReset = hasActiveManagerControls() && !planningConfirmed && (hasSteps || hasSelection || activeMarkerType || hasTempMain);
+
+        if (!toolbar) {
+            syncPlanningStatusLine();
+            return;
+        }
 
         toolbar.querySelectorAll('[data-hq-marker]').forEach((button) => {
             const type = button.getAttribute('data-hq-marker') || '';
@@ -1782,42 +1837,7 @@
             }
         }
 
-        const hint = global.document.getElementById('age-hq-planning-hint');
-        if (hint && !hint.classList.contains('is-error')) {
-            if (!hasActiveManagerControls()) {
-                hint.textContent = hqManagerEligible
-                    ? 'Open HQ Manager to place SF Planning orders.'
-                    : 'SF Planning markers require Council access.';
-            } else if (planningConfirmed) {
-                hint.textContent = 'Plan is live on the world map. Edit Plan to adjust orders, or Clear Plan when the operation is complete.';
-            } else if (hasPublishedPlan) {
-                hint.textContent = 'A published plan is still on the world map. Clear Plan when the operation is complete.';
-            } else if (activeMarkerType && isArrowMarkerType(activeMarkerType)) {
-                if (activeMarkerType === 'move') {
-                    hint.textContent = `Click an owned city bordering your chain endpoint for Move (${mpBudget.remaining} of ${mpBudget.max} MP left), or click a Hold city again for an in-city Move arrow.`;
-                } else if (activeMarkerType === 'mf') {
-                    hint.textContent = `Click a bordering neutral or enemy city for MF (${mpBudget.remaining} of ${mpBudget.max} MP left this chain). Launch from owned or Hold cities.`;
-                } else if (activeMarkerType === 'sf') {
-                    hint.textContent = 'Click a bordering neutral or enemy city for SF. Launch from owned or Hold cities along your chain.';
-                } else if (activeMarkerType === 'taxi') {
-                    hint.textContent = 'Click an owned city bordering your chain endpoint for Taxi, or click a Hold city again for an in-city Taxi arrow.';
-                } else if (activeMarkerType === 'temp-main') {
-                    hint.textContent = 'Vice Leader only: click an owned city to draw a Temp Main arrow from your real Main.';
-                } else {
-                    hint.textContent = `Click a valid bordering city to place ${markerTypeLabel(activeMarkerType)}.`;
-                }
-            } else if (activeMarkerType === 'hold') {
-                hint.textContent = `${markerTypeLabel(activeMarkerType)} armed — click the selected city again or pick an existing Hold marker to replace it.`;
-            } else if (!canPlacePill && !hasSteps) {
-                hint.textContent = 'Select a bordering city for Hold. SF, MF, Move, and Taxi can be armed immediately.';
-            } else if (!canPlacePill && hasSteps) {
-                hint.textContent = 'Select the next city bordering your last order to place Hold.';
-            } else if (hasSteps) {
-                hint.textContent = 'Arm SF, MF, Move, or Taxi to draw arrows, or select a city for Hold.';
-            } else {
-                hint.textContent = 'Arm SF, MF, Move, or Taxi, or select a bordering city first for Hold.';
-            }
-        }
+        syncPlanningStatusLine();
 
         const confirmBtn = global.document.getElementById('age-hq-planning-confirm-btn');
         if (confirmBtn) {
@@ -1863,8 +1883,11 @@
     function setActiveMarkerType(type) {
         activeMarkerType = type || '';
         if (activeMarkerType) {
-            const hint = global.document.getElementById('age-hq-planning-hint');
-            if (hint) hint.classList.remove('is-error');
+            const statusEl = getPlanningStatusEl();
+            if (statusEl) {
+                delete statusEl.dataset.errorLock;
+                statusEl.classList.remove('is-error');
+            }
         }
         global.RoyalArmiesAgeHeadquartersPlanningMap?.setActiveMarkerType(activeMarkerType);
         syncToolbarState();
