@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Royal Armies — Age Alpha</title>
     <link rel="stylesheet" href="style.css?v=cursor-modal-layer-fix-1">
-    <link rel="stylesheet" href="style2.css?v=war-room-players-design-1">
+    <link rel="stylesheet" href="style2.css?v=war-room-stage-centered-1">
     <link rel="stylesheet" href="style-age-headquarters.css?v=hq-load-status-1">
     <link rel="stylesheet" href="style-age-center-modals.css?v=age-modal-stack-fix-1">
     <link rel="stylesheet" href="style-age-council-room.css?v=age-hub-center-modals-1">
@@ -1682,85 +1682,6 @@
 
 
 
-    <aside
-        id="age-war-room-players-panel"
-        class="age-war-room-players-panel"
-        hidden
-        aria-hidden="true"
-        aria-label="City commanders">
-        <div class="age-war-room-players-shell">
-            <header class="age-war-room-players-header">
-                <div class="age-war-room-players-header-mark" aria-hidden="true"></div>
-                <div class="age-war-room-players-header-brand">
-                    <span class="age-war-room-players-eyebrow">Field Command</span>
-                    <h3 class="age-war-room-players-title">City Roster</h3>
-                    <p
-                        id="age-war-room-players-city"
-                        class="age-war-room-players-city"
-                        aria-live="polite"
-                        hidden></p>
-                </div>
-            </header>
-            <div class="age-war-room-players-body" data-age-hq-players-sync>
-                <section class="age-war-room-players-filters" aria-label="Player list filters">
-                    <div class="age-war-room-players-filter-group" role="group" aria-label="Commander presence filter">
-                        <span class="age-war-room-players-filter-label">Presence</span>
-                        <div class="age-war-room-players-filter-toggle">
-                            <button
-                                type="button"
-                                class="age-war-room-players-filter-btn is-active"
-                                data-age-players-filter="all"
-                                aria-pressed="true">All</button>
-                            <button
-                                type="button"
-                                class="age-war-room-players-filter-btn"
-                                data-age-players-filter="online"
-                                aria-pressed="false">Online</button>
-                        </div>
-                    </div>
-                    <div class="age-war-room-players-filter-group" role="group" aria-label="Commander move points sort">
-                        <span class="age-war-room-players-filter-label">Move Points</span>
-                        <div class="age-war-room-players-filter-toggle">
-                            <button
-                                type="button"
-                                class="age-war-room-players-filter-btn is-active"
-                                data-age-players-mp-sort="default"
-                                aria-pressed="true">Default</button>
-                            <button
-                                type="button"
-                                class="age-war-room-players-filter-btn"
-                                data-age-players-mp-sort="desc"
-                                aria-pressed="false">Top MP</button>
-                        </div>
-                    </div>
-                    <div class="age-war-room-players-filter-group" role="group" aria-label="Commander army focus filter">
-                        <span class="age-war-room-players-filter-label">Army Focus</span>
-                        <div class="age-war-room-players-filter-toggle">
-                            <button
-                                type="button"
-                                class="age-war-room-players-filter-btn is-active"
-                                data-age-players-army-filter="all"
-                                aria-pressed="true">All</button>
-                            <button
-                                type="button"
-                                class="age-war-room-players-filter-btn"
-                                data-age-players-army-filter="ranking"
-                                aria-pressed="false">Rank</button>
-                            <button
-                                type="button"
-                                class="age-war-room-players-filter-btn"
-                                data-age-players-army-filter="pvp"
-                                aria-pressed="false">PvP</button>
-                        </div>
-                    </div>
-                </section>
-                <p id="age-war-room-players-summary" class="age-war-room-players-summary" hidden></p>
-                <ul id="age-war-room-players-list" class="age-war-room-players-list" hidden></ul>
-                <p id="age-war-room-players-empty" class="age-war-room-players-empty">No commanders in this city yet.</p>
-            </div>
-        </div>
-    </aside>
-
     <div
         id="age-war-room-modal"
         class="age-war-room-modal"
@@ -1770,7 +1691,86 @@
         aria-modal="true"
         aria-labelledby="age-war-room-title">
         <div id="age-war-room-backdrop" class="age-war-room-backdrop" aria-hidden="true"></div>
-        <div class="age-war-room-dialog">
+        <div class="age-war-room-stage" aria-label="War Room command suite">
+            <aside
+                id="age-war-room-players-panel"
+                class="age-war-room-players-panel"
+                hidden
+                aria-hidden="true"
+                aria-label="City commanders">
+                <div class="age-war-room-players-shell">
+                    <header class="age-war-room-players-header">
+                        <div class="age-war-room-players-header-mark" aria-hidden="true"></div>
+                        <div class="age-war-room-players-header-brand">
+                            <span class="age-war-room-players-eyebrow">Field Command</span>
+                            <h3 class="age-war-room-players-title">City Roster</h3>
+                            <p
+                                id="age-war-room-players-city"
+                                class="age-war-room-players-city"
+                                aria-live="polite"
+                                hidden></p>
+                        </div>
+                    </header>
+                    <div class="age-war-room-players-body" data-age-hq-players-sync>
+                        <section class="age-war-room-players-filters" aria-label="Player list filters">
+                            <div class="age-war-room-players-filter-group" role="group" aria-label="Commander presence filter">
+                                <span class="age-war-room-players-filter-label">Presence</span>
+                                <div class="age-war-room-players-filter-toggle">
+                                    <button
+                                        type="button"
+                                        class="age-war-room-players-filter-btn is-active"
+                                        data-age-players-filter="all"
+                                        aria-pressed="true">All</button>
+                                    <button
+                                        type="button"
+                                        class="age-war-room-players-filter-btn"
+                                        data-age-players-filter="online"
+                                        aria-pressed="false">Online</button>
+                                </div>
+                            </div>
+                            <div class="age-war-room-players-filter-group" role="group" aria-label="Commander move points sort">
+                                <span class="age-war-room-players-filter-label">Move Points</span>
+                                <div class="age-war-room-players-filter-toggle">
+                                    <button
+                                        type="button"
+                                        class="age-war-room-players-filter-btn is-active"
+                                        data-age-players-mp-sort="default"
+                                        aria-pressed="true">Default</button>
+                                    <button
+                                        type="button"
+                                        class="age-war-room-players-filter-btn"
+                                        data-age-players-mp-sort="desc"
+                                        aria-pressed="false">Top MP</button>
+                                </div>
+                            </div>
+                            <div class="age-war-room-players-filter-group" role="group" aria-label="Commander army focus filter">
+                                <span class="age-war-room-players-filter-label">Army Focus</span>
+                                <div class="age-war-room-players-filter-toggle">
+                                    <button
+                                        type="button"
+                                        class="age-war-room-players-filter-btn is-active"
+                                        data-age-players-army-filter="all"
+                                        aria-pressed="true">All</button>
+                                    <button
+                                        type="button"
+                                        class="age-war-room-players-filter-btn"
+                                        data-age-players-army-filter="ranking"
+                                        aria-pressed="false">Rank</button>
+                                    <button
+                                        type="button"
+                                        class="age-war-room-players-filter-btn"
+                                        data-age-players-army-filter="pvp"
+                                        aria-pressed="false">PvP</button>
+                                </div>
+                            </div>
+                        </section>
+                        <p id="age-war-room-players-summary" class="age-war-room-players-summary" hidden></p>
+                        <ul id="age-war-room-players-list" class="age-war-room-players-list" hidden></ul>
+                        <p id="age-war-room-players-empty" class="age-war-room-players-empty">No commanders in this city yet.</p>
+                    </div>
+                </div>
+            </aside>
+            <div class="age-war-room-dialog">
             <div class="age-war-room-atmosphere" aria-hidden="true"></div>
             <header class="age-war-room-header">
                 <div class="age-war-room-header-mark" aria-hidden="true"></div>
@@ -1867,6 +1867,7 @@
                     </section>
                 </div>
                 </div>
+            </div>
             </div>
         </div>
     </div>
@@ -2122,7 +2123,7 @@
     <script src="age-unit-evolution.js?v=map-settlement-tab-only-1"></script>
     <script src="rift-unit-purchase-catalog.js?v=map-settlement-tab-only-1"></script>
     <script src="age-barracks.js?v=map-settlement-tab-only-1"></script>
-    <script src="age-army-groups.js?v=war-room-players-external-4"></script>
+    <script src="age-army-groups.js?v=war-room-stage-centered-1"></script>
     <script src="age-records.js?v=nation-hub-radial-1"></script>
     <script src="rift-song-manuscript-catalog.js?v=nation-hub-radial-1"></script>
     <script src="rift-discoveries-workspace.js?v=nation-hub-radial-1"></script>

@@ -66,12 +66,6 @@ body.age-map-shell-only .age-war-room-modal:not([hidden]) * {
     pointer-events: auto !important;
 }
 
-body.age-map-shell-only #age-war-room-players-panel.is-open,
-body.age-map-shell-only #age-war-room-players-panel.is-open * {
-    pointer-events: auto !important;
-    z-index: 2147483643 !important;
-}
-
 body.age-map-shell-only.age-settlement-venue-open .age-settlement-venue-workspace:not([hidden]),
 body.age-map-shell-only.age-settlement-venue-open .age-settlement-venue-workspace:not([hidden]) * {
     pointer-events: auto !important;

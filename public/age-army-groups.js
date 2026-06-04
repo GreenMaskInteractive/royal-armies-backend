@@ -36,9 +36,6 @@
     const SONAR_RING_LIFETIME_MS = 2200;
     const REFRESH_MS = 12000;
     const WAR_ROOM_PLAYERS_PANEL_ID = 'age-war-room-players-panel';
-    const WAR_ROOM_PLAYERS_PANEL_GAP_PX = 12;
-    const WAR_ROOM_PLAYERS_PANEL_WIDTH_PX = 357;
-    const WAR_ROOM_DIALOG_ANIM_MS = 400;
 
     const els = {
         modal: null,
@@ -46,9 +43,8 @@
         closeBtn: null,
         openBtn: null,
         playersPanel: null,
+        warRoomStage: null,
         warRoomDialog: null,
-        warRoomHeader: null,
-        warRoomWorkspace: null,
         workspaceMain: null,
         createBtn: null,
         sfLeadBtn: null,
@@ -83,8 +79,6 @@
     const expandedGroupIds = new Set();
     let editingNameGroupId = null;
     let armyViewModalEl = null;
-    let warRoomPlayersPanelLayoutObserver = null;
-    let warRoomPlayersPanelLayoutTimer = 0;
 
     function resolveUsername() {
         const saved = global.localStorage.getItem('activeCommanderUser');
@@ -223,93 +217,29 @@
         applyTypeCycleButton();
     }
 
-    function ensureWarRoomPlayersPanelPortaled() {
+    function ensureWarRoomStageLayout() {
+        const stage = els.warRoomStage || els.modal?.querySelector('.age-war-room-stage');
         const panel = els.playersPanel || global.document.getElementById(WAR_ROOM_PLAYERS_PANEL_ID);
-        if (!panel) return null;
-        if (panel.parentElement !== global.document.body) {
-            global.document.body.appendChild(panel);
+        if (!stage || !panel) return null;
+
+        if (panel.parentElement !== stage) {
+            stage.insertBefore(panel, stage.firstChild);
         }
+
+        els.warRoomStage = stage;
         els.playersPanel = panel;
-        return panel;
-    }
-
-    function disconnectWarRoomPlayersPanelLayoutObserver() {
-        if (warRoomPlayersPanelLayoutObserver) {
-            warRoomPlayersPanelLayoutObserver.disconnect();
-            warRoomPlayersPanelLayoutObserver = null;
-        }
-        if (warRoomPlayersPanelLayoutTimer) {
-            global.clearTimeout(warRoomPlayersPanelLayoutTimer);
-            warRoomPlayersPanelLayoutTimer = 0;
-        }
-    }
-
-    function connectWarRoomPlayersPanelLayoutObserver() {
-        disconnectWarRoomPlayersPanelLayoutObserver();
-        const header = els.warRoomHeader;
-        const dialog = els.warRoomDialog;
-        if (!header || !dialog || typeof ResizeObserver === 'undefined') return;
-
-        warRoomPlayersPanelLayoutObserver = new ResizeObserver(() => {
-            if (workspaceOpen) syncWarRoomPlayersPanelPosition();
-        });
-        warRoomPlayersPanelLayoutObserver.observe(header);
-        warRoomPlayersPanelLayoutObserver.observe(dialog);
-    }
-
-    function syncWarRoomPlayersPanelPosition() {
-        const panel = els.playersPanel;
-        const dialog = els.warRoomDialog;
-        const header = els.warRoomHeader;
-        if (!panel || !dialog || !header || !workspaceOpen || panel.hidden) return;
-
-        const dialogRect = dialog.getBoundingClientRect();
-        const headerRect = header.getBoundingClientRect();
-        const panelWidth = panel.offsetWidth || WAR_ROOM_PLAYERS_PANEL_WIDTH_PX;
-        const left = Math.max(12, dialogRect.left - panelWidth - WAR_ROOM_PLAYERS_PANEL_GAP_PX);
-        const viewportHeight = global.innerHeight || global.document.documentElement.clientHeight;
-
-        panel.style.top = `${headerRect.top}px`;
-        panel.style.bottom = `${Math.max(0, viewportHeight - dialogRect.bottom)}px`;
-        panel.style.left = `${left}px`;
-        panel.style.height = '';
-        panel.style.maxHeight = '';
-    }
-
-    function scheduleWarRoomPlayersPanelSync() {
-        syncWarRoomPlayersPanelPosition();
-        global.requestAnimationFrame(() => {
-            syncWarRoomPlayersPanelPosition();
-            global.requestAnimationFrame(syncWarRoomPlayersPanelPosition);
-        });
-        if (warRoomPlayersPanelLayoutTimer) global.clearTimeout(warRoomPlayersPanelLayoutTimer);
-        warRoomPlayersPanelLayoutTimer = global.setTimeout(() => {
-            warRoomPlayersPanelLayoutTimer = 0;
-            syncWarRoomPlayersPanelPosition();
-        }, WAR_ROOM_DIALOG_ANIM_MS);
+        return stage;
     }
 
     function setWarRoomPlayersPanelOpen(open) {
-        const panel = ensureWarRoomPlayersPanelPortaled();
+        ensureWarRoomStageLayout();
+        const panel = els.playersPanel;
         if (!panel) return;
 
         const isOpen = Boolean(open);
         panel.hidden = !isOpen;
         panel.setAttribute('aria-hidden', isOpen ? 'false' : 'true');
         panel.classList.toggle('is-open', isOpen);
-
-        if (!isOpen) {
-            disconnectWarRoomPlayersPanelLayoutObserver();
-            panel.style.top = '';
-            panel.style.left = '';
-            panel.style.bottom = '';
-            panel.style.height = '';
-            panel.style.maxHeight = '';
-            return;
-        }
-
-        connectWarRoomPlayersPanelLayoutObserver();
-        scheduleWarRoomPlayersPanelSync();
     }
 
     function setWorkspaceOpen(open) {
@@ -1559,13 +1489,10 @@
 
         els.backdrop?.addEventListener('click', () => setWorkspaceOpen(false));
 
+        const stage = els.warRoomStage || els.modal?.querySelector('.age-war-room-stage');
         const dialog = els.warRoomDialog || els.modal?.querySelector('.age-war-room-dialog');
+        stage?.addEventListener('click', (event) => event.stopPropagation());
         dialog?.addEventListener('click', (event) => event.stopPropagation());
-        els.playersPanel?.addEventListener('click', (event) => event.stopPropagation());
-
-        global.addEventListener('resize', () => {
-            if (workspaceOpen) syncWarRoomPlayersPanelPosition();
-        });
 
         els.createBtn?.addEventListener('click', (event) => {
             event.preventDefault();
@@ -1607,10 +1534,7 @@
             if (workspaceOpen) refreshRoster();
         });
 
-        global.addEventListener('royalarmies:age-map-overlay-layout', () => {
-            syncSonarMapLayout();
-            if (workspaceOpen) syncWarRoomPlayersPanelPosition();
-        });
+        global.addEventListener('royalarmies:age-map-overlay-layout', syncSonarMapLayout);
     }
 
     function startRefreshLoop() {
@@ -1622,12 +1546,11 @@
 
     function enable() {
         els.modal = global.document.getElementById('age-war-room-modal');
+        els.warRoomStage = els.modal?.querySelector('.age-war-room-stage') || null;
         els.warRoomDialog = els.modal?.querySelector('.age-war-room-dialog') || null;
-        els.warRoomHeader = els.warRoomDialog?.querySelector('.age-war-room-header') || null;
-        els.warRoomWorkspace = els.warRoomDialog?.querySelector('.age-war-room-workspace-shell') || null;
         els.backdrop = global.document.getElementById('age-war-room-backdrop');
         els.closeBtn = global.document.getElementById('age-war-room-close');
-        ensureWarRoomPlayersPanelPortaled();
+        ensureWarRoomStageLayout();
         els.openBtn = global.document.getElementById('age-war-room-open');
         els.workspaceMain = global.document.getElementById('age-army-groups-workspace-main');
         els.createBtn = global.document.getElementById('age-army-groups-btn-create');

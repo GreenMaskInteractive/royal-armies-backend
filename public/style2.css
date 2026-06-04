@@ -22591,30 +22591,50 @@ body.is-rift-discoveries-workspace-open {
     backdrop-filter: blur(4px);
 }
 
+.age-war-room-stage {
+    --age-war-room-players-panel-width: 357px;
+    position: relative;
+    z-index: 1;
+    display: flex;
+    align-items: stretch;
+    gap: 0;
+    width: min(1737px, calc(100vw - 48px));
+    max-width: calc(100vw - 48px);
+    height: min(960px, calc(100vh - 48px));
+    max-height: calc(100vh - 48px);
+    box-sizing: border-box;
+    pointer-events: auto;
+    border: 1px solid rgba(184, 144, 48, 0.62);
+    border-radius: 4px;
+    overflow: hidden;
+    box-shadow:
+        inset 0 1px 0 rgba(255, 215, 0, 0.2),
+        0 28px 64px rgba(0, 0, 0, 0.78),
+        0 0 48px rgba(180, 60, 20, 0.12);
+    animation: age-war-room-dialog-in 0.34s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
 .age-war-room-dialog {
     position: relative;
     z-index: 1;
     display: flex;
     flex-direction: column;
-    pointer-events: auto;
-    width: min(1380px, 90vw);
-    height: min(960px, 90vh);
-    max-width: calc(100vw - 40px);
-    max-height: calc(100vh - 40px);
+    flex: 1 1 0;
+    min-width: min(1380px, calc(100vw - 405px));
+    width: auto;
+    height: 100%;
+    max-width: none;
+    max-height: none;
     box-sizing: border-box;
-    border: 1px solid rgba(184, 144, 48, 0.62);
-    border-radius: 4px;
+    border: none;
+    border-radius: 0;
+    border-left: 1px solid rgba(184, 144, 48, 0.38);
     background:
         linear-gradient(90deg, rgba(255, 215, 0, 0.04) 0%, transparent 12%, transparent 88%, rgba(255, 215, 0, 0.04) 100%),
         linear-gradient(180deg, rgba(255, 215, 0, 0.09) 0%, transparent 14%),
         linear-gradient(165deg, rgba(42, 32, 22, 0.99) 0%, rgba(12, 9, 7, 0.99) 52%, rgba(22, 16, 12, 0.98) 100%);
-    box-shadow:
-        inset 0 1px 0 rgba(255, 215, 0, 0.2),
-        inset 0 0 80px rgba(0, 0, 0, 0.45),
-        0 28px 64px rgba(0, 0, 0, 0.78),
-        0 0 48px rgba(180, 60, 20, 0.12);
+    box-shadow: inset 0 0 80px rgba(0, 0, 0, 0.45);
     overflow: hidden;
-    animation: age-war-room-dialog-in 0.34s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .age-war-room-dialog::before,
@@ -22777,28 +22797,26 @@ body.age-war-room-open {
 }
 
 .age-war-room-players-panel.is-open {
-    --age-war-room-players-panel-width: 357px;
-    position: fixed;
-    z-index: 13061;
+    position: relative;
+    z-index: 1;
     display: flex;
     flex-direction: column;
-    width: var(--age-war-room-players-panel-width);
+    flex: 0 0 var(--age-war-room-players-panel-width, 357px);
+    width: var(--age-war-room-players-panel-width, 357px);
     min-width: 0;
+    min-height: 0;
+    height: 100%;
     box-sizing: border-box;
     padding: 0;
-    border: 1px solid rgba(184, 144, 48, 0.62);
-    border-radius: 4px;
+    border: none;
+    border-radius: 0;
     background:
         radial-gradient(ellipse 55% 40% at 12% 0%, rgba(255, 120, 40, 0.08) 0%, transparent 70%),
         radial-gradient(ellipse 40% 35% at 100% 100%, rgba(40, 80, 140, 0.1) 0%, transparent 65%),
         linear-gradient(90deg, rgba(255, 215, 0, 0.04) 0%, transparent 12%, transparent 88%, rgba(255, 215, 0, 0.04) 100%),
         linear-gradient(180deg, rgba(255, 215, 0, 0.09) 0%, transparent 14%),
         linear-gradient(165deg, rgba(42, 32, 22, 0.99) 0%, rgba(12, 9, 7, 0.99) 52%, rgba(22, 16, 12, 0.98) 100%);
-    box-shadow:
-        inset 0 1px 0 rgba(255, 215, 0, 0.2),
-        inset 0 0 80px rgba(0, 0, 0, 0.45),
-        0 28px 64px rgba(0, 0, 0, 0.78),
-        0 0 48px rgba(180, 60, 20, 0.12);
+    box-shadow: inset 0 0 80px rgba(0, 0, 0, 0.45);
     pointer-events: auto;
     overflow: hidden;
     isolation: isolate;
@@ -24318,18 +24336,35 @@ body.age-war-room-open {
     z-index: 1;
 }
 
-@media (max-width: 760px) {
-    .age-war-room-dialog {
-        width: calc(100vw - 24px);
-        height: min(92vh, 720px);
-    }
-
-    .age-war-room-header {
-        grid-template-columns: auto 1fr auto;
+@media (max-width: 1100px) {
+    .age-war-room-stage {
+        flex-direction: column;
+        width: min(1380px, calc(100vw - 24px));
+        height: auto;
+        max-height: calc(100vh - 24px);
     }
 
     .age-war-room-players-panel.is-open {
-        width: min(var(--age-war-room-players-panel-width, 357px), calc(100vw - 24px));
+        flex: 0 0 auto;
+        width: 100%;
+        max-width: none;
+        height: auto;
+        max-height: 36vh;
+    }
+
+    .age-war-room-dialog {
+        flex: 1 1 auto;
+        min-width: 0;
+        width: 100%;
+        height: min(62vh, 720px);
+        border-left: none;
+        border-top: 1px solid rgba(184, 144, 48, 0.38);
+    }
+}
+
+@media (max-width: 760px) {
+    .age-war-room-header {
+        grid-template-columns: auto 1fr auto;
     }
 
     .age-war-room-command-deck {
@@ -24355,7 +24390,7 @@ body.age-war-room-open {
 }
 
 @media (prefers-reduced-motion: reduce) {
-    .age-war-room-dialog {
+    .age-war-room-stage {
         animation: none;
     }
 
