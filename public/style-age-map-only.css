@@ -50,6 +50,8 @@ body.age-map-shell-only .age-age-center-modal:not([hidden]),
 body.age-map-shell-only .age-age-center-modal:not([hidden]) *,
 body.age-map-shell-only .rift-discoveries-workspace-modal:not([hidden]),
 body.age-map-shell-only .rift-discoveries-workspace-modal:not([hidden]) *,
+body.age-map-shell-only .age-chronicles-battle-pass-modal.is-open,
+body.age-map-shell-only .age-chronicles-battle-pass-modal.is-open *,
 body.age-map-shell-only .age-chronicles-battle-pass-modal:not([hidden]),
 body.age-map-shell-only .age-chronicles-battle-pass-modal:not([hidden]) *,
 body.age-map-shell-only #royal-armies-portal-alert-modal:not(.main-portal-modal-hidden),
@@ -85,8 +87,19 @@ body.age-map-shell-only .age-records-modal:not([hidden]),
 body.age-map-shell-only .age-records-modal:not([hidden]) *,
 body.age-map-shell-only .rift-discoveries-workspace-modal:not([hidden]),
 body.age-map-shell-only .rift-discoveries-workspace-modal:not([hidden]) *,
+body.age-map-shell-only .age-chronicles-battle-pass-modal.is-open,
+body.age-map-shell-only .age-chronicles-battle-pass-modal.is-open *,
 body.age-map-shell-only .age-chronicles-battle-pass-modal:not([hidden]),
 body.age-map-shell-only .age-chronicles-battle-pass-modal:not([hidden]) * {
+    pointer-events: auto !important;
+}
+
+body.age-map-shell-only.age-chronicles-battle-pass-open .age-chronicles-battle-pass-modal.is-open {
+    position: fixed;
+    inset: 0;
+    z-index: 2147483639 !important;
+    display: flex !important;
+    visibility: visible !important;
     pointer-events: auto !important;
 }
 

@@ -7,7 +7,7 @@
     /** Set true to restore full-screen radial menu (go-to design in style-age-nation-hub-radial.css). */
     const ENABLE_RADIAL_HUB_MENU = false;
 
-    const BOX_BUILD_VERSION = 'nation-hub-battle-pass-wire-1';
+    const BOX_BUILD_VERSION = 'nation-hub-battle-pass-wire-2';
 
     const BOX_ITEM_META = Object.freeze({
         nation: { glyph: '◆', hint: 'Council & command' },
@@ -119,7 +119,7 @@
 
         if (nextOpen) {
             ensureBoxMenuPortal();
-            renderBoxMenu();
+            renderBoxMenu(true);
             menu.classList.add('is-open');
             menu.hidden = false;
             menu.removeAttribute('hidden');
@@ -316,9 +316,10 @@
         );
     }
 
-    function renderBoxMenu() {
+    function renderBoxMenu(force) {
         const colsRoot = getMenuColumns();
-        if (!colsRoot || colsRoot.dataset.ageMenuVersion === BOX_BUILD_VERSION) return;
+        if (!colsRoot) return;
+        if (!force && colsRoot.dataset.ageMenuVersion === BOX_BUILD_VERSION) return;
 
         colsRoot.innerHTML = HUB_ITEMS.map((item, itemIndex) => (
             renderBoxMenuItem(item, itemIndex)
@@ -372,7 +373,8 @@
             const menu = getMenu();
             if (menu && menu.dataset.ageMenuClickBound !== 'true') {
                 menu.dataset.ageMenuClickBound = 'true';
-                menu.addEventListener('click', (event) => {
+                const onBoxMenuPointer = (event) => {
+                    if (event.button !== 0) return;
                     if (event.target.closest('[data-age-hub-menu]')) {
                         onMenuActivate(event);
                         return;
@@ -383,7 +385,9 @@
                     event.preventDefault();
                     event.stopPropagation();
                     closeHub();
-                });
+                };
+                menu.addEventListener('pointerup', onBoxMenuPointer);
+                menu.addEventListener('click', onBoxMenuPointer);
             }
         }
 

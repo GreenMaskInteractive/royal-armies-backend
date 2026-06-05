@@ -39,6 +39,7 @@
         if (!target || typeof target.closest !== 'function') return false;
         return Boolean(
             target.closest('.age-nation-hub')
+            || target.closest('[data-age-hub-menu]')
             || target.closest('.age-nation-hub-menu--box.is-open')
             || target.closest('#age-nation-hub-menu:not([hidden])')
             || target.closest('#age-nation-hub-radial.is-open')
@@ -52,6 +53,7 @@
             target.closest('.age-age-center-modal:not([hidden])')
             || target.closest('.rift-discoveries-workspace-modal:not([hidden])')
             || target.closest('.rift-banner-workspace-modal:not([hidden])')
+            ||             target.closest('.age-chronicles-battle-pass-modal.is-open')
             || target.closest('.age-chronicles-battle-pass-modal:not([hidden])')
         );
     }

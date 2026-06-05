@@ -66,6 +66,13 @@
 
     let bound = false;
 
+    function ensureBattlePassModalPortaled() {
+        const modal = global.document.getElementById('age-chronicles-battle-pass-modal');
+        if (!modal || modal.dataset.ageBpPortaled === 'true') return;
+        global.document.body.appendChild(modal);
+        modal.dataset.ageBpPortaled = 'true';
+    }
+
     function escapeHtml(value) {
         return String(value ?? '')
             .replace(/&/g, '&amp;')
@@ -489,15 +496,24 @@
             global.playSelectSFX();
         }
 
+        ensureBattlePassModalPortaled();
+
         const modal = global.document.getElementById('age-chronicles-battle-pass-modal');
         if (!modal) return;
 
-        renderModalBody();
         closeRewardDetail();
         modal.hidden = false;
         modal.removeAttribute('hidden');
         modal.setAttribute('aria-hidden', 'false');
+        modal.classList.add('is-open');
         global.document.body.classList.add('is-age-chronicles-battle-pass-open');
+        global.document.body.classList.add('age-chronicles-battle-pass-open');
+
+        try {
+            renderModalBody();
+        } catch (err) {
+            console.error('[RIFT] Battle Pass render failed:', err);
+        }
 
         global.requestAnimationFrame(() => {
             scrollToCurrentBattlePassLevel();
@@ -513,7 +529,9 @@
         closeRewardDetail();
         modal.hidden = true;
         modal.setAttribute('aria-hidden', 'true');
+        modal.classList.remove('is-open');
         global.document.body.classList.remove('is-age-chronicles-battle-pass-open');
+        global.document.body.classList.remove('age-chronicles-battle-pass-open');
     }
 
     function bindModalHandlers() {

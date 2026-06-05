@@ -21198,10 +21198,14 @@ body.is-age-chronicles-battle-pass-open {
     overflow: hidden;
 }
 
+.age-age-center-modal.age-chronicles-battle-pass-modal {
+    z-index: 13070;
+}
+
 .age-chronicles-battle-pass-modal {
     position: fixed;
     inset: 0;
-    z-index: 12050;
+    z-index: 13070;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -21209,8 +21213,14 @@ body.is-age-chronicles-battle-pass-open {
     box-sizing: border-box;
 }
 
-.age-chronicles-battle-pass-modal[hidden] {
+.age-chronicles-battle-pass-modal[hidden]:not(.is-open) {
     display: none !important;
+}
+
+.age-chronicles-battle-pass-modal.is-open {
+    display: flex !important;
+    pointer-events: auto !important;
+    visibility: visible !important;
 }
 
 .age-chronicles-battle-pass-backdrop {
