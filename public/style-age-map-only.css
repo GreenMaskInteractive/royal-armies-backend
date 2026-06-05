@@ -207,23 +207,11 @@ body.age-map-shell-only.age-guild-training-open .age-guild-workspace:not([hidden
     z-index: 2147483640 !important;
 }
 
-body.age-map-shell-only.age-settlement-venue-open .age-map-hud--right,
-body.age-map-shell-only.age-army-workspace-open .age-map-hud--right,
-body.age-map-shell-only.age-barracks-open .age-map-hud--right,
-body.age-map-shell-only.age-unit-evolution-open .age-map-hud--right,
-body.age-map-shell-only.age-guild-hub-open .age-map-hud--right,
-body.age-map-shell-only.age-guild-overlay-open .age-map-hud--right,
-body.age-map-shell-only.age-guild-training-open .age-map-hud--right {
-    visibility: hidden;
-    pointer-events: none !important;
-}
-
 body.age-map-shell-only .age-settlement-venue-workspace:not([hidden]) {
     display: flex;
     align-items: stretch;
     justify-content: center;
-    background: rgba(4, 6, 10, 0.92);
-    backdrop-filter: blur(6px);
+    background: transparent;
 }
 
 body.age-map-shell-only .age-settlement-venue-shell {

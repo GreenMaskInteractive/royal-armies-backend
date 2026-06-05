@@ -2,17 +2,8 @@
  * FLEX — settlement.html (city-only dev page).
  */
 
-body.age-page-settlement-only {
-    overflow: hidden;
-}
-
 body.age-page-settlement-only #age-page-canvas {
     --age-settlement-map-inset: 0;
-}
-
-body.age-page-settlement-only .age-map-anchor {
-    inset: var(--age-map-hud-top-height, 72px) var(--age-map-hud-right-width, 280px)
-        var(--age-map-hud-bottom-height, 88px) 0;
 }
 
 body.age-page-settlement-only .age-world-map-settlement-bg {
@@ -25,6 +16,131 @@ body.age-page-settlement-only .age-world-map-settlement-bg {
 body.age-page-settlement-only #age-settlement-menu-panel {
     display: flex;
     flex-direction: column;
+    flex: 1 1 auto;
+    min-height: 0;
+    max-height: calc(100dvh - 120px);
+}
+
+body.age-page-settlement-only .age-settlement-menu-body {
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+    gap: 0;
+    min-height: 0;
+}
+
+body.age-page-settlement-only .age-settlement-menu-list {
+    flex: 1 1 auto;
+    min-height: 0;
+    max-height: none;
+    overflow-x: hidden;
+    overflow-y: auto;
+    padding-right: 4px;
+    scrollbar-width: thin;
+}
+
+body.age-page-settlement-only .age-settlement-menu-war-room-slot {
+    flex: 0 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 1.35rem;
+    padding: 1.15rem 0.35rem 0.2rem;
+    border-top: 1px solid rgba(255, 217, 120, 0.28);
+    background:
+        linear-gradient(180deg, rgba(255, 217, 120, 0.1) 0%, rgba(255, 217, 120, 0.02) 42%, transparent 100%),
+        rgba(0, 0, 0, 0.22);
+    box-shadow: inset 0 1px 0 rgba(255, 217, 120, 0.12);
+}
+
+body.age-page-settlement-only .age-settlement-menu-war-room-slot[hidden] {
+    display: none !important;
+}
+
+body.age-page-settlement-only .age-settlement-menu-war-room-eyebrow {
+    margin: 0;
+    padding: 0 0.15rem;
+    font-family: 'Cinzel', serif;
+    font-size: 0.62rem;
+    font-weight: 700;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: rgba(255, 217, 120, 0.62);
+}
+
+body.age-page-settlement-only .age-settlement-menu-item--war-room {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    gap: 14px;
+    min-height: 4.6rem;
+    padding: 14px 16px;
+    border: 1px solid rgba(255, 217, 120, 0.72);
+    border-radius: 6px;
+    background:
+        linear-gradient(135deg, rgba(255, 217, 120, 0.22) 0%, rgba(255, 140, 48, 0.1) 38%, rgba(0, 0, 0, 0.55) 100%),
+        rgba(12, 8, 4, 0.92);
+    box-shadow:
+        0 0 0 1px rgba(255, 217, 120, 0.14),
+        0 10px 28px rgba(0, 0, 0, 0.55),
+        0 0 24px rgba(255, 180, 64, 0.18);
+}
+
+body.age-page-settlement-only .age-settlement-menu-item--war-room::before {
+    width: 4px;
+    background: linear-gradient(180deg, #ffe7a8 0%, #ff9a2e 100%);
+}
+
+body.age-page-settlement-only .age-settlement-menu-item--war-room:hover,
+body.age-page-settlement-only .age-settlement-menu-item--war-room:focus-visible {
+    border-color: rgba(255, 232, 168, 0.95);
+    background:
+        linear-gradient(135deg, rgba(255, 217, 120, 0.34) 0%, rgba(255, 140, 48, 0.16) 40%, rgba(0, 0, 0, 0.48) 100%),
+        rgba(18, 12, 6, 0.96);
+    box-shadow:
+        0 0 0 1px rgba(255, 217, 120, 0.28),
+        0 14px 34px rgba(0, 0, 0, 0.62),
+        0 0 32px rgba(255, 180, 64, 0.32);
+    transform: translateY(-1px);
+}
+
+body.age-page-settlement-only .age-settlement-menu-item-mark--war-room {
+    flex: 0 0 42px;
+    width: 42px;
+    height: 42px;
+    border: 1px solid rgba(255, 217, 120, 0.55);
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 30%, rgba(255, 232, 176, 0.35), rgba(0, 0, 0, 0.65));
+    font-size: 1.15rem;
+    color: #ffe7b0;
+    box-shadow: 0 0 16px rgba(255, 180, 64, 0.28);
+}
+
+body.age-page-settlement-only .age-settlement-menu-item--war-room .age-settlement-menu-item-label {
+    font-size: 1.08rem;
+    font-weight: 800;
+    letter-spacing: 0.22em;
+    color: #fff2c8;
+    text-shadow: 0 0 18px rgba(255, 200, 96, 0.35);
+}
+
+body.age-page-settlement-only .age-settlement-menu-item-tagline {
+    display: block;
+    margin-top: 0.28rem;
+    font-family: 'Segoe UI', Tahoma, sans-serif;
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: rgba(255, 232, 190, 0.72);
+}
+
+body.age-page-settlement-only .age-settlement-menu-item--war-room .age-settlement-menu-item-chevron {
+    font-size: 1.2rem;
+    color: rgba(255, 232, 176, 0.92);
+}
+
+body.age-page-settlement-only.age-war-room-open .age-area-main .age-map-hud--right {
+    visibility: hidden;
+    pointer-events: none;
 }
 
 body.age-page-settlement-only .age-settlement-dev-tier {
@@ -36,46 +152,163 @@ body.age-page-settlement-only .age-settlement-dev-tier {
     border-top: 1px solid rgba(255, 255, 255, 0.12);
 }
 
-body.age-page-settlement-only .age-settlement-page-nav {
-    margin-left: auto;
-    display: flex;
-    align-items: center;
-}
-
-body.age-page-settlement-only .age-settlement-world-map-link {
-    display: inline-flex;
-    align-items: center;
-    padding: 0.35rem 0.75rem;
-    border-radius: 6px;
-    border: 1px solid rgba(212, 175, 90, 0.45);
-    color: #f4e6c8;
-    font-size: 0.82rem;
-    font-weight: 600;
-    text-decoration: none;
-    letter-spacing: 0.02em;
-    background: rgba(12, 10, 8, 0.55);
-}
-
-body.age-page-settlement-only .age-settlement-world-map-link:hover {
-    border-color: rgba(240, 210, 140, 0.75);
-    background: rgba(24, 18, 12, 0.75);
-}
-
 body.age-page-settlement-only .age-map-bottom-dock-nav[hidden] {
     display: none !important;
 }
 
 body.age-page-settlement-only .age-barracks-workspace:not([hidden]),
 body.age-page-settlement-only .age-unit-evolution-workspace:not([hidden]),
+body.age-page-settlement-only .age-settlement-venue-workspace:not([hidden]),
+body.age-page-settlement-only.age-guild-hub-open .age-guild-workspace:not([hidden]),
+body.age-page-settlement-only.age-guild-overlay-open .age-guild-workspace:not([hidden]),
 body.age-page-settlement-only.age-guild-training-open .age-guild-workspace:not([hidden]) {
     position: fixed;
     inset: 0;
     z-index: 120;
 }
 
-body.age-page-settlement-only.age-barracks-open #age-map-hud-right,
-body.age-page-settlement-only.age-unit-evolution-open #age-map-hud-right,
-body.age-page-settlement-only.age-guild-training-open #age-map-hud-right {
-    visibility: hidden;
-    pointer-events: none;
+body.age-page-settlement-only .age-settlement-venue-workspace {
+    display: flex;
+    align-items: stretch;
+    justify-content: center;
+    background: transparent;
+}
+
+body.age-page-settlement-only .age-settlement-venue-shell {
+    display: flex;
+    flex-direction: column;
+    width: min(920px, calc(100vw - 3rem));
+    max-height: calc(100vh - 3rem);
+    margin: 1.5rem;
+    border: 1px solid rgba(212, 175, 90, 0.35);
+    border-radius: 12px;
+    background: linear-gradient(180deg, rgba(22, 18, 14, 0.98), rgba(10, 8, 6, 0.98));
+    box-shadow: 0 24px 64px rgba(0, 0, 0, 0.55);
+    overflow: hidden;
+}
+
+body.age-page-settlement-only .age-settlement-venue-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 1.25rem 1.5rem 1rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+body.age-page-settlement-only .age-settlement-venue-eyebrow {
+    margin: 0 0 0.35rem;
+    font-size: 0.78rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: rgba(212, 175, 90, 0.85);
+}
+
+body.age-page-settlement-only .age-settlement-venue-title {
+    margin: 0;
+    font-size: 1.65rem;
+    color: #f4e6c8;
+}
+
+body.age-page-settlement-only .age-settlement-venue-subtitle {
+    margin: 0.55rem 0 0;
+    max-width: 52ch;
+    color: rgba(244, 230, 200, 0.78);
+    line-height: 1.45;
+}
+
+body.age-page-settlement-only .age-settlement-venue-close {
+    flex-shrink: 0;
+    padding: 0.45rem 0.9rem;
+    border-radius: 6px;
+    border: 1px solid rgba(212, 175, 90, 0.45);
+    background: rgba(12, 10, 8, 0.65);
+    color: #f4e6c8;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+body.age-page-settlement-only .age-settlement-venue-close:hover {
+    border-color: rgba(240, 210, 140, 0.75);
+    background: rgba(24, 18, 12, 0.85);
+}
+
+body.age-page-settlement-only .age-settlement-venue-body {
+    flex: 1;
+    overflow: auto;
+    padding: 1.25rem 1.5rem 1.5rem;
+}
+
+body.age-page-settlement-only .age-settlement-venue-action-hub {
+    display: grid;
+    gap: 0.85rem;
+}
+
+body.age-page-settlement-only .age-settlement-venue-action {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.35rem;
+    width: 100%;
+    padding: 1rem 1.1rem;
+    border-radius: 8px;
+    border: 1px solid rgba(212, 175, 90, 0.28);
+    background: rgba(8, 10, 14, 0.55);
+    color: #f4e6c8;
+    text-align: left;
+    cursor: pointer;
+}
+
+body.age-page-settlement-only .age-settlement-venue-action:hover {
+    border-color: rgba(240, 210, 140, 0.55);
+    background: rgba(18, 14, 10, 0.75);
+}
+
+body.age-page-settlement-only .age-settlement-venue-action-label {
+    font-size: 1.05rem;
+    font-weight: 700;
+}
+
+body.age-page-settlement-only .age-settlement-venue-action-desc {
+    color: rgba(244, 230, 200, 0.72);
+    line-height: 1.4;
+}
+
+body.age-page-settlement-only .age-settlement-venue-placeholder-copy,
+body.age-page-settlement-only .age-settlement-venue-infirmary-copy {
+    margin: 0;
+    color: rgba(244, 230, 200, 0.8);
+    line-height: 1.5;
+}
+
+body.age-page-settlement-only .age-settlement-venue-infirmary-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-top: 1.25rem;
+}
+
+body.age-page-settlement-only .age-settlement-venue-infirmary-btn {
+    padding: 0.55rem 1rem;
+    border-radius: 6px;
+    border: 1px solid rgba(212, 175, 90, 0.35);
+    background: rgba(12, 10, 8, 0.65);
+    color: #f4e6c8;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+body.age-page-settlement-only .age-settlement-venue-infirmary-btn--primary {
+    border-color: rgba(120, 200, 140, 0.55);
+    background: rgba(18, 36, 24, 0.75);
+}
+
+body.age-page-settlement-only .age-settlement-venue-infirmary-status {
+    margin: 1rem 0 0;
+    color: rgba(180, 220, 190, 0.9);
+}
+
+body.age-page-settlement-only .age-guild-jobs-hub-arena .age-guild-hub-jobs-host {
+    display: grid;
+    gap: 0.75rem;
 }

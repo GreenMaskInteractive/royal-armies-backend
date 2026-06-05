@@ -1,65 +1,27 @@
 /**
- * FLEX — Settlement / barracks / guild workspaces fill the screen with no map bleed-through.
+ * FLEX — Settlement workspaces use the same dark translucent backdrop as Game Hub center modals.
+ * Map and HUD stay visible underneath (dimmed + blurred), like Council Room / Records / War Room.
  */
 
 body.age-immersive-workspace-open {
     overflow: hidden;
 }
 
-/* Do not hide .age-map-anchor — barracks/guild/venue workspaces live inside it on agealpha.html */
-body.age-immersive-workspace-open #age-world-map,
-body.age-immersive-workspace-open #age-world-map-settlement-bg,
-body.age-immersive-workspace-open .age-map-hud--top,
-body.age-immersive-workspace-open .age-map-hud--left,
-body.age-immersive-workspace-open .age-map-hud--right,
-body.age-immersive-workspace-open .age-map-hud--bottom,
-body.age-immersive-workspace-open .age-mobile-hud-controls,
-body.age-immersive-workspace-open .age-nation-hub,
-body.age-immersive-workspace-open .age-quick-tips-panel,
-body.age-immersive-workspace-open #age-world-map-city-search,
-body.age-immersive-workspace-open .age-world-map-terrain-controls,
-body.age-immersive-workspace-open #age-world-map-plan-tool-dock,
-body.age-immersive-workspace-open #age-world-map-plan-overlay,
-body.age-immersive-workspace-open #age-world-map-plan-draft-overlay,
-body.age-immersive-workspace-open .age-city-info-panel,
-body.age-immersive-workspace-open .age-left-reports-panel,
-body.age-immersive-workspace-open .age-settlement-menu-panel,
-body.age-immersive-workspace-open .age-world-city-drawer,
-body.age-immersive-workspace-open #age-army-groups-sonar-layer,
-body.age-immersive-workspace-open .age-map-bottom-dock-nav {
-    display: none !important;
-    visibility: hidden !important;
-    pointer-events: none !important;
-}
-
-body.age-immersive-workspace-open.age-map-shell-only .age-map-hud--left,
-body.age-immersive-workspace-open.age-map-shell-only .age-map-hud--top,
-body.age-immersive-workspace-open.age-map-shell-only .age-map-hud--right,
-body.age-immersive-workspace-open.age-map-shell-only .age-map-hud--bottom,
-body.age-immersive-workspace-open.age-map-shell-only .age-map-top-bar-clock-cluster,
-body.age-immersive-workspace-open.age-map-shell-only #age-world-map,
-body.age-immersive-workspace-open.age-map-shell-only #age-world-map-svg,
-body.age-immersive-workspace-open.age-map-shell-only #age-world-map-canvas,
-body.age-immersive-workspace-open.age-map-shell-only #age-world-map-highlight-canvas,
-body.age-immersive-workspace-open.age-map-shell-only .age-world-map-labels-host,
-body.age-immersive-workspace-open.age-map-shell-only .age-world-map-player-pins,
-body.age-immersive-workspace-open.age-map-shell-only .age-world-map-terrain-controls,
-body.age-immersive-workspace-open.age-map-shell-only #age-world-map-city-search {
-    display: none !important;
-    visibility: hidden !important;
-    pointer-events: none !important;
-}
-
-body.age-immersive-workspace-open.age-page-settlement-only .age-area-main .age-map-hud--right,
-body.age-immersive-workspace-open.age-page-settlement-only .age-area-main .age-map-hud--left,
-body.age-immersive-workspace-open.age-page-settlement-only .age-area-main .age-map-hud--top,
-body.age-immersive-workspace-open.age-page-settlement-only .age-area-main .age-map-hud--bottom,
-body.age-immersive-workspace-open.age-page-settlement-only .age-area-main .age-map-bottom-dock-nav,
-body.age-immersive-workspace-open.age-page-settlement-only .age-area-main .age-settlement-menu-panel,
-body.age-immersive-workspace-open.age-page-settlement-only .age-area-main .age-nation-hub {
-    display: none !important;
-    visibility: hidden !important;
-    pointer-events: none !important;
+body.age-immersive-workspace-open .age-army-workspace:not([hidden])::before,
+body.age-immersive-workspace-open .age-settlement-venue-workspace:not([hidden])::before,
+body.age-immersive-workspace-open .age-barracks-workspace:not([hidden])::before,
+body.age-immersive-workspace-open .age-unit-evolution-workspace:not([hidden])::before,
+body.age-immersive-workspace-open .age-guild-workspace:not([hidden])::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    background:
+        radial-gradient(ellipse 90% 70% at 50% 42%, rgba(88, 28, 18, 0.18) 0%, transparent 55%),
+        radial-gradient(ellipse at center, rgba(18, 14, 10, 0.5) 0%, rgba(0, 0, 0, 0.88) 78%);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
 }
 
 body.age-immersive-workspace-open .age-army-workspace:not([hidden]),
@@ -69,24 +31,26 @@ body.age-immersive-workspace-open .age-unit-evolution-workspace:not([hidden]),
 body.age-immersive-workspace-open .age-guild-workspace:not([hidden]) {
     position: fixed;
     inset: 0;
-    z-index: 2147483646 !important;
-    pointer-events: auto !important;
-    backdrop-filter: none !important;
-    -webkit-backdrop-filter: none !important;
-    background:
-        radial-gradient(ellipse 80% 55% at 50% 0%, rgba(72, 148, 255, 0.12), transparent 58%),
-        radial-gradient(circle at 50% 0%, rgba(255, 215, 0, 0.07), transparent 42%),
-        #050403;
-}
-
-body.age-immersive-workspace-open.age-map-shell-only .age-army-workspace:not([hidden]),
-body.age-immersive-workspace-open.age-map-shell-only .age-settlement-venue-workspace:not([hidden]),
-body.age-immersive-workspace-open.age-map-shell-only .age-barracks-workspace:not([hidden]),
-body.age-immersive-workspace-open.age-map-shell-only .age-unit-evolution-workspace:not([hidden]),
-body.age-immersive-workspace-open.age-map-shell-only .age-guild-workspace:not([hidden]) {
+    z-index: 13050;
     display: flex;
     align-items: stretch;
     justify-content: center;
+    box-sizing: border-box;
+    background: transparent;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    pointer-events: auto;
+}
+
+body.age-immersive-workspace-open .age-army-workspace:not([hidden]) > *,
+body.age-immersive-workspace-open .age-settlement-venue-workspace:not([hidden]) > *,
+body.age-immersive-workspace-open .age-barracks-workspace:not([hidden]) > *,
+body.age-immersive-workspace-open .age-unit-evolution-workspace:not([hidden]) > *,
+body.age-immersive-workspace-open .age-guild-workspace:not([hidden]) > .age-guild-job-arena:not([hidden]),
+body.age-immersive-workspace-open .age-guild-workspace:not([hidden]) > header,
+body.age-immersive-workspace-open .age-guild-workspace:not([hidden]) > .age-guild-top-band {
+    position: relative;
+    z-index: 1;
 }
 
 body.age-immersive-workspace-open.age-map-shell-only .age-settlement-venue-workspace:not([hidden]),
@@ -98,11 +62,4 @@ body.age-immersive-workspace-open.age-map-shell-only .age-unit-evolution-workspa
 body.age-immersive-workspace-open.age-map-shell-only .age-guild-workspace:not([hidden]),
 body.age-immersive-workspace-open.age-map-shell-only .age-guild-workspace:not([hidden]) * {
     pointer-events: auto !important;
-}
-
-body.age-immersive-workspace-open.age-page-settlement-only .age-settlement-venue-workspace:not([hidden]),
-body.age-immersive-workspace-open.age-page-settlement-only .age-barracks-workspace:not([hidden]),
-body.age-immersive-workspace-open.age-page-settlement-only .age-unit-evolution-workspace:not([hidden]),
-body.age-immersive-workspace-open.age-page-settlement-only .age-guild-workspace:not([hidden]) {
-    z-index: 2147483646 !important;
 }
