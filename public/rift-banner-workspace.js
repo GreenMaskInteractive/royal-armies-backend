@@ -66,7 +66,14 @@
                     title: 'Higher Ground',
                     desc: '+3 Attack increase when facing armies of greater rank in PvP.'
                 }
-            ])
+            ]),
+            skillTree: Object.freeze({
+                keystoneId: 'true-war-double-strike',
+                branches: Object.freeze([
+                    { id: 'ferocious-line', label: 'Ferocious Line', perkId: 'true-war-infantry-attack' },
+                    { id: 'higher-ground', label: 'Higher Ground', perkId: 'true-war-pvp-rank' }
+                ])
+            })
         },
         {
             id: 'sachiels-blessing',
@@ -91,7 +98,14 @@
                     title: 'Angelic March',
                     desc: 'Small chance of receiving 3 additional move points.'
                 }
-            ])
+            ]),
+            skillTree: Object.freeze({
+                keystoneId: 'sachiels-revive',
+                branches: Object.freeze([
+                    { id: 'restored-vigour', label: 'Restored Vigour', perkId: 'sachiels-hp-boost' },
+                    { id: 'angelic-march', label: 'Angelic March', perkId: 'sachiels-move-points' }
+                ])
+            })
         },
         {
             id: 'emerald-barrier',
@@ -116,7 +130,14 @@
                     title: 'Mountain Ward',
                     desc: '+2 bonus on Mountains terrain.'
                 }
-            ])
+            ]),
+            skillTree: Object.freeze({
+                keystoneId: 'emerald-pvp-defense',
+                branches: Object.freeze([
+                    { id: 'fortified-bastion', label: 'Fortified Bastion', perkId: 'emerald-fortified-city' },
+                    { id: 'mountain-ward', label: 'Mountain Ward', perkId: 'emerald-mountains' }
+                ])
+            })
         },
         {
             id: 'fortunes-gratitude',
@@ -141,7 +162,14 @@
                     title: 'Hinshuro Ledger',
                     desc: '3% reduction cost toward all expenses.'
                 }
-            ])
+            ]),
+            skillTree: Object.freeze({
+                keystoneId: 'fortunes-tick-income',
+                branches: Object.freeze([
+                    { id: 'victory-dividend', label: 'Victory Dividend', perkId: 'fortunes-victory-currency' },
+                    { id: 'hinshuro-ledger', label: 'Hinshuro Ledger', perkId: 'fortunes-expense-reduction' }
+                ])
+            })
         }
     ]);
 
@@ -162,6 +190,111 @@
             .replace(/</g, '&lt;')
             .replace(/>/g, '&gt;')
             .replace(/"/g, '&quot;');
+    }
+
+    function getBannerPerkById(banner, perkId) {
+        const id = String(perkId || '').trim();
+        if (!id || !banner) return null;
+        return (banner.perks || []).find((perk) => perk.id === id) || null;
+    }
+
+    function getBannerSkillBranches(banner) {
+        const tree = banner?.skillTree;
+        if (!tree) return [];
+
+        return (tree.branches || []).map((branch) => ({
+            id: branch.id,
+            label: branch.label,
+            perkId: branch.perkId,
+            perk: getBannerPerkById(banner, branch.perkId)
+        })).filter((branch) => branch.perk);
+    }
+
+    function getBannerKeystonePerk(banner) {
+        return getBannerPerkById(banner, banner?.skillTree?.keystoneId);
+    }
+
+    function resolvePerkPathLabel(banner, perkId) {
+        const id = String(perkId || '').trim();
+        if (!id || !banner?.skillTree) return '';
+
+        if (banner.skillTree.keystoneId === id) {
+            return 'Keystone';
+        }
+
+        const branch = (banner.skillTree.branches || []).find((entry) => entry.perkId === id);
+        return branch ? String(branch.label || '').trim() : '';
+    }
+
+    function resolvePerkTierLabel(banner, perkId) {
+        const id = String(perkId || '').trim();
+        if (!id || !banner?.skillTree) return '';
+
+        if (banner.skillTree.keystoneId === id) return 'I';
+        if ((banner.skillTree.branches || []).some((entry) => entry.perkId === id)) return 'II';
+        return '';
+    }
+
+    function renderSkillNodeMarkup(perk, unlockedPerkIds, activePerkId, tierLabel) {
+        if (!perk) return '';
+
+        const isActive = perk.id === activePerkId;
+        const isUnlocked = unlockedPerkIds.has(perk.id);
+
+        return `
+            <div class="rift-banner-skill-node${isActive ? ' is-active' : ''}${isUnlocked ? ' is-unlocked' : ' is-locked'}">
+                <button type="button"
+                    class="rift-banner-skill-node-btn"
+                    data-banner-perk-id="${escapeHtml(perk.id)}"
+                    aria-label="${escapeHtml(perk.title)}${isUnlocked ? ' (unlocked)' : ' (locked)'}">
+                    <span class="rift-banner-skill-node-ring" aria-hidden="true"></span>
+                    <span class="rift-banner-skill-node-tier">${escapeHtml(tierLabel)}</span>
+                    <span class="rift-banner-skill-node-lock" aria-hidden="true">${isUnlocked ? '' : '🔒'}</span>
+                </button>
+                <span class="rift-banner-skill-node-label">${escapeHtml(perk.title)}</span>
+            </div>
+        `;
+    }
+
+    function renderBranchedSkillTreeMarkup(banner, unlockedPerkIds, activePerkId) {
+        const keystone = getBannerKeystonePerk(banner);
+        const branches = getBannerSkillBranches(banner);
+        if (!keystone || !branches.length) return '';
+
+        const branchCount = branches.length;
+        const branchMarkup = branches.map((branch, index) => `
+            <div class="rift-banner-skill-path${index === 0 ? ' is-upper' : ''}${index === branchCount - 1 ? ' is-lower' : ''}">
+                <span class="rift-banner-skill-path-tag">${escapeHtml(branch.label)}</span>
+                <span class="rift-banner-skill-path-connector" aria-hidden="true"></span>
+                ${renderSkillNodeMarkup(branch.perk, unlockedPerkIds, activePerkId, 'II')}
+            </div>
+        `).join('');
+
+        return `
+            <div class="rift-banner-skill-tree-track rift-banner-skill-tree-track--branching" style="--branch-count:${branchCount}">
+                <div class="rift-banner-skill-tree-origin">
+                    <div class="rift-banner-skill-tree-origin-rays" aria-hidden="true"></div>
+                    <div class="rift-banner-skill-tree-origin-frame">
+                        <img class="rift-banner-skill-tree-origin-banner"
+                            src="${escapeHtml(resolveBannerImageUrl(banner.image))}"
+                            alt="${escapeHtml(banner.title)}">
+                    </div>
+                    <p class="rift-banner-skill-tree-origin-title">${escapeHtml(banner.title)}</p>
+                    <p class="rift-banner-skill-tree-origin-rune">${escapeHtml(banner.rune)}</p>
+                </div>
+                <span class="rift-banner-skill-tree-connector-h rift-banner-skill-tree-connector-h--origin" aria-hidden="true"></span>
+                <div class="rift-banner-skill-tree-keystone-wrap">
+                    <span class="rift-banner-skill-tree-keystone-tag">Keystone</span>
+                    ${renderSkillNodeMarkup(keystone, unlockedPerkIds, activePerkId, 'I')}
+                </div>
+                <div class="rift-banner-skill-tree-fork-rail" aria-hidden="true">
+                    <span class="rift-banner-skill-tree-fork-in"></span>
+                    <span class="rift-banner-skill-tree-fork-stem"></span>
+                    ${branches.map((_, index) => `<span class="rift-banner-skill-tree-fork-branch rift-banner-skill-tree-fork-branch--${index + 1}"></span>`).join('')}
+                </div>
+                <div class="rift-banner-skill-tree-branches">${branchMarkup}</div>
+            </div>
+        `;
     }
 
     function normalizeBannerState(raw) {
@@ -332,30 +465,13 @@
                 : (perks[0]?.id || null);
         }
 
-        const activePerk = perks.find((perk) => perk.id === selectedPerkId) || perks[0] || null;
-        const activePerkIndex = activePerk ? perks.findIndex((perk) => perk.id === activePerk.id) : -1;
-
-        const tierLabels = ['I', 'II', 'III'];
-        const treeNodes = perks.map((perk, index) => {
-            const isActive = perk.id === activePerk?.id;
-            const isUnlocked = unlockedPerkIds.has(perk.id);
-            const isLast = index === perks.length - 1;
-            const tierLabel = tierLabels[index] || String(index + 1);
-            return `
-                <li class="rift-banner-skill-node${isActive ? ' is-active' : ''}${isUnlocked ? ' is-unlocked' : ' is-locked'}">
-                    <button type="button"
-                        class="rift-banner-skill-node-btn"
-                        data-banner-perk-id="${escapeHtml(perk.id)}"
-                        aria-label="${escapeHtml(perk.title)}${isUnlocked ? ' (unlocked)' : ' (locked)'}">
-                        <span class="rift-banner-skill-node-ring" aria-hidden="true"></span>
-                        <span class="rift-banner-skill-node-tier">${escapeHtml(tierLabel)}</span>
-                        <span class="rift-banner-skill-node-lock" aria-hidden="true">${isUnlocked ? '' : '🔒'}</span>
-                    </button>
-                    <span class="rift-banner-skill-node-label">${escapeHtml(perk.title)}</span>
-                </li>
-                ${isLast ? '' : '<li class="rift-banner-skill-connector" aria-hidden="true"><span class="rift-banner-skill-connector-line"></span></li>'}
-            `;
-        }).join('');
+        const keystone = getBannerKeystonePerk(banner);
+        const defaultPerkId = keystone?.id || perks[0]?.id || null;
+        const activePerk = perks.find((perk) => perk.id === selectedPerkId)
+            || (defaultPerkId ? getBannerPerkById(banner, defaultPerkId) : null);
+        const activeTierLabel = activePerk ? resolvePerkTierLabel(banner, activePerk.id) : '';
+        const activePathLabel = activePerk ? resolvePerkPathLabel(banner, activePerk.id) : '';
+        const branchedTreeMarkup = renderBranchedSkillTreeMarkup(banner, unlockedPerkIds, activePerk?.id || null);
 
         const swapNote = state.swapUsed
             ? 'Banner swap spent for this Age.'
@@ -369,32 +485,22 @@
             <div class="rift-banner-skill-tree-layout">
                 <div class="rift-banner-skill-tree-canvas" aria-label="Banner Skill Tree">
                     <div class="rift-banner-skill-tree-grid" aria-hidden="true"></div>
-                    <div class="rift-banner-skill-tree-track">
-                        <div class="rift-banner-skill-tree-origin">
-                            <div class="rift-banner-skill-tree-origin-rays" aria-hidden="true"></div>
-                            <div class="rift-banner-skill-tree-origin-frame">
-                                <img class="rift-banner-skill-tree-origin-banner"
-                                    src="${escapeHtml(resolveBannerImageUrl(banner.image))}"
-                                    alt="${escapeHtml(banner.title)}">
-                            </div>
-                            <p class="rift-banner-skill-tree-origin-title">${escapeHtml(banner.title)}</p>
-                            <p class="rift-banner-skill-tree-origin-rune">${escapeHtml(banner.rune)}</p>
-                        </div>
-                        <div class="rift-banner-skill-tree-spine" aria-hidden="true"></div>
-                        <ol class="rift-banner-skill-tree">${treeNodes}</ol>
-                    </div>
+                    ${branchedTreeMarkup}
                 </div>
                 <section class="rift-banner-workspace-detail rift-banner-skill-tree-detail" aria-label="Selected skill details">
                     ${activePerk ? `
                         <div class="rift-banner-skill-tree-detail-head">
-                            <p class="rift-banner-skill-tree-detail-tier">Tier ${escapeHtml(tierLabels[activePerkIndex] || String(activePerkIndex + 1))}</p>
+                            <p class="rift-banner-skill-tree-detail-tier">Tier ${escapeHtml(activeTierLabel || '—')}</p>
+                            ${activePathLabel
+                                ? `<p class="rift-banner-skill-tree-detail-path">${escapeHtml(activePathLabel)} path</p>`
+                                : ''}
                             <h3 class="rift-banner-workspace-detail-title">${escapeHtml(activePerk.title)}</h3>
                             <span class="rift-banner-skill-tree-detail-state${unlockedPerkIds.has(activePerk.id) ? ' is-unlocked' : ' is-locked'}">${unlockedPerkIds.has(activePerk.id) ? 'Unlocked' : 'Locked'}</span>
                         </div>
                         <p class="rift-banner-workspace-detail-copy">${escapeHtml(activePerk.desc)}</p>
                         <p class="rift-banner-workspace-detail-note">${unlockedPerkIds.has(activePerk.id)
                             ? 'This skill is active on your banner tree.'
-                            : 'Spend banner skill points to unlock this node.'}</p>
+                            : 'Spend banner skill points to unlock this node on its skill path.'}</p>
                     ` : `
                         <div class="rift-banner-workspace-empty">
                             <p>Select a skill node to read its blessing.</p>
@@ -586,7 +692,7 @@
                         <p class="age-church-banner-rune">Blessed with the <strong>${escapeHtml(banner.rune)}</strong></p>
                         <p class="age-church-banner-lore">${escapeHtml(banner.lore)}</p>
                         ${skillCategory
-                            ? `<p class="age-church-banner-skill-category"><span class="age-church-banner-skill-category-label">Skill discipline</span> ${escapeHtml(skillCategory)}</p>`
+                            ? `<p class="age-church-banner-skill-category"><span class="age-church-banner-skill-category-label">Skill discipline</span> ${escapeHtml(skillCategory)}<span class="age-church-banner-skill-category-note">Branches into multiple skill paths</span></p>`
                             : ''}
                     </div>
                     <div class="age-church-banner-action">
@@ -608,7 +714,7 @@
         const chosenBanner = chosenBannerId ? BANNER_BY_ID[chosenBannerId] : null;
         const swapAvailable = canSwapBlessing();
 
-        let sanctumNote = 'Kneel before the sanctum and choose one blessed banner. Its rune will shape your Banner Skill Tree for the Age.';
+        let sanctumNote = 'Kneel before the sanctum and choose one blessed banner. Its rune will shape a branching Banner Skill Tree for the Age.';
         if (chosenBanner && swapAvailable) {
             sanctumNote = `Your soul is bound to the ${chosenBanner.title}. You may swap your blessing once this Age—doing so resets all banner perk points.`;
         } else if (chosenBanner) {
@@ -619,7 +725,7 @@
             ? (swapAvailable
                 ? 'One banner swap remains this Age. Exchanging your blessing wipes every banner perk point and unlocked node—you must earn them again.'
                 : 'Your one Age swap has been spent. This banner and its perk progress are locked until the Age turns.')
-            : 'Each banner carries a sacred rune and a focused skill discipline. You receive one blessing freely, and may swap it only once before the Age ends.';
+            : 'Each banner carries a sacred rune and a skill discipline that branches into multiple paths. You receive one blessing freely, and may swap it only once before the Age ends.';
 
         const cards = BANNER_CATALOG.map((banner) => renderChurchBannerCard(
             banner,

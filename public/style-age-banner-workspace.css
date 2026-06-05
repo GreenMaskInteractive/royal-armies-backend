@@ -284,6 +284,14 @@
     color: rgba(255, 217, 120, 0.82);
 }
 
+.age-church-banner-skill-category-note {
+    display: block;
+    margin-top: 4px;
+    font-size: 0.58rem;
+    line-height: 1.35;
+    color: rgba(196, 160, 255, 0.72);
+}
+
 .age-church-choose-blessing-btn {
     appearance: none;
     margin: 0;
@@ -359,7 +367,7 @@
 
 .rift-banner-workspace-dialog {
     position: relative;
-    width: min(1080px, 100%);
+    width: min(1140px, 100%);
     max-height: min(88vh, 820px);
     display: flex;
     flex-direction: column;
@@ -458,8 +466,7 @@
 
 .rift-banner-skill-tree-canvas {
     position: relative;
-    overflow-x: auto;
-    overflow-y: hidden;
+    overflow: auto;
     padding: 28px 24px 22px;
     border-radius: 12px;
     border: 1px solid rgba(255, 215, 120, 0.22);
@@ -490,6 +497,148 @@
     gap: 0;
     min-width: min-content;
     margin: 0 auto;
+}
+
+.rift-banner-skill-tree-track--branching {
+    display: grid;
+    grid-template-columns: auto 44px auto 56px minmax(132px, auto);
+    grid-template-rows: repeat(var(--branch-count, 2), auto);
+    align-items: center;
+    column-gap: 0;
+    row-gap: 72px;
+    padding: 10px 6px;
+}
+
+.rift-banner-skill-tree-track--branching .rift-banner-skill-tree-origin,
+.rift-banner-skill-tree-track--branching .rift-banner-skill-tree-connector-h--origin,
+.rift-banner-skill-tree-track--branching .rift-banner-skill-tree-keystone-wrap,
+.rift-banner-skill-tree-track--branching .rift-banner-skill-tree-fork-rail {
+    grid-row: 1 / span var(--branch-count, 2);
+    align-self: center;
+}
+
+.rift-banner-skill-tree-track--branching .rift-banner-skill-tree-origin {
+    grid-column: 1;
+}
+
+.rift-banner-skill-tree-track--branching .rift-banner-skill-tree-connector-h--origin {
+    grid-column: 2;
+}
+
+.rift-banner-skill-tree-track--branching .rift-banner-skill-tree-keystone-wrap {
+    grid-column: 3;
+}
+
+.rift-banner-skill-tree-track--branching .rift-banner-skill-tree-fork-rail {
+    grid-column: 4;
+    align-self: stretch;
+    min-height: 220px;
+}
+
+.rift-banner-skill-tree-branches {
+    display: contents;
+}
+
+.rift-banner-skill-path.is-upper {
+    grid-column: 5;
+    grid-row: 1;
+}
+
+.rift-banner-skill-path.is-lower {
+    grid-column: 5;
+    grid-row: 2;
+}
+
+.rift-banner-skill-tree-connector-h {
+    display: block;
+    width: 44px;
+    height: 4px;
+    border-radius: 999px;
+    background: linear-gradient(90deg, rgba(255, 215, 120, 0.65) 0%, rgba(196, 160, 255, 0.35) 100%);
+    box-shadow: 0 0 8px rgba(255, 190, 60, 0.16);
+}
+
+.rift-banner-skill-tree-keystone-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+}
+
+.rift-banner-skill-tree-keystone-tag,
+.rift-banner-skill-path-tag {
+    font-family: 'Cinzel', serif;
+    font-size: 0.56rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: rgba(255, 217, 120, 0.82);
+}
+
+.rift-banner-skill-path-tag {
+    min-width: 92px;
+    text-align: right;
+    color: rgba(196, 160, 255, 0.82);
+}
+
+.rift-banner-skill-tree-fork-rail {
+    position: relative;
+}
+
+.rift-banner-skill-tree-fork-in,
+.rift-banner-skill-tree-fork-stem,
+.rift-banner-skill-tree-fork-branch {
+    position: absolute;
+    border-radius: 999px;
+    background: linear-gradient(90deg, rgba(255, 215, 120, 0.55) 0%, rgba(196, 160, 255, 0.28) 100%);
+    box-shadow: 0 0 8px rgba(255, 190, 60, 0.14);
+}
+
+.rift-banner-skill-tree-fork-in {
+    left: 0;
+    top: 50%;
+    width: 52%;
+    height: 4px;
+    transform: translateY(-50%);
+}
+
+.rift-banner-skill-tree-fork-stem {
+    left: 50%;
+    top: 14%;
+    bottom: 14%;
+    width: 4px;
+    transform: translateX(-50%);
+    background: linear-gradient(180deg, rgba(255, 215, 120, 0.55) 0%, rgba(196, 160, 255, 0.28) 100%);
+}
+
+.rift-banner-skill-tree-fork-branch--1 {
+    left: 50%;
+    top: 14%;
+    width: 50%;
+    height: 4px;
+    transform: translateY(-50%);
+}
+
+.rift-banner-skill-tree-fork-branch--2 {
+    left: 50%;
+    bottom: 14%;
+    width: 50%;
+    height: 4px;
+    transform: translateY(50%);
+}
+
+.rift-banner-skill-path {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.rift-banner-skill-path-connector {
+    display: block;
+    width: 28px;
+    height: 4px;
+    border-radius: 999px;
+    background: linear-gradient(90deg, rgba(255, 215, 120, 0.5) 0%, rgba(196, 160, 255, 0.25) 100%);
 }
 
 .rift-banner-skill-tree-origin {
@@ -568,25 +717,6 @@
     margin: 0;
     font-size: 0.62rem;
     color: rgba(230, 210, 255, 0.82);
-}
-
-.rift-banner-skill-tree-spine {
-    flex: 0 0 auto;
-    width: 56px;
-    height: 4px;
-    margin-top: -42px;
-    background: linear-gradient(90deg, rgba(255, 215, 120, 0.65) 0%, rgba(196, 160, 255, 0.35) 100%);
-    box-shadow: 0 0 10px rgba(255, 190, 60, 0.2);
-}
-
-.rift-banner-skill-tree {
-    list-style: none;
-    margin: 0;
-    padding: 0;
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    gap: 0;
 }
 
 .rift-banner-skill-node {
@@ -689,27 +819,16 @@
     filter: grayscale(0.35);
 }
 
-.rift-banner-skill-connector {
-    display: flex;
-    align-items: center;
-    flex: 0 0 auto;
-    width: 72px;
-    margin-top: -28px;
-    padding: 0 2px;
-    list-style: none;
-}
-
-.rift-banner-skill-connector-line {
-    display: block;
-    width: 100%;
-    height: 4px;
-    border-radius: 999px;
-    background: linear-gradient(90deg, rgba(255, 215, 120, 0.55) 0%, rgba(196, 160, 255, 0.28) 100%);
-    box-shadow: 0 0 8px rgba(255, 190, 60, 0.16);
-}
-
 .rift-banner-skill-tree-detail {
     margin-top: 0;
+}
+
+.rift-banner-skill-tree-detail-path {
+    margin: 0;
+    font-size: 0.68rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: rgba(196, 160, 255, 0.82);
 }
 
 .rift-banner-workspace-detail {
@@ -1062,13 +1181,15 @@ body.is-rift-banner-blessing-toast-open {
         grid-template-columns: 1fr;
     }
 
-    .rift-banner-skill-tree-canvas {
+    .rift-banner-skill-tree-track--branching {
         justify-content: flex-start;
+        row-gap: 56px;
+        padding-bottom: 8px;
     }
 
-    .rift-banner-skill-tree-track {
-        justify-content: flex-start;
-        padding-bottom: 4px;
+    .rift-banner-skill-path-tag {
+        min-width: 72px;
+        font-size: 0.52rem;
     }
 
     .age-church-banner-grid {
