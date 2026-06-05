@@ -206,7 +206,12 @@ body[data-age-council-room-page="true"] .is-hq-arcane-themed > *:not(.hq-arcane-
     z-index: 1;
 }
 
-/* —— Workspace outer border — slow traveling light (bright accent; unchanged) —— */
+/* —— Workspace outer border — slow blue pulse (glow outside the rim only) —— */
+.age-council-room-workspace.is-hq-arcane-themed,
+body[data-age-council-room-page="true"] .age-council-room-workspace.is-hq-arcane-themed {
+    overflow: visible;
+}
+
 .is-hq-arcane-themed > .hq-arcane-border-light {
     position: absolute;
     inset: 0;
@@ -214,7 +219,8 @@ body[data-age-council-room-page="true"] .is-hq-arcane-themed > *:not(.hq-arcane-
     pointer-events: none;
     border-radius: 2px;
     padding: 2px;
-    overflow: hidden;
+    overflow: visible;
+    background: transparent;
     -webkit-mask:
         linear-gradient(#fff 0 0) content-box,
         linear-gradient(#fff 0 0);
@@ -223,29 +229,33 @@ body[data-age-council-room-page="true"] .is-hq-arcane-themed > *:not(.hq-arcane-
         linear-gradient(#fff 0 0) content-box,
         linear-gradient(#fff 0 0);
     mask-composite: exclude;
-    filter: drop-shadow(0 0 16px rgba(88, 200, 180, 0.72));
 }
 
 .is-hq-arcane-themed > .hq-arcane-border-light::before {
     content: '';
     position: absolute;
-    inset: -130%;
-    background: conic-gradient(
-        from 0deg,
-        transparent 0deg 298deg,
-        rgba(88, 200, 180, 0.55) 310deg,
-        rgba(112, 220, 200, 0.92) 322deg,
-        rgba(200, 248, 236, 1) 334deg,
-        rgba(96, 212, 188, 0.98) 346deg,
-        rgba(88, 200, 180, 0.55) 354deg,
-        transparent 360deg
-    );
-    animation: hq-arcane-border-light-spin 20s linear infinite;
+    inset: 0;
+    border-radius: inherit;
+    border: 2px solid rgba(72, 152, 255, 0.42);
+    background: transparent;
+    box-shadow: none;
+    animation: hq-arcane-border-blue-pulse 4.8s ease-in-out infinite;
 }
 
-@keyframes hq-arcane-border-light-spin {
-    to {
-        transform: rotate(360deg);
+@keyframes hq-arcane-border-blue-pulse {
+    0%,
+    100% {
+        border-color: rgba(48, 118, 220, 0.32);
+        filter:
+            drop-shadow(0 0 6px rgba(64, 140, 255, 0.42))
+            drop-shadow(0 0 16px rgba(40, 110, 230, 0.26));
+    }
+
+    50% {
+        border-color: rgba(104, 188, 255, 0.78);
+        filter:
+            drop-shadow(0 0 12px rgba(80, 168, 255, 0.72))
+            drop-shadow(0 0 32px rgba(56, 140, 255, 0.44));
     }
 }
 
@@ -455,5 +465,6 @@ body[data-age-council-room-page="true"] .is-hq-arcane-themed > .age-council-room
     .hq-arcane-sigil-rail,
     .is-hq-arcane-themed > .hq-arcane-border-light::before {
         animation: none;
+        filter: none;
     }
 }
