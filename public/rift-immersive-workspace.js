@@ -13,14 +13,16 @@
         'age-unit-evolution-open',
         'age-guild-hub-open',
         'age-guild-overlay-open',
-        'age-guild-training-open'
+        'age-guild-training-open',
+        'age-watchtower-open'
     ]);
 
     const VISIBLE_WORKSPACE_SELECTORS = Object.freeze([
         '#age-settlement-venue-workspace:not([hidden])',
         '#age-barracks-workspace:not([hidden])',
         '#age-unit-evolution-workspace:not([hidden])',
-        '#age-guild-workspace:not([hidden])'
+        '#age-guild-workspace:not([hidden])',
+        '#age-watchtower-workspace:not([hidden])'
     ]);
 
     function hasVisibleWorkspaceElement() {

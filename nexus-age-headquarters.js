@@ -13,6 +13,10 @@ const {
 } = require('./nexus-age-movement');
 const { normalizeDispatchAlert } = require('./nexus-age-dispatch-alert');
 const { normalizeSpyLogs } = require('./nexus-age-hq-intel');
+const {
+    getDefaultWatchtowerState,
+    normalizeWatchtowerState
+} = require('./nexus-age-watchtower');
 
 const PILL_MARKER_TYPES = new Set(['hold']);
 const ARROW_MARKER_TYPES = new Set(['sf', 'mf', 'move', 'taxi', 'temp-main']);
@@ -66,6 +70,7 @@ function getDefaultNationHeadquartersState() {
         warLedger: getDefaultWarLedgerState(),
         dispatchAlert: null,
         spyLogs: [],
+        watchtower: getDefaultWatchtowerState(),
         updatedAt: null
     };
 }
@@ -356,6 +361,7 @@ function normalizeNationHeadquartersState(raw) {
         warLedger: normalizeWarLedgerState(raw.warLedger),
         dispatchAlert: normalizeDispatchAlert(raw.dispatchAlert),
         spyLogs: normalizeSpyLogs(raw.spyLogs),
+        watchtower: normalizeWatchtowerState(raw.watchtower),
         updatedAt: raw.updatedAt || null
     };
 }

@@ -22,6 +22,7 @@
     <link rel="stylesheet" href="style-age-nation-hub-box.css?v=nation-hub-text-center-1">
     <link rel="stylesheet" href="style-age-modal-arcane-accent.css?v=age-modal-arcane-accent-1">
     <link rel="stylesheet" href="style-age-barracks.css?v=barracks-sleek-2">
+    <link rel="stylesheet" href="style-age-watchtower.css?v=watchtower-border-1">
 </head>
 <body id="age-page-canvas" class="age-page-canvas game-page-canvas age-map-shell-only" data-age-slug="alpha" data-age-map-only="true" data-age-view="map">
 <script src="rift-viewport-metrics.js?v=rift-iife-fix-1"></script>
@@ -1029,6 +1030,13 @@
                                                 hidden
                                                 aria-live="polite"></div>
                                             <div class="age-world-city-drawer-actions">
+                                                <button
+                                                    type="button"
+                                                    id="age-world-city-watchtower-open"
+                                                    class="age-world-city-action-btn age-world-city-action-btn--watchtower age-world-city-watchtower-btn"
+                                                    hidden>
+                                                    Watchtower
+                                                </button>
                                                 <button type="button" id="age-world-battle-report-open" class="age-world-battle-report-btn">Most Recent Capture Battle Report</button>
                                             </div>
                                         </div>
@@ -1045,7 +1053,7 @@
                                             <div id="age-world-city-drawer-structures" class="age-world-city-drawer-structures"></div>
                                             <p id="age-world-city-drawer-fog" class="age-world-city-drawer-fog" hidden>
                                                 <span class="age-world-city-drawer-fog-icon" aria-hidden="true">☁</span>
-                                                Defensive details hidden by Fog of War. Establish a bordering presence to scout.
+                                                Defensive details hidden by Fog of War. Border this city and open the Watchtower for intel.
                                             </p>
                                         </div>
                                     </div>
@@ -1148,6 +1156,24 @@
                             <aside id="age-barracks-unit-detail" class="age-barracks-unit-detail" hidden aria-live="polite"></aside>
                         </div>
                     </div>
+                </div>
+            </div>
+
+            <div id="age-watchtower-workspace" class="age-watchtower-workspace" hidden aria-hidden="true" aria-label="Watchtower border intel">
+                <div class="age-watchtower-shell">
+                    <header class="age-watchtower-header">
+                        <div>
+                            <p class="age-watchtower-eyebrow">Watchtower</p>
+                            <h2 id="age-watchtower-city-title" class="age-watchtower-title">—</h2>
+                            <p id="age-watchtower-city-subtitle" class="age-watchtower-subtitle">Border intelligence workspace</p>
+                        </div>
+                        <div class="age-watchtower-header-actions">
+                            <span id="age-watchtower-gold" class="age-watchtower-wallet" aria-live="polite">— gold</span>
+                            <button type="button" id="age-watchtower-close" class="age-watchtower-close age-age-center-modal-close" aria-label="Close Watchtower">×</button>
+                        </div>
+                    </header>
+                    <p id="age-watchtower-message" class="age-watchtower-message" hidden role="status"></p>
+                    <div id="age-watchtower-body" class="age-watchtower-body"></div>
                 </div>
             </div>
 
@@ -2142,7 +2168,8 @@
     <script src="age-world-water-routes.js?v=age-map-only-1"></script>
     <script src="rift-player-loc-pins.js?v=age-map-only-1"></script>
     <script src="rift-age-assault-risk.js?v=border-casualty-risk-1"></script>
-    <script src="age-world-map.js?v=city-click-deselect-1"></script>
+    <script src="rift-age-watchtower.js?v=watchtower-border-1"></script>
+    <script src="age-world-map.js?v=watchtower-border-1"></script>
     <script src="age-world-map-city-search.js?v=map-city-search-max-zoom-1"></script>
     <script src="rift-age-movement.js?v=movement-fetch-fix-1"></script>
     <script src="age-movement-panel.js?v=movement-fetch-fix-1"></script>
@@ -2152,7 +2179,7 @@
     <script src="age-world-map-plan-draft.js?v=portal-dialogs-in-game-1"></script>
     <script src="age-world-map-plan-editor.js?v=age-map-plan-mf-action-1"></script>
     <script src="rift-page-paths.js?v=map-settlement-tab-only-1"></script>
-    <script src="rift-immersive-workspace.js?v=immersive-workspace-only-2"></script>
+    <script src="rift-immersive-workspace.js?v=watchtower-border-1"></script>
     <script src="age-view-tabs.js?v=settlement-army-workspaces-1"></script>
     <script src="rift-age-guild-training.js?v=map-settlement-tab-only-1"></script>
     <script src="age-adventurers-guild.js?v=workspace-rsd-wallet-1"></script>
@@ -2175,7 +2202,7 @@
     <script src="age-headquarters.js?v=hq-dispatch-public-only-1"></script>
     <script src="age-left-reports-panel.js?v=nation-status-city-count-15-1"></script>
     <script src="age-quick-tips-panel.js?v=quick-tips-left-hud-1"></script>
-    <script src="age-map-only-page.js?v=church-banners-1"></script>
+    <script src="age-map-only-page.js?v=watchtower-border-1"></script>
     <script src="dev-page-navigator.js?v=dev-nav-drag-handle-1"></script>
 
 </body>

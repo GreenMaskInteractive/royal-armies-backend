@@ -116,6 +116,9 @@
         if (body?.classList.contains('age-barracks-open') && target.closest('.age-barracks-workspace')) {
             return true;
         }
+        if (body?.classList.contains('age-watchtower-open') && target.closest('.age-watchtower-workspace')) {
+            return true;
+        }
         if (body?.classList.contains('age-guild-training-open') && target.closest('.age-guild-workspace')) {
             return true;
         }
@@ -154,6 +157,7 @@
     function enableMapSettlementModules() {
         global.enableAgeSettlementVenueWorkspaces?.();
         global.enableAgeBarracks?.();
+        global.RoyalArmiesAgeWatchtower?.enable?.();
         global.enableAgeAdventurersGuild?.();
         global.enableAgeRecords?.();
     }

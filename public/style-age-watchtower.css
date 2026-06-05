@@ -1,0 +1,319 @@
+/**
+ * FLEX — Age Watchtower border intel workspace.
+ */
+
+.age-watchtower-workspace {
+    position: fixed;
+    inset: 0;
+    z-index: 12045;
+    display: flex;
+    align-items: stretch;
+    justify-content: center;
+    padding: 56px 40px 36px;
+    background: transparent;
+}
+
+.age-watchtower-workspace[hidden] {
+    display: none !important;
+}
+
+.age-watchtower-body {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: auto;
+}
+
+.age-watchtower-shell {
+    display: flex;
+    flex-direction: column;
+    width: min(1180px, 100%);
+    max-height: 100%;
+    border: 1px solid rgba(184, 144, 48, 0.42);
+    border-radius: 10px;
+    background:
+        linear-gradient(180deg, rgba(255, 215, 0, 0.06) 0%, transparent 14%),
+        linear-gradient(165deg, rgba(34, 28, 20, 0.98) 0%, rgba(12, 10, 8, 0.99) 100%);
+    box-shadow:
+        inset 0 1px 0 rgba(255, 215, 0, 0.12),
+        0 20px 48px rgba(0, 0, 0, 0.55);
+    overflow: hidden;
+}
+
+.age-watchtower-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    padding: 16px 22px;
+    border-bottom: 1px solid rgba(184, 144, 48, 0.28);
+}
+
+.age-watchtower-eyebrow {
+    margin: 0 0 4px;
+    font-family: 'Cinzel', serif;
+    font-size: 0.6rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: rgba(201, 168, 76, 0.82);
+}
+
+.age-watchtower-title {
+    margin: 0;
+    font-family: 'Cinzel', serif;
+    font-size: 1.28rem;
+    letter-spacing: 0.08em;
+    color: #ffe7b0;
+}
+
+.age-watchtower-subtitle {
+    margin: 4px 0 0;
+    font-size: 0.8rem;
+    color: rgba(236, 220, 180, 0.72);
+}
+
+.age-watchtower-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.age-watchtower-wallet {
+    padding: 6px 12px;
+    border: 1px solid rgba(184, 144, 48, 0.38);
+    border-radius: 999px;
+    background: rgba(0, 0, 0, 0.34);
+    font-size: 0.78rem;
+    color: #ffd978;
+}
+
+.age-watchtower-close {
+    min-width: 36px;
+    width: 36px;
+    height: 36px;
+    border: 1px solid rgba(184, 144, 48, 0.38);
+    border-radius: 6px;
+    background: rgba(0, 0, 0, 0.34);
+    color: #ffd978;
+    font-size: 1.2rem;
+    line-height: 1;
+    cursor: pointer;
+}
+
+.age-watchtower-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
+    gap: 16px;
+    min-height: 0;
+    flex: 1 1 auto;
+    padding: 14px 18px 18px;
+    overflow: hidden;
+}
+
+.age-watchtower-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    min-height: 0;
+    overflow: auto;
+}
+
+.age-watchtower-section {
+    padding: 12px;
+    border: 1px solid rgba(184, 144, 48, 0.22);
+    border-radius: 8px;
+    background: rgba(0, 0, 0, 0.24);
+}
+
+.age-watchtower-section-title {
+    margin: 0 0 8px;
+    font-family: 'Cinzel', serif;
+    font-size: 0.82rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #ffe7b0;
+}
+
+.age-watchtower-copy,
+.age-watchtower-empty {
+    margin: 0;
+    font-size: 0.76rem;
+    line-height: 1.45;
+    color: rgba(236, 220, 180, 0.72);
+}
+
+.age-watchtower-accuracy {
+    display: inline-block;
+    margin-left: 8px;
+    padding: 2px 8px;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 215, 0, 0.28);
+    background: rgba(255, 215, 0, 0.08);
+    font-size: 0.62rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: rgba(255, 217, 120, 0.88);
+}
+
+.age-watchtower-report-grid {
+    display: grid;
+    gap: 8px;
+}
+
+.age-watchtower-report-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 8px 10px;
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.03);
+    font-size: 0.74rem;
+    color: #ecdcb4;
+}
+
+.age-watchtower-report-row dt {
+    margin: 0;
+    color: rgba(201, 168, 76, 0.78);
+}
+
+.age-watchtower-report-row dd {
+    margin: 0;
+    text-align: right;
+    color: #fff3c4;
+}
+
+.age-watchtower-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.age-watchtower-btn {
+    padding: 8px 12px;
+    border: 1px solid rgba(184, 144, 48, 0.38);
+    border-radius: 6px;
+    background: rgba(0, 0, 0, 0.28);
+    color: #ffd978;
+    font-family: 'Cinzel', serif;
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    cursor: pointer;
+}
+
+.age-watchtower-btn:hover:not(:disabled),
+.age-watchtower-btn:focus-visible:not(:disabled) {
+    border-color: rgba(255, 215, 0, 0.62);
+    background: rgba(255, 215, 0, 0.08);
+}
+
+.age-watchtower-btn:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+
+.age-watchtower-btn--primary {
+    border-color: rgba(255, 215, 0, 0.52);
+    background: linear-gradient(180deg, rgba(255, 215, 0, 0.2), rgba(255, 215, 0, 0.06));
+}
+
+.age-watchtower-btn--scout {
+    min-width: 72px;
+}
+
+.age-watchtower-btn--seize {
+    border-color: rgba(255, 120, 90, 0.45);
+    color: #ffb89a;
+}
+
+.age-watchtower-player-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.age-watchtower-player-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto auto;
+    gap: 8px;
+    align-items: center;
+    padding: 10px 12px;
+    border: 1px solid rgba(184, 144, 48, 0.2);
+    border-radius: 6px;
+    background: rgba(0, 0, 0, 0.22);
+}
+
+.age-watchtower-player-name {
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: #ffd978;
+}
+
+.age-watchtower-player-meta {
+    display: block;
+    margin-top: 2px;
+    font-size: 0.68rem;
+    color: rgba(236, 220, 180, 0.58);
+}
+
+.age-watchtower-player-scout {
+    margin-top: 8px;
+    grid-column: 1 / -1;
+    padding: 8px 10px;
+    border-left: 2px solid rgba(120, 188, 255, 0.45);
+    background: rgba(120, 188, 255, 0.05);
+    font-size: 0.7rem;
+    line-height: 1.4;
+    color: rgba(228, 222, 240, 0.82);
+}
+
+.age-watchtower-fragment-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.age-watchtower-fragment-item {
+    padding: 8px 10px;
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.03);
+    font-size: 0.72rem;
+    color: rgba(236, 220, 180, 0.78);
+}
+
+.age-watchtower-message {
+    margin: 0;
+    padding: 8px 10px;
+    border-radius: 6px;
+    font-size: 0.74rem;
+    line-height: 1.4;
+}
+
+.age-watchtower-message.is-success {
+    border: 1px solid rgba(120, 200, 120, 0.28);
+    background: rgba(30, 80, 40, 0.22);
+    color: rgba(180, 240, 180, 0.92);
+}
+
+.age-watchtower-message.is-error {
+    border: 1px solid rgba(255, 120, 90, 0.28);
+    background: rgba(120, 40, 30, 0.22);
+    color: rgba(255, 180, 150, 0.92);
+}
+
+.age-world-city-watchtower-btn {
+    width: 100%;
+    margin-bottom: 8px;
+}
+
+.age-world-city-watchtower-btn.age-world-city-action-btn--watchtower {
+    border-color: rgba(196, 160, 255, 0.42);
+    background: linear-gradient(180deg, rgba(196, 160, 255, 0.14), rgba(120, 188, 255, 0.06));
+    color: #f4f0ff;
+}
+
+.age-world-city-watchtower-btn.age-world-city-action-btn--watchtower:hover,
+.age-world-city-watchtower-btn.age-world-city-action-btn--watchtower:focus-visible {
+    border-color: rgba(196, 160, 255, 0.62);
+    background: rgba(196, 160, 255, 0.12);
+}

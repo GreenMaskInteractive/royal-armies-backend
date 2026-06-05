@@ -821,6 +821,7 @@ module.exports = {
     resolveBattleInjuryCount,
     distributeInjuries,
     distributeInjuriesWeighted,
+    applyGuildRankXp,
     buildUnitEvolutionPayload,
     executeUnitRankPromotion,
     executeUnitTierEvolution

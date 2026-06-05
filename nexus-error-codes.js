@@ -746,6 +746,42 @@
             message: 'Launch assaults from the map while leading an army group — your group attacks together and disbands afterward.',
             category: 'game'
         },
+        'NEXUS-AGE-031': {
+            http: 403,
+            title: 'Watchtower',
+            message: 'Establish a bordering presence before using the Watchtower on this city.',
+            category: 'game'
+        },
+        'NEXUS-AGE-032': {
+            http: 409,
+            title: 'Garrison spy',
+            message: 'You have already filed a garrison spy report for this city this Age.',
+            category: 'game'
+        },
+        'NEXUS-AGE-033': {
+            http: 402,
+            title: 'Scout raid',
+            message: 'Not enough gold for a scout raid (150 gold required).',
+            category: 'game'
+        },
+        'NEXUS-AGE-034': {
+            http: 404,
+            title: 'Watchtower target',
+            message: 'That commander is not in this bordering city.',
+            category: 'game'
+        },
+        'NEXUS-AGE-035': {
+            http: 403,
+            title: 'Border seize',
+            message: 'You cannot seize allied or friendly commanders from the Watchtower.',
+            category: 'game'
+        },
+        'NEXUS-AGE-036': {
+            http: 400,
+            title: 'Garrison compiler',
+            message: 'Upload at least one garrison spy fragment before compiling a report.',
+            category: 'game'
+        },
 
         /* --- Player conduct reports --- */
         'NEXUS-REPORT-001': {

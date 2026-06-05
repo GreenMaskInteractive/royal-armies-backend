@@ -1974,7 +1974,7 @@
         const hasMovePoint = movePoints >= movePointCost;
         const moveCostLabel = movePointCost === 1 ? '1 Move' : `${movePointCost} Moves`;
         const waterNote = hints.connectionType === 'water' ? ' via water crossing' : '';
-        const showAny = hints.canTravel || hints.canAssault || hints.canTransfer || hints.canScout;
+        const showAny = hints.canTravel || hints.canAssault || hints.canTransfer;
 
         actionsHost.hidden = !showAny;
         if (!showAny) {
@@ -2023,22 +2023,21 @@
             `);
         }
 
-        if (hints.canScout) {
-            const scoutTitle = hints.relationship === 'ally'
-                ? 'Send a scout to survey allied commanders and armies in this bordering city.'
-                : 'Send a scout to attempt intel on all commanders and armies in this bordering city.';
-            buttons.push(`
-                <button
-                    type="button"
-                    class="age-world-city-action-btn age-world-city-action-btn--scout"
-                    data-age-city-action="scout"
-                    title="${scoutTitle}">
-                    Send Scout <span class="age-world-city-action-cost">(Border Intel)</span>
-                </button>
-            `);
-        }
-
         actionsHost.innerHTML = buttons.join('');
+    }
+
+    function refreshDrawerWatchtowerButton(city, hints) {
+        const button = els.drawerWatchtowerOpen;
+        if (!button || !city) return;
+
+        const showWatchtower = Boolean(hints?.canScout || hints?.canAssault);
+        button.hidden = !showWatchtower;
+        if (!showWatchtower) return;
+
+        const relationship = hints?.relationship || 'border';
+        button.title = relationship === 'hostile'
+            ? 'Open the Watchtower to spy the garrison, scout commanders, and seize hostile players.'
+            : 'Open the Watchtower to review bordering commanders and file garrison intelligence.';
     }
 
     const scoutedCityReports = new Map();
@@ -2349,7 +2348,7 @@
 
         refreshDrawerMovementActions(city);
         const borderHints = global.RoyalArmiesAgeMovement?.getBorderActionHints?.(city, playerMapCityId) || {};
-        refreshDrawerScoutIntel(city, borderHints);
+        refreshDrawerWatchtowerButton(city, borderHints);
         void refreshDrawerAssaultRisk(city, borderHints);
         setCityDrawerTab('info');
 
@@ -2678,11 +2677,14 @@
             if (!button || button.disabled) return;
             event.preventDefault();
             const action = button.getAttribute('data-age-city-action');
-            if (action === 'scout') {
-                handleDrawerScoutAction();
-                return;
-            }
             handleDrawerMovementAction(action);
+        });
+        els.drawerWatchtowerOpen?.addEventListener('click', (event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            const city = cityById.get(selectedCityId);
+            if (!city) return;
+            global.RoyalArmiesAgeWatchtower?.open?.(city.id, city.name);
         });
         global.document.getElementById('age-world-battle-report-close')?.addEventListener('click', closeBattleReportModal);
         global.document.getElementById('age-world-battle-report-backdrop')?.addEventListener('click', closeBattleReportModal);
@@ -2758,6 +2760,7 @@
         els.drawerTierBadge = global.document.getElementById('age-world-city-drawer-tier-badge');
         els.drawerCapitalBadge = global.document.getElementById('age-world-city-drawer-capital-badge');
         els.drawerMovementActions = global.document.getElementById('age-world-city-drawer-movement-actions');
+        els.drawerWatchtowerOpen = global.document.getElementById('age-world-city-watchtower-open');
         els.drawerScoutIntel = global.document.getElementById('age-world-city-drawer-scout-intel');
         els.drawerAssaultRisk = global.document.getElementById('age-world-city-drawer-assault-risk');
         els.drawerSideTabs = global.document.getElementById('age-world-city-drawer-side-tabs');

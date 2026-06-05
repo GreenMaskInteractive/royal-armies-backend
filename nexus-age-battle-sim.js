@@ -652,6 +652,7 @@ const TRAINING_MODE_LABELS = Object.freeze({
     'street-patrol': 'Street Patrol',
     'civilian-transport': 'Civilian Transport',
     'border-patrol': 'Border Patrol',
+    'border-pvp': 'Border Seize',
     'city-assault': 'City Assault',
     'city-defense': 'City Defense'
 });

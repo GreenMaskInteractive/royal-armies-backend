@@ -112,6 +112,18 @@ const {
     claimHqBountyPvpVictory
 } = require('./nexus-age-hq-intel');
 const {
+    SCOUT_GOLD_COST,
+    buildTrueGarrisonIntel,
+    buildGarrisonSpyFragment,
+    buildPlayerScoutEstimate,
+    hasGarrisonSpyForUser,
+    appendGarrisonSpy,
+    appendPlayerScout,
+    compileGarrisonFragments,
+    buildWatchtowerWorkspacePayload,
+    executeBorderSeizeBattle
+} = require('./nexus-age-watchtower');
+const {
     applyDispatchAlertPatch,
     getActiveDispatchAlert
 } = require('./nexus-age-dispatch-alert');
@@ -1587,6 +1599,64 @@ function buildAgeCityPlayersPayload(catalogCityId, viewerUsername) {
         players,
         totalForces: nationForces,
         onlineCount
+    };
+}
+
+function buildWatchtowerWorkspaceForCommander(commander, targetCityId) {
+    const username = String(commander?.username || '').trim();
+    const gameNation = resolveCommanderMapNationKey(commander);
+    if (!username || !gameNation) {
+        return { errorCode: 'GAME_NATION_REQUIRED' };
+    }
+
+    const cityId = String(targetCityId || '').trim();
+    const city = getCatalogCity(cityId);
+    if (!city) {
+        return { errorCode: 'NEXUS-AGE-003' };
+    }
+
+    const movement = readCommanderMovementRecord(username, gameNation);
+    const store = readAgeMovementStore();
+    const border = validateBorderTarget(movement.catalogCityId, cityId);
+    if (border?.errorCode) {
+        return { errorCode: border.errorCode === 'NEXUS-AGE-004' ? 'NEXUS-AGE-031' : border.errorCode };
+    }
+
+    const relationship = classifyBorderRelationship(
+        gameNation,
+        border.targetCity,
+        store.cityHolders,
+        areNationsAllied
+    );
+    if (relationship === 'own') {
+        return { errorCode: 'NEXUS-AGE-010' };
+    }
+
+    const nationState = readNationHeadquartersForNation(gameNation);
+    const watchtower = nationState.watchtower || {};
+    const cityPlayersPayload = buildAgeCityPlayersPayload(cityId, username);
+    const commanders = db.get('commanders').value() || [];
+    const commandersInCity = commanders.filter((row) => (
+        String(row?.username || '').trim()
+        && resolveCommanderCatalogCityId(row) === cityId
+        && getAgeSessionForUsername(row.username)
+    ));
+
+    return {
+        workspace: buildWatchtowerWorkspacePayload({
+            city,
+            cityId,
+            players: cityPlayersPayload.players || [],
+            watchtower,
+            viewerUsername: username,
+            viewerGold: resolveCommanderAgeGold(commander),
+            canGarrisonSpy: !hasGarrisonSpyForUser(watchtower, cityId, username),
+            relationship
+        }),
+        nationState,
+        commandersInCity,
+        relationship,
+        city
     };
 }
 
@@ -5110,6 +5180,299 @@ app.post('/api/portal/age/scout-city', (req, res) => {
         addedCount: appendResult.added.length,
         partial: appendResult.errorCode === 'HQ_SPY_LOG_PARTIAL',
         workspace: buildHeadquartersWorkspaceForCommander(commander)
+    });
+});
+
+app.get('/api/portal/age/watchtower', (req, res) => {
+    const username = resolveLedgerCommanderUsername(req.query?.username || '');
+    if (!username) {
+        return sendApiError(res, 'NEXUS-GEN-002');
+    }
+
+    const commander = db.get('commanders').find({ username }).value();
+    if (!commander) {
+        return sendApiError(res, 'NEXUS-GEN-004');
+    }
+
+    const targetCityId = String(req.query?.cityId || '').trim();
+    const snapshot = buildWatchtowerWorkspaceForCommander(commander, targetCityId);
+    if (snapshot.errorCode) {
+        return sendApiError(res, snapshot.errorCode);
+    }
+
+    res.set('Cache-Control', 'no-store');
+    res.json({
+        status: 'ok',
+        workspace: snapshot.workspace
+    });
+});
+
+app.post('/api/portal/age/watchtower/garrison-spy', (req, res) => {
+    const username = resolveLedgerCommanderUsername(req.body?.username || '');
+    if (!username) {
+        return sendApiError(res, 'NEXUS-GEN-002');
+    }
+
+    let commander = db.get('commanders').find({ username }).value();
+    if (!commander) {
+        return sendApiError(res, 'NEXUS-GEN-004');
+    }
+
+    const targetCityId = String(req.body?.cityId || '').trim();
+    const snapshot = buildWatchtowerWorkspaceForCommander(commander, targetCityId);
+    if (snapshot.errorCode) {
+        return sendApiError(res, snapshot.errorCode);
+    }
+
+    const trueIntel = buildTrueGarrisonIntel(snapshot.city, snapshot.commandersInCity);
+    const fragment = buildGarrisonSpyFragment(trueIntel, {
+        createdBy: username,
+        cityId: targetCityId,
+        cityName: snapshot.city?.name || ''
+    });
+    const appendResult = appendGarrisonSpy(snapshot.nationState.watchtower, fragment, username);
+    if (appendResult.errorCode) {
+        return sendApiError(res, appendResult.errorCode);
+    }
+
+    const nextNationState = {
+        ...snapshot.nationState,
+        watchtower: appendResult.watchtower
+    };
+    const writeResult = writeNationHeadquartersForNation(
+        resolveCommanderMapNationKey(commander),
+        nextNationState
+    );
+    if (writeResult.errorCode) {
+        return sendApiError(res, writeResult.errorCode);
+    }
+
+    const refreshed = buildWatchtowerWorkspaceForCommander(commander, targetCityId);
+    res.json({
+        status: 'ok',
+        action: 'watchtower-garrison-spy',
+        fragment: appendResult.fragment,
+        workspace: refreshed.workspace
+    });
+});
+
+app.post('/api/portal/age/watchtower/compile-garrison', (req, res) => {
+    const username = resolveLedgerCommanderUsername(req.body?.username || '');
+    if (!username) {
+        return sendApiError(res, 'NEXUS-GEN-002');
+    }
+
+    const commander = db.get('commanders').find({ username }).value();
+    if (!commander) {
+        return sendApiError(res, 'NEXUS-GEN-004');
+    }
+
+    const targetCityId = String(req.body?.cityId || '').trim();
+    const snapshot = buildWatchtowerWorkspaceForCommander(commander, targetCityId);
+    if (snapshot.errorCode) {
+        return sendApiError(res, snapshot.errorCode);
+    }
+
+    const compileResult = compileGarrisonFragments(
+        snapshot.nationState.watchtower,
+        targetCityId,
+        snapshot.city?.name || '',
+        username
+    );
+    if (compileResult.errorCode) {
+        return sendApiError(res, compileResult.errorCode);
+    }
+
+    const nextNationState = {
+        ...snapshot.nationState,
+        watchtower: compileResult.watchtower
+    };
+    const writeResult = writeNationHeadquartersForNation(
+        resolveCommanderMapNationKey(commander),
+        nextNationState
+    );
+    if (writeResult.errorCode) {
+        return sendApiError(res, writeResult.errorCode);
+    }
+
+    const refreshed = buildWatchtowerWorkspaceForCommander(commander, targetCityId);
+    res.json({
+        status: 'ok',
+        action: 'watchtower-compile-garrison',
+        compiledReport: compileResult.report,
+        workspace: refreshed.workspace
+    });
+});
+
+app.post('/api/portal/age/watchtower/scout-player', (req, res) => {
+    const username = resolveLedgerCommanderUsername(req.body?.username || '');
+    if (!username) {
+        return sendApiError(res, 'NEXUS-GEN-002');
+    }
+
+    let commander = db.get('commanders').find({ username }).value();
+    if (!commander) {
+        return sendApiError(res, 'NEXUS-GEN-004');
+    }
+
+    const targetCityId = String(req.body?.cityId || '').trim();
+    const targetUsername = String(req.body?.targetUsername || '').trim();
+    const snapshot = buildWatchtowerWorkspaceForCommander(commander, targetCityId);
+    if (snapshot.errorCode) {
+        return sendApiError(res, snapshot.errorCode);
+    }
+
+    if (targetUsername.toLowerCase() === username.toLowerCase()) {
+        return sendApiError(res, 'NEXUS-AGE-035');
+    }
+
+    const targetCommander = snapshot.commandersInCity.find((row) => (
+        String(row?.username || '').trim().toLowerCase() === targetUsername.toLowerCase()
+    ));
+    if (!targetCommander) {
+        return sendApiError(res, 'NEXUS-AGE-034');
+    }
+
+    const currentGold = resolveCommanderAgeGold(commander);
+    if (currentGold < SCOUT_GOLD_COST) {
+        return sendApiError(res, 'NEXUS-AGE-033');
+    }
+
+    const scoutEstimate = buildPlayerScoutEstimate(targetCommander, targetCityId);
+    const appendResult = appendPlayerScout(
+        snapshot.nationState.watchtower,
+        { ...scoutEstimate, createdBy: username },
+        username
+    );
+
+    const nextGold = currentGold - SCOUT_GOLD_COST;
+    db.get('commanders')
+        .find({ username })
+        .assign({ ageGold: nextGold })
+        .write();
+
+    const nextNationState = {
+        ...snapshot.nationState,
+        watchtower: appendResult.watchtower
+    };
+    const writeResult = writeNationHeadquartersForNation(
+        resolveCommanderMapNationKey(commander),
+        nextNationState
+    );
+    if (writeResult.errorCode) {
+        return sendApiError(res, writeResult.errorCode);
+    }
+
+    commander = db.get('commanders').find({ username }).value();
+    const refreshed = buildWatchtowerWorkspaceForCommander(commander, targetCityId);
+    res.json({
+        status: 'ok',
+        action: 'watchtower-scout-player',
+        goldSpent: SCOUT_GOLD_COST,
+        ageGold: nextGold,
+        scoutReport: appendResult.scoutEntry,
+        workspace: refreshed.workspace,
+        ...buildAgeMovementStatePayload(username, commander)
+    });
+});
+
+app.post('/api/portal/age/watchtower/seize', (req, res) => {
+    const username = resolveLedgerCommanderUsername(req.body?.username || '');
+    if (!username) {
+        return sendApiError(res, 'NEXUS-GEN-002');
+    }
+
+    let commander = db.get('commanders').find({ username }).value();
+    if (!commander) {
+        return sendApiError(res, 'NEXUS-GEN-004');
+    }
+
+    const gameNation = resolveCommanderMapNationKey(commander);
+    const targetCityId = String(req.body?.cityId || '').trim();
+    const targetUsername = String(req.body?.targetUsername || '').trim();
+    const snapshot = buildWatchtowerWorkspaceForCommander(commander, targetCityId);
+    if (snapshot.errorCode) {
+        return sendApiError(res, snapshot.errorCode);
+    }
+
+    if (snapshot.relationship !== 'hostile') {
+        return sendApiError(res, 'NEXUS-AGE-035');
+    }
+
+    if (targetUsername.toLowerCase() === username.toLowerCase()) {
+        return sendApiError(res, 'NEXUS-AGE-035');
+    }
+
+    const targetCommander = snapshot.commandersInCity.find((row) => (
+        String(row?.username || '').trim().toLowerCase() === targetUsername.toLowerCase()
+    ));
+    if (!targetCommander) {
+        return sendApiError(res, 'NEXUS-AGE-034');
+    }
+
+    const storageNation = resolveArmyGroupsStorageNation(commander);
+    const armyGroupsState = storageNation
+        ? readNationArmyGroupsForNation(storageNation)
+        : null;
+    if (armyGroupsState && findArmyGroupLedBy(armyGroupsState, username)) {
+        return sendApiError(res, 'NEXUS-AGE-030');
+    }
+
+    const movement = readCommanderMovementRecord(username, gameNation);
+    const spend = spendMovePoints(movement, 1);
+    if (spend.errorCode) {
+        return sendApiError(res, spend.errorCode);
+    }
+
+    ensureCommanderAgeRoster(commander);
+    commander = db.get('commanders').find({ username }).value();
+    let defender = db.get('commanders').find({ username: targetCommander.username }).value();
+    ensureCommanderAgeRoster(defender);
+    defender = db.get('commanders').find({ username: targetCommander.username }).value();
+
+    const battleResult = executeBorderSeizeBattle(commander, defender);
+    if (!battleResult.ok) {
+        return sendApiError(res, battleResult.errorCode || 'NEXUS-AGE-017');
+    }
+
+    db.get('commanders')
+        .find({ username })
+        .assign({
+            ageArmy: battleResult.attacker.ageArmy,
+            rank: battleResult.attacker.rank,
+            ageGuildXp: battleResult.attacker.ageGuildXp
+        })
+        .write();
+
+    db.get('commanders')
+        .find({ username: targetCommander.username })
+        .assign({
+            ageArmy: battleResult.defender.ageArmy,
+            rank: battleResult.defender.rank,
+            ageGuildXp: battleResult.defender.ageGuildXp
+        })
+        .write();
+
+    writeCommanderMovementRecord(username, {
+        catalogCityId: movement.catalogCityId,
+        movePoints: spend.movePoints,
+        lastMovePointRegenAt: spend.lastMovePointRegenAt
+    });
+
+    commander = db.get('commanders').find({ username }).value();
+    const refreshed = buildWatchtowerWorkspaceForCommander(commander, targetCityId);
+
+    res.json({
+        status: 'ok',
+        action: 'watchtower-seize',
+        battle: {
+            winner: battleResult.winner,
+            attackerWon: battleResult.attackerWon,
+            log: battleResult.log,
+            defenderUsername: battleResult.defenderUsername
+        },
+        workspace: refreshed.workspace,
+        ...buildAgeMovementStatePayload(username, commander)
     });
 });
 
