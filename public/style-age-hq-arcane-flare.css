@@ -180,7 +180,7 @@ body[data-age-council-room-page="true"] .is-hq-arcane-themed::before {
 body[data-age-council-room-page="true"] .is-hq-arcane-themed::after {
     content: '';
     position: absolute;
-    top: calc(var(--hq-content-inset-x, 25px) + var(--hq-content-inset-top, 0px));
+    top: var(--hq-content-inset-x, 25px);
     right: var(--hq-content-inset-x, 25px);
     bottom: var(--hq-content-inset-x, 25px);
     left: var(--hq-content-inset-x, 25px);

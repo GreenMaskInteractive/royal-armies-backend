@@ -12,10 +12,9 @@
     box-sizing: border-box;
 }
 
-/* Flex-filled shell ignores workspace padding-top — shift header + panels together. */
-.age-council-room-workspace > .age-council-room-header,
+/* Panel shell only — header stays pinned; margin shifts nation/manager panels down. */
 .age-council-room-workspace > .age-council-room-shell {
-    transform: translateY(var(--hq-content-inset-top));
+    margin-top: var(--hq-content-inset-top);
 }
 
 .age-council-room-header {
