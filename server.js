@@ -59,6 +59,7 @@ const {
     classifyBorderRelationship,
     resolveCityHolder,
     resolveCityLoser,
+    recordCityCapture,
     resolveDefaultCapitalCityId,
     normalizeCommanderMovementRecord,
     normalizeArmyFocusValue,
@@ -1191,7 +1192,8 @@ function readAgeMovementStore() {
     return {
         commanders: base.commanders && typeof base.commanders === 'object' ? base.commanders : {},
         cityHolders: base.cityHolders && typeof base.cityHolders === 'object' ? base.cityHolders : {},
-        cityLosers: base.cityLosers && typeof base.cityLosers === 'object' ? base.cityLosers : {}
+        cityLosers: base.cityLosers && typeof base.cityLosers === 'object' ? base.cityLosers : {},
+        cityCaptureAt: base.cityCaptureAt && typeof base.cityCaptureAt === 'object' ? base.cityCaptureAt : {}
     };
 }
 
@@ -1199,7 +1201,8 @@ function writeAgeMovementStore(store) {
     db.set('portal.ageMovement', {
         commanders: store.commanders && typeof store.commanders === 'object' ? store.commanders : {},
         cityHolders: store.cityHolders && typeof store.cityHolders === 'object' ? store.cityHolders : {},
-        cityLosers: store.cityLosers && typeof store.cityLosers === 'object' ? store.cityLosers : {}
+        cityLosers: store.cityLosers && typeof store.cityLosers === 'object' ? store.cityLosers : {},
+        cityCaptureAt: store.cityCaptureAt && typeof store.cityCaptureAt === 'object' ? store.cityCaptureAt : {}
     }).write();
 }
 
@@ -1856,6 +1859,8 @@ function buildHeadquartersIntelSlices(commander, nationState) {
         threatMatrix: buildThreatAssessmentMatrix({
             viewerNation: gameNation,
             cityHolders: movementStore.cityHolders,
+            cityLosers: movementStore.cityLosers,
+            cityCaptureAt: movementStore.cityCaptureAt,
             warLedger,
             commanders,
             nationRecordsMap,
@@ -6083,8 +6088,12 @@ app.post('/api/portal/age/army-groups/attack', (req, res) => {
     const previousHolder = resolveCityHolder(targetCity, store.cityHolders);
 
     if (attackResult.assaultVictory) {
-        store.cityHolders[targetCityId] = getCouncilBoardStorageKey(mapNation);
-        store.cityLosers[targetCityId] = previousHolder;
+        recordCityCapture(
+            store,
+            targetCityId,
+            getCouncilBoardStorageKey(mapNation),
+            previousHolder
+        );
         writeAgeMovementStore(store);
 
         captureReward = awardNationTreasuryForCaptureEvent(
@@ -7438,8 +7447,12 @@ app.post('/api/portal/age/assault', (req, res) => {
     let armyGroupDefeat = null;
 
     if (assaultVictory) {
-        store.cityHolders[targetCityId] = getCouncilBoardStorageKey(gameNation);
-        store.cityLosers[targetCityId] = previousHolder;
+        recordCityCapture(
+            store,
+            targetCityId,
+            getCouncilBoardStorageKey(gameNation),
+            previousHolder
+        );
         writeAgeMovementStore(store);
 
         nextRecord = writeCommanderMovementRecord(username, {
@@ -7586,8 +7599,12 @@ app.post('/api/portal/age/transfer-ownership', (req, res) => {
     }
 
     const previousHolder = resolveCityHolder(targetCity, store.cityHolders);
-    store.cityHolders[targetCityId] = getCouncilBoardStorageKey(gameNation);
-    store.cityLosers[targetCityId] = previousHolder;
+    recordCityCapture(
+        store,
+        targetCityId,
+        getCouncilBoardStorageKey(gameNation),
+        previousHolder
+    );
     writeAgeMovementStore(store);
 
     res.json({

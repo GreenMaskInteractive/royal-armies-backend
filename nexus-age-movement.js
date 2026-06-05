@@ -364,6 +364,120 @@ function areCitiesAdjacent(cityAId, cityBId) {
     return false;
 }
 
+function listNationHeldCityIds(nationId, cityHolders = {}) {
+    const nation = resolveCatalogNationKey(nationId) || String(nationId || '').trim().toLowerCase();
+    if (!nation) return [];
+
+    const ids = [];
+    (loadCityCatalog().cities || []).forEach((city) => {
+        if (resolveCityHolder(city, cityHolders) === nation) {
+            ids.push(city.id);
+        }
+    });
+    return ids;
+}
+
+function computeMinGraphDistanceFromCities(originCityIds, targetCityId) {
+    const uniqueOrigins = [...new Set((Array.isArray(originCityIds) ? originCityIds : []).filter(Boolean))];
+    const target = String(targetCityId || '').trim();
+    if (!target || !uniqueOrigins.length) return null;
+    if (uniqueOrigins.includes(target)) return 0;
+
+    const visited = new Set(uniqueOrigins);
+    const queue = uniqueOrigins.map((id) => ({ id, dist: 0 }));
+
+    while (queue.length) {
+        const { id, dist } = queue.shift();
+        const city = getCatalogCity(id);
+        if (!city) continue;
+
+        for (const neighborId of city.neighbors || []) {
+            if (neighborId === target) return dist + 1;
+            if (!visited.has(neighborId)) {
+                visited.add(neighborId);
+                queue.push({ id: neighborId, dist: dist + 1 });
+            }
+        }
+    }
+
+    return null;
+}
+
+function resolveNationLastCapturedCity(nationId, cityHolders = {}, cityLosers = {}, cityCaptureAt = {}) {
+    const nation = resolveCatalogNationKey(nationId) || String(nationId || '').trim().toLowerCase();
+    if (!nation) return null;
+
+    const holders = cityHolders && typeof cityHolders === 'object' ? cityHolders : {};
+    const losers = cityLosers && typeof cityLosers === 'object' ? cityLosers : {};
+    const captureAt = cityCaptureAt && typeof cityCaptureAt === 'object' ? cityCaptureAt : {};
+
+    let bestCity = null;
+    let bestAt = -1;
+    let bestCityId = '';
+
+    (loadCityCatalog().cities || []).forEach((city) => {
+        if (resolveCityHolder(city, holders) !== nation) return;
+        if (!resolveCityLoser(city, losers)) return;
+
+        const capturedMs = Date.parse(captureAt[city.id] || '');
+        const at = Number.isFinite(capturedMs) ? capturedMs : 0;
+        if (at > bestAt || (at === bestAt && String(city.id) > bestCityId)) {
+            bestCity = city;
+            bestAt = at;
+            bestCityId = String(city.id);
+        }
+    });
+
+    return bestCity;
+}
+
+function computeNationBorderDistanceFromLastCapture(
+    viewerNation,
+    targetNation,
+    cityHolders = {},
+    cityLosers = {},
+    cityCaptureAt = {}
+) {
+    const viewer = resolveCatalogNationKey(viewerNation) || String(viewerNation || '').trim().toLowerCase();
+    const target = resolveCatalogNationKey(targetNation) || String(targetNation || '').trim().toLowerCase();
+    if (!viewer || !target || viewer === target) return null;
+
+    const viewerCities = listNationHeldCityIds(viewer, cityHolders);
+    if (!viewerCities.length) return null;
+
+    const anchorCity = resolveNationLastCapturedCity(target, cityHolders, cityLosers, cityCaptureAt);
+    if (anchorCity) {
+        const anchorDistance = computeMinGraphDistanceFromCities(viewerCities, anchorCity.id);
+        if (anchorDistance !== null) return anchorDistance;
+    }
+
+    const targetCities = listNationHeldCityIds(target, cityHolders);
+    let minDistance = null;
+    targetCities.forEach((cityId) => {
+        const distance = computeMinGraphDistanceFromCities(viewerCities, cityId);
+        if (distance !== null && (minDistance === null || distance < minDistance)) {
+            minDistance = distance;
+        }
+    });
+    return minDistance;
+}
+
+function recordCityCapture(store, cityId, newHolderNationKey, previousHolderNationKey) {
+    const id = String(cityId || '').trim();
+    const holder = String(newHolderNationKey || '').trim().toLowerCase();
+    const loser = String(previousHolderNationKey || '').trim().toLowerCase();
+    if (!id || !holder) return store;
+
+    if (!store.cityHolders || typeof store.cityHolders !== 'object') store.cityHolders = {};
+    if (!store.cityLosers || typeof store.cityLosers !== 'object') store.cityLosers = {};
+    if (!store.cityCaptureAt || typeof store.cityCaptureAt !== 'object') store.cityCaptureAt = {};
+
+    store.cityHolders[id] = holder;
+    store.cityLosers[id] = loser;
+    store.cityCaptureAt[id] = new Date().toISOString();
+    return store;
+}
+
 function resolveCityConnection(cityAId, cityBId) {
     const cityA = getCatalogCity(cityAId);
     const cityB = getCatalogCity(cityBId);
@@ -527,6 +641,11 @@ module.exports = {
     findWaterRoute,
     resolveCityHolder,
     resolveCityLoser,
+    listNationHeldCityIds,
+    computeMinGraphDistanceFromCities,
+    resolveNationLastCapturedCity,
+    computeNationBorderDistanceFromLastCapture,
+    recordCityCapture,
     areCitiesAdjacent,
     classifyBorderRelationship,
     validateBorderTarget,

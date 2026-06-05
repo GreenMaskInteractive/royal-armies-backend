@@ -7,7 +7,8 @@ const {
     loadCityCatalog,
     getCatalogCity,
     resolveCatalogNationKey,
-    resolveCityHolder
+    resolveCityHolder,
+    computeNationBorderDistanceFromLastCapture
 } = require('./nexus-age-movement');
 const { resolveCommanderAgeArmy } = require('./nexus-age-roster');
 const { buildBattleArmy } = require('./nexus-age-battle-sim');
@@ -88,14 +89,16 @@ function resolveHostilityLevel(nationId, viewerNation, warLedger) {
     return 'neutral';
 }
 
-function findBorderingNationMetrics(viewerNation, cityHolders) {
+function findBorderingNationMetrics(viewerNation, cityHolders, cityLosers, cityCaptureAt) {
     const catalog = loadCityCatalog();
     const viewer = normalizeNationKey(viewerNation);
     if (!viewer) return new Map();
 
     const holders = cityHolders && typeof cityHolders === 'object' ? cityHolders : {};
+    const losers = cityLosers && typeof cityLosers === 'object' ? cityLosers : {};
+    const captureAt = cityCaptureAt && typeof cityCaptureAt === 'object' ? cityCaptureAt : {};
     const cities = catalog.cities || [];
-    const metrics = new Map();
+    const neighborNations = new Map();
 
     cities.forEach((city) => {
         const holder = resolveCityHolder(city, holders);
@@ -108,15 +111,27 @@ function findBorderingNationMetrics(viewerNation, cityHolders) {
                 || normalizeNationKey(neighborCity.nationId);
             if (!neighborNation || neighborNation === viewer) return;
 
-            const existing = metrics.get(neighborNation);
-            const borderDistance = 1;
-            if (!existing || borderDistance < existing.borderDistance) {
-                metrics.set(neighborNation, {
-                    nationId: neighborNation,
-                    nationName: String(neighborCity.nationName || neighborNation),
-                    borderDistance
-                });
+            if (!neighborNations.has(neighborNation)) {
+                neighborNations.set(neighborNation, String(neighborCity.nationName || neighborNation));
             }
+        });
+    });
+
+    const metrics = new Map();
+    neighborNations.forEach((nationName, nationId) => {
+        const borderDistance = computeNationBorderDistanceFromLastCapture(
+            viewer,
+            nationId,
+            holders,
+            losers,
+            captureAt
+        );
+        if (borderDistance === null) return;
+
+        metrics.set(nationId, {
+            nationId,
+            nationName,
+            borderDistance
         });
     });
 
@@ -127,6 +142,8 @@ function buildThreatAssessmentMatrix(options) {
     const {
         viewerNation,
         cityHolders,
+        cityLosers,
+        cityCaptureAt,
         warLedger,
         commanders,
         nationRecordsMap,
@@ -136,7 +153,7 @@ function buildThreatAssessmentMatrix(options) {
     const viewer = normalizeNationKey(viewerNation);
     if (!viewer) return [];
 
-    const bordering = findBorderingNationMetrics(viewer, cityHolders);
+    const bordering = findBorderingNationMetrics(viewer, cityHolders, cityLosers, cityCaptureAt);
     const rows = [];
 
     bordering.forEach((metric, nationId) => {
