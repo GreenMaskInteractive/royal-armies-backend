@@ -20,10 +20,40 @@
     ]);
 
     const ARMORY_SLOTS = Object.freeze([
-        { id: 'weapon', label: 'Primary Weapon', tier: 'Tier II', status: 'Ready to upgrade' },
-        { id: 'armor', label: 'Chest Armor', tier: 'Tier I', status: 'Eligible' },
-        { id: 'banner', label: 'Formation Banner', tier: 'Locked', status: 'Requires Church blessing' },
-        { id: 'trinket', label: 'Command Trinket', tier: 'Tier I', status: 'Eligible' }
+        {
+            id: 'weapon',
+            mark: '⚔',
+            label: 'Primary Weapon',
+            desc: 'Field-grade armament slotted for your lead companies.',
+            tier: 'Tier II',
+            status: 'Ready to upgrade'
+        },
+        {
+            id: 'armor',
+            mark: '🛡',
+            label: 'Chest Armor',
+            desc: 'Advance plating and ward stitching for assigned units.',
+            tier: 'Tier I',
+            status: 'Eligible',
+            upgradeCost: '24 provisions'
+        },
+        {
+            id: 'banner',
+            mark: '⚑',
+            label: 'Formation Banner',
+            desc: 'Morale and formation aura slot for marching armies.',
+            tier: 'Locked',
+            status: 'Requires Church blessing'
+        },
+        {
+            id: 'trinket',
+            mark: '✦',
+            label: 'Command Trinket',
+            desc: 'Officer charm slot for tactical bonuses in battle.',
+            tier: 'Tier I',
+            status: 'Eligible',
+            upgradeCost: '24 provisions'
+        }
     ]);
 
     const DEFENSE_MODULES = Object.freeze([
@@ -65,6 +95,7 @@
 
     let bound = false;
     let infirmaryTickBound = false;
+    let infirmaryGoldBound = false;
     let activeVenueId = '';
     /** @type {Array<{ id: string, stackId: string, mark: string, name: string, label: string, categoryId: string, unitType: string, tier: number, promotion: string, goldCost: number, ticksTotal: number, ticksRemaining: number }>} */
     let infirmaryInjuredUnits = [];
@@ -112,6 +143,50 @@
         wallet.classList.remove('is-visible');
     }
 
+    function resolveCommanderGold() {
+        if (global.RoyalArmiesAgeGold?.resolveAgeCommanderGold) {
+            return Math.max(0, Math.floor(Number(global.RoyalArmiesAgeGold.resolveAgeCommanderGold()) || 0));
+        }
+        if (typeof global.resolveAgeCommanderGold === 'function') {
+            return Math.max(0, Math.floor(Number(global.resolveAgeCommanderGold()) || 0));
+        }
+        const hudEl = global.document.getElementById('age-hud-gold');
+        if (hudEl?.textContent) {
+            const parsed = Number(String(hudEl.textContent).replace(/[^\d]/g, ''));
+            if (Number.isFinite(parsed) && parsed >= 0) return Math.floor(parsed);
+        }
+        return 0;
+    }
+
+    function formatCommanderGoldDisplay(amount) {
+        if (global.RoyalArmiesAgeGold?.formatAgeHudGoldDisplay) {
+            return global.RoyalArmiesAgeGold.formatAgeHudGoldDisplay(amount);
+        }
+        return Math.max(0, Math.floor(Number(amount) || 0)).toLocaleString('en-US');
+    }
+
+    function syncInfirmaryGoldWallet() {
+        const wallet = global.document.getElementById('age-settlement-venue-gold-wallet');
+        const amountEl = global.document.getElementById('age-settlement-venue-gold-amount');
+        if (!wallet || !amountEl) return;
+        amountEl.textContent = formatCommanderGoldDisplay(resolveCommanderGold());
+    }
+
+    function hideInfirmaryGoldWallet() {
+        const wallet = global.document.getElementById('age-settlement-venue-gold-wallet');
+        if (!wallet) return;
+        wallet.hidden = true;
+        wallet.classList.remove('is-visible');
+    }
+
+    function showInfirmaryGoldWallet() {
+        const wallet = global.document.getElementById('age-settlement-venue-gold-wallet');
+        if (!wallet) return;
+        wallet.hidden = false;
+        wallet.classList.add('is-visible');
+        syncInfirmaryGoldWallet();
+    }
+
     async function syncSettlementVenueRsdWallet() {
         const wallet = global.document.getElementById('age-settlement-venue-rsd-wallet');
         const amountEl = global.document.getElementById('age-settlement-venue-rsd-amount');
@@ -145,6 +220,7 @@
         }
         activeVenueId = '';
         hideSettlementVenueRsdWallet();
+        hideInfirmaryGoldWallet();
     }
 
     function openArmyWorkspace(options = {}) {
@@ -168,6 +244,7 @@
 
         activeVenueId = String(options.venueId || '').trim();
         hideSettlementVenueRsdWallet();
+        hideInfirmaryGoldWallet();
         if (DEFENSE_VENUE_IDS.has(activeVenueId)) {
             void syncSettlementVenueRsdWallet();
         }
@@ -179,63 +256,82 @@
         global.document.getElementById('age-settlement-venue-close')?.focus();
     }
 
-    function renderCatalogCards(items, actionLabel) {
+    function renderVenueCatalogList(items, options = {}) {
+        const sectionTitle = String(options.sectionTitle || 'Available').trim();
+        const sectionAriaLabel = String(options.sectionAriaLabel || sectionTitle).trim();
+        const actionLabel = String(options.actionLabel || 'Select').trim();
+        const actionAttr = String(options.actionAttr || 'data-army-workspace-action').trim();
+        const resolveStatus = typeof options.resolveStatus === 'function' ? options.resolveStatus : null;
+        const resolveDisabled = typeof options.resolveDisabled === 'function' ? options.resolveDisabled : null;
+
         return (
-            '<div class="age-army-workspace-grid" role="list">'
-            + items.map((item) => (
-                `<article class="age-army-workspace-card" role="listitem">`
-                + `<span class="age-army-workspace-card-mark" aria-hidden="true">${escapeHtml(item.mark)}</span>`
-                + `<h3 class="age-army-workspace-card-title">${escapeHtml(item.title)}</h3>`
-                + `<p class="age-army-workspace-card-desc">${escapeHtml(item.desc)}</p>`
-                + `<div class="age-army-workspace-card-meta">${escapeHtml(item.cost || item.tier || '')}</div>`
-                + `<button type="button" class="age-army-workspace-card-btn" data-army-workspace-action="${escapeHtml(item.id)}">`
-                + `${escapeHtml(actionLabel)}</button>`
-                + '</article>'
-            )).join('')
-            + '</div>'
+            '<section class="age-defense-upgrades" aria-label="'
+            + escapeHtml(sectionAriaLabel)
+            + '">'
+            + '<h3 class="age-defense-upgrades-title">'
+            + escapeHtml(sectionTitle)
+            + '</h3>'
+            + '<ul class="age-defense-upgrade-list">'
+            + items.map((item) => {
+                const title = String(item.title || item.label || '').trim();
+                const desc = String(item.desc || '').trim();
+                const cost = String(
+                    item.status === 'Eligible'
+                        ? (item.upgradeCost || item.cost || item.tier || '')
+                        : (item.cost || item.tier || item.upgradeCost || '')
+                ).trim();
+                const statusText = resolveStatus ? resolveStatus(item) : '';
+                const disabled = resolveDisabled?.(item) ? ' disabled' : '';
+                const actionCell = statusText
+                    ? `<span class="age-defense-upgrade-status">${escapeHtml(statusText)}</span>`
+                    : (
+                        `<button type="button" class="age-defense-upgrade-queue-btn" `
+                        + `${actionAttr}="${escapeHtml(item.id)}"${disabled}>`
+                        + `${escapeHtml(actionLabel)}</button>`
+                    );
+
+                return (
+                    `<li class="age-defense-upgrade-row${statusText ? ' is-slot-taken' : ''}">`
+                    + `<span class="age-defense-upgrade-mark" aria-hidden="true">${escapeHtml(item.mark || '•')}</span>`
+                    + '<div class="age-defense-upgrade-main">'
+                    + `<span class="age-defense-upgrade-title">${escapeHtml(title)}</span>`
+                    + `<span class="age-defense-upgrade-desc">${escapeHtml(desc)}</span>`
+                    + '</div>'
+                    + `<span class="age-defense-upgrade-cost">${escapeHtml(cost)}</span>`
+                    + actionCell
+                    + '</li>'
+                );
+            }).join('')
+            + '</ul>'
+            + '</section>'
         );
     }
 
     function renderBlacksmithBody() {
         return (
-            '<div class="age-army-workspace-toolbar">'
+            '<div class="age-defense-workspace">'
             + '<p class="age-army-workspace-toolbar-note">Forge and outfit your companies with weapons, armor, and campaign kits. Purchases sync to your roster when the ledger API is connected.</p>'
-            + '<div class="age-army-workspace-pill-row">'
-            + '<span class="age-army-workspace-pill">Outfit</span>'
-            + '<span class="age-army-workspace-pill">Maintain</span>'
-            + '</div></div>'
-            + renderCatalogCards(BLACKSMITH_CATALOG, 'Purchase')
+            + renderVenueCatalogList(BLACKSMITH_CATALOG, {
+                sectionTitle: 'Forge Catalog',
+                sectionAriaLabel: 'Blacksmith wares',
+                actionLabel: 'Purchase'
+            })
+            + '</div>'
         );
     }
 
     function renderArmoryBody() {
-        const list = ARMORY_SLOTS.map((slot) => (
-            `<li class="age-army-workspace-list-item">`
-            + `<span class="age-army-workspace-list-label">${escapeHtml(slot.label)}</span>`
-            + `<span class="age-army-workspace-list-value">${escapeHtml(slot.tier)}</span>`
-            + '</li>'
-        )).join('');
-
         return (
-            '<div class="age-army-workspace-split">'
-            + '<section class="age-army-workspace-panel" aria-label="Equipped loadout">'
-            + '<h3 class="age-army-workspace-panel-title">Equipped Loadout</h3>'
-            + `<ul class="age-army-workspace-list">${list}</ul>`
-            + '<p class="age-army-workspace-toolbar-note">Upgrade slots improve combat stats and special effects for units assigned to this settlement.</p>'
-            + '</section>'
-            + '<section class="age-army-workspace-panel" aria-label="Upgrade queue">'
-            + '<h3 class="age-army-workspace-panel-title">Upgrade Queue</h3>'
-            + renderCatalogCards(
-                ARMORY_SLOTS.filter((slot) => slot.status === 'Eligible').map((slot) => ({
-                    id: slot.id,
-                    mark: '↑',
-                    title: slot.label,
-                    desc: slot.status,
-                    cost: '24 provisions'
-                })),
-                'Upgrade'
-            )
-            + '</section></div>'
+            '<div class="age-defense-workspace">'
+            + '<p class="age-army-workspace-toolbar-note">Upgrade equipment slots to improve combat stats and special effects for units assigned to this settlement.</p>'
+            + renderVenueCatalogList(ARMORY_SLOTS, {
+                sectionTitle: 'Equipment Slots',
+                sectionAriaLabel: 'Armory equipment slots',
+                actionLabel: 'Upgrade',
+                resolveStatus: (slot) => (slot.status === 'Eligible' ? '' : slot.status),
+                resolveDisabled: (slot) => slot.status !== 'Eligible'
+            })
+            + '</div>'
         );
     }
 
@@ -692,6 +788,7 @@
         const bodyEl = global.document.getElementById('age-settlement-venue-body');
         if (!bodyEl) return;
         bodyEl.innerHTML = renderInfirmaryBody();
+        syncInfirmaryGoldWallet();
     }
 
     function toggleInfirmaryUnitSelection(unitId) {
@@ -712,11 +809,22 @@
             return { healed: 0, message: 'No injured units are resting in the infirmary.' };
         }
 
+        const commanderGold = resolveCommanderGold();
+
         if (healMode === 'all') {
             const healed = countInfirmaryInjuredUnits();
             const goldSpent = sumAllInfirmaryHealCost();
+            if (goldSpent > commanderGold) {
+                return {
+                    healed: 0,
+                    message: `Not enough gold. Heal entire army costs ${formatInfirmaryHealGold(goldSpent)}.`
+                };
+            }
             infirmaryInjuredUnits = [];
             infirmarySelectedUnitIds = new Set();
+            if (goldSpent > 0) {
+                global.RoyalArmiesAgeGold?.applyAgeCommanderGoldDelta?.(-goldSpent, { source: 'infirmary-heal' });
+            }
             refreshInfirmaryWorkspaceBody();
             const countLabel = healed === 1 ? '1 unit' : `${healed} units`;
             return {
@@ -732,11 +840,21 @@
         }
 
         const goldSpent = sumSelectedInfirmaryHealCost();
+        if (goldSpent > commanderGold) {
+            return {
+                healed: 0,
+                goldSpent: 0,
+                message: `Not enough gold. Selected heals cost ${formatInfirmaryHealGold(goldSpent)}.`
+            };
+        }
         const selectedIdSet = new Set(selectedUnits.map((unit) => unit.id));
         infirmaryInjuredUnits = infirmaryInjuredUnits.filter((unit) => !selectedIdSet.has(unit.id));
         infirmarySelectedUnitIds = new Set(
             [...infirmarySelectedUnitIds].filter((id) => !selectedIdSet.has(id))
         );
+        if (goldSpent > 0) {
+            global.RoyalArmiesAgeGold?.applyAgeCommanderGoldDelta?.(-goldSpent, { source: 'infirmary-heal' });
+        }
         refreshInfirmaryWorkspaceBody();
 
         const healed = selectedUnits.length;
@@ -841,6 +959,12 @@
             subtitle: venue.description || '',
             bodyHtml: renderInfirmaryBody()
         });
+        showInfirmaryGoldWallet();
+    }
+
+    function onInfirmaryGoldUpdated() {
+        if (activeVenueId !== 'infirmary') return;
+        syncInfirmaryGoldWallet();
     }
 
     function openPlaceholderVenue(detail) {
@@ -848,9 +972,7 @@
         let placeholderNote = venue?.placeholderNote
             || 'This workspace is under construction. Check back after the next Age of War update.';
 
-        if (detail?.venueId === 'border') {
-            placeholderNote = 'Border battle training and assault drills will open here. Use Army Groups on the world map until this workspace ships.';
-        } else if (detail?.venueId === 'arenas') {
+        if (detail?.venueId === 'arenas') {
             placeholderNote = 'Continent-wide commander tournaments and spectator betting will open here for citadel settlements.';
         }
 
@@ -984,6 +1106,14 @@
         if (!infirmaryTickBound) {
             infirmaryTickBound = true;
             global.addEventListener('royalarmies:age-game-tick', onInfirmaryGameTick);
+        }
+
+        if (!infirmaryGoldBound) {
+            infirmaryGoldBound = true;
+            global.addEventListener(
+                global.RoyalArmiesAgeGold?.AGE_GOLD_UPDATED_EVENT || 'royalarmies:age-gold-updated',
+                onInfirmaryGoldUpdated
+            );
         }
 
         global.addEventListener('royalarmies:church-blessing-ui-refresh', refreshChurchWorkspaceBody);
