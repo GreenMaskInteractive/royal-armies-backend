@@ -2,6 +2,8 @@
 
 .age-council-room-workspace {
     --hq-content-inset-x: 25px;
+    --hq-content-inset-top: 15px;
+    padding-top: var(--hq-content-inset-top);
     position: relative;
     flex: 1 1 auto;
     display: flex;
