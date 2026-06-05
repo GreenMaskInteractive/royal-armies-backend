@@ -793,6 +793,14 @@
         return Boolean(els.drawer && !els.drawer.hidden);
     }
 
+    function toggleCityDrawerFromClick(cityId, clientX, clientY) {
+        if (selectedCityId === cityId && isCityDrawerOpen()) {
+            closeCityDrawer();
+            return;
+        }
+        openCityDrawer(cityId, clientX, clientY);
+    }
+
     function resolveBorderingCityIds(cityId) {
         const city = cityById.get(cityId);
         if (!city || !Array.isArray(city.neighbors)) return [];
@@ -1318,7 +1326,9 @@
 
         mapCityPointerUpHandled = true;
 
-        openCityDrawer(cityId, event.clientX, event.clientY);
+        const wasAlreadySelected = selectedCityId === cityId && isCityDrawerOpen();
+        toggleCityDrawerFromClick(cityId, event.clientX, event.clientY);
+        if (wasAlreadySelected) return true;
 
         const hints = global.RoyalArmiesAgeMovement?.getBorderActionHints?.(city, playerMapCityId) || {};
         if (hints.canTravel) {
@@ -2545,7 +2555,7 @@
                 return;
             }
 
-            openCityDrawer(cityId, event.clientX, event.clientY);
+            toggleCityDrawerFromClick(cityId, event.clientX, event.clientY);
         };
 
         els.labelsCity.addEventListener('click', openFromLabel);
