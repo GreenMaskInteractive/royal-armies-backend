@@ -1925,35 +1925,22 @@
         return Array.isArray(city.neighbors) && city.neighbors.includes(playerMapCityId);
     }
 
-    function positionCityDrawer(clientX, clientY) {
+    function positionCityDrawer() {
         if (!els.drawer || !els.frame) return;
 
         const pad = 12;
-        const gap = 14;
-        const frameRect = els.frame.getBoundingClientRect();
-        const drawerW = els.drawer.offsetWidth || 280;
-        const drawerH = els.drawer.offsetHeight || 320;
+        const frameH = els.frame.clientHeight || 0;
+        const maxDrawerH = Math.max(180, frameH - pad * 2);
+        const drawerBox = els.drawer.querySelector('.age-world-city-drawer-box');
+        const drawerChrome = els.drawer.querySelector('.age-world-city-drawer-chrome');
 
-        let left = clientX - frameRect.left + gap;
-        let top = clientY - frameRect.top + gap;
-
-        const maxLeft = Math.max(pad, frameRect.width - drawerW - pad);
-        const maxTop = Math.max(pad, frameRect.height - drawerH - pad);
-
-        if (left > maxLeft) {
-            left = clientX - frameRect.left - drawerW - gap;
-        }
-        if (top > maxTop) {
-            top = clientY - frameRect.top - drawerH - gap;
-        }
-
-        left = clamp(left, pad, maxLeft);
-        top = clamp(top, pad, maxTop);
-
-        els.drawer.style.left = `${Math.round(left)}px`;
-        els.drawer.style.top = `${Math.round(top)}px`;
+        els.drawer.style.left = `${pad}px`;
+        els.drawer.style.bottom = `${pad}px`;
+        els.drawer.style.top = 'auto';
         els.drawer.style.right = 'auto';
-        els.drawer.style.bottom = 'auto';
+
+        if (drawerBox) drawerBox.style.maxHeight = `${maxDrawerH}px`;
+        if (drawerChrome) drawerChrome.style.maxHeight = `${maxDrawerH}px`;
     }
 
     function settlementTierLabel(tier) {
@@ -2270,9 +2257,6 @@
         const movement = global.RoyalArmiesAgeMovement;
         if (!city || !movement || drawerMovementBusy) return;
 
-        const drawerLeft = els.drawer?.style.left;
-        const drawerTop = els.drawer?.style.top;
-
         drawerMovementBusy = true;
         try {
             if (action === 'travel') {
@@ -2295,10 +2279,6 @@
             global.RoyalArmiesNationTreasury?.requestRefresh?.();
 
             openCityDrawer(city.id);
-            if (drawerLeft && drawerTop && els.drawer) {
-                els.drawer.style.left = drawerLeft;
-                els.drawer.style.top = drawerTop;
-            }
         } catch (err) {
             const payload = global.RoyalArmiesAgeMovement?.formatActionError?.(err) || err;
             if (typeof global.showRiftError === 'function') {
@@ -2402,12 +2382,10 @@
         els.drawer.hidden = false;
         els.drawer.setAttribute('aria-hidden', 'false');
 
-        if (Number.isFinite(clientX) && Number.isFinite(clientY)) {
-            positionCityDrawer(clientX, clientY);
-            global.requestAnimationFrame(() => {
-                positionCityDrawer(clientX, clientY);
-            });
-        }
+        positionCityDrawer();
+        global.requestAnimationFrame(() => {
+            positionCityDrawer();
+        });
 
         showCitySelectionHighlight(cityId);
     }
@@ -2745,6 +2723,9 @@
 
         global.addEventListener('resize', () => {
             recomputeBaseScale();
+            if (selectedCityId && els.drawer && !els.drawer.hidden) {
+                positionCityDrawer();
+            }
         });
     }
 
