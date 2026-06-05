@@ -161,7 +161,7 @@
         }
 
         selectedCityId = city.id;
-        const ok = mapApi()?.focusOnCity?.(city.id, { highlightMs: 3400 }) || false;
+        const ok = mapApi()?.focusOnCity?.(city.id, { highlightMs: 3400, zoomToMax: true }) || false;
         if (!ok && typeof global.showPortalAlert === 'function') {
             void global.showPortalAlert('Could not center the map on that settlement.', 'Map');
         }
