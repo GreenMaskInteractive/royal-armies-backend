@@ -1198,6 +1198,8 @@
 
         mapCityPointerUpHandled = true;
 
+        openCityDrawer(cityId, event.clientX, event.clientY);
+
         const hints = global.RoyalArmiesAgeMovement?.getBorderActionHints?.(city, playerMapCityId) || {};
         if (hints.canTravel) {
             const movePoints = global.RoyalArmiesAgeMovement?.getMovePoints?.() ?? 0;
@@ -1205,11 +1207,9 @@
             if (movePoints >= movePointCost) {
                 selectedCityId = cityId;
                 void handleDrawerMovementAction('travel');
-                return true;
             }
         }
 
-        openCityDrawer(cityId, event.clientX, event.clientY);
         return true;
     }
 
@@ -2311,11 +2311,6 @@
         return Boolean(
             target.closest('.age-world-city-drawer')
             || target.closest('.age-world-battle-report-modal')
-            || target.closest('.age-world-city-hit-path')
-            || target.closest('.age-world-city-hit-boost')
-            || target.closest('.age-world-city-hit-pin-zone')
-            || target.closest('.age-world-city-border-path')
-            || target.closest('.age-world-city-ownership-path')
             || target.closest('.age-world-map-label--city')
             || target.closest('.age-world-map-terrain-controls')
             || target.closest('.age-world-map-plan-tool-dock')
