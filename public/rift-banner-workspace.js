@@ -535,16 +535,20 @@
                     <img class="age-church-banner-image" src="${escapeHtml(banner.image)}" alt="${escapeHtml(banner.title)}">
                 </div>
                 <div class="age-church-banner-copy">
-                    <h4 class="age-church-banner-title">${escapeHtml(banner.title)}</h4>
-                    <p class="age-church-banner-rune">Blessed with the <strong>${escapeHtml(banner.rune)}</strong></p>
-                    <p class="age-church-banner-lore">${escapeHtml(banner.lore)}</p>
-                    <ul class="age-church-banner-perks">${perkItems}</ul>
-                    <button type="button"
-                        class="age-church-choose-blessing-btn ${button.modifier}"
-                        data-church-choose-blessing="${escapeHtml(banner.id)}"
-                        ${button.disabled ? 'disabled' : ''}>
-                        ${escapeHtml(button.label)}
-                    </button>
+                    <div class="age-church-banner-details">
+                        <h4 class="age-church-banner-title">${escapeHtml(banner.title)}</h4>
+                        <p class="age-church-banner-rune">Blessed with the <strong>${escapeHtml(banner.rune)}</strong></p>
+                        <p class="age-church-banner-lore">${escapeHtml(banner.lore)}</p>
+                        <ul class="age-church-banner-perks">${perkItems}</ul>
+                    </div>
+                    <div class="age-church-banner-action">
+                        <button type="button"
+                            class="age-church-choose-blessing-btn ${button.modifier}"
+                            data-church-choose-blessing="${escapeHtml(banner.id)}"
+                            ${button.disabled ? 'disabled' : ''}>
+                            ${escapeHtml(button.label)}
+                        </button>
+                    </div>
                 </div>
             </article>
         `;

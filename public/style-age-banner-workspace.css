@@ -2,9 +2,21 @@
 
 /* ── Church sanctum ─────────────────────────────────────────── */
 
+.age-settlement-venue-body:has(.age-church-workspace) {
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    padding: 18px 22px 20px;
+}
+
 .age-church-workspace {
     position: relative;
+    flex: 1 1 auto;
+    min-height: 0;
     max-width: 1180px;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
 }
 
 .age-church-workspace-veil {
@@ -32,18 +44,33 @@
         radial-gradient(circle at 88% 80%, rgba(255, 196, 96, 0.14) 0 1.5px, transparent 2.5px);
 }
 
+.age-church-split.age-army-workspace-split {
+    min-height: 0;
+}
+
 .age-church-split {
     position: relative;
     z-index: 1;
-    grid-template-columns: minmax(220px, 280px) minmax(0, 1fr);
+    flex: 1 1 auto;
+    min-height: 0;
+    grid-template-columns: minmax(220px, 260px) minmax(0, 1fr);
+    align-items: stretch;
 }
 
 .age-church-sanctum-panel,
 .age-church-banner-panel {
+    min-height: 0;
     border-color: rgba(196, 160, 255, 0.28);
     background:
         linear-gradient(165deg, rgba(24, 16, 36, 0.72) 0%, rgba(8, 8, 14, 0.82) 100%);
     box-shadow: inset 0 1px 0 rgba(255, 215, 120, 0.08);
+}
+
+.age-church-banner-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    overflow: hidden;
 }
 
 .age-church-sanctum-lead {
@@ -95,17 +122,19 @@
 .age-church-banner-grid {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 14px;
-    max-height: min(68vh, 620px);
-    overflow: auto;
-    padding-right: 4px;
+    grid-template-rows: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: hidden;
 }
 
 .age-church-banner-card {
     display: flex;
     flex-direction: column;
-    gap: 10px;
-    padding: 12px;
+    gap: 8px;
+    min-height: 0;
+    padding: 10px;
     border-radius: 10px;
     border: 1px solid rgba(255, 255, 255, 0.08);
     background: rgba(6, 8, 14, 0.55);
@@ -122,8 +151,9 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    min-height: 132px;
-    padding: 10px;
+    flex: 0 0 auto;
+    min-height: 96px;
+    padding: 8px;
     overflow: hidden;
     border-radius: 8px;
     background: radial-gradient(ellipse 70% 60% at 50% 45%, rgba(255, 215, 120, 0.08) 0%, transparent 72%);
@@ -166,11 +196,33 @@
     animation: ageChurchBannerGlowPulse 2.8s ease-in-out infinite;
 }
 
+.age-church-banner-copy {
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+    min-height: 0;
+}
+
+.age-church-banner-details {
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+    gap: 4px;
+    min-height: 0;
+}
+
+.age-church-banner-action {
+    display: flex;
+    justify-content: center;
+    margin-top: 10px;
+    flex: 0 0 auto;
+}
+
 .age-church-banner-image {
     position: relative;
     z-index: 1;
     max-width: 100%;
-    max-height: 118px;
+    max-height: 84px;
     object-fit: contain;
     filter: drop-shadow(0 8px 18px rgba(0, 0, 0, 0.55));
 }
@@ -198,26 +250,25 @@
 
 .age-church-banner-lore {
     margin: 0;
-    font-size: 0.72rem;
-    line-height: 1.5;
+    font-size: 0.68rem;
+    line-height: 1.4;
     color: rgba(220, 210, 230, 0.82);
 }
 
 .age-church-banner-perks {
     margin: 0;
-    padding-left: 1.1rem;
+    padding-left: 1rem;
     display: flex;
     flex-direction: column;
-    gap: 4px;
-    font-size: 0.68rem;
-    line-height: 1.45;
+    gap: 2px;
+    font-size: 0.62rem;
+    line-height: 1.35;
     color: rgba(196, 220, 255, 0.82);
 }
 
 .age-church-choose-blessing-btn {
     appearance: none;
-    align-self: flex-start;
-    margin-top: 2px;
+    margin: 0;
     padding: 7px 12px;
     border-radius: 6px;
     border: 1px solid rgba(255, 215, 120, 0.45);
@@ -850,6 +901,11 @@ body.is-rift-banner-blessing-toast-open {
 
     .age-church-banner-grid {
         grid-template-columns: 1fr;
-        max-height: none;
+        grid-template-rows: auto;
+        overflow: auto;
+    }
+
+    .age-settlement-venue-body:has(.age-church-workspace) {
+        overflow: auto;
     }
 }
