@@ -48,6 +48,7 @@
             title: 'True War Banner',
             image: `/images/truewarbanner.png?v=${IMAGE_BUST}`,
             rune: 'Rune of Valiance',
+            skillCategory: 'Offensive Combat & Infantry',
             lore: 'A mark of unending victory and a strong, ferocious army. This banner is blessed with the Rune of Valiance.',
             perks: Object.freeze([
                 {
@@ -72,6 +73,7 @@
             title: "Sachiel's Blessing Banner",
             image: `/images/sachielsblessingbanner.png?v=${IMAGE_BUST}`,
             rune: 'Rune of Revitalization',
+            skillCategory: 'Restoration & Army Sustain',
             lore: "Known to bring life back to many lost souls, this banner was blessed by an Angel through the Rune of Revitalization. It radiates a healing aura.",
             perks: Object.freeze([
                 {
@@ -96,6 +98,7 @@
             title: 'Emerald Barrier Banner',
             image: `/images/emeraldbarrierbanner.png?v=${IMAGE_BUST}`,
             rune: 'Rune of Fortification',
+            skillCategory: 'Defensive Fortification & Garrison',
             lore: 'Reputed for maintaining an impenetrable wall of defense and causing stalemates. Blessed with the Rune of Fortification.',
             perks: Object.freeze([
                 {
@@ -120,6 +123,7 @@
             title: "Fortune's Gratitude Banner",
             image: `/images/fortunesgratitudebanner.png?v=${IMAGE_BUST}`,
             rune: 'Rune of Hinshuro',
+            skillCategory: 'Economic Prosperity & Trade',
             lore: 'Known as the Merchant Flag of Ultimate Trade, passed down through generations of tradesmen. Blessed with the Rune of Hinshuro to aid residential and commercial growth.',
             perks: Object.freeze([
                 {
@@ -567,9 +571,7 @@
         const isChosen = chosenBannerId === banner.id;
         const button = resolveChurchBannerButton(chosenBannerId, banner.id, swapAvailable);
 
-        const perkItems = (banner.perks || []).map((perk) => (
-            `<li>${escapeHtml(perk.desc)}</li>`
-        )).join('');
+        const skillCategory = String(banner.skillCategory || '').trim();
 
         return `
             <article class="age-church-banner-card${isChosen ? ' is-chosen' : ''}" data-banner-id="${escapeHtml(banner.id)}">
@@ -583,7 +585,9 @@
                         <h4 class="age-church-banner-title">${escapeHtml(banner.title)}</h4>
                         <p class="age-church-banner-rune">Blessed with the <strong>${escapeHtml(banner.rune)}</strong></p>
                         <p class="age-church-banner-lore">${escapeHtml(banner.lore)}</p>
-                        <ul class="age-church-banner-perks">${perkItems}</ul>
+                        ${skillCategory
+                            ? `<p class="age-church-banner-skill-category"><span class="age-church-banner-skill-category-label">Skill discipline</span> ${escapeHtml(skillCategory)}</p>`
+                            : ''}
                     </div>
                     <div class="age-church-banner-action">
                         <button type="button"
@@ -615,7 +619,7 @@
             ? (swapAvailable
                 ? 'One banner swap remains this Age. Exchanging your blessing wipes every banner perk point and unlocked node—you must earn them again.'
                 : 'Your one Age swap has been spent. This banner and its perk progress are locked until the Age turns.')
-            : 'Each banner carries a sacred rune and a trio of commander perks. You receive one blessing freely, and may swap it only once before the Age ends.';
+            : 'Each banner carries a sacred rune and a focused skill discipline. You receive one blessing freely, and may swap it only once before the Age ends.';
 
         const cards = BANNER_CATALOG.map((banner) => renderChurchBannerCard(
             banner,
