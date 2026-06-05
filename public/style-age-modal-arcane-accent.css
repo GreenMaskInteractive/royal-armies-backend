@@ -1,0 +1,246 @@
+/**
+ * FLEX — Subtle Church-inspired violet / arcane-blue accents on Age page modals.
+ * Scoped to Age + settlement shells only (not main portal).
+ */
+
+body.age-page-canvas,
+body.age-page-settlement-only {
+    --age-arcane-violet: 196, 160, 255;
+    --age-arcane-blue: 120, 188, 255;
+    --age-arcane-plum: 88, 48, 120;
+    --age-arcane-border: rgba(var(--age-arcane-violet), 0.34);
+    --age-arcane-border-soft: rgba(var(--age-arcane-violet), 0.22);
+    --age-arcane-eyebrow: rgba(210, 198, 255, 0.84);
+}
+
+/* ── Backdrops ─────────────────────────────────────────────── */
+
+body.age-page-canvas :is(
+    .age-age-center-modal-backdrop,
+    .age-war-room-backdrop,
+    .rift-discoveries-workspace-backdrop,
+    .rift-banner-workspace-backdrop,
+    .age-chronicles-battle-pass-backdrop,
+    .age-nation-hub-menu-backdrop,
+    .age-war-ledger-backdrop
+) {
+    background:
+        radial-gradient(ellipse 62% 48% at 18% 16%, rgba(var(--age-arcane-violet), 0.1) 0%, transparent 58%),
+        radial-gradient(ellipse 54% 42% at 84% 18%, rgba(var(--age-arcane-blue), 0.08) 0%, transparent 62%),
+        radial-gradient(ellipse 90% 70% at 50% 42%, rgba(var(--age-arcane-plum), 0.14) 0%, transparent 55%),
+        radial-gradient(ellipse at center, rgba(16, 12, 22, 0.48) 0%, rgba(0, 0, 0, 0.88) 78%);
+}
+
+/* ── Modal shells (inner arcane veil) ──────────────────────── */
+
+body.age-page-canvas :is(
+    .age-age-center-modal-dialog,
+    .age-settlement-venue-shell,
+    .age-army-workspace-shell,
+    .age-barracks-shell,
+    .age-unit-evolution-shell,
+    .age-war-room-stage,
+    .age-chronicles-battle-pass-dialog,
+    .rift-banner-workspace-dialog
+) {
+    position: relative;
+    isolation: isolate;
+    border-color: var(--age-arcane-border);
+    box-shadow:
+        inset 0 1px 0 rgba(var(--age-arcane-violet), 0.14),
+        inset 0 0 72px rgba(var(--age-arcane-plum), 0.08),
+        0 28px 64px rgba(0, 0, 0, 0.78),
+        0 0 42px rgba(var(--age-arcane-violet), 0.08);
+}
+
+body.age-page-canvas :is(
+    .age-age-center-modal-dialog,
+    .age-settlement-venue-shell,
+    .age-army-workspace-shell,
+    .age-barracks-shell,
+    .age-unit-evolution-shell,
+    .age-war-room-stage,
+    .age-chronicles-battle-pass-dialog,
+    .rift-banner-workspace-dialog
+)::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    border-radius: inherit;
+    background:
+        radial-gradient(ellipse 55% 42% at 12% 10%, rgba(var(--age-arcane-violet), 0.1) 0%, transparent 65%),
+        radial-gradient(ellipse 48% 38% at 90% 12%, rgba(var(--age-arcane-blue), 0.08) 0%, transparent 68%),
+        radial-gradient(ellipse 78% 52% at 50% 100%, rgba(var(--age-arcane-plum), 0.1) 0%, transparent 72%);
+}
+
+body.age-page-canvas :is(
+    .age-age-center-modal-dialog,
+    .age-settlement-venue-shell,
+    .age-army-workspace-shell,
+    .age-barracks-shell,
+    .age-unit-evolution-shell,
+    .age-war-room-stage,
+    .age-chronicles-battle-pass-dialog,
+    .rift-banner-workspace-dialog
+) > * {
+    position: relative;
+    z-index: 1;
+}
+
+/* Discoveries + Game Hub use corner brackets on ::before/::after — tint via background only */
+body.age-page-canvas .rift-discoveries-workspace-dialog {
+    border-color: var(--age-arcane-border);
+    background-color: #0a0806;
+    background-image:
+        radial-gradient(ellipse 52% 40% at 10% 0%, rgba(var(--age-arcane-violet), 0.12) 0%, transparent 62%),
+        radial-gradient(ellipse 46% 38% at 92% 8%, rgba(var(--age-arcane-blue), 0.08) 0%, transparent 66%),
+        linear-gradient(180deg, #221a12 0%, #0a0806 22%),
+        radial-gradient(circle at 12% 0%, #2a2014 0%, #0a0806 48%),
+        linear-gradient(165deg, #1a1410 0%, #060504 100%);
+    box-shadow:
+        inset 0 1px 0 rgba(var(--age-arcane-violet), 0.12),
+        0 24px 64px rgba(0, 0, 0, 0.55),
+        0 0 36px rgba(var(--age-arcane-violet), 0.07);
+}
+
+body.age-page-canvas .rift-discoveries-workspace-dialog::before,
+body.age-page-canvas .rift-discoveries-workspace-dialog::after {
+    border-color: rgba(var(--age-arcane-violet), 0.38);
+}
+
+body.age-page-canvas .age-nation-hub-menu-panel {
+    border-color: rgba(var(--age-arcane-violet), 0.42);
+    background:
+        radial-gradient(ellipse 50% 38% at 14% 0%, rgba(var(--age-arcane-violet), 0.1) 0%, transparent 62%),
+        radial-gradient(ellipse 44% 36% at 88% 100%, rgba(var(--age-arcane-blue), 0.07) 0%, transparent 64%),
+        linear-gradient(90deg, rgba(255, 215, 0, 0.05) 0%, transparent 14%, transparent 86%, rgba(255, 215, 0, 0.05) 100%),
+        linear-gradient(180deg, rgba(255, 215, 0, 0.1) 0%, transparent 18%),
+        linear-gradient(165deg, rgba(36, 24, 44, 0.99) 0%, rgba(14, 10, 18, 0.99) 48%, rgba(24, 18, 28, 0.98) 100%);
+    box-shadow:
+        inset 0 1px 0 rgba(var(--age-arcane-violet), 0.16),
+        inset 0 0 100px rgba(var(--age-arcane-plum), 0.1),
+        0 0 0 1px rgba(0, 0, 0, 0.65),
+        0 0 32px rgba(var(--age-arcane-violet), 0.08);
+}
+
+body.age-page-canvas .age-nation-hub-menu-panel::before,
+body.age-page-canvas .age-nation-hub-menu-panel::after {
+    border-color: rgba(var(--age-arcane-violet), 0.42);
+}
+
+/* ── Headers & dividers ───────────────────────────────────── */
+
+body.age-page-canvas :is(
+    .age-settlement-venue-header,
+    .age-barracks-header,
+    .age-unit-evolution-header,
+    .rift-discoveries-workspace-header,
+    .rift-banner-workspace-header,
+    .age-chronicles-battle-pass-header,
+    .age-nation-hub-menu-header,
+    .age-war-room-header
+) {
+    border-bottom-color: var(--age-arcane-border-soft);
+}
+
+body.age-page-canvas :is(
+    .age-council-room-header,
+    .age-records-dialog .age-records-shell
+) {
+    border-color: var(--age-arcane-border-soft);
+}
+
+/* ── Eyebrows (lavender + arcane blue) ───────────────────── */
+
+body.age-page-canvas :is(
+    .age-settlement-venue-eyebrow,
+    .age-barracks-eyebrow,
+    .age-unit-evolution-eyebrow,
+    .rift-discoveries-workspace-eyebrow,
+    .rift-banner-workspace-eyebrow,
+    .age-chronicles-battle-pass-eyebrow,
+    .age-nation-hub-menu-eyebrow,
+    .age-war-room-header-eyebrow,
+    .age-records-intro-eyebrow
+) {
+    color: var(--age-arcane-eyebrow);
+}
+
+/* ── Close controls ────────────────────────────────────────── */
+
+body.age-page-canvas :is(
+    .age-age-center-modal-close,
+    .age-settlement-venue-close,
+    .age-barracks-close,
+    .age-unit-evolution-close,
+    .rift-discoveries-workspace-close,
+    .rift-banner-workspace-close,
+    .age-chronicles-battle-pass-close,
+    .age-guild-job-close
+):hover,
+body.age-page-canvas :is(
+    .age-age-center-modal-close,
+    .age-settlement-venue-close,
+    .age-barracks-close,
+    .age-unit-evolution-close,
+    .rift-discoveries-workspace-close,
+    .rift-banner-workspace-close,
+    .age-chronicles-battle-pass-close,
+    .age-guild-job-close
+):focus-visible {
+    border-color: rgba(var(--age-arcane-violet), 0.58);
+    box-shadow: 0 0 14px rgba(var(--age-arcane-violet), 0.16);
+}
+
+/* ── In-modal panels (armory, infirmary, guild, army workspace) */
+
+body.age-page-canvas :is(
+    .age-army-workspace-panel,
+    .age-guild-job-top-panel
+) {
+    border-color: var(--age-arcane-border-soft);
+    background:
+        radial-gradient(ellipse 60% 50% at 0% 0%, rgba(var(--age-arcane-violet), 0.06) 0%, transparent 68%),
+        linear-gradient(165deg, rgba(24, 16, 36, 0.62) 0%, rgba(8, 8, 14, 0.78) 100%);
+}
+
+body.age-page-canvas .age-army-workspace-panel-title {
+    color: rgba(230, 210, 255, 0.82);
+}
+
+/* War ledger — keep crimson identity, add faint arcane depth */
+body.age-page-canvas .age-war-ledger-dialog {
+    border-color: rgba(196, 120, 160, 0.42);
+    background:
+        radial-gradient(ellipse 50% 42% at 88% 0%, rgba(var(--age-arcane-violet), 0.08) 0%, transparent 62%),
+        linear-gradient(160deg, rgba(36, 16, 24, 0.98), rgba(8, 4, 10, 0.99));
+    box-shadow:
+        0 16px 40px rgba(0, 0, 0, 0.7),
+        0 0 28px rgba(var(--age-arcane-plum), 0.1);
+}
+
+/* Portal confirm/alert on Age pages */
+body.age-page-canvas #royal-armies-portal-alert-modal .portal-alert-bezel,
+body.age-page-settlement-only #royal-armies-portal-alert-modal .portal-alert-bezel {
+    border-color: rgba(var(--age-arcane-violet), 0.36) !important;
+    box-shadow:
+        inset 0 1px 0 rgba(var(--age-arcane-violet), 0.12),
+        0 0 32px rgba(var(--age-arcane-plum), 0.12) !important;
+}
+
+body.age-page-canvas #royal-armies-portal-alert-modal .portal-alert-bezel--age-update,
+body.age-page-settlement-only #royal-armies-portal-alert-modal .portal-alert-bezel--age-update {
+    background-image:
+        radial-gradient(ellipse 55% 42% at 14% 0%, rgba(var(--age-arcane-violet), 0.1) 0%, transparent 62%),
+        linear-gradient(165deg, rgba(28, 20, 40, 0.97) 0%, rgba(6, 5, 8, 0.99) 100%) !important;
+}
+
+/* Discovery / blessing toasts on Age */
+body.age-page-canvas :is(
+    .rift-discovery-toast-panel,
+    .rift-banner-blessing-toast-panel
+) {
+    border-color: rgba(var(--age-arcane-violet), 0.42) !important;
+}
