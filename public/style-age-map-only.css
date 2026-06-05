@@ -160,6 +160,20 @@ body.age-map-shell-only .age-world-map-terrain-controls {
     pointer-events: auto !important;
 }
 
+body.age-map-shell-only #age-world-map-city-search,
+body.age-map-shell-only #age-world-map-city-search * {
+    z-index: 2147483642 !important;
+    pointer-events: auto !important;
+}
+
+body.age-map-shell-only #age-world-map-city-search-input {
+    cursor: text !important;
+}
+
+body.age-map-shell-only #age-world-map-city-search-center {
+    cursor: pointer !important;
+}
+
 body.age-map-shell-only .age-world-map-terrain-controls button,
 body.age-map-shell-only #age-world-map-plan-add,
 body.age-map-shell-only #age-world-map-plan-post,

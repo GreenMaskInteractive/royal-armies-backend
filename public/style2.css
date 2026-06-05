@@ -18864,19 +18864,31 @@ html.age-world-map-pan-locked #cursor-click-fx-layer {
 }
 
 .age-world-map-city-search {
-    position: absolute;
-    top: calc(var(--game-region-map-bezel, 0px) + 12px);
-    right: calc(var(--game-region-map-bezel, 0px) + 12px);
+    position: fixed;
+    top: var(--age-map-search-top, calc(var(--age-map-slot-top, 0px) + 24px));
+    right: var(--age-map-search-right, max(16px, env(safe-area-inset-right, 0px)));
     left: auto;
-    z-index: 9;
+    z-index: 13;
     display: flex;
     flex-direction: column;
     align-items: flex-end;
     gap: 6px;
-    min-width: min(300px, calc(100% - 2 * var(--game-region-map-bezel, 0px) - 120px));
-    max-width: min(380px, calc(100% - 2 * var(--game-region-map-bezel, 0px) - 24px));
+    min-width: min(300px, calc(100vw - 48px));
+    max-width: min(380px, calc(100vw - 24px));
     pointer-events: auto;
     transition: opacity 0.2s ease, visibility 0.2s ease;
+}
+
+#age-page-canvas[data-age-view="map"] .age-world-map-city-search-input,
+#age-page-canvas[data-age-view="map"] .age-world-map-city-search-center-btn,
+#age-page-canvas[data-age-view="map"] .age-world-map-city-search-suggest,
+#age-page-canvas[data-age-view="map"] .age-world-map-city-search-suggest-item {
+    pointer-events: auto;
+    cursor: pointer;
+}
+
+#age-page-canvas[data-age-view="map"] .age-world-map-city-search-input {
+    cursor: text;
 }
 
 .age-world-map-frame.is-plan-editor-open .age-world-map-city-search {

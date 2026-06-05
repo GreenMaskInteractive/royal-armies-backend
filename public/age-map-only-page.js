@@ -311,6 +311,15 @@
         canvas.style.setProperty('--age-council-board-width', `${width}px`);
         canvas.style.setProperty('--age-council-board-height', `${councilHeight}px`);
         canvas.style.setProperty('--age-left-column-height', `${totalColumnHeight}px`);
+
+        const mapClientRect = mapFrame.getBoundingClientRect();
+        if (mapClientRect.width >= 8 && mapClientRect.height >= 8) {
+            const searchTop = Math.max(0, mapClientRect.top + 12);
+            const searchRight = Math.max(12, global.innerWidth - mapClientRect.right + 12);
+            canvas.style.setProperty('--age-map-search-top', `${searchTop}px`);
+            canvas.style.setProperty('--age-map-search-right', `${searchRight}px`);
+        }
+
         canvas.classList.remove('is-age-hud-layout-pending');
         lastCouncilLayoutKey = `${top}|${width}|${councilHeight}|${leftPosition}`;
     }
