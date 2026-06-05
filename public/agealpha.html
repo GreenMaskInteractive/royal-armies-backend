@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Royal Armies — Age Alpha</title>
     <link rel="stylesheet" href="style.css?v=cursor-modal-layer-fix-1">
-    <link rel="stylesheet" href="style2.css?v=border-casualty-risk-1">
+    <link rel="stylesheet" href="style2.css?v=city-movement-routes-1">
     <link rel="stylesheet" href="style-age-headquarters.css?v=hq-header-clicks-2">
     <link rel="stylesheet" href="style-age-center-modals.css?v=records-nations-fit-1">
     <link rel="stylesheet" href="style-age-council-room.css?v=hq-header-clicks-2">
@@ -310,6 +310,12 @@
                                         <span class="age-movement-label">Terrain</span>
                                         <p id="age-movement-terrain-name" class="age-movement-terrain-name">—</p>
                                     </div>
+                                </div>
+                                <div class="age-movement-routes-block" id="age-movement-routes-wrap">
+                                    <span class="age-movement-label">City Movement</span>
+                                    <p id="age-movement-routes-summary" class="age-movement-routes-summary" aria-live="polite"></p>
+                                    <ul id="age-movement-routes" class="age-movement-routes-list" hidden></ul>
+                                    <p id="age-movement-routes-empty" class="age-movement-routes-empty" hidden></p>
                                 </div>
                             </div>
                         </div>
@@ -2093,7 +2099,7 @@
     <script src="rift-age-assault-risk.js?v=border-casualty-risk-1"></script>
     <script src="age-world-map.js?v=border-casualty-risk-1"></script>
     <script src="rift-age-movement.js?v=age-map-only-1"></script>
-    <script src="age-movement-panel.js?v=hq-planning-chromeless-1"></script>
+    <script src="age-movement-panel.js?v=city-movement-routes-1"></script>
     <script src="age-world-map-plan-arrow-geometry.js?v=age-map-plan-routes-v2-1"></script>
     <script src="age-world-map-plan-route-style.js?v=age-map-plan-mf-action-1"></script>
     <script src="age-world-plan-overlay.js?v=age-map-plan-mf-action-1"></script>

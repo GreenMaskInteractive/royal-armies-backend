@@ -97,6 +97,7 @@
         loading: false
     };
     let cityPlayersRefreshPromise = null;
+    let movementRouteBusy = false;
 
     function resolveUsername() {
         const saved = global.localStorage.getItem('activeCommanderUser');
@@ -120,7 +121,18 @@
             .replace(/[^a-z0-9-]/g, '');
     }
 
+    function findCatalogCityById(cityId) {
+        const id = String(cityId || '').trim();
+        if (!id) return null;
+        const catalog = global.RoyalArmiesAgeWorldMap?.getCatalog?.();
+        if (!catalog?.cities) return null;
+        return catalog.cities.find((city) => city.id === id) || null;
+    }
+
     function findCityById(cityId) {
+        const catalogCity = findCatalogCityById(cityId);
+        if (catalogCity) return catalogCity;
+
         const id = String(cityId || '').trim().toLowerCase();
         return AMNEK_CITIES.find((city) => city.id === id) || null;
     }
@@ -133,6 +145,16 @@
 
     function findRegionById(regionId) {
         return AMNEK_REGIONS[String(regionId || '').trim()] || null;
+    }
+
+    function resolveRegionForCity(city) {
+        if (!city) return null;
+        if (city.regionId) return findRegionById(city.regionId);
+
+        const catalog = global.RoyalArmiesAgeWorldMap?.getCatalog?.();
+        const nation = catalog?.nations?.find((entry) => entry.id === city.nationId);
+        if (nation?.regionId) return findRegionById(nation.regionId);
+        return null;
     }
 
     function resolveCommanderNationId() {
@@ -239,17 +261,24 @@
 
     function syncCatalogCity(catalogCityId) {
         const previousCityId = currentCityId;
-        const catalog = global.RoyalArmiesAgeWorldMap?.getCatalog?.();
-        const match = catalog?.cities?.find((city) => city.id === String(catalogCityId || '').trim());
-        if (match) {
-            writeStoredNationId(match.nationId);
-            const stub = findCityByNationId(match.nationId);
+        const id = String(catalogCityId || '').trim();
+        const catalogCity = findCatalogCityById(id);
+
+        if (catalogCity) {
+            currentCityId = catalogCity.id;
+            writeStoredCityId(catalogCity.id);
+            writeStoredNationId(catalogCity.nationId);
+        } else if (id) {
+            const stub = findCityById(id) || findCityByNationId(id);
             if (stub) {
                 currentCityId = stub.id;
                 writeStoredCityId(stub.id);
+                writeStoredNationId(stub.nationId);
             }
         }
+
         renderMovementPanel();
+        renderMovementRoutes();
         refreshCityPlayersFromServer();
         global.RoyalArmiesPlayerLocPins?.refreshLocalPlayerPin?.();
         if (previousCityId !== currentCityId && typeof global.refreshAgeViewTabs === 'function') {
@@ -258,6 +287,12 @@
     }
 
     function resolveDefaultCity() {
+        const movementCityId = global.RoyalArmiesAgeMovement?.getCatalogCityId?.();
+        if (movementCityId) {
+            const movementCity = findCityById(movementCityId);
+            if (movementCity) return movementCity;
+        }
+
         const storedId = readStoredCityId();
         if (storedId) {
             const storedCity = findCityById(storedId);
@@ -312,7 +347,7 @@
         const capitalHud = global.document.getElementById('age-hud-capital');
 
         const city = resolveDisplayedCity();
-        const region = city ? findRegionById(city.regionId) : null;
+        const region = resolveRegionForCity(city);
 
         syncCityInfoPanelHeader(city);
 
@@ -334,6 +369,115 @@
         if (capitalHud && city?.name) {
             capitalHud.textContent = city.name;
         }
+
+        renderMovementRoutes();
+    }
+
+    function collectTravelRoutes() {
+        const movement = global.RoyalArmiesAgeMovement;
+        const catalog = global.RoyalArmiesAgeWorldMap?.getCatalog?.();
+        if (!movement || !catalog?.cities?.length) return [];
+
+        const playerCityId = movement.getCatalogCityId();
+        if (!playerCityId) return [];
+
+        const routes = [];
+        catalog.cities.forEach((targetCity) => {
+            const hints = movement.getBorderActionHints(targetCity, playerCityId) || {};
+            if (!hints.canTravel) return;
+            routes.push({ city: targetCity, hints });
+        });
+
+        routes.sort((left, right) => left.city.name.localeCompare(right.city.name, undefined, { sensitivity: 'base' }));
+        return routes;
+    }
+
+    function renderMovementRoutes() {
+        const host = global.document.getElementById('age-movement-routes');
+        const summary = global.document.getElementById('age-movement-routes-summary');
+        const empty = global.document.getElementById('age-movement-routes-empty');
+        if (!host) return;
+
+        const movement = global.RoyalArmiesAgeMovement;
+        const movePoints = movement?.getMovePoints?.() ?? 0;
+        const movePointsMax = movement?.getMovePointsMax?.() ?? 3;
+        const routes = collectTravelRoutes();
+        const playerCity = resolveDisplayedCity();
+
+        if (summary) {
+            summary.textContent = `${movePoints}/${movePointsMax} move points · ${routes.length} reachable ${routes.length === 1 ? 'city' : 'cities'}`;
+        }
+
+        if (!routes.length) {
+            host.innerHTML = '';
+            host.hidden = true;
+            if (empty) {
+                empty.hidden = false;
+                empty.textContent = playerCity?.name
+                    ? `No friendly cities border ${playerCity.name}. Open a bordering city on the map and use Travel, or capture adjacent territory.`
+                    : 'Travel routes appear after the world map loads.';
+            }
+            return;
+        }
+
+        if (empty) empty.hidden = true;
+        host.hidden = false;
+        host.innerHTML = routes.map(({ city, hints }) => {
+            const cost = Math.max(1, Math.floor(Number(hints.movePointCost) || 1));
+            const hasMovePoint = movePoints >= cost;
+            const costLabel = cost === 1 ? '1 MP' : `${cost} MP`;
+            const waterNote = hints.connectionType === 'water' ? ' · Water' : '';
+            const disabled = hasMovePoint ? '' : ' disabled aria-disabled="true"';
+            const title = hasMovePoint
+                ? `Travel to ${city.name} (${costLabel})${waterNote}`
+                : 'Not enough move points remaining';
+
+            return (
+                `<li class="age-movement-route-item">`
+                + `<button type="button" class="age-movement-route-btn" data-age-movement-route="${escapePlayerHtml(city.id)}"${disabled}`
+                + ` title="${escapePlayerHtml(title)}">`
+                + `<span class="age-movement-route-name">${escapePlayerHtml(city.name)}</span>`
+                + `<span class="age-movement-route-cost">${escapePlayerHtml(costLabel)}</span>`
+                + `</button></li>`
+            );
+        }).join('');
+    }
+
+    async function handleMovementRouteAction(cityId) {
+        const movement = global.RoyalArmiesAgeMovement;
+        const targetId = String(cityId || '').trim();
+        if (!movement || !targetId || movementRouteBusy) return;
+
+        movementRouteBusy = true;
+        try {
+            await movement.travel(targetId);
+            syncCatalogCity(movement.getCatalogCityId());
+            global.refreshAgeHudMovePoints?.();
+            global.RoyalArmiesNationTreasury?.requestRefresh?.();
+            global.RoyalArmiesAgeWorldMap?.refreshPlayerCity?.();
+            global.RoyalArmiesAgeWorldMap?.refreshNationCityHighlights?.();
+        } catch (err) {
+            if (typeof global.showRiftError === 'function') {
+                await global.showRiftError(err?.code || err?.message || err, 'Travel');
+            } else if (typeof global.showPortalAlert === 'function') {
+                await global.showPortalAlert(err?.message || 'Travel failed.', 'Travel');
+            }
+        } finally {
+            movementRouteBusy = false;
+        }
+    }
+
+    function bindMovementRoutes() {
+        const root = global.document.getElementById('age-movement-routes-wrap');
+        if (!root || root.dataset.movementRoutesBound === 'true') return;
+
+        root.dataset.movementRoutesBound = 'true';
+        root.addEventListener('click', (event) => {
+            const button = event.target.closest('[data-age-movement-route]');
+            if (!button || !root.contains(button) || button.disabled) return;
+            event.preventDefault();
+            void handleMovementRouteAction(button.getAttribute('data-age-movement-route'));
+        });
     }
 
     function setCurrentCity(cityId, options = {}) {
@@ -1003,8 +1147,18 @@
         }
         bindCityInfoTabs();
         bindPlayersTabControls();
+        bindMovementRoutes();
         syncCityInfoPanelLayoutMode('city');
         renderMovementPanel();
+
+        if (global.RoyalArmiesAgeMovement?.refresh) {
+            void global.RoyalArmiesAgeMovement.refresh().then(() => {
+                const catalogCityId = global.RoyalArmiesAgeMovement.getCatalogCityId();
+                if (catalogCityId) syncCatalogCity(catalogCityId);
+                else renderMovementRoutes();
+            });
+        }
+
         refreshCityPlayersFromServer();
 
         if (typeof global.refreshAgeViewTabs === 'function') {
@@ -1019,6 +1173,7 @@
             currentCityId = resolveDefaultCity()?.id || '';
         }
         renderMovementPanel();
+        renderMovementRoutes();
         refreshCityPlayersFromServer();
 
         if (typeof global.refreshAgeViewTabs === 'function') {
@@ -1026,7 +1181,14 @@
         }
     }
 
-    global.addEventListener('royalarmies:age-movement-updated', () => {
+    global.addEventListener('royalarmies:age-movement-updated', (event) => {
+        if (event?.detail?.eventSource === 'guild-sync') return;
+        const catalogCityId = global.RoyalArmiesAgeMovement?.getCatalogCityId?.();
+        if (catalogCityId && catalogCityId !== currentCityId) {
+            syncCatalogCity(catalogCityId);
+            return;
+        }
+        renderMovementRoutes();
         refreshCityPlayersFromServer();
     });
 
@@ -1042,6 +1204,7 @@
         refreshCityInfoPanelHeader,
         getCommanderNationId: resolveCommanderNationId,
         syncCatalogCity,
+        renderMovementRoutes,
         refreshCityPlayers: refreshCityPlayersFromServer,
         computeLocalArmyFocus,
         getCities: () => AMNEK_CITIES.map((city) => ({ ...city })),
