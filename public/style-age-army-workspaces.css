@@ -365,8 +365,131 @@
 }
 
 .age-settlement-venue-infirmary,
-.age-settlement-venue-placeholder {
-    max-width: 720px;
+.age-settlement-venue-placeholder,
+.age-infirmary-workspace {
+    max-width: 820px;
+}
+
+.age-infirmary-workspace {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.age-infirmary-injured-title {
+    margin: 0;
+    font-family: 'Cinzel', serif;
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: rgba(255, 217, 120, 0.82);
+}
+
+.age-infirmary-injured-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 8px 16px;
+    margin-bottom: 10px;
+}
+
+.age-infirmary-injured-summary {
+    margin: 0;
+    font-size: 0.82rem;
+    color: rgba(200, 150, 120, 0.88);
+    letter-spacing: 0.04em;
+}
+
+.age-infirmary-injured-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.age-infirmary-injured-row {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 12px 14px;
+    border-radius: 10px;
+    border: 1px solid rgba(184, 144, 48, 0.28);
+    background: linear-gradient(165deg, rgba(28, 22, 14, 0.9), rgba(8, 6, 4, 0.94));
+}
+
+.age-infirmary-injured-mark {
+    flex: 0 0 auto;
+    display: grid;
+    place-items: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    border: 1px solid rgba(184, 144, 48, 0.32);
+    background: rgba(0, 0, 0, 0.28);
+    font-size: 1.1rem;
+}
+
+.age-infirmary-injured-main {
+    flex: 1 1 auto;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.age-infirmary-injured-name {
+    font-family: 'Cinzel', serif;
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: #f4e6c8;
+    letter-spacing: 0.04em;
+}
+
+.age-infirmary-injured-meta {
+    font-size: 0.78rem;
+    line-height: 1.35;
+    color: rgba(236, 220, 180, 0.62);
+}
+
+.age-infirmary-injured-count {
+    flex: 0 0 auto;
+    font-family: 'Cinzel', serif;
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: rgba(220, 140, 120, 0.95);
+    white-space: nowrap;
+}
+
+.age-infirmary-injured-empty {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 88px;
+    padding: 16px;
+    border-radius: 10px;
+    border: 1px dashed rgba(184, 144, 48, 0.28);
+    background: rgba(8, 10, 14, 0.55);
+}
+
+.age-infirmary-injured-empty-copy {
+    margin: 0;
+    max-width: 48ch;
+    text-align: center;
+    font-size: 0.86rem;
+    line-height: 1.45;
+    color: rgba(236, 220, 180, 0.62);
+}
+
+.age-infirmary-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
 }
 
 .age-settlement-venue-infirmary-actions {

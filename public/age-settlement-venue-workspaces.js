@@ -33,8 +33,18 @@
         { id: 'wards', mark: '✦', title: 'Arcane Wards', desc: 'Adds spell shielding to settlement defenses.', cost: '320 RSD' }
     ]);
 
+    const INFIRMARY_DEMO_INJURED_UNITS = Object.freeze([
+        { id: 'shieldman', mark: '🛡', name: 'Recruit Shieldman (A)', injured: 3, severity: 'Light wounds', recovery: '1 cycle' },
+        { id: 'longbow', mark: '🏹', name: 'Longbowman (B)', injured: 2, severity: 'Field trauma', recovery: '2 cycles' },
+        { id: 'lancer', mark: '⚔', name: 'Royal Lancer (A/B)', injured: 1, severity: 'Mount fatigue', recovery: '1 cycle' },
+        { id: 'warder', mark: '✦', name: 'Warder (A)', injured: 2, severity: 'Arcane strain', recovery: '3 cycles' },
+        { id: 'wolf', mark: '🐺', name: 'War-Howler (A-2)', injured: 1, severity: 'Deep lacerations', recovery: '2 cycles' }
+    ]);
+
     let bound = false;
     let activeVenueId = '';
+    /** @type {Array<{ id: string, mark: string, name: string, injured: number, severity: string, recovery: string }>} */
+    let infirmaryInjuredStacks = [];
     /** @type {{ id: string } | null} */
     let defenseUpgradeQueue = null;
 
@@ -372,17 +382,97 @@
         );
     }
 
+    function resetInfirmaryInjuredStacks() {
+        infirmaryInjuredStacks = INFIRMARY_DEMO_INJURED_UNITS.map((entry) => ({ ...entry }));
+    }
+
+    function countInfirmaryInjuredUnits() {
+        return infirmaryInjuredStacks.reduce((sum, stack) => sum + Math.max(0, stack.injured), 0);
+    }
+
+    function renderInfirmaryInjuredList() {
+        const totalInjured = countInfirmaryInjuredUnits();
+        if (!totalInjured) {
+            return (
+                '<section class="age-infirmary-injured" aria-label="Injured roster">'
+                + '<h3 class="age-infirmary-injured-title">Injured Roster</h3>'
+                + '<div class="age-infirmary-injured-empty">'
+                + '<p class="age-infirmary-injured-empty-copy">No injured units are resting here. Your roster is ready for the field.</p>'
+                + '</div>'
+                + '</section>'
+            );
+        }
+
+        const summaryLabel = `${totalInjured} injured ${totalInjured === 1 ? 'unit' : 'units'} awaiting treatment`;
+        return (
+            '<section class="age-infirmary-injured" aria-label="Injured roster">'
+            + '<div class="age-infirmary-injured-head">'
+            + '<h3 class="age-infirmary-injured-title">Injured Roster</h3>'
+            + `<p class="age-infirmary-injured-summary">${escapeHtml(summaryLabel)}</p>`
+            + '</div>'
+            + '<ul class="age-infirmary-injured-list">'
+            + infirmaryInjuredStacks.map((stack) => (
+                `<li class="age-infirmary-injured-row">`
+                + `<span class="age-infirmary-injured-mark" aria-hidden="true">${escapeHtml(stack.mark)}</span>`
+                + '<div class="age-infirmary-injured-main">'
+                + `<span class="age-infirmary-injured-name">${escapeHtml(stack.name)}</span>`
+                + `<span class="age-infirmary-injured-meta">${escapeHtml(stack.severity)} · ${escapeHtml(stack.recovery)}</span>`
+                + '</div>'
+                + `<span class="age-infirmary-injured-count">${escapeHtml(stack.injured)} injured</span>`
+                + '</li>'
+            )).join('')
+            + '</ul>'
+            + '</section>'
+        );
+    }
+
     function renderInfirmaryBody() {
         return (
-            '<div class="age-settlement-venue-infirmary">'
+            '<div class="age-infirmary-workspace">'
             + '<p class="age-settlement-venue-infirmary-copy">Restore injured units at this settlement infirmary. Maintaining readiness keeps your army field-effective.</p>'
+            + renderInfirmaryInjuredList()
+            + '<section class="age-infirmary-actions" aria-label="Infirmary healing actions">'
             + '<div class="age-settlement-venue-infirmary-actions">'
             + '<button type="button" class="age-settlement-venue-infirmary-btn" data-settlement-infirmary-heal="one">Heal One Unit</button>'
             + '<button type="button" class="age-settlement-venue-infirmary-btn age-settlement-venue-infirmary-btn--primary" data-settlement-infirmary-heal="all">Heal Entire Army</button>'
             + '</div>'
             + '<p id="age-settlement-infirmary-status" class="age-settlement-venue-infirmary-status" aria-live="polite"></p>'
+            + '</section>'
             + '</div>'
         );
+    }
+
+    function refreshInfirmaryWorkspaceBody() {
+        if (activeVenueId !== 'infirmary') return;
+        const bodyEl = global.document.getElementById('age-settlement-venue-body');
+        if (!bodyEl) return;
+        bodyEl.innerHTML = renderInfirmaryBody();
+    }
+
+    function healFakeInfirmaryUnit(mode) {
+        const healMode = String(mode || 'one').trim().toLowerCase();
+        if (!infirmaryInjuredStacks.length) {
+            return { healed: 0, message: 'No injured units are resting in the infirmary.' };
+        }
+
+        if (healMode === 'all') {
+            const healed = countInfirmaryInjuredUnits();
+            infirmaryInjuredStacks = [];
+            refreshInfirmaryWorkspaceBody();
+            return {
+                healed,
+                message: healed === 1 ? '1 unit restored to fighting strength.' : `${healed} units restored to fighting strength.`
+            };
+        }
+
+        const first = infirmaryInjuredStacks[0];
+        if (first.injured > 1) {
+            first.injured -= 1;
+        } else {
+            infirmaryInjuredStacks.shift();
+        }
+        refreshInfirmaryWorkspaceBody();
+        return { healed: 1, message: '1 unit restored to fighting strength.' };
     }
 
     function renderPlaceholderBody(note) {
@@ -395,19 +485,16 @@
 
     async function healAtInfirmary(mode) {
         const statusEl = global.document.getElementById('age-settlement-infirmary-status');
-        const api = global.RoyalArmiesAgeGuildTraining;
-        if (!api?.healUnits) {
-            if (statusEl) statusEl.textContent = 'Healing is unavailable in this session.';
-            return;
-        }
+        const demoResult = healFakeInfirmaryUnit(mode);
+        if (statusEl) statusEl.textContent = demoResult.message;
 
-        if (statusEl) statusEl.textContent = 'Healing…';
+        const api = global.RoyalArmiesAgeGuildTraining;
+        if (!api?.healUnits) return;
+
         try {
             await api.healUnits({ mode });
-            if (statusEl) statusEl.textContent = 'Healing complete.';
             global.dispatchEvent(new CustomEvent('royalarmies:age-movement-updated'));
         } catch (error) {
-            if (statusEl) statusEl.textContent = error?.message || 'Healing failed.';
             if (typeof global.showRiftError === 'function' && error?.code) {
                 global.showRiftError(error.code, error.message);
             }
@@ -464,6 +551,7 @@
         const venue = detail?.venue || {};
         const tier = String(detail?.settlementTier || 'village').trim().toLowerCase();
         global.RoyalArmiesAgeGuildTraining?.setSettlementTier?.(tier);
+        resetInfirmaryInjuredStacks();
 
         openArmyWorkspace({
             venueId: 'infirmary',
