@@ -3,7 +3,6 @@
 .age-council-room-workspace {
     --hq-content-inset-x: 25px;
     --hq-content-inset-top: 15px;
-    padding-top: var(--hq-content-inset-top);
     position: relative;
     flex: 1 1 auto;
     display: flex;
@@ -11,6 +10,12 @@
     min-height: 0;
     overflow: hidden;
     box-sizing: border-box;
+}
+
+/* Flex-filled shell ignores workspace padding-top — shift header + panels together. */
+.age-council-room-workspace > .age-council-room-header,
+.age-council-room-workspace > .age-council-room-shell {
+    transform: translateY(var(--hq-content-inset-top));
 }
 
 .age-council-room-header {
