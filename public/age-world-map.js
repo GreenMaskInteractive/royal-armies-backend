@@ -773,6 +773,99 @@
         return focusOnMapCoordinates(city.centroid.x, city.centroid.y, options);
     }
 
+    const SEARCH_FOCUS_ZOOM_BY_TIER = {
+        citadel: 2.55,
+        kingdom: 2.35,
+        city: 2.2,
+        town: 2.05,
+        village: 1.95
+    };
+
+    let searchHighlightClearTimer = 0;
+
+    function clearCitySearchHighlight(cityId) {
+        if (!els.highlightLayer) return;
+        const selector = cityId
+            ? (
+                `.age-world-city-highlight-path[data-city-id="${cityId}"], `
+                + `.age-world-city-highlight-boost[data-city-id="${cityId}"]`
+            )
+            : '.age-world-city-highlight-path.is-search-center-flash, .age-world-city-highlight-boost.is-search-center-flash';
+        els.highlightLayer.querySelectorAll(selector).forEach((node) => {
+            node.classList.remove('is-search-center-flash', 'is-active');
+        });
+    }
+
+    function flashCitySearchHighlight(cityId, durationMs = 3200) {
+        if (!cityId || !els.highlightLayer) return;
+        if (searchHighlightClearTimer) {
+            global.clearTimeout(searchHighlightClearTimer);
+            searchHighlightClearTimer = 0;
+        }
+        clearCitySearchHighlight('');
+        els.highlightLayer.querySelectorAll(
+            `.age-world-city-highlight-path[data-city-id="${cityId}"], `
+            + `.age-world-city-highlight-boost[data-city-id="${cityId}"]`
+        ).forEach((node) => {
+            node.classList.remove('is-search-center-flash');
+            void node.offsetWidth;
+            node.classList.add('is-search-center-flash', 'is-active');
+        });
+        searchHighlightClearTimer = global.setTimeout(() => {
+            clearCitySearchHighlight(cityId);
+            searchHighlightClearTimer = 0;
+        }, durationMs);
+    }
+
+    function resolveSearchZoomScale(city, options = {}) {
+        if (Number.isFinite(Number(options.zoomScale)) && Number(options.zoomScale) > 0) {
+            return Number(options.zoomScale);
+        }
+        const tier = String(city?.settlementTier || 'city').trim().toLowerCase();
+        return SEARCH_FOCUS_ZOOM_BY_TIER[tier] ?? 2.2;
+    }
+
+    function focusOnCity(cityId, options = {}) {
+        const city = cityById.get(cityId);
+        if (!city?.centroid) return false;
+        const ok = focusOnMapCoordinates(city.centroid.x, city.centroid.y, {
+            zoomScale: resolveSearchZoomScale(city, options),
+            zoomToMax: Boolean(options.zoomToMax)
+        });
+        if (ok && options.highlight !== false) {
+            flashCitySearchHighlight(cityId, options.highlightMs ?? 3200);
+        }
+        return ok;
+    }
+
+    function resolveCityByQuery(query) {
+        const q = String(query || '').trim().toLowerCase();
+        if (!q || !catalog?.cities?.length) return null;
+
+        const slug = q.replace(/\s+/g, '-');
+        const cities = catalog.cities;
+        const scoreCity = (city) => {
+            const name = String(city.name || '').trim().toLowerCase();
+            const id = String(city.id || '').trim().toLowerCase();
+            const shortId = id.replace(/^[^-]+-/, '');
+            if (name === q || id === q || shortId === q || shortId === slug) return 0;
+            if (name.startsWith(q) || shortId.startsWith(slug)) return 1;
+            if (name.includes(q) || id.includes(q) || shortId.includes(slug)) return 2;
+            return 99;
+        };
+
+        let best = null;
+        let bestScore = 99;
+        cities.forEach((city) => {
+            const score = scoreCity(city);
+            if (score >= bestScore) return;
+            bestScore = score;
+            best = city;
+        });
+
+        return bestScore < 99 ? best : null;
+    }
+
     function ensureLabelLayersMounted() {
         if (!catalog) return;
 
@@ -2312,6 +2405,7 @@
             target.closest('.age-world-city-drawer')
             || target.closest('.age-world-battle-report-modal')
             || target.closest('.age-world-map-label--city')
+            || target.closest('.age-world-map-city-search')
             || target.closest('.age-world-map-terrain-controls')
             || target.closest('.age-world-map-plan-tool-dock')
             || target.closest('#age-world-map-plan-add')
@@ -2714,6 +2808,8 @@
         playerMapCityId = resolvePlayerMapCityId();
         refreshPlayerLocPinAndLabelCollisions();
         refreshNationCityHighlights();
+        global.enableAgeWorldMapCitySearch?.();
+        global.RoyalArmiesAgeWorldMapCitySearch?.refreshCatalog?.();
     }
 
     function onViewModeChange(viewId) {
@@ -2743,6 +2839,9 @@
         mapPointToFramePixels,
         focusOnMapCoordinates,
         focusOnPlannerLocation,
+        focusOnCity,
+        flashCitySearchHighlight,
+        resolveCityByQuery,
         resolveCityIdAtClientPoint,
         setPlanCityPickMode,
         syncPlanEditorHighlights,

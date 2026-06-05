@@ -61,10 +61,16 @@
         );
     }
 
+    function isMapCitySearchTarget(target) {
+        if (!target || typeof target.closest !== 'function') return false;
+        return Boolean(target.closest('.age-world-map-city-search'));
+    }
+
     function isMapPlanToolTarget(target) {
         if (!target || typeof target.closest !== 'function') return false;
         return Boolean(
             target.closest('.age-world-map-terrain-controls')
+            || target.closest('.age-world-map-city-search')
             || target.closest('.age-world-map-plan-tool-dock')
             || target.closest('#age-world-map-plan-add')
             || target.closest('#age-world-map-plan-post')
@@ -121,6 +127,7 @@
             || isInsideNationHub(target)
             || isNationHubDestinationModal(target)
             || isPortalAlertModal(target)
+            || isMapCitySearchTarget(target)
             || isMapPlanToolTarget(target)
             || isInsideMapHudSidePanels(target)
             || isWorldCityDrawerTarget(target)
@@ -454,6 +461,8 @@
             if (typeof global.enableAgeWorldMap === 'function') {
                 await global.enableAgeWorldMap();
             }
+
+            global.enableAgeWorldMapCitySearch?.();
 
             if (typeof global.enableAgeWorldPlanOverlay === 'function') {
                 try {
