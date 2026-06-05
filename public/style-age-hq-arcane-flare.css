@@ -200,8 +200,8 @@ body[data-age-council-room-page="true"] .is-hq-arcane-themed::after {
         linear-gradient(0deg, var(--hq-arcane-rim-alt), transparent 18%) bottom right / 2px 130px no-repeat;
 }
 
-.age-council-room-modal .is-hq-arcane-themed > *:not(.hq-arcane-border-light),
-body[data-age-council-room-page="true"] .is-hq-arcane-themed > *:not(.hq-arcane-chrome):not(.hq-arcane-border-light) {
+.age-council-room-modal .is-hq-arcane-themed > *:not(.hq-arcane-border-light):not(.age-council-room-header),
+body[data-age-council-room-page="true"] .is-hq-arcane-themed > *:not(.hq-arcane-chrome):not(.hq-arcane-border-light):not(.age-council-room-header) {
     position: relative;
     z-index: 1;
 }
@@ -210,7 +210,7 @@ body[data-age-council-room-page="true"] .is-hq-arcane-themed > *:not(.hq-arcane-
 .is-hq-arcane-themed > .hq-arcane-border-light {
     position: absolute;
     inset: 0;
-    z-index: 2;
+    z-index: 0;
     pointer-events: none;
     border-radius: 2px;
     padding: 2px;
@@ -249,19 +249,28 @@ body[data-age-council-room-page="true"] .is-hq-arcane-themed > *:not(.hq-arcane-
     }
 }
 
-/* —— Header stacking + crest sigil (colors from style-age-council-room.css) —— */
-.is-hq-arcane-themed .age-council-room-header {
+/* —— Header stacking: dispatch, manager, close must stay above shell + border light —— */
+.age-council-room-modal .is-hq-arcane-themed > .age-council-room-header,
+body[data-age-council-room-page="true"] .is-hq-arcane-themed > .age-council-room-header,
+.is-hq-arcane-themed > .age-council-room-header {
     position: relative;
-    z-index: 12;
+    z-index: 20;
     pointer-events: auto;
+}
+
+.is-hq-arcane-themed .age-council-room-header__crest,
+.is-hq-arcane-themed .age-council-room-header__copy {
+    pointer-events: none;
 }
 
 .is-hq-arcane-themed .age-council-room-header .age-hq-manager-btn,
 .is-hq-arcane-themed .age-council-room-header .age-age-center-modal-close,
 .is-hq-arcane-themed .age-council-room-header .age-hq-dispatch-panel,
+.is-hq-arcane-themed .age-council-room-header .age-hq-dispatch-panel-shell,
+.is-hq-arcane-themed .age-council-room-header .age-hq-dispatch-panel-actions,
 .is-hq-arcane-themed .age-council-room-header .age-hq-dispatch-btn {
     position: relative;
-    z-index: 13;
+    z-index: 21;
     pointer-events: auto;
 }
 

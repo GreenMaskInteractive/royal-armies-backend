@@ -16,7 +16,7 @@
 /* Panel shell only — header stays pinned; margin shifts nation/manager panels down. */
 .age-council-room-workspace > .age-council-room-header {
     position: relative;
-    z-index: 12;
+    z-index: 20;
     flex-shrink: 0;
     pointer-events: auto;
 }
@@ -129,6 +129,7 @@
 }
 
 .age-council-room-header__crest {
+    pointer-events: none;
     width: 52px;
     height: 52px;
     border: 2px solid rgba(255, 215, 128, 0.48);
@@ -150,6 +151,7 @@
 .age-council-room-header__copy {
     min-width: 0;
     text-align: left;
+    pointer-events: none;
 }
 
 .age-council-room-eyebrow {
@@ -208,7 +210,21 @@
     width: auto;
     max-width: min(520px, 46vw);
     margin: 0;
-    z-index: 1;
+    z-index: 21;
+    pointer-events: auto;
+}
+
+.age-council-room-header .age-hq-manager-btn,
+.age-council-room-header .age-age-center-modal-close {
+    position: relative;
+    z-index: 21;
+    pointer-events: auto;
+}
+
+.age-council-room-header .age-hq-dispatch-panel-shell,
+.age-council-room-header .age-hq-dispatch-panel-actions,
+.age-council-room-header .age-hq-dispatch-btn {
+    pointer-events: auto;
 }
 
 .age-council-room-header .age-hq-dispatch-panel:not([hidden]) {

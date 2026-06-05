@@ -59,6 +59,20 @@
     pointer-events: auto;
 }
 
+/* Council Room / HQ header embed — never use fixed bottom-bar placement */
+.age-council-room-header .age-hq-dispatch-panel,
+.age-headquarters-header .age-hq-dispatch-panel {
+    position: relative;
+    left: auto;
+    right: auto;
+    bottom: auto;
+    width: auto;
+    max-width: min(520px, 46vw);
+    margin: 0;
+    z-index: 21;
+    pointer-events: auto;
+}
+
 #age-page-canvas[data-age-view="headquarters"] .age-hq-dispatch-panel:not([hidden]) {
     display: block;
 }
