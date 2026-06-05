@@ -1,10 +1,10 @@
 /**
- * RIFT — Left HUD reports tabs (Nation Status, Intelligence, Weekly Missions).
+ * RIFT — Left HUD reports tabs (Nation Status, Intelligence, Elections, Weekly Missions).
  */
 (function initAgeLeftReportsPanel(global) {
     'use strict';
 
-    const TAB_ORDER = ['nation', 'intelligence', 'events'];
+    const TAB_ORDER = ['nation', 'intelligence', 'elections', 'events'];
     const WEEKLY_MISSION_DIFFICULTY_TITLES = ['Novice', 'Intermediate', 'Hard', 'Extreme'];
     const MAP_TERRAIN_TYPES = ['Mountains', 'Marshlands', 'Forest', 'Plains', 'Desert'];
     const COMPACT_NATION_STATUS_TERRAIN_NATIONS = Object.freeze(['aesthene']);
@@ -25,6 +25,7 @@
         }
     };
     const INTELLIGENCE_PEACE_COPY = 'Your nation is not currently at war. There is no intelligence detail to provide.';
+    const DEFAULT_NATION_TOTAL_CITIES = 15;
     const NATION_CATALOG = [
         { id: 'dravic', name: 'Dravic', crestUrl: 'images/draviccrest.png' },
         { id: 'aesthene', name: 'Aesthene', crestUrl: 'images/aesthenecrest.png' },
@@ -47,6 +48,15 @@
     let activeEnemyNationId = '';
     let weeklyMissionsMockData = null;
     let nationLeadershipRefreshPromise = null;
+    let nationDiplomacyRefreshPromise = null;
+
+    function escapeHtml(value) {
+        return String(value ?? '')
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;');
+    }
 
     function resolveApiUrl(path) {
         if (typeof global.resolveRoyalArmiesApiUrl === 'function') {
@@ -234,6 +244,57 @@
         return String(value || '').trim().toLowerCase().replace(/[^a-z0-9-]/g, '');
     }
 
+    function resolveNationTotalCityCount(nationId) {
+        const nation = normalizeNationId(nationId);
+        if (!nation) return DEFAULT_NATION_TOTAL_CITIES;
+
+        const catalog = global.RoyalArmiesAgeWorldMap?.getCatalog?.();
+        if (!catalog?.cities?.length) return DEFAULT_NATION_TOTAL_CITIES;
+
+        let total = 0;
+        catalog.cities.forEach((city) => {
+            const homeland = normalizeNationId(city?.nationId || city?.holderNationId);
+            if (homeland === nation) total += 1;
+        });
+
+        return total > 0 ? total : DEFAULT_NATION_TOTAL_CITIES;
+    }
+
+    function countNationCitiesOwned(nationId) {
+        const nation = normalizeNationId(nationId);
+        if (!nation) return DEFAULT_NATION_TOTAL_CITIES;
+
+        const catalog = global.RoyalArmiesAgeWorldMap?.getCatalog?.();
+        if (!catalog?.cities?.length) return DEFAULT_NATION_TOTAL_CITIES;
+
+        const resolveHolder = global.RoyalArmiesAgeMovement?.resolveCityHolder;
+        let owned = 0;
+
+        catalog.cities.forEach((city) => {
+            const holder = typeof resolveHolder === 'function'
+                ? resolveHolder(city)
+                : normalizeNationId(city?.holderNationId || city?.nationId);
+            if (holder === nation) owned += 1;
+        });
+
+        return owned;
+    }
+
+    function applyNationStatusCityCountHud() {
+        const el = global.document.getElementById('age-hud-territories');
+        if (!el) return;
+
+        const nationId = resolvePlayerNationId();
+        const owned = countNationCitiesOwned(nationId);
+        const total = resolveNationTotalCityCount(nationId);
+
+        el.textContent = String(owned);
+        el.setAttribute(
+            'title',
+            `City Count shows how many cities your nation currently holds (${owned} of ${total}).`
+        );
+    }
+
     function resolveActiveCommanderUsername() {
         const saved = global.localStorage.getItem('activeCommanderUser');
         if (saved && saved.trim()) return saved.trim();
@@ -293,11 +354,101 @@
         return generateNationTerrainBonuses(resolvePlayerNationMeta().id);
     }
 
+    function isNationTerrainBonusDataLive() {
+        if (typeof global.isNationTerrainBonusDataLive === 'function') {
+            return global.isNationTerrainBonusDataLive();
+        }
+        if (global.RoyalArmiesOfficialAge?.isNationTerrainBonusDataLive) {
+            return global.RoyalArmiesOfficialAge.isNationTerrainBonusDataLive();
+        }
+        return false;
+    }
+
     function terrainBonusStateClass(value) {
         const amount = Number(value) || 0;
         if (amount > 0) return 'is-positive';
         if (amount < 0) return 'is-negative';
         return 'is-neutral';
+    }
+
+    function renderNationStatusTerrainEmptyState(list) {
+        list.classList.remove('age-nation-status-terrain-list--compact');
+        list.classList.add('is-unavailable');
+        list.innerHTML = `
+            <li class="age-nation-status-terrain-empty-item" role="status">
+                No data to display
+            </li>
+        `;
+    }
+
+    function renderDiplomacyAccordsLists(diplomacyPublic) {
+        const listEls = [
+            global.document.getElementById('age-nation-status-relations-list'),
+            global.document.getElementById('age-hq-relations-list')
+        ].filter(Boolean);
+
+        if (!listEls.length) return;
+
+        const rows = [];
+        (Array.isArray(diplomacyPublic?.allies) ? diplomacyPublic.allies : []).forEach((row) => {
+            rows.push({ type: 'Ally', name: row.nationName || row.nationId });
+        });
+        (Array.isArray(diplomacyPublic?.naps) ? diplomacyPublic.naps : []).forEach((row) => {
+            rows.push({ type: 'NAP', name: row.nationName || row.nationId });
+        });
+
+        const html = !rows.length
+            ? '<li class="age-hq-relations-empty">No alliances or non-aggression pacts on record.</li>'
+            : rows.map((row) => (
+                `<li class="age-hq-relations-item">`
+                + `<span class="age-hq-relations-type">${escapeHtml(row.type)}</span>`
+                + `<strong class="age-hq-relations-name">${escapeHtml(row.name)}</strong>`
+                + `</li>`
+            )).join('');
+
+        listEls.forEach((listEl) => {
+            listEl.innerHTML = html;
+        });
+    }
+
+    async function refreshNationDiplomacyAccords() {
+        const listEl = global.document.getElementById('age-nation-status-relations-list')
+            || global.document.getElementById('age-hq-relations-list');
+        if (!listEl) return;
+
+        const username = resolveActiveCommanderUsername();
+        if (!username) {
+            renderDiplomacyAccordsLists({ allies: [], naps: [] });
+            return;
+        }
+
+        if (nationDiplomacyRefreshPromise) {
+            return nationDiplomacyRefreshPromise;
+        }
+
+        nationDiplomacyRefreshPromise = (async () => {
+            let diplomacyPublic = { allies: [], naps: [] };
+
+            try {
+                const response = await global.fetch(
+                    resolveApiUrl(`/api/portal/age/headquarters?username=${encodeURIComponent(username)}`),
+                    { credentials: 'same-origin', cache: 'no-store' }
+                );
+                const payload = await response.json();
+                if (response.ok && payload?.status === 'ok' && payload?.workspace) {
+                    diplomacyPublic = payload.workspace.diplomacyPublic || diplomacyPublic;
+                }
+            } catch (_error) {
+                /* keep empty accords */
+            }
+
+            renderDiplomacyAccordsLists(diplomacyPublic);
+            scheduleAgeMapHudLayoutSync();
+        })().finally(() => {
+            nationDiplomacyRefreshPromise = null;
+        });
+
+        return nationDiplomacyRefreshPromise;
     }
 
     function buildNationStatusTerrainRows(bonuses, nationId) {
@@ -334,14 +485,21 @@
     function refreshNationStatusPanel() {
         const list = global.document.getElementById('age-nation-status-terrain-list');
         if (list) {
-            const nationMeta = resolvePlayerNationMeta();
-            const bonuses = resolvePlayerTerrainBonuses();
-            const compact = COMPACT_NATION_STATUS_TERRAIN_NATIONS.includes(nationMeta.id);
-            list.classList.toggle('age-nation-status-terrain-list--compact', compact);
-            list.innerHTML = buildNationStatusTerrainRows(bonuses, nationMeta.id);
+            if (!isNationTerrainBonusDataLive()) {
+                renderNationStatusTerrainEmptyState(list);
+            } else {
+                const nationMeta = resolvePlayerNationMeta();
+                const bonuses = resolvePlayerTerrainBonuses();
+                const compact = COMPACT_NATION_STATUS_TERRAIN_NATIONS.includes(nationMeta.id);
+                list.classList.remove('is-unavailable');
+                list.classList.toggle('age-nation-status-terrain-list--compact', compact);
+                list.innerHTML = buildNationStatusTerrainRows(bonuses, nationMeta.id);
+            }
         }
 
+        void refreshNationDiplomacyAccords();
         refreshNationLeadershipRoster();
+        applyNationStatusCityCountHud();
     }
 
     function resolveActiveWarMatchups(playerNationId) {
@@ -523,12 +681,27 @@
 
         if (target === 'intelligence') {
             refreshIntelligencePanel();
+        } else if (target === 'elections') {
+            void refreshElectionsPanel();
         } else if (target === 'events') {
             refreshWeeklyMissionsPanel();
         } else if (target === 'nation') {
             refreshNationStatusPanel();
         }
 
+        scheduleAgeMapHudLayoutSync();
+    }
+
+    async function refreshElectionsPanel() {
+        const host = global.document.getElementById('age-hq-elections-host');
+        if (!host) return;
+
+        if (typeof global.enableAgeHeadquarters === 'function') {
+            global.enableAgeHeadquarters();
+        }
+        if (typeof global.RoyalArmiesAgeHeadquarters?.fetchHeadquartersWorkspace === 'function') {
+            await global.RoyalArmiesAgeHeadquarters.fetchHeadquartersWorkspace();
+        }
         scheduleAgeMapHudLayoutSync();
     }
 
@@ -571,6 +744,12 @@
     function enableLeftReportsPanel() {
         bindLeftReportsTabs();
         bindIntelligenceEnemyTabs();
+        if (!global.document.body?.dataset?.ageLeftReportsMovementBound) {
+            global.document.body.dataset.ageLeftReportsMovementBound = 'true';
+            global.addEventListener('royalarmies:age-movement-updated', () => {
+                applyNationStatusCityCountHud();
+            });
+        }
         refreshNationStatusPanel();
         refreshIntelligencePanel();
         refreshWeeklyMissionsPanel();
@@ -582,8 +761,12 @@
         enable: enableLeftReportsPanel,
         activateTab: activateLeftReportsTab,
         refreshNationStatus: refreshNationStatusPanel,
+        refreshNationCityCount: applyNationStatusCityCountHud,
         refreshNationLeadership: refreshNationLeadershipRoster,
-        refreshIntelligence: refreshIntelligencePanel
+        refreshNationDiplomacyAccords,
+        renderDiplomacyAccordsLists,
+        refreshIntelligence: refreshIntelligencePanel,
+        refreshElections: refreshElectionsPanel
     };
 
     global.enableAgeLeftReportsPanel = enableLeftReportsPanel;
