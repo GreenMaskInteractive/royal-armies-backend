@@ -18820,6 +18820,10 @@ body#how-did-you-get-here-canvas .achievement-unlock-title {
     user-select: none;
 }
 
+.age-world-map-frame.is-over-city:not(.is-dragging):not(.is-plan-city-pick):not(.is-plan-editor-open) {
+    cursor: pointer;
+}
+
 .age-world-map-frame.is-dragging {
     cursor: none !important;
 }

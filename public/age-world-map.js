@@ -118,6 +118,7 @@
     let planCityPickMode = false;
     let planPressCityId = '';
     let planClickHandledSeq = 0;
+    let mapCityPointerUpHandled = false;
     let layoutBaseW = 0;
     let layoutBaseH = 0;
     let terrainOverlayOn = false;
@@ -1071,6 +1072,34 @@
         return resolveCityIdAtClientPoint(event.clientX, event.clientY);
     }
 
+    function tryHandleMapCityPointerUp(event, options = {}) {
+        if (!event || event.button !== 0) return false;
+        if (isPlanCityPickActive()) return false;
+        if (options.didPan) return false;
+
+        const cityId = resolveCityIdAtPointer(event);
+        if (!cityId) return false;
+
+        const city = cityById.get(cityId);
+        if (!city) return false;
+
+        mapCityPointerUpHandled = true;
+
+        const hints = global.RoyalArmiesAgeMovement?.getBorderActionHints?.(city, playerMapCityId) || {};
+        if (hints.canTravel) {
+            const movePoints = global.RoyalArmiesAgeMovement?.getMovePoints?.() ?? 0;
+            const movePointCost = Math.max(1, Math.floor(Number(hints.movePointCost) || 1));
+            if (movePoints >= movePointCost) {
+                selectedCityId = cityId;
+                void handleDrawerMovementAction('travel');
+                return true;
+            }
+        }
+
+        openCityDrawer(cityId, event.clientX, event.clientY);
+        return true;
+    }
+
     function cancelActiveMapPan(event) {
         if (!dragging && global.document.pointerLockElement !== els.frame) return;
         endMapPan(event);
@@ -1322,9 +1351,14 @@
 
         els.hitLayer.addEventListener('pointerup', (event) => {
             if (event.button !== 0) return;
+
+            mapCityPointerUpHandled = false;
+
+            let didPan = false;
             if (dragging) {
-                endMapPan(event);
+                didPan = endMapPan(event);
             }
+
             if (processPlanDraftArrowPick(event)) {
                 return;
             }
@@ -1336,10 +1370,10 @@
                 return;
             }
 
-            const cityId = resolveCityHitTarget(event.target);
-            if (!cityId) return;
-            if (panMoved) return;
-            openCityDrawer(cityId, event.clientX, event.clientY);
+            if (tryHandleMapCityPointerUp(event, { didPan })) {
+                event.preventDefault();
+                event.stopPropagation();
+            }
         }, true);
     }
 
@@ -2150,6 +2184,10 @@
             target.closest('.age-world-city-drawer')
             || target.closest('.age-world-battle-report-modal')
             || target.closest('.age-world-city-hit-path')
+            || target.closest('.age-world-city-hit-boost')
+            || target.closest('.age-world-city-hit-pin-zone')
+            || target.closest('.age-world-city-border-path')
+            || target.closest('.age-world-city-ownership-path')
             || target.closest('.age-world-map-terrain-controls')
             || target.closest('.age-world-map-plan-tool-dock')
             || target.closest('#age-world-map-plan-add')
@@ -2239,7 +2277,8 @@
     }
 
     function endMapPan(event) {
-        if (!dragging) return;
+        if (!dragging) return false;
+        const didMove = panMoved;
         dragging = false;
         dragStart = null;
         panMoved = false;
@@ -2252,6 +2291,7 @@
         } else {
             setMapPanLockChrome(false);
         }
+        return didMove;
     }
 
     function bindMapEvents() {
@@ -2278,6 +2318,7 @@
         els.frame.addEventListener('pointerdown', (event) => {
             if (event.button !== 0) return;
             if (isMapChromeTarget(event.target)) return;
+            if (resolveCityIdAtPointer(event)) return;
             if (isPlanCityPickActive()) {
                 if (resolveCityIdAtPointer(event) || planPressCityId) {
                     return;
@@ -2292,17 +2333,34 @@
 
         bindPlanMapClickFallback();
 
+        let cityHoverRaf = 0;
         els.frame.addEventListener('pointermove', (event) => {
-            if (!dragging || !dragStart) return;
-            if (global.document.pointerLockElement === els.frame) {
-                applyPanDelta(event.movementX, event.movementY);
+            if (dragging && dragStart) {
+                if (global.document.pointerLockElement === els.frame) {
+                    applyPanDelta(event.movementX, event.movementY);
+                } else {
+                    applyPanDelta(event.clientX - dragStart.x, event.clientY - dragStart.y);
+                }
                 return;
             }
-            applyPanDelta(event.clientX - dragStart.x, event.clientY - dragStart.y);
+
+            if (cityHoverRaf) return;
+            cityHoverRaf = global.requestAnimationFrame(() => {
+                cityHoverRaf = 0;
+                if (!els.frame || dragging) return;
+                const cityId = resolveCityIdAtClientPoint(event.clientX, event.clientY);
+                const showPointer = Boolean(cityId && !isPlanCityPickActive());
+                els.frame.classList.toggle('is-over-city', showPointer);
+            });
         });
 
         const endDrag = (event) => {
-            endMapPan(event);
+            const didPan = endMapPan(event);
+            els.frame?.classList.remove('is-over-city');
+            if (!didPan && !mapCityPointerUpHandled) {
+                tryHandleMapCityPointerUp(event, { didPan: false });
+            }
+            mapCityPointerUpHandled = false;
         };
         els.frame.addEventListener('pointerup', endDrag);
         els.frame.addEventListener('pointercancel', endDrag);
