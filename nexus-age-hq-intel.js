@@ -7,6 +7,7 @@ const {
     loadCityCatalog,
     getCatalogCity,
     resolveCatalogNationKey,
+    resolveCommanderGameNationKey,
     resolveCityHolder,
     computeNationBorderDistanceFromLastCapture
 } = require('./nexus-age-movement');
@@ -46,7 +47,7 @@ function computeNationPowerScore(nationId, commanders, nationRecordsMap) {
 
     let power = 0;
     (Array.isArray(commanders) ? commanders : []).forEach((commander) => {
-        const commanderNation = normalizeNationKey(commander?.gameNation || commander?.country);
+        const commanderNation = normalizeNationKey(resolveCommanderGameNationKey(commander));
         if (commanderNation !== nation) return;
         power += computeArmyPowerScore(commander);
     });
@@ -267,7 +268,7 @@ function buildSpyReportFromCommander(commander, meta) {
         createdAt: new Date().toISOString(),
         createdBy: normalizeUsername(meta?.createdBy),
         subjectUsername: username,
-        subjectNationId: normalizeNationKey(commander?.gameNation || commander?.country),
+        subjectNationId: normalizeNationKey(resolveCommanderGameNationKey(commander)),
         subjectNationName: String(meta?.subjectNationName || '').trim().slice(0, 80),
         cityId: String(meta?.cityId || '').trim().slice(0, 64),
         cityName: String(meta?.cityName || '').trim().slice(0, 80),
@@ -374,10 +375,10 @@ function normalizeHqBountyProgram(raw) {
 function listActiveNations(commanders, cityHolders) {
     const nations = new Map();
     (Array.isArray(commanders) ? commanders : []).forEach((commander) => {
-        const nation = normalizeNationKey(commander?.gameNation || commander?.country);
+        const nation = normalizeNationKey(resolveCommanderGameNationKey(commander));
         if (!nation) return;
         if (!nations.has(nation)) {
-            nations.set(nation, String(commander?.gameNation || commander?.country || nation));
+            nations.set(nation, String(resolveCommanderGameNationKey(commander) || nation));
         }
     });
 
@@ -396,7 +397,7 @@ function listActiveNations(commanders, cityHolders) {
 function pickRandomCommanderForNation(commanders, nationId) {
     const nation = normalizeNationKey(nationId);
     const pool = (Array.isArray(commanders) ? commanders : []).filter((commander) => (
-        normalizeNationKey(commander?.gameNation || commander?.country) === nation
+        normalizeNationKey(resolveCommanderGameNationKey(commander)) === nation
         && normalizeUsername(commander?.username)
     ));
     if (!pool.length) return null;
@@ -529,7 +530,7 @@ function claimHqBountyPvpVictory(program, hunterCommander, targetUsername) {
 
     row.resolved = true;
     row.resolution = 'collected';
-    const hunterNation = normalizeNationKey(hunterCommander?.gameNation || hunterCommander?.country);
+    const hunterNation = normalizeNationKey(resolveCommanderGameNationKey(hunterCommander));
     next = pushFeedEntry(next, {
         id: createIntelId('bounty-collected'),
         type: 'collected',

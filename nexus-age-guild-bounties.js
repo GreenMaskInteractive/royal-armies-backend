@@ -3,6 +3,8 @@
  */
 'use strict';
 
+const { resolveCommanderGameNationKey } = require('./nexus-age-movement');
+
 const BOUNTY_POOL_SIZE = 7;
 const BOUNTY_DURATION_MS = 24 * 60 * 60 * 1000;
 
@@ -110,7 +112,7 @@ function buildAcceptedDiplomacyPairSet(nationStatesMap = {}) {
 
 function commanderIsBountyEligible(target, hunterNation, context = {}) {
     const username = normalizeUsername(target?.username);
-    const targetNation = normalizeNationKey(target?.gameNation || target?.country);
+    const targetNation = normalizeNationKey(resolveCommanderGameNationKey(target));
     if (!username || !targetNation) return false;
     if (targetNation === normalizeNationKey(hunterNation)) return false;
 
@@ -156,7 +158,7 @@ function refreshBountyPool(state, commanders, context = {}) {
         active.push({
             id: createBountyId(nowMs + active.length),
             targetUsername: normalizeUsername(target.username),
-            targetNation: normalizeNationKey(target.gameNation || target.country),
+            targetNation: normalizeNationKey(resolveCommanderGameNationKey(target)),
             placedAt,
             expiresAt,
             acceptedBy: null,
@@ -215,7 +217,7 @@ function acceptBounty(state, commander, bountyId, context = {}) {
         return { ok: false, errorCode: 'NEXUS-AGE-023' };
     }
 
-    const hunterNation = normalizeNationKey(commander?.gameNation || commander?.country);
+    const hunterNation = normalizeNationKey(resolveCommanderGameNationKey(commander));
     if (diplomacyBlocksBountyTargeting(hunterNation, bounty.targetNation, context)) {
         return { ok: false, errorCode: 'NEXUS-AGE-023', message: 'Diplomatic status blocks this bounty target.' };
     }

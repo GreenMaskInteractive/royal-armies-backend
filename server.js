@@ -1033,11 +1033,7 @@ function resolveCouncilBoardNationKey(commander) {
     const gameNation = String(commander?.gameNation || '').trim();
     if (gameNation) return gameNation;
 
-    const country = String(commander?.country || '').trim();
-    if (country && country !== '—' && country.toLowerCase() !== 'n/a') {
-        return country;
-    }
-
+    // commander.country is real-world locale (e.g. North America) — not an in-game nation.
     const username = String(commander?.username || '').trim().toLowerCase();
     if (username) return `staging:${username}`;
 
@@ -1340,7 +1336,7 @@ function buildAgeMovementStatePayload(username, commander) {
     const guildProgress = buildGuildProgressPayload(commander);
 
     return {
-        gameNation: councilNation,
+        gameNation: mapNation,
         mapNation,
         catalogCityId: mapNation ? (movement.catalogCityId || resolveDefaultCapitalCityId(mapNation)) : '',
         movePoints: movement.movePoints,
@@ -7229,7 +7225,7 @@ function buildGuildHubResponse(commander, settlementTier) {
     let bounties = [];
 
     if (isBountyVenueTier(tier)) {
-        const bountyState = ensureGuildBountyPool(commander?.gameNation || commander?.country);
+        const bountyState = ensureGuildBountyPool(resolveCommanderMapNationKey(commander));
         bounties = listPublicBounties(bountyState, commander);
     }
 
@@ -7580,12 +7576,13 @@ app.post('/api/portal/age/guild/bounties/accept', (req, res) => {
         return sendApiError(res, 'NEXUS-AGE-020');
     }
 
-    let state = ensureGuildBountyPool(commander?.gameNation || commander?.country);
+    const hunterMapNation = resolveCommanderMapNationKey(commander);
+    let state = ensureGuildBountyPool(hunterMapNation);
     const result = acceptBounty(
         state,
         commander,
         req.body?.bountyId,
-        buildGuildBountyContext(commander?.gameNation || commander?.country)
+        buildGuildBountyContext(hunterMapNation)
     );
     if (!result.ok) {
         return sendApiError(res, result.errorCode || 'NEXUS-AGE-023');

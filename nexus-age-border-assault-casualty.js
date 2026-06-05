@@ -18,6 +18,7 @@ const {
     resolveCommanderInjuryMitigation,
     distributeInjuriesWeighted
 } = require('./nexus-age-guild');
+const { resolveCommanderGameNationKey } = require('./nexus-age-movement');
 const { buildCommanderRankMeta } = require('./nexus-commander-rank-titles');
 
 function combineMemberArmies(commanders) {
@@ -326,7 +327,7 @@ function filterEnemyCommandersInCity(commanders, cityId, attackerNation, isAllie
             ).trim();
         if (commanderCityId !== resolvedCityId) return false;
 
-        const nation = String(commander?.gameNation || commander?.country || '').trim().toLowerCase();
+        const nation = String(resolveCommanderGameNationKey(commander) || '').trim().toLowerCase();
         if (!nation || nation === attacker) return false;
         if (typeof isAlliedFn === 'function' && isAlliedFn(attacker, nation)) return false;
         return true;

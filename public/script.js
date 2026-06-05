@@ -3195,7 +3195,7 @@ function autoDetectPlayerLocale() {
             // Sync the structured Timezone string: "State/City (GMT+/-X)"
             player.timezone = `${stateOrRegionTitle} (${gmtString})`;
             
-            // CLEAN CONTINENTAL SEGMENT FILTERING
+            // Real-world locale for dossier/chat grouping only — not an in-game Amnek nation.
             if (regionNode === "America") {
                 const southAmericanCities = ["Sao_Paulo", "Buenos_Aires", "Santiago", "Bogota", "Lima", "Caracas", "Asuncion", "Montevideo", "La_Paz"];
                 if (southAmericanCities.includes(zoneParts[1])) {

@@ -156,6 +156,13 @@ function resolveCatalogNationKey(rawNationKey) {
     return match ? match.id : '';
 }
 
+/** In-game Amnek nation id from commander ledger — never uses commander.country (real-world locale). */
+function resolveCommanderGameNationKey(commander) {
+    const fromLedger = resolveCatalogNationKey(commander?.gameNation);
+    if (fromLedger) return fromLedger;
+    return AGE_ALPHA_DEFAULT_MAP_NATION;
+}
+
 function resolveDefaultCapitalCityId(nationKey) {
     const needle = resolveCatalogNationKey(nationKey);
     if (!needle) return '';
@@ -642,6 +649,7 @@ module.exports = {
     loadCityCatalog,
     getCatalogCity,
     resolveCatalogNationKey,
+    resolveCommanderGameNationKey,
     resolveCatalogCityId,
     resolveMovementTargetCityId,
     resolveDefaultCapitalCityId,
