@@ -107,7 +107,9 @@
 
     function hideSettlementVenueRsdWallet() {
         const wallet = global.document.getElementById('age-settlement-venue-rsd-wallet');
-        if (wallet) wallet.hidden = true;
+        if (!wallet) return;
+        wallet.hidden = true;
+        wallet.classList.remove('is-visible');
     }
 
     async function syncSettlementVenueRsdWallet() {
@@ -116,6 +118,7 @@
         if (!wallet || !amountEl) return;
 
         wallet.hidden = false;
+        wallet.classList.add('is-visible');
 
         const cached = global.RoyalArmiesNationTreasury?.getLastPayload?.();
         if (cached != null) {
@@ -164,10 +167,9 @@
         bodyEl.innerHTML = options.bodyHtml || '';
 
         activeVenueId = String(options.venueId || '').trim();
+        hideSettlementVenueRsdWallet();
         if (DEFENSE_VENUE_IDS.has(activeVenueId)) {
-            syncSettlementVenueRsdWallet();
-        } else {
-            hideSettlementVenueRsdWallet();
+            void syncSettlementVenueRsdWallet();
         }
 
         workspace.hidden = false;

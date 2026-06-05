@@ -88,8 +88,9 @@
     flex-shrink: 0;
 }
 
+/* Nation treasury chip — defense settlement modal only (see .is-visible) */
 .age-army-workspace-rsd-wallet {
-    display: flex;
+    display: none;
     flex-direction: column;
     align-items: flex-end;
     gap: 2px;
@@ -97,6 +98,19 @@
     border: 1px solid rgba(184, 144, 48, 0.38);
     border-radius: 6px;
     background: rgba(0, 0, 0, 0.32);
+}
+
+.age-army-workspace-rsd-wallet.is-visible {
+    display: flex;
+}
+
+.age-army-workspace-rsd-wallet[hidden] {
+    display: none !important;
+}
+
+/* Map HUD treasury is not shown — balance appears in defense workspace only */
+#age-hud-nation-treasury-item {
+    display: none !important;
 }
 
 .age-army-workspace-rsd-label {
