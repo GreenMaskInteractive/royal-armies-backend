@@ -50,21 +50,21 @@
     });
 
     const INFIRMARY_DEMO_INJURED_UNITS = Object.freeze([
-        { stackId: 'shieldman-vet', mark: '🛡', name: 'Recruit Shieldman (A)', categoryId: 'infantry', tier: 1, promotion: 'vet', count: 2, severity: 'Light wounds', recovery: '1 cycle' },
-        { stackId: 'shieldman-std', mark: '🛡', name: 'Recruit Shieldman (A)', categoryId: 'infantry', tier: 1, promotion: 'std', count: 1, severity: 'Bruised armor', recovery: '1 cycle' },
-        { stackId: 'shield-sergeant-elt', mark: '🛡', name: 'Shield Sergeant (A)', categoryId: 'infantry', tier: 2, promotion: 'elite', count: 1, severity: 'Deep contusions', recovery: '2 cycles' },
-        { stackId: 'warder-mst', mark: '✦', name: 'Warder (A)', categoryId: 'magic-infantry', tier: 2, promotion: 'mst', count: 1, severity: 'Arcane strain', recovery: '3 cycles' },
-        { stackId: 'lancer-vet', mark: '⚔', name: 'Royal Lancer (A/B)', categoryId: 'cavalry', tier: 3, promotion: 'vet', count: 1, severity: 'Mount fatigue', recovery: '1 cycle' },
-        { stackId: 'dread-knight-std', mark: '⚔', name: 'Dread Knight (A/B)', categoryId: 'cavalry', tier: 2, promotion: 'std', count: 1, severity: 'Lance arm strain', recovery: '2 cycles' },
-        { stackId: 'longbow-std', mark: '🏹', name: 'Longbowman (B)', categoryId: 'artillery', tier: 2, promotion: 'std', count: 2, severity: 'Field trauma', recovery: '2 cycles' },
-        { stackId: 'levy-archer-app', mark: '🏹', name: 'Levy Archer (B)', categoryId: 'artillery', tier: 1, promotion: 'app', count: 1, severity: 'Splinter wound', recovery: '1 cycle' },
-        { stackId: 'wolf-mst', mark: '🐺', name: 'War-Howler (A-2)', categoryId: 'beasts', tier: 3, promotion: 'mst', count: 1, severity: 'Deep lacerations', recovery: '2 cycles' },
-        { stackId: 'trained-wolf-vet', mark: '🐺', name: 'Trained Wolf (A-1)', categoryId: 'beasts', tier: 2, promotion: 'vet', count: 1, severity: 'Crushed paw', recovery: '2 cycles' }
+        { stackId: 'shieldman-vet', mark: '🛡', name: 'Recruit Shieldman (A)', categoryId: 'infantry', tier: 1, promotion: 'vet', count: 2, recovery: '1 cycle' },
+        { stackId: 'shieldman-std', mark: '🛡', name: 'Recruit Shieldman (A)', categoryId: 'infantry', tier: 1, promotion: 'std', count: 1, recovery: '1 cycle' },
+        { stackId: 'shield-sergeant-elt', mark: '🛡', name: 'Shield Sergeant (A)', categoryId: 'infantry', tier: 2, promotion: 'elite', count: 1, recovery: '2 cycles' },
+        { stackId: 'warder-mst', mark: '✦', name: 'Warder (A)', categoryId: 'magic-infantry', tier: 2, promotion: 'mst', count: 1, recovery: '3 cycles' },
+        { stackId: 'lancer-vet', mark: '⚔', name: 'Royal Lancer (A/B)', categoryId: 'cavalry', tier: 3, promotion: 'vet', count: 1, recovery: '1 cycle' },
+        { stackId: 'dread-knight-std', mark: '⚔', name: 'Dread Knight (A/B)', categoryId: 'cavalry', tier: 2, promotion: 'std', count: 1, recovery: '2 cycles' },
+        { stackId: 'longbow-std', mark: '🏹', name: 'Longbowman (B)', categoryId: 'artillery', tier: 2, promotion: 'std', count: 2, recovery: '2 cycles' },
+        { stackId: 'levy-archer-app', mark: '🏹', name: 'Levy Archer (B)', categoryId: 'artillery', tier: 1, promotion: 'app', count: 1, recovery: '1 cycle' },
+        { stackId: 'wolf-mst', mark: '🐺', name: 'War-Howler (A-2)', categoryId: 'beasts', tier: 3, promotion: 'mst', count: 1, recovery: '2 cycles' },
+        { stackId: 'trained-wolf-vet', mark: '🐺', name: 'Trained Wolf (A-1)', categoryId: 'beasts', tier: 2, promotion: 'vet', count: 1, recovery: '2 cycles' }
     ]);
 
     let bound = false;
     let activeVenueId = '';
-    /** @type {Array<{ id: string, stackId: string, mark: string, name: string, label: string, categoryId: string, unitType: string, tier: number, promotion: string, severity: string, recovery: string }>} */
+    /** @type {Array<{ id: string, stackId: string, mark: string, name: string, label: string, categoryId: string, unitType: string, tier: number, promotion: string, recovery: string }>} */
     let infirmaryInjuredUnits = [];
     /** @type {Set<string>} */
     let infirmarySelectedUnitIds = new Set();
@@ -451,7 +451,6 @@
                     unitType,
                     tier,
                     promotion,
-                    severity: stack.severity,
                     recovery: stack.recovery
                 });
             }
@@ -524,11 +523,11 @@
             + ` data-infirmary-unit-id="${escapeHtml(unit.id)}"`
             + ` role="option"`
             + ` aria-selected="${isSelected ? 'true' : 'false'}"`
-            + ` aria-label="${escapeHtml(unit.label)} — ${escapeHtml(resolveInfirmaryPromotionLabel(unit.promotion))} — ${escapeHtml(unit.severity)}">`
+            + ` aria-label="${escapeHtml(unit.label)} — ${escapeHtml(resolveInfirmaryPromotionLabel(unit.promotion))}">`
             + `<span class="age-infirmary-injured-mark" aria-hidden="true">${escapeHtml(unit.mark)}</span>`
             + '<div class="age-infirmary-injured-main">'
             + `<span class="age-infirmary-injured-name">${escapeHtml(unit.label)}</span>`
-            + `<span class="age-infirmary-injured-meta">${escapeHtml(resolveInfirmaryPromotionLabel(unit.promotion))} · ${escapeHtml(unit.severity)} · ${escapeHtml(unit.recovery)}</span>`
+            + `<span class="age-infirmary-injured-meta">${escapeHtml(resolveInfirmaryPromotionLabel(unit.promotion))} · ${escapeHtml(unit.recovery)}</span>`
             + '</div>'
             + `<span class="age-infirmary-injured-status">${isSelected ? 'Selected' : 'Injured'}</span>`
             + '</button>'
