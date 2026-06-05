@@ -79,6 +79,14 @@
         );
     }
 
+    function isWorldCityDrawerTarget(target) {
+        if (!target || typeof target.closest !== 'function') return false;
+        return Boolean(
+            target.closest('.age-world-city-drawer:not([hidden])')
+            || target.closest('.age-world-battle-report-modal:not([hidden])')
+        );
+    }
+
     function isWarRoomModalTarget(target) {
         if (!target || typeof target.closest !== 'function') return false;
         return Boolean(
@@ -114,6 +122,7 @@
             || isPortalAlertModal(target)
             || isMapPlanToolTarget(target)
             || isInsideMapHudSidePanels(target)
+            || isWorldCityDrawerTarget(target)
             || isWarRoomModalTarget(target)
             || isSettlementOverlayTarget(target)
             || isDevPageNavigatorTarget(target);

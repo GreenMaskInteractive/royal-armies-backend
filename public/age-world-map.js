@@ -1076,6 +1076,7 @@
         if (!event || event.button !== 0) return false;
         if (isPlanCityPickActive()) return false;
         if (options.didPan) return false;
+        if (isMapChromeTarget(event.target)) return false;
 
         const cityId = resolveCityIdAtPointer(event);
         if (!cityId) return false;
@@ -2357,7 +2358,7 @@
         const endDrag = (event) => {
             const didPan = endMapPan(event);
             els.frame?.classList.remove('is-over-city');
-            if (!didPan && !mapCityPointerUpHandled) {
+            if (!didPan && !mapCityPointerUpHandled && !isMapChromeTarget(event.target)) {
                 tryHandleMapCityPointerUp(event, { didPan: false });
             }
             mapCityPointerUpHandled = false;
@@ -2379,6 +2380,15 @@
             }
         });
 
+        if (els.drawer) {
+            const stopDrawerEventToMap = (event) => {
+                event.stopPropagation();
+            };
+            els.drawer.addEventListener('pointerdown', stopDrawerEventToMap);
+            els.drawer.addEventListener('pointerup', stopDrawerEventToMap);
+            els.drawer.addEventListener('click', stopDrawerEventToMap);
+        }
+
         if (els.drawerClose) {
             els.drawerClose.addEventListener('click', (event) => {
                 event.preventDefault();
@@ -2386,12 +2396,6 @@
                 closeCityDrawer();
             });
             els.drawerClose.addEventListener('pointerdown', (event) => {
-                event.stopPropagation();
-            });
-        }
-
-        if (els.drawer) {
-            els.drawer.addEventListener('pointerdown', (event) => {
                 event.stopPropagation();
             });
         }

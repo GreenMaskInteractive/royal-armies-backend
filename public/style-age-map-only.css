@@ -130,6 +130,17 @@ body.age-map-shell-only .age-left-reports-panel * {
     pointer-events: auto !important;
 }
 
+body.age-map-shell-only .age-world-city-drawer:not([hidden]),
+body.age-map-shell-only .age-world-city-drawer:not([hidden]) *,
+body.age-map-shell-only .age-world-battle-report-modal:not([hidden]),
+body.age-map-shell-only .age-world-battle-report-modal:not([hidden]) * {
+    pointer-events: auto !important;
+}
+
+body.age-map-shell-only .age-world-city-drawer:not([hidden]) {
+    z-index: 50 !important;
+}
+
 body.age-map-shell-only button,
 body.age-map-shell-only a[href],
 body.age-map-shell-only [role="button"],

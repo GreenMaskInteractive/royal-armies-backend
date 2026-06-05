@@ -20351,6 +20351,8 @@ html.age-world-map-pan-locked #cursor-click-fx-layer {
 
 .age-world-city-drawer:not([hidden]) {
     display: block;
+    pointer-events: auto;
+    z-index: 50;
     animation: age-world-city-drawer-in 0.22s ease-out;
 }
 
@@ -20375,10 +20377,14 @@ html.age-world-map-pan-locked #cursor-click-fx-layer {
     overflow: visible;
 }
 
+.age-world-city-drawer-shell,
+.age-world-city-drawer-shell * {
+    pointer-events: auto;
+}
+
 .age-world-city-drawer-shell {
     display: flex;
     align-items: stretch;
-    pointer-events: auto;
 }
 
 .age-world-city-drawer-side-tabs {
