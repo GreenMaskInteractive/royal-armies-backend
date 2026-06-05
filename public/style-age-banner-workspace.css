@@ -348,8 +348,8 @@
 
 .rift-banner-workspace-dialog {
     position: relative;
-    width: min(960px, 100%);
-    max-height: min(86vh, 760px);
+    width: min(1080px, 100%);
+    max-height: min(88vh, 820px);
     display: flex;
     flex-direction: column;
     border: 1px solid rgba(196, 160, 255, 0.35);
@@ -438,84 +438,143 @@
     color: rgba(196, 160, 255, 0.78);
 }
 
-.rift-banner-workspace-layout {
-    display: grid;
-    grid-template-columns: minmax(240px, 300px) minmax(0, 1fr);
-    gap: 18px;
+.rift-banner-skill-tree-layout {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
     min-height: 360px;
 }
 
-.rift-banner-workspace-heraldry {
+.rift-banner-skill-tree-canvas {
+    position: relative;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding: 28px 24px 22px;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 215, 120, 0.22);
+    background:
+        radial-gradient(ellipse 80% 60% at 50% 0%, rgba(255, 215, 120, 0.08) 0%, transparent 72%),
+        linear-gradient(180deg, rgba(14, 12, 20, 0.96) 0%, rgba(6, 5, 10, 0.98) 100%);
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.03);
+}
+
+.rift-banner-skill-tree-grid {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    opacity: 0.35;
+    background-image:
+        linear-gradient(rgba(255, 215, 120, 0.08) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 215, 120, 0.08) 1px, transparent 1px);
+    background-size: 28px 28px;
+    mask-image: radial-gradient(ellipse 85% 75% at 50% 50%, #000 35%, transparent 100%);
+}
+
+.rift-banner-skill-tree-track {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0;
+    min-width: min-content;
+    margin: 0 auto;
+}
+
+.rift-banner-skill-tree-origin {
     position: relative;
     display: flex;
     flex-direction: column;
     align-items: center;
     gap: 8px;
-    padding: 16px 12px;
-    border-radius: 10px;
-    border: 1px solid rgba(255, 215, 120, 0.22);
-    background: rgba(0, 0, 0, 0.28);
-    overflow: hidden;
+    flex: 0 0 auto;
+    width: 132px;
     text-align: center;
 }
 
-.rift-banner-workspace-heraldry-rays {
+.rift-banner-skill-tree-origin-rays {
     position: absolute;
-    top: 38%;
+    top: 34px;
     left: 50%;
-    width: 180%;
+    width: 180px;
     aspect-ratio: 1;
     pointer-events: none;
     background: conic-gradient(
         from 0deg,
         transparent 0deg 30deg,
-        rgba(255, 215, 120, 0.07) 30deg 34deg,
+        rgba(255, 215, 120, 0.08) 30deg 34deg,
         transparent 34deg 90deg,
-        rgba(255, 215, 120, 0.05) 90deg 94deg,
+        rgba(255, 215, 120, 0.06) 90deg 94deg,
         transparent 94deg 150deg,
-        rgba(255, 215, 120, 0.07) 150deg 154deg,
+        rgba(255, 215, 120, 0.08) 150deg 154deg,
         transparent 154deg 210deg,
-        rgba(196, 160, 255, 0.05) 210deg 214deg,
+        rgba(196, 160, 255, 0.06) 210deg 214deg,
         transparent 214deg 270deg,
-        rgba(255, 215, 120, 0.07) 270deg 274deg,
+        rgba(255, 215, 120, 0.08) 270deg 274deg,
         transparent 274deg 330deg,
-        rgba(196, 160, 255, 0.05) 330deg 334deg,
+        rgba(196, 160, 255, 0.06) 330deg 334deg,
         transparent 334deg 360deg
     );
     transform: translate(-50%, -50%);
     animation: ageChurchBannerRaysSpin 22s linear infinite;
 }
 
-.rift-banner-workspace-heraldry-image {
+.rift-banner-skill-tree-origin-frame {
     position: relative;
     z-index: 1;
-    max-width: 100%;
-    max-height: 140px;
-    object-fit: contain;
+    display: grid;
+    place-items: center;
+    width: 92px;
+    height: 92px;
+    border-radius: 50%;
+    border: 3px solid rgba(255, 215, 120, 0.72);
+    background:
+        radial-gradient(circle at 50% 35%, rgba(255, 215, 120, 0.18) 0%, rgba(18, 14, 24, 0.96) 68%);
+    box-shadow:
+        0 0 0 4px rgba(255, 215, 120, 0.12),
+        0 0 24px rgba(255, 190, 60, 0.22);
 }
 
-.rift-banner-workspace-heraldry-title {
+.rift-banner-skill-tree-origin-banner {
+    width: 58px;
+    height: 58px;
+    object-fit: contain;
+    filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.55));
+}
+
+.rift-banner-skill-tree-origin-title {
     margin: 0;
     font-family: 'Cinzel', serif;
-    font-size: 0.78rem;
+    font-size: 0.66rem;
     font-weight: 700;
     letter-spacing: 0.08em;
     text-transform: uppercase;
     color: #f4e6c8;
+    line-height: 1.35;
 }
 
-.rift-banner-workspace-heraldry-rune {
+.rift-banner-skill-tree-origin-rune {
     margin: 0;
-    font-size: 0.7rem;
-    color: rgba(230, 210, 255, 0.85);
+    font-size: 0.62rem;
+    color: rgba(230, 210, 255, 0.82);
+}
+
+.rift-banner-skill-tree-spine {
+    flex: 0 0 auto;
+    width: 56px;
+    height: 4px;
+    margin-top: -42px;
+    background: linear-gradient(90deg, rgba(255, 215, 120, 0.65) 0%, rgba(196, 160, 255, 0.35) 100%);
+    box-shadow: 0 0 10px rgba(255, 190, 60, 0.2);
 }
 
 .rift-banner-skill-tree {
     list-style: none;
-    margin: 14px 0 0;
+    margin: 0;
     padding: 0;
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
+    align-items: center;
     gap: 0;
 }
 
@@ -523,91 +582,178 @@
     display: flex;
     flex-direction: column;
     align-items: center;
+    gap: 8px;
+    flex: 0 0 auto;
+    width: 108px;
 }
 
 .rift-banner-skill-node-btn {
     appearance: none;
     position: relative;
-    width: 100%;
-    padding: 10px 12px 10px 34px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 8px;
-    border-radius: 8px;
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    background: rgba(8, 10, 16, 0.65);
+    display: grid;
+    place-items: center;
+    width: 72px;
+    height: 72px;
+    padding: 0;
+    border-radius: 50%;
+    border: 2px solid rgba(255, 255, 255, 0.14);
+    background:
+        radial-gradient(circle at 50% 30%, rgba(255, 255, 255, 0.08) 0%, rgba(10, 12, 18, 0.92) 68%);
     color: #e8dcc0;
     font-family: 'Cinzel', serif;
-    font-size: 0.68rem;
-    font-weight: 700;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    text-align: left;
     cursor: pointer;
+    transition: border-color 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease;
+}
+
+.rift-banner-skill-node-btn:hover {
+    transform: translateY(-2px);
+}
+
+.rift-banner-skill-node-ring {
+    position: absolute;
+    inset: -5px;
+    border-radius: 50%;
+    border: 1px solid rgba(255, 215, 120, 0.18);
+    pointer-events: none;
+}
+
+.rift-banner-skill-node-tier {
+    position: relative;
+    z-index: 1;
+    font-size: 1.05rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    color: rgba(255, 236, 196, 0.92);
+}
+
+.rift-banner-skill-node-lock {
+    position: absolute;
+    right: 2px;
+    bottom: 2px;
+    font-size: 0.72rem;
+    line-height: 1;
+    opacity: 0.85;
+}
+
+.rift-banner-skill-node-label {
+    max-width: 100%;
+    font-family: 'Cinzel', serif;
+    font-size: 0.58rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    text-align: center;
+    line-height: 1.35;
+    color: rgba(220, 210, 230, 0.86);
 }
 
 .rift-banner-skill-node.is-active .rift-banner-skill-node-btn {
-    border-color: rgba(255, 215, 120, 0.55);
-    background: rgba(48, 32, 16, 0.55);
-    color: #fff3c8;
-    box-shadow: 0 0 16px rgba(255, 190, 60, 0.14);
+    border-color: rgba(255, 215, 120, 0.88);
+    background:
+        radial-gradient(circle at 50% 30%, rgba(255, 215, 120, 0.22) 0%, rgba(48, 32, 16, 0.9) 70%);
+    box-shadow:
+        0 0 0 4px rgba(255, 215, 120, 0.12),
+        0 0 22px rgba(255, 190, 60, 0.28);
 }
 
-.rift-banner-skill-node.is-unlocked .rift-banner-skill-node-orbit {
-    background: rgba(120, 220, 160, 0.55);
-    border-color: rgba(120, 220, 160, 0.75);
-    box-shadow: 0 0 10px rgba(120, 220, 160, 0.35);
+.rift-banner-skill-node.is-active .rift-banner-skill-node-label {
+    color: #fff3c8;
+}
+
+.rift-banner-skill-node.is-unlocked .rift-banner-skill-node-btn {
+    border-color: rgba(120, 220, 160, 0.72);
+}
+
+.rift-banner-skill-node.is-unlocked .rift-banner-skill-node-ring {
+    border-color: rgba(120, 220, 160, 0.45);
+    box-shadow: 0 0 12px rgba(120, 220, 160, 0.18);
+}
+
+.rift-banner-skill-node.is-unlocked .rift-banner-skill-node-tier {
+    color: rgba(196, 255, 220, 0.95);
 }
 
 .rift-banner-skill-node.is-locked .rift-banner-skill-node-btn {
-    opacity: 0.82;
-}
-
-.rift-banner-skill-node-status {
-    font-size: 0.58rem;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: rgba(196, 160, 255, 0.72);
-}
-
-.rift-banner-skill-node.is-unlocked .rift-banner-skill-node-status {
-    color: rgba(120, 220, 160, 0.9);
-}
-
-.rift-banner-skill-node-orbit {
-    position: absolute;
-    left: 12px;
-    top: 50%;
-    width: 10px;
-    height: 10px;
-    border-radius: 50%;
-    border: 1px solid rgba(255, 215, 120, 0.45);
-    background: rgba(255, 215, 120, 0.18);
-    transform: translateY(-50%);
-}
-
-.rift-banner-skill-node.is-active .rift-banner-skill-node-orbit {
-    background: rgba(255, 215, 120, 0.55);
-    box-shadow: 0 0 10px rgba(255, 190, 60, 0.45);
+    opacity: 0.72;
+    filter: grayscale(0.35);
 }
 
 .rift-banner-skill-connector {
+    display: flex;
+    align-items: center;
+    flex: 0 0 auto;
+    width: 72px;
+    margin-top: -28px;
+    padding: 0 2px;
+    list-style: none;
+}
+
+.rift-banner-skill-connector-line {
     display: block;
-    width: 2px;
-    height: 14px;
-    background: linear-gradient(180deg, rgba(255, 215, 120, 0.45) 0%, rgba(196, 160, 255, 0.25) 100%);
+    width: 100%;
+    height: 4px;
+    border-radius: 999px;
+    background: linear-gradient(90deg, rgba(255, 215, 120, 0.55) 0%, rgba(196, 160, 255, 0.28) 100%);
+    box-shadow: 0 0 8px rgba(255, 190, 60, 0.16);
+}
+
+.rift-banner-skill-tree-detail {
+    margin-top: 0;
 }
 
 .rift-banner-workspace-detail {
-    padding: 16px;
+    padding: 16px 18px;
     border-radius: 10px;
     border: 1px solid rgba(255, 255, 255, 0.08);
     background: rgba(0, 0, 0, 0.28);
 }
 
+.rift-banner-skill-tree-detail-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px 12px;
+    margin-bottom: 10px;
+}
+
+.rift-banner-skill-tree-detail-tier {
+    margin: 0;
+    padding: 4px 8px;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 215, 120, 0.35);
+    background: rgba(255, 215, 120, 0.08);
+    font-family: 'Cinzel', serif;
+    font-size: 0.62rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: rgba(255, 217, 120, 0.9);
+}
+
+.rift-banner-skill-tree-detail-state {
+    margin-left: auto;
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-size: 0.62rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.rift-banner-skill-tree-detail-state.is-unlocked {
+    color: rgba(120, 220, 160, 0.95);
+    background: rgba(120, 220, 160, 0.12);
+    border: 1px solid rgba(120, 220, 160, 0.35);
+}
+
+.rift-banner-skill-tree-detail-state.is-locked {
+    color: rgba(196, 160, 255, 0.82);
+    background: rgba(196, 160, 255, 0.08);
+    border: 1px solid rgba(196, 160, 255, 0.28);
+}
+
 .rift-banner-workspace-detail-title {
-    margin: 0 0 10px;
+    margin: 0;
     font-family: 'Cinzel', serif;
     font-size: 0.9rem;
     font-weight: 700;
@@ -892,7 +1038,7 @@ body.is-rift-banner-blessing-toast-open {
 @media (prefers-reduced-motion: reduce) {
     .age-church-banner-rays,
     .age-church-banner-glow,
-    .rift-banner-workspace-heraldry-rays,
+    .rift-banner-skill-tree-origin-rays,
     .rift-banner-blessing-toast-rays,
     .rift-banner-blessing-toast-glow,
     .rift-banner-blessing-toast-banner-rays {
@@ -901,9 +1047,17 @@ body.is-rift-banner-blessing-toast-open {
 }
 
 @media (max-width: 900px) {
-    .age-church-split,
-    .rift-banner-workspace-layout {
+    .age-church-split {
         grid-template-columns: 1fr;
+    }
+
+    .rift-banner-skill-tree-canvas {
+        justify-content: flex-start;
+    }
+
+    .rift-banner-skill-tree-track {
+        justify-content: flex-start;
+        padding-bottom: 4px;
     }
 
     .age-church-banner-grid {

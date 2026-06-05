@@ -272,8 +272,8 @@
             <div class="rift-banner-workspace-dialog" role="dialog" aria-modal="true" aria-labelledby="rift-banner-workspace-title">
                 <header class="rift-banner-workspace-header">
                     <div class="rift-banner-workspace-heading-block">
-                        <p class="rift-banner-workspace-eyebrow">Blessed heraldry</p>
-                        <h2 id="rift-banner-workspace-title" class="rift-banner-workspace-title">Banner Perk Tree</h2>
+                        <p class="rift-banner-workspace-eyebrow">Commander talents</p>
+                        <h2 id="rift-banner-workspace-title" class="rift-banner-workspace-title">Banner Skill Tree</h2>
                     </div>
                     <button type="button" id="rift-banner-workspace-close" class="rift-banner-workspace-close" aria-label="Close banner workspace">×</button>
                 </header>
@@ -301,7 +301,7 @@
                     <div class="rift-banner-blessing-toast-banner-visual" id="rift-banner-blessing-toast-banner-visual"></div>
                     <p class="rift-banner-blessing-toast-line" id="rift-banner-blessing-toast-line"></p>
                     <p class="rift-banner-blessing-toast-footnote">
-                        Open your <button type="button" class="rift-banner-blessing-toast-link" id="rift-banner-blessing-toast-open-link">Banner</button> perk tree to review your gifts.
+                        Open your <button type="button" class="rift-banner-blessing-toast-link" id="rift-banner-blessing-toast-open-link">Banner Skill Tree</button> to review your gifts.
                     </p>
                 </div>
             </div>
@@ -314,7 +314,7 @@
             return `
                 <div class="rift-banner-workspace-empty">
                     <p class="rift-banner-workspace-empty-title">No banner blessing yet</p>
-                    <p class="rift-banner-workspace-empty-copy">Visit the Church at your settlement to receive a blessed banner and unlock your personal perk tree.</p>
+                    <p class="rift-banner-workspace-empty-copy">Visit the Church at your settlement to receive a blessed banner and unlock your Banner Skill Tree.</p>
                 </div>
             `;
         }
@@ -329,52 +329,71 @@
         }
 
         const activePerk = perks.find((perk) => perk.id === selectedPerkId) || perks[0] || null;
+        const activePerkIndex = activePerk ? perks.findIndex((perk) => perk.id === activePerk.id) : -1;
 
+        const tierLabels = ['I', 'II', 'III'];
         const treeNodes = perks.map((perk, index) => {
             const isActive = perk.id === activePerk?.id;
             const isUnlocked = unlockedPerkIds.has(perk.id);
             const isLast = index === perks.length - 1;
+            const tierLabel = tierLabels[index] || String(index + 1);
             return `
                 <li class="rift-banner-skill-node${isActive ? ' is-active' : ''}${isUnlocked ? ' is-unlocked' : ' is-locked'}">
-                    <button type="button" class="rift-banner-skill-node-btn" data-banner-perk-id="${escapeHtml(perk.id)}">
-                        <span class="rift-banner-skill-node-orbit" aria-hidden="true"></span>
-                        <span class="rift-banner-skill-node-label">${escapeHtml(perk.title)}</span>
-                        <span class="rift-banner-skill-node-status">${isUnlocked ? 'Unlocked' : 'Locked'}</span>
+                    <button type="button"
+                        class="rift-banner-skill-node-btn"
+                        data-banner-perk-id="${escapeHtml(perk.id)}"
+                        aria-label="${escapeHtml(perk.title)}${isUnlocked ? ' (unlocked)' : ' (locked)'}">
+                        <span class="rift-banner-skill-node-ring" aria-hidden="true"></span>
+                        <span class="rift-banner-skill-node-tier">${escapeHtml(tierLabel)}</span>
+                        <span class="rift-banner-skill-node-lock" aria-hidden="true">${isUnlocked ? '' : '🔒'}</span>
                     </button>
-                    ${isLast ? '' : '<span class="rift-banner-skill-connector" aria-hidden="true"></span>'}
+                    <span class="rift-banner-skill-node-label">${escapeHtml(perk.title)}</span>
                 </li>
+                ${isLast ? '' : '<li class="rift-banner-skill-connector" aria-hidden="true"><span class="rift-banner-skill-connector-line"></span></li>'}
             `;
         }).join('');
 
         const swapNote = state.swapUsed
             ? 'Banner swap spent for this Age.'
-            : 'One banner swap remains this Age. Swapping resets all perk points.';
+            : 'One banner swap remains this Age. Swapping resets all skill points.';
 
         return `
             <div class="rift-banner-workspace-status" role="status">
-                <p class="rift-banner-workspace-points">Banner perk points: <strong>${escapeHtml(state.perkPoints)}</strong></p>
+                <p class="rift-banner-workspace-points">Banner skill points: <strong>${escapeHtml(state.perkPoints)}</strong></p>
                 <p class="rift-banner-workspace-swap-note">${escapeHtml(swapNote)}</p>
             </div>
-            <div class="rift-banner-workspace-layout">
-                <aside class="rift-banner-workspace-tree" aria-label="Banner perk tree">
-                    <div class="rift-banner-workspace-heraldry">
-                        <div class="rift-banner-workspace-heraldry-rays" aria-hidden="true"></div>
-                        <img class="rift-banner-workspace-heraldry-image" src="${escapeHtml(resolveBannerImageUrl(banner.image))}" alt="">
-                        <p class="rift-banner-workspace-heraldry-title">${escapeHtml(banner.title)}</p>
-                        <p class="rift-banner-workspace-heraldry-rune">${escapeHtml(banner.rune)}</p>
+            <div class="rift-banner-skill-tree-layout">
+                <div class="rift-banner-skill-tree-canvas" aria-label="Banner Skill Tree">
+                    <div class="rift-banner-skill-tree-grid" aria-hidden="true"></div>
+                    <div class="rift-banner-skill-tree-track">
+                        <div class="rift-banner-skill-tree-origin">
+                            <div class="rift-banner-skill-tree-origin-rays" aria-hidden="true"></div>
+                            <div class="rift-banner-skill-tree-origin-frame">
+                                <img class="rift-banner-skill-tree-origin-banner"
+                                    src="${escapeHtml(resolveBannerImageUrl(banner.image))}"
+                                    alt="${escapeHtml(banner.title)}">
+                            </div>
+                            <p class="rift-banner-skill-tree-origin-title">${escapeHtml(banner.title)}</p>
+                            <p class="rift-banner-skill-tree-origin-rune">${escapeHtml(banner.rune)}</p>
+                        </div>
+                        <div class="rift-banner-skill-tree-spine" aria-hidden="true"></div>
+                        <ol class="rift-banner-skill-tree">${treeNodes}</ol>
                     </div>
-                    <ol class="rift-banner-skill-tree">${treeNodes}</ol>
-                </aside>
-                <section class="rift-banner-workspace-detail" aria-label="Selected perk details">
+                </div>
+                <section class="rift-banner-workspace-detail rift-banner-skill-tree-detail" aria-label="Selected skill details">
                     ${activePerk ? `
-                        <h3 class="rift-banner-workspace-detail-title">${escapeHtml(activePerk.title)}</h3>
+                        <div class="rift-banner-skill-tree-detail-head">
+                            <p class="rift-banner-skill-tree-detail-tier">Tier ${escapeHtml(tierLabels[activePerkIndex] || String(activePerkIndex + 1))}</p>
+                            <h3 class="rift-banner-workspace-detail-title">${escapeHtml(activePerk.title)}</h3>
+                            <span class="rift-banner-skill-tree-detail-state${unlockedPerkIds.has(activePerk.id) ? ' is-unlocked' : ' is-locked'}">${unlockedPerkIds.has(activePerk.id) ? 'Unlocked' : 'Locked'}</span>
+                        </div>
                         <p class="rift-banner-workspace-detail-copy">${escapeHtml(activePerk.desc)}</p>
                         <p class="rift-banner-workspace-detail-note">${unlockedPerkIds.has(activePerk.id)
-                            ? 'This perk is unlocked on your banner tree.'
-                            : 'Spend banner perk points to unlock this node.'}</p>
+                            ? 'This skill is active on your banner tree.'
+                            : 'Spend banner skill points to unlock this node.'}</p>
                     ` : `
                         <div class="rift-banner-workspace-empty">
-                            <p>Select a perk node to read its blessing.</p>
+                            <p>Select a skill node to read its blessing.</p>
                         </div>
                     `}
                 </section>
@@ -445,8 +464,8 @@
         }
 
         line.textContent = swapped
-            ? `${banner.lore} Your banner perk tree has been reset—earn points again to unlock its gifts.`
-            : `${banner.lore} Your banner perks are now available in the Game Hub.`;
+            ? `${banner.lore} Your Banner Skill Tree has been reset—earn points again to unlock its gifts.`
+            : `${banner.lore} Your banner skills are now available in the Game Hub.`;
 
         toast.hidden = false;
         toast.classList.remove('is-exiting');
@@ -585,7 +604,7 @@
         const chosenBanner = chosenBannerId ? BANNER_BY_ID[chosenBannerId] : null;
         const swapAvailable = canSwapBlessing();
 
-        let sanctumNote = 'Kneel before the sanctum and choose one blessed banner. Its rune will shape your personal perk tree for the Age.';
+        let sanctumNote = 'Kneel before the sanctum and choose one blessed banner. Its rune will shape your Banner Skill Tree for the Age.';
         if (chosenBanner && swapAvailable) {
             sanctumNote = `Your soul is bound to the ${chosenBanner.title}. You may swap your blessing once this Age—doing so resets all banner perk points.`;
         } else if (chosenBanner) {
@@ -615,7 +634,7 @@
             + `<p class="age-church-sanctum-note">${escapeHtml(sanctumNote)}</p>`
             + `<p class="age-church-sanctum-copy">${escapeHtml(swapPolicyCopy)}</p>`
             + (chosenBanner
-                ? `<button type="button" class="age-church-open-tree-btn" data-church-open-banner-tree="1">Open Banner Perk Tree</button>`
+                ? `<button type="button" class="age-church-open-tree-btn" data-church-open-banner-tree="1">Open Banner Skill Tree</button>`
                 : '')
             + '</section>'
             + '<section class="age-army-workspace-panel age-church-banner-panel">'

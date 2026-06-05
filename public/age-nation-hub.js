@@ -13,7 +13,7 @@
         nation: { glyph: '◆', hint: 'Council & command' },
         records: { glyph: '☰', hint: 'Archives & ledgers' },
         discoveries: { glyph: '✦', hint: 'Relics & mysteries' },
-        banner: { glyph: '⚑', hint: 'Blessed perk tree' },
+        banner: { glyph: '⚑', hint: 'Banner Skill Tree' },
         'battle-pass': { glyph: '◈', hint: 'Chronicles rewards' }
     });
     const RADIAL_MENU_IMAGE = 'images/radialmenu.png?v=radialmenu-accent-3';
