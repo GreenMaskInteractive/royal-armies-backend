@@ -411,14 +411,49 @@
     gap: 8px;
 }
 
+.age-infirmary-injured-item {
+    margin: 0;
+    padding: 0;
+}
+
 .age-infirmary-injured-row {
     display: flex;
     align-items: center;
     gap: 14px;
+    width: 100%;
+    box-sizing: border-box;
     padding: 12px 14px;
     border-radius: 10px;
     border: 1px solid rgba(184, 144, 48, 0.28);
     background: linear-gradient(165deg, rgba(28, 22, 14, 0.9), rgba(8, 6, 4, 0.94));
+    color: inherit;
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+    transition:
+        border-color 0.15s ease,
+        background 0.15s ease,
+        box-shadow 0.15s ease;
+}
+
+.age-infirmary-injured-row:hover {
+    border-color: rgba(255, 217, 120, 0.45);
+}
+
+.age-infirmary-injured-row.is-selected {
+    border-color: rgba(120, 188, 255, 0.85);
+    background: linear-gradient(165deg, rgba(18, 36, 56, 0.92), rgba(8, 14, 24, 0.96));
+    box-shadow:
+        inset 0 0 0 1px rgba(120, 188, 255, 0.22),
+        0 0 14px rgba(80, 160, 255, 0.18);
+}
+
+.age-infirmary-injured-row.is-selected .age-infirmary-injured-name {
+    color: #d8ecff;
+}
+
+.age-infirmary-injured-row.is-selected .age-infirmary-injured-status {
+    color: rgba(160, 220, 255, 0.98);
 }
 
 .age-infirmary-injured-mark {
@@ -455,7 +490,7 @@
     color: rgba(236, 220, 180, 0.62);
 }
 
-.age-infirmary-injured-count {
+.age-infirmary-injured-status {
     flex: 0 0 auto;
     font-family: 'Cinzel', serif;
     font-size: 0.68rem;
@@ -464,6 +499,13 @@
     text-transform: uppercase;
     color: rgba(220, 140, 120, 0.95);
     white-space: nowrap;
+}
+
+.age-infirmary-heal-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 14px;
 }
 
 .age-infirmary-injured-empty {
@@ -518,6 +560,11 @@
     border-color: rgba(120, 188, 255, 0.55);
     background: linear-gradient(180deg, rgba(80, 160, 255, 0.22), rgba(16, 32, 56, 0.95));
     color: #d8ecff;
+}
+
+.age-settlement-venue-infirmary-btn:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
 }
 
 .age-settlement-venue-infirmary-status,

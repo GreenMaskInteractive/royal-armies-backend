@@ -34,17 +34,19 @@
     ]);
 
     const INFIRMARY_DEMO_INJURED_UNITS = Object.freeze([
-        { id: 'shieldman', mark: '🛡', name: 'Recruit Shieldman (A)', injured: 3, severity: 'Light wounds', recovery: '1 cycle' },
-        { id: 'longbow', mark: '🏹', name: 'Longbowman (B)', injured: 2, severity: 'Field trauma', recovery: '2 cycles' },
-        { id: 'lancer', mark: '⚔', name: 'Royal Lancer (A/B)', injured: 1, severity: 'Mount fatigue', recovery: '1 cycle' },
-        { id: 'warder', mark: '✦', name: 'Warder (A)', injured: 2, severity: 'Arcane strain', recovery: '3 cycles' },
-        { id: 'wolf', mark: '🐺', name: 'War-Howler (A-2)', injured: 1, severity: 'Deep lacerations', recovery: '2 cycles' }
+        { stackId: 'shieldman', mark: '🛡', name: 'Recruit Shieldman (A)', count: 3, severity: 'Light wounds', recovery: '1 cycle' },
+        { stackId: 'longbow', mark: '🏹', name: 'Longbowman (B)', count: 2, severity: 'Field trauma', recovery: '2 cycles' },
+        { stackId: 'lancer', mark: '⚔', name: 'Royal Lancer (A/B)', count: 1, severity: 'Mount fatigue', recovery: '1 cycle' },
+        { stackId: 'warder', mark: '✦', name: 'Warder (A)', count: 2, severity: 'Arcane strain', recovery: '3 cycles' },
+        { stackId: 'wolf', mark: '🐺', name: 'War-Howler (A-2)', count: 1, severity: 'Deep lacerations', recovery: '2 cycles' }
     ]);
 
     let bound = false;
     let activeVenueId = '';
-    /** @type {Array<{ id: string, mark: string, name: string, injured: number, severity: string, recovery: string }>} */
-    let infirmaryInjuredStacks = [];
+    /** @type {Array<{ id: string, stackId: string, mark: string, name: string, label: string, severity: string, recovery: string }>} */
+    let infirmaryInjuredUnits = [];
+    /** @type {Set<string>} */
+    let infirmarySelectedUnitIds = new Set();
     /** @type {{ id: string } | null} */
     let defenseUpgradeQueue = null;
 
@@ -382,12 +384,47 @@
         );
     }
 
+    function buildInfirmaryUnitRoster() {
+        const units = [];
+        INFIRMARY_DEMO_INJURED_UNITS.forEach((stack) => {
+            const count = Math.max(0, Math.floor(Number(stack.count) || 0));
+            for (let index = 0; index < count; index += 1) {
+                const slot = index + 1;
+                units.push({
+                    id: `${stack.stackId}-${slot}`,
+                    stackId: stack.stackId,
+                    mark: stack.mark,
+                    name: stack.name,
+                    label: count > 1 ? `${stack.name} #${slot}` : stack.name,
+                    severity: stack.severity,
+                    recovery: stack.recovery
+                });
+            }
+        });
+        return units;
+    }
+
     function resetInfirmaryInjuredStacks() {
-        infirmaryInjuredStacks = INFIRMARY_DEMO_INJURED_UNITS.map((entry) => ({ ...entry }));
+        infirmaryInjuredUnits = buildInfirmaryUnitRoster();
+        infirmarySelectedUnitIds = new Set();
     }
 
     function countInfirmaryInjuredUnits() {
-        return infirmaryInjuredStacks.reduce((sum, stack) => sum + Math.max(0, stack.injured), 0);
+        return infirmaryInjuredUnits.length;
+    }
+
+    function countInfirmarySelectedUnits() {
+        return infirmaryInjuredUnits.filter((unit) => infirmarySelectedUnitIds.has(unit.id)).length;
+    }
+
+    function formatInfirmarySelectionSummary() {
+        const totalInjured = countInfirmaryInjuredUnits();
+        const selectedCount = countInfirmarySelectedUnits();
+        if (!totalInjured) return '';
+        if (!selectedCount) {
+            return `${totalInjured} injured ${totalInjured === 1 ? 'unit' : 'units'} · click units to select for healing`;
+        }
+        return `${selectedCount} selected for healing · ${totalInjured} injured ${totalInjured === 1 ? 'unit' : 'units'} total`;
     }
 
     function renderInfirmaryInjuredList() {
@@ -403,25 +440,39 @@
             );
         }
 
-        const summaryLabel = `${totalInjured} injured ${totalInjured === 1 ? 'unit' : 'units'} awaiting treatment`;
+        const selectedCount = countInfirmarySelectedUnits();
         return (
             '<section class="age-infirmary-injured" aria-label="Injured roster">'
             + '<div class="age-infirmary-injured-head">'
             + '<h3 class="age-infirmary-injured-title">Injured Roster</h3>'
-            + `<p class="age-infirmary-injured-summary">${escapeHtml(summaryLabel)}</p>`
+            + `<p class="age-infirmary-injured-summary">${escapeHtml(formatInfirmarySelectionSummary())}</p>`
             + '</div>'
-            + '<ul class="age-infirmary-injured-list">'
-            + infirmaryInjuredStacks.map((stack) => (
-                `<li class="age-infirmary-injured-row">`
-                + `<span class="age-infirmary-injured-mark" aria-hidden="true">${escapeHtml(stack.mark)}</span>`
-                + '<div class="age-infirmary-injured-main">'
-                + `<span class="age-infirmary-injured-name">${escapeHtml(stack.name)}</span>`
-                + `<span class="age-infirmary-injured-meta">${escapeHtml(stack.severity)} · ${escapeHtml(stack.recovery)}</span>`
-                + '</div>'
-                + `<span class="age-infirmary-injured-count">${escapeHtml(stack.injured)} injured</span>`
-                + '</li>'
-            )).join('')
+            + '<ul class="age-infirmary-injured-list" role="listbox" aria-label="Injured units" aria-multiselectable="true">'
+            + infirmaryInjuredUnits.map((unit) => {
+                const isSelected = infirmarySelectedUnitIds.has(unit.id);
+                return (
+                    `<li class="age-infirmary-injured-item" role="presentation">`
+                    + `<button type="button" class="age-infirmary-injured-row${isSelected ? ' is-selected' : ''}"`
+                    + ` data-infirmary-unit-id="${escapeHtml(unit.id)}"`
+                    + ` role="option"`
+                    + ` aria-selected="${isSelected ? 'true' : 'false'}"`
+                    + ` aria-label="${escapeHtml(unit.label)} — ${escapeHtml(unit.severity)}">`
+                    + `<span class="age-infirmary-injured-mark" aria-hidden="true">${escapeHtml(unit.mark)}</span>`
+                    + '<div class="age-infirmary-injured-main">'
+                    + `<span class="age-infirmary-injured-name">${escapeHtml(unit.label)}</span>`
+                    + `<span class="age-infirmary-injured-meta">${escapeHtml(unit.severity)} · ${escapeHtml(unit.recovery)}</span>`
+                    + '</div>'
+                    + `<span class="age-infirmary-injured-status">${isSelected ? 'Selected' : 'Injured'}</span>`
+                    + '</button>'
+                    + '</li>'
+                );
+            }).join('')
             + '</ul>'
+            + '<section class="age-infirmary-heal-toolbar" aria-label="Heal selected units">'
+            + `<button type="button" class="age-settlement-venue-infirmary-btn age-settlement-venue-infirmary-btn--primary"`
+            + ` data-settlement-infirmary-heal="selected"${selectedCount ? '' : ' disabled'}>`
+            + `Heal Selected${selectedCount ? ` (${selectedCount})` : ''}</button>`
+            + '</section>'
             + '</section>'
         );
     }
@@ -433,8 +484,7 @@
             + renderInfirmaryInjuredList()
             + '<section class="age-infirmary-actions" aria-label="Infirmary healing actions">'
             + '<div class="age-settlement-venue-infirmary-actions">'
-            + '<button type="button" class="age-settlement-venue-infirmary-btn" data-settlement-infirmary-heal="one">Heal One Unit</button>'
-            + '<button type="button" class="age-settlement-venue-infirmary-btn age-settlement-venue-infirmary-btn--primary" data-settlement-infirmary-heal="all">Heal Entire Army</button>'
+            + '<button type="button" class="age-settlement-venue-infirmary-btn" data-settlement-infirmary-heal="all">Heal Entire Army</button>'
             + '</div>'
             + '<p id="age-settlement-infirmary-status" class="age-settlement-venue-infirmary-status" aria-live="polite"></p>'
             + '</section>'
@@ -449,15 +499,28 @@
         bodyEl.innerHTML = renderInfirmaryBody();
     }
 
+    function toggleInfirmaryUnitSelection(unitId) {
+        const id = String(unitId || '').trim();
+        if (!id || !infirmaryInjuredUnits.some((unit) => unit.id === id)) return;
+
+        if (infirmarySelectedUnitIds.has(id)) {
+            infirmarySelectedUnitIds.delete(id);
+        } else {
+            infirmarySelectedUnitIds.add(id);
+        }
+        refreshInfirmaryWorkspaceBody();
+    }
+
     function healFakeInfirmaryUnit(mode) {
-        const healMode = String(mode || 'one').trim().toLowerCase();
-        if (!infirmaryInjuredStacks.length) {
+        const healMode = String(mode || 'selected').trim().toLowerCase();
+        if (!infirmaryInjuredUnits.length) {
             return { healed: 0, message: 'No injured units are resting in the infirmary.' };
         }
 
         if (healMode === 'all') {
             const healed = countInfirmaryInjuredUnits();
-            infirmaryInjuredStacks = [];
+            infirmaryInjuredUnits = [];
+            infirmarySelectedUnitIds = new Set();
             refreshInfirmaryWorkspaceBody();
             return {
                 healed,
@@ -465,14 +528,25 @@
             };
         }
 
-        const first = infirmaryInjuredStacks[0];
-        if (first.injured > 1) {
-            first.injured -= 1;
-        } else {
-            infirmaryInjuredStacks.shift();
+        const selectedIds = infirmaryInjuredUnits
+            .filter((unit) => infirmarySelectedUnitIds.has(unit.id))
+            .map((unit) => unit.id);
+        if (!selectedIds.length) {
+            return { healed: 0, message: 'Select injured units to heal, then choose Heal Selected.' };
         }
+
+        const selectedIdSet = new Set(selectedIds);
+        infirmaryInjuredUnits = infirmaryInjuredUnits.filter((unit) => !selectedIdSet.has(unit.id));
+        infirmarySelectedUnitIds = new Set(
+            [...infirmarySelectedUnitIds].filter((id) => !selectedIdSet.has(id))
+        );
         refreshInfirmaryWorkspaceBody();
-        return { healed: 1, message: '1 unit restored to fighting strength.' };
+
+        const healed = selectedIds.length;
+        return {
+            healed,
+            message: healed === 1 ? '1 unit restored to fighting strength.' : `${healed} units restored to fighting strength.`
+        };
     }
 
     function renderPlaceholderBody(note) {
@@ -484,15 +558,24 @@
     }
 
     async function healAtInfirmary(mode) {
+        const healMode = String(mode || 'selected').trim().toLowerCase();
         const statusEl = global.document.getElementById('age-settlement-infirmary-status');
-        const demoResult = healFakeInfirmaryUnit(mode);
+        const demoResult = healFakeInfirmaryUnit(healMode);
         if (statusEl) statusEl.textContent = demoResult.message;
+        if (!demoResult.healed) return;
 
         const api = global.RoyalArmiesAgeGuildTraining;
         if (!api?.healUnits) return;
 
+        const apiMode = healMode === 'all' ? 'all' : 'one';
         try {
-            await api.healUnits({ mode });
+            if (apiMode === 'all') {
+                await api.healUnits({ mode: 'all' });
+            } else {
+                for (let index = 0; index < demoResult.healed; index += 1) {
+                    await api.healUnits({ mode: 'one' });
+                }
+            }
             global.dispatchEvent(new CustomEvent('royalarmies:age-movement-updated'));
         } catch (error) {
             if (typeof global.showRiftError === 'function' && error?.code) {
@@ -657,10 +740,20 @@
     }
 
     function onInfirmaryClick(event) {
+        if (activeVenueId !== 'infirmary') return false;
+
+        const unitBtn = event.target.closest('[data-infirmary-unit-id]');
+        if (unitBtn) {
+            event.preventDefault();
+            toggleInfirmaryUnitSelection(unitBtn.getAttribute('data-infirmary-unit-id'));
+            return true;
+        }
+
         const healBtn = event.target.closest('[data-settlement-infirmary-heal]');
-        if (!healBtn || activeVenueId !== 'infirmary') return;
+        if (!healBtn || healBtn.disabled) return false;
         event.preventDefault();
         void healAtInfirmary(healBtn.getAttribute('data-settlement-infirmary-heal'));
+        return true;
     }
 
     function onVenueWorkspaceClick(event) {
@@ -670,8 +763,8 @@
             return;
         }
         if (onDefenseWorkspaceClick(event)) return;
+        if (onInfirmaryClick(event)) return;
         onArmyWorkspaceActionClick(event);
-        onInfirmaryClick(event);
     }
 
     function onVenueWorkspaceKeydown(event) {
