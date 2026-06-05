@@ -53,13 +53,13 @@
         { stackId: 'shieldman-vet', mark: '🛡', name: 'Recruit Shieldman (A)', categoryId: 'infantry', tier: 1, promotion: 'vet', goldCost: 350, ticksTotal: 2, count: 2 },
         { stackId: 'shieldman-std', mark: '🛡', name: 'Recruit Shieldman (A)', categoryId: 'infantry', tier: 1, promotion: 'std', goldCost: 350, ticksTotal: 2, count: 1 },
         { stackId: 'shield-sergeant-elt', mark: '🛡', name: 'Shield Sergeant (A)', categoryId: 'infantry', tier: 2, promotion: 'elite', goldCost: 2100, ticksTotal: 3, count: 1 },
-        { stackId: 'bulwark-leg', mark: '🛡', name: 'Bulwark Guard (A)', categoryId: 'infantry', tier: 4, promotion: 'leg', goldCost: 13120, ticksTotal: 3, count: 6 },
+        { stackId: 'bulwark-leg', mark: '🛡', name: 'Bulwark Guard (A)', categoryId: 'infantry', tier: 4, promotion: 'leg', goldCost: 13120, ticksTotal: 3, count: 8 },
         { stackId: 'citadel-elite', mark: '🛡', name: 'Citadel Guardian (A)', categoryId: 'infantry', tier: 6, promotion: 'elite', goldCost: 66210, ticksTotal: 3, count: 2 },
         { stackId: 'lancer-vet', mark: '⚔', name: 'Royal Lancer (A/B)', categoryId: 'cavalry', tier: 3, promotion: 'vet', goldCost: 26800, ticksTotal: 2, count: 1 },
         { stackId: 'dread-knight-std', mark: '⚔', name: 'Dread Knight (A/B)', categoryId: 'cavalry', tier: 2, promotion: 'std', goldCost: 4350, ticksTotal: 3, count: 1 },
         { stackId: 'longbow-std', mark: '🏹', name: 'Longbowman (B)', categoryId: 'artillery', tier: 2, promotion: 'std', goldCost: 1220, ticksTotal: 3, count: 2 },
-        { stackId: 'sentinel-mst', mark: '✦', name: 'Arcane Sentinel (A)', categoryId: 'magic-infantry', tier: 4, promotion: 'mst', goldCost: 18400, ticksTotal: 3, count: 4 },
-        { stackId: 'steeljaw-vet', mark: '🐺', name: 'Steeljaw (A-1)', categoryId: 'beasts', tier: 4, promotion: 'vet', goldCost: 11500, ticksTotal: 3, count: 3 },
+        { stackId: 'sentinel-mst', mark: '✦', name: 'Arcane Sentinel (A)', categoryId: 'magic-infantry', tier: 4, promotion: 'mst', goldCost: 18400, ticksTotal: 3, count: 6 },
+        { stackId: 'steeljaw-vet', mark: '🐺', name: 'Steeljaw (A-1)', categoryId: 'beasts', tier: 4, promotion: 'vet', goldCost: 11500, ticksTotal: 3, count: 4 },
         { stackId: 'wolf-mst', mark: '🐺', name: 'War-Howler (A-2)', categoryId: 'beasts', tier: 3, promotion: 'mst', goldCost: 1300, ticksTotal: 3, count: 1 }
     ]);
 
@@ -674,7 +674,7 @@
         const allCostLabel = formatInfirmaryHealGold(sumAllInfirmaryHealCost());
         return (
             '<div class="age-infirmary-workspace">'
-            + '<p class="age-settlement-venue-infirmary-copy">Restore injured units at this settlement infirmary. High-tier stacks carry an exponential heal surcharge at peak injury—tier 4 armies can cost millions to restore all at once—then gold drops each tick until the final tick before natural recovery (10% above catalog purchase cost), and units recover for free.</p>'
+            + '<p class="age-settlement-venue-infirmary-copy">Restore injured units at this settlement infirmary. Each unit\'s heal gold rises with tier and how many recovery ticks the wound needs—no single unit exceeds five hundred thousand gold, but full high-tier rosters can still total millions—then costs drop each tick until the final tick before natural recovery (10% above catalog purchase cost), and units recover for free.</p>'
             + renderInfirmaryInjuredList()
             + '<section class="age-infirmary-actions" aria-label="Infirmary healing actions">'
             + '<div class="age-settlement-venue-infirmary-actions">'

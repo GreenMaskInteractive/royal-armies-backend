@@ -2,9 +2,8 @@
  * RIFT — Infirmary injury recovery ticks and decaying heal-gold costs.
  * Mirrors nexus-infirmary-recovery.js (keep tier/heal constants in sync).
  *
- * Peak heal gold scales exponentially by unit tier (tier 4+ reaches millions for
- * full high-tier rosters). Costs decay each Age tick until the penultimate tick,
- * then units recover for free on the final tick.
+ * Per-unit heal gold rises with tier and injury length (recovery ticks), capped
+ * below half a million. Full high-tier rosters still reach millions in total.
  */
 (function initRoyalArmiesInfirmaryRecovery(global) {
     'use strict';
@@ -15,6 +14,12 @@
     /** Peak instant-heal multiplier applied on the injury tick (before decay). */
     const INFIRMARY_PEAK_HEAL_MULTIPLIER = 2;
 
+    /** No single injured unit may exceed this rush-heal cost. */
+    const INFIRMARY_MAX_UNIT_HEAL_COST = 499999;
+
+    /** Each extra recovery tick deepens the peak heal bill (+25% per tick beyond the first). */
+    const INFIRMARY_INJURY_TICK_STEP = 0.25;
+
     const HEAL_COST_MULTIPLIER_BY_RANK = Object.freeze({
         1: 1,
         2: 1,
@@ -22,6 +27,16 @@
         4: 1.02,
         5: 1.03,
         6: 1.05
+    });
+
+    /** Additive tier surcharge on peak heal (tier 4 ≈ +55%, tier 6 ≈ +110%). */
+    const INFIRMARY_TIER_HEAL_SURCHARGE = Object.freeze({
+        1: 0.10,
+        2: 0.20,
+        3: 0.35,
+        4: 0.55,
+        5: 0.80,
+        6: 1.10
     });
 
     const RANK_BY_PROMOTION = Object.freeze({
@@ -33,26 +48,48 @@
         elite: 6
     });
 
-    /**
-     * Each tier doubles the peak heal surcharge (tier 4 = 8×, tier 6 = 32×).
-     * Floor heal stays at catalog purchase + penultimate premium (no tier surcharge).
-     */
+    function normalizeTier(tier) {
+        return Math.max(1, Math.min(6, Math.floor(Number(tier) || 1)));
+    }
+
+    function normalizeTicksTotal(ticksTotal) {
+        return Math.max(1, Math.min(6, Math.floor(Number(ticksTotal) || 1)));
+    }
+
+    function resolveTierHealSurcharge(tier) {
+        return INFIRMARY_TIER_HEAL_SURCHARGE[normalizeTier(tier)] || INFIRMARY_TIER_HEAL_SURCHARGE[1];
+    }
+
     function resolveTierHealMultiplier(tier) {
-        const normalizedTier = Math.max(1, Math.min(6, Math.floor(Number(tier) || 1)));
-        return Math.pow(2, normalizedTier - 1);
+        return 1 + resolveTierHealSurcharge(tier);
+    }
+
+    function resolveInjuryTickMultiplier(ticksTotal) {
+        const ticks = normalizeTicksTotal(ticksTotal);
+        return 1 + ((ticks - 1) * INFIRMARY_INJURY_TICK_STEP);
     }
 
     function resolvePromotionRank(promotion) {
         return RANK_BY_PROMOTION[String(promotion || '').trim().toLowerCase()] || 1;
     }
 
-    function resolvePeakHealCost(purchaseGold, promotion, tier) {
+    function clampUnitHealCost(amount) {
+        const value = Math.max(0, Math.floor(Number(amount) || 0));
+        if (!value) return 0;
+        return Math.min(INFIRMARY_MAX_UNIT_HEAL_COST, value);
+    }
+
+    function resolvePeakHealCost(purchaseGold, promotion, tier, ticksTotal) {
         const purchase = Math.max(0, Math.floor(Number(purchaseGold) || 0));
         if (!purchase) return 0;
         const rank = resolvePromotionRank(promotion);
         const rankMultiplier = HEAL_COST_MULTIPLIER_BY_RANK[rank] || 1;
-        const tierMultiplier = resolveTierHealMultiplier(tier);
-        return Math.max(1, Math.ceil(purchase * INFIRMARY_PEAK_HEAL_MULTIPLIER * rankMultiplier * tierMultiplier));
+        const tierMultiplier = 1 + resolveTierHealSurcharge(tier);
+        const injuryTickMultiplier = resolveInjuryTickMultiplier(ticksTotal);
+        const raw = Math.ceil(
+            purchase * INFIRMARY_PEAK_HEAL_MULTIPLIER * rankMultiplier * tierMultiplier * injuryTickMultiplier
+        );
+        return Math.max(1, clampUnitHealCost(raw));
     }
 
     function resolvePenultimateHealCost(purchaseGold) {
@@ -65,11 +102,11 @@
         const purchaseGold = Math.max(0, Math.floor(Number(unit?.goldCost ?? unit?.purchaseGold) || 0));
         if (!purchaseGold) return 0;
 
-        const ticksTotal = Math.max(1, Math.floor(Number(unit?.ticksTotal) || 1));
+        const ticksTotal = normalizeTicksTotal(unit?.ticksTotal);
         const ticksRemaining = Math.max(0, Math.floor(Number(unit?.ticksRemaining) || 0));
         if (ticksRemaining <= 0) return 0;
 
-        const peakCost = resolvePeakHealCost(purchaseGold, unit?.promotion, unit?.tier);
+        const peakCost = resolvePeakHealCost(purchaseGold, unit?.promotion, unit?.tier, ticksTotal);
         const floorCost = resolvePenultimateHealCost(purchaseGold);
 
         if (ticksTotal <= 1 || ticksRemaining <= 1) {
@@ -80,7 +117,7 @@
         const decaySpan = Math.max(1, ticksTotal - 1);
         const progress = Math.min(1, Math.max(0, elapsedTicks / decaySpan));
         const interpolated = Math.ceil(peakCost - ((peakCost - floorCost) * progress));
-        return Math.max(floorCost, interpolated);
+        return Math.max(floorCost, clampUnitHealCost(interpolated));
     }
 
     function formatInfirmaryGold(amount) {
@@ -102,8 +139,13 @@
     global.RoyalArmiesInfirmaryRecovery = {
         INFIRMARY_PENULTIMATE_TICK_PREMIUM,
         INFIRMARY_PEAK_HEAL_MULTIPLIER,
+        INFIRMARY_MAX_UNIT_HEAL_COST,
+        INFIRMARY_INJURY_TICK_STEP,
+        INFIRMARY_TIER_HEAL_SURCHARGE,
         HEAL_COST_MULTIPLIER_BY_RANK,
+        resolveTierHealSurcharge,
         resolveTierHealMultiplier,
+        resolveInjuryTickMultiplier,
         resolveInfirmaryHealCost,
         resolvePeakHealCost,
         resolvePenultimateHealCost,
