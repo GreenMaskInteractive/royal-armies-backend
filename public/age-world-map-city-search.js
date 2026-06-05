@@ -92,11 +92,23 @@
         syncCenterButton();
     }
 
+    function isPlanEditorOpen() {
+        const frame = global.document.getElementById('age-world-map-frame');
+        return Boolean(frame?.classList.contains('is-plan-editor-open'));
+    }
+
     function hideSuggestions() {
         if (!els.suggest) return;
         els.suggest.hidden = true;
         els.suggest.innerHTML = '';
         els.input?.setAttribute('aria-expanded', 'false');
+    }
+
+    function dismissSearchUi() {
+        hideSuggestions();
+        if (els.input && global.document.activeElement === els.input) {
+            els.input.blur();
+        }
     }
 
     function renderSuggestions(matches) {
@@ -211,12 +223,26 @@
         els.suggest = global.document.getElementById('age-world-map-city-search-suggest');
     }
 
+    function watchPlanEditorVisibility() {
+        const frame = global.document.getElementById('age-world-map-frame');
+        if (!frame || frame.dataset.citySearchPlanWatch === '1') return;
+        frame.dataset.citySearchPlanWatch = '1';
+
+        const observer = new MutationObserver(() => {
+            if (isPlanEditorOpen()) {
+                dismissSearchUi();
+            }
+        });
+        observer.observe(frame, { attributes: true, attributeFilter: ['class'] });
+    }
+
     function enable() {
         cacheElements();
         if (!els.root || !els.input || !els.centerBtn) return false;
 
         rebuildCityEntries();
         bindEvents();
+        watchPlanEditorVisibility();
         syncCenterButton();
         return true;
     }

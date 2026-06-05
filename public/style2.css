@@ -18866,16 +18866,23 @@ html.age-world-map-pan-locked #cursor-click-fx-layer {
 .age-world-map-city-search {
     position: absolute;
     top: calc(var(--game-region-map-bezel, 0px) + 12px);
-    left: 50%;
-    transform: translateX(-50%);
+    right: calc(var(--game-region-map-bezel, 0px) + 12px);
+    left: auto;
     z-index: 9;
     display: flex;
     flex-direction: column;
-    align-items: stretch;
+    align-items: flex-end;
     gap: 6px;
-    min-width: min(420px, calc(100% - 2 * var(--game-region-map-bezel, 0px) - 48px));
-    max-width: min(520px, calc(100% - 2 * var(--game-region-map-bezel, 0px) - 24px));
+    min-width: min(300px, calc(100% - 2 * var(--game-region-map-bezel, 0px) - 120px));
+    max-width: min(380px, calc(100% - 2 * var(--game-region-map-bezel, 0px) - 24px));
     pointer-events: auto;
+    transition: opacity 0.2s ease, visibility 0.2s ease;
+}
+
+.age-world-map-frame.is-plan-editor-open .age-world-map-city-search {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none !important;
 }
 
 .age-world-map-city-search-label {
@@ -18885,7 +18892,7 @@ html.age-world-map-pan-locked #cursor-click-fx-layer {
     letter-spacing: 0.12em;
     text-transform: uppercase;
     color: rgba(244, 230, 200, 0.82);
-    text-align: center;
+    text-align: right;
     text-shadow: 0 1px 6px rgba(0, 0, 0, 0.85);
 }
 
@@ -18894,6 +18901,7 @@ html.age-world-map-pan-locked #cursor-click-fx-layer {
     flex-direction: row;
     align-items: stretch;
     gap: 8px;
+    width: 100%;
 }
 
 .age-world-map-city-search-input {
