@@ -36,14 +36,6 @@
         kingdom: 'NPC Battle Simulation Training, Street Patrol, Civilian Transport, Trade Convoy, Border Patrol, Player Bounties (PvP Quests)'
     };
 
-    const BORDER_VENUE_COPY = {
-        village: 'View ally, neutral, or enemy armies bordering your current city, if any.',
-        town: 'View bordering armies; engage in PvP when at war with a bordering nation; spy on individual player armies to gauge strength before attacking.',
-        city: 'View ally, neutral, or enemy armies bordering your current city, if any.',
-        citadel: 'View ally, neutral, or enemy armies bordering your current city, if any.',
-        kingdom: 'View ally, neutral, or enemy armies bordering your current city, if any.'
-    };
-
     const VENUE_MARKS = {
         'village-center': '◆',
         'town-square': '◆',
@@ -57,7 +49,6 @@
         blacksmith: '⚒',
         armory: '⧉',
         arenas: '⚜',
-        border: '⌁',
         'war-room': '⚔'
     };
 
@@ -95,12 +86,6 @@
                 id: 'blacksmith',
                 label: 'Blacksmith',
                 description: 'Purchase weapons, armor, and other battle-useful tools.'
-            },
-            {
-                id: 'border',
-                label: 'Border',
-                description: BORDER_VENUE_COPY.village,
-                placement: 'bottom'
             }
         ],
         town: [
@@ -123,12 +108,6 @@
                 id: 'blacksmith',
                 label: 'Blacksmith',
                 description: 'Purchase weapons, armor, and other battle-useful tools.'
-            },
-            {
-                id: 'border',
-                label: 'Border',
-                description: BORDER_VENUE_COPY.town,
-                placement: 'bottom'
             }
         ],
         city: [
@@ -166,12 +145,6 @@
                 id: 'armory',
                 label: 'Armory',
                 description: 'Upgrade weapons, armor, and effects for battle-useful tools.'
-            },
-            {
-                id: 'border',
-                label: 'Border',
-                description: BORDER_VENUE_COPY.city,
-                placement: 'bottom'
             }
         ],
         citadel: [
@@ -214,12 +187,6 @@
                 id: 'armory',
                 label: 'Armory',
                 description: 'Upgrade weapons, armor, and effects for battle-useful tools.'
-            },
-            {
-                id: 'border',
-                label: 'Border',
-                description: BORDER_VENUE_COPY.citadel,
-                placement: 'bottom'
             }
         ],
         kingdom: [
@@ -257,12 +224,6 @@
                 id: 'armory',
                 label: 'Armory',
                 description: 'Upgrade weapons, armor, and effects for battle-useful tools.'
-            },
-            {
-                id: 'border',
-                label: 'Border',
-                description: BORDER_VENUE_COPY.kingdom,
-                placement: 'bottom'
             }
         ]
     };
@@ -562,14 +523,11 @@
             const placementClass = venue.placement === 'bottom'
                 ? ' age-settlement-menu-item--bottom'
                 : '';
-            const borderClass = venue.id === 'border'
-                ? ' age-settlement-menu-item--border'
-                : '';
             const mark = escapeSettlementMenuHtml(resolveVenueMark(venue.id));
             const label = escapeSettlementMenuHtml(venue.label);
 
             return (
-                `<button type="button" class="age-settlement-menu-item${placementClass}${borderClass}"`
+                `<button type="button" class="age-settlement-menu-item${placementClass}"`
                 + ` data-settlement-venue="${escapeSettlementMenuHtml(venue.id)}"`
                 + ` aria-label="Open ${label} workspace">`
                 + `<span class="age-settlement-menu-item-mark" aria-hidden="true">${mark}</span>`
@@ -640,8 +598,8 @@
         }
 
         if (settlementTabBtn) {
-            settlementTabBtn.textContent = settlementName;
-            settlementTabBtn.setAttribute('title', settlementName);
+            settlementTabBtn.textContent = 'Buildings';
+            settlementTabBtn.setAttribute('title', 'Buildings');
         }
 
         if (tierEl) {
@@ -739,10 +697,6 @@
         }
 
         global.dispatchEvent(new CustomEvent('royal-armies-settlement-venue-open', { detail }));
-
-        if (venueId === 'border') {
-            global.console.info('[RIFT] Border selected — battle training (coming soon).');
-        }
     }
 
     function setActiveView(view, options = {}) {

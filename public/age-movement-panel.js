@@ -225,8 +225,8 @@
 
         const settlementTabBtn = global.document.getElementById('age-city-info-tab-btn-settlement');
         if (settlementTabBtn) {
-            settlementTabBtn.textContent = settlementName;
-            settlementTabBtn.setAttribute('title', settlementName);
+            settlementTabBtn.textContent = 'Buildings';
+            settlementTabBtn.setAttribute('title', 'Buildings');
         }
 
         const kindLabel = global.document.getElementById('age-movement-settlement-kind-label');
