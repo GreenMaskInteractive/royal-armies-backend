@@ -2036,10 +2036,11 @@
                 els.drawer.style.top = drawerTop;
             }
         } catch (err) {
+            const payload = global.RoyalArmiesAgeMovement?.formatActionError?.(err) || err;
             if (typeof global.showRiftError === 'function') {
-                await global.showRiftError(err?.code || err?.message || err, 'Movement');
+                await global.showRiftError(payload, 'Movement');
             } else if (typeof global.showPortalAlert === 'function') {
-                await global.showPortalAlert(err?.message || 'Movement action failed.', 'Movement');
+                await global.showPortalAlert(payload?.message || 'Movement action failed.', 'Movement');
             }
         } finally {
             drawerMovementBusy = false;

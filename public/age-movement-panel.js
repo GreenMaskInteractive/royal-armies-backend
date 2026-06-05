@@ -457,10 +457,11 @@
             global.RoyalArmiesAgeWorldMap?.refreshPlayerCity?.();
             global.RoyalArmiesAgeWorldMap?.refreshNationCityHighlights?.();
         } catch (err) {
+            const payload = global.RoyalArmiesAgeMovement?.formatActionError?.(err) || err;
             if (typeof global.showRiftError === 'function') {
-                await global.showRiftError(err?.code || err?.message || err, 'Travel');
+                await global.showRiftError(payload, 'Travel');
             } else if (typeof global.showPortalAlert === 'function') {
-                await global.showPortalAlert(err?.message || 'Travel failed.', 'Travel');
+                await global.showPortalAlert(payload?.message || 'Travel failed.', 'Travel');
             }
         } finally {
             movementRouteBusy = false;

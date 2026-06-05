@@ -162,6 +162,85 @@
         return path;
     }
 
+    function usesCrossOriginApi() {
+        return typeof global.isLiveStaticPreviewHost === 'function' && global.isLiveStaticPreviewHost();
+    }
+
+    function resolveApiFetchInit(overrides) {
+        return {
+            credentials: usesCrossOriginApi() ? 'include' : 'same-origin',
+            cache: 'no-store',
+            ...overrides
+        };
+    }
+
+    function isFetchConnectionFailure(err) {
+        const msg = String(err?.message || err || '').toLowerCase();
+        return msg.includes('failed to fetch')
+            || msg.includes('fetch failed')
+            || msg.includes('networkerror')
+            || msg.includes('network request failed')
+            || msg.includes('connection refused')
+            || msg.includes('load failed');
+    }
+
+    function formatActionError(err) {
+        if (typeof global.isRoyalArmiesApiReachable === 'function' && !global.isRoyalArmiesApiReachable()) {
+            return {
+                code: 'RIFT-NET-001',
+                message: 'Could not reach the game server. Run node server.js on port 3000 while using Live Server (:5500).'
+            };
+        }
+
+        if (isFetchConnectionFailure(err)) {
+            if (usesCrossOriginApi()) {
+                return {
+                    code: 'RIFT-NET-001',
+                    message: 'Could not reach the game server. Run node server.js on port 3000 while using Live Server (:5500).'
+                };
+            }
+            if (typeof global.isLocalDevelopmentHost === 'function' && global.isLocalDevelopmentHost()) {
+                return {
+                    code: 'RIFT-NET-001',
+                    message: 'Could not reach the game server. Start it with node server.js.'
+                };
+            }
+            return { code: 'RIFT-NET-001' };
+        }
+
+        const code = String(err?.code || '').trim();
+        if (code) {
+            return { code, message: String(err?.message || '').trim() || undefined };
+        }
+
+        return {
+            code: 'NEXUS-GEN-001',
+            message: String(err?.message || 'Movement request failed.').trim()
+        };
+    }
+
+    function toMovementError(err) {
+        const formatted = formatActionError(err);
+        const next = new Error(formatted.message || 'Movement request failed.');
+        next.code = formatted.code;
+        return next;
+    }
+
+    async function fetchMovementApi(path, init) {
+        try {
+            const response = await fetch(resolveApiUrl(path), resolveApiFetchInit(init));
+            if (typeof global.markRoyalArmiesApiReachable === 'function') {
+                global.markRoyalArmiesApiReachable();
+            }
+            return response;
+        } catch (err) {
+            if (typeof global.markRoyalArmiesApiUnreachable === 'function') {
+                global.markRoyalArmiesApiUnreachable();
+            }
+            throw toMovementError(err);
+        }
+    }
+
     function resolveUsername() {
         const saved = global.localStorage.getItem('activeCommanderUser');
         if (saved && saved.trim()) return saved.trim();
@@ -300,9 +379,9 @@
         if (!username) return null;
 
         try {
-            const response = await fetch(
-                resolveApiUrl(`/api/portal/age/movement-state?username=${encodeURIComponent(username)}`),
-                { credentials: 'same-origin' }
+            const response = await fetchMovementApi(
+                `/api/portal/age/movement-state?username=${encodeURIComponent(username)}`,
+                { method: 'GET' }
             );
             const payload = await response.json().catch(() => ({}));
             if (!response.ok) {
@@ -351,9 +430,8 @@
             throw err;
         }
 
-        const response = await fetch(resolveApiUrl(path), {
+        const response = await fetchMovementApi(path, {
             method: 'POST',
-            credentials: 'same-origin',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 username,
@@ -383,9 +461,8 @@
                 throw err;
             }
 
-            const response = await fetch(resolveApiUrl('/api/portal/age/army-groups/attack'), {
+            const response = await fetchMovementApi('/api/portal/age/army-groups/attack', {
                 method: 'POST',
-                credentials: 'same-origin',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     username,
@@ -538,6 +615,7 @@
         travel,
         assault,
         transferOwnership,
+        formatActionError,
         resolveCityHolder,
         resolveCityLoser,
         getBorderActionHints,

@@ -7314,55 +7314,62 @@ app.post('/api/portal/age/guild/bounties/claim-pvp', (req, res) => {
 });
 
 app.post('/api/portal/age/travel', (req, res) => {
-    const username = resolveLedgerCommanderUsername(req.body?.username || '');
-    if (!username) {
-        return sendApiError(res, 'NEXUS-GEN-002');
+    try {
+        const username = resolveLedgerCommanderUsername(req.body?.username || '');
+        if (!username) {
+            return sendApiError(res, 'NEXUS-GEN-002');
+        }
+
+        const commander = db.get('commanders').find({ username }).value();
+        if (!commander) {
+            return sendApiError(res, 'NEXUS-GEN-004');
+        }
+
+        const gameNation = resolveCommanderMapNationKey(commander);
+        if (!gameNation) {
+            return sendApiError(res, 'NEXUS-AGE-008');
+        }
+
+        const targetCityId = String(req.body?.targetCityId || '').trim();
+        const movement = readCommanderMovementRecord(username, gameNation);
+        const store = readAgeMovementStore();
+
+        const validation = validateTravel(
+            gameNation,
+            movement.catalogCityId,
+            targetCityId,
+            store.cityHolders
+        );
+        if (validation.errorCode) {
+            return sendApiError(res, validation.errorCode);
+        }
+
+        const spend = spendMovePoints(movement, validation.connection?.movePointCost || 1);
+        if (spend.errorCode) {
+            return sendApiError(res, spend.errorCode);
+        }
+
+        const resolvedCityId = validation.targetCity?.id || targetCityId;
+        const nextRecord = writeCommanderMovementRecord(username, {
+            ...movement,
+            catalogCityId: resolvedCityId,
+            movePoints: spend.movePoints,
+            lastMovePointRegenAt: spend.lastMovePointRegenAt
+        });
+
+        res.json({
+            status: 'ok',
+            action: 'travel',
+            ...buildAgeMovementStatePayload(username, commander),
+            catalogCityId: nextRecord.catalogCityId,
+            movePoints: nextRecord.movePoints,
+            lastMovePointRegenAt: nextRecord.lastMovePointRegenAt,
+            targetCityId: resolvedCityId
+        });
+    } catch (err) {
+        console.error('[NEXUS] POST /api/portal/age/travel failed:', err);
+        return sendApiError(res, 'NEXUS-GEN-001');
     }
-
-    const commander = db.get('commanders').find({ username }).value();
-    if (!commander) {
-        return sendApiError(res, 'NEXUS-GEN-004');
-    }
-
-    const gameNation = resolveCommanderMapNationKey(commander);
-    if (!gameNation) {
-        return sendApiError(res, 'NEXUS-AGE-008');
-    }
-
-    const targetCityId = String(req.body?.targetCityId || '').trim();
-    const movement = readCommanderMovementRecord(username, gameNation);
-    const store = readAgeMovementStore();
-
-    const validation = validateTravel(
-        gameNation,
-        movement.catalogCityId,
-        targetCityId,
-        store.cityHolders
-    );
-    if (validation.errorCode) {
-        return sendApiError(res, validation.errorCode);
-    }
-
-    const spend = spendMovePoints(movement, validation.connection?.movePointCost || 1);
-    if (spend.errorCode) {
-        return sendApiError(res, spend.errorCode);
-    }
-
-    const nextRecord = writeCommanderMovementRecord(username, {
-        catalogCityId: targetCityId,
-        movePoints: spend.movePoints,
-        lastMovePointRegenAt: spend.lastMovePointRegenAt
-    });
-
-    res.json({
-        status: 'ok',
-        action: 'travel',
-        ...buildAgeMovementStatePayload(username, commander),
-        catalogCityId: nextRecord.catalogCityId,
-        movePoints: nextRecord.movePoints,
-        lastMovePointRegenAt: nextRecord.lastMovePointRegenAt,
-        targetCityId
-    });
 });
 
 app.post('/api/portal/age/assault', (req, res) => {
