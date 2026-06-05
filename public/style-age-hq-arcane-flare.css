@@ -29,7 +29,8 @@ body[data-age-council-room-page="true"] {
 .hq-arcane-chrome--page {
     position: fixed;
     inset: var(--age-map-slot-top, 0) 0 var(--age-map-slot-bottom, 0) 0;
-    z-index: 3;
+    z-index: 2;
+    pointer-events: none;
 }
 
 .hq-arcane-corner {
@@ -209,7 +210,7 @@ body[data-age-council-room-page="true"] .is-hq-arcane-themed > *:not(.hq-arcane-
 .is-hq-arcane-themed > .hq-arcane-border-light {
     position: absolute;
     inset: 0;
-    z-index: 3;
+    z-index: 2;
     pointer-events: none;
     border-radius: 2px;
     padding: 2px;
@@ -251,14 +252,16 @@ body[data-age-council-room-page="true"] .is-hq-arcane-themed > *:not(.hq-arcane-
 /* —— Header stacking + crest sigil (colors from style-age-council-room.css) —— */
 .is-hq-arcane-themed .age-council-room-header {
     position: relative;
-    z-index: 3;
+    z-index: 12;
+    pointer-events: auto;
 }
 
 .is-hq-arcane-themed .age-council-room-header .age-hq-manager-btn,
 .is-hq-arcane-themed .age-council-room-header .age-age-center-modal-close,
-.is-hq-arcane-themed .age-council-room-header .age-hq-dispatch-panel {
+.is-hq-arcane-themed .age-council-room-header .age-hq-dispatch-panel,
+.is-hq-arcane-themed .age-council-room-header .age-hq-dispatch-btn {
     position: relative;
-    z-index: 4;
+    z-index: 13;
     pointer-events: auto;
 }
 

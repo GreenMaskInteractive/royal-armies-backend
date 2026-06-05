@@ -14,7 +14,16 @@
 }
 
 /* Panel shell only — header stays pinned; margin shifts nation/manager panels down. */
+.age-council-room-workspace > .age-council-room-header {
+    position: relative;
+    z-index: 12;
+    flex-shrink: 0;
+    pointer-events: auto;
+}
+
 .age-council-room-workspace > .age-council-room-shell {
+    position: relative;
+    z-index: 1;
     margin-top: var(--hq-content-inset-top);
 }
 
