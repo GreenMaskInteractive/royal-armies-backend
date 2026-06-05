@@ -16,10 +16,27 @@
         'age-guild-training-open'
     ]);
 
-    function isAnyWorkspaceOpen() {
+    const VISIBLE_WORKSPACE_SELECTORS = Object.freeze([
+        '#age-settlement-venue-workspace:not([hidden])',
+        '#age-barracks-workspace:not([hidden])',
+        '#age-unit-evolution-workspace:not([hidden])',
+        '#age-guild-workspace:not([hidden])'
+    ]);
+
+    function hasVisibleWorkspaceElement() {
+        const doc = global.document;
+        if (!doc) return false;
+        return VISIBLE_WORKSPACE_SELECTORS.some((selector) => doc.querySelector(selector));
+    }
+
+    function hasWorkspaceBodyClass() {
         const body = global.document?.body;
         if (!body) return false;
         return WORKSPACE_OPEN_BODY_CLASSES.some((cls) => body.classList.contains(cls));
+    }
+
+    function isAnyWorkspaceOpen() {
+        return hasWorkspaceBodyClass() && hasVisibleWorkspaceElement();
     }
 
     function sync() {

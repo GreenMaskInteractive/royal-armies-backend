@@ -6,9 +6,9 @@ body.age-immersive-workspace-open {
     overflow: hidden;
 }
 
+/* Do not hide .age-map-anchor — barracks/guild/venue workspaces live inside it on agealpha.html */
 body.age-immersive-workspace-open #age-world-map,
 body.age-immersive-workspace-open #age-world-map-settlement-bg,
-body.age-immersive-workspace-open .age-map-anchor,
 body.age-immersive-workspace-open .age-map-hud--top,
 body.age-immersive-workspace-open .age-map-hud--left,
 body.age-immersive-workspace-open .age-map-hud--right,
