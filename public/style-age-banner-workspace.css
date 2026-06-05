@@ -361,7 +361,7 @@
 .rift-banner-workspace-backdrop {
     position: absolute;
     inset: 0;
-    background: rgba(2, 3, 6, 0.72);
+    background: rgba(4, 3, 2, 0.74);
     backdrop-filter: blur(4px);
 }
 
@@ -371,14 +371,17 @@
     max-height: min(88vh, 820px);
     display: flex;
     flex-direction: column;
-    border: 1px solid rgba(196, 160, 255, 0.35);
-    border-radius: 12px;
+    border: 1px solid rgba(184, 144, 48, 0.58);
+    border-radius: 4px;
     background:
-        linear-gradient(180deg, rgba(255, 215, 120, 0.05) 0%, transparent 18%),
-        linear-gradient(165deg, rgba(24, 18, 32, 0.98) 0%, rgba(6, 5, 8, 0.99) 100%);
+        linear-gradient(90deg, rgba(255, 215, 0, 0.04) 0%, transparent 12%, transparent 88%, rgba(255, 215, 0, 0.04) 100%),
+        linear-gradient(180deg, rgba(255, 215, 0, 0.08) 0%, transparent 14%),
+        linear-gradient(165deg, rgba(42, 32, 22, 0.99) 0%, rgba(12, 9, 7, 0.99) 52%, rgba(22, 16, 12, 0.98) 100%);
     box-shadow:
-        inset 0 1px 0 rgba(255, 215, 120, 0.1),
-        0 24px 64px rgba(0, 0, 0, 0.82);
+        inset 0 1px 0 rgba(255, 215, 0, 0.16),
+        inset 0 0 80px rgba(0, 0, 0, 0.42),
+        0 28px 64px rgba(0, 0, 0, 0.78),
+        0 0 48px rgba(180, 60, 20, 0.08);
     overflow: hidden;
 }
 
@@ -388,7 +391,7 @@
     justify-content: space-between;
     gap: 12px;
     padding: 18px 20px 14px;
-    border-bottom: 1px solid rgba(196, 160, 255, 0.2);
+    border-bottom: 1px solid rgba(184, 144, 48, 0.28);
 }
 
 .rift-banner-workspace-eyebrow {
@@ -396,7 +399,7 @@
     font-size: 0.68rem;
     letter-spacing: 0.16em;
     text-transform: uppercase;
-    color: rgba(196, 160, 255, 0.78);
+    color: rgba(255, 217, 120, 0.72);
 }
 
 .rift-banner-workspace-title {
@@ -410,12 +413,18 @@
 .rift-banner-workspace-close {
     width: 32px;
     height: 32px;
-    border: 1px solid rgba(196, 160, 255, 0.4);
+    border: 1px solid rgba(184, 144, 48, 0.45);
     border-radius: 4px;
-    background: rgba(0, 0, 0, 0.45);
+    background: rgba(8, 6, 3, 0.82);
     color: #f0e4c8;
     font-size: 1.15rem;
     cursor: pointer;
+}
+
+.rift-banner-workspace-close:hover,
+.rift-banner-workspace-close:focus-visible {
+    border-color: rgba(255, 217, 120, 0.9);
+    color: #ffd978;
 }
 
 .rift-banner-workspace-body {
@@ -434,8 +443,8 @@
     margin-bottom: 14px;
     padding: 10px 12px;
     border-radius: 8px;
-    border: 1px solid rgba(196, 160, 255, 0.22);
-    background: rgba(0, 0, 0, 0.24);
+    border: 1px solid rgba(184, 144, 48, 0.28);
+    background: rgba(0, 0, 0, 0.28);
 }
 
 .rift-banner-workspace-points {
@@ -454,7 +463,7 @@
 .rift-banner-workspace-swap-note {
     margin: 0;
     font-size: 0.72rem;
-    color: rgba(196, 160, 255, 0.78);
+    color: rgba(236, 220, 180, 0.68);
 }
 
 .rift-banner-skill-tree-layout {
@@ -468,12 +477,12 @@
     position: relative;
     overflow: auto;
     padding: 28px 24px 22px;
-    border-radius: 12px;
-    border: 1px solid rgba(255, 215, 120, 0.22);
+    border-radius: 10px;
+    border: 1px solid rgba(184, 144, 48, 0.32);
     background:
-        radial-gradient(ellipse 80% 60% at 50% 0%, rgba(255, 215, 120, 0.08) 0%, transparent 72%),
-        linear-gradient(180deg, rgba(14, 12, 20, 0.96) 0%, rgba(6, 5, 10, 0.98) 100%);
-    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.03);
+        radial-gradient(ellipse 80% 60% at 50% 0%, rgba(255, 215, 120, 0.07) 0%, transparent 72%),
+        linear-gradient(180deg, rgba(28, 22, 16, 0.96) 0%, rgba(10, 8, 6, 0.98) 100%);
+    box-shadow: inset 0 1px 0 rgba(255, 215, 0, 0.08);
 }
 
 .rift-banner-skill-tree-grid {
@@ -554,7 +563,7 @@
     width: 44px;
     height: 4px;
     border-radius: 999px;
-    background: linear-gradient(90deg, rgba(255, 215, 120, 0.65) 0%, rgba(196, 160, 255, 0.35) 100%);
+    background: linear-gradient(90deg, rgba(255, 215, 120, 0.62) 0%, rgba(184, 144, 48, 0.38) 100%);
     box-shadow: 0 0 8px rgba(255, 190, 60, 0.16);
 }
 
@@ -578,7 +587,7 @@
 .rift-banner-skill-path-tag {
     min-width: 92px;
     text-align: right;
-    color: rgba(196, 160, 255, 0.82);
+    color: rgba(236, 220, 180, 0.78);
 }
 
 .rift-banner-skill-tree-fork-rail {
@@ -590,7 +599,7 @@
 .rift-banner-skill-tree-fork-branch {
     position: absolute;
     border-radius: 999px;
-    background: linear-gradient(90deg, rgba(255, 215, 120, 0.55) 0%, rgba(196, 160, 255, 0.28) 100%);
+    background: linear-gradient(90deg, rgba(255, 215, 120, 0.55) 0%, rgba(184, 144, 48, 0.3) 100%);
     box-shadow: 0 0 8px rgba(255, 190, 60, 0.14);
 }
 
@@ -608,7 +617,7 @@
     bottom: 14%;
     width: 4px;
     transform: translateX(-50%);
-    background: linear-gradient(180deg, rgba(255, 215, 120, 0.55) 0%, rgba(196, 160, 255, 0.28) 100%);
+    background: linear-gradient(180deg, rgba(255, 215, 120, 0.55) 0%, rgba(184, 144, 48, 0.3) 100%);
 }
 
 .rift-banner-skill-tree-fork-branch--1 {
@@ -638,7 +647,7 @@
     width: 28px;
     height: 4px;
     border-radius: 999px;
-    background: linear-gradient(90deg, rgba(255, 215, 120, 0.5) 0%, rgba(196, 160, 255, 0.25) 100%);
+    background: linear-gradient(90deg, rgba(255, 215, 120, 0.5) 0%, rgba(184, 144, 48, 0.28) 100%);
 }
 
 .rift-banner-skill-tree-origin {
@@ -668,11 +677,11 @@
         transparent 94deg 150deg,
         rgba(255, 215, 120, 0.08) 150deg 154deg,
         transparent 154deg 210deg,
-        rgba(196, 160, 255, 0.06) 210deg 214deg,
+        rgba(184, 144, 48, 0.06) 210deg 214deg,
         transparent 214deg 270deg,
         rgba(255, 215, 120, 0.08) 270deg 274deg,
         transparent 274deg 330deg,
-        rgba(196, 160, 255, 0.06) 330deg 334deg,
+        rgba(184, 144, 48, 0.06) 330deg 334deg,
         transparent 334deg 360deg
     );
     transform: translate(-50%, -50%);
@@ -689,7 +698,7 @@
     border-radius: 50%;
     border: 3px solid rgba(255, 215, 120, 0.72);
     background:
-        radial-gradient(circle at 50% 35%, rgba(255, 215, 120, 0.18) 0%, rgba(18, 14, 24, 0.96) 68%);
+        radial-gradient(circle at 50% 35%, rgba(255, 215, 120, 0.18) 0%, rgba(22, 16, 12, 0.96) 68%);
     box-shadow:
         0 0 0 4px rgba(255, 215, 120, 0.12),
         0 0 24px rgba(255, 190, 60, 0.22);
@@ -716,7 +725,7 @@
 .rift-banner-skill-tree-origin-rune {
     margin: 0;
     font-size: 0.62rem;
-    color: rgba(230, 210, 255, 0.82);
+    color: rgba(236, 220, 180, 0.72);
 }
 
 .rift-banner-skill-node {
@@ -737,9 +746,9 @@
     height: 72px;
     padding: 0;
     border-radius: 50%;
-    border: 2px solid rgba(255, 255, 255, 0.14);
+    border: 2px solid rgba(184, 144, 48, 0.28);
     background:
-        radial-gradient(circle at 50% 30%, rgba(255, 255, 255, 0.08) 0%, rgba(10, 12, 18, 0.92) 68%);
+        radial-gradient(circle at 50% 30%, rgba(255, 215, 120, 0.08) 0%, rgba(18, 14, 10, 0.94) 68%);
     color: #e8dcc0;
     font-family: 'Cinzel', serif;
     cursor: pointer;
@@ -785,7 +794,7 @@
     text-transform: uppercase;
     text-align: center;
     line-height: 1.35;
-    color: rgba(220, 210, 230, 0.86);
+    color: rgba(236, 220, 180, 0.78);
 }
 
 .rift-banner-skill-node.is-active .rift-banner-skill-node-btn {
@@ -802,16 +811,16 @@
 }
 
 .rift-banner-skill-node.is-unlocked .rift-banner-skill-node-btn {
-    border-color: rgba(120, 220, 160, 0.72);
+    border-color: rgba(184, 144, 48, 0.72);
 }
 
 .rift-banner-skill-node.is-unlocked .rift-banner-skill-node-ring {
-    border-color: rgba(120, 220, 160, 0.45);
-    box-shadow: 0 0 12px rgba(120, 220, 160, 0.18);
+    border-color: rgba(255, 217, 120, 0.45);
+    box-shadow: 0 0 12px rgba(255, 190, 60, 0.18);
 }
 
 .rift-banner-skill-node.is-unlocked .rift-banner-skill-node-tier {
-    color: rgba(196, 255, 220, 0.95);
+    color: rgba(255, 236, 196, 0.95);
 }
 
 .rift-banner-skill-node.is-locked .rift-banner-skill-node-btn {
@@ -828,14 +837,14 @@
     font-size: 0.68rem;
     letter-spacing: 0.06em;
     text-transform: uppercase;
-    color: rgba(196, 160, 255, 0.82);
+    color: rgba(236, 220, 180, 0.72);
 }
 
 .rift-banner-workspace-detail {
     padding: 16px 18px;
     border-radius: 10px;
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    background: rgba(0, 0, 0, 0.28);
+    border: 1px solid rgba(184, 144, 48, 0.24);
+    background: rgba(0, 0, 0, 0.32);
 }
 
 .rift-banner-skill-tree-detail-head {
@@ -871,15 +880,15 @@
 }
 
 .rift-banner-skill-tree-detail-state.is-unlocked {
-    color: rgba(120, 220, 160, 0.95);
-    background: rgba(120, 220, 160, 0.12);
-    border: 1px solid rgba(120, 220, 160, 0.35);
+    color: rgba(255, 217, 120, 0.95);
+    background: rgba(255, 215, 120, 0.1);
+    border: 1px solid rgba(184, 144, 48, 0.42);
 }
 
 .rift-banner-skill-tree-detail-state.is-locked {
-    color: rgba(196, 160, 255, 0.82);
-    background: rgba(196, 160, 255, 0.08);
-    border: 1px solid rgba(196, 160, 255, 0.28);
+    color: rgba(236, 220, 180, 0.72);
+    background: rgba(0, 0, 0, 0.24);
+    border: 1px solid rgba(184, 144, 48, 0.22);
 }
 
 .rift-banner-workspace-detail-title {
@@ -894,13 +903,13 @@
     margin: 0 0 12px;
     font-size: 0.82rem;
     line-height: 1.6;
-    color: rgba(220, 230, 255, 0.9);
+    color: rgba(236, 220, 180, 0.88);
 }
 
 .rift-banner-workspace-detail-note {
     margin: 0;
     font-size: 0.72rem;
-    color: rgba(196, 160, 255, 0.72);
+    color: rgba(236, 220, 180, 0.62);
 }
 
 .rift-banner-workspace-empty {
@@ -922,7 +931,7 @@
     margin: 0;
     font-size: 0.8rem;
     line-height: 1.55;
-    color: rgba(210, 198, 230, 0.82);
+    color: rgba(236, 220, 180, 0.72);
 }
 
 /* ── Blessing toast (discovery-style) ───────────────────────── */
@@ -977,15 +986,15 @@
     overflow: hidden;
     min-width: min(400px, 100%);
     padding: 22px 26px 20px;
-    border: 1px solid rgba(196, 160, 255, 0.45);
-    border-radius: 10px;
+    border: 1px solid rgba(184, 144, 48, 0.52);
+    border-radius: 4px;
     background:
-        linear-gradient(180deg, rgba(196, 160, 255, 0.08) 0%, transparent 22%),
-        linear-gradient(165deg, rgba(28, 20, 40, 0.97) 0%, rgba(6, 5, 8, 0.99) 100%);
+        linear-gradient(180deg, rgba(255, 215, 0, 0.08) 0%, transparent 22%),
+        linear-gradient(165deg, rgba(42, 32, 22, 0.99) 0%, rgba(12, 9, 7, 0.99) 100%);
     box-shadow:
-        inset 0 1px 0 rgba(255, 215, 120, 0.12),
+        inset 0 1px 0 rgba(255, 215, 0, 0.14),
         0 24px 64px rgba(0, 0, 0, 0.82),
-        0 0 48px rgba(196, 160, 255, 0.14);
+        0 0 48px rgba(180, 60, 20, 0.1);
     text-align: center;
 }
 
@@ -995,8 +1004,8 @@
     pointer-events: none;
     z-index: 0;
     background:
-        radial-gradient(ellipse 50% 42% at 50% 38%, rgba(196, 160, 255, 0.22) 0%, transparent 62%),
-        radial-gradient(ellipse 80% 50% at 50% 100%, rgba(255, 215, 120, 0.1) 0%, transparent 70%);
+        radial-gradient(ellipse 50% 42% at 50% 38%, rgba(255, 215, 120, 0.16) 0%, transparent 62%),
+        radial-gradient(ellipse 80% 50% at 50% 100%, rgba(184, 144, 48, 0.1) 0%, transparent 70%);
     animation: ageChurchBannerGlowPulse 2.6s ease-in-out infinite;
 }
 
@@ -1013,15 +1022,15 @@
         transparent 0deg 28deg,
         rgba(255, 215, 120, 0.07) 28deg 32deg,
         transparent 32deg 88deg,
-        rgba(196, 160, 255, 0.05) 88deg 92deg,
+        rgba(184, 144, 48, 0.05) 88deg 92deg,
         transparent 92deg 148deg,
         rgba(255, 215, 120, 0.07) 148deg 152deg,
         transparent 152deg 208deg,
-        rgba(196, 160, 255, 0.05) 208deg 212deg,
+        rgba(184, 144, 48, 0.05) 208deg 212deg,
         transparent 212deg 268deg,
         rgba(255, 215, 120, 0.07) 268deg 272deg,
         transparent 272deg 328deg,
-        rgba(196, 160, 255, 0.05) 328deg 332deg,
+        rgba(184, 144, 48, 0.05) 328deg 332deg,
         transparent 332deg 360deg
     );
     transform: translate(-50%, -50%);
@@ -1035,7 +1044,7 @@
     z-index: 3;
     width: 30px;
     height: 30px;
-    border: 1px solid rgba(196, 160, 255, 0.45);
+    border: 1px solid rgba(184, 144, 48, 0.45);
     border-radius: 4px;
     background: rgba(0, 0, 0, 0.45);
     color: #f0e4c8;
@@ -1050,7 +1059,7 @@
     font-size: 0.68rem;
     letter-spacing: 0.16em;
     text-transform: uppercase;
-    color: rgba(196, 160, 255, 0.85);
+    color: rgba(255, 217, 120, 0.78);
 }
 
 .rift-banner-blessing-toast-kicker {
@@ -1102,11 +1111,11 @@
         transparent 92deg 148deg,
         rgba(255, 215, 120, 0.1) 148deg 152deg,
         transparent 152deg 208deg,
-        rgba(196, 160, 255, 0.07) 208deg 212deg,
+        rgba(184, 144, 48, 0.07) 208deg 212deg,
         transparent 212deg 268deg,
         rgba(255, 215, 120, 0.1) 268deg 272deg,
         transparent 272deg 328deg,
-        rgba(196, 160, 255, 0.07) 328deg 332deg,
+        rgba(184, 144, 48, 0.07) 328deg 332deg,
         transparent 332deg 360deg
     );
     animation: ageChurchBannerRaysSpin 16s linear infinite;
@@ -1137,7 +1146,7 @@
     margin: 0 0 12px;
     font-size: 0.78rem;
     line-height: 1.55;
-    color: rgba(220, 210, 230, 0.88);
+    color: rgba(236, 220, 180, 0.86);
 }
 
 .rift-banner-blessing-toast-footnote {
@@ -1145,7 +1154,7 @@
     z-index: 1;
     margin: 0;
     font-size: 0.74rem;
-    color: rgba(196, 160, 255, 0.78);
+    color: rgba(236, 220, 180, 0.68);
 }
 
 .rift-banner-blessing-toast-link {
