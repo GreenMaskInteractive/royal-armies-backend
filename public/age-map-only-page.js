@@ -50,6 +50,7 @@
         return Boolean(
             target.closest('.age-age-center-modal:not([hidden])')
             || target.closest('.rift-discoveries-workspace-modal:not([hidden])')
+            || target.closest('.rift-banner-workspace-modal:not([hidden])')
             || target.closest('.age-chronicles-battle-pass-modal:not([hidden])')
         );
     }
@@ -372,7 +373,7 @@
             '.age-barracks-workspace, .age-unit-evolution-workspace, .age-guild-workspace,'
             + ' .age-age-center-modal, .age-war-ledger-modal,'
             + ' .commander-hub-overlay, .public-profile-overlay, .player-report-modal,'
-            + ' .age-chronicles-battle-pass-modal, .rift-discoveries-workspace-modal, #age-rank-promotion-overlay'
+            + ' .age-chronicles-battle-pass-modal, .rift-discoveries-workspace-modal, .rift-banner-workspace-modal, #age-rank-promotion-overlay'
         ).forEach((node) => {
             node.hidden = true;
             node.setAttribute('aria-hidden', 'true');

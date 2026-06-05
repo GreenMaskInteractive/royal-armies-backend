@@ -13,7 +13,7 @@
         nation: { glyph: '◆', hint: 'Council & command' },
         records: { glyph: '☰', hint: 'Archives & ledgers' },
         discoveries: { glyph: '✦', hint: 'Relics & mysteries' },
-        banner: { glyph: '⚑', hint: 'Heraldry & colors' },
+        banner: { glyph: '⚑', hint: 'Blessed perk tree' },
         'battle-pass': { glyph: '◈', hint: 'Chronicles rewards' }
     });
     const RADIAL_MENU_IMAGE = 'images/radialmenu.png?v=radialmenu-accent-3';
@@ -230,12 +230,14 @@
         }
     }
 
-    function openBannerWorkspace() {
-        if (typeof global.showPortalAlert === 'function') {
-            void global.showPortalAlert('Banner management is coming soon.', 'Banner');
+    function openBannerWorkspace(event) {
+        if (typeof global.openBannerWorkspace === 'function') {
+            global.openBannerWorkspace(event);
             return;
         }
-        global.console.info('[RIFT] Banner workspace (coming soon).');
+        if (typeof global.showPortalAlert === 'function') {
+            void global.showPortalAlert('Banner perks are unavailable in this session.', 'Banner');
+        }
     }
 
     function openBattlePassWorkspace(event) {

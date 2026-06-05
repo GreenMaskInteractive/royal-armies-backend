@@ -388,23 +388,21 @@
     }
 
     function renderChurchBody() {
+        if (typeof global.RoyalArmiesBanner?.buildChurchWorkspaceHtml === 'function') {
+            return global.RoyalArmiesBanner.buildChurchWorkspaceHtml();
+        }
         return (
-            '<div class="age-army-workspace-split">'
-            + '<section class="age-army-workspace-panel">'
-            + '<h3 class="age-army-workspace-panel-title">Blessed Banner</h3>'
-            + '<p class="age-army-workspace-toolbar-note">Claim a blessed banner to unlock formation perks and morale bonuses for your personal army.</p>'
-            + '<div class="age-army-workspace-link-row">'
-            + '<button type="button" class="age-army-workspace-link-btn" data-army-workspace-action="claim-banner">Claim Banner</button>'
-            + '</div></section>'
-            + '<section class="age-army-workspace-panel">'
-            + '<h3 class="age-army-workspace-panel-title">Perk Tree</h3>'
-            + renderCatalogCards([
-                { id: 'morale', mark: '✦', title: 'Steadfast Morale', desc: 'Reduces attrition after defensive battles.', cost: '1 perk point' },
-                { id: 'march', mark: '✦', title: 'Swift March', desc: 'Improves move point recovery on friendly borders.', cost: '2 perk points' },
-                { id: 'guard', mark: '✦', title: 'Veteran Guard', desc: 'Buffs garrison units stationed in this city.', cost: '2 perk points' }
-            ], 'Unlock')
-            + '</section></div>'
+            '<div class="age-settlement-venue-placeholder">'
+            + '<p class="age-settlement-venue-placeholder-copy">Church blessings are loading. Refresh the page if this message persists.</p>'
+            + '</div>'
         );
+    }
+
+    function refreshChurchWorkspaceBody() {
+        if (activeVenueId !== 'church') return;
+        const bodyEl = global.document.getElementById('age-settlement-venue-body');
+        if (!bodyEl) return;
+        bodyEl.innerHTML = renderChurchBody();
     }
 
     function resolveInfirmaryUnitType(categoryId) {
@@ -985,6 +983,8 @@
             infirmaryTickBound = true;
             global.addEventListener('royalarmies:age-game-tick', onInfirmaryGameTick);
         }
+
+        global.addEventListener('royalarmies:church-blessing-ui-refresh', refreshChurchWorkspaceBody);
     }
 
     function enableAgeSettlementVenueWorkspaces() {
