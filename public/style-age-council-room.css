@@ -2,6 +2,7 @@
 
 .age-council-room-workspace {
     --hq-content-inset-x: 25px;
+    --hq-panel-inset-x: 5px;
     --hq-content-inset-top: 15px;
     position: relative;
     flex: 1 1 auto;
@@ -255,8 +256,8 @@
     gap: 0;
     overflow: hidden;
     box-sizing: border-box;
-    padding-left: var(--hq-content-inset-x);
-    padding-right: var(--hq-content-inset-x);
+    padding-left: calc(var(--hq-content-inset-x) + var(--hq-panel-inset-x));
+    padding-right: calc(var(--hq-content-inset-x) + var(--hq-panel-inset-x));
 }
 
 .age-council-room-column {
