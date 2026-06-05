@@ -50,21 +50,22 @@
     });
 
     const INFIRMARY_DEMO_INJURED_UNITS = Object.freeze([
-        { stackId: 'shieldman-vet', mark: '🛡', name: 'Recruit Shieldman (A)', categoryId: 'infantry', tier: 1, promotion: 'vet', count: 2, recovery: '1 cycle' },
-        { stackId: 'shieldman-std', mark: '🛡', name: 'Recruit Shieldman (A)', categoryId: 'infantry', tier: 1, promotion: 'std', count: 1, recovery: '1 cycle' },
-        { stackId: 'shield-sergeant-elt', mark: '🛡', name: 'Shield Sergeant (A)', categoryId: 'infantry', tier: 2, promotion: 'elite', count: 1, recovery: '2 cycles' },
-        { stackId: 'warder-mst', mark: '✦', name: 'Warder (A)', categoryId: 'magic-infantry', tier: 2, promotion: 'mst', count: 1, recovery: '3 cycles' },
-        { stackId: 'lancer-vet', mark: '⚔', name: 'Royal Lancer (A/B)', categoryId: 'cavalry', tier: 3, promotion: 'vet', count: 1, recovery: '1 cycle' },
-        { stackId: 'dread-knight-std', mark: '⚔', name: 'Dread Knight (A/B)', categoryId: 'cavalry', tier: 2, promotion: 'std', count: 1, recovery: '2 cycles' },
-        { stackId: 'longbow-std', mark: '🏹', name: 'Longbowman (B)', categoryId: 'artillery', tier: 2, promotion: 'std', count: 2, recovery: '2 cycles' },
-        { stackId: 'levy-archer-app', mark: '🏹', name: 'Levy Archer (B)', categoryId: 'artillery', tier: 1, promotion: 'app', count: 1, recovery: '1 cycle' },
-        { stackId: 'wolf-mst', mark: '🐺', name: 'War-Howler (A-2)', categoryId: 'beasts', tier: 3, promotion: 'mst', count: 1, recovery: '2 cycles' },
-        { stackId: 'trained-wolf-vet', mark: '🐺', name: 'Trained Wolf (A-1)', categoryId: 'beasts', tier: 2, promotion: 'vet', count: 1, recovery: '2 cycles' }
+        { stackId: 'shieldman-vet', mark: '🛡', name: 'Recruit Shieldman (A)', categoryId: 'infantry', tier: 1, promotion: 'vet', goldCost: 350, ticksTotal: 2, count: 2 },
+        { stackId: 'shieldman-std', mark: '🛡', name: 'Recruit Shieldman (A)', categoryId: 'infantry', tier: 1, promotion: 'std', goldCost: 350, ticksTotal: 2, count: 1 },
+        { stackId: 'shield-sergeant-elt', mark: '🛡', name: 'Shield Sergeant (A)', categoryId: 'infantry', tier: 2, promotion: 'elite', goldCost: 2100, ticksTotal: 3, count: 1 },
+        { stackId: 'warder-mst', mark: '✦', name: 'Warder (A)', categoryId: 'magic-infantry', tier: 2, promotion: 'mst', goldCost: 2800, ticksTotal: 3, count: 1 },
+        { stackId: 'lancer-vet', mark: '⚔', name: 'Royal Lancer (A/B)', categoryId: 'cavalry', tier: 3, promotion: 'vet', goldCost: 26800, ticksTotal: 2, count: 1 },
+        { stackId: 'dread-knight-std', mark: '⚔', name: 'Dread Knight (A/B)', categoryId: 'cavalry', tier: 2, promotion: 'std', goldCost: 4350, ticksTotal: 3, count: 1 },
+        { stackId: 'longbow-std', mark: '🏹', name: 'Longbowman (B)', categoryId: 'artillery', tier: 2, promotion: 'std', goldCost: 1220, ticksTotal: 3, count: 2 },
+        { stackId: 'levy-archer-app', mark: '🏹', name: 'Levy Archer (B)', categoryId: 'artillery', tier: 1, promotion: 'app', goldCost: 240, ticksTotal: 2, count: 1 },
+        { stackId: 'wolf-mst', mark: '🐺', name: 'War-Howler (A-2)', categoryId: 'beasts', tier: 3, promotion: 'mst', goldCost: 1300, ticksTotal: 3, count: 1 },
+        { stackId: 'trained-wolf-vet', mark: '🐺', name: 'Trained Wolf (A-1)', categoryId: 'beasts', tier: 2, promotion: 'vet', goldCost: 1840, ticksTotal: 2, count: 1 }
     ]);
 
     let bound = false;
+    let infirmaryTickBound = false;
     let activeVenueId = '';
-    /** @type {Array<{ id: string, stackId: string, mark: string, name: string, label: string, categoryId: string, unitType: string, tier: number, promotion: string, recovery: string }>} */
+    /** @type {Array<{ id: string, stackId: string, mark: string, name: string, label: string, categoryId: string, unitType: string, tier: number, promotion: string, goldCost: number, ticksTotal: number, ticksRemaining: number }>} */
     let infirmaryInjuredUnits = [];
     /** @type {Set<string>} */
     let infirmarySelectedUnitIds = new Set();
@@ -432,6 +433,52 @@
         });
     }
 
+    function infirmaryRecoveryApi() {
+        return global.RoyalArmiesInfirmaryRecovery || null;
+    }
+
+    function resolveInfirmaryUnitHealCost(unit) {
+        const api = infirmaryRecoveryApi();
+        if (api?.resolveInfirmaryHealCost) {
+            return api.resolveInfirmaryHealCost(unit);
+        }
+        return Math.max(0, Math.floor(Number(unit?.goldCost) || 0));
+    }
+
+    function formatInfirmaryHealGold(amount) {
+        const api = infirmaryRecoveryApi();
+        if (api?.formatInfirmaryGold) {
+            return api.formatInfirmaryGold(amount);
+        }
+        return `${Math.max(0, Math.floor(Number(amount) || 0)).toLocaleString('en-US')} gold`;
+    }
+
+    function formatInfirmaryTicksRemaining(ticksRemaining) {
+        const api = infirmaryRecoveryApi();
+        if (api?.formatTicksRemaining) {
+            return api.formatTicksRemaining(ticksRemaining);
+        }
+        const ticks = Math.max(0, Math.floor(Number(ticksRemaining) || 0));
+        return ticks === 1 ? '1 tick' : `${ticks} ticks`;
+    }
+
+    function sumSelectedInfirmaryHealCost() {
+        const selected = infirmaryInjuredUnits.filter((unit) => infirmarySelectedUnitIds.has(unit.id));
+        const api = infirmaryRecoveryApi();
+        if (api?.sumInfirmaryHealCosts) {
+            return api.sumInfirmaryHealCosts(selected);
+        }
+        return selected.reduce((sum, unit) => sum + resolveInfirmaryUnitHealCost(unit), 0);
+    }
+
+    function sumAllInfirmaryHealCost() {
+        const api = infirmaryRecoveryApi();
+        if (api?.sumInfirmaryHealCosts) {
+            return api.sumInfirmaryHealCosts(infirmaryInjuredUnits);
+        }
+        return infirmaryInjuredUnits.reduce((sum, unit) => sum + resolveInfirmaryUnitHealCost(unit), 0);
+    }
+
     function buildInfirmaryUnitRoster() {
         const units = [];
         INFIRMARY_DEMO_INJURED_UNITS.forEach((stack) => {
@@ -439,6 +486,8 @@
             const unitType = resolveInfirmaryUnitType(stack.categoryId);
             const tier = Math.max(1, Math.floor(Number(stack.tier) || 1));
             const promotion = String(stack.promotion || 'std').trim().toLowerCase();
+            const goldCost = Math.max(0, Math.floor(Number(stack.goldCost) || 0));
+            const ticksTotal = Math.max(1, Math.floor(Number(stack.ticksTotal) || 1));
             for (let index = 0; index < count; index += 1) {
                 const slot = index + 1;
                 units.push({
@@ -451,11 +500,38 @@
                     unitType,
                     tier,
                     promotion,
-                    recovery: stack.recovery
+                    goldCost,
+                    ticksTotal,
+                    ticksRemaining: ticksTotal
                 });
             }
         });
         return units;
+    }
+
+    function advanceInfirmaryRecoveryTicks(stepCount = 1) {
+        const step = Math.max(1, Math.floor(Number(stepCount) || 1));
+        if (!infirmaryInjuredUnits.length) return { recovered: 0 };
+
+        let recovered = 0;
+        infirmaryInjuredUnits = infirmaryInjuredUnits.flatMap((unit) => {
+            const nextRemaining = Math.max(0, Math.floor(Number(unit.ticksRemaining) || 0) - step);
+            if (nextRemaining <= 0) {
+                recovered += 1;
+                infirmarySelectedUnitIds.delete(unit.id);
+                return [];
+            }
+            return [{ ...unit, ticksRemaining: nextRemaining }];
+        });
+
+        if (activeVenueId === 'infirmary') {
+            refreshInfirmaryWorkspaceBody();
+        }
+        return { recovered };
+    }
+
+    function onInfirmaryGameTick() {
+        advanceInfirmaryRecoveryTicks(1);
     }
 
     function groupInfirmaryUnitsForDisplay(units) {
@@ -510,24 +586,27 @@
         const selectedCount = countInfirmarySelectedUnits();
         if (!totalInjured) return '';
         if (!selectedCount) {
-            return `${totalInjured} injured ${totalInjured === 1 ? 'unit' : 'units'} · click units to select for healing`;
+            return `${totalInjured} injured ${totalInjured === 1 ? 'unit' : 'units'} · heal gold drops each tick · click to select`;
         }
-        return `${selectedCount} selected for healing · ${totalInjured} injured ${totalInjured === 1 ? 'unit' : 'units'} total`;
+        return `${selectedCount} selected · ${formatInfirmaryHealGold(sumSelectedInfirmaryHealCost())} · ${totalInjured} injured total`;
     }
 
     function renderInfirmaryUnitRow(unit) {
         const isSelected = infirmarySelectedUnitIds.has(unit.id);
+        const healCost = resolveInfirmaryUnitHealCost(unit);
+        const tickLabel = formatInfirmaryTicksRemaining(unit.ticksRemaining);
+        const healGoldLabel = formatInfirmaryHealGold(healCost);
         return (
             `<li class="age-infirmary-injured-item" role="presentation">`
             + `<button type="button" class="age-infirmary-injured-row${isSelected ? ' is-selected' : ''}"`
             + ` data-infirmary-unit-id="${escapeHtml(unit.id)}"`
             + ` role="option"`
             + ` aria-selected="${isSelected ? 'true' : 'false'}"`
-            + ` aria-label="${escapeHtml(unit.label)} — ${escapeHtml(resolveInfirmaryPromotionLabel(unit.promotion))}">`
+            + ` aria-label="${escapeHtml(unit.label)} — ${escapeHtml(resolveInfirmaryPromotionLabel(unit.promotion))} — ${escapeHtml(tickLabel)} — ${escapeHtml(healGoldLabel)}">`
             + `<span class="age-infirmary-injured-mark" aria-hidden="true">${escapeHtml(unit.mark)}</span>`
             + '<div class="age-infirmary-injured-main">'
             + `<span class="age-infirmary-injured-name">${escapeHtml(unit.label)}</span>`
-            + `<span class="age-infirmary-injured-meta">${escapeHtml(resolveInfirmaryPromotionLabel(unit.promotion))} · ${escapeHtml(unit.recovery)}</span>`
+            + `<span class="age-infirmary-injured-meta">${escapeHtml(resolveInfirmaryPromotionLabel(unit.promotion))} · ${escapeHtml(tickLabel)} · ${escapeHtml(healGoldLabel)}</span>`
             + '</div>'
             + `<span class="age-infirmary-injured-status">${isSelected ? 'Selected' : 'Injured'}</span>`
             + '</button>'
@@ -569,6 +648,9 @@
         }
 
         const selectedCount = countInfirmarySelectedUnits();
+        const selectedCostLabel = selectedCount
+            ? ` · ${formatInfirmaryHealGold(sumSelectedInfirmaryHealCost())}`
+            : '';
         return (
             '<section class="age-infirmary-injured" aria-label="Injured roster">'
             + '<div class="age-infirmary-injured-head">'
@@ -581,20 +663,21 @@
             + '<section class="age-infirmary-heal-toolbar" aria-label="Heal selected units">'
             + `<button type="button" class="age-settlement-venue-infirmary-btn age-settlement-venue-infirmary-btn--primary"`
             + ` data-settlement-infirmary-heal="selected"${selectedCount ? '' : ' disabled'}>`
-            + `Heal Selected${selectedCount ? ` (${selectedCount})` : ''}</button>`
+            + `Heal Selected${selectedCount ? ` (${selectedCount})${selectedCostLabel}` : ''}</button>`
             + '</section>'
             + '</section>'
         );
     }
 
     function renderInfirmaryBody() {
+        const allCostLabel = formatInfirmaryHealGold(sumAllInfirmaryHealCost());
         return (
             '<div class="age-infirmary-workspace">'
-            + '<p class="age-settlement-venue-infirmary-copy">Restore injured units at this settlement infirmary. Maintaining readiness keeps your army field-effective.</p>'
+            + '<p class="age-settlement-venue-infirmary-copy">Restore injured units at this settlement infirmary. Heal gold drops each tick until the final tick before natural recovery (10% above catalog purchase cost), then units recover for free.</p>'
             + renderInfirmaryInjuredList()
             + '<section class="age-infirmary-actions" aria-label="Infirmary healing actions">'
             + '<div class="age-settlement-venue-infirmary-actions">'
-            + '<button type="button" class="age-settlement-venue-infirmary-btn" data-settlement-infirmary-heal="all">Heal Entire Army</button>'
+            + `<button type="button" class="age-settlement-venue-infirmary-btn" data-settlement-infirmary-heal="all">Heal Entire Army · ${escapeHtml(allCostLabel)}</button>`
             + '</div>'
             + '<p id="age-settlement-infirmary-status" class="age-settlement-venue-infirmary-status" aria-live="polite"></p>'
             + '</section>'
@@ -629,33 +712,37 @@
 
         if (healMode === 'all') {
             const healed = countInfirmaryInjuredUnits();
+            const goldSpent = sumAllInfirmaryHealCost();
             infirmaryInjuredUnits = [];
             infirmarySelectedUnitIds = new Set();
             refreshInfirmaryWorkspaceBody();
+            const countLabel = healed === 1 ? '1 unit' : `${healed} units`;
             return {
                 healed,
-                message: healed === 1 ? '1 unit restored to fighting strength.' : `${healed} units restored to fighting strength.`
+                goldSpent,
+                message: `${countLabel} restored for ${formatInfirmaryHealGold(goldSpent)}.`
             };
         }
 
-        const selectedIds = infirmaryInjuredUnits
-            .filter((unit) => infirmarySelectedUnitIds.has(unit.id))
-            .map((unit) => unit.id);
-        if (!selectedIds.length) {
-            return { healed: 0, message: 'Select injured units to heal, then choose Heal Selected.' };
+        const selectedUnits = infirmaryInjuredUnits.filter((unit) => infirmarySelectedUnitIds.has(unit.id));
+        if (!selectedUnits.length) {
+            return { healed: 0, goldSpent: 0, message: 'Select injured units to heal, then choose Heal Selected.' };
         }
 
-        const selectedIdSet = new Set(selectedIds);
+        const goldSpent = sumSelectedInfirmaryHealCost();
+        const selectedIdSet = new Set(selectedUnits.map((unit) => unit.id));
         infirmaryInjuredUnits = infirmaryInjuredUnits.filter((unit) => !selectedIdSet.has(unit.id));
         infirmarySelectedUnitIds = new Set(
             [...infirmarySelectedUnitIds].filter((id) => !selectedIdSet.has(id))
         );
         refreshInfirmaryWorkspaceBody();
 
-        const healed = selectedIds.length;
+        const healed = selectedUnits.length;
+        const countLabel = healed === 1 ? '1 unit' : `${healed} units`;
         return {
             healed,
-            message: healed === 1 ? '1 unit restored to fighting strength.' : `${healed} units restored to fighting strength.`
+            goldSpent,
+            message: `${countLabel} restored for ${formatInfirmaryHealGold(goldSpent)}.`
         };
     }
 
@@ -892,6 +979,11 @@
         const workspace = resolveVenueWorkspace();
         workspace?.addEventListener('click', onVenueWorkspaceClick);
         global.document.addEventListener('keydown', onVenueWorkspaceKeydown);
+
+        if (!infirmaryTickBound) {
+            infirmaryTickBound = true;
+            global.addEventListener('royalarmies:age-game-tick', onInfirmaryGameTick);
+        }
     }
 
     function enableAgeSettlementVenueWorkspaces() {
