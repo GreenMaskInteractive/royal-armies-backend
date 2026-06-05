@@ -197,6 +197,7 @@ body.age-map-shell-only #age-world-map-plan-tool-dock {
 
 body.age-map-shell-only .age-barracks-workspace:not([hidden]),
 body.age-map-shell-only .age-unit-evolution-workspace:not([hidden]),
+body.age-map-shell-only .age-army-workspace:not([hidden]),
 body.age-map-shell-only .age-settlement-venue-workspace:not([hidden]),
 body.age-map-shell-only.age-guild-hub-open .age-guild-workspace:not([hidden]),
 body.age-map-shell-only.age-guild-overlay-open .age-guild-workspace:not([hidden]),
@@ -207,6 +208,7 @@ body.age-map-shell-only.age-guild-training-open .age-guild-workspace:not([hidden
 }
 
 body.age-map-shell-only.age-settlement-venue-open .age-map-hud--right,
+body.age-map-shell-only.age-army-workspace-open .age-map-hud--right,
 body.age-map-shell-only.age-barracks-open .age-map-hud--right,
 body.age-map-shell-only.age-unit-evolution-open .age-map-hud--right,
 body.age-map-shell-only.age-guild-hub-open .age-map-hud--right,

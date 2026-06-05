@@ -105,8 +105,12 @@
     function isSettlementOverlayTarget(target) {
         if (!target || typeof target.closest !== 'function') return false;
         const body = global.document.body;
-        if (body?.classList.contains('age-settlement-venue-open')) {
-            if (target.closest('.age-settlement-venue-workspace:not([hidden])')) return true;
+        if (body?.classList.contains('age-settlement-venue-open')
+            || body?.classList.contains('age-army-workspace-open')) {
+            if (target.closest('.age-settlement-venue-workspace:not([hidden])')
+                || target.closest('.age-army-workspace:not([hidden])')) {
+                return true;
+            }
         }
         if (body?.classList.contains('age-barracks-open') && target.closest('.age-barracks-workspace')) {
             return true;

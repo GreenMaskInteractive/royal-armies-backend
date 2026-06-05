@@ -1,20 +1,36 @@
 /**
- * RIFT — Settlement venue buttons → full-screen workspaces (map city-info tab or legacy settlement page).
+ * RIFT — Settlement venue buttons → full-screen army workspaces on the map settlement tab.
  */
 (function initRoyalArmiesSettlementVenueWorkspaces(global) {
     'use strict';
 
-    const GARRISON_HUB_ACTIONS = Object.freeze([
-        {
-            id: 'registry',
-            label: 'Garrison Registry',
-            description: 'Recruit units and review promotion paths.'
-        },
-        {
-            id: 'evolution',
-            label: 'Unit Evolution Workspace',
-            description: 'Spend provisions on rank promotions and tier evolutions.'
-        }
+    const DEFENSE_VENUE_IDS = new Set([
+        'village-center',
+        'town-square',
+        'city-hall',
+        'citadel-court',
+        'grand-embassy'
+    ]);
+
+    const BLACKSMITH_CATALOG = Object.freeze([
+        { id: 'blade', mark: '⚔', title: 'Field Blades', desc: 'Standard issue weapons for front-line companies.', cost: '120 gold' },
+        { id: 'mail', mark: '🛡', title: 'Reinforced Mail', desc: 'Layered armor kits sized for your active roster.', cost: '95 gold' },
+        { id: 'kit', mark: '⚙', title: 'Campaign Kits', desc: 'Field tools, rations packs, and march consumables.', cost: '48 gold' },
+        { id: 'bows', mark: '🏹', title: 'Skirmish Bows', desc: 'Ranged kits for screening and harassment lanes.', cost: '110 gold' }
+    ]);
+
+    const ARMORY_SLOTS = Object.freeze([
+        { id: 'weapon', label: 'Primary Weapon', tier: 'Tier II', status: 'Ready to upgrade' },
+        { id: 'armor', label: 'Chest Armor', tier: 'Tier I', status: 'Eligible' },
+        { id: 'banner', label: 'Formation Banner', tier: 'Locked', status: 'Requires Church blessing' },
+        { id: 'trinket', label: 'Command Trinket', tier: 'Tier I', status: 'Eligible' }
+    ]);
+
+    const DEFENSE_MODULES = Object.freeze([
+        { id: 'walls', mark: '▣', title: 'Palisade Reinforcement', desc: 'Raises local garrison defense for this settlement.' },
+        { id: 'towers', mark: '◈', title: 'Watch Towers', desc: 'Extends scout response time against raids.' },
+        { id: 'stores', mark: '◆', title: 'Supply Stores', desc: 'Improves provision recovery between battles.' },
+        { id: 'wards', mark: '✦', title: 'Arcane Wards', desc: 'Adds spell shielding to settlement defenses.' }
     ]);
 
     let bound = false;
@@ -34,16 +50,17 @@
 
     function setVenueWorkspaceOpen(isOpen) {
         global.document.body.classList.toggle('age-settlement-venue-open', isOpen);
+        global.document.body.classList.toggle('age-army-workspace-open', isOpen);
     }
 
     function dismissAllWorkspaces() {
         global.RoyalArmiesAgeBarracks?.close?.();
         global.RoyalArmiesAgeUnitEvolution?.close?.();
         global.RoyalArmiesAdventurersGuild?.dismissGuildWorkspacesForSettlementAction?.();
-        closeGenericVenueWorkspace();
+        closeArmyWorkspace();
     }
 
-    function closeGenericVenueWorkspace() {
+    function closeArmyWorkspace() {
         const workspace = resolveVenueWorkspace();
         if (!workspace) return;
 
@@ -53,7 +70,7 @@
         activeVenueId = '';
     }
 
-    function openGenericVenueWorkspace(options = {}) {
+    function openArmyWorkspace(options = {}) {
         const workspace = resolveVenueWorkspace();
         const titleEl = global.document.getElementById('age-settlement-venue-title');
         const eyebrowEl = global.document.getElementById('age-settlement-venue-eyebrow');
@@ -61,8 +78,10 @@
         const bodyEl = global.document.getElementById('age-settlement-venue-body');
         if (!workspace || !titleEl || !bodyEl) return;
 
-        if (eyebrowEl) eyebrowEl.textContent = options.eyebrow || 'Settlement';
-        titleEl.textContent = options.title || 'Venue';
+        dismissAllWorkspaces();
+
+        if (eyebrowEl) eyebrowEl.textContent = options.eyebrow || 'Personal Army';
+        titleEl.textContent = options.title || 'Workspace';
         if (subtitleEl) {
             const subtitle = String(options.subtitle || '').trim();
             subtitleEl.textContent = subtitle;
@@ -74,41 +93,125 @@
         workspace.setAttribute('aria-hidden', 'false');
         setVenueWorkspaceOpen(true);
         activeVenueId = String(options.venueId || '').trim();
+
+        global.document.getElementById('age-settlement-venue-close')?.focus();
     }
 
-    function renderActionHub(actions, actionAttr) {
+    function renderCatalogCards(items, actionLabel) {
         return (
-            '<div class="age-settlement-venue-action-hub" role="list">'
-            + actions.map((action) => (
-                `<button type="button" class="age-settlement-venue-action" role="listitem"`
-                + ` ${actionAttr}="${escapeHtml(action.id)}">`
-                + `<span class="age-settlement-venue-action-label">${escapeHtml(action.label)}</span>`
-                + `<span class="age-settlement-venue-action-desc">${escapeHtml(action.description)}</span>`
-                + '</button>'
+            '<div class="age-army-workspace-grid" role="list">'
+            + items.map((item) => (
+                `<article class="age-army-workspace-card" role="listitem">`
+                + `<span class="age-army-workspace-card-mark" aria-hidden="true">${escapeHtml(item.mark)}</span>`
+                + `<h3 class="age-army-workspace-card-title">${escapeHtml(item.title)}</h3>`
+                + `<p class="age-army-workspace-card-desc">${escapeHtml(item.desc)}</p>`
+                + `<div class="age-army-workspace-card-meta">${escapeHtml(item.cost || item.tier || '')}</div>`
+                + `<button type="button" class="age-army-workspace-card-btn" data-army-workspace-action="${escapeHtml(item.id)}">`
+                + `${escapeHtml(actionLabel)}</button>`
+                + '</article>'
             )).join('')
             + '</div>'
         );
     }
 
-    function renderPlaceholderBody(venue) {
-        const note = venue?.placeholderNote
-            || 'This workspace is under construction. Check back after the next Age of War update.';
+    function renderBlacksmithBody() {
         return (
-            '<div class="age-settlement-venue-placeholder">'
-            + `<p class="age-settlement-venue-placeholder-copy">${escapeHtml(note)}</p>`
+            '<div class="age-army-workspace-toolbar">'
+            + '<p class="age-army-workspace-toolbar-note">Forge and outfit your companies with weapons, armor, and campaign kits. Purchases sync to your roster when the ledger API is connected.</p>'
+            + '<div class="age-army-workspace-pill-row">'
+            + '<span class="age-army-workspace-pill">Outfit</span>'
+            + '<span class="age-army-workspace-pill">Maintain</span>'
+            + '</div></div>'
+            + renderCatalogCards(BLACKSMITH_CATALOG, 'Purchase')
+        );
+    }
+
+    function renderArmoryBody() {
+        const list = ARMORY_SLOTS.map((slot) => (
+            `<li class="age-army-workspace-list-item">`
+            + `<span class="age-army-workspace-list-label">${escapeHtml(slot.label)}</span>`
+            + `<span class="age-army-workspace-list-value">${escapeHtml(slot.tier)}</span>`
+            + '</li>'
+        )).join('');
+
+        return (
+            '<div class="age-army-workspace-split">'
+            + '<section class="age-army-workspace-panel" aria-label="Equipped loadout">'
+            + '<h3 class="age-army-workspace-panel-title">Equipped Loadout</h3>'
+            + `<ul class="age-army-workspace-list">${list}</ul>`
+            + '<p class="age-army-workspace-toolbar-note">Upgrade slots improve combat stats and special effects for units assigned to this settlement.</p>'
+            + '</section>'
+            + '<section class="age-army-workspace-panel" aria-label="Upgrade queue">'
+            + '<h3 class="age-army-workspace-panel-title">Upgrade Queue</h3>'
+            + renderCatalogCards(
+                ARMORY_SLOTS.filter((slot) => slot.status === 'Eligible').map((slot) => ({
+                    id: slot.id,
+                    mark: '↑',
+                    title: slot.label,
+                    desc: slot.status,
+                    cost: '24 provisions'
+                })),
+                'Upgrade'
+            )
+            + '</section></div>'
+        );
+    }
+
+    function renderDefenseBody() {
+        return (
+            '<div class="age-army-workspace-toolbar">'
+            + '<p class="age-army-workspace-toolbar-note">Invest in settlement defenses to protect your army between deployments and harden this city against assaults.</p>'
             + '</div>'
+            + renderCatalogCards(
+                DEFENSE_MODULES.map((mod) => ({
+                    id: mod.id,
+                    mark: mod.mark,
+                    title: mod.title,
+                    desc: mod.desc,
+                    cost: 'Defense points'
+                })),
+                'Improve'
+            )
+        );
+    }
+
+    function renderChurchBody() {
+        return (
+            '<div class="age-army-workspace-split">'
+            + '<section class="age-army-workspace-panel">'
+            + '<h3 class="age-army-workspace-panel-title">Blessed Banner</h3>'
+            + '<p class="age-army-workspace-toolbar-note">Claim a blessed banner to unlock formation perks and morale bonuses for your personal army.</p>'
+            + '<div class="age-army-workspace-link-row">'
+            + '<button type="button" class="age-army-workspace-link-btn" data-army-workspace-action="claim-banner">Claim Banner</button>'
+            + '</div></section>'
+            + '<section class="age-army-workspace-panel">'
+            + '<h3 class="age-army-workspace-panel-title">Perk Tree</h3>'
+            + renderCatalogCards([
+                { id: 'morale', mark: '✦', title: 'Steadfast Morale', desc: 'Reduces attrition after defensive battles.', cost: '1 perk point' },
+                { id: 'march', mark: '✦', title: 'Swift March', desc: 'Improves move point recovery on friendly borders.', cost: '2 perk points' },
+                { id: 'guard', mark: '✦', title: 'Veteran Guard', desc: 'Buffs garrison units stationed in this city.', cost: '2 perk points' }
+            ], 'Unlock')
+            + '</section></div>'
         );
     }
 
     function renderInfirmaryBody() {
         return (
             '<div class="age-settlement-venue-infirmary">'
-            + '<p class="age-settlement-venue-infirmary-copy">Restore injured units at this settlement infirmary.</p>'
+            + '<p class="age-settlement-venue-infirmary-copy">Restore injured units at this settlement infirmary. Maintaining readiness keeps your army field-effective.</p>'
             + '<div class="age-settlement-venue-infirmary-actions">'
             + '<button type="button" class="age-settlement-venue-infirmary-btn" data-settlement-infirmary-heal="one">Heal One Unit</button>'
             + '<button type="button" class="age-settlement-venue-infirmary-btn age-settlement-venue-infirmary-btn--primary" data-settlement-infirmary-heal="all">Heal Entire Army</button>'
             + '</div>'
             + '<p id="age-settlement-infirmary-status" class="age-settlement-venue-infirmary-status" aria-live="polite"></p>'
+            + '</div>'
+        );
+    }
+
+    function renderPlaceholderBody(note) {
+        return (
+            '<div class="age-settlement-venue-placeholder">'
+            + `<p class="age-settlement-venue-placeholder-copy">${escapeHtml(note)}</p>`
             + '</div>'
         );
     }
@@ -134,33 +237,47 @@
         }
     }
 
-    function openBarracksHub(detail) {
+    function openBlacksmith(detail) {
         const venue = detail?.venue || {};
-        openGenericVenueWorkspace({
-            venueId: 'barracks',
-            eyebrow: 'Barracks',
-            title: venue.label || 'Barracks',
+        openArmyWorkspace({
+            venueId: 'blacksmith',
+            eyebrow: 'Blacksmith',
+            title: venue.label || 'Blacksmith',
             subtitle: venue.description || '',
-            bodyHtml: renderActionHub(GARRISON_HUB_ACTIONS, 'data-barracks-hub-action')
+            bodyHtml: renderBlacksmithBody()
         });
     }
 
-    function openPlaceholderVenue(detail) {
+    function openArmory(detail) {
         const venue = detail?.venue || {};
-        let placeholderNote = '';
-
-        if (detail?.venueId === 'border') {
-            placeholderNote = 'Border battle training and assault drills will open here. Use the world map Army Groups panel until this workspace ships.';
-        } else if (detail?.venueId === 'arenas') {
-            placeholderNote = 'Continent-wide commander tournaments and spectator betting will open here for citadel settlements.';
-        }
-
-        openGenericVenueWorkspace({
-            venueId: detail?.venueId || '',
-            eyebrow: 'Settlement',
-            title: venue.label || detail?.venueId || 'Venue',
+        openArmyWorkspace({
+            venueId: 'armory',
+            eyebrow: 'Armory',
+            title: venue.label || 'Armory',
             subtitle: venue.description || '',
-            bodyHtml: renderPlaceholderBody({ placeholderNote })
+            bodyHtml: renderArmoryBody()
+        });
+    }
+
+    function openDefenseVenue(detail) {
+        const venue = detail?.venue || {};
+        openArmyWorkspace({
+            venueId: detail?.venueId || '',
+            eyebrow: 'Settlement Defense',
+            title: venue.label || 'Defense',
+            subtitle: venue.description || '',
+            bodyHtml: renderDefenseBody()
+        });
+    }
+
+    function openChurch(detail) {
+        const venue = detail?.venue || {};
+        openArmyWorkspace({
+            venueId: 'church',
+            eyebrow: 'Church',
+            title: venue.label || 'Church',
+            subtitle: venue.description || '',
+            bodyHtml: renderChurchBody()
         });
     }
 
@@ -169,7 +286,7 @@
         const tier = String(detail?.settlementTier || 'village').trim().toLowerCase();
         global.RoyalArmiesAgeGuildTraining?.setSettlementTier?.(tier);
 
-        openGenericVenueWorkspace({
+        openArmyWorkspace({
             venueId: 'infirmary',
             eyebrow: 'Infirmary',
             title: venue.label || 'Infirmary',
@@ -178,13 +295,31 @@
         });
     }
 
+    function openPlaceholderVenue(detail) {
+        const venue = detail?.venue || {};
+        let placeholderNote = venue?.placeholderNote
+            || 'This workspace is under construction. Check back after the next Age of War update.';
+
+        if (detail?.venueId === 'border') {
+            placeholderNote = 'Border battle training and assault drills will open here. Use Army Groups on the world map until this workspace ships.';
+        } else if (detail?.venueId === 'arenas') {
+            placeholderNote = 'Continent-wide commander tournaments and spectator betting will open here for citadel settlements.';
+        }
+
+        openArmyWorkspace({
+            venueId: detail?.venueId || '',
+            eyebrow: 'Settlement',
+            title: venue.label || detail?.venueId || 'Venue',
+            subtitle: venue.description || '',
+            bodyHtml: renderPlaceholderBody(placeholderNote)
+        });
+    }
+
     async function openVenue(detail = {}) {
         if (!resolveVenueWorkspace()) return;
 
         const venueId = String(detail?.venueId || '').trim().toLowerCase();
         if (!venueId) return;
-
-        dismissAllWorkspaces();
 
         if (venueId === 'war-room') {
             if (typeof global.RoyalArmiesAgeViewTabs?.openSettlementWarRoom === 'function') {
@@ -199,7 +334,27 @@
         }
 
         if (venueId === 'barracks') {
-            openBarracksHub(detail);
+            await global.RoyalArmiesAgeBarracks?.open?.();
+            return;
+        }
+
+        if (venueId === 'blacksmith') {
+            openBlacksmith(detail);
+            return;
+        }
+
+        if (venueId === 'armory') {
+            openArmory(detail);
+            return;
+        }
+
+        if (DEFENSE_VENUE_IDS.has(venueId)) {
+            openDefenseVenue(detail);
+            return;
+        }
+
+        if (venueId === 'church') {
+            openChurch(detail);
             return;
         }
 
@@ -211,20 +366,26 @@
         openPlaceholderVenue(detail);
     }
 
-    function onBarracksHubClick(event) {
-        const actionBtn = event.target.closest('[data-barracks-hub-action]');
-        if (!actionBtn || activeVenueId !== 'barracks') return;
+    function onArmyWorkspaceActionClick(event) {
+        const actionBtn = event.target.closest('[data-army-workspace-action]');
+        if (!actionBtn) return;
 
         event.preventDefault();
-        const actionId = actionBtn.getAttribute('data-barracks-hub-action');
-        closeGenericVenueWorkspace();
+        const actionId = actionBtn.getAttribute('data-army-workspace-action');
 
-        if (actionId === 'registry') {
+        if (actionId === 'open-registry') {
+            closeArmyWorkspace();
             void global.RoyalArmiesAgeBarracks?.open?.();
             return;
         }
-        if (actionId === 'evolution') {
+        if (actionId === 'open-evolution') {
+            closeArmyWorkspace();
             void global.RoyalArmiesAgeUnitEvolution?.open?.({ highlightReady: true });
+            return;
+        }
+
+        if (typeof global.showPortalAlert === 'function') {
+            void global.showPortalAlert('This action will connect to your army ledger in a future update.', 'Army');
         }
     }
 
@@ -238,10 +399,10 @@
     function onVenueWorkspaceClick(event) {
         if (event.target.closest('#age-settlement-venue-close')) {
             event.preventDefault();
-            closeGenericVenueWorkspace();
+            closeArmyWorkspace();
             return;
         }
-        onBarracksHubClick(event);
+        onArmyWorkspaceActionClick(event);
         onInfirmaryClick(event);
     }
 
@@ -250,7 +411,7 @@
         const workspace = resolveVenueWorkspace();
         if (!workspace || workspace.hidden) return;
         event.preventDefault();
-        closeGenericVenueWorkspace();
+        closeArmyWorkspace();
     }
 
     function bindSettlementVenueWorkspaces() {
@@ -269,7 +430,7 @@
 
     global.RoyalArmiesSettlementVenueWorkspaces = {
         open: openVenue,
-        close: closeGenericVenueWorkspace,
+        close: closeArmyWorkspace,
         dismissAll: dismissAllWorkspaces,
         enableAgeSettlementVenueWorkspaces
     };

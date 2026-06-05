@@ -567,66 +567,18 @@
                 : '';
             const mark = escapeSettlementMenuHtml(resolveVenueMark(venue.id));
             const label = escapeSettlementMenuHtml(venue.label);
-            const settlementFlatMenu = isSettlementMenuFlatLayout();
-            const isExpandable = !settlementFlatMenu
-                && (venue.id === 'adventurers-guild' || venue.id === 'barracks');
-            const subPanelId = venue.id === 'adventurers-guild'
-                ? 'age-settlement-guild-jobs'
-                : (venue.id === 'barracks' ? 'age-settlement-garrison-options' : '');
-            const wrapClass = venue.id === 'adventurers-guild'
-                ? 'age-settlement-menu-guild-wrap'
-                : (venue.id === 'barracks' ? 'age-settlement-menu-garrison-wrap' : '');
-            const itemHtml = (
-                `<button type="button" class="age-settlement-menu-item${placementClass}${borderClass}${isExpandable ? ' age-settlement-menu-item--expandable' : ''}"`
+
+            return (
+                `<button type="button" class="age-settlement-menu-item${placementClass}${borderClass}"`
                 + ` data-settlement-venue="${escapeSettlementMenuHtml(venue.id)}"`
-                + `${isExpandable ? ` aria-expanded="false" aria-controls="${subPanelId}"` : ''}>`
+                + ` aria-label="Open ${label} workspace">`
                 + `<span class="age-settlement-menu-item-mark" aria-hidden="true">${mark}</span>`
                 + `<span class="age-settlement-menu-item-body">`
                 + `<span class="age-settlement-menu-item-label">${label}</span>`
                 + '</span>'
-                + `<span class="age-settlement-menu-item-chevron" aria-hidden="true">${isExpandable ? '▾' : '›'}</span>`
+                + '<span class="age-settlement-menu-item-chevron" aria-hidden="true">›</span>'
                 + '</button>'
             );
-
-            if (settlementFlatMenu) {
-                if (venue.id === 'adventurers-guild') {
-                    return (
-                        `<div class="${wrapClass}">`
-                        + itemHtml
-                        + '<div id="age-settlement-guild-jobs" class="age-settlement-guild-jobs" hidden></div>'
-                        + '</div>'
-                    );
-                }
-                if (venue.id === 'barracks') {
-                    return (
-                        `<div class="${wrapClass}">`
-                        + itemHtml
-                        + '<div id="age-settlement-garrison-options" class="age-settlement-garrison-options" hidden></div>'
-                        + '</div>'
-                    );
-                }
-                return itemHtml;
-            }
-
-            if (venue.id === 'adventurers-guild') {
-                return (
-                    `<div class="${wrapClass}">`
-                    + itemHtml
-                    + '<div id="age-settlement-guild-jobs" class="age-settlement-guild-jobs" hidden></div>'
-                    + '</div>'
-                );
-            }
-
-            if (venue.id === 'barracks') {
-                return (
-                    `<div class="${wrapClass}">`
-                    + itemHtml
-                    + '<div id="age-settlement-garrison-options" class="age-settlement-garrison-options" hidden></div>'
-                    + '</div>'
-                );
-            }
-
-            return itemHtml;
         }).join('');
     }
 
@@ -878,14 +830,10 @@
     }
 
     function onSettlementMenuClick(event) {
-        if (event.target.closest('[data-guild-job]')) {
-            return;
-        }
-        if (event.target.closest('[data-garrison-option]')) {
-            return;
-        }
         const button = event.target.closest('[data-settlement-venue]');
         if (!button) return;
+        event.preventDefault();
+        event.stopPropagation();
         handleVenueClick(button.getAttribute('data-settlement-venue'));
     }
 
