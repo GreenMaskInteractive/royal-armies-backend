@@ -20813,6 +20813,21 @@ html.age-world-map-pan-locked #cursor-click-fx-layer {
     margin-bottom: 10px;
 }
 
+.age-world-city-drawer-movement-status {
+    margin: 0 0 10px;
+    padding: 8px 10px;
+    border-radius: 6px;
+    border: 1px solid rgba(120, 200, 160, 0.34);
+    background: rgba(12, 28, 22, 0.82);
+    font-size: 0.72rem;
+    line-height: 1.45;
+    color: rgba(210, 244, 224, 0.94);
+}
+
+.age-world-city-drawer-movement-status[hidden] {
+    display: none;
+}
+
 .age-world-city-action-btn {
     width: 100%;
     border-radius: 7px;

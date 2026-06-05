@@ -339,7 +339,7 @@
         }
     }
 
-    function renderMovementPanel() {
+    function renderMovementPanel(options = {}) {
         const cityEl = global.document.getElementById('age-movement-city-name');
         const regionEl = global.document.getElementById('age-movement-region-name');
         const terrainEl = global.document.getElementById('age-movement-terrain-name')
@@ -370,7 +370,9 @@
             capitalHud.textContent = city.name;
         }
 
-        renderMovementRoutes();
+        if (options.skipRoutes !== true) {
+            renderMovementRoutes();
+        }
     }
 
     function collectTravelRoutes() {
@@ -450,12 +452,24 @@
 
         movementRouteBusy = true;
         try {
+            const resolvedTargetId = movement.resolveMovementTargetCityId?.(targetId) || targetId;
             await movement.travel(targetId);
-            syncCatalogCity(movement.getCatalogCityId());
+            const traveledCityId = movement.getCatalogCityId();
+            if (traveledCityId !== resolvedTargetId) {
+                const err = new Error('Travel completed but your map position did not update. Hard refresh and try again.');
+                err.code = 'RIFT-AGE-001';
+                throw err;
+            }
+            syncCatalogCity(traveledCityId);
+            renderMovementRoutes();
             global.refreshAgeHudMovePoints?.();
             global.RoyalArmiesNationTreasury?.requestRefresh?.();
             global.RoyalArmiesAgeWorldMap?.refreshPlayerCity?.();
             global.RoyalArmiesAgeWorldMap?.refreshNationCityHighlights?.();
+            const destination = global.RoyalArmiesAgeWorldMap?.getCityById?.(traveledCityId);
+            if (destination?.name) {
+                global.RoyalArmiesAgeWorldMap?.focusOnCity?.(traveledCityId, { highlightMs: 2400 });
+            }
         } catch (err) {
             const payload = global.RoyalArmiesAgeMovement?.formatActionError?.(err) || err;
             if (typeof global.showRiftError === 'function') {
@@ -1150,7 +1164,7 @@
         bindPlayersTabControls();
         bindMovementRoutes();
         syncCityInfoPanelLayoutMode('city');
-        renderMovementPanel();
+        renderMovementPanel({ skipRoutes: true });
 
         if (global.RoyalArmiesAgeMovement?.refresh) {
             void global.RoyalArmiesAgeMovement.refresh().then(() => {
@@ -1158,6 +1172,8 @@
                 if (catalogCityId) syncCatalogCity(catalogCityId);
                 else renderMovementRoutes();
             });
+        } else {
+            renderMovementRoutes();
         }
 
         refreshCityPlayersFromServer();

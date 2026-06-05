@@ -168,6 +168,23 @@ function resolveDefaultCapitalCityId(nationKey) {
     return fallback ? fallback.id : '';
 }
 
+function resolveMovementTargetCityId(rawCityId) {
+    const id = String(rawCityId || '').trim();
+    if (!id) return '';
+
+    const direct = getCatalogCity(id);
+    if (direct) return direct.id;
+
+    const catalog = loadCityCatalog();
+    const stub = id.replace(/^[^-]+-/, '');
+    const match = (catalog.cities || []).find((city) => (
+        city.id === id
+        || city.id.endsWith(`-${stub}`)
+        || city.id.endsWith(`-${id}`)
+    ));
+    return match ? match.id : id;
+}
+
 function resolveCatalogCityId(rawCityId, nationKey) {
     const catalog = loadCityCatalog();
     const nation = resolveCatalogNationKey(nationKey);
@@ -626,6 +643,7 @@ module.exports = {
     getCatalogCity,
     resolveCatalogNationKey,
     resolveCatalogCityId,
+    resolveMovementTargetCityId,
     resolveDefaultCapitalCityId,
     normalizeCommanderMovementRecord,
     normalizeArmyFocusValue,

@@ -70,6 +70,7 @@ const {
     getCatalogCity,
     loadCityCatalog,
     resolveCatalogCityId,
+    resolveMovementTargetCityId,
     resolveCatalogNationKey,
     TRANSFER_OWNERSHIP_RSD_COST,
     AGE_ALPHA_DEFAULT_MAP_NATION
@@ -7693,7 +7694,8 @@ app.post('/api/portal/age/travel', (req, res) => {
             return sendApiError(res, 'NEXUS-AGE-008');
         }
 
-        const targetCityId = String(req.body?.targetCityId || '').trim();
+        const rawTargetCityId = String(req.body?.targetCityId || '').trim();
+        const targetCityId = resolveMovementTargetCityId(rawTargetCityId);
         const movement = readCommanderMovementRecord(username, gameNation);
         const store = readAgeMovementStore();
 

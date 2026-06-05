@@ -106,6 +106,52 @@
         return match ? match.id : '';
     }
 
+    function resolveCatalogCityRecord(cityId) {
+        const id = String(cityId || '').trim();
+        if (!id) return null;
+
+        if (typeof global.RoyalArmiesAgeWorldMap?.getCityById === 'function') {
+            const fromMap = global.RoyalArmiesAgeWorldMap.getCityById(id);
+            if (fromMap) return fromMap;
+        }
+
+        const catalog = global.RoyalArmiesAgeWorldMap?.getCatalog?.();
+        return catalog?.cities?.find((city) => city.id === id) || null;
+    }
+
+    function resolveMovementTargetCityId(rawCityId) {
+        const id = String(rawCityId || '').trim();
+        if (!id) return '';
+
+        const fromMap = resolveCatalogCityRecord(id);
+        if (fromMap) return fromMap.id;
+
+        const catalog = global.RoyalArmiesAgeWorldMap?.getCatalog?.();
+        if (catalog?.cities) {
+            const stub = id.replace(/^[^-]+-/, '');
+            const match = catalog.cities.find((city) => (
+                city.id === id
+                || city.id.endsWith(`-${stub}`)
+                || city.id.endsWith(`-${id}`)
+            ));
+            if (match) return match.id;
+        }
+
+        return id;
+    }
+
+    function applyAuthoritativeCatalogCityId(rawCityId) {
+        const id = String(rawCityId ?? '').trim();
+        if (!id) return '';
+
+        const resolved = resolveMovementTargetCityId(id);
+        if (resolveCatalogCityRecord(resolved)) {
+            return resolved;
+        }
+
+        return resolveCatalogCityId(id);
+    }
+
     function resolveCatalogCityId(rawCityId) {
         const catalog = global.RoyalArmiesAgeWorldMap?.getCatalog?.();
         const nation = resolveMapNationKey(state.mapNation) || 'aesthene';
@@ -287,7 +333,7 @@
             }
         }
         if (payload.catalogCityId !== undefined && payload.catalogCityId !== null) {
-            const resolvedCityId = resolveCatalogCityId(payload.catalogCityId);
+            const resolvedCityId = applyAuthoritativeCatalogCityId(payload.catalogCityId);
             if (resolvedCityId) {
                 state.catalogCityId = resolvedCityId;
                 writeStoredCatalogCityId(resolvedCityId);
@@ -430,12 +476,15 @@
             throw err;
         }
 
+        ensureLocalMovementDefaults();
+        const resolvedTargetCityId = resolveMovementTargetCityId(targetCityId);
+
         const response = await fetchMovementApi(path, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 username,
-                targetCityId,
+                targetCityId: resolvedTargetCityId,
                 ...extra
             })
         });
@@ -445,7 +494,57 @@
         return payload;
     }
 
+    async function ensureMovementStateSynced() {
+        const username = resolveUsername();
+        if (!username) {
+            const err = new Error('Commander session required.');
+            err.code = 'NEXUS-GEN-002';
+            throw err;
+        }
+
+        const refreshed = await refresh();
+        ensureLocalMovementDefaults();
+        return refreshed;
+    }
+
+    function assertCanTravelToCity(targetCityId) {
+        const resolvedTargetId = resolveMovementTargetCityId(targetCityId);
+        const targetCity = resolveCatalogCityRecord(resolvedTargetId);
+        if (!targetCity) {
+            const err = new Error('Unknown city or invalid movement target.');
+            err.code = 'NEXUS-AGE-003';
+            throw err;
+        }
+
+        const hints = getBorderActionHints(targetCity, getCatalogCityId());
+        if (hints.relationship === 'current') {
+            const err = new Error('You are already in that city.');
+            err.code = 'NEXUS-AGE-009';
+            throw err;
+        }
+        if (!hints.canTravel) {
+            const err = new Error(
+                hints.relationship === 'remote'
+                    ? 'That city does not border your current position.'
+                    : 'You can only travel to cities owned by your nation.'
+            );
+            err.code = hints.relationship === 'remote' ? 'NEXUS-AGE-002' : 'NEXUS-AGE-006';
+            throw err;
+        }
+
+        const movePointCost = Math.max(1, Math.floor(Number(hints.movePointCost) || 1));
+        if (getMovePoints() < movePointCost) {
+            const err = new Error('No move points remaining. Regain 1 at each game-clock half-hour tick (:00 and :30 UTC, max 3).');
+            err.code = 'NEXUS-AGE-001';
+            throw err;
+        }
+
+        return { targetCity, hints, resolvedTargetId };
+    }
+
     async function travel(targetCityId) {
+        await ensureMovementStateSynced();
+        assertCanTravelToCity(targetCityId);
         return postAction('/api/portal/age/travel', targetCityId);
     }
 
@@ -520,11 +619,13 @@
 
     function getCatalogCityId() {
         ensureLocalMovementDefaults();
-        return resolveCatalogCityId(state.catalogCityId || readStoredCatalogCityId());
+        return applyAuthoritativeCatalogCityId(state.catalogCityId || readStoredCatalogCityId());
     }
 
     function getBorderActionHints(targetCity, playerCityId) {
-        const playerCatalogCityId = resolveCatalogCityId(playerCityId || getCatalogCityId());
+        const playerCatalogCityId = playerCityId
+            ? applyAuthoritativeCatalogCityId(playerCityId)
+            : getCatalogCityId();
         if (!targetCity || !playerCatalogCityId) {
             return { canTravel: false, canAssault: false, canTransfer: false, canScout: false };
         }
@@ -533,8 +634,7 @@
             return { canTravel: false, canAssault: false, canTransfer: false, canScout: false, relationship: 'current' };
         }
 
-        const catalog = global.RoyalArmiesAgeWorldMap?.getCatalog?.();
-        const playerCity = catalog?.cities?.find((city) => city.id === playerCatalogCityId);
+        const playerCity = resolveCatalogCityRecord(playerCatalogCityId);
         const waterRoutes = global.RoyalArmiesAgeWaterRoutes;
         const connection = waterRoutes?.resolveCityConnection
             ? waterRoutes.resolveCityConnection(playerCity, targetCity)
@@ -612,6 +712,11 @@
 
     global.RoyalArmiesAgeMovement = {
         refresh,
+        ensureMovementStateSynced,
+        assertCanTravelToCity,
+        resolveMovementTargetCityId,
+        resolveCatalogCityRecord,
+        applyAuthoritativeCatalogCityId,
         travel,
         assault,
         transferOwnership,

@@ -273,6 +273,48 @@
         return capital ? capital.id : '';
     }
 
+    function resolveActivePlayerCatalogCityId() {
+        const movementCityId = global.RoyalArmiesAgeMovement?.getCatalogCityId?.();
+        if (movementCityId && cityById.has(movementCityId)) {
+            return movementCityId;
+        }
+
+        const fallbackCityId = resolvePlayerMapCityId();
+        if (fallbackCityId && cityById.has(fallbackCityId)) {
+            return fallbackCityId;
+        }
+
+        return movementCityId || fallbackCityId || '';
+    }
+
+    function syncPlayerMapCityFromMovement() {
+        playerMapCityId = resolveActivePlayerCatalogCityId();
+        return playerMapCityId;
+    }
+
+    async function refreshDrawerMovementContext(cityId) {
+        const movement = global.RoyalArmiesAgeMovement;
+        if (!movement || !cityId) return;
+
+        if (typeof movement.ensureMovementStateSynced === 'function') {
+            await movement.ensureMovementStateSynced();
+        } else if (typeof movement.refresh === 'function') {
+            await movement.refresh();
+        }
+
+        if (selectedCityId !== cityId) return;
+
+        syncPlayerMapCityFromMovement();
+        const city = cityById.get(cityId);
+        if (!city || !els.drawer || els.drawer.hidden) return;
+
+        refreshDrawerMovementActions(city);
+        const borderHints = movement.getBorderActionHints?.(city, resolveActivePlayerCatalogCityId()) || {};
+        refreshDrawerWatchtowerButton(city, borderHints);
+        refreshDrawerScoutIntel(city, borderHints);
+        void refreshDrawerAssaultRisk(city, borderHints);
+    }
+
     function resolveLiveCityHolder(city) {
         if (global.RoyalArmiesAgeMovement && typeof global.RoyalArmiesAgeMovement.resolveCityHolder === 'function') {
             return global.RoyalArmiesAgeMovement.resolveCityHolder(city);
@@ -798,6 +840,7 @@
             closeCityDrawer();
             return;
         }
+        setDrawerMovementStatus('');
         openCityDrawer(cityId, clientX, clientY);
     }
 
@@ -1326,20 +1369,7 @@
 
         mapCityPointerUpHandled = true;
 
-        const wasAlreadySelected = selectedCityId === cityId && isCityDrawerOpen();
         toggleCityDrawerFromClick(cityId, event.clientX, event.clientY);
-        if (wasAlreadySelected) return true;
-
-        const hints = global.RoyalArmiesAgeMovement?.getBorderActionHints?.(city, playerMapCityId) || {};
-        if (hints.canTravel) {
-            const movePoints = global.RoyalArmiesAgeMovement?.getMovePoints?.() ?? 0;
-            const movePointCost = Math.max(1, Math.floor(Number(hints.movePointCost) || 1));
-            if (movePoints >= movePointCost) {
-                selectedCityId = cityId;
-                void handleDrawerMovementAction('travel');
-            }
-        }
-
         return true;
     }
 
@@ -1968,7 +1998,10 @@
         const actionsHost = els.drawerMovementActions;
         if (!actionsHost || !city) return;
 
-        const hints = global.RoyalArmiesAgeMovement?.getBorderActionHints?.(city, playerMapCityId) || {};
+        const hints = global.RoyalArmiesAgeMovement?.getBorderActionHints?.(
+            city,
+            resolveActivePlayerCatalogCityId()
+        ) || {};
         const movePoints = global.RoyalArmiesAgeMovement?.getMovePoints?.() ?? 0;
         const movePointCost = Math.max(1, Math.floor(Number(hints.movePointCost) || 1));
         const hasMovePoint = movePoints >= movePointCost;
@@ -2024,6 +2057,16 @@
         }
 
         actionsHost.innerHTML = buttons.join('');
+
+        let statusEl = global.document.getElementById('age-world-city-drawer-movement-status');
+        if (!statusEl) {
+            statusEl = global.document.createElement('p');
+            statusEl.id = 'age-world-city-drawer-movement-status';
+            statusEl.className = 'age-world-city-drawer-movement-status';
+            statusEl.setAttribute('aria-live', 'polite');
+            statusEl.hidden = true;
+            actionsHost.insertAdjacentElement('afterend', statusEl);
+        }
     }
 
     function refreshDrawerWatchtowerButton(city, hints) {
@@ -2203,7 +2246,7 @@
         const movement = global.RoyalArmiesAgeMovement;
         if (!city || !movement) return;
 
-        const hints = movement.getBorderActionHints?.(city, playerMapCityId) || {};
+        const hints = movement.getBorderActionHints?.(city, resolveActivePlayerCatalogCityId()) || {};
         if (!hints.canScout) return;
 
         const username = resolveScoutUsername();
@@ -2262,12 +2305,43 @@
 
     let drawerMovementBusy = false;
 
+    function setDrawerMovementStatus(message) {
+        const statusEl = global.document.getElementById('age-world-city-drawer-movement-status');
+        if (!statusEl) return;
+        const text = String(message || '').trim();
+        statusEl.textContent = text;
+        statusEl.hidden = !text;
+    }
+
+    function reportMovementFailure(err, fallbackTitle) {
+        const payload = global.RoyalArmiesAgeMovement?.formatActionError?.(err) || err || {};
+        const message = String(payload?.message || err?.message || 'Movement action failed.').trim();
+        setDrawerMovementStatus(message);
+        if (typeof global.showRiftError === 'function') {
+            return global.showRiftError(
+                payload?.code ? { code: payload.code, message } : { message },
+                fallbackTitle || 'Movement'
+            );
+        }
+        if (typeof global.showPortalAlert === 'function') {
+            return global.showPortalAlert(message, fallbackTitle || 'Movement');
+        }
+        return Promise.resolve();
+    }
+
     async function handleDrawerMovementAction(action) {
         const city = cityById.get(selectedCityId);
         const movement = global.RoyalArmiesAgeMovement;
         if (!city || !movement || drawerMovementBusy) return;
 
         drawerMovementBusy = true;
+        setDrawerMovementStatus(
+            action === 'travel'
+                ? `Traveling to ${city.name}…`
+                : action === 'assault'
+                    ? `Launching assault on ${city.name}…`
+                    : `Transferring ownership of ${city.name}…`
+        );
         try {
             if (action === 'travel') {
                 await movement.travel(city.id);
@@ -2279,23 +2353,37 @@
                 return;
             }
 
+            const resolvedTargetCityId = movement.resolveMovementTargetCityId?.(city.id) || city.id;
             const traveledCityId = movement.getCatalogCityId();
-            playerMapCityId = traveledCityId || resolvePlayerMapCityId();
+            syncPlayerMapCityFromMovement();
             global.RoyalArmiesAgeMovementPanel?.syncCatalogCity?.(traveledCityId);
+            global.RoyalArmiesAgeMovementPanel?.renderMovementRoutes?.();
             global.RoyalArmiesPlayerLocPins?.refreshLocalPlayerPin?.();
             refreshPlayerLocPinAndLabelCollisions();
             refreshNationCityHighlights();
             global.refreshAgeHudMovePoints?.();
             global.RoyalArmiesNationTreasury?.requestRefresh?.();
 
-            openCityDrawer(city.id);
-        } catch (err) {
-            const payload = global.RoyalArmiesAgeMovement?.formatActionError?.(err) || err;
-            if (typeof global.showRiftError === 'function') {
-                await global.showRiftError(payload, 'Movement');
-            } else if (typeof global.showPortalAlert === 'function') {
-                await global.showPortalAlert(payload?.message || 'Movement action failed.', 'Movement');
+            if (action === 'travel') {
+                if (traveledCityId !== resolvedTargetCityId) {
+                    const err = new Error(
+                        `Travel completed but your position is still ${cityById.get(traveledCityId)?.name || 'unchanged'}. `
+                        + 'Hard refresh the Age page, then try Travel again.'
+                    );
+                    err.code = 'RIFT-AGE-001';
+                    throw err;
+                }
+
+                const destinationName = cityById.get(traveledCityId)?.name || city.name;
+                focusOnCity(traveledCityId, { highlightMs: 2400 });
+                setDrawerMovementStatus(`Moved to ${destinationName}.`);
+                openCityDrawer(traveledCityId);
+            } else {
+                setDrawerMovementStatus('');
+                openCityDrawer(city.id);
             }
+        } catch (err) {
+            await reportMovementFailure(err, 'Movement');
         } finally {
             drawerMovementBusy = false;
         }
@@ -2316,7 +2404,7 @@
         const city = cityById.get(cityId);
         if (!city) return;
         selectedCityId = cityId;
-        playerMapCityId = resolvePlayerMapCityId();
+        syncPlayerMapCityFromMovement();
 
         const holder = resolveNationName(resolveLiveCityHolder(city));
         const lastCapture = resolveLastCaptureDisplay(city);
@@ -2360,9 +2448,14 @@
         }
 
         refreshDrawerMovementActions(city);
-        const borderHints = global.RoyalArmiesAgeMovement?.getBorderActionHints?.(city, playerMapCityId) || {};
+        const borderHints = global.RoyalArmiesAgeMovement?.getBorderActionHints?.(
+            city,
+            resolveActivePlayerCatalogCityId()
+        ) || {};
         refreshDrawerWatchtowerButton(city, borderHints);
+        refreshDrawerScoutIntel(city, borderHints);
         void refreshDrawerAssaultRisk(city, borderHints);
+        void refreshDrawerMovementContext(cityId);
         setCityDrawerTab('info');
 
         const canScout = playerBordersCity(city);
@@ -2567,7 +2660,12 @@
                 return;
             }
 
+            const wasAlreadySelected = selectedCityId === cityId && isCityDrawerOpen();
             toggleCityDrawerFromClick(cityId, event.clientX, event.clientY);
+            if (!wasAlreadySelected) {
+                const city = cityById.get(cityId);
+                if (city) maybeAutoTravelToBorderCity(city);
+            }
         };
 
         els.labelsCity.addEventListener('click', openFromLabel);
@@ -2689,8 +2787,9 @@
             const button = event.target.closest('[data-age-city-action]');
             if (!button || button.disabled) return;
             event.preventDefault();
+            event.stopPropagation();
             const action = button.getAttribute('data-age-city-action');
-            handleDrawerMovementAction(action);
+            void handleDrawerMovementAction(action);
         });
         els.drawerWatchtowerOpen?.addEventListener('click', (event) => {
             event.preventDefault();
@@ -2718,7 +2817,7 @@
             if (event?.detail?.eventSource === 'guild-sync') {
                 return;
             }
-            playerMapCityId = global.RoyalArmiesAgeMovement?.getCatalogCityId?.() || resolvePlayerMapCityId();
+            syncPlayerMapCityFromMovement();
             global.RoyalArmiesAgeMovementPanel?.syncCatalogCity?.(playerMapCityId);
             global.RoyalArmiesPlayerLocPins?.refreshLocalPlayerPin?.();
             refreshPlayerLocPinAndLabelCollisions();
@@ -2727,7 +2826,10 @@
                 const city = cityById.get(selectedCityId);
                 if (city) {
                     refreshDrawerMovementActions(city);
-                    const borderHints = global.RoyalArmiesAgeMovement?.getBorderActionHints?.(city, playerMapCityId) || {};
+                    const borderHints = global.RoyalArmiesAgeMovement?.getBorderActionHints?.(
+                        city,
+                        resolveActivePlayerCatalogCityId()
+                    ) || {};
                     refreshDrawerWatchtowerButton(city, borderHints);
                     refreshDrawerScoutIntel(city, borderHints);
                     void refreshDrawerAssaultRisk(city, borderHints);
@@ -2850,7 +2952,7 @@
         });
         closeCityDrawer();
         closeBattleReportModal();
-        playerMapCityId = resolvePlayerMapCityId();
+        syncPlayerMapCityFromMovement();
         refreshPlayerLocPinAndLabelCollisions();
         refreshNationCityHighlights();
         global.enableAgeWorldMapCitySearch?.();
@@ -2873,7 +2975,7 @@
         onViewModeChange,
         setTerrainOverlayEnabled,
         refreshPlayerCity: () => {
-            playerMapCityId = resolvePlayerMapCityId();
+            syncPlayerMapCityFromMovement();
             refreshPlayerLocPinAndLabelCollisions();
             syncPlayerCityPinHitTarget();
         },
