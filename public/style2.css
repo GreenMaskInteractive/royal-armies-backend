@@ -19982,6 +19982,24 @@ html.age-world-map-pan-locked #cursor-click-fx-layer {
     opacity: 1;
 }
 
+.age-world-map-layer--highlight .age-world-city-highlight-path.is-selected-city,
+.age-world-map-layer--highlight .age-world-city-highlight-boost.is-selected-city {
+    opacity: 1 !important;
+    fill: rgba(255, 196, 72, 0.32);
+    stroke: rgba(255, 217, 120, 1);
+    stroke-width: 3.5px;
+    filter: drop-shadow(0 0 10px rgba(255, 196, 72, 0.85));
+}
+
+.age-world-map-layer--highlight .age-world-city-highlight-path.is-bordering-neighbor,
+.age-world-map-layer--highlight .age-world-city-highlight-boost.is-bordering-neighbor {
+    opacity: 1 !important;
+    fill: rgba(120, 200, 255, 0.22);
+    stroke: rgba(100, 180, 255, 0.95);
+    stroke-width: 2.5px;
+    filter: drop-shadow(0 0 6px rgba(80, 160, 255, 0.45));
+}
+
 #age-world-map-hit-layer.age-world-map-layer--hit .age-world-city-hit-path {
     pointer-events: all !important;
     fill: rgba(0, 0, 0, 0.001);

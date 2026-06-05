@@ -783,6 +783,30 @@
 
     let searchHighlightClearTimer = 0;
 
+    const CITY_HIGHLIGHT_INTERACTION_CLASSES = [
+        'is-active',
+        'is-selected-city',
+        'is-bordering-neighbor'
+    ];
+
+    function isCityDrawerOpen() {
+        return Boolean(els.drawer && !els.drawer.hidden);
+    }
+
+    function resolveBorderingCityIds(cityId) {
+        const city = cityById.get(cityId);
+        if (!city || !Array.isArray(city.neighbors)) return [];
+        return city.neighbors.filter((neighborId) => cityById.has(neighborId));
+    }
+
+    function forEachCityHighlightNode(cityId, callback) {
+        if (!cityId || !els.highlightLayer || typeof callback !== 'function') return;
+        els.highlightLayer.querySelectorAll(
+            `.age-world-city-highlight-path[data-city-id="${cityId}"], `
+            + `.age-world-city-highlight-boost[data-city-id="${cityId}"]`
+        ).forEach(callback);
+    }
+
     function clearCitySearchHighlight(cityId) {
         if (!els.highlightLayer) return;
         const selector = cityId
@@ -792,7 +816,10 @@
             )
             : '.age-world-city-highlight-path.is-search-center-flash, .age-world-city-highlight-boost.is-search-center-flash';
         els.highlightLayer.querySelectorAll(selector).forEach((node) => {
-            node.classList.remove('is-search-center-flash', 'is-active');
+            node.classList.remove('is-search-center-flash');
+            CITY_HIGHLIGHT_INTERACTION_CLASSES.forEach((className) => {
+                node.classList.remove(className);
+            });
         });
     }
 
@@ -1539,11 +1566,13 @@
         els.hitLayer.dataset.hitBound = '1';
 
         els.hitLayer.addEventListener('pointerover', (event) => {
+            if (isCityDrawerOpen()) return;
             const cityId = resolveCityHitTarget(event.target);
             if (cityId) showCityHighlight(cityId);
         });
 
         els.hitLayer.addEventListener('pointerout', (event) => {
+            if (isCityDrawerOpen()) return;
             const node = event.target.closest?.('.age-world-city-hit-path[data-city-id]');
             if (!node) return;
             const leavingId = node.dataset.cityId;
@@ -1857,18 +1886,34 @@
         if (!cityId || !els.highlightLayer) return;
         clearCityHighlight();
         hoveredCityId = cityId;
-        els.highlightLayer.querySelectorAll(
-            `.age-world-city-highlight-path[data-city-id="${cityId}"]`
-        ).forEach((node) => {
+        forEachCityHighlightNode(cityId, (node) => {
             node.classList.add('is-active');
+        });
+    }
+
+    function showCitySelectionHighlight(cityId) {
+        if (!cityId || !els.highlightLayer) return;
+        clearCityHighlight();
+        hoveredCityId = '';
+
+        forEachCityHighlightNode(cityId, (node) => {
+            node.classList.add('is-selected-city');
+        });
+
+        resolveBorderingCityIds(cityId).forEach((neighborId) => {
+            forEachCityHighlightNode(neighborId, (node) => {
+                node.classList.add('is-bordering-neighbor');
+            });
         });
     }
 
     function clearCityHighlight() {
         hoveredCityId = '';
         if (!els.highlightLayer) return;
-        els.highlightLayer.querySelectorAll('.age-world-city-highlight-path.is-active, .age-world-city-highlight-boost.is-active').forEach((node) => {
-            node.classList.remove('is-active');
+        els.highlightLayer.querySelectorAll('.age-world-city-highlight-path, .age-world-city-highlight-boost').forEach((node) => {
+            CITY_HIGHLIGHT_INTERACTION_CLASSES.forEach((className) => {
+                node.classList.remove(className);
+            });
         });
     }
 
@@ -2363,6 +2408,8 @@
                 positionCityDrawer(clientX, clientY);
             });
         }
+
+        showCitySelectionHighlight(cityId);
     }
 
     function closeCityDrawer() {
@@ -2691,6 +2738,7 @@
                     const borderHints = global.RoyalArmiesAgeMovement?.getBorderActionHints?.(city, playerMapCityId) || {};
                     refreshDrawerScoutIntel(city, borderHints);
                     void refreshDrawerAssaultRisk(city, borderHints);
+                    showCitySelectionHighlight(selectedCityId);
                 }
             }
         });
