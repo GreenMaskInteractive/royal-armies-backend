@@ -33,17 +33,38 @@
         { id: 'wards', mark: '✦', title: 'Arcane Wards', desc: 'Adds spell shielding to settlement defenses.', cost: '320 RSD' }
     ]);
 
+    const INFIRMARY_UNIT_TYPE_ORDER = Object.freeze(['infantry', 'cavalry', 'artillery', 'beasts']);
+    const INFIRMARY_UNIT_TYPE_LABELS = Object.freeze({
+        infantry: 'Infantry',
+        cavalry: 'Cavalry',
+        artillery: 'Artillery',
+        beasts: 'Beasts'
+    });
+    const INFIRMARY_PROMOTION_ORDER = Object.freeze(['elite', 'mst', 'vet', 'std', 'app']);
+    const INFIRMARY_PROMOTION_LABELS = Object.freeze({
+        app: 'Apprentice',
+        std: 'Standard',
+        vet: 'Veteran',
+        mst: 'Master',
+        elite: 'Elite'
+    });
+
     const INFIRMARY_DEMO_INJURED_UNITS = Object.freeze([
-        { stackId: 'shieldman', mark: '🛡', name: 'Recruit Shieldman (A)', count: 3, severity: 'Light wounds', recovery: '1 cycle' },
-        { stackId: 'longbow', mark: '🏹', name: 'Longbowman (B)', count: 2, severity: 'Field trauma', recovery: '2 cycles' },
-        { stackId: 'lancer', mark: '⚔', name: 'Royal Lancer (A/B)', count: 1, severity: 'Mount fatigue', recovery: '1 cycle' },
-        { stackId: 'warder', mark: '✦', name: 'Warder (A)', count: 2, severity: 'Arcane strain', recovery: '3 cycles' },
-        { stackId: 'wolf', mark: '🐺', name: 'War-Howler (A-2)', count: 1, severity: 'Deep lacerations', recovery: '2 cycles' }
+        { stackId: 'shieldman-vet', mark: '🛡', name: 'Recruit Shieldman (A)', categoryId: 'infantry', tier: 1, promotion: 'vet', count: 2, severity: 'Light wounds', recovery: '1 cycle' },
+        { stackId: 'shieldman-std', mark: '🛡', name: 'Recruit Shieldman (A)', categoryId: 'infantry', tier: 1, promotion: 'std', count: 1, severity: 'Bruised armor', recovery: '1 cycle' },
+        { stackId: 'shield-sergeant-elt', mark: '🛡', name: 'Shield Sergeant (A)', categoryId: 'infantry', tier: 2, promotion: 'elite', count: 1, severity: 'Deep contusions', recovery: '2 cycles' },
+        { stackId: 'warder-mst', mark: '✦', name: 'Warder (A)', categoryId: 'magic-infantry', tier: 2, promotion: 'mst', count: 1, severity: 'Arcane strain', recovery: '3 cycles' },
+        { stackId: 'lancer-vet', mark: '⚔', name: 'Royal Lancer (A/B)', categoryId: 'cavalry', tier: 3, promotion: 'vet', count: 1, severity: 'Mount fatigue', recovery: '1 cycle' },
+        { stackId: 'dread-knight-std', mark: '⚔', name: 'Dread Knight (A/B)', categoryId: 'cavalry', tier: 2, promotion: 'std', count: 1, severity: 'Lance arm strain', recovery: '2 cycles' },
+        { stackId: 'longbow-std', mark: '🏹', name: 'Longbowman (B)', categoryId: 'artillery', tier: 2, promotion: 'std', count: 2, severity: 'Field trauma', recovery: '2 cycles' },
+        { stackId: 'levy-archer-app', mark: '🏹', name: 'Levy Archer (B)', categoryId: 'artillery', tier: 1, promotion: 'app', count: 1, severity: 'Splinter wound', recovery: '1 cycle' },
+        { stackId: 'wolf-mst', mark: '🐺', name: 'War-Howler (A-2)', categoryId: 'beasts', tier: 3, promotion: 'mst', count: 1, severity: 'Deep lacerations', recovery: '2 cycles' },
+        { stackId: 'trained-wolf-vet', mark: '🐺', name: 'Trained Wolf (A-1)', categoryId: 'beasts', tier: 2, promotion: 'vet', count: 1, severity: 'Crushed paw', recovery: '2 cycles' }
     ]);
 
     let bound = false;
     let activeVenueId = '';
-    /** @type {Array<{ id: string, stackId: string, mark: string, name: string, label: string, severity: string, recovery: string }>} */
+    /** @type {Array<{ id: string, stackId: string, mark: string, name: string, label: string, categoryId: string, unitType: string, tier: number, promotion: string, severity: string, recovery: string }>} */
     let infirmaryInjuredUnits = [];
     /** @type {Set<string>} */
     let infirmarySelectedUnitIds = new Set();
@@ -384,10 +405,30 @@
         );
     }
 
+    function resolveInfirmaryUnitType(categoryId) {
+        const raw = String(categoryId || '').trim().toLowerCase();
+        if (raw.startsWith('magic-')) return raw.slice('magic-'.length);
+        return raw;
+    }
+
+    function resolveInfirmaryPromotionLabel(promotion) {
+        const key = String(promotion || '').trim().toLowerCase();
+        return INFIRMARY_PROMOTION_LABELS[key] || key.toUpperCase();
+    }
+
+    function compareInfirmaryPromotionRank(left, right) {
+        const leftIndex = INFIRMARY_PROMOTION_ORDER.indexOf(String(left || '').toLowerCase());
+        const rightIndex = INFIRMARY_PROMOTION_ORDER.indexOf(String(right || '').toLowerCase());
+        return (leftIndex < 0 ? 99 : leftIndex) - (rightIndex < 0 ? 99 : rightIndex);
+    }
+
     function buildInfirmaryUnitRoster() {
         const units = [];
         INFIRMARY_DEMO_INJURED_UNITS.forEach((stack) => {
             const count = Math.max(0, Math.floor(Number(stack.count) || 0));
+            const unitType = resolveInfirmaryUnitType(stack.categoryId);
+            const tier = Math.max(1, Math.floor(Number(stack.tier) || 1));
+            const promotion = String(stack.promotion || 'std').trim().toLowerCase();
             for (let index = 0; index < count; index += 1) {
                 const slot = index + 1;
                 units.push({
@@ -396,12 +437,62 @@
                     mark: stack.mark,
                     name: stack.name,
                     label: count > 1 ? `${stack.name} #${slot}` : stack.name,
+                    categoryId: stack.categoryId,
+                    unitType,
+                    tier,
+                    promotion,
                     severity: stack.severity,
                     recovery: stack.recovery
                 });
             }
         });
         return units;
+    }
+
+    function groupInfirmaryUnitsForDisplay(units) {
+        const typeMap = new Map();
+
+        units.forEach((unit) => {
+            const unitType = unit.unitType || resolveInfirmaryUnitType(unit.categoryId);
+            if (!typeMap.has(unitType)) {
+                typeMap.set(unitType, new Map());
+            }
+            const tierMap = typeMap.get(unitType);
+            const tier = Math.max(1, Math.floor(Number(unit.tier) || 1));
+            if (!tierMap.has(tier)) {
+                tierMap.set(tier, new Map());
+            }
+            const promoMap = tierMap.get(tier);
+            const promotion = String(unit.promotion || 'std').trim().toLowerCase();
+            if (!promoMap.has(promotion)) {
+                promoMap.set(promotion, []);
+            }
+            promoMap.get(promotion).push(unit);
+        });
+
+        return INFIRMARY_UNIT_TYPE_ORDER
+            .filter((unitType) => typeMap.has(unitType))
+            .map((unitType) => {
+                const tierMap = typeMap.get(unitType);
+                const tiers = [...tierMap.keys()]
+                    .sort((left, right) => right - left)
+                    .map((tier) => {
+                        const promoMap = tierMap.get(tier);
+                        const promotions = [...promoMap.keys()]
+                            .sort(compareInfirmaryPromotionRank)
+                            .map((promotion) => ({
+                                promotion,
+                                promotionLabel: resolveInfirmaryPromotionLabel(promotion),
+                                units: promoMap.get(promotion)
+                            }));
+                        return { tier, promotions };
+                    });
+                return {
+                    unitType,
+                    typeLabel: INFIRMARY_UNIT_TYPE_LABELS[unitType] || unitType,
+                    tiers
+                };
+            });
     }
 
     function resetInfirmaryInjuredStacks() {
@@ -427,6 +518,52 @@
         return `${selectedCount} selected for healing · ${totalInjured} injured ${totalInjured === 1 ? 'unit' : 'units'} total`;
     }
 
+    function renderInfirmaryUnitRow(unit) {
+        const isSelected = infirmarySelectedUnitIds.has(unit.id);
+        return (
+            `<li class="age-infirmary-injured-item" role="presentation">`
+            + `<button type="button" class="age-infirmary-injured-row${isSelected ? ' is-selected' : ''}"`
+            + ` data-infirmary-unit-id="${escapeHtml(unit.id)}"`
+            + ` role="option"`
+            + ` aria-selected="${isSelected ? 'true' : 'false'}"`
+            + ` aria-label="${escapeHtml(unit.label)} — ${escapeHtml(resolveInfirmaryPromotionLabel(unit.promotion))} — ${escapeHtml(unit.severity)}">`
+            + `<span class="age-infirmary-injured-mark" aria-hidden="true">${escapeHtml(unit.mark)}</span>`
+            + '<div class="age-infirmary-injured-main">'
+            + `<span class="age-infirmary-injured-name">${escapeHtml(unit.label)}</span>`
+            + `<span class="age-infirmary-injured-meta">${escapeHtml(unit.severity)} · ${escapeHtml(unit.recovery)}</span>`
+            + '</div>'
+            + `<span class="age-infirmary-injured-status">${isSelected ? 'Selected' : 'Injured'}</span>`
+            + '</button>'
+            + '</li>'
+        );
+    }
+
+    function renderInfirmaryGroupedRoster() {
+        const groups = groupInfirmaryUnitsForDisplay(infirmaryInjuredUnits);
+        return groups.map((typeGroup) => (
+            '<section class="age-infirmary-type-group"'
+            + ` aria-label="${escapeHtml(typeGroup.typeLabel)} injured units">`
+            + `<h4 class="age-infirmary-type-title">${escapeHtml(typeGroup.typeLabel)}</h4>`
+            + typeGroup.tiers.map((tierGroup) => (
+                '<section class="age-infirmary-tier-group"'
+                + ` aria-label="Tier ${escapeHtml(tierGroup.tier)} ${escapeHtml(typeGroup.typeLabel)}">`
+                + `<h5 class="age-infirmary-tier-title">Tier ${escapeHtml(tierGroup.tier)}</h5>`
+                + tierGroup.promotions.map((promoGroup) => (
+                    '<section class="age-infirmary-promo-group"'
+                    + ` aria-label="${escapeHtml(promoGroup.promotionLabel)} ${escapeHtml(typeGroup.typeLabel)}">`
+                    + `<h6 class="age-infirmary-promo-title">${escapeHtml(promoGroup.promotionLabel)}</h6>`
+                    + '<ul class="age-infirmary-injured-list" role="listbox"'
+                    + ` aria-label="${escapeHtml(promoGroup.promotionLabel)} injured units" aria-multiselectable="true">`
+                    + promoGroup.units.map((unit) => renderInfirmaryUnitRow(unit)).join('')
+                    + '</ul>'
+                    + '</section>'
+                )).join('')
+                + '</section>'
+            )).join('')
+            + '</section>'
+        )).join('');
+    }
+
     function renderInfirmaryInjuredList() {
         const totalInjured = countInfirmaryInjuredUnits();
         if (!totalInjured) {
@@ -447,27 +584,9 @@
             + '<h3 class="age-infirmary-injured-title">Injured Roster</h3>'
             + `<p class="age-infirmary-injured-summary">${escapeHtml(formatInfirmarySelectionSummary())}</p>`
             + '</div>'
-            + '<ul class="age-infirmary-injured-list" role="listbox" aria-label="Injured units" aria-multiselectable="true">'
-            + infirmaryInjuredUnits.map((unit) => {
-                const isSelected = infirmarySelectedUnitIds.has(unit.id);
-                return (
-                    `<li class="age-infirmary-injured-item" role="presentation">`
-                    + `<button type="button" class="age-infirmary-injured-row${isSelected ? ' is-selected' : ''}"`
-                    + ` data-infirmary-unit-id="${escapeHtml(unit.id)}"`
-                    + ` role="option"`
-                    + ` aria-selected="${isSelected ? 'true' : 'false'}"`
-                    + ` aria-label="${escapeHtml(unit.label)} — ${escapeHtml(unit.severity)}">`
-                    + `<span class="age-infirmary-injured-mark" aria-hidden="true">${escapeHtml(unit.mark)}</span>`
-                    + '<div class="age-infirmary-injured-main">'
-                    + `<span class="age-infirmary-injured-name">${escapeHtml(unit.label)}</span>`
-                    + `<span class="age-infirmary-injured-meta">${escapeHtml(unit.severity)} · ${escapeHtml(unit.recovery)}</span>`
-                    + '</div>'
-                    + `<span class="age-infirmary-injured-status">${isSelected ? 'Selected' : 'Injured'}</span>`
-                    + '</button>'
-                    + '</li>'
-                );
-            }).join('')
-            + '</ul>'
+            + '<div class="age-infirmary-grouped-roster">'
+            + renderInfirmaryGroupedRoster()
+            + '</div>'
             + '<section class="age-infirmary-heal-toolbar" aria-label="Heal selected units">'
             + `<button type="button" class="age-settlement-venue-infirmary-btn age-settlement-venue-infirmary-btn--primary"`
             + ` data-settlement-infirmary-heal="selected"${selectedCount ? '' : ' disabled'}>`
