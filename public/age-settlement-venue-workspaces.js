@@ -116,9 +116,10 @@
         if (!wallet || !amountEl) return;
 
         wallet.hidden = false;
-        const hudAmount = global.document.getElementById('age-hud-nation-treasury-amount');
-        if (hudAmount?.textContent) {
-            amountEl.textContent = hudAmount.textContent.trim();
+
+        const cached = global.RoyalArmiesNationTreasury?.getLastPayload?.();
+        if (cached != null) {
+            amountEl.textContent = formatRsdAmount(cached.rsd);
         }
 
         if (typeof global.RoyalArmiesNationTreasury?.refresh === 'function') {
@@ -162,7 +163,8 @@
         }
         bodyEl.innerHTML = options.bodyHtml || '';
 
-        if (options.showNationTreasury) {
+        activeVenueId = String(options.venueId || '').trim();
+        if (DEFENSE_VENUE_IDS.has(activeVenueId)) {
             syncSettlementVenueRsdWallet();
         } else {
             hideSettlementVenueRsdWallet();
@@ -171,7 +173,6 @@
         workspace.hidden = false;
         workspace.setAttribute('aria-hidden', 'false');
         setVenueWorkspaceOpen(true);
-        activeVenueId = String(options.venueId || '').trim();
 
         global.document.getElementById('age-settlement-venue-close')?.focus();
     }
@@ -810,8 +811,7 @@
             eyebrow: 'Settlement Defense',
             title: venue.label || 'Defense',
             subtitle: venue.description || '',
-            bodyHtml: renderDefenseBody(),
-            showNationTreasury: true
+            bodyHtml: renderDefenseBody()
         });
     }
 

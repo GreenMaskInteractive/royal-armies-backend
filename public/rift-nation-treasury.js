@@ -5,6 +5,7 @@
     'use strict';
 
     const REFRESH_EVENT = 'royal-armies-nation-treasury-refresh';
+    let lastTreasuryPayload = { rsd: 0 };
 
     function resolveApiUrl(path) {
         if (typeof global.resolveRoyalArmiesApiUrl === 'function') {
@@ -30,27 +31,30 @@
         return amount.toLocaleString('en-US');
     }
 
-    function renderTreasuryHud(payload) {
-        const amountEl = global.document.getElementById('age-hud-nation-treasury-amount');
+    function hideTreasuryHud() {
         const itemEl = global.document.getElementById('age-hud-nation-treasury-item');
-        if (!amountEl) return;
-
-        const rsd = payload?.rsd ?? 0;
-        amountEl.textContent = formatRsd(rsd);
-
         if (itemEl) {
-            itemEl.setAttribute(
-                'aria-label',
-                `Nation Treasury ${formatRsd(rsd)} Royal Silver Dollar`
-            );
+            itemEl.hidden = true;
+            itemEl.setAttribute('aria-hidden', 'true');
         }
+    }
+
+    function rememberTreasuryPayload(payload) {
+        const rsd = Math.max(0, Math.floor(Number(payload?.rsd) || 0));
+        lastTreasuryPayload = {
+            ...lastTreasuryPayload,
+            ...payload,
+            rsd
+        };
+        return lastTreasuryPayload;
     }
 
     async function refreshNationTreasury() {
         const username = resolveUsername();
+        hideTreasuryHud();
+
         if (!username) {
-            renderTreasuryHud({ rsd: 0 });
-            return null;
+            return rememberTreasuryPayload({ rsd: 0 });
         }
 
         try {
@@ -60,15 +64,12 @@
             );
             const payload = await response.json().catch(() => ({}));
             if (!response.ok) {
-                renderTreasuryHud({ rsd: 0, rewardRules: payload?.rewardRules });
-                return null;
+                return rememberTreasuryPayload({ rsd: 0, rewardRules: payload?.rewardRules });
             }
 
-            renderTreasuryHud(payload);
-            return payload;
+            return rememberTreasuryPayload(payload);
         } catch (_err) {
-            renderTreasuryHud({ rsd: 0 });
-            return null;
+            return rememberTreasuryPayload({ rsd: 0 });
         }
     }
 
@@ -87,12 +88,17 @@
     global.RoyalArmiesNationTreasury = {
         refresh: refreshNationTreasury,
         requestRefresh,
-        formatRsd
+        formatRsd,
+        getLastPayload: () => ({ ...lastTreasuryPayload })
     };
 
     bindRefreshListener();
+    hideTreasuryHud();
     if (global.document.readyState === 'loading') {
-        global.document.addEventListener('DOMContentLoaded', refreshNationTreasury);
+        global.document.addEventListener('DOMContentLoaded', () => {
+            hideTreasuryHud();
+            refreshNationTreasury();
+        });
     } else {
         refreshNationTreasury();
     }
