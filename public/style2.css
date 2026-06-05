@@ -18885,17 +18885,6 @@ html.age-world-map-pan-locked #cursor-click-fx-layer {
     pointer-events: none !important;
 }
 
-.age-world-map-city-search-label {
-    font-family: 'Cinzel', serif;
-    font-size: 0.62rem;
-    font-weight: 700;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    color: rgba(244, 230, 200, 0.82);
-    text-align: right;
-    text-shadow: 0 1px 6px rgba(0, 0, 0, 0.85);
-}
-
 .age-world-map-city-search-row {
     display: flex;
     flex-direction: row;
