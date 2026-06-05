@@ -35,6 +35,8 @@
 
     let bound = false;
     let activeVenueId = '';
+    /** @type {{ id: string } | null} */
+    let defenseUpgradeQueue = null;
 
     function escapeHtml(value) {
         return String(value ?? '')
@@ -99,6 +101,9 @@
         workspace.hidden = true;
         workspace.setAttribute('aria-hidden', 'true');
         setVenueWorkspaceOpen(false);
+        if (DEFENSE_VENUE_IDS.has(activeVenueId)) {
+            defenseUpgradeQueue = null;
+        }
         activeVenueId = '';
         hideSettlementVenueRsdWallet();
     }
@@ -196,22 +201,155 @@
         );
     }
 
+    function findDefenseModule(moduleId) {
+        return DEFENSE_MODULES.find((entry) => entry.id === moduleId) || null;
+    }
+
+    function setDefenseWorkspaceStatus(message, isError) {
+        const statusEl = global.document.getElementById('age-defense-workspace-status');
+        if (!statusEl) return;
+        const text = String(message || '').trim();
+        if (!text) {
+            statusEl.hidden = true;
+            statusEl.textContent = '';
+            statusEl.classList.remove('is-error');
+            return;
+        }
+        statusEl.hidden = false;
+        statusEl.textContent = text;
+        statusEl.classList.toggle('is-error', Boolean(isError));
+    }
+
+    function renderDefenseQueueSlot() {
+        const queued = defenseUpgradeQueue ? findDefenseModule(defenseUpgradeQueue.id) : null;
+        if (!queued) {
+            return (
+                '<section class="age-defense-queue" aria-label="Defense upgrade queue">'
+                + '<h3 class="age-defense-queue-title">Upgrade Queue</h3>'
+                + '<div class="age-defense-queue-slot age-defense-queue-slot--empty">'
+                + '<p class="age-defense-queue-empty">No upgrade queued. One improvement may wait here at a time—choose from the list below.</p>'
+                + '</div>'
+                + '</section>'
+            );
+        }
+
+        return (
+            '<section class="age-defense-queue" aria-label="Defense upgrade queue">'
+            + '<h3 class="age-defense-queue-title">Upgrade Queue</h3>'
+            + '<div class="age-defense-queue-slot age-defense-queue-slot--filled">'
+            + `<span class="age-defense-queue-mark" aria-hidden="true">${escapeHtml(queued.mark)}</span>`
+            + '<div class="age-defense-queue-copy">'
+            + `<p class="age-defense-queue-name">${escapeHtml(queued.title)}</p>`
+            + `<p class="age-defense-queue-desc">${escapeHtml(queued.desc)}</p>`
+            + `<p class="age-defense-queue-cost">${escapeHtml(queued.cost)}</p>`
+            + '</div>'
+            + '<button type="button" class="age-defense-queue-cancel" data-defense-cancel-queue>Remove from queue</button>'
+            + '</div>'
+            + '</section>'
+        );
+    }
+
+    function renderDefenseUpgradeList() {
+        const queuedId = defenseUpgradeQueue?.id || '';
+        return (
+            '<section class="age-defense-upgrades" aria-label="Available defense upgrades">'
+            + '<h3 class="age-defense-upgrades-title">Available Improvements</h3>'
+            + '<ul class="age-defense-upgrade-list">'
+            + DEFENSE_MODULES.map((mod) => {
+                const isQueued = queuedId === mod.id;
+                const slotTaken = Boolean(queuedId) && !isQueued;
+                return (
+                    `<li class="age-defense-upgrade-row${isQueued ? ' is-queued' : ''}${slotTaken ? ' is-slot-taken' : ''}">`
+                    + `<span class="age-defense-upgrade-mark" aria-hidden="true">${escapeHtml(mod.mark)}</span>`
+                    + '<div class="age-defense-upgrade-main">'
+                    + `<span class="age-defense-upgrade-title">${escapeHtml(mod.title)}</span>`
+                    + `<span class="age-defense-upgrade-desc">${escapeHtml(mod.desc)}</span>`
+                    + '</div>'
+                    + `<span class="age-defense-upgrade-cost">${escapeHtml(mod.cost)}</span>`
+                    + (isQueued
+                        ? '<span class="age-defense-upgrade-status">In queue</span>'
+                        : `<button type="button" class="age-defense-upgrade-queue-btn" data-defense-queue="${escapeHtml(mod.id)}"${slotTaken ? ' disabled' : ''}>Queue</button>`)
+                    + '</li>'
+                );
+            }).join('')
+            + '</ul>'
+            + '</section>'
+        );
+    }
+
     function renderDefenseBody() {
         return (
-            '<div class="age-army-workspace-toolbar">'
-            + '<p class="age-army-workspace-toolbar-note">Invest nation treasury RSD in settlement defenses to protect your army between deployments and harden this city against assaults.</p>'
+            '<div class="age-defense-workspace">'
+            + '<p class="age-army-workspace-toolbar-note">Invest nation treasury RSD in settlement defenses. Only one upgrade can be queued at a time; additional choices unlock after the queue clears.</p>'
+            + renderDefenseQueueSlot()
+            + renderDefenseUpgradeList()
+            + '<p id="age-defense-workspace-status" class="age-defense-workspace-status" aria-live="polite" hidden></p>'
             + '</div>'
-            + renderCatalogCards(
-                DEFENSE_MODULES.map((mod) => ({
-                    id: mod.id,
-                    mark: mod.mark,
-                    title: mod.title,
-                    desc: mod.desc,
-                    cost: 'Defense points'
-                })),
-                'Improve'
-            )
         );
+    }
+
+    function refreshDefenseWorkspaceBody() {
+        if (!DEFENSE_VENUE_IDS.has(activeVenueId)) return;
+        const bodyEl = global.document.getElementById('age-settlement-venue-body');
+        if (!bodyEl) return;
+        bodyEl.innerHTML = renderDefenseBody();
+    }
+
+    function queueDefenseUpgrade(moduleId) {
+        const mod = findDefenseModule(moduleId);
+        if (!mod) return;
+
+        if (defenseUpgradeQueue?.id === mod.id) {
+            setDefenseWorkspaceStatus(`${mod.title} is already in the queue.`);
+            return;
+        }
+
+        if (defenseUpgradeQueue?.id) {
+            const previous = findDefenseModule(defenseUpgradeQueue.id);
+            defenseUpgradeQueue = { id: mod.id };
+            refreshDefenseWorkspaceBody();
+            setDefenseWorkspaceStatus(
+                previous
+                    ? `Replaced ${previous.title} with ${mod.title} in the queue.`
+                    : `${mod.title} queued for construction.`
+            );
+            return;
+        }
+
+        defenseUpgradeQueue = { id: mod.id };
+        refreshDefenseWorkspaceBody();
+        setDefenseWorkspaceStatus(`${mod.title} queued. Treasury will be charged when construction begins.`);
+    }
+
+    function cancelDefenseQueue() {
+        if (!defenseUpgradeQueue) {
+            setDefenseWorkspaceStatus('The queue is already empty.');
+            return;
+        }
+        const previous = findDefenseModule(defenseUpgradeQueue.id);
+        defenseUpgradeQueue = null;
+        refreshDefenseWorkspaceBody();
+        setDefenseWorkspaceStatus(previous ? `${previous.title} removed from the queue.` : 'Queue cleared.');
+    }
+
+    function onDefenseWorkspaceClick(event) {
+        if (!DEFENSE_VENUE_IDS.has(activeVenueId)) return false;
+
+        const cancelBtn = event.target.closest('[data-defense-cancel-queue]');
+        if (cancelBtn) {
+            event.preventDefault();
+            cancelDefenseQueue();
+            return true;
+        }
+
+        const queueBtn = event.target.closest('[data-defense-queue]');
+        if (queueBtn && !queueBtn.disabled) {
+            event.preventDefault();
+            queueDefenseUpgrade(queueBtn.getAttribute('data-defense-queue'));
+            return true;
+        }
+
+        return false;
     }
 
     function renderChurchBody() {
@@ -299,6 +437,7 @@
     }
 
     function openDefenseVenue(detail) {
+        defenseUpgradeQueue = null;
         const venue = detail?.venue || {};
         openArmyWorkspace({
             venueId: detail?.venueId || '',
@@ -442,6 +581,7 @@
             closeArmyWorkspace();
             return;
         }
+        if (onDefenseWorkspaceClick(event)) return;
         onArmyWorkspaceActionClick(event);
         onInfirmaryClick(event);
     }
