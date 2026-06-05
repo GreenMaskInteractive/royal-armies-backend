@@ -68,14 +68,10 @@ function buildGuildMerchPayload(commander) {
     };
 }
 
-const HEAL_COST_MULTIPLIER_BY_RANK = {
-    1: 1,
-    2: 1,
-    3: 1.015,
-    4: 1.02,
-    5: 1.03,
-    6: 1.05
-};
+const {
+    HEAL_COST_MULTIPLIER_BY_RANK,
+    resolveStackInfirmaryHealCost
+} = require('./nexus-infirmary-recovery');
 
 const RANK_UP_PROVISIONS_BY_NEW_RANK = Object.freeze([
     { maxRank: 4, grant: 55 },
@@ -493,14 +489,7 @@ function resolveBattleInjuryCount(commander, battleResult, trainingMode = 'stree
 
 function resolveStackHealCost(catalog, stack) {
     const unit = getCatalogUnitById(catalog, stack?.catalogUnitId);
-    if (!unit) return 0;
-
-    const baseGold = Math.max(0, Math.floor(Number(unit.goldCost) || 0));
-    if (!baseGold) return 0;
-
-    const rank = Math.max(1, Math.min(6, Math.floor(Number(stack.rank) || 1)));
-    const multiplier = HEAL_COST_MULTIPLIER_BY_RANK[rank] || 1;
-    return Math.max(1, Math.ceil(baseGold * multiplier));
+    return resolveStackInfirmaryHealCost(unit, stack);
 }
 
 function findNextInjuredStack(army, catalog) {
