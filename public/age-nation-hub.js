@@ -7,7 +7,7 @@
     /** Set true to restore full-screen radial menu (go-to design in style-age-nation-hub-radial.css). */
     const ENABLE_RADIAL_HUB_MENU = false;
 
-    const BOX_BUILD_VERSION = 'nation-hub-battle-pass-wire-2';
+    const BOX_BUILD_VERSION = 'hub-above-dev-nav-1';
 
     const BOX_ITEM_META = Object.freeze({
         nation: { glyph: '◆', hint: 'Council & command' },
@@ -326,6 +326,19 @@
         )).join('');
 
         colsRoot.dataset.ageMenuVersion = BOX_BUILD_VERSION;
+
+        colsRoot.querySelectorAll('[data-age-hub-menu]').forEach((btn) => {
+            const onItemActivate = (event) => {
+                if (event.type === 'pointerup' && event.button !== 0) return;
+                event.preventDefault();
+                event.stopPropagation();
+                const itemId = btn.getAttribute('data-age-hub-menu');
+                closeHub();
+                activateHubItem(itemId, event);
+            };
+            btn.addEventListener('pointerup', onItemActivate);
+            btn.addEventListener('click', onItemActivate);
+        });
     }
 
     function renderRadialSlots() {

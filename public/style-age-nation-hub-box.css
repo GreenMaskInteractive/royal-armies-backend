@@ -37,6 +37,8 @@
     max-height: none !important;
     opacity: 1 !important;
     pointer-events: auto !important;
+    /* Above dev-page-navigator (2147483640) so bottom menu rows stay clickable */
+    z-index: 2147483646 !important;
 }
 
 .age-nation-hub-menu-backdrop {

@@ -97,10 +97,16 @@ body.age-map-shell-only .age-chronicles-battle-pass-modal:not([hidden]) * {
 body.age-map-shell-only.age-chronicles-battle-pass-open .age-chronicles-battle-pass-modal.is-open {
     position: fixed;
     inset: 0;
-    z-index: 2147483639 !important;
+    z-index: 2147483646 !important;
     display: flex !important;
     visibility: visible !important;
     pointer-events: auto !important;
+}
+
+/* Dev navigator sits bottom-center; do not steal Game Hub / Battle Pass clicks */
+body.age-map-shell-only:has(.age-nation-hub-menu--box.is-open) .dev-page-navigator,
+body.age-map-shell-only:has(.age-chronicles-battle-pass-modal.is-open) .dev-page-navigator {
+    pointer-events: none !important;
 }
 
 body.age-map-shell-only .age-map-top-bar-clock-cluster,

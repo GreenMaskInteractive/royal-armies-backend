@@ -21199,7 +21199,11 @@ body.is-age-chronicles-battle-pass-open {
 }
 
 .age-age-center-modal.age-chronicles-battle-pass-modal {
-    z-index: 13070;
+    z-index: 2147483646;
+}
+
+.age-age-center-modal.age-chronicles-battle-pass-modal.is-open {
+    z-index: 2147483646 !important;
 }
 
 .age-chronicles-battle-pass-modal {
