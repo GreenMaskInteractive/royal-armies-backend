@@ -12,7 +12,7 @@
     gap: 8px;
     align-items: center;
     padding: 7px 10px;
-    border: 1px solid rgba(112, 200, 184, 0.28);
+    border: 1px solid rgba(184, 144, 48, 0.32);
     background: rgba(0, 0, 0, 0.28);
     font-size: 0.72rem;
 }
@@ -24,7 +24,7 @@
 
 .age-hq-threat-row__power {
     text-align: right;
-    color: #b8f0e4;
+    color: rgba(255, 215, 128, 0.82);
 }
 
 .age-hq-threat-row__hostility {
@@ -157,10 +157,10 @@
 
 .age-hq-bounty-feed-item {
     padding: 8px 10px;
-    border: 1px solid rgba(112, 200, 184, 0.28);
+    border: 1px solid rgba(184, 144, 48, 0.32);
     background: rgba(0, 0, 0, 0.32);
     font-size: 0.7rem;
-    color: rgba(228, 236, 232, 0.9);
+    color: rgba(241, 224, 172, 0.88);
 }
 
 .age-hq-bounty-feed-item.is-nation-highlight {
