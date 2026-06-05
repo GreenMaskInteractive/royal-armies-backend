@@ -7,15 +7,15 @@
     <link rel="stylesheet" href="style.css?v=cursor-modal-layer-fix-1">
     <link rel="stylesheet" href="style2.css?v=workspace-gamehub-backdrop-1">
     <link rel="stylesheet" href="style-age-headquarters.css?v=hq-header-clicks-2">
-    <link rel="stylesheet" href="style-age-center-modals.css?v=records-nations-fit-1">
+    <link rel="stylesheet" href="style-age-center-modals.css?v=workspace-rsd-wallet-1">
     <link rel="stylesheet" href="style-age-council-room.css?v=hq-header-clicks-2">
     <link rel="stylesheet" href="style-age-hq-arcane-flare.css?v=hq-border-blue-pulse-1">
     <link rel="stylesheet" href="style-age-hq-intel.css?v=hq-site-blend-1">
     <link rel="stylesheet" href="mobile-responsive.css?v=council-room-premium-2">
     <link rel="stylesheet" href="dev-page-navigator.css?v=dev-nav-drag-handle-1">
     <link rel="stylesheet" href="custom-cursor.css?v=finger-press-7">
-    <link rel="stylesheet" href="style-age-army-workspaces.css?v=workspace-gamehub-backdrop-1">
-    <link rel="stylesheet" href="style-age-map-only.css?v=workspace-gamehub-backdrop-1">
+    <link rel="stylesheet" href="style-age-army-workspaces.css?v=workspace-rsd-wallet-1">
+    <link rel="stylesheet" href="style-age-map-only.css?v=workspace-rsd-wallet-1">
     <link rel="stylesheet" href="style-age-immersive-workspace.css?v=workspace-backdrop-stack-1">
     <link rel="stylesheet" href="style-age-nation-hub-radial.css?v=radialmenu-saved-1">
     <link rel="stylesheet" href="style-age-nation-hub-box.css?v=nation-hub-text-center-1">
@@ -1127,10 +1127,8 @@
                             <button
                                 type="button"
                                 id="age-barracks-close"
-                                class="age-barracks-close"
-                                aria-label="Close barracks">
-                                Close
-                            </button>
+                                class="age-barracks-close age-age-center-modal-close"
+                                aria-label="Close barracks">×</button>
                         </div>
                     </header>
                     <div class="age-barracks-layout">
@@ -1180,7 +1178,7 @@
                                 <span id="age-unit-evolution-provisions" class="age-unit-evolution-wallet-value">—</span>
                             </div>
                             <button type="button" id="age-unit-evolution-open-barracks" class="age-unit-evolution-link-btn">Garrison Registry</button>
-                            <button type="button" id="age-unit-evolution-close" class="age-unit-evolution-close" aria-label="Close Unit Evolution workspace">Close</button>
+                            <button type="button" id="age-unit-evolution-close" class="age-unit-evolution-close age-age-center-modal-close" aria-label="Close Unit Evolution workspace">×</button>
                         </div>
                     </header>
                     <p id="age-unit-evolution-status" class="age-unit-evolution-status" hidden aria-live="polite"></p>
@@ -1288,7 +1286,7 @@
 
                 <div id="age-guild-trade-arena" class="age-guild-job-arena age-guild-trade-arena" hidden aria-hidden="true" aria-label="Trade convoy">
                     <button type="button" class="age-guild-back age-guild-job-back" data-age-guild-back>← Jobs</button>
-                    <button type="button" class="age-guild-close age-guild-job-close" data-age-guild-close aria-label="Close job">Close</button>
+                    <button type="button" class="age-guild-close age-guild-job-close age-age-center-modal-close" data-age-guild-close aria-label="Close job">×</button>
 
                     <header class="age-guild-top-band" aria-label="Trade convoy header">
                         <div class="age-guild-job-top-panel">
@@ -1308,7 +1306,7 @@
 
                 <div id="age-guild-bounties-arena" class="age-guild-job-arena age-guild-bounties-arena" hidden aria-hidden="true" aria-label="Player bounties">
                     <button type="button" class="age-guild-back age-guild-job-back" data-age-guild-back>← Jobs</button>
-                    <button type="button" class="age-guild-close age-guild-job-close" data-age-guild-close aria-label="Close job">Close</button>
+                    <button type="button" class="age-guild-close age-guild-job-close age-age-center-modal-close" data-age-guild-close aria-label="Close job">×</button>
 
                     <header class="age-guild-top-band" aria-label="Player bounties header">
                         <div class="age-guild-job-top-panel">
@@ -1332,13 +1330,23 @@
                             <h2 id="age-settlement-venue-title" class="age-settlement-venue-title">Venue</h2>
                             <p id="age-settlement-venue-subtitle" class="age-settlement-venue-subtitle" hidden></p>
                         </div>
-                        <button
-                            type="button"
-                            id="age-settlement-venue-close"
-                            class="age-settlement-venue-close"
-                            aria-label="Close venue workspace">
-                            Close
-                        </button>
+                        <div class="age-settlement-venue-header-actions age-army-workspace-header-actions">
+                            <div
+                                id="age-settlement-venue-rsd-wallet"
+                                class="age-army-workspace-rsd-wallet"
+                                hidden
+                                aria-label="Nation Treasury Royal Silver Dollars">
+                                <span class="age-army-workspace-rsd-label">Nation Treasury</span>
+                                <span class="age-army-workspace-rsd-value" aria-live="polite">
+                                    <span id="age-settlement-venue-rsd-amount">—</span><span class="age-hud-rsd-unit" aria-hidden="true"> RSD</span>
+                                </span>
+                            </div>
+                            <button
+                                type="button"
+                                id="age-settlement-venue-close"
+                                class="age-settlement-venue-close age-age-center-modal-close"
+                                aria-label="Close venue workspace">×</button>
+                        </div>
                     </header>
                     <div id="age-settlement-venue-body" class="age-settlement-venue-body" aria-live="polite"></div>
                 </div>
@@ -2144,12 +2152,13 @@
     <script src="rift-immersive-workspace.js?v=immersive-workspace-only-2"></script>
     <script src="age-view-tabs.js?v=settlement-army-workspaces-1"></script>
     <script src="rift-age-guild-training.js?v=map-settlement-tab-only-1"></script>
-    <script src="age-adventurers-guild.js?v=immersive-workspace-only-1"></script>
-    <script src="age-settlement-venue-workspaces.js?v=immersive-workspace-only-1"></script>
+    <script src="age-adventurers-guild.js?v=workspace-rsd-wallet-1"></script>
+    <script src="rift-nation-treasury.js?v=workspace-rsd-wallet-1"></script>
+    <script src="age-settlement-venue-workspaces.js?v=workspace-rsd-wallet-1"></script>
     <script src="rift-age-unit-evolution.js?v=map-settlement-tab-only-1"></script>
-    <script src="age-unit-evolution.js?v=immersive-workspace-only-1"></script>
+    <script src="age-unit-evolution.js?v=workspace-rsd-wallet-1"></script>
     <script src="rift-unit-purchase-catalog.js?v=map-settlement-tab-only-1"></script>
-    <script src="age-barracks.js?v=immersive-workspace-only-1"></script>
+    <script src="age-barracks.js?v=workspace-rsd-wallet-1"></script>
     <script src="age-army-groups.js?v=war-room-stage-centered-1"></script>
     <script src="age-records.js?v=nation-total-cities-1"></script>
     <script src="rift-song-manuscript-catalog.js?v=nation-hub-radial-1"></script>

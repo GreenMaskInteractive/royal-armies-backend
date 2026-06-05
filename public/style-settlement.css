@@ -217,7 +217,7 @@ body.age-page-settlement-only .age-settlement-venue-subtitle {
     line-height: 1.45;
 }
 
-body.age-page-settlement-only .age-settlement-venue-close {
+body.age-page-settlement-only .age-settlement-venue-close:not(.age-age-center-modal-close) {
     flex-shrink: 0;
     padding: 0.45rem 0.9rem;
     border-radius: 6px;

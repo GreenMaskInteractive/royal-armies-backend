@@ -89,4 +89,11 @@
         requestRefresh,
         formatRsd
     };
+
+    bindRefreshListener();
+    if (global.document.readyState === 'loading') {
+        global.document.addEventListener('DOMContentLoaded', refreshNationTreasury);
+    } else {
+        refreshNationTreasury();
+    }
 })(window);

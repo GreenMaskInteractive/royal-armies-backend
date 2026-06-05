@@ -27,10 +27,10 @@
     ]);
 
     const DEFENSE_MODULES = Object.freeze([
-        { id: 'walls', mark: '▣', title: 'Palisade Reinforcement', desc: 'Raises local garrison defense for this settlement.' },
-        { id: 'towers', mark: '◈', title: 'Watch Towers', desc: 'Extends scout response time against raids.' },
-        { id: 'stores', mark: '◆', title: 'Supply Stores', desc: 'Improves provision recovery between battles.' },
-        { id: 'wards', mark: '✦', title: 'Arcane Wards', desc: 'Adds spell shielding to settlement defenses.' }
+        { id: 'walls', mark: '▣', title: 'Palisade Reinforcement', desc: 'Raises local garrison defense for this settlement.', cost: '250 RSD' },
+        { id: 'towers', mark: '◈', title: 'Watch Towers', desc: 'Extends scout response time against raids.', cost: '180 RSD' },
+        { id: 'stores', mark: '◆', title: 'Supply Stores', desc: 'Improves provision recovery between battles.', cost: '120 RSD' },
+        { id: 'wards', mark: '✦', title: 'Arcane Wards', desc: 'Adds spell shielding to settlement defenses.', cost: '320 RSD' }
     ]);
 
     let bound = false;
@@ -61,6 +61,37 @@
         closeArmyWorkspace();
     }
 
+    function formatRsdAmount(value) {
+        if (global.RoyalArmiesNationTreasury?.formatRsd) {
+            return global.RoyalArmiesNationTreasury.formatRsd(value);
+        }
+        return Math.max(0, Math.floor(Number(value) || 0)).toLocaleString('en-US');
+    }
+
+    function hideSettlementVenueRsdWallet() {
+        const wallet = global.document.getElementById('age-settlement-venue-rsd-wallet');
+        if (wallet) wallet.hidden = true;
+    }
+
+    async function syncSettlementVenueRsdWallet() {
+        const wallet = global.document.getElementById('age-settlement-venue-rsd-wallet');
+        const amountEl = global.document.getElementById('age-settlement-venue-rsd-amount');
+        if (!wallet || !amountEl) return;
+
+        wallet.hidden = false;
+        const hudAmount = global.document.getElementById('age-hud-nation-treasury-amount');
+        if (hudAmount?.textContent) {
+            amountEl.textContent = hudAmount.textContent.trim();
+        }
+
+        if (typeof global.RoyalArmiesNationTreasury?.refresh === 'function') {
+            const payload = await global.RoyalArmiesNationTreasury.refresh();
+            if (payload != null) {
+                amountEl.textContent = formatRsdAmount(payload.rsd);
+            }
+        }
+    }
+
     function closeArmyWorkspace() {
         const workspace = resolveVenueWorkspace();
         if (!workspace) return;
@@ -69,6 +100,7 @@
         workspace.setAttribute('aria-hidden', 'true');
         setVenueWorkspaceOpen(false);
         activeVenueId = '';
+        hideSettlementVenueRsdWallet();
     }
 
     function openArmyWorkspace(options = {}) {
@@ -89,6 +121,12 @@
             subtitleEl.hidden = !subtitle;
         }
         bodyEl.innerHTML = options.bodyHtml || '';
+
+        if (options.showNationTreasury) {
+            syncSettlementVenueRsdWallet();
+        } else {
+            hideSettlementVenueRsdWallet();
+        }
 
         workspace.hidden = false;
         workspace.setAttribute('aria-hidden', 'false');
@@ -161,7 +199,7 @@
     function renderDefenseBody() {
         return (
             '<div class="age-army-workspace-toolbar">'
-            + '<p class="age-army-workspace-toolbar-note">Invest in settlement defenses to protect your army between deployments and harden this city against assaults.</p>'
+            + '<p class="age-army-workspace-toolbar-note">Invest nation treasury RSD in settlement defenses to protect your army between deployments and harden this city against assaults.</p>'
             + '</div>'
             + renderCatalogCards(
                 DEFENSE_MODULES.map((mod) => ({
@@ -267,7 +305,8 @@
             eyebrow: 'Settlement Defense',
             title: venue.label || 'Defense',
             subtitle: venue.description || '',
-            bodyHtml: renderDefenseBody()
+            bodyHtml: renderDefenseBody(),
+            showNationTreasury: true
         });
     }
 
