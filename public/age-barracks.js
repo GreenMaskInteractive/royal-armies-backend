@@ -469,7 +469,6 @@
             + `<dl class="age-barracks-detail-costs">`
             + `<div><dt>Recruit</dt><dd>${escapeHtml(api.formatGold(unit.goldCost))}</dd></div>`
             + `<div><dt>Tier evolution</dt><dd>${escapeHtml(unit.tierEvolutionCost)} Provisions</dd></div>`
-            + `<div><dt>Unlock</dt><dd>Commander Rank ${escapeHtml(unit.unlockRank ?? '—')}</dd></div>`
             + `<div><dt>Role</dt><dd>${escapeHtml(unit.roleLabel || 'Rank')}</dd></div>`
             + `<div><dt>Class</dt><dd>${escapeHtml(unit.combatType || '—')}</dd></div>`
             + '</dl>'
