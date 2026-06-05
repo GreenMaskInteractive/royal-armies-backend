@@ -422,6 +422,16 @@
         return (leftIndex < 0 ? 99 : leftIndex) - (rightIndex < 0 ? 99 : rightIndex);
     }
 
+    function sortInfirmaryUnitsByPromotion(units) {
+        return [...units].sort((left, right) => {
+            const rankOrder = compareInfirmaryPromotionRank(left.promotion, right.promotion);
+            if (rankOrder !== 0) return rankOrder;
+            const nameOrder = String(left.name || '').localeCompare(String(right.name || ''));
+            if (nameOrder !== 0) return nameOrder;
+            return String(left.id || '').localeCompare(String(right.id || ''));
+        });
+    }
+
     function buildInfirmaryUnitRoster() {
         const units = [];
         INFIRMARY_DEMO_INJURED_UNITS.forEach((stack) => {
@@ -460,14 +470,9 @@
             const tierMap = typeMap.get(unitType);
             const tier = Math.max(1, Math.floor(Number(unit.tier) || 1));
             if (!tierMap.has(tier)) {
-                tierMap.set(tier, new Map());
+                tierMap.set(tier, []);
             }
-            const promoMap = tierMap.get(tier);
-            const promotion = String(unit.promotion || 'std').trim().toLowerCase();
-            if (!promoMap.has(promotion)) {
-                promoMap.set(promotion, []);
-            }
-            promoMap.get(promotion).push(unit);
+            tierMap.get(tier).push(unit);
         });
 
         return INFIRMARY_UNIT_TYPE_ORDER
@@ -476,17 +481,10 @@
                 const tierMap = typeMap.get(unitType);
                 const tiers = [...tierMap.keys()]
                     .sort((left, right) => right - left)
-                    .map((tier) => {
-                        const promoMap = tierMap.get(tier);
-                        const promotions = [...promoMap.keys()]
-                            .sort(compareInfirmaryPromotionRank)
-                            .map((promotion) => ({
-                                promotion,
-                                promotionLabel: resolveInfirmaryPromotionLabel(promotion),
-                                units: promoMap.get(promotion)
-                            }));
-                        return { tier, promotions };
-                    });
+                    .map((tier) => ({
+                        tier,
+                        units: sortInfirmaryUnitsByPromotion(tierMap.get(tier))
+                    }));
                 return {
                     unitType,
                     typeLabel: INFIRMARY_UNIT_TYPE_LABELS[unitType] || unitType,
@@ -530,7 +528,7 @@
             + `<span class="age-infirmary-injured-mark" aria-hidden="true">${escapeHtml(unit.mark)}</span>`
             + '<div class="age-infirmary-injured-main">'
             + `<span class="age-infirmary-injured-name">${escapeHtml(unit.label)}</span>`
-            + `<span class="age-infirmary-injured-meta">${escapeHtml(unit.severity)} · ${escapeHtml(unit.recovery)}</span>`
+            + `<span class="age-infirmary-injured-meta">${escapeHtml(resolveInfirmaryPromotionLabel(unit.promotion))} · ${escapeHtml(unit.severity)} · ${escapeHtml(unit.recovery)}</span>`
             + '</div>'
             + `<span class="age-infirmary-injured-status">${isSelected ? 'Selected' : 'Injured'}</span>`
             + '</button>'
@@ -548,16 +546,10 @@
                 '<section class="age-infirmary-tier-group"'
                 + ` aria-label="Tier ${escapeHtml(tierGroup.tier)} ${escapeHtml(typeGroup.typeLabel)}">`
                 + `<h5 class="age-infirmary-tier-title">Tier ${escapeHtml(tierGroup.tier)}</h5>`
-                + tierGroup.promotions.map((promoGroup) => (
-                    '<section class="age-infirmary-promo-group"'
-                    + ` aria-label="${escapeHtml(promoGroup.promotionLabel)} ${escapeHtml(typeGroup.typeLabel)}">`
-                    + `<h6 class="age-infirmary-promo-title">${escapeHtml(promoGroup.promotionLabel)}</h6>`
-                    + '<ul class="age-infirmary-injured-list" role="listbox"'
-                    + ` aria-label="${escapeHtml(promoGroup.promotionLabel)} injured units" aria-multiselectable="true">`
-                    + promoGroup.units.map((unit) => renderInfirmaryUnitRow(unit)).join('')
-                    + '</ul>'
-                    + '</section>'
-                )).join('')
+                + '<ul class="age-infirmary-injured-list" role="listbox"'
+                + ` aria-label="Tier ${escapeHtml(tierGroup.tier)} injured units" aria-multiselectable="true">`
+                + tierGroup.units.map((unit) => renderInfirmaryUnitRow(unit)).join('')
+                + '</ul>'
                 + '</section>'
             )).join('')
             + '</section>'
