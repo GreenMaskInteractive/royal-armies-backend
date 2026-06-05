@@ -22,6 +22,13 @@
     const SMALL_CITY_SPAN = 26;
     const SMALL_CITY_HIT_RADIUS = 14;
     const PLAN_CITY_PICK_NEAR_PX = 38;
+    const SETTLEMENT_HIT_TIER_PRIORITY = {
+        citadel: 0,
+        kingdom: 1,
+        city: 2,
+        town: 3,
+        village: 4
+    };
     const PLAYER_PIN_HIT_PAD_PX = 6;
     const SETTLEMENT_TIER_PRIORITY = {
         kingdom: 5,
@@ -962,6 +969,9 @@
             node.className = 'age-world-map-label age-world-map-label--city';
             node.id = `age-label-city-${city.nationId}-${city.id.replace(/^[^-]+-/, '')}`;
             node.dataset.cityId = city.id;
+            node.setAttribute('role', 'button');
+            node.setAttribute('tabindex', '0');
+            node.setAttribute('aria-label', `Open ${city.name}`);
             node.style.left = pos.left;
             node.style.top = pos.top;
             stampLabelCentroid(node, city.centroid);
@@ -1015,29 +1025,123 @@
 
     function resolveCityHitTarget(target) {
         if (!target || typeof target.closest !== 'function') return '';
-        const node = target.closest('.age-world-city-hit-path[data-city-id]');
-        return node?.dataset.cityId || '';
+        const hitNode = target.closest('.age-world-city-hit-path[data-city-id]');
+        if (hitNode?.dataset?.cityId) return hitNode.dataset.cityId;
+
+        const labelNode = target.closest('.age-world-map-label--city[data-city-id]');
+        return labelNode?.dataset.cityId || '';
+    }
+
+    function mapClientPointToCatalog(clientX, clientY) {
+        if (!els.svg || !Number.isFinite(clientX) || !Number.isFinite(clientY)) return null;
+
+        const matrix = els.svg.getScreenCTM();
+        if (!matrix) return null;
+
+        const point = els.svg.createSVGPoint();
+        point.x = clientX;
+        point.y = clientY;
+        const svgPoint = point.matrixTransform(matrix.inverse());
+        return { x: svgPoint.x, y: svgPoint.y };
+    }
+
+    function cityBboxContains(city, catalogPoint, pad = 2) {
+        const box = city?.bbox;
+        if (!box || !catalogPoint) return false;
+        return catalogPoint.x >= box.minX - pad
+            && catalogPoint.x <= box.maxX + pad
+            && catalogPoint.y >= box.minY - pad
+            && catalogPoint.y <= box.maxY + pad;
+    }
+
+    function cityBboxArea(city) {
+        const box = city?.bbox;
+        if (!box) return 0;
+        return Math.max(0, box.maxX - box.minX) * Math.max(0, box.maxY - box.minY);
+    }
+
+    function settlementTierPriority(city) {
+        const tier = String(city?.settlementTier || 'city').trim().toLowerCase();
+        return SETTLEMENT_HIT_TIER_PRIORITY[tier] ?? 5;
+    }
+
+    function collectCityHitIdsAtClientPoint(clientX, clientY) {
+        const ids = [];
+        if (!els.hitLayer) return ids;
+
+        const stack = global.document.elementsFromPoint(clientX, clientY);
+        for (let i = 0; i < stack.length; i += 1) {
+            const node = stack[i];
+            if (!node || !els.hitLayer.contains(node)) continue;
+            const hitNode = node.closest?.('.age-world-city-hit-path[data-city-id]');
+            const id = hitNode?.dataset?.cityId || '';
+            if (id && !ids.includes(id)) ids.push(id);
+        }
+
+        return ids;
+    }
+
+    function pickBestCityIdFromCandidates(candidateIds, catalogPoint, clientX, clientY) {
+        const cities = candidateIds
+            .map((id) => cityById.get(id))
+            .filter(Boolean);
+        if (!cities.length) return '';
+
+        let pool = cities;
+        if (catalogPoint) {
+            const inBbox = cities.filter((city) => cityBboxContains(city, catalogPoint));
+            if (inBbox.length) pool = inBbox;
+        }
+
+        const hostRect = mapOverlayHostRect();
+        const localX = Number.isFinite(clientX) ? clientX - hostRect.left : null;
+        const localY = Number.isFinite(clientY) ? clientY - hostRect.top : null;
+
+        pool.sort((left, right) => {
+            const tierDelta = settlementTierPriority(left) - settlementTierPriority(right);
+            if (tierDelta !== 0) return tierDelta;
+
+            if (Number.isFinite(localX) && Number.isFinite(localY)) {
+                const leftPoint = mapPointToFramePixels(left.centroid.x, left.centroid.y);
+                const rightPoint = mapPointToFramePixels(right.centroid.x, right.centroid.y);
+                const leftDist = Math.hypot(leftPoint.x - localX, leftPoint.y - localY);
+                const rightDist = Math.hypot(rightPoint.x - localX, rightPoint.y - localY);
+                if (leftDist !== rightDist) return leftDist - rightDist;
+            }
+
+            return cityBboxArea(right) - cityBboxArea(left);
+        });
+
+        return pool[0]?.id || '';
     }
 
     function resolveCityIdAtClientPoint(clientX, clientY) {
         if (!Number.isFinite(clientX) || !Number.isFinite(clientY)) return '';
 
-        if (els.hitLayer) {
-            const stack = global.document.elementsFromPoint(clientX, clientY);
-            for (let i = 0; i < stack.length; i += 1) {
-                const node = stack[i];
-                if (!node || !els.hitLayer.contains(node)) continue;
-                const hitNode = node.closest?.('.age-world-city-hit-path[data-city-id]');
-                if (hitNode?.dataset?.cityId) {
-                    return hitNode.dataset.cityId;
+        const catalogPoint = mapClientPointToCatalog(clientX, clientY);
+        const hitCandidates = collectCityHitIdsAtClientPoint(clientX, clientY);
+        if (hitCandidates.length) {
+            const picked = pickBestCityIdFromCandidates(hitCandidates, catalogPoint, clientX, clientY);
+            if (picked) return picked;
+        }
+
+        if (catalogPoint) {
+            const bboxMatches = [];
+            cityById.forEach((city) => {
+                if (city?.id && cityBboxContains(city, catalogPoint)) {
+                    bboxMatches.push(city.id);
                 }
+            });
+            if (bboxMatches.length) {
+                const picked = pickBestCityIdFromCandidates(bboxMatches, catalogPoint, clientX, clientY);
+                if (picked) return picked;
             }
         }
 
-        return resolveCityIdNearClientPoint(clientX, clientY, PLAN_CITY_PICK_NEAR_PX);
+        return resolveCityIdNearClientPoint(clientX, clientY, PLAN_CITY_PICK_NEAR_PX, catalogPoint);
     }
 
-    function resolveCityIdNearClientPoint(clientX, clientY, maxPx) {
+    function resolveCityIdNearClientPoint(clientX, clientY, maxPx, catalogPoint) {
         if (!els.frame || !Number.isFinite(clientX) || !Number.isFinite(clientY)) return '';
 
         const radius = Number.isFinite(maxPx) && maxPx > 0 ? maxPx : PLAN_CITY_PICK_NEAR_PX;
@@ -1045,24 +1149,32 @@
         const localX = clientX - hostRect.left;
         const localY = clientY - hostRect.top;
 
-        let bestId = '';
-        let bestDist = radius;
-
+        const candidates = [];
         cityById.forEach((city) => {
             if (!city?.id || !city.centroid) return;
+            if (catalogPoint && !cityBboxContains(city, catalogPoint, 8)) return;
 
             const point = mapPointToFramePixels(city.centroid.x, city.centroid.y);
             const pxPerUnit = mapPixelsPerMapUnit(city.centroid.x, city.centroid.y);
-            const pickRadius = Math.max(radius, pxPerUnit * SMALL_CITY_HIT_RADIUS * 1.2);
+            const pickRadius = Math.max(
+                radius,
+                pxPerUnit * resolveCityHitRadius(city, city.outlinePath || '') * 1.15
+            );
 
             const dist = Math.hypot(point.x - localX, point.y - localY);
-            if (dist <= pickRadius && dist < bestDist) {
-                bestDist = dist;
-                bestId = city.id;
+            if (dist <= pickRadius) {
+                candidates.push({ id: city.id, dist });
             }
         });
 
-        return bestId;
+        if (!candidates.length) return '';
+
+        candidates.sort((left, right) => left.dist - right.dist);
+        const nearestIds = candidates
+            .filter((entry) => entry.dist === candidates[0].dist)
+            .map((entry) => entry.id);
+        return pickBestCityIdFromCandidates(nearestIds, catalogPoint, clientX, clientY)
+            || candidates[0].id;
     }
 
     function resolveCityIdAtPointer(event) {
@@ -1378,12 +1490,26 @@
         }, true);
     }
 
-    function appendSmallCityHitBoost(city, outlineD, hitFrag, highlightFrag, ownershipFrag) {
-        const span = pathSpan(outlineD);
-        if (span >= SMALL_CITY_SPAN || !city.centroid || !hitFrag) {
-            return;
+    function resolveCityHitRadius(city, outlineD) {
+        const tier = String(city?.settlementTier || 'city').trim().toLowerCase();
+        const box = city?.bbox;
+        if (box) {
+            const size = Math.min(box.maxX - box.minX, box.maxY - box.minY);
+            if (tier === 'citadel') return Math.max(28, Math.min(44, size * 0.14));
+            if (tier === 'kingdom') return Math.max(22, Math.min(38, size * 0.12));
+            if (tier === 'city') return Math.max(18, Math.min(30, size * 0.1));
         }
 
+        if (pathSpan(outlineD) < SMALL_CITY_SPAN) return SMALL_CITY_HIT_RADIUS;
+        if (tier === 'citadel') return 30;
+        if (tier === 'kingdom') return 24;
+        return 18;
+    }
+
+    function appendCityHitCentroidBoost(city, outlineD, hitFrag, highlightFrag) {
+        if (!city?.centroid || !hitFrag) return;
+
+        const radius = resolveCityHitRadius(city, outlineD);
         const cx = city.centroid.x;
         const cy = city.centroid.y;
         const hitCircle = global.document.createElementNS('http://www.w3.org/2000/svg', 'circle');
@@ -1391,7 +1517,7 @@
         hitCircle.setAttribute('data-city-id', city.id);
         hitCircle.setAttribute('cx', String(cx));
         hitCircle.setAttribute('cy', String(cy));
-        hitCircle.setAttribute('r', String(SMALL_CITY_HIT_RADIUS));
+        hitCircle.setAttribute('r', String(radius));
         hitFrag.appendChild(hitCircle);
 
         if (highlightFrag) {
@@ -1400,7 +1526,7 @@
             highlightCircle.setAttribute('data-city-id', city.id);
             highlightCircle.setAttribute('cx', String(cx));
             highlightCircle.setAttribute('cy', String(cy));
-            highlightCircle.setAttribute('r', String(SMALL_CITY_HIT_RADIUS));
+            highlightCircle.setAttribute('r', String(radius));
             highlightFrag.appendChild(highlightCircle);
         }
     }
@@ -1591,7 +1717,7 @@
                 highlightFrag.appendChild(highlightPath);
             }
 
-            appendSmallCityHitBoost(city, outlineD, hitFrag, highlightFrag, ownershipFrag);
+            appendCityHitCentroidBoost(city, outlineD, hitFrag, highlightFrag);
         });
 
         if (ownershipFrag && els.ownershipLayer) {
@@ -2190,6 +2316,7 @@
             || target.closest('.age-world-city-hit-pin-zone')
             || target.closest('.age-world-city-border-path')
             || target.closest('.age-world-city-ownership-path')
+            || target.closest('.age-world-map-label--city')
             || target.closest('.age-world-map-terrain-controls')
             || target.closest('.age-world-map-plan-tool-dock')
             || target.closest('#age-world-map-plan-add')
@@ -2296,7 +2423,39 @@
         return didMove;
     }
 
+    function bindCityLabelClicks() {
+        if (!els.labelsCity || els.labelsCity.dataset.cityLabelClickBound === '1') return;
+        els.labelsCity.dataset.cityLabelClickBound = '1';
+
+        const openFromLabel = (event) => {
+            const label = event.target.closest('.age-world-map-label--city[data-city-id]');
+            if (!label || !els.labelsCity.contains(label)) return;
+
+            event.preventDefault();
+            event.stopPropagation();
+            mapCityPointerUpHandled = true;
+
+            const cityId = String(label.dataset.cityId || '').trim();
+            if (!cityId || !cityById.has(cityId)) return;
+
+            if (isPlanCityPickActive()) {
+                processPlanCityPick(cityId, event);
+                return;
+            }
+
+            openCityDrawer(cityId, event.clientX, event.clientY);
+        };
+
+        els.labelsCity.addEventListener('click', openFromLabel);
+        els.labelsCity.addEventListener('pointerup', (event) => {
+            if (event.button !== 0) return;
+            openFromLabel(event);
+        });
+    }
+
     function bindMapEvents() {
+        bindCityLabelClicks();
+
         els.frame.addEventListener(
             'wheel',
             (event) => {

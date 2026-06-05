@@ -20253,6 +20253,11 @@ html.age-world-map-pan-locked #cursor-click-fx-layer {
     visibility: hidden;
 }
 
+.age-world-map-labels-host .age-world-map-label--city {
+    pointer-events: auto;
+    cursor: pointer;
+}
+
 .age-world-map-label {
     position: absolute;
     transform: translate(-50%, -50%);

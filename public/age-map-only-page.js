@@ -9,7 +9,8 @@
         `#${MAP_ROOT_ID}`,
         `#${MAP_ROOT_ID} *`,
         '#age-world-map-frame',
-        '#age-world-map-frame *'
+        '#age-world-map-frame *',
+        '.age-world-map-labels-host .age-world-map-label--city'
     ].join(', ');
 
     const COUNCIL_BOARD_MAP_GAP_PX = 10;
