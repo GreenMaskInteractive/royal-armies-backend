@@ -481,6 +481,7 @@
             event.preventDefault();
             event.stopPropagation();
         }
+        global.RoyalArmiesAgeNationHub?.close?.();
         if (typeof global.closePortalCommanderIdentityMenu === 'function') {
             global.closePortalCommanderIdentityMenu();
         }
@@ -494,6 +495,7 @@
         renderModalBody();
         closeRewardDetail();
         modal.hidden = false;
+        modal.removeAttribute('hidden');
         modal.setAttribute('aria-hidden', 'false');
         global.document.body.classList.add('is-age-chronicles-battle-pass-open');
 

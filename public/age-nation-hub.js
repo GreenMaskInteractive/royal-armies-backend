@@ -7,7 +7,7 @@
     /** Set true to restore full-screen radial menu (go-to design in style-age-nation-hub-radial.css). */
     const ENABLE_RADIAL_HUB_MENU = false;
 
-    const BOX_BUILD_VERSION = 'nation-hub-box-vertical-list-1';
+    const BOX_BUILD_VERSION = 'nation-hub-battle-pass-wire-1';
 
     const BOX_ITEM_META = Object.freeze({
         nation: { glyph: '◆', hint: 'Council & command' },
@@ -119,6 +119,7 @@
 
         if (nextOpen) {
             ensureBoxMenuPortal();
+            renderBoxMenu();
             menu.classList.add('is-open');
             menu.hidden = false;
             menu.removeAttribute('hidden');
@@ -246,7 +247,7 @@
             return;
         }
         if (typeof global.showPortalAlert === 'function') {
-            void global.showPortalAlert('Battle Pass is unavailable in this session.', 'Battle Pass');
+            void global.showPortalAlert('Battle Pass is unavailable on this page.', 'Battle Pass');
         }
     }
 
@@ -324,10 +325,6 @@
         )).join('');
 
         colsRoot.dataset.ageMenuVersion = BOX_BUILD_VERSION;
-
-        colsRoot.querySelectorAll('[data-age-hub-menu]').forEach((btn) => {
-            btn.addEventListener('click', onMenuActivate);
-        });
     }
 
     function renderRadialSlots() {
@@ -372,14 +369,22 @@
         } else {
             ensureBoxMenuPortal();
             renderBoxMenu();
-            getMenu()?.addEventListener('click', (event) => {
-                if (!event.target.closest('.age-nation-hub-menu-backdrop, .age-nation-hub-menu-close')) {
-                    return;
-                }
-                event.preventDefault();
-                event.stopPropagation();
-                closeHub();
-            });
+            const menu = getMenu();
+            if (menu && menu.dataset.ageMenuClickBound !== 'true') {
+                menu.dataset.ageMenuClickBound = 'true';
+                menu.addEventListener('click', (event) => {
+                    if (event.target.closest('[data-age-hub-menu]')) {
+                        onMenuActivate(event);
+                        return;
+                    }
+                    if (!event.target.closest('.age-nation-hub-menu-backdrop, .age-nation-hub-menu-close')) {
+                        return;
+                    }
+                    event.preventDefault();
+                    event.stopPropagation();
+                    closeHub();
+                });
+            }
         }
 
         getToggle()?.addEventListener('click', (event) => {

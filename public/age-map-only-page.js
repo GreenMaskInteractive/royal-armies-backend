@@ -39,6 +39,7 @@
         if (!target || typeof target.closest !== 'function') return false;
         return Boolean(
             target.closest('.age-nation-hub')
+            || target.closest('.age-nation-hub-menu--box.is-open')
             || target.closest('#age-nation-hub-menu:not([hidden])')
             || target.closest('#age-nation-hub-radial.is-open')
         );
