@@ -4,8 +4,18 @@
 (function initRoyalArmiesBannerWorkspace(global) {
     'use strict';
 
-    const STORAGE_KEY = 'royalarmies:age-banner-blessing-id';
+    const STORAGE_KEY = 'royalarmies:age-banner-state';
+    const LEGACY_BLESSING_KEY = 'royalarmies:age-banner-blessing-id';
     const IMAGE_BUST = 'church-banners-1';
+
+    function createDefaultBannerState() {
+        return {
+            bannerId: '',
+            swapUsed: false,
+            perkPoints: 0,
+            unlockedPerkIds: []
+        };
+    }
 
     const BANNER_CATALOG = Object.freeze([
         {
@@ -125,30 +135,94 @@
             .replace(/"/g, '&quot;');
     }
 
-    function readChosenBannerId() {
-        try {
-            const raw = global.localStorage.getItem(STORAGE_KEY);
-            const id = String(raw || '').trim();
-            return BANNER_BY_ID[id] ? id : '';
-        } catch (_error) {
-            return '';
+    function normalizeBannerState(raw) {
+        const state = createDefaultBannerState();
+        if (!raw || typeof raw !== 'object') return state;
+
+        const bannerId = String(raw.bannerId || '').trim();
+        if (bannerId && BANNER_BY_ID[bannerId]) {
+            state.bannerId = bannerId;
         }
+
+        state.swapUsed = Boolean(raw.swapUsed);
+        state.perkPoints = Math.max(0, Math.floor(Number(raw.perkPoints) || 0));
+
+        const unlocked = Array.isArray(raw.unlockedPerkIds) ? raw.unlockedPerkIds : [];
+        state.unlockedPerkIds = [...new Set(unlocked.map((id) => String(id || '').trim()).filter(Boolean))];
+
+        return state;
     }
 
-    function writeChosenBannerId(bannerId) {
-        const id = String(bannerId || '').trim();
-        if (!BANNER_BY_ID[id]) return false;
+    function readBannerState() {
         try {
-            global.localStorage.setItem(STORAGE_KEY, id);
+            const raw = global.localStorage.getItem(STORAGE_KEY);
+            if (raw) {
+                return normalizeBannerState(JSON.parse(raw));
+            }
+
+            const legacyId = String(global.localStorage.getItem(LEGACY_BLESSING_KEY) || '').trim();
+            if (legacyId && BANNER_BY_ID[legacyId]) {
+                const migrated = normalizeBannerState({ bannerId: legacyId });
+                writeBannerState(migrated);
+                global.localStorage.removeItem(LEGACY_BLESSING_KEY);
+                return migrated;
+            }
+        } catch (_error) {
+            /* fall through */
+        }
+        return createDefaultBannerState();
+    }
+
+    function writeBannerState(state) {
+        try {
+            global.localStorage.setItem(STORAGE_KEY, JSON.stringify(normalizeBannerState(state)));
             return true;
         } catch (_error) {
             return false;
         }
     }
 
+    function readChosenBannerId() {
+        return readBannerState().bannerId;
+    }
+
     function getChosenBanner() {
         const id = readChosenBannerId();
         return id ? BANNER_BY_ID[id] : null;
+    }
+
+    function canSwapBlessing() {
+        const state = readBannerState();
+        return Boolean(state.bannerId && !state.swapUsed);
+    }
+
+    function resetBannerPerkProgress(state) {
+        const next = state || readBannerState();
+        next.perkPoints = 0;
+        next.unlockedPerkIds = [];
+        return next;
+    }
+
+    async function confirmBannerSwap(fromBannerId, toBannerId) {
+        const fromBanner = BANNER_BY_ID[fromBannerId];
+        const toBanner = BANNER_BY_ID[toBannerId];
+        if (!fromBanner || !toBanner) return false;
+
+        const message = (
+            `Renounce the ${fromBanner.title} and receive the ${toBanner.title}? `
+            + 'You may swap your blessed banner only once throughout this Age. '
+            + 'All banner perk points and unlocked perks will be reset—you must earn them again.'
+        );
+
+        if (typeof global.showPortalConfirm === 'function') {
+            return global.showPortalConfirm(message, {
+                title: 'Swap Blessed Banner',
+                confirmLabel: 'Swap Blessing',
+                cancelLabel: 'Keep Current Banner'
+            });
+        }
+
+        return Boolean(global.confirm(message));
     }
 
     function playBlessingToastSfx() {
@@ -210,7 +284,7 @@
         global.document.body.appendChild(toast);
     }
 
-    function renderBannerPerkTreeMarkup(banner, focusPerkId) {
+    function renderBannerPerkTreeMarkup(banner, focusPerkId, bannerState) {
         if (!banner) {
             return `
                 <div class="rift-banner-workspace-empty">
@@ -220,6 +294,8 @@
             `;
         }
 
+        const state = bannerState || readBannerState();
+        const unlockedPerkIds = new Set(state.unlockedPerkIds || []);
         const perks = banner.perks || [];
         if (!selectedPerkId || !perks.some((perk) => perk.id === selectedPerkId)) {
             selectedPerkId = focusPerkId && perks.some((perk) => perk.id === focusPerkId)
@@ -231,19 +307,29 @@
 
         const treeNodes = perks.map((perk, index) => {
             const isActive = perk.id === activePerk?.id;
+            const isUnlocked = unlockedPerkIds.has(perk.id);
             const isLast = index === perks.length - 1;
             return `
-                <li class="rift-banner-skill-node${isActive ? ' is-active' : ''}">
+                <li class="rift-banner-skill-node${isActive ? ' is-active' : ''}${isUnlocked ? ' is-unlocked' : ' is-locked'}">
                     <button type="button" class="rift-banner-skill-node-btn" data-banner-perk-id="${escapeHtml(perk.id)}">
                         <span class="rift-banner-skill-node-orbit" aria-hidden="true"></span>
                         <span class="rift-banner-skill-node-label">${escapeHtml(perk.title)}</span>
+                        <span class="rift-banner-skill-node-status">${isUnlocked ? 'Unlocked' : 'Locked'}</span>
                     </button>
                     ${isLast ? '' : '<span class="rift-banner-skill-connector" aria-hidden="true"></span>'}
                 </li>
             `;
         }).join('');
 
+        const swapNote = state.swapUsed
+            ? 'Banner swap spent for this Age.'
+            : 'One banner swap remains this Age. Swapping resets all perk points.';
+
         return `
+            <div class="rift-banner-workspace-status" role="status">
+                <p class="rift-banner-workspace-points">Banner perk points: <strong>${escapeHtml(state.perkPoints)}</strong></p>
+                <p class="rift-banner-workspace-swap-note">${escapeHtml(swapNote)}</p>
+            </div>
             <div class="rift-banner-workspace-layout">
                 <aside class="rift-banner-workspace-tree" aria-label="Banner perk tree">
                     <div class="rift-banner-workspace-heraldry">
@@ -258,7 +344,9 @@
                     ${activePerk ? `
                         <h3 class="rift-banner-workspace-detail-title">${escapeHtml(activePerk.title)}</h3>
                         <p class="rift-banner-workspace-detail-copy">${escapeHtml(activePerk.desc)}</p>
-                        <p class="rift-banner-workspace-detail-note">Perk effects activate once your blessed banner is fielded with your army.</p>
+                        <p class="rift-banner-workspace-detail-note">${unlockedPerkIds.has(activePerk.id)
+                            ? 'This perk is unlocked on your banner tree.'
+                            : 'Spend banner perk points to unlock this node.'}</p>
                     ` : `
                         <div class="rift-banner-workspace-empty">
                             <p>Select a perk node to read its blessing.</p>
@@ -301,9 +389,10 @@
         global.setTimeout(finalizeBlessingToastHide, 320);
     }
 
-    function showBannerBlessingToast(bannerId) {
+    function showBannerBlessingToast(bannerId, options = {}) {
         const banner = BANNER_BY_ID[String(bannerId || '').trim()];
         if (!banner) return Promise.resolve();
+        const swapped = Boolean(options.swapped);
 
         ensureShell();
 
@@ -319,7 +408,20 @@
             </div>
             <p class="rift-banner-blessing-toast-banner-name">${escapeHtml(banner.title)}</p>
         `;
-        line.textContent = `${banner.lore} Your banner perks are now available in the Game Hub.`;
+        const toastEyebrow = global.document.querySelector('#rift-banner-blessing-toast .rift-banner-blessing-toast-eyebrow');
+        const toastKicker = global.document.getElementById('rift-banner-blessing-toast-title');
+        if (toastEyebrow) {
+            toastEyebrow.textContent = swapped ? 'Blessing exchanged' : 'Blessing received';
+        }
+        if (toastKicker) {
+            toastKicker.textContent = swapped
+                ? 'Your banner blessing has been exchanged!'
+                : 'You have chosen a blessing!';
+        }
+
+        line.textContent = swapped
+            ? `${banner.lore} Your banner perk tree has been reset—earn points again to unlock its gifts.`
+            : `${banner.lore} Your banner perks are now available in the Game Hub.`;
 
         toast.hidden = false;
         toast.classList.remove('is-exiting');
@@ -367,29 +469,59 @@
         global.document.body.classList.remove('is-rift-banner-workspace-open');
     }
 
-    function chooseBlessing(bannerId) {
+    async function chooseBlessing(bannerId) {
         const id = String(bannerId || '').trim();
         const banner = BANNER_BY_ID[id];
         if (!banner) return false;
 
-        const existingId = readChosenBannerId();
+        const state = readBannerState();
+        const existingId = state.bannerId;
         if (existingId === id) return false;
 
-        if (!writeChosenBannerId(id)) return false;
+        let swapped = false;
+
+        if (existingId) {
+            if (state.swapUsed) return false;
+            const confirmed = await confirmBannerSwap(existingId, id);
+            if (!confirmed) return false;
+            resetBannerPerkProgress(state);
+            state.swapUsed = true;
+            swapped = true;
+        }
+
+        state.bannerId = id;
+        if (!writeBannerState(state)) return false;
 
         global.dispatchEvent(new CustomEvent('royalarmies:banner-blessing-chosen', {
-            detail: { bannerId: id, banner }
+            detail: { bannerId: id, banner, swapped, perkPoints: state.perkPoints }
         }));
 
-        void showBannerBlessingToast(id);
+        void showBannerBlessingToast(id, { swapped });
+
+        const modal = global.document.getElementById('rift-banner-workspace-modal');
+        if (modal && !modal.hidden) {
+            renderBannerWorkspaceBody();
+        }
+
         return true;
     }
 
-    function renderChurchBannerCard(banner, chosenBannerId) {
+    function resolveChurchBannerButton(chosenBannerId, bannerId, swapAvailable) {
+        if (!chosenBannerId) {
+            return { label: 'Choose Blessing', disabled: false, modifier: '' };
+        }
+        if (chosenBannerId === bannerId) {
+            return { label: 'Blessing Chosen', disabled: true, modifier: 'is-chosen' };
+        }
+        if (swapAvailable) {
+            return { label: 'Swap Blessing', disabled: false, modifier: 'is-swap' };
+        }
+        return { label: 'Swap Spent', disabled: true, modifier: 'is-locked' };
+    }
+
+    function renderChurchBannerCard(banner, chosenBannerId, swapAvailable) {
         const isChosen = chosenBannerId === banner.id;
-        const hasOtherBlessing = Boolean(chosenBannerId && chosenBannerId !== banner.id);
-        const buttonLabel = isChosen ? 'Blessing Chosen' : 'Choose Blessing';
-        const buttonDisabled = isChosen || hasOtherBlessing;
+        const button = resolveChurchBannerButton(chosenBannerId, banner.id, swapAvailable);
 
         const perkItems = (banner.perks || []).map((perk) => (
             `<li>${escapeHtml(perk.desc)}</li>`
@@ -408,10 +540,10 @@
                     <p class="age-church-banner-lore">${escapeHtml(banner.lore)}</p>
                     <ul class="age-church-banner-perks">${perkItems}</ul>
                     <button type="button"
-                        class="age-church-choose-blessing-btn"
+                        class="age-church-choose-blessing-btn ${button.modifier}"
                         data-church-choose-blessing="${escapeHtml(banner.id)}"
-                        ${buttonDisabled ? 'disabled' : ''}>
-                        ${escapeHtml(buttonLabel)}
+                        ${button.disabled ? 'disabled' : ''}>
+                        ${escapeHtml(button.label)}
                     </button>
                 </div>
             </article>
@@ -419,13 +551,29 @@
     }
 
     function buildChurchWorkspaceHtml() {
-        const chosenBannerId = readChosenBannerId();
+        const state = readBannerState();
+        const chosenBannerId = state.bannerId;
         const chosenBanner = chosenBannerId ? BANNER_BY_ID[chosenBannerId] : null;
-        const sanctumNote = chosenBanner
-            ? `Your soul is bound to the ${chosenBanner.title}. Its gifts await in the Banner perk tree.`
-            : 'Kneel before the sanctum and choose one blessed banner. Its rune will shape your personal perk tree for the Age.';
+        const swapAvailable = canSwapBlessing();
 
-        const cards = BANNER_CATALOG.map((banner) => renderChurchBannerCard(banner, chosenBannerId)).join('');
+        let sanctumNote = 'Kneel before the sanctum and choose one blessed banner. Its rune will shape your personal perk tree for the Age.';
+        if (chosenBanner && swapAvailable) {
+            sanctumNote = `Your soul is bound to the ${chosenBanner.title}. You may swap your blessing once this Age—doing so resets all banner perk points.`;
+        } else if (chosenBanner) {
+            sanctumNote = `Your soul is sealed to the ${chosenBanner.title} for the remainder of this Age. No further banner swaps remain.`;
+        }
+
+        const swapPolicyCopy = chosenBanner
+            ? (swapAvailable
+                ? 'One banner swap remains this Age. Exchanging your blessing wipes every banner perk point and unlocked node—you must earn them again.'
+                : 'Your one Age swap has been spent. This banner and its perk progress are locked until the Age turns.')
+            : 'Each banner carries a sacred rune and a trio of commander perks. You receive one blessing freely, and may swap it only once before the Age ends.';
+
+        const cards = BANNER_CATALOG.map((banner) => renderChurchBannerCard(
+            banner,
+            chosenBannerId,
+            swapAvailable
+        )).join('');
 
         return (
             '<div class="age-church-workspace">'
@@ -436,7 +584,7 @@
             + '<h3 class="age-army-workspace-panel-title">Sanctum of Blessings</h3>'
             + '<p class="age-church-sanctum-lead">Royal Armies Banners</p>'
             + `<p class="age-church-sanctum-note">${escapeHtml(sanctumNote)}</p>`
-            + '<p class="age-church-sanctum-copy">Each banner carries a sacred rune and a trio of commander perks. You may receive only one blessing per Age—choose the heraldry that will march beside your name.</p>'
+            + `<p class="age-church-sanctum-copy">${escapeHtml(swapPolicyCopy)}</p>`
             + (chosenBanner
                 ? `<button type="button" class="age-church-open-tree-btn" data-church-open-banner-tree="1">Open Banner Perk Tree</button>`
                 : '')
@@ -481,9 +629,11 @@
             if (churchBlessingBtn && !churchBlessingBtn.disabled) {
                 event.preventDefault();
                 const bannerId = churchBlessingBtn.getAttribute('data-church-choose-blessing');
-                if (chooseBlessing(bannerId)) {
-                    global.dispatchEvent(new CustomEvent('royalarmies:church-blessing-ui-refresh'));
-                }
+                void chooseBlessing(bannerId).then((chosen) => {
+                    if (chosen) {
+                        global.dispatchEvent(new CustomEvent('royalarmies:church-blessing-ui-refresh'));
+                    }
+                });
                 return;
             }
 
@@ -491,6 +641,13 @@
             if (openTreeBtn) {
                 event.preventDefault();
                 openBannerWorkspace(event);
+            }
+        });
+
+        global.addEventListener('royalarmies:church-blessing-ui-refresh', () => {
+            const modal = global.document.getElementById('rift-banner-workspace-modal');
+            if (modal && !modal.hidden) {
+                renderBannerWorkspaceBody();
             }
         });
 
@@ -522,8 +679,10 @@
 
     global.RoyalArmiesBanner = Object.freeze({
         catalog: BANNER_CATALOG,
+        getBannerState: readBannerState,
         getChosenBannerId: readChosenBannerId,
         getChosenBanner,
+        canSwapBlessing,
         chooseBlessing,
         buildChurchWorkspaceHtml,
         open: openBannerWorkspace,

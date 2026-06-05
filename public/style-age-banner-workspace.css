@@ -236,6 +236,21 @@
     color: #fff3c8;
 }
 
+.age-church-choose-blessing-btn.is-swap {
+    border-color: rgba(196, 160, 255, 0.55);
+    background: linear-gradient(180deg, rgba(42, 24, 58, 0.92) 0%, rgba(16, 10, 24, 0.96) 100%);
+    color: #e8d4ff;
+}
+
+.age-church-choose-blessing-btn.is-swap:hover:not(:disabled) {
+    border-color: rgba(230, 200, 255, 0.85);
+    color: #fff;
+}
+
+.age-church-choose-blessing-btn.is-locked:disabled {
+    opacity: 0.45;
+}
+
 .age-church-choose-blessing-btn:disabled {
     opacity: 0.55;
     cursor: default;
@@ -333,6 +348,38 @@
     padding: 18px 20px 22px;
 }
 
+.rift-banner-workspace-status {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 8px 16px;
+    margin-bottom: 14px;
+    padding: 10px 12px;
+    border-radius: 8px;
+    border: 1px solid rgba(196, 160, 255, 0.22);
+    background: rgba(0, 0, 0, 0.24);
+}
+
+.rift-banner-workspace-points {
+    margin: 0;
+    font-size: 0.76rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: rgba(255, 217, 120, 0.88);
+}
+
+.rift-banner-workspace-points strong {
+    color: #fff3c8;
+    font-size: 0.92rem;
+}
+
+.rift-banner-workspace-swap-note {
+    margin: 0;
+    font-size: 0.72rem;
+    color: rgba(196, 160, 255, 0.78);
+}
+
 .rift-banner-workspace-layout {
     display: grid;
     grid-template-columns: minmax(240px, 300px) minmax(0, 1fr);
@@ -425,6 +472,10 @@
     position: relative;
     width: 100%;
     padding: 10px 12px 10px 34px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
     border-radius: 8px;
     border: 1px solid rgba(255, 255, 255, 0.08);
     background: rgba(8, 10, 16, 0.65);
@@ -443,6 +494,27 @@
     background: rgba(48, 32, 16, 0.55);
     color: #fff3c8;
     box-shadow: 0 0 16px rgba(255, 190, 60, 0.14);
+}
+
+.rift-banner-skill-node.is-unlocked .rift-banner-skill-node-orbit {
+    background: rgba(120, 220, 160, 0.55);
+    border-color: rgba(120, 220, 160, 0.75);
+    box-shadow: 0 0 10px rgba(120, 220, 160, 0.35);
+}
+
+.rift-banner-skill-node.is-locked .rift-banner-skill-node-btn {
+    opacity: 0.82;
+}
+
+.rift-banner-skill-node-status {
+    font-size: 0.58rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: rgba(196, 160, 255, 0.72);
+}
+
+.rift-banner-skill-node.is-unlocked .rift-banner-skill-node-status {
+    color: rgba(120, 220, 160, 0.9);
 }
 
 .rift-banner-skill-node-orbit {
