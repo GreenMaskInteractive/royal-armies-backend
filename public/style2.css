@@ -18903,6 +18903,7 @@ html.age-world-map-pan-locked #cursor-click-fx-layer {
     align-items: stretch;
     gap: 8px;
     width: 100%;
+    transform: translate(-7px, 7px);
 }
 
 .age-world-map-city-search-input {
