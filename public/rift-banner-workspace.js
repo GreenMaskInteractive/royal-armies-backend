@@ -6,7 +6,32 @@
 
     const STORAGE_KEY = 'royalarmies:age-banner-state';
     const LEGACY_BLESSING_KEY = 'royalarmies:age-banner-blessing-id';
-    const IMAGE_BUST = 'church-banners-1';
+    const IMAGE_BUST = 'church-banners-3';
+
+    function resolveBannerImageUrl(relativePath) {
+        const raw = String(relativePath || '').trim();
+        if (!raw) return '';
+        if (/^https?:\/\//i.test(raw) || raw.startsWith('data:')) return raw;
+
+        const queryIndex = raw.indexOf('?');
+        const pathPart = queryIndex >= 0 ? raw.slice(0, queryIndex) : raw;
+        const query = queryIndex >= 0 ? raw.slice(queryIndex) : `?v=${IMAGE_BUST}`;
+        const fileName = pathPart.replace(/^.*\//, '');
+        if (!fileName) return raw;
+
+        const publicPath = `/images/${fileName}${query}`;
+
+        try {
+            const href = String(global.location.href || '');
+            const inPublicFolder = /\/public\//i.test(href);
+            if (inPublicFolder) {
+                return new URL(`images/${fileName}${query}`, href).href;
+            }
+            return new URL(publicPath, global.location.origin).href;
+        } catch (_error) {
+            return publicPath;
+        }
+    }
 
     function createDefaultBannerState() {
         return {
@@ -21,7 +46,7 @@
         {
             id: 'true-war',
             title: 'True War Banner',
-            image: `images/truewarbanner.png?v=${IMAGE_BUST}`,
+            image: `/images/truewarbanner.png?v=${IMAGE_BUST}`,
             rune: 'Rune of Valiance',
             lore: 'A mark of unending victory and a strong, ferocious army. This banner is blessed with the Rune of Valiance.',
             perks: Object.freeze([
@@ -45,7 +70,7 @@
         {
             id: 'sachiels-blessing',
             title: "Sachiel's Blessing Banner",
-            image: `images/sachielsblessingbanner.png?v=${IMAGE_BUST}`,
+            image: `/images/sachielsblessingbanner.png?v=${IMAGE_BUST}`,
             rune: 'Rune of Revitalization',
             lore: "Known to bring life back to many lost souls, this banner was blessed by an Angel through the Rune of Revitalization. It radiates a healing aura.",
             perks: Object.freeze([
@@ -69,7 +94,7 @@
         {
             id: 'emerald-barrier',
             title: 'Emerald Barrier Banner',
-            image: `images/emeraldbarrierbanner.png?v=${IMAGE_BUST}`,
+            image: `/images/emeraldbarrierbanner.png?v=${IMAGE_BUST}`,
             rune: 'Rune of Fortification',
             lore: 'Reputed for maintaining an impenetrable wall of defense and causing stalemates. Blessed with the Rune of Fortification.',
             perks: Object.freeze([
@@ -93,7 +118,7 @@
         {
             id: 'fortunes-gratitude',
             title: "Fortune's Gratitude Banner",
-            image: `images/fortunesgratitudebanner.png?v=${IMAGE_BUST}`,
+            image: `/images/fortunesgratitudebanner.png?v=${IMAGE_BUST}`,
             rune: 'Rune of Hinshuro',
             lore: 'Known as the Merchant Flag of Ultimate Trade, passed down through generations of tradesmen. Blessed with the Rune of Hinshuro to aid residential and commercial growth.',
             perks: Object.freeze([
@@ -334,7 +359,7 @@
                 <aside class="rift-banner-workspace-tree" aria-label="Banner perk tree">
                     <div class="rift-banner-workspace-heraldry">
                         <div class="rift-banner-workspace-heraldry-rays" aria-hidden="true"></div>
-                        <img class="rift-banner-workspace-heraldry-image" src="${escapeHtml(banner.image)}" alt="">
+                        <img class="rift-banner-workspace-heraldry-image" src="${escapeHtml(resolveBannerImageUrl(banner.image))}" alt="">
                         <p class="rift-banner-workspace-heraldry-title">${escapeHtml(banner.title)}</p>
                         <p class="rift-banner-workspace-heraldry-rune">${escapeHtml(banner.rune)}</p>
                     </div>
@@ -404,7 +429,7 @@
         visual.innerHTML = `
             <div class="rift-banner-blessing-toast-banner-frame">
                 <div class="rift-banner-blessing-toast-banner-rays" aria-hidden="true"></div>
-                <img src="${escapeHtml(banner.image)}" alt="${escapeHtml(banner.title)}">
+                <img src="${escapeHtml(resolveBannerImageUrl(banner.image))}" alt="${escapeHtml(banner.title)}">
             </div>
             <p class="rift-banner-blessing-toast-banner-name">${escapeHtml(banner.title)}</p>
         `;
@@ -532,7 +557,7 @@
                 <div class="age-church-banner-visual">
                     <div class="age-church-banner-rays" aria-hidden="true"></div>
                     <div class="age-church-banner-glow" aria-hidden="true"></div>
-                    <img class="age-church-banner-image" src="${escapeHtml(banner.image)}" alt="${escapeHtml(banner.title)}">
+                    <img class="age-church-banner-image" src="${escapeHtml(resolveBannerImageUrl(banner.image))}" alt="${escapeHtml(banner.title)}" loading="eager" decoding="async">
                 </div>
                 <div class="age-church-banner-copy">
                     <div class="age-church-banner-details">
