@@ -22,7 +22,7 @@
     <link rel="stylesheet" href="style-age-nation-hub-box.css?v=nation-hub-text-center-1">
     <link rel="stylesheet" href="style-age-modal-arcane-accent.css?v=age-modal-arcane-accent-1">
     <link rel="stylesheet" href="style-age-barracks.css?v=barracks-sleek-2">
-    <link rel="stylesheet" href="style-age-watchtower.css?v=watchtower-border-1">
+    <link rel="stylesheet" href="style-age-watchtower.css?v=watchtower-drawer-1">
 </head>
 <body id="age-page-canvas" class="age-page-canvas game-page-canvas age-map-shell-only" data-age-slug="alpha" data-age-map-only="true" data-age-view="map">
 <script src="rift-viewport-metrics.js?v=rift-iife-fix-1"></script>
@@ -1016,6 +1016,14 @@
                                             role="tabpanel"
                                             aria-labelledby="age-world-city-drawer-tab-info">
                                             <div id="age-world-city-drawer-meta" class="age-world-city-drawer-meta"></div>
+                                            <button
+                                                type="button"
+                                                id="age-world-city-watchtower-open"
+                                                class="age-world-city-action-btn age-world-city-action-btn--watchtower age-world-city-watchtower-btn"
+                                                disabled
+                                                aria-disabled="true">
+                                                Watchtower
+                                            </button>
                                             <div
                                                 id="age-world-city-drawer-movement-actions"
                                                 class="age-world-city-drawer-movement-actions"
@@ -1032,13 +1040,6 @@
                                                 hidden
                                                 aria-live="polite"></div>
                                             <div class="age-world-city-drawer-actions">
-                                                <button
-                                                    type="button"
-                                                    id="age-world-city-watchtower-open"
-                                                    class="age-world-city-action-btn age-world-city-action-btn--watchtower age-world-city-watchtower-btn"
-                                                    hidden>
-                                                    Watchtower
-                                                </button>
                                                 <button type="button" id="age-world-battle-report-open" class="age-world-battle-report-btn">Most Recent Capture Battle Report</button>
                                             </div>
                                         </div>
@@ -2171,7 +2172,7 @@
     <script src="rift-player-loc-pins.js?v=age-map-only-1"></script>
     <script src="rift-age-assault-risk.js?v=border-casualty-risk-1"></script>
     <script src="rift-age-watchtower.js?v=watchtower-border-1"></script>
-    <script src="age-world-map.js?v=watchtower-border-1"></script>
+    <script src="age-world-map.js?v=watchtower-drawer-1"></script>
     <script src="age-world-map-city-search.js?v=map-city-search-max-zoom-1"></script>
     <script src="rift-age-movement.js?v=movement-fetch-fix-1"></script>
     <script src="age-movement-panel.js?v=movement-fetch-fix-1"></script>
@@ -2188,7 +2189,7 @@
     <script src="rift-nation-treasury.js?v=defense-treasury-only-1"></script>
     <script src="rift-infirmary-recovery.js?v=infirmary-tier-heal-scale-2"></script>
     <script src="rift-banner-workspace.js?v=church-banner-layout-1"></script>
-    <script src="age-settlement-venue-workspaces.js?v=church-banners-1"></script>
+    <script src="age-settlement-venue-workspaces.js?v=defense-treasury-only-1"></script>
     <script src="rift-age-unit-evolution.js?v=map-settlement-tab-only-1"></script>
     <script src="age-unit-evolution.js?v=workspace-rsd-wallet-1"></script>
     <script src="rift-unit-purchase-catalog.js?v=map-settlement-tab-only-1"></script>

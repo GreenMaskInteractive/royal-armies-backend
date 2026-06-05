@@ -2030,14 +2030,27 @@
         const button = els.drawerWatchtowerOpen;
         if (!button || !city) return;
 
-        const showWatchtower = Boolean(hints?.canScout || hints?.canAssault);
-        button.hidden = !showWatchtower;
-        if (!showWatchtower) return;
+        const relationship = String(hints?.relationship || 'remote').trim().toLowerCase();
+        const isBordering = relationship !== 'remote' && relationship !== 'current';
+        const canUseWatchtower = isBordering && relationship === 'hostile';
 
-        const relationship = hints?.relationship || 'border';
-        button.title = relationship === 'hostile'
-            ? 'Open the Watchtower to spy the garrison, scout commanders, and seize hostile players.'
-            : 'Open the Watchtower to review bordering commanders and file garrison intelligence.';
+        button.hidden = false;
+        button.disabled = !canUseWatchtower;
+        button.setAttribute('aria-disabled', canUseWatchtower ? 'false' : 'true');
+
+        if (!isBordering) {
+            button.title = relationship === 'current'
+                ? 'Your current city — border a hostile or neutral settlement to use the Watchtower.'
+                : 'Establish a bordering presence on this city to use the Watchtower.';
+            return;
+        }
+
+        if (relationship === 'ally') {
+            button.title = 'Watchtower intel is for hostile and neutral borders only.';
+            return;
+        }
+
+        button.title = 'Open the Watchtower to spy the garrison, scout commanders, and seize hostile players.';
     }
 
     const scoutedCityReports = new Map();
@@ -2682,6 +2695,7 @@
         els.drawerWatchtowerOpen?.addEventListener('click', (event) => {
             event.preventDefault();
             event.stopPropagation();
+            if (els.drawerWatchtowerOpen?.disabled) return;
             const city = cityById.get(selectedCityId);
             if (!city) return;
             global.RoyalArmiesAgeWatchtower?.open?.(city.id, city.name);
@@ -2714,6 +2728,7 @@
                 if (city) {
                     refreshDrawerMovementActions(city);
                     const borderHints = global.RoyalArmiesAgeMovement?.getBorderActionHints?.(city, playerMapCityId) || {};
+                    refreshDrawerWatchtowerButton(city, borderHints);
                     refreshDrawerScoutIntel(city, borderHints);
                     void refreshDrawerAssaultRisk(city, borderHints);
                     showCitySelectionHighlight(selectedCityId);

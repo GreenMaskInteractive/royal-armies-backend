@@ -303,7 +303,7 @@
 
 .age-world-city-watchtower-btn {
     width: 100%;
-    margin-bottom: 8px;
+    margin: 0 0 10px;
 }
 
 .age-world-city-watchtower-btn.age-world-city-action-btn--watchtower {
@@ -312,8 +312,22 @@
     color: #f4f0ff;
 }
 
-.age-world-city-watchtower-btn.age-world-city-action-btn--watchtower:hover,
-.age-world-city-watchtower-btn.age-world-city-action-btn--watchtower:focus-visible {
+.age-world-city-watchtower-btn.age-world-city-action-btn--watchtower:hover:not(:disabled),
+.age-world-city-watchtower-btn.age-world-city-action-btn--watchtower:focus-visible:not(:disabled) {
     border-color: rgba(196, 160, 255, 0.62);
     background: rgba(196, 160, 255, 0.12);
+}
+
+.age-world-city-watchtower-btn.age-world-city-action-btn--watchtower:disabled {
+    border-color: rgba(140, 140, 150, 0.28);
+    background: linear-gradient(180deg, rgba(80, 80, 90, 0.14), rgba(40, 40, 48, 0.08));
+    color: rgba(200, 198, 210, 0.45);
+    opacity: 1;
+    cursor: not-allowed;
+    filter: grayscale(0.25);
+}
+
+.age-world-city-drawer-actions {
+    flex-direction: column;
+    gap: 8px;
 }
