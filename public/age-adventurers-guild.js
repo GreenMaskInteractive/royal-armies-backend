@@ -121,21 +121,28 @@
         return null;
     }
 
+    function syncImmersiveWorkspace() {
+        global.RoyalArmiesImmersiveWorkspace?.sync?.();
+    }
+
     function setHubViewOpen(isOpen) {
         hubViewActive = isOpen;
         global.document.body.classList.toggle('age-guild-hub-open', isOpen);
+        syncImmersiveWorkspace();
     }
 
     function setTrainingViewOpen(isOpen) {
         trainingViewActive = isOpen;
         global.document.getElementById('age-page-canvas')?.classList.toggle('age-guild-training-view-open', isOpen);
         global.document.body.classList.toggle('age-guild-training-open', isOpen);
+        syncImmersiveWorkspace();
     }
 
     function setOverlayJobOpen(isOpen) {
         overlayJobActive = isOpen;
         global.document.getElementById('age-page-canvas')?.classList.toggle('age-guild-overlay-open', isOpen);
         global.document.body.classList.toggle('age-guild-overlay-open', isOpen);
+        syncImmersiveWorkspace();
     }
 
     function hideAllJobArenas() {

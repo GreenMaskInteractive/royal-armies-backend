@@ -51,6 +51,7 @@
     function setVenueWorkspaceOpen(isOpen) {
         global.document.body.classList.toggle('age-settlement-venue-open', isOpen);
         global.document.body.classList.toggle('age-army-workspace-open', isOpen);
+        global.RoyalArmiesImmersiveWorkspace?.sync?.();
     }
 
     function dismissAllWorkspaces() {

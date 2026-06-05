@@ -630,6 +630,7 @@
         const workspace = resolveWorkspace();
         if (!workspace) return;
 
+        global.RoyalArmiesSettlementVenueWorkspaces?.close?.();
         global.RoyalArmiesAdventurersGuild?.dismissGuildWorkspacesForSettlementAction?.();
         global.RoyalArmiesAgeUnitEvolution?.close?.();
 
@@ -655,6 +656,7 @@
         workspace.hidden = false;
         workspace.setAttribute('aria-hidden', 'false');
         global.document.body.classList.add('age-barracks-open');
+        global.RoyalArmiesImmersiveWorkspace?.sync?.();
 
         renderBarracks();
 
@@ -669,6 +671,7 @@
         workspace.hidden = true;
         workspace.setAttribute('aria-hidden', 'true');
         global.document.body.classList.remove('age-barracks-open');
+        global.RoyalArmiesImmersiveWorkspace?.sync?.();
         selectedUnitId = '';
         selectedPurchasePreset = '1';
         purchaseMessage = '';

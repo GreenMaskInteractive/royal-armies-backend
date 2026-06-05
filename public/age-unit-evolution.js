@@ -415,12 +415,14 @@
         const workspace = resolveWorkspace();
         if (!workspace) return;
 
+        global.RoyalArmiesSettlementVenueWorkspaces?.close?.();
         global.RoyalArmiesAdventurersGuild?.dismissGuildWorkspacesForSettlementAction?.();
         global.RoyalArmiesAgeBarracks?.close?.();
 
         workspace.hidden = false;
         workspace.setAttribute('aria-hidden', 'false');
         global.document.body.classList.add('age-unit-evolution-open');
+        global.RoyalArmiesImmersiveWorkspace?.sync?.();
         statusMessage = '';
         clearSelectedQuantities();
 
@@ -455,6 +457,7 @@
         workspace.hidden = true;
         workspace.setAttribute('aria-hidden', 'true');
         global.document.body.classList.remove('age-unit-evolution-open');
+        global.RoyalArmiesImmersiveWorkspace?.sync?.();
         statusMessage = '';
         clearSelectedQuantities();
     }
