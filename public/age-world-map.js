@@ -1628,29 +1628,17 @@
         return 18;
     }
 
-    function appendCityHitCentroidBoost(city, outlineD, hitFrag, highlightFrag) {
+    function appendCityHitCentroidBoost(city, outlineD, hitFrag) {
         if (!city?.centroid || !hitFrag) return;
 
         const radius = resolveCityHitRadius(city, outlineD);
-        const cx = city.centroid.x;
-        const cy = city.centroid.y;
         const hitCircle = global.document.createElementNS('http://www.w3.org/2000/svg', 'circle');
         hitCircle.setAttribute('class', 'age-world-city-hit-path age-world-city-hit-boost');
         hitCircle.setAttribute('data-city-id', city.id);
-        hitCircle.setAttribute('cx', String(cx));
-        hitCircle.setAttribute('cy', String(cy));
+        hitCircle.setAttribute('cx', String(city.centroid.x));
+        hitCircle.setAttribute('cy', String(city.centroid.y));
         hitCircle.setAttribute('r', String(radius));
         hitFrag.appendChild(hitCircle);
-
-        if (highlightFrag) {
-            const highlightCircle = global.document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-            highlightCircle.setAttribute('class', 'age-world-city-highlight-path age-world-city-highlight-boost');
-            highlightCircle.setAttribute('data-city-id', city.id);
-            highlightCircle.setAttribute('cx', String(cx));
-            highlightCircle.setAttribute('cy', String(cy));
-            highlightCircle.setAttribute('r', String(radius));
-            highlightFrag.appendChild(highlightCircle);
-        }
     }
 
     function resolvePlayerNationForOwnership() {
@@ -1839,7 +1827,7 @@
                 highlightFrag.appendChild(highlightPath);
             }
 
-            appendCityHitCentroidBoost(city, outlineD, hitFrag, highlightFrag);
+            appendCityHitCentroidBoost(city, outlineD, hitFrag);
         });
 
         if (ownershipFrag && els.ownershipLayer) {
