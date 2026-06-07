@@ -573,6 +573,10 @@ function buildCommanderGearPanelPayload(commander) {
     const classId = resolveCommanderClassId(commander);
     const classLabel = CLASS_LABELS[classId] || 'Battlemaster';
     const rank = resolveCommanderRank(commander);
+    const path = String(commander?.path || 'PHYS').trim().slice(0, 16) || 'PHYS';
+    const rankTitleGender = String(commander?.preferences?.rankTitleGender || 'male').trim().toLowerCase() === 'female'
+        ? 'female'
+        : 'male';
     const equippedMap = resolveEquippedSlotMap(commander);
     const username = String(commander?.username || 'Commander').trim() || 'Commander';
 
@@ -603,6 +607,8 @@ function buildCommanderGearPanelPayload(commander) {
         classId,
         classLabel,
         rank,
+        path,
+        rankTitleGender,
         portraitSrc: resolveDefaultAvatarUrl(commander, classId),
         classPortraitSrc: CLASS_PORTRAITS[classId] || CLASS_PORTRAITS.battlemaster,
         slots,

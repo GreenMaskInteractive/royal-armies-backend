@@ -334,6 +334,21 @@
             .replace(/"/g, '&quot;');
     }
 
+    function formatCommanderRankLabel(rank, options = {}) {
+        const rankTitles = global.RoyalArmiesCommanderRankTitles;
+        const path = options.path ?? 'PHYS';
+        const rankTitleGender = options.rankTitleGender;
+        if (options.rankDisplayTitle) return options.rankDisplayTitle;
+        if (rankTitles?.formatCommanderRankLabel) {
+            return rankTitles.formatCommanderRankLabel(rank, path, rankTitleGender);
+        }
+        if (rankTitles?.getCommanderRankDisplayTitle) {
+            const title = rankTitles.getCommanderRankDisplayTitle(rank, path, rankTitleGender);
+            if (title) return title;
+        }
+        return String(Math.max(1, Math.floor(Number(rank) || 1)));
+    }
+
     function applyRosterPayload(payload) {
         rosterPayload = payload;
         renderRosterList(payload);
@@ -1082,7 +1097,7 @@
         const bodyEl = modal.querySelector('#age-army-groups-army-body');
         const displayName = formatMemberLabel({ username: data.username });
         if (titleEl) {
-            titleEl.textContent = `${displayName} — Rank ${data.rank || 1}`;
+            titleEl.textContent = `${displayName} — ${formatCommanderRankLabel(data.rank || 1, data)}`;
         }
         if (bodyEl) {
             bodyEl.innerHTML = `

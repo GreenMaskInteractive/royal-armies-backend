@@ -586,8 +586,17 @@
         const banner = global.document.getElementById('age-hq-authority-banner');
         const lockCopy = global.document.getElementById('age-hq-planning-lock-copy');
         const pendingAuthority = Boolean(workspace?.access?.memberHub) && !workspace?.access?.fullAuthority;
+        const requiredRank = auth.requiredRank || 14;
+        const rankTitles = global.RoyalArmiesCommanderRankTitles;
+        const selfMeta = rankTitles?.resolveSelfCommanderRankMeta?.() || {
+            path: 'PHYS',
+            rankTitleGender: 'male'
+        };
+        const requiredRankLabel = rankTitles?.formatCommanderRankLabel
+            ? rankTitles.formatCommanderRankLabel(requiredRank, selfMeta.path, selfMeta.rankTitleGender)
+            : `rank ${requiredRank}`;
         const bannerText = pendingAuthority
-            ? `Nation authority pending: ${auth.rank14Count || 0} of ${auth.requiredCount || 7} commanders at rank ${auth.requiredRank || 14}. Planning, council appointments, and diplomacy unlock when authority is established.`
+            ? `Nation authority pending: ${auth.rank14Count || 0} of ${auth.requiredCount || 7} commanders at ${requiredRankLabel}. Planning, council appointments, and diplomacy unlock when authority is established.`
             : '';
 
         if (banner) {

@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Royal Armies — Age Alpha</title>
     <link rel="stylesheet" href="style.css?v=cursor-modal-layer-fix-1">
-    <link rel="stylesheet" href="style2.css?v=hub-above-dev-nav-1">
+    <link rel="stylesheet" href="style2.css?v=commander-rank-names-2">
     <link rel="stylesheet" href="style-age-headquarters.css?v=hq-header-clicks-2">
     <link rel="stylesheet" href="style-age-center-modals.css?v=workspace-rsd-wallet-1">
     <link rel="stylesheet" href="style-age-council-room.css?v=hq-header-clicks-2">
@@ -142,7 +142,7 @@
                             id="age-hud-commander-rank-item"
                             title="Commander rank from Adventurer's Guild training and battles.">
                             <span class="age-map-resource-label">Rank</span>
-                            <span class="age-map-resource-value" id="age-hud-commander-rank" aria-live="polite" aria-label="Commander rank 1">1</span>
+                            <span class="age-map-resource-value" id="age-hud-commander-rank" data-commander-rank="1" aria-live="polite" aria-label="Commander rank Vintenary Commander">Vintenary Commander</span>
                         </li>
                         <li class="age-map-resource-item">
                             <span class="age-map-resource-label">Gold</span>
@@ -2165,16 +2165,18 @@
     </div>
 
 
+    <script src="rift-age-commander-rank.js?v=commander-rank-names-2"></script>
+    <script src="rift-commander-rank-titles.js?v=commander-rank-names-2"></script>
     <script src="rift-confirm-buttons.js?v=hub-action-btn-compact-1"></script>
     <script src="portal-alerts.js?v=portal-dialogs-in-game-1"></script>
     <script src="dev-environment.js"></script>
     <script src="age-world-water-routes.js?v=age-map-only-1"></script>
     <script src="rift-player-loc-pins.js?v=age-map-only-1"></script>
     <script src="rift-age-assault-risk.js?v=border-casualty-risk-1"></script>
-    <script src="rift-age-watchtower.js?v=watchtower-border-1"></script>
+    <script src="rift-age-watchtower.js?v=commander-rank-names-2"></script>
     <script src="age-world-map.js?v=travel-sync-fix-2"></script>
     <script src="age-world-map-city-search.js?v=map-city-search-max-zoom-1"></script>
-    <script src="rift-age-movement.js?v=travel-sync-fix-2"></script>
+    <script src="rift-age-movement.js?v=commander-rank-names-2"></script>
     <script src="age-movement-panel.js?v=settlement-tab-buildings-1"></script>
     <script src="age-world-map-plan-arrow-geometry.js?v=age-map-plan-routes-v2-1"></script>
     <script src="age-world-map-plan-route-style.js?v=age-map-plan-mf-action-1"></script>
@@ -2184,25 +2186,25 @@
     <script src="rift-page-paths.js?v=map-settlement-tab-only-1"></script>
     <script src="rift-immersive-workspace.js?v=watchtower-border-1"></script>
     <script src="age-view-tabs.js?v=settlement-tab-buildings-1"></script>
-    <script src="rift-age-guild-training.js?v=map-settlement-tab-only-1"></script>
-    <script src="age-adventurers-guild.js?v=workspace-rsd-wallet-1"></script>
+    <script src="rift-age-guild-training.js?v=commander-rank-names-2"></script>
+    <script src="age-adventurers-guild.js?v=commander-rank-names-2"></script>
     <script src="rift-nation-treasury.js?v=defense-treasury-only-1"></script>
     <script src="rift-infirmary-recovery.js?v=infirmary-tier-heal-scale-2"></script>
     <script src="rift-banner-workspace.js?v=banner-skill-branches-1"></script>
     <script src="age-settlement-venue-workspaces.js?v=blacksmith-armory-list-1"></script>
     <script src="rift-age-unit-evolution.js?v=map-settlement-tab-only-1"></script>
     <script src="age-unit-evolution.js?v=workspace-rsd-wallet-1"></script>
-    <script src="rift-unit-purchase-catalog.js?v=map-settlement-tab-only-1"></script>
-    <script src="age-barracks.js?v=barracks-detail-trim-1"></script>
-    <script src="age-army-groups.js?v=war-room-stage-centered-1"></script>
-    <script src="age-records.js?v=nation-total-cities-1"></script>
+    <script src="rift-unit-purchase-catalog.js?v=commander-rank-names-2"></script>
+    <script src="age-barracks.js?v=commander-rank-names-2"></script>
+    <script src="age-army-groups.js?v=commander-rank-names-2"></script>
+    <script src="age-records.js?v=commander-rank-names-2"></script>
     <script src="rift-song-manuscript-catalog.js?v=nation-hub-radial-1"></script>
     <script src="rift-discoveries-workspace.js?v=nation-hub-radial-1"></script>
     <script src="age-chronicles-battle-pass.js?v=nation-hub-battle-pass-wire-2"></script>
     <script src="age-nation-hub.js?v=hub-above-dev-nav-1"></script>
     <script src="rift-official-age.js?v=nation-terrain-status-1"></script>
-    <script src="age-headquarters-intel.js?v=hq-bounty-feed-empty-1"></script>
-    <script src="age-headquarters.js?v=hq-dispatch-public-only-1"></script>
+    <script src="age-headquarters-intel.js?v=bounty-rank-titles-1"></script>
+    <script src="age-headquarters.js?v=commander-rank-names-2"></script>
     <script src="age-left-reports-panel.js?v=nation-status-city-count-15-1"></script>
     <script src="age-quick-tips-panel.js?v=quick-tips-left-hud-1"></script>
     <script src="age-map-only-page.js?v=nation-hub-battle-pass-wire-2"></script>

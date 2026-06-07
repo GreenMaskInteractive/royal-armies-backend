@@ -46,6 +46,21 @@
         };
     }
 
+    function formatCommanderRankLabel(rank, options = {}) {
+        const commander = getCommanderContext();
+        const rankTitles = global.RoyalArmiesCommanderRankTitles;
+        const path = options.path ?? commander.path ?? 'PHYS';
+        const rankTitleGender = options.rankTitleGender ?? commander.rankTitleGender;
+        if (rankTitles?.formatCommanderRankLabel) {
+            return rankTitles.formatCommanderRankLabel(rank, path, rankTitleGender);
+        }
+        if (rankTitles?.getCommanderRankDisplayTitle) {
+            const title = rankTitles.getCommanderRankDisplayTitle(rank, path, rankTitleGender);
+            if (title) return title;
+        }
+        return String(Math.max(1, Math.floor(Number(rank) || 1)));
+    }
+
     function getCatalogOptions() {
         return { filterByClass: true, commander: getCommanderContext() };
     }
@@ -145,7 +160,7 @@
         if (!statusEl) return;
 
         const commander = getCommanderContext();
-        statusEl.textContent = `${commander.classLabel} · Commander Rank ${commander.rank}`;
+        statusEl.textContent = `${commander.classLabel} · ${formatCommanderRankLabel(commander.rank)}`;
     }
 
     function syncCommanderGold() {
@@ -570,7 +585,7 @@
                 + '</span>'
                 + `<span class="age-barracks-unit-card-body">`
                 + `<span class="age-barracks-unit-card-name">${escapeHtml(unit.displayName || unit.name)}</span>`
-                + `<span class="age-barracks-unit-card-meta">Tier ${escapeHtml(unit.tier)} · Rank ${escapeHtml(unit.unlockRank)} · ${escapeHtml(unit.roleLabel || 'Rank')}</span>`
+                + `<span class="age-barracks-unit-card-meta">Tier ${escapeHtml(unit.tier)} · ${escapeHtml(formatCommanderRankLabel(unit.unlockRank))} · ${escapeHtml(unit.roleLabel || 'Rank')}</span>`
                 + `<span class="age-barracks-unit-card-promos">${escapeHtml((unit.promotions || []).map(api.formatPromotionLabel).join(' · '))}</span>`
                 + lockBadge
                 + '</span>'

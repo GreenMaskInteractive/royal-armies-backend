@@ -58,9 +58,16 @@
         const rank = Math.max(1, Math.floor(Number(player?.rank) || 1));
         const classId = resolveCommanderClassId(path);
 
+        const rankTitleGender = global.RoyalArmiesCommanderRankTitles?.resolveCommanderRankTitleGender
+            ? global.RoyalArmiesCommanderRankTitles.resolveCommanderRankTitleGender(
+                player?.rankTitleGender ?? global.RoyalArmiesCommanderRankTitles.readSelfRankTitleGender?.()
+            )
+            : (String(player?.rankTitleGender || 'male').trim().toLowerCase() === 'female' ? 'female' : 'male');
+
         return {
             rank,
             path,
+            rankTitleGender,
             classId,
             classLabel: classId === 'archmage' ? 'Archmage' : 'Battlemaster'
         };
@@ -197,9 +204,14 @@
 
         const unlockRank = Math.max(1, Math.floor(Number(enriched.unlockRank) || 1));
         if (ctx.rank < unlockRank) {
+            const rankTitles = global.RoyalArmiesCommanderRankTitles;
+            const unlockLabel = rankTitles?.formatCommanderRankLabel
+                ? rankTitles.formatCommanderRankLabel(unlockRank, ctx.path, ctx.rankTitleGender)
+                : (rankTitles?.getCommanderRankDisplayTitle?.(unlockRank, ctx.path, ctx.rankTitleGender)
+                    || `Commander Rank ${unlockRank}`);
             return {
                 allowed: false,
-                reason: `Unlocks at Commander Rank ${unlockRank}.`,
+                reason: `Unlocks at ${unlockLabel}.`,
                 unlockRank,
                 requiredClass: enriched.requiredClass,
                 unitRole: enriched.unitRole,

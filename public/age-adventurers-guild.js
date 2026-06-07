@@ -83,6 +83,12 @@
         guildState = {
             ...(guildState || {}),
             rank: payload.rank ?? guildState?.rank ?? 1,
+            path: payload.path ?? guildState?.path ?? payload.commanderGear?.path ?? guildState?.commanderGear?.path ?? 'PHYS',
+            rankTitleGender: payload.rankTitleGender
+                ?? guildState?.rankTitleGender
+                ?? payload.commanderGear?.rankTitleGender
+                ?? guildState?.commanderGear?.rankTitleGender
+                ?? 'male',
             ageGuildXp: payload.ageGuildXp ?? guildState?.ageGuildXp ?? 0,
             ageGuildXpRequired: payload.ageGuildXpRequired ?? guildState?.ageGuildXpRequired ?? 90,
             ageGuildXpProgress: payload.ageGuildXpProgress ?? guildState?.ageGuildXpProgress ?? 0,
@@ -102,7 +108,45 @@
         }
         if (Array.isArray(payload.bounties)) bountyList = payload.bounties;
         if (payload.bountyRewards) bountyRewards = payload.bountyRewards;
+
+        if (
+            global.RoyalArmiesAgeCommanderRank?.applyCommanderRankPayload
+            && (payload.rank !== undefined || payload.path !== undefined || payload.rankTitleGender !== undefined)
+        ) {
+            global.RoyalArmiesAgeCommanderRank.applyCommanderRankPayload(payload, { source: 'guild-state' });
+        }
+
         return guildState;
+    }
+
+    function formatCommanderRankLabel(rank, options = {}) {
+        const state = guildState || {};
+        const gear = state.commanderGear || {};
+        const mergedOptions = {
+            ...options,
+            path: options.path ?? gear.path ?? state.path,
+            rankTitleGender: options.rankTitleGender ?? gear.rankTitleGender ?? state.rankTitleGender
+        };
+
+        if (typeof global.resolveCommanderRankDisplayLabel === 'function') {
+            return global.resolveCommanderRankDisplayLabel(rank, mergedOptions);
+        }
+        if (typeof global.formatCommanderRankLabel === 'function') {
+            return global.formatCommanderRankLabel(
+                rank,
+                mergedOptions.path,
+                mergedOptions.rankTitleGender
+            );
+        }
+        if (typeof global.getCommanderRankDisplayTitle === 'function') {
+            const title = global.getCommanderRankDisplayTitle(
+                rank,
+                mergedOptions.path,
+                mergedOptions.rankTitleGender
+            );
+            if (title) return title;
+        }
+        return String(Math.max(1, Math.floor(Number(rank) || 1)));
     }
 
     function resolveGuildJobsContainer() {
@@ -443,7 +487,7 @@
 
     function renderBattleLogSummaryBlock(result) {
         const rankLine = result.rankPromoted
-            ? `<p class="age-guild-log-promotion">Promoted to rank ${escapeHtml(result.rank)}`
+            ? `<p class="age-guild-log-promotion">Promoted to ${escapeHtml(formatCommanderRankLabel(result.rank))}`
             + `${result.provisionsGranted ? ` · +${escapeHtml(result.provisionsGranted)} provisions` : ''}</p>`
             : '';
 
@@ -649,7 +693,10 @@
 
         if (nameEl) nameEl.textContent = gear.commanderName || 'Commander';
         if (classEl) {
-            classEl.textContent = `${gear.classLabel || 'Commander'} · Rank ${Math.max(1, Math.floor(Number(gear.rank) || 1))}`;
+            classEl.textContent = `${gear.classLabel || 'Commander'} · ${formatCommanderRankLabel(gear.rank, {
+                path: gear.path,
+                rankTitleGender: gear.rankTitleGender
+            })}`;
         }
 
         const slots = Array.isArray(gear.slots) ? gear.slots : [];
@@ -744,7 +791,7 @@
         const unitsUninjured = Math.max(0, Math.floor(Number(state.unitsUninjured) || 0));
         const healthProgress = unitsTotal > 0 ? Math.min(1, unitsUninjured / unitsTotal) : 1;
 
-        if (rankEl) rankEl.textContent = String(rank);
+        if (rankEl) rankEl.textContent = formatCommanderRankLabel(rank);
         if (xpFill) xpFill.style.width = `${(xpProgress * 100).toFixed(1)}%`;
         if (xpText) {
             xpText.textContent = state.rankAtMax ? `${xp} XP · Max rank` : `${xp} / ${xpRequired} XP`;
@@ -818,9 +865,10 @@
         const detailEl = global.document.getElementById('age-rank-promotion-detail');
         const provisionsEl = global.document.getElementById('age-rank-promotion-provisions');
 
-        if (rankEl) rankEl.textContent = String(result.rank ?? '');
+        const promotedRankLabel = formatCommanderRankLabel(result.rank);
+        if (rankEl) rankEl.textContent = promotedRankLabel;
         if (detailEl) {
-            detailEl.textContent = `You have reached commander rank ${result.rank}. Train your units and expand your army.`;
+            detailEl.textContent = `You have reached ${promotedRankLabel}. Train your units and expand your army.`;
         }
         if (provisionsEl) {
             if (result.provisionsGranted) {

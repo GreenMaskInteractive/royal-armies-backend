@@ -37,6 +37,7 @@ const { getDeployStatePayload } = require('./nexus-deploy-revision');
 const {
     buildChatSenderRankMeta,
     buildCommanderRankMeta,
+    getCommanderRankDisplayTitle,
     resolveCommanderRankTitleGender
 } = require('./nexus-commander-rank-titles');
 const {
@@ -1349,6 +1350,8 @@ function buildAgeMovementStatePayload(username, commander) {
         ageGold: resolveCommanderAgeGold(commander),
         ageProvisions: resolveCommanderAgeProvisions(commander),
         rank: guildProgress.rank,
+        path: guildProgress.path,
+        rankTitleGender: guildProgress.rankTitleGender,
         ageGuildXp: guildProgress.ageGuildXp,
         ageGuildXpRequired: guildProgress.ageGuildXpRequired,
         ageGuildXpProgress: guildProgress.ageGuildXpProgress,
@@ -1937,7 +1940,7 @@ function buildHeadquartersIntelSlices(commander, nationState) {
             commanders,
             allyNationIds
         }),
-        hqBounties: buildHqBountyWorkspaceSlice(bountyProgram, gameNation)
+        hqBounties: buildHqBountyWorkspaceSlice(bountyProgram, gameNation, commanders)
     };
 }
 
@@ -6695,11 +6698,15 @@ app.get('/api/portal/age/army-groups/member-army', (req, res) => {
     ensureCommanderAgeRoster(targetCommander);
     const refreshed = findCommanderByUsername(targetUsername) || targetCommander;
     const roster = buildAgeRosterHudPayload(refreshed);
+    const rankMeta = buildCommanderRankMeta(refreshed);
 
     res.json({
         status: 'ok',
         username: String(refreshed.username || targetUsername).trim(),
-        rank: resolveArmyGroupMemberRank(refreshed.username || targetUsername),
+        rank: rankMeta.rank,
+        path: rankMeta.path,
+        rankTitleGender: rankMeta.rankTitleGender,
+        rankDisplayTitle: getCommanderRankDisplayTitle(rankMeta.rank, rankMeta.path, rankMeta.rankTitleGender) || null,
         ...roster
     });
 });

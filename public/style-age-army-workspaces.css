@@ -127,6 +127,40 @@
     color: #ffd978;
 }
 
+/* Commander gold chip — infirmary workspace */
+.age-army-workspace-gold-wallet {
+    display: none;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 2px;
+    padding: 8px 12px;
+    border: 1px solid rgba(184, 144, 48, 0.38);
+    border-radius: 6px;
+    background: rgba(0, 0, 0, 0.32);
+}
+
+.age-army-workspace-gold-wallet.is-visible {
+    display: flex;
+}
+
+.age-army-workspace-gold-wallet[hidden] {
+    display: none !important;
+}
+
+.age-army-workspace-gold-label {
+    font-size: 0.62rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: rgba(212, 175, 90, 0.82);
+}
+
+.age-army-workspace-gold-value {
+    font-size: 1.02rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    color: #ffd978;
+}
+
 .age-army-workspace-close,
 .age-settlement-venue-workspace .age-settlement-venue-close:not(.age-age-center-modal-close) {
     flex-shrink: 0;

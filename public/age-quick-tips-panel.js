@@ -1,5 +1,5 @@
 /**
- * RIFT — Quick tips panel below Nation Status on the Age map HUD.
+ * RIFT — Quick tips panel below the council board on the Age map left HUD.
  */
 (function initAgeQuickTipsPanel(global) {
     'use strict';
@@ -10,7 +10,7 @@
         'Move and MF orders spend MP along a chain. Holds can launch SF and MF without needing owned cities in between.',
         'Nation Status shows terrain bonuses — stack Holds in favorable terrain before pushing into enemy borders.',
         'Open the City tab to visit venues such as Barracks, Blacksmith, and Infirmary at larger settlements.',
-        'Use View Plan on the world map to toggle your nation\'s published orders without leaving the Map tab.'
+        'Use Add Plan on the world map to draft nation orders in place. View Plan appears after your nation publishes a plan.'
     ];
 
     const TIP_ROTATE_MS = 45000;

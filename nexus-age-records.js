@@ -4,6 +4,7 @@
 'use strict';
 
 const { loadCityCatalog, resolveCatalogNationKey, resolveCityHolder } = require('./nexus-age-movement');
+const { buildCommanderRankMeta, getCommanderRankDisplayTitle } = require('./nexus-commander-rank-titles');
 
 const DEFAULT_NATION_TOTAL_CITIES = 15;
 
@@ -119,11 +120,21 @@ function buildNationPlayersInNationMap(commanders, isHiddenUsername, resolveComm
 function serializeCommanderAgeRecord(commander, resolveDisplayName) {
     const username = String(commander?.username || '').trim();
     const stats = normalizePlayerAgeRecords(commander?.ageRecords);
+    const rankMeta = buildCommanderRankMeta(commander);
+    const currentRankTitle = getCommanderRankDisplayTitle(
+        rankMeta.rank,
+        rankMeta.path,
+        rankMeta.rankTitleGender
+    );
 
     return {
         username,
         playerName: resolveDisplayName(username) || username,
-        currentRank: stats.currentRank,
+        currentRank: rankMeta.rank,
+        currentRankTitle: currentRankTitle || null,
+        currentRankPath: rankMeta.path,
+        currentRankTitleGender: rankMeta.rankTitleGender,
+        ageRecordsRank: stats.currentRank,
         overallPvpScore: stats.overallPvpScore,
         overallRankScore: stats.overallRankScore,
         armyStrength: stats.armyStrength,
@@ -177,6 +188,7 @@ function serializeNationAgeRecord({
     leadership,
     nationRecords,
     citiesOwned,
+    totalCities,
     playersInNation,
     resolveNationLeadershipDisplayName
 }) {
@@ -190,6 +202,7 @@ function serializeNationAgeRecord({
         rank: null,
         points: resolveNationStatNumber(stats.points, 0),
         citiesOwned: Number.isFinite(Number(citiesOwned)) ? Number(citiesOwned) : 0,
+        totalCities: Number.isFinite(Number(totalCities)) ? Number(totalCities) : DEFAULT_NATION_TOTAL_CITIES,
         playersInNation: Number.isFinite(Number(playersInNation)) ? Number(playersInNation) : 0,
         cityCaptures: resolveNationStatNumber(stats.cityCaptures, 0),
         overallStrength: resolveNationOptionalNumber(stats.overallStrength),
@@ -224,6 +237,7 @@ function buildAgeRecordsPayload({
     const catalogNations = Array.isArray(catalog.nations) ? catalog.nations : [];
     const recordsMap = nationRecordsMap && typeof nationRecordsMap === 'object' ? nationRecordsMap : {};
     const citiesOwnedByNation = buildNationCitiesOwnedMap(cityHolders);
+    const totalCitiesByNation = buildNationTotalCitiesMap(catalog);
     const playersInNationByNation = buildNationPlayersInNationMap(
         commanders,
         isHiddenUsername,
@@ -252,6 +266,7 @@ function buildAgeRecordsPayload({
                 leadership,
                 nationRecords,
                 citiesOwned: citiesOwnedByNation.get(nationId) ?? 0,
+                totalCities: totalCitiesByNation.get(nationId) ?? DEFAULT_NATION_TOTAL_CITIES,
                 playersInNation: playersInNationByNation.get(nationId) ?? 0,
                 resolveNationLeadershipDisplayName
             });

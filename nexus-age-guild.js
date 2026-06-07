@@ -31,6 +31,7 @@ const {
     buildCommanderEquipmentBonuses,
     commanderHasAcquiredGear
 } = require('./nexus-age-commander-gear');
+const { buildCommanderRankMeta } = require('./nexus-commander-rank-titles');
 const {
     distributeTrainingUnitXp,
     scanArmyReadyToPromote,
@@ -273,12 +274,15 @@ function resolveRankUpProvisionsGrant(newRank) {
 }
 
 function buildGuildProgressPayload(commander) {
-    const rank = resolveCommanderRank(commander);
+    const rankMeta = buildCommanderRankMeta(commander);
+    const rank = rankMeta.rank;
     const xp = resolveGuildXp(commander);
     const xpRequired = rank >= MAX_COMMANDER_RANK ? 0 : resolveGuildXpRequired(rank);
 
     return {
         rank,
+        path: rankMeta.path,
+        rankTitleGender: rankMeta.rankTitleGender,
         ageGuildXp: xp,
         ageGuildXpRequired: xpRequired,
         ageGuildXpProgress: xpRequired > 0 ? Math.min(1, xp / xpRequired) : 1,

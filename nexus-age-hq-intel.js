@@ -14,7 +14,7 @@ const {
 const { resolveCommanderAgeArmy } = require('./nexus-age-roster');
 const { buildBattleArmy } = require('./nexus-age-battle-sim');
 const { loadUnitPurchaseCatalog } = require('./nexus-age-recruitment');
-const { buildCommanderRankMeta } = require('./nexus-commander-rank-titles');
+const { buildCommanderRankMeta, getCommanderRankDisplayTitle } = require('./nexus-commander-rank-titles');
 
 const SPY_LOG_MAX = 3;
 const SPY_OUTDATED_GROWTH = 0.1;
@@ -190,7 +190,9 @@ function summarizeArmyForSpyLog(commander) {
         unitCount: units,
         stackCount: army.length,
         rank: rankMeta.rank,
-        path: rankMeta.path
+        path: rankMeta.path,
+        rankTitleGender: rankMeta.rankTitleGender,
+        rankTitle: getCommanderRankDisplayTitle(rankMeta.rank, rankMeta.path, rankMeta.rankTitleGender) || null
     };
 }
 
@@ -214,9 +216,13 @@ function normalizeSpyLogEntry(raw) {
                 unitCount: Math.max(0, Math.floor(Number(raw.armySummary.unitCount) || 0)),
                 stackCount: Math.max(0, Math.floor(Number(raw.armySummary.stackCount) || 0)),
                 rank: Math.max(1, Math.floor(Number(raw.armySummary.rank) || 1)),
-                path: String(raw.armySummary.path || '').trim().slice(0, 32)
+                path: String(raw.armySummary.path || '').trim().slice(0, 32),
+                rankTitleGender: String(raw.armySummary.rankTitleGender || 'male').trim().toLowerCase() === 'female'
+                    ? 'female'
+                    : 'male',
+                rankTitle: String(raw.armySummary.rankTitle || '').trim().slice(0, 80) || null
             }
-            : { unitCount: 0, stackCount: 0, rank: 1, path: '' },
+            : { unitCount: 0, stackCount: 0, rank: 1, path: '', rankTitleGender: 'male', rankTitle: null },
         forwardedTo: Array.isArray(raw.forwardedTo)
             ? raw.forwardedTo.map(normalizeNationKey).filter(Boolean).slice(0, 24)
             : []
@@ -443,7 +449,9 @@ function issueHqBountyCycle(commanders, cityHolders, resolveCatalogNationDisplay
             targetNationId: nationId,
             targetNationName: displayNation,
             targetRank: rankMeta.rank,
-            message: `${normalizeUsername(commander.username)} (Rank ${rankMeta.rank}, ${displayNation}) marked for bounty.`
+            targetPath: rankMeta.path,
+            targetRankTitleGender: rankMeta.rankTitleGender,
+            message: `${normalizeUsername(commander.username)} (${getCommanderRankDisplayTitle(rankMeta.rank, rankMeta.path, rankMeta.rankTitleGender) || `Rank ${rankMeta.rank}`}, ${displayNation}) marked for bounty.`
         }));
     });
 
@@ -489,7 +497,62 @@ function resolveHqBountyCycle(program, commanders, cityHolders, resolveCatalogNa
     return next;
 }
 
-function buildHqBountyWorkspaceSlice(program, viewerNation) {
+function resolveBountyTargetRankMeta(target, commanders) {
+    const username = normalizeUsername(target?.targetUsername);
+    const commander = (Array.isArray(commanders) ? commanders : []).find((row) => (
+        normalizeUsername(row?.username).toLowerCase() === username.toLowerCase()
+    ));
+    const rankMeta = commander
+        ? buildCommanderRankMeta(commander)
+        : {
+            rank: Math.max(1, Math.floor(Number(target?.targetRank) || 1)),
+            path: String(target?.targetPath || 'PHYS').trim().slice(0, 16) || 'PHYS',
+            rankTitleGender: String(target?.targetRankTitleGender || 'male').trim().toLowerCase() === 'female'
+                ? 'female'
+                : 'male'
+        };
+    const rankTitle = getCommanderRankDisplayTitle(rankMeta.rank, rankMeta.path, rankMeta.rankTitleGender) || null;
+    return {
+        ...rankMeta,
+        rankTitle,
+        rankLabel: rankTitle || `Rank ${rankMeta.rank}`
+    };
+}
+
+function formatBountyFeedDisplayMessage(entry, rankMeta) {
+    const username = normalizeUsername(entry?.targetUsername);
+    const nationName = String(entry?.targetNationName || '').trim();
+    const rankLabel = rankMeta?.rankLabel
+        || getCommanderRankDisplayTitle(rankMeta?.rank, rankMeta?.path, rankMeta?.rankTitleGender)
+        || `Rank ${Math.max(1, Math.floor(Number(entry?.targetRank) || 1))}`;
+    const type = String(entry?.type || '').trim().toLowerCase();
+
+    if (type === 'issued') {
+        return `${username} (${rankLabel}, ${nationName}) marked for bounty.`;
+    }
+    if (type === 'collected') {
+        const hunter = normalizeUsername(entry?.actorUsername);
+        return hunter
+            ? `${username} was defeated by ${hunter}. Bounty collected.`
+            : `${username} was defeated. Bounty collected.`;
+    }
+    if (type === 'evaded') {
+        return `${username} successfully evaded the nation bounty.`;
+    }
+
+    const legacy = String(entry?.message || '').trim();
+    if (!legacy) return '';
+    return legacy.replace(
+        /\(Rank\s+(\d+)\s*,/gi,
+        (_, rankNumber) => `(${getCommanderRankDisplayTitle(
+            rankNumber,
+            rankMeta?.path,
+            rankMeta?.rankTitleGender
+        ) || `Rank ${rankNumber}`},`
+    );
+}
+
+function buildHqBountyWorkspaceSlice(program, viewerNation, commanders = []) {
     const viewer = normalizeNationKey(viewerNation);
     const normalized = normalizeHqBountyProgram(program);
     const nowMs = Date.now();
@@ -500,14 +563,29 @@ function buildHqBountyWorkspaceSlice(program, viewerNation) {
         issuedAt: normalized.issuedAt,
         expiresAt: normalized.expiresAt,
         hoursRemaining: Math.ceil(msLeft / (60 * 60 * 1000)),
-        targets: normalized.targets.map((target) => ({
-            ...target,
-            highlightNation: viewer && target.nationId === viewer
-        })),
-        feed: normalized.feed.map((entry) => ({
-            ...entry,
-            highlightNation: viewer && entry.targetNationId === viewer
-        }))
+        targets: normalized.targets.map((target) => {
+            const rankMeta = resolveBountyTargetRankMeta(target, commanders);
+            return {
+                ...target,
+                targetPath: rankMeta.path,
+                targetRankTitleGender: rankMeta.rankTitleGender,
+                targetRankTitle: rankMeta.rankTitle,
+                targetRankLabel: rankMeta.rankLabel,
+                highlightNation: viewer && target.nationId === viewer
+            };
+        }),
+        feed: normalized.feed.map((entry) => {
+            const rankMeta = resolveBountyTargetRankMeta(entry, commanders);
+            return {
+                ...entry,
+                targetPath: rankMeta.path,
+                targetRankTitleGender: rankMeta.rankTitleGender,
+                targetRankTitle: rankMeta.rankTitle,
+                targetRankLabel: rankMeta.rankLabel,
+                displayMessage: formatBountyFeedDisplayMessage(entry, rankMeta),
+                highlightNation: viewer && entry.targetNationId === viewer
+            };
+        })
     };
 }
 

@@ -17,6 +17,20 @@
             .replace(/"/g, '&quot;');
     }
 
+    function formatCommanderRankLabel(rank, options = {}) {
+        const rankTitles = global.RoyalArmiesCommanderRankTitles;
+        const path = options.path ?? 'PHYS';
+        const rankTitleGender = options.rankTitleGender;
+        if (rankTitles?.formatCommanderRankLabel) {
+            return rankTitles.formatCommanderRankLabel(rank, path, rankTitleGender);
+        }
+        if (rankTitles?.getCommanderRankDisplayTitle) {
+            const title = rankTitles.getCommanderRankDisplayTitle(rank, path, rankTitleGender);
+            if (title) return title;
+        }
+        return `Rank ${formatNumber(rank)}`;
+    }
+
     function resolveApiUrl(path) {
         if (typeof global.resolveApiUrl === 'function') {
             return global.resolveApiUrl(path);
@@ -176,7 +190,7 @@
         const rows = players.map((player) => {
             const meta = [
                 player.nationId ? escapeHtml(player.nationId) : '',
-                player.rank ? `Rank ${formatNumber(player.rank)}` : '',
+                player.rank ? formatCommanderRankLabel(player.rank, player) : '',
                 player.online ? 'Online' : 'Offline'
             ].filter(Boolean).join(' · ');
 

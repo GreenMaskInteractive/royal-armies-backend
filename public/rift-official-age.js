@@ -28,13 +28,22 @@
         return Boolean(canvas && canvas.classList.contains('age-page-canvas'));
     }
 
+    /** Published nation terrain bonus table (false while Age Alpha is pre-release). */
+    function isNationTerrainBonusDataLive() {
+        const canvas = global.document.getElementById('age-page-canvas');
+        const slug = String(canvas?.dataset?.ageSlug || getOfficialAgeSlug()).trim().toLowerCase();
+        return slug !== PRE_AGE_SLUG;
+    }
+
     global.RoyalArmiesOfficialAge = {
         getOfficialAgeSlug,
         getOfficialAgePageFileName,
         getOfficialAgePagePath,
-        isOfficialAgePageActive
+        isOfficialAgePageActive,
+        isNationTerrainBonusDataLive
     };
 
     global.getOfficialAgePagePath = getOfficialAgePagePath;
     global.isOfficialAgePageActive = isOfficialAgePageActive;
+    global.isNationTerrainBonusDataLive = isNationTerrainBonusDataLive;
 })(window);

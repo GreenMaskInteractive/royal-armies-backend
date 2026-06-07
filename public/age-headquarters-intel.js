@@ -24,6 +24,69 @@
             .replace(/"/g, '&quot;');
     }
 
+    function formatCommanderRankLabel(rank, options = {}) {
+        if (options.targetRankLabel) return options.targetRankLabel;
+        if (options.rankLabel) return options.rankLabel;
+        if (options.rankTitle) return options.rankTitle;
+        if (options.targetRankTitle) return options.targetRankTitle;
+
+        const mergedOptions = {
+            path: options.path ?? options.targetPath,
+            rankTitleGender: options.rankTitleGender ?? options.targetRankTitleGender,
+            rankDisplayTitle: options.rankDisplayTitle,
+            rankTitle: options.rankTitle ?? options.targetRankTitle
+        };
+
+        if (typeof global.resolveCommanderRankDisplayLabel === 'function') {
+            return global.resolveCommanderRankDisplayLabel(rank, mergedOptions);
+        }
+        if (typeof global.formatCommanderRankLabel === 'function') {
+            return global.formatCommanderRankLabel(
+                rank,
+                mergedOptions.path,
+                mergedOptions.rankTitleGender
+            );
+        }
+        if (typeof global.getCommanderRankDisplayTitle === 'function') {
+            const title = global.getCommanderRankDisplayTitle(
+                rank,
+                mergedOptions.path || 'PHYS',
+                mergedOptions.rankTitleGender
+            );
+            if (title) return title;
+        }
+        return `Rank ${Math.max(1, Math.floor(Number(rank) || 1))}`;
+    }
+
+    function formatBountyFeedMessage(entry) {
+        if (entry?.displayMessage) return entry.displayMessage;
+
+        const type = String(entry?.type || '').trim().toLowerCase();
+        const username = String(entry?.targetUsername || '').trim();
+        const nationName = String(entry?.targetNationName || '').trim();
+        const rankLabel = formatCommanderRankLabel(entry?.targetRank, entry);
+
+        if (type === 'issued') {
+            return `${username} (${rankLabel}, ${nationName}) marked for bounty.`;
+        }
+        if (type === 'collected') {
+            const hunter = String(entry?.actorUsername || '').trim();
+            return hunter
+                ? `${username} was defeated by ${hunter}. Bounty collected.`
+                : `${username} was defeated. Bounty collected.`;
+        }
+        if (type === 'evaded') {
+            return `${username} successfully evaded the nation bounty.`;
+        }
+
+        const legacy = String(entry?.message || '').trim();
+        if (!legacy) return '';
+        return legacy.replace(
+            /\(Rank\s+(\d+)\s*,/gi,
+            (_match, rankNumber) => `(${formatCommanderRankLabel(rankNumber, entry)},`
+        );
+    }
+
     function resolveApiUrl(path) {
         if (typeof global.resolveApiUrl === 'function') {
             return global.resolveApiUrl(path);
@@ -121,7 +184,7 @@
             + `<div><dt>Location</dt><dd>${escapeHtml(log.cityName || log.cityId || 'Unknown city')}</dd></div>`
             + `<div><dt>Power at capture</dt><dd>${formatNumber(log.snapshotPower)}</dd></div>`
             + `<div><dt>Current power</dt><dd>${formatNumber(log.currentPower)} (${formatNumber(log.growthPercent)}% change)</dd></div>`
-            + `<div><dt>Units observed</dt><dd>${formatNumber(log.armySummary?.unitCount)} units · ${formatNumber(log.armySummary?.stackCount)} stacks · Rank ${formatNumber(log.armySummary?.rank)}</dd></div>`
+            + `<div><dt>Units observed</dt><dd>${formatNumber(log.armySummary?.unitCount)} units · ${formatNumber(log.armySummary?.stackCount)} stacks · ${escapeHtml(formatCommanderRankLabel(log.armySummary?.rank, log.armySummary || {}))}</dd></div>`
             + `<div><dt>Captured</dt><dd>${escapeHtml(new Date(log.createdAt).toLocaleString())}</dd></div>`
             + '</dl>'
         );
@@ -205,7 +268,7 @@
         targetsEl.innerHTML = targets.length
             ? targets.map((row) => (
                 `<div class="age-hq-bounty-target-row${row.highlightNation ? ' is-nation-highlight' : ''}${row.resolved ? ' is-resolved' : ''}">`
-                + `<strong>${escapeHtml(row.targetUsername)}</strong> · Rank ${formatNumber(row.targetRank)} · ${escapeHtml(row.nationName)}`
+                + `<strong>${escapeHtml(row.targetUsername)}</strong> · ${escapeHtml(formatCommanderRankLabel(row.targetRank, row))} · ${escapeHtml(row.nationName)}`
                 + `${row.resolved ? ` · ${escapeHtml(row.resolution || 'resolved')}` : ''}`
                 + `</div>`
             )).join('')
@@ -216,7 +279,7 @@
             ? feed.map((entry) => (
                 `<article class="age-hq-bounty-feed-item${entry.highlightNation ? ' is-nation-highlight' : ''}">`
                 + `<span class="age-hq-bounty-feed-item__type">${escapeHtml(entry.type)}</span>`
-                + `<span>${escapeHtml(entry.message)}</span>`
+                + `<span>${escapeHtml(formatBountyFeedMessage(entry))}</span>`
                 + `</article>`
             )).join('')
             : '';

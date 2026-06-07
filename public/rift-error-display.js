@@ -81,7 +81,7 @@
             return normalized;
         }
 
-        global.alert(`${normalized.title}\n\n${body}`);
+        console.warn('[RIFT] Error notice (portal alert unavailable):', normalized.title, body);
         return normalized;
     }
 
@@ -516,7 +516,7 @@
             return;
         }
 
-        global.alert(`${normalized.title}\n\n${normalized.message}`);
+        console.warn('[RIFT] Update complete notice (portal alert unavailable):', normalized.title, normalized.message);
     }
 
     function markServerReachableAgain() {
@@ -590,7 +590,7 @@
             return normalized;
         }
 
-        global.alert(`${normalized.title}\n\n${normalized.message}`);
+        console.warn('[RIFT] Update underway notice (portal alert unavailable):', normalized.title, normalized.message);
         return normalized;
     }
 

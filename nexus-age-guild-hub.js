@@ -3,6 +3,8 @@
  */
 'use strict';
 
+const { buildCommanderRankMeta, getCommanderRankDisplayTitle } = require('./nexus-commander-rank-titles');
+
 const SETTLEMENT_TIER_ORDER = Object.freeze({
     village: 1,
     town: 2,
@@ -77,7 +79,14 @@ function resolveTierRank(tier) {
     return SETTLEMENT_TIER_ORDER[normalizeSettlementTier(tier)] || 1;
 }
 
-function resolveJobLockReason(job, rank, settlementTier) {
+function formatCommanderRankThreshold(rank, commander) {
+    const rankMeta = buildCommanderRankMeta(commander);
+    const threshold = Math.max(1, Math.floor(Number(rank) || 1));
+    return getCommanderRankDisplayTitle(threshold, rankMeta.path, rankMeta.rankTitleGender)
+        || `rank ${threshold}`;
+}
+
+function resolveJobLockReason(job, rank, settlementTier, commander) {
     const tier = normalizeSettlementTier(settlementTier);
     const tierRank = resolveTierRank(tier);
 
@@ -91,23 +100,23 @@ function resolveJobLockReason(job, rank, settlementTier) {
 
     if (job.maxRank != null && rank > job.maxRank) {
         if (job.id === 'street-patrol') {
-            return 'Street Patrol closes once you reach rank 7.';
+            return `Street Patrol closes once you reach ${formatCommanderRankThreshold(7, commander)}.`;
         }
         if (job.id === 'civilian-transport') {
-            return 'Border Patrol is now required — Civilian Transport is retired at rank 14.';
+            return `Border Patrol is now required — Civilian Transport is retired at ${formatCommanderRankThreshold(14, commander)}.`;
         }
-        return `Requires rank ${job.maxRank} or lower.`;
+        return `Requires ${formatCommanderRankThreshold(job.maxRank, commander)} or lower.`;
     }
 
     if (rank < job.minRank) {
-        return `Unlocks at commander rank ${job.minRank}.`;
+        return `Unlocks at ${formatCommanderRankThreshold(job.minRank, commander)}.`;
     }
 
     return '';
 }
 
-function buildGuildHubJobEntry(job, rank, settlementTier) {
-    const lockReason = resolveJobLockReason(job, rank, settlementTier);
+function buildGuildHubJobEntry(job, rank, settlementTier, commander) {
+    const lockReason = resolveJobLockReason(job, rank, settlementTier, commander);
     const available = !lockReason;
 
     let featured = false;
@@ -133,7 +142,7 @@ function buildGuildHubJobEntry(job, rank, settlementTier) {
 function buildGuildHubManifest(commander, settlementTier) {
     const rank = resolveCommanderRank(commander);
     const tier = normalizeSettlementTier(settlementTier);
-    const jobs = GUILD_HUB_JOBS.map((job) => buildGuildHubJobEntry(job, rank, tier));
+    const jobs = GUILD_HUB_JOBS.map((job) => buildGuildHubJobEntry(job, rank, tier, commander));
 
     return {
         settlementTier: tier,

@@ -87,6 +87,25 @@
         return table[normalizedRank - 1] || '';
     }
 
+    function resolveSelfCommanderRankMeta() {
+        const player = typeof global.player !== 'undefined' ? global.player : null;
+        return {
+            rank: clampCommanderRank(player?.rank || 1),
+            path: player?.path || 'PHYS',
+            rankTitleGender: resolveCommanderRankTitleGender(
+                player?.rankTitleGender != null ? player.rankTitleGender : readSelfRankTitleGender()
+            )
+        };
+    }
+
+    function formatCommanderRankLabel(rank, pathCode, gender, options = {}) {
+        const normalizedRank = clampCommanderRank(rank);
+        const title = getCommanderRankDisplayTitle(normalizedRank, pathCode, gender);
+        if (title) return title;
+        if (options.includeNumericFallback === false) return '';
+        return `Rank ${normalizedRank}`;
+    }
+
     function getCommanderRankPillTier(rank) {
         const normalizedRank = clampCommanderRank(rank);
         if (normalizedRank > COMMANDER_RANK_TITLE_MAX) return 0;
@@ -169,6 +188,8 @@
         readSelfRankTitleGender,
         getCommanderRankTitleTable,
         getCommanderRankDisplayTitle,
+        resolveSelfCommanderRankMeta,
+        formatCommanderRankLabel,
         getCommanderRankPillTier,
         buildCommanderRankPillHtml,
         buildCommanderIdentityNameHtml,
@@ -178,9 +199,15 @@
 
     global.RoyalArmiesCommanderRankTitles = api;
     global.getCommanderRankDisplayTitle = (rank, path, gender) => api.getCommanderRankDisplayTitle(rank, path, gender);
+    global.formatCommanderRankLabel = (rank, path, gender, options) => (
+        api.formatCommanderRankLabel(rank, path, gender, options)
+    );
     global.buildCommanderIdentityNameHtml = (name, options) => api.buildCommanderIdentityNameHtml(name, options);
     global.refreshCommanderRankTitleDisplays = function refreshCommanderRankTitleDisplays() {
         api.hydrateRankDataCommanderTitles();
+        if (typeof global.refreshAgeHudCommanderRank === 'function') {
+            global.refreshAgeHudCommanderRank();
+        }
         if (typeof global.refreshLoggedUserTagDisplay === 'function') {
             global.refreshLoggedUserTagDisplay();
         }

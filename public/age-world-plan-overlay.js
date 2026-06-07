@@ -38,6 +38,60 @@
         return { x: 0, y: 0 };
     }
 
+    function buildRouteGeometry(fromCity, toCity) {
+        const from = mapPointToPixels(fromCity.centroid.x, fromCity.centroid.y);
+        const to = mapPointToPixels(toCity.centroid.x, toCity.centroid.y);
+        if (fromCity.id === toCity.id) {
+            return {
+                d: `M ${from.x - 12} ${from.y} L ${from.x + 12} ${from.y}`,
+                startX: from.x - 12,
+                startY: from.y,
+                endX: from.x + 12,
+                endY: from.y,
+                labelX: from.x,
+                labelY: from.y - 8
+            };
+        }
+
+        const curved = global.RoyalArmiesAgeWorldMapPlanArrows?.buildCurvedRoutePath?.(from, to);
+        if (curved) return curved;
+
+        return {
+            d: `M ${from.x} ${from.y} L ${to.x} ${to.y}`,
+            startX: from.x,
+            startY: from.y,
+            endX: to.x,
+            endY: to.y,
+            labelX: (from.x + to.x) / 2,
+            labelY: (from.y + to.y) / 2
+        };
+    }
+
+    function appendRallyEndpointPulse(cityId) {
+        if (!pillsLayer || !cityId) return;
+
+        const city = cityById.get(cityId);
+        if (!city?.centroid) return;
+
+        const point = mapPointToPixels(city.centroid.x, city.centroid.y);
+        const node = global.document.createElement('span');
+        node.className = 'age-world-map-plan-rally-pulse';
+        node.setAttribute('aria-hidden', 'true');
+        node.title = 'Hold or Taxi will be placed here';
+        node.innerHTML = '<span class="age-world-map-plan-rally-pulse__wave age-world-map-plan-rally-pulse__wave--a"></span>'
+            + '<span class="age-world-map-plan-rally-pulse__wave age-world-map-plan-rally-pulse__wave--b"></span>'
+            + '<span class="age-world-map-plan-rally-pulse__wave age-world-map-plan-rally-pulse__wave--c"></span>'
+            + '<span class="age-world-map-plan-rally-pulse__core"></span>'
+            + '<span class="age-world-map-plan-rally-pulse__label">Hold · Taxi</span>';
+        node.style.left = `${Math.round(point.x)}px`;
+        node.style.top = `${Math.round(point.y)}px`;
+        pillsLayer.appendChild(node);
+    }
+
+    function appendPublishedRoute(layer, geometry, routeType) {
+        global.RoyalArmiesAgeWorldMapPlanRouteStyle?.appendPublishedRoute?.(layer, geometry, routeType);
+    }
+
     function pillLabel(type) {
         if (type === 'hold') return 'Hold';
         if (type === 'taxi') return 'Taxi';
@@ -138,30 +192,21 @@
             }
         }
 
+        const rallyEndpointIds = new Set();
         (publishedPlan.arrows || []).forEach((arrow) => {
             const fromCity = cityById.get(arrow.fromCityId);
             const toCity = cityById.get(arrow.toCityId);
             if (!fromCity?.centroid || !toCity?.centroid) return;
 
-            const from = mapPointToPixels(fromCity.centroid.x, fromCity.centroid.y);
-            const to = mapPointToPixels(toCity.centroid.x, toCity.centroid.y);
-            const path = global.document.createElementNS(SVG_NS, 'path');
-            if (fromCity.id === toCity.id) {
-                path.setAttribute('d', `M ${from.x - 12} ${from.y} L ${from.x + 12} ${from.y}`);
-            } else {
-                path.setAttribute('d', `M ${from.x} ${from.y} L ${to.x} ${to.y}`);
-            }
-            path.setAttribute('class', `age-world-map-plan-arrow age-world-map-plan-arrow--${arrow.type}`);
-            path.setAttribute('marker-end', 'url(#age-world-plan-arrowhead)');
-            arrowsLayer.appendChild(path);
+            const geometry = buildRouteGeometry(fromCity, toCity);
+            appendPublishedRoute(arrowsLayer, geometry, arrow.type);
 
-            const label = global.document.createElementNS(SVG_NS, 'text');
-            label.setAttribute('x', String((from.x + to.x) / 2));
-            label.setAttribute('y', String((from.y + to.y) / 2 - 6));
-            label.setAttribute('text-anchor', 'middle');
-            label.textContent = arrowLabel(arrow);
-            arrowsLayer.appendChild(label);
+            if (arrow.type === 'taxi' && arrow.toCityId) {
+                rallyEndpointIds.add(arrow.toCityId);
+            }
         });
+
+        rallyEndpointIds.forEach((cityId) => appendRallyEndpointPulse(cityId));
     }
 
     function setPlanVisible(next) {
@@ -217,11 +262,10 @@
 
         indexCatalog();
         updateToggleVisibility();
-        if (publishedPlan) {
-            setPlanVisible(true);
-        } else {
+        if (!publishedPlan) {
             setPlanVisible(false);
         }
+        renderOverlay();
         return publishedPlan;
     }
 
@@ -258,11 +302,7 @@
 
         void refreshNationPlan().then(() => {
             indexCatalog();
-            if (publishedPlan) {
-                setPlanVisible(true);
-            } else {
-                renderOverlay();
-            }
+            renderOverlay();
         });
     }
 

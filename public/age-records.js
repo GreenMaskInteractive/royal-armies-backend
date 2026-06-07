@@ -27,7 +27,7 @@
 
     const PLAYER_COLUMNS = [
         { key: 'playerName', label: 'Player Name', kind: 'text', alwaysShow: true },
-        { key: 'currentRank', label: 'Current Rank', kind: 'number' },
+        { key: 'currentRankTitle', label: 'Current Rank', kind: 'text' },
         { key: 'overallPvpScore', label: 'Overall PvP Score', kind: 'number' },
         { key: 'overallRankScore', label: 'Overall Rank Score', kind: 'number' },
         { key: 'armyStrength', label: 'Personal Army Strength', kind: 'number' },
@@ -135,6 +135,7 @@
             username: String(username || '').trim(),
             playerName: String(playerName || username || '').trim(),
             currentRank: null,
+            currentRankTitle: null,
             overallPvpScore: null,
             overallRankScore: null,
             armyStrength: null,
@@ -151,6 +152,28 @@
         };
     }
 
+    function resolveCommanderRankTitle(row) {
+        if (row?.currentRankTitle) return row.currentRankTitle;
+        const rank = row?.currentRank;
+        if (rank == null || rank === '') return null;
+        const rankTitles = global.RoyalArmiesCommanderRankTitles;
+        if (rankTitles?.formatCommanderRankLabel) {
+            return rankTitles.formatCommanderRankLabel(
+                rank,
+                row.currentRankPath,
+                row.currentRankTitleGender
+            );
+        }
+        if (rankTitles?.getCommanderRankDisplayTitle) {
+            return rankTitles.getCommanderRankDisplayTitle(
+                rank,
+                row.currentRankPath,
+                row.currentRankTitleGender
+            ) || null;
+        }
+        return null;
+    }
+
     function normalizePlayerRows(apiPlayers) {
         const rows = (Array.isArray(apiPlayers) ? apiPlayers : [])
             .map((row) => {
@@ -158,12 +181,14 @@
                 if (!username) return null;
 
                 const playerName = String(row?.playerName || username).trim() || username;
-                return {
+                const merged = {
                     ...buildEmptyPlayerRow(username, playerName),
                     ...row,
                     username,
                     playerName
                 };
+                merged.currentRankTitle = resolveCommanderRankTitle(merged);
+                return merged;
             })
             .filter(Boolean);
 
@@ -203,6 +228,7 @@
             rank,
             points: 0,
             citiesOwned: 0,
+            totalCities: 15,
             playersInNation: 0,
             cityCaptures: 0,
             overallStrength: 'N/A',
