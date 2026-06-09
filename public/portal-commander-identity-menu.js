@@ -271,7 +271,20 @@
         });
     }
 
+    function removeChroniclesBattlePassMenuItems() {
+        global.document.querySelectorAll('.dropdown-action-item-chronicles-bp').forEach((button) => {
+            button.remove();
+        });
+        global.document.querySelectorAll('#game-mobile-commander-submenu .portal-mobile-submenu-item').forEach((button) => {
+            const label = String(button.textContent || '').replace(/\s+/g, ' ').trim().toLowerCase();
+            if (label === 'the chronicles battle pass') {
+                button.remove();
+            }
+        });
+    }
+
     function initPortalCommanderIdentityMenuBindings() {
+        removeChroniclesBattlePassMenuItems();
         bindPortalCommanderIdentityTriggerHandlers();
         bindPortalCommanderIdentityMenuActionHandlers();
         bindPortalCommanderIdentityMenuDismissHandlers();
@@ -287,6 +300,7 @@
     global.portalDesktopCommanderMenuAction = portalDesktopCommanderMenuAction;
     global.bindPortalCommanderIdentityMenuDismissHandlers = bindPortalCommanderIdentityMenuDismissHandlers;
     global.bindPortalCommanderIdentityMenu = bindPortalCommanderIdentityMenu;
+    global.removeChroniclesBattlePassMenuItems = removeChroniclesBattlePassMenuItems;
 
     if (global.document.readyState === 'loading') {
         global.document.addEventListener('DOMContentLoaded', initPortalCommanderIdentityMenuBindings, { once: true });
