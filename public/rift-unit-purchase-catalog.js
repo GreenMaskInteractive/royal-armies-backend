@@ -191,7 +191,8 @@
         }
 
         if (enriched.requiredClass && enriched.requiredClass !== ctx.classId) {
-            const requiredLabel = enriched.requiredClass === 'battlemage' ? 'Battlemage' : 'Battlemaster';
+            const requiredClass = enriched.requiredClass === 'archmage' ? 'battlemage' : enriched.requiredClass;
+            const requiredLabel = requiredClass === 'battlemage' ? 'Battlemage' : 'Battlemaster';
             return {
                 allowed: false,
                 reason: `${requiredLabel} class only.`,

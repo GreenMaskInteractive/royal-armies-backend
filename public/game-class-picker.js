@@ -21,6 +21,26 @@
         }
     };
 
+    const LEGACY_GAME_CLASS_IDS = Object.freeze({
+        archmage: 'battlemage'
+    });
+
+    function normalizeGameClassId(classId) {
+        const raw = String(classId || '').trim().toLowerCase();
+        return LEGACY_GAME_CLASS_IDS[raw] || raw;
+    }
+
+    function getGameClassOption(classId) {
+        return GAME_CLASS_OPTIONS[normalizeGameClassId(classId)] || null;
+    }
+
+    function resolveClassPanelElement(classId) {
+        const option = getGameClassOption(classId);
+        if (!option) return null;
+        return global.document.getElementById(option.panelId)
+            || global.document.getElementById(`game-class-panel-${String(classId || '').trim()}`);
+    }
+
     const CLASS_SWAP_MS_FALLBACK = 900;
     const LAYOUT_SYNC_DELAYS_MS = [0, 50, 180, 420];
     const DESKTOP_LAYOUT_MQ = '(min-width: 900px)';
@@ -64,8 +84,9 @@
 
     function setShowcaseAccentClass(classId) {
         const showcase = getShowcaseRoot();
-        if (showcase && GAME_CLASS_OPTIONS[classId]) {
-            showcase.dataset.accentClass = classId;
+        const normalizedClassId = normalizeGameClassId(classId);
+        if (showcase && getGameClassOption(normalizedClassId)) {
+            showcase.dataset.accentClass = normalizedClassId;
         }
     }
 
@@ -94,7 +115,8 @@
     }
 
     function getOtherClassId(classId) {
-        return classId === 'battlemaster' ? 'battlemage' : 'battlemaster';
+        const normalized = normalizeGameClassId(classId);
+        return normalized === 'battlemaster' ? 'battlemage' : 'battlemaster';
     }
 
     function clearPanelInlineCoords(panel) {
@@ -163,7 +185,7 @@
         const root = getPickerRoot();
         if (!root) return;
 
-        const panelClassId = activeClassId || displayedClassId;
+        const panelClassId = normalizeGameClassId(activeClassId || displayedClassId);
         if (panelClassId !== 'battlemage' && !forceMeasure) return;
 
         const bmHeight = measureBattlemasterPanelHeight();
@@ -184,7 +206,7 @@
 
     function updateShowcaseLabelForClass(classId) {
         const labelEl = getShowcaseLabelEl();
-        const meta = GAME_CLASS_OPTIONS[classId];
+        const meta = getGameClassOption(classId);
         if (!labelEl || !meta) return;
         labelEl.textContent = meta.label;
     }
@@ -200,8 +222,8 @@
 
         getClassOptions().forEach((card) => {
             const classId = card.dataset.classId;
-            const isFront = classId === displayedClassId;
-            const isBack = classId === backClassId;
+            const isFront = normalizeGameClassId(classId) === normalizeGameClassId(displayedClassId);
+            const isBack = normalizeGameClassId(classId) === backClassId;
 
             card.classList.toggle('is-front', isFront);
             card.classList.toggle('is-back', isBack);
@@ -235,7 +257,7 @@
 
         getClassPanels().forEach((panel) => {
             const panelClassIdAttr = panel.dataset.classPanel;
-            const isActive = panelClassIdAttr === panelClassId;
+            const isActive = normalizeGameClassId(panelClassIdAttr) === normalizeGameClassId(panelClassId);
 
             setPanelVisibilityState(panel, {
                 isActive,
@@ -353,7 +375,7 @@
 
         getClassOptions().forEach((option) => {
             const classId = option.dataset.classId;
-            const isSelected = classId === activeClassId;
+            const isSelected = normalizeGameClassId(classId) === normalizeGameClassId(activeClassId);
             option.classList.toggle('is-selected', isSelected);
             option.classList.toggle('is-active', isSelected);
             option.setAttribute('aria-pressed', isSelected ? 'true' : 'false');
@@ -365,9 +387,10 @@
     }
 
     function selectClass(classId) {
-        if (!GAME_CLASS_OPTIONS[classId]) return;
-        if (classId !== displayedClassId) return;
-        activeClassId = classId;
+        const normalized = normalizeGameClassId(classId);
+        if (!getGameClassOption(normalized)) return;
+        if (normalized !== normalizeGameClassId(displayedClassId)) return;
+        activeClassId = normalized;
         refreshSelectionState();
     }
 
@@ -393,8 +416,9 @@
     }
 
     function openPanelForClass(classId) {
-        if (!GAME_CLASS_OPTIONS[classId]) return;
-        activeClassId = classId;
+        const normalized = normalizeGameClassId(classId);
+        if (!getGameClassOption(normalized)) return;
+        activeClassId = normalized;
         refreshPanelState();
     }
 
@@ -428,8 +452,8 @@
 
         getClassOptions().forEach((card) => {
             const classId = card.dataset.classId;
-            card.classList.toggle('is-fading-out', classId === displayedClassId);
-            card.classList.toggle('is-fading-in', classId === targetClassId);
+            card.classList.toggle('is-fading-out', normalizeGameClassId(classId) === normalizeGameClassId(displayedClassId));
+            card.classList.toggle('is-fading-in', normalizeGameClassId(classId) === targetClassId);
         });
 
         global.setTimeout(() => {
@@ -443,14 +467,16 @@
     }
 
     function getPerk1BranchForClass(classId) {
-        return perk1BranchByClass[classId] || null;
+        const normalizedClassId = normalizeGameClassId(classId);
+        return perk1BranchByClass[normalizedClassId] ?? perk1BranchByClass[classId] ?? null;
     }
 
     function setPerk1BranchForClass(classId, branch) {
-        if (!GAME_CLASS_OPTIONS[classId]) return;
+        const normalizedClassId = normalizeGameClassId(classId);
+        if (!getGameClassOption(normalizedClassId)) return;
         const normalized = String(branch || '').trim().toUpperCase();
-        perk1BranchByClass[classId] = normalized === 'A' || normalized === 'B' ? normalized : null;
-        global.RoyalArmiesClassPerkCatalog?.mountClassPerkPanel?.(classId, perk1BranchByClass[classId]);
+        perk1BranchByClass[normalizedClassId] = normalized === 'A' || normalized === 'B' ? normalized : null;
+        global.RoyalArmiesClassPerkCatalog?.mountClassPerkPanel?.(normalizedClassId, perk1BranchByClass[normalizedClassId]);
         syncClassConfirmButtonState();
         scheduleLayoutSync();
     }
@@ -494,7 +520,7 @@
         if (!confirmBtn) return;
 
         const classId = activeClassId || displayedClassId;
-        const hasClass = Boolean(classId && GAME_CLASS_OPTIONS[classId]);
+        const hasClass = Boolean(classId && getGameClassOption(classId));
         const hasPerk = Boolean(getPerk1BranchForClass(classId));
         const ready = hasClass && hasPerk;
 
@@ -506,9 +532,10 @@
     }
 
     function confirmClassSelection(classId) {
-        if (!GAME_CLASS_OPTIONS[classId]) return;
+        const normalized = normalizeGameClassId(classId);
+        if (!getGameClassOption(normalized)) return;
 
-        const perk1Branch = getPerk1BranchForClass(classId);
+        const perk1Branch = getPerk1BranchForClass(normalized);
         if (!perk1Branch) {
             if (typeof global.showPortalAlert === 'function') {
                 void global.showPortalAlert('Choose Perk 1 Option A or B before confirming your class.', 'Choose a Class');
@@ -516,14 +543,14 @@
             return;
         }
 
-        activeClassId = classId;
-        displayedClassId = classId;
-        setShowcaseAccentClass(classId);
+        activeClassId = normalized;
+        displayedClassId = normalized;
+        setShowcaseAccentClass(normalized);
         refreshSelectionState();
         global.dispatchEvent(new CustomEvent('royalarmies:class-confirmed', {
             detail: {
-                classId,
-                pathCode: GAME_CLASS_OPTIONS[classId].pathCode,
+                classId: normalized,
+                pathCode: getGameClassOption(normalized).pathCode,
                 perk1Branch
             }
         }));
@@ -602,10 +629,10 @@
 
     function bindClassOption(option) {
         const classId = option.dataset.classId;
-        if (!classId || !GAME_CLASS_OPTIONS[classId]) return;
+        if (!classId || !getGameClassOption(classId)) return;
 
         option.addEventListener('mouseenter', () => {
-            if (classId === displayedClassId) {
+            if (normalizeGameClassId(classId) === normalizeGameClassId(displayedClassId)) {
                 option.classList.add('is-hovered');
             }
         });
@@ -616,14 +643,14 @@
 
         option.addEventListener('click', (event) => {
             event.preventDefault();
-            if (classId !== displayedClassId) return;
+            if (normalizeGameClassId(classId) !== normalizeGameClassId(displayedClassId)) return;
             selectClass(classId);
         });
 
         option.addEventListener('keydown', (event) => {
             if (event.key !== 'Enter' && event.key !== ' ') return;
             event.preventDefault();
-            if (classId !== displayedClassId) return;
+            if (normalizeGameClassId(classId) !== normalizeGameClassId(displayedClassId)) return;
             selectClass(classId);
         });
     }
@@ -708,7 +735,7 @@
         return displayedClassId;
     };
     global.getSelectedGameClassPath = function getSelectedGameClassPath() {
-        return activeClassId ? GAME_CLASS_OPTIONS[activeClassId].pathCode : null;
+        return activeClassId ? getGameClassOption(activeClassId)?.pathCode : null;
     };
     global.getSelectedGameClassPerk1Branch = function getSelectedGameClassPerk1Branch() {
         const classId = activeClassId || displayedClassId;
