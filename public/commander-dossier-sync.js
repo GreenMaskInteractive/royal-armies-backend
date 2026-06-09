@@ -261,8 +261,10 @@
                 });
             }
         }
-        if (preferences.rankTitleGender && typeof global.applyRankTitleGenderPreference === 'function') {
-            global.applyRankTitleGenderPreference(preferences.rankTitleGender);
+        if ('rankTitleGender' in preferences && typeof global.applyRankTitleGenderPreference === 'function') {
+            const preserveStaged = typeof global.shouldPreserveProfileRankTitleGenderStaged === 'function'
+                && global.shouldPreserveProfileRankTitleGenderStaged();
+            global.applyRankTitleGenderPreference(preferences.rankTitleGender, { preserveStaged });
         }
     }
 
@@ -379,6 +381,9 @@
         const cached = readDossierCache() || readLegacyDossierFallback();
         if (cached && Object.keys(cached).length) {
             applyCommanderDossierToClient(cached);
+            if (typeof global.applyDevPreviewNationOverride === 'function') {
+                global.applyDevPreviewNationOverride();
+            }
             return true;
         }
         return false;
@@ -398,6 +403,9 @@
             const payload = await response.json();
             if (!response.ok || payload.status !== 'ok') return false;
             applyCommanderDossierToClient(payload);
+            if (typeof global.applyDevPreviewNationOverride === 'function') {
+                global.applyDevPreviewNationOverride();
+            }
             return true;
         } catch (err) {
             if (typeof global.shouldSuppressRepeatedLocalDevApiWarnings === 'function'

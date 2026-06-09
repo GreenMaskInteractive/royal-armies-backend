@@ -4012,6 +4012,16 @@ body.is-terms-gate-active #main-portal-dynamic-viewport {
     font-size: 0.8rem !important;
     color: rgba(241, 224, 172, 0.62) !important;
     transition: color 0.2s ease, text-shadow 0.2s ease !important;
+    background: transparent !important;
+    border: none !important;
+    padding: 0 !important;
+    cursor: pointer !important;
+}
+
+.profile-rank-title-gender-switch-row .toggle-label-text:hover,
+.profile-rank-title-gender-switch-row .toggle-label-text:focus-visible {
+    color: rgba(255, 217, 120, 0.92) !important;
+    outline: none !important;
 }
 
 .profile-rank-title-gender-switch-label.is-active {
