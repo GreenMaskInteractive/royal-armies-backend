@@ -48,7 +48,7 @@
 
     function resolveCommanderPathId(pathCode) {
         const path = String(pathCode || '').trim().toUpperCase();
-        if (path === 'MAG' || path === 'MAGIC') return 'archmage';
+        if (path === 'MAG' || path === 'MAGIC' || path === 'ARCHMAGE') return 'archmage';
         return 'battlemaster';
     }
 
@@ -104,6 +104,22 @@
         if (title) return title;
         if (options.includeNumericFallback === false) return '';
         return `Rank ${normalizedRank}`;
+    }
+
+    function abbreviateCommanderRankTitle(title) {
+        const raw = String(title || '').trim();
+        if (!raw) return '';
+
+        const letters = raw
+            .split(/[\s-]+/)
+            .map((word) => word.replace(/[^A-Za-z0-9]/g, '').charAt(0))
+            .filter(Boolean);
+
+        if (letters.length) {
+            return letters.join('').toUpperCase();
+        }
+
+        return raw.charAt(0).toUpperCase();
     }
 
     function getCommanderRankPillTier(rank) {
@@ -190,6 +206,7 @@
         getCommanderRankDisplayTitle,
         resolveSelfCommanderRankMeta,
         formatCommanderRankLabel,
+        abbreviateCommanderRankTitle,
         getCommanderRankPillTier,
         buildCommanderRankPillHtml,
         buildCommanderIdentityNameHtml,

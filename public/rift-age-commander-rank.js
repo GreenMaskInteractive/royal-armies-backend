@@ -59,7 +59,7 @@
 
     function resolveCommanderPathId(pathCode) {
         const path = String(pathCode || '').trim().toUpperCase();
-        if (path === 'MAG' || path === 'MAGIC') return 'archmage';
+        if (path === 'MAG' || path === 'MAGIC' || path === 'ARCHMAGE') return 'archmage';
         return 'battlemaster';
     }
 
@@ -482,6 +482,19 @@
 
     function refreshAgeHudCommanderRank() {
         ensureCommanderRankTitleApi();
+        const player = getPlayer();
+        if (player) {
+            const partial = {};
+            if (player.path != null && String(player.path).trim()) {
+                partial.path = player.path;
+            }
+            if (player.rankTitleGender != null) {
+                partial.rankTitleGender = player.rankTitleGender;
+            }
+            if (Object.keys(partial).length) {
+                syncCommanderRankMeta(partial);
+            }
+        }
         ensureHudCommanderRankToggleBound();
         ensureAgeCommanderRankInitialized();
         setAgeHudCommanderRankDisplay(resolveAgeCommanderRank());
@@ -521,15 +534,31 @@
 
     function applyCommanderRankPayload(payload, options = {}) {
         if (!payload || typeof payload !== 'object') return;
+
+        const hasRankMeta = payload.rank !== undefined
+            || payload.path !== undefined
+            || payload.rankTitleGender !== undefined;
+        if (!hasRankMeta) return;
+
         syncCommanderRankMeta(payload);
-        if (payload.rank === undefined) return;
-        const rank = clampCommanderRank(payload.rank);
-        setAgeCommanderRank(rank, {
-            source: options.source || 'payload-sync',
-            silent: true,
-            path: payload.path,
-            rankTitleGender: payload.rankTitleGender
-        });
+
+        if (payload.rank !== undefined) {
+            const rank = clampCommanderRank(payload.rank);
+            setAgeCommanderRank(rank, {
+                source: options.source || 'payload-sync',
+                silent: true,
+                path: payload.path,
+                rankTitleGender: payload.rankTitleGender
+            });
+            return;
+        }
+
+        refreshAgeHudCommanderRank();
+        if (typeof global.refreshCommanderRankTitleDisplays === 'function') {
+            global.refreshCommanderRankTitleDisplays();
+        } else if (typeof global.refreshLoggedUserTagDisplay === 'function') {
+            global.refreshLoggedUserTagDisplay();
+        }
     }
 
     function bootAgeCommanderRank() {

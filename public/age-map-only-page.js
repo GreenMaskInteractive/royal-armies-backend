@@ -784,6 +784,10 @@
             }
         }
 
+        if (typeof global.refreshAgeHudCommanderRank === 'function') {
+            global.refreshAgeHudCommanderRank();
+        }
+
         refreshAgeNationWelcomeChrome();
     }
 

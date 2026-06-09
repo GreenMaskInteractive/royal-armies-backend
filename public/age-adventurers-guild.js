@@ -109,11 +109,12 @@
         if (Array.isArray(payload.bounties)) bountyList = payload.bounties;
         if (payload.bountyRewards) bountyRewards = payload.bountyRewards;
 
-        if (
-            global.RoyalArmiesAgeCommanderRank?.applyCommanderRankPayload
-            && (payload.rank !== undefined || payload.path !== undefined || payload.rankTitleGender !== undefined)
-        ) {
-            global.RoyalArmiesAgeCommanderRank.applyCommanderRankPayload(payload, { source: 'guild-state' });
+        if (global.RoyalArmiesAgeCommanderRank?.applyCommanderRankPayload) {
+            global.RoyalArmiesAgeCommanderRank.applyCommanderRankPayload({
+                rank: guildState.rank,
+                path: guildState.path,
+                rankTitleGender: guildState.rankTitleGender
+            }, { source: 'guild-state' });
         }
 
         return guildState;
@@ -464,6 +465,36 @@
         );
     }
 
+    function renderCompositionSummaryRow(result) {
+        const catalog = global.RoyalArmiesClassPerkCatalog;
+        const summary = catalog?.formatCompositionSummary?.(result?.commanderComposition);
+        if (!summary) return '';
+        return (
+            '<p class="age-guild-log-summary-row age-guild-log-summary-composition">'
+            + '<span class="age-guild-log-summary-label">Army composition</span> '
+            + `<span class="age-guild-log-summary-value">${escapeHtml(summary)}</span>`
+            + '</p>'
+        );
+    }
+
+    function renderPerk1SummaryRow(result) {
+        const catalog = global.RoyalArmiesClassPerkCatalog;
+        const classId = String(result?.classId || guildState?.commanderGear?.classId || '').trim();
+        const branch = String(
+            result?.perk1Branch
+            || guildState?.commanderGear?.perk1Branch
+            || ''
+        ).trim().toUpperCase();
+        const label = catalog?.formatPerk1BranchLabel?.(classId, branch);
+        if (!label) return '';
+        return (
+            '<p class="age-guild-log-summary-row age-guild-log-summary-perk">'
+            + '<span class="age-guild-log-summary-label">Perk 1</span> '
+            + `<span class="age-guild-log-summary-value">${escapeHtml(label)}</span>`
+            + '</p>'
+        );
+    }
+
     function renderBattleLogExtendedBlock(result) {
         const xpBreakdown = result.xpBreakdown && typeof result.xpBreakdown === 'object' ? result.xpBreakdown : null;
         const survivorMeta = xpBreakdown && Number.isFinite(xpBreakdown.totalSurviving)
@@ -510,6 +541,8 @@
 
         return (
             '<div class="age-guild-log-summary">'
+            + renderCompositionSummaryRow(result)
+            + renderPerk1SummaryRow(result)
             + renderCommanderXpSummaryRow(result)
             + renderInjuriesSummaryRow(result.injuriesApplied)
             + (rankLine || unitPromoteBlock || workspaceLinksBlock
@@ -693,10 +726,17 @@
 
         if (nameEl) nameEl.textContent = gear.commanderName || 'Commander';
         if (classEl) {
-            classEl.textContent = `${gear.classLabel || 'Commander'} · ${formatCommanderRankLabel(gear.rank, {
+            const perkLabel = global.RoyalArmiesClassPerkCatalog?.formatPerk1BranchLabel?.(
+                gear.classId,
+                gear.perk1Branch
+            );
+            const rankLabel = formatCommanderRankLabel(gear.rank, {
                 path: gear.path,
                 rankTitleGender: gear.rankTitleGender
-            })}`;
+            });
+            classEl.textContent = perkLabel
+                ? `${gear.classLabel || 'Commander'} · ${rankLabel} · ${perkLabel}`
+                : `${gear.classLabel || 'Commander'} · ${rankLabel}`;
         }
 
         const slots = Array.isArray(gear.slots) ? gear.slots : [];

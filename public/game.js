@@ -30,6 +30,122 @@
         return path;
     }
 
+    function isLocalDevGameOnboardingActive() {
+        return typeof global.shouldAllowLocalGameProgressionPreview === 'function'
+            && global.shouldAllowLocalGameProgressionPreview();
+    }
+
+    function buildGameApiFetchInit(init) {
+        if (typeof global.buildLivePreviewApiFetchInit === 'function') {
+            return global.buildLivePreviewApiFetchInit(init);
+        }
+        return init;
+    }
+
+    function getDevOnboardingClassStorageKey(username) {
+        return `royalArmies_${String(username || '').trim().toLowerCase()}_devOnboardingClass`;
+    }
+
+    function applyClassSavePayload(pathCode, perk1Branch, payload) {
+        const resolvedPath = payload?.path || pathCode;
+        const resolvedPerk = payload?.ageClassPerkChoices?.perk1 || perk1Branch;
+
+        if (typeof global.player !== 'undefined' && global.player) {
+            global.player.path = resolvedPath;
+        }
+
+        if (typeof global.applySavedGameClassChoices === 'function') {
+            global.applySavedGameClassChoices({
+                path: resolvedPath,
+                ageClassPerkChoices: payload?.ageClassPerkChoices || { perk1: resolvedPerk }
+            });
+        }
+
+        if (global.RoyalArmiesAgeCommanderRank?.syncCommanderRankMeta) {
+            global.RoyalArmiesAgeCommanderRank.syncCommanderRankMeta({ path: resolvedPath });
+        }
+        if (typeof global.refreshCommanderRankTitleDisplays === 'function') {
+            global.refreshCommanderRankTitleDisplays();
+        } else if (typeof global.refreshAgeHudCommanderRank === 'function') {
+            global.refreshAgeHudCommanderRank();
+        } else if (typeof global.refreshLoggedUserTagDisplay === 'function') {
+            global.refreshLoggedUserTagDisplay();
+        }
+    }
+
+    function persistClassChoiceLocallyForLivePreview(username, pathCode, classId, perk1Branch) {
+        applyClassSavePayload(pathCode, perk1Branch, {
+            path: pathCode,
+            ageClassPerkChoices: { perk1: perk1Branch }
+        });
+
+        try {
+            global.localStorage.setItem(getDevOnboardingClassStorageKey(username), JSON.stringify({
+                path: pathCode,
+                classId,
+                perk1: perk1Branch,
+                savedAt: new Date().toISOString()
+            }));
+        } catch (_err) {
+            /* ignore */
+        }
+
+        return true;
+    }
+
+    async function postOnboardingClassChoice(username, pathCode, classId, perk1Branch) {
+        const classSaveInit = buildGameApiFetchInit({
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify({
+                username,
+                path: pathCode,
+                classId,
+                perk1: perk1Branch
+            })
+        });
+
+        const response = await global.fetch(resolveApiUrl('/api/portal/game/onboarding-class'), classSaveInit);
+        const payload = await response.json().catch(() => ({}));
+        return { response, payload };
+    }
+
+    async function tryAcceptTermsForLivePreview(username) {
+        const termsInit = buildGameApiFetchInit({
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify({
+                username,
+                termsAccepted: true,
+                agreeToTerms: true,
+                termsVersion: global.RoyalArmiesLegalTermsVersion || '2026-06-01'
+            })
+        });
+
+        try {
+            const response = await global.fetch(resolveApiUrl('/api/portal/account/accept-terms'), termsInit);
+            return response.ok;
+        } catch (_err) {
+            return false;
+        }
+    }
+
+    async function recoverDevClassSave(username, pathCode, classId, perk1Branch) {
+        if (!isLocalDevGameOnboardingActive()) return false;
+
+        await tryAcceptTermsForLivePreview(username);
+
+        const retry = await postOnboardingClassChoice(username, pathCode, classId, perk1Branch);
+        if (retry.response.ok && retry.payload.status !== 'error') {
+            applyClassSavePayload(pathCode, perk1Branch, retry.payload);
+            return true;
+        }
+
+        return persistClassChoiceLocallyForLivePreview(username, pathCode, classId, perk1Branch);
+    }
+
     function resolveGamePageUsername() {
         const saved = global.localStorage.getItem('activeCommanderUser');
         if (saved && saved.trim()) return saved.trim();
@@ -804,8 +920,15 @@
         }
 
         const nextIndex = currentIndex + 1;
+        const nextView = GAME_ONBOARDING_STEPS[nextIndex];
         furthestUnlockedStepIndex = Math.max(furthestUnlockedStepIndex, nextIndex);
-        setActiveGameView(GAME_ONBOARDING_STEPS[nextIndex], null, { animate: true });
+
+        if (prefersReducedGameMotion()) {
+            setActiveGameViewInstant(nextView);
+        } else {
+            setActiveGameViewAnimated(nextView);
+        }
+
         return true;
     }
 
@@ -853,8 +976,11 @@
             progressTrack.addEventListener('keydown', onOnboardingProgressStepKeydown);
         }
 
-        global.addEventListener('royalarmies:class-confirmed', () => {
+        global.addEventListener('royalarmies:class-confirmed', async (event) => {
             if (activeGameView !== 'class') return;
+            const detail = event?.detail || {};
+            const saved = await persistGameClassChoice(detail);
+            if (!saved) return;
             advanceGameOnboarding();
         });
 
@@ -909,6 +1035,89 @@
         }
     }
 
+    async function hydrateGameClassOnboardingState() {
+        const username = resolveGamePageUsername();
+        if (!username) return;
+
+        try {
+            const response = await global.fetch(
+                resolveApiUrl(`/api/portal/game/onboarding-class?username=${encodeURIComponent(username)}`),
+                buildGameApiFetchInit({ credentials: 'include' })
+            );
+            const payload = await response.json().catch(() => ({}));
+            if (response.ok && payload.status !== 'error' && payload.path) {
+                applyClassSavePayload(payload.path, payload.perk1Branch || payload.ageClassPerkChoices?.perk1, payload);
+                return;
+            }
+        } catch (_err) {
+            /* fall through to local preview cache */
+        }
+
+        if (!isLocalDevGameOnboardingActive()) return;
+
+        try {
+            const raw = global.localStorage.getItem(getDevOnboardingClassStorageKey(username));
+            const cached = raw ? JSON.parse(raw) : null;
+            if (!cached?.path || !cached?.perk1) return;
+            applyClassSavePayload(cached.path, cached.perk1, {
+                path: cached.path,
+                ageClassPerkChoices: { perk1: cached.perk1 }
+            });
+        } catch (_err) {
+            /* ignore — picker still renders catalog defaults */
+        }
+    }
+
+    async function persistGameClassChoice(detail) {
+        const username = resolveGamePageUsername();
+        const classId = String(detail?.classId || global.getSelectedGameClassId?.() || '').trim();
+        const pathCode = String(detail?.pathCode || global.getSelectedGameClassPath?.() || '').trim();
+        const perk1Branch = String(detail?.perk1Branch || global.getSelectedGameClassPerk1Branch?.() || '').trim();
+
+        if (!username || !pathCode || !perk1Branch) {
+            if (typeof global.showPortalAlert === 'function') {
+                await global.showPortalAlert('Choose your class and Perk 1 branch before continuing.', 'Choose a Class');
+            }
+            return false;
+        }
+
+        try {
+            const { response, payload } = await postOnboardingClassChoice(username, pathCode, classId, perk1Branch);
+            if (!response.ok || payload.status === 'error') {
+                const isTermsBlock = payload?.code === 'NEXUS-GAME-011' || payload?.requiresTermsAcceptance;
+
+                if (isLocalDevGameOnboardingActive()) {
+                    if (await recoverDevClassSave(username, pathCode, classId, perk1Branch)) {
+                        return true;
+                    }
+                    if (isTermsBlock) {
+                        return persistClassChoiceLocallyForLivePreview(username, pathCode, classId, perk1Branch);
+                    }
+                }
+
+                const message = payload?.message
+                    || global.RoyalArmiesErrorDisplay?.resolveMessage?.(payload?.code)
+                    || 'Could not save your class choice.';
+                if (typeof global.showPortalAlert === 'function') {
+                    await global.showPortalAlert(message, 'Choose a Class');
+                }
+                return false;
+            }
+
+            applyClassSavePayload(pathCode, perk1Branch, payload);
+            return true;
+        } catch (_err) {
+            if (isLocalDevGameOnboardingActive()) {
+                return persistClassChoiceLocallyForLivePreview(username, pathCode, classId, perk1Branch);
+            }
+
+            if (typeof global.showPortalAlert === 'function') {
+                await global.showPortalAlert('Could not reach the server to save your class choice.', 'Choose a Class');
+            }
+            return false;
+        }
+    }
+
     async function bootstrapGamePageSession() {
         if (typeof global.ensurePortalAuthRestored === 'function') {
             await global.ensurePortalAuthRestored();
@@ -937,6 +1146,8 @@
         if (typeof global.fetchCommanderDossierFromServer === 'function') {
             await global.fetchCommanderDossierFromServer();
         }
+
+        await hydrateGameClassOnboardingState();
 
         refreshGamePageNavChrome();
     }
