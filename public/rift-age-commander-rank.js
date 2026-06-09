@@ -7,6 +7,12 @@
     const AGE_COMMANDER_RANK_DEFAULT = 1;
     const AGE_COMMANDER_RANK_MAX = 22;
     const AGE_COMMANDER_RANK_UPDATED_EVENT = 'royalarmies:age-commander-rank-updated';
+    const RANK_LADDER_MODAL_ID = 'age-commander-rank-ladder-modal';
+    const RANK_LADDER_LIST_ID = 'age-commander-rank-ladder-list';
+    const RANK_LADDER_PATH_ID = 'age-commander-rank-ladder-path';
+    const RANK_LADDER_BODY_OPEN_CLASS = 'is-age-commander-rank-ladder-open';
+
+    let rankLadderModalOpen = false;
 
     const BATTLEMASTER_RANK_TITLES_MALE = [
         'Vintenary Commander', 'Decurion Commander', 'Warden Commander', 'Serjeant Commander',
@@ -200,8 +206,143 @@
         return formatLocalCommanderRankLabel(normalizedRank, path, rankTitleGender);
     }
 
-    function formatAgeHudCommanderRankDisplay(value) {
-        return resolveCommanderRankDisplayLabel(value);
+    function isCommanderRankLadderOpen() {
+        return rankLadderModalOpen;
+    }
+
+    /** @deprecated Use isCommanderRankLadderOpen — kept for callers expecting the old toggle API. */
+    function isHudCommanderRankExpanded() {
+        return isCommanderRankLadderOpen();
+    }
+
+    function formatAgeHudCommanderRankDisplay(value, options = {}) {
+        return resolveCommanderRankDisplayLabel(value, options);
+    }
+
+    function resolveCommanderPathLabel(pathCode) {
+        return resolveCommanderPathId(pathCode) === 'archmage' ? 'Archmage Path' : 'Battlemaster Path';
+    }
+
+    function ensureCommanderRankLadderModal() {
+        let modal = global.document.getElementById(RANK_LADDER_MODAL_ID);
+        if (modal) return modal;
+
+        modal = global.document.createElement('div');
+        modal.id = RANK_LADDER_MODAL_ID;
+        modal.className = 'age-commander-rank-ladder-modal';
+        modal.hidden = true;
+        modal.setAttribute('aria-hidden', 'true');
+        modal.innerHTML = `
+            <button type="button" class="age-commander-rank-ladder-backdrop" aria-label="Close rank chart"></button>
+            <div class="age-commander-rank-ladder-dialog" role="dialog" aria-modal="true" aria-labelledby="age-commander-rank-ladder-title">
+                <header class="age-commander-rank-ladder-header">
+                    <div class="age-commander-rank-ladder-heading-block">
+                        <p class="age-commander-rank-ladder-eyebrow">Commander Progression</p>
+                        <h2 id="age-commander-rank-ladder-title" class="age-commander-rank-ladder-title">Rank Chart</h2>
+                        <p id="${RANK_LADDER_PATH_ID}" class="age-commander-rank-ladder-path"></p>
+                    </div>
+                    <button type="button" class="age-commander-rank-ladder-close" aria-label="Close rank chart">&times;</button>
+                </header>
+                <div class="age-commander-rank-ladder-scroll" tabindex="0" aria-label="All commander ranks">
+                    <ol id="${RANK_LADDER_LIST_ID}" class="age-commander-rank-ladder-list"></ol>
+                </div>
+            </div>
+        `;
+
+        const host = global.document.getElementById('age-page-canvas') || global.document.body;
+        host.appendChild(modal);
+
+        modal.querySelector('.age-commander-rank-ladder-backdrop')
+            ?.addEventListener('click', () => closeCommanderRankLadderModal());
+        modal.querySelector('.age-commander-rank-ladder-close')
+            ?.addEventListener('click', () => closeCommanderRankLadderModal());
+
+        return modal;
+    }
+
+    function renderCommanderRankLadderList() {
+        const modal = ensureCommanderRankLadderModal();
+        const list = modal.querySelector(`#${RANK_LADDER_LIST_ID}`);
+        const pathLabel = modal.querySelector(`#${RANK_LADDER_PATH_ID}`);
+        if (!list) return;
+
+        const meta = resolveHudRankTitleMeta();
+        const currentRank = clampCommanderRank(meta.rank);
+        if (pathLabel) {
+            pathLabel.textContent = resolveCommanderPathLabel(meta.path);
+        }
+
+        const rows = [];
+        for (let rank = AGE_COMMANDER_RANK_MAX; rank >= AGE_COMMANDER_RANK_DEFAULT; rank -= 1) {
+            const title = resolveCommanderRankDisplayLabel(rank, meta);
+            const stateClass = rank === currentRank
+                ? ' is-current'
+                : (rank < currentRank ? ' is-attained' : ' is-future');
+            rows.push(
+                `<li class="age-commander-rank-ladder-row${stateClass}" data-rank="${rank}">`
+                + `<span class="age-commander-rank-ladder-level" aria-hidden="true">${rank}</span>`
+                + `<span class="age-commander-rank-ladder-copy">`
+                + `<span class="age-commander-rank-ladder-rank-label">Rank ${rank}</span>`
+                + `<span class="age-commander-rank-ladder-name">${title}</span>`
+                + `</span>`
+                + `</li>`
+            );
+        }
+        list.innerHTML = rows.join('');
+
+        global.requestAnimationFrame(() => {
+            const currentRow = list.querySelector('.age-commander-rank-ladder-row.is-current');
+            currentRow?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+        });
+    }
+
+    function syncCommanderRankLadderChrome() {
+        const item = global.document.getElementById('age-hud-commander-rank-item');
+        const control = global.document.getElementById('age-hud-commander-rank');
+        const modal = global.document.getElementById(RANK_LADDER_MODAL_ID);
+
+        if (item) {
+            item.classList.toggle('is-rank-ladder-open', rankLadderModalOpen);
+            item.classList.remove('is-rank-display-expanded');
+        }
+        if (control?.matches('button')) {
+            control.setAttribute('aria-pressed', rankLadderModalOpen ? 'true' : 'false');
+            control.setAttribute('aria-expanded', rankLadderModalOpen ? 'true' : 'false');
+        }
+        if (modal) {
+            modal.classList.toggle('is-open', rankLadderModalOpen);
+            modal.hidden = !rankLadderModalOpen;
+            modal.setAttribute('aria-hidden', rankLadderModalOpen ? 'false' : 'true');
+        }
+        global.document.body.classList.toggle(RANK_LADDER_BODY_OPEN_CLASS, rankLadderModalOpen);
+    }
+
+    function openCommanderRankLadderModal() {
+        ensureCommanderRankLadderModal();
+        renderCommanderRankLadderList();
+        rankLadderModalOpen = true;
+        syncCommanderRankLadderChrome();
+        global.document.querySelector(`#${RANK_LADDER_MODAL_ID} .age-commander-rank-ladder-close`)?.focus();
+    }
+
+    function closeCommanderRankLadderModal() {
+        if (!rankLadderModalOpen) return;
+        rankLadderModalOpen = false;
+        syncCommanderRankLadderChrome();
+        global.document.getElementById('age-hud-commander-rank')?.focus();
+    }
+
+    function toggleCommanderRankLadderModal() {
+        if (rankLadderModalOpen) {
+            closeCommanderRankLadderModal();
+            return;
+        }
+        openCommanderRankLadderModal();
+    }
+
+    /** @deprecated Use toggleCommanderRankLadderModal — kept for callers expecting the old toggle API. */
+    function toggleHudCommanderRankDisplayMode() {
+        toggleCommanderRankLadderModal();
     }
 
     function ensureAgeCommanderRankInitialized() {
@@ -226,13 +367,75 @@
 
     function setAgeHudCommanderRankDisplay(value) {
         const el = global.document.getElementById('age-hud-commander-rank');
+        const item = global.document.getElementById('age-hud-commander-rank-item');
         if (!el) return;
+
         const rank = clampCommanderRank(value);
-        const label = formatAgeHudCommanderRankDisplay(rank);
-        el.textContent = label;
+        const fullTitle = resolveCommanderRankDisplayLabel(rank);
+        const ladderHint = 'Click to view rank chart';
+
+        el.textContent = fullTitle;
         el.dataset.commanderRank = String(rank);
-        el.setAttribute('aria-label', `Commander rank ${label}`);
-        el.setAttribute('title', label);
+        el.dataset.rankDisplayMode = 'full';
+        el.setAttribute('aria-label', `Commander rank ${fullTitle || `Rank ${rank}`}`);
+        el.setAttribute('title', fullTitle ? `${fullTitle} — ${ladderHint}` : ladderHint);
+        el.setAttribute('aria-haspopup', 'dialog');
+
+        syncHudCommanderRankToggleChrome();
+        syncCommanderRankLadderChrome();
+
+        if (rankLadderModalOpen) {
+            renderCommanderRankLadderList();
+        }
+    }
+
+    function isRankToggleInteractionTarget(target) {
+        if (!(target instanceof Element)) return false;
+        return Boolean(target.closest('#age-hud-commander-rank-item, #age-hud-commander-rank'));
+    }
+
+    function syncHudCommanderRankToggleChrome() {
+        const item = global.document.getElementById('age-hud-commander-rank-item');
+        const control = global.document.getElementById('age-hud-commander-rank');
+        if (!item || !control) return;
+
+        item.classList.add('age-map-resource-item--rank-toggle');
+        control.classList.add('age-map-resource-value--rank-toggle');
+
+        if (control.matches('button') && !control.getAttribute('type')) {
+            control.setAttribute('type', 'button');
+        }
+    }
+
+    function ensureHudCommanderRankToggleBound() {
+        ensureCommanderRankLadderModal();
+        syncHudCommanderRankToggleChrome();
+
+        const root = global.document.documentElement;
+        if (root.dataset.ageHudRankToggleBound === '1') return;
+        root.dataset.ageHudRankToggleBound = '1';
+
+        const activate = (event) => {
+            if (!isRankToggleInteractionTarget(event.target)) return;
+            event.preventDefault();
+            event.stopPropagation();
+            toggleCommanderRankLadderModal();
+        };
+
+        global.document.addEventListener('click', activate, true);
+        global.document.addEventListener('keydown', (event) => {
+            if (rankLadderModalOpen && event.key === 'Escape') {
+                event.preventDefault();
+                event.stopPropagation();
+                closeCommanderRankLadderModal();
+                return;
+            }
+            if (event.key !== 'Enter' && event.key !== ' ') return;
+            if (!isRankToggleInteractionTarget(event.target)) return;
+            event.preventDefault();
+            event.stopPropagation();
+            toggleCommanderRankLadderModal();
+        }, true);
     }
 
     function dispatchAgeCommanderRankUpdated(detail) {
@@ -241,6 +444,7 @@
 
     function refreshAgeHudCommanderRank() {
         ensureCommanderRankTitleApi();
+        ensureHudCommanderRankToggleBound();
         ensureAgeCommanderRankInitialized();
         setAgeHudCommanderRankDisplay(resolveAgeCommanderRank());
     }
@@ -292,6 +496,7 @@
 
     function bootAgeCommanderRank() {
         ensureCommanderRankTitleApi();
+        ensureHudCommanderRankToggleBound();
         refreshAgeHudCommanderRank();
     }
 
@@ -302,6 +507,12 @@
         resolveAgeCommanderRank,
         resolveCommanderRankDisplayLabel,
         formatAgeHudCommanderRankDisplay,
+        isCommanderRankLadderOpen,
+        openCommanderRankLadderModal,
+        closeCommanderRankLadderModal,
+        toggleCommanderRankLadderModal,
+        isHudCommanderRankExpanded,
+        toggleHudCommanderRankDisplayMode,
         syncCommanderRankMeta,
         applyCommanderRankPayload,
         setAgeCommanderRank,
@@ -313,6 +524,9 @@
     global.resolveCommanderRankDisplayLabel = resolveCommanderRankDisplayLabel;
     global.refreshAgeHudCommanderRank = refreshAgeHudCommanderRank;
     global.setAgeCommanderRank = setAgeCommanderRank;
+    global.openCommanderRankLadderModal = openCommanderRankLadderModal;
+    global.closeCommanderRankLadderModal = closeCommanderRankLadderModal;
+    global.toggleCommanderRankLadderModal = toggleCommanderRankLadderModal;
 
     if (global.document.readyState === 'loading') {
         global.document.addEventListener('DOMContentLoaded', bootAgeCommanderRank);

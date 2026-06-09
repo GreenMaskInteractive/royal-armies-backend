@@ -167,8 +167,10 @@
             || target.closest('.rift-discoveries-workspace-modal:not([hidden])')
             || target.closest('.rift-banner-workspace-modal:not([hidden])')
             || target.closest('.blessed-banners-modal:not([hidden])')
-            ||             target.closest('.age-chronicles-battle-pass-modal.is-open')
+            || target.closest('.age-chronicles-battle-pass-modal.is-open')
             || target.closest('.age-chronicles-battle-pass-modal:not([hidden])')
+            || target.closest('.age-commander-rank-ladder-modal.is-open')
+            || target.closest('.age-commander-rank-ladder-modal:not([hidden])')
         );
     }
 

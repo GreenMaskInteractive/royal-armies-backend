@@ -13996,12 +13996,12 @@ body.developer-maintenance-alert-active #page-landing {
 }
 
 #age-page-canvas .age-map-resource-item--commander-rank .age-map-resource-value {
-    min-width: 6.5em;
-    max-width: 11em;
+    min-width: 7.5em;
+    max-width: 16em;
     text-align: right;
     font-variant-numeric: normal;
-    font-size: 0.82em;
-    line-height: 1.15;
+    font-size: 0.76em;
+    line-height: 1.2;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -14042,8 +14042,219 @@ body.developer-maintenance-alert-active #page-landing {
     outline-offset: 2px;
 }
 
-#age-page-canvas .age-map-resource-item--commander-rank.is-rank-display-expanded .age-map-resource-value {
-    max-width: 14em;
+#age-page-canvas .age-map-resource-item--commander-rank.is-rank-ladder-open .age-map-resource-value {
+    color: #ffe7a8;
+    text-shadow: 0 0 10px rgba(255, 214, 0, 0.28);
+}
+
+/* Age — Commander rank ladder modal */
+body.is-age-commander-rank-ladder-open {
+    overflow: hidden;
+}
+
+.age-commander-rank-ladder-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 13080;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    box-sizing: border-box;
+}
+
+.age-commander-rank-ladder-modal[hidden]:not(.is-open) {
+    display: none !important;
+}
+
+.age-commander-rank-ladder-modal.is-open {
+    display: flex !important;
+    pointer-events: auto !important;
+}
+
+.age-commander-rank-ladder-backdrop {
+    position: absolute;
+    inset: 0;
+    border: 0;
+    padding: 0;
+    background: rgba(4, 3, 2, 0.76);
+    backdrop-filter: blur(2px);
+    cursor: pointer;
+}
+
+.age-commander-rank-ladder-dialog {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    width: min(420px, calc(100vw - 32px));
+    max-height: min(78vh, 720px);
+    border: 1px solid rgba(184, 144, 48, 0.48);
+    border-radius: 8px;
+    background:
+        radial-gradient(circle at 12% 0%, rgba(255, 200, 96, 0.1) 0%, transparent 42%),
+        linear-gradient(180deg, rgba(28, 20, 12, 0.98) 0%, rgba(8, 6, 4, 0.98) 100%);
+    box-shadow:
+        0 18px 42px rgba(0, 0, 0, 0.62),
+        inset 0 1px 0 rgba(255, 230, 160, 0.12);
+}
+
+.age-commander-rank-ladder-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 16px 18px 12px;
+    border-bottom: 1px solid rgba(184, 144, 48, 0.24);
+}
+
+.age-commander-rank-ladder-eyebrow {
+    margin: 0 0 4px;
+    font-family: 'Cinzel', serif;
+    font-size: 0.62rem;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: rgba(255, 210, 120, 0.78);
+}
+
+.age-commander-rank-ladder-title {
+    margin: 0;
+    font-family: 'Cinzel', serif;
+    font-size: 1.15rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    color: rgba(255, 236, 196, 0.96);
+}
+
+.age-commander-rank-ladder-path {
+    margin: 6px 0 0;
+    font-family: 'Cinzel', serif;
+    font-size: 0.72rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: rgba(241, 224, 172, 0.72);
+}
+
+.age-commander-rank-ladder-close {
+    appearance: none;
+    -webkit-appearance: none;
+    flex: 0 0 auto;
+    width: 32px;
+    height: 32px;
+    border: 1px solid rgba(184, 144, 48, 0.34);
+    border-radius: 4px;
+    background: rgba(0, 0, 0, 0.28);
+    color: rgba(255, 236, 196, 0.92);
+    font-size: 1.35rem;
+    line-height: 1;
+    cursor: pointer;
+}
+
+.age-commander-rank-ladder-close:hover,
+.age-commander-rank-ladder-close:focus-visible {
+    border-color: rgba(255, 217, 120, 0.58);
+    color: #ffe7a8;
+    outline: none;
+}
+
+.age-commander-rank-ladder-scroll {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: auto;
+    padding: 10px 12px 14px;
+}
+
+.age-commander-rank-ladder-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.age-commander-rank-ladder-row {
+    display: grid;
+    grid-template-columns: 34px minmax(0, 1fr);
+    align-items: center;
+    gap: 10px;
+    padding: 8px 10px;
+    border: 1px solid rgba(184, 144, 48, 0.16);
+    border-radius: 5px;
+    background: rgba(0, 0, 0, 0.22);
+    transition: border-color 0.18s ease, box-shadow 0.18s ease, background-color 0.18s ease;
+}
+
+.age-commander-rank-ladder-level {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    border: 1px solid rgba(184, 144, 48, 0.28);
+    font-family: 'Cinzel', serif;
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: rgba(241, 224, 172, 0.82);
+    background: rgba(12, 9, 6, 0.72);
+}
+
+.age-commander-rank-ladder-copy {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.age-commander-rank-ladder-rank-label {
+    font-family: 'Cinzel', serif;
+    font-size: 0.58rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: rgba(241, 224, 172, 0.56);
+}
+
+.age-commander-rank-ladder-name {
+    font-family: 'EB Garamond', 'Palatino Linotype', Georgia, serif;
+    font-size: 0.92rem;
+    font-weight: 700;
+    line-height: 1.2;
+    color: rgba(255, 236, 196, 0.9);
+}
+
+.age-commander-rank-ladder-row.is-attained {
+    border-color: rgba(184, 144, 48, 0.24);
+}
+
+.age-commander-rank-ladder-row.is-future {
+    opacity: 0.52;
+}
+
+.age-commander-rank-ladder-row.is-future .age-commander-rank-ladder-name {
+    color: rgba(241, 224, 172, 0.68);
+}
+
+.age-commander-rank-ladder-row.is-current {
+    border-color: rgba(255, 214, 0, 0.62);
+    background: rgba(72, 54, 12, 0.42);
+    box-shadow:
+        0 0 0 1px rgba(255, 214, 0, 0.18),
+        0 0 18px rgba(255, 214, 0, 0.22),
+        inset 0 0 14px rgba(255, 214, 0, 0.08);
+}
+
+.age-commander-rank-ladder-row.is-current .age-commander-rank-ladder-level {
+    border-color: rgba(255, 214, 0, 0.72);
+    color: #ffe7a8;
+    box-shadow: 0 0 12px rgba(255, 214, 0, 0.34);
+}
+
+.age-commander-rank-ladder-row.is-current .age-commander-rank-ladder-name {
+    color: #ffe7a8;
+    text-shadow: 0 0 12px rgba(255, 214, 0, 0.28);
 }
 
 .age-map-resource-tip {
