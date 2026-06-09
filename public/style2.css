@@ -1,4 +1,4 @@
-﻿@import url('https://fonts.googleapis.com/css2?family=EB+Garamond:wght@600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=EB+Garamond:wght@600;700&display=swap');
 
 /* ==========================================================================
    SECTION 1: STRUCTURAL BASE LAYOUTS & SCROLLBAR HIDDEN FILTERS
@@ -1995,22 +1995,32 @@ body:not(.portal-guest-mode) #portal-deployment-guest-cta {
     box-sizing: border-box !important;
     transform: translateY(-5%) !important;
     transform-origin: center center !important;
-    background: transparent !important;
     border: none !important;
     box-shadow: none !important;
-    filter: none !important;
+    --portal-game-time-gold-fill: linear-gradient(
+        180deg,
+        #ffe566 0%,
+        #ffd600 42%,
+        #ffc400 74%,
+        #f9a825 100%
+    );
     font-family: 'EB Garamond', 'Palatino Linotype', 'Book Antiqua', Georgia, serif !important;
     font-size: clamp(1.5rem, 6.4vw, 2.65rem) !important;
     font-weight: 700 !important;
     letter-spacing: 0.04em !important;
     line-height: 1 !important;
     text-align: center !important;
-    color: #c4b08a !important;
+    color: #ffd600 !important;
+    background: var(--portal-game-time-gold-fill) !important;
+    -webkit-background-clip: text !important;
+    background-clip: text !important;
+    -webkit-text-fill-color: transparent !important;
     -webkit-text-stroke: 0 !important;
     paint-order: normal !important;
-    text-shadow:
-        1px 2px 3px rgba(0, 0, 0, 0.9),
-        0 0 10px rgba(196, 176, 138, 0.35) !important;
+    filter:
+        drop-shadow(0 2px 4px rgba(0, 0, 0, 0.9))
+        drop-shadow(0 1px 0 rgba(255, 230, 120, 0.42))
+        drop-shadow(0 0 14px rgba(255, 214, 0, 0.45)) !important;
 }
 
 .portal-game-time-char {
@@ -2022,27 +2032,38 @@ body:not(.portal-guest-mode) #portal-deployment-guest-cta {
     transform-origin: center center !important;
     font-variant-numeric: tabular-nums !important;
     font-feature-settings: 'tnum' 1 !important;
-    transition: color 0.3s ease !important;
+    color: #ffd600 !important;
+    background: var(--portal-game-time-gold-fill, linear-gradient(
+        180deg,
+        #ffe566 0%,
+        #ffd600 42%,
+        #ffc400 74%,
+        #f9a825 100%
+    )) !important;
+    -webkit-background-clip: text !important;
+    background-clip: text !important;
+    -webkit-text-fill-color: transparent !important;
+    opacity: 1 !important;
 }
 
 /* Left / right wings â€” thinner band of the modal frame */
 .portal-game-time-char--wing-outer {
     font-size: 0.58em !important;
     transform: translateY(0.06em) !important;
-    opacity: 0.9 !important;
+    opacity: 1 !important;
 }
 
 .portal-game-time-char--wing-inner {
     font-size: 0.74em !important;
     transform: translateY(0.03em) !important;
-    opacity: 0.94 !important;
+    opacity: 1 !important;
 }
 
 /* Colons sit in the thinner side channels */
 .portal-game-time-char--sep {
     font-size: 0.5em !important;
     transform: translateY(0.05em) !important;
-    opacity: 0.82 !important;
+    opacity: 1 !important;
     padding: 0 0.04em !important;
 }
 
@@ -12146,6 +12167,94 @@ body.developer-maintenance-alert-active #page-landing {
     user-select: none !important;
 }
 
+.game-class-perk-branch {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 10px !important;
+    margin: 0 0 14px !important;
+}
+
+.game-class-perk-branch-heading {
+    margin: 0 !important;
+    font-family: 'RoyalDetails', serif !important;
+    font-size: 0.82rem !important;
+    letter-spacing: 0.08em !important;
+    text-transform: uppercase !important;
+    color: rgba(255, 220, 140, 0.95) !important;
+}
+
+.game-class-perk-branch-hint {
+    margin: 0 !important;
+    font-family: 'RoyalDetails', serif !important;
+    font-size: 0.68rem !important;
+    line-height: 1.45 !important;
+    color: rgba(210, 190, 130, 0.82) !important;
+}
+
+.game-class-perk-branch-grid {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 10px !important;
+}
+
+.game-class-perk-branch-btn {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 4px !important;
+    margin: 0 !important;
+    padding: 10px 11px !important;
+    border: 1px solid rgba(184, 144, 48, 0.34) !important;
+    border-radius: 4px !important;
+    background: linear-gradient(180deg, rgba(24, 20, 14, 0.92) 0%, rgba(10, 8, 6, 0.96) 100%) !important;
+    color: rgba(241, 224, 172, 0.92) !important;
+    text-align: left !important;
+    cursor: pointer !important;
+    transition: border-color 160ms ease, box-shadow 160ms ease, transform 160ms ease !important;
+}
+
+.game-class-perk-branch-btn:hover {
+    border-color: rgba(255, 215, 0, 0.55) !important;
+    box-shadow: 0 0 12px rgba(255, 200, 64, 0.16) !important;
+}
+
+.game-class-perk-branch-btn.is-selected {
+    border-color: rgba(255, 215, 0, 0.88) !important;
+    box-shadow: 0 0 16px rgba(255, 200, 64, 0.28) !important;
+    transform: translateY(-1px) !important;
+}
+
+.game-class-perk-branch-tag {
+    font-family: 'RoyalDetails', serif !important;
+    font-size: 0.62rem !important;
+    letter-spacing: 0.1em !important;
+    text-transform: uppercase !important;
+    color: rgba(255, 220, 140, 0.88) !important;
+}
+
+.game-class-perk-branch-title {
+    font-family: 'RoyalDetails', serif !important;
+    font-size: 0.78rem !important;
+    font-weight: 700 !important;
+    color: rgba(255, 236, 190, 0.98) !important;
+}
+
+.game-class-perk-branch-sub {
+    font-family: 'RoyalDetails', serif !important;
+    font-size: 0.64rem !important;
+    letter-spacing: 0.06em !important;
+    text-transform: uppercase !important;
+    color: rgba(210, 190, 130, 0.86) !important;
+}
+
+.game-class-perk-branch-copy {
+    font-family: 'RoyalDetails', serif !important;
+    font-size: 0.66rem !important;
+    line-height: 1.45 !important;
+    color: rgba(230, 210, 160, 0.9) !important;
+}
+
+.game-class-panel-notice,
 .game-class-panel-alpha-notice {
     margin: 10px 0 0 !important;
     padding-top: 12px !important;
@@ -13054,6 +13163,7 @@ body.developer-maintenance-alert-active #page-landing {
     --age-chat-compose-width: 420px;
     --age-chat-messages-width: 630px;
     --age-map-hud-bottom-bar-height: 58px;
+    --age-quick-tips-copy-width: min(26rem, calc(100vw - min(520px, 42vw) - 12rem));
     --age-chat-compose-control-height: 36px;
     --age-chat-messages-gap: 10px;
     --age-chat-messages-height: 198px;
@@ -13252,7 +13362,7 @@ body.developer-maintenance-alert-active #page-landing {
     align-self: center;
     width: 1px;
     height: calc(var(--age-map-hud-top-bar-height, 78px) - 26px);
-    margin: 0 var(--age-top-bar-age-divider-gap, 20px) 0 37px;
+    margin: 0 var(--age-top-bar-age-divider-gap, 20px) 0 14px;
     background: linear-gradient(
         180deg,
         rgba(184, 144, 48, 0) 0%,
@@ -13755,6 +13865,109 @@ body.developer-maintenance-alert-active #page-landing {
     background: var(--age-hud-rail-chip-bg, rgba(0, 0, 0, 0.35));
 }
 
+#age-page-canvas .age-map-resource-item--hub {
+    gap: 0;
+    min-width: auto;
+    padding: 0;
+    border: none;
+    background: none;
+}
+
+#age-page-canvas .age-map-resource-item--hub .age-nation-hub {
+    margin-left: 0;
+}
+
+#age-page-canvas .age-map-resource-item--hub .age-nation-hub-anchor {
+    width: auto;
+    min-width: 0;
+}
+
+#age-page-canvas .age-nation-hub-toggle--resource-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    box-sizing: border-box;
+    width: auto;
+    min-width: 118px;
+    min-height: 0;
+    padding: 7px 14px 7px 16px;
+    border-radius: 4px;
+    border: 1px solid rgba(255, 215, 0, 0.52);
+    background:
+        linear-gradient(180deg, rgba(255, 215, 128, 0.16) 0%, transparent 50%),
+        linear-gradient(165deg, rgba(44, 34, 18, 0.96) 0%, rgba(10, 8, 5, 0.98) 100%);
+    color: inherit;
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+    box-shadow:
+        inset 0 1px 0 rgba(255, 215, 128, 0.2),
+        inset 3px 0 0 rgba(255, 215, 0, 0.58),
+        0 3px 14px rgba(0, 0, 0, 0.34),
+        0 0 16px rgba(184, 144, 48, 0.14);
+    transform: none;
+    transition:
+        border-color 0.14s ease,
+        background 0.14s ease,
+        box-shadow 0.14s ease;
+}
+
+#age-page-canvas .age-nation-hub-toggle--resource-chip .age-map-resource-label {
+    color: rgba(255, 228, 168, 0.96);
+    letter-spacing: 0.12em;
+}
+
+#age-page-canvas .age-nation-hub-toggle--resource-chip .age-nation-hub-toggle-label {
+    font-family: 'Segoe UI', Tahoma, sans-serif;
+    font-size: 0.92rem;
+    font-weight: 600;
+    letter-spacing: 0.2em;
+    text-transform: none;
+    line-height: 1;
+    color: #fff3c4;
+    text-shadow: none;
+}
+
+#age-page-canvas .age-nation-hub-toggle--resource-chip:hover,
+#age-page-canvas .age-nation-hub-toggle--resource-chip:focus-visible {
+    border-color: rgba(255, 215, 0, 0.72);
+    background:
+        linear-gradient(180deg, rgba(255, 215, 128, 0.22) 0%, transparent 52%),
+        linear-gradient(165deg, rgba(54, 42, 22, 0.98) 0%, rgba(12, 10, 6, 0.99) 100%);
+    outline: none;
+    box-shadow:
+        inset 0 1px 0 rgba(255, 215, 128, 0.26),
+        inset 3px 0 0 rgba(255, 215, 0, 0.72),
+        0 5px 18px rgba(0, 0, 0, 0.38),
+        0 0 20px rgba(255, 215, 0, 0.16);
+    transform: translateY(-1px);
+}
+
+#age-page-canvas .age-nation-hub-toggle--resource-chip:hover .age-map-resource-label,
+#age-page-canvas .age-nation-hub-toggle--resource-chip:focus-visible .age-map-resource-label,
+#age-page-canvas .age-nation-hub-toggle--resource-chip:hover .age-nation-hub-toggle-label,
+#age-page-canvas .age-nation-hub-toggle--resource-chip:focus-visible .age-nation-hub-toggle-label {
+    color: #fff0c8;
+}
+
+#age-page-canvas .age-nation-hub.is-open .age-nation-hub-toggle--resource-chip {
+    border-color: rgba(255, 215, 0, 0.78);
+    background:
+        linear-gradient(180deg, rgba(255, 215, 128, 0.24) 0%, transparent 54%),
+        linear-gradient(165deg, rgba(58, 44, 22, 0.99) 0%, rgba(14, 10, 6, 0.99) 100%);
+    box-shadow:
+        inset 0 1px 0 rgba(255, 215, 128, 0.28),
+        inset 3px 0 0 rgba(255, 215, 0, 0.82),
+        0 6px 20px rgba(0, 0, 0, 0.4),
+        0 0 24px rgba(255, 215, 0, 0.2);
+    transform: none;
+}
+
+#age-page-canvas .age-nation-hub.is-open .age-nation-hub-toggle--resource-chip .age-map-resource-label,
+#age-page-canvas .age-nation-hub.is-open .age-nation-hub-toggle--resource-chip .age-nation-hub-toggle-label {
+    color: #ffd978;
+}
+
 #age-page-canvas .age-map-resource-item--commander-rank .age-map-resource-value {
     min-width: 6.5em;
     max-width: 11em;
@@ -13766,6 +13979,44 @@ body.developer-maintenance-alert-active #page-landing {
     overflow: hidden;
     text-overflow: ellipsis;
     color: rgba(255, 232, 190, 0.96);
+}
+
+#age-page-canvas .age-map-resource-item--commander-rank.age-map-resource-item--rank-toggle {
+    cursor: pointer;
+    user-select: none;
+    transition: border-color 0.16s ease, background-color 0.16s ease, box-shadow 0.16s ease;
+}
+
+#age-page-canvas .age-map-resource-item--commander-rank.age-map-resource-item--rank-toggle:hover,
+#age-page-canvas .age-map-resource-item--commander-rank.age-map-resource-item--rank-toggle:focus-within {
+    border-color: rgba(255, 217, 120, 0.52);
+    background: rgba(24, 18, 8, 0.58);
+    box-shadow: 0 0 0 1px rgba(255, 217, 120, 0.18);
+    outline: none;
+}
+
+#age-page-canvas button.age-map-resource-value--rank-toggle {
+    appearance: none;
+    -webkit-appearance: none;
+    display: block;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    font: inherit;
+    color: inherit;
+    text-align: right;
+    cursor: pointer;
+}
+
+#age-page-canvas button.age-map-resource-value--rank-toggle:focus-visible {
+    outline: 1px solid rgba(255, 217, 120, 0.72);
+    outline-offset: 2px;
+}
+
+#age-page-canvas .age-map-resource-item--commander-rank.is-rank-display-expanded .age-map-resource-value {
+    max-width: 14em;
 }
 
 .age-map-resource-tip {
@@ -13950,50 +14201,100 @@ body.developer-maintenance-alert-active #page-landing {
     }
 }
 
-.age-map-top-bar-clock-cluster {
-    position: absolute;
-    top: calc(var(--age-map-hud-top-bar-height, 78px) / 2);
-    left: 50%;
-    z-index: 2147483641;
+.age-map-top-bar-clock-cluster--brand {
+    position: relative;
+    flex: 0 0 auto;
+    align-self: center;
     display: flex;
     align-items: center;
     justify-content: center;
-    width: min(400px, 52vw);
-    max-width: 400px;
-    transform: translate(-50%, -50%);
-    pointer-events: none;
-}
-
-.age-map-top-bar-clock-cluster .portal-universal-game-time-panel {
+    margin: 0 0 0 14px;
+    width: auto;
+    max-width: none;
+    transform: none;
     pointer-events: auto;
+    filter: none;
 }
 
-#age-page-canvas .age-map-top-bar-clock-cluster .portal-universal-game-time-panel {
-    flex: 1 1 auto;
+#age-page-canvas #portal-universal-game-time-panel.portal-universal-game-time-panel--age-hud {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    position: relative !important;
+    box-sizing: border-box !important;
+    width: auto !important;
+    min-width: 0 !important;
+    max-width: none !important;
+    aspect-ratio: auto !important;
     margin: 0 !important;
-    width: 100% !important;
-    max-width: 100% !important;
-    min-width: 0;
-    aspect-ratio: 688 / 258 !important;
-    background-image:
-        linear-gradient(
-            180deg,
-            rgba(118, 88, 44, 0.46) 0%,
-            rgba(18, 14, 9, 0.88) 52%,
-            rgba(72, 54, 28, 0.5) 100%
-        ),
-        var(--portal-game-time-frame) !important;
-    background-blend-mode: multiply, normal !important;
-    filter:
-        drop-shadow(0 10px 20px rgba(0, 0, 0, 0.88))
-        drop-shadow(0 0 20px rgba(184, 144, 48, 0.18)) !important;
+    padding: 6px 14px 7px !important;
+    border-radius: 4px !important;
+    border: 1px solid rgba(184, 144, 48, 0.38) !important;
+    background:
+        linear-gradient(180deg, rgba(255, 215, 128, 0.08) 0%, transparent 46%),
+        rgba(0, 0, 0, 0.38) !important;
+    background-image: none !important;
+    box-shadow:
+        inset 0 1px 0 rgba(255, 215, 128, 0.14),
+        0 2px 10px rgba(0, 0, 0, 0.28) !important;
+    -webkit-mask-image: none !important;
+    mask-image: none !important;
+    filter: none !important;
 }
 
-#age-page-canvas .age-map-top-bar-clock-cluster .portal-universal-game-time-display {
-    max-width: 64% !important;
-    font-size: clamp(1.65rem, 4.8vw, 2.9rem) !important;
-    transform: translateY(-4%) !important;
-    column-gap: 0.02em !important;
+#age-page-canvas #portal-universal-game-time-display.portal-universal-game-time-display--age-hud {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    grid-template-columns: none !important;
+    position: relative !important;
+    z-index: 1 !important;
+    width: auto !important;
+    max-width: none !important;
+    min-height: 0 !important;
+    margin: 0 auto !important;
+    padding: 0 0 0 0.08em !important;
+    transform: none !important;
+    border: none !important;
+    box-shadow: none !important;
+    font-family: 'EB Garamond', 'Palatino Linotype', 'Book Antiqua', Georgia, serif !important;
+    font-size: clamp(1.35rem, calc(4.8vw - 0.3rem), 2.6rem) !important;
+    font-weight: 700 !important;
+    font-variant-numeric: tabular-nums !important;
+    letter-spacing: 0.08em !important;
+    line-height: 1 !important;
+    text-align: center !important;
+    color: #ffd600 !important;
+    background: linear-gradient(
+        180deg,
+        #ffe566 0%,
+        #ffd600 42%,
+        #ffc400 74%,
+        #f9a825 100%
+    ) !important;
+    -webkit-background-clip: text !important;
+    background-clip: text !important;
+    -webkit-text-fill-color: transparent !important;
+    -webkit-text-stroke: 0 !important;
+    filter:
+        drop-shadow(0 2px 4px rgba(0, 0, 0, 0.9))
+        drop-shadow(0 1px 0 rgba(255, 230, 120, 0.42))
+        drop-shadow(0 0 14px rgba(255, 214, 0, 0.45)) !important;
+}
+
+#age-page-canvas #portal-universal-game-time-display.portal-universal-game-time-display--age-hud .portal-game-time-char {
+    color: #ffd600 !important;
+    background: linear-gradient(
+        180deg,
+        #ffe566 0%,
+        #ffd600 42%,
+        #ffc400 74%,
+        #f9a825 100%
+    ) !important;
+    -webkit-background-clip: text !important;
+    background-clip: text !important;
+    -webkit-text-fill-color: transparent !important;
+    opacity: 1 !important;
 }
 
 #age-page-canvas .age-map-hud--left {
@@ -14003,7 +14304,7 @@ body.developer-maintenance-alert-active #page-landing {
     height: var(--age-left-column-height, var(--age-council-board-height, auto));
     max-width: calc(100vw - 32px);
     max-height: none;
-    overflow: hidden;
+    overflow: visible;
     background: transparent;
     border: none;
     box-shadow: none;
@@ -14011,10 +14312,10 @@ body.developer-maintenance-alert-active #page-landing {
 
 #age-page-canvas .age-map-hud-panel-inner--left {
     padding: 0;
-    height: 100%;
+    height: auto;
     min-height: 0;
     gap: 10px;
-    overflow: hidden;
+    overflow: visible;
 }
 
 #age-page-canvas .age-map-hud-panel-inner--left .age-council-board {
@@ -14022,9 +14323,27 @@ body.developer-maintenance-alert-active #page-landing {
     min-height: 0;
 }
 
-#age-page-canvas .age-map-hud-panel-inner--left .age-quick-tips-panel {
+#age-page-canvas .age-map-hud--left,
+#age-page-canvas .age-map-hud--left *,
+#age-page-canvas .age-map-hud--right,
+#age-page-canvas .age-map-hud--right * {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+
+#age-page-canvas .age-map-hud--left *::-webkit-scrollbar,
+#age-page-canvas .age-map-hud--right *::-webkit-scrollbar {
+    width: 0;
+    height: 0;
+    display: none;
+}
+
+#age-page-canvas .age-map-hud-panel-inner--left .age-left-reports-panel {
     flex: 0 0 auto;
     width: 100%;
+    height: auto !important;
+    min-height: 0;
+    overflow: visible;
 }
 
 .age-map-hud--right {
@@ -14032,51 +14351,49 @@ body.developer-maintenance-alert-active #page-landing {
     right: max(16px, env(safe-area-inset-right));
     width: min(340px, calc(100vw - 32px));
     max-height: calc(100dvh - var(--age-map-slot-top) - var(--age-map-slot-bottom));
-    overflow: auto;
+    overflow: hidden;
 }
 
 #age-page-canvas .age-map-hud--right {
-    top: calc(var(--age-map-slot-top) + 10px);
-    bottom: auto;
+    top: var(--age-council-board-top, calc(var(--age-map-slot-top) + 10px));
+    bottom: var(--age-map-slot-bottom);
     right: calc(max(16px, env(safe-area-inset-right)) + 160px);
     width: min(540px, calc(100vw - 32px));
     height: auto;
-    max-height: calc(100dvh - var(--age-map-slot-top) - var(--age-map-slot-bottom));
+    max-height: none;
     display: flex;
     flex-direction: column;
-    overflow: visible;
+    overflow: hidden;
     background: transparent;
     border: none;
     box-shadow: none;
 }
 
-#age-page-canvas .age-map-hud--right:not(.is-city-info-players-open) {
-    top: var(--age-council-board-top, calc(var(--age-map-slot-top) + 10px));
-    max-height: none;
-}
-
 #age-page-canvas .age-map-hud-panel-inner--right {
     padding: 0;
-    height: auto;
+    height: 100%;
     min-height: 0;
     gap: 10px;
+    overflow: hidden;
+    box-sizing: border-box;
 }
 
-#age-page-canvas .age-map-hud--right:not(.is-city-info-players-open) .age-map-hud-panel-inner--right {
-    overflow: visible;
-}
-
-#age-page-canvas .age-map-hud--right.is-city-info-players-open {
-    top: calc(var(--age-map-slot-top) + 10px);
-    bottom: var(--age-map-slot-bottom);
-    height: auto;
-    max-height: none;
+#age-page-canvas .age-map-hud-right-stack {
+    flex: 0 1 auto;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    max-height: 100%;
     overflow: hidden;
 }
 
-#age-page-canvas .age-map-hud--right.is-city-info-players-open .age-left-reports-panel,
-#age-page-canvas .age-map-hud--right.is-city-info-settlement-open .age-left-reports-panel {
-    display: none !important;
+#age-page-canvas .age-map-hud-right-stack .age-city-info-panel {
+    flex: 0 0 auto;
+}
+
+#age-page-canvas .age-map-hud--right.is-city-info-players-open {
+    overflow: hidden;
 }
 
 #age-page-canvas .age-map-hud--right.is-city-info-players-open .age-map-hud-panel-inner--right {
@@ -14917,18 +15234,18 @@ label.age-council-board-editor-tool {
 #age-page-canvas .age-hud-rail-tab {
     flex: 1 1 0;
     margin: 0;
-    padding: 8px 6px;
+    padding: 9px 8px;
     border-radius: 4px;
     border: 1px solid rgba(184, 144, 48, 0.32);
     background: rgba(0, 0, 0, 0.35);
     font-family: 'Cinzel', serif;
-    font-size: 0.58rem;
+    font-size: 0.8rem;
     font-weight: 700;
-    letter-spacing: 0.05em;
+    letter-spacing: 0.04em;
     text-transform: uppercase;
     color: rgba(236, 220, 180, 0.82);
     cursor: pointer;
-    line-height: 1.2;
+    line-height: 1.25;
     transition: border-color 140ms ease, color 140ms ease, background 140ms ease;
 }
 
@@ -15052,21 +15369,115 @@ label.age-council-board-editor-tool {
     color: #f6d998;
 }
 
-#age-page-canvas .age-quick-tips-panel {
-    flex: 0 0 auto;
+#age-page-canvas .age-map-bottom-dock-tips.age-quick-tips-panel {
+    position: absolute;
+    left: max(8px, env(safe-area-inset-left, 0px));
+    right: auto;
+    bottom: 0;
+    z-index: 4;
     display: flex;
-    flex-direction: column;
-    gap: 8px;
-    min-height: 0;
+    flex-direction: row;
+    align-items: center;
+    gap: 10px 12px;
+    width: fit-content;
+    max-width: calc(100% - min(520px, 42vw) - 12px);
+    min-height: var(--age-map-hud-bottom-bar-height);
+    height: auto;
     box-sizing: border-box;
-    padding: 10px 12px 12px;
-    border-radius: 6px;
-    border: 1px solid var(--age-hud-rail-border);
+    padding: 6px 10px 6px 6px;
+    margin: 0;
+    border: none;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+    pointer-events: auto;
+    overflow: visible;
+}
+
+#age-page-canvas .age-map-bottom-dock-tips .age-quick-tips-title {
+    flex: 0 0 auto;
+    white-space: nowrap;
+    line-height: 1.3;
+    align-self: center;
+}
+
+#age-page-canvas .age-map-bottom-dock-tips .age-quick-tips-copy {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 10px;
+    flex: 0 1 var(--age-quick-tips-copy-width);
+    width: var(--age-quick-tips-copy-width);
+    max-width: var(--age-quick-tips-copy-width);
+    min-width: 0;
+}
+
+#age-page-canvas .age-map-bottom-dock-tips .age-quick-tips-body {
+    flex: 1 1 auto;
+    min-width: 0;
+    margin: 0;
+    white-space: normal;
+    overflow-wrap: break-word;
+    word-break: normal;
+    line-height: 1.3;
+    align-self: center;
+}
+
+#age-page-canvas .age-map-bottom-dock-tips .age-quick-tips-next {
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.55rem;
+    height: 1.55rem;
+    padding: 0;
+    line-height: 1;
+    border-radius: 50%;
+    text-transform: none;
+    letter-spacing: 0;
+    border-color: rgba(255, 217, 120, 0.5);
     background:
-        linear-gradient(180deg, rgba(255, 217, 120, 0.05) 0%, transparent 28%),
-        var(--age-hud-rail-sheen),
-        var(--age-hud-rail-bg);
-    box-shadow: var(--age-hud-rail-inset), var(--age-hud-rail-shadow);
+        radial-gradient(circle at 35% 28%, rgba(255, 236, 170, 0.22) 0%, transparent 58%),
+        linear-gradient(180deg, rgba(48, 38, 22, 0.96) 0%, rgba(18, 14, 10, 0.98) 100%);
+    box-shadow:
+        inset 0 1px 0 rgba(255, 230, 150, 0.18),
+        0 0 10px rgba(255, 196, 72, 0.14);
+    transition:
+        border-color 0.14s ease,
+        box-shadow 0.14s ease,
+        transform 0.14s ease;
+}
+
+#age-page-canvas .age-map-bottom-dock-tips .age-quick-tips-next:hover,
+#age-page-canvas .age-map-bottom-dock-tips .age-quick-tips-next:focus-visible {
+    border-color: rgba(255, 217, 120, 0.82);
+    box-shadow:
+        inset 0 1px 0 rgba(255, 240, 180, 0.28),
+        0 0 14px rgba(255, 210, 90, 0.32);
+    transform: translateX(1px);
+    outline: none;
+}
+
+#age-page-canvas .age-map-bottom-dock-tips .age-quick-tips-next-icon {
+    display: block;
+    width: 0;
+    height: 0;
+    margin-left: 1px;
+    border-style: solid;
+    border-width: 4.5px 0 4.5px 7px;
+    border-color: transparent transparent transparent #e8c060;
+    filter: drop-shadow(0 0 3px rgba(255, 210, 110, 0.45));
+    transition: border-color 0.14s ease, filter 0.14s ease;
+}
+
+#age-page-canvas .age-map-bottom-dock-tips .age-quick-tips-next:hover .age-quick-tips-next-icon,
+#age-page-canvas .age-map-bottom-dock-tips .age-quick-tips-next:focus-visible .age-quick-tips-next-icon {
+    border-left-color: #ffe7b0;
+    filter: drop-shadow(0 0 5px rgba(255, 225, 140, 0.72));
+}
+
+#age-page-canvas .age-map-bottom-dock-tips .age-quick-tips-index {
+    display: none !important;
 }
 
 .age-quick-tips-head {
@@ -15114,9 +15525,9 @@ label.age-council-board-editor-tool {
 .age-quick-tips-body {
     margin: 0;
     font-family: 'Segoe UI', Tahoma, sans-serif;
-    font-size: 0.82rem;
+    font-size: 0.78rem;
     font-weight: 500;
-    line-height: 1.45;
+    line-height: 1.35;
     color: rgba(228, 214, 180, 0.9);
 }
 
@@ -15131,15 +15542,46 @@ label.age-council-board-editor-tool {
     text-align: right;
 }
 
-#age-page-canvas[data-age-view="city"] .age-quick-tips-panel {
-    display: none !important;
-}
-
 #age-page-canvas .age-nation-status-shell {
     display: flex;
     flex-direction: column;
     gap: 10px;
     min-height: 0;
+}
+
+#age-page-canvas .age-nation-status-shell .age-map-stat-list--dual-col {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 5px;
+}
+
+#age-page-canvas .age-nation-status-shell .age-map-stat-list--dual-col .age-map-stat-row {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    justify-content: center;
+    gap: 2px;
+    min-height: 0;
+    padding: 6px 8px;
+    border-radius: 4px;
+    border: 1px solid rgba(184, 144, 48, 0.22);
+    background: rgba(0, 0, 0, 0.28);
+    box-sizing: border-box;
+}
+
+#age-page-canvas .age-nation-status-shell .age-map-stat-list--dual-col .age-map-stat-label {
+    font-size: 0.76rem;
+    font-weight: 600;
+    line-height: 1.2;
+    letter-spacing: 0.03em;
+    color: rgba(236, 220, 180, 0.9);
+}
+
+#age-page-canvas .age-nation-status-shell .age-map-stat-list--dual-col .age-map-stat-value {
+    font-size: 0.8rem;
+    line-height: 1.2;
+    text-align: left;
+    word-break: break-word;
 }
 
 #age-page-canvas .age-nation-status-leadership {
@@ -15648,15 +16090,15 @@ label.age-council-board-editor-tool {
 #age-page-canvas .age-weekly-missions-shell {
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 6px;
     min-height: 0;
 }
 
 #age-page-canvas .age-weekly-missions-intro {
     margin: 0;
     font-family: 'Segoe UI', Tahoma, sans-serif;
-    font-size: 0.72rem;
-    line-height: 1.35;
+    font-size: 0.66rem;
+    line-height: 1.3;
     color: rgba(236, 220, 180, 0.66);
 }
 
@@ -15666,20 +16108,20 @@ label.age-council-board-editor-tool {
     padding: 0;
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 5px;
     min-height: 0;
     overflow: visible;
 }
 
 #age-page-canvas .age-weekly-mission-card {
     margin: 0;
-    padding: 8px 10px;
-    border-radius: 4px;
+    padding: 5px 8px;
+    border-radius: 3px;
     border: 1px solid rgba(184, 144, 48, 0.2);
     background: rgba(68, 68, 68, 0.42);
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    gap: 2px;
 }
 
 #age-page-canvas .age-weekly-mission-card.is-not-started {
@@ -15701,24 +16143,24 @@ label.age-council-board-editor-tool {
     display: flex;
     justify-content: space-between;
     align-items: baseline;
-    gap: 8px;
+    gap: 6px;
 }
 
 #age-page-canvas .age-weekly-mission-title {
     margin: 0;
     font-family: 'Cinzel', serif;
-    font-size: 0.68rem;
-    letter-spacing: 0.05em;
+    font-size: 0.6rem;
+    letter-spacing: 0.04em;
     text-transform: uppercase;
     color: rgba(236, 220, 180, 0.92);
 }
 
 #age-page-canvas .age-weekly-mission-status {
     font-family: 'Segoe UI', Tahoma, sans-serif;
-    font-size: 0.64rem;
+    font-size: 0.56rem;
     font-weight: 700;
     text-transform: uppercase;
-    letter-spacing: 0.04em;
+    letter-spacing: 0.03em;
     color: rgba(241, 224, 172, 0.88);
 }
 
@@ -15726,7 +16168,7 @@ label.age-council-board-editor-tool {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 10px;
+    gap: 6px;
 }
 
 #age-page-canvas .age-weekly-mission-body-left {
@@ -15736,7 +16178,8 @@ label.age-council-board-editor-tool {
 #age-page-canvas .age-weekly-mission-type {
     margin: 0;
     font-family: 'Segoe UI', Tahoma, sans-serif;
-    font-size: 0.7rem;
+    font-size: 0.62rem;
+    line-height: 1.25;
     color: rgba(236, 220, 180, 0.75);
 }
 
@@ -15744,27 +16187,27 @@ label.age-council-board-editor-tool {
     margin: 0;
     flex: 0 0 auto;
     font-family: 'Cinzel', serif;
-    font-size: 1.15rem;
+    font-size: 0.78rem;
     font-weight: 700;
-    letter-spacing: 0.04em;
+    letter-spacing: 0.03em;
     text-transform: uppercase;
     color: #ffd978;
     text-align: right;
 }
 
 #age-page-canvas .age-weekly-mission-meta {
-    margin-top: 2px;
+    margin-top: 0;
     display: flex;
     justify-content: space-between;
-    gap: 8px;
+    gap: 6px;
 }
 
 #age-page-canvas .age-weekly-mission-difficulty,
 #age-page-canvas .age-weekly-mission-xp {
     font-family: 'Segoe UI', Tahoma, sans-serif;
-    font-size: 0.66rem;
+    font-size: 0.58rem;
     font-weight: 700;
-    letter-spacing: 0.03em;
+    letter-spacing: 0.02em;
     text-transform: uppercase;
     color: rgba(241, 224, 172, 0.86);
 }
@@ -15789,18 +16232,18 @@ label.age-council-board-editor-tool {
 #age-page-canvas .age-city-info-tab {
     flex: 1 1 0;
     margin: 0;
-    padding: 8px 5px;
+    padding: 9px 8px;
     border-radius: 4px;
     border: 1px solid rgba(184, 144, 48, 0.32);
     background: rgba(0, 0, 0, 0.35);
     font-family: 'Cinzel', serif;
-    font-size: 0.7rem;
+    font-size: 0.8rem;
     font-weight: 700;
-    letter-spacing: 0.05em;
+    letter-spacing: 0.04em;
     text-transform: uppercase;
     color: rgba(236, 220, 180, 0.82);
     cursor: pointer;
-    line-height: 1.2;
+    line-height: 1.25;
     transition: border-color 140ms ease, color 140ms ease, background 140ms ease;
 }
 
@@ -15840,8 +16283,7 @@ label.age-council-board-editor-tool {
 #age-page-canvas .age-settlement-menu-body > .age-settlement-menu-list {
     flex: 1 1 auto;
     min-height: 0;
-    overflow-x: hidden;
-    overflow-y: auto;
+    overflow: hidden;
 }
 
 #age-page-canvas .age-settlement-menu-war-room-slot {
@@ -15978,7 +16420,8 @@ label.age-council-board-editor-tool {
     box-shadow: var(--age-hud-rail-inset), var(--age-hud-rail-shadow);
 }
 
-#age-page-canvas .age-map-hud--right.is-city-info-players-open .age-map-hud-panel-inner--right .age-city-info-panel {
+#age-page-canvas .age-map-hud--right.is-city-info-players-open .age-map-hud-panel-inner--right .age-city-info-panel,
+#age-page-canvas .age-map-hud--right.is-city-info-settlement-open .age-map-hud-panel-inner--right .age-city-info-panel {
     flex: 1 1 auto;
     min-height: 0;
     overflow: hidden;
@@ -16106,7 +16549,7 @@ label.age-council-board-editor-tool {
     gap: 6px;
     flex: 1 1 auto;
     min-height: 0;
-    overflow-y: auto;
+    overflow: hidden;
 }
 
 #age-page-canvas .age-city-info-player-row {
@@ -16778,19 +17221,34 @@ label.age-council-board-editor-tool {
 
 #age-page-canvas .age-map-bottom-commander-nametag .portal-commander-identity-menu {
     top: auto !important;
-    bottom: calc(100% + 6px) !important;
-    left: auto !important;
+    bottom: 100% !important;
+    left: 0 !important;
     right: 0 !important;
-    transform: translateY(-6px) scale(0.98) !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: none !important;
+    margin-bottom: 0 !important;
+    transform: translateY(4px) scale(0.98) !important;
+    transform-origin: bottom center !important;
     z-index: 248120 !important;
+    border-bottom-left-radius: 0 !important;
+    border-bottom-right-radius: 0 !important;
 }
 
 #age-page-canvas .age-map-bottom-commander-nametag .portal-commander-identity-card.is-commander-menu-open .portal-commander-identity-menu:not([hidden]) {
+    opacity: 1 !important;
+    visibility: visible !important;
+    pointer-events: auto !important;
     transform: translateY(0) scale(1) !important;
 }
 
 #age-page-canvas .age-map-bottom-commander-nametag .portal-commander-identity-card.is-commander-menu-open {
     z-index: 248110 !important;
+}
+
+#age-page-canvas .age-map-bottom-commander-nametag .portal-commander-identity-card.is-commander-menu-open .portal-commander-identity-card-body {
+    border-top-left-radius: 0 !important;
+    border-top-right-radius: 0 !important;
 }
 
 /* Age map â€” commander menu portaled to body so it clears left HUD / bottom dock stacking */
@@ -17968,9 +18426,11 @@ label.age-council-board-editor-tool {
 
 #age-page-canvas[data-age-view="headquarters"] #age-world-map-player-pins,
 #age-page-canvas[data-age-view="headquarters"] #age-world-map-terrain-controls,
+#age-page-canvas[data-age-view="headquarters"] #age-world-map-key-dock,
 #age-page-canvas[data-age-view="headquarters"] #age-world-map-continent-label,
 #age-page-canvas[data-age-view="guild-training"] #age-world-map-player-pins,
 #age-page-canvas[data-age-view="guild-training"] #age-world-map-terrain-controls,
+#age-page-canvas[data-age-view="guild-training"] #age-world-map-key-dock,
 #age-page-canvas[data-age-view="guild-training"] #age-world-map-continent-label {
     display: none !important;
 }
@@ -18869,6 +19329,197 @@ html.age-world-map-pan-locked #cursor-click-fx-layer {
     visibility: visible;
 }
 
+.age-world-map-color-backdrop,
+.age-world-map-layer--color-fill {
+    pointer-events: none;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.28s ease, visibility 0.28s ease;
+}
+
+.age-world-map-frame.is-color-map-on .age-world-map-bg-image,
+.age-world-map-frame.is-color-map-on .age-world-map-terrain-overlay {
+    opacity: 0;
+    visibility: hidden;
+}
+
+.age-world-map-frame.is-color-map-on .age-world-map-color-backdrop,
+.age-world-map-frame.is-color-map-on .age-world-map-layer--color-fill {
+    opacity: 1;
+    visibility: visible;
+}
+
+.age-world-map-frame.is-color-map-on .age-world-map-color-backdrop {
+    fill: #182430;
+}
+
+.age-world-map-color-layer-nations,
+.age-world-map-color-layer-terrain {
+    opacity: 0;
+    visibility: hidden;
+}
+
+.age-world-map-frame.is-color-map-nations .age-world-map-color-layer-nations,
+.age-world-map-frame.is-color-map-terrain .age-world-map-color-layer-terrain {
+    opacity: 1;
+    visibility: visible;
+}
+
+.age-world-map-frame.is-color-map-on .age-world-nation-color-fill {
+    fill-opacity: 0.88;
+    stroke: rgba(12, 8, 4, 0.42);
+    stroke-width: 1.5px;
+    stroke-opacity: 1;
+    vector-effect: non-scaling-stroke;
+    paint-order: stroke fill;
+    opacity: 1 !important;
+    visibility: visible !important;
+}
+
+.age-world-map-frame.is-color-map-on .age-world-terrain-color-fill {
+    fill-opacity: 0.9;
+    stroke: rgba(12, 8, 4, 0.32);
+    stroke-width: 1px;
+    stroke-opacity: 1;
+    vector-effect: non-scaling-stroke;
+    paint-order: stroke fill;
+    opacity: 1 !important;
+    visibility: visible !important;
+}
+
+.age-world-map-frame.is-color-map-on .age-world-map-layer--nations path {
+    stroke: rgba(12, 8, 4, 0.55);
+    stroke-width: 1.5px;
+}
+
+.age-world-map-frame.is-color-map-on .age-world-map-layer--cities .age-world-city-border-path {
+    stroke: rgba(12, 8, 4, 0.35);
+    stroke-width: 1.5px;
+    opacity: 1 !important;
+    visibility: visible !important;
+}
+
+.age-world-map-frame.is-color-map-on .age-world-region-border,
+.age-world-map-frame.is-color-map-on .age-world-map-layer--regions path {
+    stroke: rgba(255, 255, 255, 0.18);
+    stroke-width: 2px;
+    stroke-opacity: 1;
+    opacity: 1 !important;
+    visibility: visible !important;
+}
+
+/* Color map: stroke-only diplomacy — own nation black, foreign nations use full diplomatic colors. */
+.age-world-map-frame.is-color-map-on .age-world-map-layer--ownership .age-world-city-ownership-path.is-nation-own,
+.age-world-map-frame.is-color-map-on .age-world-map-layer--ownership .age-world-city-ownership-boost.is-nation-own {
+    fill: transparent !important;
+    stroke: rgba(12, 8, 4, 0.92);
+    stroke-width: 2px;
+    opacity: 1 !important;
+    visibility: visible !important;
+}
+
+.age-world-map-frame.is-color-map-on .age-world-map-layer--ownership .age-world-city-ownership-path.is-nation-ally,
+.age-world-map-frame.is-color-map-on .age-world-map-layer--ownership .age-world-city-ownership-boost.is-nation-ally {
+    fill: transparent !important;
+    stroke: rgba(120, 176, 255, 1);
+    stroke-width: 2px;
+    opacity: 1 !important;
+    visibility: visible !important;
+}
+
+.age-world-map-frame.is-color-map-on .age-world-map-layer--ownership .age-world-city-ownership-path.is-nation-nap,
+.age-world-map-frame.is-color-map-on .age-world-map-layer--ownership .age-world-city-ownership-boost.is-nation-nap {
+    fill: transparent !important;
+    stroke: rgba(190, 232, 255, 1);
+    stroke-width: 2px;
+    opacity: 1 !important;
+    visibility: visible !important;
+}
+
+.age-world-map-frame.is-color-map-on .age-world-map-layer--ownership .age-world-city-ownership-path.is-nation-enemy,
+.age-world-map-frame.is-color-map-on .age-world-map-layer--ownership .age-world-city-ownership-boost.is-nation-enemy {
+    fill: transparent !important;
+    stroke: rgba(255, 120, 120, 1);
+    stroke-width: 2px;
+    opacity: 1 !important;
+    visibility: visible !important;
+}
+
+.age-world-map-frame.is-color-map-on .age-world-map-layer--ownership .age-world-city-ownership-path.is-nation-neutral,
+.age-world-map-frame.is-color-map-on .age-world-map-layer--ownership .age-world-city-ownership-boost.is-nation-neutral {
+    fill: transparent !important;
+    stroke: rgba(210, 210, 210, 1);
+    stroke-width: 2px;
+    opacity: 1 !important;
+    visibility: visible !important;
+}
+
+.age-world-map-frame.is-color-map-on .age-world-map-layer--ownership .age-world-city-ownership-path.is-player-city,
+.age-world-map-frame.is-color-map-on .age-world-map-layer--ownership .age-world-city-ownership-boost.is-player-city {
+    fill: transparent !important;
+    stroke: rgba(64, 128, 255, 1) !important;
+    stroke-width: 1.5px;
+    opacity: 1 !important;
+    visibility: visible !important;
+}
+
+.age-world-map-color-swatch {
+    flex: 0 0 10px;
+    width: 10px;
+    height: 10px;
+    border-radius: 2px;
+    border: 1px solid rgba(255, 255, 255, 0.22);
+}
+
+.age-world-map-key-dock {
+    position: absolute;
+    bottom: calc(var(--game-region-map-bezel, 0px) + 12px);
+    left: calc(var(--game-region-map-bezel, 0px) + 12px);
+    z-index: 8;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: flex-end;
+    gap: 10px;
+    max-height: min(52vh, 420px);
+    pointer-events: none;
+}
+
+.age-world-map-map-key {
+    flex: 0 1 auto;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+    max-width: min(220px, 34vw);
+    max-height: min(48vh, 380px);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    overflow: hidden auto;
+    pointer-events: none;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 217, 120, 0.45) rgba(8, 6, 3, 0.35);
+}
+
+.age-world-map-map-key[hidden] {
+    display: none !important;
+}
+
+.age-world-map-map-key > li {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-family: 'Segoe UI', Tahoma, sans-serif;
+    font-size: 0.62rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    line-height: 1;
+    color: rgba(244, 230, 200, 0.9);
+    white-space: nowrap;
+}
+
 .age-world-map-city-search {
     position: fixed;
     top: var(--age-map-search-top, calc(var(--age-map-slot-top, 0px) + 24px));
@@ -18985,17 +19636,26 @@ html.age-world-map-pan-locked #cursor-click-fx-layer {
     background: linear-gradient(180deg, rgba(255, 217, 120, 0.96), rgba(214, 170, 72, 0.92));
 }
 
-.age-world-map-terrain-controls {
+.age-world-map-terrain-controls,
+#age-page-canvas[data-age-view="map"] #age-world-map-terrain-controls {
     position: absolute;
     top: calc(var(--game-region-map-bezel, 0px) + 12px);
     left: calc(var(--game-region-map-bezel, 0px) + 12px);
     z-index: 8;
     display: flex;
-    flex-direction: row;
-    flex-wrap: wrap;
+    flex-direction: column;
+    flex-wrap: nowrap;
     align-items: flex-start;
     gap: 8px;
     pointer-events: auto;
+}
+
+body.age-map-shell-only .age-world-map-terrain-controls,
+#age-page-canvas.age-map-shell-only #age-world-map-terrain-controls {
+    display: flex !important;
+    flex-direction: column !important;
+    flex-wrap: nowrap !important;
+    align-items: flex-start !important;
 }
 
 .age-world-map-terrain-toggle {
@@ -19814,55 +20474,11 @@ html.age-world-map-pan-locked #cursor-click-fx-layer {
 .age-world-map-plan-pill--main,
 .age-world-map-plan-pill--temp-main { border-color: rgba(196, 148, 255, 0.75); color: #dfc8ff; }
 
-.age-world-map-terrain-controls .age-world-map-terrain-legend {
-    flex: 1 0 100%;
-}
-
-.age-world-map-terrain-legend {
-    min-width: 132px;
-    padding: 10px 12px;
-    border-radius: 10px;
-    border: 1px solid rgba(255, 217, 120, 0.42);
-    background: rgba(8, 6, 3, 0.88);
-    box-shadow: 0 4px 18px rgba(0, 0, 0, 0.72);
-}
-
-.age-world-map-terrain-legend[hidden] {
-    display: none !important;
-}
-
-.age-world-map-terrain-legend-title {
-    margin: 0 0 8px;
-    font-family: 'Cinzel', serif;
-    font-size: 0.62rem;
-    font-weight: 700;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    color: rgba(255, 217, 120, 0.92);
-}
-
-.age-world-map-terrain-legend-list {
-    list-style: none;
-    margin: 0;
-    padding: 0;
-    display: grid;
-    gap: 6px;
-}
-
-.age-world-map-terrain-legend-list li {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 0.72rem;
-    line-height: 1.2;
-    color: rgba(244, 230, 200, 0.92);
-}
-
 .age-world-map-terrain-swatch {
-    flex: 0 0 14px;
-    width: 14px;
-    height: 14px;
-    border-radius: 3px;
+    flex: 0 0 10px;
+    width: 10px;
+    height: 10px;
+    border-radius: 2px;
     border: 1px solid rgba(255, 255, 255, 0.18);
     box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.25);
 }
@@ -19874,7 +20490,8 @@ html.age-world-map-pan-locked #cursor-click-fx-layer {
 .age-world-map-terrain-swatch--marshlands { background: rgba(48, 138, 158, 0.92); }
 .age-world-map-terrain-swatch--snow { background: rgba(236, 244, 252, 0.96); }
 
-#age-page-canvas:not([data-age-view="map"]) .age-world-map-terrain-controls {
+#age-page-canvas:not([data-age-view="map"]) .age-world-map-terrain-controls,
+#age-page-canvas:not([data-age-view="map"]) .age-world-map-key-dock {
     display: none !important;
 }
 
@@ -19941,29 +20558,71 @@ html.age-world-map-pan-locked #cursor-click-fx-layer {
 }
 
 .age-world-map-layer--ownership .age-world-city-ownership-path.is-nation-own {
-    fill: rgba(255, 196, 48, 0.46);
+    fill: rgba(255, 196, 48, 0.58);
     stroke: rgba(255, 228, 120, 1);
     opacity: 1 !important;
     visibility: visible !important;
 }
 
 .age-world-map-layer--ownership .age-world-city-ownership-path.is-nation-ally {
-    fill: rgba(64, 128, 255, 0.44);
+    fill: rgba(64, 128, 255, 0.58);
     stroke: rgba(120, 176, 255, 1);
     opacity: 1 !important;
     visibility: visible !important;
 }
 
+.age-world-map-layer--ownership .age-world-city-ownership-path.is-nation-nap {
+    fill: rgba(140, 210, 255, 0.58);
+    stroke: rgba(190, 232, 255, 1);
+    opacity: 1 !important;
+    visibility: visible !important;
+}
+
+.age-world-map-layer--ownership .age-world-city-ownership-path.is-nation-enemy {
+    fill: rgba(220, 72, 72, 0.58);
+    stroke: rgba(255, 120, 120, 1);
+    opacity: 1 !important;
+    visibility: visible !important;
+}
+
+.age-world-map-layer--ownership .age-world-city-ownership-path.is-nation-neutral {
+    fill: rgba(168, 168, 168, 0.58);
+    stroke: rgba(210, 210, 210, 1);
+    opacity: 1 !important;
+    visibility: visible !important;
+}
+
 .age-world-map-layer--ownership .age-world-city-ownership-boost.is-nation-own {
-    fill: rgba(255, 196, 48, 0.46);
+    fill: rgba(255, 196, 48, 0.58);
     stroke: rgba(255, 228, 120, 1);
     opacity: 1 !important;
     visibility: visible !important;
 }
 
 .age-world-map-layer--ownership .age-world-city-ownership-boost.is-nation-ally {
-    fill: rgba(64, 128, 255, 0.44);
+    fill: rgba(64, 128, 255, 0.58);
     stroke: rgba(120, 176, 255, 1);
+    opacity: 1 !important;
+    visibility: visible !important;
+}
+
+.age-world-map-layer--ownership .age-world-city-ownership-boost.is-nation-nap {
+    fill: rgba(140, 210, 255, 0.58);
+    stroke: rgba(190, 232, 255, 1);
+    opacity: 1 !important;
+    visibility: visible !important;
+}
+
+.age-world-map-layer--ownership .age-world-city-ownership-boost.is-nation-enemy {
+    fill: rgba(220, 72, 72, 0.58);
+    stroke: rgba(255, 120, 120, 1);
+    opacity: 1 !important;
+    visibility: visible !important;
+}
+
+.age-world-map-layer--ownership .age-world-city-ownership-boost.is-nation-neutral {
+    fill: rgba(168, 168, 168, 0.58);
+    stroke: rgba(210, 210, 210, 1);
     opacity: 1 !important;
     visibility: visible !important;
 }
@@ -20068,6 +20727,23 @@ html.age-world-map-pan-locked #cursor-click-fx-layer {
     }
 }
 
+/* Color map: outline-only gold selection — darker on clicked city, lighter on neighbors. */
+.age-world-map-frame.is-color-map-on .age-world-city-highlight-path.is-selected-city,
+.age-world-map-frame.is-color-map-on .age-world-city-highlight-boost.is-selected-city {
+    fill: transparent !important;
+    stroke: rgba(168, 112, 8, 1) !important;
+    stroke-width: 3px;
+    filter: drop-shadow(0 0 6px rgba(168, 112, 8, 0.55));
+}
+
+.age-world-map-frame.is-color-map-on .age-world-city-highlight-path.is-bordering-neighbor,
+.age-world-map-frame.is-color-map-on .age-world-city-highlight-boost.is-bordering-neighbor {
+    fill: transparent !important;
+    stroke: rgba(255, 210, 96, 1) !important;
+    stroke-width: 2.5px;
+    filter: drop-shadow(0 0 4px rgba(255, 210, 96, 0.45));
+}
+
 @keyframes age-map-plan-anchor-city-flash {
     0% {
         stroke-width: 2px;
@@ -20108,6 +20784,11 @@ html.age-world-map-pan-locked #cursor-click-fx-layer {
 }
 
 /* Border hierarchy: region (thickest) > nation > city; opacity driven by RIFT zoom + viewport fade. */
+.age-world-map-layer--regions .age-world-region-border {
+    opacity: 0;
+    visibility: hidden;
+}
+
 .age-world-map-layer--regions path {
     fill: transparent;
     stroke: rgba(12, 8, 4, 0.88);
@@ -20125,7 +20806,7 @@ html.age-world-map-pan-locked #cursor-click-fx-layer {
 .age-world-map-layer--cities .age-world-city-border-path {
     fill: transparent;
     stroke: rgba(0, 0, 0, 0.6);
-    stroke-width: 1.5px;
+    stroke-width: 2.5px;
     vector-effect: non-scaling-stroke;
     pointer-events: none;
 }
@@ -20214,21 +20895,21 @@ html.age-world-map-pan-locked #cursor-click-fx-layer {
     background:
         linear-gradient(
             to right,
-            rgba(0, 0, 0, 0.98) 0%,
-            rgba(4, 3, 2, 0.82) 10%,
-            rgba(4, 3, 2, 0.42) 16%,
-            transparent 28%
+            rgba(0, 0, 0, 0.86) 0%,
+            rgba(4, 3, 2, 0.58) 7%,
+            rgba(4, 3, 2, 0.24) 11%,
+            transparent 17%
         ),
         linear-gradient(
             to left,
-            rgba(0, 0, 0, 0.98) 0%,
-            rgba(4, 3, 2, 0.82) 10%,
-            rgba(4, 3, 2, 0.42) 16%,
-            transparent 28%
+            rgba(0, 0, 0, 0.86) 0%,
+            rgba(4, 3, 2, 0.58) 7%,
+            rgba(4, 3, 2, 0.24) 11%,
+            transparent 17%
         );
     box-shadow:
-        inset 52px 0 72px -12px rgba(0, 0, 0, 0.68),
-        inset -52px 0 72px -12px rgba(0, 0, 0, 0.68);
+        inset 38px 0 52px -18px rgba(0, 0, 0, 0.46),
+        inset -38px 0 52px -18px rgba(0, 0, 0, 0.46);
 }
 
 .age-map-edge-fog__mist {
@@ -20246,19 +20927,19 @@ html.age-world-map-pan-locked #cursor-click-fx-layer {
 
 .age-map-edge-fog__mist--east {
     top: 12%;
-    right: -34%;
-    width: 40%;
+    right: -42%;
+    width: 30%;
     height: 76%;
-    background: radial-gradient(ellipse at 0% 50%, rgba(10, 8, 6, 0.97) 0%, rgba(2, 2, 2, 0.72) 40%, transparent 60%);
+    background: radial-gradient(ellipse at 0% 50%, rgba(10, 8, 6, 0.78) 0%, rgba(2, 2, 2, 0.48) 38%, transparent 58%);
     animation: age-map-fog-roll-e 12s ease-in-out infinite;
 }
 
 .age-map-edge-fog__mist--west {
     top: 10%;
-    left: -34%;
-    width: 40%;
+    left: -42%;
+    width: 30%;
     height: 78%;
-    background: radial-gradient(ellipse at 100% 50%, rgba(10, 8, 6, 0.97) 0%, rgba(2, 2, 2, 0.72) 40%, transparent 60%);
+    background: radial-gradient(ellipse at 100% 50%, rgba(10, 8, 6, 0.78) 0%, rgba(2, 2, 2, 0.48) 38%, transparent 58%);
     animation: age-map-fog-roll-w 10s ease-in-out infinite;
 }
 
@@ -20278,13 +20959,13 @@ html.age-world-map-pan-locked #cursor-click-fx-layer {
 }
 
 @keyframes age-map-fog-roll-e {
-    0%, 100% { transform: translate3d(0, -3%, 0) scale(1); opacity: 0.6; }
-    50% { transform: translate3d(-5%, 4%, 0) scale(1.05); opacity: 0.9; }
+    0%, 100% { transform: translate3d(0, -3%, 0) scale(1); opacity: 0.44; }
+    50% { transform: translate3d(-5%, 4%, 0) scale(1.05); opacity: 0.68; }
 }
 
 @keyframes age-map-fog-roll-w {
-    0%, 100% { transform: translate3d(0, 4%, 0) scale(1.01); opacity: 0.6; }
-    50% { transform: translate3d(6%, -3%, 0) scale(1.07); opacity: 0.88; }
+    0%, 100% { transform: translate3d(0, 4%, 0) scale(1.01); opacity: 0.44; }
+    50% { transform: translate3d(6%, -3%, 0) scale(1.07); opacity: 0.66; }
 }
 
 @keyframes age-map-fog-drift-a {
@@ -20302,7 +20983,7 @@ html.age-world-map-pan-locked #cursor-click-fx-layer {
 @media (prefers-reduced-motion: reduce) {
     .age-map-edge-fog__mist {
         animation: none !important;
-        opacity: 0.84;
+        opacity: 0.62;
     }
 
     .age-world-map-plan-draft-arrows-layer path.age-world-map-plan-arrow.is-marching,
@@ -20432,6 +21113,13 @@ html.age-world-map-pan-locked #cursor-click-fx-layer {
         inset 0 1px 0 rgba(255, 255, 255, 0.06);
 }
 
+.age-world-map-label--region .age-world-map-label-title {
+    font-size: 0.82rem;
+    padding: 0.24em 0.62em;
+    letter-spacing: 0.08em;
+    border-color: rgba(255, 217, 120, 0.45);
+}
+
 .age-world-map-label--nation .age-world-map-label-title {
     font-size: 0.95rem;
     padding: 0.3em 0.75em;
@@ -20471,15 +21159,17 @@ html.age-world-map-pan-locked #cursor-click-fx-layer {
 
 .age-world-map-continent-label {
     position: absolute;
-    inset: var(--game-region-map-bezel);
-    display: flex;
-    align-items: flex-end;
-    justify-content: flex-end;
+    right: calc(var(--game-region-map-bezel, 12px) + 10px);
+    bottom: calc(var(--game-region-map-bezel, 12px) + 10px);
+    left: auto;
+    top: auto;
+    display: block;
     pointer-events: none;
-    z-index: 5;
+    z-index: 7;
     opacity: 1;
     visibility: visible;
-    padding: 0 12px 12px 0;
+    margin: 0;
+    padding: 0;
     box-sizing: border-box;
 }
 
@@ -25822,6 +26512,14 @@ button.age-guild-gear-slot {
     letter-spacing: 0.08em;
     text-transform: uppercase;
     color: rgba(236, 220, 180, 0.68);
+}
+
+.age-guild-gear-training-scope-note {
+    margin: 0 0 8px;
+    font-size: 0.68rem;
+    line-height: 1.35;
+    color: rgba(236, 220, 180, 0.48);
+    font-style: italic;
 }
 
 .age-guild-gear-stat-lines {
