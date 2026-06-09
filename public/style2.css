@@ -3997,19 +3997,36 @@ body.is-terms-gate-active #main-portal-dynamic-viewport {
     font-size: 0.58rem !important;
 }
 
-.profile-rank-title-gender-options {
+.profile-rank-title-gender-switch-row {
     display: flex !important;
+    align-items: center !important;
     flex-wrap: wrap !important;
-    gap: 8px !important;
+    gap: 12px !important;
+    margin-top: 4px !important;
 }
 
-.profile-rank-title-gender-btn {
-    min-width: 108px !important;
+.profile-rank-title-gender-switch-row .toggle-label-text {
+    margin-right: 0 !important;
+    min-width: 0 !important;
+    text-align: center !important;
+    font-size: 0.8rem !important;
+    color: rgba(241, 224, 172, 0.62) !important;
+    transition: color 0.2s ease, text-shadow 0.2s ease !important;
 }
 
-.profile-rank-title-gender-btn.is-active {
-    border-color: rgba(212, 175, 55, 0.75) !important;
-    box-shadow: 0 0 0 1px rgba(212, 175, 55, 0.35) !important;
+.profile-rank-title-gender-switch-label.is-active {
+    color: #ffd978 !important;
+    text-shadow: 0 0 10px rgba(255, 214, 0, 0.28) !important;
+}
+
+.profile-rank-title-gender-switch input:checked + .toggle-slider-track {
+    background-color: rgba(184, 144, 48, 0.28) !important;
+    border-color: rgba(212, 175, 55, 0.88) !important;
+}
+
+.profile-rank-title-gender-switch input:checked + .toggle-slider-track::before {
+    background: linear-gradient(135deg, #fff8c4 0%, #ffd600 100%) !important;
+    box-shadow: 0 0 8px rgba(255, 214, 0, 0.55) !important;
 }
 
 .profile-rank-title-preview {

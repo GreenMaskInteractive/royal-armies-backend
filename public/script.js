@@ -777,13 +777,18 @@ function applyRankTitleGenderPreference(gender) {
 function buildRankTitleGenderProfileMarkup() {
     const maleActive = stagedRankTitleGender !== 'female' ? ' is-active' : '';
     const femaleActive = stagedRankTitleGender === 'female' ? ' is-active' : '';
+    const femaleChecked = stagedRankTitleGender === 'female' ? 'checked' : '';
     return `
         <div class="profile-section-box">
             <label class="settings-label">Commander Rank Titles</label>
             <p class="profile-rank-title-setting-copy">Choose male or female rank titles shown beside your name during an Age.</p>
-            <div class="profile-rank-title-gender-options">
-                <button type="button" class="settings-btn profile-rank-title-gender-btn${maleActive}" data-rank-title-gender="male">Male titles</button>
-                <button type="button" class="settings-btn profile-rank-title-gender-btn${femaleActive}" data-rank-title-gender="female">Female titles</button>
+            <div class="profile-field-row profile-rank-title-gender-switch-row">
+                <span class="toggle-label-text profile-rank-title-gender-switch-label${maleActive}" data-rank-title-side="male" id="profile-rank-title-gender-label-male">Male titles</span>
+                <label class="switch-toggle-bar profile-rank-title-gender-switch">
+                    <input type="checkbox" id="profile-rank-title-gender-switch" ${femaleChecked} aria-label="Use female commander rank titles">
+                    <div class="toggle-slider-track"></div>
+                </label>
+                <span class="toggle-label-text profile-rank-title-gender-switch-label${femaleActive}" data-rank-title-side="female" id="profile-rank-title-gender-label-female">Female titles</span>
             </div>
             <p id="profile-rank-title-preview" class="profile-rank-title-preview" aria-live="polite"></p>
         </div>
@@ -791,8 +796,14 @@ function buildRankTitleGenderProfileMarkup() {
 }
 
 function syncRankTitleGenderProfileUi() {
-    document.querySelectorAll('[data-rank-title-gender]').forEach((btn) => {
-        btn.classList.toggle('is-active', btn.getAttribute('data-rank-title-gender') === stagedRankTitleGender);
+    const switchInput = document.getElementById('profile-rank-title-gender-switch');
+    if (switchInput) {
+        const isFemale = stagedRankTitleGender === 'female';
+        switchInput.checked = isFemale;
+        switchInput.setAttribute('aria-checked', isFemale ? 'true' : 'false');
+    }
+    document.querySelectorAll('.profile-rank-title-gender-switch-label').forEach((label) => {
+        label.classList.toggle('is-active', label.getAttribute('data-rank-title-side') === stagedRankTitleGender);
     });
     const preview = document.getElementById('profile-rank-title-preview');
     if (!preview || !window.RoyalArmiesCommanderRankTitles || typeof player === 'undefined') return;
@@ -805,10 +816,15 @@ function syncRankTitleGenderProfileUi() {
 }
 
 function bindRankTitleGenderProfileControls() {
-    document.querySelectorAll('[data-rank-title-gender]').forEach((btn) => {
-        btn.addEventListener('click', (event) => {
-            event.preventDefault();
-            const next = btn.getAttribute('data-rank-title-gender') === 'female' ? 'female' : 'male';
+    const switchInput = document.getElementById('profile-rank-title-gender-switch');
+    if (!switchInput) {
+        syncRankTitleGenderProfileUi();
+        return;
+    }
+    if (switchInput.dataset.rankTitleGenderBound !== 'true') {
+        switchInput.dataset.rankTitleGenderBound = 'true';
+        switchInput.addEventListener('change', () => {
+            const next = switchInput.checked ? 'female' : 'male';
             if (next === stagedRankTitleGender) return;
             stagedRankTitleGender = next;
             if (typeof appRuntimeGlobal !== 'undefined') {
@@ -817,7 +833,7 @@ function bindRankTitleGenderProfileControls() {
             hasUnsavedChanges = true;
             syncRankTitleGenderProfileUi();
         });
-    });
+    }
     syncRankTitleGenderProfileUi();
 }
 
@@ -2329,29 +2345,34 @@ async function handleLogin() {
         };
 
         if (payload.requiresTermsAcceptance) {
-            persistPortalAuth(ledgerUsername, payload.rememberMe !== false && rememberMe);
-            if (typeof player !== 'undefined') player.name = ledgerUsername;
-            refreshProfileCommanderNameDisplay();
-            refreshLoggedUserTagDisplay();
+            const bypassTermsLock = (typeof isTermsLockBypassedForDev === 'function' && isTermsLockBypassedForDev())
+                || (typeof isLiveServerPort5500 === 'function' && isLiveServerPort5500());
 
-            if (isMainPortalHub()) {
-                prepareMainPortalPostLoginTermsGate();
-            } else {
-                restoreLoginAuthButtons();
-            }
+            if (!bypassTermsLock) {
+                persistPortalAuth(ledgerUsername, payload.rememberMe !== false && rememberMe);
+                if (typeof player !== 'undefined') player.name = ledgerUsername;
+                refreshProfileCommanderNameDisplay();
+                refreshLoggedUserTagDisplay();
 
-            if (typeof promptReturningUserTermsAcceptance === 'function') {
-                promptReturningUserTermsAcceptance(() => {
-                    completeLedgerLogin();
-                });
-            } else {
-                await showPortalAlert(
-                    'You must accept the Terms of Service and Privacy Policy before continuing.',
-                    'Terms required'
-                );
-                restoreLoginAuthButtons();
+                if (isMainPortalHub()) {
+                    prepareMainPortalPostLoginTermsGate();
+                } else {
+                    restoreLoginAuthButtons();
+                }
+
+                if (typeof promptReturningUserTermsAcceptance === 'function') {
+                    promptReturningUserTermsAcceptance(() => {
+                        completeLedgerLogin();
+                    });
+                } else {
+                    await showPortalAlert(
+                        'You must accept the Terms of Service and Privacy Policy before continuing.',
+                        'Terms required'
+                    );
+                    restoreLoginAuthButtons();
+                }
+                return;
             }
-            return;
         }
 
         completeLedgerLogin();
