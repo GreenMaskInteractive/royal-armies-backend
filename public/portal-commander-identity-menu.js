@@ -13,8 +13,8 @@
     }
 
     function shouldFloatAgeMapCommanderMenu() {
-        return !!global.document.getElementById('age-page-canvas')
-            && !!global.document.querySelector('.age-map-bottom-commander-nametag #portal-desktop-commander-menu');
+        const body = global.document.body;
+        return Boolean(body && body.dataset && body.dataset.ageMapOnly === 'true');
     }
 
     function getAgeFloatingMenuAnchor() {
@@ -184,11 +184,6 @@
                     global.openDiscoveriesWorkspace(event);
                 }
                 break;
-            case 'chronicles-battle-pass':
-                if (typeof global.openAgeChroniclesBattlePassModal === 'function') {
-                    global.openAgeChroniclesBattlePassModal(event);
-                }
-                break;
             case 'return-to-portal':
                 if (typeof global.returnToGameAgePortal === 'function') {
                     global.returnToGameAgePortal();
@@ -211,6 +206,35 @@
             default:
                 break;
         }
+    }
+
+    function resolveCommanderMenuItemAction(button) {
+        if (!button) return null;
+        if (button.classList.contains('dropdown-action-item-view-profile')) return 'view-profile';
+        if (button.id === 'nav-dropdown-messages-btn') return 'messages';
+        if (button.classList.contains('dropdown-action-item-discoveries')) return 'discoveries';
+        if (button.id === 'game-nav-dropdown-return-portal-btn') return 'return-to-portal';
+        if (button.id === 'game-nav-dropdown-logout-btn') return 'logout';
+        if (button.classList.contains('dropdown-action-item-report-player')) return 'report-player';
+
+        const label = String(button.textContent || '').replace(/\s+/g, ' ').trim().toLowerCase();
+        if (label === 'edit profile') return 'edit-profile';
+        if (label === 'settings') return 'settings';
+        return null;
+    }
+
+    function bindPortalCommanderIdentityMenuActionHandlers() {
+        const menu = global.document.getElementById('portal-desktop-commander-menu');
+        if (!menu || menu.dataset.commanderMenuActionsBound === 'true') return;
+        menu.dataset.commanderMenuActionsBound = 'true';
+
+        menu.querySelectorAll('.dropdown-action-item').forEach((button) => {
+            const action = resolveCommanderMenuItemAction(button);
+            if (!action) return;
+            button.addEventListener('click', (event) => {
+                portalDesktopCommanderMenuAction(action, event);
+            });
+        });
     }
 
     function bindPortalCommanderIdentityTriggerHandlers() {
@@ -237,6 +261,7 @@
             if (!isPortalCommanderIdentityMenuOpen()) return;
             if (event.target.closest('#portal-commander-identity-card')) return;
             if (event.target.closest('#portal-desktop-commander-menu')) return;
+            if (event.target.closest('.portal-commander-identity-menu--age-floating')) return;
             if (event.target.closest('#portal-commander-identity-trigger')) return;
             closePortalCommanderIdentityMenu();
         });
@@ -248,7 +273,12 @@
 
     function initPortalCommanderIdentityMenuBindings() {
         bindPortalCommanderIdentityTriggerHandlers();
+        bindPortalCommanderIdentityMenuActionHandlers();
         bindPortalCommanderIdentityMenuDismissHandlers();
+    }
+
+    function bindPortalCommanderIdentityMenu() {
+        initPortalCommanderIdentityMenuBindings();
     }
 
     global.isPortalCommanderIdentityMenuOpen = isPortalCommanderIdentityMenuOpen;
@@ -256,6 +286,7 @@
     global.togglePortalCommanderIdentityMenu = togglePortalCommanderIdentityMenu;
     global.portalDesktopCommanderMenuAction = portalDesktopCommanderMenuAction;
     global.bindPortalCommanderIdentityMenuDismissHandlers = bindPortalCommanderIdentityMenuDismissHandlers;
+    global.bindPortalCommanderIdentityMenu = bindPortalCommanderIdentityMenu;
 
     if (global.document.readyState === 'loading') {
         global.document.addEventListener('DOMContentLoaded', initPortalCommanderIdentityMenuBindings, { once: true });

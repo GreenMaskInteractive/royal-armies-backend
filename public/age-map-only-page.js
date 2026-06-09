@@ -17,10 +17,123 @@
     const COUNCIL_BOARD_LEFT_OFFSET_PX = 150;
     const COUNCIL_BOARD_RIGHT_TRIM_PX = 10;
     const COUNCIL_BOARD_BOTTOM_TRIM_PX = 500;
+    const COUNCIL_BOARD_REPORTS_LIFT_PX = 35;
     const COUNCIL_BOARD_MIN_WIDTH_PX = 220;
     const COUNCIL_BOARD_MIN_HEIGHT_PX = 160;
+    const LEFT_HUD_STACK_GAP_PX = 10;
+    const LEFT_REPORTS_MIN_HEIGHT_PX = 120;
     const MAP_FRAME_LAYOUT_MAX_EDGE = 1642;
     const AGE_MOBILE_LAYOUT_MQ = '(max-width: 1024px)';
+
+    /** Hub/profile/menu scripts — production agealpha.html omits these; load on demand. */
+    const AGE_NAMETAG_HUB_SCRIPT_CHAIN = [
+        'rift-error-codes.js?v=commander-nametag-hub-2',
+        'rift-error-display.js?v=commander-nametag-hub-2',
+        'commander-dossier-sync.js?v=commander-nametag-hub-2',
+        'rank-data.js?v=commander-nametag-hub-2',
+        'rift-ui-sfx.js?v=commander-nametag-hub-2',
+        'script.js?v=commander-nametag-hub-2',
+        'commander-hub.js?v=commander-nametag-hub-2',
+        'game-chat.js?v=commander-nametag-hub-2',
+        'portal-commander-identity-menu.js?v=commander-nametag-hub-2'
+    ];
+
+    const ageNametagHubScriptsLoaded = new Set();
+    let ageNametagHubEnsurePromise = null;
+
+    function loadAgeNametagHubScript(src) {
+        if (ageNametagHubScriptsLoaded.has(src)) {
+            return Promise.resolve();
+        }
+
+        const existing = global.document.querySelector(`script[src="${src}"]`);
+        if (existing) {
+            ageNametagHubScriptsLoaded.add(src);
+            return Promise.resolve();
+        }
+
+        return new Promise((resolve, reject) => {
+            const script = global.document.createElement('script');
+            script.src = src;
+            script.async = false;
+            script.onload = () => {
+                ageNametagHubScriptsLoaded.add(src);
+                resolve();
+            };
+            script.onerror = () => reject(new Error(`[RIFT] Failed to load ${src}`));
+            global.document.head.appendChild(script);
+        });
+    }
+
+    async function ensureAgeCommanderNametagHub() {
+        if (typeof global.openCommanderHubModal === 'function'
+            && typeof global.portalDesktopCommanderMenuAction === 'function') {
+            global.bindPortalCommanderIdentityMenu?.();
+            return;
+        }
+
+        if (ageNametagHubEnsurePromise) {
+            await ageNametagHubEnsurePromise;
+            return;
+        }
+
+        ageNametagHubEnsurePromise = (async () => {
+            for (const src of AGE_NAMETAG_HUB_SCRIPT_CHAIN) {
+                await loadAgeNametagHubScript(src);
+            }
+            global.bindPortalCommanderIdentityMenu?.();
+        })();
+
+        try {
+            await ageNametagHubEnsurePromise;
+        } catch (err) {
+            ageNametagHubEnsurePromise = null;
+            console.warn('[RIFT] Age commander nametag hub scripts failed to load:', err);
+        }
+    }
+
+    function resolveAgeCommanderMenuAction(button) {
+        if (!button) return null;
+        if (button.classList.contains('dropdown-action-item-view-profile')) return 'view-profile';
+        if (button.id === 'nav-dropdown-messages-btn') return 'messages';
+        if (button.classList.contains('dropdown-action-item-discoveries')) return 'discoveries';
+        if (button.id === 'game-nav-dropdown-return-portal-btn') return 'return-to-portal';
+        if (button.id === 'game-nav-dropdown-logout-btn') return 'logout';
+        if (button.classList.contains('dropdown-action-item-report-player')) return 'report-player';
+
+        const label = String(button.textContent || '').replace(/\s+/g, ' ').trim().toLowerCase();
+        if (label === 'edit profile') return 'edit-profile';
+        if (label === 'settings') return 'settings';
+        return null;
+    }
+
+    function bindAgeCommanderNametagMenuDelegation() {
+        if (global.document.documentElement.dataset.ageNametagMenuDelegated === 'true') return;
+        global.document.documentElement.dataset.ageNametagMenuDelegated = 'true';
+
+        global.document.addEventListener('click', (event) => {
+            const button = event.target.closest(
+                '#portal-desktop-commander-menu .dropdown-action-item,'
+                + ' .portal-commander-identity-menu--age-floating .dropdown-action-item'
+            );
+            if (!button) return;
+
+            const menu = button.closest('#portal-desktop-commander-menu, .portal-commander-identity-menu--age-floating');
+            if (menu?.dataset?.commanderMenuActionsBound === 'true') return;
+
+            const action = resolveAgeCommanderMenuAction(button);
+            if (!action) return;
+
+            event.preventDefault();
+            event.stopPropagation();
+
+            ensureAgeCommanderNametagHub().then(() => {
+                if (typeof global.portalDesktopCommanderMenuAction === 'function') {
+                    global.portalDesktopCommanderMenuAction(action, event);
+                }
+            });
+        });
+    }
 
     let councilLayoutObserver = null;
     let councilLayoutStabilizeRaf = 0;
@@ -53,6 +166,7 @@
             target.closest('.age-age-center-modal:not([hidden])')
             || target.closest('.rift-discoveries-workspace-modal:not([hidden])')
             || target.closest('.rift-banner-workspace-modal:not([hidden])')
+            || target.closest('.blessed-banners-modal:not([hidden])')
             ||             target.closest('.age-chronicles-battle-pass-modal.is-open')
             || target.closest('.age-chronicles-battle-pass-modal:not([hidden])')
         );
@@ -87,6 +201,26 @@
         return Boolean(
             target.closest('.age-city-info-panel')
             || target.closest('.age-left-reports-panel')
+            || target.closest('.age-quick-tips-panel')
+        );
+    }
+
+    function isBottomHudTarget(target) {
+        if (!target || typeof target.closest !== 'function') return false;
+        return Boolean(
+            target.closest('.age-map-bottom-dock')
+            || target.closest('#portal-commander-identity-shell')
+            || target.closest('#portal-desktop-commander-menu')
+            || target.closest('.portal-commander-identity-menu--age-floating')
+        );
+    }
+
+    function isCommanderMenuOverlayTarget(target) {
+        if (!target || typeof target.closest !== 'function') return false;
+        return Boolean(
+            target.closest('.commander-hub-overlay.is-visible')
+            || target.closest('.public-profile-overlay.is-visible')
+            || target.closest('#player-report-modal:not([hidden])')
         );
     }
 
@@ -141,6 +275,8 @@
             || isMapCitySearchTarget(target)
             || isMapPlanToolTarget(target)
             || isInsideMapHudSidePanels(target)
+            || isBottomHudTarget(target)
+            || isCommanderMenuOverlayTarget(target)
             || isWorldCityDrawerTarget(target)
             || isWarRoomModalTarget(target)
             || isSettlementOverlayTarget(target)
@@ -267,6 +403,24 @@
         return global.matchMedia(AGE_MOBILE_LAYOUT_MQ).matches;
     }
 
+    function measureLeftReportsPanelHeightPx(reportsPanel) {
+        if (!reportsPanel) return 0;
+
+        const tabs = reportsPanel.querySelector('.age-left-reports-tabs');
+        const activePanel = reportsPanel.querySelector('.age-left-reports-tabpanel:not([hidden])')
+            || reportsPanel.querySelector('.age-left-reports-tabpanel.is-active');
+        const styles = global.getComputedStyle(reportsPanel);
+        const paddingY = (parseFloat(styles.paddingTop) || 0) + (parseFloat(styles.paddingBottom) || 0);
+        const gap = parseFloat(styles.rowGap || styles.gap) || 0;
+        const tabsHeight = tabs ? Math.ceil(tabs.getBoundingClientRect().height) : 0;
+        const panelContentHeight = activePanel ? Math.ceil(activePanel.scrollHeight) : 0;
+
+        return Math.max(
+            LEFT_REPORTS_MIN_HEIGHT_PX,
+            Math.ceil(paddingY + tabsHeight + (tabsHeight > 0 ? gap : 0) + panelContentHeight)
+        );
+    }
+
     function syncCouncilBoardLayoutToMap() {
         const canvas = global.document.getElementById('age-page-canvas');
         const mapFrame = global.document.querySelector('#age-page-canvas .age-map-frame');
@@ -279,7 +433,8 @@
                 '--age-council-board-left',
                 '--age-council-board-width',
                 '--age-council-board-height',
-                '--age-left-column-height'
+                '--age-left-column-height',
+                '--age-quick-tips-block-height'
             ].forEach((prop) => canvas.style.removeProperty(prop));
             lastCouncilLayoutKey = '';
             return;
@@ -304,25 +459,20 @@
             COUNCIL_BOARD_MIN_HEIGHT_PX,
             mapRect.height - COUNCIL_BOARD_BOTTOM_TRIM_PX
         );
-        const quickTipsPanel = global.document.getElementById('age-quick-tips-panel');
-        const quickTipsStyle = quickTipsPanel ? global.getComputedStyle(quickTipsPanel) : null;
-        const quickTipsVisible = quickTipsPanel
-            && quickTipsStyle
-            && quickTipsStyle.display !== 'none'
-            && quickTipsStyle.visibility !== 'hidden';
-        const quickTipsHeight = quickTipsVisible
-            ? Math.max(88, Math.ceil(quickTipsPanel.getBoundingClientRect().height) || 88)
-            : 0;
-        const quickTipsStack = quickTipsHeight > 0 ? quickTipsHeight + 10 : 0;
         const councilHeight = Math.max(
             COUNCIL_BOARD_MIN_HEIGHT_PX,
-            totalColumnHeight - quickTipsStack
+            totalColumnHeight - COUNCIL_BOARD_REPORTS_LIFT_PX
         );
+        const reportsPanel = global.document.querySelector('#age-map-hud-left .age-left-reports-panel');
+        const reportsPanelHeight = measureLeftReportsPanelHeightPx(reportsPanel);
+        const leftColumnHeight = councilHeight
+            + (reportsPanelHeight > 0 ? LEFT_HUD_STACK_GAP_PX + reportsPanelHeight : 0);
 
         canvas.style.setProperty('--age-council-board-top', `${top}px`);
         canvas.style.setProperty('--age-council-board-width', `${width}px`);
         canvas.style.setProperty('--age-council-board-height', `${councilHeight}px`);
-        canvas.style.setProperty('--age-left-column-height', `${totalColumnHeight}px`);
+        canvas.style.setProperty('--age-left-column-height', `${leftColumnHeight}px`);
+        canvas.style.removeProperty('--age-quick-tips-block-height');
 
         const mapClientRect = mapFrame.getBoundingClientRect();
         if (mapClientRect.width >= 8 && mapClientRect.height >= 8) {
@@ -333,7 +483,7 @@
         }
 
         canvas.classList.remove('is-age-hud-layout-pending');
-        lastCouncilLayoutKey = `${top}|${width}|${councilHeight}|${leftPosition}`;
+        lastCouncilLayoutKey = `${top}|${width}|${councilHeight}|${leftPosition}|${reportsPanelHeight}`;
     }
 
     function scheduleCouncilBoardLayoutUntilStable(maxFrames = 48) {
@@ -367,6 +517,8 @@
             councilLayoutObserver = new global.ResizeObserver(() => scheduleCouncilBoardLayoutUntilStable(8));
             councilLayoutObserver.observe(mapFrame);
             if (anchor) councilLayoutObserver.observe(anchor);
+            const leftReportsPanel = global.document.querySelector('#age-map-hud-left .age-left-reports-panel');
+            if (leftReportsPanel) councilLayoutObserver.observe(leftReportsPanel);
         }
     }
 
@@ -379,8 +531,7 @@
         global.document.querySelectorAll(
             '.age-barracks-workspace, .age-unit-evolution-workspace, .age-guild-workspace,'
             + ' .age-age-center-modal, .age-war-ledger-modal,'
-            + ' .commander-hub-overlay, .public-profile-overlay, .player-report-modal,'
-            + ' .age-chronicles-battle-pass-modal, .rift-discoveries-workspace-modal, .rift-banner-workspace-modal, #age-rank-promotion-overlay'
+            + ' .age-chronicles-battle-pass-modal, .rift-discoveries-workspace-modal, .rift-banner-workspace-modal, .blessed-banners-modal, #age-rank-promotion-overlay'
         ).forEach((node) => {
             node.hidden = true;
             node.setAttribute('aria-hidden', 'true');
@@ -390,6 +541,7 @@
     function stripNonMapInlineHandlers() {
         global.document.querySelectorAll('[onclick]').forEach((node) => {
             if (isInsideMap(node)) return;
+            if (node.closest?.('#portal-commander-identity-shell, #portal-desktop-commander-menu')) return;
             node.removeAttribute('onclick');
         });
 
@@ -440,6 +592,160 @@
         global.enableAgeWorldMapPlanEditor?.();
     }
 
+    async function returnToAgePortal() {
+        const target = typeof global.resolveRoyalArmiesPageUrl === 'function'
+            ? global.resolveRoyalArmiesPageUrl('main')
+            : '/main';
+        if (global.RoyalArmiesPageRouteTransition?.navigateTo) {
+            await global.RoyalArmiesPageRouteTransition.navigateTo(target);
+            return;
+        }
+        global.location.href = target;
+    }
+
+    function closeMobileCommanderSubmenu() {
+        const submenu = global.document.getElementById('game-mobile-commander-submenu');
+        const toggle = global.document.getElementById('game-mobile-commander-toggle');
+        const clip = global.document.getElementById('game-mobile-commander-clip');
+        if (!submenu || !toggle) return;
+
+        submenu.hidden = true;
+        toggle.setAttribute('aria-expanded', 'false');
+        if (clip) clip.classList.remove('is-commander-open');
+    }
+
+    function toggleMobileCommanderSubmenu(event) {
+        if (event) event.stopPropagation();
+        const submenu = global.document.getElementById('game-mobile-commander-submenu');
+        const toggle = global.document.getElementById('game-mobile-commander-toggle');
+        const clip = global.document.getElementById('game-mobile-commander-clip');
+        if (!submenu || !toggle) return;
+
+        const willOpen = submenu.hidden;
+        submenu.hidden = !willOpen;
+        toggle.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
+        if (clip) clip.classList.toggle('is-commander-open', willOpen);
+    }
+
+    function gameMobileNavCommanderAction(action, event) {
+        if (typeof global.portalDesktopCommanderMenuAction === 'function') {
+            global.portalDesktopCommanderMenuAction(action, event);
+            return;
+        }
+        if (event) event.stopPropagation();
+        closeMobileCommanderSubmenu();
+    }
+
+    function bindMobileCommanderMenuHandlers() {
+        const toggle = global.document.getElementById('game-mobile-commander-toggle');
+        if (toggle && toggle.dataset.mobileCommanderBound !== 'true') {
+            toggle.dataset.mobileCommanderBound = 'true';
+            toggle.addEventListener('click', toggleMobileCommanderSubmenu);
+        }
+
+        const submenu = global.document.getElementById('game-mobile-commander-submenu');
+        if (!submenu || submenu.dataset.mobileCommanderActionsBound === 'true') return;
+        submenu.dataset.mobileCommanderActionsBound = 'true';
+
+        const actionById = {
+            'game-mobile-messages-btn': 'messages',
+            'game-mobile-dropdown-return-portal-btn': 'return-to-portal',
+            'game-mobile-dropdown-logout-btn': 'logout'
+        };
+
+        submenu.querySelectorAll('.portal-mobile-submenu-item').forEach((button) => {
+            let action = actionById[button.id] || null;
+            if (!action) {
+                const label = String(button.textContent || '').replace(/\s+/g, ' ').trim().toLowerCase();
+                if (label === 'view profile card') action = 'view-profile';
+                else if (label === 'edit profile') action = 'edit-profile';
+                else if (label === 'settings') action = 'settings';
+            }
+            if (!action) return;
+            button.addEventListener('click', (event) => {
+                gameMobileNavCommanderAction(action, event);
+            });
+        });
+
+        global.document.addEventListener('click', (event) => {
+            const clip = global.document.getElementById('game-mobile-commander-clip');
+            if (!clip || !clip.classList.contains('is-commander-open')) return;
+            if (event.target.closest('#game-mobile-commander-clip')) return;
+            closeMobileCommanderSubmenu();
+        });
+    }
+
+    const NATION_WELCOME_LABELS = {
+        aesthene: 'Aesthine'
+    };
+
+    const NATION_CREST_URLS = {
+        aesthene: 'images/aesthenecrest.png',
+        lyllis: 'images/lylliscrest.png'
+    };
+
+    function resolveMapOnlyCommanderNationId() {
+        const movementNation = global.RoyalArmiesAgeMovement?.resolvePlayerNationId?.();
+        if (movementNation) return String(movementNation).trim().toLowerCase();
+
+        const ledgerNation = global.RoyalArmiesAgeMovement?.resolveLedgerNationId?.();
+        if (ledgerNation) return String(ledgerNation).trim().toLowerCase();
+
+        const playerNation = global.player?.gameNation || global.player?.nation;
+        if (playerNation) return String(playerNation).trim().toLowerCase();
+
+        if (typeof global.RoyalArmiesAgeMovementPanel?.getCommanderNationId === 'function') {
+            const panelNation = global.RoyalArmiesAgeMovementPanel.getCommanderNationId();
+            if (panelNation) return String(panelNation).trim().toLowerCase();
+        }
+
+        return '';
+    }
+
+    function resolveNationWelcomeLabel(nationId) {
+        if (!nationId) return '';
+        if (NATION_WELCOME_LABELS[nationId]) return NATION_WELCOME_LABELS[nationId];
+
+        const catalog = global.RoyalArmiesAgeWorldMap?.getCatalog?.();
+        const nation = catalog?.nations?.find((entry) => entry.id === nationId);
+        if (nation?.name) return nation.name;
+
+        return nationId.charAt(0).toUpperCase() + nationId.slice(1);
+    }
+
+    function resolveNationCrestUrl(nationId) {
+        if (NATION_CREST_URLS[nationId]) return NATION_CREST_URLS[nationId];
+        if (nationId) return `images/${nationId}crest.png`;
+        return 'images/aesthenecrest.png';
+    }
+
+    function refreshAgeNationWelcomeChrome() {
+        const textEl = global.document.getElementById('age-nation-welcome-text');
+        const crestEl = global.document.getElementById('age-nation-welcome-crest');
+        if (!textEl && !crestEl) return;
+
+        const nationId = resolveMapOnlyCommanderNationId();
+        const label = resolveNationWelcomeLabel(nationId);
+        if (!label) return;
+
+        if (textEl) {
+            const welcomeText = `Welcome to ${label}`;
+            if (textEl.textContent !== welcomeText) {
+                textEl.textContent = welcomeText;
+            }
+        }
+        if (crestEl) {
+            const crestUrl = resolveNationCrestUrl(nationId);
+            const crestAlt = `${label} crest`;
+            if (crestEl.getAttribute('src') !== crestUrl) {
+                crestEl.src = crestUrl;
+            }
+            if (crestEl.getAttribute('alt') !== crestAlt) {
+                crestEl.setAttribute('alt', crestAlt);
+            }
+        }
+    }
+
     async function bootstrapMapSession() {
         if (typeof global.ensurePortalAuthRestored === 'function') {
             await global.ensurePortalAuthRestored();
@@ -449,6 +755,18 @@
             const saved = global.localStorage.getItem('activeCommanderUser');
             if (!saved || !String(saved).trim()) {
                 await global.applyLocalDevAutoLogin();
+            }
+        }
+
+        if (typeof global.syncPlayerFromActiveCommanderStorage === 'function') {
+            global.syncPlayerFromActiveCommanderStorage();
+        }
+
+        if (typeof global.fetchCommanderDossierFromServer === 'function') {
+            try {
+                await global.fetchCommanderDossierFromServer();
+            } catch (_err) {
+                /* dossier sync optional during map preview */
             }
         }
 
@@ -463,6 +781,8 @@
                 /* movement sync optional for map preview */
             }
         }
+
+        refreshAgeNationWelcomeChrome();
     }
 
     async function bootMapOnlyPage() {
@@ -475,8 +795,10 @@
         blockNonMapInteraction();
 
         retainLoadingGate();
+        bindAgeCommanderNametagMenuDelegation();
 
         try {
+            await ensureAgeCommanderNametagHub();
             await bootstrapMapSession();
 
             if (typeof global.enableAgeWorldMap === 'function') {
@@ -516,10 +838,22 @@
             global.RoyalArmiesAgeNationHub?.enable?.();
             global.enableAgeWorldMapPlanEditor?.();
             global.RoyalArmiesAgeWorldMapPlanEditor?.enable?.();
+            bindMobileCommanderMenuHandlers();
+            await ensureAgeCommanderNametagHub();
+            refreshAgeNationWelcomeChrome();
         } finally {
             await releaseLoadingGate();
         }
     }
+
+    global.refreshAgeNationWelcomeChrome = refreshAgeNationWelcomeChrome;
+    global.addEventListener('royalarmies:age-movement-updated', refreshAgeNationWelcomeChrome);
+
+    global.syncAgeMapHudLayout = syncCouncilBoardLayoutToMap;
+
+    global.returnToGameAgePortal = returnToAgePortal;
+    global.toggleGameMobileCommanderSubmenu = toggleMobileCommanderSubmenu;
+    global.gameMobileNavCommanderAction = gameMobileNavCommanderAction;
 
     global.RoyalArmiesAgeMapOnlyPage = {
         isMapOnlyPage,

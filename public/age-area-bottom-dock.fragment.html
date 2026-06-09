@@ -1,5 +1,22 @@
             <footer class="age-map-hud age-map-hud--bottom age-map-bottom-dock" aria-label="Map controls and chat">
                 <div class="age-map-bottom-dock-shell age-map-hud-panel">
+                    <section
+                        id="age-quick-tips-panel"
+                        class="age-quick-tips-panel age-map-bottom-dock-tips"
+                        aria-label="Quick tips">
+                        <h3 class="age-quick-tips-title">Quick Tips</h3>
+                        <div class="age-quick-tips-copy">
+                            <p id="age-quick-tips-body" class="age-quick-tips-body" aria-live="polite"></p>
+                            <button
+                                type="button"
+                                id="age-quick-tips-next"
+                                class="age-quick-tips-next"
+                                aria-label="Next tip">
+                                <span class="age-quick-tips-next-icon" aria-hidden="true"></span>
+                            </button>
+                        </div>
+                        <p id="age-quick-tips-index" class="age-quick-tips-index" aria-hidden="true"></p>
+                    </section>
                     <div class="age-map-bottom-dock-chat-column" aria-label="In-game chat">
                         <div id="age-map-bottom-chat-messages-host" class="age-map-bottom-chat-messages-host" hidden></div>
                         <div id="age-map-bottom-chat-compose-host" class="age-map-bottom-chat-compose-host" hidden></div>
@@ -23,7 +40,6 @@
                                     <span id="game-mobile-messages-unread" class="dropdown-messages-unread-count" hidden></span>
                                 </button>
                                 <button type="button" class="portal-mobile-submenu-item" onclick="gameMobileNavCommanderAction('settings', event)">Settings</button>
-                                <button type="button" class="portal-mobile-submenu-item" onclick="gameMobileNavCommanderAction('chronicles-battle-pass', event)">The Chronicles Battle Pass</button>
                                 <button type="button" id="game-mobile-dropdown-return-portal-btn" class="portal-mobile-submenu-item portal-mobile-submenu-item-return-portal" onclick="gameMobileNavCommanderAction('return-to-portal', event)">Return to Age Portal</button>
                                 <button type="button" id="game-mobile-dropdown-logout-btn" class="portal-mobile-submenu-item portal-mobile-submenu-item-logout" onclick="gameMobileNavCommanderAction('logout', event)">Log Out</button>
                             </div>
@@ -62,7 +78,6 @@
                                         <span id="nav-messages-unread-count" class="dropdown-messages-unread-count" hidden></span>
                                     </button>
                                     <button type="button" class="dropdown-action-item" role="menuitem" onclick="portalDesktopCommanderMenuAction('settings', event)">Settings</button>
-                                    <button type="button" class="dropdown-action-item dropdown-action-item-chronicles-bp" role="menuitem" onclick="portalDesktopCommanderMenuAction('chronicles-battle-pass', event)">The Chronicles Battle Pass</button>
                                     <button type="button" id="game-nav-dropdown-return-portal-btn" class="dropdown-action-item dropdown-action-item-return-portal" role="menuitem" onclick="portalDesktopCommanderMenuAction('return-to-portal', event)">Return to Age Portal</button>
                                     <button type="button" id="game-nav-dropdown-logout-btn" class="dropdown-action-item dropdown-action-item-logout" role="menuitem" onclick="portalDesktopCommanderMenuAction('logout', event)">Log Out</button>
                                 </div>
