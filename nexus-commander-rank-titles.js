@@ -1,5 +1,5 @@
 /**
- * NEXUS — Commander rank display titles (Battlemaster / Archmage, ranks 1–22).
+ * NEXUS — Commander rank display titles (Battlemaster / Battlemage, ranks 1–22).
  */
 'use strict';
 
@@ -55,7 +55,7 @@ const BATTLEMASTER_RANK_TITLES_FEMALE = Object.freeze([
     'Lord-High Commandress'
 ]);
 
-const ARCHMAGE_RANK_TITLES_MALE = Object.freeze([
+const BATTLEMAGE_RANK_TITLES_MALE = Object.freeze([
     'Initiate Magus',
     'Apprentice Magus',
     'Acolyte Magus',
@@ -70,7 +70,7 @@ const ARCHMAGE_RANK_TITLES_MALE = Object.freeze([
     'High Magus',
     'Grand Magus',
     'Arcanist Magus',
-    'Archmagus',
+    'Battlemagus',
     'Sorcerer-General',
     'Coven-Lord',
     'Master of Spheres',
@@ -80,7 +80,7 @@ const ARCHMAGE_RANK_TITLES_MALE = Object.freeze([
     'Aether-Sovereign Magus'
 ]);
 
-const ARCHMAGE_RANK_TITLES_FEMALE = Object.freeze([
+const BATTLEMAGE_RANK_TITLES_FEMALE = Object.freeze([
     'Initiate Maga',
     'Apprentice Maga',
     'Acolyte Maga',
@@ -95,7 +95,7 @@ const ARCHMAGE_RANK_TITLES_FEMALE = Object.freeze([
     'High Maga',
     'Grand Maga',
     'Arcanist Maga',
-    'Archmaga',
+    'Battlemaga',
     'Sorceress-General',
     'Coven-Lady',
     'Mistress of Spheres',
@@ -113,7 +113,7 @@ function clampCommanderRank(rank) {
 
 function resolveCommanderPathId(pathCode) {
     const path = String(pathCode || '').trim().toUpperCase();
-    if (path === 'MAG' || path === 'MAGIC') return 'archmage';
+    if (path === 'MAG' || path === 'MAGIC') return 'battlemage';
     return 'battlemaster';
 }
 
@@ -125,8 +125,8 @@ function resolveCommanderRankTitleGender(raw) {
 function getCommanderRankTitleTable(pathCode, gender) {
     const pathId = resolveCommanderPathId(pathCode);
     const useFemale = resolveCommanderRankTitleGender(gender) === 'female';
-    if (pathId === 'archmage') {
-        return useFemale ? ARCHMAGE_RANK_TITLES_FEMALE : ARCHMAGE_RANK_TITLES_MALE;
+    if (pathId === 'battlemage') {
+        return useFemale ? BATTLEMAGE_RANK_TITLES_FEMALE : BATTLEMAGE_RANK_TITLES_MALE;
     }
     return useFemale ? BATTLEMASTER_RANK_TITLES_FEMALE : BATTLEMASTER_RANK_TITLES_MALE;
 }
@@ -185,8 +185,8 @@ module.exports = {
     COMMANDER_RANK_TITLE_MAX,
     BATTLEMASTER_RANK_TITLES_MALE,
     BATTLEMASTER_RANK_TITLES_FEMALE,
-    ARCHMAGE_RANK_TITLES_MALE,
-    ARCHMAGE_RANK_TITLES_FEMALE,
+    BATTLEMAGE_RANK_TITLES_MALE,
+    BATTLEMAGE_RANK_TITLES_FEMALE,
     clampCommanderRank,
     resolveCommanderPathId,
     resolveCommanderRankTitleGender,

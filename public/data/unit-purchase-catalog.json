@@ -30,7 +30,7 @@
       ],
       "classByPath": {
         "Physical": "battlemaster",
-        "Magic": "archmage"
+        "Magic": "battlemage"
       },
       "branchRoles": {
         "A": "Rank",
@@ -930,7 +930,7 @@
       "portraitPlaceholder": true,
       "displayName": "Acolyte",
       "unitRole": "rank",
-      "requiredClass": "archmage",
+      "requiredClass": "battlemage",
       "unlockRank": 1,
       "roleLabel": "Rank"
     },
@@ -969,7 +969,7 @@
       "portraitPlaceholder": true,
       "displayName": "Warder (A)",
       "unitRole": "rank",
-      "requiredClass": "archmage",
+      "requiredClass": "battlemage",
       "unlockRank": 7,
       "roleLabel": "Rank"
     },
@@ -1008,7 +1008,7 @@
       "portraitPlaceholder": true,
       "displayName": "Spellblade (B)",
       "unitRole": "pvp",
-      "requiredClass": "archmage",
+      "requiredClass": "battlemage",
       "unlockRank": 14,
       "roleLabel": "PvP"
     },
@@ -1053,7 +1053,7 @@
       "portraitPlaceholder": true,
       "displayName": "Arcane Sentinel (A)",
       "unitRole": "rank",
-      "requiredClass": "archmage",
+      "requiredClass": "battlemage",
       "unlockRank": 18,
       "roleLabel": "Rank"
     },
@@ -1098,7 +1098,7 @@
       "portraitPlaceholder": true,
       "displayName": "Void Reaver (B)",
       "unitRole": "pvp",
-      "requiredClass": "archmage",
+      "requiredClass": "battlemage",
       "unlockRank": 20,
       "roleLabel": "PvP"
     },
@@ -1150,7 +1150,7 @@
       "portraitPlaceholder": true,
       "displayName": "Eldritch Bulwark (A)",
       "unitRole": "rank",
-      "requiredClass": "archmage",
+      "requiredClass": "battlemage",
       "unlockRank": 21,
       "roleLabel": "Rank"
     },
@@ -1202,7 +1202,7 @@
       "portraitPlaceholder": true,
       "displayName": "Arcane Executioner (B)",
       "unitRole": "pvp",
-      "requiredClass": "archmage",
+      "requiredClass": "battlemage",
       "unlockRank": 22,
       "roleLabel": "PvP"
     },
@@ -1242,7 +1242,7 @@
       "portraitPlaceholder": true,
       "displayName": "Neophyte",
       "unitRole": "rank",
-      "requiredClass": "archmage",
+      "requiredClass": "battlemage",
       "unlockRank": 1,
       "roleLabel": "Rank"
     },
@@ -1282,7 +1282,7 @@
       "portraitPlaceholder": true,
       "displayName": "Aether Lancer",
       "unitRole": "pvp",
-      "requiredClass": "archmage",
+      "requiredClass": "battlemage",
       "unlockRank": 14,
       "roleLabel": "PvP"
     },
@@ -1323,7 +1323,7 @@
       "portraitPlaceholder": true,
       "displayName": "Celestial Harbinger",
       "unitRole": "pvp",
-      "requiredClass": "archmage",
+      "requiredClass": "battlemage",
       "unlockRank": 22,
       "roleLabel": "PvP"
     },
@@ -1365,7 +1365,7 @@
       "portraitPlaceholder": true,
       "displayName": "Holder",
       "unitRole": "pvp",
-      "requiredClass": "archmage",
+      "requiredClass": "battlemage",
       "unlockRank": 1,
       "roleLabel": "PvP"
     },
@@ -1407,7 +1407,7 @@
       "portraitPlaceholder": true,
       "displayName": "Vessel",
       "unitRole": "pvp",
-      "requiredClass": "archmage",
+      "requiredClass": "battlemage",
       "unlockRank": 14,
       "roleLabel": "PvP"
     },
@@ -1450,7 +1450,7 @@
       "portraitPlaceholder": true,
       "displayName": "Archon",
       "unitRole": "pvp",
-      "requiredClass": "archmage",
+      "requiredClass": "battlemage",
       "unlockRank": 22,
       "roleLabel": "PvP"
     },
@@ -1489,7 +1489,7 @@
       "portraitPlaceholder": true,
       "displayName": "Wyrmling",
       "unitRole": "rank",
-      "requiredClass": "archmage",
+      "requiredClass": "battlemage",
       "unlockRank": 1,
       "roleLabel": "Rank"
     },
@@ -1528,7 +1528,7 @@
       "portraitPlaceholder": true,
       "displayName": "Blood-Drake",
       "unitRole": "rank",
-      "requiredClass": "archmage",
+      "requiredClass": "battlemage",
       "unlockRank": 14,
       "roleLabel": "Rank"
     },
@@ -1567,7 +1567,7 @@
       "portraitPlaceholder": true,
       "displayName": "Iron-Hide Drake",
       "unitRole": "rank",
-      "requiredClass": "archmage",
+      "requiredClass": "battlemage",
       "unlockRank": 18,
       "roleLabel": "Rank"
     },
@@ -1613,7 +1613,7 @@
       "portraitPlaceholder": true,
       "displayName": "Calamity Dragon (A)",
       "unitRole": "rank",
-      "requiredClass": "archmage",
+      "requiredClass": "battlemage",
       "unlockRank": 20,
       "roleLabel": "Rank"
     },
@@ -1659,7 +1659,7 @@
       "portraitPlaceholder": true,
       "displayName": "Shadow Talon (B)",
       "unitRole": "pvp",
-      "requiredClass": "archmage",
+      "requiredClass": "battlemage",
       "unlockRank": 21,
       "roleLabel": "PvP"
     }

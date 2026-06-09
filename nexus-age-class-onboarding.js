@@ -1,5 +1,5 @@
 /**
- * NEXUS — Age class + Perk 1 onboarding (Battlemaster / Archmage path).
+ * NEXUS — Age class + Perk 1 onboarding (Battlemaster / Battlemage path).
  */
 'use strict';
 
@@ -22,7 +22,7 @@ function normalizeClassPerk1Branch(raw) {
 
 function resolveClassIdFromPath(pathCode) {
     const path = normalizeClassPathCode(pathCode);
-    return path === 'MAG' ? 'archmage' : 'battlemaster';
+    return path === 'MAG' ? 'battlemage' : 'battlemaster';
 }
 
 function commanderHasLockedClassChoice(commander) {

@@ -1677,9 +1677,9 @@ body {
     transform-origin: right center; /* Restored side-origin for cinematic overlap */
 } 
 
-#card-archmage { 
+#card-battlemage { 
     transform-origin: left center; 
-    top: 20px; /* Aligns Archmage vertically with the Battlemaster on PC */
+    top: 20px; /* Aligns Battlemage vertically with the Battlemaster on PC */
 } 
 
 /* Quest Plaque Nudges (Matching text to specific plaque shapes) */ 

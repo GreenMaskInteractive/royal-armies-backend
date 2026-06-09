@@ -2,6 +2,49 @@
    COMMANDER HUB MODAL — Age Portal Profile / Messages / Settings
    ========================================================================== */
 
+function isAgeMapOnlyShell() {
+    return Boolean(document.body?.dataset?.ageMapOnly === 'true');
+}
+
+function ensureCommanderHubModalPortaled() {
+    const modal = document.getElementById('commander-hub-modal');
+    if (!modal || modal.dataset.ageHubPortaled === 'true') return;
+    document.body.appendChild(modal);
+    modal.dataset.ageHubPortaled = 'true';
+}
+
+function ensurePublicProfileOverlayPortaled() {
+    const overlay = document.getElementById('public-commander-profile-overlay');
+    if (!overlay || overlay.dataset.ageProfilePortaled === 'true') return;
+    document.body.appendChild(overlay);
+    overlay.dataset.ageProfilePortaled = 'true';
+}
+
+function bindCommanderHubModalChromeHandlers() {
+    if (document.documentElement.dataset.commanderHubModalChromeBound === 'true') return;
+    document.documentElement.dataset.commanderHubModalChromeBound = 'true';
+
+    document.querySelectorAll('.commander-hub-close-btn').forEach((button) => {
+        if (button.dataset.commanderHubCloseBound === 'true') return;
+        button.dataset.commanderHubCloseBound = 'true';
+        button.addEventListener('click', (event) => closeCommanderHubModal(event));
+    });
+
+    document.querySelectorAll('.commander-hub-top-tab[data-hub-tab]').forEach((tab) => {
+        if (tab.dataset.commanderHubTabBound === 'true') return;
+        tab.dataset.commanderHubTabBound = 'true';
+        tab.addEventListener('click', (event) => {
+            handleCommanderHubTopTabClick(tab.getAttribute('data-hub-tab'), event);
+        });
+    });
+
+    document.querySelectorAll('.public-profile-close-btn').forEach((button) => {
+        if (button.dataset.publicProfileCloseBound === 'true') return;
+        button.dataset.publicProfileCloseBound = 'true';
+        button.addEventListener('click', (event) => closePublicCommanderProfileCard(event));
+    });
+}
+
 function getCommanderHubModalMount() {
     return {
         container: document.getElementById('commander-hub-subnav'),
@@ -149,12 +192,20 @@ function openCommanderHubModal(initialTab, clickEvent) {
     const modal = document.getElementById('commander-hub-modal');
     if (!modal) return;
 
+    if (isAgeMapOnlyShell()) {
+        ensureCommanderHubModalPortaled();
+        document.body.classList.add('age-commander-hub-open');
+    }
+
     syncCommanderHubPlayerFromStorage();
     if (typeof loadCommanderMailboxDossiersFromStorage === 'function') {
         loadCommanderMailboxDossiersFromStorage();
     }
     if (typeof autoDetectPlayerLocale === 'function') autoDetectPlayerLocale();
 
+    modal.hidden = false;
+    modal.removeAttribute('hidden');
+    modal.setAttribute('aria-hidden', 'false');
     modal.classList.add('is-visible');
     modal.style.display = 'flex';
     requestAnimationFrame(() => {
@@ -192,6 +243,7 @@ function closeCommanderHubModal() {
     const modal = document.getElementById('commander-hub-modal');
     if (!modal) return;
 
+    document.body.classList.remove('age-commander-hub-open');
     modal.style.opacity = '0';
     modal.classList.remove(
         'is-visible',
@@ -202,6 +254,7 @@ function closeCommanderHubModal() {
     syncCommanderHubSettingsActionDeck(null);
     window.setTimeout(() => {
         modal.style.display = 'none';
+        modal.setAttribute('aria-hidden', 'true');
     }, 280);
 
     if (typeof currentNarration !== 'undefined' && currentNarration) {
@@ -434,8 +487,8 @@ function getCommanderClassTitle(pathCode) {
 
     const labels = {
         PHYS: 'Battlemaster',
-        MAG: 'Archmage',
-        MAGIC: 'Archmage'
+        MAG: 'Battlemage',
+        MAGIC: 'Battlemage'
     };
     return labels[pathCode] || 'N/A';
 }
@@ -836,7 +889,14 @@ function showPublicCommanderProfileOverlay(snapshot) {
     const mount = document.getElementById('public-profile-card-mount');
     if (!overlay || !mount) return false;
 
+    if (isAgeMapOnlyShell()) {
+        ensurePublicProfileOverlayPortaled();
+        document.body.classList.add('age-public-profile-open');
+    }
+
     mount.innerHTML = renderPublicProfileCardContent(snapshot);
+    overlay.hidden = false;
+    overlay.removeAttribute('hidden');
     overlay.classList.add('is-visible');
     overlay.setAttribute('aria-hidden', 'false');
     overlay.style.display = 'flex';
@@ -879,6 +939,7 @@ function closePublicCommanderProfileCard(clickEvent) {
     const overlay = document.getElementById('public-commander-profile-overlay');
     if (!overlay) return;
 
+    document.body.classList.remove('age-public-profile-open');
     overlay.style.opacity = '0';
     overlay.classList.remove('is-visible');
     overlay.setAttribute('aria-hidden', 'true');
@@ -908,3 +969,8 @@ window.openPublicCommanderProfileCard = openPublicCommanderProfileCard;
 window.closePublicCommanderProfileCard = closePublicCommanderProfileCard;
 window.fetchCommanderPublicProfileForViewer = fetchCommanderPublicProfileForViewer;
 window.showPublicCommanderProfileOverlay = showPublicCommanderProfileOverlay;
+
+bindCommanderHubModalChromeHandlers();
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', bindCommanderHubModalChromeHandlers, { once: true });
+}

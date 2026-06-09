@@ -5,7 +5,7 @@
 
 function resolveCommanderClassId(commander) {
     const rawPath = String(commander?.path || 'PHYS').trim().toUpperCase();
-    if (rawPath === 'MAG' || rawPath === 'MAGIC') return 'archmage';
+    if (rawPath === 'MAG' || rawPath === 'MAGIC') return 'battlemage';
     return 'battlemaster';
 }
 
@@ -120,7 +120,7 @@ const GEAR_ITEMS = Object.freeze({
     'am-focus-staff': {
         name: 'Focus Staff',
         slot: 'mainHand',
-        classId: 'archmage',
+        classId: 'battlemage',
         tier: 1,
         rarity: 'common',
         iconSrc: 'images/classarchmage.png',
@@ -129,7 +129,7 @@ const GEAR_ITEMS = Object.freeze({
     'am-arcane-tome': {
         name: 'Arcane Tome',
         slot: 'offHand',
-        classId: 'archmage',
+        classId: 'battlemage',
         tier: 1,
         rarity: 'common',
         stats: { ranged: 2, command: 1 }
@@ -137,7 +137,7 @@ const GEAR_ITEMS = Object.freeze({
     'am-circlet': {
         name: 'Circlet of Study',
         slot: 'head',
-        classId: 'archmage',
+        classId: 'battlemage',
         tier: 1,
         rarity: 'common',
         stats: { ranged: 1, guildXp: 0.02 }
@@ -145,7 +145,7 @@ const GEAR_ITEMS = Object.freeze({
     'am-robes': {
         name: 'Scholar Robes',
         slot: 'chest',
-        classId: 'archmage',
+        classId: 'battlemage',
         tier: 1,
         rarity: 'common',
         stats: { ranged: 2, injuryMitigation: 0.02 }
@@ -153,7 +153,7 @@ const GEAR_ITEMS = Object.freeze({
     'am-weave-gloves': {
         name: 'Weave Gloves',
         slot: 'hands',
-        classId: 'archmage',
+        classId: 'battlemage',
         tier: 1,
         rarity: 'common',
         stats: { ranged: 1, command: 1 }
@@ -161,7 +161,7 @@ const GEAR_ITEMS = Object.freeze({
     'am-runed-leggings': {
         name: 'Runed Leggings',
         slot: 'legs',
-        classId: 'archmage',
+        classId: 'battlemage',
         tier: 1,
         rarity: 'common',
         stats: { morale: 2 }
@@ -169,7 +169,7 @@ const GEAR_ITEMS = Object.freeze({
     'am-soft-shoes': {
         name: 'Soft Shoes',
         slot: 'feet',
-        classId: 'archmage',
+        classId: 'battlemage',
         tier: 1,
         rarity: 'common',
         stats: { morale: 1, injuryMitigation: 0.01 }
@@ -177,7 +177,7 @@ const GEAR_ITEMS = Object.freeze({
     'am-mystic-cloak': {
         name: 'Mystic Cloak',
         slot: 'cloak',
-        classId: 'archmage',
+        classId: 'battlemage',
         tier: 1,
         rarity: 'common',
         stats: { ranged: 1, guildXp: 0.02 }
@@ -185,7 +185,7 @@ const GEAR_ITEMS = Object.freeze({
     'am-band-ring': {
         name: 'Band Ring',
         slot: 'ring',
-        classId: 'archmage',
+        classId: 'battlemage',
         tier: 1,
         rarity: 'common',
         stats: { command: 2 }
@@ -193,7 +193,7 @@ const GEAR_ITEMS = Object.freeze({
     'am-sigil-amulet': {
         name: 'Sigil Amulet',
         slot: 'amulet',
-        classId: 'archmage',
+        classId: 'battlemage',
         tier: 1,
         rarity: 'common',
         stats: { morale: 2, injuryMitigation: 0.01 }
@@ -282,7 +282,7 @@ const GEAR_ITEMS = Object.freeze({
     'am-veteran-staff': {
         name: 'Veteran Staff',
         slot: 'mainHand',
-        classId: 'archmage',
+        classId: 'battlemage',
         tier: 2,
         rarity: 'uncommon',
         iconSrc: 'images/classarchmage.png',
@@ -291,7 +291,7 @@ const GEAR_ITEMS = Object.freeze({
     'am-veteran-tome': {
         name: 'Veteran Tome',
         slot: 'offHand',
-        classId: 'archmage',
+        classId: 'battlemage',
         tier: 2,
         rarity: 'uncommon',
         stats: { ranged: 3, command: 2 }
@@ -299,7 +299,7 @@ const GEAR_ITEMS = Object.freeze({
     'am-veteran-circlet': {
         name: 'Veteran Circlet',
         slot: 'head',
-        classId: 'archmage',
+        classId: 'battlemage',
         tier: 2,
         rarity: 'uncommon',
         stats: { ranged: 2, guildXp: 0.03 }
@@ -307,7 +307,7 @@ const GEAR_ITEMS = Object.freeze({
     'am-veteran-robes': {
         name: 'Veteran Robes',
         slot: 'chest',
-        classId: 'archmage',
+        classId: 'battlemage',
         tier: 2,
         rarity: 'uncommon',
         stats: { ranged: 3, injuryMitigation: 0.04 }
@@ -315,7 +315,7 @@ const GEAR_ITEMS = Object.freeze({
     'am-veteran-gloves': {
         name: 'Veteran Gloves',
         slot: 'hands',
-        classId: 'archmage',
+        classId: 'battlemage',
         tier: 2,
         rarity: 'uncommon',
         stats: { ranged: 2, command: 2 }
@@ -323,7 +323,7 @@ const GEAR_ITEMS = Object.freeze({
     'am-veteran-leggings': {
         name: 'Veteran Leggings',
         slot: 'legs',
-        classId: 'archmage',
+        classId: 'battlemage',
         tier: 2,
         rarity: 'uncommon',
         stats: { morale: 3 }
@@ -331,7 +331,7 @@ const GEAR_ITEMS = Object.freeze({
     'am-veteran-shoes': {
         name: 'Veteran Shoes',
         slot: 'feet',
-        classId: 'archmage',
+        classId: 'battlemage',
         tier: 2,
         rarity: 'uncommon',
         stats: { morale: 2, injuryMitigation: 0.02 }
@@ -339,7 +339,7 @@ const GEAR_ITEMS = Object.freeze({
     'am-veteran-cloak': {
         name: 'Veteran Cloak',
         slot: 'cloak',
-        classId: 'archmage',
+        classId: 'battlemage',
         tier: 2,
         rarity: 'uncommon',
         stats: { ranged: 2, guildXp: 0.04 }
@@ -347,7 +347,7 @@ const GEAR_ITEMS = Object.freeze({
     'am-veteran-ring': {
         name: 'Veteran Ring',
         slot: 'ring',
-        classId: 'archmage',
+        classId: 'battlemage',
         tier: 2,
         rarity: 'uncommon',
         stats: { command: 3 }
@@ -355,10 +355,46 @@ const GEAR_ITEMS = Object.freeze({
     'am-veteran-amulet': {
         name: 'Veteran Amulet',
         slot: 'amulet',
-        classId: 'archmage',
+        classId: 'battlemage',
         tier: 2,
         rarity: 'uncommon',
         stats: { morale: 3, injuryMitigation: 0.02 }
+    },
+    'gear-commanders-signal-horn': {
+        name: "Commander's Signal Horn",
+        slot: 'mainHand',
+        classId: 'battlemaster',
+        tier: 2,
+        rarity: 'rare',
+        battleEffect: 'signal-horn',
+        stats: { command: 2, morale: 1 }
+    },
+    'gear-mage-slayer-harpoon': {
+        name: 'Mage-Slayer Harpoon',
+        slot: 'mainHand',
+        classId: 'battlemaster',
+        tier: 3,
+        rarity: 'rare',
+        battleEffect: 'mage-slayer-harpoon',
+        stats: { strength: 4 }
+    },
+    'gear-linked-resilient-plating': {
+        name: 'Linked Resilient Plating',
+        slot: 'chest',
+        classId: 'battlemaster',
+        tier: 3,
+        rarity: 'rare',
+        battleEffect: 'linked-resilient-plating',
+        stats: { injuryMitigation: 0.05, strength: 2 }
+    },
+    'gear-null-stone-aegis': {
+        name: 'Null-Stone Aegis',
+        slot: 'offHand',
+        classId: 'battlemaster',
+        tier: 3,
+        rarity: 'epic',
+        battleEffect: 'null-stone-aegis',
+        stats: { injuryMitigation: 0.04, morale: 2 }
     }
 });
 
@@ -389,7 +425,7 @@ const DEFAULT_LOADOUTS = Object.freeze({
             amulet: 'bm-veteran-amulet'
         }
     },
-    archmage: {
+    battlemage: {
         1: {
             head: 'am-circlet',
             chest: 'am-robes',
@@ -419,12 +455,12 @@ const DEFAULT_LOADOUTS = Object.freeze({
 
 const CLASS_PORTRAITS = Object.freeze({
     battlemaster: 'images/battlemasterclass.png',
-    archmage: 'images/classarchmage.png'
+    battlemage: 'images/classarchmage.png'
 });
 
 const CLASS_LABELS = Object.freeze({
     battlemaster: 'Battlemaster',
-    archmage: 'Archmage'
+    battlemage: 'Battlemage'
 });
 
 function resolveGearTierFromRank(rank) {
@@ -461,8 +497,8 @@ function commanderHasAcquiredGear(commander) {
 }
 
 /**
- * Last Knights Trainer parity: 0.5% guild XP per trainer point on wins only.
- * Applies only when perks are explicitly stored on the commander ledger.
+ * Legacy acquired guild-XP multiplier (trainer perk, gear, guild bonuses).
+ * Not used by guild training drills — see calculateGuildTrainingBattleXp.
  */
 function resolveAcquiredGuildTrainingXpMultiplier(commander, battleWinner) {
     if (String(battleWinner || '').trim().toLowerCase() !== 'commander') {
@@ -547,18 +583,50 @@ function formatStatLine(key, value) {
 
     if (key === 'injuryMitigation' || key === 'guildXp') {
         const pct = Math.round(value * 1000) / 10;
-        return { key, label, value, formatted: `+${pct}% ${label}` };
+        const scope = key === 'guildXp'
+            ? ' (city assault & border PvP)'
+            : ' (city assault & border PvP; not training)';
+        return { key, label, value, formatted: `+${pct}% ${label}${scope}` };
     }
 
     const rounded = Math.round(value * 10) / 10;
     return { key, label, value: rounded, formatted: `+${rounded} ${label}` };
 }
 
-function buildGearStatLines(totals) {
+const BATTLE_EFFECT_COPY = Object.freeze({
+    'signal-horn': 'City assault & border PvP: ranged damage marks surviving enemy stacks for +20% damage that phase.',
+    'mage-slayer-harpoon': 'City assault & border PvP: physical cavalry deals +40% vs magic lanes when dominant unit tiers match.',
+    'linked-resilient-plating': 'City assault & border PvP: +5% infantry HP from combined cavalry and beast lane HP at fight start.',
+    'null-stone-aegis': 'City assault & border PvP: physical infantry absorbs 35% of magic artillery counter damage.'
+});
+
+function buildGearBattleEffectLines(slots) {
+    const seen = new Set();
+    const lines = [];
+
+    (Array.isArray(slots) ? slots : []).forEach((slot) => {
+        const effect = String(slot?.equipped?.battleEffect || '').trim();
+        if (!effect || seen.has(effect)) return;
+        const copy = BATTLE_EFFECT_COPY[effect];
+        if (!copy) return;
+        seen.add(effect);
+        lines.push({
+            key: `battle-${effect}`,
+            label: slot.equipped.name || 'Battle gear',
+            value: effect,
+            formatted: copy
+        });
+    });
+
+    return lines;
+}
+
+function buildGearStatLines(totals, slots) {
     const order = ['strength', 'ranged', 'morale', 'command', 'injuryMitigation', 'guildXp'];
-    return order
+    const baseLines = order
         .map((key) => formatStatLine(key, totals[key]))
         .filter(Boolean);
+    return baseLines.concat(buildGearBattleEffectLines(slots));
 }
 
 function buildCommanderEquipmentBonuses(commander) {
@@ -594,6 +662,7 @@ function buildCommanderGearPanelPayload(commander) {
                     name: equipped.name,
                     rarity: equipped.rarity || 'common',
                     iconSrc: equipped.iconSrc || '',
+                    battleEffect: equipped.battleEffect || '',
                     stats: { ...(equipped.stats || {}) }
                 }
                 : null
@@ -601,6 +670,9 @@ function buildCommanderGearPanelPayload(commander) {
     });
 
     const statTotals = sumGearStatTotals(slots);
+    const perk1Branch = String(
+        commander?.ageClassPerkChoices?.perk1 || commander?.ageClassPerk1Branch || ''
+    ).trim().toUpperCase();
 
     return {
         commanderName: username,
@@ -609,11 +681,12 @@ function buildCommanderGearPanelPayload(commander) {
         rank,
         path,
         rankTitleGender,
+        perk1Branch: perk1Branch === 'A' || perk1Branch === 'B' ? perk1Branch : null,
         portraitSrc: resolveDefaultAvatarUrl(commander, classId),
         classPortraitSrc: CLASS_PORTRAITS[classId] || CLASS_PORTRAITS.battlemaster,
         slots,
         statTotals,
-        statLines: buildGearStatLines(statTotals)
+        statLines: buildGearStatLines(statTotals, slots)
     };
 }
 

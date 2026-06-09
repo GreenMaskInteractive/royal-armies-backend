@@ -23,7 +23,7 @@ const FOUR_TIER_UNLOCK_RANKS = [1, 7, 14, 18];
 const EXTENDED_UNLOCK_RANKS = [1, 7, 14, 18, 20, 21, 22];
 const CLASS_BY_PATH = {
     Physical: 'battlemaster',
-    Magic: 'archmage'
+    Magic: 'battlemage'
 };
 const PROMOTION_RANK = {
     app: 1,
@@ -45,7 +45,7 @@ function loadUnitPurchaseCatalog() {
 
 function resolveCommanderClassId(commander) {
     const rawPath = String(commander?.path || 'PHYS').trim().toUpperCase();
-    if (rawPath === 'MAG' || rawPath === 'MAGIC') return 'archmage';
+    if (rawPath === 'MAG' || rawPath === 'MAGIC') return 'battlemage';
     return 'battlemaster';
 }
 

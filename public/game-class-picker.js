@@ -12,11 +12,11 @@
             panelId: 'game-class-panel-battlemaster',
             pathCode: 'PHYS'
         },
-        archmage: {
-            id: 'archmage',
-            label: 'Archmage',
+        battlemage: {
+            id: 'battlemage',
+            label: 'Battlemage',
             side: 'right',
-            panelId: 'game-class-panel-archmage',
+            panelId: 'game-class-panel-battlemage',
             pathCode: 'MAG'
         }
     };
@@ -27,6 +27,10 @@
 
     let displayedClassId = 'battlemaster';
     let activeClassId = null;
+    const perk1BranchByClass = {
+        battlemaster: null,
+        battlemage: null
+    };
     let isClassSwapAnimating = false;
     let layoutObserver = null;
     let layoutSyncToken = 0;
@@ -90,7 +94,7 @@
     }
 
     function getOtherClassId(classId) {
-        return classId === 'battlemaster' ? 'archmage' : 'battlemaster';
+        return classId === 'battlemaster' ? 'battlemage' : 'battlemaster';
     }
 
     function clearPanelInlineCoords(panel) {
@@ -155,12 +159,12 @@
         return height;
     }
 
-    function syncArchmagePanelHeight(forceMeasure) {
+    function syncBattlemagePanelHeight(forceMeasure) {
         const root = getPickerRoot();
         if (!root) return;
 
         const panelClassId = activeClassId || displayedClassId;
-        if (panelClassId !== 'archmage' && !forceMeasure) return;
+        if (panelClassId !== 'battlemage' && !forceMeasure) return;
 
         const bmHeight = measureBattlemasterPanelHeight();
         if (bmHeight > 0) {
@@ -246,7 +250,7 @@
             }
         });
 
-        syncArchmagePanelHeight();
+        syncBattlemagePanelHeight();
     }
 
     function beginPanelSwap(fromClassId, targetClassId) {
@@ -337,7 +341,7 @@
         }
 
         syncStageActiveSide();
-        syncArchmagePanelHeight();
+        syncBattlemagePanelHeight();
     }
 
     function refreshSelectionState() {
@@ -356,6 +360,7 @@
         });
 
         refreshPanelState();
+        syncClassConfirmButtonState();
         scheduleLayoutSync();
     }
 
@@ -434,11 +439,83 @@
     }
 
     function resetPanelPerkDetail(_panel) {
-        /* Static perk layout — nothing to reset. */
+        /* Interactive perk layout — branch state persists on the class object. */
+    }
+
+    function getPerk1BranchForClass(classId) {
+        return perk1BranchByClass[classId] || null;
+    }
+
+    function setPerk1BranchForClass(classId, branch) {
+        if (!GAME_CLASS_OPTIONS[classId]) return;
+        const normalized = String(branch || '').trim().toUpperCase();
+        perk1BranchByClass[classId] = normalized === 'A' || normalized === 'B' ? normalized : null;
+        global.RoyalArmiesClassPerkCatalog?.mountClassPerkPanel?.(classId, perk1BranchByClass[classId]);
+        syncClassConfirmButtonState();
+        scheduleLayoutSync();
+    }
+
+    function hydrateClassPerkPanels() {
+        if (!global.RoyalArmiesClassPerkCatalog?.mountAllClassPerkPanels) return;
+        global.RoyalArmiesClassPerkCatalog.mountAllClassPerkPanels(perk1BranchByClass);
+    }
+
+    function applySavedClassChoicesFromCommander(commander) {
+        if (!commander || typeof commander !== 'object') return;
+
+        const path = String(commander.path || '').trim().toUpperCase();
+        const classId = path === 'MAG' || path === 'MAGIC' ? 'battlemage' : (path === 'PHYS' ? 'battlemaster' : null);
+        const perk1 = String(
+            commander?.ageClassPerkChoices?.perk1
+            || commander?.ageClassPerk1Branch
+            || ''
+        ).trim().toUpperCase();
+
+        if (perk1 === 'A' || perk1 === 'B') {
+            if (classId) perk1BranchByClass[classId] = perk1;
+            else {
+                perk1BranchByClass.battlemaster = perk1;
+                perk1BranchByClass.battlemage = perk1;
+            }
+        }
+
+        if (classId) {
+            displayedClassId = classId;
+            activeClassId = classId;
+            setShowcaseAccentClass(classId);
+        }
+
+        hydrateClassPerkPanels();
+        refreshSelectionState();
+    }
+
+    function syncClassConfirmButtonState() {
+        const confirmBtn = global.document.getElementById('game-class-confirm-btn');
+        if (!confirmBtn) return;
+
+        const classId = activeClassId || displayedClassId;
+        const hasClass = Boolean(classId && GAME_CLASS_OPTIONS[classId]);
+        const hasPerk = Boolean(getPerk1BranchForClass(classId));
+        const ready = hasClass && hasPerk;
+
+        confirmBtn.disabled = !ready;
+        confirmBtn.setAttribute('aria-disabled', ready ? 'false' : 'true');
+        confirmBtn.title = ready
+            ? 'Confirm class and lock Perk 1'
+            : 'Select your class portrait and choose Perk 1 Option A or B';
     }
 
     function confirmClassSelection(classId) {
         if (!GAME_CLASS_OPTIONS[classId]) return;
+
+        const perk1Branch = getPerk1BranchForClass(classId);
+        if (!perk1Branch) {
+            if (typeof global.showPortalAlert === 'function') {
+                void global.showPortalAlert('Choose Perk 1 Option A or B before confirming your class.', 'Choose a Class');
+            }
+            return;
+        }
+
         activeClassId = classId;
         displayedClassId = classId;
         setShowcaseAccentClass(classId);
@@ -446,7 +523,8 @@
         global.dispatchEvent(new CustomEvent('royalarmies:class-confirmed', {
             detail: {
                 classId,
-                pathCode: GAME_CLASS_OPTIONS[classId].pathCode
+                pathCode: GAME_CLASS_OPTIONS[classId].pathCode,
+                perk1Branch
             }
         }));
     }
@@ -464,13 +542,13 @@
                 if (typeof global.RoyalArmiesViewportMetrics?.sync === 'function') {
                     global.RoyalArmiesViewportMetrics.sync();
                 }
-                syncArchmagePanelHeight();
+                syncBattlemagePanelHeight();
             }, delay);
         });
 
         global.requestAnimationFrame(() => {
             if (token !== layoutSyncToken) return;
-            syncArchmagePanelHeight();
+            syncBattlemagePanelHeight();
         });
     }
 
@@ -501,8 +579,25 @@
         confirmBtn.dataset.bound = 'true';
     }
 
+    function bindClassPerkBranchControls() {
+        const root = getPickerRoot();
+        if (!root || root.dataset.perkBranchBound === 'true') return;
+
+        root.addEventListener('click', (event) => {
+            const button = event.target.closest('[data-perk1-branch][data-class-perk-branch]');
+            if (!button) return;
+            event.preventDefault();
+            event.stopPropagation();
+            const classId = button.getAttribute('data-class-perk-branch');
+            const branch = button.getAttribute('data-perk1-branch');
+            setPerk1BranchForClass(classId, branch);
+        });
+
+        root.dataset.perkBranchBound = 'true';
+    }
+
     function bindClassPanel(_panel) {
-        /* Perk rows are static in alpha — no click-to-highlight wiring. */
+        /* Perk branch buttons are delegated from the picker root. */
     }
 
     function bindClassOption(option) {
@@ -586,6 +681,7 @@
 
         getClassOptions().forEach(bindClassOption);
         getClassPanels().forEach(bindClassPanel);
+        bindClassPerkBranchControls();
         bindClassConfirmButton();
         bindClassSwapControls();
         bindClassPickerLayout();
@@ -594,8 +690,10 @@
             panel.hidden = false;
         });
         activeClassId = displayedClassId;
-        syncArchmagePanelHeight(true);
+        hydrateClassPerkPanels();
+        syncBattlemagePanelHeight(true);
         refreshSelectionState();
+        syncClassConfirmButtonState();
         scheduleLayoutSync();
 
         root.dataset.initialized = 'true';
@@ -612,10 +710,18 @@
     global.getSelectedGameClassPath = function getSelectedGameClassPath() {
         return activeClassId ? GAME_CLASS_OPTIONS[activeClassId].pathCode : null;
     };
+    global.getSelectedGameClassPerk1Branch = function getSelectedGameClassPerk1Branch() {
+        const classId = activeClassId || displayedClassId;
+        return classId ? getPerk1BranchForClass(classId) : null;
+    };
+    global.applySavedGameClassChoices = applySavedClassChoicesFromCommander;
     global.initGameClassPicker = initGameClassPicker;
     global.clearGameClassPickerSelection = function clearGameClassPickerSelection() {
         displayedClassId = 'battlemaster';
         activeClassId = displayedClassId;
+        perk1BranchByClass.battlemaster = null;
+        perk1BranchByClass.battlemage = null;
+        hydrateClassPerkPanels();
         refreshSelectionState();
     };
     global.confirmGameClassSelection = confirmClassSelection;

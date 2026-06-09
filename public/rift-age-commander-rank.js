@@ -31,17 +31,17 @@
         'Palatine Commandress', 'Marshal Commandress', 'Duchal Commandress', 'Viceroy Commandress',
         'Sovereign Commandress', 'Lord-High Commandress'
     ];
-    const ARCHMAGE_RANK_TITLES_MALE = [
+    const BATTLEMAGE_RANK_TITLES_MALE = [
         'Initiate Magus', 'Apprentice Magus', 'Acolyte Magus', 'Evoker Magus', 'Channeler Magus',
         'Circle Magus', 'Signifier Magus', 'Scholastic Magus', 'Weaver Magus', 'Warden Magus',
-        'Preceptor Magus', 'High Magus', 'Grand Magus', 'Arcanist Magus', 'Archmagus',
+        'Preceptor Magus', 'High Magus', 'Grand Magus', 'Arcanist Magus', 'Battlemagus',
         'Sorcerer-General', 'Coven-Lord', 'Master of Spheres', 'Nexus-Thane Magus',
         'Void-Exarch Magus', 'Hierophant Magus', 'Aether-Sovereign Magus'
     ];
-    const ARCHMAGE_RANK_TITLES_FEMALE = [
+    const BATTLEMAGE_RANK_TITLES_FEMALE = [
         'Initiate Maga', 'Apprentice Maga', 'Acolyte Maga', 'Evoker Maga', 'Channeler Maga',
         'Circle Maga', 'Signifier Maga', 'Scholastic Maga', 'Weaver Maga', 'Warden Maga',
-        'Preceptor Maga', 'High Maga', 'Grand Maga', 'Arcanist Maga', 'Archmaga',
+        'Preceptor Maga', 'High Maga', 'Grand Maga', 'Arcanist Maga', 'Battlemaga',
         'Sorceress-General', 'Coven-Lady', 'Mistress of Spheres', 'Nexus-Thane Maga',
         'Void-Exarch Maga', 'Hierophant Maga', 'Aether-Sovereign Maga'
     ];
@@ -59,13 +59,13 @@
 
     function normalizeCommanderPathCode(raw) {
         const path = String(raw || '').trim().toUpperCase();
-        if (path === 'MAGIC' || path === 'MAG' || path === 'ARCHMAGE') return 'MAG';
+        if (path === 'MAGIC' || path === 'MAG' || path === 'BATTLEMAGE' || path === 'ARCHMAGE') return 'MAG';
         if (path === 'PHYS' || path === 'BATTLEMASTER') return 'PHYS';
         return '';
     }
 
     function resolveCommanderPathId(pathCode) {
-        return normalizeCommanderPathCode(pathCode) === 'MAG' ? 'archmage' : 'battlemaster';
+        return normalizeCommanderPathCode(pathCode) === 'MAG' ? 'battlemage' : 'battlemaster';
     }
 
     function resolveActiveCommanderUsername() {
@@ -122,8 +122,8 @@
     function getLocalCommanderRankTitleTable(pathCode, gender) {
         const pathId = resolveCommanderPathId(pathCode);
         const useFemale = resolveCommanderRankTitleGender(gender) === 'female';
-        if (pathId === 'archmage') {
-            return useFemale ? ARCHMAGE_RANK_TITLES_FEMALE : ARCHMAGE_RANK_TITLES_MALE;
+        if (pathId === 'battlemage') {
+            return useFemale ? BATTLEMAGE_RANK_TITLES_FEMALE : BATTLEMAGE_RANK_TITLES_MALE;
         }
         return useFemale ? BATTLEMASTER_RANK_TITLES_FEMALE : BATTLEMASTER_RANK_TITLES_MALE;
     }
@@ -319,7 +319,7 @@
     }
 
     function resolveCommanderPathLabel(pathCode) {
-        return resolveCommanderPathId(pathCode) === 'archmage' ? 'Archmage Path' : 'Battlemaster Path';
+        return resolveCommanderPathId(pathCode) === 'battlemage' ? 'Battlemage Path' : 'Battlemaster Path';
     }
 
     function ensureCommanderRankLadderModal() {

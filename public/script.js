@@ -921,7 +921,7 @@ var player = {
     ]
 };
 
-/** All preset portraits in public/images/avatars (commander + archmage sets). */
+/** All preset portraits in public/images/avatars (commander + battlemage sets). */
 const PORTAL_AVATAR_PRESET_LIBRARY = [
     'images/avatars/commanderprofile01.png',
     'images/avatars/commanderprofile02.png',
@@ -2175,7 +2175,7 @@ const CHRONICLE_DATA = {
     networking: { title: "Live sync", details: "Connected the client to the server for player state and global events." },
     roadmap_foundation: { title: "Phase 1: Foundation", details: "Core app structure, login, art pipeline, and the landing portal." },
     roadmap_combat: { title: "Phase 2: Combat sync", details: "Real-time combat hits, spell animations, and shared battle state." },
-    roadmap_classes: { title: "Phase 3: Classes", details: "Battlemaster and Archmage skill trees, crests, and ability loadouts." },
+    roadmap_classes: { title: "Phase 3: Classes", details: "Battlemaster and Battlemage skill trees, crests, and ability loadouts." },
     roadmap_world: { title: "Phase 4: World map", details: "Larger explorable map, zone audio, and story checkpoints." },
     roadmap_economy: { title: "Phase 5: Economy", details: "Gold flow, vendors, and player inventory." },
     roadmap_launch: { title: "Phase 6: Launch", details: "Live release prep, community events, global accounts, and public opening." },

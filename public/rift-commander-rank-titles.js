@@ -1,5 +1,5 @@
 /**
- * RIFT — Commander rank display titles & name pills (Battlemaster / Archmage).
+ * RIFT — Commander rank display titles & name pills (Battlemaster / Battlemage).
  */
 (function initRoyalArmiesCommanderRankTitles(global) {
     'use strict';
@@ -24,18 +24,18 @@
         'Sovereign Commandress', 'Lord-High Commandress'
     ];
 
-    const ARCHMAGE_RANK_TITLES_MALE = [
+    const BATTLEMAGE_RANK_TITLES_MALE = [
         'Initiate Magus', 'Apprentice Magus', 'Acolyte Magus', 'Evoker Magus', 'Channeler Magus',
         'Circle Magus', 'Signifier Magus', 'Scholastic Magus', 'Weaver Magus', 'Warden Magus',
-        'Preceptor Magus', 'High Magus', 'Grand Magus', 'Arcanist Magus', 'Archmagus',
+        'Preceptor Magus', 'High Magus', 'Grand Magus', 'Arcanist Magus', 'Battlemagus',
         'Sorcerer-General', 'Coven-Lord', 'Master of Spheres', 'Nexus-Thane Magus',
         'Void-Exarch Magus', 'Hierophant Magus', 'Aether-Sovereign Magus'
     ];
 
-    const ARCHMAGE_RANK_TITLES_FEMALE = [
+    const BATTLEMAGE_RANK_TITLES_FEMALE = [
         'Initiate Maga', 'Apprentice Maga', 'Acolyte Maga', 'Evoker Maga', 'Channeler Maga',
         'Circle Maga', 'Signifier Maga', 'Scholastic Maga', 'Weaver Maga', 'Warden Maga',
-        'Preceptor Maga', 'High Maga', 'Grand Maga', 'Arcanist Maga', 'Archmaga',
+        'Preceptor Maga', 'High Maga', 'Grand Maga', 'Arcanist Maga', 'Battlemaga',
         'Sorceress-General', 'Coven-Lady', 'Mistress of Spheres', 'Nexus-Thane Maga',
         'Void-Exarch Maga', 'Hierophant Maga', 'Aether-Sovereign Maga'
     ];
@@ -48,7 +48,7 @@
 
     function resolveCommanderPathId(pathCode) {
         const path = String(pathCode || '').trim().toUpperCase();
-        if (path === 'MAG' || path === 'MAGIC' || path === 'ARCHMAGE') return 'archmage';
+        if (path === 'MAG' || path === 'MAGIC' || path === 'BATTLEMAGE' || path === 'ARCHMAGE') return 'battlemage';
         return 'battlemaster';
     }
 
@@ -74,8 +74,8 @@
     function getCommanderRankTitleTable(pathCode, gender) {
         const pathId = resolveCommanderPathId(pathCode);
         const useFemale = resolveCommanderRankTitleGender(gender) === 'female';
-        if (pathId === 'archmage') {
-            return useFemale ? ARCHMAGE_RANK_TITLES_FEMALE : ARCHMAGE_RANK_TITLES_MALE;
+        if (pathId === 'battlemage') {
+            return useFemale ? BATTLEMAGE_RANK_TITLES_FEMALE : BATTLEMAGE_RANK_TITLES_MALE;
         }
         return useFemale ? BATTLEMASTER_RANK_TITLES_FEMALE : BATTLEMASTER_RANK_TITLES_MALE;
     }
@@ -189,9 +189,9 @@
                 global.groundRanks[rank].displayTitleFemale = BATTLEMASTER_RANK_TITLES_FEMALE[rank - 1];
             }
             if (global.magicRanks[rank]) {
-                global.magicRanks[rank].title = ARCHMAGE_RANK_TITLES_MALE[rank - 1];
-                global.magicRanks[rank].displayTitleMale = ARCHMAGE_RANK_TITLES_MALE[rank - 1];
-                global.magicRanks[rank].displayTitleFemale = ARCHMAGE_RANK_TITLES_FEMALE[rank - 1];
+                global.magicRanks[rank].title = BATTLEMAGE_RANK_TITLES_MALE[rank - 1];
+                global.magicRanks[rank].displayTitleMale = BATTLEMAGE_RANK_TITLES_MALE[rank - 1];
+                global.magicRanks[rank].displayTitleFemale = BATTLEMAGE_RANK_TITLES_FEMALE[rank - 1];
             }
         }
     }

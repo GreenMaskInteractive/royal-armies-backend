@@ -2326,7 +2326,9 @@ async function verifyPortalAgeJoinAllowed() {
     if (result.ok) return true;
 
     if (result.payload?.code === 'NEXUS-GAME-011' || result.payload?.requiresTermsAcceptance) {
-        if (typeof promptReturningUserTermsAcceptance === 'function') {
+        const bypassTermsLock = (typeof isTermsLockBypassedForDev === 'function' && isTermsLockBypassedForDev())
+            || (typeof isLiveServerPort5500 === 'function' && isLiveServerPort5500());
+        if (!bypassTermsLock && typeof promptReturningUserTermsAcceptance === 'function') {
             promptReturningUserTermsAcceptance();
         }
     } else if (typeof showPortalAlert === 'function' && result.payload?.message) {
@@ -5495,7 +5497,7 @@ const ROADMAP_EVOLUTION_PHASES = [
                 items: [
                     'Selected persistent browser delivery (no heavy client download) as the primary distribution model.',
                     'Outlined the NEXUS ledger concept for commander accounts, Ages, and future combat sync.',
-                    'Drafted rank, provision, and Battlemaster / Archmage progression tables (rank-data foundation).'
+                    'Drafted rank, provision, and Battlemaster / Battlemage progression tables (rank-data foundation).'
                 ]
             }
         ]
@@ -5639,7 +5641,7 @@ const ROADMAP_EVOLUTION_PHASES = [
                 title: 'Combat & classes',
                 items: [
                     'Real-time combat hit resolution and spell animation sync between clients.',
-                    'Battlemaster and Archmage skill trees with crests and loadout slots.',
+                    'Battlemaster and Battlemage skill trees with crests and loadout slots.',
                     'Nation-unique legendary battalion modules per lore bible.'
                 ]
             },

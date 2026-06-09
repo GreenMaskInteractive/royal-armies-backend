@@ -20,12 +20,12 @@
 
     const CLASS_BY_PATH = {
         Physical: 'battlemaster',
-        Magic: 'archmage'
+        Magic: 'battlemage'
     };
 
     const PATH_BY_CLASS = {
         battlemaster: 'Physical',
-        archmage: 'Magic'
+        battlemage: 'Magic'
     };
 
     let catalogPromise = null;
@@ -49,7 +49,7 @@
     }
 
     function resolveCommanderClassId(rawPath) {
-        return normalizeCommanderPath(rawPath) === 'MAG' ? 'archmage' : 'battlemaster';
+        return normalizeCommanderPath(rawPath) === 'MAG' ? 'battlemage' : 'battlemaster';
     }
 
     function resolveCommanderRecruitmentContext() {
@@ -69,7 +69,7 @@
             path,
             rankTitleGender,
             classId,
-            classLabel: classId === 'archmage' ? 'Archmage' : 'Battlemaster'
+            classLabel: classId === 'battlemage' ? 'Battlemage' : 'Battlemaster'
         };
     }
 
@@ -191,7 +191,7 @@
         }
 
         if (enriched.requiredClass && enriched.requiredClass !== ctx.classId) {
-            const requiredLabel = enriched.requiredClass === 'archmage' ? 'Archmage' : 'Battlemaster';
+            const requiredLabel = enriched.requiredClass === 'battlemage' ? 'Battlemage' : 'Battlemaster';
             return {
                 allowed: false,
                 reason: `${requiredLabel} class only.`,

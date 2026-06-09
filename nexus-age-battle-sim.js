@@ -1,5 +1,5 @@
 /**
- * NEXUS — Age Adventurer's Guild training battle (commander army vs mixed NPC roster).
+ * NEXUS — Age battle simulation (phase-linking composition engine).
  *
  * Battle flow:
  *   1. Ranged volley
@@ -7,8 +7,9 @@
  *   3. Cavalry charge
  *   4. Infantry grind (up to 5 rounds)
  *
- * Baseline combat uses catalog unit stats only — no multi-hero roster and no
- * Trainer / Parry / Leadership perks until those systems are acquired on the ledger.
+ * Deterministic: no combat RNG. Composition archetypes (dual / tri / grand) anchor
+ * late-phase advantages. Class perks, banners, gear, and settlement defenses are
+ * applied via nexus-age-battle-modifiers.js (guild training passes disableCombatModifiers).
  *
  * Victory: annihilation (0 HP/units) or opponent routes (morale / unsustainable losses).
  */
@@ -18,6 +19,36 @@ const path = require('path');
 const fs = require('fs');
 const { loadUnitPurchaseCatalog, getCatalogUnitById } = require('./nexus-age-recruitment');
 const { resolveCommanderAgeArmy, normalizeAgeArmy } = require('./nexus-age-roster');
+const {
+    LANE_IDS,
+    SETTLEMENT_DEFENSE_IDS,
+    buildBattleContextFromCommander,
+    buildStrippedCombatContext,
+    isCombatModifiersDisabled,
+    initializeArmyBattleState,
+    applyMatrixEqualizer,
+    computeGrandArmyInfantryShield,
+    applyEmeraldIncomingDamageModifiers,
+    applyEmeraldOutgoingDamageModifiers,
+    resolveMoralAnchorMoraleFactor,
+    resolveTriPhaseCounterMultiplier,
+    resolveMatrixDisruptionCounterMultiplier,
+    resolveMageSlayerMultiplier,
+    resolveVanguardCleaveMultiplier,
+    resolveFeedbackOverloadMultiplier,
+    resolveArcaneConduitMultiplier,
+    resolveCombinedArmsBlitzMultiplier,
+    resolveThickHideCounterMitigation,
+    resolveWardingRuneDamageFactor,
+    resolveNullStoneMitigation,
+    resolveLinkedResilientPlatingDefense,
+    shouldIgnoreInfantryCounter,
+    resolveMoraleShockFactor,
+    markRangedDamageStacks,
+    recordLaneDamage,
+    absorbDamageWithShield,
+    GEAR_BATTLE_IDS
+} = require('./nexus-age-battle-modifiers');
 
 const PVP_MATRIX_PATH = path.join(__dirname, 'docs', 'pvp-class-opposition-matrix.json');
 
@@ -212,7 +243,15 @@ function resolveStackCombatStats(stack, catalogUnit) {
 }
 
 function createEmptyLane() {
-    return { attack: 0, hp: 0, units: 0, classWeight: {} };
+    return {
+        attack: 0,
+        hp: 0,
+        units: 0,
+        classWeight: {},
+        startingHp: 0,
+        currentHp: 0,
+        startingAttack: 0
+    };
 }
 
 function buildBattleArmy(label, stacks, catalog) {
@@ -247,6 +286,7 @@ function buildBattleArmy(label, stacks, catalog) {
 
         lane.hp += stackHp;
         lane.units += qty;
+        lane.startingUnits = (lane.startingUnits || 0) + qty;
 
         if (laneId === 'ranged') {
             lane.attack += stats.rng * qty;
@@ -260,6 +300,10 @@ function buildBattleArmy(label, stacks, catalog) {
         if (classId) {
             lane.classWeight[classId] = (lane.classWeight[classId] || 0) + qty;
         }
+
+        const unitTier = Math.max(1, Math.floor(Number(catalogUnit?.tier ?? stack?.tier) || 1));
+        if (!lane.tierWeight) lane.tierWeight = {};
+        lane.tierWeight[unitTier] = (lane.tierWeight[unitTier] || 0) + qty;
 
         army.stacks.push({
             name: catalogUnit?.displayName || catalogUnit?.name || stack.name || 'Unit',
@@ -302,7 +346,7 @@ function resolvePrimaryDefenderClassFromArmy(army) {
     return bestClass;
 }
 
-function resolveCounterMultiplierFromLane(lane, defenderClassId) {
+function resolveBaseCounterMultiplierFromLane(lane, defenderClassId) {
     if (!defenderClassId || !lane?.classWeight) return 1;
 
     const lookup = loadAdvantageLookup();
@@ -318,6 +362,31 @@ function resolveCounterMultiplierFromLane(lane, defenderClassId) {
 
     if (!totalStacks || !bonusStacks) return 1;
     return 1 + (0.5 * (bonusStacks / totalStacks));
+}
+
+function applyCounterMitigation(counterMod, mitigationRate) {
+    if (counterMod <= 1 || mitigationRate <= 0) return counterMod;
+    return 1 + ((counterMod - 1) * Math.max(0, 1 - mitigationRate));
+}
+
+function resolveCounterMultiplierFromLane(atkLane, defenderClassId, defenderArmy, defenderContext, phaseId = 'infantry', hasNaturalCounter = false) {
+    let mod = resolveBaseCounterMultiplierFromLane(atkLane, defenderClassId);
+    if (mod <= 1 || isCombatModifiersDisabled(defenderContext)) return mod;
+
+    mod = resolveTriPhaseCounterMultiplier(mod, defenderArmy);
+    mod = resolveMatrixDisruptionCounterMultiplier(mod, defenderArmy, defenderContext);
+
+    const defenderStrikeLane = defenderArmy?.lanes?.[phaseId] || defenderArmy?.lanes?.infantry;
+    const mitigation = resolveThickHideCounterMitigation(
+        atkLane,
+        defenderClassId,
+        defenderStrikeLane,
+        defenderContext,
+        phaseId,
+        hasNaturalCounter
+    ) + resolveNullStoneMitigation(defenderClassId, defenderStrikeLane, defenderContext);
+
+    return applyCounterMitigation(mod, Math.min(0.85, mitigation));
 }
 
 function syncStackSurvivorsFromArmyUnits(army) {
@@ -372,13 +441,29 @@ function resolveLanePhaseActive(army, phaseId) {
     return Boolean(lane && lane.units > 0 && lane.attack > 0);
 }
 
+function syncLanePoolsFromArmySurvival(army, survivalRatio) {
+    LANE_IDS.forEach((laneId) => {
+        const lane = army.lanes[laneId];
+        if (!lane?.startingHp) return;
+        lane.currentHp = Math.max(0, Math.floor(lane.startingHp * survivalRatio));
+        const baseUnits = Math.max(0, Math.floor(Number(lane.startingUnits ?? lane.units) || 0));
+        lane.units = Math.max(0, Math.floor(baseUnits * survivalRatio));
+        if (lane.startingAttack) {
+            lane.attack = Math.max(0, Math.floor(lane.startingAttack * survivalRatio));
+        }
+    });
+}
+
 function applyCasualties(army, damage) {
-    const dealt = Math.min(Math.max(0, Math.floor(Number(damage) || 0)), army.currentHp);
+    const rawDamage = Math.max(0, Math.floor(Number(damage) || 0));
+    const shieldedDamage = absorbDamageWithShield(army, rawDamage);
+    const dealt = Math.min(shieldedDamage, army.currentHp);
     if (!dealt) return 0;
 
     const survivalRatio = army.currentHp > 0 ? (army.currentHp - dealt) / army.currentHp : 0;
     army.currentHp -= dealt;
     army.currentUnits = Math.max(0, Math.floor(army.currentUnits * survivalRatio));
+    syncLanePoolsFromArmySurvival(army, survivalRatio);
     syncStackSurvivorsFromArmyUnits(army);
 
     return dealt;
@@ -387,8 +472,15 @@ function applyCasualties(army, damage) {
 function applyMoraleShock(army, damageDealt) {
     if (!army.startingHp || !damageDealt) return;
 
-    const phaseShock = Math.floor((damageDealt / army.startingHp) * 45);
-    const heavyLossPenalty = (army.currentHp / army.startingHp) < 0.5 ? 8 : 0;
+    const defenderContext = army.battleState?.context || null;
+    const shockFactor = resolveMoraleShockFactor(army, defenderContext);
+    const moralAnchor = isCombatModifiersDisabled(defenderContext)
+        ? 1
+        : resolveMoralAnchorMoraleFactor(army, army.battleState?.emeraldBarrier);
+    const phaseShock = Math.floor((damageDealt / army.startingHp) * shockFactor * moralAnchor);
+    const heavyLossPenalty = (army.currentHp / army.startingHp) < 0.5
+        ? Math.floor(8 * moralAnchor)
+        : 0;
     army.morale = Math.max(0, army.morale - phaseShock - heavyLossPenalty);
 }
 
@@ -456,19 +548,106 @@ function resolveBattleWinner(commander, npc) {
     return { winner: 'draw', endReason: 'stalemate' };
 }
 
-function resolvePhaseStrike(attacker, defender, phaseId, phaseLabel, log) {
+function resolvePhaseStrike(attacker, defender, phaseId, phaseLabel, log, strikeOptions = {}) {
     if (attacker.outcome || defender.outcome) return false;
 
     const atkLane = attacker.lanes[phaseId];
+    const defLane = defender.lanes[phaseId] || defender.lanes.infantry;
     if (!atkLane?.attack) return false;
 
-    const defenderClass = resolvePrimaryDefenderClassFromArmy(defender);
-    const mod = resolveCounterMultiplierFromLane(atkLane, defenderClass);
-    const damage = Math.floor(atkLane.attack * mod);
+    const attackerContext = attacker.battleState?.context || null;
+    const defenderContext = defender.battleState?.context || null;
+    const infantryRound = Math.max(0, Math.floor(Number(strikeOptions.infantryRound) || 0));
+
+    let defenderClass = resolvePrimaryDefenderClassFromArmy(defender);
+    if (defender.battleState?.emeraldBalancedBulwark
+        || defender.battleState?.matrixDisruptionActive) {
+        defenderClass = null;
+    }
+
+    const baseCounterMod = defenderClass
+        ? resolveBaseCounterMultiplierFromLane(atkLane, defenderClass)
+        : 1;
+    const hasNaturalCounter = baseCounterMod > 1;
+
+    let mod = 1;
+    if (!shouldIgnoreInfantryCounter(attacker, defender, infantryRound, attackerContext)) {
+        mod = resolveCounterMultiplierFromLane(
+            atkLane,
+            defenderClass,
+            defender,
+            defenderContext,
+            phaseId,
+            hasNaturalCounter
+        );
+    }
+
+    const attackerModsOff = isCombatModifiersDisabled(attackerContext);
+    const defenderModsOff = isCombatModifiersDisabled(defenderContext);
+
+    if (!attackerModsOff) {
+        mod *= resolveVanguardCleaveMultiplier(phaseId, atkLane, defenderClass, attackerContext, hasNaturalCounter);
+        mod *= resolveFeedbackOverloadMultiplier(phaseId, atkLane, defenderClass, attackerContext, hasNaturalCounter);
+        mod *= resolveArcaneConduitMultiplier(phaseId, attackerContext, attacker.battleState);
+        mod *= resolveCombinedArmsBlitzMultiplier(phaseId, attacker, attackerContext);
+        mod *= resolveMageSlayerMultiplier(atkLane, defLane, attackerContext);
+
+        if ((phaseId === 'cavalry' || phaseId === 'infantry')
+            && attackerContext?.gearIds?.includes(GEAR_BATTLE_IDS.signalHorn)
+            && defender.battleState?.markedStackIndexes?.size > 0) {
+            mod *= 1.2;
+        }
+    }
+
+    let damage = Math.floor(atkLane.attack * mod);
+
+    const defenderStrikeLane = defender.lanes[phaseId] || defender.lanes.infantry;
+    if (!attackerModsOff) {
+        damage = applyEmeraldOutgoingDamageModifiers(damage, attacker, defender, phaseId, {
+            defenderDealtRanged: Boolean(defender.battleState?.defenderDealtRanged),
+            attackerIsMonoBuild: attacker.composition?.archetype === 'mono'
+        });
+    }
+
+    if (!defenderModsOff) {
+        damage = Math.floor(damage * resolveWardingRuneDamageFactor(defenderStrikeLane, defenderContext, hasNaturalCounter));
+
+        if (phaseId === 'infantry') {
+            const flatDefense = resolveLinkedResilientPlatingDefense(defender);
+            if (flatDefense > 0) {
+                damage = Math.max(0, damage - flatDefense);
+            }
+        }
+
+        damage = applyEmeraldIncomingDamageModifiers(damage, defender, phaseId, {
+            infantryRound,
+            attackerIsMonoBuild: attacker.composition?.archetype === 'mono'
+        });
+    }
+
     const dealt = applyCasualties(defender, damage);
+
+    if (phaseId === 'ranged' && dealt > 0 && defender.battleState) {
+        defender.battleState.defenderDealtRanged = true;
+    }
     applyMoraleShock(defender, dealt);
 
-    const counterNote = mod > 1 ? ' · counter advantage' : '';
+    if (!attackerModsOff && phaseId === 'ranged' && dealt > 0) {
+        markRangedDamageStacks(defender, dealt, attackerContext);
+        if (attackerContext?.commanderClass === 'battlemage' && laneHasMagicArtillery(atkLane)) {
+            const resonanceGain = dealt / Math.max(1, attacker.startingHp);
+            attacker.battleState.manaResonance = Math.min(1, (attacker.battleState.manaResonance || 0) + resonanceGain);
+        }
+    }
+
+    recordLaneDamage(attacker, phaseId, dealt);
+
+    const notes = [];
+    if (mod > 1) notes.push('counter advantage');
+    if (strikeOptions.infantryRound && shouldIgnoreInfantryCounter(attacker, defender, infantryRound, attackerContext)) {
+        notes.push('flanking cover');
+    }
+    const counterNote = notes.length ? ` · ${notes.join(' · ')}` : '';
     log.push(
         `[${phaseLabel}] ${attacker.label} strikes for ${dealt} damage${counterNote}. `
         + `${defender.label}: ${formatArmyStatus(defender)}.`
@@ -480,6 +659,10 @@ function resolvePhaseStrike(attacker, defender, phaseId, phaseLabel, log) {
     }
 
     return Boolean(outcome);
+}
+
+function laneHasMagicArtillery(lane) {
+    return Boolean(lane?.classWeight?.magic_artillery);
 }
 
 function runBattlePhaseExchange(commander, npc, phaseId, phaseLabel, log) {
@@ -494,8 +677,21 @@ function runBattlePhaseExchange(commander, npc, phaseId, phaseLabel, log) {
     return endedByNpcStrike || Boolean(commander.outcome || npc.outcome);
 }
 
+function beginInfantryPhase(commander, npc, log) {
+    [commander, npc].forEach((army) => {
+        if (isCombatModifiersDisabled(army.battleState?.context)) return;
+        if (army.composition?.archetype !== 'grand') return;
+        const shield = computeGrandArmyInfantryShield(army);
+        if (!shield || !army.battleState) return;
+        army.battleState.infantryShieldRemaining = shield;
+        army.battleState.grandShieldApplied = true;
+        log.push(`${army.label} — Grand Combined shield: ${shield} HP absorbing infantry damage.`);
+    });
+}
+
 function runInfantryPhase(commander, npc, log) {
     log.push('— Phase 4 — Infantry Engagement —');
+    beginInfantryPhase(commander, npc, log);
 
     let roundsPlayed = 0;
     for (let round = 1; round <= INFANTRY_MAX_ROUNDS; round += 1) {
@@ -510,15 +706,17 @@ function runInfantryPhase(commander, npc, log) {
         }
 
         markStackPhaseParticipation(commander, 'infantry', 1);
+        if (commander.battleState) commander.battleState.infantryRound = round;
+        if (npc.battleState) npc.battleState.infantryRound = round;
 
         roundsPlayed = round;
         log.push(`Infantry round ${round}:`);
 
         if (commanderLane.attack) {
-            resolvePhaseStrike(commander, npc, 'infantry', `Infantry ${round}`, log);
+            resolvePhaseStrike(commander, npc, 'infantry', `Infantry ${round}`, log, { infantryRound: round });
         }
         if (!npc.outcome && !commander.outcome && npcLane.attack) {
-            resolvePhaseStrike(npc, commander, 'infantry', `Infantry ${round}`, log);
+            resolvePhaseStrike(npc, commander, 'infantry', `Infantry ${round}`, log, { infantryRound: round });
         }
 
         evaluateArmyOutcome(commander);
@@ -545,11 +743,14 @@ function buildForceSummary(army) {
     };
 }
 
-function simulateTrainingBattle(attackerStacks, defenderStacks, catalog, trainingMode = 'street-patrol') {
+function simulateTrainingBattle(attackerStacks, defenderStacks, catalog, trainingMode = 'street-patrol', battleOptions = {}) {
     const catalogRef = catalog || loadUnitPurchaseCatalog();
     const commander = buildBattleArmy('You', attackerStacks, catalogRef);
     const npc = buildBattleArmy(resolveDefenderBattleLabel(trainingMode), defenderStacks, catalogRef);
     const log = [resolveBattleModeIntro(trainingMode)];
+    if (battleOptions.disableCombatModifiers) {
+        log.push('Training run — perks, banners, gear, and composition bonuses are inactive.');
+    }
 
     if (!commander.startingHp || !npc.startingHp) {
         return {
@@ -557,6 +758,41 @@ function simulateTrainingBattle(attackerStacks, defenderStacks, catalog, trainin
             errorCode: 'NEXUS-AGE-017',
             log: ['Training battle requires units on both sides.']
         };
+    }
+
+    const stripCombatModifiers = Boolean(battleOptions.disableCombatModifiers);
+    const attackerContext = battleOptions.attackerContext
+        || (stripCombatModifiers
+            ? buildStrippedCombatContext(battleOptions.attackerCommander, 'attacker', battleOptions.attackerExtra)
+            : buildBattleContextFromCommander(battleOptions.attackerCommander, 'attacker', battleOptions.attackerExtra));
+    const defenderContext = battleOptions.defenderContext
+        || (stripCombatModifiers
+            ? buildStrippedCombatContext(battleOptions.defenderCommander, 'defender', battleOptions.defenderExtra)
+            : buildBattleContextFromCommander(battleOptions.defenderCommander, 'defender', battleOptions.defenderExtra));
+
+    initializeArmyBattleState(commander, attackerContext, log);
+    initializeArmyBattleState(npc, defenderContext, log);
+
+    const settlementDefenses = Array.isArray(battleOptions.settlementDefenses)
+        ? battleOptions.settlementDefenses
+        : (defenderContext?.settlementDefenses || []);
+
+    if (settlementDefenses.includes(SETTLEMENT_DEFENSE_IDS.matrixEqualizer)) {
+        applyMatrixEqualizer(commander, log);
+    }
+
+    const commanderComp = commander.composition;
+    const npcComp = npc.composition;
+    if (commanderComp) {
+        log.push(
+            `Your composition: ${commanderComp.archetype} (${commanderComp.validActiveLaneCount} active lanes, `
+            + `efficiency ${(commanderComp.compositionEfficiency * 100).toFixed(0)}%).`
+        );
+    }
+    if (npcComp) {
+        log.push(
+            `${npc.label} composition: ${npcComp.archetype} (${npcComp.validActiveLaneCount} active lanes).`
+        );
     }
 
     log.push(`Your force: ${formatArmyStatus(commander)} · ${commander.stacks.length} stack(s).`);
@@ -638,6 +874,8 @@ function simulateTrainingBattle(attackerStacks, defenderStacks, catalog, trainin
         npcOutcome: npc.outcome,
         commanderForce: buildForceSummary(commander),
         npcForce: buildForceSummary(npc),
+        commanderComposition: commander.composition || null,
+        npcComposition: npc.composition || null,
         log
     };
 }
@@ -845,7 +1083,11 @@ function executeGuildTrainingBattle(commander, trainingMode = 'street-patrol') {
     const mode = TRAINING_MODE_LABELS[trainingMode] ? trainingMode : 'street-patrol';
     const commanderRank = Math.max(1, Math.min(22, Math.floor(Number(commander?.rank) || 1)));
     const npcArmy = buildTrainingNpcArmy(catalog, undefined, mode, commanderRank);
-    const battle = simulateTrainingBattle(battleStacks, npcArmy, catalog, mode);
+    const battle = simulateTrainingBattle(battleStacks, npcArmy, catalog, mode, {
+        attackerCommander: commander,
+        attackerExtra: { settlementTier: commander?.settlementTier },
+        disableCombatModifiers: true
+    });
     if (!battle.ok) return battle;
 
     return {
@@ -871,5 +1113,6 @@ module.exports = {
     buildBattleArmy,
     buildTrainingNpcArmy,
     simulateTrainingBattle,
-    executeGuildTrainingBattle
+    executeGuildTrainingBattle,
+    buildBattleContextFromCommander
 };
