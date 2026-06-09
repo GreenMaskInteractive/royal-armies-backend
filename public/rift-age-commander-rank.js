@@ -13,6 +13,7 @@
     const RANK_LADDER_BODY_OPEN_CLASS = 'is-age-commander-rank-ladder-open';
 
     let rankLadderModalOpen = false;
+    let rankLadderRenderKey = '';
 
     const BATTLEMASTER_RANK_TITLES_MALE = [
         'Vintenary Commander', 'Decurion Commander', 'Warden Commander', 'Serjeant Commander',
@@ -260,14 +261,46 @@
         return modal;
     }
 
-    function renderCommanderRankLadderList() {
+    function buildRankLadderRenderKey(meta) {
+        return [
+            clampCommanderRank(meta.rank),
+            String(meta.path || ''),
+            resolveCommanderRankTitleGender(meta.rankTitleGender)
+        ].join('|');
+    }
+
+    function scrollRankLadderToCurrent(scrollEl, list) {
+        if (!scrollEl || !list) return;
+
+        const currentRow = list.querySelector('.age-commander-rank-ladder-row.is-current');
+        if (!currentRow) return;
+
+        const rowTop = currentRow.offsetTop;
+        const rowHeight = currentRow.offsetHeight;
+        const maxScroll = Math.max(0, scrollEl.scrollHeight - scrollEl.clientHeight);
+        const target = rowTop - ((scrollEl.clientHeight - rowHeight) / 2);
+        scrollEl.scrollTop = Math.max(0, Math.min(maxScroll, target));
+    }
+
+    function renderCommanderRankLadderList(options = {}) {
         const modal = ensureCommanderRankLadderModal();
         const list = modal.querySelector(`#${RANK_LADDER_LIST_ID}`);
         const pathLabel = modal.querySelector(`#${RANK_LADDER_PATH_ID}`);
+        const scrollEl = modal.querySelector('.age-commander-rank-ladder-scroll');
         if (!list) return;
 
         const meta = resolveHudRankTitleMeta();
         const currentRank = clampCommanderRank(meta.rank);
+        const nextRenderKey = buildRankLadderRenderKey(meta);
+        const scrollToCurrent = options.scrollToCurrent === true;
+        const previousScrollTop = scrollEl?.scrollTop ?? 0;
+
+        if (!scrollToCurrent && nextRenderKey === rankLadderRenderKey) {
+            return;
+        }
+
+        rankLadderRenderKey = nextRenderKey;
+
         if (pathLabel) {
             pathLabel.textContent = resolveCommanderPathLabel(meta.path);
         }
@@ -291,8 +324,12 @@
         list.innerHTML = rows.join('');
 
         global.requestAnimationFrame(() => {
-            const currentRow = list.querySelector('.age-commander-rank-ladder-row.is-current');
-            currentRow?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+            if (!scrollEl) return;
+            if (scrollToCurrent) {
+                scrollRankLadderToCurrent(scrollEl, list);
+                return;
+            }
+            scrollEl.scrollTop = previousScrollTop;
         });
     }
 
@@ -319,7 +356,8 @@
 
     function openCommanderRankLadderModal() {
         ensureCommanderRankLadderModal();
-        renderCommanderRankLadderList();
+        rankLadderRenderKey = '';
+        renderCommanderRankLadderList({ scrollToCurrent: true });
         rankLadderModalOpen = true;
         syncCommanderRankLadderChrome();
         global.document.querySelector(`#${RANK_LADDER_MODAL_ID} .age-commander-rank-ladder-close`)?.focus();
@@ -328,6 +366,7 @@
     function closeCommanderRankLadderModal() {
         if (!rankLadderModalOpen) return;
         rankLadderModalOpen = false;
+        rankLadderRenderKey = '';
         syncCommanderRankLadderChrome();
         global.document.getElementById('age-hud-commander-rank')?.focus();
     }
@@ -385,7 +424,7 @@
         syncCommanderRankLadderChrome();
 
         if (rankLadderModalOpen) {
-            renderCommanderRankLadderList();
+            renderCommanderRankLadderList({ scrollToCurrent: false });
         }
     }
 
