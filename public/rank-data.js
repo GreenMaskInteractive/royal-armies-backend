@@ -57,7 +57,7 @@ var groundTitles = [
 var magicTitles = [
     "Initiate Magus", "Apprentice Magus", "Acolyte Magus", "Evoker Magus", "Channeler Magus",
     "Circle Magus", "Signifier Magus", "Scholastic Magus", "Weaver Magus", "Warden Magus",
-    "Preceptor Magus", "High Magus", "Grand Magus", "Arcanist Magus", "Battlemagus",
+    "Preceptor Magus", "High Magus", "Grand Magus", "Arcanist Magus", "Archmagus",
     "Sorcerer-General", "Coven-Lord", "Master of Spheres", "Nexus-Thane Magus",
     "Void-Exarch Magus", "Hierophant Magus", "Aether-Sovereign Magus",
     "Lumen Adept", "Spellwarden", "Arc-Light", "Mystic Vanguard", "Ether Knight",

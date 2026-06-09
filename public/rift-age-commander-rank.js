@@ -34,14 +34,14 @@
     const BATTLEMAGE_RANK_TITLES_MALE = [
         'Initiate Magus', 'Apprentice Magus', 'Acolyte Magus', 'Evoker Magus', 'Channeler Magus',
         'Circle Magus', 'Signifier Magus', 'Scholastic Magus', 'Weaver Magus', 'Warden Magus',
-        'Preceptor Magus', 'High Magus', 'Grand Magus', 'Arcanist Magus', 'Battlemagus',
+        'Preceptor Magus', 'High Magus', 'Grand Magus', 'Arcanist Magus', 'Archmagus',
         'Sorcerer-General', 'Coven-Lord', 'Master of Spheres', 'Nexus-Thane Magus',
         'Void-Exarch Magus', 'Hierophant Magus', 'Aether-Sovereign Magus'
     ];
     const BATTLEMAGE_RANK_TITLES_FEMALE = [
         'Initiate Maga', 'Apprentice Maga', 'Acolyte Maga', 'Evoker Maga', 'Channeler Maga',
         'Circle Maga', 'Signifier Maga', 'Scholastic Maga', 'Weaver Maga', 'Warden Maga',
-        'Preceptor Maga', 'High Maga', 'Grand Maga', 'Arcanist Maga', 'Battlemaga',
+        'Preceptor Maga', 'High Maga', 'Grand Maga', 'Arcanist Maga', 'Archmaga',
         'Sorceress-General', 'Coven-Lady', 'Mistress of Spheres', 'Nexus-Thane Maga',
         'Void-Exarch Maga', 'Hierophant Maga', 'Aether-Sovereign Maga'
     ];
