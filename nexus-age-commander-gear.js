@@ -3,11 +3,11 @@
  */
 'use strict';
 
-function resolveCommanderClassId(commander) {
-    const rawPath = String(commander?.path || 'PHYS').trim().toUpperCase();
-    if (rawPath === 'MAG' || rawPath === 'MAGIC') return 'battlemage';
-    return 'battlemaster';
-}
+const {
+    resolveCommanderClassId,
+    COMMANDER_CLASS_LABELS: CLASS_LABELS,
+    COMMANDER_CLASS_PORTRAITS: CLASS_PORTRAITS
+} = require('./nexus-commander-class');
 
 function resolveCommanderRank(commander) {
     return Math.max(1, Math.floor(Number(commander?.rank) || 1));
@@ -451,16 +451,6 @@ const DEFAULT_LOADOUTS = Object.freeze({
             amulet: 'am-veteran-amulet'
         }
     }
-});
-
-const CLASS_PORTRAITS = Object.freeze({
-    battlemaster: 'images/battlemasterclass.png',
-    battlemage: 'images/classarchmage.png'
-});
-
-const CLASS_LABELS = Object.freeze({
-    battlemaster: 'Battlemaster',
-    battlemage: 'Battlemage'
 });
 
 function resolveGearTierFromRank(rank) {

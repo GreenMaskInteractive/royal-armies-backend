@@ -13,6 +13,7 @@ const {
     normalizeUnitXpEachSlots
 } = require('./nexus-age-roster');
 const { recordBalanceEvent } = require('./nexus-balance-monitor');
+const { resolveCommanderClassId } = require('./nexus-commander-class');
 
 const CATALOG_PATH = path.join(__dirname, 'public', 'data', 'unit-purchase-catalog.json');
 const AGE_COMMANDER_GOLD_DEFAULT = 20000;
@@ -41,12 +42,6 @@ function loadUnitPurchaseCatalog() {
     const raw = fs.readFileSync(CATALOG_PATH, 'utf8');
     catalogCache = JSON.parse(raw);
     return catalogCache;
-}
-
-function resolveCommanderClassId(commander) {
-    const rawPath = String(commander?.path || 'PHYS').trim().toUpperCase();
-    if (rawPath === 'MAG' || rawPath === 'MAGIC') return 'battlemage';
-    return 'battlemaster';
 }
 
 function resolveCommanderRank(commander) {

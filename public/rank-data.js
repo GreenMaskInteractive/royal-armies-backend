@@ -40,6 +40,11 @@ var calculateAuthority = function(rank) {
 };
 
 // 3. TITLE ARRAYS (ranks 1–22: full Battlemaster Commander titles; 23+ Chronicle ladder)
+// NOTE: Ranks 1–22 are canonically owned by rift-commander-rank-titles.js, which
+// overwrites these entries at runtime via hydrateRankDataCommanderTitles().
+// Edit titles there (and nexus-commander-rank-titles.js) first; keep these
+// seed copies in sync for pages that load rank-data.js without that module.
+// Ranks 23–48 (Chronicle ladder) are owned here.
 var groundTitles = [
     "Vintenary Commander", "Decurion Commander", "Warden Commander", "Serjeant Commander", "Provost Commander",
     "Centenary Commander", "Herald Commander", "Bachelor Commander", "Banneret Commander", "Castellan Commander",

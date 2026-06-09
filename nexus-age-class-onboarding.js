@@ -3,26 +3,15 @@
  */
 'use strict';
 
-const VALID_PATH_CODES = new Set(['PHYS', 'MAG', 'MAGIC']);
-const VALID_PERK1_BRANCHES = new Set(['A', 'B', 'BUFF', 'COVER', 'OFFENSE', 'DEFENSE']);
+const { normalizeClassPathCode, resolveClassIdFromPath } = require('./nexus-commander-class');
 
-function normalizeClassPathCode(raw) {
-    const code = String(raw || '').trim().toUpperCase();
-    if (code === 'MAGIC') return 'MAG';
-    if (code === 'MAG' || code === 'PHYS') return code;
-    return null;
-}
+const VALID_PERK1_BRANCHES = new Set(['A', 'B', 'BUFF', 'COVER', 'OFFENSE', 'DEFENSE']);
 
 function normalizeClassPerk1Branch(raw) {
     const value = String(raw || '').trim().toUpperCase();
     if (value === 'A' || value === 'BUFF' || value === 'OFFENSE') return 'A';
     if (value === 'B' || value === 'COVER' || value === 'DEFENSE') return 'B';
     return null;
-}
-
-function resolveClassIdFromPath(pathCode) {
-    const path = normalizeClassPathCode(pathCode);
-    return path === 'MAG' ? 'battlemage' : 'battlemaster';
 }
 
 function commanderHasLockedClassChoice(commander) {

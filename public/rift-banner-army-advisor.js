@@ -70,8 +70,12 @@
     }
 
     function resolveClassId(path) {
-        const raw = String(path || global.player?.path || '').trim().toUpperCase();
-        return raw === 'MAG' || raw === 'MAGIC' ? 'battlemage' : 'battlemaster';
+        const raw = path || global.player?.path || '';
+        const api = global.RoyalArmiesCommanderRankTitles;
+        if (api?.resolveCommanderPathId) return api.resolveCommanderPathId(raw);
+        // Fallback mirror of rift-commander-rank-titles.js (canonical).
+        const code = String(raw).trim().toUpperCase();
+        return code === 'MAG' || code === 'MAGIC' ? 'battlemage' : 'battlemaster';
     }
 
     function resolvePerk1Branch(player) {

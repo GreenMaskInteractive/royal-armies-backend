@@ -42,6 +42,11 @@
     }
 
     function normalizeCommanderPath(rawPath) {
+        const api = global.RoyalArmiesCommanderRankTitles;
+        if (api?.normalizeCommanderPathCode) {
+            return api.normalizeCommanderPathCode(rawPath) || String(rawPath || '').trim().toUpperCase();
+        }
+        // Fallback mirror of rift-commander-rank-titles.js (canonical).
         const path = String(rawPath || '').trim().toUpperCase();
         if (path === 'MAG' || path === 'MAGIC') return 'MAG';
         if (path === 'PHYS' || path === 'PHYSICAL') return 'PHYS';
@@ -49,6 +54,8 @@
     }
 
     function resolveCommanderClassId(rawPath) {
+        const api = global.RoyalArmiesCommanderRankTitles;
+        if (api?.resolveCommanderPathId) return api.resolveCommanderPathId(rawPath);
         return normalizeCommanderPath(rawPath) === 'MAG' ? 'battlemage' : 'battlemaster';
     }
 

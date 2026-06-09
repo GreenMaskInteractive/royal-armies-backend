@@ -485,6 +485,11 @@ function getCommanderRankTitle(rankNum, pathCode, gender) {
 function getCommanderClassTitle(pathCode) {
     if (!isViewingCommanderInActiveAge()) return 'N/A';
 
+    const api = window.RoyalArmiesCommanderRankTitles;
+    if (api?.normalizeCommanderPathCode && api?.getCommanderClassLabel) {
+        return api.normalizeCommanderPathCode(pathCode) ? api.getCommanderClassLabel(pathCode) : 'N/A';
+    }
+    // Fallback mirror of rift-commander-rank-titles.js (canonical).
     const labels = {
         PHYS: 'Battlemaster',
         MAG: 'Battlemage',

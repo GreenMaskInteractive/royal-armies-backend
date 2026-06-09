@@ -1,10 +1,25 @@
 /**
  * RIFT — Commander rank display titles & name pills (Battlemaster / Battlemage).
+ *
+ * CANONICAL client-side source for:
+ *   - rank-title tables (ranks 1-22, per path + gender)
+ *   - path-code normalization ('PHYS' | 'MAG') and class ids
+ *     ('battlemaster' | 'battlemage') via global.RoyalArmiesCommanderRankTitles
+ *
+ * Server mirror: nexus-commander-rank-titles.js + nexus-commander-class.js —
+ * keep tables and mappings in sync when titles or classes change.
+ * Other RIFT files may keep tiny local fallbacks for load-order safety, but
+ * must prefer this module's API when it is present.
  */
 (function initRoyalArmiesCommanderRankTitles(global) {
     'use strict';
 
     const COMMANDER_RANK_TITLE_MAX = 22;
+
+    const COMMANDER_CLASS_LABELS = {
+        battlemaster: 'Battlemaster',
+        battlemage: 'Battlemage'
+    };
 
     const BATTLEMASTER_RANK_TITLES_MALE = [
         'Vintenary Commander', 'Decurion Commander', 'Warden Commander', 'Serjeant Commander',
@@ -46,10 +61,23 @@
         return parsed;
     }
 
+    /** Normalize any raw path value to 'MAG' | 'PHYS' | '' (unknown). */
+    function normalizeCommanderPathCode(raw) {
+        const path = String(raw || '').trim().toUpperCase();
+        if (path === 'MAGIC' || path === 'MAG' || path === 'BATTLEMAGE' || path === 'ARCHMAGE') return 'MAG';
+        if (path === 'PHYS' || path === 'PHYSICAL' || path === 'BATTLEMASTER') return 'PHYS';
+        return '';
+    }
+
     function resolveCommanderPathId(pathCode) {
-        const path = String(pathCode || '').trim().toUpperCase();
-        if (path === 'MAG' || path === 'MAGIC' || path === 'BATTLEMAGE' || path === 'ARCHMAGE') return 'battlemage';
-        return 'battlemaster';
+        return normalizeCommanderPathCode(pathCode) === 'MAG' ? 'battlemage' : 'battlemaster';
+    }
+
+    /** Display label from a class id ('battlemage') or path code ('MAG'). */
+    function getCommanderClassLabel(classIdOrPath) {
+        const raw = String(classIdOrPath || '').trim().toLowerCase();
+        if (COMMANDER_CLASS_LABELS[raw]) return COMMANDER_CLASS_LABELS[raw];
+        return COMMANDER_CLASS_LABELS[resolveCommanderPathId(classIdOrPath)];
     }
 
     function resolveCommanderRankTitleGender(raw) {
@@ -198,8 +226,11 @@
 
     const api = {
         COMMANDER_RANK_TITLE_MAX,
+        COMMANDER_CLASS_LABELS,
         clampCommanderRank,
+        normalizeCommanderPathCode,
         resolveCommanderPathId,
+        getCommanderClassLabel,
         resolveCommanderRankTitleGender,
         readSelfRankTitleGender,
         getCommanderRankTitleTable,

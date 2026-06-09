@@ -15,6 +15,13 @@
     let rankLadderModalOpen = false;
     let rankLadderRenderKey = '';
 
+    // ── FALLBACK ONLY ───────────────────────────────────────────────────
+    // Canonical rank-title tables live in rift-commander-rank-titles.js
+    // (global RoyalArmiesCommanderRankTitles) and are preferred at runtime
+    // via ensureCommanderRankTitleApi(). These copies exist solely for
+    // pages that load this file without the titles module. When titles
+    // change, edit rift-commander-rank-titles.js + nexus-commander-rank-
+    // titles.js first, then mirror here.
     const BATTLEMASTER_RANK_TITLES_MALE = [
         'Vintenary Commander', 'Decurion Commander', 'Warden Commander', 'Serjeant Commander',
         'Provost Commander', 'Centenary Commander', 'Herald Commander', 'Bachelor Commander',
@@ -58,6 +65,9 @@
     }
 
     function normalizeCommanderPathCode(raw) {
+        const api = global.RoyalArmiesCommanderRankTitles;
+        if (api?.normalizeCommanderPathCode) return api.normalizeCommanderPathCode(raw);
+        // Fallback mirror of rift-commander-rank-titles.js (canonical).
         const path = String(raw || '').trim().toUpperCase();
         if (path === 'MAGIC' || path === 'MAG' || path === 'BATTLEMAGE' || path === 'ARCHMAGE') return 'MAG';
         if (path === 'PHYS' || path === 'BATTLEMASTER') return 'PHYS';

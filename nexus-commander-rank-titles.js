@@ -1,7 +1,13 @@
 /**
  * NEXUS — Commander rank display titles (Battlemaster / Battlemage, ranks 1–22).
+ *
+ * CANONICAL server-side rank-title tables. The client mirror is
+ * public/rift-commander-rank-titles.js — keep both files' tables in sync
+ * when titles change.
  */
 'use strict';
+
+const { resolveClassIdFromPath } = require('./nexus-commander-class');
 
 const COMMANDER_RANK_TITLE_MAX = 22;
 
@@ -112,9 +118,7 @@ function clampCommanderRank(rank) {
 }
 
 function resolveCommanderPathId(pathCode) {
-    const path = String(pathCode || '').trim().toUpperCase();
-    if (path === 'MAG' || path === 'MAGIC') return 'battlemage';
-    return 'battlemaster';
+    return resolveClassIdFromPath(pathCode);
 }
 
 function resolveCommanderRankTitleGender(raw) {

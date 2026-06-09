@@ -8,13 +8,9 @@
 const path = require('path');
 const fs = require('fs');
 
-const PVP_MATRIX_PATH = path.join(__dirname, 'docs', 'pvp-class-opposition-matrix.json');
+const { resolveCommanderClassId } = require('./nexus-commander-class');
 
-function resolveCommanderClassId(commander) {
-    const rawPath = String(commander?.path || 'PHYS').trim().toUpperCase();
-    if (rawPath === 'MAG' || rawPath === 'MAGIC') return 'battlemage';
-    return 'battlemaster';
-}
+const PVP_MATRIX_PATH = path.join(__dirname, 'docs', 'pvp-class-opposition-matrix.json');
 
 const LANE_IDS = Object.freeze(['ranged', 'beasts', 'cavalry', 'infantry']);
 const EARLY_PHASE_LANES = Object.freeze(['ranged', 'beasts', 'cavalry']);
