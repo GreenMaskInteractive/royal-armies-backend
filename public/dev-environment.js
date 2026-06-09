@@ -46,6 +46,50 @@
         return isLocalDevelopmentHost() && !isNexusBackendSameOrigin();
     }
 
+    /** Live Server default port — legal terms gate is bypassed for local preview only. */
+    function isLiveServerPort5500() {
+        if (!isLocalDevelopmentHost()) return false;
+        return String(global.location.port || '').trim() === '5500';
+    }
+
+    /** Alias used by terms-acceptance and login/onboarding flows. */
+    function isTermsLockBypassedForDev() {
+        return isLiveServerPort5500();
+    }
+
+    const LIVE_PREVIEW_TERMS_BYPASS_HEADER = 'X-Royal-Armies-Live-Preview';
+
+    function withLivePreviewFetchInit(init) {
+        if (!isLiveStaticPreviewHost()) return init;
+
+        const nextInit = init ? { ...init } : {};
+        const headers = new Headers(nextInit.headers || {});
+        const previewPort = String(global.location.port || '5500').trim() || '5500';
+        headers.set(LIVE_PREVIEW_TERMS_BYPASS_HEADER, previewPort);
+        nextInit.headers = headers;
+        return nextInit;
+    }
+
+    function isLocalNexusApiUrl(urlString, apiOrigin) {
+        try {
+            const parsed = new URL(urlString, global.location.href);
+            if (!parsed.pathname.startsWith('/api')) return false;
+
+            const host = parsed.hostname.toLowerCase();
+            const isLocalHost = host === 'localhost' || host === '127.0.0.1' || host === '[::1]';
+            if (!isLocalHost) return false;
+
+            if (!apiOrigin) return true;
+
+            const apiBase = new URL(apiOrigin);
+            const parsedPort = parsed.port || (parsed.protocol === 'https:' ? '443' : '80');
+            const apiPort = apiBase.port || (apiBase.protocol === 'https:' ? '443' : '80');
+            return parsed.hostname.toLowerCase() === apiBase.hostname.toLowerCase() && parsedPort === apiPort;
+        } catch (_err) {
+            return false;
+        }
+    }
+
     function getRoyalArmiesApiOrigin() {
         if (isNexusBackendSameOrigin()) return '';
         if (isLocalDevelopmentHost()) return LIVE_SERVER_API_ORIGIN;
@@ -283,6 +327,104 @@
         }
     }
 
+    const DEV_PREVIEW_NATION_SUFFIX = 'ageDeploymentNationId';
+    const DEV_PREVIEW_CATALOG_CITY_SUFFIX = 'ageCatalogCityId';
+
+    function readDevPreviewCommanderStorage(username, suffix) {
+        const owner = String(username || '').trim();
+        if (!owner) return '';
+        try {
+            return String(global.localStorage.getItem(`royalArmies_${owner}_${suffix}`) || '').trim();
+        } catch (_err) {
+            return '';
+        }
+    }
+
+    function resolveDevPreviewUsername() {
+        const saved = global.localStorage.getItem('activeCommanderUser');
+        if (saved && saved.trim()) return saved.trim();
+        if (typeof global.getActiveCommanderUsername === 'function') {
+            return String(global.getActiveCommanderUsername() || '').trim();
+        }
+        if (global.player?.username) return String(global.player.username).trim();
+        return '';
+    }
+
+    /** Live Server (:5500) — keep dev-panel nation choice over server ledger sync. */
+    function applyDevPreviewNationOverride() {
+        if (!isLiveStaticPreviewHost()) return null;
+
+        const username = resolveDevPreviewUsername();
+        const nationId = readDevPreviewCommanderStorage(username, DEV_PREVIEW_NATION_SUFFIX).toLowerCase();
+        if (!nationId) return null;
+
+        const catalogCityId = readDevPreviewCommanderStorage(username, DEV_PREVIEW_CATALOG_CITY_SUFFIX);
+
+        if (global.player && typeof global.player === 'object') {
+            global.player.gameNation = nationId;
+        }
+
+        if (typeof global.RoyalArmiesAgeMovement?.applyStatePayload === 'function') {
+            global.RoyalArmiesAgeMovement.applyStatePayload({
+                gameNation: nationId,
+                mapNation: nationId,
+                catalogCityId: catalogCityId || undefined
+            }, { eventSource: 'dev-preview-nation-override' });
+        }
+
+        if (typeof global.applyCommanderDossierToClient === 'function') {
+            global.applyCommanderDossierToClient({ gameNation: nationId });
+        }
+
+        if (typeof global.refreshAgeNationWelcomeChrome === 'function') {
+            global.refreshAgeNationWelcomeChrome();
+        }
+
+        return { nationId, catalogCityId };
+    }
+
+    function readDevPreviewOnboardingClassPath(username) {
+        const owner = String(username || '').trim().toLowerCase();
+        if (!owner) return '';
+        try {
+            const raw = global.localStorage.getItem(`royalArmies_${owner}_devOnboardingClass`);
+            if (!raw) return '';
+            const cached = JSON.parse(raw);
+            return String(cached?.path || '').trim().toUpperCase();
+        } catch (_err) {
+            return '';
+        }
+    }
+
+    /** Live Server (:5500) — keep dev class picker choice over stale ledger PHYS. */
+    function applyDevPreviewClassPathOverride() {
+        if (!isLiveStaticPreviewHost()) return null;
+
+        const username = resolveDevPreviewUsername();
+        const pathCode = readDevPreviewOnboardingClassPath(username);
+        if (pathCode !== 'MAG' && pathCode !== 'PHYS') return null;
+
+        if (global.player && typeof global.player === 'object') {
+            global.player.path = pathCode;
+        }
+
+        if (global.RoyalArmiesAgeCommanderRank?.applyCommanderRankPayload) {
+            global.RoyalArmiesAgeCommanderRank.applyCommanderRankPayload(
+                { path: pathCode },
+                { source: 'dev-preview-class-override' }
+            );
+        } else if (global.RoyalArmiesAgeCommanderRank?.syncCommanderRankMeta) {
+            global.RoyalArmiesAgeCommanderRank.syncCommanderRankMeta({ path: pathCode });
+            global.refreshAgeHudCommanderRank?.();
+        }
+
+        if (typeof global.refreshCommanderRankTitleDisplays === 'function') {
+            global.refreshCommanderRankTitleDisplays();
+        }
+
+        return { path: pathCode };
+    }
+
     function patchFetchForLiveStaticPreview() {
         const apiOrigin = getRoyalArmiesApiOrigin();
         if (!apiOrigin || global.__royalArmiesFetchPatched) return;
@@ -290,17 +432,45 @@
         const nativeFetch = global.fetch.bind(global);
         global.fetch = function patchedRoyalArmiesFetch(input, init) {
             let requestPromise;
+            const patchedInit = withLivePreviewFetchInit(init);
 
-            if (typeof input === 'string' && input.startsWith('/api')) {
-                requestPromise = nativeFetch(`${apiOrigin}${input}`, init);
+            if (typeof input === 'string') {
+                if (input.startsWith('/api')) {
+                    requestPromise = nativeFetch(`${apiOrigin}${input}`, patchedInit);
+                } else if (isLocalNexusApiUrl(input, apiOrigin)) {
+                    requestPromise = nativeFetch(input, patchedInit);
+                }
             } else if (input instanceof Request) {
                 const requestUrl = input.url;
                 try {
                     const parsed = new URL(requestUrl, global.location.href);
-                    if (parsed.pathname.startsWith('/api')) {
+                    if (!parsed.pathname.startsWith('/api')) {
+                        throw new Error('not api');
+                    }
+
+                    const targetUrl = requestUrl.startsWith('/api')
+                        ? `${apiOrigin}${parsed.pathname}${parsed.search}`
+                        : (isLocalNexusApiUrl(requestUrl, apiOrigin) ? requestUrl : null);
+
+                    if (targetUrl) {
+                        const forwardedHeaders = new Headers(input.headers);
+                        if (isLiveStaticPreviewHost()) {
+                            const previewPort = String(global.location.port || '5500').trim() || '5500';
+                            forwardedHeaders.set(LIVE_PREVIEW_TERMS_BYPASS_HEADER, previewPort);
+                        }
                         requestPromise = nativeFetch(
-                            new Request(`${apiOrigin}${parsed.pathname}${parsed.search}`, input),
-                            init
+                            new Request(targetUrl, {
+                                method: input.method,
+                                headers: forwardedHeaders,
+                                body: input.body,
+                                mode: input.mode,
+                                credentials: input.credentials,
+                                cache: input.cache,
+                                redirect: input.redirect,
+                                referrer: input.referrer,
+                                integrity: input.integrity
+                            }),
+                            patchedInit
                         );
                     }
                 } catch (_err) {
@@ -309,7 +479,7 @@
             }
 
             if (!requestPromise) {
-                return nativeFetch(input, init);
+                return nativeFetch(input, patchedInit);
             }
 
             return requestPromise
@@ -357,9 +527,16 @@
     global.resolveRoyalArmiesPageUrl = resolveRoyalArmiesPageUrl;
     global.isRoyalArmiesApiReachable = isRoyalArmiesApiReachable;
     global.shouldSuppressRepeatedLocalDevApiWarnings = shouldSuppressRepeatedLocalDevApiWarnings;
+    global.isLiveServerPort5500 = isLiveServerPort5500;
+    global.isTermsLockBypassedForDev = isTermsLockBypassedForDev;
+    global.buildLivePreviewApiFetchInit = withLivePreviewFetchInit;
+    global.applyDevPreviewNationOverride = applyDevPreviewNationOverride;
+    global.applyDevPreviewClassPathOverride = applyDevPreviewClassPathOverride;
     global.RoyalArmiesDev = {
         isLocalDevelopmentHost,
         isLiveStaticPreviewHost,
+        isLiveServerPort5500,
+        isTermsLockBypassedForDev,
         isNexusBackendSameOrigin,
         isPortalPreviewNavEnabled,
         isLandingServedByNexusBackend,
@@ -386,6 +563,8 @@
         resolveRoyalArmiesPageUrl,
         isRoyalArmiesApiReachable,
         shouldSuppressRepeatedLocalDevApiWarnings,
-        liveServerApiOrigin: LIVE_SERVER_API_ORIGIN
+        liveServerApiOrigin: LIVE_SERVER_API_ORIGIN,
+        applyDevPreviewNationOverride,
+        applyDevPreviewClassPathOverride
     };
 })(window);

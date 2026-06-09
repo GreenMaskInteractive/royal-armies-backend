@@ -140,36 +140,66 @@
         return id;
     }
 
-    function applyAuthoritativeCatalogCityId(rawCityId) {
-        const id = String(rawCityId ?? '').trim();
-        if (!id) return '';
-
-        const resolved = resolveMovementTargetCityId(id);
-        if (resolveCatalogCityRecord(resolved)) {
-            return resolved;
-        }
-
-        return resolveCatalogCityId(id);
+    function resolveLedgerNationId() {
+        return resolveMapNationKey(state.gameNation)
+            || resolveMapNationKey(global.player?.gameNation)
+            || resolveMapNationKey(global.player?.nation)
+            || '';
     }
 
-    function resolveCatalogCityId(rawCityId) {
+    function resolveActiveMapNationKey() {
+        return resolveLedgerNationId()
+            || resolveMapNationKey(state.mapNation)
+            || (typeof global.RoyalArmiesAgeMovementPanel?.getCommanderNationId === 'function'
+                ? resolveMapNationKey(global.RoyalArmiesAgeMovementPanel.getCommanderNationId())
+                : '');
+    }
+
+    function applyAuthoritativeCatalogCityId(rawCityId) {
+        const id = String(rawCityId ?? '').trim();
+        const nation = resolveActiveMapNationKey();
+
+        if (!id) {
+            return nation ? resolveCatalogCityId('', nation) : '';
+        }
+
+        const resolved = resolveMovementTargetCityId(id);
+        const city = resolveCatalogCityRecord(resolved);
+        if (city) {
+            if (!nation || city.nationId === nation) {
+                return resolved;
+            }
+            return resolveCatalogCityId('', nation);
+        }
+
+        return resolveCatalogCityId(id, nation);
+    }
+
+    function resolveCatalogCityId(rawCityId, nationKey) {
         const catalog = global.RoyalArmiesAgeWorldMap?.getCatalog?.();
-        const nation = resolveMapNationKey(state.mapNation) || 'aesthene';
+        const nation = resolveMapNationKey(nationKey)
+            || resolveActiveMapNationKey()
+            || 'aesthene';
         const id = String(rawCityId || '').trim();
 
         if (id && catalog?.cities) {
             const direct = catalog.cities.find((city) => city.id === id);
-            if (direct) return direct.id;
-
-            const stub = id.replace(/^[^-]+-/, '');
-            const match = catalog.cities.find((city) => {
-                if (city.nationId !== nation) return false;
-                if (city.id === id || city.id === `${nation}-${id}` || city.id === `${nation}-${stub}`) {
-                    return true;
+            if (direct) {
+                if (!nation || direct.nationId === nation) {
+                    return direct.id;
                 }
-                return city.id.endsWith(`-${stub}`) || city.id.endsWith(`-${id}`);
-            });
-            if (match) return match.id;
+            } else {
+
+                const stub = id.replace(/^[^-]+-/, '');
+                const match = catalog.cities.find((city) => {
+                    if (city.nationId !== nation) return false;
+                    if (city.id === id || city.id === `${nation}-${id}` || city.id === `${nation}-${stub}`) {
+                        return true;
+                    }
+                    return city.id.endsWith(`-${stub}`) || city.id.endsWith(`-${id}`);
+                });
+                if (match) return match.id;
+            }
         }
 
         if (catalog?.cities) {
@@ -414,6 +444,8 @@
             global.RoyalArmiesAgeGuildTraining.applyGuildPayload(payload);
         }
 
+        reconcileCatalogCityWithPlayerNation();
+
         global.dispatchEvent(new CustomEvent('royalarmies:age-movement-updated', {
             detail: {
                 ...state,
@@ -447,13 +479,48 @@
                 return null;
             }
             applyStatePayload(payload);
+            if (typeof global.applyDevPreviewNationOverride === 'function') {
+                global.applyDevPreviewNationOverride();
+            }
+            if (typeof global.applyDevPreviewClassPathOverride === 'function') {
+                global.applyDevPreviewClassPathOverride();
+            }
             return payload;
         } catch (_err) {
+            if (typeof global.applyDevPreviewNationOverride === 'function') {
+                global.applyDevPreviewNationOverride();
+            }
+            if (typeof global.applyDevPreviewClassPathOverride === 'function') {
+                global.applyDevPreviewClassPathOverride();
+            }
             return null;
         }
     }
 
+    function reconcileCatalogCityWithPlayerNation() {
+        const nation = resolveActiveMapNationKey();
+        if (!nation) return;
+
+        state.mapNation = nation;
+        const rawCityId = state.catalogCityId || readStoredCatalogCityId();
+        const resolvedCityId = resolveCatalogCityId(rawCityId, nation);
+        if (!resolvedCityId) return;
+
+        state.catalogCityId = resolvedCityId;
+        writeStoredCatalogCityId(resolvedCityId);
+    }
+
     function ensureLocalMovementDefaults() {
+        const ledgerNation = resolveLedgerNationId();
+        if (ledgerNation) {
+            state.mapNation = ledgerNation;
+        } else if (!state.mapNation && state.gameNation) {
+            const resolvedGameNation = resolveMapNationKey(state.gameNation);
+            if (resolvedGameNation) {
+                state.mapNation = resolvedGameNation;
+            }
+        }
+
         if (!state.mapNation && typeof global.RoyalArmiesAgeMovementPanel?.getCommanderNationId === 'function') {
             const panelNation = global.RoyalArmiesAgeMovementPanel.getCommanderNationId();
             const resolvedPanelNation = resolveMapNationKey(panelNation);
@@ -461,16 +528,12 @@
                 state.mapNation = resolvedPanelNation;
             }
         }
+
         if (!state.mapNation || !resolveMapNationKey(state.mapNation)) {
             state.mapNation = 'aesthene';
         }
 
-        const rawCityId = state.catalogCityId || readStoredCatalogCityId();
-        const resolvedCityId = resolveCatalogCityId(rawCityId);
-        if (resolvedCityId) {
-            state.catalogCityId = resolvedCityId;
-            writeStoredCatalogCityId(resolvedCityId);
-        }
+        reconcileCatalogCityWithPlayerNation();
     }
 
     function areCatalogCitiesAdjacent(cityA, cityB) {
@@ -618,6 +681,9 @@
 
     function resolvePlayerNationId() {
         ensureLocalMovementDefaults();
+        const ledgerNation = resolveLedgerNationId();
+        if (ledgerNation) return ledgerNation;
+
         const resolvedMapNation = resolveMapNationKey(state.mapNation);
         if (resolvedMapNation) return resolvedMapNation;
 
@@ -746,6 +812,7 @@
         getCityLosers,
         getRules,
         resolvePlayerNationId,
+        resolveLedgerNationId,
         getAlliedNationIds,
         getWarNationIds,
         getUnitsTotal,

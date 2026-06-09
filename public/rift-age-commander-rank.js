@@ -57,10 +57,53 @@
         return Math.max(AGE_COMMANDER_RANK_DEFAULT, Math.min(AGE_COMMANDER_RANK_MAX, rank));
     }
 
+    function normalizeCommanderPathCode(raw) {
+        const path = String(raw || '').trim().toUpperCase();
+        if (path === 'MAGIC' || path === 'MAG' || path === 'ARCHMAGE') return 'MAG';
+        if (path === 'PHYS' || path === 'BATTLEMASTER') return 'PHYS';
+        return '';
+    }
+
     function resolveCommanderPathId(pathCode) {
-        const path = String(pathCode || '').trim().toUpperCase();
-        if (path === 'MAG' || path === 'MAGIC' || path === 'ARCHMAGE') return 'archmage';
-        return 'battlemaster';
+        return normalizeCommanderPathCode(pathCode) === 'MAG' ? 'archmage' : 'battlemaster';
+    }
+
+    function resolveActiveCommanderUsername() {
+        if (typeof global.getActiveCommanderUsername === 'function') {
+            return String(global.getActiveCommanderUsername() || '').trim();
+        }
+        try {
+            return String(global.localStorage?.getItem('activeCommanderUser') || '').trim();
+        } catch (_err) {
+            return '';
+        }
+    }
+
+    function readDevOnboardingClassPathFromStorage() {
+        const username = resolveActiveCommanderUsername().toLowerCase();
+        if (!username) return '';
+        try {
+            const raw = global.localStorage?.getItem(`royalArmies_${username}_devOnboardingClass`);
+            if (!raw) return '';
+            const cached = JSON.parse(raw);
+            return normalizeCommanderPathCode(cached?.path);
+        } catch (_err) {
+            return '';
+        }
+    }
+
+    function resolveCommanderPathCodeForRankTitles() {
+        const player = getPlayer();
+        const playerPath = normalizeCommanderPathCode(player?.path);
+        if (playerPath) return playerPath;
+
+        const metaPath = normalizeCommanderPathCode(commanderRankMeta.path);
+        if (metaPath) return metaPath;
+
+        const devPath = readDevOnboardingClassPathFromStorage();
+        if (devPath) return devPath;
+
+        return 'PHYS';
     }
 
     function resolveCommanderRankTitleGender(raw) {
@@ -140,7 +183,8 @@
         if (!partial || typeof partial !== 'object') return commanderRankMeta;
 
         if (partial.path != null && String(partial.path).trim()) {
-            commanderRankMeta.path = String(partial.path).trim().slice(0, 16);
+            const normalizedPath = normalizeCommanderPathCode(partial.path) || String(partial.path).trim().slice(0, 16);
+            commanderRankMeta.path = normalizedPath;
         }
         if (partial.rankTitleGender != null) {
             commanderRankMeta.rankTitleGender = resolveCommanderRankTitleGender(partial.rankTitleGender);
@@ -177,13 +221,67 @@
         const player = getPlayer();
         return {
             rank: clampCommanderRank(player?.rank || readHudRankElement() || AGE_COMMANDER_RANK_DEFAULT),
-            path: player?.path || commanderRankMeta.path || 'PHYS',
+            path: resolveCommanderPathCodeForRankTitles(),
             rankTitleGender: resolveCommanderRankTitleGender(
                 player?.rankTitleGender != null ? player.rankTitleGender : (
                     commanderRankMeta.rankTitleGender || readStoredRankTitleGender()
                 )
             )
         };
+    }
+
+    function resolveApiUrl(path) {
+        if (typeof global.resolveRoyalArmiesApiUrl === 'function') {
+            return global.resolveRoyalArmiesApiUrl(path);
+        }
+        return path;
+    }
+
+    function buildApiFetchInit(init) {
+        if (typeof global.buildLivePreviewApiFetchInit === 'function') {
+            return global.buildLivePreviewApiFetchInit(init);
+        }
+        return init;
+    }
+
+    async function hydrateCommanderClassPathFromServer() {
+        const username = resolveActiveCommanderUsername();
+        if (!username) return null;
+
+        try {
+            const init = buildApiFetchInit({ credentials: 'include', cache: 'no-store' });
+            const response = await global.fetch(
+                resolveApiUrl(`/api/portal/game/onboarding-class?username=${encodeURIComponent(username)}`),
+                init
+            );
+            const payload = await response.json().catch(() => ({}));
+            const path = normalizeCommanderPathCode(payload?.path);
+            if (!response.ok || payload.status === 'error' || !path) {
+                return null;
+            }
+
+            syncCommanderRankMeta({ path });
+            return path;
+        } catch (_err) {
+            return null;
+        }
+    }
+
+    function applyStoredDevOnboardingClassPath() {
+        const path = readDevOnboardingClassPathFromStorage();
+        if (!path) return null;
+        syncCommanderRankMeta({ path });
+        return path;
+    }
+
+    function onClassPathConfirmed(event) {
+        const path = normalizeCommanderPathCode(event?.detail?.pathCode);
+        if (!path) return;
+        syncCommanderRankMeta({ path });
+        refreshAgeHudCommanderRank();
+        if (typeof global.refreshCommanderRankTitleDisplays === 'function') {
+            global.refreshCommanderRankTitleDisplays();
+        }
     }
 
     function resolveCommanderRankDisplayLabel(rank, options = {}) {
@@ -564,7 +662,21 @@
     function bootAgeCommanderRank() {
         ensureCommanderRankTitleApi();
         ensureHudCommanderRankToggleBound();
+        applyStoredDevOnboardingClassPath();
         refreshAgeHudCommanderRank();
+
+        void hydrateCommanderClassPathFromServer().then((path) => {
+            if (!path) return;
+            refreshAgeHudCommanderRank();
+            if (typeof global.refreshCommanderRankTitleDisplays === 'function') {
+                global.refreshCommanderRankTitleDisplays();
+            }
+        });
+
+        if (global.__ageCommanderRankClassListenerBound !== true) {
+            global.__ageCommanderRankClassListenerBound = true;
+            global.addEventListener('royalarmies:class-confirmed', onClassPathConfirmed);
+        }
     }
 
     global.RoyalArmiesAgeCommanderRank = {
@@ -584,7 +696,9 @@
         applyCommanderRankPayload,
         setAgeCommanderRank,
         refreshAgeHudCommanderRank,
-        ensureAgeCommanderRankInitialized
+        ensureAgeCommanderRankInitialized,
+        hydrateCommanderClassPathFromServer,
+        resolveCommanderPathCodeForRankTitles
     };
 
     global.resolveAgeCommanderRank = resolveAgeCommanderRank;

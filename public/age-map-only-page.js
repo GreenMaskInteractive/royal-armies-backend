@@ -784,6 +784,18 @@
             }
         }
 
+        if (global.RoyalArmiesAgeCommanderRank?.hydrateCommanderClassPathFromServer) {
+            try {
+                await global.RoyalArmiesAgeCommanderRank.hydrateCommanderClassPathFromServer();
+            } catch (_err) {
+                /* class path sync optional during map preview */
+            }
+        }
+
+        if (typeof global.applyDevPreviewClassPathOverride === 'function') {
+            global.applyDevPreviewClassPathOverride();
+        }
+
         if (typeof global.refreshAgeHudCommanderRank === 'function') {
             global.refreshAgeHudCommanderRank();
         }
