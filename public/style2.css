@@ -14203,18 +14203,8 @@ body.is-age-commander-rank-ladder-open {
 
 .age-commander-rank-ladder-copy {
     display: flex;
-    flex-direction: column;
-    gap: 2px;
+    align-items: center;
     min-width: 0;
-}
-
-.age-commander-rank-ladder-rank-label {
-    font-family: 'Cinzel', serif;
-    font-size: 0.58rem;
-    font-weight: 700;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    color: rgba(241, 224, 172, 0.56);
 }
 
 .age-commander-rank-ladder-name {

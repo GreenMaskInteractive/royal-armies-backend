@@ -315,7 +315,6 @@
                 `<li class="age-commander-rank-ladder-row${stateClass}" data-rank="${rank}">`
                 + `<span class="age-commander-rank-ladder-level" aria-hidden="true">${rank}</span>`
                 + `<span class="age-commander-rank-ladder-copy">`
-                + `<span class="age-commander-rank-ladder-rank-label">Rank ${rank}</span>`
                 + `<span class="age-commander-rank-ladder-name">${title}</span>`
                 + `</span>`
                 + `</li>`
