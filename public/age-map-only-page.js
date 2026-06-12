@@ -796,10 +796,13 @@
 
     async function postAgeJoin() {
         const username = resolvePageUsername();
-        if (!username) return;
+        if (!username) return { ok: false, evicted: false };
 
-        const directJoin = typeof global.isPortalDirectAgeJoinEnabled === 'function'
-            && global.isPortalDirectAgeJoinEnabled();
+        if (global.RoyalArmiesOfficialAge?.resumeAgePortalSessionJoin) {
+            return global.RoyalArmiesOfficialAge.resumeAgePortalSessionJoin(resolveApiUrl, {
+                armyFocus: global.RoyalArmiesAgeMovementPanel?.computeLocalArmyFocus?.() || ''
+            });
+        }
 
         try {
             const response = await global.fetch(resolveApiUrl('/api/portal/age/join'), {
@@ -808,7 +811,6 @@
                 body: JSON.stringify({
                     username,
                     ageSlug: global.document.body?.dataset?.ageSlug || 'alpha',
-                    assignRandomNation: directJoin,
                     armyFocus: global.RoyalArmiesAgeMovementPanel?.computeLocalArmyFocus?.() || ''
                 }),
                 cache: 'no-store',
@@ -817,9 +819,12 @@
             const payload = await response.json().catch(() => ({}));
             if (!response.ok || payload.status === 'error') {
                 console.warn('[RIFT] Age join sync failed:', payload?.message || payload);
+                return { ok: false, evicted: false, payload };
             }
+            return { ok: true, evicted: false, payload };
         } catch (err) {
             console.warn('[RIFT] Age join sync failed:', err);
+            return { ok: false, evicted: false };
         }
     }
 
@@ -840,6 +845,12 @@
         }
 
         await postAgeJoin();
+
+        if (global.__royalArmiesAgeEvictionInFlight) {
+            return;
+        }
+
+        global.RoyalArmiesOfficialAge?.startCommanderAccountResetEvictionWatch?.(resolveApiUrl);
 
         if (typeof global.fetchCommanderDossierFromServer === 'function') {
             try {

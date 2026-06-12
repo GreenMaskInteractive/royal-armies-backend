@@ -2708,6 +2708,7 @@ function getPortalLiveMetricsPayload() {
         registeredCount: visibleCommanders.length,
         recentRegistrations,
         deploy: getDeployStatePayload(),
+        commanderAccountResetAt: readPortalCommanderAccountResetAt(),
         ...getAgeSessionMetrics(),
         ...getPortalBrowseMetrics()
     };
@@ -2761,6 +2762,16 @@ function removeAgeSession(username) {
     const normalized = normalizeLedgerUsername(username);
     if (!normalized) return;
     ageSessionByUser.delete(normalized);
+}
+
+function clearAllAgeSessions() {
+    ageSessionByUser.clear();
+}
+
+function readPortalCommanderAccountResetAt() {
+    const portal = db.get('portal').value() || {};
+    const resetAt = portal.commanderAccountResetAt;
+    return resetAt ? String(resetAt).trim() : null;
 }
 
 function normalizeLedgerUsername(value) {
@@ -8379,12 +8390,21 @@ app.post('/api/portal/age/join', (req, res) => {
     ensureCommanderAgeRoster(commander);
 
     let rosterCommander = db.get('commanders').find({ username }).value() || commander;
+    const enrollFromPortal = req.body?.enrollFromPortal === true;
+    const explicitAssignRandom = req.body?.assignRandomNation === true;
+    const hasEnrolledNation = Boolean(resolveCatalogNationKey(rosterCommander?.gameNation));
+
+    if (!hasEnrolledNation && !enrollFromPortal && !explicitAssignRandom) {
+        return sendApiError(res, 'NEXUS-AGE-038', {
+            evicted: true,
+            commanderAccountResetAt: readPortalCommanderAccountResetAt()
+        });
+    }
+
     const shouldAssignRandomNation = Boolean(
         isPortalDirectAgeJoinEnabled()
-        && (
-            req.body?.assignRandomNation === true
-            || !resolveCatalogNationKey(rosterCommander?.gameNation)
-        )
+        && (enrollFromPortal || explicitAssignRandom)
+        && !hasEnrolledNation
     );
 
     if (shouldAssignRandomNation) {
@@ -8432,6 +8452,7 @@ app.post('/api/portal/age/join', (req, res) => {
         directAgeJoin: isPortalDirectAgeJoinEnabled(),
         gameNation: rosterCommander?.gameNation || '',
         onboardingRegionId: rosterCommander?.onboardingRegionId || '',
+        commanderAccountResetAt: readPortalCommanderAccountResetAt(),
         ...buildAgeMovementStatePayload(username, rosterCommander),
         ...getPortalLiveMetricsPayload()
     });
@@ -8459,13 +8480,16 @@ app.post('/api/portal/age/admin/reset-all-commander-accounts', (req, res) => {
     movementStore.commanders = {};
     writeAgeMovementStore(movementStore);
 
-    db.get('portal').assign({ commanderAccountResetAt: new Date().toISOString() }).write();
+    const commanderAccountResetAt = new Date().toISOString();
+    db.get('portal').assign({ commanderAccountResetAt }).write();
+    clearAllAgeSessions();
 
     res.json({
         status: 'ok',
         action: 'reset-all-commander-accounts',
         resetCount,
-        directAgeJoin: isPortalDirectAgeJoinEnabled()
+        directAgeJoin: isPortalDirectAgeJoinEnabled(),
+        commanderAccountResetAt
     });
 });
 

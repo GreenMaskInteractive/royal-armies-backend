@@ -79,7 +79,13 @@
 
     async function postAgeJoin() {
         const username = resolvePageUsername();
-        if (!username) return;
+        if (!username) return { ok: false, evicted: false };
+
+        if (global.RoyalArmiesOfficialAge?.resumeAgePortalSessionJoin) {
+            return global.RoyalArmiesOfficialAge.resumeAgePortalSessionJoin(resolveApiUrl, {
+                armyFocus: global.RoyalArmiesAgeMovementPanel?.computeLocalArmyFocus?.() || ''
+            });
+        }
 
         try {
             const response = await global.fetch(resolveApiUrl('/api/portal/age/join'), {
@@ -96,9 +102,12 @@
             const payload = await response.json().catch(() => ({}));
             if (!response.ok || payload.status === 'error') {
                 console.warn('[RIFT] Council Room age join sync failed:', payload?.message || payload);
+                return { ok: false, evicted: false, payload };
             }
+            return { ok: true, evicted: false, payload };
         } catch (err) {
             console.warn('[RIFT] Council Room age join sync failed:', err);
+            return { ok: false, evicted: false };
         }
     }
 
@@ -135,13 +144,15 @@
         }
 
         try {
-            await global.fetch(resolveApiUrl('/api/portal/presence'), {
+            const response = await global.fetch(resolveApiUrl('/api/portal/presence'), {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ username, inAge: true }),
                 cache: 'no-store',
                 credentials: 'include'
             });
+            const payload = await response.json().catch(() => ({}));
+            global.RoyalArmiesOfficialAge?.maybeEvictForAccountResetPayload?.(payload, resolveApiUrl);
         } catch (err) {
             if (typeof global.shouldSuppressRepeatedLocalDevApiWarnings !== 'function'
                 || !global.shouldSuppressRepeatedLocalDevApiWarnings()) {
@@ -274,6 +285,10 @@
 
         markPlayingActiveAgeLocally();
         await postAgeJoin();
+        if (global.__royalArmiesAgeEvictionInFlight) {
+            return;
+        }
+        global.RoyalArmiesOfficialAge?.startCommanderAccountResetEvictionWatch?.(resolveApiUrl);
         startPresenceLoop();
 
         if (typeof global.fetchCommanderDossierFromServer === 'function') {

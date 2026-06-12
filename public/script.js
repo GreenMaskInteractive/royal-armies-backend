@@ -3778,6 +3778,7 @@ const COMMANDER_RANK_RESET_LIMIT = 3;
 const COMMANDER_EXILE_RESET_LIMIT = 1;
 const COMMANDER_AGE_RESET_USAGE_KEY = 'savedCommanderAgeResetUsage';
 const COMMANDER_ACTIVE_AGE_SESSION_KEY = 'savedCommanderActiveAgeSessionKey';
+const COMMANDER_ACCOUNT_RESET_ACK_KEY = 'royalArmiesCommanderAccountResetAck';
 
 function resolveCommanderResetStorageKey() {
     const name = typeof getActiveCommanderUsername === 'function' ? getActiveCommanderUsername() : '';
@@ -5069,6 +5070,8 @@ window.handleHeaderAuthAction = handleHeaderAuthAction;
 window.isAgePortalShell = isAgePortalShell;
 window.notifyAgePortalSessionLeave = notifyAgePortalSessionLeave;
 window.exitAgePortalToMain = exitAgePortalToMain;
+window.storeCommanderAccountResetAck = storeCommanderAccountResetAck;
+window.readCommanderAccountResetAck = readCommanderAccountResetAck;
 window.executePortalLogoutRedirect = executePortalLogoutRedirect;
 window.requestPortalLogout = requestPortalLogout;
 window.openMainPortalLoginModal = openMainPortalLoginModal;
@@ -5509,10 +5512,21 @@ async function commitCommanderAgeResetToServer(mode) {
 
 function clearCommanderLocalAgeSessionFlags() {
     localStorage.removeItem('savedCommanderInActiveAge');
+    localStorage.removeItem(COMMANDER_ACCOUNT_RESET_ACK_KEY);
     const sessionStartedKey = resolveCommanderGameSessionStartedStorageKey();
     if (sessionStartedKey) {
         localStorage.removeItem(sessionStartedKey);
     }
+}
+
+function storeCommanderAccountResetAck(isoTimestamp) {
+    const resetAt = String(isoTimestamp || '').trim();
+    if (!resetAt) return;
+    localStorage.setItem(COMMANDER_ACCOUNT_RESET_ACK_KEY, resetAt);
+}
+
+function readCommanderAccountResetAck() {
+    return String(localStorage.getItem(COMMANDER_ACCOUNT_RESET_ACK_KEY) || '').trim();
 }
 
 function finalizeCommanderAgeReset(mode) {

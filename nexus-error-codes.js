@@ -806,6 +806,12 @@
             message: 'That location is restricted. No army may enter or leave it.',
             category: 'game'
         },
+        'NEXUS-AGE-038': {
+            http: 403,
+            title: 'Age session ended',
+            message: 'Commander accounts were reset. Return to the portal and join the Age again.',
+            category: 'game'
+        },
 
         /* --- Player conduct reports --- */
         'NEXUS-REPORT-001': {

@@ -2314,15 +2314,27 @@ async function requestPortalAgeJoin() {
     const credentials = typeof canUsePortalAuthSessionApi === 'function' && canUsePortalAuthSessionApi()
         ? 'include'
         : 'same-origin';
+    const directJoin = typeof isPortalDirectAgeJoinEnabled === 'function' && isPortalDirectAgeJoinEnabled();
 
     try {
         const response = await fetch(joinUrl, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             credentials,
-            body: JSON.stringify({ username })
+            body: JSON.stringify({
+                username,
+                enrollFromPortal: true,
+                assignRandomNation: directJoin
+            })
         });
         const payload = await response.json().catch(() => ({}));
+        if (response.ok && payload?.commanderAccountResetAt) {
+            if (typeof storeCommanderAccountResetAck === 'function') {
+                storeCommanderAccountResetAck(payload.commanderAccountResetAt);
+            } else if (typeof window.storeCommanderAccountResetAck === 'function') {
+                window.storeCommanderAccountResetAck(payload.commanderAccountResetAt);
+            }
+        }
         return { ok: response.ok, payload, response };
     } catch (err) {
         console.warn('Portal age join sync failed:', err);
