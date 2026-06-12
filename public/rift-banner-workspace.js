@@ -33,13 +33,26 @@
         }
     }
 
+    const TWENTY_FIVE_NODE_BANNERS = new Set(['emerald-barrier']);
+    const ROOT_AUTO_NODE_IDS = Object.freeze({
+        'emerald-barrier': 'eb-01'
+    });
+
     function createDefaultBannerState() {
         return {
             bannerId: '',
             swapUsed: false,
             perkPoints: 0,
-            unlockedPerkIds: []
+            unlockedPerkIds: [],
+            unlockedNodeIds: [],
+            armyAdvisor: null
         };
+    }
+
+    function refreshBannerArmyAdvisor() {
+        const advisorApi = global.RoyalArmiesBannerAdvisor;
+        if (!advisorApi?.refreshAndPersist) return Promise.resolve(null);
+        return advisorApi.refreshAndPersist(writeBannerState, readBannerState);
     }
 
     const BANNER_CATALOG = Object.freeze([
@@ -48,7 +61,12 @@
             title: 'True War Banner',
             image: `/images/truewarbanner.png?v=${IMAGE_BUST}`,
             rune: 'Rune of Valiance',
-            skillCategory: 'Offensive Combat & Infantry',
+            skillIdentity: 'Aggressive valiance — press fights, break lines, and dominate ranked PvP.',
+            branchPaths: Object.freeze([
+                Object.freeze({ name: 'Ferocious Line', playstyle: 'Infantry assault' }),
+                Object.freeze({ name: 'Higher Ground', playstyle: 'Ranked PvP aggression' }),
+                Object.freeze({ name: 'Relentless Valiance', playstyle: 'Strike pressure' })
+            ]),
             lore: 'A mark of unending victory and a strong, ferocious army. This banner is blessed with the Rune of Valiance.',
             perks: Object.freeze([
                 {
@@ -80,7 +98,12 @@
             title: "Sachiel's Blessing Banner",
             image: `/images/sachielsblessingbanner.png?v=${IMAGE_BUST}`,
             rune: 'Rune of Revitalization',
-            skillCategory: 'Restoration & Army Sustain',
+            skillIdentity: 'Restoration & army sustain — revive losses and recover after every fight.',
+            branchPaths: Object.freeze([
+                Object.freeze({ name: 'Revitalization Surge', playstyle: 'Battle revival' }),
+                Object.freeze({ name: 'Restored Vigour', playstyle: 'Post-battle recovery' }),
+                Object.freeze({ name: 'Angelic March', playstyle: 'Mobility sustain' })
+            ]),
             lore: "Known to bring life back to many lost souls, this banner was blessed by an Angel through the Rune of Revitalization. It radiates a healing aura.",
             perks: Object.freeze([
                 {
@@ -112,8 +135,12 @@
             title: 'Emerald Barrier Banner',
             image: `/images/emeraldbarrierbanner.png?v=${IMAGE_BUST}`,
             rune: 'Rune of Fortification',
-            skillCategory: 'Defensive Fortification & Garrison',
-            lore: 'Reputed for maintaining an impenetrable wall of defense and causing stalemates. Blessed with the Rune of Fortification.',
+            branchPaths: Object.freeze([
+                Object.freeze({ name: 'Phalanx Hold', playstyle: 'Battlefield bulwark' }),
+                Object.freeze({ name: 'Rampart Reserve', playstyle: 'Campaign sustain' }),
+                Object.freeze({ name: 'Sentinel Screen', playstyle: 'Scout & shield' })
+            ]),
+            lore: 'Reputed for holding the line through personal discipline and defensive mastery. Blessed with the Rune of Fortification.',
             perks: Object.freeze([
                 {
                     id: 'emerald-pvp-defense',
@@ -122,8 +149,8 @@
                 },
                 {
                     id: 'emerald-fortified-city',
-                    title: 'Fortified Bastion',
-                    desc: 'When stationed on a fortified city or capital, instantly receive +250 DEFENSE HP.'
+                    title: 'Bulwark Stance',
+                    desc: 'When your army defends in PvP battle, gain +250 effective HP at battle start.'
                 },
                 {
                     id: 'emerald-mountains',
@@ -134,7 +161,7 @@
             skillTree: Object.freeze({
                 keystoneId: 'emerald-pvp-defense',
                 branches: Object.freeze([
-                    { id: 'fortified-bastion', label: 'Fortified Bastion', perkId: 'emerald-fortified-city' },
+                    { id: 'fortified-bastion', label: 'Bulwark Stance', perkId: 'emerald-fortified-city' },
                     { id: 'mountain-ward', label: 'Mountain Ward', perkId: 'emerald-mountains' }
                 ])
             })
@@ -144,7 +171,12 @@
             title: "Fortune's Gratitude Banner",
             image: `/images/fortunesgratitudebanner.png?v=${IMAGE_BUST}`,
             rune: 'Rune of Hinshuro',
-            skillCategory: 'Economic Prosperity & Trade',
+            skillIdentity: 'Economic prosperity & trade — merchant growth, tick income, and war dividends.',
+            branchPaths: Object.freeze([
+                Object.freeze({ name: 'Merchant Tithe', playstyle: 'Passive income' }),
+                Object.freeze({ name: 'Victory Dividend', playstyle: 'War spoils' }),
+                Object.freeze({ name: 'Hinshuro Ledger', playstyle: 'Expense mastery' })
+            ]),
             lore: 'Known as the Merchant Flag of Ultimate Trade, passed down through generations of tradesmen. Blessed with the Rune of Hinshuro to aid residential and commercial growth.',
             perks: Object.freeze([
                 {
@@ -309,8 +341,20 @@
         state.swapUsed = Boolean(raw.swapUsed);
         state.perkPoints = Math.max(0, Math.floor(Number(raw.perkPoints) || 0));
 
-        const unlocked = Array.isArray(raw.unlockedPerkIds) ? raw.unlockedPerkIds : [];
-        state.unlockedPerkIds = [...new Set(unlocked.map((id) => String(id || '').trim()).filter(Boolean))];
+        const unlockedPerks = Array.isArray(raw.unlockedPerkIds) ? raw.unlockedPerkIds : [];
+        state.unlockedPerkIds = [...new Set(unlockedPerks.map((id) => String(id || '').trim()).filter(Boolean))];
+
+        const unlockedNodes = Array.isArray(raw.unlockedNodeIds) ? raw.unlockedNodeIds : [];
+        state.unlockedNodeIds = [...new Set(unlockedNodes.map((id) => String(id || '').trim()).filter(Boolean))];
+
+        const rootNodeId = ROOT_AUTO_NODE_IDS[state.bannerId];
+        if (rootNodeId && !state.unlockedNodeIds.includes(rootNodeId)) {
+            state.unlockedNodeIds.unshift(rootNodeId);
+        }
+
+        if (raw.armyAdvisor && typeof raw.armyAdvisor === 'object') {
+            state.armyAdvisor = raw.armyAdvisor;
+        }
 
         return state;
     }
@@ -362,6 +406,11 @@
         const next = state || readBannerState();
         next.perkPoints = 0;
         next.unlockedPerkIds = [];
+        next.unlockedNodeIds = [];
+        const rootNodeId = ROOT_AUTO_NODE_IDS[next.bannerId];
+        if (rootNodeId) {
+            next.unlockedNodeIds = [rootNodeId];
+        }
         return next;
     }
 
@@ -590,7 +639,7 @@
         });
     }
 
-    function openBannerWorkspace(event, focusPerkId) {
+    function openBannerWorkspaceLegacy(event, focusPerkId) {
         if (event) {
             event.preventDefault();
             event.stopPropagation();
@@ -598,6 +647,7 @@
         if (typeof global.closePortalCommanderIdentityMenu === 'function') {
             global.closePortalCommanderIdentityMenu();
         }
+
         if (typeof global.playSelectSFX === 'function') {
             global.playSelectSFX();
         }
@@ -613,6 +663,25 @@
         modal.setAttribute('aria-hidden', 'false');
         global.document.body.classList.add('is-rift-banner-workspace-open');
         global.document.getElementById('rift-banner-workspace-close')?.focus();
+    }
+
+    function openBannerWorkspace(event, focusPerkId) {
+        if (event) {
+            event.preventDefault();
+            event.stopPropagation();
+        }
+        if (typeof global.closePortalCommanderIdentityMenu === 'function') {
+            global.closePortalCommanderIdentityMenu();
+        }
+
+        const chosenId = readChosenBannerId();
+        if (TWENTY_FIVE_NODE_BANNERS.has(chosenId) && typeof global.openBlessedBannersModal === 'function') {
+            hideBannerBlessingToast();
+            void global.openBlessedBannersModal(event, chosenId);
+            return;
+        }
+
+        openBannerWorkspaceLegacy(event, focusPerkId);
     }
 
     function closeBannerWorkspace() {
@@ -644,7 +713,12 @@
         }
 
         state.bannerId = id;
+        const rootNodeId = ROOT_AUTO_NODE_IDS[id];
+        if (rootNodeId) {
+            state.unlockedNodeIds = [rootNodeId];
+        }
         if (!writeBannerState(state)) return false;
+        await refreshBannerArmyAdvisor();
 
         global.dispatchEvent(new CustomEvent('royalarmies:banner-blessing-chosen', {
             detail: { bannerId: id, banner, swapped, perkPoints: state.perkPoints }
@@ -673,14 +747,21 @@
         return { label: 'Swap Spent', disabled: true, modifier: 'is-locked' };
     }
 
-    function renderChurchBannerCard(banner, chosenBannerId, swapAvailable) {
+    function renderChurchBannerCard(banner, chosenBannerId, swapAvailable, recommendedBannerId) {
         const isChosen = chosenBannerId === banner.id;
+        const isRecommended = !chosenBannerId && recommendedBannerId === banner.id;
         const button = resolveChurchBannerButton(chosenBannerId, banner.id, swapAvailable);
 
-        const skillCategory = String(banner.skillCategory || '').trim();
+        const skillIdentity = String(banner.skillIdentity || banner.skillCategory || '').trim();
+        const branchPaths = Array.isArray(banner.branchPaths) ? banner.branchPaths : [];
+        const branchSummary = branchPaths
+            .map((path) => String(path?.name || '').trim())
+            .filter(Boolean)
+            .join(' · ');
 
         return `
-            <article class="age-church-banner-card${isChosen ? ' is-chosen' : ''}" data-banner-id="${escapeHtml(banner.id)}">
+            <article class="age-church-banner-card${isChosen ? ' is-chosen' : ''}${isRecommended ? ' is-recommended' : ''}" data-banner-id="${escapeHtml(banner.id)}">
+                ${isRecommended ? '<span class="age-church-banner-recommended-tag">Recommended for your army</span>' : ''}
                 <div class="age-church-banner-visual">
                     <div class="age-church-banner-rays" aria-hidden="true"></div>
                     <div class="age-church-banner-glow" aria-hidden="true"></div>
@@ -691,8 +772,10 @@
                         <h4 class="age-church-banner-title">${escapeHtml(banner.title)}</h4>
                         <p class="age-church-banner-rune">Blessed with the <strong>${escapeHtml(banner.rune)}</strong></p>
                         <p class="age-church-banner-lore">${escapeHtml(banner.lore)}</p>
-                        ${skillCategory
-                            ? `<p class="age-church-banner-skill-category"><span class="age-church-banner-skill-category-label">Skill discipline</span> ${escapeHtml(skillCategory)}<span class="age-church-banner-skill-category-note">Branches into multiple skill paths</span></p>`
+                        ${skillIdentity
+                            ? `<p class="age-church-banner-skill-category"><span class="age-church-banner-skill-category-label">Banner identity</span> ${escapeHtml(skillIdentity)}${branchSummary
+                                ? `<span class="age-church-banner-skill-category-note">Paths: ${escapeHtml(branchSummary)}</span>`
+                                : '<span class="age-church-banner-skill-category-note">Branches into multiple skill paths</span>'}</p>`
                             : ''}
                     </div>
                     <div class="age-church-banner-action">
@@ -727,10 +810,15 @@
                 : 'Your one Age swap has been spent. This banner and its perk progress are locked until the Age turns.')
             : 'Each banner carries a sacred rune and a skill discipline that branches into multiple paths. You receive one blessing freely, and may swap it only once before the Age ends.';
 
+        const recommendedBannerId = state.armyAdvisor?.recommendedBannerId || '';
+        const advisorReason = String(state.armyAdvisor?.recommendedBannerReason || '').trim();
+        const advisorProfile = String(state.armyAdvisor?.profileSummary || '').trim();
+
         const cards = BANNER_CATALOG.map((banner) => renderChurchBannerCard(
             banner,
             chosenBannerId,
-            swapAvailable
+            swapAvailable,
+            recommendedBannerId
         )).join('');
 
         return (
@@ -743,6 +831,16 @@
             + '<p class="age-church-sanctum-lead">Royal Armies Banners</p>'
             + `<p class="age-church-sanctum-note">${escapeHtml(sanctumNote)}</p>`
             + `<p class="age-church-sanctum-copy">${escapeHtml(swapPolicyCopy)}</p>`
+            + (!chosenBanner && (advisorProfile || advisorReason)
+                ? `<div class="age-church-advisor-note">`
+                    + (advisorProfile
+                        ? `<p class="age-church-advisor-profile">Based on: ${escapeHtml(advisorProfile)}</p>`
+                        : '')
+                    + (advisorReason
+                        ? `<p class="age-church-advisor-reason">${escapeHtml(advisorReason)}</p>`
+                        : '')
+                    + `</div>`
+                : '')
             + (chosenBanner
                 ? `<button type="button" class="age-church-open-tree-btn" data-church-open-banner-tree="1">Open Banner Skill Tree</button>`
                 : '')
@@ -809,6 +907,13 @@
             }
         });
 
+        global.addEventListener('royalarmies:banner-advisor-updated', () => {
+            const modal = global.document.getElementById('rift-banner-workspace-modal');
+            if (modal && !modal.hidden) {
+                renderBannerWorkspaceBody();
+            }
+        });
+
         global.document.addEventListener('keydown', (event) => {
             if (event.key !== 'Escape') return;
 
@@ -816,6 +921,14 @@
             if (toast && !toast.hidden && (toast.classList.contains('is-visible') || toast.classList.contains('is-exiting'))) {
                 event.stopPropagation();
                 hideBannerBlessingToast();
+                return;
+            }
+
+            const blessedModal = global.document.getElementById('blessed-banners-modal');
+            if (blessedModal && !blessedModal.hidden) {
+                if (typeof global.closeBlessedBannersModal === 'function') {
+                    global.closeBlessedBannersModal();
+                }
                 return;
             }
 
@@ -829,22 +942,27 @@
 
     function initBannerWorkspace() {
         bindHandlers();
+        void refreshBannerArmyAdvisor();
     }
 
     global.openBannerWorkspace = openBannerWorkspace;
+    global.openBannerWorkspaceLegacy = openBannerWorkspaceLegacy;
     global.closeBannerWorkspace = closeBannerWorkspace;
     global.showBannerBlessingToast = showBannerBlessingToast;
 
     global.RoyalArmiesBanner = Object.freeze({
         catalog: BANNER_CATALOG,
         getBannerState: readBannerState,
+        writeBannerState,
         getChosenBannerId: readChosenBannerId,
         getChosenBanner,
         canSwapBlessing,
         chooseBlessing,
         buildChurchWorkspaceHtml,
+        refreshArmyAdvisor: refreshBannerArmyAdvisor,
         open: openBannerWorkspace,
-        close: closeBannerWorkspace
+        close: closeBannerWorkspace,
+        supportsTwentyFiveNodeTree: (bannerId) => TWENTY_FIVE_NODE_BANNERS.has(String(bannerId || '').trim())
     });
 
     if (global.document.readyState === 'loading') {

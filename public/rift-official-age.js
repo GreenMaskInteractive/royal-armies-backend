@@ -7,6 +7,13 @@
 
     const PRE_AGE_SLUG = 'alpha';
 
+    /** Temporary — main portal Join skips game.html onboarding and routes to agealpha. */
+    const PORTAL_DIRECT_AGE_JOIN_ENABLED = true;
+
+    function isPortalDirectAgeJoinEnabled() {
+        return PORTAL_DIRECT_AGE_JOIN_ENABLED;
+    }
+
     function getOfficialAgeSlug() {
         return PRE_AGE_SLUG;
     }
@@ -40,10 +47,12 @@
         getOfficialAgePageFileName,
         getOfficialAgePagePath,
         isOfficialAgePageActive,
-        isNationTerrainBonusDataLive
+        isNationTerrainBonusDataLive,
+        isPortalDirectAgeJoinEnabled
     };
 
     global.getOfficialAgePagePath = getOfficialAgePagePath;
     global.isOfficialAgePageActive = isOfficialAgePageActive;
     global.isNationTerrainBonusDataLive = isNationTerrainBonusDataLive;
+    global.isPortalDirectAgeJoinEnabled = isPortalDirectAgeJoinEnabled;
 })(window);

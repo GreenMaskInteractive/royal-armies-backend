@@ -74,7 +74,19 @@ function executeCityAssaultBattle(commander, city, playersInCity = 1) {
     const commanderRank = Math.max(1, Math.min(22, Math.floor(Number(commander?.rank) || 1)));
     const comrades = normalizePlayersInCityCount(playersInCity);
     const garrison = buildCityGarrisonArmy(catalog, commanderRank, city, comrades);
-    const battle = simulateTrainingBattle(battleStacks, garrison, catalog, CITY_BATTLE_MODE);
+    const settlementDefenses = Array.isArray(city?.settlementDefenses)
+        ? city.settlementDefenses
+        : (city?.matrixEqualizerSpire ? ['matrix-equalizer-spire'] : []);
+
+    const battle = simulateTrainingBattle(battleStacks, garrison, catalog, CITY_BATTLE_MODE, {
+        attackerCommander: commander,
+        attackerExtra: { isNationAssault: true },
+        settlementDefenses,
+        defenderExtra: {
+            isNationDefense: true,
+            settlementDefenses
+        }
+    });
     if (!battle.ok) return battle;
 
     return {

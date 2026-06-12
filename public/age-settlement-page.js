@@ -204,10 +204,18 @@
     }
 
     function refreshHudMovePoints() {
+        const movement = global.RoyalArmiesAgeMovement;
+        if (movement?.applyAgeHudMovePointsToDom) {
+            movement.applyAgeHudMovePointsToDom(
+                movement.getMovePoints?.(),
+                movement.getMovePointsMax?.()
+            );
+            return;
+        }
+
         const el = global.document.getElementById('age-hud-move-points');
         if (!el) return;
 
-        const movement = global.RoyalArmiesAgeMovement;
         const current = movement && typeof movement.getMovePoints === 'function'
             ? movement.getMovePoints()
             : AGE_HUD_MOVE_POINTS_MAX;
@@ -325,10 +333,12 @@
                 void returnToAgePortal();
                 break;
             case 'logout':
-                if (typeof global.handleHeaderAuthAction === 'function') {
-                    global.handleHeaderAuthAction();
-                } else {
-                    global.triggerMainDashboardLogout?.();
+                if (typeof global.requestPortalLogout === 'function') {
+                    global.requestPortalLogout();
+                } else if (typeof global.triggerMainDashboardLogout === 'function') {
+                    global.triggerMainDashboardLogout();
+                } else if (typeof global.executePortalLogoutRedirect === 'function') {
+                    global.executePortalLogoutRedirect();
                 }
                 break;
             default:

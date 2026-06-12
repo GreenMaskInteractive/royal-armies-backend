@@ -28,6 +28,18 @@
             : 'same-origin';
     }
 
+    function isTermsLockBypassedForLiveServer() {
+        if (typeof global.isTermsLockBypassedForDev === 'function') {
+            return global.isTermsLockBypassedForDev();
+        }
+        if (typeof global.isLiveServerPort5500 === 'function') {
+            return global.isLiveServerPort5500();
+        }
+        const host = (global.location.hostname || '').toLowerCase();
+        const port = String(global.location.port || '').trim();
+        return (host === 'localhost' || host === '127.0.0.1' || host === '[::1]') && port === '5500';
+    }
+
     function isTermsGateBlocking() {
         return termsGateBlocking;
     }
@@ -235,11 +247,20 @@
     }
 
     function promptReturningUserTermsAcceptance(continuation) {
+        if (isTermsLockBypassedForLiveServer()) {
+            if (typeof continuation === 'function') continuation();
+            return;
+        }
+
         pendingLoginContinuation = typeof continuation === 'function' ? continuation : null;
         openTermsDashboardGate();
     }
 
     async function blockJoinAgeUntilTermsAccepted() {
+        if (isTermsLockBypassedForLiveServer()) {
+            return true;
+        }
+
         if (typeof global.isPortalUserAuthenticated === 'function' && !global.isPortalUserAuthenticated()) {
             return true;
         }
@@ -262,6 +283,8 @@
     }
 
     async function gateAuthenticatedSessionTermsCompliance() {
+        if (isTermsLockBypassedForLiveServer()) return;
+
         const onMainHub = typeof global.isMainPortalHub === 'function' && global.isMainPortalHub();
         if (!onMainHub) return;
         if (typeof global.isPortalUserAuthenticated !== 'function' || !global.isPortalUserAuthenticated()) return;

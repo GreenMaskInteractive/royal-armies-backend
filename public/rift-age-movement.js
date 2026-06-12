@@ -30,8 +30,28 @@
         return getMovePointTickBoundaryMs(timestampMs) + MOVE_POINT_TICK_MS;
     }
 
+    function isInfiniteMovePointsEnabled() {
+        if (typeof global.isPortalDirectAgeJoinEnabled === 'function' && global.isPortalDirectAgeJoinEnabled()) {
+            return true;
+        }
+        if (state.infiniteMovePoints === true) return true;
+        if (state.rules?.infiniteMovePoints === true) return true;
+        if (typeof global.isInfiniteMovePointsEnabled === 'function') {
+            return global.isInfiniteMovePointsEnabled();
+        }
+        if (global.RoyalArmiesDev?.isInfiniteMovePointsEnabled?.()) return true;
+        return false;
+    }
+
     function applyLocalMovePointRegen(nowMs = Date.now()) {
-        const max = state.movePointsMax || state.rules.movePointsMax || 3;
+        const max = getMovePointsMax();
+        if (isInfiniteMovePointsEnabled()) {
+            return {
+                movePoints: max,
+                lastMovePointRegenAt: new Date(getMovePointTickBoundaryMs(nowMs)).toISOString()
+            };
+        }
+
         let movePoints = Math.max(0, Math.min(max, Math.floor(Number(state.movePoints) || 0)));
 
         if (movePoints >= max) {
@@ -391,6 +411,9 @@
         }
         if (payload.rules && typeof payload.rules === 'object') {
             state.rules = { ...state.rules, ...payload.rules };
+            if (payload.rules.infiniteMovePoints !== undefined) {
+                state.infiniteMovePoints = Boolean(payload.rules.infiniteMovePoints);
+            }
         }
         if (payload.unitsTotal !== undefined) {
             state.unitsTotal = Math.max(0, Math.floor(Number(payload.unitsTotal) || 0));
@@ -599,6 +622,11 @@
             throw err;
         }
         if (!hints.canTravel) {
+            if (hints.relationship === 'restricted') {
+                const err = new Error('That location is restricted. No army may enter or leave it.');
+                err.code = 'NEXUS-AGE-037';
+                throw err;
+            }
             const err = new Error(
                 hints.relationship === 'remote'
                     ? 'That city does not border your current position.'
@@ -609,7 +637,7 @@
         }
 
         const movePointCost = Math.max(1, Math.floor(Number(hints.movePointCost) || 1));
-        if (getMovePoints() < movePointCost) {
+        if (!isInfiniteMovePointsEnabled() && getMovePoints() < movePointCost) {
             const err = new Error('No move points remaining. Regain 1 at each game-clock half-hour tick (:00 and :30 UTC, max 3).');
             err.code = 'NEXUS-AGE-001';
             throw err;
@@ -714,6 +742,10 @@
         }
 
         const playerCity = resolveCatalogCityRecord(playerCatalogCityId);
+
+        if (targetCity.masked || playerCity?.masked) {
+            return { canTravel: false, canAssault: false, canTransfer: false, canScout: false, relationship: 'restricted' };
+        }
         const waterRoutes = global.RoyalArmiesAgeWaterRoutes;
         const connection = waterRoutes?.resolveCityConnection
             ? waterRoutes.resolveCityConnection(playerCity, targetCity)
@@ -748,11 +780,63 @@
     }
 
     function getMovePoints() {
+        if (isInfiniteMovePointsEnabled()) {
+            return getMovePointsMax();
+        }
         return applyLocalMovePointRegen().movePoints;
     }
 
     function getMovePointsMax() {
+        if (isInfiniteMovePointsEnabled()) {
+            return Math.max(99, state.movePointsMax || state.rules.movePointsMax || 99);
+        }
         return state.movePointsMax || state.rules.movePointsMax || 3;
+    }
+
+    const MOVE_POINTS_INFINITY_SYMBOL = '\u221E';
+
+    function formatMovePointsHudLabel(current) {
+        if (isInfiniteMovePointsEnabled()) {
+            return MOVE_POINTS_INFINITY_SYMBOL;
+        }
+        const max = getMovePointsMax();
+        const clamped = Math.max(0, Math.min(max, Math.floor(Number(current) || 0)));
+        return String(clamped);
+    }
+
+    function formatMovePointsHudAriaLabel(current, max) {
+        if (isInfiniteMovePointsEnabled()) {
+            return 'Unlimited move points.';
+        }
+        const clampedMax = Math.max(1, Math.min(3, Math.floor(Number(max) || getMovePointsMax())));
+        const clampedCurrent = Math.max(0, Math.min(clampedMax, Math.floor(Number(current) || 0)));
+        return `${clampedCurrent} of ${clampedMax} move points. Regain 1 at each game-clock half-hour tick (:00 and :30 UTC).`;
+    }
+
+    function formatMovePointsSummaryLabel(current, max) {
+        if (isInfiniteMovePointsEnabled()) {
+            return `${MOVE_POINTS_INFINITY_SYMBOL} move points`;
+        }
+        const clampedMax = Math.max(1, Math.floor(Number(max) || getMovePointsMax()));
+        const clampedCurrent = Math.max(0, Math.min(clampedMax, Math.floor(Number(current) || 0)));
+        return `${clampedCurrent}/${clampedMax} move points`;
+    }
+
+    function applyAgeHudMovePointsToDom(current, max) {
+        const el = global.document.getElementById('age-hud-move-points');
+        const item = global.document.getElementById('age-hud-move-points-item');
+        if (!el) return;
+
+        const infinite = isInfiniteMovePointsEnabled();
+        el.textContent = formatMovePointsHudLabel(current);
+        el.classList.toggle('is-infinite-move-points', infinite);
+        el.setAttribute('aria-label', formatMovePointsHudAriaLabel(current, max));
+
+        const resolvedMax = Math.max(1, Math.min(3, Math.floor(Number(max) || getMovePointsMax())));
+        const title = infinite
+            ? 'Alpha testing — move points are unlimited during direct Age join.'
+            : `Regain 1 move point at every :00 and :30 on the game clock (max ${resolvedMax}).`;
+        if (item) item.setAttribute('title', title);
     }
 
     function getNextMovePointTickAt() {
@@ -806,6 +890,11 @@
         getCatalogCityId,
         getMovePoints,
         getMovePointsMax,
+        isInfiniteMovePointsEnabled,
+        formatMovePointsHudLabel,
+        formatMovePointsHudAriaLabel,
+        formatMovePointsSummaryLabel,
+        applyAgeHudMovePointsToDom,
         getNextMovePointTickAt,
         applyLocalMovePointRegen,
         getCityHolders,

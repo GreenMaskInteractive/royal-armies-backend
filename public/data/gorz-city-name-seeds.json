@@ -1,0 +1,23 @@
+{
+  "nationId": "gorz",
+  "regionId": "region-1",
+  "dialect": "highlands",
+  "notes": "Invented settlement names for Gorz. Highlands phonetics turned grim: blud-/magh-/sest- echoes, harsh stops, ash and sulfur cadence. Shaped by corrupt zealotry, obsidian strongholds, and forbidden rites in Caldera Highlands. Not Amnek dictionary terms. Run scripts/audit-settlement-names.py before committing.",
+  "cities": [
+    { "slot": "c01", "slug": "bludvekt", "name": "Bludvekt", "settlementTier": "city" },
+    { "slot": "c02", "slug": "helgrakh", "name": "Helgrakh", "settlementTier": "citadel" },
+    { "slot": "c03", "slug": "zealvarn", "name": "Zealvarn", "settlementTier": "city" },
+    { "slot": "c04", "slug": "corvexil", "name": "Corvexil", "settlementTier": "town" },
+    { "slot": "c05", "slug": "malghor", "name": "Malghor", "settlementTier": "city" },
+    { "slot": "c06", "slug": "daghmagh", "name": "Daghmagh", "settlementTier": "town" },
+    { "slot": "c07", "slug": "vurmolakh", "name": "Vurmolakh", "settlementTier": "village" },
+    { "slot": "c08", "slug": "pestrakh", "name": "Pestrakh", "settlementTier": "city" },
+    { "slot": "c09", "slug": "ashmaul", "name": "Ashmaul", "settlementTier": "citadel" },
+    { "slot": "c10", "slug": "grethmaul", "name": "Grethmaul", "settlementTier": "city" },
+    { "slot": "c11", "slug": "fenghul", "name": "Fenghul", "settlementTier": "village" },
+    { "slot": "c12", "slug": "sestmaugh", "name": "Sestmaugh", "settlementTier": "city" },
+    { "slot": "c13", "slug": "bludkharn", "name": "Bludkharn", "settlementTier": "town" },
+    { "slot": "c14", "slug": "vilegorath", "name": "Vilegorath", "settlementTier": "town" },
+    { "slot": "c15", "slug": "maghrest", "name": "Maghrest", "settlementTier": "kingdom", "isCapital": true }
+  ]
+}

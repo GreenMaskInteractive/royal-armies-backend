@@ -615,7 +615,10 @@ function executeBorderSeizeBattle(attacker, defender) {
     if (!attackerUnits) return { ok: false, errorCode: 'NEXUS-AGE-017' };
     if (!defenderUnits) return { ok: false, errorCode: 'NEXUS-AGE-034' };
 
-    const battle = simulateTrainingBattle(attackerStacks, defenderStacks, catalog, BORDER_PVP_MODE);
+    const battle = simulateTrainingBattle(attackerStacks, defenderStacks, catalog, BORDER_PVP_MODE, {
+        attackerCommander: attacker,
+        defenderCommander: defender
+    });
     if (!battle.ok) return battle;
 
     const attackerInjuries = applyCommanderBattleInjuries(attacker, battle, BORDER_PVP_MODE);

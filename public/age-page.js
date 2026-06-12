@@ -410,6 +410,11 @@
     }
 
     function setAgeHudMovePointsDisplay(current, max = AGE_HUD_MOVE_POINTS_MAX) {
+        if (global.RoyalArmiesAgeMovement?.applyAgeHudMovePointsToDom) {
+            global.RoyalArmiesAgeMovement.applyAgeHudMovePointsToDom(current, max);
+            return;
+        }
+
         const el = global.document.getElementById('age-hud-move-points');
         const item = global.document.getElementById('age-hud-move-points-item');
         if (!el) return;
@@ -429,6 +434,13 @@
 
     function refreshAgeHudMovePoints() {
         const movement = global.RoyalArmiesAgeMovement;
+        if (movement?.applyAgeHudMovePointsToDom) {
+            movement.applyAgeHudMovePointsToDom(
+                movement.getMovePoints?.(),
+                movement.getMovePointsMax?.()
+            );
+            return;
+        }
         if (movement && typeof movement.getMovePoints === 'function') {
             setAgeHudMovePointsDisplay(movement.getMovePoints(), movement.getMovePointsMax());
             return;
@@ -627,10 +639,12 @@
                 }
                 break;
             case 'logout':
-                if (typeof global.handleHeaderAuthAction === 'function') {
-                    global.handleHeaderAuthAction();
+                if (typeof global.requestPortalLogout === 'function') {
+                    global.requestPortalLogout();
                 } else if (typeof global.triggerMainDashboardLogout === 'function') {
                     global.triggerMainDashboardLogout();
+                } else if (typeof global.executePortalLogoutRedirect === 'function') {
+                    global.executePortalLogoutRedirect();
                 }
                 break;
             default:
@@ -982,21 +996,26 @@
         canvas.style.removeProperty('--age-left-reports-height');
         canvas.style.setProperty('--age-left-column-height', `${councilHeight}px`);
 
+        const leftHud = global.document.getElementById('age-map-hud-left');
         const rightHud = global.document.getElementById('age-map-hud-right');
-        const reportsPanel = rightHud?.querySelector('.age-left-reports-panel');
+        const reportsPanel = leftHud?.querySelector('.age-left-reports-panel')
+            || rightHud?.querySelector('.age-left-reports-panel');
         const playersOpen = Boolean(rightHud?.classList.contains('is-city-info-players-open'));
         const settlementOpen = Boolean(rightHud?.classList.contains('is-settlement-view-open'));
 
-        if (rightHud && reportsPanel && !playersOpen && !settlementOpen) {
+        canvas.style.removeProperty('--age-right-reports-height');
+        if (reportsPanel && reportsPanel.closest('#age-map-hud-left')) {
+            canvas.style.removeProperty('--age-left-reports-height');
+        } else if (rightHud && reportsPanel && !playersOpen && !settlementOpen) {
             const reportsContentHeight = measureReportsPanelHeightPx(reportsPanel);
             const finalReportsHeight = Math.max(RIGHT_REPORTS_MIN_HEIGHT_PX, reportsContentHeight);
 
             canvas.style.setProperty('--age-right-reports-height', `${finalReportsHeight}px`);
-        } else {
-            canvas.style.removeProperty('--age-right-reports-height');
         }
 
         canvas.style.removeProperty('--age-right-hud-height');
+        canvas.style.removeProperty('--age-quick-tips-block-height');
+
         canvas.classList.remove('is-age-hud-layout-pending');
         lastCouncilLayoutKey = `${top}|${width}|${councilHeight}|${leftPosition}`;
         syncHeadquartersPlanningLayout();
@@ -1198,8 +1217,10 @@
             const chatMessages = global.document.getElementById('age-map-bottom-chat-messages-host');
             const chatCompose = global.document.getElementById('age-map-bottom-chat-compose-host');
             const bottomDock = global.document.querySelector('#age-page-canvas .age-map-hud--bottom');
+            const leftHud = global.document.getElementById('age-map-hud-left');
             const rightHud = global.document.getElementById('age-map-hud-right');
-            const reportsPanel = rightHud?.querySelector('.age-left-reports-panel');
+            const reportsPanel = leftHud?.querySelector('.age-left-reports-panel')
+                || rightHud?.querySelector('.age-left-reports-panel');
             const cityInfoPanel = rightHud?.querySelector('.age-city-info-panel');
             if (chatMessages) councilBoardLayoutObserver.observe(chatMessages);
             if (chatCompose) councilBoardLayoutObserver.observe(chatCompose);
@@ -1271,9 +1292,17 @@
         if (shouldAllowAgeDevBypass()) {
             markGameSessionStarted();
             consumeAgeDevBypassQuery();
-        } else if (!isGameSessionStarted()) {
+        } else if (
+            !isGameSessionStarted()
+            && !(typeof global.isPortalDirectAgeJoinEnabled === 'function' && global.isPortalDirectAgeJoinEnabled())
+        ) {
             redirectToProgression();
             return;
+        } else if (
+            typeof global.isPortalDirectAgeJoinEnabled === 'function'
+            && global.isPortalDirectAgeJoinEnabled()
+        ) {
+            markGameSessionStarted();
         }
 
         applyAgeMapShellLabels();

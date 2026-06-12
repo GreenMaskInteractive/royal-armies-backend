@@ -17,7 +17,7 @@ const GUILD_HUB_JOBS = Object.freeze([
     {
         id: 'street-patrol',
         label: 'Street Patrol',
-        description: 'Low-risk patrol skirmishes against local troublemakers. Primary training for ranks 1–6.',
+        description: 'Low-risk patrol drills against local troublemakers (base combat — perks and bonuses inactive). Ranks 1–6.',
         kind: 'training',
         minRank: 1,
         maxRank: 6,
@@ -27,7 +27,7 @@ const GUILD_HUB_JOBS = Object.freeze([
     {
         id: 'civilian-transport',
         label: 'Civilian Transport',
-        description: 'Escort civilian convoys through contested routes. Main guild training from rank 7 until border duty unlocks.',
+        description: 'Escort civilian convoy drills through contested routes (base combat — perks and bonuses inactive). Ranks 7–13.',
         kind: 'training',
         minRank: 7,
         maxRank: 13,
@@ -47,7 +47,7 @@ const GUILD_HUB_JOBS = Object.freeze([
     {
         id: 'border-patrol',
         label: 'Border Patrol',
-        description: 'High-intensity border clashes. From rank 14 this is the only guild training path.',
+        description: 'High-intensity border drills (base combat — perks and bonuses inactive). From rank 14 this is the only guild training path.',
         kind: 'training',
         minRank: 14,
         maxRank: null,

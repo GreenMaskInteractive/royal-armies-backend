@@ -108,11 +108,6 @@
     display: none !important;
 }
 
-/* Map HUD treasury is not shown — balance appears in defense workspace only */
-#age-hud-nation-treasury-item {
-    display: none !important;
-}
-
 .age-army-workspace-rsd-label {
     font-size: 0.62rem;
     letter-spacing: 0.12em;

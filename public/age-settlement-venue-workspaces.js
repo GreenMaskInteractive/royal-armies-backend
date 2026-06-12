@@ -944,6 +944,11 @@
             subtitle: venue.description || '',
             bodyHtml: renderChurchBody()
         });
+        if (typeof global.RoyalArmiesBanner?.refreshArmyAdvisor === 'function') {
+            void global.RoyalArmiesBanner.refreshArmyAdvisor().then(() => {
+                refreshChurchWorkspaceBody();
+            });
+        }
     }
 
     async function openInfirmary(detail) {
@@ -1117,6 +1122,7 @@
         }
 
         global.addEventListener('royalarmies:church-blessing-ui-refresh', refreshChurchWorkspaceBody);
+        global.addEventListener('royalarmies:banner-advisor-updated', refreshChurchWorkspaceBody);
     }
 
     function enableAgeSettlementVenueWorkspaces() {

@@ -7,9 +7,24 @@ const fs = require('fs');
 const path = require('path');
 
 const MOVE_POINTS_MAX = 3;
+const INFINITE_MOVE_POINTS_VALUE = 99;
 const MOVE_POINT_REGEN_PER_TICK = 1;
 const MOVE_POINT_TICK_MINUTES = 30;
 const MOVE_POINT_TICK_MS = MOVE_POINT_TICK_MINUTES * 60 * 1000;
+
+let infiniteMovePointsEnabled = false;
+
+function setInfiniteMovePointsEnabled(enabled) {
+    infiniteMovePointsEnabled = Boolean(enabled);
+}
+
+function isInfiniteMovePointsEnabled() {
+    return infiniteMovePointsEnabled;
+}
+
+function resolveMovePointsCap() {
+    return infiniteMovePointsEnabled ? INFINITE_MOVE_POINTS_VALUE : MOVE_POINTS_MAX;
+}
 const TRANSFER_OWNERSHIP_RSD_COST = 250;
 const AGE_ALPHA_DEFAULT_MAP_NATION = 'aesthene';
 
@@ -45,23 +60,7 @@ function catalogHasCrossBorderNeighbors(cities) {
 }
 
 function augmentCrossBorderNeighbors(cities) {
-    if (!Array.isArray(cities) || !cities.length || catalogHasCrossBorderNeighbors(cities)) {
-        return;
-    }
-
-    for (let i = 0; i < cities.length; i += 1) {
-        for (let j = i + 1; j < cities.length; j += 1) {
-            const cityA = cities[i];
-            const cityB = cities[j];
-            if (!cityA || !cityB || cityA.nationId === cityB.nationId) continue;
-            if (!cityBoxesTouch(cityA.bbox, cityB.bbox)) continue;
-
-            if (!Array.isArray(cityA.neighbors)) cityA.neighbors = [];
-            if (!Array.isArray(cityB.neighbors)) cityB.neighbors = [];
-            if (!cityA.neighbors.includes(cityB.id)) cityA.neighbors.push(cityB.id);
-            if (!cityB.neighbors.includes(cityA.id)) cityB.neighbors.push(cityA.id);
-        }
-    }
+    // Neighbor edges are authored in age-world-cities.json via extract-age-city-paths.py.
 }
 
 function loadCityCatalog() {
@@ -199,9 +198,11 @@ function resolveCatalogCityId(rawCityId, nationKey) {
 
     if (id) {
         const direct = getCatalogCity(id);
-        if (direct) return direct.id;
-
-        if (nation) {
+        if (direct) {
+            if (!nation || direct.nationId === nation) {
+                return direct.id;
+            }
+        } else if (nation) {
             const stub = id.replace(/^[^-]+-/, '');
             const match = (catalog.cities || []).find((city) => {
                 if (city.nationId !== nation) return false;
@@ -304,6 +305,14 @@ function getDefaultCommanderMovementRecord(nationKey) {
 }
 
 function applyMovePointRegen(record, nowMs = Date.now()) {
+    const movePointsCap = resolveMovePointsCap();
+    if (infiniteMovePointsEnabled) {
+        return {
+            movePoints: movePointsCap,
+            lastMovePointRegenAt: new Date(getMovePointTickBoundaryMs(nowMs)).toISOString()
+        };
+    }
+
     let movePoints = Math.max(
         0,
         Math.min(MOVE_POINTS_MAX, Math.floor(Number(record?.movePoints ?? MOVE_POINTS_MAX)))
@@ -349,6 +358,12 @@ function spendMovePoint(record, nowMs = Date.now()) {
 function spendMovePoints(record, cost = 1, nowMs = Date.now()) {
     const moveCost = Math.max(1, Math.min(MOVE_POINTS_MAX, Math.floor(Number(cost) || 1)));
     const regen = applyMovePointRegen(record, nowMs);
+    if (infiniteMovePointsEnabled) {
+        return {
+            movePoints: regen.movePoints,
+            lastMovePointRegenAt: regen.lastMovePointRegenAt
+        };
+    }
     if (regen.movePoints < moveCost) {
         return { errorCode: 'NEXUS-AGE-001' };
     }
@@ -538,6 +553,9 @@ function validateBorderTarget(playerCityId, targetCityId) {
     if (playerCity.id === targetCity.id) {
         return { errorCode: 'NEXUS-AGE-009' };
     }
+    if (playerCity.masked || targetCity.masked) {
+        return { errorCode: 'NEXUS-AGE-037' };
+    }
     const connection = resolveCityConnection(playerCity.id, targetCity.id);
     if (!connection) {
         return { errorCode: 'NEXUS-AGE-002' };
@@ -604,7 +622,8 @@ function validateTransfer(playerNation, playerCityId, targetCityId, cityHolders,
 
 function getMovePointRules() {
     return {
-        movePointsMax: MOVE_POINTS_MAX,
+        movePointsMax: resolveMovePointsCap(),
+        infiniteMovePoints: infiniteMovePointsEnabled,
         movePointRegenPerTick: MOVE_POINT_REGEN_PER_TICK,
         movePointTickMinutes: MOVE_POINT_TICK_MINUTES,
         movePointTickAlignUtc: true,
@@ -641,6 +660,9 @@ function buildBorderActionHints(playerNation, playerCityId, targetCityId, cityHo
 
 module.exports = {
     MOVE_POINTS_MAX,
+    INFINITE_MOVE_POINTS_VALUE,
+    setInfiniteMovePointsEnabled,
+    isInfiniteMovePointsEnabled,
     MOVE_POINT_REGEN_PER_TICK,
     MOVE_POINT_TICK_MINUTES,
     MOVE_POINT_TICK_MS,

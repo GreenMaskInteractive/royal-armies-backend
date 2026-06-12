@@ -9,18 +9,6 @@
     const PANEL_ID = 'portal-universal-game-time-panel';
     const TICK_MS = 1000;
 
-    /** Matches countdowntimermodal.png: thin wings (L/R), tall center crest (MM). */
-    const PORTAL_GAME_TIME_CHAR_SCALE_CLASSES = [
-        'portal-game-time-char--wing-outer',
-        'portal-game-time-char--wing-inner',
-        'portal-game-time-char--sep',
-        'portal-game-time-char--center',
-        'portal-game-time-char--center',
-        'portal-game-time-char--sep',
-        'portal-game-time-char--wing-inner',
-        'portal-game-time-char--wing-outer'
-    ];
-
     let tickTimer = null;
 
     function formatUniversalGameTimeClock(now = new Date()) {
@@ -33,21 +21,9 @@
     function renderUniversalGameTimeDisplay(display, timeString) {
         if (!display) return;
 
-        const chars = String(timeString || '').padEnd(8, '-').slice(0, 8);
-        const slots = display.querySelectorAll('.portal-game-time-char');
-
-        if (slots.length !== 8) {
-            display.innerHTML = chars.split('').map((ch, index) => {
-                const scaleClass = PORTAL_GAME_TIME_CHAR_SCALE_CLASSES[index] || 'portal-game-time-char--wing-inner';
-                return `<span class="portal-game-time-char ${scaleClass}" data-slot="${index}">${ch}</span>`;
-            }).join('');
-        } else {
-            slots.forEach((slot, index) => {
-                slot.textContent = chars[index];
-            });
-        }
-
-        display.setAttribute('aria-label', `Game time ${chars}`);
+        const text = String(timeString || '--:--:--');
+        display.textContent = text;
+        display.setAttribute('aria-label', `Game time ${text}`);
     }
 
     function revealClockChrome() {

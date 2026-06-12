@@ -1,0 +1,23 @@
+{
+  "nationId": "trex",
+  "regionId": "region-1",
+  "dialect": "highlands",
+  "notes": "Invented settlement names for Trex. Highlands phonetics: heavy rok-/kald-/khor- echoes, blunt consonants, short vowels, -akh/-ok/-mar endings. Shaped by stoic discipline, volcanic craters, march drills, and unbreakable training lore in Caldera Highlands. Not Amnek dictionary terms. Run scripts/audit-settlement-names.py before committing.",
+  "cities": [
+    { "slot": "c01", "slug": "rokhmar", "name": "Rokhmar", "settlementTier": "city" },
+    { "slot": "c02", "slug": "stenrekh", "name": "Stenrekh", "settlementTier": "citadel" },
+    { "slot": "c03", "slug": "stenvar", "name": "Stenvar", "settlementTier": "town" },
+    { "slot": "c04", "slug": "ashfeld", "name": "Ashfeld", "settlementTier": "town" },
+    { "slot": "c05", "slug": "craghold", "name": "Craghold", "settlementTier": "citadel" },
+    { "slot": "c06", "slug": "halthrok", "name": "Halthrok", "settlementTier": "city" },
+    { "slot": "c07", "slug": "marchvekh", "name": "Marchvekh", "settlementTier": "town" },
+    { "slot": "c08", "slug": "grimsuet", "name": "Grimsuet", "settlementTier": "village" },
+    { "slot": "c09", "slug": "drillakh", "name": "Drillakh", "settlementTier": "city" },
+    { "slot": "c10", "slug": "sulvoken", "name": "Sulvoken", "settlementTier": "town" },
+    { "slot": "c11", "slug": "scorvekh", "name": "Scorvekh", "settlementTier": "village" },
+    { "slot": "c12", "slug": "ironvekh", "name": "Ironvekh", "settlementTier": "city" },
+    { "slot": "c13", "slug": "vehrakhan", "name": "Vehrakhan", "settlementTier": "city" },
+    { "slot": "c14", "slug": "trellgar", "name": "Trellgar", "settlementTier": "town" },
+    { "slot": "c15", "slug": "kaldrest", "name": "Kaldrest", "settlementTier": "kingdom", "isCapital": true }
+  ]
+}

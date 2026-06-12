@@ -39,6 +39,27 @@
         }
     }
 
+    function paintTreasuryHud(payload) {
+        const itemEl = global.document.getElementById('age-hud-nation-treasury-item');
+        const amountEl = global.document.getElementById('age-hud-nation-treasury-amount');
+        const treasuryEl = global.document.getElementById('age-hud-nation-treasury');
+        if (!itemEl || !amountEl) return;
+
+        const rsd = Math.max(0, Math.floor(Number(payload?.rsd) || 0));
+        const formatted = formatRsd(rsd);
+        amountEl.textContent = formatted;
+        if (treasuryEl) {
+            treasuryEl.setAttribute('aria-label', `${formatted} Royal Silver Dollars`);
+        }
+
+        itemEl.hidden = false;
+        itemEl.removeAttribute('aria-hidden');
+    }
+
+    function refreshNationTreasuryHud() {
+        paintTreasuryHud(lastTreasuryPayload);
+    }
+
     function rememberTreasuryPayload(payload) {
         const rsd = Math.max(0, Math.floor(Number(payload?.rsd) || 0));
         lastTreasuryPayload = {
@@ -51,9 +72,9 @@
 
     async function refreshNationTreasury() {
         const username = resolveUsername();
-        hideTreasuryHud();
 
         if (!username) {
+            hideTreasuryHud();
             return rememberTreasuryPayload({ rsd: 0 });
         }
 
@@ -64,12 +85,18 @@
             );
             const payload = await response.json().catch(() => ({}));
             if (!response.ok) {
-                return rememberTreasuryPayload({ rsd: 0, rewardRules: payload?.rewardRules });
+                const remembered = rememberTreasuryPayload({ rsd: 0, rewardRules: payload?.rewardRules });
+                paintTreasuryHud(remembered);
+                return remembered;
             }
 
-            return rememberTreasuryPayload(payload);
+            const remembered = rememberTreasuryPayload(payload);
+            paintTreasuryHud(remembered);
+            return remembered;
         } catch (_err) {
-            return rememberTreasuryPayload({ rsd: 0 });
+            const remembered = rememberTreasuryPayload({ rsd: 0 });
+            paintTreasuryHud(remembered);
+            return remembered;
         }
     }
 
@@ -89,14 +116,14 @@
         refresh: refreshNationTreasury,
         requestRefresh,
         formatRsd,
-        getLastPayload: () => ({ ...lastTreasuryPayload })
+        getLastPayload: () => ({ ...lastTreasuryPayload }),
+        paintHud: paintTreasuryHud
     };
+    global.refreshNationTreasuryHud = refreshNationTreasuryHud;
 
     bindRefreshListener();
-    hideTreasuryHud();
     if (global.document.readyState === 'loading') {
         global.document.addEventListener('DOMContentLoaded', () => {
-            hideTreasuryHud();
             refreshNationTreasury();
         });
     } else {

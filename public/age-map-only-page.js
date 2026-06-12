@@ -29,13 +29,13 @@
     const AGE_NAMETAG_HUB_SCRIPT_CHAIN = [
         'rift-error-codes.js?v=commander-nametag-hub-2',
         'rift-error-display.js?v=commander-nametag-hub-2',
-        'commander-dossier-sync.js?v=commander-nametag-hub-2',
+        'commander-dossier-sync.js?v=map-ambient-effects-1',
         'rank-data.js?v=commander-nametag-hub-2',
         'rift-ui-sfx.js?v=commander-nametag-hub-2',
-        'script.js?v=commander-nametag-hub-2',
+        'script.js?v=map-ambient-effects-1',
         'commander-hub.js?v=commander-nametag-hub-2',
         'game-chat.js?v=commander-nametag-hub-2',
-        'portal-commander-identity-menu.js?v=commander-nametag-hub-2'
+        'portal-commander-identity-menu.js?v=age-exit-not-logout-1'
     ];
 
     const ageNametagHubScriptsLoaded = new Set();
@@ -595,6 +595,9 @@
     }
 
     async function returnToAgePortal() {
+        if (typeof global.notifyAgePortalSessionLeave === 'function') {
+            await global.notifyAgePortalSessionLeave();
+        }
         const target = typeof global.resolveRoyalArmiesPageUrl === 'function'
             ? global.resolveRoyalArmiesPageUrl('main')
             : '/main';
@@ -748,6 +751,78 @@
         }
     }
 
+    function resolveApiUrl(path) {
+        if (typeof global.resolveRoyalArmiesApiUrl === 'function') {
+            return global.resolveRoyalArmiesApiUrl(path);
+        }
+        return path;
+    }
+
+    function resolvePageUsername() {
+        const saved = global.localStorage.getItem('activeCommanderUser');
+        if (saved && saved.trim()) return saved.trim();
+        if (typeof global.getActiveCommanderUsername === 'function') {
+            const name = String(global.getActiveCommanderUsername() || '').trim();
+            if (name && name.toLowerCase() !== 'testaccount') return name;
+        }
+        return '';
+    }
+
+    function setAgeHudMovePointsDisplay(current, max) {
+        if (global.RoyalArmiesAgeMovement?.applyAgeHudMovePointsToDom) {
+            global.RoyalArmiesAgeMovement.applyAgeHudMovePointsToDom(current, max);
+            return;
+        }
+        const el = global.document.getElementById('age-hud-move-points');
+        if (!el) return;
+        el.textContent = String(Math.max(0, Math.floor(Number(current) || 0)));
+    }
+
+    function refreshAgeHudMovePoints() {
+        const movement = global.RoyalArmiesAgeMovement;
+        if (movement?.applyAgeHudMovePointsToDom) {
+            movement.applyAgeHudMovePointsToDom(
+                movement.getMovePoints?.(),
+                movement.getMovePointsMax?.()
+            );
+            return;
+        }
+        if (movement && typeof movement.getMovePoints === 'function') {
+            setAgeHudMovePointsDisplay(movement.getMovePoints(), movement.getMovePointsMax());
+            return;
+        }
+        setAgeHudMovePointsDisplay(3, 3);
+    }
+
+    async function postAgeJoin() {
+        const username = resolvePageUsername();
+        if (!username) return;
+
+        const directJoin = typeof global.isPortalDirectAgeJoinEnabled === 'function'
+            && global.isPortalDirectAgeJoinEnabled();
+
+        try {
+            const response = await global.fetch(resolveApiUrl('/api/portal/age/join'), {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    username,
+                    ageSlug: global.document.body?.dataset?.ageSlug || 'alpha',
+                    assignRandomNation: directJoin,
+                    armyFocus: global.RoyalArmiesAgeMovementPanel?.computeLocalArmyFocus?.() || ''
+                }),
+                cache: 'no-store',
+                credentials: 'include'
+            });
+            const payload = await response.json().catch(() => ({}));
+            if (!response.ok || payload.status === 'error') {
+                console.warn('[RIFT] Age join sync failed:', payload?.message || payload);
+            }
+        } catch (err) {
+            console.warn('[RIFT] Age join sync failed:', err);
+        }
+    }
+
     async function bootstrapMapSession() {
         if (typeof global.ensurePortalAuthRestored === 'function') {
             await global.ensurePortalAuthRestored();
@@ -763,6 +838,8 @@
         if (typeof global.syncPlayerFromActiveCommanderStorage === 'function') {
             global.syncPlayerFromActiveCommanderStorage();
         }
+
+        await postAgeJoin();
 
         if (typeof global.fetchCommanderDossierFromServer === 'function') {
             try {
@@ -783,6 +860,8 @@
                 /* movement sync optional for map preview */
             }
         }
+
+        refreshAgeHudMovePoints();
 
         if (global.RoyalArmiesAgeCommanderRank?.hydrateCommanderClassPathFromServer) {
             try {
@@ -865,7 +944,10 @@
     }
 
     global.refreshAgeNationWelcomeChrome = refreshAgeNationWelcomeChrome;
+    global.refreshAgeHudMovePoints = refreshAgeHudMovePoints;
+    global.setAgeHudMovePointsDisplay = setAgeHudMovePointsDisplay;
     global.addEventListener('royalarmies:age-movement-updated', refreshAgeNationWelcomeChrome);
+    global.addEventListener('royalarmies:age-movement-updated', refreshAgeHudMovePoints);
 
     global.syncAgeMapHudLayout = syncCouncilBoardLayoutToMap;
 

@@ -122,9 +122,9 @@
         aesthene: 'aesthine'
     };
 
-    /** Alpha onboarding: only Aesthene borders are map-ready (Crescent Ridge). */
-    const ONBOARDING_ALLOWED_NATION_IDS = Object.freeze(['aesthene']);
-    const ONBOARDING_ALLOWED_REGION_IDS = Object.freeze(['region-3']);
+    /** Alpha onboarding: map-ready nations only (sync with nexus-onboarding.js). */
+    const ONBOARDING_ALLOWED_NATION_IDS = Object.freeze(['aesthene', 'lyllis', 'dravic', 'vaerenth', 'trex']);
+    const ONBOARDING_ALLOWED_REGION_IDS = Object.freeze(['region-1', 'region-3']);
 
     function isOnboardingNationAllowed(nationId) {
         const id = String(nationId || '').trim().toLowerCase();
@@ -188,10 +188,17 @@
                 global.applyCommanderDossierToClient(payload.dossier);
             }
 
+            if (payload.movement && typeof global.RoyalArmiesAgeMovement?.applyStatePayload === 'function') {
+                global.RoyalArmiesAgeMovement.applyStatePayload(payload.movement, {
+                    eventSource: 'onboarding-nation'
+                });
+            }
+
             global.dispatchEvent(new CustomEvent('royalarmies:onboarding-nation-saved', {
                 detail: {
                     nationId: payload.gameNation || nationId,
-                    regionId: payload.regionId || regionId
+                    regionId: payload.regionId || regionId,
+                    movement: payload.movement || null
                 }
             }));
 

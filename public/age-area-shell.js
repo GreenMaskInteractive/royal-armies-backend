@@ -136,6 +136,9 @@
         initializeGameTimeClock();
         refreshCommanderNavChrome();
         enableSharedChromeBindings();
+        if (typeof global.refreshAgeHudCommanderRank === 'function') {
+            global.refreshAgeHudCommanderRank();
+        }
     }
 
     function ensureAreaShellMounted() {

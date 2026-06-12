@@ -3,14 +3,11 @@
  *
  * Participation XP (survivors × combat rounds) applies only when your fight helps
  * Solo guild training drills use outcome, fight duration (rounds to resolve), and
- * host mix — not participation credit. Acquired gear Trainer / guild XP perks apply
- * only when stored on the commander ledger (see resolveAcquiredGuildTrainingXpMultiplier).
+ * host mix — not participation credit. Trainer perks and gear guild-XP bonuses do not apply.
  *
  * Tier gap: training ≪ PvP ≪ city battles / main drops.
  */
 'use strict';
-
-const { resolveAcquiredGuildTrainingXpMultiplier } = require('./nexus-age-commander-gear');
 
 /** Per-survivor XP weight by phase lane — participation profiles only. */
 const BASE_LANE_RATES = Object.freeze({
@@ -350,10 +347,8 @@ function calculateGuildTrainingBattleXp(battle, trainingMode = 'street-patrol', 
     const coreXp = baseXp * outcomeMult + hostBonus + varianceBonus;
     const preVolatilityXp = Math.max(0, Math.round(coreXp * durationFactor));
     const preBonusXp = applyTrainingDrillVolatility(preVolatilityXp);
-    const acquiredBonus = commander
-        ? resolveAcquiredGuildTrainingXpMultiplier(commander, winner)
-        : { multiplier: 1, sources: [] };
-    const xpGain = Math.max(0, Math.round(preBonusXp * acquiredBonus.multiplier));
+    const acquiredBonus = { multiplier: 1, sources: [] };
+    const xpGain = Math.max(0, preBonusXp);
 
     const force = battle?.commanderForce;
 

@@ -1,4 +1,4 @@
-﻿/* FLEX — Age Headquarters (rebuilt). Loaded after style2.css */
+/* FLEX — Age Headquarters (rebuilt). Loaded after style2.css */
 /* Age — Headquarters nation leadership workspace */
 #age-page-canvas[data-age-view="headquarters"] .age-map-anchor {
     display: none;
@@ -956,6 +956,11 @@
     fill: none;
     stroke: rgba(255, 255, 255, 0.28);
     stroke-width: 1.2px;
+}
+
+.age-hq-layer--regions .age-hq-region-border {
+    opacity: 0;
+    visibility: hidden;
 }
 
 .age-hq-planning-labels {

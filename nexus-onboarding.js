@@ -6,10 +6,10 @@
 const { resolveCatalogNationKey } = require('./nexus-age-movement');
 
 /** Catalog nation ids currently selectable in onboarding. */
-const ONBOARDING_OPEN_NATION_IDS = Object.freeze(['aesthene']);
+const ONBOARDING_OPEN_NATION_IDS = Object.freeze(['aesthene', 'lyllis', 'dravic', 'vaerenth', 'trex']);
 
 /** Region ids that may be chosen before nation pledge (must include open nations). */
-const ONBOARDING_OPEN_REGION_IDS = Object.freeze(['region-3']);
+const ONBOARDING_OPEN_REGION_IDS = Object.freeze(['region-1', 'region-3']);
 
 function isOnboardingNationAllowed(rawNationId) {
     const resolved = resolveCatalogNationKey(rawNationId);

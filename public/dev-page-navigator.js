@@ -33,6 +33,37 @@
 
     const DEV_SITE_PAGES = DEV_SITE_PAGE_GROUPS.flatMap((group) => group.pages);
 
+    const DEV_SWITCHABLE_NATIONS = Object.freeze([
+        { id: 'aesthene', label: 'Aesthene' },
+        { id: 'lyllis', label: 'Lyllis' },
+        { id: 'dravic', label: 'Dravic' },
+        { id: 'vaerenth', label: 'Vaerenth' },
+        { id: 'trex', label: 'Trex' }
+    ]);
+
+    const DEV_NATION_STORAGE_SUFFIXES = Object.freeze([
+        'ageDeploymentNationId',
+        'ageCurrentCityId',
+        'ageCatalogCityId'
+    ]);
+
+    const DEV_NATION_REGION_IDS = Object.freeze({
+        lyllis: 'region-1',
+        trex: 'region-1',
+        aesthene: 'region-3',
+        dravic: 'region-3',
+        vaerenth: 'region-3'
+    });
+
+    /** Capital city ids when the world-map catalog is not loaded yet. */
+    const DEV_NATION_CAPITAL_CITY_IDS = Object.freeze({
+        aesthene: 'aesthene-phariis',
+        lyllis: 'lyllis-caelithar',
+        trex: 'trex-kaldrest',
+        dravic: 'dravic-vigilaron',
+        vaerenth: 'vaerenth-serathion'
+    });
+
     const DEV_SEASON_PREVIEW_FILES = new Set([
         'season-age-of-war-preview.html',
         'ageofwarcinematic.html',
@@ -208,6 +239,225 @@
         global.location.reload();
     }
 
+    function resolveDevApiUrl(path) {
+        if (typeof global.resolveRoyalArmiesApiUrl === 'function') {
+            return global.resolveRoyalArmiesApiUrl(path);
+        }
+        return path;
+    }
+
+    function resolveDevActiveUsername() {
+        const saved = global.localStorage.getItem('activeCommanderUser');
+        if (saved && saved.trim()) return saved.trim();
+        if (typeof global.getActiveCommanderUsername === 'function') {
+            return String(global.getActiveCommanderUsername() || '').trim();
+        }
+        if (global.player?.username) return String(global.player.username).trim();
+        return '';
+    }
+
+    function normalizeDevNationId(value) {
+        return String(value || '').trim().toLowerCase();
+    }
+
+    function resolveDevLedgerNationId() {
+        const fromPlayer = normalizeDevNationId(global.player?.gameNation);
+        if (fromPlayer && DEV_SWITCHABLE_NATIONS.some((entry) => entry.id === fromPlayer)) {
+            return fromPlayer;
+        }
+
+        if (typeof global.RoyalArmiesAgeMovement?.resolveLedgerNationId === 'function') {
+            const fromMovement = normalizeDevNationId(global.RoyalArmiesAgeMovement.resolveLedgerNationId());
+            if (fromMovement && DEV_SWITCHABLE_NATIONS.some((entry) => entry.id === fromMovement)) {
+                return fromMovement;
+            }
+        }
+
+        return '';
+    }
+
+    function resolveCurrentDevNationId() {
+        return resolveDevLedgerNationId();
+    }
+
+    function devFetch(path, init) {
+        const url = resolveDevApiUrl(path);
+        const nextInit = typeof global.buildLivePreviewApiFetchInit === 'function'
+            ? global.buildLivePreviewApiFetchInit(init)
+            : init;
+        return global.fetch(url, nextInit);
+    }
+
+    function clearDevCommanderNationStorage(username) {
+        const owner = String(username || '').trim();
+        if (!owner) return;
+
+        DEV_NATION_STORAGE_SUFFIXES.forEach((suffix) => {
+            try {
+                global.localStorage.removeItem(`royalArmies_${owner}_${suffix}`);
+            } catch (_err) {
+                /* ignore */
+            }
+        });
+    }
+
+    function shouldUseLocalDevNationSwitch() {
+        return typeof global.isLiveStaticPreviewHost === 'function' && global.isLiveStaticPreviewHost();
+    }
+
+    function resolveDevCapitalCityId(nationId) {
+        const catalog = global.RoyalArmiesAgeWorldMap?.getCatalog?.();
+        if (catalog?.cities?.length) {
+            const capital = catalog.cities.find((city) => city.nationId === nationId && city.isCapital);
+            if (capital) return capital.id;
+            const fallbackCity = catalog.cities.find((city) => city.nationId === nationId);
+            if (fallbackCity) return fallbackCity.id;
+        }
+        return DEV_NATION_CAPITAL_CITY_IDS[nationId] || '';
+    }
+
+    function writeDevNationLocalStorage(username, nationId, catalogCityId) {
+        const owner = String(username || '').trim();
+        if (!owner) return;
+
+        const prefix = `royalArmies_${owner}_`;
+        try {
+            if (nationId) {
+                global.localStorage.setItem(`${prefix}ageDeploymentNationId`, nationId);
+            }
+            if (catalogCityId) {
+                global.localStorage.setItem(`${prefix}ageCatalogCityId`, catalogCityId);
+                global.localStorage.setItem(`${prefix}ageCurrentCityId`, catalogCityId);
+            }
+        } catch (_err) {
+            /* ignore */
+        }
+    }
+
+    function applyLocalDevNationSwitch(nationId, username) {
+        const normalizedNation = normalizeDevNationId(nationId);
+        const catalogCityId = resolveDevCapitalCityId(normalizedNation);
+        const regionId = DEV_NATION_REGION_IDS[normalizedNation] || 'region-3';
+
+        clearDevCommanderNationStorage(username);
+        writeDevNationLocalStorage(username, normalizedNation, catalogCityId);
+
+        if (global.player && typeof global.player === 'object') {
+            global.player.gameNation = normalizedNation;
+            global.player.onboardingRegionId = regionId;
+        }
+
+        if (typeof global.applyCommanderDossierToClient === 'function') {
+            global.applyCommanderDossierToClient({ gameNation: normalizedNation });
+        } else if (typeof global.scheduleCommanderDossierSave === 'function') {
+            global.scheduleCommanderDossierSave({ gameNation: normalizedNation });
+        }
+
+        applyDevNationSwitchPayload({
+            status: 'ok',
+            gameNation: normalizedNation,
+            regionId,
+            movement: {
+                gameNation: normalizedNation,
+                mapNation: normalizedNation,
+                catalogCityId
+            }
+        });
+
+        console.info('[RIFT] Dev nation switch (local preview):', normalizedNation, catalogCityId);
+        global.location.reload();
+        return true;
+    }
+
+    function applyDevNationSwitchPayload(payload) {
+        if (!payload || typeof payload !== 'object') return;
+
+        if (global.player && typeof global.player === 'object') {
+            global.player.gameNation = String(payload.gameNation || '').trim();
+        }
+
+        if (typeof global.RoyalArmiesCommanderDossier?.applyCommanderDossierToClient === 'function' && payload.dossier) {
+            global.RoyalArmiesCommanderDossier.applyCommanderDossierToClient(payload.dossier);
+        } else if (typeof global.applyCommanderDossierToClient === 'function' && payload.dossier) {
+            global.applyCommanderDossierToClient(payload.dossier);
+        }
+
+        if (payload.movement && typeof global.RoyalArmiesAgeMovement?.applyStatePayload === 'function') {
+            global.RoyalArmiesAgeMovement.applyStatePayload(payload.movement, {
+                eventSource: 'dev-nation-switch'
+            });
+        }
+
+        const catalogCityId = payload.movement?.catalogCityId
+            || global.RoyalArmiesAgeMovement?.getCatalogCityId?.();
+        if (catalogCityId && typeof global.RoyalArmiesAgeMovementPanel?.syncCatalogCity === 'function') {
+            global.RoyalArmiesAgeMovementPanel.syncCatalogCity(catalogCityId);
+        }
+
+        if (typeof global.refreshAgeNationWelcomeChrome === 'function') {
+            global.refreshAgeNationWelcomeChrome();
+        }
+        global.RoyalArmiesAgeWorldMap?.refreshPlayerCity?.();
+        global.RoyalArmiesAgeWorldMap?.refreshNationCityHighlights?.();
+        global.RoyalArmiesPlayerLocPins?.refreshLocalPlayerPin?.();
+    }
+
+    async function applyDevNationSwitch(nationId) {
+        const username = resolveDevActiveUsername();
+        const normalizedNation = normalizeDevNationId(nationId);
+        if (!username) {
+            void (typeof global.showPortalAlert === 'function'
+                ? global.showPortalAlert('Log in as a commander before switching nations.', 'Dev tools')
+                : Promise.resolve(console.warn('[RIFT] Dev nation switch requires an active commander.')));
+            return false;
+        }
+
+        if (!DEV_SWITCHABLE_NATIONS.some((entry) => entry.id === normalizedNation)) {
+            return false;
+        }
+
+        if (shouldUseLocalDevNationSwitch()) {
+            return applyLocalDevNationSwitch(normalizedNation, username);
+        }
+
+        try {
+            console.info('[RIFT] Dev nation switch →', normalizedNation, 'for', username);
+            const response = await devFetch('/api/dev/switch-nation', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+                cache: 'no-store',
+                body: JSON.stringify({ username, nationId: normalizedNation })
+            });
+            const payload = await response.json().catch(() => ({}));
+            if (!response.ok) {
+                const code = String(payload.code || '').trim();
+                if (code === 'NEXUS-GAME-012' || code === 'NEXUS-GAME-013') {
+                    console.warn('[RIFT] Dev nation switch API blocked by onboarding gate; using local preview fallback.');
+                    return applyLocalDevNationSwitch(normalizedNation, username);
+                }
+
+                const message = payload.message
+                    || payload.code
+                    || `Nation switch failed (${response.status}).`;
+                console.error('[RIFT] Dev nation switch rejected:', message, payload);
+                void (typeof global.showPortalAlert === 'function'
+                    ? global.showPortalAlert(message, 'Dev nation switch')
+                    : Promise.resolve(global.alert(`Dev nation switch: ${message}`)));
+                return false;
+            }
+
+            clearDevCommanderNationStorage(username);
+            applyDevNationSwitchPayload(payload);
+            console.info('[RIFT] Dev nation switch saved:', payload.gameNation, payload.movement?.catalogCityId);
+            global.location.reload();
+            return true;
+        } catch (err) {
+            console.warn('[RIFT] Dev nation switch API unreachable; using local preview fallback.', err);
+            return applyLocalDevNationSwitch(normalizedNation, username);
+        }
+    }
+
     function buildDevPageNavigatorMarkup() {
         const currentId = getCurrentPageId();
         const pageOptions = DEV_SITE_PAGE_GROUPS.map((group) => {
@@ -220,6 +470,12 @@
         }).join('');
 
         const viewMode = getCurrentDevViewMode();
+        const currentNationId = resolveCurrentDevNationId();
+        const nationOptions = DEV_SWITCHABLE_NATIONS.map((nation) => {
+            const selected = nation.id === currentNationId ? ' selected' : '';
+            return `<option value="${nation.id}"${selected}>${nation.label}</option>`;
+        }).join('');
+
         const personaBlock = isDevPortalPersonaPage()
             ? `
                 <label class="dev-page-navigator-label dev-page-navigator-label--persona" for="dev-portal-persona-select">
@@ -228,6 +484,12 @@
                         <option value="owner"${viewMode === 'owner' ? ' selected' : ''}>Owner · caleb_admin</option>
                         <option value="player"${viewMode === 'player' ? ' selected' : ''}>Player · all pages</option>
                         <option value="guest"${viewMode === 'guest' ? ' selected' : ''}>Guest · logged out</option>
+                    </select>
+                </label>
+                <label class="dev-page-navigator-label dev-page-navigator-label--persona" for="dev-portal-nation-select">
+                    <span class="dev-page-navigator-eyebrow">Commander nation</span>
+                    <select id="dev-portal-nation-select" class="dev-page-navigator-select dev-page-navigator-select--persona" title="Switch pledged nation and re-seed map position to capital"${viewMode === 'guest' ? ' disabled' : ''}>
+                        ${nationOptions}
                     </select>
                 </label>
             `
@@ -446,6 +708,7 @@
         const select = global.document.getElementById('dev-page-navigator-select');
         const goBtn = global.document.getElementById('dev-page-navigator-go');
         const personaSelect = global.document.getElementById('dev-portal-persona-select');
+        const nationSelect = global.document.getElementById('dev-portal-nation-select');
 
         if (select) {
             select.addEventListener('change', () => {
@@ -464,6 +727,37 @@
                 const nextMode = personaSelect.value;
                 if (nextMode === getCurrentDevViewMode()) return;
                 applyDevViewMode(nextMode);
+            });
+        }
+
+        if (nationSelect) {
+            const syncAppliedNation = () => {
+                const ledgerNation = resolveDevLedgerNationId();
+                if (ledgerNation) {
+                    nationSelect.dataset.appliedNation = ledgerNation;
+                    if (nationSelect.value !== ledgerNation) {
+                        nationSelect.value = ledgerNation;
+                    }
+                }
+            };
+
+            syncAppliedNation();
+            global.addEventListener('royalarmies:age-movement-updated', syncAppliedNation);
+            global.addEventListener('royalarmies:onboarding-nation-saved', syncAppliedNation);
+
+            nationSelect.addEventListener('change', async () => {
+                const nextNation = nationSelect.value;
+                const appliedNation = nationSelect.dataset.appliedNation || '';
+                if (!nextNation || nextNation === appliedNation) return;
+
+                nationSelect.disabled = true;
+                const ok = await applyDevNationSwitch(nextNation);
+                if (!ok) {
+                    nationSelect.disabled = getCurrentDevViewMode() === 'guest';
+                    nationSelect.value = appliedNation || resolveDevLedgerNationId() || DEV_SWITCHABLE_NATIONS[0].id;
+                } else {
+                    nationSelect.dataset.appliedNation = nextNation;
+                }
             });
         }
 
@@ -530,8 +824,12 @@
         enabled: isDevPageNavigatorEnabled,
         pages: DEV_SITE_PAGES,
         pageGroups: DEV_SITE_PAGE_GROUPS,
+        nations: DEV_SWITCHABLE_NATIONS,
         navigateTo: navigateToDevPage,
         applyDevViewMode,
+        applyDevNationSwitch,
+        resolveCurrentDevNationId,
+        resolveDevLedgerNationId,
         remount: mountDevPageNavigator
     };
 

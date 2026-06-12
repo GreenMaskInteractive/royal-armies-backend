@@ -611,6 +611,12 @@
             merged.code = resolveErrorCode(merged.message);
         }
 
+        if ((merged.code === 'NEXUS-GAME-011' || merged.requiresTermsAcceptance)
+            && typeof global.isTermsLockBypassedForDev === 'function'
+            && global.isTermsLockBypassedForDev()) {
+            return merged;
+        }
+
         return showRiftError(merged, fallbackTitle);
     }
 

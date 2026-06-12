@@ -64,6 +64,9 @@ let stagedSafetyLock = confirmedSafetyLock;
 let confirmedGameChatOpacity = Math.max(15, Math.min(100, parseFloat(localStorage.getItem('savedGameChatOpacity')) || 85));
 let stagedGameChatOpacity = confirmedGameChatOpacity;
 
+let confirmedMapAmbientEffects = localStorage.getItem('savedMapAmbientEffects') === 'true';
+let stagedMapAmbientEffects = confirmedMapAmbientEffects;
+
 function readDisplayResolutionPresetId() {
     if (appRuntimeGlobal.RoyalArmiesDisplayResolution && typeof appRuntimeGlobal.RoyalArmiesDisplayResolution.readStoredPresetId === 'function') {
         return appRuntimeGlobal.RoyalArmiesDisplayResolution.readStoredPresetId();
@@ -577,6 +580,112 @@ function handleHeaderAuthAction() {
         return;
     }
     openMainPortalLoginModal();
+}
+
+function isAgePortalShell() {
+    return Boolean(document.getElementById('age-page-canvas'));
+}
+
+function resolveActivePortalUsername() {
+    if (typeof getActiveCommanderUsername === 'function') {
+        const user = String(getActiveCommanderUsername() || '').trim();
+        if (user) return user;
+    }
+    return String(localStorage.getItem('activeCommanderUser') || '').trim();
+}
+
+async function notifyAgePortalSessionLeave() {
+    if (typeof notifyPortalAgeSessionLeave === 'function') {
+        await notifyPortalAgeSessionLeave().catch(() => {});
+        return;
+    }
+    const username = resolveActivePortalUsername();
+    if (!username) return;
+    const url = (typeof resolveRoyalArmiesApiUrl === 'function')
+        ? resolveRoyalArmiesApiUrl('/api/portal/age/leave')
+        : '/api/portal/age/leave';
+    try {
+        await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username }),
+            credentials: 'include',
+            cache: 'no-store'
+        });
+    } catch (_err) {
+        /* ignore */
+    }
+}
+
+async function exitAgePortalToMain() {
+    if (typeof returnToGameAgePortal === 'function') {
+        await returnToGameAgePortal();
+        return;
+    }
+    await notifyAgePortalSessionLeave();
+    const target = (typeof resolveRoyalArmiesPageUrl === 'function')
+        ? resolveRoyalArmiesPageUrl('main')
+        : '/main';
+    if (window.RoyalArmiesPageRouteTransition?.navigateTo) {
+        await window.RoyalArmiesPageRouteTransition.navigateTo(target);
+        return;
+    }
+    window.location.href = target;
+}
+
+function executePortalLogoutRedirect() {
+    if (typeof closeMainLogoutConfirmationWindow === 'function') {
+        closeMainLogoutConfirmationWindow();
+    }
+
+    const redirectHome = () => {
+        if (typeof markLocalDevLogoutForGuestPreview === 'function') {
+            markLocalDevLogoutForGuestPreview();
+        }
+        if (typeof clearPortalAuthStorage === 'function') {
+            clearPortalAuthStorage();
+        } else {
+            localStorage.removeItem('activeCommanderUser');
+        }
+        sessionStorage.removeItem('royalArmiesAuthAudioPlay');
+        if (typeof refreshMainPortalAuthChrome === 'function') {
+            refreshMainPortalAuthChrome();
+        }
+        window.location.replace('/main');
+    };
+
+    const logoutApi = (typeof resolveRoyalArmiesApiUrl === 'function')
+        ? resolveRoyalArmiesApiUrl('/api/auth/logout')
+        : '/api/auth/logout';
+    const serverLogout = (typeof canUsePortalAuthSessionApi === 'function' && canUsePortalAuthSessionApi())
+        ? fetch(logoutApi, { method: 'POST', credentials: 'include', keepalive: true }).catch(() => {})
+        : Promise.resolve();
+
+    serverLogout.finally(() => {
+        if (typeof clearPortalPresenceSession === 'function') {
+            clearPortalPresenceSession().finally(redirectHome);
+            return;
+        }
+        if (typeof notifyPortalAgeSessionLeave === 'function') {
+            notifyPortalAgeSessionLeave().finally(redirectHome);
+            return;
+        }
+        redirectHome();
+    });
+}
+
+function requestPortalLogout() {
+    if (isMainPortalHub()) {
+        if (typeof triggerMainDashboardLogout === 'function') {
+            triggerMainDashboardLogout();
+            return;
+        }
+    }
+    if (isAgePortalShell()) {
+        void exitAgePortalToMain();
+        return;
+    }
+    executePortalLogoutRedirect();
 }
 
 function openMainPortalLoginModal() {
@@ -2441,7 +2550,9 @@ function finishMainPortalLoginSession(isAdmin) {
         if (typeof syncCommanderLocaleAfterAuth === 'function') {
             syncCommanderLocaleAfterAuth();
         }
-        if (isCommanderEnrolledInActiveAgeRound() && isCommanderGameSessionStarted()) {
+        if (!isPortalDirectAgeJoinEnabled()
+            && isCommanderEnrolledInActiveAgeRound()
+            && isCommanderGameSessionStarted()) {
             window.location.replace(resolveActiveAgeHandoffUrl());
             return;
         }
@@ -3043,6 +3154,17 @@ const nationLore = {
                                 </label>
                             </div>
                         </div>
+
+                        <div class="settings-group">
+                            <label class="settings-label">Map Weather &amp; Time of Day</label>
+                            <div class="settings-right-wrapper">
+                                <label class="switch-toggle-bar">
+                                    <input type="checkbox" id="map-ambient-toggle-check" onclick="toggleMapAmbientEffects()">
+                                    <div class="toggle-slider-track"></div>
+                                </label>
+                            </div>
+                        </div>
+                        <p class="settings-hint-line">When enabled, the Age map shows live weather, clouds, rain, lightning, and day/night sky transitions. Off by default for smoother performance.</p>
                     </div>
                 `
             },
@@ -3569,6 +3691,27 @@ function isCommanderGameSessionStarted(username) {
     return localStorage.getItem(storageKey) === 'true';
 }
 
+function markCommanderGameSessionStarted(username) {
+    const storageKey = resolveCommanderGameSessionStartedStorageKey(username);
+    if (!storageKey) return false;
+    localStorage.setItem(storageKey, 'true');
+    return true;
+}
+
+function isPortalDirectAgeJoinEnabled() {
+    if (typeof window.isPortalDirectAgeJoinEnabled === 'function') {
+        return window.isPortalDirectAgeJoinEnabled();
+    }
+    if (window.RoyalArmiesOfficialAge && typeof window.RoyalArmiesOfficialAge.isPortalDirectAgeJoinEnabled === 'function') {
+        return window.RoyalArmiesOfficialAge.isPortalDirectAgeJoinEnabled();
+    }
+    return false;
+}
+
+function resolvePortalDirectAgeHandoffUrl() {
+    return resolveOfficialAgeResumePath();
+}
+
 function resolveOfficialAgeResumePath() {
     if (typeof resolveRoyalArmiesPageUrl === 'function') {
         return resolveRoyalArmiesPageUrl('agealpha');
@@ -3607,6 +3750,9 @@ function resolveGamePageHandoffUrl(options) {
 }
 
 function resolveActiveAgeHandoffUrl() {
+    if (isPortalDirectAgeJoinEnabled()) {
+        return resolvePortalDirectAgeHandoffUrl();
+    }
     if (isCommanderGameSessionStarted()) {
         return resolveOfficialAgeResumePath();
     }
@@ -3615,6 +3761,7 @@ function resolveActiveAgeHandoffUrl() {
 
 function enforceActiveAgePortalLock() {
     if (!isMainPortalHub()) return false;
+    if (isPortalDirectAgeJoinEnabled()) return false;
     if (!isCommanderEnrolledInActiveAgeRound()) return false;
     if (!isPortalUserAuthenticated()) return false;
 
@@ -4090,6 +4237,8 @@ function loadLore(type, customMount) {
                             if (hcCheck) hcCheck.checked = document.body.classList.contains('high-contrast-mode');
                             const fontCheck = document.getElementById('font-toggle-check');
                             if (fontCheck) fontCheck.checked = isDyslexiaFontEnabled();
+                            const ambientCheck = document.getElementById('map-ambient-toggle-check');
+                            if (ambientCheck) ambientCheck.checked = confirmedMapAmbientEffects;
                             const resolutionSelect = document.getElementById('display-resolution-select');
                             if (resolutionSelect) resolutionSelect.value = confirmedDisplayResolution;
                             if (typeof applyPortalMobileVisualSettingsRestrictions === 'function') {
@@ -4676,6 +4825,7 @@ function saveSettings() {
         confirmedSafetyLock = stagedSafetyLock; 
         confirmedGameChatOpacity = stagedGameChatOpacity;
         confirmedDisplayResolution = stagedDisplayResolution;
+        confirmedMapAmbientEffects = stagedMapAmbientEffects;
         applyRankTitleGenderPreference(stagedRankTitleGender);
 
         if (appRuntimeGlobal.RoyalArmiesDisplayResolution && typeof appRuntimeGlobal.RoyalArmiesDisplayResolution.confirmPreset === 'function') {
@@ -4704,6 +4854,10 @@ function saveSettings() {
         localStorage.setItem('savedSafetyLock', confirmedSafetyLock); 
         localStorage.setItem('savedDyslexiaFont', isDyslexiaActive); 
         localStorage.setItem('savedGameChatOpacity', confirmedGameChatOpacity);
+        localStorage.setItem('savedMapAmbientEffects', confirmedMapAmbientEffects ? 'true' : 'false');
+        if (appRuntimeGlobal.RoyalArmiesMapAmbientEffects && typeof appRuntimeGlobal.RoyalArmiesMapAmbientEffects.apply === 'function') {
+            appRuntimeGlobal.RoyalArmiesMapAmbientEffects.apply(confirmedMapAmbientEffects);
+        }
 
         localStorage.setItem('savedPortalMasterVol', confirmedMasterVol);
         localStorage.setItem('savedPortalMusicVol', confirmedMusicVol);
@@ -4795,6 +4949,8 @@ function revertSettings() {
         stagedGameChatOpacity = 85;
         confirmedDisplayResolution = 'auto';
         stagedDisplayResolution = 'auto';
+        confirmedMapAmbientEffects = false;
+        stagedMapAmbientEffects = false;
         
         document.documentElement.style.setProperty('--ui-scale', 1); 
         localStorage.clear(); 
@@ -4860,6 +5016,12 @@ function revertSettings() {
         
         document.body.classList.remove('high-contrast-mode'); 
         setDyslexiaFontEnabled(false);
+
+        const ambientCheck = document.getElementById('map-ambient-toggle-check');
+        if (ambientCheck) ambientCheck.checked = false;
+        if (appRuntimeGlobal.RoyalArmiesMapAmbientEffects && typeof appRuntimeGlobal.RoyalArmiesMapAmbientEffects.apply === 'function') {
+            appRuntimeGlobal.RoyalArmiesMapAmbientEffects.apply(false);
+        }
         
         const previewBackdrop = document.getElementById('preview-backdrop-zone'); 
         if (previewBackdrop) previewBackdrop.classList.remove('preview-hc-active'); 
@@ -4879,6 +5041,9 @@ window.confirmSelection = confirmSelection;
 window.selectClass = selectClass; 
 window.isCommanderEnrolledInActiveAgeRound = isCommanderEnrolledInActiveAgeRound;
 window.isCommanderGameSessionStarted = isCommanderGameSessionStarted;
+window.markCommanderGameSessionStarted = markCommanderGameSessionStarted;
+window.isPortalDirectAgeJoinEnabled = isPortalDirectAgeJoinEnabled;
+window.resolvePortalDirectAgeHandoffUrl = resolvePortalDirectAgeHandoffUrl;
 window.resolveOfficialAgeResumePath = resolveOfficialAgeResumePath;
 window.resolveActiveAgeHandoffUrl = resolveActiveAgeHandoffUrl;
 window.resolveGamePageHandoffUrl = resolveGamePageHandoffUrl;
@@ -4901,6 +5066,11 @@ window.syncRankTitleGenderProfileUi = syncRankTitleGenderProfileUi;
 window.refreshMainPortalAuthChrome = refreshMainPortalAuthChrome;
 window.openMainPortalGuestRegister = openMainPortalGuestRegister;
 window.handleHeaderAuthAction = handleHeaderAuthAction;
+window.isAgePortalShell = isAgePortalShell;
+window.notifyAgePortalSessionLeave = notifyAgePortalSessionLeave;
+window.exitAgePortalToMain = exitAgePortalToMain;
+window.executePortalLogoutRedirect = executePortalLogoutRedirect;
+window.requestPortalLogout = requestPortalLogout;
 window.openMainPortalLoginModal = openMainPortalLoginModal;
 window.closeMainPortalLoginModal = closeMainPortalLoginModal;
 window.isPortalUserAuthenticated = isPortalUserAuthenticated;
@@ -4954,6 +5124,9 @@ async function bootstrapMainPortalAuthOnLoad() {
         }
         if (typeof syncPortalMobileNavIdentity === 'function') {
             syncPortalMobileNavIdentity();
+        }
+        if (typeof initAgePortalHomePage === 'function') {
+            initAgePortalHomePage();
         }
     }
 }
@@ -5072,6 +5245,13 @@ function toggleSafetyLock() {
     stagedSafetyLock = (checkbox && checkbox.checked) ? "Double-Click" : "Single-Click";
     const textLabel = document.getElementById('lock-label-text');
     if (textLabel) textLabel.innerText = (stagedSafetyLock === "Double-Click") ? "Double" : "Single";
+}
+
+function toggleMapAmbientEffects() {
+    if (typeof playToggleLeverSFX === 'function') playToggleLeverSFX();
+    hasUnsavedChanges = true;
+    const checkbox = document.getElementById('map-ambient-toggle-check');
+    stagedMapAmbientEffects = !!(checkbox && checkbox.checked);
 }
 
 /* --- Block 28: Profile Visibility & Penalty Dock Toggle Switch --- */

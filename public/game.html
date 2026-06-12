@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Royal Armies - Age Session (In Development)</title>
-    <script src="dev-environment.js?v=local-api-reachability-1"></script>
+    <script src="dev-environment.js?v=live-server-class-advance-2"></script>
     <script>
     (function enforceEarlyActiveAgeSessionResume() {
         try {
@@ -35,7 +35,7 @@
     }
     </style>
     <link rel="stylesheet" href="style.css?v=cursor-modal-layer-fix-1">
-    <link rel="stylesheet" href="style2.css?v=update-complete-notice-1">
+    <link rel="stylesheet" href="style2.css?v=rain-fable-restore-1">
     <link rel="stylesheet" href="mobile-responsive.css?v=game-class-showcase-1">
     <link rel="stylesheet" href="dev-page-navigator.css">
     <link rel="stylesheet" href="custom-cursor.css?v=finger-press-7">
@@ -148,10 +148,10 @@
                                             <button
                                                 type="button"
                                                 class="game-class-portrait-card game-class-option is-back"
-                                                data-class-id="archmage"
+                                                data-class-id="battlemage"
                                                 aria-pressed="false"
-                                                aria-controls="game-class-panel-archmage"
-                                                aria-label="Archmage"
+                                                aria-controls="game-class-panel-battlemage"
+                                                aria-label="Battlemage"
                                                 tabindex="-1">
                                                 <img
                                                     src="images/classarchmage.png"
@@ -207,98 +207,30 @@
                                     <span class="game-class-side-panel-honor-emphasis">Physical Path</span>
                                 </p>
                                 <p class="game-class-side-panel-copy">
-                                    For generations, Battlemasters have been feared across the realm for their pitiless strength in war. Grueling training
-                                    forges their bodies past what most mortals can bear, and they strike with crushing power and steady aim so the deed
-                                    is finished in one blow. The title is earned only when a warrior proves worth against the fiercest foe—marking one
-                                    ready to face any challenger on the field.
+                                    Battlemasters command physical armies across four battle phases. Balanced mixed-lane compositions unlock phase-linking
+                                    bonuses — dual-lane burst, tri-lane counter mitigation, or a grand four-lane infantry shield anchored by early-phase survival.
                                 </p>
-                                <div class="game-class-perk-layout game-class-perk-layout--static" role="list" aria-label="Battlemaster perks">
-                                    <div class="game-class-perk-entry" role="listitem">
-                                        <div class="game-class-perk-icon-slot" aria-hidden="true">
-                                            <img src="images/units/unit-portrait-placeholder.svg" alt="" class="game-class-perk-icon is-placeholder" width="64" height="64" draggable="false">
-                                        </div>
-                                        <div class="game-class-perk-entry-text">
-                                            <h5 class="game-class-perk-entry-title">Tactical Retainers</h5>
-                                            <p class="game-class-perk-entry-subtitle">Economy</p>
-                                            <p class="game-class-perk-entry-copy">Grants a 10% discount on the gold training cost when recruiting Infantry and Anti-Cavalry units.</p>
-                                        </div>
-                                    </div>
-                                    <div class="game-class-perk-entry" role="listitem">
-                                        <div class="game-class-perk-icon-slot" aria-hidden="true">
-                                            <img src="images/units/unit-portrait-placeholder.svg" alt="" class="game-class-perk-icon is-placeholder" width="64" height="64" draggable="false">
-                                        </div>
-                                        <div class="game-class-perk-entry-text">
-                                            <h5 class="game-class-perk-entry-title">Vanguard Press</h5>
-                                            <p class="game-class-perk-entry-subtitle">Phase Manipulation</p>
-                                            <p class="game-class-perk-entry-copy">When the Battlemaster initiates a 1v1 PvP attack against an enemy commander sitting on a bordering city, the battle engine skips the Ranged Phase entirely after the first round, jumping straight to the Cavalry/Melee phases.</p>
-                                        </div>
-                                    </div>
-                                    <div class="game-class-perk-entry" role="listitem">
-                                        <div class="game-class-perk-icon-slot" aria-hidden="true">
-                                            <img src="images/units/unit-portrait-placeholder.svg" alt="" class="game-class-perk-icon is-placeholder" width="64" height="64" draggable="false">
-                                        </div>
-                                        <div class="game-class-perk-entry-text">
-                                            <h5 class="game-class-perk-entry-title">Iron Rally</h5>
-                                            <p class="game-class-perk-entry-subtitle">Leadership &amp; Cooperation</p>
-                                            <p class="game-class-perk-entry-copy">When participating in a Drop (Main vs Main stack), allied commanders attached to the Battlemaster's cell receive a +5% injury recovery rate for the next 30-minute tick.</p>
-                                        </div>
-                                    </div>
-                                </div>
-                                <p class="game-class-panel-alpha-notice">Class abilities are not active in this alpha version. They are not permanent and are subject to change in future updates.</p>
+                                <div class="game-class-perk-mount" data-class-perk-mount="battlemaster" aria-live="polite"></div>
                             </div>
                             </div>
                         </aside>
                         <aside
-                            id="game-class-panel-archmage"
+                            id="game-class-panel-battlemage"
                             class="game-class-side-panel portal-deployment-server-panel game-class-side-panel--left"
-                            data-class-panel="archmage"
-                            aria-labelledby="game-class-panel-archmage-honor"
+                            data-class-panel="battlemage"
+                            aria-labelledby="game-class-panel-battlemage-honor"
                             hidden>
                             <div class="portal-server-panel-controls game-page-panel-bezel">
                             <div class="game-class-side-panel-inner">
-                                <p id="game-class-panel-archmage-honor" class="game-class-side-panel-honor">
+                                <p id="game-class-panel-battlemage-honor" class="game-class-side-panel-honor">
                                     <span class="game-class-side-panel-honor-line">Voice of the</span>
                                     <span class="game-class-side-panel-honor-emphasis">Arcane Path</span>
                                 </p>
                                 <p class="game-class-side-panel-copy">
-                                    Rumors hold that Archmages first drew their power from an ancient relic sealed deep beneath the world's stone. That
-                                    bond with magic is their only shield against those who hunt them to destruction. They are spellweavers honed in war
-                                    and scholars who press ever toward mastery of their craft—and their rise has done much to kindle the age of sorcery
-                                    across the realm.
+                                    Battlemages weave magic across ranged, beasts, cavalry, and infantry lanes. Arcane Conduits link Phase 1 artillery damage
+                                    into later phases, and a fully balanced four-lane roster stabilizes morale under fire.
                                 </p>
-                                <div class="game-class-perk-layout game-class-perk-layout--static" role="list" aria-label="Archmage perks">
-                                    <div class="game-class-perk-entry" role="listitem">
-                                        <div class="game-class-perk-icon-slot" aria-hidden="true">
-                                            <img src="images/units/unit-portrait-placeholder.svg" alt="" class="game-class-perk-icon is-placeholder" width="64" height="64" draggable="false">
-                                        </div>
-                                        <div class="game-class-perk-entry-text">
-                                            <h5 class="game-class-perk-entry-title">Alchemical Logistics</h5>
-                                            <p class="game-class-perk-entry-subtitle">Economy</p>
-                                            <p class="game-class-perk-entry-copy">Grants a 10% discount on the gold training cost when recruiting Artillery, Ranged, and Ranged-Cavalry hybrid units.</p>
-                                        </div>
-                                    </div>
-                                    <div class="game-class-perk-entry" role="listitem">
-                                        <div class="game-class-perk-icon-slot" aria-hidden="true">
-                                            <img src="images/units/unit-portrait-placeholder.svg" alt="" class="game-class-perk-icon is-placeholder" width="64" height="64" draggable="false">
-                                        </div>
-                                        <div class="game-class-perk-entry-text">
-                                            <h5 class="game-class-perk-entry-title">Arcane Volley</h5>
-                                            <p class="game-class-perk-entry-subtitle">Border Defense Focus</p>
-                                            <p class="game-class-perk-entry-copy">When the Archmage is the defender in a 1v1 PvP battle (an enemy commander clicks on them from across the border to attack), the battle engine adds 1 additional round to the Ranged Phase before Cavalry or Melee calculations begin.</p>
-                                        </div>
-                                    </div>
-                                    <div class="game-class-perk-entry" role="listitem">
-                                        <div class="game-class-perk-icon-slot" aria-hidden="true">
-                                            <img src="images/units/unit-portrait-placeholder.svg" alt="" class="game-class-perk-icon is-placeholder" width="64" height="64" draggable="false">
-                                        </div>
-                                        <div class="game-class-perk-entry-text">
-                                            <h5 class="game-class-perk-entry-title">Leyline Anchor</h5>
-                                            <p class="game-class-perk-entry-subtitle">Rapid Frontline Rebound</p>
-                                            <p class="game-class-perk-entry-copy">The Archmage can spend 1 turn to place a magical anchor in their current friendly city. At any point later, they can spend 1 turn to instantly teleport back to that anchor city from anywhere inside friendly territory.</p>
-                                        </div>
-                                    </div>
-                                </div>
-                                <p class="game-class-panel-alpha-notice">Class abilities are not active in this alpha version. They are not permanent and are subject to change in future updates.</p>
+                                <div class="game-class-perk-mount" data-class-perk-mount="battlemage" aria-live="polite"></div>
                             </div>
                             </div>
                         </aside>
@@ -11488,22 +11420,23 @@
     <div id="game-onboarding-session-transition" class="game-onboarding-session-transition" aria-hidden="true"></div>
 
     <script src="rift-confirm-buttons.js?v=ra-action-btn-1"></script>
-    <script src="dev-environment.js?v=local-api-reachability-1"></script>
+    <script src="dev-environment.js?v=live-server-class-advance-2"></script>
     <script src="rift-error-codes.js?v=update-complete-notice-1"></script>
     <script src="portal-alerts.js?v=update-complete-notice-1"></script>
-    <script src="rift-error-display.js?v=deploy-watch-early-1"></script>
+    <script src="rift-error-display.js?v=live-server-terms-bypass-2"></script>
     <script src="commander-dossier-sync.js?v=display-resolution-1"></script>
     <script src="rift-ui-sfx.js?v=discovery-wav-sync-1"></script>
     <script src="script.js?v=display-resolution-1"></script>
     <script src="portal-commander-identity-menu.js?v=discoveries-menu-1"></script>
-    <script src="game-class-picker.js?v=game-class-panel-alpha-1"></script>
-    <script src="game-regions-map.js?v=site-viewport-stable-1"></script>
+    <script src="rift-class-perk-catalog.js?v=class-battlemage-rename-1"></script>
+    <script src="game-class-picker.js?v=class-battlemage-rename-1"></script>
+    <script src="game-regions-map.js?v=vaerenth-onboarding-1"></script>
     <script src="rift-official-age.js?v=official-age-page-1"></script>
     <script src="age-music-flow.js?v=song-manuscript-catalog-1"></script>
-    <script src="rift-song-manuscript-catalog.js?v=discovery-song-lyrics-1"></script>
+    <script src="rift-song-manuscript-catalog.js?v=blood-tithe-manuscript-1"></script>
     <script src="rift-discoveries-workspace.js?v=discovery-wav-sync-1"></script>
-    <script src="game.js?v=page-loading-gate-1"></script>
-    <script src="dev-page-navigator.js?v=dev-discovery-toast-preview-1"></script>
+    <script src="game.js?v=live-server-class-advance-2"></script>
+    <script src="dev-page-navigator.js?v=dev-preview-nation-override-1"></script>
     <script src="custom-cursor.js?v=finger-press-hold-1"></script>
 </body>
 </html>

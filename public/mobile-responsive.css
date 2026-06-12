@@ -513,7 +513,8 @@ body {
         transform: none !important;
     }
 
-    #commander-hub-modal.commander-hub-overlay {
+    /* Main portal only — mobile uses inline commander-hub page, not the modal */
+    body#main-dashboard-canvas #commander-hub-modal.commander-hub-overlay {
         display: none !important;
         visibility: hidden !important;
         pointer-events: none !important;

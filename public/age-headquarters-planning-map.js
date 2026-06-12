@@ -4,19 +4,16 @@
 (function initAgeHeadquartersPlanningMap(global) {
     'use strict';
 
-    const DATA_URL = 'data/age-world-cities.json?v=cross-border-neighbors-2';
-    const REGION_PATHS_URL = 'data/age-world-region-paths.json?v=glifora-border-fix-2';
-    const NATION_PATHS_URL = 'data/game-nation-paths.json?v=game-nation-paths-3';
+    const DATA_URL = 'data/age-world-cities.json?v=forest-canopy-threshold-1';
+    const REGION_PATHS_URL = 'data/age-world-region-paths.json?v=map-label-centroids-1';
+    const NATION_PATHS_URL = 'data/game-nation-paths.json?v=veyanor-restore-1';
     const MAP_BG_SRC = 'images/amnekmap.png';
     const NATIVE_SIZE = 1642;
     const LERP = 0.08;
     const WHEEL_ZOOM_FACTOR = 0.00135;
     const MAX_ZOOM_MULT = 3.35;
-    const REGION_LABEL_FADE_START = 1;
-    const REGION_LABEL_FADE_PEAK = 1.35;
     const CITY_FADE_START = 1.85;
     const CITY_FADE_FULL = 2.75;
-    const REGION_BORDER_FADE_IN_END = REGION_LABEL_FADE_START + 0.08;
     const REGION_BORDER_FADE_OUT_END = CITY_FADE_START + 0.18;
     const SMALL_CITY_SPAN = 26;
     const SMALL_CITY_HIT_RADIUS = 14;
@@ -644,10 +641,9 @@
     }
 
     function resolveLabelOpacities(ratio) {
-        const regionIn = fadeRange(ratio, REGION_LABEL_FADE_START, REGION_LABEL_FADE_PEAK);
         const cityIn = fadeRange(ratio, CITY_FADE_START, CITY_FADE_FULL);
         return {
-            region: regionIn * (1 - cityIn),
+            region: 1 - cityIn,
             city: cityIn
         };
     }
@@ -788,20 +784,79 @@
         });
     }
 
-    function buildRegionCentroidMap() {
-        const sums = new Map();
-        if (!catalog?.cities) return new Map();
-        catalog.cities.forEach((city) => {
-            if (!city.regionId || !city.centroid) return;
-            const entry = sums.get(city.regionId) || { x: 0, y: 0, n: 0 };
-            entry.x += city.centroid.x;
-            entry.y += city.centroid.y;
-            entry.n += 1;
-            sums.set(city.regionId, entry);
+    function resolveRegionPathDataList(region) {
+        if (!region) return [];
+        if (Array.isArray(region.paths) && region.paths.length) return region.paths;
+        if (region.d) return [region.d];
+        return [];
+    }
+
+    function resolveSvgPathDataBBoxCenter(pathDataList, svgRoot) {
+        if (!svgRoot || !pathDataList?.length) return null;
+
+        let minX = Infinity;
+        let minY = Infinity;
+        let maxX = -Infinity;
+        let maxY = -Infinity;
+        let measured = false;
+
+        pathDataList.forEach((pathData) => {
+            if (!pathData) return;
+            const pathEl = global.document.createElementNS('http://www.w3.org/2000/svg', 'path');
+            pathEl.setAttribute('d', pathData);
+            svgRoot.appendChild(pathEl);
+            try {
+                const box = pathEl.getBBox();
+                if (!Number.isFinite(box.width) || !Number.isFinite(box.height)) return;
+                minX = Math.min(minX, box.x);
+                minY = Math.min(minY, box.y);
+                maxX = Math.max(maxX, box.x + box.width);
+                maxY = Math.max(maxY, box.y + box.height);
+                measured = true;
+            } catch (err) {
+                // Unmeasurable path segment — skip.
+            } finally {
+                pathEl.remove();
+            }
         });
+
+        if (!measured) return null;
+        return { x: (minX + maxX) / 2, y: (minY + maxY) / 2 };
+    }
+
+    function resolveRegionBorderCentroid(regionOrId) {
+        const region = typeof regionOrId === 'string'
+            ? regionPaths.find((entry) => (entry.regionId || entry.id) === regionOrId)
+            : regionOrId;
+        const regionId = region?.regionId || region?.id || (typeof regionOrId === 'string' ? regionOrId : '');
+        if (!regionId) return null;
+
+        if (regionLayer) {
+            const group = regionLayer.querySelector(
+                `.age-hq-region-border[data-region-id="${CSS.escape(regionId)}"]`
+            );
+            if (group) {
+                const pathDataList = Array.from(group.querySelectorAll('path'))
+                    .map((pathEl) => pathEl.getAttribute('d') || '')
+                    .filter(Boolean);
+                const center = resolveSvgPathDataBBoxCenter(pathDataList, svgEl);
+                if (center) return center;
+            }
+        }
+
+        if (region && svgEl) {
+            return resolveSvgPathDataBBoxCenter(resolveRegionPathDataList(region), svgEl);
+        }
+
+        return null;
+    }
+
+    function buildRegionCentroidMap() {
         const centroids = new Map();
-        sums.forEach((entry, regionId) => {
-            if (entry.n) centroids.set(regionId, { x: entry.x / entry.n, y: entry.y / entry.n });
+        regionPaths.forEach((region) => {
+            const regionId = region.regionId || region.id;
+            const centroid = resolveRegionBorderCentroid(region);
+            if (regionId && centroid) centroids.set(regionId, centroid);
         });
         return centroids;
     }
@@ -828,14 +883,28 @@
         });
     }
 
+    function syncRegionBorderLayer(layer, tierOpacity, frameW, frameH) {
+        if (!layer) return;
+        layer.querySelectorAll('.age-hq-region-border').forEach((group) => {
+            const mapX = Number(group.dataset.centroidX);
+            const mapY = Number(group.dataset.centroidY);
+            let opacity = tierOpacity;
+            if (Number.isFinite(mapX) && Number.isFinite(mapY)) {
+                const point = mapPointToFramePixels(mapX, mapY);
+                const viewportFade = resolveLabelViewportFade(point.x, point.y, frameW, frameH);
+                opacity = tierOpacity * viewportFade;
+            }
+            group.style.opacity = String(opacity);
+            group.style.visibility = opacity > 0.02 ? 'visible' : 'hidden';
+        });
+    }
+
     function resolveRegionBorderOpacity(ratio) {
-        const fadeIn = fadeRange(ratio, REGION_LABEL_FADE_START, REGION_BORDER_FADE_IN_END);
-        const fadeOut = 1 - fadeRange(ratio, CITY_FADE_START, REGION_BORDER_FADE_OUT_END);
-        return fadeIn * fadeOut;
+        return 1 - fadeRange(ratio, CITY_FADE_START, REGION_BORDER_FADE_OUT_END);
     }
 
     function resolveWaterRouteOpacity(ratio) {
-        return fadeRange(ratio, REGION_LABEL_FADE_PEAK, CITY_FADE_START);
+        return 1 - fadeRange(ratio, CITY_FADE_START, REGION_BORDER_FADE_OUT_END);
     }
 
     function syncBorderVisuals() {
@@ -849,7 +918,7 @@
             city: resolveLabelOpacities(ratio).city
         };
         const waterRouteOpacity = resolveWaterRouteOpacity(ratio);
-        syncBorderLayer(regionLayer, borderOpacities.region, hostW, hostH);
+        syncRegionBorderLayer(regionLayer, borderOpacities.region, hostW, hostH);
         syncBorderLayer(nationLayer, borderOpacities.nation, hostW, hostH);
         syncBorderLayer(visualLayer, borderOpacities.city, hostW, hostH);
         syncBorderLayer(waterRoutesLayer, waterRouteOpacity, hostW, hostH);
@@ -1031,10 +1100,9 @@
     function buildRegionLabels() {
         if (!labelsRegion) return;
         labelsRegion.innerHTML = '';
-        const centroids = buildRegionCentroidMap();
         regionPaths.forEach((region) => {
             const regionId = region.regionId || region.id;
-            const centroid = centroids.get(regionId);
+            const centroid = resolveRegionBorderCentroid(region);
             const name = region.name;
             if (!centroid || !name) return;
             const label = global.document.createElement('div');

@@ -122,42 +122,131 @@ The tide returns.`
         {
             trackId: 'a-warriors-pride',
             title: "A Warrior's Pride",
-            nation: 'Khaerant',
+            nation: 'Trex',
             body: `
-                <p>This brutal military march originated from the heavy iron foundries and training grounds within the nation of Khaerant, where the elite forces of the autocracy lived and labored. Performed by a disciplined battalion of the imperial guard during their grueling multi-mile endurance marches through the industrial heartlands, the group delivered a harsh, unpolished unison chant.</p>
-                <p>Dropping their voices into a deep, guttural register with a heavy, rolling northern accent, the men bit down hard on every syllable without any complex studio harmonies or beautiful chords. This track was created to serve as a rigid psychological anchor, driving physical compliance and reinforcing absolute obedience to the nation&apos;s harsh imperial codes.</p>
+                <p>Originating from the open stone streets of Kaldrest—the capital built into the rim of the resting fire—this anthem began within the nation of Trex as a send-off sung at the city&apos;s march-gates. By long tradition, when a battalion departed for the endurance drills at Drillakh or the border columns of Marchvekh, the daughters of serving warriors would line the obsidian road and sing the verses into the cold crater air—flat, bare, and unadorned, exactly as their mothers had sung them. The custom honors Vekha the Stone-Voiced, a smith&apos;s daughter who stood alone at the gates during the Ash-Winter siege and sang the columns out of the city for forty consecutive dawns, never once letting her voice break—not even on the morning her own father did not march back through them.</p>
+                <p>The song spread along the march-roads to every stronghold on the crater rim, from the watchposts of Stenrekh to the forges of Ironvekh, until its quiet middle verse—<em>I never fall, I master my heart</em>—became the private vow every Trex recruit speaks on the final day of training. It is still performed the old way: a single woman&apos;s voice in the open street, hard highland accent biting down on every syllable, steady as the mountain itself. Among the Trex, to sing it beautifully is considered a small failure; to sing it without faltering is considered the point. Pride in the highlands is not displayed—it is endured, and this song is how the nation has taught its children the difference since the days following the Great Transition.</p>
             `,
             lyrics: {
-                original: `Ik-pek-rum. Tak-ti-kum.
+                original: `Markh skorz uz.
+Sten rok uz.
+Awak kaldar ghurokz.
+Sten sest durokh uz.
 
-Ik-pek-rum tak-ti-kum vak-rok-um ker-ti-tas.
-Khaer-um taktiktas form tenzum ikpek-pru.
-Vak-rok-um kertis ikpek-rum tak-ti-kum.
+Orvakh vekhor!
+Sten rokz uz!
+Magh kaldar uz!
+Malkh venakh uz khorz!
 
-Myn-tas pru form vak-rok-um kertis.
-Ik-pek-rum tak-ti-kum vak-rok-um ker-ti-tas.
-Khaer-um taktiktas form tenzum ikpek-pru.
+Grakh blud kaldar uz.
+Awak dakhorz rok.
+Markh vekhorz kaldar.
+Awak khaluz kaldar.
 
-Ik-pek-rum tak-ti-kum vak-rok-um ker-ti-tas.
-Khaer-um taktiktas form tenzum ikpek-pru.
-Vak-rok-um kertis ikpek-rum tak-ti-kum.
+Valgh nakh ekh.
+Magh ghurok ekh.
+Sten rok ekh.
+Markh nakh olakh ekh.
 
-Tak-ti-kum.`,
-                english: `Iron holds the line. Mark the step.
+Orvakh vekhor!
+Sten rokz uz!
+Magh kaldar uz!
+Malkh venakh uz khorz!
 
-Iron holds the step through smoke and sworn ash.
-The rank forms unbroken, no breath out of file.
-Through smoke and ash the oath—iron holds, mark the step.
+Kaldrest! Kaldrest!
+Orvakh vekhor!`,
+                english: `We march through the ashes.
+We hold the mountain stone.
+Our hearts awaken the fire.
+We guard the unbroken throne.
 
-The oath takes form in smoke and ash.
-Iron holds the step through smoke and sworn ash.
-The rank forms unbroken, no breath out of file.
+A warrior's pride!
+We hold the mountainside!
+We are masters of the flame!
+The foe remembers our name!
 
-Iron holds the step through smoke and sworn ash.
-The rank forms unbroken, no breath out of file.
-Through smoke and ash the oath—iron holds, mark the step.
+We give our blood to the fire.
+The daughters of the mountain rise.
+The warriors of flame are marching.
+The fire rises to the skies.
 
-Mark the step.`
+I never fall.
+I master my heart of stone.
+I hold the mountain.
+I never march alone.
+
+A warrior's pride!
+We hold the mountainside!
+We are masters of the flame!
+The foe remembers our name!
+
+Kaldrest! Kaldrest!
+A warrior's pride!`
+            }
+        },
+        {
+            trackId: 'the-blood-tithe',
+            title: 'The Blood Tithe',
+            nation: 'Gorz',
+            body: `
+                <p>Known in the highland tongue as <em>Bludgrakh</em>, this grim liturgical chant originated from the obsidian offering-chambers carved beneath Maghrest, the capital seat within the nation of Gorz. It descends directly from the rites of the magma-worshipping clans who poured into the Caldera Highlands in the early cataclysmic wars and hunted the Ash-Born Aidoriians from their crater halls—a slaughter the Gorz faith remembers not with shame, but as its founding act of devotion. Performed by a lone rite-speaker and an all-male congregation of kneeling zealots, the chant moves in strict call-and-response: the priest intones each demand of the fire below, and the brotherhood answers in a single flat voice, their massed drone standing in place of any instrument the rite forbids.</p>
+                <p>The chant became a staple at the sulfur vents of the crater rim, where each settlement delivers its seasonal tithe to keep the mountain&apos;s hunger fed—and what the tithe consists of is a question outsiders are advised not to ask. Its central verse, <em>velakh uz blud</em>—"the blood makes us clean"—is the closest thing the nation has to a creed, recited over cradles and graves alike. Among the other highland peoples, hearing the Bludgrakh drift up from a valley at night is taken as a sign to turn around; among the Gorz, teaching a child to answer the calls without flinching is considered the first duty of a parent.</p>
+            `,
+            lyrics: {
+                original: `Sovakh kaldar drukh.
+Bludgrakh.
+Ghulakh kaldar drukh.
+Bludgrakh.
+
+Grakh blud uz!
+Grakh blud!
+Magh uz sest kaldar!
+Magh uz!
+
+Awak gorz lyl!
+Awak! Awak!
+Trex khorz kaldar!
+Trex khorz!
+
+Velakh uz blud.
+Sovakh nakh kaldar.
+Ghulakh sest drukh.
+Grakh blud uz, grakh!
+
+Grakh blud uz!
+Grakh blud!
+Awak gorz lyl!
+Awak! Awak!
+
+Maghrest!
+Bludgrakh! Bludgrakh! Bludgrakh!`,
+                english: `The fire sleeps below.
+The blood tithe.
+The fire hungers below.
+The blood tithe.
+
+We give the blood!
+Give the blood!
+The molten throne rules us!
+It rules us!
+
+The dark power rises!
+It rises! It rises!
+The fire crushes the enemies!
+Crush the enemies!
+
+The blood makes us clean.
+The fire never sleeps.
+The throne below hungers.
+We give the blood — give!
+
+We give the blood!
+Give the blood!
+The dark power rises!
+It rises! It rises!
+
+Maghrest!
+The blood tithe! The blood tithe! The blood tithe!`
             }
         },
         {

@@ -197,10 +197,12 @@
                 }
                 break;
             case 'logout':
-                if (typeof global.handleHeaderAuthAction === 'function') {
-                    global.handleHeaderAuthAction();
+                if (typeof global.requestPortalLogout === 'function') {
+                    global.requestPortalLogout();
                 } else if (typeof global.triggerMainDashboardLogout === 'function') {
                     global.triggerMainDashboardLogout();
+                } else if (typeof global.executePortalLogoutRedirect === 'function') {
+                    global.executePortalLogoutRedirect();
                 }
                 break;
             default:

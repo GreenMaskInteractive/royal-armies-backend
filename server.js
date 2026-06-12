@@ -67,6 +67,7 @@ const {
     resolveCommanderArmyFocus,
     getDefaultCommanderMovementRecord,
     getMovePointRules,
+    setInfiniteMovePointsEnabled,
     buildBorderActionHints,
     getCatalogCity,
     loadCityCatalog,
@@ -82,6 +83,20 @@ const {
     resolveOnboardingNationId,
     getOnboardingOpenConfig
 } = require('./nexus-onboarding');
+const { buildDevNationSwitchLedgerPatch } = require('./nexus-dev-nation-switch');
+const {
+    isPortalDirectAgeJoinEnabled,
+    buildRandomNationEnrollmentPatch,
+    buildDirectAgeJoinMovementRefillRecord,
+    resetCommanderRecordPreservingAchievements
+} = require('./nexus-age-portal-join');
+const {
+    buildClassOnboardingPatch,
+    commanderHasLockedClassChoice,
+    normalizeClassPerk1Branch,
+    normalizeClassPathCode,
+    resolveClassIdFromPath
+} = require('./nexus-age-class-onboarding');
 const {
     getDefaultNationHeadquartersState,
     normalizeNationHeadquartersState,
@@ -205,6 +220,11 @@ const {
     BOUNTY_REWARDS
 } = require('./nexus-age-guild-bounties');
 const {
+    loadBlessedBannersSchema,
+    canUnlockEmeraldNode,
+    normalizeUnlockedNodeIds
+} = require('./nexus-emerald-barrier-skills');
+const {
     getTrailerRenderStatusPayload,
     startTrailerRenderJob,
     canStartTrailerRenderFromRequest,
@@ -215,6 +235,10 @@ const {
 
 /* Block 2: Environment Path Resolution */
 const isProduction = process.env.RENDER === 'true';
+
+if (!isProduction || isPortalDirectAgeJoinEnabled()) {
+    setInfiniteMovePointsEnabled(true);
+}
 const dbPath = isProduction ? '/data/db.json' : path.join(__dirname, 'db.json');
 
 /** Chronicles Battle Pass — dossier read/write gated until server rollout. */
@@ -1249,6 +1273,14 @@ function readCommanderMovementRecord(username, nationKey) {
     const store = readAgeMovementStore();
     const raw = store.commanders[storageUsername];
     const normalized = normalizeCommanderMovementRecord(raw, nationKey);
+    if (
+        raw
+        && nationKey
+        && normalized.catalogCityId
+        && String(raw.catalogCityId || '').trim().toLowerCase() !== normalized.catalogCityId
+    ) {
+        writeCommanderMovementRecord(username, normalized);
+    }
     const regen = applyMovePointRegen(normalized);
     return {
         ...normalized,
@@ -2792,7 +2824,41 @@ function applyTermsAcceptanceToCommander(username, termsVersion) {
     return findCommanderByUsername(normalized);
 }
 
-function assertCommanderAcceptedTermsForJoinAge(commander) {
+function isLiveServerPort5500Request(req) {
+    if (!req) return false;
+
+    const previewHeader = String(
+        req.get('x-royal-armies-live-preview')
+        || req.headers['x-royal-armies-live-preview']
+        || ''
+    ).trim();
+    if (previewHeader && previewHeader !== '3000') {
+        return true;
+    }
+
+    const checkUrl = (value) => {
+        const text = String(value || '').toLowerCase();
+        return /:\/\/localhost:(?!3000)\d+/.test(text)
+            || /:\/\/127\.0\.0\.1:(?!3000)\d+/.test(text)
+            || /:\/\/\[::1\]:(?!3000)\d+/.test(text);
+    };
+
+    return checkUrl(req.get('origin')) || checkUrl(req.get('referer'));
+}
+
+function shouldAutoAcceptTermsForDevJoin(commander, req) {
+    if (isLiveServerPort5500Request(req)) return true;
+    return !isProduction && isLocalDevHostRequest(req);
+}
+
+function assertCommanderAcceptedTermsForJoinAge(commander, req) {
+    if (shouldAutoAcceptTermsForDevJoin(commander, req)) {
+        if (commander && !commanderHasAcceptedTerms(commander)) {
+            applyTermsAcceptanceToCommander(commander.username, LEGAL_TERMS_VERSION);
+        }
+        return { ok: true };
+    }
+
     if (!commanderHasAcceptedTerms(commander)) {
         return {
             ok: false,
@@ -3422,7 +3488,7 @@ if (!isProduction) {
             res.setHeader('Access-Control-Allow-Origin', origin);
             res.setHeader('Access-Control-Allow-Credentials', 'true');
             res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
-            res.setHeader('Access-Control-Allow-Headers', 'Content-Type, X-Dev-Key, Authorization');
+            res.setHeader('Access-Control-Allow-Headers', 'Content-Type, X-Dev-Key, Authorization, X-Royal-Armies-Live-Preview');
             res.setHeader('Vary', 'Origin');
         }
         if (req.method === 'OPTIONS') {
@@ -3806,7 +3872,9 @@ app.post('/api/login', async (req, res) => {
             .assign(buildCommanderLoginAuditPatch(req))
             .write();
 
-        const requiresTermsAcceptance = !commanderHasAcceptedTerms(commander);
+        const requiresTermsAcceptance = isLiveServerPort5500Request(req)
+            ? false
+            : !commanderHasAcceptedTerms(commander);
 
         res.status(200).json({
             status: requiresTermsAcceptance ? 'terms_required' : 'success',
@@ -3842,10 +3910,13 @@ app.get('/api/auth/session', (req, res) => {
 
     const commander = findCommanderByUsername(username);
     const termsAcceptedAt = commander ? getCommanderTermsAcceptedAt(commander) : null;
+    const requiresTermsAcceptance = isLiveServerPort5500Request(req)
+        ? false
+        : (commander ? !commanderHasAcceptedTerms(commander) : false);
     res.json({
         authenticated: true,
         username,
-        requiresTermsAcceptance: commander ? !commanderHasAcceptedTerms(commander) : false,
+        requiresTermsAcceptance,
         termsAcceptedAt,
         terms_accepted_at: termsAcceptedAt,
         termsVersion: LEGAL_TERMS_VERSION,
@@ -3949,6 +4020,64 @@ app.post('/api/auth/dev-session', (req, res) => {
     ensureLocalDevCommanderInLedger(username, req);
     setPortalSessionForUser(req, username, true);
     res.json({ authenticated: true, username, dev: true, mode: mode === 'player' ? 'player' : 'owner' });
+});
+
+/** Local dev only — switch commander nation and re-seed movement to that nation's capital. */
+app.post('/api/dev/switch-nation', (req, res) => {
+    if (isProduction) {
+        return sendApiError(res, 'NEXUS-GEN-001');
+    }
+
+    const host = String(req.hostname || '').toLowerCase();
+    if (host !== 'localhost' && host !== '127.0.0.1' && host !== '[::1]') {
+        return sendApiError(res, 'NEXUS-GEN-001');
+    }
+
+    const sessionUsername = String(req.session?.username || '').trim();
+    const bodyUsername = resolveLedgerCommanderUsername(req.body?.username || '');
+    const username = sessionUsername || bodyUsername;
+    if (!username) {
+        return sendApiError(res, 'NEXUS-GEN-002');
+    }
+
+    if (sessionUsername && bodyUsername && bodyUsername.toLowerCase() !== sessionUsername.toLowerCase()) {
+        return sendApiError(res, 'NEXUS-AUTH-011');
+    }
+
+    const ledgerPatch = buildDevNationSwitchLedgerPatch(req.body?.nationId);
+    if (!ledgerPatch) {
+        return sendApiError(res, 'NEXUS-GAME-012');
+    }
+
+    const commander = db.get('commanders').find({ username }).value();
+    if (!commander) {
+        return sendApiError(res, 'NEXUS-GEN-004');
+    }
+
+    db.get('commanders')
+        .find({ username })
+        .assign(ledgerPatch)
+        .write();
+
+    const updated = db.get('commanders').find({ username }).value();
+    ensureCommanderAgeRoster(updated);
+    const rosterCommander = db.get('commanders').find({ username }).value();
+    const movementNation = resolveCommanderMapNationKey(rosterCommander);
+    const reconciledMovement = normalizeCommanderMovementRecord(
+        readCommanderMovementRecord(username, movementNation),
+        movementNation
+    );
+    writeCommanderMovementRecord(username, reconciledMovement);
+
+    const dossier = serializeCommanderDossierForClient(updated);
+
+    res.json({
+        status: 'ok',
+        gameNation: ledgerPatch.gameNation,
+        regionId: ledgerPatch.onboardingRegionId,
+        dossier,
+        movement: buildAgeMovementStatePayload(username, rosterCommander)
+    });
 });
 
 app.post('/api/auth/logout', (req, res) => {
@@ -5817,6 +5946,42 @@ app.get('/api/portal/age/council-board', (req, res) => {
     });
 });
 
+app.get('/api/portal/age/blessed-banners/schema', (req, res) => {
+    res.set('Cache-Control', 'public, max-age=300');
+    res.json(loadBlessedBannersSchema());
+});
+
+app.post('/api/portal/age/blessed-banners/validate-unlock', (req, res) => {
+    const username = resolveLedgerCommanderUsername(req.body?.username || '');
+    if (!username) {
+        return sendApiError(res, 'NEXUS-GEN-002');
+    }
+
+    const commander = db.get('commanders').find({ username }).value();
+    if (!commander) {
+        return sendApiError(res, 'NEXUS-GEN-004');
+    }
+
+    const bannerId = String(req.body?.bannerId || '').trim();
+    const nodeId = String(req.body?.nodeId || '').trim();
+    if (bannerId !== 'emerald-barrier') {
+        return res.status(400).json({ status: 'error', reason: 'Banner tree not active yet.' });
+    }
+
+    const schema = loadBlessedBannersSchema().banners[bannerId];
+    const unlocked = normalizeUnlockedNodeIds(req.body?.unlockedNodeIds || []);
+    const gate = canUnlockEmeraldNode(nodeId, unlocked, schema);
+    const perkPoints = Math.max(0, Math.floor(Number(req.body?.perkPoints) || 0));
+
+    res.set('Cache-Control', 'no-store');
+    res.json({
+        status: gate.ok ? 'ok' : 'error',
+        reason: gate.reason || '',
+        cost: gate.cost ?? 0,
+        canAfford: gate.ok ? perkPoints >= (gate.cost ?? 0) : false
+    });
+});
+
 app.patch('/api/portal/age/council-board', (req, res) => {
     const username = resolveLedgerCommanderUsername(req.body?.username || '');
     if (!username) {
@@ -6785,6 +6950,82 @@ app.get('/api/portal/game/onboarding-config', (req, res) => {
     });
 });
 
+app.get('/api/portal/game/onboarding-class', (req, res) => {
+    const username = resolveLedgerCommanderUsername(req.query?.username || '');
+    if (!username) {
+        return sendApiError(res, 'NEXUS-GEN-002');
+    }
+
+    const commander = db.get('commanders').find({ username }).value();
+    if (!commander) {
+        return sendApiError(res, 'NEXUS-GEN-004');
+    }
+
+    const path = normalizeClassPathCode(commander.path);
+    const perk1Branch = normalizeClassPerk1Branch(
+        commander?.ageClassPerkChoices?.perk1 || commander?.ageClassPerk1Branch
+    );
+
+    res.json({
+        status: 'ok',
+        path: path || null,
+        classId: path ? resolveClassIdFromPath(path) : null,
+        perk1Branch,
+        ageClassPerkChoices: perk1Branch ? { perk1: perk1Branch } : null,
+        locked: commanderHasLockedClassChoice(commander),
+        ageClassConfirmedAt: commander.ageClassConfirmedAt || null
+    });
+});
+
+app.post('/api/portal/game/onboarding-class', (req, res) => {
+    const username = resolveLedgerCommanderUsername(req.body?.username || '');
+    if (!username) {
+        return sendApiError(res, 'NEXUS-GEN-002');
+    }
+
+    const commander = db.get('commanders').find({ username }).value();
+    if (!commander) {
+        return sendApiError(res, 'NEXUS-GEN-004');
+    }
+
+    const termsGate = assertCommanderAcceptedTermsForJoinAge(commander, req);
+    if (!termsGate.ok) {
+        return res.status(403).json({
+            status: 'error',
+            code: termsGate.code,
+            message: termsGate.message,
+            requiresTermsAcceptance: true
+        });
+    }
+
+    const allowClassReselect = isLiveServerPort5500Request(req)
+        || (!isProduction && isLocalDevHostRequest(req));
+    const result = buildClassOnboardingPatch(req.body || {}, commander, { allowClassReselect });
+    if (!result.ok) {
+        return sendApiError(res, result.errorCode);
+    }
+
+    if (Object.keys(result.patch).length) {
+        db.get('commanders')
+            .find({ username })
+            .assign(result.patch)
+            .write();
+    }
+
+    const updated = db.get('commanders').find({ username }).value();
+
+    res.json({
+        status: 'ok',
+        path: result.path,
+        classId: result.classId,
+        perk1Branch: result.perk1Branch,
+        alreadySaved: result.alreadySaved,
+        classReselected: result.classReselected === true,
+        ageClassPerkChoices: updated.ageClassPerkChoices || { perk1: result.perk1Branch },
+        dossier: serializeCommanderDossierForClient(updated)
+    });
+});
+
 app.post('/api/portal/game/onboarding-nation', (req, res) => {
     const username = resolveLedgerCommanderUsername(req.body?.username || '');
     if (!username) {
@@ -6796,7 +7037,7 @@ app.post('/api/portal/game/onboarding-nation', (req, res) => {
         return sendApiError(res, 'NEXUS-GEN-004');
     }
 
-    const termsGate = assertCommanderAcceptedTermsForJoinAge(commander);
+    const termsGate = assertCommanderAcceptedTermsForJoinAge(commander, req);
     if (!termsGate.ok) {
         return res.status(403).json({
             status: 'error',
@@ -7342,6 +7583,12 @@ app.post('/api/portal/age/guild/training-battle', (req, res) => {
             unitXpGains: result.unitXpGains || [],
             unitsReadyToPromote: result.unitsReadyToPromote || [],
             unitsReadyToPromoteCount: result.unitsReadyToPromoteCount || 0,
+            commanderComposition: result.commanderComposition || null,
+            npcComposition: result.npcComposition || null,
+            classId: resolveClassIdFromPath(commander.path),
+            perk1Branch: normalizeClassPerk1Branch(
+                commander?.ageClassPerkChoices?.perk1 || commander?.ageClassPerk1Branch
+            ),
             ...buildGuildHubResponse(commander, settlementTier),
             ...buildAgeMovementStatePayload(username, commander)
         });
@@ -8116,7 +8363,7 @@ app.post('/api/portal/age/join', (req, res) => {
         return sendApiError(res, 'NEXUS-GEN-004');
     }
 
-    const termsGate = assertCommanderAcceptedTermsForJoinAge(commander);
+    const termsGate = assertCommanderAcceptedTermsForJoinAge(commander, req);
     if (!termsGate.ok) {
         return sendApiError(res, termsGate.code, {
             message: termsGate.message
@@ -8131,7 +8378,44 @@ app.post('/api/portal/age/join', (req, res) => {
 
     ensureCommanderAgeRoster(commander);
 
-    const mapNation = resolveCommanderMapNationKey(commander);
+    let rosterCommander = db.get('commanders').find({ username }).value() || commander;
+    const shouldAssignRandomNation = Boolean(
+        isPortalDirectAgeJoinEnabled()
+        && (
+            req.body?.assignRandomNation === true
+            || !resolveCatalogNationKey(rosterCommander?.gameNation)
+        )
+    );
+
+    if (shouldAssignRandomNation) {
+        const nationPatch = buildRandomNationEnrollmentPatch(req.body?.nationId, { allowRandom: true });
+        if (nationPatch) {
+            db.get('commanders')
+                .find({ username })
+                .assign(nationPatch)
+                .write();
+            rosterCommander = db.get('commanders').find({ username }).value() || rosterCommander;
+            ensureCommanderAgeRoster(rosterCommander);
+            rosterCommander = db.get('commanders').find({ username }).value() || rosterCommander;
+
+            const movementNation = resolveCommanderMapNationKey(rosterCommander);
+            const reconciledMovement = normalizeCommanderMovementRecord({}, movementNation);
+            writeCommanderMovementRecord(username, reconciledMovement);
+        }
+    }
+
+    if (isPortalDirectAgeJoinEnabled()) {
+        const movementNation = resolveCommanderMapNationKey(rosterCommander);
+        if (movementNation) {
+            const currentMovement = readCommanderMovementRecord(username, movementNation);
+            writeCommanderMovementRecord(
+                username,
+                buildDirectAgeJoinMovementRefillRecord(currentMovement, movementNation)
+            );
+        }
+    }
+
+    const mapNation = resolveCommanderMapNationKey(rosterCommander);
     const armyFocus = normalizeArmyFocusValue(req.body?.armyFocus);
     if (armyFocus) {
         const movement = readCommanderMovementRecord(username, mapNation);
@@ -8145,7 +8429,43 @@ app.post('/api/portal/age/join', (req, res) => {
         status: 'ok',
         ageSlug,
         countryChatWiped: ageChatReset.wiped,
+        directAgeJoin: isPortalDirectAgeJoinEnabled(),
+        gameNation: rosterCommander?.gameNation || '',
+        onboardingRegionId: rosterCommander?.onboardingRegionId || '',
+        ...buildAgeMovementStatePayload(username, rosterCommander),
         ...getPortalLiveMetricsPayload()
+    });
+});
+
+app.post('/api/portal/age/admin/reset-all-commander-accounts', (req, res) => {
+    const actingUsername = resolveLedgerCommanderUsername(req.body?.username || '');
+    if (!actingUsername) {
+        return sendApiError(res, 'NEXUS-GEN-002');
+    }
+    if (!isAgeLedgerAdminUsername(actingUsername)) {
+        return sendApiError(res, 'NEXUS-AGE-018');
+    }
+
+    const commanders = db.get('commanders').value() || [];
+    const resetCount = commanders.length;
+    const nextCommanders = commanders.map((commander) => {
+        if (!commander?.username) return commander;
+        return resetCommanderRecordPreservingAchievements(commander);
+    });
+
+    db.set('commanders', nextCommanders).write();
+
+    const movementStore = readAgeMovementStore();
+    movementStore.commanders = {};
+    writeAgeMovementStore(movementStore);
+
+    db.get('portal').assign({ commanderAccountResetAt: new Date().toISOString() }).write();
+
+    res.json({
+        status: 'ok',
+        action: 'reset-all-commander-accounts',
+        resetCount,
+        directAgeJoin: isPortalDirectAgeJoinEnabled()
     });
 });
 

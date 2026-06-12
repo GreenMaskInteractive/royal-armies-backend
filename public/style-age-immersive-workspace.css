@@ -17,6 +17,7 @@ body.age-immersive-workspace-open .age-nation-hub,
 body.age-immersive-workspace-open .age-quick-tips-panel,
 body.age-immersive-workspace-open #age-world-map-city-search,
 body.age-immersive-workspace-open .age-world-map-terrain-controls,
+body.age-immersive-workspace-open .age-world-map-key-dock,
 body.age-immersive-workspace-open #age-world-map-plan-tool-dock,
 body.age-immersive-workspace-open .age-world-city-drawer:not([hidden]) {
     z-index: 1 !important;
@@ -30,6 +31,7 @@ body.age-immersive-workspace-open.age-map-shell-only .age-map-hud--right,
 body.age-immersive-workspace-open.age-map-shell-only .age-map-hud--bottom,
 body.age-immersive-workspace-open.age-map-shell-only #age-world-map-city-search,
 body.age-immersive-workspace-open.age-map-shell-only .age-world-map-terrain-controls,
+body.age-immersive-workspace-open.age-map-shell-only .age-world-map-key-dock,
 body.age-immersive-workspace-open.age-map-shell-only #age-world-map-plan-tool-dock {
     z-index: 1 !important;
     pointer-events: none !important;

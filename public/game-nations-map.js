@@ -4,7 +4,7 @@
 (function initGameNationsMap(global) {
     'use strict';
 
-    const ONBOARDING_ALLOWED_NATION_IDS = Object.freeze(['aesthene']);
+    const ONBOARDING_ALLOWED_NATION_IDS = Object.freeze(['aesthene', 'lyllis', 'dravic', 'vaerenth', 'trex']);
     const ONBOARDING_DEFAULT_REGION_ID = 'region-3';
 
     const NATION_PATHS_URL = 'data/game-nation-paths.json?v=game-nation-paths-3';

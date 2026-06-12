@@ -27,13 +27,38 @@ body.age-map-shell-only .age-war-ledger-modal,
 body.age-map-shell-only .age-barracks-workspace,
 body.age-map-shell-only .age-unit-evolution-workspace,
 body.age-map-shell-only .age-guild-workspace,
-body.age-map-shell-only .commander-hub-overlay,
-body.age-map-shell-only .public-profile-overlay,
-body.age-map-shell-only .player-report-modal,
 body.age-map-shell-only .age-chronicles-battle-pass-modal,
 body.age-map-shell-only #age-rank-promotion-overlay,
 body.age-map-shell-only #age-council-board-editor-overlay {
     pointer-events: none !important;
+}
+
+/* Commander hub / profile / report — portaled above map HUD when opened from nametag menu */
+body.age-map-shell-only .commander-hub-overlay.is-visible,
+body.age-map-shell-only .commander-hub-overlay.is-visible *,
+body.age-map-shell-only .public-profile-overlay.is-visible,
+body.age-map-shell-only .public-profile-overlay.is-visible *,
+body.age-map-shell-only .player-report-modal:not([hidden]),
+body.age-map-shell-only .player-report-modal:not([hidden]) * {
+    pointer-events: auto !important;
+}
+
+body.age-map-shell-only .commander-hub-overlay.is-visible,
+body.age-map-shell-only #commander-hub-modal.commander-hub-overlay.is-visible,
+body.age-map-shell-only .public-profile-overlay.is-visible,
+body.age-map-shell-only #public-commander-profile-overlay.public-profile-overlay.is-visible {
+    position: fixed !important;
+    inset: 0 !important;
+    z-index: 2147483646 !important;
+    display: flex !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    pointer-events: auto !important;
+}
+
+body.age-map-shell-only .player-report-modal:not([hidden]) {
+    z-index: 2147483646 !important;
+    pointer-events: auto !important;
 }
 
 body.age-map-shell-only #age-world-map,
@@ -103,6 +128,23 @@ body.age-map-shell-only.age-chronicles-battle-pass-open .age-chronicles-battle-p
     pointer-events: auto !important;
 }
 
+/* Commander hub / profile — same portaled-above-HUD stack as Battle Pass */
+body.age-map-shell-only.age-commander-hub-open #commander-hub-modal.commander-hub-overlay.is-visible,
+body.age-map-shell-only.age-public-profile-open #public-commander-profile-overlay.public-profile-overlay.is-visible {
+    position: fixed !important;
+    inset: 0 !important;
+    z-index: 2147483646 !important;
+    display: flex !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    pointer-events: auto !important;
+}
+
+body.age-map-shell-only.age-commander-hub-open #commander-hub-modal.commander-hub-overlay.is-visible *,
+body.age-map-shell-only.age-public-profile-open #public-commander-profile-overlay.public-profile-overlay.is-visible * {
+    pointer-events: auto !important;
+}
+
 /* Dev navigator sits bottom-center; do not steal Game Hub / Battle Pass clicks */
 body.age-map-shell-only:has(.age-nation-hub-menu--box.is-open) .dev-page-navigator,
 body.age-map-shell-only:has(.age-chronicles-battle-pass-modal.is-open) .dev-page-navigator {
@@ -115,6 +157,19 @@ body.age-map-shell-only .age-map-top-bar-clock-cluster .portal-universal-game-ti
     opacity: 1 !important;
 }
 
+/* Top bar chips (rank toggle, gold, menu) must stay clickable above the inert map shell HUD. */
+body.age-map-shell-only .age-map-hud--top .age-map-hud-top-bar,
+body.age-map-shell-only .age-map-hud--top .age-map-hud-top-bar *,
+body.age-map-shell-only .age-map-hud--top .age-map-top-bar-clock-cluster,
+body.age-map-shell-only .age-map-hud--top .age-map-top-bar-clock-cluster * {
+    pointer-events: auto !important;
+}
+
+body.age-map-shell-only #age-hud-commander-rank-item,
+body.age-map-shell-only #age-hud-commander-rank {
+    cursor: pointer !important;
+}
+
 body.age-map-shell-only #age-world-map-settlement-bg {
     display: none !important;
 }
@@ -125,6 +180,7 @@ body.age-map-shell-only #age-world-map-highlight-canvas,
 body.age-map-shell-only .age-world-map-labels-host,
 body.age-map-shell-only .age-world-map-player-pins,
 body.age-map-shell-only .age-world-map-terrain-controls,
+body.age-map-shell-only .age-world-map-key-dock,
 body.age-map-shell-only .age-world-map-continent-label,
 body.age-map-shell-only #age-world-map-plan-overlay,
 body.age-map-shell-only #age-world-map-plan-draft-overlay,
@@ -145,7 +201,9 @@ body.age-map-shell-only .age-settlement-menu-panel {
 body.age-map-shell-only .age-city-info-panel,
 body.age-map-shell-only .age-city-info-panel *,
 body.age-map-shell-only .age-left-reports-panel,
-body.age-map-shell-only .age-left-reports-panel * {
+body.age-map-shell-only .age-left-reports-panel *,
+body.age-map-shell-only .age-quick-tips-panel,
+body.age-map-shell-only .age-quick-tips-panel * {
     pointer-events: auto !important;
 }
 
@@ -156,8 +214,9 @@ body.age-map-shell-only .age-world-battle-report-modal:not([hidden]) * {
     pointer-events: auto !important;
 }
 
+/* City info drawer must sit above the bottom-left map key dock (z 2147483641) and search (z 2147483642). */
 body.age-map-shell-only .age-world-city-drawer:not([hidden]) {
-    z-index: 50 !important;
+    z-index: 2147483643 !important;
 }
 
 body.age-map-shell-only button,
@@ -175,8 +234,22 @@ body.age-map-shell-only .age-world-map-terrain-controls button {
 }
 
 body.age-map-shell-only .age-world-map-terrain-controls {
+    display: flex !important;
+    flex-direction: column !important;
+    flex-wrap: nowrap !important;
+    align-items: flex-start !important;
+    gap: 8px;
     z-index: 2147483641 !important;
     pointer-events: auto !important;
+}
+
+body.age-map-shell-only .age-world-map-key-dock {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    justify-content: flex-end !important;
+    z-index: 2147483641 !important;
+    pointer-events: none !important;
 }
 
 body.age-map-shell-only #age-world-map-city-search,
@@ -205,6 +278,7 @@ body.age-map-shell-only .age-city-info-panel button,
 body.age-map-shell-only .age-city-info-panel [role="tab"],
 body.age-map-shell-only .age-left-reports-panel button,
 body.age-map-shell-only .age-left-reports-panel [role="tab"],
+body.age-map-shell-only .age-quick-tips-panel button,
 body.age-map-shell-only .age-intelligence-enemy-tabs button {
     pointer-events: auto !important;
     cursor: pointer !important;

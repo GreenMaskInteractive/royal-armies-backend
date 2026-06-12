@@ -62,7 +62,8 @@
         { id: 'the-battles-of-old', title: 'The Battles of Old', file: 'audio/thebattlesofold.wav' },
         { id: 'a-gracious-host', title: 'A Gracious Host', file: 'audio/agracioushost.wav' },
         { id: 'arcane-soul', title: 'Arcane Soul', file: 'audio/arcanesoul.wav' },
-        { id: 'a-warriors-pride', title: "A Warrior's Pride", file: 'audio/awarriorspride.wav' },
+        { id: 'a-warriors-pride', title: "A Warrior's Pride", file: 'audio/awarriorspride.wav?v=warriors-pride-3' },
+        { id: 'the-blood-tithe', title: 'The Blood Tithe', file: 'audio/thebloodtithe.wav' },
         { id: 'drunken-thrunesian', title: 'Drunken Thrunesian', file: 'audio/drunkenthrunesian.wav' },
         { id: 'field-of-gods', title: 'Field of gods', file: 'audio/fieldofgods.wav' }
     ]);

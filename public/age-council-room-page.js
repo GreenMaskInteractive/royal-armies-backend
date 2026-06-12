@@ -186,10 +186,18 @@
     }
 
     function refreshHudMovePoints() {
+        const movement = global.RoyalArmiesAgeMovement;
+        if (movement?.applyAgeHudMovePointsToDom) {
+            movement.applyAgeHudMovePointsToDom(
+                movement.getMovePoints?.(),
+                movement.getMovePointsMax?.()
+            );
+            return;
+        }
+
         const el = global.document.getElementById('age-hud-move-points');
         if (!el) return;
 
-        const movement = global.RoyalArmiesAgeMovement;
         const current = movement && typeof movement.getMovePoints === 'function'
             ? movement.getMovePoints()
             : 3;

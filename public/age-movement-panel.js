@@ -48,7 +48,7 @@
 
     /** Nation capitals used until live map placement is wired. settlementTier: village | city | kingdom */
     const AMNEK_CITIES = [
-        { id: 'basalt-crown', name: 'Basalt Crown', nationId: 'trex', regionId: 'region-1', settlementTier: 'village' },
+        { id: 'trex-kaldrest', name: 'Kaldrest', nationId: 'trex', regionId: 'region-1', settlementTier: 'kingdom' },
         { id: 'cinder-maw', name: 'Cinder Maw', nationId: 'gorz', regionId: 'region-1', settlementTier: 'village' },
         { id: 'ember-veil', name: 'Ember Veil', nationId: 'lyllis', regionId: 'region-1', settlementTier: 'village' },
         { id: 'frostglass-grove', name: 'Frostglass Grove', nationId: 'aethelgard', regionId: 'region-2', settlementTier: 'village' },
@@ -56,7 +56,8 @@
         { id: 'whisperpine', name: 'Whisperpine', nationId: 'saelthine', regionId: 'region-2', settlementTier: 'village' },
         { id: 'whitecrest', name: 'Whitecrest', nationId: 'dravic', regionId: 'region-3', settlementTier: 'city' },
         { id: 'phariis', name: 'Phariis', nationId: 'aesthene', regionId: 'region-3', settlementTier: 'kingdom' },
-        { id: 'stillwind', name: 'Stillwind', nationId: 'vaerenth', regionId: 'region-3', settlementTier: 'village' },
+        { id: 'vaerenth-stillwind', name: 'Stillwind', nationId: 'vaerenth', regionId: 'region-3', settlementTier: 'village' },
+        { id: 'vaerenth-serathion', name: 'Serathion', nationId: 'vaerenth', regionId: 'region-3', settlementTier: 'kingdom' },
         { id: 'mirecourt', name: 'Mirecourt', nationId: 'thruun', regionId: 'region-4', settlementTier: 'village' },
         { id: 'greenhollow', name: 'Greenhollow', nationId: 'zevros', regionId: 'region-4', settlementTier: 'village' },
         { id: 'pearl-gate', name: 'Pearl Gate', nationId: 'vaelior', regionId: 'region-5', settlementTier: 'village' },
@@ -158,11 +159,16 @@
     }
 
     function resolveCommanderNationId() {
-        const stored = global.localStorage.getItem(storageKey(STORAGE_NATION_SUFFIX));
-        if (stored && stored.trim()) return normalizeNationId(stored);
-
         const playerNation = global.player?.gameNation || global.player?.nation;
         if (playerNation) return normalizeNationId(playerNation);
+
+        if (typeof global.RoyalArmiesAgeMovement?.resolveLedgerNationId === 'function') {
+            const ledgerNation = global.RoyalArmiesAgeMovement.resolveLedgerNationId();
+            if (ledgerNation) return normalizeNationId(ledgerNation);
+        }
+
+        const stored = global.localStorage.getItem(storageKey(STORAGE_NATION_SUFFIX));
+        if (stored && stored.trim()) return normalizeNationId(stored);
 
         return '';
     }
@@ -185,8 +191,11 @@
 
     function ensureDeploymentNationDefaults() {
         const nationKey = storageKey(STORAGE_NATION_SUFFIX);
-        if (nationKey && !global.localStorage.getItem(nationKey)) {
-            global.localStorage.setItem(nationKey, DEFAULT_NATION_ID);
+        if (!nationKey || global.localStorage.getItem(nationKey)) return;
+
+        const fromPlayer = normalizeNationId(global.player?.gameNation || global.player?.nation);
+        if (fromPlayer) {
+            global.localStorage.setItem(nationKey, fromPlayer);
         }
     }
 
@@ -214,7 +223,7 @@
     }
 
     function syncCityInfoPanelHeader(city) {
-        const tier = formatSettlementTier(city?.settlementTier);
+        const tier = city?.masked ? 'Settlement' : formatSettlementTier(city?.settlementTier);
         const settlementName = String(city?.name || '').trim() || 'Settlement';
         const infoTabLabel = 'Settlement Info';
 
@@ -264,16 +273,18 @@
         const id = String(catalogCityId || '').trim();
         const catalogCity = findCatalogCityById(id);
 
+        const commanderNation = resolveCommanderNationId();
+
         if (catalogCity) {
             currentCityId = catalogCity.id;
             writeStoredCityId(catalogCity.id);
-            writeStoredNationId(catalogCity.nationId);
+            writeStoredNationId(commanderNation || catalogCity.nationId);
         } else if (id) {
             const stub = findCityById(id) || findCityByNationId(id);
             if (stub) {
                 currentCityId = stub.id;
                 writeStoredCityId(stub.id);
-                writeStoredNationId(stub.nationId);
+                writeStoredNationId(commanderNation || stub.nationId);
             }
         }
 
@@ -360,7 +371,7 @@
         }
 
         if (terrainEl) {
-            const terrainName = resolveSettlementTerrainName(city, region);
+            const terrainName = city?.masked ? 'Unknown' : resolveSettlementTerrainName(city, region);
             terrainEl.textContent = terrainName || 'Terrain data unavailable for this location.';
             terrainEl.classList.toggle('is-empty', !terrainName);
             applySettlementTerrainNameStyle(terrainEl, terrainName);
@@ -403,11 +414,14 @@
         const movement = global.RoyalArmiesAgeMovement;
         const movePoints = movement?.getMovePoints?.() ?? 0;
         const movePointsMax = movement?.getMovePointsMax?.() ?? 3;
+        const movePointsSummary = movement?.formatMovePointsSummaryLabel
+            ? movement.formatMovePointsSummaryLabel(movePoints, movePointsMax)
+            : `${movePoints}/${movePointsMax} move points`;
         const routes = collectTravelRoutes();
         const playerCity = resolveDisplayedCity();
 
         if (summary) {
-            summary.textContent = `${movePoints}/${movePointsMax} move points · ${routes.length} reachable ${routes.length === 1 ? 'city' : 'cities'}`;
+            summary.textContent = `${movePointsSummary} · ${routes.length} reachable ${routes.length === 1 ? 'city' : 'cities'}`;
         }
 
         if (!routes.length) {
@@ -468,7 +482,10 @@
             global.RoyalArmiesAgeWorldMap?.refreshNationCityHighlights?.();
             const destination = global.RoyalArmiesAgeWorldMap?.getCityById?.(traveledCityId);
             if (destination?.name) {
-                global.RoyalArmiesAgeWorldMap?.focusOnCity?.(traveledCityId, { highlightMs: 2400 });
+                global.RoyalArmiesAgeWorldMap?.focusOnCity?.(traveledCityId, {
+                    highlightMs: 2400,
+                    movementRedirect: true
+                });
             }
         } catch (err) {
             const payload = global.RoyalArmiesAgeMovement?.formatActionError?.(err) || err;

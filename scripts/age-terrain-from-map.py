@@ -32,6 +32,15 @@ DEFAULT_TERRAIN = "Plains"
 VARIANCE_RADIUS = 2
 DESERT_MIN_COVERAGE = 0.55
 MOUNTAINS_MIN_COVERAGE = 0.25
+FOREST_MIN_COVERAGE = 0.55
+# Sample the inner settlement footprint so border fringe pixels do not skew terrain.
+CORE_SAMPLE_PERCENTILE = 55
+LIVE_TERRAINS = frozenset({"Forest", "Plains", "Desert", "Mountains"})
+# Nations whose settlements are a single gameplay terrain regardless of map RGB noise.
+NATION_TERRAIN_LOCK: dict[str, str] = {
+    # Crescent Ridge — grassland and rolling hills only; dark greens misread as Forest.
+    "vaerenth": "Plains",
+}
 
 
 def local_variance(gray: np.ndarray, radius: int = VARIANCE_RADIUS) -> np.ndarray:
@@ -142,6 +151,24 @@ def polygon_mask(size: tuple[int, int], outline_path: str) -> np.ndarray:
     return np.array(mask_img, dtype=bool)
 
 
+def polygon_core_mask(size: tuple[int, int], outline_path: str) -> np.ndarray:
+    """Keep pixels in the inner CORE_SAMPLE_PERCENTILE band by centroid distance."""
+    mask = polygon_mask(size, outline_path)
+    ys, xs = np.where(mask)
+    if len(xs) == 0:
+        return mask
+    cx = float(xs.mean())
+    cy = float(ys.mean())
+    dists = np.sqrt((xs.astype(np.float64) - cx) ** 2 + (ys.astype(np.float64) - cy) ** 2)
+    if dists.max() <= 0:
+        return mask
+    cutoff = float(np.percentile(dists, CORE_SAMPLE_PERCENTILE))
+    core = np.zeros_like(mask)
+    keep = dists <= cutoff
+    core[ys[keep], xs[keep]] = True
+    return core
+
+
 def is_excluded_pixel(r: int, g: int, b: int) -> bool:
     total = int(r) + int(g) + int(b)
     spread = max(r, g, b) - min(r, g, b)
@@ -163,6 +190,33 @@ def nearest_terrain(r: int, g: int, b: int) -> str:
     )[0]
 
 
+def _rgb_dist(r: int, g: int, b: int, ref: tuple[int, int, int]) -> int:
+    return (r - ref[0]) ** 2 + (g - ref[1]) ** 2 + (b - ref[2]) ** 2
+
+
+def is_tree_canopy_pixel(r: int, g: int, b: int, variance: float) -> bool:
+    """Forest only when pixels match dark canopy greens with tree-like texture — not open grass."""
+    total = int(r) + int(g) + int(b)
+    brightness = total / 3
+    if not (g >= r and g >= b):
+        return False
+
+    forest_dist = _rgb_dist(r, g, b, TERRAIN_REFS["Forest"])
+    plains_dist = _rgb_dist(r, g, b, TERRAIN_REFS["Plains"])
+    if forest_dist >= plains_dist:
+        return False
+
+    if brightness <= 52 and variance >= 100:
+        return True
+    if brightness <= 62 and variance >= 145:
+        return True
+    if variance >= 230 and brightness <= 70:
+        return True
+    if forest_dist <= 500 and variance >= 85:
+        return True
+    return False
+
+
 def classify_pixel(r: int, g: int, b: int, variance: float) -> str | None:
     if is_excluded_pixel(r, g, b):
         return None
@@ -179,9 +233,7 @@ def classify_pixel(r: int, g: int, b: int, variance: float) -> str | None:
         return "Desert"
 
     if green_dom:
-        if variance >= 140:
-            return "Forest"
-        if brightness < 80 and variance >= 80:
+        if is_tree_canopy_pixel(r, g, b, variance):
             return "Forest"
         return "Plains"
 
@@ -193,18 +245,24 @@ def classify_pixel(r: int, g: int, b: int, variance: float) -> str | None:
     if b >= r + 5 and b >= g - 8 and total < 180 and brightness < 85:
         return "Marshlands"
 
-    return nearest_terrain(r, g, b)
+    label = nearest_terrain(r, g, b)
+    if label == "Forest" and not is_tree_canopy_pixel(r, g, b, variance):
+        return "Plains"
+    return label
 
 
 def terrain_counts_for_path(outline_path: str, rgb: np.ndarray) -> Counter:
-    mask = polygon_mask((rgb.shape[1], rgb.shape[0]), outline_path)
+    size = (rgb.shape[1], rgb.shape[0])
+    mask = polygon_core_mask(size, outline_path)
+    if not mask.any():
+        mask = polygon_mask(size, outline_path)
     gray = rgb.mean(axis=2)
     variance = local_variance(gray)
     counts: Counter = Counter()
     for y, x in zip(*np.where(mask)):
         r, g, b = map(int, rgb[y, x])
         label = classify_pixel(r, g, b, float(variance[y, x]))
-        if label:
+        if label in LIVE_TERRAINS:
             counts[label] += 1
     return counts
 
@@ -218,20 +276,26 @@ def terrain_for_path(outline_path: str, rgb: np.ndarray) -> str:
     ranked = counts.most_common()
     desert_share = counts.get("Desert", 0) / total
     mountain_share = counts.get("Mountains", 0) / total
+    forest_share = counts.get("Forest", 0) / total
 
     if desert_share >= DESERT_MIN_COVERAGE:
         return "Desert"
     if mountain_share >= MOUNTAINS_MIN_COVERAGE:
         return "Mountains"
+    if forest_share >= FOREST_MIN_COVERAGE:
+        return "Forest"
 
-    winner, _winner_count = ranked[0]
-    if winner == "Desert":
-        for terrain, _count in ranked[1:]:
-            if terrain != "Desert":
-                return terrain
-        return DEFAULT_TERRAIN
+    for terrain, _count in ranked:
+        if terrain == "Forest" and forest_share < FOREST_MIN_COVERAGE:
+            continue
+        if terrain == "Desert" and desert_share < DESERT_MIN_COVERAGE:
+            continue
+        if terrain == "Mountains" and mountain_share < MOUNTAINS_MIN_COVERAGE:
+            continue
+        if terrain in LIVE_TERRAINS:
+            return terrain
 
-    return winner
+    return DEFAULT_TERRAIN
 
 
 def load_map_rgb(map_path) -> np.ndarray:

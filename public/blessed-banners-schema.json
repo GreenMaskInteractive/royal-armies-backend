@@ -1,0 +1,609 @@
+{
+  "version": 1,
+  "validLaneHpThresholdDefault": 0.15,
+  "validLaneHpThresholdSovereignty": 0.1,
+  "banners": {
+    "true-war": {
+      "id": "true-war",
+      "title": "True War Banner",
+      "rune": "Rune of Valiance",
+      "themeColor": "#e8a040",
+      "skillIdentity": "Aggressive valiance \u2014 press fights, break lines, and dominate ranked PvP.",
+      "nodeCount": 25,
+      "implementationStatus": "pending",
+      "branchPaths": [
+        {
+          "rootId": "tw-03",
+          "branch": "A",
+          "name": "Ferocious Line",
+          "playstyle": "Infantry assault",
+          "summary": "Break enemy lines with infantry damage spikes and relentless front-line pressure."
+        },
+        {
+          "rootId": "tw-13",
+          "branch": "B",
+          "name": "Higher Ground",
+          "playstyle": "Ranked PvP aggression",
+          "summary": "Punish stronger-ranked armies and win duels where Valiance matters most."
+        },
+        {
+          "rootId": "tw-14",
+          "branch": "C",
+          "name": "Relentless Valiance",
+          "playstyle": "Strike pressure",
+          "summary": "Chain attacks, tempo swings, and wounded-unit ferocity to keep the offensive alive."
+        }
+      ],
+      "nodes": []
+    },
+    "sachiels-blessing": {
+      "id": "sachiels-blessing",
+      "title": "Sachiel's Blessing Banner",
+      "rune": "Rune of Revitalization",
+      "themeColor": "#f0e8c8",
+      "skillIdentity": "Restoration & army sustain \u2014 revive losses and recover after every fight.",
+      "nodeCount": 25,
+      "implementationStatus": "pending",
+      "branchPaths": [
+        {
+          "rootId": "sb-03",
+          "branch": "A",
+          "name": "Revitalization Surge",
+          "playstyle": "Battle revival",
+          "summary": "Bring injured units back from the brink during and after combat."
+        },
+        {
+          "rootId": "sb-13",
+          "branch": "B",
+          "name": "Restored Vigour",
+          "playstyle": "Post-battle recovery",
+          "summary": "Heal, reinforce, and harden armies between engagements."
+        },
+        {
+          "rootId": "sb-14",
+          "branch": "C",
+          "name": "Angelic March",
+          "playstyle": "Mobility sustain",
+          "summary": "Keep armies moving with bonus march tempo and recovery on the road."
+        }
+      ],
+      "nodes": []
+    },
+    "emerald-barrier": {
+      "id": "emerald-barrier",
+      "title": "Emerald Barrier Banner",
+      "rune": "Rune of Fortification",
+      "themeColor": "#6ecf8a",
+      "nodeCount": 24,
+      "implementationStatus": "active",
+      "branchExclusivity": {
+        "id": "tri-split",
+        "branchRoots": [
+          "eb-03",
+          "eb-13",
+          "eb-14"
+        ]
+      },
+      "branchPaths": [
+        {
+          "rootId": "eb-03",
+          "branch": "A",
+          "name": "Phalanx Hold",
+          "playstyle": "Battlefield bulwark",
+          "summary": "Hold battle lines with mixed-unit defense, damage reduction, and defensive fighting rounds."
+        },
+        {
+          "rootId": "eb-13",
+          "branch": "B",
+          "name": "Rampart Reserve",
+          "playstyle": "Campaign sustain",
+          "summary": "Stretch your gold, recover after losses, and keep your army funded on the map."
+        },
+        {
+          "rootId": "eb-14",
+          "branch": "C",
+          "name": "Sentinel Screen",
+          "playstyle": "Screen & shield",
+          "summary": "Misdirect enemy intel, march faster to allies, and hold your own defensive battles."
+        }
+      ],
+      "pinnacleParents": [
+        "eb-11",
+        "eb-23"
+      ],
+      "pinnacleNode": "eb-25",
+      "nodes": [
+        {
+          "id": "eb-01",
+          "number": 1,
+          "name": "Phalanx Pledge",
+          "tier": 1,
+          "branch": "root",
+          "grid": {
+            "col": 5,
+            "row": 8
+          },
+          "description": "Your whole army takes 5% less damage in battle.",
+          "counterplay": "Hit their weakest unit type first.",
+          "cost": 0,
+          "autoUnlock": true,
+          "linksTo": [
+            "eb-03",
+            "eb-13",
+            "eb-14"
+          ],
+          "battleScope": "combat"
+        },
+        {
+          "id": "eb-03",
+          "number": 2,
+          "name": "Phalanx Foundation",
+          "tier": 2,
+          "branch": "A",
+          "grid": {
+            "col": 7,
+            "row": 6
+          },
+          "pathName": "Phalanx Hold",
+          "description": "If your army has two unit types, both take 20% less damage. With three unit types, enemy counter-attacks deal 25% less damage.",
+          "counterplay": "Break their unit mix or finish counter-attacks before they stack defense.",
+          "cost": 1,
+          "linksTo": [
+            "eb-04",
+            "eb-06",
+            "eb-07"
+          ],
+          "battleScope": "combat"
+        },
+        {
+          "id": "eb-04",
+          "number": 4,
+          "name": "Layered Deflection",
+          "tier": 3,
+          "branch": "A",
+          "grid": {
+            "col": 1,
+            "row": 6
+          },
+          "powerLabel": "Solid pick",
+          "description": "Your Cavalry takes 20% less damage from piercing and magic attacks.",
+          "counterplay": "Use Ranged and Beasts against their Cavalry before the cavalry round.",
+          "cost": 2,
+          "linksTo": [
+            "eb-08",
+            "eb-09"
+          ],
+          "battleScope": "combat"
+        },
+        {
+          "id": "eb-05",
+          "number": 5,
+          "name": "Shrapnel Screen",
+          "tier": 3,
+          "branch": "A",
+          "grid": {
+            "col": 2,
+            "row": 5
+          },
+          "powerLabel": "Side path",
+          "description": "If enemy Ranged hurt you in round 1, your Ranged hits back 20% harder.",
+          "counterplay": "Shut down their Ranged in round 1.",
+          "cost": 2,
+          "linksTo": [],
+          "isShortEnd": true,
+          "battleScope": "combat"
+        },
+        {
+          "id": "eb-06",
+          "number": 6,
+          "name": "Aegis Conduit",
+          "tier": 3,
+          "branch": "A",
+          "grid": {
+            "col": 4,
+            "row": 6
+          },
+          "powerLabel": "Solid pick",
+          "description": "The more Ranged you keep alive, the better your Beasts block damage.",
+          "counterplay": "Kill their Ranged early to weaken their Beasts.",
+          "cost": 2,
+          "linksTo": [
+            "eb-10"
+          ],
+          "battleScope": "combat"
+        },
+        {
+          "id": "eb-07",
+          "number": 7,
+          "name": "Integrated Guard",
+          "tier": 3,
+          "branch": "A",
+          "grid": {
+            "col": 5,
+            "row": 6
+          },
+          "powerLabel": "Strong pick",
+          "description": "When one unit type drops below 40% health, your other unit types take 15% less damage.",
+          "counterplay": "Finish off a wounded group before the rest get tougher.",
+          "cost": 2,
+          "linksTo": [
+            "eb-11",
+            "eb-12"
+          ],
+          "battleScope": "combat"
+        },
+        {
+          "id": "eb-08",
+          "number": 8,
+          "name": "Anchor Formation",
+          "tier": 4,
+          "branch": "A",
+          "grid": {
+            "col": 1,
+            "row": 4
+          },
+          "powerLabel": "Solid pick",
+          "description": "Your Cavalry always fights in the right battle round\u2014it cannot be skipped or pushed aside.",
+          "counterplay": "Win the Ranged and Beast rounds so their Cavalry never matters.",
+          "cost": 3,
+          "linksTo": [],
+          "battleScope": "combat"
+        },
+        {
+          "id": "eb-09",
+          "number": 9,
+          "name": "Stalemate Mastery",
+          "tier": 4,
+          "branch": "A",
+          "grid": {
+            "col": 2,
+            "row": 3
+          },
+          "powerLabel": "Strong pick",
+          "description": "Each Infantry fighting round adds +3% defense. This stacks every round.",
+          "counterplay": "End the fight fast\u2014do not let Infantry drag on.",
+          "cost": 3,
+          "linksTo": [],
+          "battleScope": "combat"
+        },
+        {
+          "id": "eb-10",
+          "number": 10,
+          "name": "Hold the Breach",
+          "tier": 4,
+          "branch": "A",
+          "grid": {
+            "col": 4,
+            "row": 4
+          },
+          "powerLabel": "Solid pick",
+          "description": "When your army defends, your Beasts take 25% less damage during the Beast fighting round.",
+          "counterplay": "Win the Ranged and Cavalry rounds before Beasts matter.",
+          "cost": 3,
+          "linksTo": [],
+          "battleScope": "combat"
+        },
+        {
+          "id": "eb-11",
+          "number": 11,
+          "name": "Phalanx Apex",
+          "tier": 5,
+          "branch": "A",
+          "grid": {
+            "col": 3,
+            "row": 2
+          },
+          "powerLabel": "\ud83d\udd25 Best end-game pick",
+          "description": "When your army defends, your Infantry gets +25% armor and +20% max health.",
+          "counterplay": "Force the fight on your terms\u2014attack before they settle into defense.",
+          "cost": 4,
+          "linksTo": [
+            "eb-25"
+          ],
+          "isCapstone": true,
+          "battleScope": "combat"
+        },
+        {
+          "id": "eb-12",
+          "number": 12,
+          "name": "Bastion Reserve",
+          "tier": 4,
+          "branch": "A",
+          "grid": {
+            "col": 5,
+            "row": 4
+          },
+          "powerLabel": "Side path \u2014 no bonus yet",
+          "description": "Saved for a future update. No effect right now.",
+          "counterplay": "None.",
+          "cost": 3,
+          "linksTo": [],
+          "isShortEnd": true,
+          "battleScope": "meta"
+        },
+        {
+          "id": "eb-13",
+          "number": 13,
+          "name": "Logistics Reserve",
+          "tier": 2,
+          "branch": "B",
+          "grid": {
+            "col": 7,
+            "row": 8
+          },
+          "pathName": "Rampart Reserve",
+          "description": "Gold spent on army expenses costs 12% less.",
+          "counterplay": "Keep pressure on so they cannot bank savings forever.",
+          "cost": 1,
+          "linksTo": [
+            "eb-15",
+            "eb-16"
+          ],
+          "battleScope": "macro"
+        },
+        {
+          "id": "eb-14",
+          "number": 14,
+          "name": "Sentinel Sentry",
+          "tier": 2,
+          "branch": "C",
+          "grid": {
+            "col": 7,
+            "row": 10
+          },
+          "pathName": "Sentinel Screen",
+          "description": "When you defend in battle, your army takes 5% less damage.",
+          "counterplay": "Attack before they can settle into a defensive fight.",
+          "cost": 1,
+          "linksTo": [
+            "eb-17",
+            "eb-18"
+          ],
+          "battleScope": "macro"
+        },
+        {
+          "id": "eb-15",
+          "number": 15,
+          "name": "War Chest Salvage",
+          "tier": 3,
+          "branch": "B",
+          "grid": {
+            "col": 6,
+            "row": 5
+          },
+          "powerLabel": "Side path",
+          "description": "After battles you lose, you recover 20% of the army wages you spent in that fight.",
+          "counterplay": "Keep winning\u2014salvage only helps after defeats.",
+          "cost": 2,
+          "linksTo": [],
+          "isShortEnd": true,
+          "battleScope": "macro"
+        },
+        {
+          "id": "eb-16",
+          "number": 16,
+          "name": "Border Warden",
+          "tier": 3,
+          "branch": "B",
+          "grid": {
+            "col": 8,
+            "row": 5
+          },
+          "powerLabel": "Side path",
+          "description": "When fighting on your nation's border tiles, your army can deploy 15% more of your own troops.",
+          "counterplay": "Attack before they finish mustering on the border.",
+          "cost": 2,
+          "linksTo": [],
+          "isShortEnd": true,
+          "battleScope": "macro"
+        },
+        {
+          "id": "eb-17",
+          "number": 17,
+          "name": "Defensive Mobilization",
+          "tier": 3,
+          "branch": "C",
+          "grid": {
+            "col": 7,
+            "row": 6
+          },
+          "powerLabel": "Solid pick",
+          "description": "When you march to assist an ally on your nation's map, it costs you 30% fewer Move Points.",
+          "counterplay": "Cut off reinforcements before they arrive.",
+          "cost": 2,
+          "linksTo": [
+            "eb-19",
+            "eb-20"
+          ],
+          "battleScope": "macro"
+        },
+        {
+          "id": "eb-18",
+          "number": 18,
+          "name": "Counter-Intelligence",
+          "tier": 3,
+          "branch": "C",
+          "grid": {
+            "col": 9,
+            "row": 6
+          },
+          "powerLabel": "Strong pick",
+          "description": "Enemies scouting you see fake army numbers\u2014they cannot read your real unit mix.",
+          "counterplay": "Scout again or fight them to learn their true army.",
+          "cost": 2,
+          "linksTo": [
+            "eb-21",
+            "eb-22",
+            "eb-23",
+            "eb-24"
+          ],
+          "battleScope": "macro"
+        },
+        {
+          "id": "eb-19",
+          "number": 19,
+          "name": "Rapid Redeploy",
+          "tier": 4,
+          "branch": "C",
+          "grid": {
+            "col": 6,
+            "row": 4
+          },
+          "powerLabel": "Solid pick",
+          "description": "Spend 1 Move Point to march directly to an ally's battle within your map sight range.",
+          "counterplay": "Cut off their march before they can join the fight.",
+          "cost": 3,
+          "linksTo": [],
+          "battleScope": "macro"
+        },
+        {
+          "id": "eb-20",
+          "number": 20,
+          "name": "Steadfast Rally",
+          "tier": 4,
+          "branch": "C",
+          "grid": {
+            "col": 7,
+            "row": 3
+          },
+          "powerLabel": "Solid pick",
+          "description": "Your army recovers morale 20% faster between battles.",
+          "counterplay": "Chain attacks before their morale recovers.",
+          "cost": 3,
+          "linksTo": [],
+          "battleScope": "macro"
+        },
+        {
+          "id": "eb-21",
+          "number": 21,
+          "name": "Watchtower Network",
+          "tier": 4,
+          "branch": "C",
+          "grid": {
+            "col": 8,
+            "row": 4
+          },
+          "powerLabel": "Solid pick",
+          "description": "Moving through your nation's land ignores enemy slowdown effects.",
+          "counterplay": "Block key routes instead of relying on movement penalties.",
+          "cost": 3,
+          "linksTo": [],
+          "battleScope": "macro"
+        },
+        {
+          "id": "eb-22",
+          "number": 22,
+          "name": "Exposed Flank",
+          "tier": 4,
+          "branch": "C",
+          "grid": {
+            "col": 9,
+            "row": 3
+          },
+          "powerLabel": "Solid pick",
+          "description": "When your army defends, enemies using only one unit type deal 15% less damage to you.",
+          "counterplay": "Bring a mixed army instead of one unit type only.",
+          "cost": 3,
+          "linksTo": [],
+          "battleScope": "combat"
+        },
+        {
+          "id": "eb-23",
+          "number": 23,
+          "name": "Iron Curtain",
+          "tier": 5,
+          "branch": "C",
+          "grid": {
+            "col": 10,
+            "row": 2
+          },
+          "powerLabel": "\ud83d\udd25 Best end-game pick",
+          "description": "When your army defends on your nation's map, you take 15% less damage in battle.",
+          "counterplay": "Fight them outside their homeland or force them to attack.",
+          "cost": 4,
+          "linksTo": [
+            "eb-25"
+          ],
+          "isCapstone": true,
+          "battleScope": "combat"
+        },
+        {
+          "id": "eb-24",
+          "number": 24,
+          "name": "Moral Anchor",
+          "tier": 4,
+          "branch": "C",
+          "grid": {
+            "col": 10,
+            "row": 4
+          },
+          "powerLabel": "Side path",
+          "description": "When a unit type is wiped out, your army's morale drop is cut in half.",
+          "counterplay": "Destroy several groups in the same round.",
+          "cost": 3,
+          "linksTo": [],
+          "isShortEnd": true,
+          "battleScope": "combat"
+        },
+        {
+          "id": "eb-25",
+          "number": 25,
+          "name": "Sovereign Phalanx",
+          "tier": 6,
+          "branch": "pinnacle",
+          "grid": {
+            "col": 5,
+            "row": 0
+          },
+          "description": "Mixed armies are easier to field\u2014a unit type only needs 10% of your army (not 15%) to count as active.",
+          "counterplay": "Still punish fake mixed armies built from tiny unit stacks.",
+          "cost": 5,
+          "linksTo": [],
+          "isPinnacle": true,
+          "requiresAnyOf": [
+            "eb-11",
+            "eb-23"
+          ],
+          "battleScope": "combat"
+        }
+      ],
+      "costModel": {
+        "type": "sequential",
+        "summary": "Each next purchased skill costs 1 additional banner point (1st purchase = 1 pt, 2nd = 2 pts, and so on). Keystone auto-unlocks for free."
+      }
+    },
+    "fortunes-gratitude": {
+      "id": "fortunes-gratitude",
+      "title": "Fortune's Gratitude Banner",
+      "rune": "Rune of Hinshuro",
+      "themeColor": "#c8a0e8",
+      "skillIdentity": "Economic prosperity & trade \u2014 merchant growth, tick income, and war dividends.",
+      "nodeCount": 25,
+      "implementationStatus": "pending",
+      "branchPaths": [
+        {
+          "rootId": "fg-03",
+          "branch": "A",
+          "name": "Merchant Tithe",
+          "playstyle": "Passive income",
+          "summary": "Grow wealth every tick and compound merchant reserves over time."
+        },
+        {
+          "rootId": "fg-13",
+          "branch": "B",
+          "name": "Victory Dividend",
+          "playstyle": "War spoils",
+          "summary": "Convert battlefield wins into currency and post-victory payouts."
+        },
+        {
+          "rootId": "fg-14",
+          "branch": "C",
+          "name": "Hinshuro Ledger",
+          "playstyle": "Expense mastery",
+          "summary": "Shrink army and city costs so trade income outpaces upkeep."
+        }
+      ],
+      "nodes": []
+    }
+  }
+}

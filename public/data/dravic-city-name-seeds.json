@@ -1,0 +1,23 @@
+{
+  "nationId": "dravic",
+  "regionId": "region-3",
+  "dialect": "ridge",
+  "notes": "Invented settlement names for Dravic. Ridge phonetics (kr-, t-, p-, r-; sharp stops; -is/-on endings). Shaped by Watchful Eye lore: bedrock bulwarks, hidden ballistae, war-refuge sanctuaries, spectral mechanism whispers. Not Amnek dictionary terms. Run scripts/audit-settlement-names.py before committing new nation name sets.",
+  "cities": [
+    { "slot": "c01", "slug": "kravellen", "name": "Kravellen", "settlementTier": "city" },
+    { "slot": "c02", "slug": "torraval", "name": "Torraval", "settlementTier": "city" },
+    { "slot": "c03", "slug": "sparrath", "name": "Sparrath", "settlementTier": "citadel" },
+    { "slot": "c04", "slug": "shelvath", "name": "Shelvath", "settlementTier": "town" },
+    { "slot": "c05", "slug": "ballistrek", "name": "Ballistrek", "settlementTier": "city" },
+    { "slot": "c06", "slug": "gulvaron", "name": "Gulvaron", "settlementTier": "citadel" },
+    { "slot": "c07", "slug": "whitecrest", "name": "Whitecrest", "settlementTier": "village" },
+    { "slot": "c08", "slug": "terragrim", "name": "Terragrim", "settlementTier": "city" },
+    { "slot": "c09", "slug": "crenellon", "name": "Crenellon", "settlementTier": "town" },
+    { "slot": "c10", "slug": "driftgram", "name": "Driftgram", "settlementTier": "town" },
+    { "slot": "c11", "slug": "krolvast", "name": "Krolvast", "settlementTier": "village" },
+    { "slot": "c12", "slug": "sentinelor", "name": "Sentinelor", "settlementTier": "city" },
+    { "slot": "c13", "slug": "martrek", "name": "Martrek", "settlementTier": "town" },
+    { "slot": "c14", "slug": "stalviron", "name": "Stalviron", "settlementTier": "city" },
+    { "slot": "c15", "slug": "vigilaron", "name": "Vigilaron", "settlementTier": "kingdom", "isCapital": true, "svgFile": "dravic_vigilaron_capital.svg" }
+  ]
+}

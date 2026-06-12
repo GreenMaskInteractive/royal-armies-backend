@@ -1,0 +1,23 @@
+{
+  "nationId": "krall",
+  "regionId": "region-2",
+  "dialect": "woodland",
+  "notes": "Invented settlement names for Krall. Woodland phonetics turned barbaric: harsh skhr-/khr-/vkh-/zh- starts, voiceless fricatives, abrupt stops, Norse-raider -vok/-gar/-uld/-haug endings. Woven from canon woodland roots (khra burn, num blood, taz death, skhra raider, gale forest, ghu river). Shaped by relentless bloodlust, frozen pine forests, and longship coastal raids in North-Gale Woodlands. Not Amnek dictionary terms. Run scripts/audit-settlement-names.py before committing.",
+  "cities": [
+    { "slot": "c01", "slug": "skhravok", "name": "Skhravok", "settlementTier": "city" },
+    { "slot": "c02", "slug": "khravgar", "name": "Khravgar", "settlementTier": "citadel" },
+    { "slot": "c03", "slug": "numveld", "name": "Numveld", "settlementTier": "city" },
+    { "slot": "c04", "slug": "tazhuld", "name": "Tazhuld", "settlementTier": "town" },
+    { "slot": "c05", "slug": "vkhornn", "name": "Vkhornn", "settlementTier": "town" },
+    { "slot": "c06", "slug": "ghulrakk", "name": "Ghulrakk", "settlementTier": "city" },
+    { "slot": "c07", "slug": "zhagmorr", "name": "Zhagmorr", "settlementTier": "village" },
+    { "slot": "c08", "slug": "draughaug", "name": "Draughaug", "settlementTier": "city" },
+    { "slot": "c09", "slug": "skhulvarn", "name": "Skhulvarn", "settlementTier": "citadel" },
+    { "slot": "c10", "slug": "morkhveld", "name": "Morkhveld", "settlementTier": "town" },
+    { "slot": "c11", "slug": "brennakh", "name": "Brennakh", "settlementTier": "village" },
+    { "slot": "c12", "slug": "velghorn", "name": "Velghorn", "settlementTier": "city" },
+    { "slot": "c13", "slug": "khorrgale", "name": "Khorrgale", "settlementTier": "town" },
+    { "slot": "c14", "slug": "skargholl", "name": "Skargholl", "settlementTier": "city" },
+    { "slot": "c15", "slug": "kravnhaug", "name": "Kravnhaug", "settlementTier": "kingdom", "isCapital": true }
+  ]
+}

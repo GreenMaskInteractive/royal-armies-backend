@@ -15,14 +15,24 @@
         Plains: 'plains',
         Desert: 'desert'
     };
+    // Mock nation terrain bonuses for Nation Status (and Intelligence previews) until
+    // NEXUS publishes the live balance table.
     const NATION_TERRAIN_BONUS_OVERRIDES = {
-        aesthene: {
-            Forest: 3,
-            Mountains: -2,
-            Marshlands: -3,
-            Plains: 2,
-            Desert: 0
-        }
+        aesthene: { Forest: 3, Mountains: -2, Marshlands: -3, Plains: 2, Desert: 0 },
+        lyllis: { Forest: 2, Mountains: 1, Marshlands: 0, Plains: 1, Desert: -2 },
+        dravic: { Mountains: 3, Plains: 2, Forest: 1, Marshlands: -2, Desert: -3 },
+        vaerenth: { Plains: 3, Mountains: 0, Forest: -2, Marshlands: 0, Desert: -2 },
+        trex: { Mountains: 3, Plains: 1, Forest: -1, Marshlands: -2, Desert: 0 },
+        gorz: { Desert: 2, Mountains: 1, Plains: 0, Forest: -2, Marshlands: -3 },
+        krall: { Desert: 3, Plains: 2, Forest: -1, Mountains: -2, Marshlands: -3 },
+        aethelgard: { Forest: 3, Plains: 2, Mountains: -2, Marshlands: -1, Desert: -3 },
+        saelthine: { Forest: 2, Mountains: 2, Plains: 1, Marshlands: 0, Desert: -2 },
+        thruun: { Mountains: 2, Marshlands: 1, Forest: 0, Plains: 1, Desert: -1 },
+        zevros: { Desert: 2, Plains: 1, Forest: -1, Mountains: 0, Marshlands: -2 },
+        skaros: { Mountains: 2, Forest: 1, Plains: 0, Marshlands: 1, Desert: -2 },
+        vaelior: { Forest: 2, Plains: 2, Mountains: -1, Marshlands: 0, Desert: -1 },
+        mynor: { Marshlands: 2, Forest: 1, Plains: 0, Mountains: -1, Desert: -2 },
+        khaerant: { Mountains: 3, Marshlands: 1, Forest: 0, Plains: -1, Desert: -2 }
     };
     const INTELLIGENCE_PEACE_COPY = 'Your nation is not currently at war. There is no intelligence detail to provide.';
     const DEFAULT_NATION_TOTAL_CITIES = 15;
@@ -253,6 +263,7 @@
 
         let total = 0;
         catalog.cities.forEach((city) => {
+            if (city?.masked) return;
             const homeland = normalizeNationId(city?.nationId || city?.holderNationId);
             if (homeland === nation) total += 1;
         });
@@ -271,6 +282,7 @@
         let owned = 0;
 
         catalog.cities.forEach((city) => {
+            if (city?.masked) return;
             const holder = typeof resolveHolder === 'function'
                 ? resolveHolder(city)
                 : normalizeNationId(city?.holderNationId || city?.nationId);
@@ -485,16 +497,12 @@
     function refreshNationStatusPanel() {
         const list = global.document.getElementById('age-nation-status-terrain-list');
         if (list) {
-            if (!isNationTerrainBonusDataLive()) {
-                renderNationStatusTerrainEmptyState(list);
-            } else {
-                const nationMeta = resolvePlayerNationMeta();
-                const bonuses = resolvePlayerTerrainBonuses();
-                const compact = COMPACT_NATION_STATUS_TERRAIN_NATIONS.includes(nationMeta.id);
-                list.classList.remove('is-unavailable');
-                list.classList.toggle('age-nation-status-terrain-list--compact', compact);
-                list.innerHTML = buildNationStatusTerrainRows(bonuses, nationMeta.id);
-            }
+            const nationMeta = resolvePlayerNationMeta();
+            const bonuses = resolvePlayerTerrainBonuses();
+            const compact = COMPACT_NATION_STATUS_TERRAIN_NATIONS.includes(nationMeta.id);
+            list.classList.remove('is-unavailable');
+            list.classList.toggle('age-nation-status-terrain-list--compact', compact);
+            list.innerHTML = buildNationStatusTerrainRows(bonuses, nationMeta.id);
         }
 
         void refreshNationDiplomacyAccords();

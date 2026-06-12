@@ -448,6 +448,24 @@
             message: 'The Chronicles Battle Pass is not available on the server yet.',
             category: 'game'
         },
+        'NEXUS-GAME-018': {
+            http: 400,
+            title: 'Class path',
+            message: 'That class path is not valid for onboarding.',
+            category: 'game'
+        },
+        'NEXUS-GAME-019': {
+            http: 400,
+            title: 'Class perk',
+            message: 'Choose Perk 1 Option A or Option B before confirming your class.',
+            category: 'game'
+        },
+        'NEXUS-GAME-020': {
+            http: 409,
+            title: 'Class locked',
+            message: 'Your class and Perk 1 choices are already locked for this Age.',
+            category: 'game'
+        },
 
         /* --- Age Headquarters --- */
         'NEXUS-HQ-001': {
@@ -780,6 +798,12 @@
             http: 400,
             title: 'Garrison compiler',
             message: 'Upload at least one garrison spy fragment before compiling a report.',
+            category: 'game'
+        },
+        'NEXUS-AGE-037': {
+            http: 403,
+            title: 'Movement',
+            message: 'That location is restricted. No army may enter or leave it.',
             category: 'game'
         },
 

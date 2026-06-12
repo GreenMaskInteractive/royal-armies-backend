@@ -185,6 +185,11 @@
         }
     }
 
+    /** Infinite move points on local dev (NEXUS non-production). */
+    function isInfiniteMovePointsEnabled() {
+        return isLocalDevelopmentHost() && !isProductionRoyalArmiesHost();
+    }
+
     /** Auto sign-in as caleb_admin on local dev (port 3000, Live Server :5500, etc.). */
     function isLocalDevAutoLoginEnabled() {
         return isLocalDevelopmentHost() && !isProductionRoyalArmiesHost();
@@ -506,6 +511,7 @@
     global.isPortalPreviewNavEnabled = isPortalPreviewNavEnabled;
     global.isLandingServedByNexusBackend = isLandingServedByNexusBackend;
     global.isMailboxApiAvailable = isMailboxApiAvailable;
+    global.isInfiniteMovePointsEnabled = isInfiniteMovePointsEnabled;
     global.isLocalDevAutoLoginEnabled = isLocalDevAutoLoginEnabled;
     global.shouldShowRiftErrorCodes = shouldShowRiftErrorCodes;
     global.shouldSuppressLocalDevErrorPopups = shouldSuppressLocalDevErrorPopups;
@@ -541,6 +547,7 @@
         isPortalPreviewNavEnabled,
         isLandingServedByNexusBackend,
         isMailboxApiAvailable,
+        isInfiniteMovePointsEnabled,
         isLocalDevAutoLoginEnabled,
         shouldShowRiftErrorCodes,
         shouldSuppressLocalDevErrorPopups,

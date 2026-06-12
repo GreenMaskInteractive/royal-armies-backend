@@ -54,14 +54,7 @@ window.onload = async () => {
     
     // Launch active chronometer ticker sand-clock calculations loop
     initializeServerAgeClockTickerCountdown();
-    initializeUniversalGameTimeClock();
     initializePortalLivePlayerMetrics();
-
-    applyPortalNavAccessRestrictions();
-    applyPortalGuestDeploymentChrome();
-    hydrateDevelopersLogDock();
-    mountAgePortalHomeLayout();
-    applyPortalAlphaVersionLabels();
 
     if (typeof loadCommanderMailboxDossiersFromStorage === 'function') {
         loadCommanderMailboxDossiersFromStorage();
@@ -129,15 +122,16 @@ function renderUniversalGameTimeDisplay(display, timeString) {
 }
 
 function initializeUniversalGameTimeClock() {
-    const display = document.getElementById('portal-universal-game-time-display');
-    if (!display) return;
-
     const tick = () => {
-        renderUniversalGameTimeDisplay(display, formatUniversalGameTimeClock(new Date()));
+        const display = document.getElementById('portal-universal-game-time-display');
+        if (display) {
+            renderUniversalGameTimeDisplay(display, formatUniversalGameTimeClock(new Date()));
+        }
     };
 
     tick();
-    window.setInterval(tick, 1000);
+    if (window.portalUniversalGameTimeClockTimer != null) return;
+    window.portalUniversalGameTimeClockTimer = window.setInterval(tick, 1000);
 }
 
 function applyPausedPortalCountdownReadouts() {
@@ -1020,14 +1014,12 @@ function switchMainPortalView(viewName, clickEvent, chatChannelKey) {
         case 'portal':
             if (window.cachedAgePortalViewportHTML) {
                 viewport.innerHTML = window.cachedAgePortalViewportHTML;
-                hydrateDevelopersLogDock();
-                mountAgePortalHomeLayout();
+                initAgePortalHomePage();
                 initializeTacticalButtonEarthquakeEngine();
                 if (arePortalCountdownTimersPaused()) applyPausedPortalCountdownReadouts();
             } else {
                 restoreAgePortalHomeViewLayout(viewport);
             }
-            applyPortalGuestDeploymentChrome();
             mountPortalMediaPlayerForViewport();
             break;
 
@@ -1233,6 +1225,8 @@ function mountAgePortalHomeLayout() {
     bindAgePortalIntroResizeObserver();
 }
 
+let agePortalIntroResizeObserver = null;
+
 function syncAgePortalPanelHeights() {
     const panel = document.getElementById('panel-age-portal-mode');
     if (!panel || !panel.classList.contains('portal-age-portal-layout-mounted')) return;
@@ -1246,10 +1240,10 @@ function syncAgePortalPanelHeights() {
     const stack = panel.querySelector('.portal-age-portal-right-stack');
     if (!intro || !stack) return;
 
-    stack.style.maxHeight = `${intro.offsetHeight}px`;
+    const nextHeight = `${intro.offsetHeight}px`;
+    if (stack.style.maxHeight === nextHeight) return;
+    stack.style.maxHeight = nextHeight;
 }
-
-let agePortalIntroResizeObserver = null;
 
 function bindAgePortalIntroResizeObserver() {
     const intro = document.querySelector('#panel-age-portal-mode .portal-age-intro-card');
@@ -1260,7 +1254,7 @@ function bindAgePortalIntroResizeObserver() {
     }
 
     agePortalIntroResizeObserver = new ResizeObserver(() => {
-        syncAgePortalPanelHeights();
+        window.requestAnimationFrame(() => syncAgePortalPanelHeights());
     });
     agePortalIntroResizeObserver.observe(intro);
 }
@@ -1269,6 +1263,23 @@ function hydrateDevelopersLogDock() {
     const dock = document.getElementById('dashboard-patch-notes-dock');
     if (dock) dock.innerHTML = renderDevelopersLogMarkup();
     scheduleDevelopersLogDockRefresh();
+}
+
+function initAgePortalHomePage() {
+    if (!document.getElementById('panel-age-portal-mode')) return;
+
+    mountAgePortalHomeLayout();
+    if (typeof applyPortalNavAccessRestrictions === 'function') {
+        applyPortalNavAccessRestrictions();
+    }
+    if (typeof applyPortalGuestDeploymentChrome === 'function') {
+        applyPortalGuestDeploymentChrome();
+    }
+    hydrateDevelopersLogDock();
+    if (typeof applyPortalAlphaVersionLabels === 'function') {
+        applyPortalAlphaVersionLabels();
+    }
+    initializeUniversalGameTimeClock();
 }
 
 function restoreAgePortalHomeViewLayout(viewport) {
@@ -1335,10 +1346,8 @@ function restoreAgePortalHomeViewLayout(viewport) {
             </div>
         </div>
     `;
-    hydrateDevelopersLogDock();
-    mountAgePortalHomeLayout();
+    initAgePortalHomePage();
     initializeTacticalButtonEarthquakeEngine();
-    applyPortalGuestDeploymentChrome();
 }
 
 /* Block 4: MAP INTERFACE DEPLOYMENT SECTOR ROUTER */
@@ -6654,8 +6663,10 @@ function initializeTacticalButtonEarthquakeEngine() {
 }
 
 const originalWindowInitHandshake = window.onload;
-window.onload = () => {
-    if (typeof originalWindowInitHandshake === 'function') originalWindowInitHandshake();
+window.onload = async () => {
+    if (typeof originalWindowInitHandshake === 'function') {
+        await originalWindowInitHandshake();
+    }
     initializeTacticalButtonEarthquakeEngine();
 };
 
@@ -6881,18 +6892,18 @@ function formatMediaClockSecondsToString(seconds) {
 }
 
 const existingWindowMediaLoadHook = window.onload;
-window.onload = () => {
-    if (typeof existingWindowMediaLoadHook === 'function') existingWindowMediaLoadHook();
+window.onload = async () => {
+    if (typeof existingWindowMediaLoadHook === 'function') {
+        await existingWindowMediaLoadHook();
+    }
     initializeAdvancedMediaJukeboxEngine();
     initializeTacticalButtonEarthquakeEngine();
     mountPortalMediaPlayerForViewport();
     ensurePortalMediaPlayerCollapsedByDefault();
-    if (typeof applyPortalDeploymentDeckPresentation === 'function') {
-        applyPortalDeploymentDeckPresentation();
-    } else if (typeof applyPortalGuestDeploymentChrome === 'function') {
-        applyPortalGuestDeploymentChrome();
+    initAgePortalHomePage();
+    if (typeof activeMainPortalView !== 'undefined' && activeMainPortalView === 'portal') {
+        window.cachedAgePortalViewportHTML = snapshotAgePortalViewportForCache();
     }
-    window.cachedAgePortalViewportHTML = snapshotAgePortalViewportForCache();
     if (!isMainPortalDashboardPage() && getPortalBackgroundAudioElement()?.paused) {
         startPortalBackgroundMusic({ silentFail: true });
     }
@@ -6960,6 +6971,9 @@ window.closeMainLogoutConfirmationWindow = closeMainLogoutConfirmationWindow;
 window.executeLogoutRedirect = executeLogoutRedirect;
 window.notifyPortalAgeSessionLeave = notifyPortalAgeSessionLeave;
 window.notifyPortalAgeSessionJoin = notifyPortalAgeSessionJoin;
+window.initAgePortalHomePage = initAgePortalHomePage;
+window.mountAgePortalHomeLayout = mountAgePortalHomeLayout;
+window.hydrateDevelopersLogDock = hydrateDevelopersLogDock;
 
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => {

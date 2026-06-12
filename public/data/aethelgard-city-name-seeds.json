@@ -1,0 +1,23 @@
+{
+  "nationId": "aethelgard",
+  "regionId": "region-2",
+  "dialect": "woodland",
+  "notes": "Invented settlement names for Aethelgard. Woodland phonetics turned secretive and scholarly: harsh khr-/zh-/vkh-/gh-/sk- starts kept, but semantics shifted to hidden halls, frost, shadow, and lore-keeping (myrk dark, sval cold, skugg shadow, skhald lore-keeper, vard watch, skog deep wood, myr mire). Same North-Gale Woodlands dialect family as Krall, tuned away from raider bloodlust toward concealed research outposts and frost-forest watchtowers. The secret-base entrance displays as 'Unknown' in-world with all city info masked. NOTE: the names are intentionally swapped across the two slugs — slot c07 (slug 'thaurghend', SVG aethelgard_thaurghend.svg) is the masked 'Unknown' entrance, while slot c06 (slug 'unknown', SVG aethelgard_unknown.svg) displays as 'Thaurghend'. Do not 'fix' this by matching names to slugs; the geometry binding is deliberate. Not Amnek dictionary terms. Run scripts/audit-settlement-names.py before committing.",
+  "cities": [
+    { "slot": "c01", "slug": "myrkvend", "name": "Myrkvend", "settlementTier": "city" },
+    { "slot": "c02", "slug": "svalkrend", "name": "Svalkrend", "settlementTier": "citadel" },
+    { "slot": "c03", "slug": "vardskog", "name": "Vardskog", "settlementTier": "town" },
+    { "slot": "c04", "slug": "khaelvyr", "name": "Khaelvyr", "settlementTier": "town" },
+    { "slot": "c05", "slug": "ghrenmyr", "name": "Ghrenmyr", "settlementTier": "city" },
+    { "slot": "c06", "slug": "unknown", "name": "Thaurghend", "settlementTier": "city" },
+    { "slot": "c07", "slug": "thaurghend", "name": "Unknown", "settlementTier": "village", "masked": true },
+    { "slot": "c08", "slug": "vkhaeldis", "name": "Vkhaeldis", "settlementTier": "citadel" },
+    { "slot": "c09", "slug": "fennskog", "name": "Fennskog", "settlementTier": "town" },
+    { "slot": "c10", "slug": "ljundvarr", "name": "Ljundvarr", "settlementTier": "village" },
+    { "slot": "c11", "slug": "myrrgholl", "name": "Myrrgholl", "settlementTier": "city" },
+    { "slot": "c12", "slug": "aelmyrk", "name": "Aelmyrk", "settlementTier": "town" },
+    { "slot": "c13", "slug": "skhaldvend", "name": "Skhaldvend", "settlementTier": "city" },
+    { "slot": "c14", "slug": "draelghor", "name": "Draelghor", "settlementTier": "city" },
+    { "slot": "c15", "slug": "vaurnheim", "name": "Vaurnheim", "settlementTier": "kingdom", "isCapital": true }
+  ]
+}

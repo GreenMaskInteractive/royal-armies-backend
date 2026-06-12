@@ -28,9 +28,9 @@ text = re.sub(r'\s+onclick="[^"]*"', '', text)
 
 scripts = """
     <script src="dev-environment.js"></script>
-    <script src="age-world-water-routes.js?v=age-map-only-1"></script>
+    <script src="age-world-water-routes.js?v=forced-borders-client-4"></script>
     <script src="rift-player-loc-pins.js?v=age-map-only-1"></script>
-    <script src="age-world-map.js?v=age-map-only-1"></script>
+    <script src="age-world-map.js?v=rain-fable-restore-1"></script>
     <script src="rift-age-movement.js?v=age-map-only-1"></script>
     <script src="age-movement-panel.js?v=age-map-only-1"></script>
     <script src="age-world-plan-overlay.js?v=age-map-only-1"></script>

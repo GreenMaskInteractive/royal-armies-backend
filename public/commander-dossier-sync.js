@@ -121,6 +121,9 @@
         setNum('savedPortalNarrationVol', prefs.portalNarrationVol);
         setNum('savedPortalSfxVol', prefs.portalSfxVol);
         setNum('savedGameChatOpacity', prefs.gameChatOpacity);
+        if ('mapAmbientEffects' in prefs) {
+            global.localStorage.setItem('savedMapAmbientEffects', prefs.mapAmbientEffects ? 'true' : 'false');
+        }
     }
 
     function readLegacyDossierFallback() {
@@ -163,7 +166,8 @@
                 portalNarrationVol: parseFloat(global.localStorage.getItem('savedPortalNarrationVol')) || 1,
                 portalSfxVol: parseFloat(global.localStorage.getItem('savedPortalSfxVol')) || 0.2,
                 gameChatOpacity: parseFloat(global.localStorage.getItem('savedGameChatOpacity')) || 85,
-                rankTitleGender: global.localStorage.getItem('savedRankTitleGender') === 'female' ? 'female' : 'male'
+                rankTitleGender: global.localStorage.getItem('savedRankTitleGender') === 'female' ? 'female' : 'male',
+                mapAmbientEffects: global.localStorage.getItem('savedMapAmbientEffects') === 'true'
             };
         } catch (_err) {
             /* ignore malformed legacy cache */
@@ -261,6 +265,18 @@
                 });
             }
         }
+        if (typeof global.confirmedMapAmbientEffects !== 'undefined' && 'mapAmbientEffects' in preferences) {
+            global.confirmedMapAmbientEffects = !!preferences.mapAmbientEffects;
+            global.stagedMapAmbientEffects = global.confirmedMapAmbientEffects;
+            try {
+                global.localStorage.setItem('savedMapAmbientEffects', global.confirmedMapAmbientEffects ? 'true' : 'false');
+            } catch (_err) {
+                /* ignore */
+            }
+            if (global.RoyalArmiesMapAmbientEffects && typeof global.RoyalArmiesMapAmbientEffects.apply === 'function') {
+                global.RoyalArmiesMapAmbientEffects.apply(global.confirmedMapAmbientEffects);
+            }
+        }
         if ('rankTitleGender' in preferences && typeof global.applyRankTitleGenderPreference === 'function') {
             const preserveStaged = typeof global.shouldPreserveProfileRankTitleGenderStaged === 'function'
                 && global.shouldPreserveProfileRankTitleGenderStaged();
@@ -346,7 +362,10 @@
                 : (Number(global.localStorage.getItem('savedGameChatOpacity')) || 85),
             rankTitleGender: typeof global.confirmedRankTitleGender !== 'undefined'
                 ? global.confirmedRankTitleGender
-                : (global.localStorage.getItem('savedRankTitleGender') === 'female' ? 'female' : 'male')
+                : (global.localStorage.getItem('savedRankTitleGender') === 'female' ? 'female' : 'male'),
+            mapAmbientEffects: typeof global.confirmedMapAmbientEffects !== 'undefined'
+                ? !!global.confirmedMapAmbientEffects
+                : global.localStorage.getItem('savedMapAmbientEffects') === 'true'
         };
     }
 

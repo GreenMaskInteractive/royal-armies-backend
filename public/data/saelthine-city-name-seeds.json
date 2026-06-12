@@ -1,0 +1,23 @@
+{
+  "nationId": "saelthine",
+  "regionId": "region-2",
+  "dialect": "woodland",
+  "notes": "Invented settlement names for Saelthine. Same North-Gale Woodlands dialect family as Krall and Aethelgard, tuned toward piety, prophecy, and pilgrimage under one Divine entity: sael blessed, hael holy light, spae prophecy, wyrd fate, skri scripture, galdr chant, vak vigil, bede prayer, helga hallowed, ljos lantern-light, fara pilgrimage, lund grove, brim shore. Softer devotional semantics than Krall's bloodlust or Aethelgard's secrecy, but the same harsh woodland phonetics and -vend/-skog/-myr/-holl/-veld endings. Not Amnek dictionary terms. Run scripts/audit-settlement-names.py before committing.",
+  "cities": [
+    { "slot": "c01", "slug": "spaeskog", "name": "Spaeskog", "settlementTier": "city" },
+    { "slot": "c02", "slug": "orvasholl", "name": "Orvasholl", "settlementTier": "citadel" },
+    { "slot": "c03", "slug": "vakmyr", "name": "Vakmyr", "settlementTier": "town" },
+    { "slot": "c04", "slug": "dovrskog", "name": "Dovrskog", "settlementTier": "town" },
+    { "slot": "c05", "slug": "haelvarr", "name": "Haelvarr", "settlementTier": "city" },
+    { "slot": "c06", "slug": "wyrdkrend", "name": "Wyrdkrend", "settlementTier": "city" },
+    { "slot": "c07", "slug": "bedemyr", "name": "Bedemyr", "settlementTier": "village" },
+    { "slot": "c08", "slug": "skrivend", "name": "Skrivend", "settlementTier": "citadel" },
+    { "slot": "c09", "slug": "faraveld", "name": "Faraveld", "settlementTier": "town" },
+    { "slot": "c10", "slug": "haellund", "name": "Haellund", "settlementTier": "village" },
+    { "slot": "c11", "slug": "galdrholl", "name": "Galdrholl", "settlementTier": "city" },
+    { "slot": "c12", "slug": "brimsael", "name": "Brimsael", "settlementTier": "town" },
+    { "slot": "c13", "slug": "helgagard", "name": "Helgagard", "settlementTier": "city" },
+    { "slot": "c14", "slug": "ljosvend", "name": "Ljosvend", "settlementTier": "city" },
+    { "slot": "c15", "slug": "saelvenheim", "name": "Saelvenheim", "settlementTier": "kingdom", "isCapital": true }
+  ]
+}

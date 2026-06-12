@@ -1,0 +1,23 @@
+{
+  "nationId": "vaerenth",
+  "regionId": "region-3",
+  "dialect": "ridge",
+  "notes": "Invented settlement names for Vaerenth. Ridge cadence softened for monastic serenity: temple prefixes, -en/-on/-el endings, contemplative vowels. Shaped by elder-priest pantheons, guarded longevity, and canyon sanctuaries on Crescent Ridge. Entire nation is rolling grassland and hills (Plains only in gameplay terrain — no forest, desert, or alpine mountains). Not Amnek dictionary terms. Keeps movement-panel stub Stillwind. Run scripts/audit-settlement-names.py before committing.",
+  "cities": [
+    { "slot": "c01", "slug": "lentharis", "name": "Lentharis", "settlementTier": "city" },
+    { "slot": "c02", "slug": "sanctivel", "name": "Sanctivel", "settlementTier": "citadel" },
+    { "slot": "c03", "slug": "veyanor", "name": "Veyanor", "settlementTier": "town" },
+    { "slot": "c04", "slug": "ordalisse", "name": "Ordalisse", "settlementTier": "city" },
+    { "slot": "c05", "slug": "eldaranor", "name": "Eldaranor", "settlementTier": "town" },
+    { "slot": "c06", "slug": "chanteris", "name": "Chanteris", "settlementTier": "city" },
+    { "slot": "c07", "slug": "stillwind", "name": "Stillwind", "settlementTier": "village" },
+    { "slot": "c08", "slug": "vesperon", "name": "Vesperon", "settlementTier": "citadel" },
+    { "slot": "c09", "slug": "tolvaren", "name": "Tolvaren", "settlementTier": "city" },
+    { "slot": "c10", "slug": "aurelong", "name": "Aurelong", "settlementTier": "town" },
+    { "slot": "c11", "slug": "hilareth", "name": "Hilareth", "settlementTier": "city" },
+    { "slot": "c12", "slug": "panthelon", "name": "Panthelon", "settlementTier": "town" },
+    { "slot": "c13", "slug": "greylen", "name": "Greylen", "settlementTier": "village" },
+    { "slot": "c14", "slug": "sorathil", "name": "Sorathil", "settlementTier": "city" },
+    { "slot": "c15", "slug": "serathion", "name": "Serathion", "settlementTier": "kingdom", "isCapital": true }
+  ]
+}

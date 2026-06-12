@@ -16,6 +16,8 @@ SOURCES = [
 
 MIN_SPAN = 25
 DEDUP_DIST = 70
+ADJACENCY_PAD = 4
+CITY_CATALOG_PATH = ROOT / "public" / "data" / "age-world-cities.json"
 
 # Canonical playable nations — matched to nearest extracted polygon centroid.
 MAJOR_NATIONS = {
@@ -140,6 +142,41 @@ def slugify(value: str) -> str:
     return slug or "territory"
 
 
+def load_city_bboxes() -> list[dict]:
+    if not CITY_CATALOG_PATH.is_file():
+        return []
+    payload = json.loads(CITY_CATALOG_PATH.read_text(encoding="utf-8"))
+    return [city["bbox"] for city in payload.get("cities", []) if city.get("bbox")]
+
+
+def path_bbox(d: str) -> dict:
+    nums = [float(x) for x in re.findall(r"[-+]?(?:\d*\.\d+|\d+)(?:[eE][-+]?\d+)?", d)]
+    xs, ys = nums[0::2], nums[1::2]
+    n = min(len(xs), len(ys))
+    if n < 2:
+        return {"minX": 0.0, "minY": 0.0, "maxX": 0.0, "maxY": 0.0}
+    return {
+        "minX": min(xs[:n]),
+        "minY": min(ys[:n]),
+        "maxX": max(xs[:n]),
+        "maxY": max(ys[:n]),
+    }
+
+
+def boxes_touch(a: dict, b: dict, pad: float = ADJACENCY_PAD) -> bool:
+    return not (
+        a["maxX"] + pad < b["minX"] - pad
+        or b["maxX"] + pad < a["minX"] - pad
+        or a["maxY"] + pad < b["minY"] - pad
+        or b["maxY"] + pad < a["minY"] - pad
+    )
+
+
+def overlaps_city_territory(d: str, city_bboxes: list[dict]) -> bool:
+    bbox = path_bbox(d)
+    return any(boxes_touch(bbox, city_bbox) for city_bbox in city_bboxes)
+
+
 MAP_MAJOR_IDS: dict[str, list[str]] = {
     "northern": ["krall", "aethelgard", "saelthine", "trex", "gorz"],
     "central": ["lyllis", "dravic", "aesthene", "vaerenth", "thruun"],
@@ -167,7 +204,7 @@ def assign_major_clusters(map_id: str, clusters: list[tuple]) -> tuple[list[tupl
     return assignments, remaining
 
 
-def extract_source(map_id: str, svg_path: Path) -> list[dict]:
+def extract_source(map_id: str, svg_path: Path, city_bboxes: list[dict]) -> list[dict]:
     text = svg_path.read_text(encoding="utf-8")
     candidates: list[tuple] = []
     for d in parse_path_elements(text):
@@ -201,6 +238,9 @@ def extract_source(map_id: str, svg_path: Path) -> list[dict]:
         append_record(cluster, nation_id, meta["name"], meta["accent"], "major")
 
     for cluster in minor_clusters:
+        _, _, _, _, d = cluster
+        if overlaps_city_territory(d, city_bboxes):
+            continue
         if pool_index < len(name_pool):
             display_name = name_pool[pool_index]
             pool_index += 1
@@ -214,9 +254,10 @@ def extract_source(map_id: str, svg_path: Path) -> list[dict]:
 
 
 def main() -> None:
+    city_bboxes = load_city_bboxes()
     nations: list[dict] = []
     for map_id, svg_path in SOURCES:
-        nations.extend(extract_source(map_id, svg_path))
+        nations.extend(extract_source(map_id, svg_path, city_bboxes))
 
     nations.sort(key=lambda row: (
         0 if row.get("kind") == "major" else 1,

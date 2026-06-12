@@ -20,7 +20,11 @@ def main() -> None:
     rgb = terrain.load_map_rgb(MAP_PATH)
     payload = json.loads(DATA_PATH.read_text(encoding="utf-8"))
     for city in payload["cities"]:
-        city["terrain"] = terrain.terrain_for_path(city["outlinePath"], rgb)
+        lock = terrain.NATION_TERRAIN_LOCK.get(city["nationId"])
+        if lock:
+            city["terrain"] = lock
+        else:
+            city["terrain"] = terrain.terrain_for_path(city["outlinePath"], rgb)
 
     for nation in payload["nations"]:
         nation_cities = [c for c in payload["cities"] if c["nationId"] == nation["id"]]

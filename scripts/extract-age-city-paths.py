@@ -1,4 +1,4 @@
-"""Extract 15 city polygons per nation from *cities.svg → public/data/age-world-cities.json."""
+"""Extract city polygons from per-city SVGs into age-world-cities.json."""
 from __future__ import annotations
 
 import importlib.util
@@ -20,27 +20,59 @@ def _load_terrain_module():
     spec.loader.exec_module(mod)
     return mod
 
-CITY_SVGS = {
-    "dravic": "draviccities.svg",
-    "khaerant": "khaerantcities.svg",
-    "mynor": "mynorcities.svg",
-    "trex": "trexcities.svg",
-    "vaerenth": "vaerenthcities.svg",
-    "skaros": "skaroscities.svg",
-    "vaelior": "vaeliorcities.svg",
-    "zevros": "zevroscities.svg",
-    "gorz": "gorzcities.svg",
-    "krall": "krallcities.svg",
-    "thruun": "thruuncities.svg",
-    "saelthine": "saelthinecities.svg",
-    "aethelgard": "aethelgardcities.svg",
-    "lyllis": "lylliscities.svg",
-}
+
+def _load_border_geometry_module():
+    spec = importlib.util.spec_from_file_location(
+        "age_city_border_geometry", ROOT / "scripts" / "age-city-border-geometry.py"
+    )
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod
+
+
+def _audit_settlement_names(world_path: Path) -> None:
+    spec = importlib.util.spec_from_file_location(
+        "audit_settlement_names", ROOT / "scripts" / "audit-settlement-names.py"
+    )
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    print("[audit] Cross-referencing settlement names across nations...")
+    mod.audit_settlement_names(world_path=world_path, exit_on_conflict=True)
+    print("[audit] No cross-nation settlement name conflicts detected.")
+
+# Legacy composite *cities.svg sheets are retired; only per-city SVG nations are extracted.
+CITY_SVGS: dict[str, str] = {}
 
 # Nations whose cities ship as one SVG per settlement (public/images/{prefix}{slug}.svg).
 INDIVIDUAL_CITY_NATIONS: dict[str, dict[str, str]] = {
     "aesthene": {"glob": "aesthine_*.svg", "prefix": "aesthine_"},
+    "lyllis": {"glob": "lyllis_*.svg", "prefix": "lyllis_"},
+    "dravic": {"glob": "dravic_*.svg", "prefix": "dravic_"},
+    "vaerenth": {"glob": "vaerenth_*.svg", "prefix": "vaerenth_"},
+    "trex": {"glob": "trex_*.svg", "prefix": "trex_"},
+    "gorz": {"glob": "gorz_*.svg", "prefix": "gorz_"},
+    "krall": {"glob": "krall_*.svg", "prefix": "krall_"},
+    "aethelgard": {"glob": "aethelgard_*.svg", "prefix": "aethelgard_"},
+    "saelthine": {"glob": "saelthine_*.svg", "prefix": "saelthine_"},
 }
+
+
+def load_city_name_seeds() -> dict[str, dict[str, dict]]:
+    """nationId -> slug -> seed row from public/data/*-city-name-seeds.json."""
+    seeds_by_nation: dict[str, dict[str, dict]] = {}
+    seeds_dir = ROOT / "public" / "data"
+    for path in sorted(seeds_dir.glob("*-city-name-seeds.json")):
+        payload = json.loads(path.read_text(encoding="utf-8"))
+        nation_id = payload.get("nationId")
+        if not nation_id:
+            continue
+        nation_seeds: dict[str, dict] = {}
+        for city in payload.get("cities", []):
+            slug = city.get("slug")
+            if slug:
+                nation_seeds[slug] = city
+        seeds_by_nation[nation_id] = nation_seeds
+    return seeds_by_nation
 
 NATION_REGION = {
     "trex": "region-1",
@@ -213,8 +245,7 @@ def cluster_paths(paths: list[str]) -> list[dict]:
     return trimmed
 
 
-def boxes_touch(a: dict, b: dict) -> bool:
-    pad = ADJACENCY_PAD
+def boxes_touch(a: dict, b: dict, pad: float = ADJACENCY_PAD) -> bool:
     return not (
         a["maxX"] + pad < b["minX"] - pad
         or b["maxX"] + pad < a["minX"] - pad
@@ -291,7 +322,7 @@ def assign_settlement_tiers(
 
 
 def parse_individual_city_stem(prefix: str, stem: str) -> tuple[str, str, bool]:
-    if not stem.startswith(prefix):
+    if stem[: len(prefix)].lower() != prefix.lower():
         raise ValueError(f"Expected stem {stem!r} to start with {prefix!r}")
     slug = stem[len(prefix) :]
     is_capital = slug.endswith("_capital")
@@ -350,7 +381,12 @@ def load_individual_nation_clusters(nation_id: str, config: dict[str, str]) -> l
     images_dir = ROOT / "public" / "images"
     prefix = config["prefix"]
     clusters: list[dict] = []
-    for svg_path in sorted(images_dir.glob(config["glob"])):
+    seen_stems: set[str] = set()
+    for svg_path in sorted(images_dir.glob(config["glob"]), key=lambda p: p.stem.lower()):
+        stem_key = svg_path.stem.lower()
+        if stem_key in seen_stems:
+            continue
+        seen_stems.add(stem_key)
         slug, display, is_capital = parse_individual_city_stem(prefix, svg_path.stem)
         paths = parse_path_elements(svg_path.read_text(encoding="utf-8"))
         cluster = cluster_from_paths(paths, min_span=0.0)
@@ -372,9 +408,13 @@ def load_individual_nation_clusters(nation_id: str, config: dict[str, str]) -> l
 
 
 def main() -> None:
+    border_geometry = _load_border_geometry_module()
+    cities_border = border_geometry.cities_border
+
     terrain_mod = _load_terrain_module()
     map_rgb = terrain_mod.load_map_rgb(MAP_PATH)
     nation_meta = {n["id"]: n for n in json.loads(NATION_PATHS.read_text(encoding="utf-8"))["nations"]}
+    name_seeds = load_city_name_seeds()
     nations_out: list[dict] = []
     cities_out: list[dict] = []
 
@@ -395,8 +435,13 @@ def main() -> None:
 
         capital_index = 0
         if nation_id in INDIVIDUAL_CITY_NATIONS:
+            nation_seeds = name_seeds.get(nation_id, {})
             for index, cluster in enumerate(clusters):
                 if cluster.get("isCapital"):
+                    capital_index = index
+                    break
+                seed = nation_seeds.get(cluster["slug"])
+                if seed and seed.get("isCapital"):
                     capital_index = index
                     break
         else:
@@ -410,6 +455,10 @@ def main() -> None:
                     capital_index = index
 
         terrain_mod.assign_terrains_from_map(clusters, map_rgb)
+        if nation_id in terrain_mod.NATION_TERRAIN_LOCK:
+            locked_terrain = terrain_mod.NATION_TERRAIN_LOCK[nation_id]
+            for cluster in clusters:
+                cluster["terrain"] = locked_terrain
         assign_settlement_tiers(clusters, capital_index, nation_cx, nation_cy)
 
         nation_cities: list[dict] = []
@@ -438,12 +487,25 @@ def main() -> None:
                 "loserNationId": "",
                 "defensiveStructures": [],
             }
+            if nation_id in INDIVIDUAL_CITY_NATIONS:
+                seed = name_seeds.get(nation_id, {}).get(slug)
+                if seed:
+                    if seed.get("name"):
+                        city["name"] = seed["name"]
+                    if seed.get("settlementTier"):
+                        city["settlementTier"] = seed["settlementTier"]
+                    if seed.get("isCapital"):
+                        city["isCapital"] = True
+                    if seed.get("masked"):
+                        city["masked"] = True
+                    if seed.get("terrain"):
+                        city["terrain"] = seed["terrain"]
             nation_cities.append(city)
             cities_out.append(city)
 
         for i, a in enumerate(nation_cities):
             for j, b in enumerate(nation_cities):
-                if i != j and boxes_touch(a["bbox"], b["bbox"]):
+                if i != j and cities_border(a, b):
                     a["neighbors"].append(b["id"])
 
         for i, city in enumerate(nation_cities):
@@ -466,7 +528,7 @@ def main() -> None:
         for j, b in enumerate(cities_out):
             if i >= j or a["nationId"] == b["nationId"]:
                 continue
-            if boxes_touch(a["bbox"], b["bbox"]):
+            if cities_border(a, b):
                 if b["id"] not in a["neighbors"]:
                     a["neighbors"].append(b["id"])
                 if a["id"] not in b["neighbors"]:
@@ -480,8 +542,26 @@ def main() -> None:
         "nations": nations_out,
         "cities": cities_out,
     }
+    valid_neighbors = border_geometry.compute_valid_neighbors(cities_out)
+    for city in cities_out:
+        city["neighbors"] = valid_neighbors[city["id"]]
+
     OUT.write_text(json.dumps(payload, indent=2), encoding="utf-8")
     print(f"Wrote {len(cities_out)} cities across {len(nations_out)} nations -> {OUT}")
+    _audit_settlement_names(OUT)
+
+    spec = importlib.util.spec_from_file_location(
+        "audit_city_neighbors", ROOT / "scripts" / "audit-city-neighbors.py"
+    )
+    audit_mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(audit_mod)
+    false_positives, false_negatives, _ = audit_mod.audit_world_cities(OUT)
+    if false_positives or false_negatives:
+        raise RuntimeError(
+            f"Neighbor audit failed after extract ({len(false_positives)} false positives, "
+            f"{len(false_negatives)} false negatives)."
+        )
+    print("[audit] All city neighbor links match sampled outline borders.")
 
 
 if __name__ == "__main__":

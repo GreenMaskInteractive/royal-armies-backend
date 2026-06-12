@@ -413,6 +413,11 @@ function resolveArmyQualityMitigation(army, catalog) {
     return Math.min(0.22, ((avgRank - 1) / 5) * 0.14 + ((avgTier - 1) / 2) * 0.10);
 }
 
+function resolveTrainingInjuryMitigation(commander, catalog) {
+    const army = resolveCommanderAgeArmy(commander);
+    return Math.min(0.48, Math.max(0, resolveArmyQualityMitigation(army, catalog)));
+}
+
 function resolveCommanderInjuryMitigation(commander, catalog) {
     const army = resolveCommanderAgeArmy(commander);
     let mitigation = resolveArmyQualityMitigation(army, catalog);
@@ -452,14 +457,16 @@ function rollInjuryCountFromBand(thresholds, mitigation) {
     return 4;
 }
 
-function resolveBattleInjuryCount(commander, battleResult, trainingMode = 'street-patrol', catalog) {
+function resolveBattleInjuryCount(commander, battleResult, trainingMode = 'street-patrol', catalog, options = {}) {
     const catalogRef = catalog || loadUnitPurchaseCatalog();
     const rosterBefore = countAgeArmyUnits(resolveCommanderAgeArmy(commander));
     const healthyBefore = rosterBefore.uninjured;
     if (!healthyBefore) return 0;
 
     const rank = resolveCommanderRank(commander);
-    const mitigation = resolveCommanderInjuryMitigation(commander, catalogRef);
+    const mitigation = Number.isFinite(options.injuryMitigationOverride)
+        ? Math.max(0, Number(options.injuryMitigationOverride))
+        : resolveCommanderInjuryMitigation(commander, catalogRef);
     const thresholds = resolveTrainingInjuryThresholds(rank);
     let injuryCount = rollInjuryCountFromBand(thresholds, mitigation);
 
@@ -610,8 +617,10 @@ function executeGuildTrainingBattleWithLedger(commander, trainingMode = 'street-
     const battle = executeGuildTrainingBattle(commander, trainingMode);
     if (!battle.ok) return battle;
 
-    const injuryMitigation = resolveCommanderInjuryMitigation(commander, catalog);
-    const injuryCount = resolveBattleInjuryCount(commander, battle, trainingMode, catalog);
+    const injuryMitigation = resolveTrainingInjuryMitigation(commander, catalog);
+    const injuryCount = resolveBattleInjuryCount(commander, battle, trainingMode, catalog, {
+        injuryMitigationOverride: injuryMitigation
+    });
     const preArmy = resolveCommanderAgeArmy(commander);
     const unitXpResult = distributeTrainingUnitXp(battle, preArmy, catalog, trainingMode);
     const nextArmy = distributeInjuriesWeighted(
