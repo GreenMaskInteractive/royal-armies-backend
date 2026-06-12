@@ -5,8 +5,14 @@
 
 const { resolveCatalogNationKey } = require('./nexus-age-movement');
 
-/** Nations exposed in the dev bypass panel — not gated by onboarding alpha list. */
-const DEV_SWITCHABLE_NATION_IDS = Object.freeze(['aesthene', 'lyllis', 'dravic', 'vaerenth', 'trex']);
+const { listCatalogNationsWithCities, resolveCatalogNationRegionId } = require('./nexus-age-movement');
+
+/** Nations exposed in the dev bypass panel — all catalog nations with playable cities. */
+function getDevSwitchableNationIds() {
+    return listCatalogNationsWithCities();
+}
+
+const DEV_SWITCHABLE_NATION_IDS = Object.freeze(getDevSwitchableNationIds());
 
 const DEV_NATION_REGION_IDS = Object.freeze({
     lyllis: 'region-1',
@@ -35,7 +41,7 @@ function resolveDevSwitchNationId(rawNationId) {
 function resolveDevNationRegionId(rawNationId) {
     const nationId = resolveDevSwitchNationId(rawNationId);
     if (!nationId) return '';
-    return DEV_NATION_REGION_IDS[nationId] || '';
+    return resolveCatalogNationRegionId(nationId) || DEV_NATION_REGION_IDS[nationId] || '';
 }
 
 function buildDevNationSwitchLedgerPatch(rawNationId) {

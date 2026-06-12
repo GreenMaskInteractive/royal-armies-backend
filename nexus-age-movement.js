@@ -72,6 +72,23 @@ function loadCityCatalog() {
     return cityCatalogCache;
 }
 
+function listCatalogNationsWithCities() {
+    const catalog = loadCityCatalog();
+    return (catalog.nations || [])
+        .filter((nation) => Array.isArray(nation.cityIds) && nation.cityIds.length > 0)
+        .map((nation) => String(nation.id || '').trim().toLowerCase())
+        .filter(Boolean)
+        .sort((a, b) => a.localeCompare(b));
+}
+
+function resolveCatalogNationRegionId(rawNationKey) {
+    const nationId = resolveCatalogNationKey(rawNationKey);
+    if (!nationId) return '';
+    const catalog = loadCityCatalog();
+    const entry = (catalog.nations || []).find((nation) => nation.id === nationId);
+    return entry?.regionId ? String(entry.regionId).trim() : '';
+}
+
 function getCityByIdMap() {
     if (cityByIdCache) return cityByIdCache;
     const catalog = loadCityCatalog();
@@ -669,6 +686,8 @@ module.exports = {
     TRANSFER_OWNERSHIP_RSD_COST,
     AGE_ALPHA_DEFAULT_MAP_NATION,
     loadCityCatalog,
+    listCatalogNationsWithCities,
+    resolveCatalogNationRegionId,
     getCatalogCity,
     resolveCatalogNationKey,
     resolveCommanderGameNationKey,

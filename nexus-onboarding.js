@@ -3,22 +3,36 @@
  */
 'use strict';
 
-const { resolveCatalogNationKey } = require('./nexus-age-movement');
+const {
+    resolveCatalogNationKey,
+    listCatalogNationsWithCities,
+    resolveCatalogNationRegionId,
+    loadCityCatalog
+} = require('./nexus-age-movement');
 
-/** Catalog nation ids currently selectable in onboarding. */
-const ONBOARDING_OPEN_NATION_IDS = Object.freeze(['aesthene', 'lyllis', 'dravic', 'vaerenth', 'trex']);
+function getOnboardingOpenNationIds() {
+    return listCatalogNationsWithCities();
+}
 
-/** Region ids that may be chosen before nation pledge (must include open nations). */
-const ONBOARDING_OPEN_REGION_IDS = Object.freeze(['region-1', 'region-3']);
+function getOnboardingOpenRegionIds() {
+    const catalog = loadCityCatalog();
+    const regionSet = new Set();
+    (catalog.nations || []).forEach((nation) => {
+        if (!Array.isArray(nation.cityIds) || !nation.cityIds.length) return;
+        const regionId = String(nation.regionId || '').trim();
+        if (regionId) regionSet.add(regionId);
+    });
+    return [...regionSet].sort((a, b) => a.localeCompare(b));
+}
 
 function isOnboardingNationAllowed(rawNationId) {
     const resolved = resolveCatalogNationKey(rawNationId);
-    return Boolean(resolved && ONBOARDING_OPEN_NATION_IDS.includes(resolved));
+    return Boolean(resolved && getOnboardingOpenNationIds().includes(resolved));
 }
 
 function isOnboardingRegionAllowed(rawRegionId) {
     const regionId = String(rawRegionId || '').trim();
-    return Boolean(regionId && ONBOARDING_OPEN_REGION_IDS.includes(regionId));
+    return Boolean(regionId && getOnboardingOpenRegionIds().includes(regionId));
 }
 
 function resolveOnboardingNationId(rawNationId) {
@@ -29,19 +43,30 @@ function resolveOnboardingNationId(rawNationId) {
 }
 
 function getOnboardingOpenConfig() {
+    const nationIds = getOnboardingOpenNationIds();
+    const regionIds = getOnboardingOpenRegionIds();
     return {
-        nationIds: [...ONBOARDING_OPEN_NATION_IDS],
-        regionIds: [...ONBOARDING_OPEN_REGION_IDS],
-        defaultNationId: ONBOARDING_OPEN_NATION_IDS[0] || 'aesthene',
-        defaultRegionId: ONBOARDING_OPEN_REGION_IDS[0] || 'region-3'
+        nationIds,
+        regionIds,
+        defaultNationId: nationIds[0] || 'aesthene',
+        defaultRegionId: regionIds.includes('region-3') ? 'region-3' : (regionIds[0] || 'region-3')
     };
 }
 
+function resolveOnboardingRegionIdForNation(rawNationId) {
+    const nationId = resolveOnboardingNationId(rawNationId);
+    if (!nationId) return '';
+    return resolveCatalogNationRegionId(nationId)
+        || getOnboardingOpenConfig().defaultRegionId
+        || 'region-3';
+}
+
 module.exports = {
-    ONBOARDING_OPEN_NATION_IDS,
-    ONBOARDING_OPEN_REGION_IDS,
+    getOnboardingOpenNationIds,
+    getOnboardingOpenRegionIds,
     isOnboardingNationAllowed,
     isOnboardingRegionAllowed,
     resolveOnboardingNationId,
+    resolveOnboardingRegionIdForNation,
     getOnboardingOpenConfig
 };

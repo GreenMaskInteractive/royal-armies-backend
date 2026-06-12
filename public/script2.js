@@ -1413,15 +1413,29 @@ function launchGameRoundSectorAfterTermsCheck(isTutorialModeActive, clickEvent) 
         beginCommanderAgeResetSession();
     }
 
-    const attemptGamePageHandoff = () => {
-        if (!deployPulseFinished || !selectAudioFinished) return;
-        const destination = typeof resolveGamePageHandoffUrl === 'function'
-            ? resolveGamePageHandoffUrl({
+    const resolveJoinAgeDestination = () => {
+        if (typeof isPortalDirectAgeJoinEnabled === 'function' && isPortalDirectAgeJoinEnabled()) {
+            if (typeof resolvePortalDirectAgeHandoffUrl === 'function') {
+                return resolvePortalDirectAgeHandoffUrl();
+            }
+            if (typeof resolveOfficialAgeResumePath === 'function') {
+                return resolveOfficialAgeResumePath();
+            }
+            return '/agealpha';
+        }
+        if (typeof resolveGamePageHandoffUrl === 'function') {
+            return resolveGamePageHandoffUrl({
                 tutorial: isTutorialModeActive,
                 joinAge: true,
                 server: readCommanderSelectedServerId()
-            })
-            : `/game?tutorial=${isTutorialModeActive}&joinAge=1&server=${encodeURIComponent(readCommanderSelectedServerId())}`;
+            });
+        }
+        return `/game?tutorial=${isTutorialModeActive}&joinAge=1&server=${encodeURIComponent(readCommanderSelectedServerId())}`;
+    };
+
+    const attemptGamePageHandoff = () => {
+        if (!deployPulseFinished || !selectAudioFinished) return;
+        const destination = resolveJoinAgeDestination();
         verifyPortalAgeJoinAllowed().then((joinAllowed) => {
             if (!joinAllowed) {
                 joinAgePortalTransitionActive = false;

@@ -12,7 +12,8 @@ const {
 } = require('./nexus-age-movement');
 const {
     getOnboardingOpenConfig,
-    resolveOnboardingNationId
+    resolveOnboardingNationId,
+    resolveOnboardingRegionIdForNation
 } = require('./nexus-onboarding');
 const { DEV_NATION_REGION_IDS } = require('./nexus-dev-nation-switch');
 
@@ -26,7 +27,8 @@ function isPortalDirectAgeJoinEnabled() {
 function resolveOnboardingRegionForNation(nationId) {
     const nation = resolveOnboardingNationId(nationId);
     if (!nation) return '';
-    return DEV_NATION_REGION_IDS[nation]
+    return resolveOnboardingRegionIdForNation(nation)
+        || DEV_NATION_REGION_IDS[nation]
         || getOnboardingOpenConfig().defaultRegionId
         || 'region-3';
 }

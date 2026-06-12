@@ -8406,6 +8406,11 @@ app.post('/api/portal/age/join', (req, res) => {
     let rosterCommander = db.get('commanders').find({ username }).value() || commander;
     const enrollFromPortal = req.body?.enrollFromPortal === true;
     const hasEnrolledNation = Boolean(resolveCatalogNationKey(rosterCommander?.gameNation));
+    const enrollmentStaleAfterReset = Boolean(
+        readPortalCommanderAccountResetAt()
+        && !commanderHasValidAgePortalEnrollment(rosterCommander)
+    );
+    const requiresFreshNationEnrollment = !hasEnrolledNation || enrollmentStaleAfterReset;
 
     if (!enrollFromPortal) {
         if (!hasEnrolledNation || !commanderHasValidAgePortalEnrollment(rosterCommander)) {
@@ -8419,7 +8424,7 @@ app.post('/api/portal/age/join', (req, res) => {
     const shouldAssignRandomNation = Boolean(
         isPortalDirectAgeJoinEnabled()
         && enrollFromPortal
-        && !hasEnrolledNation
+        && requiresFreshNationEnrollment
     );
 
     if (shouldAssignRandomNation) {
