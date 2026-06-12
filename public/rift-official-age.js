@@ -246,6 +246,10 @@
             }
 
             if (!response.ok || payload.status === 'error') {
+                if (isAgeSessionEvictedJoinResponse(payload)) {
+                    await evictAgePageToMainAfterAccountReset({ username, resolveApiUrl });
+                    return { ok: false, evicted: true, payload };
+                }
                 return { ok: false, evicted: false, payload };
             }
 

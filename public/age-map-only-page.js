@@ -24,6 +24,9 @@
     const LEFT_REPORTS_MIN_HEIGHT_PX = 120;
     const MAP_FRAME_LAYOUT_MAX_EDGE = 1642;
     const AGE_MOBILE_LAYOUT_MQ = '(max-width: 1024px)';
+    const GAME_PRESENCE_HEARTBEAT_MS = 20000;
+
+    let presenceHeartbeatTimer = null;
 
     /** Hub/profile/menu scripts — production agealpha.html omits these; load on demand. */
     const AGE_NAMETAG_HUB_SCRIPT_CHAIN = [
@@ -828,6 +831,47 @@
         }
     }
 
+    async function sendPresenceHeartbeat() {
+        const username = resolvePageUsername();
+        if (!username || username.toLowerCase() === 'testaccount') return;
+        if (typeof global.shouldSuppressRepeatedLocalDevApiWarnings === 'function'
+            && global.shouldSuppressRepeatedLocalDevApiWarnings()) {
+            return;
+        }
+
+        try {
+            const response = await global.fetch(resolveApiUrl('/api/portal/presence'), {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, inAge: true }),
+                cache: 'no-store',
+                credentials: 'include'
+            });
+            const payload = await response.json().catch(() => ({}));
+            global.RoyalArmiesOfficialAge?.maybeEvictForAccountResetPayload?.(payload, resolveApiUrl);
+        } catch (err) {
+            if (typeof global.shouldSuppressRepeatedLocalDevApiWarnings !== 'function'
+                || !global.shouldSuppressRepeatedLocalDevApiWarnings()) {
+                console.warn('[RIFT] Age map presence heartbeat failed:', err);
+            }
+        }
+    }
+
+    function startPresenceLoop() {
+        if (presenceHeartbeatTimer) {
+            global.clearInterval(presenceHeartbeatTimer);
+        }
+        sendPresenceHeartbeat();
+        presenceHeartbeatTimer = global.setInterval(sendPresenceHeartbeat, GAME_PRESENCE_HEARTBEAT_MS);
+    }
+
+    function stopPresenceLoop() {
+        if (presenceHeartbeatTimer) {
+            global.clearInterval(presenceHeartbeatTimer);
+            presenceHeartbeatTimer = null;
+        }
+    }
+
     async function bootstrapMapSession() {
         if (typeof global.ensurePortalAuthRestored === 'function') {
             await global.ensurePortalAuthRestored();
@@ -851,6 +895,7 @@
         }
 
         global.RoyalArmiesOfficialAge?.startCommanderAccountResetEvictionWatch?.(resolveApiUrl);
+        startPresenceLoop();
 
         if (typeof global.fetchCommanderDossierFromServer === 'function') {
             try {
@@ -908,6 +953,10 @@
         try {
             await ensureAgeCommanderNametagHub();
             await bootstrapMapSession();
+
+            if (global.__royalArmiesAgeEvictionInFlight) {
+                return;
+            }
 
             if (typeof global.enableAgeWorldMap === 'function') {
                 await global.enableAgeWorldMap();

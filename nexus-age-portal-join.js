@@ -89,6 +89,7 @@ function buildCommanderAccountResetPatch(commander) {
         ageClassPerk1Branch: '',
         ageClassConfirmedAt: null,
         ageRosterSeededAt: null,
+        agePortalEnrolledAt: null,
         dossierUpdatedAt: new Date().toISOString()
     };
 }

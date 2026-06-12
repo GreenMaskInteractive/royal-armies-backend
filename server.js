@@ -2774,6 +2774,20 @@ function readPortalCommanderAccountResetAt() {
     return resetAt ? String(resetAt).trim() : null;
 }
 
+function commanderHasValidAgePortalEnrollment(commander) {
+    const portalResetAt = readPortalCommanderAccountResetAt();
+    if (!portalResetAt) return true;
+
+    const enrolledAt = String(commander?.agePortalEnrolledAt || '').trim();
+    if (!enrolledAt) return false;
+
+    const resetMs = Date.parse(portalResetAt);
+    const enrolledMs = Date.parse(enrolledAt);
+    if (!Number.isFinite(resetMs)) return true;
+    if (!Number.isFinite(enrolledMs)) return false;
+    return enrolledMs >= resetMs;
+}
+
 function normalizeLedgerUsername(value) {
     return String(value || '').trim();
 }
@@ -8391,19 +8405,20 @@ app.post('/api/portal/age/join', (req, res) => {
 
     let rosterCommander = db.get('commanders').find({ username }).value() || commander;
     const enrollFromPortal = req.body?.enrollFromPortal === true;
-    const explicitAssignRandom = req.body?.assignRandomNation === true;
     const hasEnrolledNation = Boolean(resolveCatalogNationKey(rosterCommander?.gameNation));
 
-    if (!hasEnrolledNation && !enrollFromPortal && !explicitAssignRandom) {
-        return sendApiError(res, 'NEXUS-AGE-038', {
-            evicted: true,
-            commanderAccountResetAt: readPortalCommanderAccountResetAt()
-        });
+    if (!enrollFromPortal) {
+        if (!hasEnrolledNation || !commanderHasValidAgePortalEnrollment(rosterCommander)) {
+            return sendApiError(res, 'NEXUS-AGE-038', {
+                evicted: true,
+                commanderAccountResetAt: readPortalCommanderAccountResetAt()
+            });
+        }
     }
 
     const shouldAssignRandomNation = Boolean(
         isPortalDirectAgeJoinEnabled()
-        && (enrollFromPortal || explicitAssignRandom)
+        && enrollFromPortal
         && !hasEnrolledNation
     );
 
@@ -8443,6 +8458,15 @@ app.post('/api/portal/age/join', (req, res) => {
             ...movement,
             armyFocus
         });
+    }
+
+    if (enrollFromPortal) {
+        const enrolledAt = new Date().toISOString();
+        db.get('commanders')
+            .find({ username })
+            .assign({ agePortalEnrolledAt: enrolledAt })
+            .write();
+        rosterCommander = db.get('commanders').find({ username }).value() || rosterCommander;
     }
 
     res.json({
