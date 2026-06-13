@@ -6,7 +6,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 SEASON_0_ROOT = ROOT / "Season 0"
 SEASON_0_REGIONS = SEASON_0_ROOT / "regions"
-SEASON_0_NATIONS = SEASON_0_ROOT / "nations"
+SEASON_0_NATIONS = SEASON_0_REGIONS / "nations"
 LEGACY_IMAGES = ROOT / "public" / "images"
 LEGACY_MAP_FILES = LEGACY_IMAGES / "Map Image Files"
 
@@ -146,5 +146,5 @@ def legacy_duplicate_paths(asset_name: str) -> list[Path]:
 def public_nation_map_svg_url(nation_id: str) -> str:
     slug = nation_asset_slug(nation_id)
     if resolve_nation_map_svg(nation_id):
-        return f"season-0/nations/mapof{slug}.svg"
+        return f"season-0/regions/nations/mapof{slug}.svg"
     return f"images/mapof{slug}.svg"

@@ -634,7 +634,7 @@
 
     function resolveNationSvgUrl(nationId) {
         const slug = NATION_SVG_SLUG[nationId] || nationId;
-        return `season-0/nations/mapof${slug}.svg`;
+        return `season-0/regions/nations/mapof${slug}.svg`;
     }
 
     function normalizeFillHex(fill) {
