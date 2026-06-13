@@ -1,4 +1,4 @@
-"""Sync all Lyllis city geometry from public/images/lyllis_*.svg into age-world-cities.json."""
+"""Sync all Lyllis city geometry from Season 0 Lyllis SVGs into age-world-cities.json."""
 from __future__ import annotations
 
 import importlib.util
@@ -8,9 +8,17 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / "public" / "data" / "age-world-cities.json"
-IMAGES = ROOT / "public" / "images"
 MAP_PATH = ROOT / "public" / "images" / "amnekmap.png"
 ADJACENCY_PAD = 4
+
+
+def _load_season_0_assets_module():
+    spec = importlib.util.spec_from_file_location(
+        "season_0_city_assets", ROOT / "scripts" / "season-0-city-assets.py"
+    )
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod
 
 SLUG_TO_ID = {
     "auriven": "lyllis-c01",
@@ -109,8 +117,13 @@ def main() -> None:
     data = json.loads(OUT.read_text(encoding="utf-8"))
     by_id = {city["id"]: city for city in data["cities"]}
 
+    season_0 = _load_season_0_assets_module()
+    lyllis_dir = season_0.resolve_nation_city_assets_dir("lyllis")
+    if not lyllis_dir:
+        raise SystemExit("Missing Season 0 Lyllis city assets directory.")
+
     updated: list[str] = []
-    for svg_path in sorted(IMAGES.glob("lyllis_*.svg")):
+    for svg_path in sorted(lyllis_dir.glob("lyllis_*.svg")):
         slug = svg_path.stem.replace("lyllis_", "")
         city_id = SLUG_TO_ID.get(slug)
         if not city_id:

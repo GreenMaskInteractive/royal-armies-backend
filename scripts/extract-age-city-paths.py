@@ -12,6 +12,15 @@ NATION_PATHS = ROOT / "public" / "data" / "game-nation-paths.json"
 MAP_PATH = ROOT / "public" / "images" / "amnekmap.png"
 
 
+def _load_season_0_assets_module():
+    spec = importlib.util.spec_from_file_location(
+        "season_0_city_assets", ROOT / "scripts" / "season-0-city-assets.py"
+    )
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod
+
+
 def _load_terrain_module():
     spec = importlib.util.spec_from_file_location(
         "age_terrain_from_map", ROOT / "scripts" / "age-terrain-from-map.py"
@@ -43,7 +52,7 @@ def _audit_settlement_names(world_path: Path) -> None:
 # Legacy composite *cities.svg sheets are retired; only per-city SVG nations are extracted.
 CITY_SVGS: dict[str, str] = {}
 
-# Nations whose cities ship as one SVG per settlement (public/images/{prefix}{slug}.svg).
+# Nations whose cities ship as one SVG per settlement (Season 0/regions/.../{nation}/).
 INDIVIDUAL_CITY_NATIONS: dict[str, dict[str, str]] = {
     "aesthene": {"glob": "aesthine_*.svg", "prefix": "aesthine_"},
     "lyllis": {"glob": "lyllis_*.svg", "prefix": "lyllis_"},
@@ -379,11 +388,16 @@ def cluster_from_paths(paths: list[str], *, min_span: float = 0.0) -> dict | Non
 
 
 def load_individual_nation_clusters(nation_id: str, config: dict[str, str]) -> list[dict]:
-    images_dir = ROOT / "public" / "images"
+    season_0 = _load_season_0_assets_module()
+    assets_dir = season_0.resolve_nation_city_assets_dir(nation_id)
+    if not assets_dir:
+        assets_dir = ROOT / "public" / "images"
     prefix = config["prefix"]
     clusters: list[dict] = []
     seen_stems: set[str] = set()
-    for svg_path in sorted(images_dir.glob(config["glob"]), key=lambda p: p.stem.lower()):
+    for svg_path in sorted(assets_dir.glob(config["glob"]), key=lambda p: p.stem.lower()):
+        if svg_path.suffix.lower() != ".svg":
+            continue
         stem_key = svg_path.stem.lower()
         if stem_key in seen_stems:
             continue

@@ -1,4 +1,9 @@
-"""Organize per-city SVG/PNG assets into Season 0/regions/{region}/{nation}/."""
+"""Organize per-city SVG/PNG assets into Season 0/regions/{region}/{nation}/.
+
+Season 0 is the canonical source for per-city assets. This script copies any
+remaining legacy files from public/images into Season 0 when missing there.
+Run scripts/prune-legacy-city-asset-duplicates.py afterward to remove duplicates.
+"""
 from __future__ import annotations
 
 import re
@@ -83,6 +88,8 @@ def main() -> None:
 
             for src in sources:
                 dest = nation_dir / src.name
+                if dest.exists():
+                    continue
                 shutil.copy2(src, dest)
                 total_files += 1
 
