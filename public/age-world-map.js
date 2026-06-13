@@ -5181,7 +5181,11 @@
         );
         try {
             if (action === 'travel') {
-                await movement.travel(city.id);
+                const payload = await movement.travel(city.id);
+                if (payload === null) {
+                    setDrawerMovementStatus('');
+                    return;
+                }
             } else if (action === 'assault') {
                 await movement.assault(city.id);
             } else if (action === 'transfer') {

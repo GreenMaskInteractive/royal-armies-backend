@@ -467,7 +467,8 @@
         movementRouteBusy = true;
         try {
             const resolvedTargetId = movement.resolveMovementTargetCityId?.(targetId) || targetId;
-            await movement.travel(targetId);
+            const payload = await movement.travel(targetId);
+            if (payload === null) return;
             const traveledCityId = movement.getCatalogCityId();
             if (traveledCityId !== resolvedTargetId) {
                 const err = new Error('Travel completed but your map position did not update. Hard refresh and try again.');

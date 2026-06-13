@@ -646,9 +646,47 @@
         return { targetCity, hints, resolvedTargetId };
     }
 
-    async function travel(targetCityId) {
+    function resolveCityDisplayName(city, cityId) {
+        if (city?.name) return String(city.name).trim();
+        const fromMap = global.RoyalArmiesAgeWorldMap?.getCityById?.(cityId);
+        if (fromMap?.name) return String(fromMap.name).trim();
+        const id = String(cityId || '').trim();
+        return id || 'that city';
+    }
+
+    async function confirmTravelToCity(travelCheck) {
+        if (!travelCheck || typeof travelCheck !== 'object') return true;
+        if (typeof global.showPortalConfirm !== 'function') return true;
+
+        const { targetCity, hints, resolvedTargetId } = travelCheck;
+        const movePointCost = Math.max(1, Math.floor(Number(hints?.movePointCost) || 1));
+        const currentCityId = getCatalogCityId();
+        const currentCity = resolveCatalogCityRecord(currentCityId);
+        const fromName = resolveCityDisplayName(currentCity, currentCityId);
+        const toName = resolveCityDisplayName(targetCity, resolvedTargetId);
+        const costLabel = movePointCost === 1 ? '1 move point' : `${movePointCost} move points`;
+        const waterNote = hints?.connectionType === 'water' ? ' via water crossing' : '';
+
+        return global.showPortalConfirm(
+            `Move from ${fromName} to ${toName}? This will spend ${costLabel}${waterNote}.`,
+            {
+                title: 'Confirm Travel',
+                confirmLabel: 'Travel',
+                cancelLabel: 'Stay'
+            }
+        );
+    }
+
+    async function travel(targetCityId, options = {}) {
         await ensureMovementStateSynced();
-        assertCanTravelToCity(targetCityId);
+        const travelCheck = assertCanTravelToCity(targetCityId);
+        const opts = options && typeof options === 'object' ? options : {};
+
+        if (!opts.skipConfirm) {
+            const confirmed = await confirmTravelToCity(travelCheck);
+            if (!confirmed) return null;
+        }
+
         return postAction('/api/portal/age/travel', targetCityId);
     }
 
