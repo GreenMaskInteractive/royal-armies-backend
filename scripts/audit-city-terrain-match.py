@@ -22,6 +22,7 @@ INDIVIDUAL_CITY_NATIONS = {
     "krall",
     "aethelgard",
     "saelthine",
+    "thruun",
 }
 
 LIVE_TERRAINS = {"Forest", "Plains", "Desert", "Mountains"}

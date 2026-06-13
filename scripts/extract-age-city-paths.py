@@ -54,6 +54,7 @@ INDIVIDUAL_CITY_NATIONS: dict[str, dict[str, str]] = {
     "krall": {"glob": "krall_*.svg", "prefix": "krall_"},
     "aethelgard": {"glob": "aethelgard_*.svg", "prefix": "aethelgard_"},
     "saelthine": {"glob": "saelthine_*.svg", "prefix": "saelthine_"},
+    "thruun": {"glob": "thruun_*.svg", "prefix": "thruun_"},
 }
 
 

@@ -1,0 +1,23 @@
+{
+  "nationId": "thruun",
+  "regionId": "region-4",
+  "dialect": "basin",
+  "notes": "Invented settlement names for Thruun. Verdant Basin dialect (SOV, guttural open vowels, gh-/kh-/lag-/num-/gora-/ghuz-/roz- roots): settlements shaped by river-market revelry, bought mercenary garrisons, merchant graft, and feast-hall vice — wealth without honor, ale without restraint. Softer and more slurred than Zevros's martial basin voice, but same linguistic family. Not Amnek dictionary terms. Run scripts/audit-settlement-names.py before committing.",
+  "cities": [
+    { "slot": "c01", "slug": "khahgora", "name": "Khahgora", "settlementTier": "city" },
+    { "slot": "c02", "slug": "umvelgh", "name": "Umvelgh", "settlementTier": "citadel" },
+    { "slot": "c03", "slug": "ghuzmar", "name": "Ghuzmar", "settlementTier": "city" },
+    { "slot": "c04", "slug": "laguzden", "name": "Laguzden", "settlementTier": "town" },
+    { "slot": "c05", "slug": "rozkah", "name": "Rozkah", "settlementTier": "city" },
+    { "slot": "c06", "slug": "kharahden", "name": "Kharahden", "settlementTier": "town" },
+    { "slot": "c07", "slug": "kharahuz", "name": "Kharahuz", "settlementTier": "village" },
+    { "slot": "c08", "slug": "gorazum", "name": "Gorazum", "settlementTier": "city" },
+    { "slot": "c09", "slug": "numkhald", "name": "Numkhald", "settlementTier": "citadel" },
+    { "slot": "c10", "slug": "zhorveld", "name": "Zhorveld", "settlementTier": "town" },
+    { "slot": "c11", "slug": "lagumuz", "name": "Lagumuz", "settlementTier": "city" },
+    { "slot": "c12", "slug": "ghuzorn", "name": "Ghuzorn", "settlementTier": "town" },
+    { "slot": "c13", "slug": "khahros", "name": "Khahros", "settlementTier": "city" },
+    { "slot": "c14", "slug": "umgora", "name": "Umgora", "settlementTier": "village" },
+    { "slot": "c15", "slug": "ghuzheim", "name": "Ghuzheim", "settlementTier": "kingdom", "isCapital": true }
+  ]
+}
