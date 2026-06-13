@@ -20955,6 +20955,49 @@ body.age-map-shell-only .age-world-map-terrain-controls,
     }
 }
 
+.age-world-map-capital-shine-layer {
+    pointer-events: none;
+}
+
+.age-world-map-frame.is-color-map-on .age-world-map-capital-shine-layer {
+    display: none !important;
+}
+
+.age-world-map-capital-shine-sweep {
+    mix-blend-mode: screen;
+    opacity: 0.82;
+    transform-box: fill-box;
+    transform-origin: center;
+    animation: age-world-capital-shine-sweep 4.2s cubic-bezier(0.45, 0.05, 0.25, 1) infinite;
+    animation-delay: 0.6s;
+}
+
+@keyframes age-world-capital-shine-sweep {
+    0% {
+        transform: translate(-108%, -108%) rotate(-18deg);
+        opacity: 0;
+    }
+
+    10% {
+        opacity: 0.95;
+    }
+
+    90% {
+        opacity: 0.95;
+    }
+
+    100% {
+        transform: translate(108%, 108%) rotate(-18deg);
+        opacity: 0;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .age-world-map-capital-shine-layer {
+        display: none !important;
+    }
+}
+
 /* Color map: outline-only gold selection — darker on clicked city, lighter on neighbors. */
 .age-world-map-frame.is-color-map-on .age-world-city-highlight-path.is-selected-city,
 .age-world-map-frame.is-color-map-on .age-world-city-highlight-boost.is-selected-city {

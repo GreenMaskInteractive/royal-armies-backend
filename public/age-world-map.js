@@ -1837,6 +1837,7 @@
             refreshNationColorFills();
         }
         syncBorderVisuals({ force: true });
+        syncPlayerNationCapitalShine();
         if (isColor) {
             suppressAmbientMapEffects();
             lastAmbientMapStyleMode = mapStyleMode;
@@ -2593,6 +2594,134 @@
         defs.appendChild(pattern);
     }
 
+    const CAPITAL_SHINE_CLIP_ID = 'age-world-capital-shine-clip';
+    const CAPITAL_SHINE_GRAD_ID = 'age-world-capital-shine-grad';
+
+    function ensureSvgDefsRoot() {
+        if (!els.svg) return null;
+        const svgNs = 'http://www.w3.org/2000/svg';
+        let defs = els.svg.querySelector('defs');
+        if (!defs) {
+            defs = global.document.createElementNS(svgNs, 'defs');
+            els.svg.insertBefore(defs, els.svg.firstChild);
+        }
+        return defs;
+    }
+
+    function clearCapitalShineDefs() {
+        const defs = ensureSvgDefsRoot();
+        if (!defs) return;
+        defs.querySelector(`#${CAPITAL_SHINE_CLIP_ID}`)?.remove();
+        defs.querySelector(`#${CAPITAL_SHINE_GRAD_ID}`)?.remove();
+    }
+
+    function resolvePlayerNationCapitalCity() {
+        const playerNation = String(resolvePlayerNationForOwnership() || '').trim().toLowerCase();
+        if (!playerNation || !catalog?.cities) return null;
+
+        const capital = catalog.cities.find((city) => (
+            city.nationId === playerNation && city.isCapital
+        ));
+        if (!capital || isMaskedCity(capital)) return null;
+        if (!resolveCityOutlinePath(capital)) return null;
+        return capital;
+    }
+
+    function ensureCapitalShineLayer() {
+        if (!els.visualLayer) return null;
+        const svgNs = 'http://www.w3.org/2000/svg';
+        let layer = els.visualLayer.querySelector('#age-world-map-capital-shine-layer');
+        if (!layer) {
+            layer = global.document.createElementNS(svgNs, 'g');
+            layer.setAttribute('id', 'age-world-map-capital-shine-layer');
+            layer.setAttribute('class', 'age-world-map-capital-shine-layer');
+            layer.setAttribute('pointer-events', 'none');
+            els.visualLayer.appendChild(layer);
+        }
+        return layer;
+    }
+
+    function syncPlayerNationCapitalShine() {
+        const layer = ensureCapitalShineLayer();
+        if (!layer) return;
+
+        layer.replaceChildren();
+        clearCapitalShineDefs();
+
+        if (isColorMapStyleActive()) return;
+
+        const capital = resolvePlayerNationCapitalCity();
+        if (!capital) return;
+
+        const outlineD = resolveCityOutlinePath(capital);
+        const bbox = capital.bbox || {};
+        const minX = Number(bbox.minX);
+        const minY = Number(bbox.minY);
+        const maxX = Number(bbox.maxX);
+        const maxY = Number(bbox.maxY);
+        if (!outlineD || !Number.isFinite(minX) || !Number.isFinite(minY) || !Number.isFinite(maxX) || !Number.isFinite(maxY)) {
+            return;
+        }
+
+        const svgNs = 'http://www.w3.org/2000/svg';
+        const defs = ensureSvgDefsRoot();
+        if (!defs) return;
+
+        const clipPath = global.document.createElementNS(svgNs, 'clipPath');
+        clipPath.setAttribute('id', CAPITAL_SHINE_CLIP_ID);
+        const clipShape = global.document.createElementNS(svgNs, 'path');
+        clipShape.setAttribute('d', outlineD);
+        clipPath.appendChild(clipShape);
+        defs.appendChild(clipPath);
+
+        const gradient = global.document.createElementNS(svgNs, 'linearGradient');
+        gradient.setAttribute('id', CAPITAL_SHINE_GRAD_ID);
+        gradient.setAttribute('gradientUnits', 'objectBoundingBox');
+        gradient.setAttribute('x1', '0');
+        gradient.setAttribute('y1', '0');
+        gradient.setAttribute('x2', '1');
+        gradient.setAttribute('y2', '0');
+        gradient.setAttribute('gradientTransform', 'rotate(24)');
+        [
+            ['0%', '#fff4cc', '0'],
+            ['38%', '#fff4cc', '0'],
+            ['48%', '#ffe08a', '0.92'],
+            ['54%', '#fff8e8', '0.48'],
+            ['62%', '#fff4cc', '0'],
+            ['100%', '#fff4cc', '0']
+        ].forEach(([offset, color, opacity]) => {
+            const stop = global.document.createElementNS(svgNs, 'stop');
+            stop.setAttribute('offset', offset);
+            stop.setAttribute('stop-color', color);
+            stop.setAttribute('stop-opacity', opacity);
+            gradient.appendChild(stop);
+        });
+        defs.appendChild(gradient);
+
+        const width = Math.max(maxX - minX, 12);
+        const height = Math.max(maxY - minY, 12);
+        const span = Math.max(width, height);
+        const cx = Number.isFinite(capital.centroid?.x) ? capital.centroid.x : minX + width / 2;
+        const cy = Number.isFinite(capital.centroid?.y) ? capital.centroid.y : minY + height / 2;
+        const sweepSize = span * 2.85;
+
+        const shineGroup = global.document.createElementNS(svgNs, 'g');
+        shineGroup.setAttribute('class', 'age-world-capital-shine-clip');
+        shineGroup.setAttribute('clip-path', `url(#${CAPITAL_SHINE_CLIP_ID})`);
+        shineGroup.setAttribute('data-city-id', capital.id);
+
+        const sweepRect = global.document.createElementNS(svgNs, 'rect');
+        sweepRect.setAttribute('class', 'age-world-capital-shine-sweep');
+        sweepRect.setAttribute('x', String(cx - sweepSize / 2));
+        sweepRect.setAttribute('y', String(cy - sweepSize / 2));
+        sweepRect.setAttribute('width', String(sweepSize));
+        sweepRect.setAttribute('height', String(sweepSize));
+        sweepRect.setAttribute('fill', `url(#${CAPITAL_SHINE_GRAD_ID})`);
+
+        shineGroup.appendChild(sweepRect);
+        layer.appendChild(shineGroup);
+    }
+
     // Night lights: each nation lights its settlements after dark in its own way.
     // Martial and brutal cultures burn open flame; the arcane, mystic, and
     // ritualistic nations conjure magic light instead. One shared color per
@@ -3027,6 +3156,7 @@
 
         syncOwnershipVisuals();
         refreshNationColorFills();
+        syncPlayerNationCapitalShine();
     }
 
     function refreshNationCityHighlightsWithDiplomacy() {
