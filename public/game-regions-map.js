@@ -634,11 +634,7 @@
 
     function resolveNationSvgUrl(nationId) {
         const slug = NATION_SVG_SLUG[nationId] || nationId;
-        const regionFolder = NATION_REGION_FOLDER[nationId];
-        if (regionFolder) {
-            return `season-0/regions/${regionFolder}/${nationId}/mapof${slug}.svg`;
-        }
-        return `images/mapof${slug}.svg`;
+        return `season-0/nations/mapof${slug}.svg`;
     }
 
     function normalizeFillHex(fill) {

@@ -49,6 +49,8 @@ def main() -> None:
                 moved.append(str(png_dest.relative_to(ROOT)))
                 break
 
+    season_0.SEASON_0_NATIONS.mkdir(parents=True, exist_ok=True)
+
     for _rid, region_slug, nation_ids, _num in season_0.REGION_REGISTRY:
         region_dir = season_0.SEASON_0_REGIONS / season_0.region_folder_name(_rid, region_slug)
         for nation_id in nation_ids:
@@ -57,11 +59,12 @@ def main() -> None:
             asset_slug = season_0.nation_asset_slug(nation_id)
             for ext in (".svg", ".png"):
                 name = f"mapof{asset_slug}{ext}"
-                src = IMAGES / name
-                dest = nation_dir / name
-                if src.is_file() and not dest.exists():
-                    shutil.move(str(src), str(dest))
-                    moved.append(str(dest.relative_to(ROOT)))
+                dest = season_0.SEASON_0_NATIONS / name
+                for src in (IMAGES / name, nation_dir / name):
+                    if src.is_file() and not dest.exists():
+                        shutil.move(str(src), str(dest))
+                        moved.append(str(dest.relative_to(ROOT)))
+                        break
 
     print(f"Moved {len(moved)} region/nation map asset(s) into Season 0.")
     for line in moved:

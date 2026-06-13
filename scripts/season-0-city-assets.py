@@ -6,6 +6,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 SEASON_0_ROOT = ROOT / "Season 0"
 SEASON_0_REGIONS = SEASON_0_ROOT / "regions"
+SEASON_0_NATIONS = SEASON_0_ROOT / "nations"
 LEGACY_IMAGES = ROOT / "public" / "images"
 LEGACY_MAP_FILES = LEGACY_IMAGES / "Map Image Files"
 
@@ -89,20 +90,18 @@ def resolve_region_map_png(region_num: int) -> Path | None:
 
 
 def resolve_nation_map_svg(nation_id: str) -> Path | None:
-    nation_dir = resolve_nation_city_assets_dir(nation_id)
-    if not nation_dir:
+    if not SEASON_0_NATIONS.is_dir():
         return None
     slug = nation_asset_slug(nation_id)
-    candidate = nation_dir / f"mapof{slug}.svg"
+    candidate = SEASON_0_NATIONS / f"mapof{slug}.svg"
     return candidate if candidate.is_file() else None
 
 
 def resolve_nation_map_png(nation_id: str) -> Path | None:
-    nation_dir = resolve_nation_city_assets_dir(nation_id)
-    if not nation_dir:
+    if not SEASON_0_NATIONS.is_dir():
         return None
     slug = nation_asset_slug(nation_id)
-    candidate = nation_dir / f"mapof{slug}.png"
+    candidate = SEASON_0_NATIONS / f"mapof{slug}.png"
     return candidate if candidate.is_file() else None
 
 
@@ -145,12 +144,7 @@ def legacy_duplicate_paths(asset_name: str) -> list[Path]:
 
 
 def public_nation_map_svg_url(nation_id: str) -> str:
-    region_id = NATION_TO_REGION.get(str(nation_id or "").strip().lower())
-    if not region_id:
-        slug = nation_asset_slug(nation_id)
-        return f"images/mapof{slug}.svg"
-    region_slug = next(slug for rid, slug, _n, _num in REGION_REGISTRY if rid == region_id)
-    nation_key = str(nation_id).strip().lower()
     slug = nation_asset_slug(nation_id)
-    folder = region_folder_name(region_id, region_slug)
-    return f"season-0/regions/{folder}/{nation_key}/mapof{slug}.svg"
+    if resolve_nation_map_svg(nation_id):
+        return f"season-0/nations/mapof{slug}.svg"
+    return f"images/mapof{slug}.svg"
