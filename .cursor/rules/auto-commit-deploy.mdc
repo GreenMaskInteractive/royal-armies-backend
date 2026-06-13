@@ -5,6 +5,8 @@ alwaysApply: true
 
 # ALWAYS COMMIT (auto deploy)
 
+**User confirmed (2026-06-10): auto deploy from here on out.** This repo uses automatic commit + push to `main` after implementation unless the user opts out for a task.
+
 **ALWAYS COMMIT** after completing requested code changes or fixes in this repo. Do **not** wait for a separate "commit", "deploy", or "push" message. Immediately commit and push to `main` when implementation is done.
 
 This overrides generic "only commit when asked" guidance unless the user opts out for that task or session.
