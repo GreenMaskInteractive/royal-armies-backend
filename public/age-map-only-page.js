@@ -35,7 +35,7 @@
         'commander-dossier-sync.js?v=map-ambient-effects-1',
         'rank-data.js?v=commander-nametag-hub-2',
         'rift-ui-sfx.js?v=commander-nametag-hub-2',
-        'script.js?v=age-logout-fix-1',
+        'script.js?v=portal-join-nation-fix-1',
         'commander-hub.js?v=commander-nametag-hub-2',
         'game-chat.js?v=commander-nametag-hub-2',
         'portal-commander-identity-menu.js?v=age-exit-not-logout-1'
@@ -272,8 +272,14 @@
         return Boolean(target.closest('#dev-page-navigator, .dev-page-navigator'));
     }
 
+    function isAgeMapHudTarget(target) {
+        if (!target || typeof target.closest !== 'function') return false;
+        return Boolean(target.closest('.age-map-hud'));
+    }
+
     function isMapInteractionAllowed(target) {
         return isInsideMap(target)
+            || isAgeMapHudTarget(target)
             || isInsideNationHub(target)
             || isNationHubDestinationModal(target)
             || isPortalAlertModal(target)
@@ -897,10 +903,36 @@
             global.syncPlayerFromActiveCommanderStorage();
         }
 
-        await postAgeJoin();
+        const joinResult = await postAgeJoin();
 
         if (global.__royalArmiesAgeEvictionInFlight) {
             return;
+        }
+
+        if (joinResult?.ok && joinResult.payload) {
+            if (global.RoyalArmiesAgeMovement?.applyStatePayload) {
+                global.RoyalArmiesAgeMovement.applyStatePayload(joinResult.payload);
+            }
+            if (joinResult.payload.gameNation && typeof global.player !== 'undefined') {
+                global.player.gameNation = joinResult.payload.gameNation;
+            }
+            if (joinResult.payload.commanderAccountResetAt) {
+                if (typeof global.storeCommanderAccountResetAck === 'function') {
+                    global.storeCommanderAccountResetAck(joinResult.payload.commanderAccountResetAt);
+                } else if (global.RoyalArmiesOfficialAge?.storeCommanderAccountResetAck) {
+                    global.RoyalArmiesOfficialAge.storeCommanderAccountResetAck(joinResult.payload.commanderAccountResetAt);
+                }
+            }
+        } else if (!joinResult?.ok && !joinResult?.evicted) {
+            const joinCode = String(joinResult?.payload?.code || '').trim();
+            if (joinCode === 'NEXUS-AGE-038') {
+                const mainUrl = typeof global.resolveRoyalArmiesPageUrl === 'function'
+                    ? global.resolveRoyalArmiesPageUrl('main')
+                    : '/main';
+                global.location.replace(mainUrl);
+                return;
+            }
+            console.warn('[RIFT] Age map session join did not complete:', joinResult?.payload?.message || joinCode || 'unknown');
         }
 
         global.RoyalArmiesOfficialAge?.startCommanderAccountResetEvictionWatch?.(resolveApiUrl);

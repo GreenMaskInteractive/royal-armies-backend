@@ -237,6 +237,7 @@
         const requestBody = {
             username,
             ageSlug: global.document.body?.dataset?.ageSlug || getOfficialAgeSlug(),
+            ...(isPortalDirectAgeJoinEnabled() ? { enrollFromPortal: true } : {}),
             ...(bodyExtras && typeof bodyExtras === 'object' ? bodyExtras : {})
         };
 

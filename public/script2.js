@@ -381,8 +381,9 @@ function canUsePortalJoinAgeButtons() {
 
 function applyPortalDeploymentDeckPresentation() {
     const authed = typeof isPortalUserAuthenticated === 'function' && isPortalUserAuthenticated();
-    const showServerPanel = authed && isCommanderAgeDeploymentPanelUnlocked();
-    const showJoinButtons = authed && !showServerPanel && canUsePortalJoinAgeButtons();
+    const directAgeJoin = typeof isPortalDirectAgeJoinEnabled === 'function' && isPortalDirectAgeJoinEnabled();
+    const showServerPanel = authed && !directAgeJoin && isCommanderAgeDeploymentPanelUnlocked();
+    const showJoinButtons = authed && (directAgeJoin || !showServerPanel) && canUsePortalJoinAgeButtons();
 
     const joinActions = document.getElementById('portal-deployment-member-actions');
     const serverPanel = document.getElementById('portal-deployment-server-panel');
@@ -394,6 +395,10 @@ function applyPortalDeploymentDeckPresentation() {
     if (countdownPanel) {
         countdownPanel.hidden = true;
         countdownPanel.setAttribute('aria-hidden', 'true');
+    }
+    if (showJoinButtons) {
+        joinAgePortalTransitionActive = false;
+        portalAgeRejoinTransitionActive = false;
     }
     if (serverPanel) {
         serverPanel.hidden = !showServerPanel;

@@ -5115,6 +5115,9 @@ window.revertSettings = revertSettings;
 window.captureProfileEditorBaseline = captureProfileEditorBaseline;
 
 async function bootstrapMainPortalAuthOnLoad() {
+    if (document.body?.dataset?.ageMapOnly === 'true' || document.getElementById('age-page-canvas')) {
+        return;
+    }
     await ensurePortalAuthRestored();
     if (sessionStorage.getItem('royalArmiesInactivityLogoutNotice') === '1') {
         sessionStorage.removeItem('royalArmiesInactivityLogoutNotice');
