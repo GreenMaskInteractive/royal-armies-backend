@@ -2520,10 +2520,25 @@ async function handleLogin() {
             }
         }
 
-        completeLedgerLogin();
+        try {
+            completeLedgerLogin();
+        } catch (postLoginErr) {
+            console.error('NEXUS post-login session error:', postLoginErr);
+            await showPortalAlert(
+                'Login succeeded but the portal could not finish loading. Refresh the page and try again.',
+                'Login incomplete'
+            );
+            restoreLoginAuthButtons();
+        }
     } catch (err) {
         console.error('NEXUS login link error:', err);
-        await showPortalAlert('Cannot reach the Royal Armies server. Run node server.js locally (or use the live site) and try again.', 'Connection error');
+        const onLocalPreview = typeof isLocalDevelopmentHost === 'function' && isLocalDevelopmentHost();
+        await showPortalAlert(
+            onLocalPreview
+                ? 'Cannot reach the Royal Armies server. Run node server.js locally (or use the live site) and try again.'
+                : 'Cannot reach the Royal Armies server. Check your connection and try again.',
+            'Connection error'
+        );
         restoreLoginAuthButtons();
     }
 }
@@ -3706,13 +3721,14 @@ function markCommanderGameSessionStarted(username) {
 }
 
 function isPortalDirectAgeJoinEnabled() {
-    if (typeof window.isPortalDirectAgeJoinEnabled === 'function') {
-        return window.isPortalDirectAgeJoinEnabled();
-    }
     if (window.RoyalArmiesOfficialAge && typeof window.RoyalArmiesOfficialAge.isPortalDirectAgeJoinEnabled === 'function') {
         return window.RoyalArmiesOfficialAge.isPortalDirectAgeJoinEnabled();
     }
-    return false;
+    try {
+        return localStorage.getItem('royalArmiesPortalDirectAgeJoin') === 'true';
+    } catch (_err) {
+        return false;
+    }
 }
 
 function resolvePortalDirectAgeHandoffUrl() {

@@ -1546,6 +1546,11 @@ function executeLogoutRedirect() {
         if (typeof markLocalDevLogoutForGuestPreview === 'function') {
             markLocalDevLogoutForGuestPreview();
         }
+        if (typeof clearCommanderLocalAgeSessionFlags === 'function') {
+            clearCommanderLocalAgeSessionFlags();
+        } else {
+            localStorage.removeItem('savedCommanderInActiveAge');
+        }
         if (typeof clearPortalAuthStorage === 'function') {
             clearPortalAuthStorage();
         } else {
