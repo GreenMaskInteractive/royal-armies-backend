@@ -107,6 +107,7 @@
         'is-player-city'
     ]);
     const CITY_SETTLEMENT_OUTLINE_STROKE = 'rgba(168, 168, 176, 0.85)';
+    const COLOR_MAP_CITY_BORDER_STROKE = '#000000';
 
     const els = {
         stage: null,
@@ -997,7 +998,7 @@
 
         if (colorMapOn && isPlayerCity) {
             node.setAttribute('fill', 'transparent');
-            node.setAttribute('stroke', 'rgba(64, 128, 255, 1)');
+            node.setAttribute('stroke', COLOR_MAP_CITY_BORDER_STROKE);
             node.setAttribute('stroke-width', '1.5');
             node.style.opacity = '1';
             node.style.visibility = 'visible';
@@ -1021,18 +1022,9 @@
                 return;
             }
 
-            if (isPlayerCity) {
-                node.setAttribute('fill', 'transparent');
-                node.setAttribute('stroke', 'rgba(64, 128, 255, 1)');
-                node.setAttribute('stroke-width', '1.5');
-                node.style.opacity = '1';
-                node.style.visibility = 'visible';
-                return;
-            }
-
             node.setAttribute('fill', 'transparent');
-            node.setAttribute('stroke', kind === 'own' ? 'rgba(12, 8, 4, 0.92)' : palette.stroke);
-            node.setAttribute('stroke-width', '2');
+            node.setAttribute('stroke', COLOR_MAP_CITY_BORDER_STROKE);
+            node.setAttribute('stroke-width', '1.5');
             node.style.opacity = '1';
             node.style.visibility = 'visible';
             return;
@@ -2426,11 +2418,17 @@
         if (!node) return;
 
         const colorMapOn = isColorMapStyleActive();
+        if (colorMapOn) {
+            node.style.setProperty('stroke', COLOR_MAP_CITY_BORDER_STROKE);
+            node.style.setProperty('stroke-width', '1.5px');
+            return;
+        }
+
         const isPlayerCity = node.classList.contains('is-player-city');
 
         if (isPlayerCity) {
             node.style.setProperty('stroke', 'rgba(64, 128, 255, 1)');
-            node.style.setProperty('stroke-width', colorMapOn ? '1.5px' : '2.5px');
+            node.style.setProperty('stroke-width', '2.5px');
             return;
         }
 
@@ -2440,12 +2438,12 @@
 
         if (useSettlementOutline) {
             node.style.setProperty('stroke', CITY_SETTLEMENT_OUTLINE_STROKE);
-            node.style.setProperty('stroke-width', colorMapOn ? '1.5px' : '2px');
+            node.style.setProperty('stroke-width', '2px');
             return;
         }
 
         node.style.setProperty('stroke', palette.stroke);
-        node.style.setProperty('stroke-width', colorMapOn ? '2px' : '2.5px');
+        node.style.setProperty('stroke-width', '2.5px');
     }
 
     function syncCityBorderRelationshipStrokes() {
