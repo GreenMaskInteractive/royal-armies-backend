@@ -241,6 +241,12 @@ async function executeInactivityLogout(options) {
         return;
     }
 
+    if (typeof clearCommanderLocalAgeSessionFlags === 'function') {
+        clearCommanderLocalAgeSessionFlags();
+    } else {
+        localStorage.removeItem('savedCommanderInActiveAge');
+    }
+
     if (typeof clearPortalAuthStorage === 'function') {
         clearPortalAuthStorage();
     } else {
@@ -642,6 +648,11 @@ function executePortalLogoutRedirect() {
         if (typeof markLocalDevLogoutForGuestPreview === 'function') {
             markLocalDevLogoutForGuestPreview();
         }
+        if (typeof clearCommanderLocalAgeSessionFlags === 'function') {
+            clearCommanderLocalAgeSessionFlags();
+        } else {
+            localStorage.removeItem('savedCommanderInActiveAge');
+        }
         if (typeof clearPortalAuthStorage === 'function') {
             clearPortalAuthStorage();
         } else {
@@ -680,10 +691,6 @@ function requestPortalLogout() {
             triggerMainDashboardLogout();
             return;
         }
-    }
-    if (isAgePortalShell()) {
-        void exitAgePortalToMain();
-        return;
     }
     executePortalLogoutRedirect();
 }

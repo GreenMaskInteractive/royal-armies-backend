@@ -9,6 +9,17 @@
 
     /** Temporary — main portal Join skips game.html onboarding and routes to agealpha. */
     const PORTAL_DIRECT_AGE_JOIN_ENABLED = true;
+    const PORTAL_DIRECT_AGE_JOIN_STORAGE_KEY = 'royalArmiesPortalDirectAgeJoin';
+
+    try {
+        if (PORTAL_DIRECT_AGE_JOIN_ENABLED) {
+            global.localStorage.setItem(PORTAL_DIRECT_AGE_JOIN_STORAGE_KEY, 'true');
+        } else {
+            global.localStorage.removeItem(PORTAL_DIRECT_AGE_JOIN_STORAGE_KEY);
+        }
+    } catch (_err) {
+        /* ignore */
+    }
 
     const COMMANDER_ACCOUNT_RESET_ACK_KEY = 'royalArmiesCommanderAccountResetAck';
     const AGE_SESSION_EVICTED_CODE = 'NEXUS-AGE-038';

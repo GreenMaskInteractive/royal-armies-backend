@@ -35,7 +35,7 @@
         'commander-dossier-sync.js?v=map-ambient-effects-1',
         'rank-data.js?v=commander-nametag-hub-2',
         'rift-ui-sfx.js?v=commander-nametag-hub-2',
-        'script.js?v=map-ambient-effects-1',
+        'script.js?v=age-logout-fix-1',
         'commander-hub.js?v=commander-nametag-hub-2',
         'game-chat.js?v=commander-nametag-hub-2',
         'portal-commander-identity-menu.js?v=age-exit-not-logout-1'
@@ -600,6 +600,15 @@
     async function returnToAgePortal() {
         if (typeof global.notifyAgePortalSessionLeave === 'function') {
             await global.notifyAgePortalSessionLeave();
+        }
+        try {
+            global.localStorage.removeItem('savedCommanderInActiveAge');
+            const user = global.localStorage.getItem('activeCommanderUser');
+            if (user && user.trim()) {
+                global.localStorage.removeItem(`royalArmies_${user.trim()}_gameSessionStarted`);
+            }
+        } catch (_err) {
+            /* ignore */
         }
         const target = typeof global.resolveRoyalArmiesPageUrl === 'function'
             ? global.resolveRoyalArmiesPageUrl('main')

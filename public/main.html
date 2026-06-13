@@ -28,6 +28,12 @@
 <script>
 (function enforceEarlyActiveAgePortalLock() {
     try {
+        /* Sync with PORTAL_DIRECT_AGE_JOIN_ENABLED in rift-official-age.js */
+        var portalDirectAgeJoinEnabled = true;
+        if (portalDirectAgeJoinEnabled) {
+            try { localStorage.setItem('royalArmiesPortalDirectAgeJoin', 'true'); } catch (_setErr) { /* ignore */ }
+            return;
+        }
         if (localStorage.getItem('savedCommanderInActiveAge') !== 'true') return;
         var username = String(localStorage.getItem('activeCommanderUser') || '').trim().toLowerCase();
         if (!username) return;
@@ -753,7 +759,7 @@
     <script src="rank-data.js?v=class-cleanup-pass-1"></script>
     <script src="rift-commander-rank-titles.js?v=class-cleanup-pass-1"></script>
     <script src="rift-ui-sfx.js?v=discovery-toast-persist-1"></script>
-    <script src="script.js?v=account-reset-evict-1"></script>
+    <script src="script.js?v=age-logout-fix-1"></script>
     <script src="commander-hub.js?v=class-cleanup-pass-1"></script>
     <script src="maintenance-alert.js?v=local-api-reachability-1"></script>
     <script src="nexus-player-report-catalog.js?v=report-categories-pbbg-1"></script>
