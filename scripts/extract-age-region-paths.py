@@ -8,6 +8,17 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / "public" / "data" / "age-world-region-paths.json"
 
+
+def _load_season_0_assets_module():
+    import importlib.util
+
+    spec = importlib.util.spec_from_file_location(
+        "season_0_city_assets", ROOT / "scripts" / "season-0-city-assets.py"
+    )
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod
+
 REGION_NAMES = {
     1: "Caldera Highlands",
     2: "North-Gale Woodlands",
@@ -31,7 +42,10 @@ def parse_paths(svg_text: str) -> list[str]:
 def main() -> None:
     regions = []
     for region_num, name in REGION_NAMES.items():
-        svg_path = ROOT / "public" / "images" / f"Region{region_num}map.svg"
+        season_0 = _load_season_0_assets_module()
+        svg_path = season_0.resolve_region_map_svg(region_num)
+        if not svg_path or not svg_path.is_file():
+            svg_path = ROOT / "public" / "images" / f"Region{region_num}map.svg"
         paths = parse_paths(svg_path.read_text(encoding="utf-8"))
         regions.append(
             {

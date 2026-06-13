@@ -122,6 +122,24 @@
         aesthene: 'aesthine'
     };
 
+    const NATION_REGION_FOLDER = {
+        trex: 'region-1-caldera-highlands',
+        gorz: 'region-1-caldera-highlands',
+        lyllis: 'region-1-caldera-highlands',
+        aethelgard: 'region-2-north-gale-woodlands',
+        krall: 'region-2-north-gale-woodlands',
+        saelthine: 'region-2-north-gale-woodlands',
+        dravic: 'region-3-crescent-ridge',
+        aesthene: 'region-3-crescent-ridge',
+        vaerenth: 'region-3-crescent-ridge',
+        thruun: 'region-4-verdant-basin',
+        zevros: 'region-4-verdant-basin',
+        vaelior: 'region-5-wyrmtooth-gulf',
+        skaros: 'region-5-wyrmtooth-gulf',
+        mynor: 'region-6-dreadforge-reach',
+        khaerant: 'region-6-dreadforge-reach'
+    };
+
     /** Alpha onboarding: map-ready nations only (sync with nexus-onboarding.js). */
     const ONBOARDING_ALLOWED_NATION_IDS = Object.freeze(['aesthene', 'lyllis', 'dravic', 'vaerenth', 'trex']);
     const ONBOARDING_ALLOWED_REGION_IDS = Object.freeze(['region-1', 'region-3']);
@@ -616,6 +634,10 @@
 
     function resolveNationSvgUrl(nationId) {
         const slug = NATION_SVG_SLUG[nationId] || nationId;
+        const regionFolder = NATION_REGION_FOLDER[nationId];
+        if (regionFolder) {
+            return `season-0/regions/${regionFolder}/${nationId}/mapof${slug}.svg`;
+        }
         return `images/mapof${slug}.svg`;
     }
 

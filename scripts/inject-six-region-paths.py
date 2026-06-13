@@ -9,14 +9,34 @@ IMAGES = ROOT / "public" / "images"
 GAME = ROOT / "public" / "game.html"
 OUT_FRAGMENT = ROOT / "public" / "data" / "game-region-paths-extract.html"
 
-REGION_FILES = [
-    (1, IMAGES / "Region1map.svg"),
-    (2, IMAGES / "Region2map.svg"),
-    (3, IMAGES / "Region3map.svg"),
-    (4, IMAGES / "Region4map.svg"),
-    (5, IMAGES / "Region5map.svg"),
-    (6, IMAGES / "Region6map.svg"),
-]
+
+def _load_season_0_assets_module():
+    import importlib.util
+
+    spec = importlib.util.spec_from_file_location(
+        "season_0_city_assets", ROOT / "scripts" / "season-0-city-assets.py"
+    )
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod
+
+
+def _region_files() -> list[tuple[int, Path]]:
+    season_0 = _load_season_0_assets_module()
+    files: list[tuple[int, Path]] = []
+    for _rid, _slug, _nations, region_num in season_0.REGION_REGISTRY:
+        svg_path = season_0.resolve_region_map_svg(region_num)
+        if svg_path and svg_path.is_file():
+            files.append((region_num, svg_path))
+            continue
+        legacy = IMAGES / f"Region{region_num}map.svg"
+        if legacy.is_file():
+            files.append((region_num, legacy))
+    return files
+
+
+REGION_FILES = _region_files()  # legacy alias for tooling
+
 
 REGION_SECTION = """        <section class="game-page-view game-page-view--region" data-game-view="region" aria-label="Choose a Region" hidden>
             <div id="game-region-map" class="game-region-map">
@@ -118,7 +138,7 @@ def build_layers() -> tuple[str, str]:
     hit_lines: list[str] = []
     totals: list[tuple[int, int]] = []
 
-    for num, svg_path in REGION_FILES:
+    for num, svg_path in _region_files():
         if not svg_path.is_file():
             raise SystemExit(f"Missing SVG: {svg_path}")
         paths = parse_paths(svg_path.read_text(encoding="utf-8", errors="replace"))

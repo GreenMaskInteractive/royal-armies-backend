@@ -3546,6 +3546,7 @@ app.use((req, res, next) => {
 });
 
 const PUBLIC_DIR = path.join(__dirname, 'public');
+const SEASON_0_DIR = path.join(__dirname, 'Season 0');
 
 const PORTAL_HTML_PAGES = {
     main: 'main.html',
@@ -3638,6 +3639,14 @@ app.get(['/ageofwar-trailer', '/ageofwar-trailer.html'], (req, res) => {
 app.get(['/royalarmies-ageofwar-trailer', '/royalarmies-ageofwar-trailer.html'], (req, res) => {
     redirectWithQuery(req, res, '/ageofwar-trailer');
 });
+
+app.use('/season-0', express.static(SEASON_0_DIR, {
+    setHeaders(res, filePath) {
+        if (/\.(svg|png)$/i.test(filePath)) {
+            res.set('Cache-Control', 'public, max-age=300, must-revalidate');
+        }
+    }
+}));
 
 app.use(express.static(PUBLIC_DIR, {
     setHeaders(res, filePath) {

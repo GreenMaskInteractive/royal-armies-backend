@@ -13,6 +13,17 @@ SVG_NS = {"svg": "http://www.w3.org/2000/svg"}
 MATCH_RADIUS = 45.0
 
 
+def _load_season_0_assets_module():
+    import importlib.util
+
+    spec = importlib.util.spec_from_file_location(
+        "season_0_city_assets", ROOT / "scripts" / "season-0-city-assets.py"
+    )
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod
+
+
 def path_centroid_span(d: str) -> tuple[float, float, float] | None:
     nums = [float(x) for x in re.findall(r"[-+]?(?:\d*\.\d+|\d+)(?:[eE][-+]?\d+)?", d)]
     xs, ys = nums[0::2], nums[1::2]
@@ -67,8 +78,9 @@ def main() -> None:
     majors = [n for n in data["nations"] if n.get("kind") == "major"]
 
     asset_refs: list[tuple[str, float, float]] = []
-    for svg_path in sorted(IMAGES.glob("mapof*.svg")):
-        slug = svg_path.stem.replace("mapof", "")
+    season_0 = _load_season_0_assets_module()
+    for nation_id, svg_path in season_0.iter_nation_map_svgs():
+        slug = season_0.nation_asset_slug(nation_id)
         centroid = svg_primary_centroid(svg_path)
         if centroid:
             asset_refs.append((slug, centroid[0], centroid[1]))
@@ -84,8 +96,8 @@ def main() -> None:
         )
         slug, sx, sy = best
         dist = ((sx - jx) ** 2 + (sy - jy) ** 2) ** 0.5
-        png_path = IMAGES / f"mapof{slug}.png"
-        png = png_centroid(png_path) if png_path.exists() else None
+        png_path = season_0.resolve_nation_map_png(nation_id)
+        png = png_centroid(png_path) if png_path and png_path.exists() else None
         png_text = f" png=({png[0]},{png[1]})" if png else ""
         print(
             f"  {nation_id:<12} json=({jx},{jy}) ref=mapof{slug} ({sx},{sy}) dist={dist:.1f}{png_text}"
