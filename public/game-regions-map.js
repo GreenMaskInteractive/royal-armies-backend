@@ -123,21 +123,21 @@
     };
 
     const NATION_REGION_FOLDER = {
-        trex: 'region-1-caldera-highlands',
-        gorz: 'region-1-caldera-highlands',
-        lyllis: 'region-1-caldera-highlands',
-        aethelgard: 'region-2-north-gale-woodlands',
-        krall: 'region-2-north-gale-woodlands',
-        saelthine: 'region-2-north-gale-woodlands',
-        dravic: 'region-3-crescent-ridge',
-        aesthene: 'region-3-crescent-ridge',
-        vaerenth: 'region-3-crescent-ridge',
-        thruun: 'region-4-verdant-basin',
-        zevros: 'region-4-verdant-basin',
-        vaelior: 'region-5-wyrmtooth-gulf',
-        skaros: 'region-5-wyrmtooth-gulf',
-        mynor: 'region-6-dreadforge-reach',
-        khaerant: 'region-6-dreadforge-reach'
+        trex: 'caldera-highlands',
+        gorz: 'caldera-highlands',
+        lyllis: 'caldera-highlands',
+        aethelgard: 'north-gale-woodlands',
+        krall: 'north-gale-woodlands',
+        saelthine: 'north-gale-woodlands',
+        dravic: 'crescent-ridge',
+        aesthene: 'crescent-ridge',
+        vaerenth: 'crescent-ridge',
+        thruun: 'verdant-basin',
+        zevros: 'verdant-basin',
+        vaelior: 'wyrmtooth-gulf',
+        skaros: 'wyrmtooth-gulf',
+        mynor: 'dreadforge-reach',
+        khaerant: 'dreadforge-reach'
     };
 
     /** Alpha onboarding: map-ready nations only (sync with nexus-onboarding.js). */

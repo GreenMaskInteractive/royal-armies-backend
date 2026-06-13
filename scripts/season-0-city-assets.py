@@ -33,10 +33,10 @@ for region_id, region_slug, nation_ids, _region_num in REGION_REGISTRY:
 def region_folder_name(region_id: str, region_slug: str | None = None) -> str:
     region_key = str(region_id or "").strip().lower()
     if region_slug:
-        return f"{region_key}-{region_slug}"
+        return str(region_slug).strip().lower()
     for rid, slug, _nations, _num in REGION_REGISTRY:
         if rid == region_key:
-            return f"{rid}-{slug}"
+            return slug
     return region_key
 
 
