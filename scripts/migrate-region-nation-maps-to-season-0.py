@@ -23,21 +23,31 @@ def main() -> None:
     moved: list[str] = []
 
     for _rid, slug, _nations, region_num in season_0.REGION_REGISTRY:
+        season_0.SEASON_0_REGIONS.mkdir(parents=True, exist_ok=True)
         region_dir = season_0.SEASON_0_REGIONS / season_0.region_folder_name(_rid, slug)
         region_dir.mkdir(parents=True, exist_ok=True)
 
         region_name = f"Region{region_num}map.svg"
-        src = IMAGES / region_name
-        dest = region_dir / region_name
-        if src.is_file() and not dest.exists():
-            shutil.move(str(src), str(dest))
-            moved.append(str(dest.relative_to(ROOT)))
+        for src in (
+            IMAGES / region_name,
+            region_dir / region_name,
+        ):
+            dest = season_0.SEASON_0_REGIONS / region_name
+            if src.is_file() and not dest.exists():
+                shutil.move(str(src), str(dest))
+                moved.append(str(dest.relative_to(ROOT)))
+                break
 
-        region_png = IMAGES / f"Region{region_num}map.png"
-        png_dest = region_dir / region_png.name
-        if region_png.is_file() and not png_dest.exists():
-            shutil.move(str(region_png), str(png_dest))
-            moved.append(str(png_dest.relative_to(ROOT)))
+        region_png_name = f"Region{region_num}map.png"
+        for src in (
+            IMAGES / region_png_name,
+            region_dir / region_png_name,
+        ):
+            png_dest = season_0.SEASON_0_REGIONS / region_png_name
+            if src.is_file() and not png_dest.exists():
+                shutil.move(str(src), str(png_dest))
+                moved.append(str(png_dest.relative_to(ROOT)))
+                break
 
     for _rid, region_slug, nation_ids, _num in season_0.REGION_REGISTRY:
         region_dir = season_0.SEASON_0_REGIONS / season_0.region_folder_name(_rid, region_slug)

@@ -75,10 +75,16 @@ def resolve_nation_city_assets_dir(nation_id: str) -> Path | None:
 
 
 def resolve_region_map_svg(region_num: int) -> Path | None:
-    region_dir = resolve_region_dir_by_num(region_num)
-    if not region_dir:
+    if not SEASON_0_REGIONS.is_dir():
         return None
-    candidate = region_dir / f"Region{region_num}map.svg"
+    candidate = SEASON_0_REGIONS / f"Region{region_num}map.svg"
+    return candidate if candidate.is_file() else None
+
+
+def resolve_region_map_png(region_num: int) -> Path | None:
+    if not SEASON_0_REGIONS.is_dir():
+        return None
+    candidate = SEASON_0_REGIONS / f"Region{region_num}map.png"
     return candidate if candidate.is_file() else None
 
 
