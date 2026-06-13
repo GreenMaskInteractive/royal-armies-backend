@@ -20786,70 +20786,70 @@ body.age-map-shell-only .age-world-map-terrain-controls,
 }
 
 .age-world-map-layer--ownership .age-world-city-ownership-path.is-nation-own {
-    fill: rgba(255, 196, 48, 0.58);
+    fill: rgba(255, 196, 48, 0.30);
     stroke: rgba(255, 228, 120, 1);
     opacity: 1 !important;
     visibility: visible !important;
 }
 
 .age-world-map-layer--ownership .age-world-city-ownership-path.is-nation-ally {
-    fill: rgba(64, 128, 255, 0.58);
+    fill: rgba(64, 128, 255, 0.30);
     stroke: rgba(120, 176, 255, 1);
     opacity: 1 !important;
     visibility: visible !important;
 }
 
 .age-world-map-layer--ownership .age-world-city-ownership-path.is-nation-nap {
-    fill: rgba(140, 210, 255, 0.58);
+    fill: rgba(140, 210, 255, 0.30);
     stroke: rgba(190, 232, 255, 1);
     opacity: 1 !important;
     visibility: visible !important;
 }
 
 .age-world-map-layer--ownership .age-world-city-ownership-path.is-nation-enemy {
-    fill: rgba(220, 72, 72, 0.58);
+    fill: rgba(220, 72, 72, 0.30);
     stroke: rgba(255, 120, 120, 1);
     opacity: 1 !important;
     visibility: visible !important;
 }
 
 .age-world-map-layer--ownership .age-world-city-ownership-path.is-nation-neutral {
-    fill: rgba(168, 168, 168, 0.58);
+    fill: rgba(168, 168, 168, 0.30);
     stroke: rgba(210, 210, 210, 1);
     opacity: 1 !important;
     visibility: visible !important;
 }
 
 .age-world-map-layer--ownership .age-world-city-ownership-boost.is-nation-own {
-    fill: rgba(255, 196, 48, 0.58);
+    fill: rgba(255, 196, 48, 0.30);
     stroke: rgba(255, 228, 120, 1);
     opacity: 1 !important;
     visibility: visible !important;
 }
 
 .age-world-map-layer--ownership .age-world-city-ownership-boost.is-nation-ally {
-    fill: rgba(64, 128, 255, 0.58);
+    fill: rgba(64, 128, 255, 0.30);
     stroke: rgba(120, 176, 255, 1);
     opacity: 1 !important;
     visibility: visible !important;
 }
 
 .age-world-map-layer--ownership .age-world-city-ownership-boost.is-nation-nap {
-    fill: rgba(140, 210, 255, 0.58);
+    fill: rgba(140, 210, 255, 0.30);
     stroke: rgba(190, 232, 255, 1);
     opacity: 1 !important;
     visibility: visible !important;
 }
 
 .age-world-map-layer--ownership .age-world-city-ownership-boost.is-nation-enemy {
-    fill: rgba(220, 72, 72, 0.58);
+    fill: rgba(220, 72, 72, 0.30);
     stroke: rgba(255, 120, 120, 1);
     opacity: 1 !important;
     visibility: visible !important;
 }
 
 .age-world-map-layer--ownership .age-world-city-ownership-boost.is-nation-neutral {
-    fill: rgba(168, 168, 168, 0.58);
+    fill: rgba(168, 168, 168, 0.30);
     stroke: rgba(210, 210, 210, 1);
     opacity: 1 !important;
     visibility: visible !important;

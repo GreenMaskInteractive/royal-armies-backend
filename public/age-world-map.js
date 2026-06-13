@@ -74,23 +74,23 @@
     });
     const OWNERSHIP_TINT = {
         own: {
-            fill: 'rgba(255, 196, 48, 0.38)',
+            fill: 'rgba(255, 196, 48, 0.24)',
             stroke: 'rgba(255, 228, 120, 1)'
         },
         ally: {
-            fill: 'rgba(64, 128, 255, 0.38)',
+            fill: 'rgba(64, 128, 255, 0.24)',
             stroke: 'rgba(120, 176, 255, 1)'
         },
         nap: {
-            fill: 'rgba(140, 210, 255, 0.38)',
+            fill: 'rgba(140, 210, 255, 0.24)',
             stroke: 'rgba(190, 232, 255, 1)'
         },
         enemy: {
-            fill: 'rgba(220, 72, 72, 0.38)',
+            fill: 'rgba(220, 72, 72, 0.24)',
             stroke: 'rgba(255, 120, 120, 1)'
         },
         neutral: {
-            fill: 'rgba(168, 168, 168, 0.38)',
+            fill: 'rgba(168, 168, 168, 0.24)',
             stroke: 'rgba(168, 168, 176, 0.85)'
         },
         none: {
