@@ -170,6 +170,10 @@
             && target.closest('#age-rank-promotion-overlay')) {
             return true;
         }
+        if (global.document.body?.classList.contains('age-gear-level-up-open')
+            && target.closest('#age-gear-level-up-overlay')) {
+            return true;
+        }
         return Boolean(target.closest(
             '.age-age-center-modal:not([hidden]),'
             + '.age-war-ledger-modal:not([hidden]),'
@@ -185,6 +189,7 @@
             + '.age-guild-job-arena:not([hidden]),'
             + '.age-settlement-venue-workspace:not([hidden]),'
             + '#age-rank-promotion-overlay:not([hidden]),'
+            + '#age-gear-level-up-overlay:not([hidden]),'
             + '.rift-discoveries-workspace-modal:not([hidden]),'
             + '.rift-banner-workspace-modal:not([hidden]),'
             + '.blessed-banners-modal:not([hidden]),'
@@ -564,7 +569,7 @@
         global.document.querySelectorAll(
             '.age-barracks-workspace, .age-unit-evolution-workspace, .age-guild-workspace,'
             + ' .age-age-center-modal, .age-war-ledger-modal,'
-            + ' .age-chronicles-battle-pass-modal, .rift-discoveries-workspace-modal, .rift-banner-workspace-modal, .blessed-banners-modal, #age-rank-promotion-overlay'
+            + ' .age-chronicles-battle-pass-modal, .rift-discoveries-workspace-modal, .rift-banner-workspace-modal, .blessed-banners-modal, #age-rank-promotion-overlay, #age-gear-level-up-overlay'
         ).forEach((node) => {
             node.hidden = true;
             node.setAttribute('aria-hidden', 'true');

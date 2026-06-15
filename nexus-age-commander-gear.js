@@ -395,61 +395,114 @@ const GEAR_ITEMS = Object.freeze({
         rarity: 'epic',
         battleEffect: 'null-stone-aegis',
         stats: { injuryMitigation: 0.04, morale: 2 }
-    }
+    },
+    'cmd-ironheart-saber': { name: 'Ironheart Saber', slot: 'mainHand', classId: 'commander', tier: 1, rarity: 'common', stats: { strength: 2, ranged: 2, morale: 1 } },
+    'cmd-warded-bulwark': { name: 'Warded Bulwark', slot: 'offHand', classId: 'commander', tier: 1, rarity: 'common', stats: { command: 1, ranged: 1, injuryMitigation: 0.02 } },
+    'cmd-oathbound-visor': { name: 'Oathbound Visor', slot: 'head', classId: 'commander', tier: 1, rarity: 'common', stats: { strength: 1, ranged: 1, injuryMitigation: 0.01 } },
+    'cmd-concord-mail': { name: 'Concord Mail', slot: 'chest', classId: 'commander', tier: 1, rarity: 'common', stats: { strength: 2, ranged: 2, injuryMitigation: 0.03 } },
+    'cmd-duelweave-gauntlets': { name: 'Duelweave Gauntlets', slot: 'hands', classId: 'commander', tier: 1, rarity: 'common', stats: { strength: 1, ranged: 1, command: 1 } },
+    'cmd-marchward-greaves': { name: 'Marchward Greaves', slot: 'legs', classId: 'commander', tier: 1, rarity: 'common', stats: { morale: 1, command: 1, injuryMitigation: 0.01 } },
+    'cmd-pathfinder-treads': { name: 'Pathfinder Treads', slot: 'feet', classId: 'commander', tier: 1, rarity: 'common', stats: { morale: 1, injuryMitigation: 0.01, command: 1 } },
+    'cmd-bannercloak-accord': { name: 'Bannercloak of Accord', slot: 'cloak', classId: 'commander', tier: 1, rarity: 'common', stats: { command: 1, guildXp: 0.02, morale: 1 } },
+    'cmd-covenant-signet': { name: 'Covenant Signet', slot: 'ring', classId: 'commander', tier: 1, rarity: 'common', stats: { command: 2 } },
+    'cmd-twinpath-talisman': { name: 'Twinpath Talisman', slot: 'amulet', classId: 'commander', tier: 1, rarity: 'common', stats: { morale: 2, injuryMitigation: 0.01 } },
+    'cmd-sovereign-edge': { name: "Sovereign's Edge", slot: 'mainHand', classId: 'commander', tier: 2, rarity: 'uncommon', stats: { strength: 4, ranged: 4, morale: 2 } },
+    'cmd-bastion-two-paths': { name: 'Bastion of Two Paths', slot: 'offHand', classId: 'commander', tier: 2, rarity: 'uncommon', stats: { command: 2, ranged: 1, injuryMitigation: 0.04 } },
+    'cmd-crownward-casque': { name: 'Crownward Casque', slot: 'head', classId: 'commander', tier: 2, rarity: 'uncommon', stats: { strength: 2, ranged: 2, injuryMitigation: 0.02 } },
+    'cmd-aegis-of-concord': { name: 'Aegis of Concord', slot: 'chest', classId: 'commander', tier: 2, rarity: 'uncommon', stats: { strength: 3, ranged: 3, injuryMitigation: 0.05 } },
+    'cmd-warfinger-gauntlets': { name: 'Warfinger Gauntlets', slot: 'hands', classId: 'commander', tier: 2, rarity: 'uncommon', stats: { strength: 2, ranged: 2, command: 2 } },
+    'cmd-legionward-plates': { name: 'Legionward Plates', slot: 'legs', classId: 'commander', tier: 2, rarity: 'uncommon', stats: { morale: 2, command: 2, injuryMitigation: 0.02 } },
+    'cmd-ironpath-sabatons': { name: 'Ironpath Sabatons', slot: 'feet', classId: 'commander', tier: 2, rarity: 'uncommon', stats: { morale: 2, injuryMitigation: 0.02 } },
+    'cmd-marshal-pathcloak': { name: "Marshal's Pathcloak", slot: 'cloak', classId: 'commander', tier: 2, rarity: 'uncommon', stats: { command: 2, guildXp: 0.04, morale: 2 } },
+    'cmd-oathkeeper-band': { name: "Oathkeeper's Band", slot: 'ring', classId: 'commander', tier: 2, rarity: 'uncommon', stats: { command: 3 } },
+    'cmd-dualheart-amulet': { name: 'Dualheart Amulet', slot: 'amulet', classId: 'commander', tier: 2, rarity: 'uncommon', stats: { morale: 3, injuryMitigation: 0.02, guildXp: 0.01 } },
+    'gear-horn-rallying-dawn': { name: 'Horn of Rallying Dawn', slot: 'mainHand', classId: 'commander', tier: 2, rarity: 'rare', battleEffect: 'signal-horn', stats: { command: 2, morale: 1, strength: 1, ranged: 1 } },
+    'gear-nullspike-harpoon': { name: 'Nullspike Harpoon', slot: 'mainHand', classId: 'commander', tier: 3, rarity: 'rare', battleEffect: 'mage-slayer-harpoon', stats: { strength: 3, ranged: 2 } },
+    'gear-phoenix-interlock': { name: 'Phoenix Interlock Plate', slot: 'chest', classId: 'commander', tier: 3, rarity: 'rare', battleEffect: 'linked-resilient-plating', stats: { injuryMitigation: 0.05, strength: 2, ranged: 2 } },
+    'gear-nullstone-palladium': { name: 'Nullstone Palladium', slot: 'offHand', classId: 'commander', tier: 3, rarity: 'epic', battleEffect: 'null-stone-aegis', stats: { injuryMitigation: 0.04, morale: 2, command: 1 } }
+});
+
+const LEGACY_GEAR_ID_MAP = Object.freeze({
+    'bm-patrol-blade': 'cmd-ironheart-saber',
+    'am-focus-staff': 'cmd-ironheart-saber',
+    'bm-training-shield': 'cmd-warded-bulwark',
+    'am-arcane-tome': 'cmd-warded-bulwark',
+    'bm-patrol-helm': 'cmd-oathbound-visor',
+    'am-circlet': 'cmd-oathbound-visor',
+    'bm-leather-cuirass': 'cmd-concord-mail',
+    'am-robes': 'cmd-concord-mail',
+    'bm-grip-gloves': 'cmd-duelweave-gauntlets',
+    'am-weave-gloves': 'cmd-duelweave-gauntlets',
+    'bm-march-greaves': 'cmd-marchward-greaves',
+    'am-runed-leggings': 'cmd-marchward-greaves',
+    'bm-road-boots': 'cmd-pathfinder-treads',
+    'am-soft-shoes': 'cmd-pathfinder-treads',
+    'bm-guild-cloak': 'cmd-bannercloak-accord',
+    'am-mystic-cloak': 'cmd-bannercloak-accord',
+    'bm-signet-ring': 'cmd-covenant-signet',
+    'am-band-ring': 'cmd-covenant-signet',
+    'bm-command-amulet': 'cmd-twinpath-talisman',
+    'am-sigil-amulet': 'cmd-twinpath-talisman',
+    'bm-veteran-blade': 'cmd-sovereign-edge',
+    'am-veteran-staff': 'cmd-sovereign-edge',
+    'bm-veteran-shield': 'cmd-bastion-two-paths',
+    'am-veteran-tome': 'cmd-bastion-two-paths',
+    'bm-veteran-helm': 'cmd-crownward-casque',
+    'am-veteran-circlet': 'cmd-crownward-casque',
+    'bm-veteran-cuirass': 'cmd-aegis-of-concord',
+    'am-veteran-robes': 'cmd-aegis-of-concord',
+    'bm-veteran-gloves': 'cmd-warfinger-gauntlets',
+    'am-veteran-gloves': 'cmd-warfinger-gauntlets',
+    'bm-veteran-greaves': 'cmd-legionward-plates',
+    'am-veteran-leggings': 'cmd-legionward-plates',
+    'bm-veteran-boots': 'cmd-ironpath-sabatons',
+    'am-veteran-shoes': 'cmd-ironpath-sabatons',
+    'bm-veteran-cloak': 'cmd-marshal-pathcloak',
+    'am-veteran-cloak': 'cmd-marshal-pathcloak',
+    'bm-veteran-ring': 'cmd-oathkeeper-band',
+    'am-veteran-ring': 'cmd-oathkeeper-band',
+    'bm-veteran-amulet': 'cmd-dualheart-amulet',
+    'am-veteran-amulet': 'cmd-dualheart-amulet',
+    'gear-commanders-signal-horn': 'gear-horn-rallying-dawn',
+    'gear-mage-slayer-harpoon': 'gear-nullspike-harpoon',
+    'gear-linked-resilient-plating': 'gear-phoenix-interlock',
+    'gear-null-stone-aegis': 'gear-nullstone-palladium'
+});
+
+const COMMANDER_DEFAULT_LOADOUT_TIER_1 = Object.freeze({
+    head: 'cmd-oathbound-visor',
+    chest: 'cmd-concord-mail',
+    hands: 'cmd-duelweave-gauntlets',
+    legs: 'cmd-marchward-greaves',
+    feet: 'cmd-pathfinder-treads',
+    mainHand: 'cmd-ironheart-saber',
+    offHand: 'cmd-warded-bulwark',
+    cloak: 'cmd-bannercloak-accord',
+    ring: 'cmd-covenant-signet',
+    amulet: 'cmd-twinpath-talisman'
+});
+
+const COMMANDER_DEFAULT_LOADOUT_TIER_2 = Object.freeze({
+    head: 'cmd-crownward-casque',
+    chest: 'cmd-aegis-of-concord',
+    hands: 'cmd-warfinger-gauntlets',
+    legs: 'cmd-legionward-plates',
+    feet: 'cmd-ironpath-sabatons',
+    mainHand: 'cmd-sovereign-edge',
+    offHand: 'cmd-bastion-two-paths',
+    cloak: 'cmd-marshal-pathcloak',
+    ring: 'cmd-oathkeeper-band',
+    amulet: 'cmd-dualheart-amulet'
 });
 
 const DEFAULT_LOADOUTS = Object.freeze({
     battlemaster: {
-        1: {
-            head: 'bm-patrol-helm',
-            chest: 'bm-leather-cuirass',
-            hands: 'bm-grip-gloves',
-            legs: 'bm-march-greaves',
-            feet: 'bm-road-boots',
-            mainHand: 'bm-patrol-blade',
-            offHand: 'bm-training-shield',
-            cloak: 'bm-guild-cloak',
-            ring: 'bm-signet-ring',
-            amulet: 'bm-command-amulet'
-        },
-        2: {
-            head: 'bm-veteran-helm',
-            chest: 'bm-veteran-cuirass',
-            hands: 'bm-veteran-gloves',
-            legs: 'bm-veteran-greaves',
-            feet: 'bm-veteran-boots',
-            mainHand: 'bm-veteran-blade',
-            offHand: 'bm-veteran-shield',
-            cloak: 'bm-veteran-cloak',
-            ring: 'bm-veteran-ring',
-            amulet: 'bm-veteran-amulet'
-        }
+        1: COMMANDER_DEFAULT_LOADOUT_TIER_1,
+        2: COMMANDER_DEFAULT_LOADOUT_TIER_2
     },
     battlemage: {
-        1: {
-            head: 'am-circlet',
-            chest: 'am-robes',
-            hands: 'am-weave-gloves',
-            legs: 'am-runed-leggings',
-            feet: 'am-soft-shoes',
-            mainHand: 'am-focus-staff',
-            offHand: 'am-arcane-tome',
-            cloak: 'am-mystic-cloak',
-            ring: 'am-band-ring',
-            amulet: 'am-sigil-amulet'
-        },
-        2: {
-            head: 'am-veteran-circlet',
-            chest: 'am-veteran-robes',
-            hands: 'am-veteran-gloves',
-            legs: 'am-veteran-leggings',
-            feet: 'am-veteran-shoes',
-            mainHand: 'am-veteran-staff',
-            offHand: 'am-veteran-tome',
-            cloak: 'am-veteran-cloak',
-            ring: 'am-veteran-ring',
-            amulet: 'am-veteran-amulet'
-        }
+        1: COMMANDER_DEFAULT_LOADOUT_TIER_1,
+        2: COMMANDER_DEFAULT_LOADOUT_TIER_2
     }
 });
 
@@ -469,7 +522,7 @@ function normalizeEquippedSlotMap(raw) {
     if (!raw || typeof raw !== 'object') return null;
     const next = {};
     GEAR_SLOT_ORDER.forEach((slot) => {
-        const itemId = String(raw[slot.id] || '').trim();
+        const itemId = mapLegacyGearId(raw[slot.id]);
         if (itemId) next[slot.id] = itemId;
     });
     return Object.keys(next).length ? next : null;
@@ -538,8 +591,13 @@ function resolvePreviewGearLoadout(commander) {
     return DEFAULT_LOADOUTS[classId]?.[tier] || DEFAULT_LOADOUTS.battlemaster[1];
 }
 
-function resolveGearItem(itemId) {
+function mapLegacyGearId(itemId) {
     const id = String(itemId || '').trim();
+    return LEGACY_GEAR_ID_MAP[id] || id;
+}
+
+function resolveGearItem(itemId) {
+    const id = mapLegacyGearId(itemId);
     if (!id) return null;
     const item = GEAR_ITEMS[id];
     if (!item) return null;

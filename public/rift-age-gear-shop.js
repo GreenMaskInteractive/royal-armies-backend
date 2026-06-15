@@ -6,6 +6,18 @@
 
     const STORAGE_KEY = 'royalarmies:age-gear-shop-state';
     const EQUIPMENT_MIN_RANK = 2;
+    const MAX_GEAR_LEVEL = 15;
+    const ARMORY_UPGRADE_MIN_LEVEL = 5;
+
+    const BATTLE_XP_SLOTS = Object.freeze(new Set([
+        'mainHand', 'offHand', 'head', 'chest', 'hands', 'legs', 'feet', 'cloak'
+    ]));
+
+    const BATTLE_XP_BY_OUTCOME = Object.freeze({
+        commander: 18,
+        draw: 12,
+        npc: 8
+    });
 
     const STAT_LABELS = Object.freeze({
         strength: 'Strength',
@@ -29,117 +41,160 @@
         amulet: '✦'
     });
 
+    const FORGE_CATEGORIES = Object.freeze([
+        { id: 'weapons', label: 'Weapons', slots: ['mainHand', 'offHand'] },
+        { id: 'armor', label: 'Armor', slots: ['head', 'chest', 'hands', 'legs', 'feet', 'cloak'] },
+        { id: 'accessories', label: 'Accessories', slots: ['ring', 'amulet'] },
+        { id: 'tools', label: 'Tools & Kits', isTools: true }
+    ]);
+
+    const ARMORY_CATEGORIES = Object.freeze([
+        { id: 'weapons', label: 'Weapons', slots: ['mainHand', 'offHand'] },
+        { id: 'armor', label: 'Armor', slots: ['head', 'chest', 'hands', 'legs', 'feet', 'cloak'] },
+        { id: 'accessories', label: 'Accessories', slots: ['ring', 'amulet'] }
+    ]);
+
     const FORGE_TOOLS = Object.freeze([
         {
-            id: 'tool-field-whetstone',
-            name: 'Field Whetstone',
+            id: 'tool-emberstone-whetstone',
+            name: 'Emberstone Whetstone',
             mark: '⚙',
             category: 'tool',
-            desc: 'Keeps blades keen between marches. Grants minor upkeep efficiency.',
-            purchaseGold: 240,
+            desc: 'A heat-charged whetstone that steadies blade and spell focus alike on long campaigns.',
+            stats: { morale: 1, guildXp: 0.01 },
+            purchaseGold: 260,
             equipMinRank: 2
         },
         {
-            id: 'tool-marching-compass',
-            name: 'Marching Compass',
+            id: 'tool-meridian-compass',
+            name: 'Meridian March Compass',
             mark: '🧭',
             category: 'tool',
-            desc: 'Calibrated for grid marches and route planning.',
-            purchaseGold: 320,
+            desc: 'Star-cut compass for grid marches—favored by physical captains and arcane marshals.',
+            stats: { command: 1 },
+            purchaseGold: 340,
             equipMinRank: 2
         },
         {
-            id: 'tool-siege-pry',
-            name: 'Siege Pry Bar',
+            id: 'tool-siegebreaker-pry',
+            name: 'Siegebreaker Pry',
             mark: '⚒',
             category: 'tool',
-            desc: 'Breaching lever for siege lanes and fortification work.',
-            purchaseGold: 480,
+            desc: 'Lever forged for breaching lanes; lends raw force and guarded footing under strain.',
+            stats: { strength: 1, injuryMitigation: 0.01 },
+            purchaseGold: 500,
             equipMinRank: 4
         },
         {
-            id: 'tool-artificer-kit',
-            name: 'Artificer Kit',
+            id: 'tool-wardwright-kit',
+            name: 'Wardwright Artificer Kit',
             mark: '✦',
             category: 'tool',
-            desc: 'Precision tools for advanced fittings and ward stitching.',
-            purchaseGold: 1200,
+            desc: 'Precision fittings and ward-stitch tools for commanders who blend steel and sigil craft.',
+            stats: { ranged: 1, guildXp: 0.02 },
+            purchaseGold: 1250,
             equipMinRank: 7
         }
     ]);
 
     const GEAR_CATALOG = Object.freeze([
-        { id: 'bm-patrol-blade', name: 'Patrol Blade', slot: 'mainHand', classId: 'battlemaster', tier: 1, rarity: 'common', stats: { strength: 3, morale: 1 }, purchaseGold: 780, equipMinRank: 2, desc: 'Standard battlemaster field blade.' },
-        { id: 'bm-training-shield', name: 'Training Shield', slot: 'offHand', classId: 'battlemaster', tier: 1, rarity: 'common', stats: { command: 1, injuryMitigation: 0.02 }, purchaseGold: 620, equipMinRank: 2, desc: 'Light shield for company drills.' },
-        { id: 'bm-patrol-helm', name: 'Patrol Helm', slot: 'head', classId: 'battlemaster', tier: 1, rarity: 'common', stats: { strength: 1, injuryMitigation: 0.01 }, purchaseGold: 520, equipMinRank: 2, desc: 'Basic head protection.' },
-        { id: 'bm-leather-cuirass', name: 'Leather Cuirass', slot: 'chest', classId: 'battlemaster', tier: 1, rarity: 'common', stats: { strength: 2, injuryMitigation: 0.03 }, purchaseGold: 690, equipMinRank: 2, desc: 'Layered leather chest guard.' },
-        { id: 'bm-grip-gloves', name: 'Grip Gloves', slot: 'hands', classId: 'battlemaster', tier: 1, rarity: 'common', stats: { strength: 1, command: 1 }, purchaseGold: 410, equipMinRank: 2, desc: 'Reinforced grip for weapon control.' },
-        { id: 'bm-march-greaves', name: 'March Greaves', slot: 'legs', classId: 'battlemaster', tier: 1, rarity: 'common', stats: { morale: 1, injuryMitigation: 0.01 }, purchaseGold: 450, equipMinRank: 2, desc: 'Leg guards for long marches.' },
-        { id: 'bm-road-boots', name: 'Road Boots', slot: 'feet', classId: 'battlemaster', tier: 1, rarity: 'common', stats: { morale: 1 }, purchaseGold: 360, equipMinRank: 2, desc: 'Sturdy boots for campaign roads.' },
-        { id: 'bm-guild-cloak', name: 'Guild Cloak', slot: 'cloak', classId: 'battlemaster', tier: 1, rarity: 'common', stats: { guildXp: 0.02, command: 1 }, purchaseGold: 540, equipMinRank: 2, desc: 'Guild-issue march cloak.' },
-        { id: 'bm-signet-ring', name: 'Signet Ring', slot: 'ring', classId: 'battlemaster', tier: 1, rarity: 'common', stats: { command: 2 }, purchaseGold: 480, equipMinRank: 2, desc: 'Officer signet for command presence.' },
-        { id: 'bm-command-amulet', name: 'Command Amulet', slot: 'amulet', classId: 'battlemaster', tier: 1, rarity: 'common', stats: { morale: 2, guildXp: 0.01 }, purchaseGold: 510, equipMinRank: 2, desc: 'Charm of minor battlefield resolve.' },
-        { id: 'am-focus-staff', name: 'Focus Staff', slot: 'mainHand', classId: 'battlemage', tier: 1, rarity: 'common', stats: { ranged: 4, morale: 1 }, purchaseGold: 820, equipMinRank: 2, desc: 'Channeling staff for battlemages.' },
-        { id: 'am-arcane-tome', name: 'Arcane Tome', slot: 'offHand', classId: 'battlemage', tier: 1, rarity: 'common', stats: { ranged: 2, command: 1 }, purchaseGold: 640, equipMinRank: 2, desc: 'Spell reference tome.' },
-        { id: 'am-circlet', name: 'Circlet of Study', slot: 'head', classId: 'battlemage', tier: 1, rarity: 'common', stats: { ranged: 1, guildXp: 0.02 }, purchaseGold: 500, equipMinRank: 2, desc: 'Focus circlet for arcane study.' },
-        { id: 'am-robes', name: 'Scholar Robes', slot: 'chest', classId: 'battlemage', tier: 1, rarity: 'common', stats: { ranged: 2, injuryMitigation: 0.02 }, purchaseGold: 710, equipMinRank: 2, desc: 'Warded scholar vestments.' },
-        { id: 'am-weave-gloves', name: 'Weave Gloves', slot: 'hands', classId: 'battlemage', tier: 1, rarity: 'common', stats: { ranged: 1, command: 1 }, purchaseGold: 420, equipMinRank: 2, desc: 'Threaded gloves for spell weaving.' },
-        { id: 'am-runed-leggings', name: 'Runed Leggings', slot: 'legs', classId: 'battlemage', tier: 1, rarity: 'common', stats: { morale: 2 }, purchaseGold: 440, equipMinRank: 2, desc: 'Runed march leggings.' },
-        { id: 'am-soft-shoes', name: 'Soft Shoes', slot: 'feet', classId: 'battlemage', tier: 1, rarity: 'common', stats: { morale: 1, injuryMitigation: 0.01 }, purchaseGold: 370, equipMinRank: 2, desc: 'Silent-soled arcane footwear.' },
-        { id: 'am-mystic-cloak', name: 'Mystic Cloak', slot: 'cloak', classId: 'battlemage', tier: 1, rarity: 'common', stats: { ranged: 1, guildXp: 0.02 }, purchaseGold: 550, equipMinRank: 2, desc: 'Cloak threaded with minor wards.' },
-        { id: 'am-band-ring', name: 'Band Ring', slot: 'ring', classId: 'battlemage', tier: 1, rarity: 'common', stats: { command: 2 }, purchaseGold: 490, equipMinRank: 2, desc: 'Simple command band.' },
-        { id: 'am-sigil-amulet', name: 'Sigil Amulet', slot: 'amulet', classId: 'battlemage', tier: 1, rarity: 'common', stats: { morale: 2, injuryMitigation: 0.01 }, purchaseGold: 520, equipMinRank: 2, desc: 'Sigil charm for spell stability.' },
-        { id: 'bm-veteran-blade', name: 'Veteran Blade', slot: 'mainHand', classId: 'battlemaster', tier: 2, rarity: 'uncommon', stats: { strength: 5, morale: 2 }, purchaseGold: 4200, equipMinRank: 7, desc: 'High-grade assault blade. Purchase early; equip at Herald rank.' },
-        { id: 'bm-veteran-shield', name: 'Veteran Shield', slot: 'offHand', classId: 'battlemaster', tier: 2, rarity: 'uncommon', stats: { command: 2, injuryMitigation: 0.04 }, purchaseGold: 3600, equipMinRank: 7, desc: 'Reinforced wall shield for veteran companies.' },
-        { id: 'bm-veteran-helm', name: 'Veteran Helm', slot: 'head', classId: 'battlemaster', tier: 2, rarity: 'uncommon', stats: { strength: 2, injuryMitigation: 0.02 }, purchaseGold: 2800, equipMinRank: 7, desc: 'Tempered helm with ward rivets.' },
-        { id: 'bm-veteran-cuirass', name: 'Veteran Cuirass', slot: 'chest', classId: 'battlemaster', tier: 2, rarity: 'uncommon', stats: { strength: 3, injuryMitigation: 0.05 }, purchaseGold: 3900, equipMinRank: 7, desc: 'Plate-lined cuirass for front-line duty.' },
-        { id: 'bm-veteran-gloves', name: 'Veteran Gauntlets', slot: 'hands', classId: 'battlemaster', tier: 2, rarity: 'uncommon', stats: { strength: 2, command: 2 }, purchaseGold: 2600, equipMinRank: 7, desc: 'Tempered gauntlets for weapon mastery.' },
-        { id: 'bm-veteran-greaves', name: 'Veteran Greaves', slot: 'legs', classId: 'battlemaster', tier: 2, rarity: 'uncommon', stats: { morale: 2, injuryMitigation: 0.02 }, purchaseGold: 2500, equipMinRank: 7, desc: 'Veteran march greaves.' },
-        { id: 'bm-veteran-boots', name: 'Veteran Boots', slot: 'feet', classId: 'battlemaster', tier: 2, rarity: 'uncommon', stats: { morale: 2 }, purchaseGold: 2200, equipMinRank: 7, desc: 'Reinforced veteran march boots.' },
-        { id: 'bm-veteran-cloak', name: 'Veteran Cloak', slot: 'cloak', classId: 'battlemaster', tier: 2, rarity: 'uncommon', stats: { guildXp: 0.04, command: 2 }, purchaseGold: 3000, equipMinRank: 7, desc: 'Officer cloak with guild threading.' },
-        { id: 'bm-veteran-ring', name: 'Veteran Ring', slot: 'ring', classId: 'battlemaster', tier: 2, rarity: 'uncommon', stats: { command: 3 }, purchaseGold: 2700, equipMinRank: 7, desc: 'Signet ring of a proven commander.' },
-        { id: 'bm-veteran-amulet', name: 'Veteran Amulet', slot: 'amulet', classId: 'battlemaster', tier: 2, rarity: 'uncommon', stats: { morale: 3, guildXp: 0.02 }, purchaseGold: 2900, equipMinRank: 7, desc: 'Battle charm carried by veteran officers.' },
-        { id: 'am-veteran-staff', name: 'Veteran Staff', slot: 'mainHand', classId: 'battlemage', tier: 2, rarity: 'uncommon', stats: { ranged: 6, morale: 2 }, purchaseGold: 4400, equipMinRank: 7, desc: 'Masterwork focus staff for senior magi.' },
-        { id: 'am-veteran-tome', name: 'Veteran Tome', slot: 'offHand', classId: 'battlemage', tier: 2, rarity: 'uncommon', stats: { ranged: 3, command: 2 }, purchaseGold: 3400, equipMinRank: 7, desc: 'Expanded spell codex for veteran magi.' },
-        { id: 'am-veteran-circlet', name: 'Veteran Circlet', slot: 'head', classId: 'battlemage', tier: 2, rarity: 'uncommon', stats: { ranged: 2, guildXp: 0.03 }, purchaseGold: 2700, equipMinRank: 7, desc: 'Circlet tuned for sustained channeling.' },
-        { id: 'am-veteran-robes', name: 'Veteran Robes', slot: 'chest', classId: 'battlemage', tier: 2, rarity: 'uncommon', stats: { ranged: 3, injuryMitigation: 0.04 }, purchaseGold: 4000, equipMinRank: 7, desc: 'Layered ward robes for battlemage veterans.' },
-        { id: 'am-veteran-gloves', name: 'Veteran Gloves', slot: 'hands', classId: 'battlemage', tier: 2, rarity: 'uncommon', stats: { ranged: 2, command: 2 }, purchaseGold: 2550, equipMinRank: 7, desc: 'Arcane weave gloves for spell control.' },
-        { id: 'am-veteran-leggings', name: 'Veteran Leggings', slot: 'legs', classId: 'battlemage', tier: 2, rarity: 'uncommon', stats: { morale: 3 }, purchaseGold: 2450, equipMinRank: 7, desc: 'Veteran runed leggings.' },
-        { id: 'am-veteran-shoes', name: 'Veteran Shoes', slot: 'feet', classId: 'battlemage', tier: 2, rarity: 'uncommon', stats: { morale: 2, injuryMitigation: 0.02 }, purchaseGold: 2300, equipMinRank: 7, desc: 'Warded shoes for long campaigns.' },
-        { id: 'am-veteran-cloak', name: 'Veteran Cloak', slot: 'cloak', classId: 'battlemage', tier: 2, rarity: 'uncommon', stats: { ranged: 2, guildXp: 0.04 }, purchaseGold: 3100, equipMinRank: 7, desc: 'Mystic cloak with veteran ward lines.' },
-        { id: 'am-veteran-ring', name: 'Veteran Ring', slot: 'ring', classId: 'battlemage', tier: 2, rarity: 'uncommon', stats: { command: 3 }, purchaseGold: 2750, equipMinRank: 7, desc: 'Ring of senior arcane command.' },
-        { id: 'am-veteran-amulet', name: 'Veteran Amulet', slot: 'amulet', classId: 'battlemage', tier: 2, rarity: 'uncommon', stats: { morale: 3, injuryMitigation: 0.02 }, purchaseGold: 2950, equipMinRank: 7, desc: 'Veteran sigil amulet.' },
-        { id: 'gear-commanders-signal-horn', name: "Commander's Signal Horn", slot: 'mainHand', classId: 'battlemaster', tier: 2, rarity: 'rare', battleEffect: 'signal-horn', stats: { command: 2, morale: 1 }, purchaseGold: 6800, equipMinRank: 7, desc: 'Battle horn that marks priority targets in PvP.' },
-        { id: 'gear-mage-slayer-harpoon', name: 'Mage-Slayer Harpoon', slot: 'mainHand', classId: 'battlemaster', tier: 3, rarity: 'rare', battleEffect: 'mage-slayer-harpoon', stats: { strength: 4 }, purchaseGold: 14200, equipMinRank: 14, desc: 'Anti-magic harpoon. High cost — requires rank 14 to wield.' },
-        { id: 'gear-linked-resilient-plating', name: 'Linked Resilient Plating', slot: 'chest', classId: 'battlemaster', tier: 3, rarity: 'rare', battleEffect: 'linked-resilient-plating', stats: { injuryMitigation: 0.05, strength: 2 }, purchaseGold: 15800, equipMinRank: 14, desc: 'Elite linked plate harness for nation assaults.' },
-        { id: 'gear-null-stone-aegis', name: 'Null-Stone Aegis', slot: 'offHand', classId: 'battlemaster', tier: 3, rarity: 'epic', battleEffect: 'null-stone-aegis', stats: { injuryMitigation: 0.04, morale: 2 }, purchaseGold: 18500, equipMinRank: 18, desc: 'Null-stone ward shield. Equip at rank 18.' }
+        { id: 'cmd-ironheart-saber', name: 'Ironheart Saber', slot: 'mainHand', classId: 'commander', tier: 1, rarity: 'common', stats: { strength: 2, ranged: 2, morale: 1 }, purchaseGold: 800, equipMinRank: 2, desc: 'A balanced field blade suited to steel and spell alike.' },
+        { id: 'cmd-warded-bulwark', name: 'Warded Bulwark', slot: 'offHand', classId: 'commander', tier: 1, rarity: 'common', stats: { command: 1, ranged: 1, injuryMitigation: 0.02 }, purchaseGold: 650, equipMinRank: 2, desc: 'Shield lined with minor wards—steady for melee and channelers.' },
+        { id: 'cmd-oathbound-visor', name: 'Oathbound Visor', slot: 'head', classId: 'commander', tier: 1, rarity: 'common', stats: { strength: 1, ranged: 1, injuryMitigation: 0.01 }, purchaseGold: 540, equipMinRank: 2, desc: 'Visor etched with dual-path oaths of the Royal Armies.' },
+        { id: 'cmd-concord-mail', name: 'Concord Mail', slot: 'chest', classId: 'commander', tier: 1, rarity: 'common', stats: { strength: 2, ranged: 2, injuryMitigation: 0.03 }, purchaseGold: 720, equipMinRank: 2, desc: 'Mail that flexes for sword-work and sigil-weave alike.' },
+        { id: 'cmd-duelweave-gauntlets', name: 'Duelweave Gauntlets', slot: 'hands', classId: 'commander', tier: 1, rarity: 'common', stats: { strength: 1, ranged: 1, command: 1 }, purchaseGold: 430, equipMinRank: 2, desc: 'Threaded gauntlets for weapon grip and spell shaping.' },
+        { id: 'cmd-marchward-greaves', name: 'Marchward Greaves', slot: 'legs', classId: 'commander', tier: 1, rarity: 'common', stats: { morale: 1, command: 1, injuryMitigation: 0.01 }, purchaseGold: 460, equipMinRank: 2, desc: 'Greaves worn on every path through hostile territory.' },
+        { id: 'cmd-pathfinder-treads', name: 'Pathfinder Treads', slot: 'feet', classId: 'commander', tier: 1, rarity: 'common', stats: { morale: 1, injuryMitigation: 0.01, command: 1 }, purchaseGold: 380, equipMinRank: 2, desc: 'Boots that keep commanders sure-footed in melee or ritual march.' },
+        { id: 'cmd-bannercloak-accord', name: 'Bannercloak of Accord', slot: 'cloak', classId: 'commander', tier: 1, rarity: 'common', stats: { command: 1, guildXp: 0.02, morale: 1 }, purchaseGold: 560, equipMinRank: 2, desc: 'Guild-issue cloak signaling unity of physical and arcane companies.' },
+        { id: 'cmd-covenant-signet', name: 'Covenant Signet', slot: 'ring', classId: 'commander', tier: 1, rarity: 'common', stats: { command: 2 }, purchaseGold: 500, equipMinRank: 2, desc: 'Signet ring of shared command authority.' },
+        { id: 'cmd-twinpath-talisman', name: 'Twinpath Talisman', slot: 'amulet', classId: 'commander', tier: 1, rarity: 'common', stats: { morale: 2, injuryMitigation: 0.01 }, purchaseGold: 530, equipMinRank: 2, desc: 'Charm balancing resolve for blade and spell commanders.' },
+        { id: 'cmd-sovereign-edge', name: "Sovereign's Edge", slot: 'mainHand', classId: 'commander', tier: 2, rarity: 'uncommon', stats: { strength: 4, ranged: 4, morale: 2 }, purchaseGold: 4400, equipMinRank: 7, desc: 'Masterwork edge for veteran officers of either path.' },
+        { id: 'cmd-bastion-two-paths', name: 'Bastion of Two Paths', slot: 'offHand', classId: 'commander', tier: 2, rarity: 'uncommon', stats: { command: 2, ranged: 1, injuryMitigation: 0.04 }, purchaseGold: 3700, equipMinRank: 7, desc: 'Reinforced ward-shield carried by herald-ranked commanders.' },
+        { id: 'cmd-crownward-casque', name: 'Crownward Casque', slot: 'head', classId: 'commander', tier: 2, rarity: 'uncommon', stats: { strength: 2, ranged: 2, injuryMitigation: 0.02 }, purchaseGold: 2900, equipMinRank: 7, desc: 'Tempered casque with riveted ward lines.' },
+        { id: 'cmd-aegis-of-concord', name: 'Aegis of Concord', slot: 'chest', classId: 'commander', tier: 2, rarity: 'uncommon', stats: { strength: 3, ranged: 3, injuryMitigation: 0.05 }, purchaseGold: 4000, equipMinRank: 7, desc: 'Plate-lined harness for front-line duty on any path.' },
+        { id: 'cmd-warfinger-gauntlets', name: 'Warfinger Gauntlets', slot: 'hands', classId: 'commander', tier: 2, rarity: 'uncommon', stats: { strength: 2, ranged: 2, command: 2 }, purchaseGold: 2650, equipMinRank: 7, desc: 'Tempered gauntlets for weapon mastery and spell control.' },
+        { id: 'cmd-legionward-plates', name: 'Legionward Plates', slot: 'legs', classId: 'commander', tier: 2, rarity: 'uncommon', stats: { morale: 2, command: 2, injuryMitigation: 0.02 }, purchaseGold: 2550, equipMinRank: 7, desc: 'Veteran leg plates for long campaign marches.' },
+        { id: 'cmd-ironpath-sabatons', name: 'Ironpath Sabatons', slot: 'feet', classId: 'commander', tier: 2, rarity: 'uncommon', stats: { morale: 2, injuryMitigation: 0.02 }, purchaseGold: 2350, equipMinRank: 7, desc: 'Reinforced march boots with warded soles.' },
+        { id: 'cmd-marshal-pathcloak', name: "Marshal's Pathcloak", slot: 'cloak', classId: 'commander', tier: 2, rarity: 'uncommon', stats: { command: 2, guildXp: 0.04, morale: 2 }, purchaseGold: 3100, equipMinRank: 7, desc: 'Officer cloak threaded for guild recognition on both paths.' },
+        { id: 'cmd-oathkeeper-band', name: "Oathkeeper's Band", slot: 'ring', classId: 'commander', tier: 2, rarity: 'uncommon', stats: { command: 3 }, purchaseGold: 2800, equipMinRank: 7, desc: 'Ring of a proven dual-path commander.' },
+        { id: 'cmd-dualheart-amulet', name: 'Dualheart Amulet', slot: 'amulet', classId: 'commander', tier: 2, rarity: 'uncommon', stats: { morale: 3, injuryMitigation: 0.02, guildXp: 0.01 }, purchaseGold: 3000, equipMinRank: 7, desc: 'Battle charm carried by herald-ranked veterans.' },
+        { id: 'gear-horn-rallying-dawn', name: 'Horn of Rallying Dawn', slot: 'mainHand', classId: 'commander', tier: 2, rarity: 'rare', battleEffect: 'signal-horn', stats: { command: 2, morale: 1, strength: 1, ranged: 1 }, purchaseGold: 6800, equipMinRank: 7, desc: 'Battle horn that marks priority targets in PvP.' },
+        { id: 'gear-nullspike-harpoon', name: 'Nullspike Harpoon', slot: 'mainHand', classId: 'commander', tier: 3, rarity: 'rare', battleEffect: 'mage-slayer-harpoon', stats: { strength: 3, ranged: 2 }, purchaseGold: 14200, equipMinRank: 14, desc: 'Anti-magic harpoon—high cost, requires rank 14 to wield.' },
+        { id: 'gear-phoenix-interlock', name: 'Phoenix Interlock Plate', slot: 'chest', classId: 'commander', tier: 3, rarity: 'rare', battleEffect: 'linked-resilient-plating', stats: { injuryMitigation: 0.05, strength: 2, ranged: 2 }, purchaseGold: 15800, equipMinRank: 14, desc: 'Elite linked plate harness for nation assaults.' },
+        { id: 'gear-nullstone-palladium', name: 'Nullstone Palladium', slot: 'offHand', classId: 'commander', tier: 3, rarity: 'epic', battleEffect: 'null-stone-aegis', stats: { injuryMitigation: 0.04, morale: 2, command: 1 }, purchaseGold: 18500, equipMinRank: 18, desc: 'Null-stone ward shield. Equip at rank 18.' }
     ]);
 
     const ARMORY_UPGRADE_PATHS = Object.freeze({
-        battlemaster: Object.freeze({
-            'bm-patrol-blade': 'bm-veteran-blade',
-            'bm-training-shield': 'bm-veteran-shield',
-            'bm-patrol-helm': 'bm-veteran-helm',
-            'bm-leather-cuirass': 'bm-veteran-cuirass',
-            'bm-grip-gloves': 'bm-veteran-gloves',
-            'bm-march-greaves': 'bm-veteran-greaves',
-            'bm-road-boots': 'bm-veteran-boots',
-            'bm-guild-cloak': 'bm-veteran-cloak',
-            'bm-signet-ring': 'bm-veteran-ring',
-            'bm-command-amulet': 'bm-veteran-amulet'
-        }),
-        battlemage: Object.freeze({
-            'am-focus-staff': 'am-veteran-staff',
-            'am-arcane-tome': 'am-veteran-tome',
-            'am-circlet': 'am-veteran-circlet',
-            'am-robes': 'am-veteran-robes',
-            'am-weave-gloves': 'am-veteran-gloves',
-            'am-runed-leggings': 'am-veteran-leggings',
-            'am-soft-shoes': 'am-veteran-shoes',
-            'am-mystic-cloak': 'am-veteran-cloak',
-            'am-band-ring': 'am-veteran-ring',
-            'am-sigil-amulet': 'am-veteran-amulet'
+        commander: Object.freeze({
+            'cmd-ironheart-saber': 'cmd-sovereign-edge',
+            'cmd-warded-bulwark': 'cmd-bastion-two-paths',
+            'cmd-oathbound-visor': 'cmd-crownward-casque',
+            'cmd-concord-mail': 'cmd-aegis-of-concord',
+            'cmd-duelweave-gauntlets': 'cmd-warfinger-gauntlets',
+            'cmd-marchward-greaves': 'cmd-legionward-plates',
+            'cmd-pathfinder-treads': 'cmd-ironpath-sabatons',
+            'cmd-bannercloak-accord': 'cmd-marshal-pathcloak',
+            'cmd-covenant-signet': 'cmd-oathkeeper-band',
+            'cmd-twinpath-talisman': 'cmd-dualheart-amulet'
         })
+    });
+
+    const LEGACY_GEAR_ID_MAP = Object.freeze({
+        'bm-patrol-blade': 'cmd-ironheart-saber',
+        'am-focus-staff': 'cmd-ironheart-saber',
+        'bm-training-shield': 'cmd-warded-bulwark',
+        'am-arcane-tome': 'cmd-warded-bulwark',
+        'bm-patrol-helm': 'cmd-oathbound-visor',
+        'am-circlet': 'cmd-oathbound-visor',
+        'bm-leather-cuirass': 'cmd-concord-mail',
+        'am-robes': 'cmd-concord-mail',
+        'bm-grip-gloves': 'cmd-duelweave-gauntlets',
+        'am-weave-gloves': 'cmd-duelweave-gauntlets',
+        'bm-march-greaves': 'cmd-marchward-greaves',
+        'am-runed-leggings': 'cmd-marchward-greaves',
+        'bm-road-boots': 'cmd-pathfinder-treads',
+        'am-soft-shoes': 'cmd-pathfinder-treads',
+        'bm-guild-cloak': 'cmd-bannercloak-accord',
+        'am-mystic-cloak': 'cmd-bannercloak-accord',
+        'bm-signet-ring': 'cmd-covenant-signet',
+        'am-band-ring': 'cmd-covenant-signet',
+        'bm-command-amulet': 'cmd-twinpath-talisman',
+        'am-sigil-amulet': 'cmd-twinpath-talisman',
+        'bm-veteran-blade': 'cmd-sovereign-edge',
+        'am-veteran-staff': 'cmd-sovereign-edge',
+        'bm-veteran-shield': 'cmd-bastion-two-paths',
+        'am-veteran-tome': 'cmd-bastion-two-paths',
+        'bm-veteran-helm': 'cmd-crownward-casque',
+        'am-veteran-circlet': 'cmd-crownward-casque',
+        'bm-veteran-cuirass': 'cmd-aegis-of-concord',
+        'am-veteran-robes': 'cmd-aegis-of-concord',
+        'bm-veteran-gloves': 'cmd-warfinger-gauntlets',
+        'am-veteran-gloves': 'cmd-warfinger-gauntlets',
+        'bm-veteran-greaves': 'cmd-legionward-plates',
+        'am-veteran-leggings': 'cmd-legionward-plates',
+        'bm-veteran-boots': 'cmd-ironpath-sabatons',
+        'am-veteran-shoes': 'cmd-ironpath-sabatons',
+        'bm-veteran-cloak': 'cmd-marshal-pathcloak',
+        'am-veteran-cloak': 'cmd-marshal-pathcloak',
+        'bm-veteran-ring': 'cmd-oathkeeper-band',
+        'am-veteran-ring': 'cmd-oathkeeper-band',
+        'bm-veteran-amulet': 'cmd-dualheart-amulet',
+        'am-veteran-amulet': 'cmd-dualheart-amulet',
+        'gear-commanders-signal-horn': 'gear-horn-rallying-dawn',
+        'gear-mage-slayer-harpoon': 'gear-nullspike-harpoon',
+        'gear-linked-resilient-plating': 'gear-phoenix-interlock',
+        'gear-null-stone-aegis': 'gear-nullstone-palladium',
+        'tool-field-whetstone': 'tool-emberstone-whetstone',
+        'tool-marching-compass': 'tool-meridian-compass',
+        'tool-siege-pry': 'tool-siegebreaker-pry',
+        'tool-artificer-kit': 'tool-wardwright-kit'
+    });
+
+    const LEGACY_TOOL_ID_MAP = Object.freeze({
+        'tool-field-whetstone': 'tool-emberstone-whetstone',
+        'tool-marching-compass': 'tool-meridian-compass',
+        'tool-siege-pry': 'tool-siegebreaker-pry',
+        'tool-artificer-kit': 'tool-wardwright-kit'
     });
 
     const FORGE_EYEBROW_BY_TIER = Object.freeze({
@@ -173,6 +228,14 @@
     );
 
     let handlersBound = false;
+    let uiHandlersBound = false;
+    let gearLevelUpQueue = [];
+    let gearLevelUpShowing = false;
+    let gearLevelUpOverlayBound = false;
+    let activeForgeCategory = 'weapons';
+    let activeArmoryCategory = 'weapons';
+    let selectedForgeItemId = '';
+    let selectedArmorySlotId = '';
 
     function escapeHtml(value) {
         return String(value ?? '')
@@ -202,7 +265,81 @@
     }
 
     function createDefaultState() {
-        return { ownedGearIds: [], ownedToolIds: [], equipped: {} };
+        return { ownedGearIds: [], ownedToolIds: [], equipped: {}, gearProgress: {} };
+    }
+
+    function normalizeGearProgress(raw) {
+        const progress = {};
+        if (!raw || typeof raw !== 'object') return progress;
+        Object.entries(raw).forEach(([itemId, entry]) => {
+            const id = String(itemId || '').trim();
+            if (!id || !GEAR_BY_ID[id]) return;
+            const level = Math.max(1, Math.min(MAX_GEAR_LEVEL, Math.floor(Number(entry?.level) || 1)));
+            const xp = Math.max(0, Math.floor(Number(entry?.xp) || 0));
+            progress[id] = { level, xp };
+        });
+        return progress;
+    }
+
+    function mapLegacyGearId(itemId) {
+        const id = String(itemId || '').trim();
+        return LEGACY_GEAR_ID_MAP[id] || id;
+    }
+
+    function mapLegacyToolId(toolId) {
+        const id = String(toolId || '').trim();
+        return LEGACY_TOOL_ID_MAP[id] || id;
+    }
+
+    function migrateGearProgressEntry(state, fromId, toId) {
+        if (!fromId || !toId || fromId === toId) return;
+        if (!state.gearProgress || typeof state.gearProgress !== 'object') return;
+        const source = state.gearProgress[fromId];
+        if (!source) return;
+        const target = state.gearProgress[toId];
+        if (!target || (source.level || 1) > (target.level || 1)) {
+            state.gearProgress[toId] = { level: source.level, xp: source.xp };
+        }
+        delete state.gearProgress[fromId];
+    }
+
+    function migrateGearState(state) {
+        if (!state || typeof state !== 'object') return state;
+
+        state.ownedGearIds = [...new Set(
+            (state.ownedGearIds || [])
+                .map(mapLegacyGearId)
+                .filter((id) => GEAR_BY_ID[id])
+        )];
+
+        state.ownedToolIds = [...new Set(
+            (state.ownedToolIds || [])
+                .map(mapLegacyToolId)
+                .filter((id) => TOOL_BY_ID[id])
+        )];
+
+        const nextEquipped = {};
+        Object.entries(state.equipped || {}).forEach(([slot, itemId]) => {
+            const mapped = mapLegacyGearId(itemId);
+            if (mapped && GEAR_BY_ID[mapped]) {
+                migrateGearProgressEntry(state, String(itemId || '').trim(), mapped);
+                nextEquipped[slot] = mapped;
+            }
+        });
+        state.equipped = nextEquipped;
+
+        Object.keys(state.gearProgress || {}).forEach((itemId) => {
+            const mapped = mapLegacyGearId(itemId);
+            if (!GEAR_BY_ID[mapped]) {
+                delete state.gearProgress[itemId];
+                return;
+            }
+            if (mapped !== itemId) {
+                migrateGearProgressEntry(state, itemId, mapped);
+            }
+        });
+
+        return state;
     }
 
     function readState() {
@@ -210,15 +347,16 @@
             const raw = global.localStorage.getItem(STORAGE_KEY);
             if (!raw) return createDefaultState();
             const parsed = JSON.parse(raw);
-            return {
+            return migrateGearState({
                 ownedGearIds: Array.isArray(parsed?.ownedGearIds)
                     ? [...new Set(parsed.ownedGearIds.map((id) => String(id || '').trim()).filter(Boolean))]
                     : [],
                 ownedToolIds: Array.isArray(parsed?.ownedToolIds)
                     ? [...new Set(parsed.ownedToolIds.map((id) => String(id || '').trim()).filter(Boolean))]
                     : [],
-                equipped: parsed?.equipped && typeof parsed.equipped === 'object' ? { ...parsed.equipped } : {}
-            };
+                equipped: parsed?.equipped && typeof parsed.equipped === 'object' ? { ...parsed.equipped } : {},
+                gearProgress: normalizeGearProgress(parsed?.gearProgress)
+            });
         } catch (_error) {
             return createDefaultState();
         }
@@ -228,7 +366,8 @@
         const next = {
             ownedGearIds: [...new Set((state?.ownedGearIds || []).map((id) => String(id || '').trim()).filter(Boolean))],
             ownedToolIds: [...new Set((state?.ownedToolIds || []).map((id) => String(id || '').trim()).filter(Boolean))],
-            equipped: state?.equipped && typeof state.equipped === 'object' ? { ...state.equipped } : {}
+            equipped: state?.equipped && typeof state.equipped === 'object' ? { ...state.equipped } : {},
+            gearProgress: normalizeGearProgress(state?.gearProgress)
         };
         try {
             global.localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
@@ -237,6 +376,241 @@
         } catch (_error) {
             return false;
         }
+    }
+
+    function resolveXpForNextLevel(level) {
+        const currentLevel = Math.max(1, Math.floor(Number(level) || 1));
+        return 60 + currentLevel * 40;
+    }
+
+    function ensureGearProgress(state, itemId) {
+        const id = String(itemId || '').trim();
+        if (!id) return { level: 1, xp: 0 };
+        if (!state.gearProgress || typeof state.gearProgress !== 'object') {
+            state.gearProgress = {};
+        }
+        if (!state.gearProgress[id]) {
+            state.gearProgress[id] = { level: 1, xp: 0 };
+        }
+        const entry = state.gearProgress[id];
+        entry.level = Math.max(1, Math.min(MAX_GEAR_LEVEL, Math.floor(Number(entry.level) || 1)));
+        entry.xp = Math.max(0, Math.floor(Number(entry.xp) || 0));
+        return entry;
+    }
+
+    function resolveGearProgress(state, itemId) {
+        const id = String(itemId || '').trim();
+        if (!id) return { level: 1, xp: 0 };
+        const entry = state?.gearProgress?.[id];
+        if (!entry) return { level: 1, xp: 0 };
+        return {
+            level: Math.max(1, Math.min(MAX_GEAR_LEVEL, Math.floor(Number(entry.level) || 1))),
+            xp: Math.max(0, Math.floor(Number(entry.xp) || 0))
+        };
+    }
+
+    function formatGearLevelLabel(level) {
+        return `Lv. ${Math.max(1, Math.floor(Number(level) || 1))}`;
+    }
+
+    function formatGearXpProgress(state, itemId) {
+        const progress = resolveGearProgress(state, itemId);
+        if (progress.level >= MAX_GEAR_LEVEL) return 'Max level';
+        const needed = resolveXpForNextLevel(progress.level);
+        return `${progress.xp} / ${needed} XP`;
+    }
+
+    function resolveArmoryUpgradeMinLevel(slot) {
+        return BATTLE_XP_SLOTS.has(String(slot || '').trim()) ? ARMORY_UPGRADE_MIN_LEVEL : 1;
+    }
+
+    function applyGearXpGain(state, itemId, xpGain) {
+        const item = GEAR_BY_ID[String(itemId || '').trim()];
+        if (!item || !BATTLE_XP_SLOTS.has(item.slot)) return [];
+
+        const gain = Math.max(0, Math.floor(Number(xpGain) || 0));
+        if (!gain) return [];
+
+        const entry = ensureGearProgress(state, item.id);
+        if (entry.level >= MAX_GEAR_LEVEL) return [];
+
+        entry.xp += gain;
+        const levelUps = [];
+
+        while (entry.level < MAX_GEAR_LEVEL) {
+            const needed = resolveXpForNextLevel(entry.level);
+            if (entry.xp < needed) break;
+            entry.xp -= needed;
+            const fromLevel = entry.level;
+            entry.level += 1;
+            levelUps.push({
+                itemId: item.id,
+                itemName: item.name,
+                slot: item.slot,
+                fromLevel,
+                toLevel: entry.level,
+                mark: SLOT_MARKS[item.slot] || '•'
+            });
+        }
+
+        if (entry.level >= MAX_GEAR_LEVEL) {
+            entry.xp = 0;
+        }
+
+        return levelUps;
+    }
+
+    function transferGearProgress(state, fromItemId, toItemId) {
+        const fromId = String(fromItemId || '').trim();
+        const toId = String(toItemId || '').trim();
+        if (!fromId || !toId || fromId === toId) return;
+        if (!state.gearProgress || typeof state.gearProgress !== 'object') {
+            state.gearProgress = {};
+        }
+        const source = resolveGearProgress(state, fromId);
+        state.gearProgress[toId] = { level: source.level, xp: source.xp };
+    }
+
+    function resolveBattleXpGain(winner) {
+        const outcome = String(winner || 'npc').trim().toLowerCase();
+        if (outcome === 'commander' || outcome === 'player') return BATTLE_XP_BY_OUTCOME.commander;
+        if (outcome === 'draw' || outcome === 'tie') return BATTLE_XP_BY_OUTCOME.draw;
+        return BATTLE_XP_BY_OUTCOME.npc;
+    }
+
+    function grantBattleXpFromTraining(battleResult) {
+        const xpGain = resolveBattleXpGain(battleResult?.winner);
+        if (!xpGain) return [];
+
+        const state = readState();
+        const levelUps = [];
+        let xpApplied = false;
+
+        Object.entries(state.equipped || {}).forEach(([_slot, itemId]) => {
+            const item = GEAR_BY_ID[String(itemId || '').trim()];
+            if (!item || !BATTLE_XP_SLOTS.has(item.slot)) return;
+            xpApplied = true;
+            const itemLevelUps = applyGearXpGain(state, itemId, xpGain);
+            if (itemLevelUps.length) levelUps.push(...itemLevelUps);
+        });
+
+        if (!xpApplied) return [];
+
+        writeState(state);
+        global.dispatchEvent(new CustomEvent('royalarmies:age-gear-progress-updated', {
+            detail: { levelUps, xpGain }
+        }));
+
+        if (levelUps.length) {
+            enqueueGearLevelUps(levelUps);
+        }
+
+        return levelUps;
+    }
+
+    function ensureGearLevelUpOverlay() {
+        let overlay = global.document.getElementById('age-gear-level-up-overlay');
+        if (overlay) return overlay;
+
+        overlay = global.document.createElement('div');
+        overlay.id = 'age-gear-level-up-overlay';
+        overlay.className = 'age-rank-promotion-overlay age-gear-level-up-overlay';
+        overlay.hidden = true;
+        overlay.setAttribute('aria-hidden', 'true');
+        overlay.setAttribute('role', 'dialog');
+        overlay.setAttribute('aria-modal', 'true');
+        overlay.setAttribute('aria-labelledby', 'age-gear-level-up-title');
+        overlay.innerHTML = (
+            '<div class="age-rank-promotion-card age-gear-level-up-card">'
+            + '<p class="age-rank-promotion-eyebrow">Equipment Mastery</p>'
+            + '<h2 id="age-gear-level-up-title" class="age-rank-promotion-title">Level Up!</h2>'
+            + '<p id="age-gear-level-up-item" class="age-gear-level-up-item-line"></p>'
+            + '<p id="age-gear-level-up-levels" class="age-gear-level-up-levels-line"></p>'
+            + '<p id="age-gear-level-up-detail" class="age-rank-promotion-detail"></p>'
+            + '<div class="age-rank-promotion-actions">'
+            + '<button type="button" id="age-gear-level-up-dismiss" class="age-rank-promotion-btn age-rank-promotion-btn--continue">Continue</button>'
+            + '</div>'
+            + '</div>'
+        );
+        global.document.body.appendChild(overlay);
+        return overlay;
+    }
+
+    function bindGearLevelUpOverlayHandlers() {
+        if (gearLevelUpOverlayBound) return;
+        gearLevelUpOverlayBound = true;
+        global.document.addEventListener('click', (event) => {
+            if (event.target.closest('#age-gear-level-up-dismiss')) {
+                event.preventDefault();
+                dismissGearLevelUpPopup();
+            }
+        });
+        global.document.addEventListener('keydown', (event) => {
+            if (event.key !== 'Escape') return;
+            const overlay = global.document.getElementById('age-gear-level-up-overlay');
+            if (!overlay || overlay.hidden) return;
+            event.preventDefault();
+            dismissGearLevelUpPopup();
+        });
+    }
+
+    function dismissGearLevelUpPopup() {
+        const overlay = global.document.getElementById('age-gear-level-up-overlay');
+        if (!overlay) return;
+        overlay.hidden = true;
+        overlay.setAttribute('aria-hidden', 'true');
+        global.document.body.classList.remove('age-gear-level-up-open');
+        gearLevelUpShowing = false;
+        global.setTimeout(pumpGearLevelUpQueue, 120);
+    }
+
+    function showGearLevelUpPopup(levelUp) {
+        if (!levelUp) return;
+        bindGearLevelUpOverlayHandlers();
+        const overlay = ensureGearLevelUpOverlay();
+        const itemEl = global.document.getElementById('age-gear-level-up-item');
+        const levelsEl = global.document.getElementById('age-gear-level-up-levels');
+        const detailEl = global.document.getElementById('age-gear-level-up-detail');
+
+        if (itemEl) {
+            itemEl.textContent = `${levelUp.mark || '•'} ${levelUp.itemName || 'Equipment'}`;
+        }
+        if (levelsEl) {
+            levelsEl.innerHTML = `Reached <strong>${formatGearLevelLabel(levelUp.toLevel)}</strong> `
+                + `(from ${formatGearLevelLabel(levelUp.fromLevel)})`;
+        }
+        if (detailEl) {
+            const minLevel = resolveArmoryUpgradeMinLevel(levelUp.slot);
+            if (levelUp.toLevel >= minLevel && minLevel > 1) {
+                detailEl.textContent = 'This piece is now eligible for Armory upgrades.';
+            } else if (levelUp.toLevel < MAX_GEAR_LEVEL) {
+                const needed = resolveXpForNextLevel(levelUp.toLevel);
+                detailEl.textContent = `Keep fighting with this gear equipped to reach the next level (${needed} XP needed).`;
+            } else {
+                detailEl.textContent = 'This piece has reached maximum mastery.';
+            }
+        }
+
+        overlay.hidden = false;
+        overlay.setAttribute('aria-hidden', 'false');
+        global.document.body.classList.add('age-gear-level-up-open');
+        gearLevelUpShowing = true;
+        global.document.getElementById('age-gear-level-up-dismiss')?.focus();
+    }
+
+    function pumpGearLevelUpQueue() {
+        if (gearLevelUpShowing || !gearLevelUpQueue.length) return;
+        if (global.document.body.classList.contains('age-rank-promotion-open')) {
+            global.setTimeout(pumpGearLevelUpQueue, 350);
+            return;
+        }
+        showGearLevelUpPopup(gearLevelUpQueue.shift());
+    }
+
+    function enqueueGearLevelUps(levelUps) {
+        if (!Array.isArray(levelUps) || !levelUps.length) return;
+        gearLevelUpQueue.push(...levelUps);
+        pumpGearLevelUpQueue();
     }
 
     function syncPlayerGearSlots(equipped) {
@@ -332,15 +706,69 @@
             .join(' · ');
     }
 
-    function resolveForgeCatalog(classId) {
-        return GEAR_CATALOG.filter((item) => item.classId === classId);
+    function resolveCommanderClassLabel() {
+        const classId = resolveCommanderClassId();
+        return classId === 'battlemage' ? 'Battlemage' : 'Battlemaster';
     }
 
-    function resolveArmoryUpgrades(classId, equipped) {
-        const paths = ARMORY_UPGRADE_PATHS[classId] || {};
+    function syncGearShopCommanderStatus(prefix) {
+        const statusEl = global.document.getElementById(`${prefix}-commander-status`);
+        if (!statusEl) return;
+        const rankTitles = global.RoyalArmiesCommanderRankTitles;
+        const meta = rankTitles?.resolveSelfCommanderRankMeta?.() || {};
+        const rank = resolveCommanderRank();
+        const rankLabel = rankTitles?.formatCommanderRankLabel
+            ? rankTitles.formatCommanderRankLabel(rank, meta.path, meta.rankTitleGender)
+            : `Rank ${rank}`;
+        statusEl.textContent = `${resolveCommanderClassLabel()} · ${rankLabel}`;
+    }
+
+    function buildGearShopShellHtml(mode) {
+        const prefix = mode === 'armory' ? 'age-armory-shop' : 'age-gear-shop';
+        return (
+            `<div class="age-gear-shop-workspace age-barracks-workspace" data-gear-shop-mode="${escapeHtml(mode)}">`
+            + '<div class="age-barracks-body age-army-workspace-body">'
+            + '<div class="age-barracks-layout">'
+            + `<nav id="${prefix}-category-nav" class="age-barracks-category-nav age-army-workspace-panel" aria-label="Gear categories"></nav>`
+            + '<div class="age-barracks-main">'
+            + '<div class="age-barracks-main-head age-army-workspace-toolbar">'
+            + '<div>'
+            + `<h3 id="${prefix}-active-category-label" class="age-barracks-active-category-label age-army-workspace-panel-title">Weapons</h3>`
+            + `<p id="${prefix}-commander-status" class="age-barracks-commander-status" aria-live="polite"></p>`
+            + '</div>'
+            + '<p class="age-barracks-main-hint age-army-workspace-toolbar-note">Select gear for stats, mastery, and pricing.</p>'
+            + '</div>'
+            + '<div class="age-barracks-main-split age-army-workspace-split">'
+            + '<section class="age-barracks-unit-list-panel age-army-workspace-panel">'
+            + `<div id="${prefix}-item-grid" class="age-barracks-unit-grid age-gear-shop-item-grid" aria-live="polite"></div>`
+            + '</section>'
+            + `<aside id="${prefix}-item-detail" class="age-barracks-unit-detail age-army-workspace-panel" hidden aria-live="polite"></aside>`
+            + '</div>'
+            + '</div>'
+            + '</div>'
+            + '</div>'
+            + '<p id="age-gear-shop-status" class="age-defense-workspace-status" aria-live="polite" hidden></p>'
+            + '</div>'
+        );
+    }
+
+    function resolveForgeCatalog() {
+        return GEAR_CATALOG.filter((item) => item.classId === 'commander');
+    }
+
+    function resolveForgeCategoryItems(categoryId) {
+        const category = FORGE_CATEGORIES.find((entry) => entry.id === categoryId);
+        if (!category) return [];
+        if (category.isTools) return FORGE_TOOLS;
+        return resolveForgeCatalog().filter((item) => category.slots.includes(item.slot));
+    }
+
+    function resolveArmoryUpgrades(equipped, state) {
+        const paths = ARMORY_UPGRADE_PATHS.commander || {};
+        const gearState = state || readState();
         const upgrades = [];
         Object.entries(equipped || {}).forEach(([slot, itemId]) => {
-            const currentId = String(itemId || '').trim();
+            const currentId = mapLegacyGearId(itemId);
             const nextId = paths[currentId];
             if (!nextId) return;
             const current = GEAR_BY_ID[currentId];
@@ -352,10 +780,292 @@
                 current,
                 next,
                 upgradeGold: computeUpgradeGoldCost(current, next),
-                statGain: formatStatSummary(next.stats)
+                statGain: formatStatSummary(next.stats),
+                minUpgradeLevel: resolveArmoryUpgradeMinLevel(slot),
+                currentLevel: resolveGearProgress(gearState, currentId).level
             });
         });
         return upgrades;
+    }
+
+    function resolveArmoryCategoryUpgrades(categoryId, state) {
+        const category = ARMORY_CATEGORIES.find((entry) => entry.id === categoryId);
+        if (!category) return [];
+        const equipped = state?.equipped || readState().equipped;
+        return resolveArmoryUpgrades(equipped, state).filter((entry) => category.slots.includes(entry.slot));
+    }
+
+    function renderGearCategoryNav(categories, activeCategoryId, attrName, navId) {
+        const nav = global.document.getElementById(navId);
+        if (!nav) return;
+        nav.innerHTML = (
+            '<p class="age-army-workspace-panel-title age-barracks-category-nav-title">Equipment</p>'
+            + categories.map((category) => {
+                const isActive = category.id === activeCategoryId;
+                return (
+                    `<button type="button"`
+                    + ` class="age-barracks-category-btn${isActive ? ' is-active' : ''}"`
+                    + ` ${attrName}="${escapeHtml(category.id)}"`
+                    + ` aria-pressed="${isActive ? 'true' : 'false'}">`
+                    + `<span class="age-barracks-category-label">${escapeHtml(category.label)}</span>`
+                    + '</button>'
+                );
+            }).join('')
+        );
+    }
+
+    function formatItemCardMeta(item, state, rank, options = {}) {
+        const owned = options.isTool
+            ? resolveOwnedToolSet(state).has(item.id)
+            : resolveOwnedGearSet(state).has(item.id);
+        const equipped = !options.isTool && isEquipped(state, item.id);
+        const parts = [];
+        if (equipped) parts.push('Equipped');
+        else if (owned) parts.push('Owned');
+        else parts.push(`${formatGold(item.purchaseGold)} gold`);
+        if (!options.isTool && (owned || equipped) && BATTLE_XP_SLOTS.has(item.slot)) {
+            const progress = resolveGearProgress(state, item.id);
+            parts.push(formatGearLevelLabel(progress.level));
+        }
+        if (!owned && rank < item.equipMinRank) {
+            parts.push(`Equip ${resolveRankThresholdLabel(item.equipMinRank)}`);
+        }
+        return parts.join(' · ');
+    }
+
+    function renderForgeItemCard(item, state, rank, isTool) {
+        const isActive = selectedForgeItemId === item.id;
+        const owned = isTool ? resolveOwnedToolSet(state).has(item.id) : resolveOwnedGearSet(state).has(item.id);
+        const equipped = !isTool && isEquipped(state, item.id);
+        const mark = isTool ? (item.mark || '⚙') : (SLOT_MARKS[item.slot] || '•');
+        const meta = formatItemCardMeta(item, state, rank, { isTool });
+        const locked = !owned && rank < item.equipMinRank;
+        return (
+            `<button type="button"`
+            + ` class="age-barracks-unit-card age-gear-shop-item-card${isActive ? ' is-active' : ''}${locked && !owned ? ' is-locked' : ''}${equipped ? ' is-equipped' : ''}"`
+            + ` data-gear-shop-item="${escapeHtml(item.id)}"`
+            + ` aria-pressed="${isActive ? 'true' : 'false'}">`
+            + `<span class="age-gear-shop-item-mark" aria-hidden="true">${escapeHtml(mark)}</span>`
+            + '<span class="age-barracks-unit-card-body">'
+            + `<span class="age-barracks-unit-card-name">${escapeHtml(item.name)}</span>`
+            + `<span class="age-barracks-unit-card-meta">${escapeHtml(meta)}</span>`
+            + '</span>'
+            + '</button>'
+        );
+    }
+
+    function renderArmoryUpgradeCard(upgrade, rank) {
+        const isActive = selectedArmorySlotId === upgrade.slot;
+        const meetsLevel = upgrade.currentLevel >= upgrade.minUpgradeLevel;
+        const canUpgradeRank = rank >= upgrade.next.equipMinRank;
+        const locked = !meetsLevel || !canUpgradeRank;
+        const metaParts = [
+            `${formatGold(upgrade.upgradeGold)} gold`,
+            formatGearLevelLabel(upgrade.currentLevel),
+            locked ? 'Locked' : 'Ready'
+        ];
+        return (
+            `<button type="button"`
+            + ` class="age-barracks-unit-card age-gear-shop-item-card${isActive ? ' is-active' : ''}${locked ? ' is-locked' : ''}"`
+            + ` data-armory-slot="${escapeHtml(upgrade.slot)}"`
+            + ` aria-pressed="${isActive ? 'true' : 'false'}">`
+            + `<span class="age-gear-shop-item-mark" aria-hidden="true">${escapeHtml(SLOT_MARKS[upgrade.slot] || '⧉')}</span>`
+            + '<span class="age-barracks-unit-card-body">'
+            + `<span class="age-barracks-unit-card-name">${escapeHtml(upgrade.current.name)}</span>`
+            + `<span class="age-barracks-unit-card-meta">${escapeHtml(metaParts.join(' · '))}</span>`
+            + '</span>'
+            + '</button>'
+        );
+    }
+
+    function renderForgeActionPanel(item, state, rank, isTool) {
+        const owned = isTool ? resolveOwnedToolSet(state).has(item.id) : resolveOwnedGearSet(state).has(item.id);
+        const equipped = !isTool && isEquipped(state, item.id);
+        const canEquip = rank >= item.equipMinRank;
+        const gold = resolveGold();
+        const canAfford = gold >= item.purchaseGold;
+
+        if (equipped) {
+            return '<div class="age-gear-shop-detail-actions"><span class="age-defense-upgrade-status">Equipped</span></div>';
+        }
+        if (owned && !isTool) {
+            if (!canEquip) {
+                return `<div class="age-gear-shop-detail-actions"><span class="age-defense-upgrade-status">Equip at ${escapeHtml(resolveRankThresholdLabel(item.equipMinRank))}</span></div>`;
+            }
+            return (
+                '<div class="age-gear-shop-detail-actions">'
+                + `<button type="button" class="age-barracks-purchase-btn is-ready" data-forge-equip="${escapeHtml(item.id)}">Equip</button>`
+                + '</div>'
+            );
+        }
+        if (owned && isTool) {
+            return '<div class="age-gear-shop-detail-actions"><span class="age-defense-upgrade-status">Owned</span></div>';
+        }
+        const purchaseAttr = isTool ? 'data-forge-tool-purchase' : 'data-forge-purchase';
+        const disabled = canAfford ? '' : ' disabled';
+        return (
+            '<div class="age-gear-shop-detail-actions">'
+            + `<button type="button" class="age-barracks-purchase-btn${canAfford ? ' is-ready' : ''}" ${purchaseAttr}="${escapeHtml(item.id)}"${disabled}>`
+            + `Purchase — ${escapeHtml(formatGold(item.purchaseGold))}`
+            + '</button>'
+            + '</div>'
+        );
+    }
+
+    function renderForgeItemDetail(item, state, rank, isTool) {
+        const panel = global.document.getElementById('age-gear-shop-item-detail');
+        if (!panel) return;
+        if (!item) {
+            panel.hidden = true;
+            panel.innerHTML = '';
+            return;
+        }
+
+        const mark = isTool ? (item.mark || '⚙') : (SLOT_MARKS[item.slot] || '•');
+        const statsLine = formatStatSummary(item.stats);
+        const progress = !isTool && BATTLE_XP_SLOTS.has(item.slot)
+            ? resolveGearProgress(state, item.id)
+            : null;
+        const tierLine = !isTool && item.tier
+            ? `<p class="age-gear-shop-detail-tier">Tier ${escapeHtml(item.tier)} · ${escapeHtml(item.rarity || 'common')}</p>`
+            : '';
+        const masteryLine = progress
+            ? `<p class="age-gear-shop-detail-mastery">${escapeHtml(formatGearLevelLabel(progress.level))}`
+                + (progress.level < MAX_GEAR_LEVEL
+                    ? ` · ${escapeHtml(formatGearXpProgress(state, item.id))}`
+                    : ' · Max level')
+                + '</p>'
+            : '';
+
+        panel.hidden = false;
+        panel.innerHTML = (
+            '<div class="age-gear-shop-detail-inner">'
+            + '<div class="age-gear-shop-detail-header">'
+            + `<span class="age-gear-shop-detail-mark" aria-hidden="true">${escapeHtml(mark)}</span>`
+            + '<div class="age-gear-shop-detail-summary">'
+            + `<h3 class="age-barracks-detail-title">${escapeHtml(item.name)}</h3>`
+            + tierLine
+            + `<p class="age-gear-shop-detail-desc">${escapeHtml(item.desc)}</p>`
+            + (statsLine ? `<p class="age-gear-shop-detail-stats">${escapeHtml(statsLine)}</p>` : '')
+            + masteryLine
+            + '</div>'
+            + '</div>'
+            + renderForgeActionPanel(item, state, rank, isTool)
+            + '</div>'
+        );
+    }
+
+    function renderArmoryItemDetail(upgrade, rank) {
+        const panel = global.document.getElementById('age-armory-shop-item-detail');
+        if (!panel) return;
+        if (!upgrade) {
+            panel.hidden = true;
+            panel.innerHTML = '';
+            return;
+        }
+
+        const meetsLevel = upgrade.currentLevel >= upgrade.minUpgradeLevel;
+        const canUpgradeRank = rank >= upgrade.next.equipMinRank;
+        const gold = resolveGold();
+        const canAfford = gold >= upgrade.upgradeGold;
+        const canUpgrade = meetsLevel && canUpgradeRank;
+        const gate = !meetsLevel
+            ? `Requires ${formatGearLevelLabel(upgrade.minUpgradeLevel)} (currently ${formatGearLevelLabel(upgrade.currentLevel)})`
+            : (!canUpgradeRank ? `Requires ${resolveRankThresholdLabel(upgrade.next.equipMinRank)}` : '');
+
+        panel.hidden = false;
+        panel.innerHTML = (
+            '<div class="age-gear-shop-detail-inner">'
+            + '<div class="age-gear-shop-detail-header">'
+            + `<span class="age-gear-shop-detail-mark" aria-hidden="true">${escapeHtml(SLOT_MARKS[upgrade.slot] || '⧉')}</span>`
+            + '<div class="age-gear-shop-detail-summary">'
+            + `<h3 class="age-barracks-detail-title">${escapeHtml(upgrade.current.name)} → ${escapeHtml(upgrade.next.name)}</h3>`
+            + `<p class="age-gear-shop-detail-desc">Upgrade equipped gear for improved battle stats. Fight in the Adventurers Guild to raise mastery before upgrading weapons and armor.</p>`
+            + `<p class="age-gear-shop-detail-stats">Gain: ${escapeHtml(upgrade.statGain || 'Improved battle stats')}</p>`
+            + `<p class="age-gear-shop-detail-mastery">${escapeHtml(formatGearLevelLabel(upgrade.currentLevel))} · ${escapeHtml(formatGearXpProgress(readState(), upgrade.current.id))}</p>`
+            + (gate ? `<p class="age-gear-shop-detail-lock">${escapeHtml(gate)}</p>` : '')
+            + '</div>'
+            + '</div>'
+            + (
+                canUpgrade
+                    ? (
+                        '<div class="age-gear-shop-detail-actions">'
+                        + `<button type="button" class="age-barracks-purchase-btn${canAfford ? ' is-ready' : ''}" data-armory-upgrade="${escapeHtml(upgrade.slot)}"${canAfford ? '' : ' disabled'}>`
+                        + `Upgrade — ${escapeHtml(formatGold(upgrade.upgradeGold))}`
+                        + '</button>'
+                        + '</div>'
+                    )
+                    : `<div class="age-gear-shop-detail-actions"><span class="age-defense-upgrade-status">${escapeHtml(gate || 'Locked')}</span></div>`
+            )
+            + '</div>'
+        );
+    }
+
+    function refreshForgeShopUi() {
+        const grid = global.document.getElementById('age-gear-shop-item-grid');
+        if (!grid) return;
+
+        const state = readState();
+        const rank = resolveCommanderRank();
+        const category = FORGE_CATEGORIES.find((entry) => entry.id === activeForgeCategory) || FORGE_CATEGORIES[0];
+        const isTools = Boolean(category.isTools);
+        const items = resolveForgeCategoryItems(activeForgeCategory);
+
+        syncGearShopCommanderStatus('age-gear-shop');
+        const labelEl = global.document.getElementById('age-gear-shop-active-category-label');
+        if (labelEl) labelEl.textContent = category.label;
+        renderGearCategoryNav(FORGE_CATEGORIES, activeForgeCategory, 'data-gear-shop-category', 'age-gear-shop-category-nav');
+
+        if (!items.length) {
+            grid.innerHTML = '<p class="age-barracks-empty">No gear listed in this category yet.</p>';
+            renderForgeItemDetail(null);
+            return;
+        }
+
+        if (!selectedForgeItemId || !items.some((item) => item.id === selectedForgeItemId)) {
+            selectedForgeItemId = items[0].id;
+        }
+
+        grid.innerHTML = items.map((item) => renderForgeItemCard(item, state, rank, isTools)).join('');
+        const selected = items.find((item) => item.id === selectedForgeItemId);
+        renderForgeItemDetail(selected, state, rank, isTools);
+    }
+
+    function refreshArmoryShopUi() {
+        const grid = global.document.getElementById('age-armory-shop-item-grid');
+        if (!grid) return;
+
+        const state = readState();
+        const rank = resolveCommanderRank();
+        const category = ARMORY_CATEGORIES.find((entry) => entry.id === activeArmoryCategory) || ARMORY_CATEGORIES[0];
+        const upgrades = resolveArmoryCategoryUpgrades(activeArmoryCategory, state);
+
+        syncGearShopCommanderStatus('age-armory-shop');
+        const labelEl = global.document.getElementById('age-armory-shop-active-category-label');
+        if (labelEl) labelEl.textContent = category.label;
+        renderGearCategoryNav(ARMORY_CATEGORIES, activeArmoryCategory, 'data-armory-category', 'age-armory-shop-category-nav');
+
+        if (!upgrades.length) {
+            grid.innerHTML = '<p class="age-barracks-empty">No upgrades ready in this category. Equip forge gear, then return once it reaches the required mastery level.</p>';
+            renderArmoryItemDetail(null);
+            return;
+        }
+
+        if (!selectedArmorySlotId || !upgrades.some((entry) => entry.slot === selectedArmorySlotId)) {
+            selectedArmorySlotId = upgrades[0].slot;
+        }
+
+        grid.innerHTML = upgrades.map((entry) => renderArmoryUpgradeCard(entry, rank)).join('');
+        const selected = upgrades.find((entry) => entry.slot === selectedArmorySlotId);
+        renderArmoryItemDetail(selected, rank);
+    }
+
+    function renderForgeBody() {
+        return buildGearShopShellHtml('forge');
+    }
+
+    function renderArmoryBody() {
+        return buildGearShopShellHtml('armory');
     }
 
     function resolveOwnedGearSet(state) {
@@ -369,152 +1079,6 @@
     function isEquipped(state, itemId) {
         const id = String(itemId || '').trim();
         return Object.values(state?.equipped || {}).some((value) => String(value || '').trim() === id);
-    }
-
-    function renderForgeRow(item, state, rank) {
-        const owned = resolveOwnedGearSet(state).has(item.id);
-        const equipped = isEquipped(state, item.id);
-        const canEquip = rank >= item.equipMinRank;
-        const gold = resolveGold();
-        const canAfford = gold >= item.purchaseGold;
-        const statsLine = formatStatSummary(item.stats);
-        const equipGate = canEquip
-            ? ''
-            : `Equip at ${resolveRankThresholdLabel(item.equipMinRank)}`;
-
-        let actionHtml = '';
-        if (equipped) {
-            actionHtml = '<span class="age-defense-upgrade-status">Equipped</span>';
-        } else if (owned) {
-            actionHtml = canEquip
-                ? `<button type="button" class="age-defense-upgrade-queue-btn" data-forge-equip="${escapeHtml(item.id)}">Equip</button>`
-                : `<span class="age-defense-upgrade-status">${escapeHtml(equipGate)}</span>`;
-        } else {
-            actionHtml = `<button type="button" class="age-defense-upgrade-queue-btn" data-forge-purchase="${escapeHtml(item.id)}"${canAfford ? '' : ' disabled'}>Purchase</button>`;
-        }
-
-        return (
-            `<li class="age-defense-upgrade-row${owned ? ' is-queued' : ''}${!canAfford && !owned ? ' is-slot-taken' : ''}">`
-            + `<span class="age-defense-upgrade-mark" aria-hidden="true">${escapeHtml(SLOT_MARKS[item.slot] || item.mark || '•')}</span>`
-            + '<div class="age-defense-upgrade-main">'
-            + `<span class="age-defense-upgrade-title">${escapeHtml(item.name)}</span>`
-            + `<span class="age-defense-upgrade-desc">${escapeHtml(item.desc)}${statsLine ? ` · ${escapeHtml(statsLine)}` : ''}</span>`
-            + (equipGate && !owned ? `<span class="age-gear-shop-equip-gate">${escapeHtml(equipGate)}</span>` : '')
-            + '</div>'
-            + `<span class="age-defense-upgrade-cost">${escapeHtml(formatGold(item.purchaseGold))} gold</span>`
-            + actionHtml
-            + '</li>'
-        );
-    }
-
-    function renderToolRow(tool, state, rank) {
-        const owned = resolveOwnedToolSet(state).has(tool.id);
-        const canUse = rank >= tool.equipMinRank;
-        const gold = resolveGold();
-        const canAfford = gold >= tool.purchaseGold;
-        const gate = canUse ? '' : `Usable at ${resolveRankThresholdLabel(tool.equipMinRank)}`;
-
-        const actionHtml = owned
-            ? `<span class="age-defense-upgrade-status">${canUse ? 'Owned' : escapeHtml(gate)}</span>`
-            : `<button type="button" class="age-defense-upgrade-queue-btn" data-forge-tool-purchase="${escapeHtml(tool.id)}"${canAfford ? '' : ' disabled'}>Purchase</button>`;
-
-        return (
-            `<li class="age-defense-upgrade-row${owned ? ' is-queued' : ''}">`
-            + `<span class="age-defense-upgrade-mark" aria-hidden="true">${escapeHtml(tool.mark || '⚙')}</span>`
-            + '<div class="age-defense-upgrade-main">'
-            + `<span class="age-defense-upgrade-title">${escapeHtml(tool.name)}</span>`
-            + `<span class="age-defense-upgrade-desc">${escapeHtml(tool.desc)}</span>`
-            + (gate && !owned ? `<span class="age-gear-shop-equip-gate">${escapeHtml(gate)}</span>` : '')
-            + '</div>'
-            + `<span class="age-defense-upgrade-cost">${escapeHtml(formatGold(tool.purchaseGold))} gold</span>`
-            + actionHtml
-            + '</li>'
-        );
-    }
-
-    function renderArmoryRow(upgrade, rank) {
-        const canUpgrade = rank >= upgrade.next.equipMinRank;
-        const gold = resolveGold();
-        const canAfford = gold >= upgrade.upgradeGold;
-        const gate = canUpgrade
-            ? ''
-            : `Requires ${resolveRankThresholdLabel(upgrade.next.equipMinRank)}`;
-
-        const actionHtml = canUpgrade
-            ? `<button type="button" class="age-defense-upgrade-queue-btn" data-armory-upgrade="${escapeHtml(upgrade.slot)}"${canAfford ? '' : ' disabled'}>Upgrade</button>`
-            : `<span class="age-defense-upgrade-status">${escapeHtml(gate)}</span>`;
-
-        return (
-            `<li class="age-defense-upgrade-row">`
-            + `<span class="age-defense-upgrade-mark" aria-hidden="true">${escapeHtml(SLOT_MARKS[upgrade.slot] || '⧉')}</span>`
-            + '<div class="age-defense-upgrade-main">'
-            + `<span class="age-defense-upgrade-title">${escapeHtml(upgrade.current.name)} → ${escapeHtml(upgrade.next.name)}</span>`
-            + `<span class="age-defense-upgrade-desc">Gain: ${escapeHtml(upgrade.statGain || 'Improved battle stats')}</span>`
-            + '</div>'
-            + `<span class="age-defense-upgrade-cost">${escapeHtml(formatGold(upgrade.upgradeGold))} gold</span>`
-            + actionHtml
-            + '</li>'
-        );
-    }
-
-    function renderForgeBody(options = {}) {
-        const classId = resolveCommanderClassId();
-        const rank = resolveCommanderRank();
-        const state = readState();
-        const gear = resolveForgeCatalog(classId);
-        const weapons = gear.filter((item) => item.slot === 'mainHand' || item.slot === 'offHand');
-        const armor = gear.filter((item) => ['head', 'chest', 'hands', 'legs', 'feet', 'cloak'].includes(item.slot));
-        const accessories = gear.filter((item) => item.slot === 'ring' || item.slot === 'amulet');
-        const tierNote = 'High-tier wares can be purchased early, but equipping them requires the listed commander rank.';
-
-        const section = (title, items) => (
-            '<section class="age-defense-upgrades" aria-label="' + escapeHtml(title) + '">'
-            + '<h3 class="age-defense-upgrades-title">' + escapeHtml(title) + '</h3>'
-            + '<ul class="age-defense-upgrade-list">'
-            + items.map((item) => renderForgeRow(item, state, rank)).join('')
-            + '</ul>'
-            + '</section>'
-        );
-
-        return (
-            '<div class="age-defense-workspace age-gear-shop-workspace">'
-            + '<p class="age-army-workspace-toolbar-note">Purchase weapons, armor, accessories, and field tools with commander gold. '
-            + escapeHtml(tierNote) + '</p>'
-            + section('Weapons', weapons)
-            + section('Armor', armor)
-            + section('Accessories', accessories)
-            + '<section class="age-defense-upgrades" aria-label="Field tools">'
-            + '<h3 class="age-defense-upgrades-title">Tools &amp; Kits</h3>'
-            + '<ul class="age-defense-upgrade-list">'
-            + FORGE_TOOLS.map((tool) => renderToolRow(tool, state, rank)).join('')
-            + '</ul>'
-            + '</section>'
-            + '<p id="age-gear-shop-status" class="age-defense-workspace-status" aria-live="polite" hidden></p>'
-            + '</div>'
-        );
-    }
-
-    function renderArmoryBody() {
-        const classId = resolveCommanderClassId();
-        const rank = resolveCommanderRank();
-        const state = readState();
-        const upgrades = resolveArmoryUpgrades(classId, state.equipped);
-
-        const listHtml = upgrades.length
-            ? upgrades.map((entry) => renderArmoryRow(entry, rank)).join('')
-            : '<li class="age-defense-upgrade-row"><div class="age-defense-upgrade-main"><span class="age-defense-upgrade-title">No upgrades ready</span>'
-                + '<span class="age-defense-upgrade-desc">Equip forge gear in a slot, then return here to upgrade it for improved stats.</span></div></li>';
-
-        return (
-            '<div class="age-defense-workspace age-gear-shop-workspace">'
-            + '<p class="age-army-workspace-toolbar-note">Upgrade equipped weapons and armor with gold. Upgrade costs scale with the stat gains you receive.</p>'
-            + '<section class="age-defense-upgrades" aria-label="Armory upgrades">'
-            + '<h3 class="age-defense-upgrades-title">Equipment Upgrades</h3>'
-            + '<ul class="age-defense-upgrade-list">' + listHtml + '</ul>'
-            + '</section>'
-            + '<p id="age-gear-shop-status" class="age-defense-workspace-status" aria-live="polite" hidden></p>'
-            + '</div>'
-        );
     }
 
     function setShopStatus(message, isError) {
@@ -536,9 +1100,17 @@
         const bodyEl = global.document.getElementById('age-settlement-venue-body');
         if (!bodyEl) return;
         if (activeVenueId === 'blacksmith') {
-            bodyEl.innerHTML = renderForgeBody();
+            bodyEl.classList.add('is-gear-shop-layout');
+            if (!bodyEl.querySelector('[data-gear-shop-mode="forge"]')) {
+                bodyEl.innerHTML = renderForgeBody();
+            }
+            refreshForgeShopUi();
         } else if (activeVenueId === 'armory') {
-            bodyEl.innerHTML = renderArmoryBody();
+            bodyEl.classList.add('is-gear-shop-layout');
+            if (!bodyEl.querySelector('[data-gear-shop-mode="armory"]')) {
+                bodyEl.innerHTML = renderArmoryBody();
+            }
+            refreshArmoryShopUi();
         }
     }
 
@@ -559,6 +1131,7 @@
             return false;
         }
         state.ownedGearIds.push(item.id);
+        ensureGearProgress(state, item.id);
         writeState(state);
         setShopStatus(`${item.name} purchased. ${item.equipMinRank > resolveCommanderRank()
             ? `Equip at ${resolveRankThresholdLabel(item.equipMinRank)}.`
@@ -598,6 +1171,7 @@
             return false;
         }
         state.equipped[item.slot] = item.id;
+        ensureGearProgress(state, item.id);
         writeState(state);
         setShopStatus(`${item.name} equipped.`);
         return true;
@@ -605,10 +1179,9 @@
 
     function upgradeArmorySlot(slotId) {
         const slot = String(slotId || '').trim();
-        const classId = resolveCommanderClassId();
         const state = readState();
-        const currentId = String(state.equipped?.[slot] || '').trim();
-        const paths = ARMORY_UPGRADE_PATHS[classId] || {};
+        const currentId = mapLegacyGearId(state.equipped?.[slot]);
+        const paths = ARMORY_UPGRADE_PATHS.commander || {};
         const nextId = paths[currentId];
         const current = GEAR_BY_ID[currentId];
         const next = GEAR_BY_ID[nextId];
@@ -621,6 +1194,12 @@
             setShopStatus(`Upgrade requires ${resolveRankThresholdLabel(next.equipMinRank)}.`, true);
             return false;
         }
+        const progress = resolveGearProgress(state, currentId);
+        const minLevel = resolveArmoryUpgradeMinLevel(slot);
+        if (progress.level < minLevel) {
+            setShopStatus(`${current.name} must reach ${formatGearLevelLabel(minLevel)} before upgrading (currently ${formatGearLevelLabel(progress.level)}).`, true);
+            return false;
+        }
         const cost = computeUpgradeGoldCost(current, next);
         if (resolveGold() < cost || !spendGold(cost, 'armory-upgrade')) {
             setShopStatus('Not enough gold for this upgrade.', true);
@@ -629,6 +1208,7 @@
         if (!resolveOwnedGearSet(state).has(next.id)) {
             state.ownedGearIds.push(next.id);
         }
+        transferGearProgress(state, currentId, next.id);
         state.equipped[slot] = next.id;
         writeState(state);
         setShopStatus(`${current.name} upgraded to ${next.name} for ${formatGold(cost)} gold.`);
@@ -651,8 +1231,51 @@
         return ARMORY_EYEBROW_BY_TIER[tier] || ARMORY_EYEBROW_BY_TIER.city;
     }
 
+    function onGearShopUiClick(event, activeVenueId) {
+        if (activeVenueId === 'blacksmith') {
+            const categoryBtn = event.target.closest('[data-gear-shop-category]');
+            if (categoryBtn) {
+                event.preventDefault();
+                activeForgeCategory = categoryBtn.getAttribute('data-gear-shop-category') || 'weapons';
+                selectedForgeItemId = '';
+                refreshForgeShopUi();
+                return true;
+            }
+
+            const itemBtn = event.target.closest('[data-gear-shop-item]');
+            if (itemBtn) {
+                event.preventDefault();
+                selectedForgeItemId = itemBtn.getAttribute('data-gear-shop-item') || '';
+                refreshForgeShopUi();
+                return true;
+            }
+        }
+
+        if (activeVenueId === 'armory') {
+            const categoryBtn = event.target.closest('[data-armory-category]');
+            if (categoryBtn) {
+                event.preventDefault();
+                activeArmoryCategory = categoryBtn.getAttribute('data-armory-category') || 'weapons';
+                selectedArmorySlotId = '';
+                refreshArmoryShopUi();
+                return true;
+            }
+
+            const slotBtn = event.target.closest('[data-armory-slot]');
+            if (slotBtn) {
+                event.preventDefault();
+                selectedArmorySlotId = slotBtn.getAttribute('data-armory-slot') || '';
+                refreshArmoryShopUi();
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     function onGearShopClick(event, activeVenueId) {
         if (activeVenueId !== 'blacksmith' && activeVenueId !== 'armory') return false;
+        if (onGearShopUiClick(event, activeVenueId)) return true;
 
         const purchaseBtn = event.target.closest('[data-forge-purchase]');
         if (purchaseBtn && !purchaseBtn.disabled) {
@@ -712,12 +1335,22 @@
                 refreshActiveBody(venueId);
             }
         });
+        global.addEventListener('royalarmies:age-gear-progress-updated', () => {
+            const workspace = global.document.getElementById('age-settlement-venue-workspace');
+            if (!workspace || workspace.hidden) return;
+            const venueId = global.RoyalArmiesSettlementVenueWorkspaces?.getActiveVenueId?.();
+            if (venueId === 'blacksmith' || venueId === 'armory') {
+                refreshActiveBody(venueId);
+            }
+        });
     }
 
     bindHandlers();
 
     global.RoyalArmiesAgeGearShop = Object.freeze({
         EQUIPMENT_MIN_RANK,
+        ARMORY_UPGRADE_MIN_LEVEL,
+        MAX_GEAR_LEVEL,
         renderForgeBody,
         renderArmoryBody,
         onGearShopClick,
@@ -726,6 +1359,9 @@
         resolveArmoryEyebrow,
         refreshActiveBody,
         readState,
-        writeState
+        writeState,
+        grantBattleXpFromTraining,
+        resolveGearProgress,
+        formatGearLevelLabel
     });
 })(window);

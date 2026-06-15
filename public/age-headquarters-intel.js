@@ -227,14 +227,15 @@
         const allyOptions = lastAllies
             .map((row) => `<option value="${escapeHtml(row.nationId)}">${escapeHtml(row.name)}</option>`)
             .join('');
+        const canManageIntel = Boolean(global.RoyalArmiesAgeHeadquarters?.hasCouncilAccess?.());
 
         listEl.innerHTML = rows.map((log) => {
             const outdated = Boolean(log.outdated);
             const stamp = outdated ? '<span class="age-hq-spy-log-btn__stamp" aria-hidden="true">OUTDATED</span>' : '';
-            const reviewBtn = outdated
+            const reviewBtn = outdated || !canManageIntel
                 ? ''
                 : `<button type="button" class="age-hq-spy-log-mini-btn" data-hq-spy-review="${escapeHtml(log.id)}">Review</button>`;
-            const forwardSelect = outdated || !allyOptions
+            const forwardSelect = outdated || !allyOptions || !canManageIntel
                 ? ''
                 : (
                     `<select class="age-hq-spy-forward-select" data-hq-spy-forward-select="${escapeHtml(log.id)}" aria-label="Forward to ally">`
@@ -242,11 +243,14 @@
                     + allyOptions
                     + '</select>'
                 );
+            const deleteBtn = canManageIntel
+                ? `<button type="button" class="age-hq-spy-log-mini-btn" data-hq-spy-delete="${escapeHtml(log.id)}">Delete</button>`
+                : '';
             const selected = log.id === activeSpyLogId;
             return (
                 `<div class="age-hq-spy-log-btn${outdated ? ' is-outdated' : ''}${selected ? ' is-selected' : ''}" data-hq-spy-id="${escapeHtml(log.id)}">`
                 + `<span class="age-hq-spy-log-btn__copy"><strong>${escapeHtml(log.subjectUsername)}</strong> · ${escapeHtml(log.subjectNationName)} · Power ${formatNumber(log.snapshotPower)}</span>`
-                + `<span class="age-hq-spy-log-btn__actions">${reviewBtn}<button type="button" class="age-hq-spy-log-mini-btn" data-hq-spy-delete="${escapeHtml(log.id)}">Delete</button>${forwardSelect}</span>`
+                + `<span class="age-hq-spy-log-btn__actions">${reviewBtn}${deleteBtn}${forwardSelect}</span>`
                 + stamp
                 + `</div>`
             );
@@ -292,6 +296,9 @@
 
         renderThreatMatrix(workspace?.threatMatrix);
         renderSpyLogs(workspace?.spyLogs);
+        if (!global.RoyalArmiesAgeHeadquarters?.hasCouncilAccess?.()) {
+            closeSpyDetail({ skipRender: true });
+        }
         renderBounties(workspace?.hqBounties);
     }
 

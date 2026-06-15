@@ -401,6 +401,7 @@
         refreshDrawerInfiltrateButton(city);
         refreshDrawerScoutIntel(city, borderHints);
         void refreshDrawerAssaultRisk(city, borderHints);
+        restoreDrawerCityHighlight();
     }
 
     function isMaskedCity(city) {
@@ -1337,6 +1338,13 @@
         ).forEach(callback);
     }
 
+    function nodeHasCitySelectionHighlight(node) {
+        return node.classList.contains('is-selected-city')
+            || node.classList.contains('is-restricted-selected-city')
+            || node.classList.contains('is-bordering-neighbor')
+            || node.classList.contains('is-restricted-neighbor');
+    }
+
     function clearCitySearchHighlight(cityId) {
         if (!els.highlightLayer) return;
         const selector = cityId
@@ -1347,10 +1355,16 @@
             : '.age-world-city-highlight-path.is-search-center-flash, .age-world-city-highlight-boost.is-search-center-flash';
         els.highlightLayer.querySelectorAll(selector).forEach((node) => {
             node.classList.remove('is-search-center-flash');
-            CITY_HIGHLIGHT_INTERACTION_CLASSES.forEach((className) => {
-                node.classList.remove(className);
-            });
+            if (!nodeHasCitySelectionHighlight(node)) {
+                node.classList.remove('is-active');
+            }
         });
+    }
+
+    function restoreDrawerCityHighlight() {
+        if (isCityDrawerOpen() && selectedCityId) {
+            showCitySelectionHighlight(selectedCityId);
+        }
     }
 
     function flashCitySearchHighlight(cityId, durationMs = 3200) {
@@ -2068,7 +2082,10 @@
         if (anchorCityId) {
             showCityHighlight(anchorCityId);
         } else if (!armedCityId) {
-            clearCityHighlight();
+            restoreDrawerCityHighlight();
+            if (!isCityDrawerOpen()) {
+                clearCityHighlight();
+            }
         }
     }
 
@@ -3168,6 +3185,7 @@
 
     function showCityHighlight(cityId) {
         if (!cityId || !els.highlightLayer) return;
+        if (isCityDrawerOpen()) return;
         clearCityHighlight();
         hoveredCityId = cityId;
         forEachCityHighlightNode(cityId, (node) => {
@@ -5713,19 +5731,10 @@
                 return;
             }
 
-            const wasAlreadySelected = selectedCityId === cityId && isCityDrawerOpen();
             toggleCityDrawerFromClick(cityId, event.clientX, event.clientY);
-            if (!wasAlreadySelected) {
-                const city = cityById.get(cityId);
-                if (city) maybeAutoTravelToBorderCity(city);
-            }
         };
 
         els.labelsCity.addEventListener('click', openFromLabel);
-        els.labelsCity.addEventListener('pointerup', (event) => {
-            if (event.button !== 0) return;
-            openFromLabel(event);
-        });
     }
 
     function bindMapEvents() {

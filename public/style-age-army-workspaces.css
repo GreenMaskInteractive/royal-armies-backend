@@ -848,8 +848,145 @@
     color: rgba(255, 198, 120, 0.88);
 }
 
+.age-gear-shop-progress-line {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    margin-top: 5px;
+}
+
+.age-gear-shop-level-tag {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 8px;
+    border: 1px solid rgba(255, 210, 120, 0.35);
+    border-radius: 3px;
+    font-size: 0.68rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: rgba(255, 224, 168, 0.95);
+    background: rgba(36, 28, 14, 0.72);
+}
+
+.age-gear-shop-xp-tag {
+    font-size: 0.7rem;
+    letter-spacing: 0.03em;
+    color: rgba(196, 186, 160, 0.86);
+}
+
 .age-gear-shop-workspace .age-defense-upgrades + .age-defense-upgrades {
     margin-top: 18px;
+}
+
+/* Blacksmith / Armory — barracks-style split layout inside settlement venue */
+.age-settlement-venue-workspace .age-settlement-venue-body.is-gear-shop-layout {
+    padding: 0;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.age-settlement-venue-workspace .age-gear-shop-workspace.age-barracks-workspace {
+    flex: 1 1 auto;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.age-settlement-venue-workspace .age-gear-shop-workspace .age-barracks-body {
+    flex: 1 1 auto;
+    min-height: 0;
+}
+
+.age-settlement-venue-workspace .age-gear-shop-workspace .age-barracks-layout {
+    min-height: 420px;
+}
+
+.age-settlement-venue-workspace .age-gear-shop-item-card {
+    grid-template-columns: 52px minmax(0, 1fr);
+    text-align: left;
+    width: 100%;
+    cursor: pointer;
+}
+
+.age-settlement-venue-workspace .age-gear-shop-item-card.is-equipped {
+    border-color: rgba(255, 217, 120, 0.42);
+}
+
+.age-settlement-venue-workspace .age-gear-shop-item-mark {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 52px;
+    height: 52px;
+    border-radius: 8px;
+    border: 1px solid rgba(120, 188, 255, 0.28);
+    background:
+        radial-gradient(circle at 50% 18%, rgba(120, 188, 255, 0.1) 0%, transparent 58%),
+        rgba(0, 0, 0, 0.42);
+    font-size: 1.35rem;
+    color: #b8dcff;
+}
+
+.age-settlement-venue-workspace .age-gear-shop-detail-inner {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.age-settlement-venue-workspace .age-gear-shop-detail-header {
+    display: grid;
+    grid-template-columns: 64px minmax(0, 1fr);
+    gap: 14px;
+    align-items: start;
+}
+
+.age-settlement-venue-workspace .age-gear-shop-detail-mark {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 64px;
+    height: 64px;
+    border-radius: 10px;
+    border: 1px solid rgba(255, 217, 120, 0.35);
+    background:
+        radial-gradient(circle at 50% 20%, rgba(255, 217, 120, 0.12) 0%, transparent 58%),
+        rgba(0, 0, 0, 0.45);
+    font-size: 1.6rem;
+    color: #ffd978;
+}
+
+.age-settlement-venue-workspace .age-gear-shop-detail-tier,
+.age-settlement-venue-workspace .age-gear-shop-detail-desc,
+.age-settlement-venue-workspace .age-gear-shop-detail-stats,
+.age-settlement-venue-workspace .age-gear-shop-detail-mastery,
+.age-settlement-venue-workspace .age-gear-shop-detail-lock {
+    margin: 6px 0 0;
+    font-size: 0.8rem;
+    line-height: 1.45;
+    color: rgba(236, 220, 180, 0.72);
+}
+
+.age-settlement-venue-workspace .age-gear-shop-detail-stats {
+    color: rgba(120, 188, 255, 0.88);
+    font-weight: 700;
+    letter-spacing: 0.04em;
+}
+
+.age-settlement-venue-workspace .age-gear-shop-detail-lock {
+    color: rgba(255, 160, 120, 0.9);
+}
+
+.age-settlement-venue-workspace .age-gear-shop-detail-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.age-settlement-venue-workspace .age-gear-shop-workspace .age-defense-workspace-status {
+    margin: 0 22px 18px;
 }
 
 @media (max-width: 1100px) {

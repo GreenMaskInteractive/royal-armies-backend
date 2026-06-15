@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Royal Armies — Age Alpha</title>
     <link rel="stylesheet" href="style.css?v=cursor-modal-layer-fix-1">
-    <link rel="stylesheet" href="style2.css?v=settlement-venue-rank-gates-1">
+    <link rel="stylesheet" href="style2.css?v=leadership-visibility-1">
     <link rel="stylesheet" href="style-age-headquarters.css?v=utf8-content-fix-1">
     <link rel="stylesheet" href="style-age-center-modals.css?v=guild-job-modals-1">
     <link rel="stylesheet" href="style-age-council-room.css?v=hq-header-clicks-2">
@@ -14,10 +14,10 @@
     <link rel="stylesheet" href="mobile-responsive.css?v=commander-nametag-hub-2">
     <link rel="stylesheet" href="dev-page-navigator.css?v=dev-nav-drag-handle-1">
     <link rel="stylesheet" href="custom-cursor.css?v=finger-press-7">
-    <link rel="stylesheet" href="style-age-army-workspaces.css?v=gear-shop-gold-1">
+    <link rel="stylesheet" href="style-age-army-workspaces.css?v=gear-barracks-layout-1">
     <link rel="stylesheet" href="style-age-banner-workspace.css?v=banner-advisor-profile-1">
     <link rel="stylesheet" href="style-blessed-banners-modal.css?v=banner-skill-select-1">
-    <link rel="stylesheet" href="style-age-map-only.css?v=age-bottom-maintenance-1">
+    <link rel="stylesheet" href="style-age-map-only.css?v=gear-level-xp-1">
     <link rel="stylesheet" href="style-age-immersive-workspace.css?v=workspace-backdrop-stack-1">
     <link rel="stylesheet" href="style-age-nation-hub-radial.css?v=radialmenu-saved-1">
     <link rel="stylesheet" href="style-age-nation-hub-box.css?v=hub-disabled-actions-1">
@@ -946,7 +946,8 @@
                                 class="age-world-map-terrain-toggle age-world-map-plan-add-btn"
                                 aria-pressed="false"
                                 aria-expanded="false"
-                                aria-controls="age-world-map-plan-tool-dock">
+                                aria-controls="age-world-map-plan-tool-dock"
+                                hidden>
                                 Add Plan
                             </button>
                             <button
@@ -954,7 +955,8 @@
                                 id="age-world-map-plan-post"
                                 class="age-world-map-terrain-toggle age-world-map-plan-post-btn"
                                 disabled
-                                aria-disabled="true">
+                                aria-disabled="true"
+                                hidden>
                                 Post Plan
                             </button>
                             <button
@@ -1654,7 +1656,7 @@
                                 </header>
                                 <div class="age-headquarters-ops-card-body" id="age-hq-defense-upgrades-host" aria-live="polite"></div>
                             </section>
-                            <section class="age-headquarters-ops-card age-council-room-panel age-hq-intel-card" data-hq-public hidden aria-labelledby="age-hq-threat-title">
+                            <section class="age-headquarters-ops-card age-council-room-panel age-hq-intel-card" data-hq-leadership-only hidden aria-labelledby="age-hq-threat-title">
                                 <header class="age-headquarters-ops-card-head">
                                     <h3 class="age-headquarters-ops-card-title" id="age-hq-threat-title">Threat Assessment Matrix</h3>
                                     <p class="age-headquarters-ops-card-sub">Bordering nations ranked by military power, hostility, and distance.</p>
@@ -1663,7 +1665,7 @@
                                     <div id="age-hq-threat-matrix" class="age-hq-threat-matrix" aria-live="polite"></div>
                                 </div>
                             </section>
-                            <section class="age-headquarters-ops-card age-council-room-panel age-hq-intel-card" data-hq-public hidden aria-labelledby="age-hq-spy-title">
+                            <section class="age-headquarters-ops-card age-council-room-panel age-hq-intel-card" data-hq-leadership-only hidden aria-labelledby="age-hq-spy-title">
                                 <header class="age-headquarters-ops-card-head">
                                     <h3 class="age-headquarters-ops-card-title" id="age-hq-spy-title">Spy Logs</h3>
                                     <p class="age-headquarters-ops-card-sub">Public army intel (3 max). Reports stale after +10% enemy growth.</p>
@@ -1684,7 +1686,7 @@
                                     </section>
                                 </div>
                             </section>
-                            <section class="age-headquarters-ops-card age-council-room-panel age-hq-intel-card age-hq-intel-card--bounties" data-hq-public hidden aria-labelledby="age-hq-bounty-title">
+                            <section class="age-headquarters-ops-card age-council-room-panel age-hq-intel-card age-hq-intel-card--bounties" data-hq-leadership-only hidden aria-labelledby="age-hq-bounty-title">
                                 <header class="age-headquarters-ops-card-head">
                                     <h3 class="age-headquarters-ops-card-title" id="age-hq-bounty-title">Nation Bounties</h3>
                                     <p class="age-headquarters-ops-card-sub" id="age-hq-bounty-meta">Live feed · 24-hour hunt window per cycle.</p>
@@ -2245,7 +2247,7 @@
     <script src="rift-age-assault-risk.js?v=border-casualty-risk-1"></script>
     <script src="rift-age-watchtower.js?v=commander-rank-names-2"></script>
     <script src="rift-map-ambient-effects.js?v=map-ambient-effects-1"></script>
-    <script src="age-world-map.js?v=map-border-stroke-black-1"></script>
+    <script src="age-world-map.js?v=city-selection-highlight-persist-1"></script>
     <script src="age-world-map-city-search.js?v=map-city-search-max-zoom-1"></script>
     <script src="rift-age-movement.js?v=travel-confirm-1"></script>
     <script src="rift-age-gold.js?v=starting-gold-40k-1"></script>
@@ -2256,18 +2258,18 @@
     <script src="age-world-map-plan-route-style.js?v=age-map-plan-mf-action-1"></script>
     <script src="age-world-plan-overlay.js?v=age-map-plan-mf-action-1"></script>
     <script src="age-world-map-plan-draft.js?v=plan-author-gate-1"></script>
-    <script src="age-world-map-plan-editor.js?v=plan-author-gate-1"></script>
+    <script src="age-world-map-plan-editor.js?v=leadership-visibility-1"></script>
     <script src="rift-page-paths.js?v=map-settlement-tab-only-1"></script>
     <script src="rift-immersive-workspace.js?v=watchtower-border-1"></script>
     <script src="age-view-tabs.js?v=armory-rank-gate-1"></script>
     <script src="rift-age-guild-training.js?v=commander-rank-names-2"></script>
-    <script src="age-adventurers-guild.js?v=rank-promotion-clicks-1"></script>
+    <script src="age-adventurers-guild.js?v=gear-level-xp-1"></script>
     <script src="rift-nation-treasury.js?v=defense-treasury-only-1"></script>
     <script src="rift-infirmary-recovery.js?v=infirmary-tier-heal-scale-2"></script>
     <script src="rift-banner-workspace.js?v=banner-skill-branches-1"></script>
     <script src="blessed-banners-modal.js?v=modal-close-audit-1"></script>
-    <script src="rift-age-gear-shop.js?v=gear-shop-gold-1"></script>
-    <script src="age-settlement-venue-workspaces.js?v=gear-shop-gold-1"></script>
+    <script src="rift-age-gear-shop.js?v=gear-barracks-layout-1"></script>
+    <script src="age-settlement-venue-workspaces.js?v=gear-barracks-layout-1"></script>
     <script src="rift-age-unit-evolution.js?v=map-settlement-tab-only-1"></script>
     <script src="age-unit-evolution.js?v=unit-evolution-close-1"></script>
     <script src="rift-unit-purchase-catalog.js?v=commander-rank-names-2"></script>
@@ -2281,13 +2283,13 @@
     <script src="age-chronicles-battle-pass.js?v=nation-hub-battle-pass-wire-2"></script>
     <script src="age-nation-hub.js?v=hub-disabled-actions-1"></script>
     <script src="rift-official-age.js?v=age-join-after-reset-1"></script>
-    <script src="age-headquarters-intel.js?v=bounty-rank-titles-1"></script>
-    <script src="age-headquarters.js?v=hq-defense-upgrades-1"></script>
+    <script src="age-headquarters-intel.js?v=leadership-visibility-1"></script>
+    <script src="age-headquarters.js?v=leadership-visibility-1"></script>
     <script src="age-left-reports-panel.js?v=terrain-bonus-two-col-1"></script>
     <script src="age-quick-tips-panel.js?v=quick-tips-left-hud-1"></script>
     <script src="nexus-player-report-catalog.js?v=modal-close-audit-1"></script>
     <script src="rift-player-report.js?v=modal-close-audit-1"></script>
-    <script src="age-map-only-page.js?v=rank-promotion-clicks-1"></script>
+    <script src="age-map-only-page.js?v=gear-level-xp-1"></script>
     <script src="dev-page-navigator.js?v=dev-nav-drag-handle-1"></script>
 
 </body>

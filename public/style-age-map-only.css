@@ -29,6 +29,7 @@ body.age-map-shell-only .age-unit-evolution-workspace,
 body.age-map-shell-only .age-guild-workspace,
 body.age-map-shell-only .age-chronicles-battle-pass-modal,
 body.age-map-shell-only #age-rank-promotion-overlay,
+body.age-map-shell-only #age-gear-level-up-overlay,
 body.age-map-shell-only #age-council-board-editor-overlay {
     pointer-events: none !important;
 }
@@ -81,6 +82,8 @@ body.age-map-shell-only .age-chronicles-battle-pass-modal:not([hidden]),
 body.age-map-shell-only .age-chronicles-battle-pass-modal:not([hidden]) *,
 body.age-map-shell-only #age-rank-promotion-overlay:not([hidden]),
 body.age-map-shell-only #age-rank-promotion-overlay:not([hidden]) *,
+body.age-map-shell-only #age-gear-level-up-overlay:not([hidden]),
+body.age-map-shell-only #age-gear-level-up-overlay:not([hidden]) *,
 body.age-map-shell-only #royal-armies-portal-alert-modal:not(.main-portal-modal-hidden),
 body.age-map-shell-only #royal-armies-portal-alert-modal:not(.main-portal-modal-hidden) * {
     pointer-events: auto !important;
@@ -97,6 +100,20 @@ body.age-map-shell-only.age-rank-promotion-open #age-rank-promotion-overlay {
 }
 
 body.age-map-shell-only.age-rank-promotion-open #age-rank-promotion-overlay * {
+    pointer-events: auto !important;
+}
+
+body.age-map-shell-only.age-gear-level-up-open #age-gear-level-up-overlay {
+    position: fixed !important;
+    inset: 0 !important;
+    z-index: 2147483646 !important;
+    display: flex !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    pointer-events: auto !important;
+}
+
+body.age-map-shell-only.age-gear-level-up-open #age-gear-level-up-overlay * {
     pointer-events: auto !important;
 }
 

@@ -1383,6 +1383,9 @@
             if (lastBattleResult.rankPromoted) {
                 showCommanderRankPromotionPopup(lastBattleResult);
             }
+            if (global.RoyalArmiesAgeGearShop?.grantBattleXpFromTraining) {
+                global.RoyalArmiesAgeGearShop.grantBattleXpFromTraining(lastBattleResult);
+            }
         } catch (error) {
             console.error('[RIFT][guild-battle] runTrainingBattle failed', error);
             if (typeof global.showRiftError === 'function' && error?.code) {

@@ -48,9 +48,11 @@
         const showOnMap = sessionOpen && isMapViewActive() && mayAuthor;
 
         if (addBtn) {
-            addBtn.classList.toggle('is-active', sessionOpen);
-            addBtn.setAttribute('aria-pressed', sessionOpen ? 'true' : 'false');
-            addBtn.setAttribute('aria-expanded', sessionOpen ? 'true' : 'false');
+            addBtn.hidden = !mayAuthor;
+            addBtn.setAttribute('aria-hidden', mayAuthor ? 'false' : 'true');
+            addBtn.classList.toggle('is-active', sessionOpen && mayAuthor);
+            addBtn.setAttribute('aria-pressed', sessionOpen && mayAuthor ? 'true' : 'false');
+            addBtn.setAttribute('aria-expanded', sessionOpen && mayAuthor ? 'true' : 'false');
         }
         if (dockEl) {
             dockEl.hidden = !showOnMap;

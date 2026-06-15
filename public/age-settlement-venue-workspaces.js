@@ -212,6 +212,7 @@
         activeVenueId = '';
         hideSettlementVenueRsdWallet();
         hideInfirmaryGoldWallet();
+        global.document.getElementById('age-settlement-venue-body')?.classList.remove('is-gear-shop-layout');
     }
 
     function openArmyWorkspace(options = {}) {
@@ -234,6 +235,7 @@
         bodyEl.innerHTML = options.bodyHtml || '';
 
         activeVenueId = String(options.venueId || '').trim();
+        bodyEl.classList.toggle('is-gear-shop-layout', activeVenueId === 'blacksmith' || activeVenueId === 'armory');
         hideSettlementVenueRsdWallet();
         hideInfirmaryGoldWallet();
         if (DEFENSE_VENUE_IDS.has(activeVenueId)) {
@@ -938,6 +940,9 @@
             bodyHtml: renderBlacksmithBody()
         });
         showVenueGoldWallet();
+        if (activeVenueId === 'blacksmith') {
+            global.RoyalArmiesAgeGearShop?.refreshActiveBody?.('blacksmith');
+        }
     }
 
     function openArmory(detail) {
@@ -960,6 +965,9 @@
             bodyHtml: renderArmoryBody()
         });
         showVenueGoldWallet();
+        if (activeVenueId === 'armory') {
+            global.RoyalArmiesAgeGearShop?.refreshActiveBody?.('armory');
+        }
     }
 
     function openDefenseVenue(detail) {

@@ -463,6 +463,15 @@
             setNodeHidden(node, !showPublicWorkspace);
         });
 
+        const showLeadershipPanels = Boolean((showPublicWorkspace || showManagerControls) && hqManagerEligible);
+        global.document.querySelectorAll('[data-hq-leadership-only]').forEach((node) => {
+            setNodeHidden(node, !showLeadershipPanels);
+        });
+
+        global.document.querySelectorAll('[data-leadership-only]').forEach((node) => {
+            setNodeHidden(node, !hqManagerEligible);
+        });
+
         global.document.querySelectorAll('[data-hq-member-only]').forEach((node) => {
             setNodeHidden(node, !showMemberElections);
         });
@@ -609,9 +618,15 @@
 
         const warBtn = global.document.getElementById('age-hq-war-declare-btn');
         const composeBtn = global.document.getElementById('age-hq-diplo-compose-btn');
-        const councilLocked = !workspace?.access?.fullAuthority;
-        if (warBtn) warBtn.disabled = councilLocked || !workspace?.access?.leader;
-        if (composeBtn) composeBtn.disabled = councilLocked || !workspace?.access?.leader;
+        const showLeaderDiplomacy = Boolean(workspace?.access?.fullAuthority && workspace?.access?.leader);
+        if (warBtn) {
+            setNodeHidden(warBtn, !showLeaderDiplomacy);
+            warBtn.disabled = !showLeaderDiplomacy;
+        }
+        if (composeBtn) {
+            setNodeHidden(composeBtn, !showLeaderDiplomacy);
+            composeBtn.disabled = !showLeaderDiplomacy;
+        }
     }
 
     function formatElectionCountdown(closesAt) {
@@ -1298,8 +1313,12 @@
             detail: {
                 canAuthorNationPlan: Boolean(
                     workspace.access?.council || isDevOwnerHeadquartersBypass(username)
-                )
+                ),
+                hasLeadershipRole: hqManagerEligible
             }
+        }));
+        global.dispatchEvent(new CustomEvent('royalarmies:age-leadership-access-updated', {
+            detail: { hasLeadershipRole: hqManagerEligible }
         }));
         syncHeadquartersViewMode(workspace);
 
@@ -2221,6 +2240,7 @@
         fetchHeadquartersWorkspace,
         syncDispatchPanel,
         hasCouncilAccess: () => councilAccess,
+        hasLeadershipRole: () => hqManagerEligible,
         hasLeaderAccess: () => leaderAccess,
         hasViceLeaderAccess: () => viceLeaderAccess,
         hasActiveManagerControls,
