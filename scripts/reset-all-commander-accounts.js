@@ -8,7 +8,8 @@
  * Stop NEXUS (npm start) before running locally — a live server may reload
  * stale in-memory ledger and overwrite db.json after this script finishes.
  *
- * Production: POST /api/portal/age/admin/reset-all-commander-accounts as an Age admin.
+ * Production: POST /api/portal/age/admin/reset-all-commander-accounts as an Age admin,
+ * or wait for the automatic age-conclusion reset (portal.ageCampaign lifecycle on NEXUS).
  */
 'use strict';
 

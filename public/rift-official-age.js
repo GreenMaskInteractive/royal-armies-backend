@@ -8,7 +8,7 @@
     const PRE_AGE_SLUG = 'alpha';
 
     /** When true, main portal Join skips game.html onboarding and routes to agealpha. */
-    const PORTAL_DIRECT_AGE_JOIN_ENABLED = false;
+    const PORTAL_DIRECT_AGE_JOIN_ENABLED = true;
     const PORTAL_DIRECT_AGE_JOIN_STORAGE_KEY = 'royalArmiesPortalDirectAgeJoin';
 
     try {
@@ -226,20 +226,23 @@
             return { ok: false, evicted: false, payload: { message: 'No commander session.' } };
         }
 
-        if (await checkCommanderAccountResetEvictionFromMetrics(resolveApiUrl)) {
-            return { ok: false, evicted: true, payload: { code: AGE_SESSION_EVICTED_CODE } };
+        const requestBody = {
+            username,
+            ageSlug: global.document.body?.dataset?.ageSlug || getOfficialAgeSlug(),
+            ...(isPortalDirectAgeJoinEnabled() ? { enrollFromPortal: true, assignRandomNation: true } : {}),
+            ...(bodyExtras && typeof bodyExtras === 'object' ? bodyExtras : {})
+        };
+        const isFreshPortalEnrollmentJoin = requestBody.enrollFromPortal === true;
+
+        if (!isFreshPortalEnrollmentJoin) {
+            if (await checkCommanderAccountResetEvictionFromMetrics(resolveApiUrl)) {
+                return { ok: false, evicted: true, payload: { code: AGE_SESSION_EVICTED_CODE } };
+            }
         }
 
         const url = typeof resolveApiUrl === 'function'
             ? resolveApiUrl('/api/portal/age/join')
             : resolveAgeSessionApiUrl('/api/portal/age/join');
-
-        const requestBody = {
-            username,
-            ageSlug: global.document.body?.dataset?.ageSlug || getOfficialAgeSlug(),
-            ...(isPortalDirectAgeJoinEnabled() ? { enrollFromPortal: true } : {}),
-            ...(bodyExtras && typeof bodyExtras === 'object' ? bodyExtras : {})
-        };
 
         try {
             const response = await global.fetch(url, {
@@ -251,18 +254,16 @@
             });
             const payload = await response.json().catch(() => ({}));
 
-            if (isAgeSessionEvictedJoinResponse(payload)
-                || shouldEvictForCommanderAccountReset(payload?.commanderAccountResetAt)) {
-                await evictAgePageToMainAfterAccountReset({ username, resolveApiUrl });
-                return { ok: false, evicted: true, payload };
-            }
-
             if (!response.ok || payload.status === 'error') {
                 if (isAgeSessionEvictedJoinResponse(payload)) {
                     await evictAgePageToMainAfterAccountReset({ username, resolveApiUrl });
                     return { ok: false, evicted: true, payload };
                 }
                 return { ok: false, evicted: false, payload };
+            }
+
+            if (payload.commanderAccountResetAt) {
+                storeCommanderAccountResetAck(payload.commanderAccountResetAt);
             }
 
             return { ok: true, evicted: false, payload };

@@ -219,10 +219,14 @@
         }
         const payload = await response.json().catch(() => ({}));
         const deploy = payload?.deploy && typeof payload.deploy === 'object' ? payload.deploy : {};
-        return {
+        const snapshot = {
             bootId: String(deploy.bootId || '').trim(),
             revision: String(deploy.revision || '').trim()
         };
+        if (typeof global.checkDeployBootForPostUpdateLogout === 'function') {
+            global.checkDeployBootForPostUpdateLogout(snapshot);
+        }
+        return snapshot;
     }
 
     async function fetchMaintenanceUpdateImminent() {
@@ -492,15 +496,38 @@
             return;
         }
 
-        const normalized = buildErrorPayload('RIFT-NET-003');
         updateCompleteNoticeShown = true;
         clearUpdateUnderwaySession();
         updateAwaitingRecoveryConfirm = false;
         updateUnderwayNoticeShown = false;
+        stopUpdateUnderwayWatchers();
 
         if (typeof global.closePortalAlertModal === 'function') {
             global.closePortalAlertModal(true);
         }
+
+        let deployBootId = '';
+        try {
+            const snapshot = await fetchDeployWatchSnapshot();
+            deployBootId = snapshot?.bootId || '';
+        } catch (_err) {
+            /* ignore */
+        }
+
+        const hasAuth = typeof global.isPortalUserAuthenticated === 'function'
+            ? global.isPortalUserAuthenticated()
+            : Boolean(String(global.localStorage?.getItem?.('activeCommanderUser') || '').trim());
+
+        if (hasAuth && typeof global.performPostUpdatePlayerbaseLogout === 'function') {
+            await global.performPostUpdatePlayerbaseLogout({ deployBootId });
+            return;
+        }
+
+        if (deployBootId && typeof global.storeKnownDeployBootId === 'function') {
+            global.storeKnownDeployBootId(deployBootId);
+        }
+
+        const normalized = buildErrorPayload('RIFT-NET-003');
 
         if (typeof global.showPortalUpdateCompleteAlert === 'function') {
             await global.showPortalUpdateCompleteAlert({

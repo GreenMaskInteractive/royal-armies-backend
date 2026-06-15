@@ -27,6 +27,7 @@
     const GAME_PRESENCE_HEARTBEAT_MS = 20000;
 
     let presenceHeartbeatTimer = null;
+    let ageSessionLeaveSent = false;
 
     /** Hub/profile/menu scripts — production agealpha.html omits these; load on demand. */
     const AGE_NAMETAG_HUB_SCRIPT_CHAIN = [
@@ -35,10 +36,10 @@
         'commander-dossier-sync.js?v=map-ambient-effects-1',
         'rank-data.js?v=commander-nametag-hub-2',
         'rift-ui-sfx.js?v=commander-nametag-hub-2',
-        'script.js?v=portal-join-nation-fix-1',
+        'script.js?v=update-post-logout-1',
         'commander-hub.js?v=commander-nametag-hub-2',
         'game-chat.js?v=commander-nametag-hub-2',
-        'portal-commander-identity-menu.js?v=age-exit-not-logout-1'
+        'portal-commander-identity-menu.js?v=remove-return-portal-1'
     ];
 
     const ageNametagHubScriptsLoaded = new Set();
@@ -100,13 +101,13 @@
         if (button.classList.contains('dropdown-action-item-view-profile')) return 'view-profile';
         if (button.id === 'nav-dropdown-messages-btn') return 'messages';
         if (button.classList.contains('dropdown-action-item-discoveries')) return 'discoveries';
-        if (button.id === 'game-nav-dropdown-return-portal-btn') return 'return-to-portal';
-        if (button.id === 'game-nav-dropdown-logout-btn') return 'logout';
+        if (button.id === 'game-nav-dropdown-logout-btn') return 'exit-server';
         if (button.classList.contains('dropdown-action-item-report-player')) return 'report-player';
 
         const label = String(button.textContent || '').replace(/\s+/g, ' ').trim().toLowerCase();
         if (label === 'edit profile') return 'edit-profile';
         if (label === 'settings') return 'settings';
+        if (label === 'exit server') return 'exit-server';
         return null;
     }
 
@@ -603,19 +604,43 @@
         global.enableAgeWorldMapPlanEditor?.();
     }
 
-    async function returnToAgePortal() {
+    async function postAgeLeave(useKeepalive) {
+        if (ageSessionLeaveSent) return;
+        const username = resolvePageUsername();
+        if (!username) return;
+
+        ageSessionLeaveSent = true;
+        stopPresenceLoop();
+
         if (typeof global.notifyAgePortalSessionLeave === 'function') {
-            await global.notifyAgePortalSessionLeave();
+            await global.notifyAgePortalSessionLeave({ useKeepalive: useKeepalive === true });
+            return;
         }
+
         try {
             global.localStorage.removeItem('savedCommanderInActiveAge');
-            const user = global.localStorage.getItem('activeCommanderUser');
-            if (user && user.trim()) {
-                global.localStorage.removeItem(`royalArmies_${user.trim()}_gameSessionStarted`);
-            }
         } catch (_err) {
             /* ignore */
         }
+
+        const fetchOptions = {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username }),
+            cache: 'no-store',
+            credentials: 'include'
+        };
+        if (useKeepalive) fetchOptions.keepalive = true;
+
+        try {
+            await global.fetch(resolveApiUrl('/api/portal/age/leave'), fetchOptions);
+        } catch (err) {
+            console.warn('[RIFT] Age leave sync failed:', err);
+        }
+    }
+
+    async function returnToAgePortal() {
+        await postAgeLeave(false);
         const target = typeof global.resolveRoyalArmiesPageUrl === 'function'
             ? global.resolveRoyalArmiesPageUrl('main')
             : '/main';
@@ -624,6 +649,19 @@
             return;
         }
         global.location.href = target;
+    }
+
+    function registerUnloadHandlers() {
+        const onLeave = () => {
+            if (typeof global.sendAgeServerLeaveBeacon === 'function') {
+                global.sendAgeServerLeaveBeacon();
+                return;
+            }
+            void postAgeLeave(true);
+        };
+
+        global.addEventListener('pagehide', onLeave);
+        global.addEventListener('beforeunload', onLeave);
     }
 
     function closeMobileCommanderSubmenu() {
@@ -672,8 +710,7 @@
 
         const actionById = {
             'game-mobile-messages-btn': 'messages',
-            'game-mobile-dropdown-return-portal-btn': 'return-to-portal',
-            'game-mobile-dropdown-logout-btn': 'logout'
+            'game-mobile-dropdown-logout-btn': 'exit-server'
         };
 
         submenu.querySelectorAll('.portal-mobile-submenu-item').forEach((button) => {
@@ -683,6 +720,7 @@
                 if (label === 'view profile card') action = 'view-profile';
                 else if (label === 'edit profile') action = 'edit-profile';
                 else if (label === 'settings') action = 'settings';
+                else if (label === 'exit server') action = 'exit-server';
             }
             if (!action) return;
             button.addEventListener('click', (event) => {
@@ -923,9 +961,9 @@
                     global.RoyalArmiesOfficialAge.storeCommanderAccountResetAck(joinResult.payload.commanderAccountResetAt);
                 }
             }
-        } else if (!joinResult?.ok && !joinResult?.evicted) {
+        } else if (!joinResult?.ok) {
             const joinCode = String(joinResult?.payload?.code || '').trim();
-            if (joinCode === 'NEXUS-AGE-038') {
+            if (joinResult?.evicted || joinCode === 'NEXUS-AGE-038') {
                 const mainUrl = typeof global.resolveRoyalArmiesPageUrl === 'function'
                     ? global.resolveRoyalArmiesPageUrl('main')
                     : '/main';
@@ -933,6 +971,14 @@
                 return;
             }
             console.warn('[RIFT] Age map session join did not complete:', joinResult?.payload?.message || joinCode || 'unknown');
+            if (typeof global.showPortalAlert === 'function' && joinResult?.payload?.message) {
+                await global.showPortalAlert(joinResult.payload.message, joinResult.payload.title || 'Cannot join Age');
+            }
+            const mainUrl = typeof global.resolveRoyalArmiesPageUrl === 'function'
+                ? global.resolveRoyalArmiesPageUrl('main')
+                : '/main';
+            global.location.replace(mainUrl);
+            return;
         }
 
         global.RoyalArmiesOfficialAge?.startCommanderAccountResetEvictionWatch?.(resolveApiUrl);
@@ -990,6 +1036,7 @@
 
         retainLoadingGate();
         bindAgeCommanderNametagMenuDelegation();
+        registerUnloadHandlers();
 
         try {
             await ensureAgeCommanderNametagHub();

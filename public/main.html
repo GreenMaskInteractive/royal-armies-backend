@@ -15,7 +15,7 @@
     <!-- Block 2: Page Title & Stylesheet Bridge -->
     <title>Royal Armies - An MMOHFT Medieval-Fantasy Strategy Game</title>
     <link rel="stylesheet" href="style.css?v=display-resolution-1">
-    <link rel="stylesheet" href="style2.css?v=utf8-content-fix-1">
+    <link rel="stylesheet" href="style2.css?v=chat-roster-expand-fix-2">
     <link rel="stylesheet" href="mobile-responsive.css?v=report-player-menu-red-1">
     <link rel="stylesheet" href="dev-page-navigator.css">
     <link rel="stylesheet" href="custom-cursor.css?v=finger-press-7">
@@ -29,7 +29,7 @@
 (function enforceEarlyActiveAgePortalLock() {
     try {
         /* Sync with PORTAL_DIRECT_AGE_JOIN_ENABLED in rift-official-age.js / nexus-age-portal-join.js */
-        var portalDirectAgeJoinEnabled = false;
+        var portalDirectAgeJoinEnabled = true;
         try {
             if (portalDirectAgeJoinEnabled) {
                 localStorage.setItem('royalArmiesPortalDirectAgeJoin', 'true');
@@ -734,7 +734,7 @@
 
     <!-- Block 10: Commander Hub + Shared RAGE Logic -->
     <script src="dev-environment.js?v=dev-preview-nation-override-1"></script>
-    <script src="commander-dossier-sync.js?v=rank-title-gender-switch-2"></script>
+    <script src="commander-dossier-sync.js?v=membership-owner-royalty-1"></script>
     <script src="portal-commander-identity-menu.js?v=nametag-no-chronicles-bp-2"></script>
     <script src="rift-song-manuscript-catalog.js?v=discovery-song-lyrics-1"></script>
     <script src="rift-discoveries-workspace.js?v=discovery-toast-persist-1"></script>
@@ -742,21 +742,21 @@
     <script src="dev-page-navigator.js?v=dev-nation-switch-local-1"></script>
     <script src="rift-confirm-buttons.js?v=hub-action-btn-compact-1"></script>
     <script src="nexus-account-validation.js?v=registration-username-rules-1"></script>
-    <script src="rift-error-codes.js?v=update-complete-notice-1"></script>
+    <script src="rift-error-codes.js?v=update-post-logout-1"></script>
     <script src="terms-acceptance.js?v=live-server-terms-bypass-2"></script>
     <script src="royalty-billing.js?v=legal-terms-compliance-1"></script>
-    <script src="portal-alerts.js?v=update-complete-notice-1"></script>
-    <script src="rift-error-display.js?v=deploy-watch-early-1"></script>
+    <script src="portal-alerts.js?v=update-post-logout-1"></script>
+    <script src="rift-error-display.js?v=update-post-logout-1"></script>
     <script src="rank-data.js?v=class-cleanup-pass-1"></script>
     <script src="rift-commander-rank-titles.js?v=class-cleanup-pass-1"></script>
     <script src="rift-ui-sfx.js?v=discovery-toast-persist-1"></script>
-    <script src="script.js?v=portal-join-nation-fix-1"></script>
-    <script src="commander-hub.js?v=class-cleanup-pass-1"></script>
+    <script src="script.js?v=update-post-logout-1"></script>
+    <script src="commander-hub.js?v=membership-owner-royalty-1"></script>
     <script src="maintenance-alert.js?v=local-api-reachability-1"></script>
     <script src="nexus-player-report-catalog.js?v=report-categories-pbbg-1"></script>
     <script src="rift-player-report.js?v=report-no-commander-menu-context-1"></script>
     <script src="age-music-flow.js?v=age-soundtrack-wandering-soul-1"></script>
-    <script src="script2.js?v=portal-server-dashboard-2"></script>
+    <script src="script2.js?v=chat-roster-expand-fix-2"></script>
     <script src="custom-cursor.js?v=finger-press-hold-1"></script>
 
 </body>

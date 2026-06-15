@@ -4271,20 +4271,19 @@ body.is-terms-gate-active #main-portal-dynamic-viewport {
 .chat-roster-commander-card {
     display: flex !important;
     flex-direction: row !important;
-    align-items: center !important;
+    align-items: flex-start !important;
     gap: 10px !important;
     padding: 8px 10px 8px 8px !important;
     border-radius: 6px !important;
     background: linear-gradient(135deg, rgba(18, 14, 10, 0.92) 0%, rgba(0, 0, 0, 0.55) 100%) !important;
     border: 1px solid rgba(184, 144, 48, 0.18) !important;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35) !important;
-    transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.15s ease !important;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease !important;
 }
 
 .chat-roster-commander-card:hover {
     border-color: rgba(201, 162, 39, 0.38) !important;
     box-shadow: 0 6px 16px rgba(0, 0, 0, 0.45) !important;
-    transform: translateY(-1px) !important;
 }
 
 .chat-roster-commander-card--self {
@@ -4486,8 +4485,12 @@ body.is-terms-gate-active #main-portal-dynamic-viewport {
 }
 
 .chat-roster-commander-card--slim .chat-roster-commander-body,
-.chat-roster-commander-card:not([data-staff-role]) .chat-roster-commander-body {
+.chat-roster-commander-card:not([data-staff-role]):not(.chat-roster-commander-card--expandable) .chat-roster-commander-body {
     gap: 0 !important;
+}
+
+.chat-roster-commander-card--expandable .chat-roster-commander-body {
+    gap: 2px !important;
 }
 
 .chat-roster-commander-card--profile-open {
@@ -4505,13 +4508,15 @@ body.is-terms-gate-active #main-portal-dynamic-viewport {
 }
 
 .chat-roster-expand-btn {
+    position: relative !important;
+    z-index: 3 !important;
     flex-shrink: 0 !important;
     display: inline-flex !important;
     align-items: center !important;
     justify-content: center !important;
     width: 22px !important;
     height: 22px !important;
-    margin-left: 2px !important;
+    margin-left: 0 !important;
     padding: 0 !important;
     border: 1px solid rgba(184, 144, 48, 0.28) !important;
     border-radius: 3px !important;
@@ -4520,6 +4525,7 @@ body.is-terms-gate-active #main-portal-dynamic-viewport {
     font-size: 0.72rem !important;
     line-height: 1 !important;
     cursor: pointer !important;
+    pointer-events: auto !important;
 }
 
 .chat-roster-expand-btn:hover,
@@ -4530,7 +4536,7 @@ body.is-terms-gate-active #main-portal-dynamic-viewport {
 }
 
 .chat-roster-commander-card--expandable {
-    cursor: pointer !important;
+    cursor: default !important;
 }
 
 .chat-roster-commander-card--expandable:hover {
@@ -4557,12 +4563,17 @@ body.is-terms-gate-active #main-portal-dynamic-viewport {
 }
 
 .chat-roster-commander-expand-panel {
-    display: flex !important;
+    display: none !important;
     flex-direction: column !important;
     gap: 4px !important;
     margin-top: 6px !important;
     padding-top: 8px !important;
     border-top: 1px solid rgba(184, 144, 48, 0.12) !important;
+    width: 100% !important;
+}
+
+.chat-roster-commander-card.is-expanded .chat-roster-commander-expand-panel {
+    display: flex !important;
 }
 
 .chat-roster-commander-expand-panel[hidden] {
@@ -4576,9 +4587,10 @@ body.is-terms-gate-active #main-portal-dynamic-viewport {
 .chat-roster-commander-topline {
     display: flex !important;
     align-items: center !important;
-    justify-content: space-between !important;
-    gap: 6px !important;
+    justify-content: flex-start !important;
+    gap: 4px !important;
     min-width: 0 !important;
+    width: 100% !important;
 }
 
 .chat-roster-name-row {
@@ -4588,6 +4600,20 @@ body.is-terms-gate-active #main-portal-dynamic-viewport {
     flex: 1 1 auto !important;
     min-width: 0 !important;
     overflow: hidden !important;
+}
+
+.chat-roster-name-row--profile-open {
+    cursor: pointer !important;
+}
+
+.chat-roster-name-row--profile-open:hover .chat-roster-name {
+    color: #ffd978 !important;
+}
+
+.chat-roster-name-row--profile-open:focus-visible {
+    outline: 2px solid rgba(201, 162, 39, 0.55) !important;
+    outline-offset: 2px !important;
+    border-radius: 4px !important;
 }
 
 .chat-roster-name {
@@ -4609,6 +4635,7 @@ body.is-terms-gate-active #main-portal-dynamic-viewport {
 
 .chat-roster-status-pill {
     flex-shrink: 0 !important;
+    margin-left: auto !important;
     display: inline-flex !important;
     align-items: center !important;
     gap: 3px !important;
@@ -7232,6 +7259,13 @@ body.is-terms-gate-active #main-portal-dynamic-viewport {
     border-color: #e0b840 !important;
     background: linear-gradient(180deg, rgba(150, 118, 32, 0.94) 0%, rgba(60, 46, 12, 0.97) 100%) !important;
     box-shadow: inset 0 1px 0 rgba(255, 240, 180, 0.22), 0 0 10px rgba(201, 162, 39, 0.35), 0 2px 6px rgba(0, 0, 0, 0.4) !important;
+}
+.public-profile-membership.tier-owner,
+.membership-badge.tier-owner {
+    color: #fff6dc !important;
+    border-color: #f0cc66 !important;
+    background: linear-gradient(180deg, rgba(168, 128, 28, 0.96) 0%, rgba(54, 40, 10, 0.98) 100%) !important;
+    box-shadow: inset 0 1px 0 rgba(255, 244, 196, 0.24), 0 0 12px rgba(255, 215, 120, 0.38), 0 2px 6px rgba(0, 0, 0, 0.4) !important;
 }
 .public-profile-membership.tier-silver,
 .membership-badge.tier-silver {

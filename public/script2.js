@@ -455,6 +455,9 @@ function rejoinSelectedAgeServerAfterTermsCheck(clickEvent) {
         }
         notifyPortalAgeSessionJoin().finally(() => {
             localStorage.setItem('savedCommanderInActiveAge', 'true');
+            if (typeof markCommanderGameSessionStarted === 'function') {
+                markCommanderGameSessionStarted();
+            }
             if (window.RoyalArmiesPageRouteTransition && typeof window.RoyalArmiesPageRouteTransition.navigateTo === 'function') {
                 window.RoyalArmiesPageRouteTransition.navigateTo(destination);
             } else {
@@ -1564,7 +1567,8 @@ function renderMetricRosterList(listElement, entries, emptyMessage) {
             return `<li class="metric-roster-popover-item"><span class="metric-roster-name">${escapeMetricRosterHtml(entry)}</span></li>`;
         }
         const username = entry.username || 'Unknown';
-        const joinedLabel = formatPortalRegistrationTimestamp(entry.joinedAt);
+        const joinedLabel = entry.statusLabel
+            || formatPortalRegistrationTimestamp(entry.joinedAt);
         return `<li class="metric-roster-popover-item"><span class="metric-roster-name">${escapeMetricRosterHtml(username)}</span><span class="metric-roster-meta">${escapeMetricRosterHtml(joinedLabel)}</span></li>`;
     }).join('');
 }
@@ -1588,6 +1592,14 @@ function applyPortalLiveMetricsToBanner(metrics) {
     const agePlayingCount = Number(metrics?.agePlayingCount) || 0;
     const recentRegistrations = Array.isArray(metrics?.recentRegistrations) ? metrics.recentRegistrations : [];
     const ageOnlinePlayers = Array.isArray(metrics?.ageOnlinePlayers) ? metrics.ageOnlinePlayers : [];
+    const agePlayingPlayers = Array.isArray(metrics?.agePlayingPlayers) ? metrics.agePlayingPlayers : [];
+    const ageOnlineSet = new Set(
+        ageOnlinePlayers.map((name) => normalizeCommunityChatUsername(name))
+    );
+    const agePlayingRosterEntries = agePlayingPlayers.map((username) => ({
+        username,
+        statusLabel: ageOnlineSet.has(normalizeCommunityChatUsername(username)) ? 'Online' : 'Offline'
+    }));
 
     const portalBrowsingPlayers = Array.isArray(metrics?.portalBrowsingPlayers) ? metrics.portalBrowsingPlayers : [];
 
@@ -1597,10 +1609,14 @@ function applyPortalLiveMetricsToBanner(metrics) {
         ageOnlineCount,
         agePlayingCount,
         ageOnlinePlayers,
-        agePlayingPlayers: Array.isArray(metrics?.agePlayingPlayers) ? metrics.agePlayingPlayers : [],
+        agePlayingPlayers,
         portalBrowsingCount: Number(metrics?.portalBrowsingCount) || portalBrowsingPlayers.length,
         portalBrowsingPlayers
     };
+
+    if (metrics?.deploy && typeof window.checkDeployBootForPostUpdateLogout === 'function') {
+        window.checkDeployBootForPostUpdateLogout(metrics.deploy);
+    }
 
     refreshCommunityChatOnlineRosterIfVisible();
 
@@ -1619,8 +1635,8 @@ function applyPortalLiveMetricsToBanner(metrics) {
     );
     renderMetricRosterList(
         activeList,
-        ageOnlinePlayers,
-        'No players are online in the active Age right now.'
+        agePlayingRosterEntries,
+        'No commanders are enrolled in the active Age right now.'
     );
 }
 
@@ -1797,18 +1813,27 @@ function getChatRosterDisplayRank(name, isSelf) {
     return 'Vintenary';
 }
 
-function getChatRosterPresenceQuip(name, inAge, isSelf) {
+function getChatRosterPresenceQuip(name, inAgeOnline, inAgeRoster, isSelf) {
     const staffRole = typeof getPortalStaffRole === 'function' ? getPortalStaffRole(name) : null;
     if (staffRole === 'owner') {
-        return inAge ? 'Owner — in the Age' : 'Owner — on the portal';
+        if (inAgeOnline) return 'Owner — in the Age';
+        if (inAgeRoster) return 'Owner — offline in the Age';
+        return 'Owner — on the portal';
     }
     if (staffRole === 'moderator') {
-        return inAge ? 'Moderator — in the Age' : 'Moderator — on the portal';
+        if (inAgeOnline) return 'Moderator — in the Age';
+        if (inAgeRoster) return 'Moderator — offline in the Age';
+        return 'Moderator — on the portal';
     }
     if (isSelf) {
-        return inAge ? 'You are in the Age' : 'You are on the portal';
+        if (inAgeOnline) return 'You are in the Age';
+        if (inAgeRoster) return 'You are offline in the Age';
+        return 'You are on the portal';
     }
-    const pool = inAge ? CHAT_ROSTER_AGE_QUIPS : CHAT_ROSTER_PORTAL_QUIPS;
+    if (inAgeRoster && !inAgeOnline) {
+        return 'Enrolled in the Age — currently offline';
+    }
+    const pool = inAgeOnline ? CHAT_ROSTER_AGE_QUIPS : CHAT_ROSTER_PORTAL_QUIPS;
     return pool[hashCommunityChatRosterSeed(name) % pool.length];
 }
 
@@ -1873,8 +1898,14 @@ function getChatRosterPresenceRingClass(presenceState) {
     return 'chat-roster-presence-ring--portal-browsing';
 }
 
-function getChatRosterStatusMeta(inAge, isSelf, presenceState) {
+function getChatRosterStatusMeta(inAgeOnline, inAgeRoster, isSelf, presenceState) {
     const presence = presenceState || 'portal';
+
+    if (inAgeRoster && !inAgeOnline) {
+        const offlineMeta = { pillClass: 'chat-roster-status-pill--idle', icon: '○', label: 'Offline' };
+        if (isSelf) return { ...offlineMeta, pillClass: 'chat-roster-status-pill--self-idle', label: 'You · Offline' };
+        return offlineMeta;
+    }
 
     if (presence === 'idle') {
         const idleMeta = { pillClass: 'chat-roster-status-pill--idle', icon: '●', label: 'Away' };
@@ -1890,7 +1921,7 @@ function getChatRosterStatusMeta(inAge, isSelf, presenceState) {
     const portalMeta = { pillClass: 'chat-roster-status-pill--portal-browsing', icon: '●', label: 'On Site' };
     if (isSelf) return { ...portalMeta, pillClass: 'chat-roster-status-pill--self-portal', label: 'You · On Site' };
 
-    if (inAge) {
+    if (inAgeOnline) {
         return { pillClass: 'chat-roster-status-pill--in-age', icon: '⚔', label: 'In Age' };
     }
     return portalMeta;
@@ -1905,14 +1936,14 @@ function getChatRosterExpandKey(name, staffRole) {
 }
 
 function isChatRosterCardExpandable(staffRole) {
-    return staffRole === 'owner' || staffRole === 'moderator' || staffRole === 'royal-guard-bot';
+    return true;
 }
 
 function buildChatRosterExpandHintMarkup() {
     return '<span class="chat-roster-expand-hint" aria-hidden="true">▸</span>';
 }
 
-function buildChatRosterExpandPanelMarkup(name, isSelf, inAge, staffRole) {
+function buildChatRosterExpandPanelMarkup(name, isSelf, inAgeOnline, inAgeRoster, staffRole) {
     if (staffRole === 'royal-guard-bot') {
         return `
             <div class="chat-roster-staff-badge-row">
@@ -1927,27 +1958,44 @@ function buildChatRosterExpandPanelMarkup(name, isSelf, inAge, staffRole) {
     return `
         ${staffBadge ? `<div class="chat-roster-staff-badge-row">${staffBadge}</div>` : ''}
         <span class="chat-roster-rank-title">${escapeMetricRosterHtml(getChatRosterDisplayRank(name, isSelf))}</span>
-        <p class="chat-roster-quip">${escapeMetricRosterHtml(getChatRosterPresenceQuip(name, inAge, isSelf))}</p>
+        <p class="chat-roster-quip">${escapeMetricRosterHtml(getChatRosterPresenceQuip(name, inAgeOnline, inAgeRoster, isSelf))}</p>
     `;
 }
 
-function toggleChatRosterCardExpand(event) {
-    const card = event.currentTarget;
-    if (!card || !card.classList.contains('chat-roster-commander-card--expandable')) return;
-    event.preventDefault();
-    event.stopPropagation();
+function syncChatRosterExpandButtonState(card, isExpanded) {
+    if (!card) return;
+    const button = card.querySelector('.chat-roster-expand-btn');
+    if (!button) return;
+    button.setAttribute('aria-expanded', isExpanded ? 'true' : 'false');
+    button.textContent = isExpanded ? '▾' : '▸';
+}
+
+function toggleChatRosterCardExpandFromElement(card) {
+    if (!card || !card.classList.contains('chat-roster-commander-card--expandable')) return false;
 
     const expandKey = card.dataset.rosterExpandKey;
-    const isExpanded = card.classList.toggle('is-expanded');
+    const isExpanded = !card.classList.contains('is-expanded');
+    card.classList.toggle('is-expanded', isExpanded);
     card.setAttribute('aria-expanded', isExpanded ? 'true' : 'false');
 
     const panel = card.querySelector('.chat-roster-commander-expand-panel');
     if (panel) panel.hidden = !isExpanded;
+    syncChatRosterExpandButtonState(card, isExpanded);
 
     if (expandKey) {
         if (isExpanded) chatRosterExpandedCommanders.add(expandKey);
         else chatRosterExpandedCommanders.delete(expandKey);
     }
+
+    return isExpanded;
+}
+
+function toggleChatRosterCardExpand(event) {
+    const card = event?.currentTarget;
+    if (!card) return;
+    if (typeof event?.preventDefault === 'function') event.preventDefault();
+    if (typeof event?.stopPropagation === 'function') event.stopPropagation();
+    toggleChatRosterCardExpandFromElement(card);
 }
 
 function handleChatRosterCardExpandKeydown(event) {
@@ -1962,7 +2010,7 @@ function handleChatRosterExpandButtonClick(event) {
     }
     const card = event?.currentTarget?.closest('.chat-roster-commander-card');
     if (!card) return;
-    toggleChatRosterCardExpand({ ...event, currentTarget: card });
+    toggleChatRosterCardExpandFromElement(card);
 }
 
 function handleChatRosterExpandButtonKeydown(event) {
@@ -1971,6 +2019,8 @@ function handleChatRosterExpandButtonKeydown(event) {
 }
 
 async function openCommunityChatRosterCommanderProfile(clickEvent) {
+    if (clickEvent?.target?.closest?.('.chat-roster-expand-btn')) return;
+
     if (clickEvent) {
         clickEvent.preventDefault();
         clickEvent.stopPropagation();
@@ -1997,6 +2047,73 @@ function handleCommunityChatRosterProfileKeydown(event) {
     if (event.key !== 'Enter' && event.key !== ' ') return;
     event.preventDefault();
     openCommunityChatRosterCommanderProfile(event);
+}
+
+function ensureCommunityChatRosterInteractionBindings() {
+    const deck = document.querySelector('.chat-sidebar-player-roster-deck');
+    if (!deck || deck.dataset.rosterInteractionsBound === 'true') return;
+    deck.dataset.rosterInteractionsBound = 'true';
+
+    deck.addEventListener('click', (event) => {
+        const expandBtn = event.target.closest('.chat-roster-expand-btn');
+        if (expandBtn) {
+            event.preventDefault();
+            event.stopPropagation();
+            const card = expandBtn.closest('.chat-roster-commander-card');
+            if (card) toggleChatRosterCardExpandFromElement(card);
+            return;
+        }
+
+        const profileRow = event.target.closest('.chat-roster-name-row--profile-open');
+        if (profileRow) {
+            openCommunityChatRosterCommanderProfile({
+                ...event,
+                currentTarget: profileRow,
+                target: event.target,
+                preventDefault: () => event.preventDefault(),
+                stopPropagation: () => event.stopPropagation()
+            });
+            return;
+        }
+
+        const botCard = event.target.closest('.chat-roster-commander-card--royal-guard-bot.chat-roster-commander-card--expandable');
+        if (botCard) {
+            event.preventDefault();
+            event.stopPropagation();
+            toggleChatRosterCardExpandFromElement(botCard);
+        }
+    });
+
+    deck.addEventListener('keydown', (event) => {
+        if (event.key !== 'Enter' && event.key !== ' ') return;
+        const expandBtn = event.target.closest('.chat-roster-expand-btn');
+        if (expandBtn) {
+            event.preventDefault();
+            event.stopPropagation();
+            const card = expandBtn.closest('.chat-roster-commander-card');
+            if (card) toggleChatRosterCardExpandFromElement(card);
+            return;
+        }
+
+        const profileRow = event.target.closest('.chat-roster-name-row--profile-open');
+        if (profileRow) {
+            event.preventDefault();
+            openCommunityChatRosterCommanderProfile({
+                ...event,
+                currentTarget: profileRow,
+                target: event.target,
+                preventDefault: () => event.preventDefault(),
+                stopPropagation: () => event.stopPropagation()
+            });
+            return;
+        }
+
+        const botCard = event.target.closest('.chat-roster-commander-card--royal-guard-bot.chat-roster-commander-card--expandable');
+        if (botCard) {
+            event.preventDefault();
+            toggleChatRosterCardExpandFromElement(botCard);
+        }
+    });
 }
 
 window.toggleChatRosterCardExpand = toggleChatRosterCardExpand;
@@ -2035,37 +2152,36 @@ function buildRoyalGuardBotRosterCardMarkup() {
             data-staff-role="${staffRole}"
             data-roster-commander="royal-guard-bot"
             data-roster-expand-key="${expandKey}"
-            role="button"
             tabindex="0"
             aria-expanded="${isExpanded ? 'true' : 'false'}"
-            aria-label="${escapeMetricRosterHtml(botName)} — click for details"
-            onclick="toggleChatRosterCardExpand(event)"
-            onkeydown="handleChatRosterCardExpandKeydown(event)">
+            aria-label="${escapeMetricRosterHtml(botName)} — click for details">
             <div class="chat-roster-commander-body">
                 <div class="chat-roster-commander-topline">
                     <span class="chat-roster-name-row">
                         <span class="chat-roster-presence-ring chat-roster-presence-ring--bot" aria-hidden="true"></span>
                         <span class="chat-roster-name">${escapeMetricRosterHtml(botName)}</span>
                     </span>
-                    <span class="chat-roster-status-pill chat-roster-status-pill--bot"><span class="chat-roster-status-pill-icon" aria-hidden="true">●</span>Online</span>
                     ${buildChatRosterExpandHintMarkup()}
+                    <span class="chat-roster-status-pill chat-roster-status-pill--bot"><span class="chat-roster-status-pill-icon" aria-hidden="true">●</span>Online</span>
                 </div>
-                <div class="chat-roster-commander-expand-panel" ${isExpanded ? '' : 'hidden'}>
-                    ${buildChatRosterExpandPanelMarkup(botName, false, false, staffRole)}
+                <div class="chat-roster-commander-expand-panel"${isExpanded ? '' : ' hidden'}>
+                    ${buildChatRosterExpandPanelMarkup(botName, false, false, false, staffRole)}
                 </div>
             </div>
         </article>
     `;
 }
 
-function buildCommunityChatRosterCardMarkup(name, selfLower, playingSet, presenceState) {
+function buildCommunityChatRosterCardMarkup(name, selfLower, playingSet, onlineSet, presenceState) {
     if (isRoyalGuardBotUsername(name)) return '';
-    const isSelf = normalizeCommunityChatUsername(name) === selfLower;
-    const inAge = playingSet.has(normalizeCommunityChatUsername(name));
+    const key = normalizeCommunityChatUsername(name);
+    const isSelf = key === selfLower;
+    const inAgeRoster = playingSet.has(key);
+    const inAgeOnline = onlineSet.has(key);
     const staffRole = typeof getPortalStaffRole === 'function' ? getPortalStaffRole(name) : null;
     const resolvedPresence = presenceState || 'portal';
     const presenceRingClass = getChatRosterPresenceRingClass(resolvedPresence);
-    const status = getChatRosterStatusMeta(inAge, isSelf, resolvedPresence);
+    const status = getChatRosterStatusMeta(inAgeOnline, inAgeRoster, isSelf, resolvedPresence);
     const isExpandable = isChatRosterCardExpandable(staffRole);
     const expandKey = isExpandable ? getChatRosterExpandKey(name, staffRole) : '';
     const isExpanded = isExpandable && chatRosterExpandedCommanders.has(expandKey);
@@ -2073,40 +2189,39 @@ function buildCommunityChatRosterCardMarkup(name, selfLower, playingSet, presenc
         staffRole === 'owner' ? 'chat-roster-commander-card--owner' : '',
         staffRole === 'moderator' ? 'chat-roster-commander-card--moderator' : '',
         isSelf ? 'chat-roster-commander-card--self' : '',
-        inAge ? 'chat-roster-commander-card--in-age' : '',
+        inAgeRoster ? 'chat-roster-commander-card--in-age' : '',
+        inAgeRoster && !inAgeOnline ? 'chat-roster-commander-card--in-age-offline' : '',
         `chat-roster-commander-card--presence-${resolvedPresence}`,
         isExpandable ? 'chat-roster-commander-card--expandable' : 'chat-roster-commander-card--slim',
         isExpanded ? 'is-expanded' : ''
     ].filter(Boolean).join(' ');
 
     const expandPanelMarkup = isExpandable
-        ? `<div class="chat-roster-commander-expand-panel" ${isExpanded ? '' : 'hidden'}>${buildChatRosterExpandPanelMarkup(name, isSelf, inAge, staffRole)}</div>`
+        ? `<div class="chat-roster-commander-expand-panel"${isExpanded ? '' : ' hidden'}>${buildChatRosterExpandPanelMarkup(name, isSelf, inAgeOnline, inAgeRoster, staffRole)}</div>`
         : '';
 
-    const profileInteractionAttrs = `role="button" tabindex="0" data-roster-profile-commander="${escapeMetricRosterHtml(name)}" aria-label="View ${escapeMetricRosterHtml(name)} profile" onclick="openCommunityChatRosterCommanderProfile(event)" onkeydown="handleCommunityChatRosterProfileKeydown(event)"`;
-
     const expandButtonMarkup = isExpandable
-        ? `<button type="button" class="chat-roster-expand-btn" aria-expanded="${isExpanded ? 'true' : 'false'}" aria-label="Toggle ${escapeMetricRosterHtml(name)} staff details" data-roster-expand-key="${expandKey}" onclick="handleChatRosterExpandButtonClick(event)" onkeydown="handleChatRosterExpandButtonKeydown(event)">${isExpanded ? '▾' : '▸'}</button>`
+        ? `<button type="button" class="chat-roster-expand-btn" aria-expanded="${isExpanded ? 'true' : 'false'}" aria-label="Toggle ${escapeMetricRosterHtml(name)} roster details" data-roster-expand-key="${expandKey}">${isExpanded ? '▾' : '▸'}</button>`
         : '';
 
     return `
-        <article class="chat-roster-commander-card chat-roster-commander-card--profile-open ${cardModifiers}" data-roster-commander="${escapeMetricRosterHtml(normalizeCommunityChatUsername(name))}"${staffRole ? ` data-staff-role="${staffRole}"` : ''} ${profileInteractionAttrs}${isExpandable ? ` data-roster-expand-key="${expandKey}"` : ''}>
+        <article class="chat-roster-commander-card ${cardModifiers}" data-roster-commander="${escapeMetricRosterHtml(normalizeCommunityChatUsername(name))}"${staffRole ? ` data-staff-role="${staffRole}"` : ''}${isExpandable ? ` data-roster-expand-key="${expandKey}"` : ''}${isExpanded ? ' aria-expanded="true"' : ' aria-expanded="false"'}>
             <div class="chat-roster-commander-body">
                 <div class="chat-roster-commander-topline">
-                    <span class="chat-roster-name-row">
+                    <span class="chat-roster-name-row chat-roster-name-row--profile-open" role="button" tabindex="0" data-roster-profile-commander="${escapeMetricRosterHtml(name)}" aria-label="View ${escapeMetricRosterHtml(name)} profile">
                         <span class="chat-roster-presence-ring ${presenceRingClass}" aria-hidden="true" title="${escapeMetricRosterHtml(status.label)}"></span>
                         <span class="chat-roster-name" title="${escapeMetricRosterHtml(name)}">${isSelf && window.RoyalArmiesCommanderRankTitles && typeof player !== 'undefined'
         ? window.RoyalArmiesCommanderRankTitles.buildCommanderIdentityNameHtml(name, {
             rank: player.rank,
             path: player.path,
             rankTitleGender: typeof confirmedRankTitleGender !== 'undefined' ? confirmedRankTitleGender : player.rankTitleGender,
-            inAge: true,
+            inAge: inAgeOnline,
             compact: true
         })
         : escapeMetricRosterHtml(name)}</span>
                     </span>
-                    <span class="chat-roster-status-pill ${status.pillClass}"><span class="chat-roster-status-pill-icon" aria-hidden="true">${status.icon}</span>${escapeMetricRosterHtml(status.label)}</span>
                     ${expandButtonMarkup}
+                    <span class="chat-roster-status-pill ${status.pillClass}"><span class="chat-roster-status-pill-icon" aria-hidden="true">${status.icon}</span>${escapeMetricRosterHtml(status.label)}</span>
                 </div>
                 ${expandPanelMarkup}
             </div>
@@ -2118,10 +2233,15 @@ function renderCommunityChatOnlineRoster(targetBin) {
     const bin = targetBin || document.getElementById('chat-online-roster-dock');
     if (!bin) return;
 
+    ensureCommunityChatRosterInteractionBindings();
+
     const selfRaw = resolvePortalPresenceUsername() || getLoggedCommunityChatUsername();
     const selfLower = normalizeCommunityChatUsername(selfRaw);
     const playingSet = new Set(
         (portalLiveMetricsCache.agePlayingPlayers || []).map((name) => normalizeCommunityChatUsername(name))
+    );
+    const onlineSet = new Set(
+        (portalLiveMetricsCache.ageOnlinePlayers || []).map((name) => normalizeCommunityChatUsername(name))
     );
     const presenceByUser = getPortalBrowsingPresenceMap();
 
@@ -2136,6 +2256,16 @@ function renderCommunityChatOnlineRoster(targetBin) {
         rosterEntries.push({
             username: normalized.username,
             presence: presenceByUser.get(key) || normalized.presence || 'portal'
+        });
+    });
+
+    (portalLiveMetricsCache.agePlayingPlayers || []).forEach((username) => {
+        const key = normalizeCommunityChatUsername(username);
+        if (!key || key === 'testaccount' || isRoyalGuardBotUsername(username) || seen.has(key)) return;
+        seen.add(key);
+        rosterEntries.push({
+            username,
+            presence: 'portal'
         });
     });
 
@@ -2159,7 +2289,7 @@ function renderCommunityChatOnlineRoster(targetBin) {
         .map((name) => entryByKey.get(normalizeCommunityChatUsername(name)))
         .filter(Boolean);
     const inAgeCount = sortedEntries.filter((entry) => (
-        playingSet.has(normalizeCommunityChatUsername(entry.username))
+        onlineSet.has(normalizeCommunityChatUsername(entry.username))
     )).length;
 
     const countEl = document.getElementById('chat-online-roster-count');
@@ -2174,6 +2304,7 @@ function renderCommunityChatOnlineRoster(targetBin) {
             entry.username,
             selfLower,
             playingSet,
+            onlineSet,
             entry.presence
         ))
         .filter(Boolean)
@@ -2204,7 +2335,6 @@ async function requestPortalAgeJoin() {
     const credentials = typeof canUsePortalAuthSessionApi === 'function' && canUsePortalAuthSessionApi()
         ? 'include'
         : 'same-origin';
-    const directJoin = typeof isPortalDirectAgeJoinEnabled === 'function' && isPortalDirectAgeJoinEnabled();
 
     try {
         const response = await fetch(joinUrl, {
@@ -2214,7 +2344,7 @@ async function requestPortalAgeJoin() {
             body: JSON.stringify({
                 username,
                 enrollFromPortal: true,
-                assignRandomNation: directJoin
+                assignRandomNation: true
             })
         });
         const payload = await response.json().catch(() => ({}));
@@ -3320,7 +3450,7 @@ function renderCommunityChatPortalCanvas(viewport) {
                         <span class="chat-roster-header-label">Active Players</span>
                         <span class="chat-online-roster-count" id="chat-online-roster-count">0</span>
                     </div>
-                    <p class="chat-roster-subtitle"><span id="chat-online-in-age-count">0</span> in the Age · click a player for their profile · Owner/Mod ▸ for staff details</p>
+                    <p class="chat-roster-subtitle"><span id="chat-online-in-age-count">0</span> in the Age · click a name for profile · ▸ for rank details</p>
                     <div class="chat-roster-status-legend" aria-label="Roster presence and badges">
                         <span class="chat-roster-legend-item"><span class="chat-roster-legend-dot chat-roster-legend-dot--chat-active" aria-hidden="true"></span> In Chat</span>
                         <span class="chat-roster-legend-item"><span class="chat-roster-legend-dot chat-roster-legend-dot--portal-browsing" aria-hidden="true"></span> On Site</span>
@@ -3988,6 +4118,18 @@ const ROYALTY_PAID_BADGE_TITLE = 'Royalty';
 const FREE_MEMBERSHIP_BADGE_TITLE = 'Basic';
 const ROYALTY_MEMBER_DISPLAY_TITLE = 'Royalty Member';
 const BASIC_MEMBER_DISPLAY_TITLE = 'Basic Member';
+const OWNER_MEMBER_DISPLAY_TITLE = 'Owner';
+
+function resolveCommanderAccountUsername(subject) {
+    const subjectKey = String(subject || '').trim().toLowerCase();
+    const activeUser = typeof getActiveCommanderUsername === 'function' ? getActiveCommanderUsername() : '';
+    const activeKey = String(activeUser || '').trim().toLowerCase();
+    if (!subjectKey) return activeKey;
+    if (activeKey && subjectKey === activeKey) return activeKey;
+    const playerNameKey = String(typeof player !== 'undefined' ? player.name : '').trim().toLowerCase();
+    if (activeKey && playerNameKey && subjectKey === playerNameKey) return activeKey;
+    return subjectKey;
+}
 
 function normalizeStoredMembershipTitle(stored) {
     const value = String(stored || '').trim();
@@ -3998,7 +4140,13 @@ function normalizeStoredMembershipTitle(stored) {
     return value;
 }
 
-function formatMembershipDisplayTitle(title) {
+function formatMembershipDisplayTitle(title, options = {}) {
+    const accountUsername = options.username
+        ? resolveCommanderAccountUsername(options.username)
+        : (options.forActiveCommander ? resolveCommanderAccountUsername() : '');
+    if (accountUsername && typeof isPortalSiteOwner === 'function' && isPortalSiteOwner(accountUsername)) {
+        return OWNER_MEMBER_DISPLAY_TITLE;
+    }
     const normalized = normalizeStoredMembershipTitle(title);
     if (normalized === FREE_MEMBERSHIP_BADGE_TITLE) return BASIC_MEMBER_DISPLAY_TITLE;
     if (normalized === ROYALTY_PAID_BADGE_TITLE) return ROYALTY_MEMBER_DISPLAY_TITLE;
@@ -4007,7 +4155,13 @@ function formatMembershipDisplayTitle(title) {
     return base ? `${base} Member` : BASIC_MEMBER_DISPLAY_TITLE;
 }
 
-function resolveMembershipBadgeTierClass(title) {
+function resolveMembershipBadgeTierClass(title, options = {}) {
+    const accountUsername = options.username
+        ? resolveCommanderAccountUsername(options.username)
+        : (options.forActiveCommander ? resolveCommanderAccountUsername() : '');
+    if (accountUsername && typeof isPortalSiteOwner === 'function' && isPortalSiteOwner(accountUsername)) {
+        return 'owner';
+    }
     const normalized = normalizeStoredMembershipTitle(title).toLowerCase();
     if (normalized === 'basic') return 'bronze';
     return normalized;
@@ -4028,25 +4182,29 @@ function isCommanderExcludedFromChronicleTiers() {
 }
 
 function resolveCommanderMembershipTitleForUsername(username, fallbackTitle) {
-    if (typeof isPortalSiteOwner === 'function' && isPortalSiteOwner(username)) {
+    const accountUsername = resolveCommanderAccountUsername(username);
+    if (typeof isPortalSiteOwner === 'function' && isPortalSiteOwner(accountUsername)) {
         return ROYALTY_PAID_BADGE_TITLE;
     }
     const activeUser = typeof getActiveCommanderUsername === 'function' ? getActiveCommanderUsername() : '';
-    const subjectKey = String(username || '').trim().toLowerCase();
     const activeKey = String(activeUser || '').trim().toLowerCase();
-    if (subjectKey && activeKey && subjectKey === activeKey) {
+    if (accountUsername && activeKey && accountUsername === activeKey) {
         return getCommanderMembershipTitle();
     }
-    return fallbackTitle || FREE_MEMBERSHIP_BADGE_TITLE;
+    const fallback = normalizeStoredMembershipTitle(fallbackTitle);
+    if (fallback === ROYALTY_PAID_BADGE_TITLE) return ROYALTY_PAID_BADGE_TITLE;
+    return fallback || FREE_MEMBERSHIP_BADGE_TITLE;
 }
 
 function getCommanderMembershipTitle() {
     if (isActiveCommanderPortalOwner()) {
         return ROYALTY_PAID_BADGE_TITLE;
     }
+    if (localStorage.getItem('savedChroniclePremiumMember') === 'true') {
+        return ROYALTY_PAID_BADGE_TITLE;
+    }
     const stored = normalizeStoredMembershipTitle(localStorage.getItem(COMMANDER_MEMBERSHIP_STORAGE_KEY));
     if (stored === ROYALTY_PAID_BADGE_TITLE) return ROYALTY_PAID_BADGE_TITLE;
-    if (localStorage.getItem('savedChroniclePremiumMember') === 'true') return ROYALTY_PAID_BADGE_TITLE;
     return FREE_MEMBERSHIP_BADGE_TITLE;
 }
 
@@ -4060,19 +4218,28 @@ function buildCommanderOwnerTagMarkup() {
 }
 
 function shouldShowCommanderOwnerTag(username) {
-    return username
-        ? (typeof isPortalSiteOwner === 'function' && isPortalSiteOwner(username))
-        : isActiveCommanderPortalOwner();
+    const accountUsername = resolveCommanderAccountUsername(
+        username !== undefined && username !== null ? username : undefined
+    );
+    return typeof isPortalSiteOwner === 'function' && isPortalSiteOwner(accountUsername);
 }
 
 function buildCommanderMembershipBadgeRowMarkup(username, badgeClassName = 'membership-badge', options = {}) {
     const includeOwnerTag = options.includeOwnerTag === true;
-    const title = username
-        ? resolveCommanderMembershipTitleForUsername(username)
+    const accountUsername = username !== undefined && username !== null
+        ? resolveCommanderAccountUsername(username)
+        : resolveCommanderAccountUsername();
+    const title = accountUsername
+        ? resolveCommanderMembershipTitleForUsername(accountUsername)
         : getCommanderMembershipTitle();
-    const tierClass = resolveMembershipBadgeTierClass(title);
-    const ownerTag = includeOwnerTag && shouldShowCommanderOwnerTag(username) ? buildCommanderOwnerTagMarkup() : '';
-    return `<span class="${badgeClassName} tier-${tierClass}">${formatMembershipDisplayTitle(title)}</span>${ownerTag}`;
+    const tierClass = resolveMembershipBadgeTierClass(title, { username: accountUsername });
+    const displayTitle = formatMembershipDisplayTitle(title, { username: accountUsername });
+    const ownerTag = includeOwnerTag
+        && shouldShowCommanderOwnerTag(accountUsername)
+        && displayTitle !== OWNER_MEMBER_DISPLAY_TITLE
+        ? buildCommanderOwnerTagMarkup()
+        : '';
+    return `<span class="${badgeClassName} tier-${tierClass}">${displayTitle}</span>${ownerTag}`;
 }
 
 function applyCommanderMembershipTitle(title) {
@@ -4111,24 +4278,27 @@ function hydrateCommanderMembershipFromStorage() {
 
 function refreshCommanderMembershipBadgeDisplays() {
     const title = getCommanderMembershipTitle();
-    const tierClass = title.toLowerCase();
-    const playerName = typeof player !== 'undefined' ? player.name : undefined;
+    const tierClass = resolveMembershipBadgeTierClass(title, { forActiveCommander: true });
+    const displayTitle = formatMembershipDisplayTitle(title, { forActiveCommander: true });
+    const accountUsername = resolveCommanderAccountUsername();
 
     document.querySelectorAll('.profile-identity-badge-row').forEach((row) => {
-        row.innerHTML = buildCommanderMembershipBadgeRowMarkup(playerName, 'membership-badge', { includeOwnerTag: true });
+        row.innerHTML = buildCommanderMembershipBadgeRowMarkup(accountUsername, 'membership-badge', { includeOwnerTag: true });
     });
 
     document.querySelectorAll('.commander-membership-badge-row').forEach((row) => {
         if (row.id === 'nav-commander-membership-badge-row') return;
         if (row.classList.contains('public-profile-badge-row')) return;
         if (row.classList.contains('profile-identity-badge-row')) return;
-        row.innerHTML = buildCommanderMembershipBadgeRowMarkup(playerName, 'membership-badge');
+        row.innerHTML = buildCommanderMembershipBadgeRowMarkup(accountUsername, 'membership-badge');
     });
 
     document.querySelectorAll('.public-profile-badge-row').forEach((row) => {
         const card = row.closest('.public-profile-card, .public-profile-overlay');
         const subjectName = card?.querySelector('.public-profile-commander-name')?.textContent?.trim() || '';
-        row.innerHTML = buildCommanderMembershipBadgeRowMarkup(subjectName, 'public-profile-membership');
+        row.innerHTML = buildCommanderMembershipBadgeRowMarkup(subjectName, 'public-profile-membership', {
+            includeOwnerTag: true
+        });
     });
 
     const navBadgeRow = document.getElementById('nav-commander-membership-badge-row');
@@ -4145,13 +4315,13 @@ function refreshCommanderMembershipBadgeDisplays() {
 
     document.querySelectorAll('.membership-badge').forEach((badge) => {
         if (badge.closest('.commander-membership-badge-row, .nav-commander-owner-tag-slot')) return;
-        badge.textContent = `${title} Member`;
+        badge.textContent = displayTitle;
         badge.className = `membership-badge tier-${tierClass}`;
     });
     document.querySelectorAll('.public-profile-membership').forEach((badge) => {
         const row = badge.closest('.public-profile-badge-row');
         if (row) return;
-        badge.textContent = `${title} Member`;
+        badge.textContent = displayTitle;
         badge.className = `public-profile-membership tier-${tierClass}`;
     });
 }
@@ -4283,7 +4453,7 @@ function renderRoyaltyTierPortalCanvas(viewport) {
         <div class="royalty-workspace-container">
             <header class="royalty-workspace-header-deck">
                 <h2 class="royalty-master-title">👑 Royalty Membership</h2>
-                <p class="royalty-master-subtitle">As <strong>site owner</strong>, your profile shows the <strong>Royalty Member</strong> title with an <strong>Owner</strong> tag. Paid membership plans are not required for you, and the ${CHRONICLE_FREE_PASS_LABEL} / ${CHRONICLE_PREMIUM_PASS_LABEL} lanes on the ${CHRONICLE_BATTLE_PASS_HEADING} do not apply.</p>
+                <p class="royalty-master-subtitle">As <strong>site owner</strong>, your profile shows the <strong>Owner</strong> membership title. Paid membership plans are not required for you, and the ${CHRONICLE_FREE_PASS_LABEL} / ${CHRONICLE_PREMIUM_PASS_LABEL} lanes on the ${CHRONICLE_BATTLE_PASS_HEADING} do not apply.</p>
             </header>
             <div class="royalty-owner-exempt-banner">
                 <strong>Owner account</strong> — you are not enrolled in the Standard or Premium membership flows. ${CHRONICLE_BATTLE_PASS_HEADING} level rewards on The Chronicles are disabled for owner accounts.
@@ -5361,6 +5531,9 @@ window.openUnlockPremiumTierPortal = openUnlockPremiumTierPortal;
 window.openRoyaltyMembershipFromChronicles = openUnlockPremiumTierPortal;
 window.hydrateCommanderMembershipFromStorage = hydrateCommanderMembershipFromStorage;
 window.applyCommanderMembershipTitle = applyCommanderMembershipTitle;
+window.formatMembershipDisplayTitle = formatMembershipDisplayTitle;
+window.resolveMembershipBadgeTierClass = resolveMembershipBadgeTierClass;
+window.resolveCommanderMembershipTitleForUsername = resolveCommanderMembershipTitleForUsername;
 window.buildCommanderMembershipBadgeRowMarkup = buildCommanderMembershipBadgeRowMarkup;
 window.isActiveCommanderPortalOwner = isActiveCommanderPortalOwner;
 window.isCommanderExcludedFromChronicleTiers = isCommanderExcludedFromChronicleTiers;

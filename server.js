@@ -33,7 +33,7 @@ const {
     savePlayerReportScreenshot
 } = require('./nexus-player-report-screenshot');
 const { listErrorCodes } = require('./nexus-error-codes');
-const { getDeployStatePayload } = require('./nexus-deploy-revision');
+const { getDeployStatePayload, SERVER_BOOT_ID } = require('./nexus-deploy-revision');
 const {
     buildChatSenderRankMeta,
     buildCommanderRankMeta,
@@ -90,6 +90,16 @@ const {
     buildDirectAgeJoinMovementRefillRecord,
     resetCommanderRecordPreservingAchievements
 } = require('./nexus-age-portal-join');
+const {
+    AGE_CAMPAIGN_TICK_MS,
+    ensureAgeCampaignRecord,
+    maybeStartAgeCampaignClock,
+    performAllCommanderAccountReset,
+    readAgeCampaignFromPortal,
+    buildAgeSlugForCampaign,
+    formatAgeCampaignDisplayLabel,
+    createAgeCampaignLifecycleRunner
+} = require('./nexus-age-campaign-lifecycle');
 const {
     buildClassOnboardingPatch,
     commanderHasLockedClassChoice,
@@ -405,7 +415,8 @@ function setPortalMaintenanceAlert(patch = {}) {
 const MAINTENANCE_ALERT_DEV_KEY = process.env.MAINTENANCE_ALERT_DEV_KEY || 'local-dev-maintenance';
 
 /* --- Section: Age Portal live presence (in-memory; no mock accounts) --- */
-const AGE_SESSION_ONLINE_TTL_MS = 5 * 60 * 1000;
+/** In-game "active" roster window — heartbeats do not extend this; tab close removes the session. */
+const AGE_SESSION_ACTIVE_MS = 3 * 60 * 1000;
 const PORTAL_BROWSE_ONLINE_TTL_MS = 90 * 1000;
 const CHAT_PRESENCE_ACTIVE_MS = 25 * 1000;
 const PORTAL_PRESENCE_IDLE_MS = 10 * 60 * 1000;
@@ -879,6 +890,8 @@ function writePortalGameAgeMeta(meta) {
 function formatOfficialAgeLabel(ageSlug) {
     const slug = normalizeOfficialAgeSlug(ageSlug);
     if (slug === 'alpha') return 'Age Alpha';
+    const betaMatch = slug.match(/^beta-(\d+)$/);
+    if (betaMatch) return `Age: Beta ${betaMatch[1]}`;
     if (/^\d+$/.test(slug)) return `Age ${slug}`;
     return `Age ${slug.charAt(0).toUpperCase()}${slug.slice(1)}`;
 }
@@ -1503,7 +1516,7 @@ function buildAgeNationPlayersPayload(nationId, viewerUsername) {
             catalogCityId,
             cityName: city?.name || '',
             online: Boolean(session?.isOnline),
-            membershipTitle: String(commander.membershipTitle || 'Basic').trim() || 'Basic',
+            membershipTitle: resolveCommanderMembershipTitleForLedger(commander),
             isSelf: Boolean(viewerLower && username.toLowerCase() === viewerLower)
         });
     });
@@ -1578,7 +1591,7 @@ function buildAgeCityPlayersPayload(catalogCityId, viewerUsername) {
             catalogCityId: commanderCityId,
             nationId: mapNation,
             online: Boolean(session?.isOnline),
-            membershipTitle: String(commander.membershipTitle || 'Basic').trim() || 'Basic',
+            membershipTitle: resolveCommanderMembershipTitleForLedger(commander),
             movePoints: movePoints.movePoints,
             armyFocus: armyFocus || null,
             isSelf: Boolean(viewerLower && username.toLowerCase() === viewerLower),
@@ -2613,7 +2626,9 @@ function pruneAgeSessionOnlineState() {
     const now = Date.now();
     for (const [username, session] of ageSessionByUser.entries()) {
         if (!session) continue;
-        session.isOnline = (now - session.lastSeen) <= AGE_SESSION_ONLINE_TTL_MS;
+        const joinedAt = Number(session.joinedAt) || now;
+        const activeUntil = Number(session.activeUntil) || (joinedAt + AGE_SESSION_ACTIVE_MS);
+        session.isOnline = now < activeUntil;
         ageSessionByUser.set(username, session);
     }
 }
@@ -2709,6 +2724,7 @@ function getPortalLiveMetricsPayload() {
         recentRegistrations,
         deploy: getDeployStatePayload(),
         commanderAccountResetAt: readPortalCommanderAccountResetAt(),
+        ageCampaign: readPortalAgeCampaignPayload(),
         ...getAgeSessionMetrics(),
         ...getPortalBrowseMetrics()
     };
@@ -2742,16 +2758,43 @@ function getAgeSessionMetrics() {
     };
 }
 
+function markAgeSessionOffline(username) {
+    const normalized = normalizeLedgerUsername(username);
+    if (!normalized || isHiddenRegistrationUsername(normalized)) return null;
+
+    const now = Date.now();
+    const existing = ageSessionByUser.get(normalized);
+    if (!existing) return null;
+
+    ageSessionByUser.set(normalized, {
+        ...existing,
+        joinedAt: existing.joinedAt || now,
+        lastSeen: now,
+        activeUntil: now,
+        isOnline: false
+    });
+    return ageSessionByUser.get(normalized);
+}
+
 function touchAgeSession(username, options = {}) {
     const normalized = normalizeLedgerUsername(username);
     if (!normalized || isHiddenRegistrationUsername(normalized)) return null;
 
     const now = Date.now();
     const existing = ageSessionByUser.get(normalized);
+    const joinedAt = existing?.joinedAt || now;
+    const markOnline = options.markOnline !== false;
+    const refreshActiveWindow = options.refreshActiveWindow === true;
+    let activeUntil = Number(existing?.activeUntil) || 0;
+    if (refreshActiveWindow || !activeUntil || activeUntil <= now) {
+        activeUntil = now + AGE_SESSION_ACTIVE_MS;
+    }
+
     const nextSession = {
-        joinedAt: existing?.joinedAt || now,
+        joinedAt,
         lastSeen: now,
-        isOnline: options.markOnline !== false
+        activeUntil,
+        isOnline: markOnline && now < activeUntil
     };
 
     ageSessionByUser.set(normalized, nextSession);
@@ -2773,6 +2816,44 @@ function readPortalCommanderAccountResetAt() {
     const resetAt = portal.commanderAccountResetAt;
     return resetAt ? String(resetAt).trim() : null;
 }
+
+function readPortalAgeCampaignPayload() {
+    const portal = db.get('portal').value() || {};
+    return readAgeCampaignFromPortal(portal);
+}
+
+function clearAgeMovementCommanderPositions() {
+    const movementStore = readAgeMovementStore();
+    movementStore.commanders = {};
+    writeAgeMovementStore(movementStore);
+}
+
+const tickAgeCampaignLifecycle = createAgeCampaignLifecycleRunner(db, {
+    resetCommanderRecordPreservingAchievements,
+    clearAgeMovementCommanders: clearAgeMovementCommanderPositions,
+    clearAllAgeSessions,
+    finalizeCountryChatForAgeEnd,
+    onAgeConcluded({ ageNumber, resetCount, commanderAccountResetAt }) {
+        console.log(
+            `[NEXUS] Age ${ageNumber} concluded — reset ${resetCount} commander account(s) at ${commanderAccountResetAt}.`
+        );
+    },
+    onNextAgeStarted({ ageNumber, startedAt, campaign }) {
+        const meta = readPortalGameAgeMeta();
+        const nextSlug = buildAgeSlugForCampaign(campaign || { era: 'beta', number: ageNumber });
+        writePortalGameAgeMeta({
+            ...meta,
+            activeSlug: nextSlug,
+            startedAt,
+            endedAt: null
+        });
+        console.log(`[NEXUS] ${formatAgeCampaignDisplayLabel(campaign || { era: 'beta', number: ageNumber })} began at ${startedAt}.`);
+    },
+    prepareCountryChatForAgeStart() {
+        const meta = readPortalGameAgeMeta();
+        prepareCountryChatForAgeStart(meta.activeSlug);
+    }
+});
 
 function commanderHasValidAgePortalEnrollment(commander) {
     const portalResetAt = readPortalCommanderAccountResetAt();
@@ -3281,6 +3362,8 @@ function serializeCommanderDossierForClient(commander) {
     if (!commander) return null;
     const legacyBio = commander.description != null ? String(commander.description) : '';
     const bioSource = commander.bio != null ? String(commander.bio) : legacyBio;
+    const resolvedMembershipTitle = resolveCommanderMembershipTitleForLedger(commander);
+    const resolvedPremiumMember = resolvedMembershipTitle === 'Royalty' || !!commander.premiumMember;
     const dossier = {
         status: 'ok',
         username: commander.username,
@@ -3294,8 +3377,8 @@ function serializeCommanderDossierForClient(commander) {
         ageHistory: normalizeCommanderDossierArray(commander.ageHistory, 50),
         awards: enrichCommanderAwardsForClient(commander.awards),
         medals: normalizeCommanderDossierArray(commander.medals, 100),
-        membershipTitle: String(commander.membershipTitle || 'Basic').slice(0, 64),
-        premiumMember: !!commander.premiumMember,
+        membershipTitle: resolvedMembershipTitle,
+        premiumMember: resolvedPremiumMember,
         battlePassServerEnabled: isBattlePassServerEnabled(),
         ageResetUsage: normalizeCommanderAgeResetUsage(commander.ageResetUsage),
         preferences: normalizeCommanderPreferences(commander.preferences),
@@ -3306,6 +3389,34 @@ function serializeCommanderDossierForClient(commander) {
         dossier.chronicleXp = normalizeCommanderChronicleXp(commander.chronicleXp);
     }
     return dossier;
+}
+
+function resolveCommanderMembershipTitleForLedger(commander) {
+    const username = String(commander?.username || '').trim().toLowerCase();
+    if (isHeadquartersOwnerBypass(username)) return 'Royalty';
+    if (commander?.premiumMember) return 'Royalty';
+    const stored = String(commander?.membershipTitle || 'Basic').trim();
+    if (stored === 'Royalty' || stored === 'Royalty Member') return 'Royalty';
+    return stored.slice(0, 64) || 'Basic';
+}
+
+function grantRoyaltyMembershipToCommander(username) {
+    const resolved = resolveLedgerCommanderUsername(username);
+    if (!resolved) return null;
+
+    const commander = db.get('commanders').find({ username: resolved }).value();
+    if (!commander) return null;
+
+    db.get('commanders')
+        .find({ username: resolved })
+        .assign({
+            membershipTitle: 'Royalty',
+            premiumMember: true,
+            dossierUpdatedAt: new Date().toISOString()
+        })
+        .write();
+
+    return db.get('commanders').find({ username: resolved }).value();
 }
 
 function buildCommanderDossierPatch(body) {
@@ -3337,10 +3448,19 @@ function buildCommanderDossierPatch(body) {
         patch.medals = normalizeCommanderDossierArray(body.medals, 100);
     }
     if ('membershipTitle' in body) {
-        patch.membershipTitle = String(body.membershipTitle ?? 'Basic').slice(0, 64);
+        const nextTitle = String(body.membershipTitle ?? 'Basic').slice(0, 64);
+        patch.membershipTitle = nextTitle;
+        if (nextTitle === 'Royalty' || nextTitle === 'Royalty Member') {
+            patch.premiumMember = true;
+        } else if (nextTitle === 'Basic' || nextTitle === 'Basic Member' || nextTitle === 'Bronze') {
+            patch.premiumMember = false;
+        }
     }
     if ('premiumMember' in body) {
         patch.premiumMember = !!body.premiumMember;
+        if (patch.premiumMember) {
+            patch.membershipTitle = 'Royalty';
+        }
     }
     if ('chronicleXp' in body && isBattlePassServerEnabled()) {
         patch.chronicleXp = normalizeCommanderChronicleXp(body.chronicleXp);
@@ -3429,6 +3549,8 @@ app.use(session({
     }
 }));
 
+app.use(rejectStaleDeployPortalSession);
+
 function getPortalSessionLastActivityAt(req) {
     const session = req.session;
     if (!session) return 0;
@@ -3497,12 +3619,42 @@ function setPortalSessionForUser(req, username, rememberMe = true) {
     const nowMs = Date.now();
     req.session.loginAt = nowMs;
     req.session.lastActivityAt = nowMs;
+    req.session.deployBootId = SERVER_BOOT_ID;
 
     if (rememberMe === false) {
         req.session.cookie.maxAge = null;
     } else {
         req.session.cookie.maxAge = PORTAL_SESSION_MAX_AGE_MS;
     }
+}
+
+function destroyPortalSessionForDeploy(req, res, callback) {
+    const finish = typeof callback === 'function' ? callback : () => {};
+    if (typeof req.session?.destroy === 'function') {
+        return req.session.destroy((err) => {
+            if (err) {
+                console.warn('[NEXUS] Deploy session destroy failed:', err);
+            }
+            if (res && typeof res.clearCookie === 'function') {
+                res.clearCookie('royalArmiesPortalSid');
+            }
+            finish();
+        });
+    }
+    if (res && typeof res.clearCookie === 'function') {
+        res.clearCookie('royalArmiesPortalSid');
+    }
+    finish();
+}
+
+function rejectStaleDeployPortalSession(req, res, next) {
+    const username = String(req.session?.username || '').trim();
+    if (!username) return next();
+
+    const sessionBoot = String(req.session.deployBootId || '').trim();
+    if (sessionBoot === SERVER_BOOT_ID) return next();
+
+    destroyPortalSessionForDeploy(req, res, next);
 }
 
 /* Local dev: allow Live Server / static preview origins to call the API on port 3000 */
@@ -8406,9 +8558,11 @@ app.post('/api/portal/age/join', (req, res) => {
 
     const ageSlug = normalizeOfficialAgeSlug(req.body?.ageSlug || readPortalGameAgeMeta().activeSlug);
     const ageChatReset = prepareCountryChatForAgeStart(ageSlug);
+    ensureAgeCampaignRecord(db);
+    maybeStartAgeCampaignClock(db);
 
     touchPortalBrowseSession(username);
-    touchAgeSession(username, { markOnline: true });
+    touchAgeSession(username, { markOnline: true, refreshActiveWindow: true });
 
     ensureCommanderAgeRoster(commander);
 
@@ -8431,9 +8585,9 @@ app.post('/api/portal/age/join', (req, res) => {
     }
 
     const shouldAssignRandomNation = Boolean(
-        isPortalDirectAgeJoinEnabled()
-        && enrollFromPortal
+        enrollFromPortal
         && requiresFreshNationEnrollment
+        && (req.body?.assignRandomNation === true || isPortalDirectAgeJoinEnabled())
     );
 
     if (shouldAssignRandomNation) {
@@ -8505,29 +8659,16 @@ app.post('/api/portal/age/admin/reset-all-commander-accounts', (req, res) => {
         return sendApiError(res, 'NEXUS-AGE-018');
     }
 
-    const commanders = db.get('commanders').value() || [];
-    const resetCount = commanders.length;
-    const nextCommanders = commanders.map((commander) => {
-        if (!commander?.username) return commander;
-        return resetCommanderRecordPreservingAchievements(commander);
-    });
-
-    db.set('commanders', nextCommanders).write();
-
-    const movementStore = readAgeMovementStore();
-    movementStore.commanders = {};
-    writeAgeMovementStore(movementStore);
-
-    const commanderAccountResetAt = new Date().toISOString();
-    db.get('portal').assign({ commanderAccountResetAt }).write();
+    const resetResult = performAllCommanderAccountReset(db, resetCommanderRecordPreservingAchievements);
+    clearAgeMovementCommanderPositions();
     clearAllAgeSessions();
 
     res.json({
         status: 'ok',
         action: 'reset-all-commander-accounts',
-        resetCount,
+        resetCount: resetResult.resetCount,
         directAgeJoin: isPortalDirectAgeJoinEnabled(),
-        commanderAccountResetAt
+        commanderAccountResetAt: resetResult.commanderAccountResetAt
     });
 });
 
@@ -8537,11 +8678,9 @@ app.post('/api/portal/age/leave', (req, res) => {
         return sendApiError(res, 'NEXUS-GEN-002');
     }
 
-    removeAgeSession(username);
-    const countryChatWiped = maybeFinalizeCountryChatAfterAgeVacant();
+    markAgeSessionOffline(username);
     res.json({
         status: 'ok',
-        countryChatWiped,
         ...getPortalLiveMetricsPayload()
     });
 });
@@ -8649,6 +8788,9 @@ app.listen(PORT, () => {
     backfillWelcomeSystemMessagesForAllCommanders();
     backfillFirstTimerAchievementForAllCommanders();
     clearPortalUpdateImminentFlag();
+    ensureAgeCampaignRecord(db);
+    tickAgeCampaignLifecycle();
+    setInterval(tickAgeCampaignLifecycle, AGE_CAMPAIGN_TICK_MS);
     console.log(`========================================`);
     console.log(` NEXUS ENGINE ONLINE: Port ${PORT}`);
     console.log(` GREEN MASK INTERACTIVE: ALPHA 0.1.11`);

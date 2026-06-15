@@ -629,6 +629,7 @@
                 }
                 break;
             case 'return-to-portal':
+            case 'exit-server':
                 returnToAgePortal();
                 break;
             case 'report-player':
@@ -639,12 +640,10 @@
                 }
                 break;
             case 'logout':
-                if (typeof global.requestPortalLogout === 'function') {
-                    global.requestPortalLogout();
-                } else if (typeof global.triggerMainDashboardLogout === 'function') {
-                    global.triggerMainDashboardLogout();
-                } else if (typeof global.executePortalLogoutRedirect === 'function') {
-                    global.executePortalLogoutRedirect();
+                if (typeof global.exitGameServerSession === 'function') {
+                    global.exitGameServerSession();
+                } else {
+                    returnToAgePortal();
                 }
                 break;
             default:
@@ -662,15 +661,17 @@
     }
 
     function registerUnloadHandlers() {
-        global.addEventListener('pagehide', () => {
+        const onLeave = () => {
             stopPresenceLoop();
+            if (typeof global.sendAgeServerLeaveBeacon === 'function') {
+                global.sendAgeServerLeaveBeacon();
+                return;
+            }
             postAgeLeave(true);
-        });
+        };
 
-        global.addEventListener('beforeunload', () => {
-            stopPresenceLoop();
-            postAgeLeave(true);
-        });
+        global.addEventListener('pagehide', onLeave);
+        global.addEventListener('beforeunload', onLeave);
     }
 
     function bindPageNavigation() {

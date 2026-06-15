@@ -18,7 +18,7 @@ const {
 const { DEV_NATION_REGION_IDS } = require('./nexus-dev-nation-switch');
 
 /** When true, main portal Join skips game.html and routes straight to agealpha. */
-const PORTAL_DIRECT_AGE_JOIN_ENABLED = false;
+const PORTAL_DIRECT_AGE_JOIN_ENABLED = true;
 
 function isPortalDirectAgeJoinEnabled() {
     return PORTAL_DIRECT_AGE_JOIN_ENABLED;

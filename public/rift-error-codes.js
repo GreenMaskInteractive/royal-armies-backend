@@ -652,7 +652,7 @@
         'RIFT-NET-003': {
             http: 0,
             title: 'UPDATE COMPLETE',
-            message: 'Royal Armies is back online. Thank you for your patience.',
+            message: 'Royal Armies has been updated. All commanders are being signed out for a fresh session. Please sign in again.',
             category: 'network'
         }
     };

@@ -600,27 +600,166 @@ function resolveActivePortalUsername() {
     return String(localStorage.getItem('activeCommanderUser') || '').trim();
 }
 
-async function notifyAgePortalSessionLeave() {
-    if (typeof notifyPortalAgeSessionLeave === 'function') {
+async function notifyAgePortalSessionLeave(options) {
+    const opts = options && typeof options === 'object' ? options : {};
+    const useKeepalive = opts.useKeepalive === true;
+
+    if (typeof notifyPortalAgeSessionLeave === 'function' && !useKeepalive) {
         await notifyPortalAgeSessionLeave().catch(() => {});
-        return;
+    } else {
+        const username = resolveActivePortalUsername();
+        if (username) {
+            const url = (typeof resolveRoyalArmiesApiUrl === 'function')
+                ? resolveRoyalArmiesApiUrl('/api/portal/age/leave')
+                : '/api/portal/age/leave';
+
+            const fetchOptions = {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username }),
+                credentials: 'include',
+                cache: 'no-store'
+            };
+            if (useKeepalive) fetchOptions.keepalive = true;
+
+            try {
+                await fetch(url, fetchOptions);
+            } catch (_err) {
+                /* ignore */
+            }
+        }
     }
-    const username = resolveActivePortalUsername();
-    if (!username) return;
-    const url = (typeof resolveRoyalArmiesApiUrl === 'function')
-        ? resolveRoyalArmiesApiUrl('/api/portal/age/leave')
-        : '/api/portal/age/leave';
+
     try {
-        await fetch(url, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ username }),
-            credentials: 'include',
-            cache: 'no-store'
-        });
+        localStorage.removeItem('savedCommanderInActiveAge');
+    } catch (_storageErr) {
+        /* ignore */
+    }
+}
+
+function sendAgeServerLeaveBeacon() {
+    if (sendAgeServerLeaveBeacon._sent) return;
+    sendAgeServerLeaveBeacon._sent = true;
+    notifyAgePortalSessionLeave({ useKeepalive: true }).catch(() => {});
+}
+
+const DEPLOY_BOOT_STORAGE_KEY = 'royalArmiesKnownDeployBootId';
+
+function readStoredDeployBootId() {
+    try {
+        return String(localStorage.getItem(DEPLOY_BOOT_STORAGE_KEY) || '').trim();
+    } catch (_err) {
+        return '';
+    }
+}
+
+function storeKnownDeployBootId(bootId) {
+    const normalized = String(bootId || '').trim();
+    if (!normalized) return;
+    try {
+        localStorage.setItem(DEPLOY_BOOT_STORAGE_KEY, normalized);
     } catch (_err) {
         /* ignore */
     }
+}
+
+async function performPostUpdatePlayerbaseLogout(options) {
+    const opts = options && typeof options === 'object' ? options : {};
+    if (performPostUpdatePlayerbaseLogout._inFlight) return;
+    performPostUpdatePlayerbaseLogout._inFlight = true;
+
+    if (typeof isLocalDevelopmentHost === 'function' && isLocalDevelopmentHost()) {
+        performPostUpdatePlayerbaseLogout._inFlight = false;
+        return;
+    }
+
+    const deployBootId = String(opts.deployBootId || '').trim();
+    if (deployBootId) {
+        storeKnownDeployBootId(deployBootId);
+    }
+
+    if (typeof closePortalAlertModal === 'function') {
+        closePortalAlertModal(true);
+    }
+    if (typeof closeMainLogoutConfirmationWindow === 'function') {
+        closeMainLogoutConfirmationWindow();
+    }
+
+    const hasLocalAuth = typeof isPortalUserAuthenticated === 'function'
+        ? isPortalUserAuthenticated()
+        : Boolean(String(localStorage.getItem('activeCommanderUser') || '').trim());
+    if (!hasLocalAuth && opts.requireAuth !== false) {
+        performPostUpdatePlayerbaseLogout._inFlight = false;
+        return;
+    }
+
+    if (typeof notifyAgePortalSessionLeave === 'function') {
+        await notifyAgePortalSessionLeave({ useKeepalive: true }).catch(() => {});
+    } else if (typeof notifyPortalAgeSessionLeave === 'function') {
+        await notifyPortalAgeSessionLeave().catch(() => {});
+    }
+
+    const redirectHome = () => {
+        if (typeof markLocalDevLogoutForGuestPreview === 'function') {
+            markLocalDevLogoutForGuestPreview();
+        }
+        if (typeof clearCommanderLocalAgeSessionFlags === 'function') {
+            clearCommanderLocalAgeSessionFlags();
+        } else {
+            localStorage.removeItem('savedCommanderInActiveAge');
+        }
+        if (typeof clearPortalAuthStorage === 'function') {
+            clearPortalAuthStorage();
+        } else {
+            localStorage.removeItem('activeCommanderUser');
+        }
+        sessionStorage.removeItem('royalArmiesAuthAudioPlay');
+        try {
+            sessionStorage.removeItem('riftUpdateUnderwayActive');
+        } catch (_err) {
+            /* ignore */
+        }
+        window.location.replace(typeof resolveRoyalArmiesPageUrl === 'function'
+            ? resolveRoyalArmiesPageUrl('main')
+            : '/main');
+    };
+
+    const logoutApi = (typeof resolveRoyalArmiesApiUrl === 'function')
+        ? resolveRoyalArmiesApiUrl('/api/auth/logout')
+        : '/api/auth/logout';
+    const serverLogout = (typeof canUsePortalAuthSessionApi === 'function' && canUsePortalAuthSessionApi())
+        ? fetch(logoutApi, { method: 'POST', credentials: 'include', keepalive: true }).catch(() => {})
+        : Promise.resolve();
+
+    serverLogout.finally(() => {
+        if (typeof clearPortalPresenceSession === 'function') {
+            clearPortalPresenceSession().finally(redirectHome);
+            return;
+        }
+        redirectHome();
+    });
+}
+
+function checkDeployBootForPostUpdateLogout(deploy) {
+    if (typeof isLocalDevelopmentHost === 'function' && isLocalDevelopmentHost()) {
+        return false;
+    }
+
+    const bootId = String(deploy?.bootId || '').trim();
+    if (!bootId) return false;
+
+    const knownBootId = readStoredDeployBootId();
+    const hasAuth = typeof isPortalUserAuthenticated === 'function'
+        ? isPortalUserAuthenticated()
+        : Boolean(String(localStorage.getItem('activeCommanderUser') || '').trim());
+
+    if (knownBootId && knownBootId !== bootId && hasAuth) {
+        void performPostUpdatePlayerbaseLogout({ deployBootId: bootId });
+        return true;
+    }
+
+    storeKnownDeployBootId(bootId);
+    return false;
 }
 
 async function exitAgePortalToMain() {
@@ -4134,7 +4273,11 @@ function loadLore(type, customMount) {
                             <span class="profile-main-name">${player.name}</span>
                             <div class="commander-membership-badge-row profile-identity-badge-row">${
                                 typeof buildCommanderMembershipBadgeRowMarkup === 'function'
-                                    ? buildCommanderMembershipBadgeRowMarkup(player.name, 'membership-badge', { includeOwnerTag: true })
+                                    ? buildCommanderMembershipBadgeRowMarkup(
+                                        typeof getActiveCommanderUsername === 'function' ? getActiveCommanderUsername() : player.name,
+                                        'membership-badge',
+                                        { includeOwnerTag: true }
+                                    )
                                     : `<span class="membership-badge tier-${player.membershipTitle.toLowerCase()}">${player.membershipTitle} Member</span>`
                             }</div>
                         </div>
@@ -4227,6 +4370,9 @@ function loadLore(type, customMount) {
             bindProfileEditorFooterActions(profileFooter);
             bindRankTitleGenderProfileControls();
             applyProfileRankResetButtonState();
+            if (typeof refreshCommanderMembershipBadgeDisplays === 'function') {
+                refreshCommanderMembershipBadgeDisplays();
+            }
             return;
         }
         
@@ -5092,10 +5238,15 @@ window.openMainPortalGuestRegister = openMainPortalGuestRegister;
 window.handleHeaderAuthAction = handleHeaderAuthAction;
 window.isAgePortalShell = isAgePortalShell;
 window.notifyAgePortalSessionLeave = notifyAgePortalSessionLeave;
+window.sendAgeServerLeaveBeacon = sendAgeServerLeaveBeacon;
 window.exitAgePortalToMain = exitAgePortalToMain;
+window.exitGameServerSession = exitAgePortalToMain;
 window.storeCommanderAccountResetAck = storeCommanderAccountResetAck;
 window.readCommanderAccountResetAck = readCommanderAccountResetAck;
 window.executePortalLogoutRedirect = executePortalLogoutRedirect;
+window.performPostUpdatePlayerbaseLogout = performPostUpdatePlayerbaseLogout;
+window.checkDeployBootForPostUpdateLogout = checkDeployBootForPostUpdateLogout;
+window.storeKnownDeployBootId = storeKnownDeployBootId;
 window.requestPortalLogout = requestPortalLogout;
 window.openMainPortalLoginModal = openMainPortalLoginModal;
 window.closeMainPortalLoginModal = closeMainPortalLoginModal;

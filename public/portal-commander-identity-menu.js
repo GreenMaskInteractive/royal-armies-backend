@@ -185,8 +185,13 @@
                 }
                 break;
             case 'return-to-portal':
-                if (typeof global.returnToGameAgePortal === 'function') {
+            case 'exit-server':
+                if (typeof global.exitGameServerSession === 'function') {
+                    global.exitGameServerSession();
+                } else if (typeof global.returnToGameAgePortal === 'function') {
                     global.returnToGameAgePortal();
+                } else if (typeof global.exitAgePortalToMain === 'function') {
+                    global.exitAgePortalToMain();
                 }
                 break;
             case 'report-player':
@@ -197,12 +202,18 @@
                 }
                 break;
             case 'logout':
-                if (typeof global.requestPortalLogout === 'function') {
-                    global.requestPortalLogout();
-                } else if (typeof global.triggerMainDashboardLogout === 'function') {
-                    global.triggerMainDashboardLogout();
-                } else if (typeof global.executePortalLogoutRedirect === 'function') {
-                    global.executePortalLogoutRedirect();
+                if (typeof global.isMainPortalHub === 'function' && global.isMainPortalHub()) {
+                    if (typeof global.requestPortalLogout === 'function') {
+                        global.requestPortalLogout();
+                    } else if (typeof global.triggerMainDashboardLogout === 'function') {
+                        global.triggerMainDashboardLogout();
+                    } else if (typeof global.executePortalLogoutRedirect === 'function') {
+                        global.executePortalLogoutRedirect();
+                    }
+                } else if (typeof global.exitGameServerSession === 'function') {
+                    global.exitGameServerSession();
+                } else if (typeof global.returnToGameAgePortal === 'function') {
+                    global.returnToGameAgePortal();
                 }
                 break;
             default:
@@ -215,13 +226,13 @@
         if (button.classList.contains('dropdown-action-item-view-profile')) return 'view-profile';
         if (button.id === 'nav-dropdown-messages-btn') return 'messages';
         if (button.classList.contains('dropdown-action-item-discoveries')) return 'discoveries';
-        if (button.id === 'game-nav-dropdown-return-portal-btn') return 'return-to-portal';
-        if (button.id === 'game-nav-dropdown-logout-btn') return 'logout';
+        if (button.id === 'game-nav-dropdown-logout-btn') return 'exit-server';
         if (button.classList.contains('dropdown-action-item-report-player')) return 'report-player';
 
         const label = String(button.textContent || '').replace(/\s+/g, ' ').trim().toLowerCase();
         if (label === 'edit profile') return 'edit-profile';
         if (label === 'settings') return 'settings';
+        if (label === 'exit server') return 'exit-server';
         return null;
     }
 

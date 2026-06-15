@@ -239,6 +239,9 @@
     }
 
     function shouldResumeActiveAgeSession() {
+        if (typeof global.isPortalDirectAgeJoinEnabled === 'function' && global.isPortalDirectAgeJoinEnabled()) {
+            return !isLocalGameProgressionPreviewActive();
+        }
         return isGameSessionStarted() && !isLocalGameProgressionPreviewActive();
     }
 
@@ -420,6 +423,7 @@
     }
 
     async function notifyGameSessionError(response, payload, fallbackTitle, networkCode) {
+        await global.RoyalArmiesPageLoadingGate?.release?.('game-page-boot');
         if (typeof global.handleRiftApiFailure === 'function') {
             await global.handleRiftApiFailure(response, payload, fallbackTitle);
             return;
@@ -437,20 +441,60 @@
 
     async function postAgeJoin() {
         const username = resolveGamePageUsername();
-        if (!username) return;
+        if (!username) return false;
+
+        if (global.RoyalArmiesOfficialAge?.resumeAgePortalSessionJoin) {
+            const result = await global.RoyalArmiesOfficialAge.resumeAgePortalSessionJoin(resolveApiUrl);
+            if (result?.evicted) {
+                return false;
+            }
+            if (!result?.ok) {
+                const joinCode = String(result?.payload?.code || '').trim();
+                if (joinCode === 'NEXUS-AGE-038') {
+                    global.location.replace(resolveMainPortalUrl());
+                    return false;
+                }
+                await notifyGameSessionError(null, result.payload, 'Age session', 'NEXUS-GAME-006');
+                return false;
+            }
+            if (result.payload?.gameNation && typeof global.player !== 'undefined' && global.player) {
+                global.player.gameNation = result.payload.gameNation;
+            }
+            return true;
+        }
+
+        const joinBody = {
+            username,
+            ...(typeof global.isPortalDirectAgeJoinEnabled === 'function' && global.isPortalDirectAgeJoinEnabled()
+                ? { enrollFromPortal: true, assignRandomNation: true }
+                : {})
+        };
 
         try {
             const response = await global.fetch(resolveApiUrl('/api/portal/age/join'), {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ username }),
+                body: JSON.stringify(joinBody),
                 cache: 'no-store',
                 credentials: 'include'
             });
             const payload = await response.json().catch(() => ({}));
             if (!response.ok || payload.status === 'error') {
+                const joinCode = String(payload?.code || '').trim();
+                if (joinCode === 'NEXUS-AGE-038') {
+                    global.location.replace(resolveMainPortalUrl());
+                    return false;
+                }
                 await notifyGameSessionError(response, payload, 'Age session', 'NEXUS-GAME-006');
+                return false;
             }
+            if (payload.commanderAccountResetAt && global.RoyalArmiesOfficialAge?.storeCommanderAccountResetAck) {
+                global.RoyalArmiesOfficialAge.storeCommanderAccountResetAck(payload.commanderAccountResetAt);
+            }
+            if (payload.gameNation && typeof global.player !== 'undefined' && global.player) {
+                global.player.gameNation = payload.gameNation;
+            }
+            return true;
         } catch (err) {
             console.warn('Age join sync failed:', err);
             if (typeof global.showRiftNetworkError === 'function') {
@@ -458,6 +502,7 @@
             } else if (typeof global.showRoyalArmiesNetworkError === 'function') {
                 await global.showRoyalArmiesNetworkError('Age session');
             }
+            return false;
         }
     }
 
@@ -895,15 +940,14 @@
                 }
                 break;
             case 'return-to-portal':
+            case 'exit-server':
                 returnToAgePortal();
                 break;
             case 'logout':
-                if (typeof global.requestPortalLogout === 'function') {
-                    global.requestPortalLogout();
-                } else if (typeof global.triggerMainDashboardLogout === 'function') {
-                    global.triggerMainDashboardLogout();
-                } else if (typeof global.executePortalLogoutRedirect === 'function') {
-                    global.executePortalLogoutRedirect();
+                if (typeof global.exitGameServerSession === 'function') {
+                    global.exitGameServerSession();
+                } else {
+                    returnToAgePortal();
                 }
                 break;
             default:
@@ -1155,15 +1199,17 @@
     }
 
     function registerUnloadHandlers() {
-        global.addEventListener('pagehide', () => {
+        const onLeave = () => {
             stopGamePresenceLoop();
+            if (typeof global.sendAgeServerLeaveBeacon === 'function') {
+                global.sendAgeServerLeaveBeacon();
+                return;
+            }
             postAgeLeave(true);
-        });
+        };
 
-        global.addEventListener('beforeunload', () => {
-            stopGamePresenceLoop();
-            postAgeLeave(true);
-        });
+        global.addEventListener('pagehide', onLeave);
+        global.addEventListener('beforeunload', onLeave);
     }
 
     async function bootGamePage() {

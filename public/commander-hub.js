@@ -777,7 +777,15 @@ function renderPublicProfileCardContent(snapshot, options) {
         ? buildCommanderMembershipBadgeRowMarkup(snapshot.name, 'public-profile-membership', {
             includeOwnerTag: viewingSelf
         })
-        : `<span class="public-profile-membership tier-${String(snapshot.membershipTitle).toLowerCase()}">${escapePublicProfileHtml(snapshot.membershipTitle)} Member</span>`;
+        : (() => {
+            const resolvedTitle = typeof global.formatMembershipDisplayTitle === 'function'
+                ? global.formatMembershipDisplayTitle(snapshot.membershipTitle, { username: snapshot.name })
+                : `${escapePublicProfileHtml(snapshot.membershipTitle)} Member`;
+            const tierClass = typeof global.resolveMembershipBadgeTierClass === 'function'
+                ? global.resolveMembershipBadgeTierClass(snapshot.membershipTitle, { username: snapshot.name })
+                : String(snapshot.membershipTitle).toLowerCase();
+            return `<span class="public-profile-membership tier-${tierClass}">${escapePublicProfileHtml(resolvedTitle)}</span>`;
+        })();
     const royaltyNameBadgeMarkup = buildRoyaltyProfileNameBadgeMarkup(snapshot.membershipTitle);
     const rankTitle = getCommanderRankTitle(snapshot.rank, snapshot.path, snapshot.rankTitleGender);
     const classTitle = getCommanderClassTitle(snapshot.path);

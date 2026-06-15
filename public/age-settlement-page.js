@@ -341,15 +341,14 @@
                 global.openAgeChroniclesBattlePassModal?.(event);
                 break;
             case 'return-to-portal':
+            case 'exit-server':
                 void returnToAgePortal();
                 break;
             case 'logout':
-                if (typeof global.requestPortalLogout === 'function') {
-                    global.requestPortalLogout();
-                } else if (typeof global.triggerMainDashboardLogout === 'function') {
-                    global.triggerMainDashboardLogout();
-                } else if (typeof global.executePortalLogoutRedirect === 'function') {
-                    global.executePortalLogoutRedirect();
+                if (typeof global.exitGameServerSession === 'function') {
+                    global.exitGameServerSession();
+                } else {
+                    void returnToAgePortal();
                 }
                 break;
             default:

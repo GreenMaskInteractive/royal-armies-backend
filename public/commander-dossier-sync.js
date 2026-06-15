@@ -80,6 +80,7 @@
             }
             if (dossier.premiumMember) {
                 global.localStorage.setItem(LEGACY_KEYS.premiumMember, 'true');
+                global.localStorage.setItem(LEGACY_KEYS.membershipTitle, 'Royalty');
             } else if (dossier.premiumMember === false) {
                 global.localStorage.removeItem(LEGACY_KEYS.premiumMember);
             }
@@ -303,7 +304,6 @@
                     : dossier.awards.slice();
             }
             if (Array.isArray(dossier.medals)) global.player.medals = dossier.medals.slice();
-            if (dossier.membershipTitle) global.player.membershipTitle = dossier.membershipTitle;
         }
 
         mirrorLegacyLocalStorage(dossier);
@@ -312,6 +312,8 @@
 
         if (typeof global.hydrateCommanderMembershipFromStorage === 'function') {
             global.hydrateCommanderMembershipFromStorage();
+        } else if (dossier.premiumMember === true && typeof global.applyCommanderMembershipTitle === 'function') {
+            global.applyCommanderMembershipTitle('Royalty');
         }
         if (typeof global.refreshChronicleRewardsTrackPanels === 'function') {
             global.refreshChronicleRewardsTrackPanels();
