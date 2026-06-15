@@ -26347,30 +26347,36 @@ body.age-barracks-open {
 
 .age-guild-workspace {
     position: fixed;
-    left: 0;
-    right: 0;
-    top: var(--age-map-slot-top);
-    bottom: var(--age-map-slot-bottom);
-    z-index: 4;
+    inset: 0;
+    z-index: 13060;
     pointer-events: none;
     box-sizing: border-box;
+}
+
+body.age-guild-modal-open .age-guild-workspace:not([hidden]) {
+    pointer-events: none;
+}
+
+.age-guild-job-arena.age-age-center-modal:not([hidden]) {
+    position: fixed;
+    inset: 0;
+    z-index: 13061;
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    box-sizing: border-box;
+    pointer-events: auto;
+    background: transparent;
 }
 
 body.age-guild-training-open .age-guild-workspace:not([hidden]),
 body.age-guild-hub-open .age-guild-workspace:not([hidden]),
 body.age-guild-overlay-open .age-guild-workspace:not([hidden]),
-#age-page-canvas[data-age-view="guild-training"] .age-guild-workspace:not([hidden]) {
-    inset: 0;
-    top: 0;
-    bottom: 0;
-    z-index: 12035;
-    pointer-events: auto;
+body.age-guild-modal-open .age-guild-workspace:not([hidden]) {
+    pointer-events: none;
     display: block;
     background: transparent;
-}
-
-#age-page-canvas[data-age-view="guild-training"] .age-guild-workspace {
-    display: block;
 }
 
 .age-guild-workspace[hidden] {
@@ -26536,48 +26542,13 @@ body.age-guild-overlay-open .age-guild-workspace:not([hidden]),
 }
 
 .age-guild-job-arena {
-    position: absolute;
-    inset: 0;
-    z-index: 1;
-    display: grid;
     box-sizing: border-box;
     pointer-events: none;
     background: transparent;
 }
 
-#age-page-canvas[data-age-view="guild-training"] .age-guild-training-arena:not([hidden]) {
-    display: grid;
-    pointer-events: auto;
-}
-
-body.age-guild-hub-open .age-guild-jobs-hub-arena:not([hidden]) {
-    display: grid;
-    pointer-events: auto;
-}
-
-body.age-guild-overlay-open {
-    overflow: hidden;
-}
-
-body.age-guild-overlay-open .age-guild-workspace {
-    position: fixed;
-    inset: 0;
-    z-index: 12035;
-    top: 0;
-    bottom: 0;
-    pointer-events: auto;
-}
-
-.age-guild-trade-arena,
-.age-guild-bounties-arena {
-    position: fixed;
-    left: 0;
-    right: 0;
-    top: var(--age-map-slot-top);
-    bottom: var(--age-map-slot-bottom);
-    z-index: 12036;
-}
-
+body.age-guild-training-open .age-guild-training-arena:not([hidden]),
+body.age-guild-hub-open .age-guild-jobs-hub-arena:not([hidden]),
 body.age-guild-overlay-open .age-guild-trade-arena:not([hidden]),
 body.age-guild-overlay-open .age-guild-bounties-arena:not([hidden]) {
     pointer-events: auto;
@@ -26588,6 +26559,24 @@ body.age-guild-overlay-open .age-guild-bounties-arena:not([hidden]) {
 }
 
 .age-guild-training-arena {
+    display: block;
+}
+
+.age-guild-training-modal-dialog {
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr);
+}
+
+.age-guild-trade-arena,
+.age-guild-bounties-arena,
+.age-guild-jobs-hub-arena {
+    display: block;
+}
+
+.age-guild-trade-modal-dialog,
+.age-guild-bounties-modal-dialog,
+.age-guild-hub-modal-dialog {
+    display: grid;
     grid-template-rows: auto minmax(0, 1fr);
 }
 
@@ -26898,7 +26887,8 @@ button.age-guild-gear-slot {
     border-left-color: rgba(184, 144, 48, 0.38);
 }
 
-#age-page-canvas[data-age-view="guild-training"] .age-guild-job-top-panel {
+#age-page-canvas[data-age-view="guild-training"] .age-guild-job-top-panel,
+body.age-guild-training-open .age-guild-training-modal-dialog .age-guild-job-top-panel--training {
     border: 1px solid var(--age-hud-rail-border);
     border-radius: 6px;
     background:
@@ -27266,11 +27256,7 @@ button.age-guild-gear-slot {
     grid-template-rows: auto minmax(0, 1fr);
 }
 
-#age-page-canvas.age-guild-overlay-open .age-settlement-menu-panel,
-#age-page-canvas.age-guild-overlay-open .age-city-info-panel {
-    visibility: hidden;
-    pointer-events: none;
-}
+/* Guild job modals keep settlement/map visible under the backdrop. */
 
 .age-guild-top-band,
 .age-guild-bottom-band,
@@ -27319,17 +27305,17 @@ button.age-guild-gear-slot {
 }
 
 .age-guild-job-back {
-    position: fixed;
-    top: calc(var(--age-map-slot-top) + 8px);
-    left: max(16px, env(safe-area-inset-left));
-    z-index: 12040;
+    position: absolute;
+    top: 14px;
+    left: 14px;
+    z-index: 2;
 }
 
 .age-guild-job-close {
-    position: fixed;
-    top: calc(var(--age-map-slot-top) + 8px);
-    right: max(16px, env(safe-area-inset-right));
-    z-index: 12040;
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    z-index: 2;
     border: 1px solid rgba(184, 144, 48, 0.45);
     border-radius: 6px;
     padding: 7px 12px;

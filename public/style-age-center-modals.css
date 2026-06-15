@@ -150,3 +150,64 @@ body.age-records-open {
     text-transform: none;
     letter-spacing: 0;
 }
+
+.age-guild-hub-modal-dialog {
+    width: min(760px, 96vw);
+    max-height: min(720px, 90vh);
+}
+
+.age-guild-training-modal-dialog {
+    width: min(1480px, 96vw);
+    height: min(920px, 90vh);
+}
+
+.age-guild-trade-modal-dialog,
+.age-guild-bounties-modal-dialog {
+    width: min(980px, 96vw);
+    max-height: min(860px, 90vh);
+}
+
+.age-guild-job-modal-dialog {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    overflow: hidden;
+}
+
+.age-guild-job-modal-dialog .age-guild-top-band {
+    position: relative;
+    flex: 0 0 auto;
+    padding: 18px 56px 12px 18px;
+}
+
+.age-guild-job-modal-dialog .age-guild-job-body,
+.age-guild-job-modal-dialog .age-guild-training-center {
+    flex: 1 1 auto;
+    min-height: 0;
+}
+
+.age-guild-job-modal-dialog .age-guild-job-close {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    z-index: 2;
+}
+
+.age-guild-job-modal-dialog .age-guild-job-back {
+    position: absolute;
+    top: 14px;
+    left: 14px;
+    z-index: 2;
+}
+
+.age-guild-training-modal-dialog .age-guild-training-title-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding-right: 44px;
+}
+
+body.age-guild-modal-open {
+    overflow: hidden;
+}

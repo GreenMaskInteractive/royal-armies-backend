@@ -419,18 +419,20 @@
 
         const guildWorkspace = global.document.getElementById('age-guild-workspace');
         const guildTrainingArena = global.document.getElementById('age-guild-training-arena');
+        const guildTrainingOpen = typeof global.RoyalArmiesAdventurersGuild?.isTrainingOpen === 'function'
+            && global.RoyalArmiesAdventurersGuild.isTrainingOpen();
         const guildOverlayOpen = typeof global.RoyalArmiesAdventurersGuild?.isOverlayOpen === 'function'
             && global.RoyalArmiesAdventurersGuild.isOverlayOpen();
         const guildWorkspaceOpen = typeof global.RoyalArmiesAdventurersGuild?.isOpen === 'function'
             && global.RoyalArmiesAdventurersGuild.isOpen();
-        const showGuildWorkspace = inGuildTrainingView || guildOverlayOpen || guildWorkspaceOpen;
+        const showGuildWorkspace = guildTrainingOpen || guildOverlayOpen || guildWorkspaceOpen;
         if (guildWorkspace) {
             guildWorkspace.hidden = !showGuildWorkspace;
             guildWorkspace.setAttribute('aria-hidden', showGuildWorkspace ? 'false' : 'true');
         }
         if (guildTrainingArena) {
-            guildTrainingArena.hidden = !inGuildTrainingView;
-            guildTrainingArena.setAttribute('aria-hidden', inGuildTrainingView ? 'false' : 'true');
+            guildTrainingArena.hidden = !guildTrainingOpen;
+            guildTrainingArena.setAttribute('aria-hidden', guildTrainingOpen ? 'false' : 'true');
         }
 
     }
@@ -491,7 +493,7 @@
 
         if (inGuildTrainingView) {
             global.RoyalArmiesAdventurersGuild?.onTrainingViewOpen?.();
-        } else {
+        } else if (!global.RoyalArmiesAdventurersGuild?.isTrainingOpen?.()) {
             global.RoyalArmiesAdventurersGuild?.onTrainingViewClose?.();
         }
 
@@ -527,13 +529,9 @@
                 : '';
             const mark = escapeSettlementMenuHtml(resolveVenueMark(venue.id));
             const label = escapeSettlementMenuHtml(venue.label);
-            const isExpandable = venue.id === 'adventurers-guild' || venue.id === 'barracks';
-            const subPanelId = venue.id === 'adventurers-guild'
-                ? 'age-settlement-guild-jobs'
-                : (venue.id === 'barracks' ? 'age-settlement-garrison-options' : '');
-            const wrapClass = venue.id === 'adventurers-guild'
-                ? 'age-settlement-menu-guild-wrap'
-                : (venue.id === 'barracks' ? 'age-settlement-menu-garrison-wrap' : '');
+            const isExpandable = venue.id === 'barracks';
+            const subPanelId = venue.id === 'barracks' ? 'age-settlement-garrison-options' : '';
+            const wrapClass = venue.id === 'barracks' ? 'age-settlement-menu-garrison-wrap' : '';
             const itemHtml = (
                 `<button type="button" class="age-settlement-menu-item${placementClass}${isExpandable ? ' age-settlement-menu-item--expandable' : ''}"`
                 + ` data-settlement-venue="${escapeSettlementMenuHtml(venue.id)}"`
@@ -546,15 +544,6 @@
                 + `<span class="age-settlement-menu-item-chevron" aria-hidden="true">${isExpandable ? '▾' : '›'}</span>`
                 + '</button>'
             );
-
-            if (venue.id === 'adventurers-guild') {
-                return (
-                    `<div class="${wrapClass}">`
-                    + itemHtml
-                    + '<div id="age-settlement-guild-jobs" class="age-settlement-guild-jobs" hidden></div>'
-                    + '</div>'
-                );
-            }
 
             if (venue.id === 'barracks') {
                 return (
@@ -698,12 +687,10 @@
         const tier = resolveSettlementTier();
 
         if (normalizedVenueId === 'adventurers-guild') {
-            if (typeof global.RoyalArmiesAdventurersGuild?.toggleSettlementJobs === 'function') {
-                void global.RoyalArmiesAdventurersGuild.toggleSettlementJobs({
-                    settlementTier: tier,
-                    city: resolveCurrentCity()
-                });
-            }
+            void global.RoyalArmiesAdventurersGuild?.openSettlementHub?.({
+                settlementTier: tier,
+                city: resolveCurrentCity()
+            });
             return;
         }
 
@@ -768,6 +755,10 @@
 
         if (activeView === VIEW_GUILD_TRAINING && nextView !== VIEW_GUILD_TRAINING) {
             global.RoyalArmiesAdventurersGuild?.closeTrainingView?.({ skipViewRestore: true });
+        }
+
+        if (activeView === VIEW_CITY && nextView !== VIEW_CITY) {
+            global.RoyalArmiesAdventurersGuild?.dismissGuildWorkspacesForSettlementAction?.();
         }
 
         activeView = nextView;
