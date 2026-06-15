@@ -867,6 +867,95 @@
         setAgeHudMovePointsDisplay(3, 3);
     }
 
+    const AGE_HUD_UNITS_LOW_HEALTH_RATIO = 0.6;
+    const AGE_HUD_UNITS_CRITICAL_HEALTH_RATIO = 0.25;
+
+    function getAgeHudUnitsHealthCounts(uninjured, total) {
+        const safeTotal = Math.max(0, Math.floor(Number(total) || 0));
+        const safeUninjured = Math.max(0, Math.min(safeTotal, Math.floor(Number(uninjured) || 0)));
+        const ratio = safeTotal > 0 ? safeUninjured / safeTotal : 1;
+        return { safeTotal, safeUninjured, ratio };
+    }
+
+    function isAgeHudUnitsLowHealth(uninjured, total) {
+        const { ratio } = getAgeHudUnitsHealthCounts(uninjured, total);
+        return ratio < AGE_HUD_UNITS_LOW_HEALTH_RATIO;
+    }
+
+    function isAgeHudUnitsCriticalHealth(uninjured, total) {
+        const { safeTotal, ratio } = getAgeHudUnitsHealthCounts(uninjured, total);
+        if (!safeTotal) return false;
+        return ratio < AGE_HUD_UNITS_CRITICAL_HEALTH_RATIO;
+    }
+
+    function setAgeHudUnitsDisplay(uninjured, total) {
+        const root = global.document.getElementById('age-hud-units');
+        const item = global.document.getElementById('age-hud-units-item');
+        const uninjuredEl = global.document.getElementById('age-hud-units-uninjured');
+        const totalEl = global.document.getElementById('age-hud-units-total');
+        if (!root || !uninjuredEl || !totalEl) return;
+
+        const { safeTotal, safeUninjured } = getAgeHudUnitsHealthCounts(uninjured, total);
+        const lowHealth = isAgeHudUnitsLowHealth(safeUninjured, safeTotal);
+        const criticalHealth = isAgeHudUnitsCriticalHealth(safeUninjured, safeTotal);
+
+        uninjuredEl.textContent = String(safeUninjured);
+        totalEl.textContent = String(safeTotal);
+        root.setAttribute(
+            'aria-label',
+            `${safeUninjured} uninjured ${safeUninjured === 1 ? 'unit' : 'units'} of ${safeTotal} total`
+        );
+
+        if (item) {
+            item.classList.toggle('is-units-low-health', lowHealth);
+            item.classList.toggle('is-units-critical-health', criticalHealth);
+            item.setAttribute('aria-live', lowHealth || criticalHealth ? 'polite' : 'off');
+        }
+        root.classList.toggle('is-units-low-health', lowHealth);
+        root.classList.toggle('is-units-critical-health', criticalHealth);
+    }
+
+    function countLocalArmyUnits(army) {
+        let total = 0;
+        let injured = 0;
+
+        (Array.isArray(army) ? army : []).forEach((stack) => {
+            if (!stack || typeof stack !== 'object') return;
+            const qty = Math.max(0, Math.floor(Number(stack.qty) || 0));
+            if (!qty) return;
+            const stackInjured = Math.max(
+                0,
+                Math.min(qty, Math.floor(Number(stack.injuredQty ?? stack.injured) || 0))
+            );
+            total += qty;
+            injured += stackInjured;
+        });
+
+        return {
+            total,
+            uninjured: Math.max(0, total - injured)
+        };
+    }
+
+    function resolveAgeHudUnitsCounts() {
+        const movement = global.RoyalArmiesAgeMovement;
+        if (movement && typeof movement.getUnitsTotal === 'function') {
+            return {
+                total: movement.getUnitsTotal(),
+                uninjured: movement.getUnitsUninjured()
+            };
+        }
+
+        const army = global.player?.ageArmy || global.player?.army;
+        const localCounts = countLocalArmyUnits(army);
+        return { uninjured: localCounts.uninjured, total: localCounts.total };
+    }
+
+    function refreshAgeHudUnits() {
+        const { uninjured, total } = resolveAgeHudUnitsCounts();
+        setAgeHudUnitsDisplay(uninjured, total);
+    }
+
     async function postAgeJoin() {
         const username = resolvePageUsername();
         if (!username) return { ok: false, evicted: false };
@@ -1022,6 +1111,7 @@
         }
 
         refreshAgeHudMovePoints();
+        refreshAgeHudUnits();
 
         if (global.RoyalArmiesAgeCommanderRank?.hydrateCommanderClassPathFromServer) {
             try {
@@ -1117,9 +1207,12 @@
 
     global.refreshAgeNationWelcomeChrome = refreshAgeNationWelcomeChrome;
     global.refreshAgeHudMovePoints = refreshAgeHudMovePoints;
+    global.refreshAgeHudUnits = refreshAgeHudUnits;
     global.setAgeHudMovePointsDisplay = setAgeHudMovePointsDisplay;
     global.addEventListener('royalarmies:age-movement-updated', refreshAgeNationWelcomeChrome);
     global.addEventListener('royalarmies:age-movement-updated', refreshAgeHudMovePoints);
+    global.addEventListener('royalarmies:age-movement-updated', refreshAgeHudUnits);
+    global.addEventListener('royalarmies:age-recruitment-updated', refreshAgeHudUnits);
 
     global.syncAgeMapHudLayout = syncCouncilBoardLayoutToMap;
 

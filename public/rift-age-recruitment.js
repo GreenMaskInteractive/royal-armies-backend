@@ -85,13 +85,12 @@
 
         if (global.RoyalArmiesAgeMovement?.applyStatePayload) {
             global.RoyalArmiesAgeMovement.applyStatePayload(payload);
-        } else {
-            if (Array.isArray(payload.ageArmy) && typeof global.player !== 'undefined') {
-                global.player.ageArmy = payload.ageArmy.slice();
-            }
-            if (typeof global.refreshAgeHudUnits === 'function') {
-                global.refreshAgeHudUnits();
-            }
+        } else if (Array.isArray(payload.ageArmy) && typeof global.player !== 'undefined') {
+            global.player.ageArmy = payload.ageArmy.slice();
+        }
+
+        if (typeof global.refreshAgeHudUnits === 'function') {
+            global.refreshAgeHudUnits();
         }
 
         syncRecruitmentResources(payload);
