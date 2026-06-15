@@ -28622,11 +28622,11 @@ body.player-report-modal-open {
     color: rgba(255, 196, 168, 0.98);
 }
 
-/* --- Commander rank promotion popup --- */
+/* --- Commander rank promotion popup (above guild job center modals ~13061) --- */
 .age-rank-promotion-overlay {
     position: fixed;
     inset: 0;
-    z-index: 12050;
+    z-index: 13120;
     display: flex;
     align-items: center;
     justify-content: center;
