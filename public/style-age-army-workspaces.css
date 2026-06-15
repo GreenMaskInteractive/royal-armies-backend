@@ -880,15 +880,19 @@
     margin-top: 18px;
 }
 
-/* Blacksmith / Armory — compact centered modal (not barracks / army-workspace scale) */
+/* Blacksmith / Armory — centered modal (between compact dialog and full barracks scale) */
 .age-settlement-venue-workspace.is-gear-shop-venue {
+    --age-gear-shop-shell-width: min(1240px, calc(100vw - 4rem));
+    --age-gear-shop-shell-max-height: min(860px, calc(100vh - 5rem));
+    --age-gear-shop-shell-min-height: min(680px, calc(100vh - 8rem));
+    --age-gear-shop-body-max-height: min(720px, calc(100vh - 10rem));
     position: fixed;
     inset: 0;
     z-index: 12035;
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 1.5rem;
+    padding: 2rem;
     box-sizing: border-box;
     background: transparent;
     pointer-events: none;
@@ -896,10 +900,11 @@
 
 .age-settlement-venue-workspace.is-gear-shop-venue > .age-settlement-venue-shell {
     pointer-events: auto;
-    width: min(920px, calc(100vw - 3rem));
-    max-width: min(920px, calc(100vw - 3rem));
+    width: var(--age-gear-shop-shell-width);
+    max-width: var(--age-gear-shop-shell-width);
     height: auto;
-    max-height: min(640px, calc(100vh - 4rem));
+    min-height: var(--age-gear-shop-shell-min-height);
+    max-height: var(--age-gear-shop-shell-max-height);
     flex: 0 0 auto;
     align-self: center;
     margin: 0;
@@ -917,7 +922,7 @@
     flex-direction: column;
     flex: 1 1 auto;
     min-height: 0;
-    max-height: min(500px, calc(100vh - 14rem));
+    max-height: var(--age-gear-shop-body-max-height);
 }
 
 .age-settlement-venue-workspace .age-gear-shop-workspace.age-barracks-workspace {
