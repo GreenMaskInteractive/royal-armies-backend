@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Royal Armies — Age Alpha</title>
     <link rel="stylesheet" href="style.css?v=cursor-modal-layer-fix-1">
-    <link rel="stylesheet" href="style2.css?v=rank-promotion-clicks-1">
+    <link rel="stylesheet" href="style2.css?v=age-bottom-maintenance-1">
     <link rel="stylesheet" href="style-age-headquarters.css?v=utf8-content-fix-1">
     <link rel="stylesheet" href="style-age-center-modals.css?v=guild-job-modals-1">
     <link rel="stylesheet" href="style-age-council-room.css?v=hq-header-clicks-2">
@@ -17,7 +17,7 @@
     <link rel="stylesheet" href="style-age-army-workspaces.css?v=hud-nation-treasury-1">
     <link rel="stylesheet" href="style-age-banner-workspace.css?v=banner-advisor-profile-1">
     <link rel="stylesheet" href="style-blessed-banners-modal.css?v=banner-skill-select-1">
-    <link rel="stylesheet" href="style-age-map-only.css?v=rank-promotion-clicks-1">
+    <link rel="stylesheet" href="style-age-map-only.css?v=age-bottom-maintenance-1">
     <link rel="stylesheet" href="style-age-immersive-workspace.css?v=workspace-backdrop-stack-1">
     <link rel="stylesheet" href="style-age-nation-hub-radial.css?v=radialmenu-saved-1">
     <link rel="stylesheet" href="style-age-nation-hub-box.css?v=hub-disabled-actions-1">
@@ -1440,6 +1440,16 @@
                         <div id="age-map-bottom-chat-messages-host" class="age-map-bottom-chat-messages-host" hidden></div>
                         <div id="age-map-bottom-chat-compose-host" class="age-map-bottom-chat-compose-host" hidden></div>
                     </div>
+                    <div id="developer-maintenance-alert-bar" class="developer-maintenance-alert-bar age-map-bottom-dock-maintenance-alert" role="alert" aria-live="polite" hidden>
+                        <div class="developer-maintenance-alert-inner">
+                            <span class="developer-maintenance-alert-icon" aria-hidden="true">⚠️</span>
+                            <div class="developer-maintenance-alert-copy">
+                                <strong id="developer-maintenance-alert-title" class="developer-maintenance-alert-title"></strong>
+                                <p id="developer-maintenance-alert-message" class="developer-maintenance-alert-message"></p>
+                                <p id="developer-maintenance-alert-window" class="developer-maintenance-alert-window" hidden></p>
+                            </div>
+                        </div>
+                    </div>
                     <div class="age-map-bottom-dock-nav" aria-label="Map navigation" hidden></div>
                     <div class="age-map-bottom-dock-controls">
                     <div class="portal-mobile-nav-bar-clip game-page-mobile-commander-clip age-page-mobile-commander-clip" id="game-mobile-commander-clip">
@@ -2205,6 +2215,7 @@
     <script src="rift-confirm-buttons.js?v=hub-action-btn-compact-1"></script>
     <script src="portal-alerts.js?v=portal-dialogs-in-game-1"></script>
     <script src="dev-environment.js"></script>
+    <script src="maintenance-alert.js?v=age-bottom-dock-1"></script>
     <script src="age-world-water-routes.js?v=forced-borders-client-4"></script>
     <script src="rift-player-loc-pins.js?v=age-map-only-1"></script>
     <script src="rift-age-assault-risk.js?v=border-casualty-risk-1"></script>
