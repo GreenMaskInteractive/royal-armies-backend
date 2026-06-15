@@ -99,6 +99,44 @@ function syncMaintenanceAlertPageOffset(barEl) {
     document.body.classList.toggle('developer-maintenance-alert-active', height > 0);
 }
 
+function buildMaintenanceAlertScrollText(data) {
+    const parts = [String(data?.message || '').trim()];
+    const windowText = String(data?.windowLabel || '').trim();
+    if (windowText) {
+        parts.push(windowText);
+    }
+    return parts.filter(Boolean).join(' · ');
+}
+
+function syncAgeMaintenanceAlertMarquee(messageEl) {
+    if (!messageEl || !isAgePageMaintenanceLayout()) return;
+
+    const marquee = messageEl.closest('.developer-maintenance-alert-message-marquee');
+    const track = messageEl.closest('.developer-maintenance-alert-message-track');
+    const clone = track?.querySelector('.developer-maintenance-alert-message-clone');
+    if (!marquee || !track || !clone) return;
+
+    const scrollText = messageEl.textContent || '';
+    clone.textContent = scrollText;
+
+    const measure = () => {
+        const overflow = track.scrollWidth > marquee.clientWidth + 2;
+        marquee.classList.toggle('is-scrolling', overflow);
+        if (overflow) {
+            const pxPerSecond = 44;
+            const duration = Math.max(14, (track.scrollWidth + 56) / pxPerSecond);
+            track.style.setProperty('--age-maintenance-marquee-duration', `${duration}s`);
+        } else {
+            track.style.removeProperty('--age-maintenance-marquee-duration');
+            track.style.transform = '';
+        }
+    };
+
+    requestAnimationFrame(() => {
+        requestAnimationFrame(measure);
+    });
+}
+
 function applyDeveloperMaintenanceAlert(payload) {
     const { bar, title, message, windowLabel } = getMaintenanceAlertElements();
     if (!bar) return;
@@ -120,7 +158,13 @@ function applyDeveloperMaintenanceAlert(payload) {
         title.textContent = data.title || PORTAL_EARLY_ACCESS_MAINTENANCE.title;
     }
     if (message) {
-        message.textContent = data.message;
+        const marquee = message.closest('.developer-maintenance-alert-message-marquee');
+        if (marquee) {
+            message.textContent = buildMaintenanceAlertScrollText(data);
+            syncAgeMaintenanceAlertMarquee(message);
+        } else {
+            message.textContent = data.message;
+        }
     }
     if (windowLabel) {
         const windowText = String(data.windowLabel || '').trim();
@@ -135,7 +179,12 @@ function applyDeveloperMaintenanceAlert(payload) {
 
     bar.hidden = false;
     bar.setAttribute('aria-hidden', 'false');
-    requestAnimationFrame(() => syncMaintenanceAlertPageOffset(bar));
+    requestAnimationFrame(() => {
+        syncMaintenanceAlertPageOffset(bar);
+        if (message?.closest('.developer-maintenance-alert-message-marquee')) {
+            syncAgeMaintenanceAlertMarquee(message);
+        }
+    });
 }
 
 function primeMaintenanceAlertBanner() {
@@ -249,9 +298,12 @@ function initializeDeveloperMaintenanceAlert() {
     if (!maintenanceAlertResizeBound) {
         maintenanceAlertResizeBound = true;
         window.addEventListener('resize', () => {
-            const { bar } = getMaintenanceAlertElements();
+            const { bar, message } = getMaintenanceAlertElements();
             if (bar && !bar.hidden) {
                 syncMaintenanceAlertPageOffset(bar);
+                if (message?.closest('.developer-maintenance-alert-message-marquee')) {
+                    syncAgeMaintenanceAlertMarquee(message);
+                }
             }
         });
     }

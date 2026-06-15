@@ -17345,10 +17345,10 @@ label.age-council-board-editor-tool {
     bottom: auto !important;
     transform: translate(-50%, -50%) !important;
     z-index: 6 !important;
-    width: min(520px, calc(100vw - min(520px, 42vw) - 300px - 32px)) !important;
-    max-width: min(520px, 46vw) !important;
-    min-width: 0 !important;
-    padding: 5px 12px !important;
+    width: min(920px, calc(100vw - min(460px, 36vw) - min(340px, 30vw) - 40px)) !important;
+    max-width: min(920px, 62vw) !important;
+    min-width: min(640px, calc(100vw - 360px)) !important;
+    padding: 6px 14px !important;
     border: 1px solid rgba(232, 160, 48, 0.62) !important;
     border-radius: 4px !important;
     box-shadow:
@@ -17359,12 +17359,14 @@ label.age-council-board-editor-tool {
 
 #age-page-canvas .age-map-bottom-dock-maintenance-alert .developer-maintenance-alert-inner {
     align-items: center !important;
-    gap: 8px !important;
+    gap: 10px !important;
     max-width: none !important;
     margin: 0 !important;
+    width: 100% !important;
 }
 
 #age-page-canvas .age-map-bottom-dock-maintenance-alert .developer-maintenance-alert-icon {
+    flex: 0 0 auto !important;
     font-size: 0.95rem !important;
     line-height: 1 !important;
 }
@@ -17373,30 +17375,64 @@ label.age-council-board-editor-tool {
     display: flex !important;
     flex-direction: row !important;
     align-items: center !important;
-    gap: 8px !important;
+    gap: 12px !important;
     min-width: 0 !important;
+    flex: 1 1 auto !important;
     overflow: hidden !important;
-    white-space: nowrap !important;
 }
 
 #age-page-canvas .age-map-bottom-dock-maintenance-alert .developer-maintenance-alert-title {
-    display: inline !important;
+    display: block !important;
     flex: 0 0 auto !important;
     margin: 0 !important;
-    font-size: 0.72rem !important;
-    letter-spacing: 0.03em !important;
+    padding-right: 12px !important;
+    border-right: 1px solid rgba(232, 160, 48, 0.38) !important;
+    font-size: 0.74rem !important;
+    letter-spacing: 0.04em !important;
     white-space: nowrap !important;
 }
 
-#age-page-canvas .age-map-bottom-dock-maintenance-alert .developer-maintenance-alert-message {
+#age-page-canvas .age-map-bottom-dock-maintenance-alert .developer-maintenance-alert-message-marquee {
+    position: relative !important;
     flex: 1 1 auto !important;
     min-width: 0 !important;
-    margin: 0 !important;
-    font-size: 0.72rem !important;
-    line-height: 1.25 !important;
     overflow: hidden !important;
-    text-overflow: ellipsis !important;
+    height: 1.25rem !important;
+    mask-image: linear-gradient(90deg, transparent 0, #000 12px, #000 calc(100% - 12px), transparent 100%) !important;
+}
+
+#age-page-canvas .age-map-bottom-dock-maintenance-alert .developer-maintenance-alert-message-track {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 56px !important;
+    min-width: 100% !important;
     white-space: nowrap !important;
+    will-change: transform;
+}
+
+#age-page-canvas .age-map-bottom-dock-maintenance-alert .developer-maintenance-alert-message-marquee.is-scrolling .developer-maintenance-alert-message-track {
+    animation: ageMaintenanceAlertMarquee var(--age-maintenance-marquee-duration, 24s) linear infinite !important;
+}
+
+#age-page-canvas .age-map-bottom-dock-maintenance-alert .developer-maintenance-alert-message {
+    flex: 0 0 auto !important;
+    margin: 0 !important;
+    font-size: 0.74rem !important;
+    line-height: 1.25 !important;
+    white-space: nowrap !important;
+}
+
+#age-page-canvas .age-map-bottom-dock-maintenance-alert .developer-maintenance-alert-message-clone {
+    flex: 0 0 auto !important;
+}
+
+@keyframes ageMaintenanceAlertMarquee {
+    0% {
+        transform: translateX(0);
+    }
+    100% {
+        transform: translateX(-50%);
+    }
 }
 
 #age-page-canvas .age-map-bottom-dock-maintenance-alert .developer-maintenance-alert-window {
