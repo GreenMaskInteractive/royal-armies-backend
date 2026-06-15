@@ -10,6 +10,20 @@
     const ARMORY_UPGRADE_MIN_LEVEL = 5;
     const INVENTORY_MAX_SLOTS = 30;
     const INVENTORY_START_UNLOCKED = 10;
+    const TRAINING_PANEL_PREFIX = 'age-guild-training';
+
+    const TRAINING_GEAR_SLOT_ORDER = Object.freeze([
+        { id: 'head', label: 'Head' },
+        { id: 'mainHand', label: 'Main Hand' },
+        { id: 'offHand', label: 'Off Hand' },
+        { id: 'chest', label: 'Chest' },
+        { id: 'hands', label: 'Hands' },
+        { id: 'legs', label: 'Legs' },
+        { id: 'feet', label: 'Feet' },
+        { id: 'cloak', label: 'Cloak' },
+        { id: 'ring', label: 'Ring' },
+        { id: 'amulet', label: 'Amulet' }
+    ]);
 
     const BATTLE_XP_SLOTS = Object.freeze(new Set([
         'mainHand', 'offHand', 'head', 'chest', 'hands', 'legs', 'feet', 'cloak'
@@ -944,21 +958,6 @@
             + `<aside id="${prefix}-item-detail" class="age-barracks-unit-detail age-army-workspace-panel" hidden aria-live="polite"></aside>`
             + '</div>'
             + '</div>'
-            + `<aside class="age-gear-player-rail age-army-workspace-panel" aria-label="Commander loadout">`
-            + '<div class="age-gear-player-rail-split">'
-            + `<section class="age-gear-equipment-panel" aria-labelledby="${prefix}-equipment-title">`
-            + `<h4 id="${prefix}-equipment-title" class="age-gear-panel-title">Equipment</h4>`
-            + `<div id="${prefix}-equipment-sheet" class="age-gear-equipment-sheet" aria-live="polite"></div>`
-            + '</section>'
-            + `<section class="age-gear-inventory-panel" aria-labelledby="${prefix}-inventory-title">`
-            + '<header class="age-gear-inventory-head">'
-            + `<h4 id="${prefix}-inventory-title" class="age-gear-panel-title">Inventory</h4>`
-            + `<p id="${prefix}-inventory-capacity" class="age-gear-inventory-capacity" aria-live="polite"></p>`
-            + '</header>'
-            + `<div id="${prefix}-inventory-grid" class="age-gear-inventory-grid" aria-live="polite"></div>`
-            + '</section>'
-            + '</div>'
-            + '</aside>'
             + '</div>'
             + '</div>'
             + '<p id="age-gear-shop-status" class="age-defense-workspace-status" aria-live="polite" hidden></p>'
@@ -1215,65 +1214,79 @@
         );
     }
 
-    function resolveEquippedItemForSlot(state, slotId) {
-        const slot = String(slotId || '').trim();
-        const itemId = mapLegacyGearId(state?.equipped?.[slot]);
-        if (!itemId) return null;
-        const item = GEAR_BY_ID[itemId];
-        if (!item) return null;
-        const progress = resolveGearProgress(state, itemId);
-        return { ...item, itemId, progress };
+    function sumLocalGearStatTotals(slots) {
+        const totals = {
+            strength: 0,
+            ranged: 0,
+            morale: 0,
+            command: 0,
+            injuryMitigation: 0,
+            guildXp: 0
+        };
+        (slots || []).forEach((slot) => {
+            const stats = slot?.equipped?.stats;
+            if (!stats || typeof stats !== 'object') return;
+            Object.entries(stats).forEach(([key, value]) => {
+                if (!Object.prototype.hasOwnProperty.call(totals, key)) return;
+                totals[key] += Math.max(0, Number(value) || 0);
+            });
+        });
+        return totals;
     }
 
-    function renderEquipmentSlotMarkup(slotId, equippedItem) {
-        const slotLabel = escapeHtml(GEAR_SLOT_LABELS[slotId] || slotId);
-        if (!equippedItem) {
-            return (
-                `<div class="age-gear-equipment-slot is-empty" data-equipment-slot="${escapeHtml(slotId)}">`
-                + `<span class="age-gear-equipment-slot-label">${slotLabel}</span>`
-                + '<span class="age-gear-equipment-slot-empty">Empty</span>'
-                + '</div>'
-            );
-        }
+    function buildLocalGearStatLines(statTotals, slots) {
+        const lines = [];
+        Object.entries(statTotals || {}).forEach(([key, value]) => {
+            const qty = Math.max(0, Number(value) || 0);
+            if (!qty) return;
+            const label = STAT_LABELS[key] || key;
+            if (key === 'injuryMitigation' || key === 'guildXp') {
+                lines.push({ label, formatted: `+${Math.round(qty * 1000) / 10}% ${label}` });
+            } else {
+                lines.push({ label, formatted: `+${Math.round(qty * 10) / 10} ${label}` });
+            }
+        });
 
-        const rarity = escapeHtml(equippedItem.rarity || 'common');
-        const mark = escapeHtml(SLOT_MARKS[slotId] || '•');
-        const levelTag = BATTLE_XP_SLOTS.has(slotId)
-            ? ` · ${escapeHtml(formatGearLevelLabel(equippedItem.progress?.level || 1))}`
-            : '';
-        return (
-            `<div class="age-gear-equipment-slot is-equipped is-rarity-${rarity}" data-equipment-slot="${escapeHtml(slotId)}">`
-            + `<span class="age-gear-equipment-slot-mark" aria-hidden="true">${mark}</span>`
-            + '<span class="age-gear-equipment-slot-body">'
-            + `<span class="age-gear-equipment-slot-label">${slotLabel}</span>`
-            + `<span class="age-gear-equipment-slot-item">${escapeHtml(equippedItem.name || 'Equipped')}${levelTag}</span>`
-            + '</span>'
-            + '</div>'
-        );
+        (slots || []).forEach((slot) => {
+            const effect = String(slot?.equipped?.battleEffect || '').trim();
+            if (!effect) return;
+            const pretty = effect.replace(/-/g, ' ').replace(/\b\w/g, (char) => char.toUpperCase());
+            lines.push({ label: 'battleEffect', formatted: pretty });
+        });
+
+        return lines;
     }
 
-    function renderEquipmentPanel(prefix) {
-        const sheetEl = global.document.getElementById(`${prefix}-equipment-sheet`);
-        if (!sheetEl) return;
-
+    function applyLocalEquippedOverlay(gearPanel) {
+        if (!gearPanel || typeof gearPanel !== 'object') return gearPanel;
         const state = readState();
-        const slotById = (slotId) => resolveEquippedItemForSlot(state, slotId);
-        const renderColumn = (slotIds) => slotIds
-            .map((slotId) => renderEquipmentSlotMarkup(slotId, slotById(slotId)))
-            .join('');
-
-        sheetEl.innerHTML = (
-            '<div class="age-gear-equipment-layout">'
-            + `<div class="age-gear-equipment-col age-gear-equipment-col--left">${renderColumn(['mainHand', 'hands', 'cloak'])}</div>`
-            + '<div class="age-gear-equipment-col age-gear-equipment-col--center">'
-            + renderEquipmentSlotMarkup('head', slotById('head'))
-            + renderEquipmentSlotMarkup('chest', slotById('chest'))
-            + renderEquipmentSlotMarkup('legs', slotById('legs'))
-            + renderEquipmentSlotMarkup('feet', slotById('feet'))
-            + '</div>'
-            + `<div class="age-gear-equipment-col age-gear-equipment-col--right">${renderColumn(['offHand', 'ring', 'amulet'])}</div>`
-            + '</div>'
-        );
+        const slots = TRAINING_GEAR_SLOT_ORDER.map((slotDef) => {
+            const itemId = mapLegacyGearId(state.equipped?.[slotDef.id]);
+            const item = GEAR_BY_ID[itemId];
+            return {
+                id: slotDef.id,
+                label: slotDef.label,
+                column: slotDef.id,
+                row: 0,
+                equipped: item
+                    ? {
+                        itemId: item.id,
+                        name: item.name,
+                        rarity: item.rarity || 'common',
+                        iconSrc: '',
+                        battleEffect: item.battleEffect || '',
+                        stats: { ...(item.stats || {}) }
+                    }
+                    : null
+            };
+        });
+        const statTotals = sumLocalGearStatTotals(slots);
+        return {
+            ...gearPanel,
+            slots,
+            statTotals,
+            statLines: buildLocalGearStatLines(statTotals, slots)
+        };
     }
 
     function resolveInventoryItemMeta(entry) {
@@ -1309,8 +1322,8 @@
         const isLocked = index >= unlocked;
         if (isLocked) {
             return (
-                `<div class="age-gear-inventory-slot is-locked" data-inventory-slot="${index}" aria-label="Locked inventory slot">`
-                + '<span class="age-gear-inventory-slot-lock" aria-hidden="true">🔒</span>'
+                `<div class="age-guild-inventory-slot is-locked" data-inventory-slot="${index}" aria-label="Locked inventory slot">`
+                + '<span class="age-guild-inventory-slot-lock" aria-hidden="true">🔒</span>'
                 + '</div>'
             );
         }
@@ -1318,8 +1331,8 @@
         const meta = resolveInventoryItemMeta(entry);
         if (!meta) {
             return (
-                `<div class="age-gear-inventory-slot is-empty" data-inventory-slot="${index}" aria-label="Empty inventory slot">`
-                + '<span class="age-gear-inventory-slot-empty">—</span>'
+                `<div class="age-guild-inventory-slot is-empty" data-inventory-slot="${index}" aria-label="Empty inventory slot">`
+                + '<span class="age-guild-inventory-slot-empty">—</span>'
                 + '</div>'
             );
         }
@@ -1336,11 +1349,11 @@
         const role = canEquip ? '' : ' role="presentation"';
 
         return (
-            `<${tagName} class="age-gear-inventory-slot is-filled is-${escapeHtml(meta.type)} is-rarity-${escapeHtml(meta.rarity)}"`
+            `<${tagName} class="age-guild-inventory-slot is-filled is-${escapeHtml(meta.type)} is-rarity-${escapeHtml(meta.rarity)}"`
             + ` data-inventory-slot="${index}"${attrs}${role}`
             + ` aria-label="${escapeHtml(meta.name)}">`
-            + `<span class="age-gear-inventory-slot-mark" aria-hidden="true">${escapeHtml(meta.mark)}</span>`
-            + `<span class="age-gear-inventory-slot-name">${escapeHtml(meta.name)}</span>`
+            + `<span class="age-guild-inventory-slot-mark" aria-hidden="true">${escapeHtml(meta.mark)}</span>`
+            + `<span class="age-guild-inventory-slot-name">${escapeHtml(meta.name)}</span>`
             + `</${tagName}>`
         );
     }
@@ -1364,10 +1377,8 @@
             .join('');
     }
 
-    function refreshPlayerGearPanels(mode) {
-        const prefix = mode === 'armory' ? 'age-armory-shop' : 'age-gear-shop';
-        renderEquipmentPanel(prefix);
-        renderInventoryPanel(prefix);
+    function refreshTrainingInventoryPanel() {
+        renderInventoryPanel(TRAINING_PANEL_PREFIX);
     }
 
     function refreshForgeShopUi() {
@@ -1388,7 +1399,6 @@
         if (!items.length) {
             grid.innerHTML = '<p class="age-barracks-empty">No gear listed in this category yet.</p>';
             renderForgeItemDetail(null);
-            refreshPlayerGearPanels('forge');
             return;
         }
 
@@ -1399,7 +1409,6 @@
         grid.innerHTML = items.map((item) => renderForgeItemCard(item, state, rank, isTools)).join('');
         const selected = items.find((item) => item.id === selectedForgeItemId);
         renderForgeItemDetail(selected, state, rank, isTools);
-        refreshPlayerGearPanels('forge');
     }
 
     function refreshArmoryShopUi() {
@@ -1419,7 +1428,6 @@
         if (!upgrades.length) {
             grid.innerHTML = '<p class="age-barracks-empty">No upgrades ready in this category. Equip forge gear, then return once it reaches the required mastery level.</p>';
             renderArmoryItemDetail(null);
-            refreshPlayerGearPanels('armory');
             return;
         }
 
@@ -1430,7 +1438,6 @@
         grid.innerHTML = upgrades.map((entry) => renderArmoryUpgradeCard(entry, rank)).join('');
         const selected = upgrades.find((entry) => entry.slot === selectedArmorySlotId);
         renderArmoryItemDetail(selected, rank);
-        refreshPlayerGearPanels('armory');
     }
 
     function renderForgeBody() {
@@ -1543,6 +1550,7 @@
         }
         writeState(state);
         setShopStatus(formatPurchasePlacementMessage(item, placement, false));
+        refreshTrainingLoadoutAfterInventoryChange();
         return true;
     }
 
@@ -1569,6 +1577,7 @@
         }
         writeState(state);
         setShopStatus(formatPurchasePlacementMessage(tool, placement, true));
+        refreshTrainingLoadoutAfterInventoryChange();
         return true;
     }
 
@@ -1767,21 +1776,28 @@
             return true;
         }
 
-        const inventoryEquipBtn = event.target.closest('[data-inventory-equip]');
-        if (inventoryEquipBtn) {
-            event.preventDefault();
-            if (equipFromInventory(inventoryEquipBtn.getAttribute('data-inventory-equip'))) {
-                refreshActiveBody(activeVenueId);
-            }
-            return true;
-        }
-
         return false;
+    }
+
+    function refreshTrainingLoadoutAfterInventoryChange() {
+        refreshTrainingInventoryPanel();
+        if (global.RoyalArmiesAdventurersGuild?.isTrainingOpen?.()) {
+            global.RoyalArmiesAdventurersGuild.refreshTrainingLoadout?.();
+        }
     }
 
     function bindHandlers() {
         if (handlersBound) return;
         handlersBound = true;
+        global.document.addEventListener('click', (event) => {
+            const inventoryEquipBtn = event.target.closest('[data-inventory-equip]');
+            if (!inventoryEquipBtn) return;
+            if (!inventoryEquipBtn.closest('#age-guild-training-arena')) return;
+            event.preventDefault();
+            if (equipFromInventory(inventoryEquipBtn.getAttribute('data-inventory-equip'))) {
+                refreshTrainingLoadoutAfterInventoryChange();
+            }
+        });
         global.addEventListener('royalarmies:age-gold-updated', () => {
             const workspace = global.document.getElementById('age-settlement-venue-workspace');
             if (!workspace || workspace.hidden) return;
@@ -1805,6 +1821,9 @@
             if (venueId === 'blacksmith' || venueId === 'armory') {
                 refreshActiveBody(venueId);
             }
+            if (global.RoyalArmiesAdventurersGuild?.isTrainingOpen?.()) {
+                refreshTrainingLoadoutAfterInventoryChange();
+            }
         });
     }
 
@@ -1814,6 +1833,8 @@
         EQUIPMENT_MIN_RANK,
         ARMORY_UPGRADE_MIN_LEVEL,
         MAX_GEAR_LEVEL,
+        INVENTORY_MAX_SLOTS,
+        INVENTORY_START_UNLOCKED,
         renderForgeBody,
         renderArmoryBody,
         onGearShopClick,
@@ -1821,6 +1842,8 @@
         resolveForgeEyebrow,
         resolveArmoryEyebrow,
         refreshActiveBody,
+        refreshTrainingInventoryPanel,
+        applyLocalEquippedOverlay,
         readState,
         writeState,
         grantBattleXpFromTraining,

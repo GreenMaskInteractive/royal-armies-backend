@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Royal Armies — Age Alpha</title>
     <link rel="stylesheet" href="style.css?v=cursor-modal-layer-fix-1">
-    <link rel="stylesheet" href="style2.css?v=leadership-visibility-1">
+    <link rel="stylesheet" href="style2.css?v=training-loadout-panels-1">
     <link rel="stylesheet" href="style-age-headquarters.css?v=utf8-content-fix-1">
     <link rel="stylesheet" href="style-age-center-modals.css?v=guild-job-modals-1">
     <link rel="stylesheet" href="style-age-council-room.css?v=hq-header-clicks-2">
@@ -1267,6 +1267,7 @@
                             </div>
                         </aside>
 
+                        <div class="age-guild-commander-loadout-rail" aria-label="Commander loadout">
                         <aside class="age-guild-commander-gear-panel" aria-label="Commander equipment">
                             <div class="age-guild-commander-gear-inner">
                                 <header class="age-guild-commander-gear-head">
@@ -1282,6 +1283,15 @@
                                 </section>
                             </div>
                         </aside>
+
+                        <aside class="age-guild-inventory-panel" aria-label="Inventory">
+                            <header class="age-guild-inventory-head">
+                                <h4 class="age-guild-inventory-title">Inventory</h4>
+                                <p id="age-guild-training-inventory-capacity" class="age-guild-inventory-capacity" aria-live="polite"></p>
+                            </header>
+                            <div id="age-guild-training-inventory-grid" class="age-guild-inventory-grid" aria-live="polite"></div>
+                        </aside>
+                        </div>
 
                         <div class="age-guild-battle-controls-dock" aria-label="Battle controls">
                             <div id="age-guild-xp-float-host" class="age-guild-xp-float-host" aria-live="polite" aria-atomic="true"></div>
@@ -2263,12 +2273,12 @@
     <script src="rift-immersive-workspace.js?v=watchtower-border-1"></script>
     <script src="age-view-tabs.js?v=armory-rank-gate-1"></script>
     <script src="rift-age-guild-training.js?v=commander-rank-names-2"></script>
-    <script src="age-adventurers-guild.js?v=gear-level-xp-1"></script>
+    <script src="age-adventurers-guild.js?v=training-loadout-panels-1"></script>
     <script src="rift-nation-treasury.js?v=defense-treasury-only-1"></script>
     <script src="rift-infirmary-recovery.js?v=infirmary-tier-heal-scale-2"></script>
     <script src="rift-banner-workspace.js?v=banner-skill-branches-1"></script>
     <script src="blessed-banners-modal.js?v=modal-close-audit-1"></script>
-    <script src="rift-age-gear-shop.js?v=gear-auto-equip-inventory-1"></script>
+    <script src="rift-age-gear-shop.js?v=training-loadout-panels-1"></script>
     <script src="age-settlement-venue-workspaces.js?v=gear-auto-equip-inventory-1"></script>
     <script src="rift-age-unit-evolution.js?v=map-settlement-tab-only-1"></script>
     <script src="age-unit-evolution.js?v=unit-evolution-close-1"></script>

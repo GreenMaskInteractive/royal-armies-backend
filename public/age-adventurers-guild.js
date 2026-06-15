@@ -859,7 +859,10 @@
     }
 
     function renderCommanderGearPanel() {
-        const gear = guildState?.commanderGear;
+        let gear = guildState?.commanderGear;
+        if (global.RoyalArmiesAgeGearShop?.applyLocalEquippedOverlay) {
+            gear = global.RoyalArmiesAgeGearShop.applyLocalEquippedOverlay(gear);
+        }
         const nameEl = global.document.getElementById('age-guild-commander-name');
         const classEl = global.document.getElementById('age-guild-commander-class');
         const sheetEl = global.document.getElementById('age-guild-gear-sheet');
@@ -946,6 +949,7 @@
         syncTrainingReturnButton();
         updateProgressBars();
         renderCommanderGearPanel();
+        global.RoyalArmiesAgeGearShop?.refreshTrainingInventoryPanel?.();
         renderLootLog();
         renderBattleLog();
         setBattleTab(activeBattleTab);
@@ -1839,6 +1843,11 @@
         global.enableAgeUnitEvolution?.();
     }
 
+    function refreshTrainingLoadout() {
+        renderCommanderGearPanel();
+        global.RoyalArmiesAgeGearShop?.refreshTrainingInventoryPanel?.();
+    }
+
     global.RoyalArmiesAdventurersGuild = {
         toggleSettlementJobs,
         collapseSettlementJobs,
@@ -1851,6 +1860,7 @@
         closeTrainingView,
         onTrainingViewOpen,
         onTrainingViewClose,
+        refreshTrainingLoadout,
         isOpen,
         isOverlayOpen,
         isTrainingOpen: () => trainingViewActive,
