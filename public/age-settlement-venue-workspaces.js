@@ -38,8 +38,18 @@
         std: 'Standard',
         vet: 'Veteran',
         mst: 'Master',
-        elite: 'Elite'
+        elite: 'Elite',
+        leg: 'Legendary'
     });
+    const INFIRMARY_PROMOTION_BY_RANK = Object.freeze({
+        1: 'app',
+        2: 'std',
+        3: 'vet',
+        4: 'mst',
+        5: 'leg',
+        6: 'elite'
+    });
+    const INFIRMARY_DEFAULT_INJURY_TICKS = 3;
 
     function resolveCommanderRank() {
         return Math.max(1, Math.floor(Number(global.player?.rank) || 1));
@@ -513,7 +523,40 @@
     function resolveInfirmaryUnitType(categoryId) {
         const raw = String(categoryId || '').trim().toLowerCase();
         if (raw.startsWith('magic-')) return raw.slice('magic-'.length);
+        if (raw === 'ranged') return 'artillery';
         return raw;
+    }
+
+    function resolveCommanderArmyStacks() {
+        const army = global.player?.ageArmy || global.player?.army;
+        return Array.isArray(army) ? army : [];
+    }
+
+    function resolveInfirmaryStackPromotion(stack, catalogUnit) {
+        const rank = Math.max(1, Math.floor(Number(stack?.rank) || 1));
+        const fromRank = INFIRMARY_PROMOTION_BY_RANK[rank];
+        if (fromRank && catalogUnit?.stats?.[fromRank]) return fromRank;
+
+        const first = Array.isArray(catalogUnit?.promotions) && catalogUnit.promotions.length
+            ? catalogUnit.promotions[0]
+            : 'app';
+        return first;
+    }
+
+    function resolveInfirmaryUnitMark(name) {
+        const trimmed = String(name || '').trim();
+        return trimmed ? trimmed.charAt(0).toUpperCase() : 'U';
+    }
+
+    async function ensureInfirmaryCatalogLoaded() {
+        const catalogApi = global.RoyalArmiesUnitPurchaseCatalog;
+        if (!catalogApi?.loadCatalog) return;
+        if (catalogApi.getCachedCatalog?.()) return;
+        try {
+            await catalogApi.loadCatalog();
+        } catch (_err) {
+            /* roster can still render without catalog gold costs */
+        }
     }
 
     function resolveInfirmaryPromotionLabel(promotion) {
@@ -583,8 +626,151 @@
         return infirmaryInjuredUnits.reduce((sum, unit) => sum + resolveInfirmaryUnitHealCost(unit), 0);
     }
 
-    function buildInfirmaryUnitRoster() {
-        return [];
+    function mapRosterReviewUnitToInfirmaryUnit(rosterUnit, priorTicksById) {
+        const tickMap = priorTicksById instanceof Map ? priorTicksById : null;
+        const catalogApi = global.RoyalArmiesUnitPurchaseCatalog;
+        const catalog = catalogApi?.getCachedCatalog?.() || null;
+        const catalogUnit = catalog && catalogApi?.getUnitById
+            ? catalogApi.getUnitById(catalog, rosterUnit.catalogUnitId)
+            : null;
+        const categoryId = String(
+            catalogUnit?.categoryId || rosterUnit.class || rosterUnit.unitType || 'infantry'
+        ).trim().toLowerCase();
+        const ticksTotal = Math.max(
+            1,
+            Math.min(6, Math.floor(Number(rosterUnit?.injuryTicksTotal) || INFIRMARY_DEFAULT_INJURY_TICKS))
+        );
+        const id = String(rosterUnit?.id || '').trim();
+        const ticksRemaining = tickMap?.has(id)
+            ? Math.max(0, Math.min(ticksTotal, Math.floor(Number(tickMap.get(id)) || 0)))
+            : ticksTotal;
+        const promotion = String(rosterUnit?.promotionKey || rosterUnit?.promotion || 'std').trim().toLowerCase();
+        const rank = Math.max(1, Math.floor(Number(rosterUnit?.rank) || 1));
+        const catalogUnitId = String(rosterUnit?.catalogUnitId || '').trim();
+        const name = String(rosterUnit?.name || 'Unit').trim();
+
+        return {
+            id,
+            stackId: `${catalogUnitId || name}|${rank}`,
+            catalogUnitId,
+            rank,
+            slotIndex: Math.max(0, Math.floor(Number(rosterUnit?.slotIndex) || 0)),
+            mark: rosterUnit?.mark || resolveInfirmaryUnitMark(name),
+            name,
+            label: rosterUnit?.label || name,
+            categoryId,
+            unitType: rosterUnit?.unitType || resolveInfirmaryUnitType(categoryId),
+            tier: Math.max(1, Math.floor(Number(rosterUnit?.tier) || 1)),
+            promotion,
+            goldCost: Math.max(0, Math.floor(Number(catalogUnit?.goldCost) || 0)),
+            ticksTotal,
+            ticksRemaining
+        };
+    }
+
+    async function syncInfirmaryRosterFromServer() {
+        const priorTicks = new Map(
+            infirmaryInjuredUnits.map((unit) => [unit.id, unit.ticksRemaining])
+        );
+        const priorSelection = infirmarySelectedUnitIds;
+
+        await ensureInfirmaryCatalogLoaded();
+
+        const rosterApi = global.RoyalArmiesAgeRosterReviewApi;
+        if (rosterApi?.fetchRosterReviewState) {
+            try {
+                const payload = await rosterApi.fetchRosterReviewState();
+                const injured = (Array.isArray(payload?.units) ? payload.units : [])
+                    .filter((unit) => unit && unit.isInjured === true);
+                infirmaryInjuredUnits = injured.map((unit) => mapRosterReviewUnitToInfirmaryUnit(unit, priorTicks));
+                infirmarySelectedUnitIds = new Set(
+                    [...priorSelection].filter((id) => infirmaryInjuredUnits.some((unit) => unit.id === id))
+                );
+                if (infirmaryInjuredUnits.length) return;
+            } catch (error) {
+                console.warn('[RIFT] Infirmary roster review sync failed:', error);
+            }
+        }
+
+        if (global.RoyalArmiesAgeGuildTraining?.fetchGuildState) {
+            try {
+                await global.RoyalArmiesAgeGuildTraining.fetchGuildState();
+            } catch (error) {
+                console.warn('[RIFT] Infirmary guild state sync failed:', error);
+            }
+        } else if (global.RoyalArmiesAgeMovement?.refresh) {
+            try {
+                await global.RoyalArmiesAgeMovement.refresh();
+            } catch (error) {
+                console.warn('[RIFT] Infirmary movement sync failed:', error);
+            }
+        }
+
+        resetInfirmaryInjuredStacks();
+    }
+
+    function buildInfirmaryUnitRoster(priorTicksById) {
+        const tickMap = priorTicksById instanceof Map ? priorTicksById : null;
+        const catalogApi = global.RoyalArmiesUnitPurchaseCatalog;
+        const catalog = catalogApi?.getCachedCatalog?.() || null;
+        const units = [];
+
+        resolveCommanderArmyStacks().forEach((stack) => {
+            const catalogUnitId = String(stack?.catalogUnitId || '').trim();
+            const catalogUnit = catalog && catalogApi?.getUnitById
+                ? catalogApi.getUnitById(catalog, catalogUnitId)
+                : null;
+
+            const qty = Math.max(0, Math.floor(Number(stack?.qty) || 0));
+            const injuredQty = Math.min(
+                qty,
+                Math.max(0, Math.floor(Number(stack?.injuredQty ?? stack?.injured) || 0))
+            );
+            if (!injuredQty) return;
+
+            const name = String(catalogUnit?.displayName || catalogUnit?.name || stack?.name || 'Unit').trim();
+            const tier = Math.max(1, Math.floor(Number(catalogUnit?.tier ?? stack?.tier) || 1));
+            const rank = Math.max(1, Math.floor(Number(stack?.rank) || 1));
+            const promotion = resolveInfirmaryStackPromotion(stack, catalogUnit);
+            const categoryId = String(catalogUnit?.categoryId || stack?.class || 'infantry').trim().toLowerCase();
+            const unitType = resolveInfirmaryUnitType(categoryId);
+            const goldCost = Math.max(0, Math.floor(Number(catalogUnit?.goldCost) || 0));
+            const ticksTotal = Math.max(
+                1,
+                Math.min(6, Math.floor(Number(stack?.injuryTicksTotal) || INFIRMARY_DEFAULT_INJURY_TICKS))
+            );
+            const stackKey = `${catalogUnitId || name}|${rank}`;
+
+            for (let slotIndex = 0; slotIndex < injuredQty; slotIndex += 1) {
+                const slot = slotIndex + 1;
+                const id = `${stackKey}|${slotIndex}`;
+                const ticksRemaining = tickMap?.has(id)
+                    ? Math.max(0, Math.min(ticksTotal, Math.floor(Number(tickMap.get(id)) || 0)))
+                    : (stack?.injuryTicksRemaining != null
+                        ? Math.max(0, Math.min(ticksTotal, Math.floor(Number(stack.injuryTicksRemaining) || 0)))
+                        : ticksTotal);
+
+                units.push({
+                    id,
+                    stackId: stackKey,
+                    catalogUnitId,
+                    rank,
+                    slotIndex,
+                    mark: resolveInfirmaryUnitMark(name),
+                    name,
+                    label: injuredQty > 1 ? `${name} #${slot}` : name,
+                    categoryId,
+                    unitType,
+                    tier,
+                    promotion,
+                    goldCost,
+                    ticksTotal,
+                    ticksRemaining
+                });
+            }
+        });
+
+        return units;
     }
 
     function advanceInfirmaryRecoveryTicks(stepCount = 1) {
@@ -602,9 +788,25 @@
             return [{ ...unit, ticksRemaining: nextRemaining }];
         });
 
-        if (activeVenueId === 'infirmary') {
+        if (recovered > 0) {
+            const api = global.RoyalArmiesAgeGuildTraining;
+            if (api?.recoverInjuries) {
+                void api.recoverInjuries({ count: recovered })
+                    .then(() => {
+                        resetInfirmaryInjuredStacks();
+                        if (activeVenueId === 'infirmary') {
+                            refreshInfirmaryWorkspaceBody();
+                        }
+                        global.dispatchEvent(new CustomEvent('royalarmies:age-movement-updated'));
+                    })
+                    .catch((error) => {
+                        console.warn('[RIFT] Natural injury recovery sync failed:', error);
+                    });
+            }
+        } else if (activeVenueId === 'infirmary') {
             refreshInfirmaryWorkspaceBody();
         }
+
         return { recovered };
     }
 
@@ -630,6 +832,9 @@
 
         return INFIRMARY_UNIT_TYPE_ORDER
             .filter((unitType) => typeMap.has(unitType))
+            .concat(
+                [...typeMap.keys()].filter((unitType) => !INFIRMARY_UNIT_TYPE_ORDER.includes(unitType))
+            )
             .map((unitType) => {
                 const tierMap = typeMap.get(unitType);
                 const tiers = [...tierMap.keys()]
@@ -647,8 +852,21 @@
     }
 
     function resetInfirmaryInjuredStacks() {
-        infirmaryInjuredUnits = buildInfirmaryUnitRoster();
-        infirmarySelectedUnitIds = new Set();
+        const priorTicks = new Map(
+            infirmaryInjuredUnits.map((unit) => [unit.id, unit.ticksRemaining])
+        );
+        const priorSelection = infirmarySelectedUnitIds;
+        infirmaryInjuredUnits = buildInfirmaryUnitRoster(priorTicks);
+        infirmarySelectedUnitIds = new Set(
+            [...priorSelection].filter((id) => infirmaryInjuredUnits.some((unit) => unit.id === id))
+        );
+    }
+
+    function onInfirmaryArmyUpdated() {
+        if (activeVenueId !== 'infirmary') return;
+        void syncInfirmaryRosterFromServer().then(() => {
+            refreshInfirmaryWorkspaceBody();
+        });
     }
 
     function countInfirmaryInjuredUnits() {
@@ -789,67 +1007,64 @@
         refreshInfirmaryWorkspaceBody();
     }
 
-    function healFakeInfirmaryUnit(mode) {
+    async function healAtInfirmary(mode) {
         const healMode = String(mode || 'selected').trim().toLowerCase();
+        const statusEl = global.document.getElementById('age-settlement-infirmary-status');
+        const api = global.RoyalArmiesAgeGuildTraining;
+
         if (!infirmaryInjuredUnits.length) {
-            return { healed: 0, message: 'No injured units are resting in the infirmary.' };
+            if (statusEl) statusEl.textContent = 'No injured units are resting in the infirmary.';
+            return;
+        }
+        if (!api?.healUnits) {
+            if (statusEl) statusEl.textContent = 'Healing service unavailable.';
+            return;
         }
 
-        const commanderGold = resolveCommanderGold();
+        try {
+            if (healMode === 'all') {
+                const payload = await api.healUnits({ mode: 'all' });
+                const healed = Math.max(0, Math.floor(Number(payload?.healedCount) || 0));
+                resetInfirmaryInjuredStacks();
+                refreshInfirmaryWorkspaceBody();
+                if (statusEl) {
+                    statusEl.textContent = healed
+                        ? `${healed === 1 ? '1 unit' : `${healed} units`} restored for ${formatInfirmaryHealGold(payload?.goldSpent || 0)}.`
+                        : 'Entire injured roster restored.';
+                }
+            } else {
+                const selectedCount = countInfirmarySelectedUnits();
+                if (!selectedCount) {
+                    if (statusEl) statusEl.textContent = 'Select injured units to heal, then choose Heal Selected.';
+                    return;
+                }
 
-        if (healMode === 'all') {
-            const healed = countInfirmaryInjuredUnits();
-            const goldSpent = sumAllInfirmaryHealCost();
-            if (goldSpent > commanderGold) {
-                return {
-                    healed: 0,
-                    message: `Not enough gold. Heal entire army costs ${formatInfirmaryHealGold(goldSpent)}.`
-                };
+                let goldSpent = 0;
+                let healed = 0;
+                for (let index = 0; index < selectedCount; index += 1) {
+                    const payload = await api.healUnits({ mode: 'one' });
+                    if (!payload || payload.status !== 'ok') break;
+                    goldSpent += Math.max(0, Math.floor(Number(payload.goldSpent) || 0));
+                    healed += 1;
+                }
+
+                infirmarySelectedUnitIds = new Set();
+                resetInfirmaryInjuredStacks();
+                refreshInfirmaryWorkspaceBody();
+                if (statusEl) {
+                    const countLabel = healed === 1 ? '1 unit' : `${healed} units`;
+                    statusEl.textContent = `${countLabel} restored for ${formatInfirmaryHealGold(goldSpent)}.`;
+                }
             }
-            infirmaryInjuredUnits = [];
-            infirmarySelectedUnitIds = new Set();
-            if (goldSpent > 0) {
-                global.RoyalArmiesAgeGold?.applyAgeCommanderGoldDelta?.(-goldSpent, { source: 'infirmary-heal' });
+
+            global.dispatchEvent(new CustomEvent('royalarmies:age-movement-updated'));
+        } catch (error) {
+            if (typeof global.showRiftError === 'function' && error?.code) {
+                global.showRiftError(error.code, error.message);
+            } else if (statusEl) {
+                statusEl.textContent = error?.message || 'Healing failed.';
             }
-            refreshInfirmaryWorkspaceBody();
-            const countLabel = healed === 1 ? '1 unit' : `${healed} units`;
-            return {
-                healed,
-                goldSpent,
-                message: `${countLabel} restored for ${formatInfirmaryHealGold(goldSpent)}.`
-            };
         }
-
-        const selectedUnits = infirmaryInjuredUnits.filter((unit) => infirmarySelectedUnitIds.has(unit.id));
-        if (!selectedUnits.length) {
-            return { healed: 0, goldSpent: 0, message: 'Select injured units to heal, then choose Heal Selected.' };
-        }
-
-        const goldSpent = sumSelectedInfirmaryHealCost();
-        if (goldSpent > commanderGold) {
-            return {
-                healed: 0,
-                goldSpent: 0,
-                message: `Not enough gold. Selected heals cost ${formatInfirmaryHealGold(goldSpent)}.`
-            };
-        }
-        const selectedIdSet = new Set(selectedUnits.map((unit) => unit.id));
-        infirmaryInjuredUnits = infirmaryInjuredUnits.filter((unit) => !selectedIdSet.has(unit.id));
-        infirmarySelectedUnitIds = new Set(
-            [...infirmarySelectedUnitIds].filter((id) => !selectedIdSet.has(id))
-        );
-        if (goldSpent > 0) {
-            global.RoyalArmiesAgeGold?.applyAgeCommanderGoldDelta?.(-goldSpent, { source: 'infirmary-heal' });
-        }
-        refreshInfirmaryWorkspaceBody();
-
-        const healed = selectedUnits.length;
-        const countLabel = healed === 1 ? '1 unit' : `${healed} units`;
-        return {
-            healed,
-            goldSpent,
-            message: `${countLabel} restored for ${formatInfirmaryHealGold(goldSpent)}.`
-        };
     }
 
     function renderPlaceholderBody(note) {
@@ -858,33 +1073,6 @@
             + `<p class="age-settlement-venue-placeholder-copy">${escapeHtml(note)}</p>`
             + '</div>'
         );
-    }
-
-    async function healAtInfirmary(mode) {
-        const healMode = String(mode || 'selected').trim().toLowerCase();
-        const statusEl = global.document.getElementById('age-settlement-infirmary-status');
-        const demoResult = healFakeInfirmaryUnit(healMode);
-        if (statusEl) statusEl.textContent = demoResult.message;
-        if (!demoResult.healed) return;
-
-        const api = global.RoyalArmiesAgeGuildTraining;
-        if (!api?.healUnits) return;
-
-        const apiMode = healMode === 'all' ? 'all' : 'one';
-        try {
-            if (apiMode === 'all') {
-                await api.healUnits({ mode: 'all' });
-            } else {
-                for (let index = 0; index < demoResult.healed; index += 1) {
-                    await api.healUnits({ mode: 'one' });
-                }
-            }
-            global.dispatchEvent(new CustomEvent('royalarmies:age-movement-updated'));
-        } catch (error) {
-            if (typeof global.showRiftError === 'function' && error?.code) {
-                global.showRiftError(error.code, error.message);
-            }
-        }
     }
 
     function openBlacksmith(detail) {
@@ -990,7 +1178,7 @@
         const venue = detail?.venue || {};
         const tier = String(detail?.settlementTier || 'village').trim().toLowerCase();
         global.RoyalArmiesAgeGuildTraining?.setSettlementTier?.(tier);
-        resetInfirmaryInjuredStacks();
+        await syncInfirmaryRosterFromServer();
 
         openArmyWorkspace({
             venueId: 'infirmary',
@@ -1167,6 +1355,8 @@
 
         global.addEventListener('royalarmies:church-blessing-ui-refresh', refreshChurchWorkspaceBody);
         global.addEventListener('royalarmies:banner-advisor-updated', refreshChurchWorkspaceBody);
+        global.addEventListener('royalarmies:age-recruitment-updated', onInfirmaryArmyUpdated);
+        global.addEventListener('royalarmies:age-movement-updated', onInfirmaryArmyUpdated);
     }
 
     function enableAgeSettlementVenueWorkspaces() {

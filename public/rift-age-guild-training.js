@@ -206,6 +206,34 @@
         return payload;
     }
 
+    async function recoverInjuries(options = {}) {
+        const username = String(options.username || resolveUsername() || '').trim();
+        const count = Math.max(0, Math.floor(Number(options.count) || 0));
+        if (!username) {
+            throw new Error('Commander session required.');
+        }
+        if (!count) {
+            return { recoveredCount: 0 };
+        }
+
+        const response = await global.fetch(resolveApiUrl('/api/portal/age/guild/recover-injuries'), {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'same-origin',
+            body: JSON.stringify({ username, count })
+        });
+
+        const payload = await response.json().catch(() => ({}));
+        if (!response.ok || payload.status !== 'ok') {
+            const err = new Error(payload.message || 'Injury recovery failed.');
+            err.code = payload.code || payload.errorCode || '';
+            throw err;
+        }
+
+        applyGuildPayload(payload);
+        return payload;
+    }
+
     async function purchaseTradeConvoyLot(options = {}) {
         const username = String(options.username || resolveUsername() || '').trim();
         if (!username) {
@@ -266,6 +294,7 @@
         fetchGuildState,
         runTrainingBattle,
         healUnits,
+        recoverInjuries,
         purchaseTradeConvoyLot,
         acceptBounty,
         applyGuildPayload,

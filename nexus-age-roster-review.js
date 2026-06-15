@@ -193,8 +193,7 @@ function buildGarrisonRosterReviewPayload(commander, catalog) {
 
     const units = [];
     normalizeAgeArmy(army).forEach((stack) => {
-        const catalogUnit = getCatalogUnitById(catalogRef, stack?.catalogUnitId);
-        if (!catalogUnit) return;
+        const catalogUnit = getCatalogUnitById(catalogRef, stack?.catalogUnitId) || null;
         units.push(...buildRosterReviewUnitRows(stack, catalogUnit));
     });
 

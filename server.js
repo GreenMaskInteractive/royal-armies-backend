@@ -214,6 +214,7 @@ const {
     executeGuildTrainingBattleWithLedger,
     executeCityAssaultBattleWithLedger,
     executeGuildHeal,
+    executeNaturalInjuryRecovery,
     executeTradeConvoyPurchase,
     buildUnitEvolutionPayload,
     executeUnitRankPromotion,
@@ -8078,6 +8079,46 @@ app.post('/api/portal/age/guild/heal', (req, res) => {
         goldSpent: result.goldSpent,
         healedCount: result.healedCount,
         ageGold: result.ageGold,
+        ageArmy: result.ageArmy,
+        unitsTotal: result.unitsTotal,
+        unitsUninjured: result.unitsUninjured,
+        unitsInjured: result.unitsInjured,
+        unitsHealthProgress: result.unitsHealthProgress,
+        ...buildGuildStatePayload(commander),
+        ...buildAgeMovementStatePayload(username, commander)
+    });
+});
+
+app.post('/api/portal/age/guild/recover-injuries', (req, res) => {
+    const username = resolveLedgerCommanderUsername(req.body?.username || '');
+    if (!username) {
+        return sendApiError(res, 'NEXUS-GEN-002');
+    }
+
+    let commander = db.get('commanders').find({ username }).value();
+    if (!commander) {
+        return sendApiError(res, 'NEXUS-GEN-004');
+    }
+
+    ensureCommanderAgeRoster(commander);
+    commander = db.get('commanders').find({ username }).value();
+
+    const recoverCount = Math.max(0, Math.floor(Number(req.body?.count) || 0));
+    const result = executeNaturalInjuryRecovery(commander, recoverCount);
+    if (!result.ok) {
+        return sendApiError(res, result.errorCode || 'NEXUS-AGE-019');
+    }
+
+    persistCommanderGuildLedger(username, {
+        ageArmy: result.ageArmy
+    });
+
+    commander = db.get('commanders').find({ username }).value();
+
+    res.json({
+        status: 'ok',
+        action: 'guild-recover-injuries',
+        recoveredCount: result.recoveredCount,
         ageArmy: result.ageArmy,
         unitsTotal: result.unitsTotal,
         unitsUninjured: result.unitsUninjured,

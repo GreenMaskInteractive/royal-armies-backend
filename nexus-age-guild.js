@@ -521,6 +521,19 @@ function findNextInjuredStack(army, catalog) {
     return null;
 }
 
+function findNextInjuredStackForRecovery(army) {
+    const stacks = normalizeAgeArmy(army);
+    for (let index = 0; index < stacks.length; index += 1) {
+        const stack = stacks[index];
+        const qty = Math.max(0, Math.floor(Number(stack.qty) || 0));
+        const injured = Math.min(qty, Math.max(0, Math.floor(Number(stack.injuredQty) || 0)));
+        if (injured > 0) {
+            return { index, stack };
+        }
+    }
+    return null;
+}
+
 function healOneInjuredUnit(army, catalog, availableGold) {
     const stacks = normalizeAgeArmy(army);
     const target = findNextInjuredStack(stacks, catalog);
@@ -568,6 +581,51 @@ function healAllInjuredUnits(army, catalog, availableGold) {
         ageArmy: stacks,
         goldSpent,
         healedCount
+    };
+}
+
+function recoverInjuredUnitsNaturally(army, recoverCount) {
+    const limit = Math.max(0, Math.floor(Number(recoverCount) || 0));
+    if (!limit) {
+        return { ok: false, errorCode: 'NEXUS-AGE-019', recoveredCount: 0, ageArmy: normalizeAgeArmy(army) };
+    }
+
+    let stacks = normalizeAgeArmy(army);
+    let recoveredCount = 0;
+
+    for (let step = 0; step < limit; step += 1) {
+        const target = findNextInjuredStackForRecovery(stacks);
+        if (!target) break;
+        stacks[target.index] = swapRandomInjuredUnitToHealthy(target.stack);
+        recoveredCount += 1;
+    }
+
+    if (!recoveredCount) {
+        return { ok: false, errorCode: 'NEXUS-AGE-019', recoveredCount: 0, ageArmy: stacks };
+    }
+
+    return {
+        ok: true,
+        recoveredCount,
+        ageArmy: normalizeAgeArmy(stacks)
+    };
+}
+
+function executeNaturalInjuryRecovery(commander, recoverCount) {
+    const army = resolveCommanderAgeArmy(commander);
+    const result = recoverInjuredUnitsNaturally(army, recoverCount);
+    if (!result.ok) return result;
+
+    const roster = buildAgeRosterHudPayload({ ...commander, ageArmy: result.ageArmy });
+
+    return {
+        ok: true,
+        recoveredCount: result.recoveredCount,
+        ageArmy: result.ageArmy,
+        unitsTotal: roster.unitsTotal,
+        unitsUninjured: roster.unitsUninjured,
+        unitsInjured: roster.unitsTotal - roster.unitsUninjured,
+        unitsHealthProgress: roster.unitsTotal > 0 ? roster.unitsUninjured / roster.unitsTotal : 1
     };
 }
 
@@ -828,6 +886,7 @@ module.exports = {
     executeGuildTrainingBattleWithLedger,
     executeCityAssaultBattleWithLedger,
     executeGuildHeal,
+    executeNaturalInjuryRecovery,
     executeTradeConvoyPurchase,
     calculatePvpBattleGuildXp,
     appendPvpBattleXpLogLines,
