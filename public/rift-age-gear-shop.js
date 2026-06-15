@@ -8,6 +8,8 @@
     const EQUIPMENT_MIN_RANK = 2;
     const MAX_GEAR_LEVEL = 15;
     const ARMORY_UPGRADE_MIN_LEVEL = 5;
+    const INVENTORY_MAX_SLOTS = 30;
+    const INVENTORY_START_UNLOCKED = 10;
 
     const BATTLE_XP_SLOTS = Object.freeze(new Set([
         'mainHand', 'offHand', 'head', 'chest', 'hands', 'legs', 'feet', 'cloak'
@@ -39,6 +41,19 @@
         cloak: '🧥',
         ring: '💍',
         amulet: '✦'
+    });
+
+    const GEAR_SLOT_LABELS = Object.freeze({
+        mainHand: 'Main Hand',
+        offHand: 'Off Hand',
+        head: 'Head',
+        chest: 'Chest',
+        hands: 'Hands',
+        legs: 'Legs',
+        feet: 'Feet',
+        cloak: 'Cloak',
+        ring: 'Ring',
+        amulet: 'Amulet'
     });
 
     const FORGE_CATEGORIES = Object.freeze([
@@ -265,7 +280,178 @@
     }
 
     function createDefaultState() {
-        return { ownedGearIds: [], ownedToolIds: [], equipped: {}, gearProgress: {} };
+        return {
+            ownedGearIds: [],
+            ownedToolIds: [],
+            equipped: {},
+            gearProgress: {},
+            inventorySlots: Array(INVENTORY_MAX_SLOTS).fill(null),
+            inventoryUnlocked: INVENTORY_START_UNLOCKED
+        };
+    }
+
+    function normalizeInventoryEntry(entry) {
+        if (!entry || typeof entry !== 'object') return null;
+        const type = String(entry.type || '').trim().toLowerCase();
+        const itemId = type === 'tool'
+            ? mapLegacyToolId(entry.itemId)
+            : mapLegacyGearId(entry.itemId);
+        if (!itemId) return null;
+        if (type === 'tool') {
+            return TOOL_BY_ID[itemId] ? { type: 'tool', itemId } : null;
+        }
+        if (type === 'gear') {
+            return GEAR_BY_ID[itemId] ? { type: 'gear', itemId } : null;
+        }
+        return null;
+    }
+
+    function normalizeInventorySlots(rawSlots) {
+        const slots = Array(INVENTORY_MAX_SLOTS).fill(null);
+        if (!Array.isArray(rawSlots)) return slots;
+        rawSlots.slice(0, INVENTORY_MAX_SLOTS).forEach((entry, index) => {
+            slots[index] = normalizeInventoryEntry(entry);
+        });
+        return slots;
+    }
+
+    function ensureInventoryState(state) {
+        if (!state || typeof state !== 'object') return state;
+        state.inventorySlots = normalizeInventorySlots(state.inventorySlots);
+        const unlocked = Math.floor(Number(state.inventoryUnlocked) || INVENTORY_START_UNLOCKED);
+        state.inventoryUnlocked = Math.max(1, Math.min(INVENTORY_MAX_SLOTS, unlocked));
+        return state;
+    }
+
+    function findFirstFreeInventorySlot(state) {
+        ensureInventoryState(state);
+        const unlocked = state.inventoryUnlocked;
+        for (let index = 0; index < unlocked; index += 1) {
+            if (!state.inventorySlots[index]) return index;
+        }
+        return -1;
+    }
+
+    function countInventoryItems(state) {
+        ensureInventoryState(state);
+        return state.inventorySlots
+            .slice(0, state.inventoryUnlocked)
+            .filter(Boolean)
+            .length;
+    }
+
+    function inventoryHasItem(state, itemId, type) {
+        ensureInventoryState(state);
+        const id = String(itemId || '').trim();
+        const kind = String(type || '').trim().toLowerCase();
+        return state.inventorySlots.some((entry) => (
+            entry
+            && entry.itemId === id
+            && (!kind || entry.type === kind)
+        ));
+    }
+
+    function addToInventory(state, entry) {
+        ensureInventoryState(state);
+        const normalized = normalizeInventoryEntry(entry);
+        if (!normalized) return false;
+        const slotIndex = findFirstFreeInventorySlot(state);
+        if (slotIndex < 0) return false;
+        state.inventorySlots[slotIndex] = normalized;
+        return true;
+    }
+
+    function removeInventorySlot(state, slotIndex) {
+        ensureInventoryState(state);
+        const index = Math.floor(Number(slotIndex));
+        if (!Number.isFinite(index) || index < 0 || index >= state.inventoryUnlocked) return null;
+        const entry = state.inventorySlots[index];
+        state.inventorySlots[index] = null;
+        return entry;
+    }
+
+    function migrateOrphanedItemsToInventory(state) {
+        ensureInventoryState(state);
+        const equippedIds = new Set(
+            Object.values(state.equipped || {})
+                .map((itemId) => mapLegacyGearId(itemId))
+                .filter(Boolean)
+        );
+        const trackedIds = new Set();
+
+        state.inventorySlots.forEach((entry) => {
+            if (entry?.itemId) trackedIds.add(entry.itemId);
+        });
+        equippedIds.forEach((itemId) => trackedIds.add(itemId));
+
+        (state.ownedGearIds || []).forEach((itemId) => {
+            const id = mapLegacyGearId(itemId);
+            if (!id || trackedIds.has(id)) return;
+            if (addToInventory(state, { type: 'gear', itemId: id })) {
+                trackedIds.add(id);
+            }
+        });
+
+        (state.ownedToolIds || []).forEach((toolId) => {
+            const id = mapLegacyToolId(toolId);
+            if (!id || trackedIds.has(id)) return;
+            if (addToInventory(state, { type: 'tool', itemId: id })) {
+                trackedIds.add(id);
+            }
+        });
+    }
+
+    function canPlacePurchasedItem(state, item, isTool) {
+        ensureInventoryState(state);
+        if (!isTool) {
+            const slot = String(item?.slot || '').trim();
+            const currentEquipped = mapLegacyGearId(state.equipped?.[slot]);
+            const rank = resolveCommanderRank();
+            if (!currentEquipped && rank >= item.equipMinRank) return true;
+        }
+        return findFirstFreeInventorySlot(state) >= 0;
+    }
+
+    function placePurchasedItem(state, item, isTool) {
+        ensureInventoryState(state);
+        if (isTool) {
+            state.ownedToolIds.push(item.id);
+            const placed = addToInventory(state, { type: 'tool', itemId: item.id });
+            return { placed: 'inventory', success: placed };
+        }
+
+        state.ownedGearIds.push(item.id);
+        ensureGearProgress(state, item.id);
+
+        const slot = String(item.slot || '').trim();
+        const currentEquipped = mapLegacyGearId(state.equipped?.[slot]);
+        const rank = resolveCommanderRank();
+
+        if (!currentEquipped && rank >= item.equipMinRank) {
+            state.equipped[slot] = item.id;
+            return { placed: 'equipped', success: true, slot };
+        }
+
+        const placed = addToInventory(state, { type: 'gear', itemId: item.id });
+        const reason = currentEquipped ? 'occupied' : 'rank';
+        return { placed: 'inventory', success: placed, slot, reason };
+    }
+
+    function formatPurchasePlacementMessage(item, result, isTool) {
+        if (!result?.success) return 'Inventory full — free a slot before purchasing.';
+        if (result.placed === 'equipped') {
+            const slotLabel = GEAR_SLOT_LABELS[result.slot] || result.slot || 'slot';
+            return `${item.name} equipped to ${slotLabel}.`;
+        }
+        if (isTool) return `${item.name} stowed in your inventory.`;
+        if (result.reason === 'occupied') {
+            const slotLabel = GEAR_SLOT_LABELS[result.slot] || result.slot || 'slot';
+            return `${item.name} stowed in inventory (${slotLabel} occupied).`;
+        }
+        if (result.reason === 'rank') {
+            return `${item.name} stowed in inventory until ${resolveRankThresholdLabel(item.equipMinRank)}.`;
+        }
+        return `${item.name} stowed in your inventory.`;
     }
 
     function normalizeGearProgress(raw) {
@@ -339,6 +525,7 @@
             }
         });
 
+        migrateOrphanedItemsToInventory(state);
         return state;
     }
 
@@ -355,7 +542,9 @@
                     ? [...new Set(parsed.ownedToolIds.map((id) => String(id || '').trim()).filter(Boolean))]
                     : [],
                 equipped: parsed?.equipped && typeof parsed.equipped === 'object' ? { ...parsed.equipped } : {},
-                gearProgress: normalizeGearProgress(parsed?.gearProgress)
+                gearProgress: normalizeGearProgress(parsed?.gearProgress),
+                inventorySlots: normalizeInventorySlots(parsed?.inventorySlots),
+                inventoryUnlocked: parsed?.inventoryUnlocked
             });
         } catch (_error) {
             return createDefaultState();
@@ -363,11 +552,21 @@
     }
 
     function writeState(state) {
+        const migrated = migrateGearState({
+            ownedGearIds: state?.ownedGearIds || [],
+            ownedToolIds: state?.ownedToolIds || [],
+            equipped: state?.equipped || {},
+            gearProgress: state?.gearProgress || {},
+            inventorySlots: state?.inventorySlots || [],
+            inventoryUnlocked: state?.inventoryUnlocked
+        });
         const next = {
-            ownedGearIds: [...new Set((state?.ownedGearIds || []).map((id) => String(id || '').trim()).filter(Boolean))],
-            ownedToolIds: [...new Set((state?.ownedToolIds || []).map((id) => String(id || '').trim()).filter(Boolean))],
-            equipped: state?.equipped && typeof state.equipped === 'object' ? { ...state.equipped } : {},
-            gearProgress: normalizeGearProgress(state?.gearProgress)
+            ownedGearIds: [...new Set((migrated?.ownedGearIds || []).map((id) => String(id || '').trim()).filter(Boolean))],
+            ownedToolIds: [...new Set((migrated?.ownedToolIds || []).map((id) => String(id || '').trim()).filter(Boolean))],
+            equipped: migrated?.equipped && typeof migrated.equipped === 'object' ? { ...migrated.equipped } : {},
+            gearProgress: normalizeGearProgress(migrated?.gearProgress),
+            inventorySlots: normalizeInventorySlots(migrated?.inventorySlots),
+            inventoryUnlocked: migrated?.inventoryUnlocked || INVENTORY_START_UNLOCKED
         };
         try {
             global.localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
@@ -745,6 +944,21 @@
             + `<aside id="${prefix}-item-detail" class="age-barracks-unit-detail age-army-workspace-panel" hidden aria-live="polite"></aside>`
             + '</div>'
             + '</div>'
+            + `<aside class="age-gear-player-rail age-army-workspace-panel" aria-label="Commander loadout">`
+            + '<div class="age-gear-player-rail-split">'
+            + `<section class="age-gear-equipment-panel" aria-labelledby="${prefix}-equipment-title">`
+            + `<h4 id="${prefix}-equipment-title" class="age-gear-panel-title">Equipment</h4>`
+            + `<div id="${prefix}-equipment-sheet" class="age-gear-equipment-sheet" aria-live="polite"></div>`
+            + '</section>'
+            + `<section class="age-gear-inventory-panel" aria-labelledby="${prefix}-inventory-title">`
+            + '<header class="age-gear-inventory-head">'
+            + `<h4 id="${prefix}-inventory-title" class="age-gear-panel-title">Inventory</h4>`
+            + `<p id="${prefix}-inventory-capacity" class="age-gear-inventory-capacity" aria-live="polite"></p>`
+            + '</header>'
+            + `<div id="${prefix}-inventory-grid" class="age-gear-inventory-grid" aria-live="polite"></div>`
+            + '</section>'
+            + '</div>'
+            + '</aside>'
             + '</div>'
             + '</div>'
             + '<p id="age-gear-shop-status" class="age-defense-workspace-status" aria-live="polite" hidden></p>'
@@ -1001,6 +1215,161 @@
         );
     }
 
+    function resolveEquippedItemForSlot(state, slotId) {
+        const slot = String(slotId || '').trim();
+        const itemId = mapLegacyGearId(state?.equipped?.[slot]);
+        if (!itemId) return null;
+        const item = GEAR_BY_ID[itemId];
+        if (!item) return null;
+        const progress = resolveGearProgress(state, itemId);
+        return { ...item, itemId, progress };
+    }
+
+    function renderEquipmentSlotMarkup(slotId, equippedItem) {
+        const slotLabel = escapeHtml(GEAR_SLOT_LABELS[slotId] || slotId);
+        if (!equippedItem) {
+            return (
+                `<div class="age-gear-equipment-slot is-empty" data-equipment-slot="${escapeHtml(slotId)}">`
+                + `<span class="age-gear-equipment-slot-label">${slotLabel}</span>`
+                + '<span class="age-gear-equipment-slot-empty">Empty</span>'
+                + '</div>'
+            );
+        }
+
+        const rarity = escapeHtml(equippedItem.rarity || 'common');
+        const mark = escapeHtml(SLOT_MARKS[slotId] || '•');
+        const levelTag = BATTLE_XP_SLOTS.has(slotId)
+            ? ` · ${escapeHtml(formatGearLevelLabel(equippedItem.progress?.level || 1))}`
+            : '';
+        return (
+            `<div class="age-gear-equipment-slot is-equipped is-rarity-${rarity}" data-equipment-slot="${escapeHtml(slotId)}">`
+            + `<span class="age-gear-equipment-slot-mark" aria-hidden="true">${mark}</span>`
+            + '<span class="age-gear-equipment-slot-body">'
+            + `<span class="age-gear-equipment-slot-label">${slotLabel}</span>`
+            + `<span class="age-gear-equipment-slot-item">${escapeHtml(equippedItem.name || 'Equipped')}${levelTag}</span>`
+            + '</span>'
+            + '</div>'
+        );
+    }
+
+    function renderEquipmentPanel(prefix) {
+        const sheetEl = global.document.getElementById(`${prefix}-equipment-sheet`);
+        if (!sheetEl) return;
+
+        const state = readState();
+        const slotById = (slotId) => resolveEquippedItemForSlot(state, slotId);
+        const renderColumn = (slotIds) => slotIds
+            .map((slotId) => renderEquipmentSlotMarkup(slotId, slotById(slotId)))
+            .join('');
+
+        sheetEl.innerHTML = (
+            '<div class="age-gear-equipment-layout">'
+            + `<div class="age-gear-equipment-col age-gear-equipment-col--left">${renderColumn(['mainHand', 'hands', 'cloak'])}</div>`
+            + '<div class="age-gear-equipment-col age-gear-equipment-col--center">'
+            + renderEquipmentSlotMarkup('head', slotById('head'))
+            + renderEquipmentSlotMarkup('chest', slotById('chest'))
+            + renderEquipmentSlotMarkup('legs', slotById('legs'))
+            + renderEquipmentSlotMarkup('feet', slotById('feet'))
+            + '</div>'
+            + `<div class="age-gear-equipment-col age-gear-equipment-col--right">${renderColumn(['offHand', 'ring', 'amulet'])}</div>`
+            + '</div>'
+        );
+    }
+
+    function resolveInventoryItemMeta(entry) {
+        if (!entry) return null;
+        if (entry.type === 'tool') {
+            const tool = TOOL_BY_ID[entry.itemId];
+            if (!tool) return null;
+            return {
+                type: 'tool',
+                itemId: tool.id,
+                name: tool.name,
+                mark: tool.mark || '⚙',
+                rarity: 'common'
+            };
+        }
+        const gear = GEAR_BY_ID[entry.itemId];
+        if (!gear) return null;
+        const state = readState();
+        const progress = resolveGearProgress(state, gear.id);
+        return {
+            type: 'gear',
+            itemId: gear.id,
+            name: gear.name,
+            mark: SLOT_MARKS[gear.slot] || '•',
+            rarity: gear.rarity || 'common',
+            slot: gear.slot,
+            level: progress.level
+        };
+    }
+
+    function renderInventorySlotMarkup(slotIndex, entry, unlocked) {
+        const index = Math.floor(Number(slotIndex));
+        const isLocked = index >= unlocked;
+        if (isLocked) {
+            return (
+                `<div class="age-gear-inventory-slot is-locked" data-inventory-slot="${index}" aria-label="Locked inventory slot">`
+                + '<span class="age-gear-inventory-slot-lock" aria-hidden="true">🔒</span>'
+                + '</div>'
+            );
+        }
+
+        const meta = resolveInventoryItemMeta(entry);
+        if (!meta) {
+            return (
+                `<div class="age-gear-inventory-slot is-empty" data-inventory-slot="${index}" aria-label="Empty inventory slot">`
+                + '<span class="age-gear-inventory-slot-empty">—</span>'
+                + '</div>'
+            );
+        }
+
+        const levelLine = meta.type === 'gear' && meta.level
+            ? ` · ${formatGearLevelLabel(meta.level)}`
+            : '';
+        const title = `${meta.name}${levelLine}`;
+        const canEquip = meta.type === 'gear';
+        const tagName = canEquip ? 'button' : 'div';
+        const attrs = canEquip
+            ? ` type="button" data-inventory-equip="${index}" title="${escapeHtml(title)}"`
+            : ` title="${escapeHtml(title)}"`;
+        const role = canEquip ? '' : ' role="presentation"';
+
+        return (
+            `<${tagName} class="age-gear-inventory-slot is-filled is-${escapeHtml(meta.type)} is-rarity-${escapeHtml(meta.rarity)}"`
+            + ` data-inventory-slot="${index}"${attrs}${role}`
+            + ` aria-label="${escapeHtml(meta.name)}">`
+            + `<span class="age-gear-inventory-slot-mark" aria-hidden="true">${escapeHtml(meta.mark)}</span>`
+            + `<span class="age-gear-inventory-slot-name">${escapeHtml(meta.name)}</span>`
+            + `</${tagName}>`
+        );
+    }
+
+    function renderInventoryPanel(prefix) {
+        const gridEl = global.document.getElementById(`${prefix}-inventory-grid`);
+        const capacityEl = global.document.getElementById(`${prefix}-inventory-capacity`);
+        if (!gridEl) return;
+
+        const state = readState();
+        ensureInventoryState(state);
+        const used = countInventoryItems(state);
+        const unlocked = state.inventoryUnlocked;
+
+        if (capacityEl) {
+            capacityEl.textContent = `${used} / ${unlocked} slots · ${INVENTORY_MAX_SLOTS} total`;
+        }
+
+        gridEl.innerHTML = state.inventorySlots
+            .map((entry, index) => renderInventorySlotMarkup(index, entry, unlocked))
+            .join('');
+    }
+
+    function refreshPlayerGearPanels(mode) {
+        const prefix = mode === 'armory' ? 'age-armory-shop' : 'age-gear-shop';
+        renderEquipmentPanel(prefix);
+        renderInventoryPanel(prefix);
+    }
+
     function refreshForgeShopUi() {
         const grid = global.document.getElementById('age-gear-shop-item-grid');
         if (!grid) return;
@@ -1019,6 +1388,7 @@
         if (!items.length) {
             grid.innerHTML = '<p class="age-barracks-empty">No gear listed in this category yet.</p>';
             renderForgeItemDetail(null);
+            refreshPlayerGearPanels('forge');
             return;
         }
 
@@ -1029,6 +1399,7 @@
         grid.innerHTML = items.map((item) => renderForgeItemCard(item, state, rank, isTools)).join('');
         const selected = items.find((item) => item.id === selectedForgeItemId);
         renderForgeItemDetail(selected, state, rank, isTools);
+        refreshPlayerGearPanels('forge');
     }
 
     function refreshArmoryShopUi() {
@@ -1048,6 +1419,7 @@
         if (!upgrades.length) {
             grid.innerHTML = '<p class="age-barracks-empty">No upgrades ready in this category. Equip forge gear, then return once it reaches the required mastery level.</p>';
             renderArmoryItemDetail(null);
+            refreshPlayerGearPanels('armory');
             return;
         }
 
@@ -1058,6 +1430,7 @@
         grid.innerHTML = upgrades.map((entry) => renderArmoryUpgradeCard(entry, rank)).join('');
         const selected = upgrades.find((entry) => entry.slot === selectedArmorySlotId);
         renderArmoryItemDetail(selected, rank);
+        refreshPlayerGearPanels('armory');
     }
 
     function renderForgeBody() {
@@ -1114,12 +1487,45 @@
         }
     }
 
+    function equipItemToSlot(state, item, sourceInventoryIndex) {
+        const slot = String(item?.slot || '').trim();
+        if (!slot) return { ok: false, reason: 'invalid_slot' };
+
+        const displaced = mapLegacyGearId(state.equipped?.[slot]);
+        if (displaced && displaced !== item.id) {
+            if (!addToInventory(state, { type: 'gear', itemId: displaced })) {
+                return { ok: false, reason: 'inventory_full' };
+            }
+        }
+
+        state.equipped[slot] = item.id;
+
+        if (sourceInventoryIndex != null && sourceInventoryIndex !== '') {
+            const index = Math.floor(Number(sourceInventoryIndex));
+            if (Number.isFinite(index) && state.inventorySlots[index]?.itemId === item.id) {
+                state.inventorySlots[index] = null;
+            }
+        } else {
+            state.inventorySlots.forEach((entry, index) => {
+                if (entry?.type === 'gear' && entry.itemId === item.id) {
+                    state.inventorySlots[index] = null;
+                }
+            });
+        }
+
+        return { ok: true };
+    }
+
     function purchaseForgeItem(itemId) {
         const item = GEAR_BY_ID[String(itemId || '').trim()];
         if (!item) return false;
         const state = readState();
         if (resolveOwnedGearSet(state).has(item.id)) {
             setShopStatus(`${item.name} is already in your inventory.`, true);
+            return false;
+        }
+        if (!canPlacePurchasedItem(state, item, false)) {
+            setShopStatus('Inventory full — free a slot before purchasing.', true);
             return false;
         }
         if (resolveGold() < item.purchaseGold) {
@@ -1130,12 +1536,13 @@
             setShopStatus('Not enough gold for this purchase.', true);
             return false;
         }
-        state.ownedGearIds.push(item.id);
-        ensureGearProgress(state, item.id);
+        const placement = placePurchasedItem(state, item, false);
+        if (!placement.success) {
+            setShopStatus('Inventory full — free a slot before purchasing.', true);
+            return false;
+        }
         writeState(state);
-        setShopStatus(`${item.name} purchased. ${item.equipMinRank > resolveCommanderRank()
-            ? `Equip at ${resolveRankThresholdLabel(item.equipMinRank)}.`
-            : 'Ready to equip.'}`);
+        setShopStatus(formatPurchasePlacementMessage(item, placement, false));
         return true;
     }
 
@@ -1147,13 +1554,21 @@
             setShopStatus(`${tool.name} is already owned.`, true);
             return false;
         }
+        if (!canPlacePurchasedItem(state, tool, true)) {
+            setShopStatus('Inventory full — free a slot before purchasing.', true);
+            return false;
+        }
         if (resolveGold() < tool.purchaseGold || !spendGold(tool.purchaseGold, 'forge-tool')) {
             setShopStatus('Not enough gold for this tool.', true);
             return false;
         }
-        state.ownedToolIds.push(tool.id);
+        const placement = placePurchasedItem(state, tool, true);
+        if (!placement.success) {
+            setShopStatus('Inventory full — free a slot before purchasing.', true);
+            return false;
+        }
         writeState(state);
-        setShopStatus(`${tool.name} added to your field kits.`);
+        setShopStatus(formatPurchasePlacementMessage(tool, placement, true));
         return true;
     }
 
@@ -1170,10 +1585,41 @@
             setShopStatus('Purchase this item at the forge first.', true);
             return false;
         }
-        state.equipped[item.slot] = item.id;
+        const result = equipItemToSlot(state, item);
+        if (!result.ok) {
+            setShopStatus('Inventory full — make room before swapping gear.', true);
+            return false;
+        }
         ensureGearProgress(state, item.id);
         writeState(state);
-        setShopStatus(`${item.name} equipped.`);
+        setShopStatus(`${item.name} equipped to ${GEAR_SLOT_LABELS[item.slot] || item.slot}.`);
+        return true;
+    }
+
+    function equipFromInventory(slotIndex) {
+        const state = readState();
+        const index = Math.floor(Number(slotIndex));
+        const entry = state.inventorySlots[index];
+        if (!entry || entry.type !== 'gear') return false;
+
+        const item = GEAR_BY_ID[entry.itemId];
+        if (!item) return false;
+
+        const rank = resolveCommanderRank();
+        if (rank < item.equipMinRank) {
+            setShopStatus(`Equip ${item.name} at ${resolveRankThresholdLabel(item.equipMinRank)}.`, true);
+            return false;
+        }
+
+        const result = equipItemToSlot(state, item, index);
+        if (!result.ok) {
+            setShopStatus('Inventory full — make room before swapping gear.', true);
+            return false;
+        }
+
+        ensureGearProgress(state, item.id);
+        writeState(state);
+        setShopStatus(`${item.name} equipped to ${GEAR_SLOT_LABELS[item.slot] || item.slot}.`);
         return true;
     }
 
@@ -1209,6 +1655,14 @@
             state.ownedGearIds.push(next.id);
         }
         transferGearProgress(state, currentId, next.id);
+        state.inventorySlots.forEach((entry, index) => {
+            if (entry?.type === 'gear' && entry.itemId === next.id) {
+                state.inventorySlots[index] = null;
+            }
+        });
+        if (currentId && currentId !== next.id) {
+            addToInventory(state, { type: 'gear', itemId: currentId });
+        }
         state.equipped[slot] = next.id;
         writeState(state);
         setShopStatus(`${current.name} upgraded to ${next.name} for ${formatGold(cost)} gold.`);
@@ -1308,6 +1762,15 @@
         if (upgradeBtn && !upgradeBtn.disabled) {
             event.preventDefault();
             if (upgradeArmorySlot(upgradeBtn.getAttribute('data-armory-upgrade'))) {
+                refreshActiveBody(activeVenueId);
+            }
+            return true;
+        }
+
+        const inventoryEquipBtn = event.target.closest('[data-inventory-equip]');
+        if (inventoryEquipBtn) {
+            event.preventDefault();
+            if (equipFromInventory(inventoryEquipBtn.getAttribute('data-inventory-equip'))) {
                 refreshActiveBody(activeVenueId);
             }
             return true;
