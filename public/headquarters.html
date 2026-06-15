@@ -5,12 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Royal Armies — Headquarters</title>
     <link rel="stylesheet" href="style.css?v=cursor-modal-layer-fix-1">
-    <link rel="stylesheet" href="style2.css?v=utf8-content-fix-1">
+    <link rel="stylesheet" href="style2.css?v=settlement-venue-rank-gates-1">
     <link rel="stylesheet" href="style-age-area-shell.css?v=age-area-shell-1">
     <link rel="stylesheet" href="style-age-headquarters.css?v=utf8-content-fix-1">
     <link rel="stylesheet" href="style-age-council-room.css?v=hq-header-clicks-2">
     <link rel="stylesheet" href="style-age-hq-arcane-flare.css?v=hq-border-blue-pulse-1">
-    <link rel="stylesheet" href="style-age-hq-intel.css?v=hq-site-blend-1">
+    <link rel="stylesheet" href="style-age-army-workspaces.css?v=hq-defense-upgrades-1">
     <link rel="stylesheet" href="style-council-room-page.css?v=dispatch-header-inline-1">
     <link rel="stylesheet" href="mobile-responsive.css?v=council-room-premium-2">
     <link rel="stylesheet" href="dev-page-navigator.css">
@@ -159,6 +159,13 @@
                                     <p id="age-hq-treasury-fort-empty" class="age-hq-treasury-empty">No fortified cities on record.</p>
                                 </div>
                             </section>
+                            <section class="age-headquarters-ops-card age-headquarters-ops-card--defense age-council-room-panel" data-hq-public hidden aria-labelledby="age-hq-defense-title">
+                                <header class="age-headquarters-ops-card-head">
+                                    <h3 class="age-headquarters-ops-card-title" id="age-hq-defense-title">Settlement Defense</h3>
+                                    <p class="age-headquarters-ops-card-sub">Queue treasury-funded improvements for your nation's settlements.</p>
+                                </header>
+                                <div class="age-headquarters-ops-card-body" id="age-hq-defense-upgrades-host" aria-live="polite"></div>
+                            </section>
                             <section class="age-headquarters-ops-card age-council-room-panel age-hq-intel-card" data-hq-public hidden aria-labelledby="age-hq-threat-title">
                                 <header class="age-headquarters-ops-card-head">
                                     <h3 class="age-headquarters-ops-card-title" id="age-hq-threat-title">Threat Assessment Matrix</h3>
@@ -275,8 +282,9 @@
     <script src="rift-age-movement.js?v=travel-confirm-1"></script>
     <script src="rift-age-gold.js?v=age-gold-sync-1"></script>
     <script src="rift-age-provisions.js?v=provisions-deplete-1"></script>
+    <script src="age-settlement-venue-workspaces.js?v=hq-defense-upgrades-1"></script>
     <script src="age-headquarters-intel.js?v=bounty-rank-titles-1"></script>
-    <script src="age-headquarters.js?v=plan-author-gate-1"></script>
+    <script src="age-headquarters.js?v=hq-defense-upgrades-1"></script>
     <script src="age-dispatch-alert.js?v=council-room-page-1"></script>
     <script src="commander-hub.js?v=modal-close-audit-1"></script>
     <script src="portal-commander-identity-menu.js?v=nametag-no-chronicles-bp-2"></script>

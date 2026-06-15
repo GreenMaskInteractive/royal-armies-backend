@@ -1316,6 +1316,7 @@
         lastCabinetState = workspace.cabinet || null;
         renderNationCabinet(lastCabinetState, workspace.vote || {});
         renderTreasuryFortifications(workspace.fortifiedCities || []);
+        global.RoyalArmiesSettlementDefense?.mountHeadquartersPanel?.();
         planningConfirmed = Boolean(workspace.planning?.confirmed);
         hasPublishedPlan = Boolean(workspace.planning?.hasPublishedPlan);
         applyPlanningSnapshotToMap(workspace.planning || {});
@@ -2203,6 +2204,7 @@
 
     function enable() {
         bindUi();
+        global.RoyalArmiesSettlementDefense?.mountHeadquartersPanel?.();
     }
 
     global.RoyalArmiesAgeHeadquarters = {

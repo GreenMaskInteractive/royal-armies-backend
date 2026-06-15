@@ -36,12 +36,12 @@
         kingdom: 'Settlement Patrol, Civilian Escort, Trade Escort (skill), Border Patrol, Player Bounties'
     };
 
+    const VENUE_RANK_GATES = Object.freeze({
+        blacksmith: 2,
+        church: 7
+    });
+
     const VENUE_MARKS = {
-        'village-center': '◆',
-        'town-square': '◆',
-        'city-hall': '◆',
-        'citadel-court': '◆',
-        'grand-embassy': '◆',
         'adventurers-guild': '⚑',
         'infirmary': '✚',
         church: '✦',
@@ -73,11 +73,6 @@
     const SETTLEMENT_VENUES = {
         village: [
             {
-                id: 'village-center',
-                label: 'Village Center',
-                description: 'Purchase defense improvements.'
-            },
-            {
                 id: 'adventurers-guild',
                 label: "Adventurer's Guild",
                 description: `Accept jobs: ${ADVENTURERS_GUILD_JOBS.village}.`
@@ -89,11 +84,6 @@
             }
         ],
         town: [
-            {
-                id: 'town-square',
-                label: 'Town Square',
-                description: 'Purchase defense improvements.'
-            },
             {
                 id: 'adventurers-guild',
                 label: "Adventurer's Guild",
@@ -111,11 +101,6 @@
             }
         ],
         city: [
-            {
-                id: 'city-hall',
-                label: 'City Hall',
-                description: 'Purchase defense improvements.'
-            },
             {
                 id: 'adventurers-guild',
                 label: "Adventurer's Guild",
@@ -148,11 +133,6 @@
             }
         ],
         citadel: [
-            {
-                id: 'citadel-court',
-                label: 'Citadel Court',
-                description: 'Purchase defense improvements.'
-            },
             {
                 id: 'arenas',
                 label: 'Arenas',
@@ -191,11 +171,6 @@
         ],
         kingdom: [
             {
-                id: 'grand-embassy',
-                label: 'Grand Embassy',
-                description: 'Purchase defense improvements.'
-            },
-            {
                 id: 'adventurers-guild',
                 label: "Adventurer's Guild",
                 description: `Accept jobs: ${ADVENTURERS_GUILD_JOBS.kingdom}.`
@@ -230,6 +205,39 @@
 
     let activeView = VIEW_MAP;
     let bound = false;
+
+    function resolveCommanderRank() {
+        return Math.max(1, Math.floor(Number(global.player?.rank) || 1));
+    }
+
+    function resolveVenueRankGate(venueId) {
+        const normalizedId = String(venueId || '').trim().toLowerCase();
+        const minRank = VENUE_RANK_GATES[normalizedId];
+        if (!minRank) {
+            return { locked: false, lockReason: '', minRank: 0 };
+        }
+
+        const rank = resolveCommanderRank();
+        if (rank >= minRank) {
+            return { locked: false, lockReason: '', minRank };
+        }
+
+        const rankTitles = global.RoyalArmiesCommanderRankTitles;
+        const meta = rankTitles?.resolveSelfCommanderRankMeta?.() || {};
+        const thresholdLabel = rankTitles?.formatCommanderRankLabel
+            ? rankTitles.formatCommanderRankLabel(minRank, meta.path, meta.rankTitleGender)
+            : `rank ${minRank}`;
+
+        return {
+            locked: true,
+            lockReason: `Unlocks at ${thresholdLabel}.`,
+            minRank
+        };
+    }
+
+    function isSettlementVenueLocked(venueId) {
+        return resolveVenueRankGate(venueId).locked;
+    }
 
     function resolveCanvas() {
         return global.document.getElementById('age-page-canvas');
@@ -529,6 +537,12 @@
                 : '';
             const mark = escapeSettlementMenuHtml(resolveVenueMark(venue.id));
             const label = escapeSettlementMenuHtml(venue.label);
+            const gate = resolveVenueRankGate(venue.id);
+            const lockedClass = gate.locked ? ' is-locked' : '';
+            const disabledAttr = gate.locked ? ' disabled aria-disabled="true"' : '';
+            const lockTagline = gate.locked
+                ? `<span class="age-settlement-menu-item-tagline age-settlement-menu-item-lock">${escapeSettlementMenuHtml(gate.lockReason)}</span>`
+                : '';
             const isExpandable = venue.id === 'adventurers-guild' || venue.id === 'barracks';
             const subPanelId = venue.id === 'adventurers-guild'
                 ? 'age-settlement-guild-jobs'
@@ -537,13 +551,17 @@
                 ? 'age-settlement-menu-guild-wrap'
                 : (venue.id === 'barracks' ? 'age-settlement-menu-garrison-wrap' : '');
             const itemHtml = (
-                `<button type="button" class="age-settlement-menu-item${placementClass}${isExpandable ? ' age-settlement-menu-item--expandable' : ''}"`
+                `<button type="button" class="age-settlement-menu-item${placementClass}${lockedClass}${isExpandable ? ' age-settlement-menu-item--expandable' : ''}"`
                 + ` data-settlement-venue="${escapeSettlementMenuHtml(venue.id)}"`
+                + `${disabledAttr}`
                 + `${isExpandable ? ` aria-expanded="false" aria-controls="${subPanelId}"` : ''}`
-                + ` aria-label="${isExpandable ? `Toggle ${label} options` : `Open ${label} workspace`}">`
+                + ` aria-label="${gate.locked
+                    ? `${label} locked — ${escapeSettlementMenuHtml(gate.lockReason)}`
+                    : (isExpandable ? `Toggle ${label} options` : `Open ${label} workspace`)}">`
                 + `<span class="age-settlement-menu-item-mark" aria-hidden="true">${mark}</span>`
                 + `<span class="age-settlement-menu-item-body">`
                 + `<span class="age-settlement-menu-item-label">${label}</span>`
+                + lockTagline
                 + '</span>'
                 + `<span class="age-settlement-menu-item-chevron" aria-hidden="true">${isExpandable ? '▾' : '›'}</span>`
                 + '</button>'
@@ -702,6 +720,10 @@
 
     function handleVenueClick(venueId) {
         const normalizedVenueId = String(venueId || '').trim().toLowerCase();
+        if (isSettlementVenueLocked(normalizedVenueId)) {
+            return;
+        }
+
         if (normalizedVenueId === 'war-room') {
             openSettlementWarRoom();
             return;
@@ -833,7 +855,7 @@
 
     function onSettlementMenuClick(event) {
         const button = event.target.closest('[data-settlement-venue]');
-        if (!button) return;
+        if (!button || button.disabled || button.getAttribute('aria-disabled') === 'true') return;
         event.preventDefault();
         event.stopPropagation();
         handleVenueClick(button.getAttribute('data-settlement-venue'));
@@ -874,6 +896,11 @@
         }
 
         bindViewTabs();
+        global.addEventListener('royalarmies:age-commander-rank-updated', () => {
+            if (activeView === VIEW_CITY) {
+                renderSettlementMenu();
+            }
+        });
         if (isSettlementOnlyPage()) {
             setActiveView(VIEW_CITY, { force: true });
         } else {

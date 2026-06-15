@@ -12,6 +12,13 @@
         'grand-embassy'
     ]);
 
+    const HQ_DEFENSE_HOST_ID = 'age-hq-defense-upgrades-host';
+    const HQ_DEFENSE_STATUS_ID = 'age-hq-defense-status';
+    const BLACKSMITH_MIN_RANK = 2;
+
+    let defensePanelContext = { hostId: '', statusId: 'age-defense-workspace-status' };
+    let hqDefenseBound = false;
+
     const BLACKSMITH_CATALOG = Object.freeze([
         { id: 'blade', mark: '⚔', title: 'Field Blades', desc: 'Standard issue weapons for front-line companies.', cost: '120 gold' },
         { id: 'mail', mark: '🛡', title: 'Reinforced Mail', desc: 'Layered armor kits sized for your active roster.', cost: '95 gold' },
@@ -92,6 +99,33 @@
         { stackId: 'steeljaw-vet', mark: '🐺', name: 'Steeljaw (A-1)', categoryId: 'beasts', tier: 4, promotion: 'vet', goldCost: 11500, ticksTotal: 3, count: 4 },
         { stackId: 'wolf-mst', mark: '🐺', name: 'War-Howler (A-2)', categoryId: 'beasts', tier: 3, promotion: 'mst', goldCost: 1300, ticksTotal: 3, count: 1 }
     ]);
+
+    function resolveCommanderRank() {
+        return Math.max(1, Math.floor(Number(global.player?.rank) || 1));
+    }
+
+    function resolveBlacksmithRankLockReason() {
+        const rank = resolveCommanderRank();
+        if (rank >= BLACKSMITH_MIN_RANK) return '';
+
+        const rankTitles = global.RoyalArmiesCommanderRankTitles;
+        const meta = rankTitles?.resolveSelfCommanderRankMeta?.() || {};
+        const thresholdLabel = rankTitles?.formatCommanderRankLabel
+            ? rankTitles.formatCommanderRankLabel(BLACKSMITH_MIN_RANK, meta.path, meta.rankTitleGender)
+            : `rank ${BLACKSMITH_MIN_RANK}`;
+        return `Unlocks at ${thresholdLabel}.`;
+    }
+
+    function setDefensePanelContext(hostId, statusId) {
+        defensePanelContext = {
+            hostId: String(hostId || '').trim(),
+            statusId: String(statusId || 'age-defense-workspace-status').trim()
+        };
+    }
+
+    function clearDefensePanelContext() {
+        defensePanelContext = { hostId: '', statusId: 'age-defense-workspace-status' };
+    }
 
     let bound = false;
     let infirmaryTickBound = false;
@@ -217,6 +251,7 @@
         setVenueWorkspaceOpen(false);
         if (DEFENSE_VENUE_IDS.has(activeVenueId)) {
             defenseUpgradeQueue = null;
+            clearDefensePanelContext();
         }
         activeVenueId = '';
         hideSettlementVenueRsdWallet();
@@ -340,7 +375,7 @@
     }
 
     function setDefenseWorkspaceStatus(message, isError) {
-        const statusEl = global.document.getElementById('age-defense-workspace-status');
+        const statusEl = global.document.getElementById(defensePanelContext.statusId || 'age-defense-workspace-status');
         if (!statusEl) return;
         const text = String(message || '').trim();
         if (!text) {
@@ -411,22 +446,52 @@
         );
     }
 
-    function renderDefenseBody() {
+    function renderDefenseBody(options = {}) {
+        const statusId = String(options.statusId || defensePanelContext.statusId || 'age-defense-workspace-status').trim();
         return (
             '<div class="age-defense-workspace">'
             + '<p class="age-army-workspace-toolbar-note">Invest nation treasury RSD in settlement defenses. Only one upgrade can be queued at a time; additional choices unlock after the queue clears.</p>'
             + renderDefenseQueueSlot()
             + renderDefenseUpgradeList()
-            + '<p id="age-defense-workspace-status" class="age-defense-workspace-status" aria-live="polite" hidden></p>'
+            + `<p id="${escapeHtml(statusId)}" class="age-defense-workspace-status" aria-live="polite" hidden></p>`
             + '</div>'
         );
     }
 
+    function refreshDefensePanel(hostId, statusId) {
+        const host = global.document.getElementById(hostId);
+        if (!host) return;
+        setDefensePanelContext(hostId, statusId);
+        host.innerHTML = renderDefenseBody({ statusId });
+    }
+
     function refreshDefenseWorkspaceBody() {
+        if (defensePanelContext.hostId) {
+            refreshDefensePanel(defensePanelContext.hostId, defensePanelContext.statusId);
+            return;
+        }
+
         if (!DEFENSE_VENUE_IDS.has(activeVenueId)) return;
         const bodyEl = global.document.getElementById('age-settlement-venue-body');
         if (!bodyEl) return;
         bodyEl.innerHTML = renderDefenseBody();
+    }
+
+    function mountHeadquartersDefensePanel() {
+        const host = global.document.getElementById(HQ_DEFENSE_HOST_ID);
+        if (!host) return;
+
+        refreshDefensePanel(HQ_DEFENSE_HOST_ID, HQ_DEFENSE_STATUS_ID);
+
+        if (!hqDefenseBound) {
+            hqDefenseBound = true;
+            host.addEventListener('click', onHeadquartersDefenseClick);
+        }
+    }
+
+    function onHeadquartersDefenseClick(event) {
+        setDefensePanelContext(HQ_DEFENSE_HOST_ID, HQ_DEFENSE_STATUS_ID);
+        onDefenseWorkspaceClick(event);
     }
 
     function queueDefenseUpgrade(moduleId) {
@@ -467,7 +532,9 @@
     }
 
     function onDefenseWorkspaceClick(event) {
-        if (!DEFENSE_VENUE_IDS.has(activeVenueId)) return false;
+        const inHq = Boolean(event.target.closest(`#${HQ_DEFENSE_HOST_ID}`));
+        const inSettlement = DEFENSE_VENUE_IDS.has(activeVenueId);
+        if (!inHq && !inSettlement) return false;
 
         const cancelBtn = event.target.closest('[data-defense-cancel-queue]');
         if (cancelBtn) {
@@ -902,6 +969,14 @@
     }
 
     function openBlacksmith(detail) {
+        const lockReason = resolveBlacksmithRankLockReason();
+        if (lockReason) {
+            if (typeof global.showPortalAlert === 'function') {
+                void global.showPortalAlert(lockReason, 'Blacksmith');
+            }
+            return;
+        }
+
         const venue = detail?.venue || {};
         openArmyWorkspace({
             venueId: 'blacksmith',
@@ -924,8 +999,8 @@
     }
 
     function openDefenseVenue(detail) {
-        defenseUpgradeQueue = null;
         const venue = detail?.venue || {};
+        setDefensePanelContext('age-settlement-venue-body', 'age-defense-workspace-status');
         openArmyWorkspace({
             venueId: detail?.venueId || '',
             eyebrow: 'Settlement Defense',
@@ -935,7 +1010,28 @@
         });
     }
 
+    function resolveChurchRankLockReason() {
+        const rank = resolveCommanderRank();
+        const churchMinRank = 7;
+        if (rank >= churchMinRank) return '';
+
+        const rankTitles = global.RoyalArmiesCommanderRankTitles;
+        const meta = rankTitles?.resolveSelfCommanderRankMeta?.() || {};
+        const thresholdLabel = rankTitles?.formatCommanderRankLabel
+            ? rankTitles.formatCommanderRankLabel(churchMinRank, meta.path, meta.rankTitleGender)
+            : `rank ${churchMinRank}`;
+        return `Unlocks at ${thresholdLabel}.`;
+    }
+
     function openChurch(detail) {
+        const lockReason = resolveChurchRankLockReason();
+        if (lockReason) {
+            if (typeof global.showPortalAlert === 'function') {
+                void global.showPortalAlert(lockReason, 'Church');
+            }
+            return;
+        }
+
         const venue = detail?.venue || {};
         openArmyWorkspace({
             venueId: 'church',
@@ -1135,6 +1231,10 @@
         close: closeArmyWorkspace,
         dismissAll: dismissAllWorkspaces,
         enableAgeSettlementVenueWorkspaces
+    };
+    global.RoyalArmiesSettlementDefense = {
+        mountHeadquartersPanel: mountHeadquartersDefensePanel,
+        refreshHeadquartersPanel: () => refreshDefensePanel(HQ_DEFENSE_HOST_ID, HQ_DEFENSE_STATUS_ID)
     };
     global.enableAgeSettlementVenueWorkspaces = enableAgeSettlementVenueWorkspaces;
 })(window);
