@@ -41,20 +41,6 @@
         elite: 'Elite'
     });
 
-    const INFIRMARY_DEMO_INJURED_UNITS = Object.freeze([
-        { stackId: 'shieldman-vet', mark: '🛡', name: 'Recruit Shieldman (A)', categoryId: 'infantry', tier: 1, promotion: 'vet', goldCost: 350, ticksTotal: 2, count: 2 },
-        { stackId: 'shieldman-std', mark: '🛡', name: 'Recruit Shieldman (A)', categoryId: 'infantry', tier: 1, promotion: 'std', goldCost: 350, ticksTotal: 2, count: 1 },
-        { stackId: 'shield-sergeant-elt', mark: '🛡', name: 'Shield Sergeant (A)', categoryId: 'infantry', tier: 2, promotion: 'elite', goldCost: 2100, ticksTotal: 3, count: 1 },
-        { stackId: 'bulwark-leg', mark: '🛡', name: 'Bulwark Guard (A)', categoryId: 'infantry', tier: 4, promotion: 'leg', goldCost: 13120, ticksTotal: 3, count: 8 },
-        { stackId: 'citadel-elite', mark: '🛡', name: 'Citadel Guardian (A)', categoryId: 'infantry', tier: 6, promotion: 'elite', goldCost: 66210, ticksTotal: 3, count: 2 },
-        { stackId: 'lancer-vet', mark: '⚔', name: 'Royal Lancer (A/B)', categoryId: 'cavalry', tier: 3, promotion: 'vet', goldCost: 26800, ticksTotal: 2, count: 1 },
-        { stackId: 'dread-knight-std', mark: '⚔', name: 'Dread Knight (A/B)', categoryId: 'cavalry', tier: 2, promotion: 'std', goldCost: 4350, ticksTotal: 3, count: 1 },
-        { stackId: 'longbow-std', mark: '🏹', name: 'Longbowman (B)', categoryId: 'artillery', tier: 2, promotion: 'std', goldCost: 1220, ticksTotal: 3, count: 2 },
-        { stackId: 'sentinel-mst', mark: '✦', name: 'Arcane Sentinel (A)', categoryId: 'magic-infantry', tier: 4, promotion: 'mst', goldCost: 18400, ticksTotal: 3, count: 6 },
-        { stackId: 'steeljaw-vet', mark: '🐺', name: 'Steeljaw (A-1)', categoryId: 'beasts', tier: 4, promotion: 'vet', goldCost: 11500, ticksTotal: 3, count: 4 },
-        { stackId: 'wolf-mst', mark: '🐺', name: 'War-Howler (A-2)', categoryId: 'beasts', tier: 3, promotion: 'mst', goldCost: 1300, ticksTotal: 3, count: 1 }
-    ]);
-
     function resolveCommanderRank() {
         return Math.max(1, Math.floor(Number(global.player?.rank) || 1));
     }
@@ -598,33 +584,7 @@
     }
 
     function buildInfirmaryUnitRoster() {
-        const units = [];
-        INFIRMARY_DEMO_INJURED_UNITS.forEach((stack) => {
-            const count = Math.max(0, Math.floor(Number(stack.count) || 0));
-            const unitType = resolveInfirmaryUnitType(stack.categoryId);
-            const tier = Math.max(1, Math.floor(Number(stack.tier) || 1));
-            const promotion = String(stack.promotion || 'std').trim().toLowerCase();
-            const goldCost = Math.max(0, Math.floor(Number(stack.goldCost) || 0));
-            const ticksTotal = Math.max(1, Math.floor(Number(stack.ticksTotal) || 1));
-            for (let index = 0; index < count; index += 1) {
-                const slot = index + 1;
-                units.push({
-                    id: `${stack.stackId}-${slot}`,
-                    stackId: stack.stackId,
-                    mark: stack.mark,
-                    name: stack.name,
-                    label: count > 1 ? `${stack.name} #${slot}` : stack.name,
-                    categoryId: stack.categoryId,
-                    unitType,
-                    tier,
-                    promotion,
-                    goldCost,
-                    ticksTotal,
-                    ticksRemaining: ticksTotal
-                });
-            }
-        });
-        return units;
+        return [];
     }
 
     function advanceInfirmaryRecoveryTicks(stepCount = 1) {
@@ -788,17 +748,23 @@
     }
 
     function renderInfirmaryBody() {
-        const allCostLabel = formatInfirmaryHealGold(sumAllInfirmaryHealCost());
+        const totalInjured = countInfirmaryInjuredUnits();
+        const healActionsMarkup = totalInjured
+            ? (
+                '<section class="age-infirmary-actions" aria-label="Infirmary healing actions">'
+                + '<div class="age-settlement-venue-infirmary-actions">'
+                + `<button type="button" class="age-settlement-venue-infirmary-btn" data-settlement-infirmary-heal="all">Heal Entire Army · ${escapeHtml(formatInfirmaryHealGold(sumAllInfirmaryHealCost()))}</button>`
+                + '</div>'
+                + '<p id="age-settlement-infirmary-status" class="age-settlement-venue-infirmary-status" aria-live="polite"></p>'
+                + '</section>'
+            )
+            : '<p id="age-settlement-infirmary-status" class="age-settlement-venue-infirmary-status" aria-live="polite"></p>';
+
         return (
             '<div class="age-infirmary-workspace">'
             + '<p class="age-settlement-venue-infirmary-copy">Restore injured units at this settlement infirmary. Each unit\'s heal gold rises with tier and how many recovery ticks the wound needs—no single unit exceeds five hundred thousand gold, but full high-tier rosters can still total millions—then costs drop each tick until the final tick before natural recovery (10% above catalog purchase cost), and units recover for free.</p>'
             + renderInfirmaryInjuredList()
-            + '<section class="age-infirmary-actions" aria-label="Infirmary healing actions">'
-            + '<div class="age-settlement-venue-infirmary-actions">'
-            + `<button type="button" class="age-settlement-venue-infirmary-btn" data-settlement-infirmary-heal="all">Heal Entire Army · ${escapeHtml(allCostLabel)}</button>`
-            + '</div>'
-            + '<p id="age-settlement-infirmary-status" class="age-settlement-venue-infirmary-status" aria-live="polite"></p>'
-            + '</section>'
+            + healActionsMarkup
             + '</div>'
         );
     }
