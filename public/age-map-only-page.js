@@ -166,6 +166,10 @@
     /** Open age workspaces/modals — must stay clickable on map-only shell (capture-phase block bypass). */
     function isOpenAgeOverlayTarget(target) {
         if (!target || typeof target.closest !== 'function') return false;
+        if (global.document.body?.classList.contains('age-rank-promotion-open')
+            && target.closest('#age-rank-promotion-overlay')) {
+            return true;
+        }
         return Boolean(target.closest(
             '.age-age-center-modal:not([hidden]),'
             + '.age-war-ledger-modal:not([hidden]),'

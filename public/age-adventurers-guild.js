@@ -1047,8 +1047,18 @@
         logEl.scrollTop = 0;
     }
 
-    function showCommanderRankPromotionPopup(result) {
+    function ensureRankPromotionOverlayPortaled() {
         const overlay = global.document.getElementById('age-rank-promotion-overlay');
+        if (!overlay || overlay.dataset.ageRankPromotionPortaled === 'true') {
+            return overlay;
+        }
+        global.document.body.appendChild(overlay);
+        overlay.dataset.ageRankPromotionPortaled = 'true';
+        return overlay;
+    }
+
+    function showCommanderRankPromotionPopup(result) {
+        const overlay = ensureRankPromotionOverlayPortaled();
         if (!overlay || !result?.rankPromoted) return;
 
         const rankEl = global.document.getElementById('age-rank-promotion-rank');
@@ -1103,6 +1113,7 @@
     }
 
     function onRankPromotionOverlayClick(event) {
+        event.stopPropagation();
         if (event.target.closest('#age-rank-promotion-dismiss')) {
             event.preventDefault();
             dismissCommanderRankPromotionPopup();

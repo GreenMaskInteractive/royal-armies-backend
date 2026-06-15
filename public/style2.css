@@ -28633,6 +28633,16 @@ body.player-report-modal-open {
     padding: 24px;
     background: rgba(4, 6, 10, 0.78);
     backdrop-filter: blur(4px);
+    pointer-events: auto;
+}
+
+body.age-rank-promotion-open #age-rank-promotion-overlay {
+    z-index: 2147483646 !important;
+    pointer-events: auto !important;
+}
+
+body.age-rank-promotion-open #age-rank-promotion-overlay * {
+    pointer-events: auto !important;
 }
 
 .age-rank-promotion-overlay[hidden] {
