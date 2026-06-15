@@ -107,6 +107,7 @@
     function dismissAllWorkspaces() {
         global.RoyalArmiesAgeBarracks?.close?.();
         global.RoyalArmiesAgeUnitEvolution?.close?.();
+        global.RoyalArmiesAgeRosterReview?.close?.();
         global.RoyalArmiesAdventurersGuild?.dismissGuildWorkspacesForSettlementAction?.();
         closeArmyWorkspace();
     }

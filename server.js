@@ -186,6 +186,10 @@ const {
     resolveCommanderAgeArmy
 } = require('./nexus-age-roster');
 const {
+    buildGarrisonRosterReviewPayload,
+    executeDismissRosterUnits
+} = require('./nexus-age-roster-review');
+const {
     resolveCommanderAgeGold,
     buildCommanderAgeGoldSeedPatch,
     resolveCommanderAgeProvisions,
@@ -7804,6 +7808,66 @@ app.get('/api/portal/age/units/evolution', (req, res) => {
         action: 'unit-evolution-state',
         ...buildUnitEvolutionPayload(commander),
         ageArmy: resolveCommanderAgeArmy(commander)
+    });
+});
+
+app.get('/api/portal/age/units/roster-review', (req, res) => {
+    const username = resolveLedgerCommanderUsername(req.query?.username || '');
+    if (!username) {
+        return sendApiError(res, 'NEXUS-GEN-002');
+    }
+
+    let commander = db.get('commanders').find({ username }).value();
+    if (!commander) {
+        return sendApiError(res, 'NEXUS-GEN-004');
+    }
+
+    ensureCommanderAgeRoster(commander);
+    commander = db.get('commanders').find({ username }).value();
+
+    res.json({
+        status: 'ok',
+        action: 'roster-review-state',
+        ...buildGarrisonRosterReviewPayload(commander),
+        ageArmy: resolveCommanderAgeArmy(commander)
+    });
+});
+
+app.post('/api/portal/age/units/dismiss', (req, res) => {
+    const username = resolveLedgerCommanderUsername(req.body?.username || '');
+    if (!username) {
+        return sendApiError(res, 'NEXUS-GEN-002');
+    }
+
+    let commander = db.get('commanders').find({ username }).value();
+    if (!commander) {
+        return sendApiError(res, 'NEXUS-GEN-004');
+    }
+
+    ensureCommanderAgeRoster(commander);
+    commander = db.get('commanders').find({ username }).value();
+
+    const unitIds = Array.isArray(req.body?.unitIds) ? req.body.unitIds : [];
+    const result = executeDismissRosterUnits(commander, unitIds);
+    if (!result.ok) {
+        return sendApiError(res, result.errorCode || 'NEXUS-AGE-040');
+    }
+
+    db.get('commanders')
+        .find({ username })
+        .assign({ ageArmy: result.ageArmy })
+        .write();
+
+    commander = db.get('commanders').find({ username }).value();
+
+    res.json({
+        status: 'ok',
+        action: 'dismiss-roster-units',
+        unitsDismissed: result.unitsDismissed,
+        unitsTotal: result.unitsTotal,
+        unitsUninjured: result.unitsUninjured,
+        ageArmy: result.ageArmy,
+        ...buildGarrisonRosterReviewPayload(commander)
     });
 });
 

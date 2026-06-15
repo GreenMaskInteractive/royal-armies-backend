@@ -1278,6 +1278,10 @@
             global.enableAgeUnitEvolution();
         }
 
+        if (typeof global.enableAgeRosterReview === 'function') {
+            global.enableAgeRosterReview();
+        }
+
         if (typeof global.bindPortalNewMessagesBarNavigation === 'function') {
             global.bindPortalNewMessagesBarNavigation();
         }

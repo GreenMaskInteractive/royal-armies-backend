@@ -8,11 +8,11 @@
     <link rel="stylesheet" href="style2.css?v=training-loadout-panels-1">
     <link rel="stylesheet" href="style-age-area-shell.css?v=age-area-shell-1">
     <link rel="stylesheet" href="style-settlement.css?v=workspace-gamehub-backdrop-1">
-    <link rel="stylesheet" href="style-age-center-modals.css?v=guild-job-modals-1">
-    <link rel="stylesheet" href="style-age-army-workspaces.css?v=gear-auto-equip-inventory-1">
+    <link rel="stylesheet" href="style-age-center-modals.css?v=garrison-roster-review-1">
+    <link rel="stylesheet" href="style-age-army-workspaces.css?v=garrison-roster-review-1">
     <link rel="stylesheet" href="style-age-banner-workspace.css?v=banner-advisor-profile-1">
     <link rel="stylesheet" href="style-blessed-banners-modal.css?v=banner-skill-select-1">
-    <link rel="stylesheet" href="style-age-immersive-workspace.css?v=workspace-backdrop-stack-1">
+    <link rel="stylesheet" href="style-age-immersive-workspace.css?v=garrison-roster-review-1">
     <link rel="stylesheet" href="style-age-modal-arcane-accent.css?v=age-modal-arcane-accent-1">
     <link rel="stylesheet" href="style-age-barracks.css?v=barracks-modal-width-1">
     <link rel="stylesheet" href="mobile-responsive.css?v=settlement-page-1">
@@ -180,6 +180,39 @@
                     </header>
                     <p id="age-unit-evolution-status" class="age-unit-evolution-status" hidden aria-live="polite"></p>
                     <div id="age-unit-evolution-stack-list" class="age-unit-evolution-stack-list" aria-live="polite"></div>
+                </div>
+            </div>
+
+            <div id="age-roster-review-workspace" class="age-roster-review-workspace" hidden aria-hidden="true" aria-label="Garrison Roster">
+                <div class="age-roster-review-shell">
+                    <header class="age-roster-review-header">
+                        <div class="age-roster-review-header-copy">
+                            <p class="age-roster-review-eyebrow">Barracks</p>
+                            <h2 class="age-roster-review-title">Garrison Roster</h2>
+                            <p class="age-roster-review-subtitle">Review every unit in your army with full combat stats. Select units to dismiss them from garrison.</p>
+                            <div class="age-roster-review-commander-panel" aria-label="Commander information">
+                                <p id="age-roster-review-commander-name" class="age-roster-review-commander-name">Commander</p>
+                                <p id="age-roster-review-commander-class" class="age-roster-review-commander-class">Battlemaster · Rank 1</p>
+                                <p id="age-roster-review-commander-army" class="age-roster-review-commander-army" aria-live="polite">—</p>
+                            </div>
+                        </div>
+                        <div class="age-roster-review-header-actions">
+                            <div class="age-roster-review-wallets">
+                                <div class="age-roster-review-wallet" aria-label="Commander gold">
+                                    <span class="age-roster-review-wallet-label">Gold</span>
+                                    <span id="age-roster-review-commander-gold" class="age-roster-review-wallet-value">—</span>
+                                </div>
+                                <div class="age-roster-review-wallet" aria-label="Commander provisions">
+                                    <span class="age-roster-review-wallet-label">Provisions</span>
+                                    <span id="age-roster-review-commander-provisions" class="age-roster-review-wallet-value">—</span>
+                                </div>
+                            </div>
+                            <button type="button" id="age-roster-review-open-registry" class="age-roster-review-link-btn">Garrison Registry</button>
+                            <button type="button" id="age-roster-review-close" class="age-roster-review-close age-age-center-modal-close" aria-label="Close Garrison Roster">×</button>
+                        </div>
+                    </header>
+                    <p id="age-roster-review-status" class="age-roster-review-status" hidden aria-live="polite"></p>
+                    <div id="age-roster-review-body" class="age-roster-review-body" aria-live="polite"></div>
                 </div>
             </div>
 
@@ -611,12 +644,13 @@
     <script src="rift-age-gold.js?v=starting-gold-40k-1"></script>
     <script src="rift-age-provisions.js?v=provisions-deplete-1"></script>
     <script src="rift-age-recruitment.js?v=swarm-recruit-1"></script>
-    <script src="rift-immersive-workspace.js?v=immersive-workspace-only-2"></script>
+    <script src="rift-immersive-workspace.js?v=garrison-roster-review-1"></script>
     <script src="age-view-tabs.js?v=armory-rank-gate-1"></script>
     <script src="age-army-groups.js?v=war-room-stage-centered-1"></script>
     <script src="rift-unit-purchase-catalog.js?v=magic-beasts-portraits-1"></script>
     <script src="rift-age-guild-training.js?v=commander-rank-names-2"></script>
     <script src="rift-age-unit-evolution.js?v=unit-evolution-qty-1"></script>
+    <script src="rift-age-roster-review.js?v=garrison-roster-review-1"></script>
     <script src="rift-class-perk-catalog.js?v=class-battlemage-rename-1"></script>
     <script src="age-adventurers-guild.js?v=training-loadout-panels-1"></script>
     <script src="rift-infirmary-recovery.js?v=infirmary-tier-heal-scale-2"></script>
@@ -624,13 +658,14 @@
     <script src="rift-banner-workspace.js?v=banner-no-skill-identity-1"></script>
     <script src="blessed-banners-modal.js?v=banner-skill-select-1"></script>
     <script src="rift-age-gear-shop.js?v=training-loadout-panels-1"></script>
-    <script src="age-settlement-venue-workspaces.js?v=gear-auto-equip-inventory-1"></script>
-    <script src="age-unit-evolution.js?v=unit-evolution-close-1"></script>
-    <script src="age-barracks.js?v=settlement-dropdown-exclusive-1"></script>
+    <script src="age-settlement-venue-workspaces.js?v=garrison-roster-review-1"></script>
+    <script src="age-unit-evolution.js?v=garrison-roster-review-1"></script>
+    <script src="age-roster-review.js?v=garrison-roster-review-1"></script>
+    <script src="age-barracks.js?v=garrison-roster-menu-1"></script>
     <script src="age-nation-hub.js?v=banner-skill-tree-1"></script>
     <script src="rift-nation-treasury.js?v=hud-nation-treasury-1"></script>
     <script src="age-area-shell.js?v=commander-rank-toggle-2"></script>
-    <script src="age-settlement-page.js?v=account-reset-evict-2"></script>
+    <script src="age-settlement-page.js?v=garrison-roster-review-1"></script>
     <script src="dev-page-navigator.js?v=dev-nation-switch-local-1"></script>
     <script src="custom-cursor.js?v=finger-press-hold-1"></script>
 </body>

@@ -10,6 +10,7 @@
         'age-settlement-venue-open',
         'age-army-workspace-open',
         'age-barracks-open',
+        'age-roster-review-open',
         'age-unit-evolution-open',
         'age-guild-hub-open',
         'age-guild-overlay-open',
@@ -20,6 +21,7 @@
     const VISIBLE_WORKSPACE_SELECTORS = Object.freeze([
         '#age-settlement-venue-workspace:not([hidden])',
         '#age-barracks-workspace:not([hidden])',
+        '#age-roster-review-workspace:not([hidden])',
         '#age-unit-evolution-workspace:not([hidden])',
         '#age-guild-workspace:not([hidden])',
         '#age-watchtower-workspace:not([hidden])'

@@ -500,6 +500,9 @@
             if (typeof global.enableAgeUnitEvolution === 'function') {
                 global.enableAgeUnitEvolution();
             }
+            if (typeof global.enableAgeRosterReview === 'function') {
+                global.enableAgeRosterReview();
+            }
             if (typeof global.enableAgeSettlementVenueWorkspaces === 'function') {
                 global.enableAgeSettlementVenueWorkspaces();
             }

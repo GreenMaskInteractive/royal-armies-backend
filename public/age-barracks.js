@@ -22,6 +22,11 @@
             description: 'Recruit units and review promotion paths.'
         },
         {
+            id: 'roster',
+            label: 'Garrison Roster',
+            description: 'Review all units, stats, and dismiss units from your army.'
+        },
+        {
             id: 'evolution',
             label: 'Unit Evolution',
             description: 'Spend provisions on rank promotions and tier evolutions.'
@@ -254,6 +259,10 @@
         const normalized = String(optionId || '').trim().toLowerCase();
         if (normalized === 'registry') {
             void open();
+            return;
+        }
+        if (normalized === 'roster') {
+            global.RoyalArmiesAgeRosterReview?.open?.();
             return;
         }
         if (normalized === 'evolution') {
@@ -676,6 +685,7 @@
         global.RoyalArmiesSettlementVenueWorkspaces?.close?.();
         global.RoyalArmiesAdventurersGuild?.dismissGuildWorkspacesForSettlementAction?.();
         global.RoyalArmiesAgeUnitEvolution?.close?.();
+        global.RoyalArmiesAgeRosterReview?.close?.();
 
         try {
             await ensureCatalogLoaded();

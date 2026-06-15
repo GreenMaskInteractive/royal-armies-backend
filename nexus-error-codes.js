@@ -812,6 +812,18 @@
             message: 'Commander accounts were reset. Return to the portal and join the Age again.',
             category: 'game'
         },
+        'NEXUS-AGE-039': {
+            http: 400,
+            title: 'Garrison roster',
+            message: 'Select at least one unit to dismiss from your garrison roster.',
+            category: 'game'
+        },
+        'NEXUS-AGE-040': {
+            http: 400,
+            title: 'Garrison roster',
+            message: 'One or more selected units could not be found in your roster.',
+            category: 'game'
+        },
 
         /* --- Player conduct reports --- */
         'NEXUS-REPORT-001': {

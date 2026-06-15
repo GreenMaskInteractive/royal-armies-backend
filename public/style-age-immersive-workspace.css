@@ -60,6 +60,7 @@ body.age-immersive-workspace-open .age-army-workspace:not([hidden])::before,
 body.age-immersive-workspace-open .age-settlement-venue-workspace:not([hidden])::before,
 body.age-immersive-workspace-open .age-barracks-workspace:not([hidden])::before,
 body.age-immersive-workspace-open .age-unit-evolution-workspace:not([hidden])::before,
+body.age-immersive-workspace-open .age-roster-review-workspace:not([hidden])::before,
 body.age-immersive-workspace-open .age-guild-workspace:not([hidden])::before {
     content: '';
     position: fixed;
@@ -77,6 +78,7 @@ body.age-immersive-workspace-open .age-army-workspace:not([hidden]),
 body.age-immersive-workspace-open .age-settlement-venue-workspace:not([hidden]),
 body.age-immersive-workspace-open .age-barracks-workspace:not([hidden]),
 body.age-immersive-workspace-open .age-unit-evolution-workspace:not([hidden]),
+body.age-immersive-workspace-open .age-roster-review-workspace:not([hidden]),
 body.age-immersive-workspace-open .age-guild-workspace:not([hidden]) {
     position: fixed;
     inset: 0;
@@ -95,6 +97,7 @@ body.age-immersive-workspace-open .age-army-workspace:not([hidden]) > *,
 body.age-immersive-workspace-open .age-settlement-venue-workspace:not([hidden]) > *,
 body.age-immersive-workspace-open .age-barracks-workspace:not([hidden]) > *,
 body.age-immersive-workspace-open .age-unit-evolution-workspace:not([hidden]) > *,
+body.age-immersive-workspace-open .age-roster-review-workspace:not([hidden]) > *,
 body.age-immersive-workspace-open .age-guild-workspace:not([hidden]) > .age-guild-job-arena:not([hidden]),
 body.age-immersive-workspace-open .age-guild-workspace:not([hidden]) > header,
 body.age-immersive-workspace-open .age-guild-workspace:not([hidden]) > .age-guild-top-band {
@@ -105,6 +108,7 @@ body.age-immersive-workspace-open .age-guild-workspace:not([hidden]) > .age-guil
 
 body.age-immersive-workspace-open.age-map-shell-only .age-barracks-workspace:not([hidden]),
 body.age-immersive-workspace-open.age-map-shell-only .age-unit-evolution-workspace:not([hidden]),
+body.age-immersive-workspace-open.age-map-shell-only .age-roster-review-workspace:not([hidden]),
 body.age-immersive-workspace-open.age-map-shell-only .age-army-workspace:not([hidden]),
 body.age-immersive-workspace-open.age-map-shell-only .age-settlement-venue-workspace:not([hidden]),
 body.age-immersive-workspace-open.age-map-shell-only.age-guild-hub-open .age-guild-workspace:not([hidden]),
@@ -116,6 +120,7 @@ body.age-immersive-workspace-open.age-map-shell-only.age-guild-training-open .ag
 body.age-immersive-workspace-open.age-map-shell-only .age-settlement-venue-workspace:not([hidden]) *,
 body.age-immersive-workspace-open.age-map-shell-only .age-barracks-workspace:not([hidden]) *,
 body.age-immersive-workspace-open.age-map-shell-only .age-unit-evolution-workspace:not([hidden]) *,
+body.age-immersive-workspace-open.age-map-shell-only .age-roster-review-workspace:not([hidden]) *,
 body.age-immersive-workspace-open.age-map-shell-only .age-guild-workspace:not([hidden]) * {
     pointer-events: auto !important;
 }

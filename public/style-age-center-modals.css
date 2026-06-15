@@ -129,6 +129,7 @@ body.age-records-open {
 /* Age settlement workspaces — match center-modal × close (not "Close" text) */
 .age-barracks-close.age-age-center-modal-close,
 .age-unit-evolution-close.age-age-center-modal-close,
+.age-roster-review-close.age-age-center-modal-close,
 .age-settlement-venue-close.age-age-center-modal-close {
     min-width: 0;
     width: 36px;

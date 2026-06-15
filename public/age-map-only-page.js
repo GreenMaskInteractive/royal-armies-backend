@@ -181,6 +181,7 @@
             + '.age-war-room-modal:not([hidden]),'
             + '#age-council-board-editor:not([hidden]),'
             + '.age-unit-evolution-workspace:not([hidden]),'
+            + '.age-roster-review-workspace:not([hidden]),'
             + '.age-barracks-workspace:not([hidden]),'
             + '.age-watchtower-workspace:not([hidden]),'
             + '.age-guild-workspace:not([hidden]),'
@@ -284,6 +285,9 @@
         if (body?.classList.contains('age-barracks-open') && target.closest('.age-barracks-workspace')) {
             return true;
         }
+        if (body?.classList.contains('age-roster-review-open') && target.closest('.age-roster-review-workspace')) {
+            return true;
+        }
         if (body?.classList.contains('age-watchtower-open') && target.closest('.age-watchtower-workspace')) {
             return true;
         }
@@ -336,6 +340,7 @@
         global.RoyalArmiesAgeWatchtower?.enable?.();
         global.enableAgeAdventurersGuild?.();
         global.enableAgeUnitEvolution?.();
+        global.enableAgeRosterReview?.();
         global.enableAgeRecords?.();
     }
 
@@ -567,7 +572,7 @@
         }
 
         global.document.querySelectorAll(
-            '.age-barracks-workspace, .age-unit-evolution-workspace, .age-guild-workspace,'
+            '.age-barracks-workspace, .age-unit-evolution-workspace, .age-roster-review-workspace, .age-guild-workspace,'
             + ' .age-age-center-modal, .age-war-ledger-modal,'
             + ' .age-chronicles-battle-pass-modal, .rift-discoveries-workspace-modal, .rift-banner-workspace-modal, .blessed-banners-modal, #age-rank-promotion-overlay, #age-gear-level-up-overlay'
         ).forEach((node) => {

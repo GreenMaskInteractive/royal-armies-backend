@@ -420,6 +420,7 @@
         global.RoyalArmiesSettlementVenueWorkspaces?.close?.();
         global.RoyalArmiesAdventurersGuild?.dismissGuildWorkspacesForSettlementAction?.();
         global.RoyalArmiesAgeBarracks?.close?.();
+        global.RoyalArmiesAgeRosterReview?.close?.();
 
         workspace.hidden = false;
         workspace.setAttribute('aria-hidden', 'false');
