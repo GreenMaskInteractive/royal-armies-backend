@@ -134,22 +134,8 @@
             bodyEl.textContent = message;
 
             const countdownWrap = document.getElementById('portal-alert-update-countdown');
-            const countdownValue = document.getElementById('portal-alert-update-countdown-value');
-            const countdownUnit = document.getElementById('portal-alert-update-countdown-unit');
-            const countdownHint = document.getElementById('portal-alert-update-countdown-hint');
-            if (countdownWrap && countdownValue && countdownUnit && countdownHint) {
-                if (isUpdateUnderway) {
-                    countdownWrap.hidden = false;
-                    countdownValue.textContent = config.countdownValue ?? config.countdownLabel ?? '--';
-                    countdownUnit.textContent = config.countdownUnit || 'seconds remaining (estimate)';
-                    countdownHint.textContent = config.countdownHint
-                        || 'Estimated time until the 502 Bad Gateway page may appear.';
-                } else {
-                    countdownWrap.hidden = true;
-                    countdownValue.textContent = '--';
-                    countdownUnit.textContent = '';
-                    countdownHint.textContent = '';
-                }
+            if (countdownWrap) {
+                countdownWrap.hidden = true;
             }
 
             modal.dataset.updateUnderway = isUpdateUnderway ? 'true' : 'false';
@@ -206,20 +192,6 @@
         }).then(() => undefined);
     }
 
-    function setPortalUpdateUnderwayCountdown(parts) {
-        const modal = document.getElementById('royal-armies-portal-alert-modal');
-        if (!modal || modal.dataset.updateUnderway !== 'true') return;
-        if (modal.style.display === 'none' || modal.classList.contains('main-portal-modal-hidden')) return;
-
-        const opts = parts && typeof parts === 'object' ? parts : { value: parts };
-        const countdownValue = document.getElementById('portal-alert-update-countdown-value');
-        const countdownUnit = document.getElementById('portal-alert-update-countdown-unit');
-        const countdownHint = document.getElementById('portal-alert-update-countdown-hint');
-        if (countdownValue && opts.value != null) countdownValue.textContent = String(opts.value);
-        if (countdownUnit && opts.unit != null) countdownUnit.textContent = String(opts.unit);
-        if (countdownHint && opts.hint != null) countdownHint.textContent = String(opts.hint);
-    }
-
     function showPortalUpdateCompleteAlert(config) {
         const opts = config && typeof config === 'object' ? config : {};
         const title = opts.title || 'UPDATE COMPLETE';
@@ -242,7 +214,7 @@
     function showPortalUpdateUnderwayAlert(config) {
         const opts = config && typeof config === 'object' ? config : {};
         const title = opts.title || 'NOTICE!';
-        const message = opts.message || 'Update Underway. Site Disruption Imminent.';
+        const message = opts.message || 'A site update is rolling out. Service will be interrupted momentarily. You may dismiss this notice and keep playing until the connection drops.';
 
         if (shouldSuppressPortalAlertPopup(message, title)) {
             console.warn('[Royal Armies — local dev] Update notice suppressed:', title, message);
@@ -254,10 +226,7 @@
             updateUnderway: true,
             message,
             title,
-            confirmLabel: opts.confirmLabel || 'OK',
-            countdownValue: opts.countdownValue ?? opts.countdownLabel,
-            countdownUnit: opts.countdownUnit,
-            countdownHint: opts.countdownHint,
+            confirmLabel: opts.confirmLabel || 'Continue',
             onClose: opts.onClose
         }).then(() => undefined);
     }
@@ -277,7 +246,6 @@
     window.showPortalConfirm = showPortalConfirm;
     window.showPortalUpdateUnderwayAlert = showPortalUpdateUnderwayAlert;
     window.showPortalUpdateCompleteAlert = showPortalUpdateCompleteAlert;
-    window.setPortalUpdateUnderwayCountdown = setPortalUpdateUnderwayCountdown;
     window.closePortalAlertModal = closePortalAlertModal;
 
     if (document.readyState === 'loading') {

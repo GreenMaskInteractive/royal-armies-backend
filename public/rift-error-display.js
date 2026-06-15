@@ -91,19 +91,14 @@
     const DEPLOY_WATCH_POLL_VISIBLE_MS = 2500;
     const DEPLOY_WATCH_POLL_HIDDEN_MS = 8000;
     const DEPLOY_WATCH_FAIL_STREAK_THRESHOLD = 2;
-    const UPDATE_GATEWAY_ESTIMATE_SEC = 45;
     const UPDATE_GATEWAY_STANDALONE_RELOAD_MS = 6000;
-    const UPDATE_GATEWAY_HINT_ACTIVE = 'Estimated time until the 502 Bad Gateway page may appear.';
-    const UPDATE_GATEWAY_HINT_NOW = 'The 502 Bad Gateway page may appear at any moment. The site will refresh automatically.';
 
     const UPDATE_UNDERWAY_SESSION_KEY = 'riftUpdateUnderwayActive';
 
     let updateUnderwayNoticeShown = false;
     let updateAwaitingRecoveryConfirm = false;
     let updateCompleteNoticeShown = false;
-    let updateUnderwayCountdownTimer = null;
     let updateUnderwayGatewayPollTimer = null;
-    let updateUnderwayCountdownEndsAt = 0;
     let updateGatewayReloadTriggered = false;
     let deployWatchTimer = null;
     let deployWatchBaselineKey = '';
@@ -331,49 +326,10 @@
         return urls;
     }
 
-    function formatUpdateCountdownDisplay(secondsRemaining) {
-        const total = Math.max(0, Math.ceil(secondsRemaining));
-
-        if (total <= 0) {
-            return { value: 'Now', unit: 'No time remaining on estimate', hint: UPDATE_GATEWAY_HINT_NOW };
-        }
-        if (total < 60) {
-            return {
-                value: String(total),
-                unit: total === 1 ? 'second remaining (estimate)' : 'seconds remaining (estimate)',
-                hint: UPDATE_GATEWAY_HINT_ACTIVE
-            };
-        }
-        const minutes = Math.floor(total / 60);
-        const seconds = total % 60;
-        return {
-            value: `${minutes}:${String(seconds).padStart(2, '0')}`,
-            unit: 'minutes and seconds remaining (estimate)',
-            hint: UPDATE_GATEWAY_HINT_ACTIVE
-        };
-    }
-
     function stopUpdateUnderwayWatchers() {
-        if (updateUnderwayCountdownTimer) {
-            global.clearInterval(updateUnderwayCountdownTimer);
-            updateUnderwayCountdownTimer = null;
-        }
         if (updateUnderwayGatewayPollTimer) {
             global.clearInterval(updateUnderwayGatewayPollTimer);
             updateUnderwayGatewayPollTimer = null;
-        }
-    }
-
-    function tickUpdateUnderwayCountdown() {
-        const remaining = (updateUnderwayCountdownEndsAt - Date.now()) / 1000;
-        const display = formatUpdateCountdownDisplay(remaining);
-
-        if (typeof global.setPortalUpdateUnderwayCountdown === 'function') {
-            global.setPortalUpdateUnderwayCountdown(display);
-        }
-
-        if (remaining <= 0) {
-            void probeUpdateGatewayState();
         }
     }
 
@@ -470,10 +426,6 @@
 
     function startUpdateUnderwayWatchers() {
         stopUpdateUnderwayWatchers();
-        updateUnderwayCountdownEndsAt = Date.now() + (UPDATE_GATEWAY_ESTIMATE_SEC * 1000);
-        tickUpdateUnderwayCountdown();
-
-        updateUnderwayCountdownTimer = global.setInterval(tickUpdateUnderwayCountdown, 1000);
         updateUnderwayGatewayPollTimer = global.setInterval(() => {
             probeUpdateGatewayState();
         }, UPDATE_GATEWAY_POLL_MS);
@@ -599,15 +551,11 @@
 
         startUpdateUnderwayWatchers();
 
-        const initialCountdown = formatUpdateCountdownDisplay(UPDATE_GATEWAY_ESTIMATE_SEC);
-
         if (typeof global.showPortalUpdateUnderwayAlert === 'function') {
             void global.showPortalUpdateUnderwayAlert({
                 title: normalized.title,
                 message: normalized.message,
-                countdownValue: initialCountdown.value,
-                countdownUnit: initialCountdown.unit,
-                countdownHint: initialCountdown.hint
+                confirmLabel: 'Continue'
             });
             return normalized;
         }

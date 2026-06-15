@@ -31,8 +31,8 @@
 
     /** Hub/profile/menu scripts — production agealpha.html omits these; load on demand. */
     const AGE_NAMETAG_HUB_SCRIPT_CHAIN = [
-        'rift-error-codes.js?v=commander-nametag-hub-2',
-        'rift-error-display.js?v=commander-nametag-hub-2',
+        'rift-error-codes.js?v=update-notice-momentarily-1',
+        'rift-error-display.js?v=update-notice-momentarily-1',
         'commander-dossier-sync.js?v=map-ambient-effects-1',
         'rank-data.js?v=commander-nametag-hub-2',
         'rift-ui-sfx.js?v=commander-nametag-hub-2',

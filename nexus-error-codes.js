@@ -879,7 +879,7 @@
         'RIFT-NET-002': {
             http: 0,
             title: 'NOTICE!',
-            message: 'Update Underway. Site Disruption Imminent.',
+            message: 'A site update is rolling out. Service will be interrupted momentarily. You may dismiss this notice and keep playing until the connection drops.',
             category: 'network'
         },
         'RIFT-NET-003': {
