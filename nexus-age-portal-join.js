@@ -17,8 +17,8 @@ const {
 } = require('./nexus-onboarding');
 const { DEV_NATION_REGION_IDS } = require('./nexus-dev-nation-switch');
 
-/** Temporary alpha shortcut — main Join routes straight to agealpha with random nation. */
-const PORTAL_DIRECT_AGE_JOIN_ENABLED = true;
+/** When true, main portal Join skips game.html and routes straight to agealpha. */
+const PORTAL_DIRECT_AGE_JOIN_ENABLED = false;
 
 function isPortalDirectAgeJoinEnabled() {
     return PORTAL_DIRECT_AGE_JOIN_ENABLED;

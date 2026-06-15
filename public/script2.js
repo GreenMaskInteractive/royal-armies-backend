@@ -306,6 +306,14 @@ function isCommanderAgeDeploymentPanelUnlocked() {
         return true;
     }
 
+    if (typeof isCommanderEnrolledInActiveAgeRound === 'function' && isCommanderEnrolledInActiveAgeRound()) {
+        return true;
+    }
+
+    if (typeof isCommanderGameSessionStarted === 'function' && isCommanderGameSessionStarted()) {
+        return true;
+    }
+
     // Commanders who joined before unlock persistence shipped still earn the join-age achievement.
     const hasJoinAgeAchievement =
         (window.RoyalArmiesAchievements && typeof window.RoyalArmiesAchievements.hasCommanderAchievement === 'function'
@@ -375,35 +383,23 @@ function bindPortalDeploymentServerPanelControls() {
     hydratePortalActiveServerSelect();
 }
 
-function canUsePortalJoinAgeButtons() {
-    return typeof isPortalUserAuthenticated === 'function' && isPortalUserAuthenticated();
-}
-
 function applyPortalDeploymentDeckPresentation() {
     const authed = typeof isPortalUserAuthenticated === 'function' && isPortalUserAuthenticated();
-    const directAgeJoin = typeof isPortalDirectAgeJoinEnabled === 'function' && isPortalDirectAgeJoinEnabled();
-    const showServerPanel = authed && !directAgeJoin && isCommanderAgeDeploymentPanelUnlocked();
-    const showJoinButtons = authed && (directAgeJoin || !showServerPanel) && canUsePortalJoinAgeButtons();
+    const showServerPanel = authed;
 
-    const joinActions = document.getElementById('portal-deployment-member-actions');
     const serverPanel = document.getElementById('portal-deployment-server-panel');
     const countdownPanel = document.getElementById('portal-age-countdown-panel');
     const gameTimePanel = document.getElementById('portal-universal-game-time-panel');
 
-    if (joinActions) joinActions.hidden = !showJoinButtons;
     if (gameTimePanel) gameTimePanel.hidden = false;
     if (countdownPanel) {
         countdownPanel.hidden = true;
         countdownPanel.setAttribute('aria-hidden', 'true');
     }
-    if (showJoinButtons) {
-        joinAgePortalTransitionActive = false;
-        portalAgeRejoinTransitionActive = false;
-    }
     if (serverPanel) {
         serverPanel.hidden = !showServerPanel;
         if (showServerPanel) {
-            joinAgePortalTransitionActive = false;
+            portalAgeRejoinTransitionActive = false;
             bindPortalDeploymentServerPanelControls();
         }
     } else if (authed) {
@@ -413,7 +409,6 @@ function applyPortalDeploymentDeckPresentation() {
     recacheAgePortalViewportSnapshot();
 }
 
-let joinAgePortalTransitionActive = false;
 let portalAgeRejoinTransitionActive = false;
 
 function rejoinSelectedAgeServer(clickEvent) {
@@ -512,18 +507,6 @@ function renderPortalDeploymentDeckMarkup() {
                     ${renderPortalUniversalGameTimePanelMarkup()}
                 <div id="portal-deployment-member-block" class="portal-deployment-member-block">
                     ${renderPortalAgeCountdownPanelMarkup()}
-                    <div class="deployment-action-button-row portal-deployment-member-actions" id="portal-deployment-member-actions">
-                        <div class="action-btn-aura-housing aura-glow-red">
-                            <button type="button" class="deployment-image-trigger-btn" onclick="launchGameRoundSector(false, event)" aria-label="Join Age">
-                                <img src="images/joinagebtn.png?v=portal-join-age-image-1" alt="Join Age">
-                            </button>
-                        </div>
-                        <div class="action-btn-aura-housing aura-glow-blue">
-                            <button type="button" class="deployment-image-trigger-btn" onclick="launchGameRoundSector(true, event)" aria-label="Tutorial Age">
-                                <img src="images/joinagetutorialbtn.png?v=portal-join-age-image-1" alt="Tutorial Age">
-                            </button>
-                        </div>
-                    </div>
                     ${renderPortalDeploymentServerPanelMarkup()}
                 </div>
                 <div id="portal-deployment-guest-cta" class="portal-deployment-guest-cta" hidden>
@@ -1356,129 +1339,12 @@ function restoreAgePortalHomeViewLayout(viewport) {
 }
 
 /* Block 4: MAP INTERFACE DEPLOYMENT SECTOR ROUTER */
-const JOIN_AGE_POST_SELECT_DELAY_MS = 400;
-const JOIN_AGE_DEPLOY_PULSE_GROW_MS = 420;
-const JOIN_AGE_DEPLOY_PULSE_SETTLE_MS = 720;
 
 async function ensurePortalTermsComplianceBeforeJoinAge() {
     if (typeof blockJoinAgeUntilTermsAccepted === 'function') {
         return blockJoinAgeUntilTermsAccepted();
     }
     return true;
-}
-
-function launchGameRoundSector(isTutorialModeActive, clickEvent) {
-    if (typeof isPortalUserAuthenticated === 'function' && !isPortalUserAuthenticated()) {
-        if (typeof openMainPortalGuestRegister === 'function') {
-            openMainPortalGuestRegister(clickEvent);
-        }
-        return;
-    }
-
-    if (!canUsePortalJoinAgeButtons()) {
-        return;
-    }
-
-    if (joinAgePortalTransitionActive) return;
-
-    ensurePortalTermsComplianceBeforeJoinAge().then((termsOk) => {
-        if (!termsOk) return;
-        launchGameRoundSectorAfterTermsCheck(isTutorialModeActive, clickEvent);
-    });
-}
-
-function launchGameRoundSectorAfterTermsCheck(isTutorialModeActive, clickEvent) {
-    if (joinAgePortalTransitionActive) return;
-    joinAgePortalTransitionActive = true;
-
-    markCommanderAgeDeploymentPanelUnlocked(isTutorialModeActive);
-    applyPortalDeploymentDeckPresentation();
-
-    if (typeof markJoinAgeAttemptForAchievement === 'function') {
-        markJoinAgeAttemptForAchievement();
-    } else if (window.RoyalArmiesAchievements && typeof window.RoyalArmiesAchievements.markJoinAgeAttemptForAchievement === 'function') {
-        window.RoyalArmiesAchievements.markJoinAgeAttemptForAchievement();
-    }
-
-    const clickedHousing = clickEvent?.target?.closest?.('.action-btn-aura-housing')
-        ?? clickEvent?.currentTarget?.closest?.('.action-btn-aura-housing');
-
-    if (window.RoyalArmiesMusicFlow
-        && typeof window.RoyalArmiesMusicFlow.prepareJoinAgeLaunch === 'function') {
-        window.RoyalArmiesMusicFlow.prepareJoinAgeLaunch();
-    }
-
-    haltAllPortalAudioForGameLaunch();
-    resetAllJoinAgeDeploymentButtonShakeStates();
-
-    let deployPulseFinished = false;
-    let selectAudioFinished = false;
-
-    if (typeof beginCommanderAgeResetSession === 'function') {
-        beginCommanderAgeResetSession();
-    }
-
-    const resolveJoinAgeDestination = () => {
-        if (typeof isPortalDirectAgeJoinEnabled === 'function' && isPortalDirectAgeJoinEnabled()) {
-            if (typeof resolvePortalDirectAgeHandoffUrl === 'function') {
-                return resolvePortalDirectAgeHandoffUrl();
-            }
-            if (typeof resolveOfficialAgeResumePath === 'function') {
-                return resolveOfficialAgeResumePath();
-            }
-            return '/agealpha';
-        }
-        if (typeof resolveGamePageHandoffUrl === 'function') {
-            return resolveGamePageHandoffUrl({
-                tutorial: isTutorialModeActive,
-                joinAge: true,
-                server: readCommanderSelectedServerId()
-            });
-        }
-        return `/game?tutorial=${isTutorialModeActive}&joinAge=1&server=${encodeURIComponent(readCommanderSelectedServerId())}`;
-    };
-
-    const attemptGamePageHandoff = () => {
-        if (!deployPulseFinished || !selectAudioFinished) return;
-        const destination = resolveJoinAgeDestination();
-        verifyPortalAgeJoinAllowed().then((joinAllowed) => {
-            if (!joinAllowed) {
-                joinAgePortalTransitionActive = false;
-                return;
-            }
-            window.setTimeout(() => {
-            localStorage.setItem('savedCommanderInActiveAge', 'true');
-            markCommanderAgeDeploymentPanelUnlocked(isTutorialModeActive);
-            applyPortalDeploymentDeckPresentation();
-            if (typeof markJoinAgeAttemptForAchievement === 'function') {
-                markJoinAgeAttemptForAchievement();
-            } else if (window.RoyalArmiesAchievements && typeof window.RoyalArmiesAchievements.markJoinAgeAttemptForAchievement === 'function') {
-                window.RoyalArmiesAchievements.markJoinAgeAttemptForAchievement();
-            }
-            notifyPortalAgeSessionJoin().finally(() => {
-                if (window.RoyalArmiesPageRouteTransition && typeof window.RoyalArmiesPageRouteTransition.navigateTo === 'function') {
-                    window.RoyalArmiesPageRouteTransition.navigateTo(destination);
-                } else {
-                    window.location.href = destination;
-                }
-            });
-            }, JOIN_AGE_POST_SELECT_DELAY_MS);
-        });
-    };
-
-    if (clickedHousing && !isPortalMobileNavLayout()) {
-        runJoinAgeDeployConfirmPulse(clickedHousing, () => {
-            deployPulseFinished = true;
-            attemptGamePageHandoff();
-        });
-    } else {
-        deployPulseFinished = true;
-    }
-
-    playJoinAgeSelectSfx(() => {
-        selectAudioFinished = true;
-        attemptGamePageHandoff();
-    });
 }
 
 
@@ -6180,17 +6046,6 @@ window.addEventListener("DOMContentLoaded", () => {
     applyPortalBackgroundMusicVolume();
     initializeAdvancedMediaJukeboxEngine();
 
-    const joinHoverSfx = getJoinAgeHoverSoundElement();
-    const joinSelectSfx = getJoinAgeSelectSoundElement();
-    if (joinHoverSfx) {
-        applyJoinAgeSfxMaxVolume(joinHoverSfx);
-        joinHoverSfx.load();
-    }
-    if (joinSelectSfx) {
-        applyJoinAgeSfxMaxVolume(joinSelectSfx);
-        joinSelectSfx.load();
-    }
-
     if (sessionStorage.getItem('royalArmiesAuthAudioPlay') === 'granted') {
         startPortalBackgroundMusic({ markSessionGranted: true, silentFail: true });
     } else {
@@ -6377,325 +6232,18 @@ function formatTransitionTimestampClockString(milliseconds) {
 runDynamicAgeLifecycleTrackingEngine();
 
 /* ==========================================================================
-   SECTION 13: SCRIPT-DRIVEN TACTICAL EARTHQUAKE HOVER TIMELINES WITH AUDIO
+   SECTION 13: PORTAL DEPLOYMENT AUDIO HALT (SERVER DASHBOARD JOIN)
    ========================================================================== */
 
-let joinAgeBuildHoverCount = 0;
-let joinAgeBuildAudioFadeInterval = null;
-let joinAgeBgMusicPreDuckVolume = null;
-
-const JOIN_AGE_SFX_MAX_VOLUME = 1;
-const JOIN_AGE_HOVER_BG_DUCK_VOLUME = 0.2;
-
-function applyJoinAgeSfxMaxVolume(audioElement) {
-    if (!audioElement) return;
-    audioElement.muted = false;
-    audioElement.volume = JOIN_AGE_SFX_MAX_VOLUME;
-}
-
-function resolvePortalBackgroundMusicVolume() {
-    return resolvePortalBackgroundMusicGain();
-}
-
-function duckPortalBackgroundMusicForJoinAgeHover() {
-    const bgMusic = document.getElementById('portal-background-theme-audio');
-    if (!bgMusic || joinAgeBgMusicPreDuckVolume !== null) return;
-    joinAgeBgMusicPreDuckVolume = bgMusic.volume;
-    bgMusic.volume = JOIN_AGE_HOVER_BG_DUCK_VOLUME;
-}
-
-function restorePortalBackgroundMusicAfterJoinAgeHover() {
+function haltAllPortalAudioForGameLaunch() {
     const bgMusic = getPortalBackgroundAudioElement();
     if (!bgMusic) return;
-
-    joinAgeBgMusicPreDuckVolume = null;
-    applyPortalBackgroundMusicVolume();
-}
-
-function getJoinAgeHoverSoundElement() {
-    return document.getElementById('join-age-hover-sound')
-        || document.getElementById('join-age-build-sound')
-        || document.getElementById('earthquake-build-sound');
-}
-
-function getJoinAgeBuildSoundElement() {
-    return getJoinAgeHoverSoundElement();
-}
-
-function getJoinAgeSelectSoundElement() {
-    return document.getElementById('join-age-select-sound');
-}
-
-function haltJoinAgeHoverSoundImmediately() {
-    joinAgeBuildHoverCount = 0;
-    if (joinAgeBuildAudioFadeInterval) {
-        clearInterval(joinAgeBuildAudioFadeInterval);
-        joinAgeBuildAudioFadeInterval = null;
-    }
-    restorePortalBackgroundMusicAfterJoinAgeHover();
-    const hoverAudio = getJoinAgeHoverSoundElement();
-    if (hoverAudio) {
-        hoverAudio.pause();
-        hoverAudio.currentTime = 0;
-        applyJoinAgeSfxMaxVolume(hoverAudio);
-    }
-}
-
-function haltPortalBackgroundMusicImmediately() {
-    const bgMusic = getPortalBackgroundAudioElement();
-    if (!bgMusic) return;
-    joinAgeBgMusicPreDuckVolume = null;
     bgMusic.pause();
     syncPortalJukeboxPlaybackUI(false);
 }
 
-function haltAllPortalAudioForGameLaunch() {
-    haltJoinAgeHoverSoundImmediately();
-    haltPortalBackgroundMusicImmediately();
-
-    document.querySelectorAll('.deployment-image-trigger-btn').forEach((btn) => {
-        btn.disabled = true;
-        btn.style.pointerEvents = 'none';
-    });
-}
-
-function clearJoinAgeButtonShakeState(buttonChassis) {
-    if (!buttonChassis) return;
-
-    if (buttonChassis._joinAgeShakeProgressionInterval) {
-        clearInterval(buttonChassis._joinAgeShakeProgressionInterval);
-        buttonChassis._joinAgeShakeProgressionInterval = null;
-    }
-    if (buttonChassis._joinAgeRumbleFrameLoop) {
-        clearInterval(buttonChassis._joinAgeRumbleFrameLoop);
-        buttonChassis._joinAgeRumbleFrameLoop = null;
-    }
-
-    buttonChassis.classList.remove('is-building-up', 'shake-level-1', 'shake-level-2', 'shake-level-3');
-    buttonChassis.style.left = '0px';
-    buttonChassis.style.top = '0px';
-    buttonChassis.style.transform = 'scale(1) rotate(0deg)';
-}
-
-function resetAllJoinAgeDeploymentButtonShakeStates() {
-    document.querySelectorAll(
-        '.action-btn-aura-housing.aura-glow-red, .action-btn-aura-housing.aura-glow-blue'
-    ).forEach(clearJoinAgeButtonShakeState);
-}
-
-function runJoinAgeDeployConfirmPulse(buttonChassis, onComplete) {
-    if (!buttonChassis) {
-        if (typeof onComplete === 'function') onComplete();
-        return;
-    }
-
-    clearJoinAgeButtonShakeState(buttonChassis);
-
-    buttonChassis.classList.remove('deploy-confirm-pulse', 'phase-grow', 'phase-settle');
-    buttonChassis.classList.add('deploy-confirm-pulse');
-    buttonChassis.style.setProperty(
-        'transition',
-        'transform 0.42s cubic-bezier(0.22, 1, 0.36, 1), left 0.2s ease, top 0.2s ease, filter 0.35s ease',
-        'important'
-    );
-    buttonChassis.style.setProperty('transform', 'scale(1) rotate(0deg)', 'important');
-
-    window.requestAnimationFrame(() => {
-        buttonChassis.classList.add('phase-grow');
-        buttonChassis.style.setProperty('transform', 'scale(1.2) rotate(0deg)', 'important');
-
-        window.setTimeout(() => {
-            buttonChassis.classList.remove('phase-grow');
-            buttonChassis.classList.add('phase-settle');
-            buttonChassis.style.setProperty('transform', 'scale(1) rotate(0deg)', 'important');
-
-            window.setTimeout(() => {
-                buttonChassis.classList.remove('deploy-confirm-pulse', 'phase-settle');
-                if (typeof onComplete === 'function') onComplete();
-            }, JOIN_AGE_DEPLOY_PULSE_SETTLE_MS);
-        }, JOIN_AGE_DEPLOY_PULSE_GROW_MS);
-    });
-}
-
-function playJoinAgeSelectSfx(onAudioComplete) {
-    const selectAudio = getJoinAgeSelectSoundElement();
-
-    const finishAudioPhase = () => {
-        if (typeof onAudioComplete === 'function') onAudioComplete();
-    };
-
-    if (!selectAudio) {
-        console.log('Join Age select SFX missing — proceeding without select audio.');
-        finishAudioPhase();
-        return;
-    }
-
-    let transitionScheduled = false;
-    const scheduleTransitionOnce = () => {
-        if (transitionScheduled) return;
-        transitionScheduled = true;
-        selectAudio.removeEventListener('ended', scheduleTransitionOnce);
-        finishAudioPhase();
-    };
-
-    selectAudio.loop = false;
-    applyJoinAgeSfxMaxVolume(selectAudio);
-    selectAudio.currentTime = 0;
-
-    selectAudio.addEventListener('ended', scheduleTransitionOnce);
-
-    selectAudio.play()
-        .then(() => {
-            console.log('Join Age select SFX engaged. Awaiting full playback before deployment handoff.');
-        })
-        .catch((err) => {
-            console.warn('Join Age select SFX blocked — using timed fallback.', err);
-            scheduleTransitionOnce();
-        });
-
-    const waitForMetadata = () => {
-        const durationMs = Number.isFinite(selectAudio.duration) && selectAudio.duration > 0
-            ? (selectAudio.duration * 1000) + 100
-            : 3500;
-        window.setTimeout(scheduleTransitionOnce, durationMs);
-    };
-
-    if (selectAudio.readyState >= 1 && Number.isFinite(selectAudio.duration)) {
-        waitForMetadata();
-    } else {
-        selectAudio.addEventListener('loadedmetadata', waitForMetadata, { once: true });
-        selectAudio.load();
-    }
-}
-
-function startJoinAgeBuildSoundscape() {
-    const buildAudio = getJoinAgeBuildSoundElement();
-    if (!buildAudio) return;
-
-    if (joinAgeBuildAudioFadeInterval) {
-        clearInterval(joinAgeBuildAudioFadeInterval);
-        joinAgeBuildAudioFadeInterval = null;
-    }
-
-    applyJoinAgeSfxMaxVolume(buildAudio);
-    buildAudio.loop = true;
-    duckPortalBackgroundMusicForJoinAgeHover();
-
-    const attemptPlayback = () => {
-        buildAudio.play().catch(() => {});
-    };
-
-    if (buildAudio.readyState >= 2) {
-        attemptPlayback();
-    } else {
-        buildAudio.addEventListener('canplaythrough', attemptPlayback, { once: true });
-        buildAudio.load();
-    }
-}
-
-function stopJoinAgeBuildSoundscape() {
-    const buildAudio = getJoinAgeBuildSoundElement();
-    if (!buildAudio) return;
-
-    if (joinAgeBuildAudioFadeInterval) clearInterval(joinAgeBuildAudioFadeInterval);
-
-    joinAgeBuildAudioFadeInterval = setInterval(() => {
-        if (buildAudio.volume > 0.05) {
-            buildAudio.volume -= 0.05;
-        } else {
-            clearInterval(joinAgeBuildAudioFadeInterval);
-            joinAgeBuildAudioFadeInterval = null;
-            buildAudio.pause();
-            buildAudio.currentTime = 0;
-            applyJoinAgeSfxMaxVolume(buildAudio);
-            if (joinAgeBuildHoverCount === 0) {
-                restorePortalBackgroundMusicAfterJoinAgeHover();
-            }
-        }
-    }, 30);
-}
-
-function bindJoinAgeDeploymentButtonHover(buttonChassis) {
-    if (!buttonChassis || buttonChassis.dataset.earthquakeBound === 'true') return;
-    if (isPortalMobileNavLayout()) return;
-    buttonChassis.dataset.earthquakeBound = 'true';
-
-    let elapsedHoverSeconds = 0;
-    let currentRumbleIntensityMax = 0;
-
-    buttonChassis.addEventListener('mouseenter', () => {
-            if (joinAgePortalTransitionActive) return;
-
-            buttonChassis.style.setProperty('transition', 'transform 5.0s cubic-bezier(0.1, 0.8, 0.2, 1), filter 5.0s ease-in-out', 'important');
-            buttonChassis.classList.add('is-building-up');
-
-            elapsedHoverSeconds = 0;
-            currentRumbleIntensityMax = 0.5;
-
-            joinAgeBuildHoverCount++;
-            if (joinAgeBuildHoverCount === 1) {
-                startJoinAgeBuildSoundscape();
-            }
-
-            buttonChassis._joinAgeRumbleFrameLoop = setInterval(() => {
-                const randomOffsetLeft = (Math.random() * (currentRumbleIntensityMax * 2) - currentRumbleIntensityMax);
-                const randomOffsetTop = (Math.random() * (currentRumbleIntensityMax * 2) - currentRumbleIntensityMax);
-                const randomRotationAngle = (Math.random() * (currentRumbleIntensityMax * 0.5) - (currentRumbleIntensityMax * 0.25));
-
-                buttonChassis.style.left = `${randomOffsetLeft}px`;
-                buttonChassis.style.top = `${randomOffsetTop}px`;
-                buttonChassis.style.transform = `scale(1.15) rotate(${randomRotationAngle}deg)`;
-            }, 30);
-
-            buttonChassis._joinAgeShakeProgressionInterval = setInterval(() => {
-                elapsedHoverSeconds += 0.5;
-
-                if (elapsedHoverSeconds >= 0.5 && elapsedHoverSeconds < 2.0) {
-                    buttonChassis.classList.add('shake-level-1');
-                    currentRumbleIntensityMax = 1.5;
-                }
-                else if (elapsedHoverSeconds >= 2.0 && elapsedHoverSeconds < 4.0) {
-                    buttonChassis.classList.remove('shake-level-1');
-                    buttonChassis.classList.add('shake-level-2');
-                    currentRumbleIntensityMax = 3.5;
-                }
-                else if (elapsedHoverSeconds >= 4.0) {
-                    buttonChassis.classList.remove('shake-level-2');
-                    buttonChassis.classList.add('shake-level-3');
-                    currentRumbleIntensityMax = 6.0;
-                    clearInterval(buttonChassis._joinAgeShakeProgressionInterval);
-                    buttonChassis._joinAgeShakeProgressionInterval = null;
-                }
-            }, 500);
-        });
-
-        buttonChassis.addEventListener('mouseleave', () => {
-            if (joinAgePortalTransitionActive) return;
-
-            clearJoinAgeButtonShakeState(buttonChassis);
-
-            buttonChassis.style.setProperty('transition', 'transform 0.2s ease-out, filter 0.2s ease-out', 'important');
-            buttonChassis.style.removeProperty('filter');
-            buttonChassis.style.transform = 'scale(1) rotate(0deg)';
-
-            joinAgeBuildHoverCount = Math.max(0, joinAgeBuildHoverCount - 1);
-            if (joinAgeBuildHoverCount === 0) {
-                stopJoinAgeBuildSoundscape();
-            }
-        });
-}
-
 function initializeTacticalButtonEarthquakeEngine() {
-    const deploymentHousings = document.querySelectorAll(
-        '.action-btn-aura-housing.aura-glow-red, .action-btn-aura-housing.aura-glow-blue'
-    );
-    deploymentHousings.forEach((housing) => {
-        if (isPortalMobileNavLayout()) {
-            clearJoinAgeButtonShakeState(housing);
-            return;
-        }
-        bindJoinAgeDeploymentButtonHover(housing);
-    });
+    /* Join Age image buttons removed — server dashboard is the sole member entry point. */
 }
 
 const originalWindowInitHandshake = window.onload;
@@ -6995,10 +6543,8 @@ window.positionPortalMobileNavMenu = positionPortalMobileNavMenu;
 window.triggerMainDashboardLogout = triggerMainDashboardLogout;
 window.applyPortalNavAccessRestrictions = applyPortalNavAccessRestrictions;
 window.applyPortalGuestDeploymentChrome = applyPortalGuestDeploymentChrome;
-window.canUsePortalJoinAgeButtons = canUsePortalJoinAgeButtons;
 window.applyPortalDeploymentDeckPresentation = applyPortalDeploymentDeckPresentation;
 window.rejoinSelectedAgeServer = rejoinSelectedAgeServer;
-window.launchGameRoundSector = launchGameRoundSector;
 ensurePortalDeploymentServerPanelDelegation();
 window.recacheAgePortalViewportSnapshot = recacheAgePortalViewportSnapshot;
 window.isPortalNavViewAccessible = isPortalNavViewAccessible;

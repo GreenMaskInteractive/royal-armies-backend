@@ -28,10 +28,16 @@
 <script>
 (function enforceEarlyActiveAgePortalLock() {
     try {
-        /* Sync with PORTAL_DIRECT_AGE_JOIN_ENABLED in rift-official-age.js */
-        var portalDirectAgeJoinEnabled = true;
+        /* Sync with PORTAL_DIRECT_AGE_JOIN_ENABLED in rift-official-age.js / nexus-age-portal-join.js */
+        var portalDirectAgeJoinEnabled = false;
+        try {
+            if (portalDirectAgeJoinEnabled) {
+                localStorage.setItem('royalArmiesPortalDirectAgeJoin', 'true');
+            } else {
+                localStorage.removeItem('royalArmiesPortalDirectAgeJoin');
+            }
+        } catch (_setErr) { /* ignore */ }
         if (portalDirectAgeJoinEnabled) {
-            try { localStorage.setItem('royalArmiesPortalDirectAgeJoin', 'true'); } catch (_setErr) { /* ignore */ }
             return;
         }
         if (localStorage.getItem('savedCommanderInActiveAge') !== 'true') return;
@@ -325,19 +331,6 @@
                         <div id="dynamic-age-sub-timer-display" class="timer-readout-default">-- : -- : -- : --</div>
                     </div>
 
-                    <div class="deployment-action-button-row portal-deployment-member-actions" id="portal-deployment-member-actions">
-                        <div class="action-btn-aura-housing aura-glow-red">
-                            <button type="button" class="deployment-image-trigger-btn" onclick="launchGameRoundSector(false, event)" aria-label="Join Age">
-                                <img src="images/joinagebtn.png?v=portal-join-age-image-1" alt="Join Age">
-                            </button>
-                        </div>
-                        <div class="action-btn-aura-housing aura-glow-blue">
-                            <button type="button" class="deployment-image-trigger-btn" onclick="launchGameRoundSector(true, event)" aria-label="Tutorial Age">
-                                <img src="images/joinagetutorialbtn.png?v=portal-join-age-image-1" alt="Tutorial Age">
-                            </button>
-                        </div>
-                    </div>
-
                     <div id="portal-deployment-server-panel" class="portal-deployment-server-panel" hidden>
                         <div class="portal-server-panel-header">
                             <h4 class="portal-server-panel-heading">Server Dashboard</h4>
@@ -442,8 +435,6 @@
         <audio id="hover-sound" src="audio/uihover.wav" preload="auto"></audio>
         <audio id="select-sound" src="audio/uiselect.wav" preload="auto"></audio>
         <audio id="discovery-swoosh-sound" src="audio/swoosh.wav?v=swoosh-clean-1" preload="auto"></audio>
-        <audio id="join-age-hover-sound" src="audio/joinagesfxhover.wav" preload="auto" loop volume="1"></audio>
-        <audio id="join-age-select-sound" src="audio/joinagesfxselect.wav" preload="auto" volume="1"></audio>
 
     </main>
 
@@ -765,7 +756,7 @@
     <script src="nexus-player-report-catalog.js?v=report-categories-pbbg-1"></script>
     <script src="rift-player-report.js?v=report-no-commander-menu-context-1"></script>
     <script src="age-music-flow.js?v=age-soundtrack-wandering-soul-1"></script>
-    <script src="script2.js?v=portal-join-nation-fix-1"></script>
+    <script src="script2.js?v=portal-server-dashboard-2"></script>
     <script src="custom-cursor.js?v=finger-press-hold-1"></script>
 
 </body>

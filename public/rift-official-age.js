@@ -7,8 +7,8 @@
 
     const PRE_AGE_SLUG = 'alpha';
 
-    /** Temporary — main portal Join skips game.html onboarding and routes to agealpha. */
-    const PORTAL_DIRECT_AGE_JOIN_ENABLED = true;
+    /** When true, main portal Join skips game.html onboarding and routes to agealpha. */
+    const PORTAL_DIRECT_AGE_JOIN_ENABLED = false;
     const PORTAL_DIRECT_AGE_JOIN_STORAGE_KEY = 'royalArmiesPortalDirectAgeJoin';
 
     try {
