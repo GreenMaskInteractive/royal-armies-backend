@@ -134,7 +134,7 @@
             {
                 id: 'barracks',
                 label: 'Barracks',
-                description: 'Garrison Registry and Unit Evolution Workspace.'
+                description: 'Garrison Registry and Unit Evolution.'
             },
             {
                 id: 'blacksmith',
@@ -176,7 +176,7 @@
             {
                 id: 'barracks',
                 label: 'Barracks',
-                description: 'Garrison Registry and Unit Evolution Workspace.'
+                description: 'Garrison Registry and Unit Evolution.'
             },
             {
                 id: 'blacksmith',
@@ -213,7 +213,7 @@
             {
                 id: 'barracks',
                 label: 'Barracks',
-                description: 'Garrison Registry and Unit Evolution Workspace.'
+                description: 'Garrison Registry and Unit Evolution.'
             },
             {
                 id: 'blacksmith',

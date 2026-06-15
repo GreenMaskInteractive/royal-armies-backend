@@ -875,7 +875,7 @@
             + '<span class="age-guild-log-workspace-links-label">Barracks:</span> '
             + '<button type="button" class="age-guild-log-workspace-link" data-guild-log-workspace="registry">Garrison Registry</button>'
             + '<span class="age-guild-log-workspace-sep" aria-hidden="true"> · </span>'
-            + '<button type="button" class="age-guild-log-workspace-link" data-guild-log-workspace="evolution">Unit Evolution Workspace</button>'
+            + '<button type="button" class="age-guild-log-workspace-link" data-guild-log-workspace="evolution">Unit Evolution</button>'
             + '</p>'
         );
     }

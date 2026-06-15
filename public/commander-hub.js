@@ -24,10 +24,14 @@ function bindCommanderHubModalChromeHandlers() {
     if (document.documentElement.dataset.commanderHubModalChromeBound === 'true') return;
     document.documentElement.dataset.commanderHubModalChromeBound = 'true';
 
-    document.querySelectorAll('.commander-hub-close-btn').forEach((button) => {
-        if (button.dataset.commanderHubCloseBound === 'true') return;
-        button.dataset.commanderHubCloseBound = 'true';
-        button.addEventListener('click', (event) => closeCommanderHubModal(event));
+    document.addEventListener('click', (event) => {
+        if (event.target.closest('.commander-hub-close-btn')) {
+            closeCommanderHubModal(event);
+            return;
+        }
+        if (event.target.closest('.public-profile-close-btn')) {
+            closePublicCommanderProfileCard(event);
+        }
     });
 
     document.querySelectorAll('.commander-hub-top-tab[data-hub-tab]').forEach((tab) => {
@@ -36,12 +40,6 @@ function bindCommanderHubModalChromeHandlers() {
         tab.addEventListener('click', (event) => {
             handleCommanderHubTopTabClick(tab.getAttribute('data-hub-tab'), event);
         });
-    });
-
-    document.querySelectorAll('.public-profile-close-btn').forEach((button) => {
-        if (button.dataset.publicProfileCloseBound === 'true') return;
-        button.dataset.publicProfileCloseBound = 'true';
-        button.addEventListener('click', (event) => closePublicCommanderProfileCard(event));
     });
 }
 

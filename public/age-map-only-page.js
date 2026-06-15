@@ -37,7 +37,7 @@
         'rank-data.js?v=commander-nametag-hub-2',
         'rift-ui-sfx.js?v=commander-nametag-hub-2',
         'script.js?v=update-post-logout-1',
-        'commander-hub.js?v=commander-nametag-hub-2',
+        'commander-hub.js?v=modal-close-audit-1',
         'game-chat.js?v=commander-nametag-hub-2',
         'portal-commander-identity-menu.js?v=remove-return-portal-1'
     ];
@@ -163,19 +163,35 @@
         );
     }
 
-    /** Modals opened from Game Hub menu — must stay clickable on map-only shell */
-    function isNationHubDestinationModal(target) {
+    /** Open age workspaces/modals — must stay clickable on map-only shell (capture-phase block bypass). */
+    function isOpenAgeOverlayTarget(target) {
         if (!target || typeof target.closest !== 'function') return false;
-        return Boolean(
-            target.closest('.age-age-center-modal:not([hidden])')
-            || target.closest('.rift-discoveries-workspace-modal:not([hidden])')
-            || target.closest('.rift-banner-workspace-modal:not([hidden])')
-            || target.closest('.blessed-banners-modal:not([hidden])')
-            || target.closest('.age-chronicles-battle-pass-modal.is-open')
-            || target.closest('.age-chronicles-battle-pass-modal:not([hidden])')
-            || target.closest('.age-commander-rank-ladder-modal.is-open')
-            || target.closest('.age-commander-rank-ladder-modal:not([hidden])')
-        );
+        return Boolean(target.closest(
+            '.age-age-center-modal:not([hidden]),'
+            + '.age-war-ledger-modal:not([hidden]),'
+            + '.age-world-battle-report-modal:not([hidden]),'
+            + '.age-war-room-modal:not([hidden]),'
+            + '#age-council-board-editor:not([hidden]),'
+            + '.age-unit-evolution-workspace:not([hidden]),'
+            + '.age-barracks-workspace:not([hidden]),'
+            + '.age-watchtower-workspace:not([hidden]),'
+            + '.age-guild-workspace:not([hidden]),'
+            + '#age-guild-jobs-arena:not([hidden]),'
+            + '.age-guild-jobs-hub-arena:not([hidden]),'
+            + '.age-guild-job-arena:not([hidden]),'
+            + '.age-settlement-venue-workspace:not([hidden]),'
+            + '#age-rank-promotion-overlay:not([hidden]),'
+            + '.rift-discoveries-workspace-modal:not([hidden]),'
+            + '.rift-banner-workspace-modal:not([hidden]),'
+            + '.blessed-banners-modal:not([hidden]),'
+            + '.age-chronicles-battle-pass-modal:not([hidden]),'
+            + '.age-commander-rank-ladder-modal:not([hidden])'
+        ));
+    }
+
+    /** @deprecated alias — use isOpenAgeOverlayTarget */
+    function isNationHubDestinationModal(target) {
+        return isOpenAgeOverlayTarget(target);
     }
 
     function isPortalAlertModal(target) {
@@ -282,7 +298,7 @@
         return isInsideMap(target)
             || isAgeMapHudTarget(target)
             || isInsideNationHub(target)
-            || isNationHubDestinationModal(target)
+            || isOpenAgeOverlayTarget(target)
             || isPortalAlertModal(target)
             || isMapCitySearchTarget(target)
             || isMapPlanToolTarget(target)
@@ -310,6 +326,7 @@
         global.enableAgeBarracks?.();
         global.RoyalArmiesAgeWatchtower?.enable?.();
         global.enableAgeAdventurersGuild?.();
+        global.enableAgeUnitEvolution?.();
         global.enableAgeRecords?.();
     }
 
@@ -1083,6 +1100,12 @@
             global.RoyalArmiesAgeNationHub?.enable?.();
             global.enableAgeWorldMapPlanEditor?.();
             global.RoyalArmiesAgeWorldMapPlanEditor?.enable?.();
+            if (typeof global.enableAgeWarLedger === 'function') {
+                global.enableAgeWarLedger();
+            }
+            if (typeof global.enableAgeCouncilBoard === 'function') {
+                void global.enableAgeCouncilBoard();
+            }
             bindMobileCommanderMenuHandlers();
             await ensureAgeCommanderNametagHub();
             refreshAgeNationWelcomeChrome();

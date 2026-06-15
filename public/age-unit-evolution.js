@@ -412,6 +412,8 @@
     }
 
     async function open(options = {}) {
+        bindEvolution();
+
         const workspace = resolveWorkspace();
         if (!workspace) return;
 
@@ -583,9 +585,23 @@
         commitManualQuantityInput(input);
     }
 
+    function bindEvolutionChrome() {
+        if (global.document.documentElement.dataset.ageUnitEvolutionChromeBound === 'true') return;
+        global.document.documentElement.dataset.ageUnitEvolutionChromeBound = 'true';
+
+        global.document.addEventListener('click', (event) => {
+            if (!event.target.closest('#age-unit-evolution-close')) return;
+            event.preventDefault();
+            event.stopPropagation();
+            close();
+        }, true);
+    }
+
     function bindEvolution() {
         if (bound) return;
         bound = true;
+
+        bindEvolutionChrome();
 
         const workspace = resolveWorkspace();
         workspace?.addEventListener('click', onWorkspaceClick);
@@ -609,4 +625,11 @@
     };
 
     global.enableAgeUnitEvolution = enableAgeUnitEvolution;
+
+    bindEvolutionChrome();
+    if (global.document.readyState === 'loading') {
+        global.document.addEventListener('DOMContentLoaded', bindEvolution, { once: true });
+    } else {
+        bindEvolution();
+    }
 })(window);

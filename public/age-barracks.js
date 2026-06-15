@@ -23,7 +23,7 @@
         },
         {
             id: 'evolution',
-            label: 'Unit Evolution Workspace',
+            label: 'Unit Evolution',
             description: 'Spend provisions on rank promotions and tier evolutions.'
         }
     ]);

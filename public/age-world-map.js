@@ -398,6 +398,7 @@
         refreshDrawerMovementActions(city);
         const borderHints = movement.getBorderActionHints?.(city, resolveActivePlayerCatalogCityId()) || {};
         refreshDrawerWatchtowerButton(city, borderHints);
+        refreshDrawerInfiltrateButton(city);
         refreshDrawerScoutIntel(city, borderHints);
         void refreshDrawerAssaultRisk(city, borderHints);
     }
@@ -4876,6 +4877,12 @@
         return Array.isArray(city.neighbors) && city.neighbors.includes(playerMapCityId);
     }
 
+    function canShowInfiltrationButton(city) {
+        if (!isMaskedCity(city) || !playerMapCityId) return false;
+        if (city.id === playerMapCityId) return false;
+        return Array.isArray(city.neighbors) && city.neighbors.includes(playerMapCityId);
+    }
+
     function positionCityDrawer() {
         if (!els.drawer || !els.frame) return;
 
@@ -5028,6 +5035,24 @@
 
     const INFILTRATE_BUTTON_LABEL = 'Attempt Infiltration';
     let infiltrateAttemptTimer = null;
+
+    function refreshDrawerInfiltrateButton(city) {
+        const button = els.infiltrateOpen;
+        if (!button || !city) return;
+
+        const canInfiltrate = canShowInfiltrationButton(city);
+        button.hidden = !canInfiltrate;
+        if (!canInfiltrate) {
+            button.disabled = false;
+            button.setAttribute('aria-disabled', 'false');
+            button.title = '';
+            return;
+        }
+
+        button.disabled = false;
+        button.setAttribute('aria-disabled', 'false');
+        button.title = 'Attempt to infiltrate this unknown settlement from your bordering city.';
+    }
 
     function resetInfiltrateButton() {
         if (infiltrateAttemptTimer) {
@@ -5420,9 +5445,7 @@
             );
         }
         resetInfiltrateButton();
-        if (els.infiltrateOpen) {
-            els.infiltrateOpen.hidden = !masked;
-        }
+        refreshDrawerInfiltrateButton(city);
 
         refreshDrawerMovementActions(city);
         const borderHints = global.RoyalArmiesAgeMovement?.getBorderActionHints?.(
@@ -5869,6 +5892,7 @@
                         resolveActivePlayerCatalogCityId()
                     ) || {};
                     refreshDrawerWatchtowerButton(city, borderHints);
+                    refreshDrawerInfiltrateButton(city);
                     refreshDrawerScoutIntel(city, borderHints);
                     void refreshDrawerAssaultRisk(city, borderHints);
                     showCitySelectionHighlight(selectedCityId);
