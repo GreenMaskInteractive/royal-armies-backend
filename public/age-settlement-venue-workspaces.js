@@ -14,54 +14,9 @@
 
     const HQ_DEFENSE_HOST_ID = 'age-hq-defense-upgrades-host';
     const HQ_DEFENSE_STATUS_ID = 'age-hq-defense-status';
-    const BLACKSMITH_MIN_RANK = 2;
 
     let defensePanelContext = { hostId: '', statusId: 'age-defense-workspace-status' };
     let hqDefenseBound = false;
-
-    const BLACKSMITH_CATALOG = Object.freeze([
-        { id: 'blade', mark: '⚔', title: 'Field Blades', desc: 'Standard issue weapons for front-line companies.', cost: '120 gold' },
-        { id: 'mail', mark: '🛡', title: 'Reinforced Mail', desc: 'Layered armor kits sized for your active roster.', cost: '95 gold' },
-        { id: 'kit', mark: '⚙', title: 'Campaign Kits', desc: 'Field tools, rations packs, and march consumables.', cost: '48 gold' },
-        { id: 'bows', mark: '🏹', title: 'Skirmish Bows', desc: 'Ranged kits for screening and harassment lanes.', cost: '110 gold' }
-    ]);
-
-    const ARMORY_SLOTS = Object.freeze([
-        {
-            id: 'weapon',
-            mark: '⚔',
-            label: 'Primary Weapon',
-            desc: 'Field-grade armament slotted for your lead companies.',
-            tier: 'Tier II',
-            status: 'Ready to upgrade'
-        },
-        {
-            id: 'armor',
-            mark: '🛡',
-            label: 'Chest Armor',
-            desc: 'Advance plating and ward stitching for assigned units.',
-            tier: 'Tier I',
-            status: 'Eligible',
-            upgradeCost: '24 provisions'
-        },
-        {
-            id: 'banner',
-            mark: '⚑',
-            label: 'Formation Banner',
-            desc: 'Morale and formation aura slot for marching armies.',
-            tier: 'Locked',
-            status: 'Requires Church blessing'
-        },
-        {
-            id: 'trinket',
-            mark: '✦',
-            label: 'Command Trinket',
-            desc: 'Officer charm slot for tactical bonuses in battle.',
-            tier: 'Tier I',
-            status: 'Eligible',
-            upgradeCost: '24 provisions'
-        }
-    ]);
 
     const DEFENSE_MODULES = Object.freeze([
         { id: 'walls', mark: '▣', title: 'Palisade Reinforcement', desc: 'Raises local garrison defense for this settlement.', cost: '250 RSD' },
@@ -104,16 +59,9 @@
         return Math.max(1, Math.floor(Number(global.player?.rank) || 1));
     }
 
-    function resolveBlacksmithRankLockReason() {
-        const rank = resolveCommanderRank();
-        if (rank >= BLACKSMITH_MIN_RANK) return '';
-
-        const rankTitles = global.RoyalArmiesCommanderRankTitles;
-        const meta = rankTitles?.resolveSelfCommanderRankMeta?.() || {};
-        const thresholdLabel = rankTitles?.formatCommanderRankLabel
-            ? rankTitles.formatCommanderRankLabel(BLACKSMITH_MIN_RANK, meta.path, meta.rankTitleGender)
-            : `rank ${BLACKSMITH_MIN_RANK}`;
-        return `Unlocks at ${thresholdLabel}.`;
+    function resolveEquipmentRankLockReason() {
+        return global.RoyalArmiesAgeGearShop?.resolveEquipmentRankLockReason?.()
+            || '';
     }
 
     function setDefensePanelContext(hostId, statusId) {
@@ -211,6 +159,14 @@
         if (!wallet) return;
         wallet.hidden = true;
         wallet.classList.remove('is-visible');
+    }
+
+    function showVenueGoldWallet() {
+        const wallet = global.document.getElementById('age-settlement-venue-gold-wallet');
+        if (!wallet) return;
+        wallet.hidden = false;
+        wallet.classList.add('is-visible');
+        syncInfirmaryGoldWallet();
     }
 
     function showInfirmaryGoldWallet() {
@@ -343,29 +299,23 @@
     }
 
     function renderBlacksmithBody() {
+        if (typeof global.RoyalArmiesAgeGearShop?.renderForgeBody === 'function') {
+            return global.RoyalArmiesAgeGearShop.renderForgeBody();
+        }
         return (
-            '<div class="age-defense-workspace">'
-            + '<p class="age-army-workspace-toolbar-note">Forge and outfit your companies with weapons, armor, and campaign kits. Purchases sync to your roster when the ledger API is connected.</p>'
-            + renderVenueCatalogList(BLACKSMITH_CATALOG, {
-                sectionTitle: 'Forge Catalog',
-                sectionAriaLabel: 'Blacksmith wares',
-                actionLabel: 'Purchase'
-            })
+            '<div class="age-settlement-venue-placeholder">'
+            + '<p class="age-settlement-venue-placeholder-copy">Forge catalog is loading. Refresh the page if this message persists.</p>'
             + '</div>'
         );
     }
 
     function renderArmoryBody() {
+        if (typeof global.RoyalArmiesAgeGearShop?.renderArmoryBody === 'function') {
+            return global.RoyalArmiesAgeGearShop.renderArmoryBody();
+        }
         return (
-            '<div class="age-defense-workspace">'
-            + '<p class="age-army-workspace-toolbar-note">Upgrade equipment slots to improve combat stats and special effects for units assigned to this settlement.</p>'
-            + renderVenueCatalogList(ARMORY_SLOTS, {
-                sectionTitle: 'Equipment Slots',
-                sectionAriaLabel: 'Armory equipment slots',
-                actionLabel: 'Upgrade',
-                resolveStatus: (slot) => (slot.status === 'Eligible' ? '' : slot.status),
-                resolveDisabled: (slot) => slot.status !== 'Eligible'
-            })
+            '<div class="age-settlement-venue-placeholder">'
+            + '<p class="age-settlement-venue-placeholder-copy">Armory upgrades are loading. Refresh the page if this message persists.</p>'
             + '</div>'
         );
     }
@@ -969,7 +919,7 @@
     }
 
     function openBlacksmith(detail) {
-        const lockReason = resolveBlacksmithRankLockReason();
+        const lockReason = resolveEquipmentRankLockReason();
         if (lockReason) {
             if (typeof global.showPortalAlert === 'function') {
                 void global.showPortalAlert(lockReason, 'Blacksmith');
@@ -978,24 +928,38 @@
         }
 
         const venue = detail?.venue || {};
+        const tier = String(detail?.settlementTier || 'city').trim().toLowerCase();
+        const eyebrow = global.RoyalArmiesAgeGearShop?.resolveForgeEyebrow?.(tier) || 'Blacksmith';
         openArmyWorkspace({
             venueId: 'blacksmith',
-            eyebrow: 'Blacksmith',
-            title: venue.label || 'Blacksmith',
+            eyebrow,
+            title: venue.label || eyebrow,
             subtitle: venue.description || '',
             bodyHtml: renderBlacksmithBody()
         });
+        showVenueGoldWallet();
     }
 
     function openArmory(detail) {
+        const lockReason = resolveEquipmentRankLockReason();
+        if (lockReason) {
+            if (typeof global.showPortalAlert === 'function') {
+                void global.showPortalAlert(lockReason, 'Armory');
+            }
+            return;
+        }
+
         const venue = detail?.venue || {};
+        const tier = String(detail?.settlementTier || 'city').trim().toLowerCase();
+        const eyebrow = global.RoyalArmiesAgeGearShop?.resolveArmoryEyebrow?.(tier) || 'Armory';
         openArmyWorkspace({
             venueId: 'armory',
-            eyebrow: 'Armory',
-            title: venue.label || 'Armory',
+            eyebrow,
+            title: venue.label || eyebrow,
             subtitle: venue.description || '',
             bodyHtml: renderArmoryBody()
         });
+        showVenueGoldWallet();
     }
 
     function openDefenseVenue(detail) {
@@ -1064,8 +1028,13 @@
     }
 
     function onInfirmaryGoldUpdated() {
-        if (activeVenueId !== 'infirmary') return;
-        syncInfirmaryGoldWallet();
+        if (activeVenueId === 'infirmary') {
+            syncInfirmaryGoldWallet();
+            return;
+        }
+        if (activeVenueId === 'blacksmith' || activeVenueId === 'armory') {
+            syncInfirmaryGoldWallet();
+        }
     }
 
     function openPlaceholderVenue(detail) {
@@ -1138,6 +1107,10 @@
     }
 
     function onArmyWorkspaceActionClick(event) {
+        if (global.RoyalArmiesAgeGearShop?.onGearShopClick?.(event, activeVenueId)) {
+            return;
+        }
+
         const actionBtn = event.target.closest('[data-army-workspace-action]');
         if (!actionBtn) return;
 
@@ -1230,7 +1203,8 @@
         open: openVenue,
         close: closeArmyWorkspace,
         dismissAll: dismissAllWorkspaces,
-        enableAgeSettlementVenueWorkspaces
+        enableAgeSettlementVenueWorkspaces,
+        getActiveVenueId: () => activeVenueId
     };
     global.RoyalArmiesSettlementDefense = {
         mountHeadquartersPanel: mountHeadquartersDefensePanel,

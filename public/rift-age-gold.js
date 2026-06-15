@@ -5,7 +5,7 @@
 (function initRoyalArmiesAgeGold(global) {
     'use strict';
 
-    const AGE_COMMANDER_GOLD_DEFAULT = 20000;
+    const AGE_COMMANDER_GOLD_DEFAULT = 40000;
     const AGE_GOLD_UPDATED_EVENT = 'royalarmies:age-gold-updated';
 
     function getPlayer() {

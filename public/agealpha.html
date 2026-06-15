@@ -14,7 +14,7 @@
     <link rel="stylesheet" href="mobile-responsive.css?v=commander-nametag-hub-2">
     <link rel="stylesheet" href="dev-page-navigator.css?v=dev-nav-drag-handle-1">
     <link rel="stylesheet" href="custom-cursor.css?v=finger-press-7">
-    <link rel="stylesheet" href="style-age-army-workspaces.css?v=hud-nation-treasury-1">
+    <link rel="stylesheet" href="style-age-army-workspaces.css?v=gear-shop-gold-1">
     <link rel="stylesheet" href="style-age-banner-workspace.css?v=banner-advisor-profile-1">
     <link rel="stylesheet" href="style-blessed-banners-modal.css?v=banner-skill-select-1">
     <link rel="stylesheet" href="style-age-map-only.css?v=age-bottom-maintenance-1">
@@ -1388,6 +1388,16 @@
                         </div>
                         <div class="age-settlement-venue-header-actions age-army-workspace-header-actions">
                             <div
+                                id="age-settlement-venue-gold-wallet"
+                                class="age-army-workspace-gold-wallet"
+                                hidden
+                                aria-label="Commander gold">
+                                <span class="age-army-workspace-gold-label">Gold</span>
+                                <span class="age-army-workspace-gold-value" aria-live="polite">
+                                    <span id="age-settlement-venue-gold-amount">—</span><span class="age-hud-gold-unit" aria-hidden="true"> gold</span>
+                                </span>
+                            </div>
+                            <div
                                 id="age-settlement-venue-rsd-wallet"
                                 class="age-army-workspace-rsd-wallet"
                                 hidden
@@ -2238,7 +2248,7 @@
     <script src="age-world-map.js?v=map-border-stroke-black-1"></script>
     <script src="age-world-map-city-search.js?v=map-city-search-max-zoom-1"></script>
     <script src="rift-age-movement.js?v=travel-confirm-1"></script>
-    <script src="rift-age-gold.js?v=recruit-units-active-1"></script>
+    <script src="rift-age-gold.js?v=starting-gold-40k-1"></script>
     <script src="rift-age-provisions.js?v=recruit-units-active-1"></script>
     <script src="rift-age-recruitment.js?v=recruit-units-hud-1"></script>
     <script src="age-movement-panel.js?v=travel-confirm-1"></script>
@@ -2249,14 +2259,15 @@
     <script src="age-world-map-plan-editor.js?v=plan-author-gate-1"></script>
     <script src="rift-page-paths.js?v=map-settlement-tab-only-1"></script>
     <script src="rift-immersive-workspace.js?v=watchtower-border-1"></script>
-    <script src="age-view-tabs.js?v=settlement-venue-rank-gates-1"></script>
+    <script src="age-view-tabs.js?v=armory-rank-gate-1"></script>
     <script src="rift-age-guild-training.js?v=commander-rank-names-2"></script>
     <script src="age-adventurers-guild.js?v=rank-promotion-clicks-1"></script>
     <script src="rift-nation-treasury.js?v=defense-treasury-only-1"></script>
     <script src="rift-infirmary-recovery.js?v=infirmary-tier-heal-scale-2"></script>
     <script src="rift-banner-workspace.js?v=banner-skill-branches-1"></script>
     <script src="blessed-banners-modal.js?v=modal-close-audit-1"></script>
-    <script src="age-settlement-venue-workspaces.js?v=hq-defense-upgrades-1"></script>
+    <script src="rift-age-gear-shop.js?v=gear-shop-gold-1"></script>
+    <script src="age-settlement-venue-workspaces.js?v=gear-shop-gold-1"></script>
     <script src="rift-age-unit-evolution.js?v=map-settlement-tab-only-1"></script>
     <script src="age-unit-evolution.js?v=unit-evolution-close-1"></script>
     <script src="rift-unit-purchase-catalog.js?v=commander-rank-names-2"></script>

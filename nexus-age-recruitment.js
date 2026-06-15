@@ -16,7 +16,7 @@ const { recordBalanceEvent } = require('./nexus-balance-monitor');
 const { resolveCommanderClassId } = require('./nexus-commander-class');
 
 const CATALOG_PATH = path.join(__dirname, 'public', 'data', 'unit-purchase-catalog.json');
-const AGE_COMMANDER_GOLD_DEFAULT = 20000;
+const AGE_COMMANDER_GOLD_DEFAULT = 40000;
 const AGE_COMMANDER_PROVISIONS_DEFAULT = 132;
 const MAX_RECRUIT_QUANTITY_DEFAULT = 15;
 const SWARM_RECRUIT_BATCH_CEILING_DEFAULT = 999;

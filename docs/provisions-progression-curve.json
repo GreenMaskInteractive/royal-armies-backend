@@ -8,7 +8,7 @@
     "resourceKey": "provisions"
   },
   "constants": {
-    "rank1StartingGold": 20000,
+    "rank1StartingGold": 40000,
     "movePointsMax": 3,
     "movePointRegenPerTick": 1,
     "movePointTickMinutes": 30,

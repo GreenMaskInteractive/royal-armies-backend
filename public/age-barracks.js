@@ -103,7 +103,7 @@
         if (typeof global.resolveAgeCommanderGold === 'function') {
             return global.resolveAgeCommanderGold();
         }
-        return 20000;
+        return 40000;
     }
 
     function computeMaxAffordableByGold(gold, unitCost) {

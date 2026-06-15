@@ -38,6 +38,7 @@
 
     const VENUE_RANK_GATES = Object.freeze({
         blacksmith: 2,
+        armory: 2,
         church: 7
     });
 
