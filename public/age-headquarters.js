@@ -1294,6 +1294,13 @@
         }
         setCouncilAccessUI(Boolean(workspace.access?.council || isDevOwnerHeadquartersBypass(username)));
         setViceLeaderAccessUI(Boolean(workspace.access?.viceLeader));
+        global.dispatchEvent(new CustomEvent('royalarmies:headquarters-access-updated', {
+            detail: {
+                canAuthorNationPlan: Boolean(
+                    workspace.access?.council || isDevOwnerHeadquartersBypass(username)
+                )
+            }
+        }));
         syncHeadquartersViewMode(workspace);
 
         voteCandidates = Array.isArray(workspace.vote?.candidates) ? workspace.vote.candidates : [];

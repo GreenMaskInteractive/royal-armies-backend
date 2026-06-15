@@ -39,7 +39,13 @@
     }
 
     function applyEditorChrome() {
-        const showOnMap = sessionOpen && isMapViewActive();
+        const mayAuthor = Boolean(global.RoyalArmiesAgeWorldMapPlanDraft?.canAuthorNationPlan?.());
+
+        if (!mayAuthor && sessionOpen) {
+            setEditorOpen(false);
+        }
+
+        const showOnMap = sessionOpen && isMapViewActive() && mayAuthor;
 
         if (addBtn) {
             addBtn.classList.toggle('is-active', sessionOpen);
@@ -92,6 +98,11 @@
 
     function setEditorOpen(open) {
         const next = Boolean(open);
+        if (next && !global.RoyalArmiesAgeWorldMapPlanDraft?.canAuthorNationPlan?.()) {
+            setHint('Only nation leadership and planners can author a nation plan.');
+            applyEditorChrome();
+            return;
+        }
         if (next === sessionOpen) {
             applyEditorChrome();
             return;
@@ -197,6 +208,10 @@
     function onAddPlanToggle(event) {
         event.preventDefault();
         event.stopPropagation();
+        if (!global.RoyalArmiesAgeWorldMapPlanDraft?.canAuthorNationPlan?.()) {
+            setHint('Only nation leadership and planners can author a nation plan.');
+            return;
+        }
         setEditorOpen(!sessionOpen);
     }
 
@@ -234,6 +249,10 @@
         dockEl.addEventListener('click', onDockClick);
         dockEl.addEventListener('pointerdown', (event) => event.stopPropagation());
         orbitEl?.addEventListener('click', onOrbitClick);
+
+        global.addEventListener('royalarmies:nation-plan-access-updated', () => {
+            applyEditorChrome();
+        });
 
         global.addEventListener('royalarmies:age-map-view-change', () => {
             applyEditorChrome();

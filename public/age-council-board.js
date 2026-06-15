@@ -444,7 +444,7 @@
 
     function canUseCouncilEditor() {
         if (!resolveUsername()) return false;
-        return Boolean(canEdit || isPortalOwnerCouncilEditor());
+        return Boolean(canEdit);
     }
 
     function ensureCouncilBoardEditButtonMarkup() {

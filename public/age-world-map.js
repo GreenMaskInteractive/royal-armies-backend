@@ -91,7 +91,7 @@
         },
         neutral: {
             fill: 'rgba(168, 168, 168, 0.24)',
-            stroke: 'rgba(168, 168, 176, 0.85)'
+            stroke: 'rgba(0, 0, 0, 0.85)'
         },
         none: {
             fill: 'transparent',
@@ -106,7 +106,7 @@
         'is-nation-neutral',
         'is-player-city'
     ]);
-    const CITY_SETTLEMENT_OUTLINE_STROKE = 'rgba(168, 168, 176, 0.85)';
+    const CITY_SETTLEMENT_OUTLINE_STROKE = 'rgba(0, 0, 0, 0.85)';
     const COLOR_MAP_CITY_BORDER_STROKE = '#000000';
 
     const els = {

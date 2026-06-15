@@ -19668,7 +19668,7 @@ html.age-world-map-pan-locked #cursor-click-fx-layer {
 
 .age-world-map-frame.is-color-map-on .age-world-region-border,
 .age-world-map-frame.is-color-map-on .age-world-map-layer--regions path {
-    stroke: rgba(255, 255, 255, 0.18);
+    stroke: rgba(0, 0, 0, 0.72);
     stroke-width: 2px;
     stroke-opacity: 1;
     opacity: 1 !important;
@@ -20854,7 +20854,7 @@ body.age-map-shell-only .age-world-map-terrain-controls,
 
 .age-world-map-layer--ownership .age-world-city-ownership-path.is-nation-neutral {
     fill: rgba(168, 168, 168, 0.30);
-    stroke: rgba(210, 210, 210, 1);
+    stroke: rgba(0, 0, 0, 0.85);
     opacity: 1 !important;
     visibility: visible !important;
 }
@@ -20889,7 +20889,7 @@ body.age-map-shell-only .age-world-map-terrain-controls,
 
 .age-world-map-layer--ownership .age-world-city-ownership-boost.is-nation-neutral {
     fill: rgba(168, 168, 168, 0.30);
-    stroke: rgba(210, 210, 210, 1);
+    stroke: rgba(0, 0, 0, 0.85);
     opacity: 1 !important;
     visibility: visible !important;
 }
@@ -21115,7 +21115,7 @@ body.age-map-shell-only .age-world-map-terrain-controls,
 
 .age-world-map-layer--cities .age-world-city-border-path {
     fill: transparent;
-    stroke: rgba(0, 0, 0, 0.6);
+    stroke: rgba(0, 0, 0, 0.85);
     stroke-width: 2.5px;
     vector-effect: non-scaling-stroke;
     pointer-events: none;

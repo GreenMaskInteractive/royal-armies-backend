@@ -36,6 +36,7 @@
     let lastRallyAssignedArrowId = '';
     let publicPlanPosted = false;
     let cancelingPublicPlan = false;
+    let canAuthorNationPlan = false;
 
     function resolveApiUrl(path) {
         if (typeof global.resolveRoyalArmiesApiUrl === 'function') {
@@ -587,11 +588,44 @@
         };
     }
 
+    function syncPlanAuthorControls() {
+        const addBtn = global.document.getElementById('age-world-map-plan-add');
+        const postBtn = global.document.getElementById('age-world-map-plan-post');
+        const dockEl = global.document.getElementById('age-world-map-plan-tool-dock');
+
+        if (addBtn) {
+            addBtn.hidden = !canAuthorNationPlan;
+            addBtn.setAttribute('aria-hidden', canAuthorNationPlan ? 'false' : 'true');
+        }
+        if (postBtn) {
+            postBtn.hidden = !canAuthorNationPlan;
+            postBtn.setAttribute('aria-hidden', canAuthorNationPlan ? 'false' : 'true');
+        }
+        if (dockEl && !canAuthorNationPlan) {
+            dockEl.hidden = true;
+            dockEl.setAttribute('aria-hidden', 'true');
+        }
+
+        if (!canAuthorNationPlan) {
+            if (sessionActive) {
+                setSessionActive(false);
+            }
+            global.RoyalArmiesAgeWorldMapPlanEditor?.closeEditor?.();
+            clearPersistedDraft();
+        }
+
+        syncPostButton();
+        global.dispatchEvent(new CustomEvent('royalarmies:nation-plan-access-updated', {
+            detail: { canAuthorNationPlan }
+        }));
+    }
+
     async function refreshPublicPlanPostedState() {
         const username = resolveUsername();
         if (!username) {
             publicPlanPosted = false;
-            syncPostButton();
+            canAuthorNationPlan = false;
+            syncPlanAuthorControls();
             return false;
         }
 
@@ -601,12 +635,19 @@
                 { credentials: 'same-origin', cache: 'no-store' }
             );
             const payload = await response.json();
-            publicPlanPosted = Boolean(response.ok && payload?.status === 'ok' && payload?.hasPlan);
+            if (response.ok && payload?.status === 'ok') {
+                publicPlanPosted = Boolean(payload.hasPlan);
+                canAuthorNationPlan = Boolean(payload.canAuthorPlan ?? payload.canClearPlan);
+            } else {
+                publicPlanPosted = false;
+                canAuthorNationPlan = false;
+            }
         } catch (_error) {
             publicPlanPosted = false;
+            canAuthorNationPlan = false;
         }
 
-        syncPostButton();
+        syncPlanAuthorControls();
         return publicPlanPosted;
     }
 
@@ -626,6 +667,10 @@
     }
 
     async function cancelPublishedPlan() {
+        if (!canAuthorNationPlan) {
+            notifyBlocked('Only nation leadership and planners can cancel a published plan.');
+            return false;
+        }
         if (!publicPlanPosted || cancelingPublicPlan) return false;
 
         const confirmed = await showCancelPlanConfirm();
@@ -673,6 +718,10 @@
     }
 
     async function postPlan() {
+        if (!canAuthorNationPlan) {
+            notifyBlocked('Only nation leadership and planners can post a nation plan.');
+            return false;
+        }
         if (publicPlanPosted) {
             return cancelPublishedPlan();
         }
@@ -882,6 +931,10 @@
     }
 
     function setSessionActive(next) {
+        if (Boolean(next) && !canAuthorNationPlan) {
+            notifyBlocked('Only nation leadership and planners can edit the nation plan.');
+            return;
+        }
         sessionActive = Boolean(next);
         global.RoyalArmiesAgeWorldMap?.setPlanCityPickMode?.(sessionActive);
         if (!sessionActive) {
@@ -969,12 +1022,22 @@
         draftPillsLayer = overlayEl?.querySelector('.age-world-map-plan-draft-pills') || null;
         bindDraftLayer();
 
+        syncPlanAuthorControls();
+
         global.addEventListener('royalarmies:age-map-transform', renderDraft);
         global.addEventListener('royalarmies:age-map-overlay-layout', renderDraft);
         global.addEventListener('royalarmies:age-movement-updated', () => {
             if (sessionActive) {
                 indexCatalog();
                 renderDraft();
+            }
+            void refreshPublicPlanPostedState();
+        });
+
+        global.addEventListener('royalarmies:headquarters-access-updated', (event) => {
+            if (event?.detail && typeof event.detail.canAuthorNationPlan === 'boolean') {
+                canAuthorNationPlan = event.detail.canAuthorNationPlan;
+                syncPlanAuthorControls();
             }
         });
 
@@ -1015,6 +1078,8 @@
         cancelPublishedPlan,
         refreshPublicPlanPostedState,
         flushPersistDraft,
+        canAuthorNationPlan: () => canAuthorNationPlan,
+        refreshPlanAuthorAccess: refreshPublicPlanPostedState,
         hasPersistedDraft: () => {
             const key = draftStorageKey();
             if (!key) return false;

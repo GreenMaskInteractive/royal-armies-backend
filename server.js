@@ -5996,6 +5996,7 @@ app.get('/api/portal/age/nation-plan', (req, res) => {
         status: 'ok',
         gameNation,
         canClearPlan: Boolean(access.council),
+        canAuthorPlan: Boolean(access.council),
         ...buildNationPlanPayload(nationState)
     });
 });

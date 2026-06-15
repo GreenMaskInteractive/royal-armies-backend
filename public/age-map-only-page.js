@@ -1100,6 +1100,7 @@
             global.RoyalArmiesAgeNationHub?.enable?.();
             global.enableAgeWorldMapPlanEditor?.();
             global.RoyalArmiesAgeWorldMapPlanEditor?.enable?.();
+            global.RoyalArmiesAgeWorldMapPlanDraft?.refreshPlanAuthorAccess?.();
             if (typeof global.enableAgeWarLedger === 'function') {
                 global.enableAgeWarLedger();
             }
