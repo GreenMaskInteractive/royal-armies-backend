@@ -62,7 +62,7 @@ body[data-age-area-shell="true"].age-page-settlement-only .age-area-main .age-ma
 }
 
 body[data-age-area-shell="true"] .age-settlement-venue-workspace:not([hidden]),
-body[data-age-area-shell="true"] .age-barracks-workspace:not([hidden]),
+body[data-age-area-shell="true"] .age-barracks-workspace:not([hidden]):not(.age-gear-shop-workspace),
 body[data-age-area-shell="true"] .age-unit-evolution-workspace:not([hidden]),
 body[data-age-area-shell="true"] .age-guild-hub-open .age-guild-workspace:not([hidden]),
 body[data-age-area-shell="true"] .age-guild-overlay-open .age-guild-workspace:not([hidden]),

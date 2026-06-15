@@ -195,6 +195,16 @@
         }
     }
 
+    function syncGearShopVenuePresentation(workspace, isGearShopVenue) {
+        if (!workspace) return;
+        const shell = workspace.querySelector('.age-settlement-venue-shell');
+        workspace.classList.toggle('is-gear-shop-venue', isGearShopVenue);
+        workspace.classList.toggle('age-army-workspace', !isGearShopVenue);
+        if (shell) {
+            shell.classList.toggle('age-army-workspace-shell', !isGearShopVenue);
+        }
+    }
+
     function closeArmyWorkspace() {
         const workspace = resolveVenueWorkspace();
         if (!workspace) return;
@@ -210,7 +220,7 @@
         hideSettlementVenueRsdWallet();
         hideInfirmaryGoldWallet();
         global.document.getElementById('age-settlement-venue-body')?.classList.remove('is-gear-shop-layout');
-        workspace?.classList.remove('is-gear-shop-venue');
+        syncGearShopVenuePresentation(workspace, false);
     }
 
     function openArmyWorkspace(options = {}) {
@@ -235,7 +245,7 @@
         activeVenueId = String(options.venueId || '').trim();
         const isGearShopVenue = activeVenueId === 'blacksmith' || activeVenueId === 'armory';
         bodyEl.classList.toggle('is-gear-shop-layout', isGearShopVenue);
-        workspace.classList.toggle('is-gear-shop-venue', isGearShopVenue);
+        syncGearShopVenuePresentation(workspace, isGearShopVenue);
         hideSettlementVenueRsdWallet();
         hideInfirmaryGoldWallet();
         if (DEFENSE_VENUE_IDS.has(activeVenueId)) {
