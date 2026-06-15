@@ -9,8 +9,6 @@ alwaysApply: true
 
 **ALWAYS COMMIT** after completing requested code changes or fixes in this repo. Do **not** wait for a separate "commit", "deploy", or "push" message. Immediately commit and push to `main` when implementation is done.
 
-This overrides generic "only commit when asked" guidance unless the user opts out for that task or session.
-
 Pushing to `main` deploys [royalarmies.com](https://royalarmies.com) via Render.
 
 ## When to skip
