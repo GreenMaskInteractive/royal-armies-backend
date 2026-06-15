@@ -914,6 +914,7 @@
             || global.document.getElementById('age-settlement-menu-war-room-slot')) {
             renderSettlementMenu();
         }
+        void global.RoyalArmiesAdventurersGuild?.refreshGuildJobsForSettlementChange?.();
         if (activeView === VIEW_CITY) {
             syncMapStage();
         }

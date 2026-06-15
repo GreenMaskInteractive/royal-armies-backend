@@ -210,6 +210,7 @@
         hideSettlementVenueRsdWallet();
         hideInfirmaryGoldWallet();
         global.document.getElementById('age-settlement-venue-body')?.classList.remove('is-gear-shop-layout');
+        workspace?.classList.remove('is-gear-shop-venue');
     }
 
     function openArmyWorkspace(options = {}) {
@@ -232,7 +233,9 @@
         bodyEl.innerHTML = options.bodyHtml || '';
 
         activeVenueId = String(options.venueId || '').trim();
-        bodyEl.classList.toggle('is-gear-shop-layout', activeVenueId === 'blacksmith' || activeVenueId === 'armory');
+        const isGearShopVenue = activeVenueId === 'blacksmith' || activeVenueId === 'armory';
+        bodyEl.classList.toggle('is-gear-shop-layout', isGearShopVenue);
+        workspace.classList.toggle('is-gear-shop-venue', isGearShopVenue);
         hideSettlementVenueRsdWallet();
         hideInfirmaryGoldWallet();
         if (DEFENSE_VENUE_IDS.has(activeVenueId)) {

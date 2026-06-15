@@ -22,6 +22,7 @@
     let sfPulseTimer = null;
     let boardState = null;
     let canEdit = false;
+    let hasLeadershipRole = false;
     let gameNation = '';
     let statusCatalog = [];
     let enemyBorderPending = false;
@@ -435,16 +436,61 @@
             && global.isLocalDevPlayerBypassActive();
     }
 
-    function isPortalOwnerCouncilEditor() {
-        if (isDevPlayerPortalPersonaActive()) return false;
-        const username = resolveUsername();
-        if (!username) return false;
-        return typeof global.isPortalSiteOwner === 'function' && global.isPortalSiteOwner(username);
+    function applyLeadershipRoleGate(nextRole) {
+        const role = Boolean(nextRole);
+        const previous = hasLeadershipRole;
+        hasLeadershipRole = role;
+        if (!role) {
+            canEdit = false;
+            closeEditor();
+            renderBoard();
+            return;
+        }
+        if (!previous) {
+            void fetchCouncilBoard();
+            return;
+        }
+        renderBoard();
     }
 
     function canUseCouncilEditor() {
         if (!resolveUsername()) return false;
-        return Boolean(canEdit);
+        return Boolean(canEdit && hasLeadershipRole);
+    }
+
+    async function refreshLeadershipAccessGate() {
+        const username = resolveUsername();
+        if (!username) {
+            applyLeadershipRoleGate(false);
+            return;
+        }
+
+        if (typeof global.RoyalArmiesAgeHeadquarters?.hasLeadershipRole === 'function') {
+            applyLeadershipRoleGate(global.RoyalArmiesAgeHeadquarters.hasLeadershipRole());
+            return;
+        }
+
+        try {
+            const response = await global.fetch(
+                resolveApiUrl(`/api/portal/age/headquarters-access?username=${encodeURIComponent(username)}`),
+                { credentials: 'include', cache: 'no-store' }
+            );
+            const payload = await response.json().catch(() => ({}));
+            if (!response.ok || payload.status !== 'ok') {
+                applyLeadershipRoleGate(false);
+                return;
+            }
+
+            const access = payload.access && typeof payload.access === 'object' ? payload.access : {};
+            applyLeadershipRoleGate(Boolean(
+                access.hasLeadershipRole
+                || access.council
+                || access.leader
+                || access.viceLeader
+            ));
+        } catch (_err) {
+            applyLeadershipRoleGate(false);
+        }
     }
 
     function ensureCouncilBoardEditButtonMarkup() {
@@ -458,6 +504,7 @@
     function applyCouncilBoardFallback() {
         gameNation = '';
         canEdit = false;
+        hasLeadershipRole = false;
         boardState = getDefaultBoardState();
         statusCatalog = buildStatusCatalog();
         renderBoard();
@@ -716,6 +763,9 @@
             const previousStatusId = boardState?.statusId;
             gameNation = String(payload.gameNation || '').trim();
             canEdit = Boolean(payload.canEdit);
+            if (!hasLeadershipRole) {
+                canEdit = false;
+            }
             statusCatalog = Array.isArray(payload.statusCatalog) ? payload.statusCatalog : buildStatusCatalog();
             boardState = payload.board || getDefaultBoardState();
 
@@ -904,6 +954,20 @@
                 openEditor();
             });
         }
+
+        if (global.document.body?.dataset.councilLeadershipGateBound !== 'true') {
+            global.document.body.dataset.councilLeadershipGateBound = 'true';
+            global.addEventListener('royalarmies:age-leadership-access-updated', (event) => {
+                if (typeof event?.detail?.hasLeadershipRole === 'boolean') {
+                    applyLeadershipRoleGate(event.detail.hasLeadershipRole);
+                }
+            });
+            global.addEventListener('royalarmies:headquarters-access-updated', (event) => {
+                if (typeof event?.detail?.hasLeadershipRole === 'boolean') {
+                    applyLeadershipRoleGate(event.detail.hasLeadershipRole);
+                }
+            });
+        }
     }
 
     function startPolling() {
@@ -924,9 +988,11 @@
         bindUi();
         ensureCouncilBoardEditButtonMarkup();
         canEdit = false;
+        hasLeadershipRole = false;
         boardState = getDefaultBoardState();
         statusCatalog = buildStatusCatalog();
         renderBoard();
+        await refreshLeadershipAccessGate();
         await fetchCouncilBoard();
         startPolling();
     }

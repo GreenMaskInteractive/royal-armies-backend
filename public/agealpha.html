@@ -5,19 +5,19 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Royal Armies — Age Alpha</title>
     <link rel="stylesheet" href="style.css?v=cursor-modal-layer-fix-1">
-    <link rel="stylesheet" href="style2.css?v=training-loadout-panels-1">
+    <link rel="stylesheet" href="style2.css?v=unknown-city-no-tabs-1">
     <link rel="stylesheet" href="style-age-headquarters.css?v=utf8-content-fix-1">
     <link rel="stylesheet" href="style-age-center-modals.css?v=garrison-roster-review-1">
-    <link rel="stylesheet" href="style-age-council-room.css?v=hq-header-clicks-2">
+    <link rel="stylesheet" href="style-age-council-room.css?v=leadership-visibility-2">
     <link rel="stylesheet" href="style-age-hq-arcane-flare.css?v=hq-border-blue-pulse-1">
     <link rel="stylesheet" href="style-age-hq-intel.css?v=hq-site-blend-1">
     <link rel="stylesheet" href="mobile-responsive.css?v=commander-nametag-hub-2">
     <link rel="stylesheet" href="dev-page-navigator.css?v=dev-nav-drag-handle-1">
     <link rel="stylesheet" href="custom-cursor.css?v=finger-press-7">
-    <link rel="stylesheet" href="style-age-army-workspaces.css?v=unit-evolution-bulk-1">
+    <link rel="stylesheet" href="style-age-army-workspaces.css?v=gear-shop-barracks-size-1">
     <link rel="stylesheet" href="style-age-banner-workspace.css?v=banner-advisor-profile-1">
     <link rel="stylesheet" href="style-blessed-banners-modal.css?v=banner-skill-select-1">
-    <link rel="stylesheet" href="style-age-map-only.css?v=gear-level-xp-1">
+    <link rel="stylesheet" href="style-age-map-only.css?v=gear-shop-barracks-size-1">
     <link rel="stylesheet" href="style-age-immersive-workspace.css?v=garrison-roster-review-1">
     <link rel="stylesheet" href="style-age-nation-hub-radial.css?v=radialmenu-saved-1">
     <link rel="stylesheet" href="style-age-nation-hub-box.css?v=hub-disabled-actions-1">
@@ -229,6 +229,7 @@
                                 type="button"
                                 id="age-council-board-edit-btn"
                                 class="age-council-board-edit-btn"
+                                data-leadership-only
                                 hidden
                                 aria-label="Edit council board"
                                 title="Edit council board (Leader, Vice Leader, Council, or Planner)">
@@ -1633,7 +1634,7 @@
                             </div>
                         </div>
                     </div>
-                    <button type="button" id="age-hq-manager-toggle" class="age-hq-manager-btn" hidden aria-pressed="false">Open HQ Manager</button>
+                    <button type="button" id="age-hq-manager-toggle" class="age-hq-manager-btn" data-leadership-only hidden aria-pressed="false">Open HQ Manager</button>
                     <button type="button" id="age-council-room-close" class="age-age-center-modal-close" aria-label="Close Headquarters">×</button>
                     <p id="age-hq-load-status" class="age-hq-load-status" hidden aria-live="polite"></p>
                 </header>
@@ -2291,7 +2292,7 @@
     <script src="rift-age-assault-risk.js?v=border-casualty-risk-1"></script>
     <script src="rift-age-watchtower.js?v=commander-rank-names-2"></script>
     <script src="rift-map-ambient-effects.js?v=map-ambient-effects-1"></script>
-    <script src="age-world-map.js?v=city-selection-highlight-persist-1"></script>
+    <script src="age-world-map.js?v=watchtower-current-settlement-1"></script>
     <script src="age-world-map-city-search.js?v=map-city-search-max-zoom-1"></script>
     <script src="rift-age-movement.js?v=travel-confirm-1"></script>
     <script src="rift-age-gold.js?v=starting-gold-40k-1"></script>
@@ -2305,15 +2306,15 @@
     <script src="age-world-map-plan-editor.js?v=leadership-visibility-1"></script>
     <script src="rift-page-paths.js?v=map-settlement-tab-only-1"></script>
     <script src="rift-immersive-workspace.js?v=garrison-roster-review-1"></script>
-    <script src="age-view-tabs.js?v=armory-rank-gate-1"></script>
+    <script src="age-view-tabs.js?v=guild-settlement-tier-3"></script>
     <script src="rift-age-guild-training.js?v=infirmary-army-roster-1"></script>
-    <script src="age-adventurers-guild.js?v=training-loadout-panels-1"></script>
+    <script src="age-adventurers-guild.js?v=guild-settlement-tier-3"></script>
     <script src="rift-nation-treasury.js?v=defense-treasury-only-1"></script>
     <script src="rift-infirmary-recovery.js?v=infirmary-tier-heal-scale-2"></script>
     <script src="rift-banner-workspace.js?v=banner-skill-branches-1"></script>
     <script src="blessed-banners-modal.js?v=modal-close-audit-1"></script>
     <script src="rift-age-gear-shop.js?v=training-loadout-panels-1"></script>
-    <script src="age-settlement-venue-workspaces.js?v=infirmary-army-roster-2"></script>
+    <script src="age-settlement-venue-workspaces.js?v=gear-shop-barracks-size-1"></script>
     <script src="rift-age-unit-evolution.js?v=unit-evolution-bulk-1"></script>
     <script src="rift-age-roster-review.js?v=garrison-roster-review-1"></script>
     <script src="age-unit-evolution.js?v=unit-evolution-bulk-1"></script>
@@ -2322,7 +2323,7 @@
     <script src="age-barracks.js?v=garrison-roster-menu-1"></script>
     <script src="age-army-groups.js?v=commander-rank-names-2"></script>
     <script src="age-records.js?v=commander-rank-names-2"></script>
-    <script src="age-council-board.js?v=plan-author-gate-1"></script>
+    <script src="age-council-board.js?v=leadership-visibility-2"></script>
     <script src="age-war-ledger.js?v=modal-close-audit-1"></script>
     <script src="rift-song-manuscript-catalog.js?v=blood-tithe-manuscript-1"></script>
     <script src="rift-discoveries-workspace.js?v=nation-hub-radial-1"></script>
@@ -2330,7 +2331,7 @@
     <script src="age-nation-hub.js?v=hub-disabled-actions-1"></script>
     <script src="rift-official-age.js?v=age-join-after-reset-1"></script>
     <script src="age-headquarters-intel.js?v=leadership-visibility-1"></script>
-    <script src="age-headquarters.js?v=leadership-visibility-1"></script>
+    <script src="age-headquarters.js?v=leadership-visibility-2"></script>
     <script src="age-left-reports-panel.js?v=terrain-bonus-two-col-1"></script>
     <script src="age-quick-tips-panel.js?v=quick-tips-left-hud-1"></script>
     <script src="nexus-player-report-catalog.js?v=modal-close-audit-1"></script>

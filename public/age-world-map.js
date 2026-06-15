@@ -183,6 +183,7 @@
     let panMoved = false;
     const PAN_LOCK_ROOT_CLASS = 'age-world-map-pan-locked';
     let selectedCityId = '';
+    let lastWatchtowerTargetCityId = '';
     let playerMapCityId = '';
     let labelPhase = '';
     let labelOpacities = { continent: 1, region: 0, nation: 0, city: 0 };
@@ -216,7 +217,8 @@
     let mapTransformEventFrame = 0;
 
     function setCityDrawerTab(tabId) {
-        const target = tabId === 'defenses' ? 'defenses' : 'info';
+        const maskedDrawer = Boolean(els.drawer?.classList.contains('is-masked-city'));
+        const target = maskedDrawer ? 'info' : (tabId === 'defenses' ? 'defenses' : 'info');
         drawerActiveTab = target;
 
         if (els.drawerSideTabs) {
@@ -246,6 +248,7 @@
         els.drawerSideTabs.dataset.drawerTabsBound = 'true';
 
         els.drawerSideTabs.addEventListener('click', (event) => {
+            if (els.drawer?.classList.contains('is-masked-city')) return;
             const tab = event.target.closest('[data-city-drawer-tab]');
             if (!tab) return;
             event.preventDefault();
@@ -395,6 +398,7 @@
         const city = cityById.get(cityId);
         if (!city || !els.drawer || els.drawer.hidden) return;
 
+        syncCityDrawerMaskedPresentation(city);
         refreshDrawerMovementActions(city);
         const borderHints = movement.getBorderActionHints?.(city, resolveActivePlayerCatalogCityId()) || {};
         refreshDrawerWatchtowerButton(city, borderHints);
@@ -406,6 +410,37 @@
 
     function isMaskedCity(city) {
         return Boolean(city?.masked);
+    }
+
+    function syncCityDrawerMaskedPresentation(city) {
+        const masked = isMaskedCity(city);
+        if (els.drawer) {
+            els.drawer.classList.toggle('is-masked-city', masked);
+        }
+
+        if (els.drawerSideTabs) {
+            els.drawerSideTabs.hidden = masked;
+            if (masked) {
+                els.drawerSideTabs.setAttribute('hidden', '');
+                els.drawerSideTabs.setAttribute('aria-hidden', 'true');
+            } else {
+                els.drawerSideTabs.removeAttribute('hidden');
+                els.drawerSideTabs.setAttribute('aria-hidden', 'false');
+            }
+        }
+
+        const eyebrow = els.drawer?.querySelector('.age-world-city-drawer-eyebrow');
+        if (eyebrow) {
+            eyebrow.textContent = masked ? 'Restricted Settlement' : 'City Info';
+        }
+
+        if (masked) {
+            setCityDrawerTab('info');
+            if (els.drawerPanelDefenses) {
+                els.drawerPanelDefenses.hidden = true;
+                els.drawerPanelDefenses.classList.remove('is-active');
+            }
+        }
     }
 
     function resolveLiveCityHolder(city) {
@@ -5017,6 +5052,51 @@
         }
     }
 
+    function listWatchtowerBorderTargets(playerCityId) {
+        const playerCity = cityById.get(playerCityId);
+        if (!playerCity || !Array.isArray(playerCity.neighbors)) return [];
+
+        const movement = global.RoyalArmiesAgeMovement;
+        if (!movement?.getBorderActionHints) return [];
+
+        return playerCity.neighbors
+            .map((neighborId) => cityById.get(neighborId))
+            .filter((neighbor) => {
+                if (!neighbor || isMaskedCity(neighbor)) return false;
+                const neighborHints = movement.getBorderActionHints(neighbor, playerCityId) || {};
+                return String(neighborHints.relationship || '').trim().toLowerCase() === 'hostile';
+            });
+    }
+
+    function isWatchtowerBorderTargetCity(cityId, playerCityId) {
+        if (!cityId || !playerCityId || cityId === playerCityId) return false;
+        return listWatchtowerBorderTargets(playerCityId).some((target) => target.id === cityId);
+    }
+
+    function resolveWatchtowerTargetCityId() {
+        const playerCityId = resolveActivePlayerCatalogCityId();
+        if (!playerCityId) return '';
+
+        if (
+            lastWatchtowerTargetCityId
+            && isWatchtowerBorderTargetCity(lastWatchtowerTargetCityId, playerCityId)
+        ) {
+            return lastWatchtowerTargetCityId;
+        }
+
+        return listWatchtowerBorderTargets(playerCityId)[0]?.id || '';
+    }
+
+    function syncWatchtowerTargetAfterMovement() {
+        const playerCityId = resolveActivePlayerCatalogCityId();
+        if (
+            lastWatchtowerTargetCityId
+            && !isWatchtowerBorderTargetCity(lastWatchtowerTargetCityId, playerCityId)
+        ) {
+            lastWatchtowerTargetCityId = '';
+        }
+    }
+
     function refreshDrawerWatchtowerButton(city, hints) {
         const button = els.drawerWatchtowerOpen;
         if (!button || !city) return;
@@ -5029,26 +5109,21 @@
         }
 
         const relationship = String(hints?.relationship || 'remote').trim().toLowerCase();
-        const isBordering = relationship !== 'remote' && relationship !== 'current';
-        const canUseWatchtower = isBordering && relationship === 'hostile';
+        const isCurrentSettlement = relationship === 'current';
+        const hasBorderTarget = Boolean(resolveWatchtowerTargetCityId());
+        const canUseWatchtower = isCurrentSettlement && hasBorderTarget;
 
-        button.hidden = false;
+        button.hidden = !isCurrentSettlement;
         button.disabled = !canUseWatchtower;
         button.setAttribute('aria-disabled', canUseWatchtower ? 'false' : 'true');
 
-        if (!isBordering) {
-            button.title = relationship === 'current'
-                ? 'Your current city — border a hostile or neutral settlement to use the Watchtower.'
-                : 'Establish a bordering presence on this city to use the Watchtower.';
+        if (!isCurrentSettlement) {
             return;
         }
 
-        if (relationship === 'ally') {
-            button.title = 'Watchtower intel is for hostile and neutral borders only.';
-            return;
-        }
-
-        button.title = 'Open the Watchtower to spy the garrison, scout commanders, and seize hostile players.';
+        button.title = hasBorderTarget
+            ? 'Open the Watchtower to spy the garrison, scout commanders, and seize hostile players at the border.'
+            : 'Border a hostile settlement to unlock Watchtower intel from this city.';
     }
 
     const INFILTRATE_BUTTON_LABEL = 'Attempt Infiltration';
@@ -5470,11 +5545,17 @@
             city,
             resolveActivePlayerCatalogCityId()
         ) || {};
+        if (
+            String(borderHints.relationship || '').trim().toLowerCase() === 'hostile'
+            && city.id !== resolveActivePlayerCatalogCityId()
+        ) {
+            lastWatchtowerTargetCityId = city.id;
+        }
         refreshDrawerWatchtowerButton(city, borderHints);
         refreshDrawerScoutIntel(city, borderHints);
         void refreshDrawerAssaultRisk(city, borderHints);
         void refreshDrawerMovementContext(cityId);
-        if (els.drawerSideTabs) els.drawerSideTabs.hidden = masked;
+        syncCityDrawerMaskedPresentation(city);
         setCityDrawerTab('info');
 
         const canScout = !masked && playerBordersCity(city);
@@ -5516,6 +5597,12 @@
         if (!els.drawer) return;
         els.drawer.hidden = true;
         els.drawer.setAttribute('aria-hidden', 'true');
+        els.drawer.classList.remove('is-masked-city');
+        if (els.drawerSideTabs) {
+            els.drawerSideTabs.hidden = false;
+            els.drawerSideTabs.removeAttribute('hidden');
+            els.drawerSideTabs.setAttribute('aria-hidden', 'false');
+        }
         selectedCityId = '';
         clearCityHighlight();
     }
@@ -5865,9 +5952,10 @@
             event.preventDefault();
             event.stopPropagation();
             if (els.drawerWatchtowerOpen?.disabled) return;
-            const city = cityById.get(selectedCityId);
-            if (!city) return;
-            global.RoyalArmiesAgeWatchtower?.open?.(city.id, city.name);
+            const targetCityId = resolveWatchtowerTargetCityId();
+            if (!targetCityId) return;
+            const targetCity = cityById.get(targetCityId);
+            global.RoyalArmiesAgeWatchtower?.open?.(targetCityId, targetCity?.name || targetCityId);
         });
         global.document.getElementById('age-world-battle-report-close')?.addEventListener('click', closeBattleReportModal);
         global.document.getElementById('age-world-battle-report-backdrop')?.addEventListener('click', closeBattleReportModal);
@@ -5888,6 +5976,7 @@
                 return;
             }
             syncPlayerMapCityFromMovement();
+            syncWatchtowerTargetAfterMovement();
             global.RoyalArmiesAgeMovementPanel?.syncCatalogCity?.(playerMapCityId);
             global.RoyalArmiesPlayerLocPins?.refreshLocalPlayerPin?.();
             refreshPlayerLocPinAndLabelCollisions();

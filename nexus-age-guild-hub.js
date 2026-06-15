@@ -310,9 +310,67 @@ function buildGuildHubJobEntry(job, rank, settlementTier, commander) {
 
         minRank: job.minRank,
 
-        maxRank: job.maxRank
+        maxRank: job.maxRank,
+
+        settlementGate: {
+
+            minSettlementTier: job.minSettlementTier || 'village',
+
+            excludeSettlementTiers: Array.isArray(job.excludeSettlementTiers) ? job.excludeSettlementTiers : [],
+
+            venueTiers: Array.isArray(job.venueTiers) && job.venueTiers.length ? job.venueTiers : null
+
+        }
 
     };
+
+}
+
+
+
+function isBountyVenueTier(settlementTier) {
+
+    const tier = normalizeSettlementTier(settlementTier);
+
+    return tier === 'citadel' || tier === 'kingdom';
+
+}
+
+
+
+function shouldIncludeGuildHubJob(job, settlementTier) {
+
+    const tier = normalizeSettlementTier(settlementTier);
+
+    const tierRank = resolveTierRank(tier);
+
+
+
+    if (Array.isArray(job.venueTiers) && job.venueTiers.length) {
+
+        return job.venueTiers.includes(tier);
+
+    }
+
+
+
+    if (Array.isArray(job.excludeSettlementTiers) && job.excludeSettlementTiers.includes(tier)) {
+
+        return false;
+
+    }
+
+
+
+    if (job.minSettlementTier) {
+
+        return tierRank >= resolveTierRank(job.minSettlementTier);
+
+    }
+
+
+
+    return true;
 
 }
 
@@ -324,7 +382,23 @@ function buildGuildHubManifest(commander, settlementTier) {
 
     const tier = normalizeSettlementTier(settlementTier);
 
-    const jobs = GUILD_HUB_JOBS.map((job) => buildGuildHubJobEntry(job, rank, tier, commander));
+    const jobs = GUILD_HUB_JOBS
+
+        .filter((job) => shouldIncludeGuildHubJob(job, tier))
+
+        .map((job) => buildGuildHubJobEntry(job, rank, tier, commander));
+
+    const preferredTrainingJobId = rank >= 14
+
+        ? 'border-patrol'
+
+        : (rank >= 7 ? 'civilian-transport' : 'street-patrol');
+
+    const primaryTrainingJobId = jobs.some((entry) => entry.id === preferredTrainingJobId)
+
+        ? preferredTrainingJobId
+
+        : (jobs.find((entry) => entry.kind === 'training')?.id || preferredTrainingJobId);
 
 
 
@@ -338,11 +412,7 @@ function buildGuildHubManifest(commander, settlementTier) {
 
         jobs,
 
-        primaryTrainingJobId: rank >= 14
-
-            ? 'border-patrol'
-
-            : (rank >= 7 ? 'civilian-transport' : 'street-patrol')
+        primaryTrainingJobId
 
     };
 
@@ -375,16 +445,6 @@ function resolveTrainingModeAvailability(commander, settlementTier, trainingMode
     }
 
     return { ok: true, job };
-
-}
-
-
-
-function isBountyVenueTier(settlementTier) {
-
-    const tier = normalizeSettlementTier(settlementTier);
-
-    return tier === 'citadel' || tier === 'kingdom';
 
 }
 

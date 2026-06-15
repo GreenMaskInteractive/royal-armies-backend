@@ -85,6 +85,11 @@
     cursor: wait;
 }
 
+.age-hq-manager-btn[hidden] {
+    display: none !important;
+    pointer-events: none;
+}
+
 .age-council-room-header .age-hq-dispatch-panel:not([hidden]) ~ .age-hq-manager-btn {
     grid-column: 4;
 }

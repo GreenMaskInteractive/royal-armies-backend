@@ -76,7 +76,100 @@
     }
 
     function resolveSettlementTierFromEvent(event) {
-        return String(event?.detail?.settlementTier || settlementTier || 'village').trim().toLowerCase();
+        const fromEvent = String(event?.detail?.settlementTier || '').trim().toLowerCase();
+        if (fromEvent && SETTLEMENT_TIER_ORDER[fromEvent]) {
+            return fromEvent;
+        }
+        return resolveCurrentSettlementTier();
+    }
+
+    const SETTLEMENT_TIER_ORDER = Object.freeze({
+        village: 1,
+        town: 2,
+        city: 3,
+        citadel: 4,
+        kingdom: 5
+    });
+
+    const GUILD_JOB_MIN_SETTLEMENT_TIER = Object.freeze({
+        'street-patrol': 'village',
+        'civilian-transport': 'town',
+        'trade-convoy': 'village',
+        'border-patrol': 'town',
+        'player-bounties': 'citadel'
+    });
+
+    function normalizeSettlementTier(value) {
+        const tier = String(value || 'village').trim().toLowerCase();
+        return SETTLEMENT_TIER_ORDER[tier] ? tier : 'village';
+    }
+
+    function resolveSettlementTierRank(tier) {
+        return SETTLEMENT_TIER_ORDER[normalizeSettlementTier(tier)] || 1;
+    }
+
+    function resolveCurrentSettlementTier() {
+        const devOverride = global.RoyalArmiesSettlementPage?.getDevTierOverride?.();
+        if (devOverride && SETTLEMENT_TIER_ORDER[devOverride]) {
+            return devOverride;
+        }
+
+        const city = global.RoyalArmiesAgeMovementPanel?.getDisplayedCity?.()
+            || global.RoyalArmiesAgeMovementPanel?.getCurrentCity?.();
+        if (city?.settlementTier) {
+            return normalizeSettlementTier(city.settlementTier);
+        }
+
+        return normalizeSettlementTier(settlementTier);
+    }
+
+    function syncSettlementTierFromContext() {
+        settlementTier = resolveCurrentSettlementTier();
+        resolveApi()?.setSettlementTier?.(settlementTier);
+        return settlementTier;
+    }
+
+    function resolveJobMinSettlementTier(job) {
+        const gate = job?.settlementGate && typeof job.settlementGate === 'object'
+            ? job.settlementGate
+            : null;
+        if (gate?.minSettlementTier) {
+            return normalizeSettlementTier(gate.minSettlementTier);
+        }
+        const jobId = String(job?.id || '').trim().toLowerCase();
+        if (jobId && GUILD_JOB_MIN_SETTLEMENT_TIER[jobId]) {
+            return GUILD_JOB_MIN_SETTLEMENT_TIER[jobId];
+        }
+        return 'village';
+    }
+
+    function jobMatchesSettlementSize(job, tier) {
+        if (!job) return false;
+
+        const normalized = normalizeSettlementTier(tier);
+        const gate = job.settlementGate && typeof job.settlementGate === 'object'
+            ? job.settlementGate
+            : null;
+
+        if (Array.isArray(gate?.venueTiers) && gate.venueTiers.length) {
+            return gate.venueTiers.includes(normalized);
+        }
+
+        if (Array.isArray(gate?.excludeSettlementTiers) && gate.excludeSettlementTiers.includes(normalized)) {
+            return false;
+        }
+
+        const minTier = resolveJobMinSettlementTier(job);
+        return resolveSettlementTierRank(normalized) >= resolveSettlementTierRank(minTier);
+    }
+
+    function filterGuildJobsForSettlement(jobs, tier) {
+        return (Array.isArray(jobs) ? jobs : []).filter((job) => jobMatchesSettlementSize(job, tier));
+    }
+
+    function resolveHubJobsForCurrentSettlement(hub) {
+        const jobs = Array.isArray(hub?.jobs) ? hub.jobs : [];
+        return filterGuildJobsForSettlement(jobs, resolveCurrentSettlementTier());
     }
 
     function mergeGuildState(payload) {
@@ -104,8 +197,8 @@
             commanderGear: payload.commanderGear ?? guildState?.commanderGear ?? null
         };
         if (payload.hub) hubManifest = payload.hub;
-        if (payload.hub?.settlementTier) {
-            settlementTier = String(payload.hub.settlementTier).trim().toLowerCase();
+        if (payload.settlementTier) {
+            settlementTier = normalizeSettlementTier(payload.settlementTier);
         }
         if (Array.isArray(payload.bounties)) bountyList = payload.bounties;
         if (payload.bountyRewards) bountyRewards = payload.bountyRewards;
@@ -398,7 +491,7 @@
         const hub = hubManifest || { jobs: [], settlementTierLabel: 'Settlement', rank: 1 };
         if (!host) return;
 
-        const jobs = Array.isArray(hub.jobs) ? hub.jobs : [];
+        const jobs = resolveHubJobsForCurrentSettlement(hub);
         let nextHtml;
         if (!jobs.length && options.loading) {
             nextHtml = '<p class="age-settlement-guild-jobs-empty">Loading guild contracts…</p>';
@@ -425,7 +518,9 @@
         guildJobsExpanded = false;
         guildHubModalEntry = true;
         syncSettlementMenuGuild();
-        settlementTier = String(detail?.settlementTier || settlementTier || 'village').trim().toLowerCase();
+        settlementTier = detail?.settlementTier
+            ? normalizeSettlementTier(detail.settlementTier)
+            : syncSettlementTierFromContext();
         resolveApi()?.setSettlementTier?.(settlementTier);
 
         renderGuildHubJobs({ loading: true });
@@ -501,7 +596,7 @@
         const hub = hubManifest || { jobs: [], settlementTierLabel: 'Settlement', rank: 1 };
         if (!optionsEl) return;
 
-        const jobs = Array.isArray(hub.jobs) ? hub.jobs : [];
+        const jobs = resolveHubJobsForCurrentSettlement(hub);
         let nextHtml;
         if (!jobs.length && options.loading) {
             nextHtml = '<p class="age-settlement-guild-jobs-empty">Loading guild contracts…</p>';
@@ -536,10 +631,15 @@
     }
 
     async function ensureSettlementGuildHubLoaded(detail = {}) {
-        settlementTier = String(detail?.settlementTier || settlementTier || 'village').trim().toLowerCase();
+        const nextTier = detail?.settlementTier
+            ? normalizeSettlementTier(detail.settlementTier)
+            : syncSettlementTierFromContext();
+        settlementTier = nextTier;
         resolveApi()?.setSettlementTier?.(settlementTier);
 
-        if (Array.isArray(hubManifest?.jobs) && hubManifest.jobs.length) {
+        const cachedTier = normalizeSettlementTier(hubManifest?.settlementTier || '');
+        const hasCachedJobs = Array.isArray(hubManifest?.jobs) && hubManifest.jobs.length;
+        if (hasCachedJobs && cachedTier === settlementTier) {
             return hubManifest;
         }
 
@@ -547,8 +647,17 @@
         return hubManifest;
     }
 
+    async function refreshGuildJobsForSettlementChange() {
+        syncSettlementTierFromContext();
+        await ensureSettlementGuildHubLoaded({ settlementTier });
+        if (guildJobsExpanded) renderSettlementGuildJobs();
+        if (hubViewActive) renderGuildHubJobs();
+    }
+
     async function toggleSettlementJobs(detail) {
-        settlementTier = String(detail?.settlementTier || settlementTier || 'village').trim().toLowerCase();
+        settlementTier = detail?.settlementTier
+            ? normalizeSettlementTier(detail.settlementTier)
+            : syncSettlementTierFromContext();
         resolveApi()?.setSettlementTier?.(settlementTier);
 
         guildHubModalEntry = false;
@@ -1632,7 +1741,8 @@
 
     function openJob(jobId) {
         const hub = hubManifest || { jobs: [] };
-        const job = (hub.jobs || []).find((entry) => entry.id === jobId);
+        const job = filterGuildJobsForSettlement(hub.jobs || [], resolveCurrentSettlementTier())
+            .find((entry) => entry.id === jobId);
         if (!job || !job.available) return;
 
         if (job.kind === 'training') {
@@ -1683,6 +1793,7 @@
         if (!api?.fetchGuildState) return null;
 
         guildStateLoadInFlight = (async () => {
+            syncSettlementTierFromContext();
             api.setSettlementTier?.(settlementTier);
             try {
                 mergeGuildState(await api.fetchGuildState({ settlementTier }));
@@ -1823,6 +1934,20 @@
             if (guildJobsExpanded) renderSettlementGuildJobs();
             if (isOpen()) renderGuildPanel();
         });
+        global.addEventListener('royalarmies:age-movement-updated', (event) => {
+            if (event?.detail?.eventSource === 'guild-sync') return;
+            const previousTier = settlementTier;
+            syncSettlementTierFromContext();
+            if (
+                previousTier !== settlementTier
+                || guildJobsExpanded
+                || hubViewActive
+                || overlayJobActive
+                || trainingViewActive
+            ) {
+                void refreshGuildJobsForSettlementChange();
+            }
+        });
         global.addEventListener('royalarmies:age-recruitment-updated', () => {
             if (!guildJobsExpanded && !isOpen()) return;
             void loadGuildState().then(() => {
@@ -1853,6 +1978,7 @@
         collapseSettlementJobs,
         syncSettlementMenuGuild,
         ensureSettlementGuildHubLoaded,
+        refreshGuildJobsForSettlementChange,
         openSettlementHub,
         openJob,
         closeJobWorkspace,

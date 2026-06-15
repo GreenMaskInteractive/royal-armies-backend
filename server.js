@@ -1742,15 +1742,10 @@ function appendGameChatNationSystemEventToStore(store, nationKey, text) {
     return { entry };
 }
 
-/** Council board edit — elected leadership; local dev owner bypass for caleb_admin QA only. */
-function canEditNationCouncilBoard(commander) {
+function commanderHasNationLeadershipRole(commander) {
     const username = normalizeHeadquartersUsername(commander?.username);
     const storageKey = getCouncilBoardStorageKey(resolveCouncilBoardNationKey(commander));
     if (!username || !storageKey) return false;
-
-    if (isLocalDevOwnerLeadershipBypass(username)) {
-        return true;
-    }
 
     const leadership = readNationLeadershipForNation(storageKey);
     if (!leadership) return false;
@@ -1759,6 +1754,18 @@ function canEditNationCouncilBoard(commander) {
         || leadership.viceLeaderUsername === username
         || leadership.councilUsernames.includes(username)
         || leadership.plannerUsernames.includes(username);
+}
+
+/** Council board edit — elected leadership; local dev owner bypass for caleb_admin QA only. */
+function canEditNationCouncilBoard(commander) {
+    const username = normalizeHeadquartersUsername(commander?.username);
+    if (!username) return false;
+
+    if (isLocalDevOwnerLeadershipBypass(username)) {
+        return true;
+    }
+
+    return commanderHasNationLeadershipRole(commander);
 }
 
 function normalizeHeadquartersUsername(value) {
@@ -1847,6 +1854,7 @@ function resolveHeadquartersAccessForCommander(commander) {
             viceLeader: false,
             fullAuthority: false,
             memberHub: false,
+            hasLeadershipRole: false,
             nationAuthority
         };
     }
@@ -1857,6 +1865,7 @@ function resolveHeadquartersAccessForCommander(commander) {
             ...adminAccess,
             fullAuthority: true,
             memberHub: true,
+            hasLeadershipRole: true,
             nationAuthority: {
                 established: true,
                 rank14Count: NATION_AUTHORITY_MIN_RANK14,
@@ -1874,6 +1883,7 @@ function resolveHeadquartersAccessForCommander(commander) {
             viceLeader: false,
             fullAuthority: false,
             memberHub: false,
+            hasLeadershipRole: false,
             nationAuthority
         };
     }
@@ -1893,6 +1903,9 @@ function resolveHeadquartersAccessForCommander(commander) {
     const inNation = nationRoster.some((row) => row.id === username)
         || (Boolean(storageKey) && commanderNationKey === storageKey);
 
+    const hasLeadershipRole = isHeadquartersOwnerBypass(username)
+        || commanderHasNationLeadershipRole(commander);
+
     return {
         gameNation: storageKey,
         council: fullAuthority && (isLeader || isViceLeader || isCouncilMember || isPlanner),
@@ -1900,6 +1913,7 @@ function resolveHeadquartersAccessForCommander(commander) {
         viceLeader: fullAuthority && isViceLeader,
         fullAuthority,
         memberHub: inNation,
+        hasLeadershipRole,
         nationAuthority
     };
 }

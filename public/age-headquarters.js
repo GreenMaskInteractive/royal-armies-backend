@@ -216,9 +216,36 @@
             access.council
             || access.leader
             || access.viceLeader
+            || access.hasLeadershipRole
             || access.fullAuthority
             || access.memberHub
         );
+    }
+
+    function mergeHeadquartersAccessSlice(previous, incoming) {
+        const prev = previous && typeof previous === 'object' ? previous : {};
+        if (!incoming || typeof incoming !== 'object') {
+            return { ...prev };
+        }
+
+        return {
+            ...prev,
+            ...incoming,
+            council: 'council' in incoming ? Boolean(incoming.council) : false,
+            leader: 'leader' in incoming ? Boolean(incoming.leader) : false,
+            viceLeader: 'viceLeader' in incoming ? Boolean(incoming.viceLeader) : false,
+            hasLeadershipRole: 'hasLeadershipRole' in incoming
+                ? Boolean(incoming.hasLeadershipRole)
+                : false,
+            fullAuthority: 'fullAuthority' in incoming
+                ? Boolean(incoming.fullAuthority)
+                : Boolean(prev.fullAuthority),
+            memberHub: 'memberHub' in incoming
+                ? Boolean(incoming.memberHub)
+                : Boolean(prev.memberHub),
+            nationAuthority: incoming.nationAuthority || prev.nationAuthority,
+            gameNation: String(incoming.gameNation || prev.gameNation || '').trim()
+        };
     }
 
     function coalesceHeadquartersWorkspace(incoming, options = {}) {
@@ -229,10 +256,9 @@
         const merged = {
             ...previous,
             ...incoming,
-            access: {
-                ...(previous.access || {}),
-                ...(incoming.access || {})
-            },
+            access: incoming.access && typeof incoming.access === 'object'
+                ? mergeHeadquartersAccessSlice({}, incoming.access)
+                : mergeHeadquartersAccessSlice(previous.access, incoming.access),
             vote: incoming.vote && typeof incoming.vote === 'object'
                 ? { ...previous.vote, ...incoming.vote }
                 : previous.vote,
@@ -256,7 +282,7 @@
         };
 
         if (!hasMeaningfulWorkspaceAccess(incoming.access) && hasMeaningfulWorkspaceAccess(previous.access)) {
-            merged.access = { ...(previous.access || {}) };
+            merged.access = mergeHeadquartersAccessSlice(previous.access, incoming.access);
         }
 
         return merged;
@@ -328,6 +354,9 @@
             return true;
         }
         if (!access) return false;
+        if (typeof access.hasLeadershipRole === 'boolean') {
+            return access.hasLeadershipRole;
+        }
         return Boolean(access.council || access.leader || access.viceLeader);
     }
 
@@ -536,7 +565,8 @@
         }
 
         if (!hqManagerEligible) {
-            hqManagerOpenRequested = true;
+            hqManagerOpenRequested = false;
+            resetHeadquartersManagerMode();
             flushHeadquartersViewMode();
             return;
         }
@@ -548,6 +578,9 @@
     }
 
     function toggleHqManagerMode() {
+        if (!hqManagerEligible && !hasActiveManagerControls()) {
+            return;
+        }
         if (hasActiveManagerControls()) {
             setHqManagerModeOpen(false);
             return;
@@ -858,7 +891,8 @@
                 leader: true,
                 viceLeader: true,
                 fullAuthority: true,
-                memberHub: true
+                memberHub: true,
+                hasLeadershipRole: true
             },
             nationAuthority: {
                 established: true,
@@ -949,7 +983,8 @@
                 leader: true,
                 viceLeader: true,
                 fullAuthority: true,
-                memberHub: true
+                memberHub: true,
+                hasLeadershipRole: true
             },
             nationAuthority: base.nationAuthority || fallback.nationAuthority,
             diplomacyPublic: base.diplomacyPublic || fallback.diplomacyPublic,
