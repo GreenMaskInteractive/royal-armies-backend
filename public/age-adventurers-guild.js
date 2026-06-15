@@ -49,6 +49,7 @@
     let trainingViewActive = false;
     let overlayJobActive = false;
     let hubViewActive = false;
+    let guildHubModalEntry = false;
 
     function escapeHtml(value) {
         return String(value ?? '')
@@ -311,25 +312,42 @@
         refreshGuildWorkspaceVisibility();
     }
 
-    function returnToGuildHub() {
+    function returnFromGuildJobModal() {
         battleControlsReset();
         setTrainingViewOpen(false);
         setOverlayJobOpen(false);
-        setHubViewOpen(true);
-        showJobArena('hub');
-        renderGuildHubJobs();
-        renderGuildPanel();
-        refreshGuildWorkspaceVisibility();
+        hideAllJobArenas();
+        activeView = null;
+        if (guildHubModalEntry) {
+            setHubViewOpen(true);
+            showJobArena('hub');
+            renderGuildHubJobs();
+            renderGuildPanel();
+            refreshGuildWorkspaceVisibility();
+            return;
+        }
+        closeJobWorkspace();
+    }
+
+    function returnToGuildHub() {
+        returnFromGuildJobModal();
     }
 
     function closeAllGuildModals() {
+        guildHubModalEntry = false;
         guildJobsExpanded = false;
         syncSettlementMenuGuild();
         closeTrainingView({ skipViewRestore: true });
     }
 
+    function closeGuildJobModal() {
+        guildHubModalEntry = false;
+        closeTrainingView({ skipViewRestore: true });
+    }
+
     function dismissGuildWorkspacesForSettlementAction() {
         guildJobsExpanded = false;
+        guildHubModalEntry = false;
         syncSettlementMenuGuild();
         if (trainingViewActive || overlayJobActive || hubViewActive) {
             closeTrainingView({ skipViewRestore: true });
@@ -396,8 +414,16 @@
     }
 
     async function openSettlementHub(detail = {}) {
+        if (resolveGuildJobsContainer()) {
+            if (!guildJobsExpanded) {
+                await toggleSettlementJobs(detail);
+            }
+            return;
+        }
+
         global.RoyalArmiesSettlementVenueWorkspaces?.close?.();
         guildJobsExpanded = false;
+        guildHubModalEntry = true;
         syncSettlementMenuGuild();
         settlementTier = String(detail?.settlementTier || settlementTier || 'village').trim().toLowerCase();
         resolveApi()?.setSettlementTier?.(settlementTier);
@@ -522,11 +548,17 @@
     }
 
     async function toggleSettlementJobs(detail) {
-        if (hubViewActive && !trainingViewActive && !overlayJobActive) {
-            closeAllGuildModals();
-            return;
+        settlementTier = String(detail?.settlementTier || settlementTier || 'village').trim().toLowerCase();
+        resolveApi()?.setSettlementTier?.(settlementTier);
+
+        guildHubModalEntry = false;
+        guildJobsExpanded = !guildJobsExpanded;
+        syncSettlementMenuGuild();
+        if (guildJobsExpanded) {
+            renderSettlementGuildJobs({ loading: !Array.isArray(hubManifest?.jobs) || !hubManifest.jobs.length });
+            await ensureSettlementGuildHubLoaded({ settlementTier });
+            renderSettlementGuildJobs();
         }
-        await openSettlementHub(detail);
     }
 
     function loadExtendedBattleLogPreference() {
@@ -1655,7 +1687,7 @@
             if (hubViewActive && !trainingViewActive && !overlayJobActive) {
                 closeAllGuildModals();
             } else if (trainingViewActive || overlayJobActive) {
-                returnToGuildHub();
+                returnFromGuildJobModal();
             } else {
                 closeAllGuildModals();
             }
@@ -1663,13 +1695,17 @@
         }
         if (event.target.closest('[data-age-guild-close]')) {
             event.preventDefault();
-            closeAllGuildModals();
+            if (trainingViewActive || overlayJobActive) {
+                closeGuildJobModal();
+            } else {
+                closeAllGuildModals();
+            }
             return;
         }
         if (event.target.closest('[data-age-guild-back]') || event.target.closest('#age-guild-training-return-btn')) {
             event.preventDefault();
             if (trainingViewActive || overlayJobActive) {
-                returnToGuildHub();
+                returnFromGuildJobModal();
             } else {
                 closeAllGuildModals();
             }
@@ -1737,7 +1773,7 @@
         if (event.key === 'Escape' && isOpen()) {
             event.preventDefault();
             if (trainingViewActive || overlayJobActive) {
-                returnToGuildHub();
+                returnFromGuildJobModal();
             } else {
                 closeAllGuildModals();
             }

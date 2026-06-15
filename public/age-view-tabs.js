@@ -529,9 +529,13 @@
                 : '';
             const mark = escapeSettlementMenuHtml(resolveVenueMark(venue.id));
             const label = escapeSettlementMenuHtml(venue.label);
-            const isExpandable = venue.id === 'barracks';
-            const subPanelId = venue.id === 'barracks' ? 'age-settlement-garrison-options' : '';
-            const wrapClass = venue.id === 'barracks' ? 'age-settlement-menu-garrison-wrap' : '';
+            const isExpandable = venue.id === 'adventurers-guild' || venue.id === 'barracks';
+            const subPanelId = venue.id === 'adventurers-guild'
+                ? 'age-settlement-guild-jobs'
+                : (venue.id === 'barracks' ? 'age-settlement-garrison-options' : '');
+            const wrapClass = venue.id === 'adventurers-guild'
+                ? 'age-settlement-menu-guild-wrap'
+                : (venue.id === 'barracks' ? 'age-settlement-menu-garrison-wrap' : '');
             const itemHtml = (
                 `<button type="button" class="age-settlement-menu-item${placementClass}${isExpandable ? ' age-settlement-menu-item--expandable' : ''}"`
                 + ` data-settlement-venue="${escapeSettlementMenuHtml(venue.id)}"`
@@ -544,6 +548,15 @@
                 + `<span class="age-settlement-menu-item-chevron" aria-hidden="true">${isExpandable ? '▾' : '›'}</span>`
                 + '</button>'
             );
+
+            if (venue.id === 'adventurers-guild') {
+                return (
+                    `<div class="${wrapClass}">`
+                    + itemHtml
+                    + '<div id="age-settlement-guild-jobs" class="age-settlement-guild-jobs" hidden></div>'
+                    + '</div>'
+                );
+            }
 
             if (venue.id === 'barracks') {
                 return (
@@ -687,10 +700,12 @@
         const tier = resolveSettlementTier();
 
         if (normalizedVenueId === 'adventurers-guild') {
-            void global.RoyalArmiesAdventurersGuild?.openSettlementHub?.({
-                settlementTier: tier,
-                city: resolveCurrentCity()
-            });
+            if (typeof global.RoyalArmiesAdventurersGuild?.toggleSettlementJobs === 'function') {
+                void global.RoyalArmiesAdventurersGuild.toggleSettlementJobs({
+                    settlementTier: tier,
+                    city: resolveCurrentCity()
+                });
+            }
             return;
         }
 
