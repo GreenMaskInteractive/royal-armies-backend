@@ -189,29 +189,28 @@ body.age-page-settlement-only .age-settlement-venue-shell {
 }
 
 body.age-page-settlement-only .age-settlement-venue-workspace.is-gear-shop-venue {
-    padding: 72px 48px 48px;
+    align-items: center;
+    justify-content: center;
+    padding: 1.5rem;
 }
 
 body.age-page-settlement-only .age-settlement-venue-workspace.is-gear-shop-venue .age-settlement-venue-shell {
-    width: min(1480px, 100%);
-    max-width: min(1480px, 100%);
-    max-height: 100%;
+    width: min(920px, calc(100vw - 3rem));
+    max-width: min(920px, calc(100vw - 3rem));
+    max-height: calc(100vh - 3rem);
     margin: 0;
     flex: 0 1 auto;
-    align-self: stretch;
-    border-radius: 14px;
-    border-color: rgba(184, 144, 48, 0.42);
-    background:
-        linear-gradient(180deg, rgba(255, 215, 0, 0.05) 0%, transparent 16%),
-        linear-gradient(165deg, rgba(34, 28, 20, 0.98) 0%, rgba(12, 10, 8, 0.99) 100%);
-    box-shadow:
-        inset 0 1px 0 rgba(255, 215, 0, 0.12),
-        0 18px 48px rgba(0, 0, 0, 0.58);
+    align-self: auto;
+    border-radius: 12px;
+    border-color: rgba(212, 175, 90, 0.35);
+    background: linear-gradient(180deg, rgba(22, 18, 14, 0.98), rgba(10, 8, 6, 0.98));
+    box-shadow: 0 24px 64px rgba(0, 0, 0, 0.55);
 }
 
 body.age-page-settlement-only .age-settlement-venue-workspace.is-gear-shop-venue .age-settlement-venue-body.is-gear-shop-layout {
     flex: 1 1 auto;
     min-height: 0;
+    max-height: min(560px, calc(100vh - 12rem));
     padding: 0;
     overflow: hidden;
 }

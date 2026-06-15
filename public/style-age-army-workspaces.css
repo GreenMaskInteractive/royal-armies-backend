@@ -880,22 +880,22 @@
     margin-top: 18px;
 }
 
-/* Blacksmith / Armory — barracks-scale modal inside settlement venue */
+/* Blacksmith / Armory — compact settlement modal (not barracks-scale) */
 .age-settlement-venue-workspace.is-gear-shop-venue {
-    align-items: stretch;
+    align-items: center;
     justify-content: center;
-    padding: 72px 48px 48px;
+    padding: 1.5rem;
     box-sizing: border-box;
 }
 
 .age-settlement-venue-workspace.is-gear-shop-venue .age-settlement-venue-shell {
-    width: min(1480px, 100%);
-    max-width: min(1480px, 100%);
+    width: min(920px, calc(100vw - 3rem));
+    max-width: min(920px, calc(100vw - 3rem));
     flex: 0 1 auto;
-    align-self: stretch;
+    align-self: auto;
     height: auto;
     min-height: 0;
-    max-height: 100%;
+    max-height: calc(100vh - 3rem);
     margin: 0;
 }
 
@@ -906,6 +906,7 @@
     flex-direction: column;
     flex: 1 1 auto;
     min-height: 0;
+    max-height: min(560px, calc(100vh - 12rem));
 }
 
 .age-settlement-venue-workspace .age-gear-shop-workspace.age-barracks-workspace {
