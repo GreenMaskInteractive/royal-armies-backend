@@ -824,6 +824,12 @@
             message: 'One or more selected units could not be found in your roster.',
             category: 'game'
         },
+        'NEXUS-AGE-041': {
+            http: 400,
+            title: 'Unit evolution',
+            message: 'No rank promotions or tier evolutions are available with your current provisions.',
+            category: 'game'
+        },
 
         /* --- Player conduct reports --- */
         'NEXUS-REPORT-001': {

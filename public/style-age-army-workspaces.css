@@ -1344,3 +1344,49 @@
 .age-roster-review-dismiss-btn--primary:not(:disabled):hover {
     filter: brightness(1.08);
 }
+
+/* --- Unit evolution bulk actions --- */
+.age-unit-evolution-bulk-actions {
+    flex-shrink: 0;
+    padding: 0 24px 8px;
+}
+
+.age-unit-evolution-bulk-actions[hidden] {
+    display: none !important;
+}
+
+.age-unit-evolution-bulk-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    padding: 10px 12px;
+    border-radius: 5px;
+    border: 1px solid rgba(255, 210, 120, 0.18);
+    background: rgba(16, 12, 8, 0.72);
+}
+
+.age-unit-evolution-bulk-btn {
+    padding: 9px 14px;
+    border-radius: 4px;
+    border: 1px solid rgba(255, 210, 120, 0.28);
+    background: rgba(36, 28, 16, 0.88);
+    color: rgba(255, 232, 190, 0.92);
+    font-size: 0.78rem;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.age-unit-evolution-bulk-btn--evolve {
+    border-color: rgba(120, 180, 255, 0.35);
+    color: rgba(190, 220, 255, 0.94);
+    background: rgba(16, 24, 40, 0.72);
+}
+
+.age-unit-evolution-bulk-btn:hover:not(:disabled) {
+    filter: brightness(1.08);
+}
+
+.age-unit-evolution-bulk-btn:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+}

@@ -38,6 +38,8 @@ const {
     buildUnitEvolutionPayload,
     executeUnitRankPromotion,
     executeUnitTierEvolution,
+    executePromoteAllEligibleRanks,
+    executeEvolveAllEligibleTiers,
     swapRandomHealthyUnitToInjured,
     swapRandomInjuredUnitToHealthy
 } = require('./nexus-age-unit-xp');
@@ -837,5 +839,7 @@ module.exports = {
     applyGuildRankXp,
     buildUnitEvolutionPayload,
     executeUnitRankPromotion,
-    executeUnitTierEvolution
+    executeUnitTierEvolution,
+    executePromoteAllEligibleRanks,
+    executeEvolveAllEligibleTiers
 };

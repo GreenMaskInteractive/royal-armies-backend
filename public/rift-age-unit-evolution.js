@@ -123,10 +123,60 @@
         return payload;
     }
 
+    async function promoteAllEligibleRanks(options = {}) {
+        const username = String(options.username || resolveUsername() || '').trim();
+        if (!username) {
+            throw new Error('Commander session required.');
+        }
+
+        const response = await global.fetch(resolveApiUrl('/api/portal/age/units/promote-all'), {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'same-origin',
+            body: JSON.stringify({ username })
+        });
+
+        const payload = await response.json().catch(() => ({}));
+        if (!response.ok || payload.status !== 'ok') {
+            const err = new Error(payload.message || 'Bulk rank promotion failed.');
+            err.code = payload.code || payload.errorCode || '';
+            throw err;
+        }
+
+        applyEvolutionPayload(payload);
+        return payload;
+    }
+
+    async function evolveAllEligibleTiers(options = {}) {
+        const username = String(options.username || resolveUsername() || '').trim();
+        if (!username) {
+            throw new Error('Commander session required.');
+        }
+
+        const response = await global.fetch(resolveApiUrl('/api/portal/age/units/evolve-all'), {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'same-origin',
+            body: JSON.stringify({ username })
+        });
+
+        const payload = await response.json().catch(() => ({}));
+        if (!response.ok || payload.status !== 'ok') {
+            const err = new Error(payload.message || 'Bulk tier evolution failed.');
+            err.code = payload.code || payload.errorCode || '';
+            throw err;
+        }
+
+        applyEvolutionPayload(payload);
+        return payload;
+    }
+
     global.RoyalArmiesAgeUnitEvolutionApi = {
         fetchEvolutionState,
         promoteUnitRank,
         evolveUnitTier,
+        promoteAllEligibleRanks,
+        evolveAllEligibleTiers,
         applyEvolutionPayload
     };
 })(window);

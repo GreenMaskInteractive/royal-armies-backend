@@ -861,6 +861,104 @@ function executeUnitTierEvolution(commander, catalogUnitId, rank, quantity) {
     };
 }
 
+function buildWorkingCommanderSnapshot(commander, ageArmy, ageProvisions) {
+    return {
+        ...commander,
+        ageArmy,
+        ageProvisions
+    };
+}
+
+function executePromoteAllEligibleRanks(commander) {
+    const catalog = loadUnitPurchaseCatalog();
+    let workingArmy = resolveCommanderAgeArmy(commander);
+    let workingProvisions = resolveCommanderAgeProvisions(commander);
+    let totalPromoted = 0;
+    let totalSpent = 0;
+    let promotionActions = 0;
+
+    for (let iteration = 0; iteration < 500; iteration += 1) {
+        const workingCommander = buildWorkingCommanderSnapshot(commander, workingArmy, workingProvisions);
+        const payload = buildUnitEvolutionPayload(workingCommander, catalog);
+        const candidate = (Array.isArray(payload.stacks) ? payload.stacks : [])
+            .find((stack) => stack?.canPromoteRank);
+
+        if (!candidate) break;
+
+        const result = executeUnitRankPromotion(
+            workingCommander,
+            candidate.catalogUnitId,
+            candidate.rank,
+            candidate.maxRankPromoteQty
+        );
+        if (!result.ok) break;
+
+        workingArmy = result.ageArmy;
+        workingProvisions = result.ageProvisions;
+        totalPromoted += Math.max(0, Math.floor(Number(result.quantityPromoted) || 0));
+        totalSpent += Math.max(0, Math.floor(Number(result.provisionsSpent) || 0));
+        promotionActions += 1;
+    }
+
+    if (!totalPromoted) {
+        return { ok: false, errorCode: 'NEXUS-AGE-041' };
+    }
+
+    return {
+        ok: true,
+        ageArmy: workingArmy,
+        ageProvisions: workingProvisions,
+        quantityPromoted: totalPromoted,
+        provisionsSpent: totalSpent,
+        promotionActions
+    };
+}
+
+function executeEvolveAllEligibleTiers(commander) {
+    const catalog = loadUnitPurchaseCatalog();
+    let workingArmy = resolveCommanderAgeArmy(commander);
+    let workingProvisions = resolveCommanderAgeProvisions(commander);
+    let totalEvolved = 0;
+    let totalSpent = 0;
+    let evolutionActions = 0;
+
+    for (let iteration = 0; iteration < 500; iteration += 1) {
+        const workingCommander = buildWorkingCommanderSnapshot(commander, workingArmy, workingProvisions);
+        const payload = buildUnitEvolutionPayload(workingCommander, catalog);
+        const candidate = (Array.isArray(payload.stacks) ? payload.stacks : [])
+            .find((stack) => stack?.canEvolveTier);
+
+        if (!candidate) break;
+
+        const result = executeUnitTierEvolution(
+            workingCommander,
+            candidate.catalogUnitId,
+            candidate.rank,
+            candidate.maxEvolveQty
+        );
+        if (!result.ok) break;
+
+        workingArmy = result.ageArmy;
+        workingProvisions = result.ageProvisions;
+        totalEvolved += Math.max(0, Math.floor(Number(result.unitsEvolved) || 0));
+        totalSpent += Math.max(0, Math.floor(Number(result.provisionsSpent) || 0));
+        evolutionActions += 1;
+    }
+
+    if (!totalEvolved) {
+        return { ok: false, errorCode: 'NEXUS-AGE-041' };
+    }
+
+    return {
+        ok: true,
+        ageArmy: workingArmy,
+        ageProvisions: workingProvisions,
+        unitsEvolved: totalEvolved,
+        provisionsSpent: totalSpent,
+        evolutionActions
+    };
+}
+
 module.exports = {
     PROMOTION_BY_RANK,
     RANK_BY_PROMOTION,
@@ -881,6 +979,8 @@ module.exports = {
     buildUnitEvolutionCategories,
     executeUnitRankPromotion,
     executeUnitTierEvolution,
+    executePromoteAllEligibleRanks,
+    executeEvolveAllEligibleTiers,
     resolveRankPromotionProvisionCost,
     resolveRankPromotionProvisionCostPerUnit,
     resolveTierEvolutionProvisionCost,

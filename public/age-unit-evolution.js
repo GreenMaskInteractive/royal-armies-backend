@@ -198,6 +198,96 @@
         }
     }
 
+    function collectEvolutionStacks(action) {
+        const categoryId = action === 'evolve-tier' ? 'tier-evolution' : 'rank-promotion';
+        const categories = Array.isArray(evolutionState?.categories) ? evolutionState.categories : [];
+        const stacks = [];
+
+        categories.forEach((category) => {
+            if (category.id !== categoryId) return;
+            (Array.isArray(category.groups) ? category.groups : []).forEach((group) => {
+                (Array.isArray(group.stacks) ? group.stacks : []).forEach((stack) => {
+                    if (stack) stacks.push(stack);
+                });
+            });
+        });
+
+        return stacks;
+    }
+
+    function summarizeBulkAction(action) {
+        const stacks = collectEvolutionStacks(action).filter((stack) => (
+            action === 'promote-rank' ? stack.canPromoteRank : stack.canEvolveTier
+        ));
+        let units = 0;
+        let cost = 0;
+
+        stacks.forEach((stack) => {
+            const qty = action === 'promote-rank'
+                ? Math.max(0, Math.floor(Number(stack.maxRankPromoteQty) || 0))
+                : Math.max(0, Math.floor(Number(stack.maxEvolveQty) || 0));
+            const perUnit = action === 'promote-rank'
+                ? Math.max(0, Math.floor(Number(stack.rankPromotionCostPerUnit) || 0))
+                : Math.max(0, Math.floor(Number(stack.tierEvolutionCostPerUnit) || 0));
+            units += qty;
+            cost += qty * perUnit;
+        });
+
+        const provisions = Math.max(0, Math.floor(Number(evolutionState?.ageProvisions) || 0));
+        return {
+            stackCount: stacks.length,
+            units,
+            cost: Math.min(cost, provisions)
+        };
+    }
+
+    function renderBulkActions() {
+        const bulkEl = global.document.getElementById('age-unit-evolution-bulk-actions');
+        if (!bulkEl) return;
+
+        const promoteSummary = summarizeBulkAction('promote-rank');
+        const evolveSummary = summarizeBulkAction('evolve-tier');
+        const hasPromote = promoteSummary.stackCount > 0;
+        const hasEvolve = evolveSummary.stackCount > 0;
+
+        if (!hasPromote && !hasEvolve) {
+            bulkEl.hidden = true;
+            bulkEl.setAttribute('aria-hidden', 'true');
+            bulkEl.innerHTML = '';
+            return;
+        }
+
+        bulkEl.hidden = false;
+        bulkEl.setAttribute('aria-hidden', 'false');
+        const buttons = [];
+
+        if (hasPromote) {
+            buttons.push(
+                `<button type="button" class="age-unit-evolution-bulk-btn age-unit-evolution-bulk-btn--promote"`
+                + ` data-evolution-bulk="promote-all"${actionInFlight ? ' disabled' : ''}>`
+                + `Promote All (${escapeHtml(promoteSummary.units)} unit${promoteSummary.units === 1 ? '' : 's'}`
+                + ` · ${escapeHtml(promoteSummary.cost)} provisions)`
+                + '</button>'
+            );
+        }
+
+        if (hasEvolve) {
+            buttons.push(
+                `<button type="button" class="age-unit-evolution-bulk-btn age-unit-evolution-bulk-btn--evolve"`
+                + ` data-evolution-bulk="evolve-all"${actionInFlight ? ' disabled' : ''}>`
+                + `Evolve All (${escapeHtml(evolveSummary.units)} unit${evolveSummary.units === 1 ? '' : 's'}`
+                + ` · ${escapeHtml(evolveSummary.cost)} provisions)`
+                + '</button>'
+            );
+        }
+
+        bulkEl.innerHTML = (
+            '<section class="age-unit-evolution-bulk-toolbar" aria-label="Bulk unit evolution actions">'
+            + buttons.join('')
+            + '</section>'
+        );
+    }
+
     function resolveQuantityPresets(maxQty) {
         const max = Math.max(0, Math.floor(Number(maxQty) || 0));
         const presets = ['1'];
@@ -383,6 +473,7 @@
 
     function renderEvolution() {
         syncProvisionsDisplay();
+        renderBulkActions();
         renderStackList();
         renderStatus();
 
@@ -465,6 +556,110 @@
         clearSelectedQuantities();
     }
 
+    async function handlePromoteAll() {
+        if (actionInFlight) return;
+        const api = resolveApi();
+        if (!api?.promoteAllEligibleRanks) return;
+
+        const summary = summarizeBulkAction('promote-rank');
+        if (!summary.stackCount) {
+            statusMessage = 'No rank promotions are available with your current provisions.';
+            renderEvolution();
+            return;
+        }
+
+        const confirmMessage = (
+            `Promote all eligible units across ${summary.stackCount} ready stack${summary.stackCount === 1 ? '' : 's'}? `
+            + `Up to ${summary.units} unit${summary.units === 1 ? '' : 's'} will advance for about ${summary.cost} provisions.`
+        );
+
+        if (typeof global.showPortalConfirm === 'function') {
+            const confirmed = await global.showPortalConfirm({
+                title: 'Promote all eligible ranks',
+                message: confirmMessage,
+                confirmLabel: 'Promote All',
+                cancelLabel: 'Cancel'
+            });
+            if (!confirmed) return;
+        } else if (!global.confirm(confirmMessage)) {
+            return;
+        }
+
+        actionInFlight = true;
+        statusMessage = 'Promoting all eligible unit ranks…';
+        renderEvolution();
+
+        try {
+            const result = await api.promoteAllEligibleRanks();
+            evolutionState = result;
+            clearSelectedQuantities();
+            const promoted = Math.max(0, Math.floor(Number(result.quantityPromoted) || 0));
+            const spent = Math.max(0, Math.floor(Number(result.provisionsSpent) || 0));
+            statusMessage = `${promoted} unit${promoted === 1 ? '' : 's'} promoted across your garrison (${spent} provisions).`;
+            renderEvolution();
+        } catch (error) {
+            statusMessage = '';
+            if (typeof global.showRiftError === 'function' && error?.code) {
+                global.showRiftError(error.code, error.message);
+            }
+        } finally {
+            actionInFlight = false;
+            renderBulkActions();
+        }
+    }
+
+    async function handleEvolveAll() {
+        if (actionInFlight) return;
+        const api = resolveApi();
+        if (!api?.evolveAllEligibleTiers) return;
+
+        const summary = summarizeBulkAction('evolve-tier');
+        if (!summary.stackCount) {
+            statusMessage = 'No tier evolutions are available with your current provisions.';
+            renderEvolution();
+            return;
+        }
+
+        const confirmMessage = (
+            `Evolve all eligible units across ${summary.stackCount} ready stack${summary.stackCount === 1 ? '' : 's'}? `
+            + `Up to ${summary.units} unit${summary.units === 1 ? '' : 's'} will advance for about ${summary.cost} provisions.`
+        );
+
+        if (typeof global.showPortalConfirm === 'function') {
+            const confirmed = await global.showPortalConfirm({
+                title: 'Evolve all eligible tiers',
+                message: confirmMessage,
+                confirmLabel: 'Evolve All',
+                cancelLabel: 'Cancel'
+            });
+            if (!confirmed) return;
+        } else if (!global.confirm(confirmMessage)) {
+            return;
+        }
+
+        actionInFlight = true;
+        statusMessage = 'Evolving all eligible unit tiers…';
+        renderEvolution();
+
+        try {
+            const result = await api.evolveAllEligibleTiers();
+            evolutionState = result;
+            clearSelectedQuantities();
+            const evolved = Math.max(0, Math.floor(Number(result.unitsEvolved) || 0));
+            const spent = Math.max(0, Math.floor(Number(result.provisionsSpent) || 0));
+            statusMessage = `${evolved} unit${evolved === 1 ? '' : 's'} evolved across your garrison (${spent} provisions).`;
+            renderEvolution();
+        } catch (error) {
+            statusMessage = '';
+            if (typeof global.showRiftError === 'function' && error?.code) {
+                global.showRiftError(error.code, error.message);
+            }
+        } finally {
+            actionInFlight = false;
+            renderBulkActions();
+        }
+    }
+
     async function handlePromoteRank(catalogUnitId, rank, quantity) {
         if (actionInFlight) return;
         const api = resolveApi();
@@ -526,6 +721,18 @@
             event.preventDefault();
             close();
             global.RoyalArmiesAgeBarracks?.open();
+            return;
+        }
+
+        const bulkBtn = event.target.closest('[data-evolution-bulk]');
+        if (bulkBtn && !bulkBtn.disabled) {
+            event.preventDefault();
+            const bulkAction = bulkBtn.getAttribute('data-evolution-bulk') || '';
+            if (bulkAction === 'promote-all') {
+                void handlePromoteAll();
+            } else if (bulkAction === 'evolve-all') {
+                void handleEvolveAll();
+            }
             return;
         }
 
