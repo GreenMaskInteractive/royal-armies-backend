@@ -561,6 +561,12 @@
         }
     }
 
+    function collapseSettlementJobs() {
+        if (!guildJobsExpanded) return;
+        guildJobsExpanded = false;
+        syncSettlementMenuGuild();
+    }
+
     function loadExtendedBattleLogPreference() {
         try {
             showExtendedBattleLog = global.localStorage?.getItem(EXTENDED_BATTLE_LOG_STORAGE_KEY) === '1';
@@ -1821,6 +1827,7 @@
 
     global.RoyalArmiesAdventurersGuild = {
         toggleSettlementJobs,
+        collapseSettlementJobs,
         syncSettlementMenuGuild,
         ensureSettlementGuildHubLoaded,
         openSettlementHub,

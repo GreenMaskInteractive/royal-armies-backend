@@ -241,6 +241,12 @@
         syncSettlementMenuGarrison();
     }
 
+    function collapseSettlementGarrisonMenu() {
+        if (!garrisonMenuExpanded) return;
+        garrisonMenuExpanded = false;
+        syncSettlementMenuGarrison();
+    }
+
     function openGarrisonMenuOption(optionId) {
         garrisonMenuExpanded = false;
         syncSettlementMenuGarrison();
@@ -823,6 +829,7 @@
         isOpen,
         enableAgeBarracks,
         toggleSettlementGarrisonMenu,
+        collapseSettlementGarrisonMenu,
         syncSettlementMenuGarrison
     };
 

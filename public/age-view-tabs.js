@@ -690,6 +690,16 @@
         }
     }
 
+    function collapseOtherSettlementMenuDropdowns(activeVenueId) {
+        const active = String(activeVenueId || '').trim().toLowerCase();
+        if (active !== 'adventurers-guild') {
+            global.RoyalArmiesAdventurersGuild?.collapseSettlementJobs?.();
+        }
+        if (active !== 'barracks') {
+            global.RoyalArmiesAgeBarracks?.collapseSettlementGarrisonMenu?.();
+        }
+    }
+
     function handleVenueClick(venueId) {
         const normalizedVenueId = String(venueId || '').trim().toLowerCase();
         if (normalizedVenueId === 'war-room') {
@@ -700,6 +710,7 @@
         const tier = resolveSettlementTier();
 
         if (normalizedVenueId === 'adventurers-guild') {
+            collapseOtherSettlementMenuDropdowns(normalizedVenueId);
             if (typeof global.RoyalArmiesAdventurersGuild?.toggleSettlementJobs === 'function') {
                 void global.RoyalArmiesAdventurersGuild.toggleSettlementJobs({
                     settlementTier: tier,
@@ -710,6 +721,7 @@
         }
 
         if (normalizedVenueId === 'barracks') {
+            collapseOtherSettlementMenuDropdowns(normalizedVenueId);
             if (typeof global.RoyalArmiesAgeBarracks?.toggleSettlementGarrisonMenu === 'function') {
                 global.RoyalArmiesAgeBarracks.toggleSettlementGarrisonMenu();
             }
