@@ -37,7 +37,7 @@
     let bountyRewards = null;
     let activeView = null;
     let activeTrainingMode = 'street-patrol';
-    let activeTrainingLabel = 'Street Patrol';
+    let activeTrainingLabel = 'Settlement Patrol';
     let settlementTier = 'village';
     let lastBattleResult = null;
     let guildJobsExpanded = false;
@@ -254,13 +254,23 @@
             ? ''
             : `<span class="age-settlement-guild-job-lock">${escapeHtml(job.lockReason || 'Unavailable')}</span>`;
         const featuredTag = job.featured ? '<span class="age-settlement-guild-job-tag">Primary</span>' : '';
+        const difficultyTag = job.difficultyLabel
+            ? `<span class="age-settlement-guild-job-difficulty">${escapeHtml(job.difficultyLabel)}</span>`
+            : '';
+        const accessLine = job.accessSummary
+            ? `<span class="age-settlement-guild-job-access">${escapeHtml(job.accessSummary)}</span>`
+            : '';
 
         return (
             `<button type="button" class="age-settlement-guild-job age-guild-hub-job${lockedClass}${featuredClass}"`
             + ` data-guild-job="${escapeHtml(job.id)}"`
             + `${job.available ? '' : ' disabled'}>`
+            + `<span class="age-settlement-guild-job-head">`
             + `<span class="age-settlement-guild-job-label">${escapeHtml(job.label)}</span>`
             + featuredTag
+            + difficultyTag
+            + '</span>'
+            + accessLine
             + `<span class="age-settlement-guild-job-desc">${escapeHtml(job.description)}</span>`
             + lockLine
             + '</button>'
@@ -288,6 +298,13 @@
     }
 
     async function openSettlementHub(detail = {}) {
+        if (resolveGuildJobsContainer()) {
+            if (!guildJobsExpanded) {
+                await toggleSettlementJobs(detail);
+            }
+            return;
+        }
+
         global.RoyalArmiesSettlementVenueWorkspaces?.close?.();
         guildJobsExpanded = false;
         syncSettlementMenuGuild();
@@ -339,13 +356,23 @@
             ? ''
             : `<span class="age-settlement-guild-job-lock">${escapeHtml(job.lockReason || 'Unavailable')}</span>`;
         const featuredTag = job.featured ? '<span class="age-settlement-guild-job-tag">Primary</span>' : '';
+        const difficultyTag = job.difficultyLabel
+            ? `<span class="age-settlement-guild-job-difficulty">${escapeHtml(job.difficultyLabel)}</span>`
+            : '';
+        const accessLine = job.accessSummary
+            ? `<span class="age-settlement-guild-job-access">${escapeHtml(job.accessSummary)}</span>`
+            : '';
 
         return (
             `<button type="button" class="age-settlement-guild-job${lockedClass}${featuredClass}"`
             + ` data-guild-job="${escapeHtml(job.id)}"`
             + `${job.available ? '' : ' disabled'}>`
+            + `<span class="age-settlement-guild-job-head">`
             + `<span class="age-settlement-guild-job-label">${escapeHtml(job.label)}</span>`
             + featuredTag
+            + difficultyTag
+            + '</span>'
+            + accessLine
             + `<span class="age-settlement-guild-job-desc">${escapeHtml(job.description)}</span>`
             + lockLine
             + '</button>'

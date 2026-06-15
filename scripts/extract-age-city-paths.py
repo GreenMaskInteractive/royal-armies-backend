@@ -64,6 +64,11 @@ INDIVIDUAL_CITY_NATIONS: dict[str, dict[str, str]] = {
     "aethelgard": {"glob": "aethelgard_*.svg", "prefix": "aethelgard_"},
     "saelthine": {"glob": "saelthine_*.svg", "prefix": "saelthine_"},
     "thruun": {"glob": "thruun_*.svg", "prefix": "thruun_"},
+    "zevros": {"glob": "zevros_*.svg", "prefix": "zevros_"},
+    "skaros": {"glob": "skaros_*.svg", "prefix": "skaros_"},
+    "vaelior": {"glob": "vaelior_*.svg", "prefix": "vaelior_"},
+    "mynor": {"glob": "mynor_*.svg", "prefix": "mynor_"},
+    "khaerant": {"glob": "khaerant_*.svg", "prefix": "khaerant_"},
 }
 
 
@@ -445,6 +450,9 @@ def main() -> None:
 
         region_id = NATION_REGION[nation_id]
         meta = nation_meta.get(nation_id, {"name": nation_id.title(), "centroid": {"x": 821, "y": 821}})
+        if not clusters:
+            print(f"[WARN] {nation_id}: no city SVG clusters found; skipping.")
+            continue
         nation_cx = meta.get("centroid", {}).get("x", 821)
         nation_cy = meta.get("centroid", {}).get("y", 821)
 

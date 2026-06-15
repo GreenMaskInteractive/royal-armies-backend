@@ -1,44 +1,48 @@
-<div id="age-barracks-workspace" class="age-barracks-workspace" hidden aria-hidden="true" aria-label="Garrison Registry recruitment">
-                <div class="age-barracks-shell">
-                    <header class="age-barracks-header">
+<div id="age-barracks-workspace" class="age-barracks-workspace age-army-workspace" hidden aria-hidden="true" aria-label="Garrison Registry recruitment">
+                <div class="age-barracks-shell age-army-workspace-shell">
+                    <header class="age-barracks-header age-army-workspace-header">
                         <div class="age-barracks-header-copy">
-                            <p class="age-barracks-eyebrow">Barracks</p>
-                            <h2 class="age-barracks-title">Garrison Registry</h2>
-                            <p class="age-barracks-subtitle">Recruit units, review promotion paths, and prepare your standing army.</p>
+                            <p class="age-barracks-eyebrow age-army-workspace-eyebrow">Barracks</p>
+                            <h2 class="age-barracks-title age-army-workspace-title">Garrison Registry</h2>
+                            <p class="age-barracks-subtitle age-army-workspace-subtitle">Recruit units, review promotion paths, and prepare your standing army.</p>
                             <p id="age-barracks-commander-status" class="age-barracks-commander-status" aria-live="polite"></p>
                         </div>
-                        <div class="age-barracks-header-actions">
+                        <div class="age-barracks-header-actions age-army-workspace-header-actions">
                             <div class="age-barracks-wallets">
-                                <div class="age-barracks-wallet" aria-label="Commander gold">
-                                    <span class="age-barracks-wallet-label">Gold</span>
-                                    <span id="age-barracks-commander-gold" class="age-barracks-wallet-value" aria-live="polite">—</span>
+                                <div class="age-barracks-wallet age-army-workspace-gold-wallet is-visible" aria-label="Commander gold">
+                                    <span class="age-barracks-wallet-label age-army-workspace-gold-label">Gold</span>
+                                    <span id="age-barracks-commander-gold" class="age-barracks-wallet-value age-army-workspace-gold-value" aria-live="polite">—</span>
                                 </div>
-                                <div class="age-barracks-wallet" aria-label="Commander provisions">
-                                    <span class="age-barracks-wallet-label">Provisions</span>
-                                    <span id="age-barracks-commander-provisions" class="age-barracks-wallet-value" aria-live="polite">—</span>
+                                <div class="age-barracks-wallet age-army-workspace-gold-wallet is-visible" aria-label="Commander provisions">
+                                    <span class="age-barracks-wallet-label age-army-workspace-gold-label">Provisions</span>
+                                    <span id="age-barracks-commander-provisions" class="age-barracks-wallet-value age-army-workspace-gold-value" aria-live="polite">—</span>
                                 </div>
                             </div>
                             <button
                                 type="button"
                                 id="age-barracks-close"
-                                class="age-barracks-close"
-                                aria-label="Close barracks">
-                                Close
-                            </button>
+                                class="age-barracks-close age-age-center-modal-close"
+                                aria-label="Close barracks">×</button>
                         </div>
                     </header>
-                    <div class="age-barracks-layout">
-                        <nav
-                            id="age-barracks-category-nav"
-                            class="age-barracks-category-nav"
-                            aria-label="Unit classes"></nav>
-                        <div class="age-barracks-main">
-                            <div class="age-barracks-main-head">
-                                <h3 id="age-barracks-active-category-label" class="age-barracks-active-category-label">Infantry</h3>
-                                <p class="age-barracks-main-hint">Select a unit to view stats, promotion costs, and recruit price.</p>
+                    <div class="age-barracks-body age-army-workspace-body">
+                        <div class="age-barracks-layout">
+                            <nav
+                                id="age-barracks-category-nav"
+                                class="age-barracks-category-nav age-army-workspace-panel"
+                                aria-label="Unit classes"></nav>
+                            <div class="age-barracks-main">
+                                <div class="age-barracks-main-head age-army-workspace-toolbar">
+                                    <h3 id="age-barracks-active-category-label" class="age-barracks-active-category-label age-army-workspace-panel-title">Infantry</h3>
+                                    <p class="age-barracks-main-hint age-army-workspace-toolbar-note">Select a unit to view stats, promotion costs, and recruit price.</p>
+                                </div>
+                                <div class="age-barracks-main-split age-army-workspace-split">
+                                    <section class="age-barracks-unit-list-panel age-army-workspace-panel">
+                                        <div id="age-barracks-unit-grid" class="age-barracks-unit-grid" aria-live="polite"></div>
+                                    </section>
+                                    <aside id="age-barracks-unit-detail" class="age-barracks-unit-detail age-army-workspace-panel" hidden aria-live="polite"></aside>
+                                </div>
                             </div>
-                            <div id="age-barracks-unit-grid" class="age-barracks-unit-grid" aria-live="polite"></div>
-                            <aside id="age-barracks-unit-detail" class="age-barracks-unit-detail" hidden aria-live="polite"></aside>
                         </div>
                     </div>
                 </div>
@@ -87,7 +91,7 @@
                     <header class="age-guild-top-band" aria-label="Training header">
                         <div class="age-guild-job-top-panel age-guild-job-top-panel--training">
                             <div class="age-guild-training-title-row">
-                                <h2 id="age-guild-training-title" class="age-guild-training-title">Street Patrol</h2>
+                                <h2 id="age-guild-training-title" class="age-guild-training-title">Settlement Patrol</h2>
                                 <button
                                     type="button"
                                     id="age-guild-training-return-btn"
@@ -198,6 +202,21 @@
                             <h3 class="age-guild-section-title">Your Merchandise</h3>
                             <div id="age-guild-trade-inventory" class="age-guild-trade-inventory-list" aria-live="polite"></div>
                         </section>
+                    </div>
+                </div>
+
+                <div id="age-guild-jobs-arena" class="age-guild-job-arena age-guild-jobs-hub-arena" hidden aria-hidden="true" aria-label="Adventurer's Guild jobs">
+                    <button type="button" class="age-guild-close age-guild-job-close age-age-center-modal-close" data-age-guild-close aria-label="Close guild workspace">×</button>
+
+                    <header class="age-guild-top-band" aria-label="Guild jobs header">
+                        <div class="age-guild-job-top-panel">
+                            <h2 class="age-guild-hub-title">Adventurer's Guild</h2>
+                            <p class="age-guild-hub-subtitle">Select a contract to open its workspace.</p>
+                        </div>
+                    </header>
+
+                    <div class="age-guild-job-body">
+                        <div id="age-guild-hub-jobs-host" class="age-guild-hub-jobs-host age-settlement-guild-jobs" aria-live="polite"></div>
                     </div>
                 </div>
 

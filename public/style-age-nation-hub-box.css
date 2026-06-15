@@ -338,6 +338,37 @@
     color: #fff0c8;
 }
 
+.age-nation-hub-menu-item.is-disabled,
+.age-nation-hub-menu-item:disabled {
+    opacity: 0.38;
+    cursor: not-allowed;
+    filter: grayscale(0.65);
+    pointer-events: none;
+    border-color: rgba(184, 144, 48, 0.16);
+    background:
+        linear-gradient(105deg, rgba(255, 215, 0, 0.02) 0%, transparent 42%),
+        rgba(0, 0, 0, 0.28);
+    box-shadow: inset 0 1px 0 rgba(255, 215, 128, 0.04);
+}
+
+.age-nation-hub-menu-item.is-disabled .age-nation-hub-menu-item-label,
+.age-nation-hub-menu-item:disabled .age-nation-hub-menu-item-label {
+    color: rgba(200, 188, 150, 0.52);
+}
+
+.age-nation-hub-menu-item.is-disabled .age-nation-hub-menu-item-hint,
+.age-nation-hub-menu-item:disabled .age-nation-hub-menu-item-hint {
+    color: rgba(180, 168, 130, 0.42);
+    font-style: italic;
+}
+
+.age-nation-hub-menu-item.is-disabled .age-nation-hub-menu-item-glyph,
+.age-nation-hub-menu-item:disabled .age-nation-hub-menu-item-glyph {
+    color: rgba(180, 168, 130, 0.38);
+    border-color: rgba(184, 144, 48, 0.14);
+    box-shadow: none;
+}
+
 .age-nation-hub-menu-footer {
     display: flex;
     align-items: center;

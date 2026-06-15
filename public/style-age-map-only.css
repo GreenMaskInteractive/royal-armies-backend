@@ -104,7 +104,11 @@ body.age-map-shell-only.age-barracks-open .age-barracks-workspace * {
 }
 
 body.age-map-shell-only.age-guild-training-open .age-guild-workspace,
-body.age-map-shell-only.age-guild-training-open .age-guild-workspace * {
+body.age-map-shell-only.age-guild-training-open .age-guild-workspace *,
+body.age-map-shell-only.age-guild-hub-open .age-guild-workspace,
+body.age-map-shell-only.age-guild-hub-open .age-guild-workspace *,
+body.age-map-shell-only.age-guild-overlay-open .age-guild-workspace,
+body.age-map-shell-only.age-guild-overlay-open .age-guild-workspace * {
     pointer-events: auto !important;
 }
 
@@ -276,6 +280,8 @@ body.age-map-shell-only #age-world-map-plan-toggle {
 
 body.age-map-shell-only .age-city-info-panel button,
 body.age-map-shell-only .age-city-info-panel [role="tab"],
+body.age-map-shell-only .age-city-info-panel [data-settlement-venue],
+body.age-map-shell-only .age-settlement-menu-item,
 body.age-map-shell-only .age-left-reports-panel button,
 body.age-map-shell-only .age-left-reports-panel [role="tab"],
 body.age-map-shell-only .age-quick-tips-panel button,
@@ -298,6 +304,11 @@ body.age-map-shell-only.age-guild-training-open .age-guild-workspace:not([hidden
     position: fixed;
     inset: 0;
     z-index: 2147483640 !important;
+}
+
+body.age-map-shell-only.age-guild-hub-open .age-guild-jobs-hub-arena:not([hidden]) {
+    display: grid;
+    pointer-events: auto !important;
 }
 
 body.age-map-shell-only .age-settlement-venue-workspace:not([hidden]) {

@@ -203,7 +203,7 @@ const unitDatabase = {
         leg: { hp: 216, str: 48, upc: 52 }
       }
     },
-    "Eldritch Bulwark (A)": {
+    "Eldritch Titan (A)": {
       tier: 6, branch: "A", baseProv: 263, gold: 62400, tec: 85, type: "MAG_INF",
       stats: {
         std: { hp: 254, str: 49, upc: 32 },
@@ -251,33 +251,33 @@ const unitDatabase = {
     }
   },
   "MAGIC_ARTILLERY": {
-    "Holder (B)": {
+    "Runefire Ballista (B)": {
       tier: 1, branch: "B", baseProv: 115, gold: 280, tec: 15, type: "MAG_ART",
       stats: {
-        app: { hp: 88, rng: 24, ml: 7, upc: 4 },
-        std: { hp: 104, rng: 25, ml: 8, upc: 8 },
-        vet: { hp: 120, rng: 26, ml: 9, upc: 12 }
+        app: { hp: 64, rng: 38, ml: 6, upc: 4 },
+        std: { hp: 74, rng: 44, ml: 7, upc: 8 },
+        vet: { hp: 86, rng: 52, ml: 8, upc: 12 }
       }
     },
-    "Vessel (B)": {
+    "Stellar Mortar (B)": {
       tier: 3, branch: "B", baseProv: 115, gold: 1550, tec: 22, type: "MAG_ART",
       stats: {
-        std: { hp: 111, rng: 30, ml: 10, upc: 10 },
-        vet: { hp: 130, rng: 33, ml: 11, upc: 16 },
-        mst: { hp: 148, rng: 36, ml: 12, upc: 22 }
+        std: { hp: 94, rng: 62, ml: 9, upc: 10 },
+        vet: { hp: 110, rng: 72, ml: 10, upc: 16 },
+        mst: { hp: 125, rng: 84, ml: 11, upc: 22 }
       }
     },
-    "Archon (B)": {
+    "Eldritch Siege Engine (B)": {
       tier: 7, branch: "B", baseProv: 115, gold: 22400, tec: 35, type: "MAG_ART",
       stats: {
-        std: { hp: 172, rng: 38, ml: 14, upc: 18 },
-        vet: { hp: 192, rng: 42, ml: 16, upc: 25 },
-        mst: { hp: 211, rng: 45, ml: 18, upc: 32 }
+        std: { hp: 145, rng: 98, ml: 12, upc: 18 },
+        vet: { hp: 162, rng: 112, ml: 13, upc: 25 },
+        mst: { hp: 178, rng: 128, ml: 14, upc: 32 }
       }
     }
   },
   "MAGIC_BEASTS": {
-    "Wyrmling (A)": {
+    "Hatchling Imp (A)": {
       tier: 1, branch: "A", baseProv: 108, gold: 310, tec: 15, type: "MAG_BST",
       stats: {
         app: { hp: 88, str: 9, upc: 4 },
@@ -285,7 +285,7 @@ const unitDatabase = {
         vet: { hp: 120, str: 11, upc: 12 }
       }
     },
-    "Blood-Drake (A)": {
+    "Lizard Dragon (A)": {
       tier: 3, branch: "A", baseProv: 108, gold: 1720, tec: 25, type: "MAG_BST",
       stats: {
         std: { hp: 111, str: 13, upc: 10 },
@@ -293,7 +293,7 @@ const unitDatabase = {
         mst: { hp: 148, str: 15, upc: 22 }
       }
     },
-    "Iron-Hide Drake (A)": {
+    "Spiked Komogon (A)": {
       tier: 4, branch: "A", baseProv: 108, gold: 4850, tec: 32, type: "MAG_BST",
       stats: {
         std: { hp: 155, str: 16, upc: 16 },
@@ -301,7 +301,7 @@ const unitDatabase = {
         mst: { hp: 184, str: 19, upc: 32 }
       }
     },
-    "Calamity Dragon (A)": {
+    "Armored Drake (A)": {
       tier: 5, branch: "A", baseProv: 108, gold: 22400, tec: 48, type: "MAG_BST",
       stats: {
         std: { hp: 196, str: 22, upc: 22 },
@@ -310,7 +310,7 @@ const unitDatabase = {
         leg: { hp: 242, str: 28, upc: 36 }
       }
     },
-    "Shadow Talon (B)": {
+    "Shadow Sparker (B)": {
       tier: 6, branch: "B", baseProv: 108, gold: 18600, tec: 38, type: "MAG_BST",
       stats: {
         std: { hp: 172, str: 38, upc: 28 },

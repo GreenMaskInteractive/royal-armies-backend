@@ -85,6 +85,7 @@ function buildCommanderAccountResetPatch(commander) {
         ageGuildMerch: [],
         ageGuildPerks: null,
         ageGuildBonuses: null,
+        ageGuildUnlockSkills: [],
         ageResetUsage: {},
         path: '',
         ageClassPerkChoices: null,

@@ -6,7 +6,7 @@
 (function initAgeWorldMap(global) {
     'use strict';
 
-    const DATA_URL = 'data/age-world-cities.json?v=thruun-cities-1';
+    const DATA_URL = 'data/age-world-cities.json?v=zevros-cities-1';
     const REGION_PATHS_URL = 'data/age-world-region-paths.json?v=map-label-centroids-1';
     const NATION_PATHS_URL = 'data/game-nation-paths.json?v=veyanor-restore-1';
     const NATIVE_SIZE = 1642;

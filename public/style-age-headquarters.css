@@ -1724,7 +1724,7 @@
 }
 
 .age-hq-treasury-structure-item::before {
-    content: 'â›¨';
+    content: '\26E8';
     position: absolute;
     left: 0;
     top: 0;

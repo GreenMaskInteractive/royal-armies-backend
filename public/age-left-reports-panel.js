@@ -7,7 +7,6 @@
     const TAB_ORDER = ['nation', 'intelligence', 'elections', 'events'];
     const WEEKLY_MISSION_DIFFICULTY_TITLES = ['Novice', 'Intermediate', 'Hard', 'Extreme'];
     const MAP_TERRAIN_TYPES = ['Mountains', 'Marshlands', 'Forest', 'Plains', 'Desert'];
-    const COMPACT_NATION_STATUS_TERRAIN_NATIONS = Object.freeze(['aesthene']);
     const TERRAIN_SWATCH_CLASS = {
         Mountains: 'mountains',
         Marshlands: 'marshlands',
@@ -463,32 +462,18 @@
         return nationDiplomacyRefreshPromise;
     }
 
-    function buildNationStatusTerrainRows(bonuses, nationId) {
-        const compact = COMPACT_NATION_STATUS_TERRAIN_NATIONS.includes(normalizeNationId(nationId));
+    function buildNationStatusTerrainRows(bonuses) {
         const terrains = MAP_TERRAIN_TYPES;
-
-        if (compact) {
-            return terrains.map((terrain) => {
-                const value = Number(bonuses[terrain] || 0);
-                const stateClass = terrainBonusStateClass(value);
-                const swatchClass = TERRAIN_SWATCH_CLASS[terrain] || 'plains';
-                return `
-                    <li class="age-nation-status-terrain-tile ${stateClass}">
-                        <span class="age-nation-status-terrain-tile-swatch age-nation-status-terrain-tile-swatch--${swatchClass}" aria-hidden="true"></span>
-                        <span class="age-nation-status-terrain-tile-label">${terrain}</span>
-                        <span class="age-nation-status-terrain-tile-value">${formatSignedBonus(value)}</span>
-                    </li>
-                `;
-            }).join('');
-        }
 
         return terrains.map((terrain) => {
             const value = Number(bonuses[terrain] || 0);
             const stateClass = terrainBonusStateClass(value);
+            const swatchClass = TERRAIN_SWATCH_CLASS[terrain] || 'plains';
             return `
-                <li class="age-nation-status-terrain-row ${stateClass}">
-                    <span class="age-nation-status-terrain-name">${terrain}</span>
-                    <span class="age-nation-status-terrain-value">${formatSignedBonus(value)}</span>
+                <li class="age-nation-status-terrain-tile ${stateClass}">
+                    <span class="age-nation-status-terrain-tile-swatch age-nation-status-terrain-tile-swatch--${swatchClass}" aria-hidden="true"></span>
+                    <span class="age-nation-status-terrain-tile-label">${terrain}</span>
+                    <span class="age-nation-status-terrain-tile-value">${formatSignedBonus(value)}</span>
                 </li>
             `;
         }).join('');
@@ -497,12 +482,10 @@
     function refreshNationStatusPanel() {
         const list = global.document.getElementById('age-nation-status-terrain-list');
         if (list) {
-            const nationMeta = resolvePlayerNationMeta();
             const bonuses = resolvePlayerTerrainBonuses();
-            const compact = COMPACT_NATION_STATUS_TERRAIN_NATIONS.includes(nationMeta.id);
             list.classList.remove('is-unavailable');
-            list.classList.toggle('age-nation-status-terrain-list--compact', compact);
-            list.innerHTML = buildNationStatusTerrainRows(bonuses, nationMeta.id);
+            list.classList.add('age-nation-status-terrain-list--compact');
+            list.innerHTML = buildNationStatusTerrainRows(bonuses);
         }
 
         void refreshNationDiplomacyAccords();

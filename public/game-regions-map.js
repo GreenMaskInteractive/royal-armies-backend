@@ -140,18 +140,55 @@
         khaerant: 'dreadforge-reach'
     };
 
-    /** Alpha onboarding: map-ready nations only (sync with nexus-onboarding.js). */
-    const ONBOARDING_ALLOWED_NATION_IDS = Object.freeze(['aesthene', 'lyllis', 'dravic', 'vaerenth', 'trex']);
-    const ONBOARDING_ALLOWED_REGION_IDS = Object.freeze(['region-1', 'region-3']);
+    /** Fallback until NEXUS onboarding-config loads (sync with nexus-onboarding.js). */
+    const ONBOARDING_CONFIG_FALLBACK = Object.freeze({
+        nationIds: Object.freeze([
+            'aesthene', 'lyllis', 'dravic', 'vaerenth', 'trex',
+            'gorz', 'krall', 'aethelgard', 'saelthine', 'thruun',
+            'zevros', 'skaros', 'vaelior', 'mynor', 'khaerant'
+        ]),
+        regionIds: Object.freeze([
+            'region-1', 'region-2', 'region-3', 'region-4', 'region-5', 'region-6'
+        ])
+    });
+
+    let onboardingOpenConfig = {
+        nationIds: ONBOARDING_CONFIG_FALLBACK.nationIds,
+        regionIds: ONBOARDING_CONFIG_FALLBACK.regionIds
+    };
+
+    async function refreshOnboardingOpenConfig() {
+        try {
+            const response = await global.fetch(resolveApiUrl('/api/portal/game/onboarding-config'));
+            const payload = await response.json().catch(() => ({}));
+            if (!response.ok || payload?.status !== 'ok' || !payload?.config) return;
+
+            const nationIds = Array.isArray(payload.config.nationIds)
+                ? payload.config.nationIds.map((id) => String(id || '').trim().toLowerCase()).filter(Boolean)
+                : [];
+            const regionIds = Array.isArray(payload.config.regionIds)
+                ? payload.config.regionIds.map((id) => String(id || '').trim()).filter(Boolean)
+                : [];
+
+            if (nationIds.length) {
+                onboardingOpenConfig = {
+                    nationIds,
+                    regionIds: regionIds.length ? regionIds : ONBOARDING_CONFIG_FALLBACK.regionIds
+                };
+            }
+        } catch (_error) {
+            /* keep fallback */
+        }
+    }
 
     function isOnboardingNationAllowed(nationId) {
         const id = String(nationId || '').trim().toLowerCase();
-        return ONBOARDING_ALLOWED_NATION_IDS.includes(id);
+        return onboardingOpenConfig.nationIds.includes(id);
     }
 
     function isOnboardingRegionAllowed(regionId) {
         const id = String(regionId || '').trim();
-        return ONBOARDING_ALLOWED_REGION_IDS.includes(id);
+        return onboardingOpenConfig.regionIds.includes(id);
     }
 
     function filterOnboardingNations(nations) {
@@ -1362,8 +1399,9 @@
         }
     }
 
-    function init() {
+    async function init() {
         if (!getMapRoot() || !getVisualLayer() || !getListPanel()) return;
+        await refreshOnboardingOpenConfig();
         bindRegionPicker();
         bindRegionLayoutSync();
         applyOnboardingRegionListRestrictions();
@@ -1374,8 +1412,8 @@
         const nationWrap = getNationListWrap();
         if (nationWrap) nationWrap.hidden = true;
         updateConfirmButtonVisibility();
-        if (ONBOARDING_ALLOWED_REGION_IDS.length === 1 && locationPhase === 'region') {
-            applySelectedRegion(ONBOARDING_ALLOWED_REGION_IDS[0]);
+        if (onboardingOpenConfig.regionIds.length === 1 && locationPhase === 'region') {
+            applySelectedRegion(onboardingOpenConfig.regionIds[0]);
         }
         scheduleRegionFlankLayout();
     }

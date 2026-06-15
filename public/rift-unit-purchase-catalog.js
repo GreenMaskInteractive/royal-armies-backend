@@ -80,14 +80,63 @@
         };
     }
 
-    function getCategoryMaxTier(catalog, categoryId) {
+    function getUnitsForCategoryId(catalog, categoryId) {
         const id = String(categoryId || '').trim();
-        return (catalog?.units || [])
-            .filter((unit) => unit.categoryId === id)
+        return (catalog?.units || []).filter((unit) => unit.categoryId === id);
+    }
+
+    function getCategoryMaxCatalogTier(catalog, categoryId) {
+        return getUnitsForCategoryId(catalog, categoryId)
             .reduce((max, unit) => Math.max(max, Number(unit.tier) || 0), 0);
     }
 
-    function resolveUnlockRankForTier(catalog, tier, categoryId) {
+    /**
+     * Expanded lines store Rank/PvP pairs on consecutive catalog tiers after a solo
+     * tier-1 starter: game tier 1 = catalog 1; tiers 2+ pair as (2,3), (4,5), (6,7).
+     * Catalog rows may be sparse (skipped game tiers) or extend past game tier 4 by design.
+     */
+    function categoryUsesPairedCatalogTiers(catalog, categoryId) {
+        const units = getUnitsForCategoryId(catalog, categoryId);
+        if (!units.length) return false;
+
+        const maxCatalogTier = getCategoryMaxCatalogTier(catalog, categoryId);
+        if (maxCatalogTier > 4) return true;
+
+        const tierCounts = new Map();
+        units.forEach((unit) => {
+            const tier = Math.max(1, Math.floor(Number(unit.tier) || 1));
+            tierCounts.set(tier, (tierCounts.get(tier) || 0) + 1);
+        });
+        for (const count of tierCounts.values()) {
+            if (count > 1) return true;
+        }
+        return false;
+    }
+
+    function resolveGameTierForCatalogTier(catalogTier) {
+        const tier = Math.max(1, Math.floor(Number(catalogTier) || 1));
+        if (tier <= 1) return 1;
+        return 1 + Math.ceil((tier - 1) / 2);
+    }
+
+    function resolveGameTierForUnit(catalog, unit) {
+        const catalogTier = Math.max(1, Math.floor(Number(unit?.tier) || 1));
+        if (categoryUsesPairedCatalogTiers(catalog, unit?.categoryId)) {
+            return resolveGameTierForCatalogTier(catalogTier);
+        }
+        return catalogTier;
+    }
+
+    function getCategoryMaxGameTier(catalog, categoryId) {
+        const maxCatalogTier = getCategoryMaxCatalogTier(catalog, categoryId);
+        if (!maxCatalogTier) return 1;
+        if (categoryUsesPairedCatalogTiers(catalog, categoryId)) {
+            return resolveGameTierForCatalogTier(maxCatalogTier);
+        }
+        return maxCatalogTier;
+    }
+
+    function resolveUnlockRankForTier(catalog, gameTier, categoryId) {
         const rules = catalog?.meta?.tierUnlockRules;
         const fourTier = Array.isArray(rules?.fourTierUnlockRanks)
             ? rules.fourTierUnlockRanks
@@ -96,10 +145,10 @@
             ? rules.extendedUnlockRanks
             : EXTENDED_UNLOCK_RANKS;
 
-        const gameTier = Math.max(1, Math.floor(Number(tier) || 1));
-        const maxTier = getCategoryMaxTier(catalog, categoryId);
-        const table = maxTier > 4 ? extended : fourTier;
-        const index = Math.max(0, Math.min(table.length - 1, gameTier - 1));
+        const tier = Math.max(1, Math.floor(Number(gameTier) || 1));
+        const maxGameTier = getCategoryMaxGameTier(catalog, categoryId);
+        const table = maxGameTier > 4 ? extended : fourTier;
+        const index = Math.max(0, Math.min(table.length - 1, tier - 1));
         return table[index];
     }
 
@@ -109,13 +158,13 @@
         const category = (catalog?.categories || []).find((entry) => entry.id === unit.categoryId);
         const path = category?.path || 'Physical';
         const requiredClass = unit.requiredClass || CLASS_BY_PATH[path] || 'battlemaster';
-        const unlockRank = Number.isFinite(Number(unit.unlockRank))
-            ? Number(unit.unlockRank)
-            : resolveUnlockRankForTier(catalog, unit.tier, unit.categoryId);
+        const gameTier = resolveGameTierForUnit(catalog, unit);
+        const unlockRank = resolveUnlockRankForTier(catalog, gameTier, unit.categoryId);
 
         return {
             ...unit,
             requiredClass,
+            gameTier,
             unlockRank,
             roleLabel: unit.roleLabel || formatUnitRoleLabel(unit.unitRole)
         };
@@ -134,7 +183,7 @@
 
         catalogPromise = (async () => {
             const response = await global.fetch(
-                resolveApiUrl('data/unit-purchase-catalog.json?v=unit-catalog-5'),
+                resolveApiUrl('data/unit-purchase-catalog.json?v=magic-beasts-portraits-1'),
                 { cache: 'no-store' }
             );
             if (!response.ok) {
@@ -311,6 +360,8 @@
         getUnitsForCategory,
         getUnitById,
         resolveCommanderRecruitmentContext,
+        resolveGameTierForUnit,
+        categoryUsesPairedCatalogTiers,
         resolveUnlockRankForTier,
         evaluateUnitPurchaseAccess,
         formatUnitRoleLabel,

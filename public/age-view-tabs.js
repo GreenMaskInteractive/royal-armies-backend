@@ -29,11 +29,11 @@
     };
 
     const ADVENTURERS_GUILD_JOBS = {
-        village: 'NPC Battle Simulation Training, Street Patrol, Civilian Transport, Trade Convoy',
-        town: 'NPC Battle Simulation Training, Street Patrol, Civilian Transport, Trade Convoy, Border Patrol',
-        city: 'NPC Battle Simulation Training, Street Patrol, Civilian Transport, Border Patrol',
-        citadel: 'NPC Battle Simulation Training, Street Patrol, Civilian Transport, Trade Convoy, Border Patrol, Player Bounties (PvP Quests)',
-        kingdom: 'NPC Battle Simulation Training, Street Patrol, Civilian Transport, Trade Convoy, Border Patrol, Player Bounties (PvP Quests)'
+        village: 'Settlement Patrol, Trade Escort (skill)',
+        town: 'Settlement Patrol, Civilian Escort, Trade Escort (skill), Border Patrol',
+        city: 'Settlement Patrol, Civilian Escort, Trade Escort (skill), Border Patrol',
+        citadel: 'Settlement Patrol, Civilian Escort, Trade Escort (skill), Border Patrol, Player Bounties',
+        kingdom: 'Settlement Patrol, Civilian Escort, Trade Escort (skill), Border Patrol, Player Bounties'
     };
 
     const VENUE_MARKS = {
@@ -421,7 +421,9 @@
         const guildTrainingArena = global.document.getElementById('age-guild-training-arena');
         const guildOverlayOpen = typeof global.RoyalArmiesAdventurersGuild?.isOverlayOpen === 'function'
             && global.RoyalArmiesAdventurersGuild.isOverlayOpen();
-        const showGuildWorkspace = inGuildTrainingView || guildOverlayOpen;
+        const guildWorkspaceOpen = typeof global.RoyalArmiesAdventurersGuild?.isOpen === 'function'
+            && global.RoyalArmiesAdventurersGuild.isOpen();
+        const showGuildWorkspace = inGuildTrainingView || guildOverlayOpen || guildWorkspaceOpen;
         if (guildWorkspace) {
             guildWorkspace.hidden = !showGuildWorkspace;
             guildWorkspace.setAttribute('aria-hidden', showGuildWorkspace ? 'false' : 'true');
@@ -525,18 +527,45 @@
                 : '';
             const mark = escapeSettlementMenuHtml(resolveVenueMark(venue.id));
             const label = escapeSettlementMenuHtml(venue.label);
-
-            return (
-                `<button type="button" class="age-settlement-menu-item${placementClass}"`
+            const isExpandable = venue.id === 'adventurers-guild' || venue.id === 'barracks';
+            const subPanelId = venue.id === 'adventurers-guild'
+                ? 'age-settlement-guild-jobs'
+                : (venue.id === 'barracks' ? 'age-settlement-garrison-options' : '');
+            const wrapClass = venue.id === 'adventurers-guild'
+                ? 'age-settlement-menu-guild-wrap'
+                : (venue.id === 'barracks' ? 'age-settlement-menu-garrison-wrap' : '');
+            const itemHtml = (
+                `<button type="button" class="age-settlement-menu-item${placementClass}${isExpandable ? ' age-settlement-menu-item--expandable' : ''}"`
                 + ` data-settlement-venue="${escapeSettlementMenuHtml(venue.id)}"`
-                + ` aria-label="Open ${label} workspace">`
+                + `${isExpandable ? ` aria-expanded="false" aria-controls="${subPanelId}"` : ''}`
+                + ` aria-label="${isExpandable ? `Toggle ${label} options` : `Open ${label} workspace`}">`
                 + `<span class="age-settlement-menu-item-mark" aria-hidden="true">${mark}</span>`
                 + `<span class="age-settlement-menu-item-body">`
                 + `<span class="age-settlement-menu-item-label">${label}</span>`
                 + '</span>'
-                + '<span class="age-settlement-menu-item-chevron" aria-hidden="true">›</span>'
+                + `<span class="age-settlement-menu-item-chevron" aria-hidden="true">${isExpandable ? '▾' : '›'}</span>`
                 + '</button>'
             );
+
+            if (venue.id === 'adventurers-guild') {
+                return (
+                    `<div class="${wrapClass}">`
+                    + itemHtml
+                    + '<div id="age-settlement-guild-jobs" class="age-settlement-guild-jobs" hidden></div>'
+                    + '</div>'
+                );
+            }
+
+            if (venue.id === 'barracks') {
+                return (
+                    `<div class="${wrapClass}">`
+                    + itemHtml
+                    + '<div id="age-settlement-garrison-options" class="age-settlement-garrison-options" hidden></div>'
+                    + '</div>'
+                );
+            }
+
+            return itemHtml;
         }).join('');
     }
 
@@ -667,19 +696,8 @@
         }
 
         const tier = resolveSettlementTier();
-        const detail = {
-            venueId: normalizedVenueId,
-            settlementTier: tier,
-            city: resolveCurrentCity(),
-            venue: resolveSettlementVenueMeta(normalizedVenueId, tier)
-        };
 
-        if (hasSettlementVenueWorkspace() && typeof global.RoyalArmiesSettlementVenueWorkspaces?.open === 'function') {
-            void global.RoyalArmiesSettlementVenueWorkspaces.open(detail);
-            return;
-        }
-
-        if (venueId === 'adventurers-guild') {
+        if (normalizedVenueId === 'adventurers-guild') {
             if (typeof global.RoyalArmiesAdventurersGuild?.toggleSettlementJobs === 'function') {
                 void global.RoyalArmiesAdventurersGuild.toggleSettlementJobs({
                     settlementTier: tier,
@@ -689,10 +707,22 @@
             return;
         }
 
-        if (venueId === 'barracks') {
+        if (normalizedVenueId === 'barracks') {
             if (typeof global.RoyalArmiesAgeBarracks?.toggleSettlementGarrisonMenu === 'function') {
                 global.RoyalArmiesAgeBarracks.toggleSettlementGarrisonMenu();
             }
+            return;
+        }
+
+        const detail = {
+            venueId: normalizedVenueId,
+            settlementTier: tier,
+            city: resolveCurrentCity(),
+            venue: resolveSettlementVenueMeta(normalizedVenueId, tier)
+        };
+
+        if (hasSettlementVenueWorkspace() && typeof global.RoyalArmiesSettlementVenueWorkspaces?.open === 'function') {
+            void global.RoyalArmiesSettlementVenueWorkspaces.open(detail);
             return;
         }
 
@@ -811,6 +841,7 @@
 
         [
             global.document.getElementById('age-settlement-menu-panel'),
+            global.document.getElementById('age-settlement-menu-list'),
             global.document.getElementById('age-city-info-tab-settlement'),
             global.document.querySelector('.age-city-info-settlement-shell'),
             global.document.getElementById('age-settlement-menu-war-room-slot')

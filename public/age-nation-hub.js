@@ -7,7 +7,9 @@
     /** Set true to restore full-screen radial menu (go-to design in style-age-nation-hub-radial.css). */
     const ENABLE_RADIAL_HUB_MENU = false;
 
-    const BOX_BUILD_VERSION = 'hub-above-dev-nav-1';
+    const BOX_BUILD_VERSION = 'hub-disabled-actions-1';
+
+    const HUB_DISABLED_ITEM_IDS = Object.freeze(['discoveries', 'banner', 'battle-pass']);
 
     const BOX_ITEM_META = Object.freeze({
         nation: { glyph: '◆', hint: 'Council & command' },
@@ -253,6 +255,7 @@
 
     function activateHubItem(itemId, event) {
         const normalizedId = String(itemId || '').trim().toLowerCase();
+        if (isHubItemDisabled(normalizedId)) return;
 
         switch (normalizedId) {
             case 'nation':
@@ -278,6 +281,7 @@
     function onMenuActivate(event) {
         const item = event.target.closest('[data-age-hub-menu]');
         if (!item || !getMenu()?.contains(item)) return;
+        if (item.disabled || item.classList.contains('is-disabled')) return;
 
         event.preventDefault();
         const itemId = item.getAttribute('data-age-hub-menu');
@@ -295,21 +299,28 @@
         activateHubItem(itemId, event);
     }
 
+    function isHubItemDisabled(itemId) {
+        return HUB_DISABLED_ITEM_IDS.includes(String(itemId || '').trim().toLowerCase());
+    }
+
     function getHubItem(itemId) {
         return HUB_ITEMS.find((item) => item.id === itemId);
     }
 
     function renderBoxMenuItem(item, itemIndex) {
+        const disabled = isHubItemDisabled(item.id);
         const meta = BOX_ITEM_META[item.id] || { glyph: '•', hint: '' };
+        const hint = disabled ? 'Coming soon' : meta.hint;
         const delaySec = (0.04 + 0.05 * itemIndex).toFixed(2);
         return (
-            `<button type="button" class="age-nation-hub-menu-item age-nation-hub-menu-item--${item.id}"`
+            `<button type="button" class="age-nation-hub-menu-item age-nation-hub-menu-item--${item.id}${disabled ? ' is-disabled' : ''}"`
             + ` data-age-hub-menu="${item.id}" role="menuitem"`
+            + (disabled ? ' disabled aria-disabled="true"' : '')
             + ` style="--age-hub-menu-item-delay: ${delaySec}s;">`
             + `<span class="age-nation-hub-menu-item-glyph" aria-hidden="true">${meta.glyph}</span>`
             + '<span class="age-nation-hub-menu-item-copy">'
             + `<span class="age-nation-hub-menu-item-label">${item.label}</span>`
-            + `<span class="age-nation-hub-menu-item-hint">${meta.hint}</span>`
+            + `<span class="age-nation-hub-menu-item-hint">${hint}</span>`
             + '</span>'
             + '<span class="age-nation-hub-menu-item-chevron" aria-hidden="true"></span>'
             + '</button>'
@@ -328,6 +339,7 @@
         colsRoot.dataset.ageMenuVersion = BOX_BUILD_VERSION;
 
         colsRoot.querySelectorAll('[data-age-hub-menu]').forEach((btn) => {
+            if (btn.disabled || btn.classList.contains('is-disabled')) return;
             const onItemActivate = (event) => {
                 if (event.type === 'pointerup' && event.button !== 0) return;
                 event.preventDefault();

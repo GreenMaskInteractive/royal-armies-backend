@@ -1,0 +1,23 @@
+{
+  "nationId": "skaros",
+  "regionId": "region-5",
+  "dialect": "gulf",
+  "notes": "Invented settlement names for Skaros. Wyrmtooth Gulf dialect (VSO, sha-/eru- prefixes, ah-/oh-/lor-/lwis-/meen-/lior- roots) turned cultic and anti-spiritual: mournful vowels, hidden shrines, and void-hunger rhetoric — same linguistic family as Vaelior, inverted temperament. No transparent English compounds (reef-, black-, void-, etc.); only Blackreef is excepted as the movement-panel stub. Not Amnek dictionary terms. Run scripts/audit-settlement-names.py before committing.",
+  "cities": [
+    { "slot": "c01", "slug": "ashloris", "name": "Ashloris", "settlementTier": "city" },
+    { "slot": "c02", "slug": "shavrun", "name": "Shavrun", "settlementTier": "citadel" },
+    { "slot": "c03", "slug": "morlweth", "name": "Morlweth", "settlementTier": "town" },
+    { "slot": "c04", "slug": "eruveil", "name": "Eruveil", "settlementTier": "city" },
+    { "slot": "c05", "slug": "ohskara", "name": "Ohskara", "settlementTier": "city" },
+    { "slot": "c06", "slug": "shalwior", "name": "Shalwior", "settlementTier": "town" },
+    { "slot": "c07", "slug": "blackreef", "name": "Blackreef", "settlementTier": "village" },
+    { "slot": "c08", "slug": "meenvash", "name": "Meenvash", "settlementTier": "citadel" },
+    { "slot": "c09", "slug": "lorvash", "name": "Lorvash", "settlementTier": "city" },
+    { "slot": "c10", "slug": "veilmora", "name": "Veilmora", "settlementTier": "town" },
+    { "slot": "c11", "slug": "malivath", "name": "Malivath", "settlementTier": "city" },
+    { "slot": "c12", "slug": "morashora", "name": "Morashora", "settlementTier": "city" },
+    { "slot": "c13", "slug": "lwisathor", "name": "Lwisathor", "settlementTier": "village" },
+    { "slot": "c14", "slug": "ohlior", "name": "Ohlior", "settlementTier": "town" },
+    { "slot": "c15", "slug": "skarneth", "name": "Skarneth", "settlementTier": "kingdom", "isCapital": true }
+  ]
+}

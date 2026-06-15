@@ -1,0 +1,23 @@
+{
+  "nationId": "vaelior",
+  "regionId": "region-5",
+  "dialect": "gulf",
+  "notes": "Invented settlement names for Vaelior. Wyrmtooth Gulf dialect (VSO, sha-/eru- prefixes, ah-/oh-/lor-/lwis-/meen-/lior- roots): smooth, melodic, ancient Aidoriian voice — coastal temples, clan bloodlines, honored memory, and tide-wrought elegance. Same linguistic family as Skaros, opposite temperament. No transparent English compounds; only Pearl Gate is excepted as the movement-panel stub. Not Amnek dictionary terms. Run scripts/audit-settlement-names.py before committing.",
+  "cities": [
+    { "slot": "c01", "slug": "shaahlor", "name": "Shaahlor", "settlementTier": "city" },
+    { "slot": "c02", "slug": "eruahla", "name": "Eruahla", "settlementTier": "citadel" },
+    { "slot": "c03", "slug": "lwisarion", "name": "Lwisarion", "settlementTier": "city" },
+    { "slot": "c04", "slug": "meenavel", "name": "Meenavel", "settlementTier": "town" },
+    { "slot": "c05", "slug": "ahiralon", "name": "Ahiralon", "settlementTier": "city" },
+    { "slot": "c06", "slug": "shaashen", "name": "Shaashen", "settlementTier": "town" },
+    { "slot": "c07", "slug": "pearlgate", "name": "Pearl Gate", "settlementTier": "village" },
+    { "slot": "c08", "slug": "liorvael", "name": "Liorvael", "settlementTier": "citadel" },
+    { "slot": "c09", "slug": "ashorael", "name": "Ashorael", "settlementTier": "city" },
+    { "slot": "c10", "slug": "vaerellen", "name": "Vaerellen", "settlementTier": "town" },
+    { "slot": "c11", "slug": "meenaris", "name": "Meenaris", "settlementTier": "city" },
+    { "slot": "c12", "slug": "shalmeen", "name": "Shalmeen", "settlementTier": "town" },
+    { "slot": "c13", "slug": "lwisavel", "name": "Lwisavel", "settlementTier": "village" },
+    { "slot": "c14", "slug": "erulior", "name": "Erulior", "settlementTier": "town" },
+    { "slot": "c15", "slug": "ashoralior", "name": "Ashoralior", "settlementTier": "kingdom", "isCapital": true }
+  ]
+}

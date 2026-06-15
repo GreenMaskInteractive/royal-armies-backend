@@ -4,21 +4,52 @@
 (function initGameNationsMap(global) {
     'use strict';
 
-    const ONBOARDING_ALLOWED_NATION_IDS = Object.freeze(['aesthene', 'lyllis', 'dravic', 'vaerenth', 'trex']);
+    const ONBOARDING_CONFIG_FALLBACK = Object.freeze({
+        nationIds: Object.freeze([
+            'aesthene', 'lyllis', 'dravic', 'vaerenth', 'trex',
+            'gorz', 'krall', 'aethelgard', 'saelthine', 'thruun',
+            'zevros', 'skaros', 'vaelior', 'mynor', 'khaerant'
+        ])
+    });
     const ONBOARDING_DEFAULT_REGION_ID = 'region-3';
 
     const NATION_PATHS_URL = 'data/game-nation-paths.json?v=game-nation-paths-3';
 
     let nationsCatalog = [];
     let nationById = {};
+    let onboardingNationIds = ONBOARDING_CONFIG_FALLBACK.nationIds;
 
     let activeNationId = null;
     let selectedNationId = null;
     let pathsReady = false;
 
+    function resolveApiUrl(path) {
+        if (typeof global.resolveRoyalArmiesApiUrl === 'function') {
+            return global.resolveRoyalArmiesApiUrl(path);
+        }
+        return path;
+    }
+
+    async function refreshOnboardingOpenConfig() {
+        try {
+            const response = await global.fetch(resolveApiUrl('/api/portal/game/onboarding-config'));
+            const payload = await response.json().catch(() => ({}));
+            if (!response.ok || payload?.status !== 'ok' || !payload?.config) return;
+
+            const nationIds = Array.isArray(payload.config.nationIds)
+                ? payload.config.nationIds.map((id) => String(id || '').trim().toLowerCase()).filter(Boolean)
+                : [];
+            if (nationIds.length) {
+                onboardingNationIds = nationIds;
+            }
+        } catch (_error) {
+            /* keep fallback */
+        }
+    }
+
     function isOnboardingNationAllowed(nationId) {
         const id = String(nationId || '').trim().toLowerCase();
-        return ONBOARDING_ALLOWED_NATION_IDS.includes(id);
+        return onboardingNationIds.includes(id);
     }
 
     function filterOnboardingNations(nations) {
@@ -396,6 +427,7 @@
     async function init() {
         if (!getMapRoot() || !getVisualLayer() || !getListPanel()) return;
 
+        await refreshOnboardingOpenConfig();
         bindNationPicker();
         bindNationLayoutSync();
         await loadNationPaths();

@@ -12,7 +12,7 @@
     },
     "placeholderPortrait": "images/units/unit-portrait-placeholder.svg",
     "tierUnlockRules": {
-      "description": "Four-tier unlock ladder: tier 1 at rank 1, tier 2 at 7, tier 3 at 14, tier 4 at 18. Lines beyond tier 4 extend toward rank 22.",
+      "description": "Game tiers 1–4: tier 1 is a solo starter (Rank or PvP). Tiers 2–4 pair Rank (A) + PvP (B) on consecutive catalog rows; both unlock at the same commander rank (1, 7, 14, 18). Expanded catalog lines map game tier with tier 1 solo, then pairs at catalog tiers 2–3, 4–5, 6–7. Compact lines (cavalry A/B, artillery B-only) use catalog tier as game tier. Some classes intentionally skip game tiers or extend past four — sparse or long lines are valid catalog design, not data gaps.",
       "fourTierUnlockRanks": [
         1,
         7,
@@ -103,25 +103,25 @@
     },
     {
       "id": "magic-infantry",
-      "label": "Magic Infantry",
+      "label": "Infantry",
       "path": "Magic",
       "sortOrder": 5
     },
     {
       "id": "magic-cavalry",
-      "label": "Magic Cavalry",
+      "label": "Cavalry",
       "path": "Magic",
       "sortOrder": 6
     },
     {
       "id": "magic-artillery",
-      "label": "Magic Artillery",
+      "label": "Artillery",
       "path": "Magic",
       "sortOrder": 7
     },
     {
       "id": "magic-beasts",
-      "label": "Magic Beasts",
+      "label": "Beasts",
       "path": "Magic",
       "sortOrder": 8
     }
@@ -926,8 +926,7 @@
         }
       },
       "combatType": "MAG_INF",
-      "portraitSrc": "images/units/portraits/acolyte.png",
-      "portraitPlaceholder": true,
+      "portraitSrc": "images/acolyte.png",
       "displayName": "Acolyte",
       "unitRole": "rank",
       "requiredClass": "battlemage",
@@ -965,8 +964,7 @@
         }
       },
       "combatType": "MAG_INF",
-      "portraitSrc": "images/units/portraits/warder-a.png",
-      "portraitPlaceholder": true,
+      "portraitSrc": "images/warder.png",
       "displayName": "Warder (A)",
       "unitRole": "rank",
       "requiredClass": "battlemage",
@@ -988,24 +986,23 @@
       ],
       "stats": {
         "std": {
-          "hp": 124,
+          "hp": 107,
           "str": 32,
           "upc": 14
         },
         "vet": {
-          "hp": 140,
+          "hp": 124,
           "str": 33,
           "upc": 22
         },
         "mst": {
-          "hp": 156,
+          "hp": 140,
           "str": 35,
           "upc": 31
         }
       },
       "combatType": "MAG_INF",
-      "portraitSrc": "images/units/portraits/spellblade-b.png",
-      "portraitPlaceholder": true,
+      "portraitSrc": "images/spellblade.png",
       "displayName": "Spellblade (B)",
       "unitRole": "pvp",
       "requiredClass": "battlemage",
@@ -1049,8 +1046,7 @@
         }
       },
       "combatType": "MAG_INF",
-      "portraitSrc": "images/units/portraits/arcane-sentinel-a.png",
-      "portraitPlaceholder": true,
+      "portraitSrc": "images/arcanesentinel.png",
       "displayName": "Arcane Sentinel (A)",
       "unitRole": "rank",
       "requiredClass": "battlemage",
@@ -1094,8 +1090,7 @@
         }
       },
       "combatType": "MAG_INF",
-      "portraitSrc": "images/units/portraits/void-reaver-b.png",
-      "portraitPlaceholder": true,
+      "portraitSrc": "images/voidreaver.png",
       "displayName": "Void Reaver (B)",
       "unitRole": "pvp",
       "requiredClass": "battlemage",
@@ -1105,7 +1100,7 @@
     {
       "id": "eldritch-bulwark-a",
       "categoryId": "magic-infantry",
-      "name": "Eldritch Bulwark",
+      "name": "Eldritch Titan",
       "branch": "A",
       "tier": 6,
       "goldCost": 82400,
@@ -1146,9 +1141,8 @@
         }
       },
       "combatType": "MAG_INF",
-      "portraitSrc": "images/units/portraits/eldritch-bulwark-a.png",
-      "portraitPlaceholder": true,
-      "displayName": "Eldritch Bulwark (A)",
+      "portraitSrc": "images/eldritchbulwark.png",
+      "displayName": "Eldritch Titan (A)",
       "unitRole": "rank",
       "requiredClass": "battlemage",
       "unlockRank": 21,
@@ -1198,8 +1192,7 @@
         }
       },
       "combatType": "MAG_INF",
-      "portraitSrc": "images/units/portraits/arcane-executioner-b.png",
-      "portraitPlaceholder": true,
+      "portraitSrc": "images/arcaneexecutioner.png",
       "displayName": "Arcane Executioner (B)",
       "unitRole": "pvp",
       "requiredClass": "battlemage",
@@ -1238,8 +1231,7 @@
         }
       },
       "combatType": "MAG_CAV",
-      "portraitSrc": "images/units/portraits/neophyte.png",
-      "portraitPlaceholder": true,
+      "portraitSrc": "images/neophyte.png",
       "displayName": "Neophyte",
       "unitRole": "rank",
       "requiredClass": "battlemage",
@@ -1278,8 +1270,7 @@
         }
       },
       "combatType": "MAG_CAV",
-      "portraitSrc": "images/units/portraits/aether-lancer.png",
-      "portraitPlaceholder": true,
+      "portraitSrc": "images/aetherlancer.png",
       "displayName": "Aether Lancer",
       "unitRole": "pvp",
       "requiredClass": "battlemage",
@@ -1319,8 +1310,7 @@
         }
       },
       "combatType": "MAG_CAV",
-      "portraitSrc": "images/units/portraits/celestial-harbinger.png",
-      "portraitPlaceholder": true,
+      "portraitSrc": "images/celestialharbinger.png",
       "displayName": "Celestial Harbinger",
       "unitRole": "pvp",
       "requiredClass": "battlemage",
@@ -1330,7 +1320,7 @@
     {
       "id": "holder",
       "categoryId": "magic-artillery",
-      "name": "Holder",
+      "name": "Runefire Ballista",
       "branch": "B",
       "tier": 1,
       "goldCost": 280,
@@ -1342,28 +1332,27 @@
       ],
       "stats": {
         "app": {
-          "hp": 75,
-          "str": 7,
-          "rng": 24,
+          "hp": 64,
+          "str": 6,
+          "rng": 38,
           "upc": 8
         },
         "std": {
-          "hp": 88,
-          "str": 8,
-          "rng": 25,
+          "hp": 74,
+          "str": 7,
+          "rng": 44,
           "upc": 14
         },
         "vet": {
-          "hp": 104,
-          "str": 9,
-          "rng": 26,
+          "hp": 86,
+          "str": 8,
+          "rng": 52,
           "upc": 22
         }
       },
       "combatType": "MAG_ART",
-      "portraitSrc": "images/units/portraits/holder.png",
-      "portraitPlaceholder": true,
-      "displayName": "Holder",
+      "portraitSrc": "images/runefireballista.png",
+      "displayName": "Runefire Ballista",
       "unitRole": "pvp",
       "requiredClass": "battlemage",
       "unlockRank": 1,
@@ -1372,7 +1361,7 @@
     {
       "id": "vessel",
       "categoryId": "magic-artillery",
-      "name": "Vessel",
+      "name": "Stellar Mortar",
       "branch": "B",
       "tier": 3,
       "goldCost": 1660,
@@ -1384,28 +1373,27 @@
       ],
       "stats": {
         "std": {
-          "hp": 111,
-          "str": 10,
-          "rng": 30,
+          "hp": 94,
+          "str": 9,
+          "rng": 62,
           "upc": 14
         },
         "vet": {
-          "hp": 130,
-          "str": 11,
-          "rng": 33,
+          "hp": 110,
+          "str": 10,
+          "rng": 72,
           "upc": 22
         },
         "mst": {
-          "hp": 148,
-          "str": 12,
-          "rng": 36,
+          "hp": 125,
+          "str": 11,
+          "rng": 84,
           "upc": 31
         }
       },
       "combatType": "MAG_ART",
-      "portraitSrc": "images/units/portraits/vessel.png",
-      "portraitPlaceholder": true,
-      "displayName": "Vessel",
+      "portraitSrc": "images/stellarmortar.png",
+      "displayName": "Stellar Mortar",
       "unitRole": "pvp",
       "requiredClass": "battlemage",
       "unlockRank": 14,
@@ -1414,7 +1402,7 @@
     {
       "id": "archon",
       "categoryId": "magic-artillery",
-      "name": "Archon",
+      "name": "Eldritch Siege Engine",
       "branch": "B",
       "tier": 7,
       "goldCost": 22400,
@@ -1427,28 +1415,27 @@
       "promotionCapNotes": "68 units (Marshal Commander) or 54 (Lord-High Commander) for promotion cap.",
       "stats": {
         "std": {
-          "hp": 172,
-          "str": 14,
-          "rng": 38,
+          "hp": 145,
+          "str": 12,
+          "rng": 98,
           "upc": 14
         },
         "vet": {
-          "hp": 192,
-          "str": 16,
-          "rng": 42,
+          "hp": 162,
+          "str": 13,
+          "rng": 112,
           "upc": 22
         },
         "mst": {
-          "hp": 211,
-          "str": 18,
-          "rng": 45,
+          "hp": 178,
+          "str": 14,
+          "rng": 128,
           "upc": 31
         }
       },
       "combatType": "MAG_ART",
-      "portraitSrc": "images/units/portraits/archon.png",
-      "portraitPlaceholder": true,
-      "displayName": "Archon",
+      "portraitSrc": "images/eldritchsiegeengine.png",
+      "displayName": "Eldritch Siege Engine",
       "unitRole": "pvp",
       "requiredClass": "battlemage",
       "unlockRank": 22,
@@ -1457,7 +1444,7 @@
     {
       "id": "wyrmling",
       "categoryId": "magic-beasts",
-      "name": "Wyrmling",
+      "name": "Hatchling Imp",
       "branch": "A",
       "tier": 1,
       "goldCost": 310,
@@ -1485,9 +1472,8 @@
         }
       },
       "combatType": "MAG_BST",
-      "portraitSrc": "images/units/portraits/wyrmling.png",
-      "portraitPlaceholder": true,
-      "displayName": "Wyrmling",
+      "portraitSrc": "images/hatchlingimp.png",
+      "displayName": "Hatchling Imp",
       "unitRole": "rank",
       "requiredClass": "battlemage",
       "unlockRank": 1,
@@ -1496,7 +1482,7 @@
     {
       "id": "blood-drake",
       "categoryId": "magic-beasts",
-      "name": "Blood-Drake",
+      "name": "Lizard Dragon",
       "branch": "A",
       "tier": 3,
       "goldCost": 1720,
@@ -1524,9 +1510,8 @@
         }
       },
       "combatType": "MAG_BST",
-      "portraitSrc": "images/units/portraits/blood-drake.png",
-      "portraitPlaceholder": true,
-      "displayName": "Blood-Drake",
+      "portraitSrc": "images/lizarddragon.png",
+      "displayName": "Lizard Dragon",
       "unitRole": "rank",
       "requiredClass": "battlemage",
       "unlockRank": 14,
@@ -1535,7 +1520,7 @@
     {
       "id": "iron-hide-drake",
       "categoryId": "magic-beasts",
-      "name": "Iron-Hide Drake",
+      "name": "Spiked Komogon",
       "branch": "A",
       "tier": 4,
       "goldCost": 4360,
@@ -1563,9 +1548,8 @@
         }
       },
       "combatType": "MAG_BST",
-      "portraitSrc": "images/units/portraits/iron-hide-drake.png",
-      "portraitPlaceholder": true,
-      "displayName": "Iron-Hide Drake",
+      "portraitSrc": "images/spikedkomogon.png",
+      "displayName": "Spiked Komogon",
       "unitRole": "rank",
       "requiredClass": "battlemage",
       "unlockRank": 18,
@@ -1574,7 +1558,7 @@
     {
       "id": "calamity-dragon-a",
       "categoryId": "magic-beasts",
-      "name": "Calamity Dragon",
+      "name": "Armored Drake",
       "branch": "A",
       "tier": 5,
       "goldCost": 22400,
@@ -1609,9 +1593,8 @@
         }
       },
       "combatType": "MAG_BST",
-      "portraitSrc": "images/units/portraits/calamity-dragon-a.png",
-      "portraitPlaceholder": true,
-      "displayName": "Calamity Dragon (A)",
+      "portraitSrc": "images/armoreddrake.png",
+      "displayName": "Armored Drake (A)",
       "unitRole": "rank",
       "requiredClass": "battlemage",
       "unlockRank": 20,
@@ -1620,7 +1603,7 @@
     {
       "id": "shadow-talon-b",
       "categoryId": "magic-beasts",
-      "name": "Shadow Talon",
+      "name": "Shadow Sparker",
       "branch": "B",
       "tier": 6,
       "goldCost": 13800,
@@ -1655,9 +1638,8 @@
         }
       },
       "combatType": "MAG_BST",
-      "portraitSrc": "images/units/portraits/shadow-talon-b.png",
-      "portraitPlaceholder": true,
-      "displayName": "Shadow Talon (B)",
+      "portraitSrc": "images/shadowsparker.png",
+      "displayName": "Shadow Sparker (B)",
       "unitRole": "pvp",
       "requiredClass": "battlemage",
       "unlockRank": 21,

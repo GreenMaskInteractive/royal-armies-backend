@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Royal Armies — Age Alpha</title>
     <link rel="stylesheet" href="style.css?v=cursor-modal-layer-fix-1">
-    <link rel="stylesheet" href="style2.css?v=player-capital-shine-1">
-    <link rel="stylesheet" href="style-age-headquarters.css?v=hq-header-clicks-2">
+    <link rel="stylesheet" href="style2.css?v=guild-jobs-catalog-1">
+    <link rel="stylesheet" href="style-age-headquarters.css?v=utf8-content-fix-1">
     <link rel="stylesheet" href="style-age-center-modals.css?v=workspace-rsd-wallet-1">
     <link rel="stylesheet" href="style-age-council-room.css?v=hq-header-clicks-2">
     <link rel="stylesheet" href="style-age-hq-arcane-flare.css?v=hq-border-blue-pulse-1">
@@ -17,12 +17,12 @@
     <link rel="stylesheet" href="style-age-army-workspaces.css?v=hud-nation-treasury-1">
     <link rel="stylesheet" href="style-age-banner-workspace.css?v=banner-advisor-profile-1">
     <link rel="stylesheet" href="style-blessed-banners-modal.css?v=banner-skill-select-1">
-    <link rel="stylesheet" href="style-age-map-only.css?v=drawer-above-map-key-1">
+    <link rel="stylesheet" href="style-age-map-only.css?v=guild-hub-reactivate-2">
     <link rel="stylesheet" href="style-age-immersive-workspace.css?v=workspace-backdrop-stack-1">
     <link rel="stylesheet" href="style-age-nation-hub-radial.css?v=radialmenu-saved-1">
-    <link rel="stylesheet" href="style-age-nation-hub-box.css?v=hub-above-dev-nav-1">
+    <link rel="stylesheet" href="style-age-nation-hub-box.css?v=hub-disabled-actions-1">
     <link rel="stylesheet" href="style-age-modal-arcane-accent.css?v=age-modal-arcane-accent-1">
-    <link rel="stylesheet" href="style-age-barracks.css?v=barracks-sleek-2">
+    <link rel="stylesheet" href="style-age-barracks.css?v=barracks-army-workspace-1">
     <link rel="stylesheet" href="style-age-watchtower.css?v=watchtower-drawer-1">
 </head>
 <body id="age-page-canvas" class="age-page-canvas game-page-canvas age-map-shell-only" data-age-slug="alpha" data-age-map-only="true" data-age-view="map">
@@ -1117,24 +1117,24 @@
                 </div>
             </div>
 
-<div id="age-barracks-workspace" class="age-barracks-workspace" hidden aria-hidden="true" aria-label="Garrison Registry recruitment">
-                <div class="age-barracks-shell">
-                    <header class="age-barracks-header">
+<div id="age-barracks-workspace" class="age-barracks-workspace age-army-workspace" hidden aria-hidden="true" aria-label="Garrison Registry recruitment">
+                <div class="age-barracks-shell age-army-workspace-shell">
+                    <header class="age-barracks-header age-army-workspace-header">
                         <div class="age-barracks-header-copy">
-                            <p class="age-barracks-eyebrow">Barracks</p>
-                            <h2 class="age-barracks-title">Garrison Registry</h2>
-                            <p class="age-barracks-subtitle">Recruit units and review promotion paths for your standing army.</p>
+                            <p class="age-barracks-eyebrow age-army-workspace-eyebrow">Barracks</p>
+                            <h2 class="age-barracks-title age-army-workspace-title">Garrison Registry</h2>
+                            <p class="age-barracks-subtitle age-army-workspace-subtitle">Recruit units and review promotion paths for your standing army.</p>
                             <p id="age-barracks-commander-status" class="age-barracks-commander-status" aria-live="polite"></p>
                         </div>
-                        <div class="age-barracks-header-actions">
+                        <div class="age-barracks-header-actions age-army-workspace-header-actions">
                             <div class="age-barracks-wallets">
-                                <div class="age-barracks-wallet" aria-label="Commander gold">
-                                    <span class="age-barracks-wallet-label">Gold</span>
-                                    <span id="age-barracks-commander-gold" class="age-barracks-wallet-value" aria-live="polite">—</span>
+                                <div class="age-barracks-wallet age-army-workspace-gold-wallet is-visible" aria-label="Commander gold">
+                                    <span class="age-barracks-wallet-label age-army-workspace-gold-label">Gold</span>
+                                    <span id="age-barracks-commander-gold" class="age-barracks-wallet-value age-army-workspace-gold-value" aria-live="polite">—</span>
                                 </div>
-                                <div class="age-barracks-wallet" aria-label="Commander provisions">
-                                    <span class="age-barracks-wallet-label">Provisions</span>
-                                    <span id="age-barracks-commander-provisions" class="age-barracks-wallet-value" aria-live="polite">—</span>
+                                <div class="age-barracks-wallet age-army-workspace-gold-wallet is-visible" aria-label="Commander provisions">
+                                    <span class="age-barracks-wallet-label age-army-workspace-gold-label">Provisions</span>
+                                    <span id="age-barracks-commander-provisions" class="age-barracks-wallet-value age-army-workspace-gold-value" aria-live="polite">—</span>
                                 </div>
                             </div>
                             <button
@@ -1144,18 +1144,24 @@
                                 aria-label="Close barracks">×</button>
                         </div>
                     </header>
-                    <div class="age-barracks-layout">
-                        <nav
-                            id="age-barracks-category-nav"
-                            class="age-barracks-category-nav"
-                            aria-label="Unit classes"></nav>
-                        <div class="age-barracks-main">
-                            <div class="age-barracks-main-head">
-                                <h3 id="age-barracks-active-category-label" class="age-barracks-active-category-label">Infantry</h3>
-                                <p class="age-barracks-main-hint">Select a unit for stats and pricing.</p>
+                    <div class="age-barracks-body age-army-workspace-body">
+                        <div class="age-barracks-layout">
+                            <nav
+                                id="age-barracks-category-nav"
+                                class="age-barracks-category-nav age-army-workspace-panel"
+                                aria-label="Unit classes"></nav>
+                            <div class="age-barracks-main">
+                                <div class="age-barracks-main-head age-army-workspace-toolbar">
+                                    <h3 id="age-barracks-active-category-label" class="age-barracks-active-category-label age-army-workspace-panel-title">Infantry</h3>
+                                    <p class="age-barracks-main-hint age-army-workspace-toolbar-note">Select a unit for stats and pricing.</p>
+                                </div>
+                                <div class="age-barracks-main-split age-army-workspace-split">
+                                    <section class="age-barracks-unit-list-panel age-army-workspace-panel">
+                                        <div id="age-barracks-unit-grid" class="age-barracks-unit-grid" aria-live="polite"></div>
+                                    </section>
+                                    <aside id="age-barracks-unit-detail" class="age-barracks-unit-detail age-army-workspace-panel" hidden aria-live="polite"></aside>
+                                </div>
                             </div>
-                            <div id="age-barracks-unit-grid" class="age-barracks-unit-grid" aria-live="polite"></div>
-                            <aside id="age-barracks-unit-detail" class="age-barracks-unit-detail" hidden aria-live="polite"></aside>
                         </div>
                     </div>
                 </div>
@@ -1222,7 +1228,7 @@
                     <header class="age-guild-top-band" aria-label="Training header">
                         <div class="age-guild-job-top-panel age-guild-job-top-panel--training">
                             <div class="age-guild-training-title-row">
-                                <h2 id="age-guild-training-title" class="age-guild-training-title">Street Patrol</h2>
+                                <h2 id="age-guild-training-title" class="age-guild-training-title">Settlement Patrol</h2>
                                 <button
                                     type="button"
                                     id="age-guild-training-return-btn"
@@ -1336,6 +1342,21 @@
                     </div>
                 </div>
 
+                <div id="age-guild-jobs-arena" class="age-guild-job-arena age-guild-jobs-hub-arena" hidden aria-hidden="true" aria-label="Adventurer's Guild jobs">
+                    <button type="button" class="age-guild-close age-guild-job-close age-age-center-modal-close" data-age-guild-close aria-label="Close guild workspace">×</button>
+
+                    <header class="age-guild-top-band" aria-label="Guild jobs header">
+                        <div class="age-guild-job-top-panel">
+                            <h2 class="age-guild-hub-title">Adventurer's Guild</h2>
+                            <p class="age-guild-hub-subtitle">Select a contract to open its workspace.</p>
+                        </div>
+                    </header>
+
+                    <div class="age-guild-job-body">
+                        <div id="age-guild-hub-jobs-host" class="age-guild-hub-jobs-host age-settlement-guild-jobs" aria-live="polite"></div>
+                    </div>
+                </div>
+
                 <div id="age-guild-bounties-arena" class="age-guild-job-arena age-guild-bounties-arena" hidden aria-hidden="true" aria-label="Player bounties">
                     <button type="button" class="age-guild-back age-guild-job-back" data-age-guild-back>← Jobs</button>
                     <button type="button" class="age-guild-close age-guild-job-close age-age-center-modal-close" data-age-guild-close aria-label="Close job">×</button>
@@ -1437,7 +1458,6 @@
                                     <span id="game-mobile-messages-unread" class="dropdown-messages-unread-count" hidden></span>
                                 </button>
                                 <button type="button" class="portal-mobile-submenu-item">Settings</button>
-                                <button type="button" id="game-mobile-dropdown-return-portal-btn" class="portal-mobile-submenu-item portal-mobile-submenu-item-return-portal">Return to Age Portal</button>
                                 <button type="button" id="game-mobile-dropdown-logout-btn" class="portal-mobile-submenu-item portal-mobile-submenu-item-logout">Log Out</button>
                             </div>
                         </div>
@@ -1475,7 +1495,6 @@
                                         <span id="nav-messages-unread-count" class="dropdown-messages-unread-count" hidden></span>
                                     </button>
                                     <button type="button" class="dropdown-action-item" role="menuitem">Settings</button>
-                                    <button type="button" id="game-nav-dropdown-return-portal-btn" class="dropdown-action-item dropdown-action-item-return-portal" role="menuitem">Return to Age Portal</button>
                                     <button type="button" id="game-nav-dropdown-logout-btn" class="dropdown-action-item dropdown-action-item-logout" role="menuitem">Log Out</button>
                                 </div>
                             </div>
@@ -2201,9 +2220,9 @@
     <script src="age-world-map-plan-editor.js?v=age-map-plan-mf-action-1"></script>
     <script src="rift-page-paths.js?v=map-settlement-tab-only-1"></script>
     <script src="rift-immersive-workspace.js?v=watchtower-border-1"></script>
-    <script src="age-view-tabs.js?v=settlement-tab-buildings-1"></script>
+    <script src="age-view-tabs.js?v=guild-jobs-catalog-1"></script>
     <script src="rift-age-guild-training.js?v=commander-rank-names-2"></script>
-    <script src="age-adventurers-guild.js?v=commander-rank-names-2"></script>
+    <script src="age-adventurers-guild.js?v=guild-jobs-catalog-1"></script>
     <script src="rift-nation-treasury.js?v=defense-treasury-only-1"></script>
     <script src="rift-infirmary-recovery.js?v=infirmary-tier-heal-scale-2"></script>
     <script src="rift-banner-workspace.js?v=banner-skill-branches-1"></script>
@@ -2211,17 +2230,17 @@
     <script src="rift-age-unit-evolution.js?v=map-settlement-tab-only-1"></script>
     <script src="age-unit-evolution.js?v=workspace-rsd-wallet-1"></script>
     <script src="rift-unit-purchase-catalog.js?v=commander-rank-names-2"></script>
-    <script src="age-barracks.js?v=commander-rank-names-2"></script>
+    <script src="age-barracks.js?v=barracks-unit-card-unlock-2"></script>
     <script src="age-army-groups.js?v=commander-rank-names-2"></script>
     <script src="age-records.js?v=commander-rank-names-2"></script>
     <script src="rift-song-manuscript-catalog.js?v=blood-tithe-manuscript-1"></script>
     <script src="rift-discoveries-workspace.js?v=nation-hub-radial-1"></script>
     <script src="age-chronicles-battle-pass.js?v=nation-hub-battle-pass-wire-2"></script>
-    <script src="age-nation-hub.js?v=hub-above-dev-nav-1"></script>
+    <script src="age-nation-hub.js?v=hub-disabled-actions-1"></script>
     <script src="rift-official-age.js?v=portal-join-nation-fix-1"></script>
     <script src="age-headquarters-intel.js?v=bounty-rank-titles-1"></script>
     <script src="age-headquarters.js?v=commander-rank-names-2"></script>
-    <script src="age-left-reports-panel.js?v=vaerenth-plains-only-1"></script>
+    <script src="age-left-reports-panel.js?v=terrain-bonus-two-col-1"></script>
     <script src="age-quick-tips-panel.js?v=quick-tips-left-hud-1"></script>
     <script src="age-map-only-page.js?v=portal-join-nation-fix-1"></script>
     <script src="dev-page-navigator.js?v=dev-nav-drag-handle-1"></script>

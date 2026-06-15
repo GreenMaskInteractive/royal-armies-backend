@@ -2268,7 +2268,7 @@ body:not(.portal-guest-mode) #portal-deployment-guest-cta {
 }
 
 .portal-server-select-shell::after {
-    content: 'â–¾' !important;
+    content: '\25BE' !important;
     position: absolute !important;
     top: 50% !important;
     right: 14px !important;
@@ -16511,7 +16511,18 @@ label.age-council-board-editor-tool {
 #age-page-canvas .age-settlement-menu-body > .age-settlement-menu-list {
     flex: 1 1 auto;
     min-height: 0;
-    overflow: hidden;
+    overflow-x: hidden;
+    overflow-y: auto;
+}
+
+#age-page-canvas .age-city-info-settlement-shell .age-settlement-menu-list {
+    --settlement-menu-label-size: 0.82rem;
+    --settlement-menu-desc-size: 0.74rem;
+    --settlement-menu-mark-size: 26px;
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-x: hidden;
+    overflow-y: auto;
 }
 
 #age-page-canvas .age-settlement-menu-war-room-slot {
@@ -16526,6 +16537,12 @@ label.age-council-board-editor-tool {
         linear-gradient(180deg, rgba(255, 217, 120, 0.1) 0%, rgba(255, 217, 120, 0.02) 42%, transparent 100%),
         rgba(0, 0, 0, 0.22);
     box-shadow: inset 0 1px 0 rgba(255, 217, 120, 0.12);
+}
+
+#age-page-canvas .age-map-hud--right.is-city-info-settlement-open .age-city-info-settlement-shell {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: hidden;
 }
 
 #age-page-canvas .age-settlement-menu-war-room-slot[hidden] {
@@ -16611,18 +16628,6 @@ label.age-council-board-editor-tool {
 #age-page-canvas .age-settlement-menu-item--war-room .age-settlement-menu-item-chevron {
     font-size: 1.2rem;
     color: rgba(255, 232, 176, 0.92);
-}
-
-#age-page-canvas .age-city-info-settlement-shell .age-settlement-menu-list {
-    --settlement-menu-label-size: 0.82rem;
-    --settlement-menu-desc-size: 0.74rem;
-    --settlement-menu-mark-size: 26px;
-}
-
-#age-page-canvas .age-map-hud--right.is-city-info-settlement-open .age-city-info-settlement-shell {
-    flex: 1 1 auto;
-    min-height: 0;
-    overflow: hidden;
 }
 
 #age-page-canvas .age-map-hud--right.is-city-info-settlement-open #age-city-info-tab-settlement {
@@ -19062,7 +19067,7 @@ label.age-council-board-editor-tool {
 }
 
 .game-chat-msg.is-pending .game-chat-msg-time::after {
-    content: ' Â· sending';
+    content: ' \00B7 sending';
     font-size: 0.62rem;
     letter-spacing: 0.04em;
     text-transform: lowercase;
@@ -19431,7 +19436,7 @@ body#how-did-you-get-here-canvas .achievement-unlock-xp[hidden] {
 }
 
 body#how-did-you-get-here-canvas .achievement-unlock-xp:not([hidden]) + .achievement-unlock-title::before {
-    content: 'â€” ' !important;
+    content: '\2014 ' !important;
     color: rgba(241, 224, 172, 0.55) !important;
     font-weight: 400 !important;
 }
@@ -21661,7 +21666,7 @@ body.age-map-shell-only .age-world-map-terrain-controls,
 }
 
 .age-world-city-drawer-capital-badge::before {
-    content: 'â™› ';
+    content: '\265B ';
     color: #ffd978;
 }
 
@@ -26318,6 +26323,8 @@ body.age-barracks-open {
 }
 
 body.age-guild-training-open .age-guild-workspace:not([hidden]),
+body.age-guild-hub-open .age-guild-workspace:not([hidden]),
+body.age-guild-overlay-open .age-guild-workspace:not([hidden]),
 #age-page-canvas[data-age-view="guild-training"] .age-guild-workspace:not([hidden]) {
     inset: 0;
     top: 0;
@@ -26447,6 +26454,40 @@ body.age-guild-training-open .age-guild-workspace:not([hidden]),
     color: rgba(255, 215, 120, 0.82);
 }
 
+.age-settlement-guild-job-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+    width: 100%;
+}
+
+.age-settlement-guild-job-difficulty {
+    display: inline-flex;
+    align-items: center;
+    padding: 1px 6px;
+    border-radius: 3px;
+    border: 1px solid rgba(184, 144, 48, 0.34);
+    background: rgba(255, 215, 120, 0.08);
+    font-family: 'Segoe UI', Tahoma, sans-serif;
+    font-size: 0.62rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: rgba(255, 224, 160, 0.82);
+}
+
+.age-settlement-guild-job-access {
+    display: block;
+    width: 100%;
+    font-family: 'Segoe UI', Tahoma, sans-serif;
+    font-size: 0.68rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: rgba(255, 208, 128, 0.62);
+}
+
 .age-settlement-guild-job-desc,
 .age-settlement-guild-job-lock,
 .age-settlement-guild-jobs-empty,
@@ -26471,6 +26512,11 @@ body.age-guild-training-open .age-guild-workspace:not([hidden]),
 }
 
 #age-page-canvas[data-age-view="guild-training"] .age-guild-training-arena:not([hidden]) {
+    display: grid;
+    pointer-events: auto;
+}
+
+body.age-guild-hub-open .age-guild-jobs-hub-arena:not([hidden]) {
     display: grid;
     pointer-events: auto;
 }
@@ -27788,7 +27834,7 @@ button.age-guild-gear-slot {
 }
 
 .age-guild-hub-training-toggle::after {
-    content: 'â–¾';
+    content: '\25BE';
     position: absolute;
     right: 14px;
     top: 50%;
@@ -28247,7 +28293,7 @@ body.player-report-modal-open {
 }
 
 .player-report-select-shell::after {
-    content: 'â–¾';
+    content: '\25BE';
     position: absolute;
     top: 50%;
     right: 12px;

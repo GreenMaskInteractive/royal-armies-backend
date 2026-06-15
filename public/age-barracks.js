@@ -354,20 +354,6 @@
         const buyLabel = purchaseInFlight
             ? 'Recruiting…'
             : `Recruit — ${quote.formatGold(quote.totalGoldCost)}`;
-        const summaryLine = quote.quantity
-            ? `${quote.quantity} ${quote.quantity === 1 ? 'unit' : 'units'} · ${quote.formatGold(quote.totalGoldCost)} · ${quote.totalProvisionsCost} Provisions`
-            : (quote.upcPerUnit
-                ? 'Not enough gold or Provisions for this unit.'
-                : 'Unit provision cost unavailable.');
-        const limitLine = quote.canAffordAny
-            ? (quote.swarmRecruit
-                ? `Swarm recruit — up to ${quote.maxAffordable} by Provisions and gold (no per-purchase cap)`
-                : quote.limitedByBatch
-                    ? `Limited to ${quote.batchCap} units per purchase (${quote.upcPerUnit} UPC each · ${quote.maxByProvisions} affordable by Provisions)`
-                    : quote.limitedByProvisions
-                        ? `Limited by Provisions (${quote.maxByProvisions} max · ${quote.upcPerUnit} UPC each)`
-                        : `Limited by gold (${quote.maxByGold} max · ${quote.formatGold(quote.unitCost)} each)`)
-            : '';
         const messageLine = purchaseMessage
             ? `<p class="age-barracks-detail-message${purchaseMessage.startsWith('Recruited') ? ' is-success' : ' is-error'}">${escapeHtml(purchaseMessage)}</p>`
             : '';
@@ -377,7 +363,6 @@
             + `<div class="age-barracks-qty-picker">`
             + `<span class="age-barracks-qty-label">Quantity</span>`
             + `<div class="age-barracks-qty-options" role="group" aria-label="Recruit quantity">${qtyButtons}</div>`
-            + `<p class="age-barracks-qty-summary">${escapeHtml(summaryLine)}</p>`
             + '</div>'
             + messageLine
             + `<div class="age-barracks-detail-actions">`
@@ -389,8 +374,6 @@
                 : `Recruit ${quote.quantity} unit(s)`)}">`
             + `${escapeHtml(buyLabel)}`
             + '</button>'
-            + `<p class="age-barracks-detail-footnote">${escapeHtml(quote.formatGold(quote.unitCost))} · ${escapeHtml(quote.upcPerUnit)} UPC per unit · ${quote.swarmRecruit ? 'swarm recruit (no 15 cap)' : `${quote.batchCap} max per purchase`} · ${quote.maxByGold} max by gold · ${quote.maxByProvisions} max by Provisions</p>`
-            + (limitLine ? `<p class="age-barracks-detail-limit">${escapeHtml(limitLine)}</p>` : '')
             + '</div>'
             + '</div>'
         );
@@ -440,6 +423,17 @@
         );
     }
 
+    function renderPortraitImg(className, portraitUrl, options = {}) {
+        const placeholderClass = options.placeholder ? ' is-placeholder' : '';
+        const loading = options.eager ? 'eager' : 'lazy';
+        const decoding = options.eager ? 'sync' : 'async';
+        return (
+            `<img class="${className}${placeholderClass}"`
+            + ` src="${escapeHtml(portraitUrl)}" alt="" width="1024" height="1024"`
+            + ` loading="${loading}" decoding="${decoding}">`
+        );
+    }
+
     function renderUnitDetail(unit) {
         const panel = global.document.getElementById('age-barracks-unit-detail');
         if (!panel) return;
@@ -469,15 +463,19 @@
 
         panel.hidden = false;
         panel.innerHTML = (
-            `<div class="age-barracks-detail-card">`
+            `<div class="age-barracks-detail-inner">`
+            + `<div class="age-barracks-detail-header">`
             + `<div class="age-barracks-detail-portrait-wrap">`
-            + `<img class="age-barracks-detail-portrait${unit.portraitPlaceholder ? ' is-placeholder' : ''}"`
-            + ` src="${escapeHtml(portraitUrl)}" alt="" loading="lazy" decoding="async">`
+            + renderPortraitImg(
+                'age-barracks-detail-portrait',
+                portraitUrl,
+                { placeholder: Boolean(unit.portraitPlaceholder), eager: true }
+            )
             + (unit.portraitPlaceholder
                 ? `<span class="age-barracks-detail-portrait-badge">Portrait coming soon</span>`
                 : '')
             + '</div>'
-            + `<div class="age-barracks-detail-body">`
+            + `<div class="age-barracks-detail-summary">`
             + `<h3 class="age-barracks-detail-title">${escapeHtml(unit.displayName || unit.name)}</h3>`
             + branchLine
             + specialLine
@@ -489,6 +487,9 @@
             + '</dl>'
             + lockLine
             + capNotes
+            + '</div>'
+            + '</div>'
+            + `<div class="age-barracks-detail-recruit-section">`
             + renderPromotionTable(unit)
             + renderPurchaseControls(unit, access)
             + '</div>'
@@ -549,6 +550,19 @@
         }
     }
 
+    function formatUnitCardUnlockLine(unit) {
+        const api = catalogApi();
+        const catalogRef = catalog || api.getCachedCatalog?.();
+        const gameTier = Number.isFinite(Number(unit?.gameTier))
+            ? Math.max(1, Math.floor(Number(unit.gameTier)))
+            : (catalogRef && api.resolveGameTierForUnit
+                ? api.resolveGameTierForUnit(catalogRef, unit)
+                : Math.max(1, Math.floor(Number(unit?.tier) || 1)));
+        const unlockRank = Math.max(1, Math.floor(Number(unit?.unlockRank) || 1));
+        const unlockLabel = formatCommanderRankLabel(unlockRank);
+        return `Tier ${gameTier} · Unlocks at ${unlockLabel}`;
+    }
+
     function renderUnitGrid() {
         const grid = global.document.getElementById('age-barracks-unit-grid');
         if (!grid || !catalog) return;
@@ -570,24 +584,26 @@
             const portraitUrl = api.resolveUnitPortraitUrl(unit, catalog);
             const access = api.evaluateUnitPurchaseAccess(unit, commander);
             const isActive = unit.id === selectedUnitId;
-            const lockBadge = access.allowed
+            const unlockLine = formatUnitCardUnlockLine(unit);
+            const metaMarkup = access.allowed
                 ? ''
-                : `<span class="age-barracks-unit-card-lock">${escapeHtml(access.reason)}</span>`;
+                : `<span class="age-barracks-unit-card-meta">${escapeHtml(unlockLine)}</span>`;
             return (
                 `<button type="button"`
                 + ` class="age-barracks-unit-card${isActive ? ' is-active' : ''}${access.allowed ? '' : ' is-locked'}"`
                 + ` data-barracks-unit-id="${escapeHtml(unit.id)}"`
                 + ` aria-pressed="${isActive ? 'true' : 'false'}"`
-                + ` title="${escapeHtml(access.allowed ? '' : access.reason)}">`
+                + ` title="${escapeHtml(access.allowed ? (unit.displayName || unit.name) : access.reason)}">`
                 + `<span class="age-barracks-unit-card-portrait-wrap">`
-                + `<img class="age-barracks-unit-card-portrait${unit.portraitPlaceholder ? ' is-placeholder' : ''}"`
-                + ` src="${escapeHtml(portraitUrl)}" alt="" loading="lazy" decoding="async">`
+                + renderPortraitImg(
+                    'age-barracks-unit-card-portrait',
+                    portraitUrl,
+                    { placeholder: Boolean(unit.portraitPlaceholder) }
+                )
                 + '</span>'
                 + `<span class="age-barracks-unit-card-body">`
                 + `<span class="age-barracks-unit-card-name">${escapeHtml(unit.displayName || unit.name)}</span>`
-                + `<span class="age-barracks-unit-card-meta">Tier ${escapeHtml(unit.tier)} · ${escapeHtml(formatCommanderRankLabel(unit.unlockRank))} · ${escapeHtml(unit.roleLabel || 'Rank')}</span>`
-                + `<span class="age-barracks-unit-card-promos">${escapeHtml((unit.promotions || []).map(api.formatPromotionLabel).join(' · '))}</span>`
-                + lockBadge
+                + metaMarkup
                 + '</span>'
                 + '</button>'
             );
@@ -596,12 +612,19 @@
         renderUnitDetail(api.getUnitById(catalog, selectedUnitId));
     }
 
+    function resolveCategoryNavTitle() {
+        const commander = getCommanderContext();
+        return commander.classId === 'battlemage' ? 'Magic Unit Classes' : 'Unit Classes';
+    }
+
     function renderCategoryNav() {
         const nav = global.document.getElementById('age-barracks-category-nav');
         if (!nav || !catalog) return;
 
         const api = catalogApi();
-        nav.innerHTML = api.getCategories(catalog, getCatalogOptions()).map((category) => {
+        nav.innerHTML = (
+            `<p class="age-army-workspace-panel-title age-barracks-category-nav-title">${escapeHtml(resolveCategoryNavTitle())}</p>`
+            + api.getCategories(catalog, getCatalogOptions()).map((category) => {
             const isActive = category.id === activeCategoryId;
             return (
                 `<button type="button"`
@@ -609,10 +632,10 @@
                 + ` data-barracks-category="${escapeHtml(category.id)}"`
                 + ` aria-pressed="${isActive ? 'true' : 'false'}">`
                 + `<span class="age-barracks-category-label">${escapeHtml(category.label)}</span>`
-                + `<span class="age-barracks-category-path">${escapeHtml(category.path)}</span>`
                 + '</button>'
             );
-        }).join('');
+        }).join('')
+        );
     }
 
     function syncCategoryLabel() {

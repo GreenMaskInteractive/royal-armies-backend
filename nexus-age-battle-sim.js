@@ -887,8 +887,8 @@ const TRAINING_MODE_NPC_SCALE = Object.freeze({
 });
 
 const TRAINING_MODE_LABELS = Object.freeze({
-    'street-patrol': 'Street Patrol',
-    'civilian-transport': 'Civilian Transport',
+    'street-patrol': 'Settlement Patrol',
+    'civilian-transport': 'Civilian Escort',
     'border-patrol': 'Border Patrol',
     'border-pvp': 'Border Seize',
     'city-assault': 'City Assault',

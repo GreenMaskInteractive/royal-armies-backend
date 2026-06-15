@@ -1,0 +1,23 @@
+{
+  "nationId": "mynor",
+  "regionId": "region-6",
+  "dialect": "reach",
+  "notes": "Invented settlement names for Mynor. Dreadforge Reach dialect (case-inflected, ik-/pru-/tas-/tenz-/taktik-/form-/khaer-/vakrok-/kertis-/myn- roots): rigid imperial craft-voice — artificer guilds, mechanism forges, ordered labor, and defensive engineering. Not Amnek dictionary terms. Keeps movement-panel stub Northvale. No transparent English compounds. Run scripts/audit-settlement-names.py before committing.",
+  "cities": [
+    { "slot": "c01", "slug": "taktikum", "name": "Taktikum", "settlementTier": "city" },
+    { "slot": "c02", "slug": "vakroktas", "name": "Vakroktas", "settlementTier": "citadel" },
+    { "slot": "c03", "slug": "ikprutas", "name": "Ikprutas", "settlementTier": "city" },
+    { "slot": "c04", "slug": "kertisum", "name": "Kertisum", "settlementTier": "town" },
+    { "slot": "c05", "slug": "tenzumar", "name": "Tenzumar", "settlementTier": "city" },
+    { "slot": "c06", "slug": "formvass", "name": "Formvass", "settlementTier": "town" },
+    { "slot": "c07", "slug": "northvale", "name": "Northvale", "settlementTier": "city" },
+    { "slot": "c08", "slug": "pruktas", "name": "Pruktas", "settlementTier": "citadel" },
+    { "slot": "c09", "slug": "mynvass", "name": "Mynvass", "settlementTier": "city" },
+    { "slot": "c10", "slug": "ikform", "name": "Ikform", "settlementTier": "town" },
+    { "slot": "c11", "slug": "vakrokum", "name": "Vakrokum", "settlementTier": "city" },
+    { "slot": "c12", "slug": "tenzpru", "name": "Tenzpru", "settlementTier": "town" },
+    { "slot": "c13", "slug": "prukvel", "name": "Prukvel", "settlementTier": "village" },
+    { "slot": "c14", "slug": "khaertas", "name": "Khaertas", "settlementTier": "town" },
+    { "slot": "c15", "slug": "ikpekum", "name": "Ikpekum", "settlementTier": "kingdom", "isCapital": true }
+  ]
+}

@@ -1,0 +1,23 @@
+{
+  "nationId": "zevros",
+  "regionId": "region-4",
+  "dialect": "basin",
+  "notes": "Invented settlement names for Zevros. Verdant Basin dialect (SOV, guttural consonants, val-/hon-/leg-/str-/drak-/coh-/rank- roots): martial res publica voice — legions, echelons, honour, valour, and liberty-through-conquest. Crisper and more formal than Thruun's slurred merchant-basin speech; same linguistic family, different civic temperament. Not Amnek dictionary terms. Run scripts/audit-settlement-names.py before committing.",
+  "cities": [
+    { "slot": "c01", "slug": "valdrakon", "name": "Valdrakon", "settlementTier": "city" },
+    { "slot": "c02", "slug": "kharnhold", "name": "Kharnhold", "settlementTier": "citadel" },
+    { "slot": "c03", "slug": "legiastra", "name": "Legiastra", "settlementTier": "city" },
+    { "slot": "c04", "slug": "honvarn", "name": "Honvarn", "settlementTier": "town" },
+    { "slot": "c05", "slug": "stratheos", "name": "Stratheos", "settlementTier": "city" },
+    { "slot": "c06", "slug": "vexmarch", "name": "Vexmarch", "settlementTier": "town" },
+    { "slot": "c07", "slug": "drakkhor", "name": "Drakkhor", "settlementTier": "village" },
+    { "slot": "c08", "slug": "cohsalden", "name": "Cohsalden", "settlementTier": "city" },
+    { "slot": "c09", "slug": "primvexar", "name": "Primvexar", "settlementTier": "citadel" },
+    { "slot": "c10", "slug": "rankhald", "name": "Rankhald", "settlementTier": "town" },
+    { "slot": "c11", "slug": "saldros", "name": "Saldros", "settlementTier": "city" },
+    { "slot": "c12", "slug": "tharnvex", "name": "Tharnvex", "settlementTier": "town" },
+    { "slot": "c13", "slug": "vexkaros", "name": "Vexkaros", "settlementTier": "city" },
+    { "slot": "c14", "slug": "rosvalden", "name": "Rosvalden", "settlementTier": "village" },
+    { "slot": "c15", "slug": "echelvalor", "name": "Echelvalor", "settlementTier": "kingdom", "isCapital": true, "svgFile": "zevros_echelvalor_capital.svg" }
+  ]
+}

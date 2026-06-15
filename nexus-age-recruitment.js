@@ -144,10 +144,55 @@ function computeMaxRecruitQuantity(gold, provisions, unitCost, upcPerUnit, unit)
     return Math.min(batchCap, byGold, byProvisions);
 }
 
-function getCategoryMaxTier(catalog, categoryId) {
-    return (catalog?.units || [])
-        .filter((unit) => unit.categoryId === categoryId)
+function getUnitsForCategoryId(catalog, categoryId) {
+    const id = String(categoryId || '').trim();
+    return (catalog?.units || []).filter((unit) => unit.categoryId === id);
+}
+
+function getCategoryMaxCatalogTier(catalog, categoryId) {
+    return getUnitsForCategoryId(catalog, categoryId)
         .reduce((max, unit) => Math.max(max, Number(unit.tier) || 0), 0);
+}
+
+function categoryUsesPairedCatalogTiers(catalog, categoryId) {
+    const units = getUnitsForCategoryId(catalog, categoryId);
+    if (!units.length) return false;
+
+    const maxCatalogTier = getCategoryMaxCatalogTier(catalog, categoryId);
+    if (maxCatalogTier > 4) return true;
+
+    const tierCounts = new Map();
+    units.forEach((unit) => {
+        const tier = Math.max(1, Math.floor(Number(unit.tier) || 1));
+        tierCounts.set(tier, (tierCounts.get(tier) || 0) + 1);
+    });
+    for (const count of tierCounts.values()) {
+        if (count > 1) return true;
+    }
+    return false;
+}
+
+function resolveGameTierForCatalogTier(catalogTier) {
+    const tier = Math.max(1, Math.floor(Number(catalogTier) || 1));
+    if (tier <= 1) return 1;
+    return 1 + Math.ceil((tier - 1) / 2);
+}
+
+function resolveGameTierForUnit(catalog, unit) {
+    const catalogTier = Math.max(1, Math.floor(Number(unit?.tier) || 1));
+    if (categoryUsesPairedCatalogTiers(catalog, unit?.categoryId)) {
+        return resolveGameTierForCatalogTier(catalogTier);
+    }
+    return catalogTier;
+}
+
+function getCategoryMaxGameTier(catalog, categoryId) {
+    const maxCatalogTier = getCategoryMaxCatalogTier(catalog, categoryId);
+    if (!maxCatalogTier) return 1;
+    if (categoryUsesPairedCatalogTiers(catalog, categoryId)) {
+        return resolveGameTierForCatalogTier(maxCatalogTier);
+    }
+    return maxCatalogTier;
 }
 
 function enrichCatalogUnit(catalog, unit) {
@@ -156,18 +201,18 @@ function enrichCatalogUnit(catalog, unit) {
     const category = (catalog?.categories || []).find((entry) => entry.id === unit.categoryId);
     const categoryPath = category?.path || 'Physical';
     const requiredClass = unit.requiredClass || CLASS_BY_PATH[categoryPath] || 'battlemaster';
-    const unlockRank = Number.isFinite(Number(unit.unlockRank))
-        ? Number(unit.unlockRank)
-        : resolveUnlockRankForTier(catalog, unit.tier, unit.categoryId);
+    const gameTier = resolveGameTierForUnit(catalog, unit);
+    const unlockRank = resolveUnlockRankForTier(catalog, gameTier, unit.categoryId);
 
     return {
         ...unit,
         requiredClass,
+        gameTier,
         unlockRank
     };
 }
 
-function resolveUnlockRankForTier(catalog, tier, categoryId) {
+function resolveUnlockRankForTier(catalog, gameTier, categoryId) {
     const rules = catalog?.meta?.tierUnlockRules;
     const fourTier = Array.isArray(rules?.fourTierUnlockRanks)
         ? rules.fourTierUnlockRanks
@@ -175,10 +220,10 @@ function resolveUnlockRankForTier(catalog, tier, categoryId) {
     const extended = Array.isArray(rules?.extendedUnlockRanks)
         ? rules.extendedUnlockRanks
         : EXTENDED_UNLOCK_RANKS;
-    const gameTier = Math.max(1, Math.floor(Number(tier) || 1));
-    const maxTier = getCategoryMaxTier(catalog, categoryId);
-    const table = maxTier > 4 ? extended : fourTier;
-    const index = Math.max(0, Math.min(table.length - 1, gameTier - 1));
+    const tier = Math.max(1, Math.floor(Number(gameTier) || 1));
+    const maxGameTier = getCategoryMaxGameTier(catalog, categoryId);
+    const table = maxGameTier > 4 ? extended : fourTier;
+    const index = Math.max(0, Math.min(table.length - 1, tier - 1));
     return table[index];
 }
 

@@ -1,0 +1,23 @@
+{
+  "nationId": "khaerant",
+  "regionId": "region-6",
+  "dialect": "reach",
+  "notes": "Invented settlement names for Khaerant. Dreadforge Reach dialect (case-inflected, ik-/pru-/tas-/tenz-/kraz-/form-/khaer-/vakrok-/kertis- roots): iron-willed Aidoriian secession voice — sovereign treasury, rigid law, gold-armed host, and veiled labor pits. Same linguistic family as Mynor, tuned toward crown authority rather than artificer craft. Keeps movement-panel stub Ironspine. No transparent English compounds except Ironspine. Not Amnek dictionary terms. Run scripts/audit-settlement-names.py before committing.",
+  "cities": [
+    { "slot": "c01", "slug": "krazvel", "name": "Krazvel", "settlementTier": "city" },
+    { "slot": "c02", "slug": "ikpekvel", "name": "Ikpekvel", "settlementTier": "citadel" },
+    { "slot": "c03", "slug": "pruform", "name": "Pruform", "settlementTier": "city" },
+    { "slot": "c04", "slug": "tenzvel", "name": "Tenzvel", "settlementTier": "town" },
+    { "slot": "c05", "slug": "khaervok", "name": "Khaervok", "settlementTier": "city" },
+    { "slot": "c06", "slug": "formkraz", "name": "Formkraz", "settlementTier": "town" },
+    { "slot": "c07", "slug": "tasvel", "name": "Tasvel", "settlementTier": "village" },
+    { "slot": "c08", "slug": "iktenz", "name": "Iktenz", "settlementTier": "citadel" },
+    { "slot": "c09", "slug": "kraztas", "name": "Kraztas", "settlementTier": "city" },
+    { "slot": "c10", "slug": "formpru", "name": "Formpru", "settlementTier": "town" },
+    { "slot": "c11", "slug": "kertistass", "name": "Kertistass", "settlementTier": "city" },
+    { "slot": "c12", "slug": "vasskraz", "name": "Vasskraz", "settlementTier": "town" },
+    { "slot": "c13", "slug": "pruvok", "name": "Pruvok", "settlementTier": "village" },
+    { "slot": "c14", "slug": "ikraz", "name": "Ikraz", "settlementTier": "town" },
+    { "slot": "c15", "slug": "ironspine", "name": "Ironspine", "settlementTier": "kingdom", "isCapital": true }
+  ]
+}
