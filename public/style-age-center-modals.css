@@ -59,14 +59,60 @@
 }
 
 .age-records-dialog {
-    width: min(1520px, 96vw);
+    width: min(1920px, calc(100vw - 20px));
     height: min(960px, 94vh);
-    max-width: calc(100vw - 40px);
-    max-height: calc(100vh - 40px);
+    max-width: calc(100vw - 20px);
+    max-height: calc(100vh - 20px);
 }
 
 .age-records-dialog .age-records-shell {
-    margin: 0 14px 14px;
+    margin: 0 10px 10px;
+    padding: 12px 14px 14px;
+}
+
+body.age-records-open .age-records-modal.age-age-center-modal {
+    padding: 10px 12px;
+}
+
+.age-records-dialog .age-records-table-scroll {
+    overflow-x: hidden;
+    overflow-y: auto;
+}
+
+.age-records-dialog .age-records-table {
+    width: 100%;
+    min-width: 0;
+    table-layout: fixed;
+}
+
+.age-records-dialog .age-records-table-head,
+.age-records-dialog .age-records-table-cell {
+    white-space: normal;
+}
+
+.age-records-dialog .age-records-table-head-label {
+    padding: 8px 7px 7px;
+    font-size: 0.54rem;
+    letter-spacing: 0.05em;
+    line-height: 1.15;
+    white-space: normal;
+}
+
+.age-records-dialog .age-records-table-cell-inner {
+    padding: 8px 7px;
+    font-size: 0.73rem;
+    line-height: 1.2;
+    overflow-wrap: anywhere;
+}
+
+.age-records-dialog .age-records-table [data-col="playerName"],
+.age-records-dialog .age-records-table [data-col="nationName"] {
+    width: 11%;
+}
+
+.age-records-dialog .age-records-table [data-col="leader"],
+.age-records-dialog .age-records-table [data-col="viceLeader"] {
+    width: 9%;
 }
 
 /* Nations ledger — room for all 15 nations plus header without inner vertical scroll */

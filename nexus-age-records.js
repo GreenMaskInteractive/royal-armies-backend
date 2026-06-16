@@ -117,23 +117,31 @@ function buildNationPlayersInNationMap(commanders, isHiddenUsername, resolveComm
     return counts;
 }
 
+function commanderHasJoinedAge(commander) {
+    return Boolean(resolveCatalogNationKey(commander?.gameNation));
+}
+
 function serializeCommanderAgeRecord(commander, resolveDisplayName) {
     const username = String(commander?.username || '').trim();
     const stats = normalizePlayerAgeRecords(commander?.ageRecords);
-    const rankMeta = buildCommanderRankMeta(commander);
-    const currentRankTitle = getCommanderRankDisplayTitle(
-        rankMeta.rank,
-        rankMeta.path,
-        rankMeta.rankTitleGender
-    );
+    const joinedAge = commanderHasJoinedAge(commander);
+    const rankMeta = joinedAge ? buildCommanderRankMeta(commander) : null;
+    const currentRankTitle = joinedAge && rankMeta
+        ? getCommanderRankDisplayTitle(
+            rankMeta.rank,
+            rankMeta.path,
+            rankMeta.rankTitleGender
+        )
+        : null;
 
     return {
         username,
         playerName: resolveDisplayName(username) || username,
-        currentRank: rankMeta.rank,
+        hasJoinedAge: joinedAge,
+        currentRank: joinedAge && rankMeta ? rankMeta.rank : null,
         currentRankTitle: currentRankTitle || null,
-        currentRankPath: rankMeta.path,
-        currentRankTitleGender: rankMeta.rankTitleGender,
+        currentRankPath: joinedAge && rankMeta ? rankMeta.path : null,
+        currentRankTitleGender: joinedAge && rankMeta ? rankMeta.rankTitleGender : null,
         ageRecordsRank: stats.currentRank,
         overallPvpScore: stats.overallPvpScore,
         overallRankScore: stats.overallRankScore,
@@ -287,6 +295,7 @@ function buildAgeRecordsPayload({
 
 module.exports = {
     buildAgeRecordsPayload,
+    commanderHasJoinedAge,
     normalizePlayerAgeRecords,
     normalizeNationAgeRecords
 };

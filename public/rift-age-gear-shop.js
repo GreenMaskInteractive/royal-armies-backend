@@ -352,6 +352,15 @@
         return Math.max(1, Math.floor(Number(global.player?.rank) || 1));
     }
 
+    function resolveForgeItemEquipMinRank(item) {
+        return Math.max(1, Math.floor(Number(item?.equipMinRank) || EQUIPMENT_MIN_RANK));
+    }
+
+    function isForgeItemPurchaseLocked(item, rank) {
+        const commanderRank = Math.max(1, Math.floor(Number(rank ?? resolveCommanderRank()) || 1));
+        return commanderRank < resolveForgeItemEquipMinRank(item);
+    }
+
     function resolveCommanderClassId() {
         const path = String(global.player?.path || global.confirmedPath || 'PHYS').trim().toUpperCase();
         if (path === 'MAG' || path === 'MAGIC' || path === 'BATTLEMAGE') return 'battlemage';
@@ -1284,10 +1293,9 @@
         const equipped = !options.isTool && isEquipped(state, item.id);
         const parts = [];
         if (equipped || owned) parts.push('Purchased');
-        else parts.push(`${formatGold(item.purchaseGold)} gold`);
-        if (!owned && rank < item.equipMinRank) {
-            parts.push(`Equip ${resolveRankThresholdLabel(item.equipMinRank)}`);
-        }
+        else if (isForgeItemPurchaseLocked(item, rank)) {
+            parts.push(`Locked — ${resolveRankThresholdLabel(resolveForgeItemEquipMinRank(item))}`);
+        } else parts.push(`${formatGold(item.purchaseGold)} gold`);
         return parts.join(' · ');
     }
 
@@ -1398,7 +1406,8 @@
     function renderForgeInspectFooter(item, state, rank, isTool) {
         const owned = isTool ? resolveOwnedToolSet(state).has(item.id) : resolveOwnedGearSet(state).has(item.id);
         const equipped = !isTool && isEquipped(state, item.id);
-        const showPrice = !owned && !equipped;
+        const rankLocked = isForgeItemPurchaseLocked(item, rank);
+        const showPrice = !owned && !equipped && !rankLocked;
         const priceBlock = showPrice
             ? (
                 '<div class="age-gear-shop-inspect-price-block">'
@@ -1406,11 +1415,17 @@
                 + `<span class="age-gear-shop-inspect-price-value">${escapeHtml(formatGold(item.purchaseGold))} <span class="age-gear-shop-inspect-price-unit">gold</span></span>`
                 + '</div>'
             )
-            : (
-                '<div class="age-gear-shop-inspect-price-block is-owned">'
-                + `<span class="age-gear-shop-inspect-price-label">Purchased</span>`
-                + '</div>'
-            );
+            : (owned || equipped)
+                ? (
+                    '<div class="age-gear-shop-inspect-price-block is-owned">'
+                    + '<span class="age-gear-shop-inspect-price-label">Purchased</span>'
+                    + '</div>'
+                )
+                : (
+                    '<div class="age-gear-shop-inspect-price-block is-owned">'
+                    + `<span class="age-gear-shop-inspect-price-label">Unlocks at ${escapeHtml(resolveRankThresholdLabel(resolveForgeItemEquipMinRank(item)))}</span>`
+                    + '</div>'
+                );
         return (
             '<footer class="age-gear-shop-inspect-footer">'
             + priceBlock
@@ -1452,7 +1467,7 @@
         const equipped = !isTool && isEquipped(state, item.id);
         const imageSrc = resolveForgeItemImage(item, isTool);
         const meta = formatItemCardMeta(item, state, rank, { isTool });
-        const locked = !owned && rank < item.equipMinRank;
+        const locked = !owned && isForgeItemPurchaseLocked(item, rank);
         const rarity = escapeHtml(item.rarity || 'common');
         return (
             `<button type="button"`
@@ -1497,6 +1512,7 @@
     function renderForgeActionPanel(item, state, rank, isTool) {
         const owned = isTool ? resolveOwnedToolSet(state).has(item.id) : resolveOwnedGearSet(state).has(item.id);
         const equipped = !isTool && isEquipped(state, item.id);
+        const rankLocked = isForgeItemPurchaseLocked(item, rank);
         const canEquip = rank >= item.equipMinRank;
         const gold = resolveGold();
         const canAfford = gold >= item.purchaseGold;
@@ -1516,6 +1532,13 @@
         }
         if (owned && isTool) {
             return '<div class="age-gear-shop-detail-actions age-gear-shop-inspect-actions"><span class="age-gear-shop-inspect-action-status is-owned">Purchased — stowed in inventory</span></div>';
+        }
+        if (rankLocked) {
+            return (
+                '<div class="age-gear-shop-detail-actions age-gear-shop-inspect-actions">'
+                + `<span class="age-gear-shop-inspect-action-status is-locked">Unlocks at ${escapeHtml(resolveRankThresholdLabel(resolveForgeItemEquipMinRank(item)))}</span>`
+                + '</div>'
+            );
         }
         const purchaseAttr = isTool ? 'data-forge-tool-purchase' : 'data-forge-purchase';
         const disabled = canAfford ? '' : ' disabled';
@@ -2012,6 +2035,11 @@
     function purchaseForgeItem(itemId) {
         const item = GEAR_BY_ID[String(itemId || '').trim()];
         if (!item) return false;
+        const rank = resolveCommanderRank();
+        if (isForgeItemPurchaseLocked(item, rank)) {
+            setShopStatus(`Unlock ${item.name} at ${resolveRankThresholdLabel(resolveForgeItemEquipMinRank(item))}.`, true);
+            return false;
+        }
         const state = readState();
         if (resolveOwnedGearSet(state).has(item.id)) {
             setShopStatus(`${item.name} is already in your inventory.`, true);
@@ -2043,6 +2071,11 @@
     function purchaseTool(toolId) {
         const tool = TOOL_BY_ID[String(toolId || '').trim()];
         if (!tool) return false;
+        const rank = resolveCommanderRank();
+        if (isForgeItemPurchaseLocked(tool, rank)) {
+            setShopStatus(`Unlock ${tool.name} at ${resolveRankThresholdLabel(resolveForgeItemEquipMinRank(tool))}.`, true);
+            return false;
+        }
         const state = readState();
         if (resolveOwnedToolSet(state).has(tool.id)) {
             setShopStatus(`${tool.name} is already owned.`, true);
@@ -2350,6 +2383,8 @@
         renderForgeBody,
         renderArmoryBody,
         onGearShopClick,
+        resolveForgeItemEquipMinRank,
+        isForgeItemPurchaseLocked,
         resolveEquipmentRankLockReason,
         resolveForgeEyebrow,
         resolveArmoryEyebrow,

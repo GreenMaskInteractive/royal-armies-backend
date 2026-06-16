@@ -187,7 +187,14 @@
                     username,
                     playerName
                 };
-                merged.currentRankTitle = resolveCommanderRankTitle(merged);
+                if (merged.hasJoinedAge === false) {
+                    merged.currentRank = null;
+                    merged.currentRankTitle = null;
+                    merged.currentRankPath = null;
+                    merged.currentRankTitleGender = null;
+                } else {
+                    merged.currentRankTitle = resolveCommanderRankTitle(merged);
+                }
                 return merged;
             })
             .filter(Boolean);
