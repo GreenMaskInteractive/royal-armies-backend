@@ -351,6 +351,9 @@
                     targetUsername
                 });
                 const won = Boolean(payload?.battle?.attackerWon);
+                if (payload?.battleReport) {
+                    global.RoyalArmiesAgeBattleReport?.show?.(payload.battleReport);
+                }
                 showMessage(
                     won
                         ? `Seize victorious against ${targetUsername}.`

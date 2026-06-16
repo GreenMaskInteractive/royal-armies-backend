@@ -5433,7 +5433,10 @@
                     return;
                 }
             } else if (action === 'assault') {
-                await movement.assault(city.id);
+                const payload = await movement.assault(city.id);
+                if (payload?.battleReport) {
+                    global.RoyalArmiesAgeBattleReport?.show?.(payload.battleReport);
+                }
             } else if (action === 'transfer') {
                 await movement.transferOwnership(city.id);
             } else {

@@ -25,6 +25,7 @@ const {
     buildRankAssaultRiskSummary,
     resolveSoloCaptureEligibility
 } = require('./nexus-age-solo-assault-balance');
+const { isDevAssaultNoPermanentDeathEnabled } = require('./nexus-age-dev-testing');
 
 function combineMemberArmies(commanders) {
     const merged = new Map();
@@ -288,6 +289,17 @@ function applyPercentCasualtiesToArmy(army, deathPercent, injuryPercent, catalog
     let working = normalizeAgeArmy(army);
     const healthyBefore = countHealthyUnits(working);
     if (!healthyBefore) return working;
+
+    if (isDevAssaultNoPermanentDeathEnabled()) {
+        const totalCasualties = Math.min(
+            healthyBefore,
+            Math.max(0, Math.floor(healthyBefore * ((deathPercent + injuryPercent) / 100)))
+        );
+        if (totalCasualties > 0) {
+            working = distributeInjuriesWeighted(working, totalCasualties, catalogRef);
+        }
+        return working;
+    }
 
     const deaths = Math.min(
         healthyBefore,

@@ -88,8 +88,10 @@ const {
     isDevGlobalNationWarEnabled,
     isDevSoloCityAssaultEasierEnabled,
     resolveDevGlobalWarEnemyNationIds,
-    resolveDevGlobalWarLedger
+    resolveDevGlobalWarLedger,
+    reviveCommanderArmyFromSnapshot
 } = require('./nexus-age-dev-testing');
+const { buildAgeBattleReport } = require('./nexus-age-battle-report');
 const {
     isPortalDirectAgeJoinEnabled,
     buildRandomNationEnrollmentPatch,
@@ -206,7 +208,8 @@ const {
 const {
     isAgeLedgerAdminUsername,
     resetAllCommanderAgeArmies,
-    buildAdminGoldRestorePatch
+    buildAdminGoldRestorePatch,
+    reviveAdminCommanderArmy
 } = require('./nexus-age-ledger-admin');
 const {
     buildCommanderRankResetLedgerPatch,
@@ -5786,6 +5789,10 @@ app.post('/api/portal/age/watchtower/seize', (req, res) => {
     ensureCommanderAgeRoster(defender);
     defender = db.get('commanders').find({ username: targetCommander.username }).value();
 
+    const attackerArmyBefore = JSON.parse(JSON.stringify(resolveCommanderAgeArmy(commander)));
+    const defenderArmyBefore = JSON.parse(JSON.stringify(resolveCommanderAgeArmy(defender)));
+    saveCommanderArmyPreBattleSnapshot(username, attackerArmyBefore);
+
     const battleResult = executeBorderSeizeBattle(commander, defender);
     if (!battleResult.ok) {
         return sendApiError(res, battleResult.errorCode || 'NEXUS-AGE-017');
@@ -5818,9 +5825,20 @@ app.post('/api/portal/age/watchtower/seize', (req, res) => {
     commander = db.get('commanders').find({ username }).value();
     const refreshed = buildWatchtowerWorkspaceForCommander(commander, targetCityId);
 
+    const battleReport = buildBorderPvpBattleReport({
+        battleResult,
+        attackerUsername: username,
+        defenderUsername: targetCommander.username,
+        attackerArmyBefore,
+        attackerArmyAfter: battleResult.attacker.ageArmy,
+        defenderArmyBefore,
+        defenderArmyAfter: battleResult.defender.ageArmy
+    });
+
     res.json({
         status: 'ok',
         action: 'watchtower-seize',
+        battleReport,
         battle: {
             winner: battleResult.winner,
             attackerWon: battleResult.attackerWon,
@@ -6366,10 +6384,91 @@ function loadArmyGroupMemberCommanders(memberUsernames) {
     }).filter(Boolean);
 }
 
-function applyArmyGroupCasualtyUpdates(casualtyUpdates) {
+function applyArmyGroupCasualtyUpdates(casualtyUpdates, armiesBefore = null) {
     (casualtyUpdates || []).forEach((entry) => {
         if (!entry?.username) return;
         persistCommanderGuildLedger(entry.username, { ageArmy: entry.ageArmy });
+        const beforeArmy = armiesBefore?.[entry.username];
+        if (Array.isArray(beforeArmy) && beforeArmy.length) {
+            db.get('commanders')
+                .find({ username: entry.username })
+                .assign({ ageArmyPreBattleSnapshot: JSON.parse(JSON.stringify(beforeArmy)) })
+                .write();
+        }
+    });
+}
+
+function saveCommanderArmyPreBattleSnapshot(username, army) {
+    const canonical = resolveLedgerCommanderUsername(username);
+    if (!canonical || !Array.isArray(army)) return;
+    db.get('commanders')
+        .find({ username: canonical })
+        .assign({ ageArmyPreBattleSnapshot: JSON.parse(JSON.stringify(army)) })
+        .write();
+}
+
+function buildCityAssaultBattleReport({
+    battleResult,
+    targetCity,
+    armyBefore,
+    armyAfter,
+    assaultVictory,
+    captureReward
+}) {
+    return buildAgeBattleReport({
+        battleType: 'city-assault',
+        title: `${String(targetCity?.name || 'City').trim()} Assault`,
+        locationName: String(targetCity?.name || '').trim(),
+        winner: battleResult?.winner === 'commander' ? 'attacker' : 'defender',
+        outcomeLabel: battleResult?.endReason || '',
+        assaultVictory: assaultVictory === true,
+        attacker: {
+            label: 'Your army',
+            armyBefore,
+            armyAfter
+        },
+        defender: {
+            label: 'City garrison',
+            forceSummary: battleResult?.npcForce || null
+        },
+        xpGain: battleResult?.xpGain,
+        rankPromoted: battleResult?.rankPromoted,
+        rankPromotions: battleResult?.rankPromotions,
+        provisionsGranted: battleResult?.provisionsGranted,
+        captureTreasuryRsd: captureReward?.grantedRsd || 0,
+        log: battleResult?.log
+    });
+}
+
+function buildBorderPvpBattleReport({
+    battleResult,
+    attackerUsername,
+    defenderUsername,
+    attackerArmyBefore,
+    attackerArmyAfter,
+    defenderArmyBefore,
+    defenderArmyAfter
+}) {
+    return buildAgeBattleReport({
+        battleType: 'border-pvp',
+        title: 'Border Seize',
+        opponentName: defenderUsername,
+        winner: battleResult?.attackerWon ? 'attacker' : 'defender',
+        outcomeLabel: battleResult?.endReason || '',
+        attacker: {
+            label: attackerUsername,
+            username: attackerUsername,
+            armyBefore: attackerArmyBefore,
+            armyAfter: attackerArmyAfter
+        },
+        defender: {
+            label: defenderUsername,
+            username: defenderUsername,
+            armyBefore: defenderArmyBefore,
+            armyAfter: defenderArmyAfter
+        },
+        xpGain: battleResult?.attacker?.xpGain,
+        log: battleResult?.log
     });
 }
 
@@ -6807,6 +6906,14 @@ app.post('/api/portal/age/army-groups/attack', (req, res) => {
     ensureCommanderAgeRoster(commander);
     commander = db.get('commanders').find({ username }).value();
 
+    const armiesBeforeGroup = {};
+    (memberCommanders || []).forEach((member) => {
+        const memberUsername = String(member?.username || '').trim().toLowerCase();
+        if (!memberUsername) return;
+        armiesBeforeGroup[memberUsername] = JSON.parse(JSON.stringify(resolveCommanderAgeArmy(member)));
+    });
+    saveCommanderArmyPreBattleSnapshot(username, armiesBeforeGroup[username] || resolveCommanderAgeArmy(commander));
+
     const allCommanders = db.get('commanders').value() || [];
     const attackResult = prepareArmyGroupAttack({
         state: current,
@@ -6837,7 +6944,7 @@ app.post('/api/portal/age/army-groups/attack', (req, res) => {
         )
     });
 
-    applyArmyGroupCasualtyUpdates(attackResult.casualtyUpdates);
+    applyArmyGroupCasualtyUpdates(attackResult.casualtyUpdates, armiesBeforeGroup);
 
     let captureReward = null;
     const targetCity = attackResult.targetCity;
@@ -6882,8 +6989,18 @@ app.post('/api/portal/age/army-groups/attack', (req, res) => {
 
     commander = db.get('commanders').find({ username }).value();
 
+    const battleReport = buildCityAssaultBattleReport({
+        battleResult,
+        targetCity,
+        armyBefore: armiesBeforeGroup[username] || [],
+        armyAfter: resolveCommanderAgeArmy(commander),
+        assaultVictory: attackResult.assaultVictory,
+        captureReward
+    });
+
     respondArmyGroupsPayload(res, storageNation, commander, username, writeResult.state, {
         action: 'army-group-attack',
+        battleReport,
         assaultVictory: attackResult.assaultVictory,
         winner: battleResult.winner,
         endReason: battleResult.endReason,
@@ -7484,6 +7601,53 @@ app.post('/api/portal/age/admin/reset-age-rosters', (req, res) => {
         ageArmy: [],
         unitsTotal: roster.unitsTotal,
         unitsUninjured: roster.unitsUninjured
+    });
+});
+
+app.post('/api/portal/age/admin/revive-army', (req, res) => {
+    const actingUsername = resolveLedgerCommanderUsername(req.body?.username || '');
+    if (!actingUsername) {
+        return sendApiError(res, 'NEXUS-GEN-002');
+    }
+    if (!isAgeLedgerAdminUsername(actingUsername)) {
+        return sendApiError(res, 'NEXUS-AGE-018');
+    }
+
+    const targetUsername = resolveLedgerCommanderUsername(
+        req.body?.targetUsername || req.body?.commanderUsername || actingUsername
+    );
+    if (!targetUsername) {
+        return sendApiError(res, 'NEXUS-GEN-004');
+    }
+
+    let commander = db.get('commanders').find({ username: targetUsername }).value();
+    if (!commander) {
+        return sendApiError(res, 'NEXUS-GEN-004');
+    }
+
+    ensureCommanderAgeRoster(commander);
+    commander = db.get('commanders').find({ username: targetUsername }).value();
+    const hadSnapshot = Array.isArray(commander?.ageArmyPreBattleSnapshot)
+        && commander.ageArmyPreBattleSnapshot.length > 0;
+    const revivePatch = reviveAdminCommanderArmy(commander);
+
+    db.get('commanders')
+        .find({ username: targetUsername })
+        .assign(revivePatch)
+        .write();
+
+    commander = db.get('commanders').find({ username: targetUsername }).value();
+    const roster = buildAgeRosterHudPayload(commander);
+
+    res.json({
+        status: 'ok',
+        action: 'revive-army',
+        username: targetUsername,
+        restoredFromSnapshot: hadSnapshot,
+        ageArmy: revivePatch.ageArmy,
+        unitsTotal: roster.unitsTotal,
+        unitsUninjured: roster.unitsUninjured,
+        ...buildAgeMovementStatePayload(targetUsername, commander)
     });
 });
 
@@ -8447,6 +8611,9 @@ app.post('/api/portal/age/assault', (req, res) => {
     ensureCommanderAgeRoster(commander);
     commander = db.get('commanders').find({ username }).value();
 
+    const armyBeforeAssault = JSON.parse(JSON.stringify(resolveCommanderAgeArmy(commander)));
+    saveCommanderArmyPreBattleSnapshot(username, armyBeforeAssault);
+
     const battleResult = executeCityAssaultBattleWithLedger(commander, targetCity, playersInCity);
     if (!battleResult.ok) {
         return sendApiError(res, battleResult.errorCode || 'NEXUS-AGE-017');
@@ -8472,7 +8639,7 @@ app.post('/api/portal/age/assault', (req, res) => {
             commanderRank: battleResult.commanderRank
         }
     );
-    applyArmyGroupCasualtyUpdates(casualtyUpdates);
+    applyArmyGroupCasualtyUpdates(casualtyUpdates, { [username]: armyBeforeAssault });
 
     persistCommanderGuildLedger(username, {
         rank: battleResult.rank,
@@ -8484,6 +8651,7 @@ app.post('/api/portal/age/assault', (req, res) => {
     });
 
     commander = db.get('commanders').find({ username }).value();
+    const armyAfterAssault = resolveCommanderAgeArmy(commander);
 
     let nextRecord = writeCommanderMovementRecord(username, {
         catalogCityId: movement.catalogCityId,
@@ -8554,10 +8722,20 @@ app.post('/api/portal/age/assault', (req, res) => {
         }
     }
 
+    const battleReport = buildCityAssaultBattleReport({
+        battleResult,
+        targetCity,
+        armyBefore: armyBeforeAssault,
+        armyAfter: armyAfterAssault,
+        assaultVictory,
+        captureReward
+    });
+
     res.json({
         status: 'ok',
         action: 'assault',
         assaultVictory,
+        battleReport,
         captureEligible: battleResult.captureEligible !== false,
         minCaptureRank: battleResult.minCaptureRank || null,
         armyGroupDefeat,

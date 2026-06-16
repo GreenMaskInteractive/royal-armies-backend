@@ -7,6 +7,7 @@ const {
     AGE_COMMANDER_GOLD_DEFAULT,
     AGE_COMMANDER_PROVISIONS_DEFAULT
 } = require('./nexus-age-recruitment');
+const { reviveCommanderArmyFromSnapshot } = require('./nexus-age-dev-testing');
 
 function isAgeLedgerAdminUsername(username) {
     return String(username || '').trim().toLowerCase() === 'caleb_admin';
@@ -51,10 +52,19 @@ function applyAdminLedgerRestore(commander) {
     };
 }
 
+function reviveAdminCommanderArmy(commander) {
+    const revivedArmy = reviveCommanderArmyFromSnapshot(commander);
+    return {
+        ageArmy: revivedArmy,
+        ageArmyPreBattleSnapshot: null
+    };
+}
+
 module.exports = {
     isAgeLedgerAdminUsername,
     buildCommanderAgeArmyResetPatch,
     buildAdminGoldRestorePatch,
     resetAllCommanderAgeArmies,
-    applyAdminLedgerRestore
+    applyAdminLedgerRestore,
+    reviveAdminCommanderArmy
 };

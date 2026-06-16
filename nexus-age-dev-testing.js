@@ -15,6 +15,9 @@ const DEV_GLOBAL_NATION_WAR_ENABLED = true;
 /** Weaker city garrisons so solo commanders can capture bordering settlements during testing. */
 const DEV_SOLO_CITY_ASSAULT_EASIER = true;
 
+/** During alpha assault testing, battle deaths become injuries instead of removing stacks. */
+const DEV_ASSAULT_NO_PERMANENT_DEATH = true;
+
 /** Multiplier applied to generated garrison size when solo-assault easing is on (0–1). */
 const DEV_CITY_ASSAULT_GARRISON_MULTIPLIER = 0.62;
 
@@ -24,6 +27,29 @@ function isDevGlobalNationWarEnabled() {
 
 function isDevSoloCityAssaultEasierEnabled() {
     return DEV_SOLO_CITY_ASSAULT_EASIER;
+}
+
+function isDevAssaultNoPermanentDeathEnabled() {
+    return DEV_ASSAULT_NO_PERMANENT_DEATH;
+}
+
+function reviveCommanderArmyFromSnapshot(commander) {
+    const { normalizeAgeArmy, resolveCommanderAgeArmy } = require('./nexus-age-roster');
+    const snapshot = commander?.ageArmyPreBattleSnapshot;
+    let army;
+
+    if (Array.isArray(snapshot) && snapshot.length) {
+        army = normalizeAgeArmy(JSON.parse(JSON.stringify(snapshot)));
+    } else {
+        army = normalizeAgeArmy(resolveCommanderAgeArmy(commander));
+    }
+
+    return army
+        .map((stack) => ({
+            ...stack,
+            injuredQty: 0
+        }))
+        .filter((stack) => Math.max(0, Math.floor(Number(stack.qty) || 0)) > 0);
 }
 
 function getDevCityAssaultGarrisonMultiplier(commanderRank, city) {
@@ -94,8 +120,11 @@ function areNationsAlliedForAgeCombat(nationA, nationB, baseIsAlliedFn) {
 module.exports = {
     DEV_GLOBAL_NATION_WAR_ENABLED,
     DEV_SOLO_CITY_ASSAULT_EASIER,
+    DEV_ASSAULT_NO_PERMANENT_DEATH,
     isDevGlobalNationWarEnabled,
     isDevSoloCityAssaultEasierEnabled,
+    isDevAssaultNoPermanentDeathEnabled,
+    reviveCommanderArmyFromSnapshot,
     getDevCityAssaultGarrisonMultiplier,
     resolveDevGlobalWarEnemyNationIds,
     resolveDevGlobalWarLedger,
