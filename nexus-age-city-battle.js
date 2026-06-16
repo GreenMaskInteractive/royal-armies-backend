@@ -10,6 +10,7 @@ const {
     buildTrainingNpcArmy,
     TRAINING_MODE_LABELS
 } = require('./nexus-age-battle-sim');
+const { getDevCityAssaultGarrisonMultiplier } = require('./nexus-age-dev-testing');
 
 const CITY_BATTLE_MODE = 'city-assault';
 
@@ -58,7 +59,8 @@ function buildCityGarrisonArmy(catalog, commanderRank, city, playersInCity = 1) 
     const rank = Math.max(1, Math.min(22, Math.floor(Number(commanderRank) || 1)));
 
     const baseGarrison = buildTrainingNpcArmy(catalogRef, undefined, 'border-patrol', rank);
-    return scaleGarrisonStacks(baseGarrison, tierScale * allyScale);
+    const devGarrisonScale = getDevCityAssaultGarrisonMultiplier();
+    return scaleGarrisonStacks(baseGarrison, tierScale * allyScale * devGarrisonScale);
 }
 
 function executeCityAssaultBattle(commander, city, playersInCity = 1) {

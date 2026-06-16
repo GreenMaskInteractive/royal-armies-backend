@@ -85,6 +85,12 @@ const {
 } = require('./nexus-onboarding');
 const { buildDevNationSwitchLedgerPatch } = require('./nexus-dev-nation-switch');
 const {
+    isDevGlobalNationWarEnabled,
+    isDevSoloCityAssaultEasierEnabled,
+    resolveDevGlobalWarEnemyNationIds,
+    resolveDevGlobalWarLedger
+} = require('./nexus-age-dev-testing');
+const {
     isPortalDirectAgeJoinEnabled,
     buildRandomNationEnrollmentPatch,
     buildDirectAgeJoinMovementRefillRecord,
@@ -180,6 +186,7 @@ const {
     prepareArmyGroupDefeatForMember,
     buildArmyGroupAssaultCasualtyEstimate
 } = require('./nexus-age-army-group-battle');
+const { resolveAssaultCasualtiesForMembers } = require('./nexus-age-border-assault-casualty');
 const {
     buildAgeRosterHudPayload,
     buildCommanderAgeRosterSeedPatch,
@@ -1282,7 +1289,10 @@ function resolveNationAllianceId(nationKey) {
 function areNationsAllied(nationA, nationB) {
     const a = getCouncilBoardStorageKey(nationA);
     const b = getCouncilBoardStorageKey(nationB);
-    if (!a || !b || a === b) return a === b;
+    if (!a || !b) return false;
+    if (a === b) return true;
+    if (isDevGlobalNationWarEnabled()) return false;
+
     const allianceA = resolveNationAllianceId(a);
     const allianceB = resolveNationAllianceId(b);
     return Boolean(allianceA && allianceB && allianceA === allianceB);
@@ -1397,7 +1407,14 @@ function buildAgeMovementStatePayload(username, commander) {
         lastMovePointRegenAt: movement.lastMovePointRegenAt,
         cityHolders: store.cityHolders,
         cityLosers: store.cityLosers,
-        alliedNationIds: mapNation ? resolveAlliedNationIds(mapNation) : [],
+        alliedNationIds: mapNation && !isDevGlobalNationWarEnabled() ? resolveAlliedNationIds(mapNation) : [],
+        warNationIds: mapNation && isDevGlobalNationWarEnabled()
+            ? resolveDevGlobalWarEnemyNationIds(mapNation)
+            : [],
+        devTesting: isDevGlobalNationWarEnabled() ? {
+            globalNationWar: true,
+            soloCityAssaultEasier: isDevSoloCityAssaultEasierEnabled()
+        } : null,
         rules,
         ageGold: resolveCommanderAgeGold(commander),
         ageProvisions: resolveCommanderAgeProvisions(commander),
@@ -1975,7 +1992,10 @@ function buildHeadquartersIntelSlices(commander, nationState) {
 
     const commanders = db.get('commanders').value() || [];
     const movementStore = readAgeMovementStore();
-    const warLedger = syncWarLedgerRelations(nationState?.warLedger, nationState?.diplomacy);
+    let warLedger = syncWarLedgerRelations(nationState?.warLedger, nationState?.diplomacy);
+    if (isDevGlobalNationWarEnabled()) {
+        warLedger = resolveDevGlobalWarLedger(gameNation);
+    }
     const nationRecordsMap = readNationAgeRecordsMap();
     const ledgerRelations = warLedger?.relations || {};
     const allyNationIds = [
@@ -8431,6 +8451,24 @@ app.post('/api/portal/age/assault', (req, res) => {
     if (!battleResult.ok) {
         return sendApiError(res, battleResult.errorCode || 'NEXUS-AGE-017');
     }
+
+    const allCommanders = db.get('commanders').value() || [];
+    const casualtyEstimate = buildArmyGroupAssaultCasualtyEstimate({
+        memberCommanders: [commander],
+        targetCity,
+        nationKey: gameNation,
+        playersInCity,
+        allCommanders,
+        isAlliedFn: areNationsAllied,
+        resolveCommanderCityId: resolveCommanderCatalogCityId
+    });
+    const casualtyUpdates = resolveAssaultCasualtiesForMembers(
+        [{ username, army: resolveCommanderAgeArmy(commander) }],
+        casualtyEstimate.risk,
+        battleResult,
+        casualtyEstimate.context.catalog
+    );
+    applyArmyGroupCasualtyUpdates(casualtyUpdates);
 
     persistCommanderGuildLedger(username, {
         rank: battleResult.rank,

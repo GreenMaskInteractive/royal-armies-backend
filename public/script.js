@@ -2399,10 +2399,14 @@ function toggleMute() {
 /* --- Section: Chronicle Data & Login Engine --- */
 
 /** Shown on the Age Portal (metrics strip, header) and in release notes. */
-const PORTAL_ALPHA_VERSION = 'Alpha 0.1.14';
+const PORTAL_ALPHA_VERSION = 'Alpha 0.1.15';
 
 /* --- Block 2: The Chronicle Archives (Full Data Set) --- */
 const CHRONICLE_DATA = {
+    alpha_0115: {
+        title: "Alpha 0.1.15 — Living World & Settlement Depth",
+        details: "Royal Armies Alpha 0.1.15 expands the playable Age with a living world map, deep settlement workspaces, and richer commander progression.\n\nWhat's new: the world map now carries finalized settlement art and names across multiple nations with color-map and topology views; weather rolls every half-hour game tick with rain, cloud cover, clear skies, and sunny light, plus a day-night cycle with settlement torch and magic glow at night; move-point travel includes a confirmation step before you spend points; the Blacksmith forge and Armory open full gear shops with category navigation, an inspect panel, an Owned tab with mastery progress, inventory slots, and auto-equip on purchase; the Barracks workspace matches the settlement modal style with magic unit class portraits and expanded unit rosters; enrolling in the Age plays a full-screen loading theatre on first join and exile re-entry; your nation's capital shows a sweeping shine on the map; song manuscripts such as A Warrior's Pride and The Blood Tithe are discoverable in the world; Records and roster review modals help you track commander progress; and bordering hostile cities can be assaulted from the world map when diplomacy allows.\n\nThank you for helping us shape Royal Armies."
+    },
     alpha_0114: {
         title: "Alpha 0.1.14 — Aesthene Onboarding & Age Map",
         details: "Royal Armies Alpha 0.1.14 locks starting-location onboarding to Aesthene in Crescent Ridge while we finish nation border art, and saves your pledge on the server before you continue.\n\nWhat's new: the region and nation picker now shows only Crescent Ridge and Aesthene — the first nation with finalized map borders; confirming your nation writes gameNation to your commander ledger through NEXUS and seeds your Age movement record at the capital; move points regenerate on UTC half-hour ticks aligned to the universal game clock (:00 and :30); the Age world map keeps your location pin centered on your city at every zoom level, with highlights and clicks working through the pin; titles and headers across the portal use the Royal Family display typeface.\n\nMore nations and regions will reopen as their borders are ready. Thank you for helping us shape Royal Armies."

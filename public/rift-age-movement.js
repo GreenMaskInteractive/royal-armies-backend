@@ -241,6 +241,7 @@
         cityHolders: {},
         cityLosers: {},
         alliedNationIds: [],
+        warNationIds: [],
         rules: {
             movePointsMax: 3,
             movePointRegenPerTick: 1,
@@ -406,6 +407,11 @@
         }
         if (Array.isArray(payload.alliedNationIds)) {
             state.alliedNationIds = payload.alliedNationIds
+                .map((id) => String(id || '').trim().toLowerCase())
+                .filter(Boolean);
+        }
+        if (Array.isArray(payload.warNationIds)) {
+            state.warNationIds = payload.warNationIds
                 .map((id) => String(id || '').trim().toLowerCase())
                 .filter(Boolean);
         }
@@ -804,12 +810,14 @@
 
         const movePointCost = connection.movePointCost || 1;
         const isForeignBorder = relationship !== 'own';
+        const holderAtWar = !state.warNationIds.length
+            || (holder && state.warNationIds.includes(holder));
 
         return {
             relationship,
             connectionType: connection.type || 'land',
             canTravel: relationship === 'own',
-            canAssault: relationship === 'hostile',
+            canAssault: relationship === 'hostile' && holderAtWar,
             canTransfer: relationship === 'ally',
             canScout: isForeignBorder,
             transferRsdCost: state.rules.transferOwnershipRsdCost || 250,

@@ -1066,7 +1066,7 @@ function switchMainPortalView(viewName, clickEvent, chatChannelKey) {
 }
 
 /** Release IDs from CHRONICLE_DATA (script.js), newest first — shown in Developer's Log sidebar. */
-const DEVELOPER_LOG_RELEASE_IDS = ['alpha_0114', 'alpha_0113', 'alpha_0112', 'alpha_0111'];
+const DEVELOPER_LOG_RELEASE_IDS = ['alpha_0115', 'alpha_0114', 'alpha_0113', 'alpha_0112', 'alpha_0111'];
 
 function applyPortalAlphaVersionLabels() {
     const label = typeof PORTAL_ALPHA_VERSION !== 'undefined'
