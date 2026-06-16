@@ -56,8 +56,8 @@
 
     const NATIONAL_COLUMNS = [
         { key: 'playerName', label: 'Player Name', kind: 'text', alwaysShow: true },
-        { key: 'nationRanking', label: 'Nation Ranking', kind: 'ranking', alwaysShow: true },
         { key: 'commanderRankTitle', label: 'Commander', kind: 'text' },
+        { key: 'nationRanking', label: 'Nation Ranking', kind: 'ranking', alwaysShow: true },
         { key: 'globalRanking', label: 'Global Ranking', kind: 'ranking' },
         { key: 'cityBattles', label: 'City Battles', kind: 'number' },
         { key: 'cityBattlesWon', label: 'City Battles Won', kind: 'number' },
