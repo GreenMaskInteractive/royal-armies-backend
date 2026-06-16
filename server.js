@@ -5450,14 +5450,11 @@ app.get('/api/portal/age/records', (req, res) => {
         status: 'ok',
         ...buildAgeRecordsPayload({
             commanders: db.get('commanders').value() || [],
-            nationRecordsMap: readNationAgeRecordsMap(),
-            cityHolders: readAgeMovementStore().cityHolders,
             isHiddenUsername: isHiddenRegistrationUsername,
-            resolveCommanderMapNationKey,
-            readNationTreasuryForNation,
-            readNationLeadershipForNation,
             resolveNationLeadershipDisplayName,
             resolveCatalogNationDisplayName,
+            viewerUsername: username,
+            viewerNationId: resolveCommanderMapNationKey(commander),
             ageCampaignActiveStartedAt: campaign.activeStartedAt,
             nowMs: Date.now()
         })
@@ -5847,6 +5844,7 @@ app.post('/api/portal/age/watchtower/seize', (req, res) => {
     });
 
     recordAgeBattleReportOutcome(battleReport, {
+        battleType: 'border-pvp',
         attackerUsername: username,
         defenderUsername: targetCommander.username
     });
@@ -7050,7 +7048,9 @@ app.post('/api/portal/age/army-groups/attack', (req, res) => {
     });
 
     recordAgeBattleReportOutcome(battleReport, {
+        battleType: 'city-assault',
         attackerUsername: username,
+        isSfParticipation: String(lookup?.type || '').trim().toLowerCase() === 'sf',
         isSfCityBattle: String(lookup?.type || '').trim().toLowerCase() === 'sf',
         participantUsernames: Array.isArray(lookup?.memberUsernames) ? lookup.memberUsernames : []
     });
@@ -8880,6 +8880,7 @@ app.post('/api/portal/age/assault', (req, res) => {
     });
 
     recordAgeBattleReportOutcome(battleReport, {
+        battleType: 'city-assault',
         attackerUsername: username
     });
 

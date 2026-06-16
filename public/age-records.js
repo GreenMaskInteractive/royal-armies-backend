@@ -1,76 +1,99 @@
 /**
- * RIFT — Age Records page (all commanders and nations) opened from the bottom bar view tabs.
+ * RIFT — Age Records rankings (Personal, National, Global) opened from the bottom bar.
  */
 (function initAgeRecords(global) {
     'use strict';
 
     const PLACEHOLDER = '—';
     const RECORDS_EMPTY = '';
+    const VALID_TABS = new Set(['personal', 'national', 'global']);
 
-    const NATION_CATALOG = [
-        { id: 'aesthene', name: 'Aesthene' },
-        { id: 'aethelgard', name: 'Aethelgard' },
-        { id: 'dravic', name: 'Dravic' },
-        { id: 'gorz', name: 'Gorz' },
-        { id: 'khaerant', name: 'Khaerant' },
-        { id: 'krall', name: 'Krall' },
-        { id: 'lyllis', name: 'Lyllis' },
-        { id: 'mynor', name: 'Mynor' },
-        { id: 'saelthine', name: 'Saelthine' },
-        { id: 'skaros', name: 'Skaros' },
-        { id: 'thruun', name: 'Thruun' },
-        { id: 'trex', name: 'Trex' },
-        { id: 'vaelior', name: 'Vaelior' },
-        { id: 'vaerenth', name: 'Vaerenth' },
-        { id: 'zevros', name: 'Zevros' }
-    ];
-
-    const PLAYER_COLUMNS = [
+    const GLOBAL_COLUMNS = [
         { key: 'playerName', label: 'Player Name', kind: 'text', alwaysShow: true },
-        { key: 'ranking', label: 'Ranking', kind: 'ranking', alwaysShow: true },
+        { key: 'globalRanking', label: 'Global Ranking', kind: 'ranking', alwaysShow: true },
         { key: 'commanderRankTitle', label: 'Commander', kind: 'text' },
-        { key: 'overallPvpScore', label: 'Overall PvP Score', kind: 'number' },
-        { key: 'overallRankScore', label: 'Overall Rank Score', kind: 'number' },
-        { key: 'battlesWon', label: 'Battles Won', kind: 'number' },
-        { key: 'battlesLost', label: 'Battles Lost', kind: 'number' },
-        { key: 'sfCityBattles', label: 'SF City Battles', kind: 'number' },
-        { key: 'pvpKillsAttack', label: 'Unit Kills', kind: 'number' },
-        { key: 'pvpCapturesAttack', label: 'Unit Captures', kind: 'number' }
+        { key: 'nationName', label: 'Nation', kind: 'text' },
+        { key: 'sfParticipations', label: 'Strike Force', kind: 'number' },
+        { key: 'overallPvpScore', label: 'PvP Score', kind: 'number' },
+        { key: 'overallRankScore', label: 'Rank Score', kind: 'number' },
+        { key: 'pvpBattlesWon', label: 'PvP Battles Won', kind: 'number' },
+        { key: 'pvpBattlesLost', label: 'PvP Battles Lost', kind: 'number' },
+        { key: 'pvpKillsAttack', label: 'PvP Unit Kills', kind: 'number' },
+        { key: 'pvpCapturesAttack', label: 'PvP Unit Captures', kind: 'number' }
     ];
 
-    const NATION_COLUMNS = [
-        { key: 'nationName', label: 'Nation Name', kind: 'text', alwaysShow: true },
-        { key: 'rank', label: 'Rank', kind: 'number', alwaysShow: true },
-        { key: 'points', label: 'Points', kind: 'number', alwaysShow: true, defaultValue: 0 },
-        { key: 'citiesOwned', label: 'Cities (Owned)', kind: 'number', alwaysShow: true, defaultValue: 0 },
-        { key: 'totalCities', label: 'Cities (Total)', kind: 'number', alwaysShow: true, defaultValue: 15 },
-        { key: 'playersInNation', label: 'Players', kind: 'number', alwaysShow: true, defaultValue: 0 },
-        { key: 'cityCaptures', label: 'Captures', kind: 'number', alwaysShow: true, defaultValue: 0 },
-        { key: 'overallStrength', label: 'Strength', kind: 'text', alwaysShow: true, defaultValue: 'N/A' },
-        { key: 'overallGoldWealth', label: 'Wealth', kind: 'text', alwaysShow: true, defaultValue: 'N/A' },
-        { key: 'cityCaptureBattlePoints', label: 'Battle Points', kind: 'number', alwaysShow: true, defaultValue: 0 },
-        { key: 'overallPvpStrength', label: 'PvP Strength', kind: 'text', alwaysShow: true, defaultValue: 'N/A' },
-        { key: 'successfulDropsPerformed', label: 'Drops (Attacker)', kind: 'number', alwaysShow: true, defaultValue: 0 },
-        { key: 'successfulDropsAgainstNation', label: 'Drops (Defender)', kind: 'number', alwaysShow: true, defaultValue: 0 },
-        { key: 'leader', label: 'Leader', kind: 'text', alwaysShow: true, defaultValue: 'None' },
-        { key: 'viceLeader', label: 'Vice Leader', kind: 'text', alwaysShow: true, defaultValue: 'None' }
+    const NATIONAL_COLUMNS = [
+        { key: 'playerName', label: 'Player Name', kind: 'text', alwaysShow: true },
+        { key: 'nationRanking', label: 'Nation Ranking', kind: 'ranking', alwaysShow: true },
+        { key: 'commanderRankTitle', label: 'Commander', kind: 'text' },
+        { key: 'globalRanking', label: 'Global Ranking', kind: 'ranking' },
+        { key: 'sfParticipations', label: 'Strike Force', kind: 'number' },
+        { key: 'cityBattlesWon', label: 'City Battles Won', kind: 'number' },
+        { key: 'cityBattlesLost', label: 'City Battles Lost', kind: 'number' },
+        { key: 'sfCityBattles', label: 'SF City Battles', kind: 'number' },
+        { key: 'cityKillsAttack', label: 'City Unit Kills', kind: 'number' },
+        { key: 'cityCapturesAttack', label: 'City Unit Captures', kind: 'number' }
+    ];
+
+    const PERSONAL_SECTIONS = [
+        {
+            title: 'Standing',
+            stats: [
+                { key: 'globalRanking', label: 'Global Ranking', kind: 'ranking' },
+                { key: 'nationRanking', label: 'Nation Ranking', kind: 'ranking' },
+                { key: 'commanderRankTitle', label: 'Commander', kind: 'text' },
+                { key: 'nationName', label: 'Nation', kind: 'text' }
+            ]
+        },
+        {
+            title: 'Scores',
+            stats: [
+                { key: 'overallPvpScore', label: 'PvP Score', kind: 'number' },
+                { key: 'overallRankScore', label: 'Rank Score', kind: 'number' }
+            ]
+        },
+        {
+            title: 'PvP Combat',
+            stats: [
+                { key: 'pvpBattlesWon', label: 'PvP Battles Won', kind: 'number' },
+                { key: 'pvpBattlesLost', label: 'PvP Battles Lost', kind: 'number' },
+                { key: 'pvpKillsAttack', label: 'PvP Unit Kills', kind: 'number' },
+                { key: 'pvpCapturesAttack', label: 'PvP Unit Captures', kind: 'number' }
+            ]
+        },
+        {
+            title: 'City Operations',
+            stats: [
+                { key: 'cityBattlesWon', label: 'City Battles Won', kind: 'number' },
+                { key: 'cityBattlesLost', label: 'City Battles Lost', kind: 'number' },
+                { key: 'sfParticipations', label: 'Strike Force', kind: 'number' },
+                { key: 'sfCityBattles', label: 'SF City Battles', kind: 'number' },
+                { key: 'cityKillsAttack', label: 'City Unit Kills', kind: 'number' },
+                { key: 'cityCapturesAttack', label: 'City Unit Captures', kind: 'number' }
+            ]
+        }
     ];
 
     const TAB_INTRO = {
-        players: {
-            eyebrow: 'Commander Ledger',
-            copy: 'Participation standings for all commanders. Rankings unlock at the first half-hour tick after the Age begins, then refresh every tick.'
+        personal: {
+            eyebrow: 'Personal Rankings',
+            copy: 'Your full participation ledger — every score, battle, and strike force record tied to your commander.'
         },
-        nations: {
-            eyebrow: 'Nation Ledger',
-            copy: 'All fifteen nations on the Amnek continent. Stats appear as they are recorded.'
+        national: {
+            eyebrow: 'National Rankings',
+            copy: 'Nation-only intelligence for your realm. City operations and confidential stats are visible here — never shared with rival nations.'
+        },
+        global: {
+            eyebrow: 'Global Rankings',
+            copy: 'Amnek-wide standings. PvP scores and public participation stats visible to every commander in the Age.'
         }
     };
 
     let bound = false;
-    let activeTab = 'players';
+    let activeTab = 'personal';
     let loadPromise = null;
     let recordsRankingLive = false;
+    let snapshotCache = null;
 
     function resolveApiUrl(path) {
         if (typeof global.resolveRoyalArmiesApiUrl === 'function') {
@@ -112,40 +135,6 @@
         return String(value);
     }
 
-    function formatPairCell(row, column, options = {}) {
-        const emptyDisplay = options.emptyDisplay ?? PLACEHOLDER;
-        const attackRaw = row[column.attackKey];
-        const defenseRaw = row[column.defenseKey];
-        const hasAttack = attackRaw !== null && attackRaw !== undefined && attackRaw !== '';
-        const hasDefense = defenseRaw !== null && defenseRaw !== undefined && defenseRaw !== '';
-
-        if (!hasAttack && !hasDefense) {
-            return emptyDisplay;
-        }
-
-        const attack = hasAttack ? formatCellValue(attackRaw, 'number', options) : emptyDisplay;
-        const defense = hasDefense ? formatCellValue(defenseRaw, 'number', options) : emptyDisplay;
-
-        return `${attack} / ${defense}`;
-    }
-
-    function buildEmptyPlayerRow(username, playerName) {
-        return {
-            username: String(username || '').trim(),
-            playerName: String(playerName || username || '').trim(),
-            ranking: null,
-            commanderRank: null,
-            commanderRankTitle: null,
-            overallPvpScore: null,
-            overallRankScore: null,
-            battlesWon: null,
-            battlesLost: null,
-            sfCityBattles: null,
-            pvpKillsAttack: null,
-            pvpCapturesAttack: null
-        };
-    }
-
     function resolveCommanderRankTitle(row) {
         if (row?.commanderRankTitle) return row.commanderRankTitle;
         const rank = row?.commanderRank;
@@ -168,51 +157,30 @@
         return null;
     }
 
-    function normalizePlayerRows(apiPlayers) {
-        const rows = (Array.isArray(apiPlayers) ? apiPlayers : [])
-            .map((row) => {
-                const username = String(row?.username || '').trim();
-                if (!username) return null;
+    function normalizePersonalRecord(record) {
+        if (!record || typeof record !== 'object') return null;
+        const merged = { ...record };
+        merged.commanderRankTitle = resolveCommanderRankTitle(merged);
+        if (!recordsRankingLive || merged.hasJoinedAge === false) {
+            merged.globalRanking = null;
+            merged.nationRanking = null;
+        }
+        return merged;
+    }
 
-                const playerName = String(row?.playerName || username).trim() || username;
-                const merged = {
-                    ...buildEmptyPlayerRow(username, playerName),
-                    ...row,
-                    username,
-                    playerName
-                };
-                if (merged.hasJoinedAge === false) {
-                    merged.commanderRank = null;
-                    merged.commanderRankTitle = null;
-                    merged.commanderRankPath = null;
-                    merged.commanderRankTitleGender = null;
-                    merged.ranking = null;
-                } else {
-                    merged.commanderRankTitle = resolveCommanderRankTitle(merged);
-                    if (!recordsRankingLive) {
-                        merged.ranking = null;
-                    }
+    function normalizeTableRows(rows) {
+        return (Array.isArray(rows) ? rows : [])
+            .map((row) => {
+                if (!row) return null;
+                const merged = { ...row };
+                merged.commanderRankTitle = resolveCommanderRankTitle(merged);
+                if (!recordsRankingLive || merged.hasJoinedAge === false) {
+                    merged.globalRanking = null;
+                    merged.nationRanking = null;
                 }
                 return merged;
             })
             .filter(Boolean);
-
-        rows.sort((left, right) => {
-            if (recordsRankingLive) {
-                const leftRank = Number(left.ranking);
-                const rightRank = Number(right.ranking);
-                const leftHasRank = Number.isFinite(leftRank) && leftRank > 0;
-                const rightHasRank = Number.isFinite(rightRank) && rightRank > 0;
-                if (leftHasRank && rightHasRank && leftRank !== rightRank) {
-                    return leftRank - rightRank;
-                }
-                if (leftHasRank !== rightHasRank) {
-                    return leftHasRank ? -1 : 1;
-                }
-            }
-            return left.playerName.localeCompare(right.playerName, undefined, { sensitivity: 'base' });
-        });
-        return rows;
     }
 
     function resolveCellValue(row, column, options = {}) {
@@ -220,11 +188,7 @@
             if (!recordsRankingLive || row.hasJoinedAge === false) {
                 return PLACEHOLDER;
             }
-            return formatCellValue(row.ranking, 'number', { emptyDisplay: PLACEHOLDER });
-        }
-
-        if (column.kind === 'pair') {
-            return formatPairCell(row, column, options);
+            return formatCellValue(row[column.key], 'number', { emptyDisplay: PLACEHOLDER });
         }
 
         const rawValue = row[column.key];
@@ -247,55 +211,14 @@
         return formatCellValue(rawValue, column.kind, options);
     }
 
-    function buildEmptyNationRow(nation, rank) {
-        return {
-            nationId: nation.id,
-            nationName: nation.name,
-            rank,
-            points: 0,
-            citiesOwned: 0,
-            totalCities: 15,
-            playersInNation: 0,
-            cityCaptures: 0,
-            overallStrength: 'N/A',
-            overallGoldWealth: 'N/A',
-            cityCaptureBattlePoints: 0,
-            overallPvpStrength: 'N/A',
-            successfulDropsPerformed: 0,
-            successfulDropsAgainstNation: 0,
-            leader: 'None',
-            viceLeader: 'None'
-        };
-    }
-
-    function mergeNationRows(apiNations) {
-        const byId = new Map();
-        (Array.isArray(apiNations) ? apiNations : []).forEach((row) => {
-            const nationId = String(row?.nationId || '').trim().toLowerCase();
-            if (nationId) {
-                byId.set(nationId, row);
-            }
-        });
-
-        return NATION_CATALOG.map((nation, index) => {
-            const existing = byId.get(nation.id);
-            const rank = index + 1;
-            if (existing) {
-                return {
-                    ...buildEmptyNationRow(nation, rank),
-                    ...existing,
-                    nationId: nation.id,
-                    nationName: existing.nationName || nation.name,
-                    rank
-                };
-            }
-            return buildEmptyNationRow(nation, rank);
-        });
-    }
-
     async function fetchRecordsSnapshot() {
         const username = getActiveUsername();
-        const emptySnapshot = { players: [], nations: [] };
+        const emptySnapshot = {
+            personal: null,
+            national: { nationId: null, nationName: null, players: [] },
+            global: { players: [] },
+            recordsRanking: null
+        };
 
         if (!username) {
             return emptySnapshot;
@@ -310,9 +233,17 @@
             }
             const payload = await response.json();
             return {
-                players: Array.isArray(payload.players) ? payload.players : [],
-                nations: Array.isArray(payload.nations) ? payload.nations : [],
-                recordsRanking: payload.recordsRanking || null
+                personal: payload.personal || null,
+                national: {
+                    nationId: payload.national?.nationId || null,
+                    nationName: payload.national?.nationName || null,
+                    players: Array.isArray(payload.national?.players) ? payload.national.players : []
+                },
+                global: {
+                    players: Array.isArray(payload.global?.players) ? payload.global.players : []
+                },
+                recordsRanking: payload.recordsRanking || null,
+                viewerNationId: payload.viewerNationId || null
             };
         } catch (error) {
             console.warn('[RIFT] Age Records snapshot fetch failed:', error);
@@ -352,7 +283,7 @@
                 const isEmptyCell = cellValue === (cellOptions.emptyDisplay ?? PLACEHOLDER);
                 const emptyClass = isEmptyCell ? ' is-empty' : ' has-value';
                 const identityClass = column.alwaysShow || columnIndex === 0 ? ' age-records-table-cell--identity' : '';
-                const rankClass = column.key === 'rank' || column.key === 'ranking' ? ' age-records-table-cell--rank' : '';
+                const rankClass = column.kind === 'ranking' || column.key === 'rank' ? ' age-records-table-cell--rank' : '';
                 return (
                     `<td class="age-records-table-cell age-records-table-cell--${column.kind}${identityClass}${rankClass}${emptyClass}" data-col="${escapeHtml(column.key)}">`
                     + `<span class="age-records-table-cell-inner">${escapeHtml(cellValue)}</span>`
@@ -366,8 +297,8 @@
         return (
             `<div class="age-records-table-frame" aria-hidden="false">`
             + '<div class="age-records-table-frame-corners" aria-hidden="true"></div>'
-            + `<div class="age-records-table-scroll">`
-            + `<table class="age-records-table">`
+            + '<div class="age-records-table-scroll">'
+            + '<table class="age-records-table">'
             + `<thead><tr>${headerCells}</tr></thead>`
             + `<tbody>${bodyRows}</tbody>`
             + '</table>'
@@ -376,41 +307,101 @@
         );
     }
 
-    function renderPlayerPanel(players) {
-        const panel = global.document.getElementById('age-records-panel-players');
+    function renderPersonalStatValue(row, stat) {
+        if (stat.kind === 'ranking') {
+            if (!recordsRankingLive || row.hasJoinedAge === false) return PLACEHOLDER;
+            return formatCellValue(row[stat.key], 'number', { emptyDisplay: PLACEHOLDER });
+        }
+        return formatCellValue(row[stat.key], stat.kind, { emptyDisplay: RECORDS_EMPTY });
+    }
+
+    function renderPersonalPanel(record) {
+        const panel = global.document.getElementById('age-records-panel-personal');
         if (!panel) return;
 
-        const rows = normalizePlayerRows(players);
+        const row = normalizePersonalRecord(record);
+        if (!row) {
+            panel.innerHTML = '<p class="age-records-empty">Join the Age to begin recording your personal rankings.</p>';
+            return;
+        }
+
+        const headerName = escapeHtml(row.playerName || row.username || 'Commander');
+        const sectionsHtml = PERSONAL_SECTIONS.map((section) => {
+            const statsHtml = section.stats.map((stat) => {
+                const value = renderPersonalStatValue(row, stat);
+                const emptyClass = value === RECORDS_EMPTY || value === PLACEHOLDER ? ' is-empty' : ' has-value';
+                return (
+                    `<div class="age-records-personal-stat${emptyClass}">`
+                    + `<span class="age-records-personal-stat-label">${escapeHtml(stat.label)}</span>`
+                    + `<span class="age-records-personal-stat-value">${escapeHtml(value)}</span>`
+                    + '</div>'
+                );
+            }).join('');
+
+            return (
+                `<section class="age-records-personal-section" aria-label="${escapeHtml(section.title)}">`
+                + `<h3 class="age-records-personal-section-title">${escapeHtml(section.title)}</h3>`
+                + `<div class="age-records-personal-stat-grid">${statsHtml}</div>`
+                + '</section>'
+            );
+        }).join('');
 
         panel.innerHTML = (
-            rows.length
+            '<div class="age-records-personal-shell">'
+            + '<header class="age-records-personal-head">'
+            + `<p class="age-records-personal-eyebrow">Your Commander Record</p>`
+            + `<h2 class="age-records-personal-name">${headerName}</h2>`
+            + '</header>'
+            + `<div class="age-records-personal-sections">${sectionsHtml}</div>`
+            + '</div>'
+        );
+    }
+
+    function renderNationalPanel(national) {
+        const panel = global.document.getElementById('age-records-panel-national');
+        if (!panel) return;
+
+        if (!national?.nationId) {
+            panel.innerHTML = '<p class="age-records-empty">Enlist with a nation to view national rankings.</p>';
+            return;
+        }
+
+        const rows = normalizeTableRows(national.players);
+        const nationLabel = national.nationName || national.nationId;
+        panel.innerHTML = (
+            `<p class="age-records-scope-banner">${escapeHtml(nationLabel)} — nation intelligence only</p>`
+            + (rows.length
                 ? renderRecordsTable({
-                    columns: PLAYER_COLUMNS,
+                    columns: NATIONAL_COLUMNS,
                     rows,
                     rowKey: 'username',
                     selfMatchKey: 'username',
                     cellOptions: { emptyDisplay: RECORDS_EMPTY }
                 })
-                : `<p class="age-records-empty">No registered commanders yet.</p>`
+                : `<p class="age-records-empty">No commanders from ${escapeHtml(nationLabel)} have recorded stats yet.</p>`)
         );
     }
 
-    function renderNationPanel(nations) {
-        const panel = global.document.getElementById('age-records-panel-nations');
+    function renderGlobalPanel(globalSection) {
+        const panel = global.document.getElementById('age-records-panel-global');
         if (!panel) return;
 
-        const rows = mergeNationRows(nations);
-
-        panel.innerHTML = renderRecordsTable({
-            columns: NATION_COLUMNS,
-            rows,
-            rowKey: 'nationId',
-            cellOptions: { emptyDisplay: RECORDS_EMPTY }
-        });
+        const rows = normalizeTableRows(globalSection?.players);
+        panel.innerHTML = (
+            rows.length
+                ? renderRecordsTable({
+                    columns: GLOBAL_COLUMNS,
+                    rows,
+                    rowKey: 'username',
+                    selfMatchKey: 'username',
+                    cellOptions: { emptyDisplay: RECORDS_EMPTY }
+                })
+                : '<p class="age-records-empty">No global rankings have been recorded for this Age yet.</p>'
+        );
     }
 
     function syncRecordsIntro() {
-        const meta = TAB_INTRO[activeTab] || TAB_INTRO.players;
+        const meta = TAB_INTRO[activeTab] || TAB_INTRO.personal;
         const eyebrowEl = global.document.getElementById('age-records-intro-eyebrow');
         const copyEl = global.document.getElementById('age-records-intro-copy');
 
@@ -428,13 +419,15 @@
         }
 
         const snapshot = await loadPromise;
+        snapshotCache = snapshot;
         recordsRankingLive = snapshot.recordsRanking?.live === true;
-        renderPlayerPanel(snapshot.players);
-        renderNationPanel(snapshot.nations);
+        renderPersonalPanel(snapshot.personal);
+        renderNationalPanel(snapshot.national);
+        renderGlobalPanel(snapshot.global);
     }
 
     function setActiveTab(tabId) {
-        activeTab = tabId === 'nations' ? 'nations' : 'players';
+        activeTab = VALID_TABS.has(tabId) ? tabId : 'personal';
 
         global.document.querySelectorAll('[data-age-records-tab]').forEach((button) => {
             const isActive = button.getAttribute('data-age-records-tab') === activeTab;
@@ -445,20 +438,18 @@
 
         syncRecordsIntro();
 
-        const playersPanel = global.document.getElementById('age-records-panel-players');
-        const nationsPanel = global.document.getElementById('age-records-panel-nations');
+        const panelMap = {
+            personal: global.document.getElementById('age-records-panel-personal'),
+            national: global.document.getElementById('age-records-panel-national'),
+            global: global.document.getElementById('age-records-panel-global')
+        };
 
-        if (playersPanel) {
-            const showPlayers = activeTab === 'players';
-            playersPanel.hidden = !showPlayers;
-            playersPanel.classList.toggle('is-active', showPlayers);
-        }
-
-        if (nationsPanel) {
-            const showNations = activeTab === 'nations';
-            nationsPanel.hidden = !showNations;
-            nationsPanel.classList.toggle('is-active', showNations);
-        }
+        Object.entries(panelMap).forEach(([tabKey, panelEl]) => {
+            if (!panelEl) return;
+            const show = activeTab === tabKey;
+            panelEl.hidden = !show;
+            panelEl.classList.toggle('is-active', show);
+        });
     }
 
     let recordsModalOpen = false;
@@ -472,6 +463,7 @@
 
     function onViewClose() {
         loadPromise = null;
+        snapshotCache = null;
     }
 
     function setRecordsModalOpen(open) {
@@ -532,7 +524,7 @@
 
     function enableRecords() {
         bindRecords();
-        setActiveTab('players');
+        setActiveTab('personal');
     }
 
     global.RoyalArmiesAgeRecords = {

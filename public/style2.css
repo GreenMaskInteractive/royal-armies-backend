@@ -18778,6 +18778,136 @@ label.age-council-board-editor-tool {
     border-bottom: none;
 }
 
+.age-records-scope-banner {
+    margin: 0 0 12px;
+    padding: 10px 14px;
+    border: 1px solid rgba(184, 144, 48, 0.34);
+    border-radius: 4px;
+    background: linear-gradient(180deg, rgba(36, 28, 18, 0.92), rgba(18, 14, 10, 0.88));
+    color: #e8c878;
+    font-family: 'Cinzel', serif;
+    font-size: 13px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.age-records-personal-shell {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    min-height: 0;
+}
+
+.age-records-personal-head {
+    padding: 18px 22px;
+    border: 1px solid rgba(184, 144, 48, 0.48);
+    border-radius: 6px;
+    background:
+        linear-gradient(145deg, rgba(52, 38, 22, 0.96), rgba(18, 14, 10, 0.94)),
+        radial-gradient(circle at top right, rgba(255, 196, 88, 0.08), transparent 55%);
+    box-shadow:
+        inset 0 1px 0 rgba(255, 217, 120, 0.08),
+        0 0 24px rgba(255, 196, 88, 0.06);
+}
+
+.age-records-personal-eyebrow {
+    margin: 0 0 8px;
+    color: rgba(232, 200, 120, 0.78);
+    font-family: 'Cinzel', serif;
+    font-size: 12px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+}
+
+.age-records-personal-name {
+    margin: 0;
+    color: #ffd978;
+    font-family: 'Cinzel', serif;
+    font-size: 34px;
+    font-weight: 700;
+    line-height: 1.1;
+    text-shadow: 0 2px 12px rgba(255, 196, 88, 0.18);
+}
+
+.age-records-personal-sections {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+}
+
+.age-records-personal-section {
+    padding: 16px 18px;
+    border: 1px solid rgba(184, 144, 48, 0.38);
+    border-radius: 6px;
+    background: linear-gradient(180deg, rgba(28, 22, 14, 0.94), rgba(14, 11, 8, 0.96));
+    box-shadow: inset 0 1px 0 rgba(255, 217, 120, 0.05);
+}
+
+.age-records-personal-section-title {
+    margin: 0 0 14px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid rgba(184, 144, 48, 0.22);
+    color: #e8c878;
+    font-family: 'Cinzel', serif;
+    font-size: 15px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.age-records-personal-stat-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px 16px;
+}
+
+.age-records-personal-stat {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-height: 72px;
+    padding: 12px 14px;
+    border: 1px solid rgba(184, 144, 48, 0.24);
+    border-radius: 4px;
+    background: rgba(8, 6, 4, 0.42);
+}
+
+.age-records-personal-stat-label {
+    color: rgba(184, 168, 140, 0.82);
+    font-family: 'Cinzel', serif;
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    line-height: 1.35;
+    text-transform: uppercase;
+}
+
+.age-records-personal-stat-value {
+    color: #f6e6b8;
+    font-family: 'Cinzel', serif;
+    font-size: 28px;
+    font-weight: 700;
+    line-height: 1.1;
+    text-shadow: 0 1px 8px rgba(255, 196, 88, 0.12);
+}
+
+.age-records-personal-stat.is-empty .age-records-personal-stat-value {
+    color: rgba(184, 168, 140, 0.24);
+    text-shadow: none;
+}
+
+#age-records-panel-personal .age-records-personal-sections .age-records-personal-section:last-child {
+    grid-column: 1 / -1;
+}
+
+#age-records-panel-personal .age-records-personal-section:last-child .age-records-personal-stat-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.age-records-dialog .age-records-tab {
+    min-width: 0;
+    padding-inline: 14px;
+    font-size: 12px;
+}
+
 #age-page-canvas[data-age-view="headquarters"] .age-map-anchor,
 #age-page-canvas[data-age-view="guild-training"] .age-map-anchor {
     display: none;

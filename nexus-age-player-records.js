@@ -1,7 +1,6 @@
 /**
  * NEXUS — Age player records (participation stats + tick-based leaderboard ranking).
- * Ranking mechanics mirror Last Knights officer/PvP composite scoring; commander rank
- * replaces hero-build contribution.
+ * PvP score counts border PvP battles only; city and SF ops are tracked separately.
  */
 'use strict';
 
@@ -11,7 +10,6 @@ const { sumSideTotals } = require('./nexus-age-battle-report');
 
 const PVP_SCORE_BATTLE_WON = 100;
 const PVP_SCORE_BATTLE_LOST = 25;
-const PVP_SCORE_SF_CITY_BATTLE = 75;
 const PVP_SCORE_KILL_ATTACK = 8;
 const PVP_SCORE_CAPTURE_ATTACK = 12;
 const RANK_SCORE_PER_LEVEL = 10;
@@ -26,30 +24,49 @@ function normalizePlayerAgeRecords(raw) {
     if (!raw || typeof raw !== 'object') {
         return {
             currentRank: null,
+            nationRank: null,
             overallPvpScore: null,
             overallRankScore: null,
-            battlesWon: null,
-            battlesLost: null,
+            pvpBattlesWon: null,
+            pvpBattlesLost: null,
+            cityBattlesWon: null,
+            cityBattlesLost: null,
+            sfParticipations: null,
             sfCityBattles: null,
             pvpKillsAttack: null,
-            pvpCapturesAttack: null
+            pvpCapturesAttack: null,
+            cityKillsAttack: null,
+            cityCapturesAttack: null
         };
     }
 
+    const legacyBattlesWon = numberOrNull(raw.battlesWon);
+    const legacyBattlesLost = numberOrNull(raw.battlesLost);
+
     return {
         currentRank: numberOrNull(raw.currentRank),
+        nationRank: numberOrNull(raw.nationRank),
         overallPvpScore: numberOrNull(raw.overallPvpScore),
         overallRankScore: numberOrNull(raw.overallRankScore),
-        battlesWon: numberOrNull(raw.battlesWon),
-        battlesLost: numberOrNull(raw.battlesLost),
+        pvpBattlesWon: numberOrNull(raw.pvpBattlesWon) ?? legacyBattlesWon,
+        pvpBattlesLost: numberOrNull(raw.pvpBattlesLost) ?? legacyBattlesLost,
+        cityBattlesWon: numberOrNull(raw.cityBattlesWon),
+        cityBattlesLost: numberOrNull(raw.cityBattlesLost),
+        sfParticipations: numberOrNull(raw.sfParticipations),
         sfCityBattles: numberOrNull(raw.sfCityBattles),
         pvpKillsAttack: numberOrNull(raw.pvpKillsAttack),
-        pvpCapturesAttack: numberOrNull(raw.pvpCapturesAttack)
+        pvpCapturesAttack: numberOrNull(raw.pvpCapturesAttack),
+        cityKillsAttack: numberOrNull(raw.cityKillsAttack),
+        cityCapturesAttack: numberOrNull(raw.cityCapturesAttack)
     };
 }
 
 function commanderHasJoinedAge(commander) {
     return Boolean(resolveCatalogNationKey(commander?.gameNation || resolveCommanderGameNationKey(commander)));
+}
+
+function resolveCommanderNationKey(commander) {
+    return resolveCatalogNationKey(commander?.gameNation || resolveCommanderGameNationKey(commander)) || null;
 }
 
 function numberOrZero(value) {
@@ -111,9 +128,8 @@ function computeOverallRankScoreFromCommander(commander) {
 
 function computeOverallPvpScoreFromStats(stats) {
     return (
-        numberOrZero(stats.battlesWon) * PVP_SCORE_BATTLE_WON
-        + numberOrZero(stats.battlesLost) * PVP_SCORE_BATTLE_LOST
-        + numberOrZero(stats.sfCityBattles) * PVP_SCORE_SF_CITY_BATTLE
+        numberOrZero(stats.pvpBattlesWon) * PVP_SCORE_BATTLE_WON
+        + numberOrZero(stats.pvpBattlesLost) * PVP_SCORE_BATTLE_LOST
         + numberOrZero(stats.pvpKillsAttack) * PVP_SCORE_KILL_ATTACK
         + numberOrZero(stats.pvpCapturesAttack) * PVP_SCORE_CAPTURE_ATTACK
     );
@@ -157,6 +173,13 @@ function attackerWonBattleReport(battleReport) {
     return winner === 'attacker' || winner === 'commander';
 }
 
+function resolveBattleTypeKey(battleReport, options = {}) {
+    const explicit = String(options.battleType || battleReport?.battleType || '').trim().toLowerCase();
+    if (explicit === 'border-pvp' || explicit === 'border-seize' || explicit === 'pvp') return 'pvp';
+    if (explicit === 'city-assault' || explicit === 'city') return 'city';
+    return 'city';
+}
+
 function resolveDefenderCombatTotals(battleReport) {
     const defender = battleReport?.defender;
     if (!defender) return { dead: 0, captured: 0 };
@@ -167,42 +190,141 @@ function resolveDefenderCombatTotals(battleReport) {
     };
 }
 
+function buildAttackerBattlePatch(battleTypeKey, attackerWon, draw, combatTotals, options = {}) {
+    const patch = {};
+
+    if (battleTypeKey === 'pvp') {
+        patch.pvpBattlesWon = attackerWon ? 1 : 0;
+        patch.pvpBattlesLost = !attackerWon && !draw ? 1 : 0;
+        patch.pvpKillsAttack = combatTotals.dead;
+        patch.pvpCapturesAttack = combatTotals.captured;
+    } else {
+        patch.cityBattlesWon = attackerWon ? 1 : 0;
+        patch.cityBattlesLost = !attackerWon && !draw ? 1 : 0;
+        patch.cityKillsAttack = combatTotals.dead;
+        patch.cityCapturesAttack = combatTotals.captured;
+    }
+
+    if (options.isSfParticipation) {
+        patch.sfParticipations = 1;
+    }
+    if (options.isSfCityBattle) {
+        patch.sfCityBattles = 1;
+    }
+
+    return patch;
+}
+
+function buildDefenderBattlePatch(battleTypeKey, attackerWon, draw, options = {}) {
+    const patch = {};
+
+    if (battleTypeKey === 'pvp') {
+        patch.pvpBattlesWon = !attackerWon && !draw ? 1 : 0;
+        patch.pvpBattlesLost = attackerWon ? 1 : 0;
+    } else {
+        patch.cityBattlesWon = !attackerWon && !draw ? 1 : 0;
+        patch.cityBattlesLost = attackerWon ? 1 : 0;
+    }
+
+    if (options.isSfParticipation) {
+        patch.sfParticipations = 1;
+    }
+    if (options.isSfCityBattle) {
+        patch.sfCityBattles = 1;
+    }
+
+    return patch;
+}
+
+function buildParticipantBattlePatch(battleTypeKey, attackerWon, draw, options = {}) {
+    const patch = {};
+
+    if (battleTypeKey === 'pvp') {
+        patch.pvpBattlesWon = attackerWon ? 1 : 0;
+        patch.pvpBattlesLost = !attackerWon && !draw ? 1 : 0;
+    } else {
+        patch.cityBattlesWon = attackerWon ? 1 : 0;
+        patch.cityBattlesLost = !attackerWon && !draw ? 1 : 0;
+    }
+
+    if (options.isSfParticipation) {
+        patch.sfParticipations = 1;
+    }
+    if (options.isSfCityBattle) {
+        patch.sfCityBattles = 1;
+    }
+
+    return patch;
+}
+
 function applyAgeRecordsBattleOutcome(db, options = {}) {
     const battleReport = options.battleReport;
     if (!battleReport || typeof battleReport !== 'object') return;
 
+    const battleTypeKey = resolveBattleTypeKey(battleReport, options);
     const attackerUsername = String(options.attackerUsername || battleReport.attacker?.username || '').trim().toLowerCase();
     const defenderUsername = String(options.defenderUsername || battleReport.defender?.username || '').trim().toLowerCase();
     const attackerWon = attackerWonBattleReport(battleReport);
     const draw = String(battleReport.winner || '').trim().toLowerCase() === 'draw';
     const combatTotals = resolveDefenderCombatTotals(battleReport);
+    const sfOptions = {
+        isSfParticipation: options.isSfParticipation === true || options.isSfCityBattle === true,
+        isSfCityBattle: options.isSfCityBattle === true
+    };
 
     if (attackerUsername) {
-        persistCommanderAgeRecords(db, attackerUsername, {
-            battlesWon: attackerWon ? 1 : 0,
-            battlesLost: !attackerWon && !draw ? 1 : 0,
-            sfCityBattles: options.isSfCityBattle ? 1 : 0,
-            pvpKillsAttack: combatTotals.dead,
-            pvpCapturesAttack: combatTotals.captured
-        });
+        persistCommanderAgeRecords(
+            db,
+            attackerUsername,
+            buildAttackerBattlePatch(battleTypeKey, attackerWon, draw, combatTotals, sfOptions)
+        );
     }
 
     if (defenderUsername) {
-        persistCommanderAgeRecords(db, defenderUsername, {
-            battlesWon: !attackerWon && !draw ? 1 : 0,
-            battlesLost: attackerWon ? 1 : 0,
-            sfCityBattles: options.isSfCityBattle ? 1 : 0
-        });
+        persistCommanderAgeRecords(
+            db,
+            defenderUsername,
+            buildDefenderBattlePatch(battleTypeKey, attackerWon, draw, sfOptions)
+        );
     }
 
     (Array.isArray(options.participantUsernames) ? options.participantUsernames : []).forEach((rawUsername) => {
         const participant = String(rawUsername || '').trim().toLowerCase();
         if (!participant || participant === attackerUsername || participant === defenderUsername) return;
 
-        persistCommanderAgeRecords(db, participant, {
-            battlesWon: attackerWon ? 1 : 0,
-            battlesLost: !attackerWon && !draw ? 1 : 0,
-            sfCityBattles: options.isSfCityBattle ? 1 : 0
+        persistCommanderAgeRecords(
+            db,
+            participant,
+            buildParticipantBattlePatch(battleTypeKey, attackerWon, draw, sfOptions)
+        );
+    });
+}
+
+function assignNationRanks(eligibleEntries) {
+    const byNation = new Map();
+
+    eligibleEntries.forEach((entry) => {
+        const nationKey = entry.nationKey;
+        if (!nationKey) return;
+        if (!byNation.has(nationKey)) {
+            byNation.set(nationKey, []);
+        }
+        byNation.get(nationKey).push(entry);
+    });
+
+    byNation.forEach((entries) => {
+        entries.sort((left, right) => {
+            if (right.compositeScore !== left.compositeScore) {
+                return right.compositeScore - left.compositeScore;
+            }
+            if (numberOrZero(right.stats.pvpBattlesWon) !== numberOrZero(left.stats.pvpBattlesWon)) {
+                return numberOrZero(right.stats.pvpBattlesWon) - numberOrZero(left.stats.pvpBattlesWon);
+            }
+            return left.username.localeCompare(right.username);
+        });
+
+        entries.forEach((entry, index) => {
+            entry.nationRank = index + 1;
         });
     });
 }
@@ -225,10 +347,12 @@ function recalculatePlayerAgeRecordsRankings(commanders, activeStartedAt, nowMs 
             const compositeScore = overallPvpScore + overallRankScore;
             return {
                 username: String(commander.username).trim().toLowerCase(),
+                nationKey: resolveCommanderNationKey(commander),
                 stats,
                 overallRankScore,
                 overallPvpScore,
-                compositeScore
+                compositeScore,
+                nationRank: null
             };
         });
 
@@ -236,11 +360,13 @@ function recalculatePlayerAgeRecordsRankings(commanders, activeStartedAt, nowMs 
         if (right.compositeScore !== left.compositeScore) {
             return right.compositeScore - left.compositeScore;
         }
-        if (numberOrZero(right.stats.battlesWon) !== numberOrZero(left.stats.battlesWon)) {
-            return numberOrZero(right.stats.battlesWon) - numberOrZero(left.stats.battlesWon);
+        if (numberOrZero(right.stats.pvpBattlesWon) !== numberOrZero(left.stats.pvpBattlesWon)) {
+            return numberOrZero(right.stats.pvpBattlesWon) - numberOrZero(left.stats.pvpBattlesWon);
         }
         return left.username.localeCompare(right.username);
     });
+
+    assignNationRanks(eligible);
 
     const updated = eligible.map((entry, index) => ({
         username: entry.username,
@@ -248,7 +374,8 @@ function recalculatePlayerAgeRecordsRankings(commanders, activeStartedAt, nowMs 
             ...entry.stats,
             overallRankScore: entry.overallRankScore,
             overallPvpScore: entry.overallPvpScore,
-            currentRank: index + 1
+            currentRank: index + 1,
+            nationRank: entry.nationRank
         }
     }));
 
@@ -304,7 +431,6 @@ function maybeRunAgePlayerRecordsRankingTick(db, activeStartedAt, nowMs = Date.n
 module.exports = {
     PVP_SCORE_BATTLE_WON,
     PVP_SCORE_BATTLE_LOST,
-    PVP_SCORE_SF_CITY_BATTLE,
     PVP_SCORE_KILL_ATTACK,
     PVP_SCORE_CAPTURE_ATTACK,
     RANK_SCORE_PER_LEVEL,
@@ -316,10 +442,12 @@ module.exports = {
     computeOverallRankScoreFromCommander,
     computeOverallPvpScoreFromStats,
     computeCompositeRecordsScore,
+    normalizePlayerAgeRecords,
     mergeAgeRecordsPatch,
     persistCommanderAgeRecords,
     applyAgeRecordsBattleOutcome,
     recalculatePlayerAgeRecordsRankings,
     persistPlayerAgeRecordsRankings,
-    maybeRunAgePlayerRecordsRankingTick
+    maybeRunAgePlayerRecordsRankingTick,
+    resolveCommanderNationKey
 };

@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Royal Armies — Age Alpha</title>
     <link rel="stylesheet" href="style.css?v=cursor-modal-layer-fix-1">
-    <link rel="stylesheet" href="style2.css?v=commander-battle-report-1">
+    <link rel="stylesheet" href="style2.css?v=records-rankings-tabs-1">
     <link rel="stylesheet" href="style-age-headquarters.css?v=utf8-content-fix-1">
     <link rel="stylesheet" href="style-age-center-modals.css?v=records-modal-wide-1">
     <link rel="stylesheet" href="style-age-council-room.css?v=leadership-visibility-2">
@@ -1829,31 +1829,44 @@
                             <button
                                 type="button"
                                 class="age-records-tab is-active"
-                                data-age-records-tab="players"
+                                data-age-records-tab="personal"
                                 role="tab"
                                 aria-selected="true"
-                                aria-controls="age-records-panel-players"
-                                id="age-records-tab-players"
-                                title="Individual Players">
-                                Players
+                                aria-controls="age-records-panel-personal"
+                                id="age-records-tab-personal"
+                                title="Personal Rankings">
+                                Personal Rankings
                             </button>
                             <button
                                 type="button"
                                 class="age-records-tab"
-                                data-age-records-tab="nations"
+                                data-age-records-tab="national"
                                 role="tab"
                                 aria-selected="false"
-                                aria-controls="age-records-panel-nations"
-                                id="age-records-tab-nations"
+                                aria-controls="age-records-panel-national"
+                                id="age-records-tab-national"
                                 tabindex="-1"
-                                title="Individual Nations">
-                                Nations
+                                title="National Rankings">
+                                National Rankings
+                            </button>
+                            <button
+                                type="button"
+                                class="age-records-tab"
+                                data-age-records-tab="global"
+                                role="tab"
+                                aria-selected="false"
+                                aria-controls="age-records-panel-global"
+                                id="age-records-tab-global"
+                                tabindex="-1"
+                                title="Global Rankings">
+                                Global Rankings
                             </button>
                         </div>
                     </div>
                     <div class="age-records-content">
-                        <div id="age-records-panel-players" class="age-records-panel is-active" role="tabpanel" aria-labelledby="age-records-tab-players" aria-live="polite"></div>
-                        <div id="age-records-panel-nations" class="age-records-panel" role="tabpanel" aria-labelledby="age-records-tab-nations" hidden aria-live="polite"></div>
+                        <div id="age-records-panel-personal" class="age-records-panel is-active" role="tabpanel" aria-labelledby="age-records-tab-personal" aria-live="polite"></div>
+                        <div id="age-records-panel-national" class="age-records-panel" role="tabpanel" aria-labelledby="age-records-tab-national" hidden aria-live="polite"></div>
+                        <div id="age-records-panel-global" class="age-records-panel" role="tabpanel" aria-labelledby="age-records-tab-global" hidden aria-live="polite"></div>
                     </div>
                 </div>
             </div>
@@ -2326,7 +2339,7 @@
     <script src="rift-unit-purchase-catalog.js?v=commander-rank-names-2"></script>
     <script src="age-barracks.js?v=garrison-roster-menu-1"></script>
     <script src="age-army-groups.js?v=commander-rank-names-2"></script>
-    <script src="age-records.js?v=records-participation-rank-1"></script>
+    <script src="age-records.js?v=records-rankings-tabs-1"></script>
     <script src="age-council-board.js?v=leadership-visibility-2"></script>
     <script src="age-war-ledger.js?v=modal-close-audit-1"></script>
     <script src="rift-song-manuscript-catalog.js?v=blood-tithe-manuscript-1"></script>
