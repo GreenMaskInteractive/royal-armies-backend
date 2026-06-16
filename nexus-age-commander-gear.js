@@ -8,6 +8,7 @@ const {
     COMMANDER_CLASS_LABELS: CLASS_LABELS,
     COMMANDER_CLASS_PORTRAITS: CLASS_PORTRAITS
 } = require('./nexus-commander-class');
+const { sanitizeEquippedSlotMap } = require('./nexus-age-gear-equip-rules');
 
 function resolveCommanderRank(commander) {
     return Math.max(1, Math.floor(Number(commander?.rank) || 1));
@@ -44,6 +45,7 @@ const GEAR_ITEMS = Object.freeze({
     'bm-patrol-blade': {
         name: 'Patrol Blade',
         slot: 'mainHand',
+        handedness: 'oneHand',
         classId: 'battlemaster',
         tier: 1,
         rarity: 'common',
@@ -125,6 +127,7 @@ const GEAR_ITEMS = Object.freeze({
     'am-focus-staff': {
         name: 'Focus Staff',
         slot: 'mainHand',
+        handedness: 'twoHand',
         classId: 'battlemage',
         tier: 1,
         rarity: 'common',
@@ -206,6 +209,7 @@ const GEAR_ITEMS = Object.freeze({
     'bm-veteran-blade': {
         name: 'Veteran Blade',
         slot: 'mainHand',
+        handedness: 'oneHand',
         classId: 'battlemaster',
         tier: 2,
         rarity: 'uncommon',
@@ -287,6 +291,7 @@ const GEAR_ITEMS = Object.freeze({
     'am-veteran-staff': {
         name: 'Veteran Staff',
         slot: 'mainHand',
+        handedness: 'twoHand',
         classId: 'battlemage',
         tier: 2,
         rarity: 'uncommon',
@@ -368,6 +373,7 @@ const GEAR_ITEMS = Object.freeze({
     'gear-commanders-signal-horn': {
         name: "Commander's Signal Horn",
         slot: 'mainHand',
+        handedness: 'twoHand',
         classId: 'battlemaster',
         tier: 2,
         rarity: 'rare',
@@ -377,6 +383,7 @@ const GEAR_ITEMS = Object.freeze({
     'gear-mage-slayer-harpoon': {
         name: 'Mage-Slayer Harpoon',
         slot: 'mainHand',
+        handedness: 'twoHand',
         classId: 'battlemaster',
         tier: 3,
         rarity: 'rare',
@@ -401,7 +408,7 @@ const GEAR_ITEMS = Object.freeze({
         battleEffect: 'null-stone-aegis',
         stats: { injuryMitigation: 0.04, morale: 2 }
     },
-    'cmd-ironheart-saber': { name: 'Ironheart Saber', slot: 'mainHand', classId: 'commander', tier: 1, rarity: 'common', stats: { strength: 2, ranged: 2, morale: 1 } },
+    'cmd-ironheart-saber': { name: 'Ironheart Saber', slot: 'mainHand', handedness: 'oneHand', dualWieldOffHand: true, classId: 'commander', tier: 1, rarity: 'common', stats: { strength: 2, ranged: 2, morale: 1 } },
     'cmd-warded-bulwark': { name: 'Warded Bulwark', slot: 'offHand', classId: 'commander', tier: 1, rarity: 'common', stats: { command: 1, ranged: 1, injuryMitigation: 0.02 } },
     'cmd-oathbound-visor': { name: 'Oathbound Visor', slot: 'head', classId: 'commander', tier: 1, rarity: 'common', stats: { strength: 1, ranged: 1, injuryMitigation: 0.01 } },
     'cmd-concord-mail': { name: 'Concord Mail', slot: 'chest', classId: 'commander', tier: 1, rarity: 'common', stats: { strength: 2, ranged: 2, injuryMitigation: 0.03 } },
@@ -411,7 +418,7 @@ const GEAR_ITEMS = Object.freeze({
     'cmd-bannercloak-accord': { name: 'Bannercloak of Accord', slot: 'cloak', classId: 'commander', tier: 1, rarity: 'common', stats: { command: 1, guildXp: 0.02, morale: 1 } },
     'cmd-covenant-signet': { name: 'Covenant Signet', slot: 'ring', classId: 'commander', tier: 1, rarity: 'common', stats: { command: 2 } },
     'cmd-twinpath-talisman': { name: 'Twinpath Talisman', slot: 'amulet', classId: 'commander', tier: 1, rarity: 'common', stats: { morale: 2, injuryMitigation: 0.01 } },
-    'cmd-sovereign-edge': { name: "Sovereign's Edge", slot: 'mainHand', classId: 'commander', tier: 2, rarity: 'uncommon', stats: { strength: 4, ranged: 4, morale: 2 } },
+    'cmd-sovereign-edge': { name: "Sovereign's Edge", slot: 'mainHand', handedness: 'oneHand', dualWieldOffHand: true, classId: 'commander', tier: 2, rarity: 'uncommon', stats: { strength: 4, ranged: 4, morale: 2 } },
     'cmd-bastion-two-paths': { name: 'Bastion of Two Paths', slot: 'offHand', classId: 'commander', tier: 2, rarity: 'uncommon', stats: { command: 2, ranged: 1, injuryMitigation: 0.04 } },
     'cmd-crownward-casque': { name: 'Crownward Casque', slot: 'head', classId: 'commander', tier: 2, rarity: 'uncommon', stats: { strength: 2, ranged: 2, injuryMitigation: 0.02 } },
     'cmd-aegis-of-concord': { name: 'Aegis of Concord', slot: 'chest', classId: 'commander', tier: 2, rarity: 'uncommon', stats: { strength: 3, ranged: 3, injuryMitigation: 0.05 } },
@@ -421,8 +428,8 @@ const GEAR_ITEMS = Object.freeze({
     'cmd-marshal-pathcloak': { name: "Marshal's Pathcloak", slot: 'cloak', classId: 'commander', tier: 2, rarity: 'uncommon', stats: { command: 2, guildXp: 0.04, morale: 2 } },
     'cmd-oathkeeper-band': { name: "Oathkeeper's Band", slot: 'ring', classId: 'commander', tier: 2, rarity: 'uncommon', stats: { command: 3 } },
     'cmd-dualheart-amulet': { name: 'Dualheart Amulet', slot: 'amulet', classId: 'commander', tier: 2, rarity: 'uncommon', stats: { morale: 3, injuryMitigation: 0.02, guildXp: 0.01 } },
-    'gear-horn-rallying-dawn': { name: 'Horn of Rallying Dawn', slot: 'mainHand', classId: 'commander', tier: 2, rarity: 'rare', battleEffect: 'signal-horn', stats: { command: 2, morale: 1, strength: 1, ranged: 1 } },
-    'gear-nullspike-harpoon': { name: 'Nullspike Harpoon', slot: 'mainHand', classId: 'commander', tier: 3, rarity: 'rare', battleEffect: 'mage-slayer-harpoon', stats: { strength: 3, ranged: 2 } },
+    'gear-horn-rallying-dawn': { name: 'Horn of Rallying Dawn', slot: 'mainHand', handedness: 'twoHand', classId: 'commander', tier: 2, rarity: 'rare', battleEffect: 'signal-horn', stats: { command: 2, morale: 1, strength: 1, ranged: 1 } },
+    'gear-nullspike-harpoon': { name: 'Nullspike Harpoon', slot: 'mainHand', handedness: 'twoHand', classId: 'commander', tier: 3, rarity: 'rare', battleEffect: 'mage-slayer-harpoon', stats: { strength: 3, ranged: 2 } },
     'gear-phoenix-interlock': { name: 'Phoenix Interlock Plate', slot: 'chest', classId: 'commander', tier: 3, rarity: 'rare', battleEffect: 'linked-resilient-plating', stats: { injuryMitigation: 0.05, strength: 2, ranged: 2 } },
     'gear-nullstone-palladium': { name: 'Nullstone Palladium', slot: 'offHand', classId: 'commander', tier: 3, rarity: 'epic', battleEffect: 'null-stone-aegis', stats: { injuryMitigation: 0.04, morale: 2, command: 1 } }
 });
@@ -525,12 +532,13 @@ function resolveDefaultAvatarUrl(commander, classId) {
 
 function normalizeEquippedSlotMap(raw) {
     if (!raw || typeof raw !== 'object') return null;
-    const next = {};
+    const mapped = {};
     GEAR_SLOT_ORDER.forEach((slot) => {
         const itemId = mapLegacyGearId(raw[slot.id]);
-        if (itemId) next[slot.id] = itemId;
+        if (itemId) mapped[slot.id] = itemId;
     });
-    return Object.keys(next).length ? next : null;
+    const sanitized = sanitizeEquippedSlotMap(mapped, (itemId) => GEAR_ITEMS[itemId]);
+    return Object.keys(sanitized).length ? sanitized : null;
 }
 
 function resolveEquippedSlotMap(commander) {

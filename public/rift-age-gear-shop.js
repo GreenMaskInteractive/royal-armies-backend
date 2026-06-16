@@ -127,8 +127,8 @@
     ]);
 
     const GEAR_CATALOG = Object.freeze([
-        { id: 'cmd-ironheart-saber', name: 'Ironheart Saber', slot: 'mainHand', classId: 'commander', tier: 1, rarity: 'common', stats: { strength: 2, ranged: 2, morale: 1 }, purchaseGold: 800, equipMinRank: 2, desc: 'A balanced field blade suited to steel and spell alike.' },
-        { id: 'cmd-warded-bulwark', name: 'Warded Bulwark', slot: 'offHand', classId: 'commander', tier: 1, rarity: 'common', stats: { command: 1, ranged: 1, injuryMitigation: 0.02 }, purchaseGold: 650, equipMinRank: 2, desc: 'Shield lined with minor wards—steady for melee and channelers.' },
+        { id: 'cmd-ironheart-saber', name: 'Ironheart Saber', slot: 'mainHand', handedness: 'oneHand', dualWieldOffHand: true, classId: 'commander', tier: 1, rarity: 'common', stats: { strength: 2, ranged: 2, morale: 1 }, purchaseGold: 800, equipMinRank: 2, desc: 'A balanced field blade suited to steel and spell alike. Dual-wield capable when paired with another one-handed blade.' },
+        { id: 'cmd-warded-bulwark', name: 'Warded Bulwark', slot: 'offHand', offHandType: 'shield', classId: 'commander', tier: 1, rarity: 'common', stats: { command: 1, ranged: 1, injuryMitigation: 0.02 }, purchaseGold: 650, equipMinRank: 2, desc: 'Shield lined with minor wards—steady for melee and channelers.' },
         { id: 'cmd-oathbound-visor', name: 'Oathbound Visor', slot: 'head', classId: 'commander', tier: 1, rarity: 'common', stats: { strength: 1, ranged: 1, injuryMitigation: 0.01 }, purchaseGold: 540, equipMinRank: 2, desc: 'Visor etched with dual-path oaths of the Royal Armies.' },
         { id: 'cmd-concord-mail', name: 'Concord Mail', slot: 'chest', classId: 'commander', tier: 1, rarity: 'common', stats: { strength: 2, ranged: 2, injuryMitigation: 0.03 }, purchaseGold: 720, equipMinRank: 2, desc: 'Mail that flexes for sword-work and sigil-weave alike.' },
         { id: 'cmd-duelweave-gauntlets', name: 'Duelweave Gauntlets', slot: 'hands', classId: 'commander', tier: 1, rarity: 'common', stats: { strength: 1, ranged: 1, command: 1 }, purchaseGold: 430, equipMinRank: 2, desc: 'Threaded gauntlets for weapon grip and spell shaping.' },
@@ -137,8 +137,8 @@
         { id: 'cmd-bannercloak-accord', name: 'Bannercloak of Accord', slot: 'cloak', classId: 'commander', tier: 1, rarity: 'common', stats: { command: 1, guildXp: 0.02, morale: 1 }, purchaseGold: 560, equipMinRank: 2, desc: 'Guild-issue cloak signaling unity of physical and arcane companies.' },
         { id: 'cmd-covenant-signet', name: 'Covenant Signet', slot: 'ring', classId: 'commander', tier: 1, rarity: 'common', stats: { command: 2 }, purchaseGold: 500, equipMinRank: 2, desc: 'Signet ring of shared command authority.' },
         { id: 'cmd-twinpath-talisman', name: 'Twinpath Talisman', slot: 'amulet', classId: 'commander', tier: 1, rarity: 'common', stats: { morale: 2, injuryMitigation: 0.01 }, purchaseGold: 530, equipMinRank: 2, desc: 'Charm balancing resolve for blade and spell commanders.' },
-        { id: 'cmd-sovereign-edge', name: "Sovereign's Edge", slot: 'mainHand', classId: 'commander', tier: 2, rarity: 'uncommon', stats: { strength: 4, ranged: 4, morale: 2 }, purchaseGold: 4400, equipMinRank: 7, desc: 'Masterwork edge for veteran officers of either path.' },
-        { id: 'cmd-bastion-two-paths', name: 'Bastion of Two Paths', slot: 'offHand', classId: 'commander', tier: 2, rarity: 'uncommon', stats: { command: 2, ranged: 1, injuryMitigation: 0.04 }, purchaseGold: 3700, equipMinRank: 7, desc: 'Reinforced ward-shield carried by herald-ranked commanders.' },
+        { id: 'cmd-sovereign-edge', name: "Sovereign's Edge", slot: 'mainHand', handedness: 'oneHand', dualWieldOffHand: true, classId: 'commander', tier: 2, rarity: 'uncommon', stats: { strength: 4, ranged: 4, morale: 2 }, purchaseGold: 4400, equipMinRank: 7, desc: 'Masterwork edge for veteran officers. Dual-wield capable when paired with another one-handed blade.' },
+        { id: 'cmd-bastion-two-paths', name: 'Bastion of Two Paths', slot: 'offHand', offHandType: 'shield', classId: 'commander', tier: 2, rarity: 'uncommon', stats: { command: 2, ranged: 1, injuryMitigation: 0.04 }, purchaseGold: 3700, equipMinRank: 7, desc: 'Reinforced ward-shield carried by herald-ranked commanders.' },
         { id: 'cmd-crownward-casque', name: 'Crownward Casque', slot: 'head', classId: 'commander', tier: 2, rarity: 'uncommon', stats: { strength: 2, ranged: 2, injuryMitigation: 0.02 }, purchaseGold: 2900, equipMinRank: 7, desc: 'Tempered casque with riveted ward lines.' },
         { id: 'cmd-aegis-of-concord', name: 'Aegis of Concord', slot: 'chest', classId: 'commander', tier: 2, rarity: 'uncommon', stats: { strength: 3, ranged: 3, injuryMitigation: 0.05 }, purchaseGold: 4000, equipMinRank: 7, desc: 'Plate-lined harness for front-line duty on any path.' },
         { id: 'cmd-warfinger-gauntlets', name: 'Warfinger Gauntlets', slot: 'hands', classId: 'commander', tier: 2, rarity: 'uncommon', stats: { strength: 2, ranged: 2, command: 2 }, purchaseGold: 2650, equipMinRank: 7, desc: 'Tempered gauntlets for weapon mastery and spell control.' },
@@ -147,10 +147,10 @@
         { id: 'cmd-marshal-pathcloak', name: "Marshal's Pathcloak", slot: 'cloak', classId: 'commander', tier: 2, rarity: 'uncommon', stats: { command: 2, guildXp: 0.04, morale: 2 }, purchaseGold: 3100, equipMinRank: 7, desc: 'Officer cloak threaded for guild recognition on both paths.' },
         { id: 'cmd-oathkeeper-band', name: "Oathkeeper's Band", slot: 'ring', classId: 'commander', tier: 2, rarity: 'uncommon', stats: { command: 3 }, purchaseGold: 2800, equipMinRank: 7, desc: 'Ring of a proven dual-path commander.' },
         { id: 'cmd-dualheart-amulet', name: 'Dualheart Amulet', slot: 'amulet', classId: 'commander', tier: 2, rarity: 'uncommon', stats: { morale: 3, injuryMitigation: 0.02, guildXp: 0.01 }, purchaseGold: 3000, equipMinRank: 7, desc: 'Battle charm carried by herald-ranked veterans.' },
-        { id: 'gear-horn-rallying-dawn', name: 'Horn of Rallying Dawn', slot: 'mainHand', classId: 'commander', tier: 2, rarity: 'rare', battleEffect: 'signal-horn', stats: { command: 2, morale: 1, strength: 1, ranged: 1 }, purchaseGold: 6800, equipMinRank: 7, desc: 'Battle horn that marks priority targets in PvP.' },
-        { id: 'gear-nullspike-harpoon', name: 'Nullspike Harpoon', slot: 'mainHand', classId: 'commander', tier: 3, rarity: 'rare', battleEffect: 'mage-slayer-harpoon', stats: { strength: 3, ranged: 2 }, purchaseGold: 14200, equipMinRank: 14, desc: 'Anti-magic harpoon—high cost, requires rank 14 to wield.' },
+        { id: 'gear-horn-rallying-dawn', name: 'Horn of Rallying Dawn', slot: 'mainHand', handedness: 'twoHand', classId: 'commander', tier: 2, rarity: 'rare', battleEffect: 'signal-horn', stats: { command: 2, morale: 1, strength: 1, ranged: 1 }, purchaseGold: 6800, equipMinRank: 7, desc: 'Two-handed battle horn that marks priority targets in PvP.' },
+        { id: 'gear-nullspike-harpoon', name: 'Nullspike Harpoon', slot: 'mainHand', handedness: 'twoHand', classId: 'commander', tier: 3, rarity: 'rare', battleEffect: 'mage-slayer-harpoon', stats: { strength: 3, ranged: 2 }, purchaseGold: 14200, equipMinRank: 14, desc: 'Two-handed anti-magic harpoon—high cost, requires rank 14 to wield.' },
         { id: 'gear-phoenix-interlock', name: 'Phoenix Interlock Plate', slot: 'chest', classId: 'commander', tier: 3, rarity: 'rare', battleEffect: 'linked-resilient-plating', stats: { injuryMitigation: 0.05, strength: 2, ranged: 2 }, purchaseGold: 15800, equipMinRank: 14, desc: 'Elite linked plate harness for nation assaults.' },
-        { id: 'gear-nullstone-palladium', name: 'Nullstone Palladium', slot: 'offHand', classId: 'commander', tier: 3, rarity: 'epic', battleEffect: 'null-stone-aegis', stats: { injuryMitigation: 0.04, morale: 2, command: 1 }, purchaseGold: 18500, equipMinRank: 18, desc: 'Null-stone ward shield. Equip at rank 18.' }
+        { id: 'gear-nullstone-palladium', name: 'Nullstone Palladium', slot: 'offHand', offHandType: 'shield', classId: 'commander', tier: 3, rarity: 'epic', battleEffect: 'null-stone-aegis', stats: { injuryMitigation: 0.04, morale: 2, command: 1 }, purchaseGold: 18500, equipMinRank: 18, desc: 'Null-stone ward shield. Equip at rank 18.' }
     ]);
 
     const ARMORY_UPGRADE_PATHS = Object.freeze({
@@ -248,6 +248,33 @@
             return map;
         }, {})
     );
+
+    const GearEquipRules = global.RoyalArmiesGearEquipRules || {};
+
+    function resolveGearItemById(itemId) {
+        return GEAR_BY_ID[String(itemId || '').trim()] || null;
+    }
+
+    function sanitizeLocalEquippedMap(equipped) {
+        if (typeof GearEquipRules.sanitizeEquippedSlotMap === 'function') {
+            return GearEquipRules.sanitizeEquippedSlotMap(equipped || {}, resolveGearItemById);
+        }
+        return equipped && typeof equipped === 'object' ? { ...equipped } : {};
+    }
+
+    function resolveEquipTargetSlot(item, equipped) {
+        if (typeof GearEquipRules.resolveEquipTargetSlot === 'function') {
+            return GearEquipRules.resolveEquipTargetSlot(item, equipped || {}, resolveGearItemById);
+        }
+        return String(item?.slot || '').trim();
+    }
+
+    function describeEquipFailure(reason) {
+        if (typeof GearEquipRules.describeEquipSlotFailure === 'function') {
+            return GearEquipRules.describeEquipSlotFailure(reason);
+        }
+        return 'That item cannot be equipped right now.';
+    }
 
     const TOOL_BY_ID = Object.freeze(
         FORGE_TOOLS.reduce((map, item) => {
@@ -418,10 +445,15 @@
     function canPlacePurchasedItem(state, item, isTool) {
         ensureInventoryState(state);
         if (!isTool) {
-            const slot = String(item?.slot || '').trim();
+            const slot = resolveEquipTargetSlot(item, state.equipped);
             const currentEquipped = mapLegacyGearId(state.equipped?.[slot]);
             const rank = resolveCommanderRank();
-            if (!currentEquipped && rank >= item.equipMinRank) return true;
+            if (!currentEquipped && rank >= item.equipMinRank) {
+                const check = GearEquipRules.canEquipGearItemToSlot
+                    ? GearEquipRules.canEquipGearItemToSlot(item, slot, state.equipped, resolveGearItemById)
+                    : { ok: true };
+                if (check.ok) return true;
+            }
         }
         return findFirstFreeInventorySlot(state) >= 0;
     }
@@ -437,12 +469,20 @@
         state.ownedGearIds.push(item.id);
         ensureGearProgress(state, item.id);
 
-        const slot = String(item.slot || '').trim();
+        const slot = resolveEquipTargetSlot(item, state.equipped);
         const currentEquipped = mapLegacyGearId(state.equipped?.[slot]);
         const rank = resolveCommanderRank();
+        const slotCheck = GearEquipRules.canEquipGearItemToSlot
+            ? GearEquipRules.canEquipGearItemToSlot(item, slot, state.equipped, resolveGearItemById)
+            : { ok: true };
 
-        if (!currentEquipped && rank >= item.equipMinRank) {
+        if (!currentEquipped && rank >= item.equipMinRank && slotCheck.ok) {
             state.equipped[slot] = item.id;
+            if (slot === 'mainHand' && item.handedness === 'twoHand' && state.equipped.offHand) {
+                const offId = mapLegacyGearId(state.equipped.offHand);
+                if (offId) addToInventory(state, { type: 'gear', itemId: offId });
+                delete state.equipped.offHand;
+            }
             return { placed: 'equipped', success: true, slot };
         }
 
@@ -526,7 +566,7 @@
                 nextEquipped[slot] = mapped;
             }
         });
-        state.equipped = nextEquipped;
+        state.equipped = sanitizeLocalEquippedMap(nextEquipped);
 
         Object.keys(state.gearProgress || {}).forEach((itemId) => {
             const mapped = mapLegacyGearId(itemId);
@@ -1155,6 +1195,12 @@
         const tierLine = !isTool && item.tier
             ? `<p class="age-gear-shop-detail-tier">Tier ${escapeHtml(item.tier)} · ${escapeHtml(item.rarity || 'common')}</p>`
             : '';
+        const handMeta = !isTool && typeof GearEquipRules.formatHandSlotMeta === 'function'
+            ? GearEquipRules.formatHandSlotMeta(item)
+            : '';
+        const handLine = handMeta
+            ? `<p class="age-gear-shop-detail-hand">${escapeHtml(handMeta)}</p>`
+            : '';
         const masteryLine = progress
             ? `<p class="age-gear-shop-detail-mastery">${escapeHtml(formatGearLevelLabel(progress.level))}`
                 + (progress.level < MAX_GEAR_LEVEL
@@ -1171,6 +1217,7 @@
             + '<div class="age-gear-shop-detail-summary">'
             + `<h3 class="age-barracks-detail-title">${escapeHtml(item.name)}</h3>`
             + tierLine
+            + handLine
             + `<p class="age-gear-shop-detail-desc">${escapeHtml(item.desc)}</p>`
             + (statsLine ? `<p class="age-gear-shop-detail-stats">${escapeHtml(statsLine)}</p>` : '')
             + masteryLine
@@ -1502,18 +1549,39 @@
         }
     }
 
-    function equipItemToSlot(state, item, sourceInventoryIndex) {
-        const slot = String(item?.slot || '').trim();
-        if (!slot) return { ok: false, reason: 'invalid_slot' };
+    function equipItemToSlot(state, item, sourceInventoryIndex, preferredSlot) {
+        const targetSlot = String(preferredSlot || resolveEquipTargetSlot(item, state.equipped) || '').trim();
+        if (!targetSlot) return { ok: false, reason: 'invalid_slot' };
 
-        const displaced = mapLegacyGearId(state.equipped?.[slot]);
+        const slotCheck = GearEquipRules.canEquipGearItemToSlot
+            ? GearEquipRules.canEquipGearItemToSlot(item, targetSlot, state.equipped, resolveGearItemById)
+            : { ok: targetSlot === String(item?.slot || '').trim() };
+        if (!slotCheck.ok) {
+            return { ok: false, reason: slotCheck.reason || 'off_hand_not_eligible' };
+        }
+
+        const displaced = mapLegacyGearId(state.equipped?.[targetSlot]);
         if (displaced && displaced !== item.id) {
             if (!addToInventory(state, { type: 'gear', itemId: displaced })) {
                 return { ok: false, reason: 'inventory_full' };
             }
         }
 
-        state.equipped[slot] = item.id;
+        state.equipped[targetSlot] = item.id;
+
+        if (targetSlot === 'mainHand' && item.handedness === 'twoHand' && state.equipped.offHand) {
+            const offId = mapLegacyGearId(state.equipped.offHand);
+            if (offId && offId !== item.id) {
+                if (!addToInventory(state, { type: 'gear', itemId: offId })) {
+                    delete state.equipped[targetSlot];
+                    if (displaced) state.equipped[targetSlot] = displaced;
+                    return { ok: false, reason: 'inventory_full' };
+                }
+            }
+            delete state.equipped.offHand;
+        }
+
+        state.equipped = sanitizeLocalEquippedMap(state.equipped);
 
         if (sourceInventoryIndex != null && sourceInventoryIndex !== '') {
             const index = Math.floor(Number(sourceInventoryIndex));
@@ -1528,7 +1596,7 @@
             });
         }
 
-        return { ok: true };
+        return { ok: true, slot: targetSlot };
     }
 
     function purchaseForgeItem(itemId) {
@@ -1604,12 +1672,16 @@
         }
         const result = equipItemToSlot(state, item);
         if (!result.ok) {
-            setShopStatus('Inventory full — make room before swapping gear.', true);
+            if (result.reason === 'inventory_full') {
+                setShopStatus('Inventory full — make room before swapping gear.', true);
+            } else {
+                setShopStatus(describeEquipFailure(result.reason), true);
+            }
             return false;
         }
         ensureGearProgress(state, item.id);
         writeState(state);
-        setShopStatus(`${item.name} equipped to ${GEAR_SLOT_LABELS[item.slot] || item.slot}.`);
+        setShopStatus(`${item.name} equipped to ${GEAR_SLOT_LABELS[result.slot] || result.slot}.`);
         return true;
     }
 
@@ -1630,13 +1702,17 @@
 
         const result = equipItemToSlot(state, item, index);
         if (!result.ok) {
-            setShopStatus('Inventory full — make room before swapping gear.', true);
+            if (result.reason === 'inventory_full') {
+                setShopStatus('Inventory full — make room before swapping gear.', true);
+            } else {
+                setShopStatus(describeEquipFailure(result.reason), true);
+            }
             return false;
         }
 
         ensureGearProgress(state, item.id);
         writeState(state);
-        setShopStatus(`${item.name} equipped to ${GEAR_SLOT_LABELS[item.slot] || item.slot}.`);
+        setShopStatus(`${item.name} equipped to ${GEAR_SLOT_LABELS[result.slot] || result.slot}.`);
         return true;
     }
 
@@ -1681,6 +1757,7 @@
             addToInventory(state, { type: 'gear', itemId: currentId });
         }
         state.equipped[slot] = next.id;
+        state.equipped = sanitizeLocalEquippedMap(state.equipped);
         writeState(state);
         setShopStatus(`${current.name} upgraded to ${next.name} for ${formatGold(cost)} gold.`);
         return true;
