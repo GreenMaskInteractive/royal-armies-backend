@@ -40,10 +40,14 @@
         const enemyLine = enemyCount > 0
             ? `${enemyCount} enemy commander${enemyCount === 1 ? '' : 's'} in city`
             : 'Garrison only (no enemy commanders spotted)';
+        const captureLine = risk.captureEligible === false && risk.minCaptureRank
+            ? `<p class="age-assault-risk-copy age-assault-risk-copy--capture">Capture requires commander rank ${escapeHtml(String(risk.minCaptureRank))} or higher for this settlement.</p>`
+            : '';
 
         return (
             '<p class="age-assault-risk-eyebrow">Casualty pressure (not victory odds)</p>'
             + `<p class="age-assault-risk-copy">${escapeHtml(risk.summary || '')}</p>`
+            + captureLine
             + '<dl class="age-assault-risk-stats">'
             + `<div><dt>Injury risk</dt><dd>${escapeHtml(risk.injuryPercent?.label || '—')}</dd></div>`
             + `<div><dt>Death risk</dt><dd>${escapeHtml(risk.deathPercent?.label || '—')}</dd></div>`

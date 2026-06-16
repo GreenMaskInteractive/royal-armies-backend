@@ -20,6 +20,11 @@ const {
 } = require('./nexus-age-guild');
 const { resolveCommanderGameNationKey } = require('./nexus-age-movement');
 const { buildCommanderRankMeta } = require('./nexus-commander-rank-titles');
+const {
+    resolveRankAssaultCasualtyModifiers,
+    buildRankAssaultRiskSummary,
+    resolveSoloCaptureEligibility
+} = require('./nexus-age-solo-assault-balance');
 
 function combineMemberArmies(commanders) {
     const merged = new Map();
@@ -117,7 +122,7 @@ function buildDefenderForceProfile({
     const comrades = normalizePlayersInCityCount(
         enemies.length > 0 ? enemies.length : playersInCity
     );
-    const garrison = buildCityGarrisonArmy(catalog, rank, city, comrades);
+    const garrison = buildCityGarrisonArmy(catalog, commanderRankHint, city, comrades);
     const garrisonForce = summarizeArmyForce(garrison, catalog);
 
     return {
@@ -148,7 +153,8 @@ function buildAssaultCasualtyContext(options) {
         catalog,
         attacker,
         defender,
-        hasEnemyPlayers: defender.enemyCommanders > 0
+        hasEnemyPlayers: defender.enemyCommanders > 0,
+        targetCity: options?.targetCity || null
     };
 }
 
@@ -156,6 +162,9 @@ function estimateAssaultCasualtyRisk(context) {
     const attackerHp = Math.max(1, Number(context?.attacker?.hp) || 1);
     const defenderHp = Math.max(0, Number(context?.defender?.hp) || 0);
     const pressure = Math.min(2.35, Math.max(0.12, defenderHp / attackerHp));
+    const commanderRank = Math.max(1, Math.floor(Number(context?.attacker?.avgRank) || 1));
+    const city = context?.targetCity || null;
+    const eligibility = city ? resolveSoloCaptureEligibility(commanderRank, city) : null;
 
     const mitigation = Math.min(
         0.42,
@@ -167,17 +176,37 @@ function estimateAssaultCasualtyRisk(context) {
     let injuryMid = 10 + (pressure / 2.35) * 58 - mitigationEase;
     injuryMid = Math.max(6, Math.min(88, injuryMid));
 
-    const injurySpread = 4 + pressure * 8 + (context?.hasEnemyPlayers ? 3 : 0);
+    if (eligibility) {
+        injuryMid += eligibility.defenderGap * 1.15;
+        if (eligibility.rankShortfall > 0) {
+            injuryMid += 6 + eligibility.rankShortfall * 2.8;
+        } else if (eligibility.commanderRank <= eligibility.minRank + 2) {
+            injuryMid += 10;
+        }
+    }
+
+    injuryMid = Math.max(6, Math.min(92, injuryMid));
+
+    const injurySpread = 4 + pressure * 8 + (context?.hasEnemyPlayers ? 3 : 0)
+        + (eligibility?.rankShortfall ? 4 : 0);
     const injuryMin = clampPercent(injuryMid - injurySpread * 0.58);
     const injuryMax = clampPercent(injuryMid + injurySpread * 0.42);
 
-    const deathRatio = 0.2 + Math.min(0.32, pressure * 0.14);
+    const deathRatio = 0.2 + Math.min(0.32, pressure * 0.14)
+        + (eligibility?.rankShortfall ? 0.06 : 0);
     let deathMid = injuryMid * deathRatio - mitigationEase * 0.35;
+    if (eligibility?.rankShortfall) {
+        deathMid += 3 + eligibility.rankShortfall * 1.4;
+    }
     deathMid = Math.max(2, Math.min(injuryMid * 0.72, deathMid));
 
-    const deathSpread = 2 + pressure * 4;
+    const deathSpread = 2 + pressure * 4 + (eligibility?.rankShortfall ? 2 : 0);
     const deathMin = clampPercent(deathMid - deathSpread * 0.5);
     const deathMax = clampPercent(Math.min(injuryMax * 0.85, deathMid + deathSpread * 0.45));
+
+    const summary = eligibility
+        ? buildRankAssaultRiskSummary(eligibility, injuryMid)
+        : buildRiskSummary(injuryMin, injuryMax, deathMin, deathMax);
 
     return {
         pressureIndex: Math.round(pressure * 100) / 100,
@@ -185,7 +214,9 @@ function estimateAssaultCasualtyRisk(context) {
         deathPercent: buildPercentRange(deathMin, Math.max(deathMin, deathMax)),
         injuryMid: Math.round(injuryMid),
         deathMid: Math.round(deathMid),
-        summary: buildRiskSummary(injuryMin, injuryMax, deathMin, deathMax)
+        captureEligible: eligibility ? eligibility.eligible : true,
+        minCaptureRank: eligibility ? eligibility.minRank : null,
+        summary
     };
 }
 
@@ -277,12 +308,20 @@ function applyPercentCasualtiesToArmy(army, deathPercent, injuryPercent, catalog
     return working;
 }
 
-function resolveAssaultCasualtiesForMembers(memberSnapshots, riskEstimate, battleResult, catalog) {
+function resolveAssaultCasualtiesForMembers(memberSnapshots, riskEstimate, battleResult, catalog, options = {}) {
     const injuryMid = Number(riskEstimate?.injuryMid) || (
         (riskEstimate?.injuryPercent?.min || 0) + (riskEstimate?.injuryPercent?.max || 0)
     ) / 2;
     const bias = resolveRollBias(injuryMid);
     const outcomeMult = resolveOutcomePressureMultiplier(battleResult?.winner);
+    const commanderRank = Math.max(
+        1,
+        Math.floor(Number(options?.commanderRank || battleResult?.commanderRank) || 1)
+    );
+    const city = options?.targetCity || null;
+    const rankMods = city
+        ? resolveRankAssaultCasualtyModifiers(commanderRank, city, battleResult)
+        : { injuryBonus: 0, deathBonus: 0 };
 
     const injuryRoll = rollPercentInRange(riskEstimate?.injuryPercent, bias) * outcomeMult;
     const deathRoll = rollPercentInRange(riskEstimate?.deathPercent, Math.max(0.5, bias - 0.12)) * outcomeMult;
@@ -292,8 +331,8 @@ function resolveAssaultCasualtiesForMembers(memberSnapshots, riskEstimate, battl
         / Math.max(1, Number(battleResult?.commanderForce?.units) || 1)
     )));
 
-    const injuryPercent = Math.min(95, injuryRoll + battleLossRatio * 8);
-    const deathPercent = Math.min(80, deathRoll + battleLossRatio * 12);
+    const injuryPercent = Math.min(95, injuryRoll + battleLossRatio * 8 + rankMods.injuryBonus);
+    const deathPercent = Math.min(80, deathRoll + battleLossRatio * 12 + rankMods.deathBonus);
 
     return (memberSnapshots || []).map((entry) => ({
         username: entry.username,
@@ -305,7 +344,9 @@ function resolveAssaultCasualtiesForMembers(memberSnapshots, riskEstimate, battl
         ),
         casualtyRoll: {
             injuryPercent: Math.round(injuryPercent),
-            deathPercent: Math.round(deathPercent)
+            deathPercent: Math.round(deathPercent),
+            captureEligible: battleResult?.captureEligible !== false,
+            minCaptureRank: battleResult?.minCaptureRank || riskEstimate?.minCaptureRank || null
         }
     }));
 }

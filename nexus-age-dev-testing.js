@@ -16,7 +16,7 @@ const DEV_GLOBAL_NATION_WAR_ENABLED = true;
 const DEV_SOLO_CITY_ASSAULT_EASIER = true;
 
 /** Multiplier applied to generated garrison size when solo-assault easing is on (0–1). */
-const DEV_CITY_ASSAULT_GARRISON_MULTIPLIER = 0.4;
+const DEV_CITY_ASSAULT_GARRISON_MULTIPLIER = 0.62;
 
 function isDevGlobalNationWarEnabled() {
     return DEV_GLOBAL_NATION_WAR_ENABLED;
@@ -26,10 +26,26 @@ function isDevSoloCityAssaultEasierEnabled() {
     return DEV_SOLO_CITY_ASSAULT_EASIER;
 }
 
-function getDevCityAssaultGarrisonMultiplier() {
-    return isDevSoloCityAssaultEasierEnabled()
-        ? Math.max(0.15, Math.min(1, Number(DEV_CITY_ASSAULT_GARRISON_MULTIPLIER) || 0.4))
-        : 1;
+function getDevCityAssaultGarrisonMultiplier(commanderRank, city) {
+    if (!isDevSoloCityAssaultEasierEnabled()) return 1;
+    const base = Math.max(0.15, Math.min(1, Number(DEV_CITY_ASSAULT_GARRISON_MULTIPLIER) || 0.62));
+    if (!city) return base;
+
+    const rank = Math.max(1, Math.min(22, Math.floor(Number(commanderRank) || 1)));
+    const tier = String(city?.settlementTier || 'village').trim().toLowerCase();
+    const minCaptureByTier = {
+        village: 6,
+        town: 8,
+        city: 11,
+        citadel: 14,
+        kingdom: 17
+    };
+    const minRank = minCaptureByTier[tier] || minCaptureByTier.village;
+    if (rank < minRank) {
+        return Math.min(1, base + 0.22);
+    }
+    const headroom = rank - minRank;
+    return Math.max(0.42, base - headroom * 0.025);
 }
 
 function resolveDevGlobalWarEnemyNationIds(viewerNation) {

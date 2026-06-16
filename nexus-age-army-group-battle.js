@@ -366,7 +366,11 @@ function prepareArmyGroupAttack({
         memberSnapshots,
         casualtyEstimate.risk,
         battleResult,
-        casualtyEstimate.context.catalog
+        casualtyEstimate.context.catalog,
+        {
+            targetCity: validation.targetCity,
+            commanderRank: battleResult.commanderRank
+        }
     );
     const assaultVictory = battleResult.winner === 'commander';
 

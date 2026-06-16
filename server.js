@@ -8466,7 +8466,11 @@ app.post('/api/portal/age/assault', (req, res) => {
         [{ username, army: resolveCommanderAgeArmy(commander) }],
         casualtyEstimate.risk,
         battleResult,
-        casualtyEstimate.context.catalog
+        casualtyEstimate.context.catalog,
+        {
+            targetCity,
+            commanderRank: battleResult.commanderRank
+        }
     );
     applyArmyGroupCasualtyUpdates(casualtyUpdates);
 
@@ -8554,6 +8558,8 @@ app.post('/api/portal/age/assault', (req, res) => {
         status: 'ok',
         action: 'assault',
         assaultVictory,
+        captureEligible: battleResult.captureEligible !== false,
+        minCaptureRank: battleResult.minCaptureRank || null,
         armyGroupDefeat,
         winner: battleResult.winner,
         endReason: battleResult.endReason,

@@ -11,6 +11,11 @@ const {
     TRAINING_MODE_LABELS
 } = require('./nexus-age-battle-sim');
 const { getDevCityAssaultGarrisonMultiplier } = require('./nexus-age-dev-testing');
+const {
+    applySoloCaptureRankOutcome,
+    resolveSettlementDefenderRank,
+    clampCommanderRank
+} = require('./nexus-age-solo-assault-balance');
 
 const CITY_BATTLE_MODE = 'city-assault';
 
@@ -56,10 +61,11 @@ function buildCityGarrisonArmy(catalog, commanderRank, city, playersInCity = 1) 
     const tier = normalizeSettlementTier(city?.settlementTier);
     const tierScale = SETTLEMENT_GARRISON_SCALE[tier] || 1;
     const allyScale = 1 + (Math.max(0, normalizePlayersInCityCount(playersInCity) - 1) * 0.1);
-    const rank = Math.max(1, Math.min(22, Math.floor(Number(commanderRank) || 1)));
+    const defenderRank = resolveSettlementDefenderRank(city);
+    const attackerRank = clampCommanderRank(commanderRank);
 
-    const baseGarrison = buildTrainingNpcArmy(catalogRef, undefined, 'border-patrol', rank);
-    const devGarrisonScale = getDevCityAssaultGarrisonMultiplier();
+    const baseGarrison = buildTrainingNpcArmy(catalogRef, undefined, 'border-patrol', defenderRank);
+    const devGarrisonScale = getDevCityAssaultGarrisonMultiplier(attackerRank, city);
     return scaleGarrisonStacks(baseGarrison, tierScale * allyScale * devGarrisonScale);
 }
 
@@ -73,7 +79,7 @@ function executeCityAssaultBattle(commander, city, playersInCity = 1) {
         return { ok: false, errorCode: 'NEXUS-AGE-017' };
     }
 
-    const commanderRank = Math.max(1, Math.min(22, Math.floor(Number(commander?.rank) || 1)));
+    const commanderRank = clampCommanderRank(commander?.rank);
     const comrades = normalizePlayersInCityCount(playersInCity);
     const garrison = buildCityGarrisonArmy(catalog, commanderRank, city, comrades);
     const settlementDefenses = Array.isArray(city?.settlementDefenses)
@@ -91,19 +97,25 @@ function executeCityAssaultBattle(commander, city, playersInCity = 1) {
     });
     if (!battle.ok) return battle;
 
-    return {
-        ok: true,
-        battleRole: 'assault',
-        playersInCity: comrades,
-        cityId: String(city?.id || '').trim(),
-        cityName: String(city?.name || 'City').trim(),
-        trainingMode: CITY_BATTLE_MODE,
-        trainingModeLabel: TRAINING_MODE_LABELS[CITY_BATTLE_MODE] || 'City Assault',
+    const resolved = applySoloCaptureRankOutcome(
+        {
+            ok: true,
+            battleRole: 'assault',
+            playersInCity: comrades,
+            cityId: String(city?.id || '').trim(),
+            cityName: String(city?.name || 'City').trim(),
+            trainingMode: CITY_BATTLE_MODE,
+            trainingModeLabel: TRAINING_MODE_LABELS[CITY_BATTLE_MODE] || 'City Assault',
+            commanderRank,
+            ...battle,
+            commanderUnits: totalUnits,
+            npcUnits: garrison.reduce((sum, stack) => sum + stack.qty, 0)
+        },
         commanderRank,
-        ...battle,
-        commanderUnits: totalUnits,
-        npcUnits: garrison.reduce((sum, stack) => sum + stack.qty, 0)
-    };
+        city
+    );
+
+    return resolved;
 }
 
 module.exports = {
