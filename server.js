@@ -5832,7 +5832,9 @@ app.post('/api/portal/age/watchtower/seize', (req, res) => {
         attackerArmyBefore,
         attackerArmyAfter: battleResult.attacker.ageArmy,
         defenderArmyBefore,
-        defenderArmyAfter: battleResult.defender.ageArmy
+        defenderArmyAfter: battleResult.defender.ageArmy,
+        attackerCommander: commander,
+        defenderCommander: db.get('commanders').find({ username: targetCommander.username }).value()
     });
 
     res.json({
@@ -6421,7 +6423,8 @@ function buildCityAssaultBattleReport({
     armyBefore,
     armyAfter,
     assaultVictory,
-    captureReward
+    captureReward,
+    attackerCommander
 }) {
     return buildAgeBattleReport({
         battleType: 'city-assault',
@@ -6432,6 +6435,7 @@ function buildCityAssaultBattleReport({
         assaultVictory: assaultVictory === true,
         attacker: {
             label: 'Your army',
+            commander: attackerCommander,
             armyBefore,
             armyAfter
         },
@@ -6455,7 +6459,9 @@ function buildBorderPvpBattleReport({
     attackerArmyBefore,
     attackerArmyAfter,
     defenderArmyBefore,
-    defenderArmyAfter
+    defenderArmyAfter,
+    attackerCommander,
+    defenderCommander
 }) {
     return buildAgeBattleReport({
         battleType: 'border-pvp',
@@ -6466,12 +6472,14 @@ function buildBorderPvpBattleReport({
         attacker: {
             label: attackerUsername,
             username: attackerUsername,
+            commander: attackerCommander,
             armyBefore: attackerArmyBefore,
             armyAfter: attackerArmyAfter
         },
         defender: {
             label: defenderUsername,
             username: defenderUsername,
+            commander: defenderCommander,
             armyBefore: defenderArmyBefore,
             armyAfter: defenderArmyAfter
         },
@@ -7003,7 +7011,8 @@ app.post('/api/portal/age/army-groups/attack', (req, res) => {
         armyBefore: armiesBeforeGroup[username] || [],
         armyAfter: resolveCommanderAgeArmy(commander),
         assaultVictory: attackResult.assaultVictory,
-        captureReward
+        captureReward,
+        attackerCommander: commander
     });
 
     respondArmyGroupsPayload(res, storageNation, commander, username, writeResult.state, {
@@ -8826,7 +8835,8 @@ app.post('/api/portal/age/assault', (req, res) => {
         armyBefore: armyBeforeAssault,
         armyAfter: armyAfterAssault,
         assaultVictory,
-        captureReward
+        captureReward,
+        attackerCommander: commander
     });
 
     res.json({
@@ -9313,6 +9323,12 @@ app.listen(PORT, () => {
     ensureAgeCampaignRecord(db);
     tickAgeCampaignLifecycle();
     setInterval(tickAgeCampaignLifecycle, AGE_CAMPAIGN_TICK_MS);
+
+    const ownerRestore = restoreCommanderArmyFromLedgerSnapshot('caleb_admin');
+    if (ownerRestore.ok && ownerRestore.restoredFromSnapshot && ownerRestore.unitsAfter > ownerRestore.unitsBefore) {
+        console.log(`[NEXUS] Restored caleb_admin army from assault snapshot (${ownerRestore.unitsBefore} → ${ownerRestore.unitsAfter} units).`);
+    }
+
     console.log(`========================================`);
     console.log(` NEXUS ENGINE ONLINE: Port ${PORT}`);
     console.log(` GREEN MASK INTERACTIVE: ALPHA 0.1.11`);

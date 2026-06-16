@@ -4,6 +4,11 @@
 'use strict';
 
 const { normalizeAgeArmy } = require('./nexus-age-roster');
+const {
+    buildCommanderUnitLine,
+    prependCommanderLine,
+    collectCommanderKills
+} = require('./nexus-age-battle-report-commander');
 
 function stackKey(stack) {
     return String(stack?.catalogUnitId || stack?.name || stack?.class || 'unit').trim().toLowerCase();
@@ -85,17 +90,26 @@ function buildUnitLinesFromForceSummary(force) {
 
 function buildReportSide(options = {}) {
     const label = String(options.label || 'Force').trim();
+    const battleType = String(options.battleType || 'battle').trim();
+    let unitLines = [];
+
     if (options.armyBefore !== undefined && options.armyAfter !== undefined) {
-        const unitLines = buildUnitLinesFromArmyDiff(options.armyBefore, options.armyAfter);
-        return {
-            label,
-            username: options.username || null,
-            unitLines,
-            totals: sumSideTotals(unitLines)
-        };
+        unitLines = buildUnitLinesFromArmyDiff(options.armyBefore, options.armyAfter);
+    } else {
+        unitLines = buildUnitLinesFromForceSummary(options.forceSummary);
     }
 
-    const unitLines = buildUnitLinesFromForceSummary(options.forceSummary);
+    const commanderLine = buildCommanderUnitLine({
+        commander: options.commander,
+        battleType,
+        sideWon: options.sideWon === true,
+        armyBefore: options.armyBefore,
+        armyAfter: options.armyAfter,
+        endReason: options.endReason || '',
+        vulnerabilityBonus: options.vulnerabilityBonus
+    });
+    unitLines = prependCommanderLine(unitLines, commanderLine);
+
     return {
         label,
         username: options.username || null,
@@ -115,11 +129,26 @@ function resolveWinnerLabel(winner, battleType) {
 
 function buildAgeBattleReport(options = {}) {
     const battleType = String(options.battleType || 'battle').trim();
-    const attacker = buildReportSide(options.attacker || {});
-    const defender = buildReportSide(options.defender || {});
+    const endReason = String(options.outcomeLabel || options.endReason || '').trim();
+    const attackerWon = String(options.winner || '').trim().toLowerCase() === 'attacker'
+        || String(options.winner || '').trim().toLowerCase() === 'commander';
+
+    const attacker = buildReportSide({
+        ...(options.attacker || {}),
+        battleType,
+        endReason,
+        sideWon: attackerWon
+    });
+    const defender = buildReportSide({
+        ...(options.defender || {}),
+        battleType,
+        endReason,
+        sideWon: !attackerWon && String(options.winner || '').trim().toLowerCase() !== 'draw'
+    });
 
     const rankPromotions = Array.isArray(options.rankPromotions) ? options.rankPromotions : [];
     const unitPromotions = Array.isArray(options.unitPromotions) ? options.unitPromotions : [];
+    const commanderKills = collectCommanderKills(attacker, defender);
 
     return {
         battleType,
@@ -129,9 +158,10 @@ function buildAgeBattleReport(options = {}) {
         opponentName: String(options.opponentName || '').trim(),
         winner: String(options.winner || '').trim(),
         winnerLabel: resolveWinnerLabel(options.winner, battleType),
-        outcomeLabel: String(options.outcomeLabel || options.endReason || '').trim(),
+        outcomeLabel: endReason,
         attacker,
         defender,
+        commanderKills,
         xpGain: Math.max(0, Math.floor(Number(options.xpGain) || 0)),
         goldGain: Math.max(0, Math.floor(Number(options.goldGain) || 0)),
         goldLoss: Math.max(0, Math.floor(Number(options.goldLoss) || 0)),

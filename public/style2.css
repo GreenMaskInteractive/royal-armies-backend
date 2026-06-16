@@ -22463,6 +22463,66 @@ body.age-map-shell-only .age-world-map-terrain-controls,
     color: #8fe48f;
 }
 
+.age-battle-report-unit-row--commander {
+    background: rgba(255, 215, 0, 0.06);
+}
+
+.age-battle-report-unit-row--commander .age-battle-report-unit-name {
+    color: #ffe8a8;
+    font-weight: 700;
+}
+
+.age-battle-report-commander-badge {
+    display: inline-block;
+    margin-right: 6px;
+    padding: 1px 5px;
+    border-radius: 3px;
+    border: 1px solid rgba(255, 215, 0, 0.42);
+    font-family: 'Cinzel', serif;
+    font-size: 0.52rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #ffd978;
+    vertical-align: middle;
+}
+
+.age-battle-report-commander-notes {
+    margin-top: 8px;
+    display: grid;
+    gap: 4px;
+}
+
+.age-battle-report-commander-note {
+    margin: 0;
+    font-size: 0.72rem;
+    color: rgba(232, 220, 200, 0.82);
+    line-height: 1.4;
+}
+
+.age-battle-report-commander-note--killed {
+    color: #ffb3b3;
+}
+
+.age-battle-report-commander-note--injured {
+    color: #ffd978;
+}
+
+.age-battle-report-kill-pressure {
+    opacity: 0.78;
+    font-size: 0.68rem;
+}
+
+.age-battle-report-section--commander-kills {
+    border-color: rgba(255, 120, 120, 0.35);
+}
+
+.age-battle-report-kill-list {
+    margin: 0;
+    padding-left: 18px;
+    font-size: 0.76rem;
+    color: #ffb3b3;
+}
+
 #age-page-canvas[data-age-view="city"] #age-world-map-svg,
 #age-page-canvas[data-age-view="city"] #age-world-map-canvas,
 #age-page-canvas[data-age-view="city"] #age-world-map-highlight-canvas,

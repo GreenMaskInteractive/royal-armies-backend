@@ -19,23 +19,51 @@
         return '0';
     }
 
+    function formatCommanderStatus(line) {
+        const status = String(line?.commanderStatus || '').trim().toLowerCase();
+        if (status === 'killed') return 'Slain';
+        if (status === 'injured') return 'Wounded';
+        if (status === 'captured') return 'Captured';
+        return 'Active';
+    }
+
     function renderUnitTable(side) {
         const lines = Array.isArray(side?.unitLines) ? side.unitLines : [];
         if (!lines.length) {
             return '<p class="age-battle-report-empty-side">No unit data recorded for this side.</p>';
         }
 
-        const rows = lines.map((line) => (
-            '<tr>'
-            + `<td class="age-battle-report-unit-name">${escapeHtml(line.name)}</td>`
-            + `<td class="age-battle-report-unit-class">${escapeHtml(line.class || '—')}</td>`
-            + `<td class="age-battle-report-unit-count">${escapeHtml(line.count)}</td>`
-            + `<td class="age-battle-report-unit-stat">${escapeHtml(line.injured || 0)}</td>`
-            + `<td class="age-battle-report-unit-stat">${escapeHtml(line.dead || 0)}</td>`
-            + `<td class="age-battle-report-unit-stat">${escapeHtml(line.captured || 0)}</td>`
-            + `<td class="age-battle-report-unit-stat">${escapeHtml(line.remaining || 0)}</td>`
-            + '</tr>'
-        )).join('');
+        const rows = lines.map((line) => {
+            const isCommander = Boolean(line.isCommander);
+            const rowClass = isCommander ? ' age-battle-report-unit-row--commander' : '';
+            const nameCell = isCommander
+                ? `<span class="age-battle-report-commander-badge">Commander</span> ${escapeHtml(line.name)}`
+                : escapeHtml(line.name);
+            const classLabel = isCommander ? 'Commander' : (line.class || '—');
+            return (
+                '<tr class="age-battle-report-unit-row' + rowClass + '">'
+                + `<td class="age-battle-report-unit-name">${nameCell}</td>`
+                + `<td class="age-battle-report-unit-class">${escapeHtml(classLabel)}</td>`
+                + `<td class="age-battle-report-unit-count">${escapeHtml(line.count)}</td>`
+                + `<td class="age-battle-report-unit-stat">${escapeHtml(line.injured || 0)}</td>`
+                + `<td class="age-battle-report-unit-stat">${escapeHtml(line.dead || 0)}</td>`
+                + `<td class="age-battle-report-unit-stat">${escapeHtml(line.captured || 0)}</td>`
+                + `<td class="age-battle-report-unit-stat">${escapeHtml(line.remaining || 0)}</td>`
+                + '</tr>'
+            );
+        }).join('');
+
+        const commanderNotes = lines
+            .filter((line) => line.isCommander && line.commanderNote)
+            .map((line) => (
+                `<p class="age-battle-report-commander-note age-battle-report-commander-note--${escapeHtml(line.commanderStatus || 'survived')}">`
+                + `<strong>${escapeHtml(formatCommanderStatus(line))}:</strong> ${escapeHtml(line.commanderNote)}`
+                + (line.commanderKillChance != null && line.commanderStatus !== 'killed'
+                    ? ` <span class="age-battle-report-kill-pressure">(kill pressure ~${escapeHtml(line.commanderKillChance)}%)</span>`
+                    : '')
+                + '</p>'
+            ))
+            .join('');
 
         const totals = side.totals || {};
 
@@ -56,7 +84,24 @@
             + `<td>${escapeHtml(totals.remaining || 0)}</td>`
             + '</tr></tfoot>'
             + '</table>'
+            + (commanderNotes ? `<div class="age-battle-report-commander-notes">${commanderNotes}</div>` : '')
             + '</div>'
+        );
+    }
+
+    function renderCommanderKills(report) {
+        const kills = Array.isArray(report.commanderKills) ? report.commanderKills : [];
+        if (!kills.length) return '';
+
+        return (
+            '<section class="age-battle-report-section age-battle-report-section--commander-kills">'
+            + '<h3 class="age-battle-report-section-title">Commander casualties</h3>'
+            + '<ul class="age-battle-report-kill-list">'
+            + kills.map((entry) => (
+                `<li><strong>${escapeHtml(entry.name || entry.username)}</strong> was slain in PvP.</li>`
+            )).join('')
+            + '</ul>'
+            + '</section>'
         );
     }
 
@@ -122,6 +167,7 @@
             + location
             + opponent
             + renderRewards(report)
+            + renderCommanderKills(report)
             + renderUnitTable(report.attacker)
             + renderUnitTable(report.defender)
             + renderPromotions(report)
