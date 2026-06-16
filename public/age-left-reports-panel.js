@@ -494,9 +494,28 @@
     }
 
     function resolveActiveWarMatchups(playerNationId) {
-        // Returns nations actively at war with the player's nation once NEXUS war state is wired.
-        void playerNationId;
-        return [];
+        const selfId = normalizeNationId(playerNationId);
+        let enemyIds = [];
+
+        if (typeof global.RoyalArmiesAgeMovement?.getWarNationIds === 'function') {
+            enemyIds = global.RoyalArmiesAgeMovement.getWarNationIds()
+                .map((id) => normalizeNationId(id))
+                .filter((id) => id && id !== selfId);
+        }
+
+        return [...new Set(enemyIds)]
+            .map((id) => {
+                const meta = resolveNationMeta(id);
+                if (!meta) return null;
+                return {
+                    id: meta.id,
+                    name: meta.name,
+                    crestUrl: meta.crestUrl,
+                    conflictType: 'War'
+                };
+            })
+            .filter(Boolean)
+            .sort((left, right) => left.name.localeCompare(right.name));
     }
 
     function renderIntelligencePeaceState() {
@@ -739,6 +758,7 @@
             global.document.body.dataset.ageLeftReportsMovementBound = 'true';
             global.addEventListener('royalarmies:age-movement-updated', () => {
                 applyNationStatusCityCountHud();
+                refreshIntelligencePanel();
             });
         }
         refreshNationStatusPanel();
