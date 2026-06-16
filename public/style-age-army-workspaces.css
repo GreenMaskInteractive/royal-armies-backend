@@ -1000,13 +1000,17 @@
 .age-settlement-venue-workspace.is-gear-shop-venue .age-gear-shop-workspace .age-barracks-unit-detail.age-gear-shop-inspect-panel {
     display: flex;
     flex-direction: column;
+    align-self: stretch !important;
+    height: 100% !important;
+    max-height: 100% !important;
+    min-height: 0 !important;
     border: 1px solid rgba(212, 175, 90, 0.28);
     border-radius: 12px;
     background: linear-gradient(180deg, rgba(24, 19, 14, 0.98), rgba(8, 7, 5, 0.99));
     box-shadow:
         inset 0 1px 0 rgba(255, 217, 120, 0.08),
         0 8px 28px rgba(0, 0, 0, 0.35);
-    overflow: hidden;
+    overflow: hidden !important;
     padding: 0 !important;
 }
 
@@ -1085,13 +1089,13 @@
     min-height: 0;
     overflow-x: hidden;
     overflow-y: auto;
-    padding-bottom: 4px;
+    padding: 0 0 6px;
 }
 
 .age-settlement-venue-workspace .age-gear-shop-inspect-art {
     position: relative;
     flex-shrink: 0;
-    height: 200px;
+    height: 132px;
     border-bottom: 1px solid rgba(212, 175, 90, 0.16);
     background:
         radial-gradient(circle at 50% 28%, rgba(255, 217, 120, 0.09) 0%, transparent 64%),
@@ -1122,33 +1126,33 @@
 
 .age-settlement-venue-workspace .age-gear-shop-inspect-art-img {
     width: 100%;
-    max-width: 180px;
-    max-height: 168px;
+    max-width: 120px;
+    max-height: 108px;
     object-fit: contain;
     display: block;
     filter: drop-shadow(0 12px 20px rgba(0, 0, 0, 0.5));
 }
 
 .age-settlement-venue-workspace .age-gear-shop-inspect-identity {
-    padding: 16px 18px 12px;
+    padding: 14px 18px 10px;
     border-bottom: 1px solid rgba(212, 175, 90, 0.12);
     background: rgba(0, 0, 0, 0.16);
 }
 
-.age-settlement-venue-workspace .age-gear-shop-inspect-eyebrow {
-    margin: 0 0 6px;
-    font-size: 0.68rem;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    color: rgba(236, 220, 180, 0.52);
-}
-
 .age-settlement-venue-workspace .age-gear-shop-inspect-title {
-    margin: 0 0 10px;
-    font-size: 1.2rem;
+    margin: 0 0 4px;
+    font-size: 1.18rem;
     line-height: 1.22;
     font-weight: 700;
     color: #ffd978;
+}
+
+.age-settlement-venue-workspace .age-gear-shop-inspect-eyebrow {
+    margin: 0;
+    font-size: 0.66rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: rgba(236, 220, 180, 0.48);
 }
 
 .age-settlement-venue-workspace .age-gear-shop-inspect-tags {
@@ -1205,7 +1209,7 @@
 }
 
 .age-settlement-venue-workspace .age-gear-shop-inspect-section {
-    padding: 14px 18px;
+    padding: 12px 18px;
     border-bottom: 1px solid rgba(212, 175, 90, 0.1);
 }
 
@@ -1214,12 +1218,65 @@
 }
 
 .age-settlement-venue-workspace .age-gear-shop-inspect-section-title {
-    margin: 0 0 10px;
-    font-size: 0.68rem;
+    margin: 0 0 12px;
+    padding-bottom: 7px;
+    border-bottom: 1px solid rgba(212, 175, 90, 0.16);
+    font-size: 0.7rem;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: rgba(255, 217, 120, 0.78);
+    font-weight: 700;
+}
+
+.age-settlement-venue-workspace .age-gear-shop-inspect-section-body {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+}
+
+.age-settlement-venue-workspace .age-gear-shop-inspect-field-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px 16px;
+}
+
+.age-settlement-venue-workspace .age-gear-shop-inspect-field-grid--stats {
+    grid-template-columns: 1fr;
+    gap: 12px;
+}
+
+.age-settlement-venue-workspace .age-gear-shop-inspect-field {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+}
+
+.age-settlement-venue-workspace .age-gear-shop-inspect-field-label {
+    font-size: 0.64rem;
     letter-spacing: 0.14em;
     text-transform: uppercase;
-    color: rgba(255, 217, 120, 0.68);
+    color: rgba(255, 217, 120, 0.58);
     font-weight: 700;
+    line-height: 1.2;
+}
+
+.age-settlement-venue-workspace .age-gear-shop-inspect-field-value {
+    font-size: 0.9rem;
+    line-height: 1.35;
+    color: rgba(236, 220, 180, 0.92);
+    font-weight: 600;
+}
+
+.age-settlement-venue-workspace .age-gear-shop-inspect-field-grid--stats .age-gear-shop-inspect-field-value {
+    color: rgba(120, 188, 255, 0.95);
+}
+
+.age-settlement-venue-workspace .age-gear-shop-inspect-field-note {
+    font-size: 0.7rem;
+    line-height: 1.4;
+    color: rgba(236, 220, 180, 0.48);
+    font-weight: 400;
 }
 
 .age-settlement-venue-workspace .age-gear-shop-inspect-desc {
@@ -1500,7 +1557,7 @@
     overflow: auto;
 }
 
-.age-settlement-venue-workspace.is-gear-shop-venue .age-gear-shop-workspace .age-barracks-unit-detail {
+.age-settlement-venue-workspace.is-gear-shop-venue .age-gear-shop-workspace .age-barracks-unit-detail:not(.age-gear-shop-inspect-panel) {
     min-height: 0;
     overflow: auto;
     align-self: stretch;
@@ -1515,6 +1572,82 @@
 .age-settlement-venue-workspace.is-gear-shop-venue .age-gear-shop-workspace .age-defense-workspace-status {
     flex-shrink: 0;
     margin-top: auto;
+}
+
+.age-settlement-venue-workspace .age-gear-shop-owned-tab-btn {
+    width: 100%;
+    margin-bottom: 12px;
+    text-align: left;
+}
+
+.age-settlement-venue-workspace .age-gear-shop-dept-nav-title {
+    margin-top: 4px;
+}
+
+.age-settlement-venue-workspace .age-gear-shop-owned-card {
+    align-items: flex-start;
+    grid-template-columns: 72px minmax(0, 1fr);
+    padding-top: 12px;
+    padding-bottom: 12px;
+}
+
+.age-settlement-venue-workspace .age-gear-shop-owned-card-body {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-width: 0;
+}
+
+.age-settlement-venue-workspace .age-gear-shop-owned-mastery {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    width: 100%;
+    margin-top: 2px;
+}
+
+.age-settlement-venue-workspace .age-gear-shop-owned-mastery-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.age-settlement-venue-workspace .age-gear-shop-owned-level {
+    font-size: 0.74rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: #ffd978;
+}
+
+.age-settlement-venue-workspace .age-gear-shop-owned-xp {
+    font-size: 0.7rem;
+    color: rgba(236, 220, 180, 0.56);
+    white-space: nowrap;
+}
+
+.age-settlement-venue-workspace .age-gear-shop-owned-progress-track {
+    position: relative;
+    width: 100%;
+    height: 8px;
+    border-radius: 999px;
+    overflow: hidden;
+    border: 1px solid rgba(212, 175, 90, 0.18);
+    background: rgba(0, 0, 0, 0.42);
+}
+
+.age-settlement-venue-workspace .age-gear-shop-owned-progress-fill {
+    height: 100%;
+    border-radius: 999px;
+    background: linear-gradient(90deg, rgba(120, 188, 255, 0.72), rgba(255, 217, 120, 0.88));
+    box-shadow: 0 0 10px rgba(120, 188, 255, 0.28);
+    transition: width 0.2s ease;
+}
+
+.age-settlement-venue-workspace .age-gear-shop-owned-progress-fill.is-max {
+    background: linear-gradient(90deg, rgba(255, 217, 120, 0.72), rgba(255, 217, 120, 0.95));
+    box-shadow: 0 0 10px rgba(255, 217, 120, 0.24);
 }
 
 .age-settlement-venue-workspace .age-gear-shop-item-card {
