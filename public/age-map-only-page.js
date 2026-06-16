@@ -36,7 +36,7 @@
         'commander-dossier-sync.js?v=map-ambient-effects-1',
         'rank-data.js?v=commander-nametag-hub-2',
         'rift-ui-sfx.js?v=commander-nametag-hub-2',
-        'script.js?v=suicide-overlay-stack-1',
+        'script.js?v=settings-suicide-tab-1',
         'commander-hub.js?v=records-profile-links-1',
         'game-chat.js?v=commander-nametag-hub-2',
         'portal-commander-identity-menu.js?v=remove-return-portal-1'

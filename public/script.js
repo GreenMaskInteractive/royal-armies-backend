@@ -3420,6 +3420,21 @@ const nationLore = {
                     </div>
                 `
             },
+            {
+                name: "Suicide",
+                detail: `
+                    <div class="settings-scroll-wrapper commander-suicide-panel">
+                        <div class="profile-section-box critical-danger-zone">
+                            <label class="settings-label warning-title">Rank Reset</label>
+                            <p class="settings-hint-line">Secede Rank returns you to rank 1 while remaining in your nation. Suicide out of Country removes you from the active realm for this Age.</p>
+                            <div class="profile-btn-row-stacked commander-suicide-option-stack">
+                                <button type="button" class="danger-action-btn rank-reset-action-btn" data-commander-reset-mode="rank" onclick="triggerCommanderSuicide('rank')">Secede Rank</button>
+                                <button type="button" class="danger-action-btn rank-reset-action-btn" data-commander-reset-mode="exile" onclick="triggerCommanderSuicide('exile')">Suicide out of Country</button>
+                            </div>
+                        </div>
+                    </div>
+                `
+            },
         ],
         /* ============================================================
            /* Block 18: NEW COMMANDER PROFILE REPOSITORY DATA MODULE
@@ -3480,21 +3495,13 @@ const nationLore = {
                             </div>
                         </div>
 
-                        <!-- BOTTOM DASHBOARD: SECURITY, SIMULATION & RISK MANAGEMENT -->
+                        <!-- BOTTOM DASHBOARD: SECURITY -->
                         <div class="profile-fullscreen-footer-deck">
                             <div class="profile-section-box footer-box-third">
                                 <label class="settings-label">Login Information</label>
                                 <div class="profile-btn-row-stacked">
                                     <button class="settings-btn" onclick="manageSecurityUpdate('email')">Update Email Address</button>
                                     <button class="settings-btn" onclick="manageSecurityUpdate('password')">Change password</button>
-                                </div>
-                            </div>
-                            
-                            <div class="profile-section-box footer-box-third critical-danger-zone">
-                                <label class="settings-label warning-title">Rank Reset</label>
-                                <div class="profile-btn-row-stacked">
-                                    <button type="button" class="danger-action-btn rank-reset-action-btn" data-commander-reset-mode="rank" onclick="triggerCommanderSuicide('rank')">Secede Rank</button>
-                                    <button type="button" class="danger-action-btn rank-reset-action-btn" data-commander-reset-mode="exile" onclick="triggerCommanderSuicide('exile')">Suicide out of Country</button>
                                 </div>
                             </div>
                         </div>
@@ -4365,13 +4372,6 @@ function loadLore(type, customMount) {
                                 <button class="settings-btn" onclick="manageSecurityUpdate('password')">Change Password</button>
                             </div>
                         </div>
-                        <div class="profile-section-box footer-box-third">
-                            <label class="settings-label">Rank Reset</label>
-                            <div class="profile-btn-row-stacked">
-                                <button type="button" class="settings-btn rank-reset-action-btn" data-commander-reset-mode="rank" onclick="triggerCommanderSuicide('rank')">Secede Rank</button>
-                                <button type="button" class="settings-btn rank-reset-action-btn" data-commander-reset-mode="exile" onclick="triggerCommanderSuicide('exile')">Suicide out of Country</button>
-                            </div>
-                        </div>
                     </div>
                 </div>
             `;
@@ -4388,7 +4388,6 @@ function loadLore(type, customMount) {
             captureProfileEditorBaseline();
             bindProfileEditorFooterActions(profileFooter);
             bindRankTitleGenderProfileControls();
-            applyProfileRankResetButtonState();
             if (typeof refreshCommanderMembershipBadgeDisplays === 'function') {
                 refreshCommanderMembershipBadgeDisplays();
             }
@@ -4405,6 +4404,9 @@ function loadLore(type, customMount) {
             
             const div = document.createElement('div');
             div.className = subnavItemClass;
+            if (item.name === 'Suicide') {
+                div.classList.add('commander-hub-subnav-item--suicide');
+            }
             div.innerText = getCommanderHubCompactSubnavLabel(item.name);
             div.onclick = () => {
                 markHubChannelTabActive(div, containerBox);
@@ -4463,6 +4465,9 @@ function loadLore(type, customMount) {
                             if (lCheck) lCheck.checked = (confirmedSafetyLock === "Double-Click");
                             const lText = document.getElementById('lock-label-text');
                             if (lText) lText.innerText = (confirmedSafetyLock === "Double-Click") ? "Double" : "Single";
+                        }
+                        else if (item.name === 'Suicide') {
+                            applyProfileRankResetButtonState();
                         }
                     }, 20);
                 }

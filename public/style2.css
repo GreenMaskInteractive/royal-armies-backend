@@ -8446,6 +8446,32 @@ body.is-terms-gate-active #main-portal-dynamic-viewport {
     box-shadow: inset 0 0 16px rgba(184, 144, 48, 0.16), 0 0 12px rgba(184, 144, 48, 0.14) !important;
 }
 
+.commander-hub-subnav-item--suicide {
+    margin-top: auto !important;
+    color: rgba(255, 168, 148, 0.88) !important;
+    border-color: rgba(168, 56, 48, 0.45) !important;
+    border-left-color: rgba(220, 88, 72, 0.72) !important;
+    background: linear-gradient(145deg, rgba(42, 18, 16, 0.96) 0%, rgba(14, 6, 5, 0.99) 100%) !important;
+}
+
+.commander-hub-subnav-item--suicide:hover,
+.commander-hub-subnav-item--suicide.active {
+    color: #ffb8a8 !important;
+    border-color: rgba(220, 88, 72, 0.62) !important;
+    border-left-color: #ff8a78 !important;
+    background: linear-gradient(145deg, rgba(58, 22, 18, 0.98) 0%, rgba(18, 8, 6, 1) 100%) !important;
+    box-shadow: inset 0 0 14px rgba(220, 88, 72, 0.14), 0 0 10px rgba(120, 32, 24, 0.22) !important;
+}
+
+.commander-suicide-panel .commander-suicide-option-stack {
+    gap: 10px;
+    margin-top: 8px;
+}
+
+.commander-suicide-panel .commander-suicide-option-stack .danger-action-btn {
+    width: 100%;
+}
+
 .commander-hub-content-pane {
     flex: 1 !important;
     min-width: 0 !important;
