@@ -883,9 +883,7 @@
 /* Blacksmith / Armory — centered modal (between compact dialog and full barracks scale) */
 .age-settlement-venue-workspace.is-gear-shop-venue {
     --age-gear-shop-shell-width: min(1240px, calc(100vw - 4rem));
-    --age-gear-shop-shell-max-height: min(860px, calc(100vh - 5rem));
-    --age-gear-shop-shell-min-height: min(680px, calc(100vh - 8rem));
-    --age-gear-shop-body-max-height: min(720px, calc(100vh - 10rem));
+    --age-gear-shop-shell-height: min(860px, calc(100vh - 5rem));
     position: fixed;
     inset: 0;
     z-index: 12035;
@@ -900,11 +898,13 @@
 
 .age-settlement-venue-workspace.is-gear-shop-venue > .age-settlement-venue-shell {
     pointer-events: auto;
+    display: flex;
+    flex-direction: column;
     width: var(--age-gear-shop-shell-width);
     max-width: var(--age-gear-shop-shell-width);
-    height: auto;
-    min-height: var(--age-gear-shop-shell-min-height);
-    max-height: var(--age-gear-shop-shell-max-height);
+    height: var(--age-gear-shop-shell-height);
+    min-height: var(--age-gear-shop-shell-height);
+    max-height: var(--age-gear-shop-shell-height);
     flex: 0 0 auto;
     align-self: center;
     margin: 0;
@@ -915,6 +915,10 @@
     overflow: hidden;
 }
 
+.age-settlement-venue-workspace.is-gear-shop-venue .age-settlement-venue-header {
+    flex-shrink: 0;
+}
+
 .age-settlement-venue-workspace.is-gear-shop-venue .age-settlement-venue-body.is-gear-shop-layout {
     padding: 0;
     overflow: hidden;
@@ -922,7 +926,6 @@
     flex-direction: column;
     flex: 1 1 auto;
     min-height: 0;
-    max-height: var(--age-gear-shop-body-max-height);
 }
 
 .age-settlement-venue-workspace .age-gear-shop-workspace.age-barracks-workspace {
@@ -938,7 +941,7 @@
     align-items: stretch !important;
     justify-content: flex-start !important;
     width: 100% !important;
-    height: auto !important;
+    height: 100% !important;
     max-height: none !important;
     flex: 1 1 auto;
     min-height: 0;
@@ -946,6 +949,7 @@
     flex-direction: column;
     background: transparent !important;
     pointer-events: auto !important;
+    overflow: hidden;
 }
 
 .age-settlement-venue-workspace.is-gear-shop-venue .age-gear-shop-workspace.age-barracks-workspace::before {
@@ -956,11 +960,59 @@
 .age-settlement-venue-workspace .age-gear-shop-workspace .age-barracks-body {
     flex: 1 1 auto;
     min-height: 0;
+    height: 100%;
+    overflow: hidden;
 }
 
 .age-settlement-venue-workspace .age-gear-shop-workspace .age-barracks-layout {
     flex: 1 1 auto;
     min-height: 0;
+    height: 100%;
+    align-items: stretch;
+}
+
+.age-settlement-venue-workspace.is-gear-shop-venue .age-gear-shop-workspace .age-barracks-main {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    height: 100%;
+    overflow: hidden;
+}
+
+.age-settlement-venue-workspace.is-gear-shop-venue .age-gear-shop-workspace .age-barracks-main-split.age-army-workspace-split {
+    flex: 1 1 auto;
+    min-height: 0;
+    align-items: stretch;
+    grid-template-columns: minmax(260px, 300px) minmax(280px, 1fr);
+}
+
+.age-settlement-venue-workspace.is-gear-shop-venue .age-gear-shop-workspace .age-barracks-unit-list-panel {
+    min-height: 0;
+    overflow: hidden;
+    align-self: stretch;
+}
+
+.age-settlement-venue-workspace.is-gear-shop-venue .age-gear-shop-workspace .age-barracks-unit-grid {
+    min-height: 0;
+    max-height: none;
+    overflow: auto;
+}
+
+.age-settlement-venue-workspace.is-gear-shop-venue .age-gear-shop-workspace .age-barracks-unit-detail {
+    min-height: 0;
+    overflow: auto;
+    align-self: stretch;
+}
+
+.age-settlement-venue-workspace.is-gear-shop-venue .age-gear-shop-workspace .age-barracks-unit-detail[hidden] {
+    display: flex !important;
+    visibility: hidden;
+    pointer-events: none;
+}
+
+.age-settlement-venue-workspace.is-gear-shop-venue .age-gear-shop-workspace .age-defense-workspace-status {
+    flex-shrink: 0;
+    margin-top: auto;
 }
 
 .age-settlement-venue-workspace .age-gear-shop-item-card {
