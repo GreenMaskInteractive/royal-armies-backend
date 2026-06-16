@@ -44,6 +44,7 @@
     let guildStateLoadInFlight = null;
     let lootLog = [];
     let activeBattleTab = 'details';
+    let activeLoadoutTab = 'equipment';
     let showExtendedBattleLog = false;
     let lootTabAlert = false;
     let trainingViewActive = false;
@@ -715,12 +716,17 @@
         );
     }
 
-    function renderInjuriesSummaryRow(injuriesApplied) {
-        const count = Math.max(0, Math.floor(Number(injuriesApplied) || 0));
+    function renderInjuriesSummaryRow(injuriesApplied, deathsApplied) {
+        const injuries = Math.max(0, Math.floor(Number(injuriesApplied) || 0));
+        const deaths = Math.max(0, Math.floor(Number(deathsApplied) || 0));
+        let value = injuries ? `${injuries} unit(s) injured` : 'None';
+        if (deaths) {
+            value += injuries ? ` · ${deaths} lost` : `${deaths} unit(s) lost`;
+        }
         return (
             '<p class="age-guild-log-summary-row age-guild-log-summary-injuries">'
-            + '<span class="age-guild-log-summary-label">Injuries</span> '
-            + `<span class="age-guild-log-summary-value">${count ? `${escapeHtml(count)} unit(s) injured` : 'None'}</span>`
+            + '<span class="age-guild-log-summary-label">Casualties</span> '
+            + `<span class="age-guild-log-summary-value">${escapeHtml(value)}</span>`
             + '</p>'
         );
     }
@@ -769,7 +775,8 @@
             + '<header class="age-guild-log-head age-guild-log-head--extended">'
             + `<p class="age-guild-log-outcome">${escapeHtml(formatWinnerLabel(result.winner))}</p>`
             + `<p class="age-guild-log-meta">${escapeHtml(formatEndReason(result))} · +${escapeHtml(result.xpGain ?? 0)} XP${escapeHtml(survivorMeta)}`
-            + `${result.injuriesApplied ? ` · ${escapeHtml(result.injuriesApplied)} injured` : ''}</p>`
+            + `${result.injuriesApplied ? ` · ${escapeHtml(result.injuriesApplied)} injured` : ''}`
+            + `${result.deathsApplied ? ` · ${escapeHtml(result.deathsApplied)} lost` : ''}</p>`
             + '</header>'
             + `<ol class="age-guild-battle-log">${logLines}</ol>`
             + '</div>'
@@ -804,7 +811,7 @@
             + renderCompositionSummaryRow(result)
             + renderPerk1SummaryRow(result)
             + renderCommanderXpSummaryRow(result)
-            + renderInjuriesSummaryRow(result.injuriesApplied)
+            + renderInjuriesSummaryRow(result.injuriesApplied, result.deathsApplied)
             + (rankLine || unitPromoteBlock || workspaceLinksBlock
                 ? `<div class="age-guild-log-summary-section age-guild-log-summary-section--promotions">${rankLine}${unitPromoteBlock}${workspaceLinksBlock}</div>`
                 : '')
@@ -855,6 +862,28 @@
             lootTabAlert = false;
         }
         updateLootTabAlert();
+    }
+
+    function setLoadoutTab(tabId) {
+        activeLoadoutTab = tabId === 'inventory' ? 'inventory' : 'equipment';
+        const tabs = global.document.querySelectorAll('[data-guild-loadout-tab]');
+        tabs.forEach((tab) => {
+            const isActive = tab.getAttribute('data-guild-loadout-tab') === activeLoadoutTab;
+            tab.classList.toggle('is-active', isActive);
+            tab.setAttribute('aria-selected', isActive ? 'true' : 'false');
+            tab.tabIndex = isActive ? 0 : -1;
+        });
+
+        const equipmentPanel = global.document.getElementById('age-guild-loadout-tab-equipment');
+        const inventoryPanel = global.document.getElementById('age-guild-loadout-tab-inventory');
+        if (equipmentPanel) {
+            equipmentPanel.hidden = activeLoadoutTab !== 'equipment';
+            equipmentPanel.classList.toggle('is-active', activeLoadoutTab === 'equipment');
+        }
+        if (inventoryPanel) {
+            inventoryPanel.hidden = activeLoadoutTab !== 'inventory';
+            inventoryPanel.classList.toggle('is-active', activeLoadoutTab === 'inventory');
+        }
     }
 
     function updateLootTabAlert() {
@@ -1071,6 +1100,7 @@
         updateProgressBars();
         renderCommanderGearPanel();
         global.RoyalArmiesAgeGearShop?.refreshTrainingInventoryPanel?.();
+        setLoadoutTab(activeLoadoutTab);
         renderLootLog();
         renderBattleLog();
         setBattleTab(activeBattleTab);
@@ -1822,6 +1852,13 @@
     }
 
     function onWorkspaceClick(event) {
+        const loadoutTab = event.target.closest('[data-guild-loadout-tab]');
+        if (loadoutTab) {
+            event.preventDefault();
+            setLoadoutTab(loadoutTab.getAttribute('data-guild-loadout-tab'));
+            return;
+        }
+
         const battleTab = event.target.closest('[data-guild-battle-tab]');
         if (battleTab) {
             event.preventDefault();
@@ -1983,6 +2020,7 @@
     function refreshTrainingLoadout() {
         renderCommanderGearPanel();
         global.RoyalArmiesAgeGearShop?.refreshTrainingInventoryPanel?.();
+        setLoadoutTab(activeLoadoutTab);
     }
 
     global.RoyalArmiesAdventurersGuild = {
@@ -1999,6 +2037,7 @@
         onTrainingViewOpen,
         onTrainingViewClose,
         refreshTrainingLoadout,
+        setLoadoutTab,
         isOpen,
         isOverlayOpen,
         isTrainingOpen: () => trainingViewActive,

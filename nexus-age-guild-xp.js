@@ -9,7 +9,6 @@
  */
 'use strict';
 
-/** Per-survivor XP weight by phase lane — participation profiles only. */
 const BASE_LANE_RATES = Object.freeze({
     ranged: 2.5,
     beasts: 3.5,

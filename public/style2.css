@@ -27200,30 +27200,20 @@ body.age-guild-overlay-open .age-guild-bounties-arena:not([hidden]) {
     display: none !important;
 }
 
-#age-page-canvas .age-guild-commander-loadout-rail {
+#age-page-canvas .age-guild-commander-loadout-panel {
     position: absolute;
     top: 8px;
     right: 16px;
-    display: flex;
-    gap: 10px;
-    align-items: flex-start;
-    pointer-events: auto;
-    z-index: 2;
-}
-
-#age-page-canvas .age-guild-commander-loadout-rail .age-guild-commander-gear-panel {
-    position: static;
-    right: auto;
-    top: auto;
-    width: min(400px, 28vw);
+    width: min(420px, 30vw);
     max-height: min(85vh, 720px);
     display: flex;
     flex-direction: column;
     gap: 0;
     padding: 10px 12px 12px;
     box-sizing: border-box;
-    overflow: visible;
+    overflow: hidden;
     pointer-events: auto;
+    z-index: 2;
     border-radius: 6px;
     border: 1px solid var(--age-hud-rail-border);
     background:
@@ -27231,45 +27221,43 @@ body.age-guild-overlay-open .age-guild-bounties-arena:not([hidden]) {
         var(--age-hud-rail-bg);
     box-shadow: var(--age-hud-rail-inset), var(--age-hud-rail-shadow);
     color: #f1e0ac;
-    flex: 0 0 auto;
 }
 
-#age-page-canvas .age-guild-inventory-panel {
-    width: min(220px, 20vw);
-    max-height: min(85vh, 720px);
+.age-guild-commander-loadout-inner {
     display: flex;
     flex-direction: column;
     gap: 8px;
-    padding: 10px 12px 12px;
-    box-sizing: border-box;
-    overflow: auto;
-    pointer-events: auto;
-    border-radius: 6px;
-    border: 1px solid var(--age-hud-rail-border);
-    background:
-        var(--age-hud-rail-sheen),
-        var(--age-hud-rail-bg);
-    box-shadow: var(--age-hud-rail-inset), var(--age-hud-rail-shadow);
-    color: #f1e0ac;
-    flex: 0 0 auto;
+    min-height: 0;
+    flex: 1 1 auto;
+    overflow: hidden;
 }
 
-.age-guild-inventory-head {
+#age-page-canvas .age-guild-loadout-tabs {
+    flex: 0 0 auto;
+    margin-top: 2px;
+}
+
+#age-page-canvas .age-guild-loadout-tabpanel {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: auto;
     display: flex;
     flex-direction: column;
-    gap: 2px;
-    padding-bottom: 6px;
-    border-bottom: 1px solid rgba(184, 144, 48, 0.22);
+    gap: 10px;
 }
 
-.age-guild-inventory-title {
+#age-page-canvas .age-guild-loadout-tabpanel[hidden] {
+    display: none !important;
+}
+
+#age-guild-loadout-tab-inventory .age-guild-inventory-capacity {
     margin: 0;
-    font-family: 'Cinzel', serif;
-    font-size: 0.78rem;
-    font-weight: 700;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    color: rgba(255, 231, 168, 0.92);
+    padding-bottom: 4px;
+    border-bottom: 1px solid rgba(184, 144, 48, 0.18);
+}
+
+#age-guild-loadout-tab-inventory .age-guild-inventory-grid {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
 }
 
 .age-guild-inventory-capacity {
@@ -27353,27 +27341,10 @@ button.age-guild-inventory-slot:focus-visible {
     opacity: 0.7;
 }
 
-#age-page-canvas .age-guild-commander-gear-panel {
-    position: absolute;
-    top: 8px;
-    right: 220px;
-    width: min(400px, 44vw);
-    max-height: min(85vh, 720px);
-    display: flex;
-    flex-direction: column;
-    gap: 0;
-    padding: 10px 12px 12px;
-    box-sizing: border-box;
-    overflow: visible;
-    pointer-events: auto;
-    z-index: 2;
-    border-radius: 6px;
-    border: 1px solid var(--age-hud-rail-border);
-    background:
-        var(--age-hud-rail-sheen),
-        var(--age-hud-rail-bg);
-    box-shadow: var(--age-hud-rail-inset), var(--age-hud-rail-shadow);
-    color: #f1e0ac;
+/* Legacy alias — loadout panel replaced separate gear + inventory asides */
+#age-page-canvas .age-guild-commander-gear-panel,
+#age-page-canvas .age-guild-inventory-panel {
+    display: none !important;
 }
 
 .age-guild-commander-gear-inner {

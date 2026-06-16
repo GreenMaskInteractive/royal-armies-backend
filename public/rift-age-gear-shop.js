@@ -2341,6 +2341,7 @@
             event.preventDefault();
             if (equipFromInventory(inventoryEquipBtn.getAttribute('data-inventory-equip'))) {
                 refreshTrainingLoadoutAfterInventoryChange();
+                global.RoyalArmiesAdventurersGuild?.setLoadoutTab?.('equipment');
             }
         });
         global.addEventListener('royalarmies:age-gold-updated', () => {

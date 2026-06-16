@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Royal Armies — Settlement</title>
     <link rel="stylesheet" href="style.css?v=cursor-modal-layer-fix-1">
-    <link rel="stylesheet" href="style2.css?v=training-loadout-panels-1">
+    <link rel="stylesheet" href="style2.css?v=training-npc-curve-1">
     <link rel="stylesheet" href="style-age-area-shell.css?v=age-area-shell-1">
     <link rel="stylesheet" href="style-settlement.css?v=gear-shop-scale-4">
     <link rel="stylesheet" href="style-age-center-modals.css?v=garrison-roster-review-1">
@@ -256,31 +256,31 @@
                             </div>
                         </aside>
 
-                        <div class="age-guild-commander-loadout-rail" aria-label="Commander loadout">
-                        <aside class="age-guild-commander-gear-panel" aria-label="Commander equipment">
-                            <div class="age-guild-commander-gear-inner">
+                        <aside class="age-guild-commander-loadout-panel" aria-label="Commander loadout">
+                            <div class="age-guild-commander-loadout-inner">
                                 <header class="age-guild-commander-gear-head">
                                     <p class="age-guild-commander-gear-eyebrow">Commander</p>
                                     <h3 id="age-guild-commander-name" class="age-guild-commander-gear-name">Commander</h3>
                                     <p id="age-guild-commander-class" class="age-guild-commander-gear-class">Battlemaster · Rank 1</p>
                                 </header>
-                                <div id="age-guild-gear-sheet" class="age-guild-gear-sheet" aria-label="Equipped gear"></div>
-                                <section class="age-guild-gear-stats" aria-label="Equipment bonuses">
-                                    <h4 class="age-guild-gear-stats-title">Commander Bonuses</h4>
-                                    <p class="age-guild-gear-training-scope-note">Shown for city assault and border PvP. Perks, gear, banners, and composition bonuses are inactive in guild training runs.</p>
-                                    <ul id="age-guild-gear-stat-lines" class="age-guild-gear-stat-lines"></ul>
-                                </section>
+                                <div class="age-hud-rail-tabs age-guild-loadout-tabs" role="tablist" aria-label="Commander loadout tabs">
+                                    <button type="button" class="age-hud-rail-tab age-guild-loadout-tab is-active" data-guild-loadout-tab="equipment" role="tab" aria-selected="true" aria-controls="age-guild-loadout-tab-equipment" id="age-guild-loadout-tab-btn-equipment">Equipment</button>
+                                    <button type="button" class="age-hud-rail-tab age-guild-loadout-tab" data-guild-loadout-tab="inventory" role="tab" aria-selected="false" aria-controls="age-guild-loadout-tab-inventory" id="age-guild-loadout-tab-btn-inventory" tabindex="-1">Inventory</button>
+                                </div>
+                                <div id="age-guild-loadout-tab-equipment" class="age-hud-rail-tabpanel age-guild-loadout-tabpanel is-active" role="tabpanel" aria-labelledby="age-guild-loadout-tab-btn-equipment">
+                                    <div id="age-guild-gear-sheet" class="age-guild-gear-sheet" aria-label="Equipped gear"></div>
+                                    <section class="age-guild-gear-stats" aria-label="Equipment bonuses">
+                                        <h4 class="age-guild-gear-stats-title">Commander Bonuses</h4>
+                                        <p class="age-guild-gear-training-scope-note">Shown for city assault and border PvP. Perks, gear, banners, and composition bonuses are inactive in guild training runs.</p>
+                                        <ul id="age-guild-gear-stat-lines" class="age-guild-gear-stat-lines"></ul>
+                                    </section>
+                                </div>
+                                <div id="age-guild-loadout-tab-inventory" class="age-hud-rail-tabpanel age-guild-loadout-tabpanel" role="tabpanel" aria-labelledby="age-guild-loadout-tab-btn-inventory" hidden aria-live="polite">
+                                    <p id="age-guild-training-inventory-capacity" class="age-guild-inventory-capacity" aria-live="polite"></p>
+                                    <div id="age-guild-training-inventory-grid" class="age-guild-inventory-grid" aria-live="polite"></div>
+                                </div>
                             </div>
                         </aside>
-
-                        <aside class="age-guild-inventory-panel" aria-label="Inventory">
-                            <header class="age-guild-inventory-head">
-                                <h4 class="age-guild-inventory-title">Inventory</h4>
-                                <p id="age-guild-training-inventory-capacity" class="age-guild-inventory-capacity" aria-live="polite"></p>
-                            </header>
-                            <div id="age-guild-training-inventory-grid" class="age-guild-inventory-grid" aria-live="polite"></div>
-                        </aside>
-                        </div>
 
                         <div class="age-guild-battle-controls-dock" aria-label="Battle controls">
                             <div id="age-guild-xp-float-host" class="age-guild-xp-float-host" aria-live="polite" aria-atomic="true"></div>
@@ -653,13 +653,13 @@
     <script src="rift-age-unit-evolution.js?v=unit-evolution-confirm-fix-1"></script>
     <script src="rift-age-roster-review.js?v=roster-confirm-fix-1"></script>
     <script src="rift-class-perk-catalog.js?v=class-battlemage-rename-1"></script>
-    <script src="age-adventurers-guild.js?v=guild-settlement-tier-3"></script>
+    <script src="age-adventurers-guild.js?v=training-npc-curve-1"></script>
     <script src="rift-infirmary-recovery.js?v=infirmary-tier-heal-scale-2"></script>
     <script src="rift-banner-army-advisor.js?v=class-cleanup-pass-1"></script>
     <script src="rift-banner-workspace.js?v=banner-no-skill-identity-1"></script>
     <script src="blessed-banners-modal.js?v=banner-skill-select-1"></script>
     <script src="rift-age-gear-equip-rules.js?v=gear-equip-rules-1"></script>
-    <script src="rift-age-gear-shop.js?v=forge-rank-lock-1"></script>
+    <script src="rift-age-gear-shop.js?v=training-npc-curve-1"></script>
     <script src="age-settlement-venue-workspaces.js?v=gear-shop-compact-2"></script>
     <script src="age-unit-evolution.js?v=unit-evolution-confirm-fix-1"></script>
     <script src="age-roster-review.js?v=roster-confirm-fix-1"></script>

@@ -24,6 +24,15 @@ const {
     isPvpCommandMoraleBattleMode
 } = require('./nexus-age-commander-gear');
 const {
+    computeTrainingRosterContext,
+    appendTrainingModifiersLogLine,
+    isTrainingCombatModifiersEnabled
+} = require('./nexus-age-training-balance');
+const {
+    calibrateTrainingNpcStacks,
+    resolveCurvedTrainingNpcTargetTotal
+} = require('./nexus-age-training-progression');
+const {
     LANE_IDS,
     SETTLEMENT_DEFENSE_IDS,
     buildBattleContextFromCommander,
@@ -768,7 +777,8 @@ function simulateTrainingBattle(attackerStacks, defenderStacks, catalog, trainin
     const commander = buildBattleArmy('You', attackerStacks, catalogRef);
     const npc = buildBattleArmy(resolveDefenderBattleLabel(trainingMode), defenderStacks, catalogRef);
     const log = [resolveBattleModeIntro(trainingMode)];
-    if (battleOptions.disableCombatModifiers) {
+    const stripCombatModifiers = Boolean(battleOptions.disableCombatModifiers);
+    if (stripCombatModifiers) {
         log.push('Training run — perks, banners, gear, and composition bonuses are inactive.');
     }
 
@@ -782,7 +792,6 @@ function simulateTrainingBattle(attackerStacks, defenderStacks, catalog, trainin
 
     applyPvpAttackerCommandStartingMorale(commander, trainingMode, battleOptions, log);
 
-    const stripCombatModifiers = Boolean(battleOptions.disableCombatModifiers);
     const attackerContext = battleOptions.attackerContext
         || (stripCombatModifiers
             ? buildStrippedCombatContext(battleOptions.attackerCommander, 'attacker', battleOptions.attackerExtra)
@@ -794,6 +803,8 @@ function simulateTrainingBattle(attackerStacks, defenderStacks, catalog, trainin
 
     initializeArmyBattleState(commander, attackerContext, log);
     initializeArmyBattleState(npc, defenderContext, log);
+
+    appendTrainingModifiersLogLine(log, battleOptions.trainingRosterContext || battleOptions.trainingReadiness);
 
     const settlementDefenses = Array.isArray(battleOptions.settlementDefenses)
         ? battleOptions.settlementDefenses
@@ -898,6 +909,7 @@ function simulateTrainingBattle(attackerStacks, defenderStacks, catalog, trainin
         npcForce: buildForceSummary(npc),
         commanderComposition: commander.composition || null,
         npcComposition: npc.composition || null,
+        trainingRosterContext: battleOptions.trainingRosterContext || battleOptions.trainingReadiness || null,
         log
     };
 }
@@ -1060,12 +1072,12 @@ function buildTrainingNpcArmy(catalog, templateStacks, trainingMode = 'street-pa
     const band = resolveTrainingNpcRankBand(rank);
     const targetTotal = Math.min(
         TRAINING_NPC_MAX_UNITS,
-        Math.max(1, Math.round(resolveTrainingNpcTargetTotal(rank) * modeScale))
+        Math.max(1, Math.round(resolveCurvedTrainingNpcTargetTotal(rank, modeScale)))
     );
     const hostStacks = buildRandomizedTrainingHostStacks(band.stacks);
     const distributed = distributeTrainingNpcQuantities(hostStacks, targetTotal);
 
-    return distributed.map(({ entry, qty }) => {
+    const rawStacks = distributed.map(({ entry, qty }) => {
         const catalogUnit = getCatalogUnitById(catalogRef, entry.catalogUnitId);
         const stackRank = resolveTrainingStackRank(entry, rank, band);
 
@@ -1080,6 +1092,8 @@ function buildTrainingNpcArmy(catalog, templateStacks, trainingMode = 'street-pa
             purpose: 'training'
         };
     });
+
+    return calibrateTrainingNpcStacks(rawStacks, rank, catalogRef, modeScale);
 }
 
 function buildHealthyBattleStacks(army) {
@@ -1104,11 +1118,22 @@ function executeGuildTrainingBattle(commander, trainingMode = 'street-patrol') {
 
     const mode = TRAINING_MODE_LABELS[trainingMode] ? trainingMode : 'street-patrol';
     const commanderRank = Math.max(1, Math.min(22, Math.floor(Number(commander?.rank) || 1)));
+    // NPC host: rank-only curved progression + per-fight randomization — not player army quality.
     const npcArmy = buildTrainingNpcArmy(catalog, undefined, mode, commanderRank);
+    const disableCombatModifiers = !isTrainingCombatModifiersEnabled();
+    const trainingRosterContext = computeTrainingRosterContext({
+        healthyUnits: totalUnits,
+        commanderRank,
+        trainingMode: mode,
+        catalog,
+        battleStacks,
+        npcStacks: npcArmy
+    });
     const battle = simulateTrainingBattle(battleStacks, npcArmy, catalog, mode, {
         attackerCommander: commander,
         attackerExtra: { settlementTier: commander?.settlementTier },
-        disableCombatModifiers: true
+        disableCombatModifiers,
+        trainingRosterContext
     });
     if (!battle.ok) return battle;
 
@@ -1117,6 +1142,8 @@ function executeGuildTrainingBattle(commander, trainingMode = 'street-patrol') {
         trainingMode: mode,
         trainingModeLabel: TRAINING_MODE_LABELS[mode] || 'Training',
         commanderRank,
+        trainingRosterContext,
+        trainingReadiness: trainingRosterContext,
         ...battle,
         commanderUnits: totalUnits,
         npcUnits: npcArmy.reduce((sum, stack) => sum + stack.qty, 0)
@@ -1132,6 +1159,7 @@ module.exports = {
     TRAINING_MODE_LABELS,
     TRAINING_NPC_RANK_BANDS,
     resolveTrainingNpcTargetTotal,
+    resolveTrainingNpcRankBand,
     buildBattleArmy,
     buildTrainingNpcArmy,
     simulateTrainingBattle,

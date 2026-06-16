@@ -16,6 +16,8 @@ const {
     buildAgeRosterHudPayload
 } = require('./nexus-age-roster');
 const { executeGuildTrainingBattle } = require('./nexus-age-battle-sim');
+const { resolveTrainingCasualtyOverlay } = require('./nexus-age-training-balance');
+const { removeUnitsFromArmy } = require('./nexus-age-border-assault-casualty');
 const { resolveTrainingModeAvailability } = require('./nexus-age-guild-hub');
 const {
     calculateGuildTrainingBattleXp,
@@ -677,14 +679,37 @@ function executeGuildTrainingBattleWithLedger(commander, trainingMode = 'street-
     const battle = executeGuildTrainingBattle(commander, trainingMode);
     if (!battle.ok) return battle;
 
-    const injuryMitigation = resolveTrainingInjuryMitigation(commander, catalog);
-    const injuryCount = resolveBattleInjuryCount(commander, battle, trainingMode, catalog, {
+    const injuryMitigation = resolveCommanderInjuryMitigation(commander, catalog);
+    const rosterBefore = countAgeArmyUnits(resolveCommanderAgeArmy(commander));
+    const healthyBefore = rosterBefore.uninjured;
+    let injuryCount = resolveBattleInjuryCount(commander, battle, trainingMode, catalog, {
         injuryMitigationOverride: injuryMitigation
     });
+    let deathCount = 0;
+    const trainingRoster = battle.trainingRosterContext || battle.trainingReadiness;
+    if (trainingRoster && healthyBefore > 0) {
+        const overlay = resolveTrainingCasualtyOverlay({
+            healthyBefore,
+            rosterFillRatio: trainingRoster.rosterFillRatio,
+            armyQuality: trainingRoster.armyQuality,
+            powerRatio: trainingRoster.powerRatio,
+            winner: battle.winner,
+            baseInjuryCount: injuryCount
+        });
+        injuryCount = overlay.injuryCount;
+        deathCount = overlay.deathCount;
+    }
     const preArmy = resolveCommanderAgeArmy(commander);
     const unitXpResult = distributeTrainingUnitXp(battle, preArmy, catalog, trainingMode);
+    let armyAfterCasualties = unitXpResult.ageArmy;
+    if (deathCount > 0) {
+        armyAfterCasualties = removeUnitsFromArmy(armyAfterCasualties, deathCount, catalog);
+        if (Array.isArray(battle.log)) {
+            battle.log.push(`— Casualties — ${deathCount} unit${deathCount === 1 ? '' : 's'} lost in the drill.`);
+        }
+    }
     const nextArmy = distributeInjuriesWeighted(
-        unitXpResult.ageArmy,
+        armyAfterCasualties,
         injuryCount,
         catalog
     );
@@ -738,7 +763,9 @@ function executeGuildTrainingBattleWithLedger(commander, trainingMode = 'street-
         trainingMode: String(trainingMode || 'street-patrol').trim().toLowerCase(),
         winner: String(battle?.winner || ''),
         xpGain,
-        injuriesApplied: injuryCount
+        injuriesApplied: injuryCount,
+        deathsApplied: deathCount,
+        rosterFillRatio: trainingRoster?.rosterFillRatio ?? null
     });
 
     return {
@@ -751,6 +778,9 @@ function executeGuildTrainingBattleWithLedger(commander, trainingMode = 'street-
         lootGoldTotal: lootResult.lootGoldTotal,
         ageGold: nextGold,
         injuriesApplied: injuryCount,
+        deathsApplied: deathCount,
+        trainingRosterContext: trainingRoster,
+        trainingReadiness: trainingRoster,
         injuryMitigation,
         ageArmy: nextArmy,
         rank: xpResult.rank,
