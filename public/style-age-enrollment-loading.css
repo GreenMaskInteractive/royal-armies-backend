@@ -1,0 +1,166 @@
+/* FLEX — Age first-enrollment / exile re-entry loading theatre */
+
+body.age-enrollment-loading-open {
+    overflow: hidden !important;
+}
+
+.age-enrollment-loading {
+    position: fixed;
+    inset: 0;
+    z-index: 2147483645;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 48px;
+    box-sizing: border-box;
+    background: #030201;
+    opacity: 1;
+    transition: opacity 0.38s ease;
+    pointer-events: auto;
+}
+
+.age-enrollment-loading[hidden] {
+    display: none !important;
+}
+
+.age-enrollment-loading.is-hiding {
+    opacity: 0;
+    pointer-events: none;
+}
+
+.age-enrollment-loading-inner {
+    width: min(920px, calc(100vw - 96px));
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 36px;
+}
+
+.age-enrollment-loading-head {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 28px;
+    min-height: 112px;
+}
+
+.age-enrollment-loading-lore-tool {
+    flex: 0 0 auto;
+    width: 96px;
+    height: 96px;
+    object-fit: contain;
+    animation: age-enrollment-lore-tool-spin3d 6s linear infinite;
+    transform-origin: 50% 50%;
+    backface-visibility: visible;
+    filter: sepia(1) saturate(3.1) hue-rotate(8deg) brightness(1.03) contrast(1.04);
+}
+
+@keyframes age-enrollment-lore-tool-spin3d {
+    0% {
+        transform: perspective(320px) rotateY(0deg);
+    }
+    50% {
+        transform: perspective(320px) rotateY(360deg);
+    }
+    100% {
+        transform: perspective(320px) rotateY(360deg);
+    }
+}
+
+.age-enrollment-loading-status-wrap {
+    flex: 0 1 auto;
+    min-width: 0;
+    max-width: 520px;
+}
+
+.age-enrollment-loading-status {
+    margin: 0;
+    font-family: Cinzel, Georgia, serif;
+    font-size: 1.35rem;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: #ffd978;
+    line-height: 1.35;
+    transition: opacity 0.28s ease;
+}
+
+.age-enrollment-loading-status.is-fading {
+    opacity: 0.35;
+}
+
+.age-enrollment-loading-tip {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 18px;
+    text-align: center;
+}
+
+.age-enrollment-loading-tip-visual {
+    width: min(640px, 100%);
+    height: 220px;
+    border-radius: 10px;
+    border: 1px dashed rgba(212, 175, 90, 0.28);
+    background:
+        linear-gradient(145deg, rgba(18, 14, 10, 0.92), rgba(6, 5, 4, 0.98)),
+        repeating-linear-gradient(
+            -18deg,
+            rgba(255, 217, 120, 0.03) 0,
+            rgba(255, 217, 120, 0.03) 12px,
+            transparent 12px,
+            transparent 24px
+        );
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    box-sizing: border-box;
+}
+
+.age-enrollment-loading-tip-visual-label {
+    font-family: 'Segoe UI', Tahoma, sans-serif;
+    font-size: 0.78rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: rgba(236, 220, 180, 0.42);
+}
+
+.age-enrollment-loading-tip-visual-img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    display: none;
+}
+
+.age-enrollment-loading-tip-visual.has-image .age-enrollment-loading-tip-visual-label {
+    display: none;
+}
+
+.age-enrollment-loading-tip-visual.has-image .age-enrollment-loading-tip-visual-img {
+    display: block;
+}
+
+.age-enrollment-loading-tip-title {
+    margin: 0;
+    font-family: Cinzel, Georgia, serif;
+    font-size: 1.5rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    color: #ffd978;
+    line-height: 1.25;
+}
+
+.age-enrollment-loading-tip-body {
+    margin: 0;
+    max-width: 720px;
+    font-family: 'Segoe UI', Tahoma, sans-serif;
+    font-size: 1.12rem;
+    line-height: 1.55;
+    color: rgba(236, 220, 180, 0.82);
+    transition: opacity 0.28s ease;
+}
+
+.age-enrollment-loading-tip-body.is-fading {
+    opacity: 0.4;
+}

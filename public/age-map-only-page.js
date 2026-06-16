@@ -345,6 +345,7 @@
     }
 
     function retainLoadingGate() {
+        if (global.RoyalArmiesAgeEnrollmentLoading?.isActive?.()) return;
         const gate = global.RoyalArmiesPageLoadingGate;
         if (gate && typeof gate.retain === 'function') {
             gate.retain('age-map-only');
@@ -352,6 +353,14 @@
     }
 
     async function releaseLoadingGate() {
+        if (global.RoyalArmiesAgeEnrollmentLoading?.isActive?.()) {
+            const enrollment = global.RoyalArmiesAgeEnrollmentLoading;
+            await enrollment.complete({
+                short: !enrollment.wasFreshEnrollment?.()
+            });
+            return;
+        }
+
         scheduleCouncilBoardLayoutUntilStable(24);
         await new Promise((resolve) => {
             global.requestAnimationFrame(() => {
@@ -1068,6 +1077,9 @@
         }
 
         if (joinResult?.ok && joinResult.payload) {
+            if (joinResult.payload.freshAgeEnrollment) {
+                global.RoyalArmiesAgeEnrollmentLoading?.confirmFreshEnrollment?.();
+            }
             if (global.RoyalArmiesAgeMovement?.applyStatePayload) {
                 global.RoyalArmiesAgeMovement.applyStatePayload(joinResult.payload);
             }

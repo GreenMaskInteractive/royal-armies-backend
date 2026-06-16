@@ -5712,6 +5712,15 @@ function finalizeCommanderAgeReset(mode) {
     if (mode === 'exile') {
         clearCommanderLocalAgeSessionFlags();
         clearCommanderAgeResetSession();
+        if (typeof markPendingAgeEnrollmentLoading === 'function') {
+            markPendingAgeEnrollmentLoading();
+        } else {
+            try {
+                sessionStorage.setItem('royalarmies:age-enrollment-loading', '1');
+            } catch (_err) {
+                /* ignore */
+            }
+        }
         if (typeof notifyPortalAgeSessionLeave === 'function') {
             notifyPortalAgeSessionLeave();
         }

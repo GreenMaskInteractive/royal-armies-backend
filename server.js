@@ -8788,6 +8788,8 @@ app.post('/api/portal/age/join', (req, res) => {
         && (req.body?.assignRandomNation === true || isPortalDirectAgeJoinEnabled())
     );
 
+    let nationAssigned = false;
+
     if (shouldAssignRandomNation) {
         const nationPatch = buildRandomNationEnrollmentPatch(req.body?.nationId, { allowRandom: true });
         if (nationPatch) {
@@ -8802,6 +8804,7 @@ app.post('/api/portal/age/join', (req, res) => {
             const movementNation = resolveCommanderMapNationKey(rosterCommander);
             const reconciledMovement = normalizeCommanderMovementRecord({}, movementNation);
             writeCommanderMovementRecord(username, reconciledMovement);
+            nationAssigned = true;
         }
     }
 
@@ -8840,6 +8843,7 @@ app.post('/api/portal/age/join', (req, res) => {
         ageSlug,
         countryChatWiped: ageChatReset.wiped,
         directAgeJoin: isPortalDirectAgeJoinEnabled(),
+        freshAgeEnrollment: nationAssigned,
         gameNation: rosterCommander?.gameNation || '',
         onboardingRegionId: rosterCommander?.onboardingRegionId || '',
         commanderAccountResetAt: readPortalCommanderAccountResetAt(),
