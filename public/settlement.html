@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Royal Armies — Settlement</title>
     <link rel="stylesheet" href="style.css?v=cursor-modal-layer-fix-1">
-    <link rel="stylesheet" href="style2.css?v=training-npc-curve-1">
+    <link rel="stylesheet" href="style2.css?v=loadout-bonuses-tab-1">
     <link rel="stylesheet" href="style-age-area-shell.css?v=age-area-shell-1">
     <link rel="stylesheet" href="style-settlement.css?v=gear-shop-scale-4">
     <link rel="stylesheet" href="style-age-center-modals.css?v=garrison-roster-review-1">
@@ -265,11 +265,14 @@
                                 </header>
                                 <div class="age-hud-rail-tabs age-guild-loadout-tabs" role="tablist" aria-label="Commander loadout tabs">
                                     <button type="button" class="age-hud-rail-tab age-guild-loadout-tab is-active" data-guild-loadout-tab="equipment" role="tab" aria-selected="true" aria-controls="age-guild-loadout-tab-equipment" id="age-guild-loadout-tab-btn-equipment">Equipment</button>
+                                    <button type="button" class="age-hud-rail-tab age-guild-loadout-tab" data-guild-loadout-tab="bonuses" role="tab" aria-selected="false" aria-controls="age-guild-loadout-tab-bonuses" id="age-guild-loadout-tab-btn-bonuses" tabindex="-1">Bonuses</button>
                                     <button type="button" class="age-hud-rail-tab age-guild-loadout-tab" data-guild-loadout-tab="inventory" role="tab" aria-selected="false" aria-controls="age-guild-loadout-tab-inventory" id="age-guild-loadout-tab-btn-inventory" tabindex="-1">Inventory</button>
                                 </div>
                                 <div id="age-guild-loadout-tab-equipment" class="age-hud-rail-tabpanel age-guild-loadout-tabpanel is-active" role="tabpanel" aria-labelledby="age-guild-loadout-tab-btn-equipment">
                                     <div id="age-guild-gear-sheet" class="age-guild-gear-sheet" aria-label="Equipped gear"></div>
-                                    <section class="age-guild-gear-stats" aria-label="Equipment bonuses">
+                                </div>
+                                <div id="age-guild-loadout-tab-bonuses" class="age-hud-rail-tabpanel age-guild-loadout-tabpanel" role="tabpanel" aria-labelledby="age-guild-loadout-tab-btn-bonuses" hidden aria-live="polite">
+                                    <section class="age-guild-gear-stats" aria-label="Commander bonuses">
                                         <h4 class="age-guild-gear-stats-title">Commander Bonuses</h4>
                                         <p class="age-guild-gear-training-scope-note">Shown for city assault and border PvP. Perks, gear, banners, and composition bonuses are inactive in guild training runs.</p>
                                         <ul id="age-guild-gear-stat-lines" class="age-guild-gear-stat-lines"></ul>
@@ -653,7 +656,7 @@
     <script src="rift-age-unit-evolution.js?v=unit-evolution-confirm-fix-1"></script>
     <script src="rift-age-roster-review.js?v=roster-confirm-fix-1"></script>
     <script src="rift-class-perk-catalog.js?v=class-battlemage-rename-1"></script>
-    <script src="age-adventurers-guild.js?v=training-npc-curve-1"></script>
+    <script src="age-adventurers-guild.js?v=loadout-bonuses-tab-1"></script>
     <script src="rift-infirmary-recovery.js?v=infirmary-tier-heal-scale-2"></script>
     <script src="rift-banner-army-advisor.js?v=class-cleanup-pass-1"></script>
     <script src="rift-banner-workspace.js?v=banner-no-skill-identity-1"></script>

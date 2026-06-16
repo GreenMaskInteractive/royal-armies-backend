@@ -27237,6 +27237,17 @@ body.age-guild-overlay-open .age-guild-bounties-arena:not([hidden]) {
     margin-top: 2px;
 }
 
+#age-page-canvas .age-guild-loadout-tabs .age-hud-rail-tab {
+    padding: 8px 5px;
+    font-size: 0.68rem;
+    letter-spacing: 0.03em;
+}
+
+#age-guild-loadout-tab-bonuses .age-guild-gear-stats {
+    padding-top: 0;
+    border-top: none;
+}
+
 #age-page-canvas .age-guild-loadout-tabpanel {
     flex: 1 1 auto;
     min-height: 0;

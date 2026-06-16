@@ -864,8 +864,15 @@
         updateLootTabAlert();
     }
 
+    function normalizeLoadoutTab(tabId) {
+        const key = String(tabId || '').trim().toLowerCase();
+        if (key === 'inventory') return 'inventory';
+        if (key === 'bonuses') return 'bonuses';
+        return 'equipment';
+    }
+
     function setLoadoutTab(tabId) {
-        activeLoadoutTab = tabId === 'inventory' ? 'inventory' : 'equipment';
+        activeLoadoutTab = normalizeLoadoutTab(tabId);
         const tabs = global.document.querySelectorAll('[data-guild-loadout-tab]');
         tabs.forEach((tab) => {
             const isActive = tab.getAttribute('data-guild-loadout-tab') === activeLoadoutTab;
@@ -875,10 +882,15 @@
         });
 
         const equipmentPanel = global.document.getElementById('age-guild-loadout-tab-equipment');
+        const bonusesPanel = global.document.getElementById('age-guild-loadout-tab-bonuses');
         const inventoryPanel = global.document.getElementById('age-guild-loadout-tab-inventory');
         if (equipmentPanel) {
             equipmentPanel.hidden = activeLoadoutTab !== 'equipment';
             equipmentPanel.classList.toggle('is-active', activeLoadoutTab === 'equipment');
+        }
+        if (bonusesPanel) {
+            bonusesPanel.hidden = activeLoadoutTab !== 'bonuses';
+            bonusesPanel.classList.toggle('is-active', activeLoadoutTab === 'bonuses');
         }
         if (inventoryPanel) {
             inventoryPanel.hidden = activeLoadoutTab !== 'inventory';
