@@ -5,6 +5,12 @@
 
 const { loadCityCatalog, resolveCatalogNationKey, resolveCityHolder } = require('./nexus-age-movement');
 const { buildCommanderRankMeta, getCommanderRankDisplayTitle } = require('./nexus-commander-rank-titles');
+const {
+    isAgeRecordsRankingLive,
+    resolveAgeRecordsRankingMeta,
+    computeOverallRankScoreFromCommander,
+    computeOverallPvpScoreFromStats
+} = require('./nexus-age-player-records');
 
 const DEFAULT_NATION_TOTAL_CITIES = 15;
 
@@ -20,17 +26,11 @@ function normalizePlayerAgeRecords(raw) {
             currentRank: null,
             overallPvpScore: null,
             overallRankScore: null,
-            armyStrength: null,
             battlesWon: null,
             battlesLost: null,
             sfCityBattles: null,
-            personalGold: null,
             pvpKillsAttack: null,
-            pvpKillsDefense: null,
-            pvpInjuriesAttack: null,
-            pvpInjuriesDefense: null,
-            pvpCapturesAttack: null,
-            pvpCapturesDefense: null
+            pvpCapturesAttack: null
         };
     }
 
@@ -38,17 +38,11 @@ function normalizePlayerAgeRecords(raw) {
         currentRank: numberOrNull(raw.currentRank),
         overallPvpScore: numberOrNull(raw.overallPvpScore),
         overallRankScore: numberOrNull(raw.overallRankScore),
-        armyStrength: numberOrNull(raw.armyStrength),
         battlesWon: numberOrNull(raw.battlesWon),
         battlesLost: numberOrNull(raw.battlesLost),
         sfCityBattles: numberOrNull(raw.sfCityBattles),
-        personalGold: numberOrNull(raw.personalGold),
         pvpKillsAttack: numberOrNull(raw.pvpKillsAttack),
-        pvpKillsDefense: numberOrNull(raw.pvpKillsDefense),
-        pvpInjuriesAttack: numberOrNull(raw.pvpInjuriesAttack),
-        pvpInjuriesDefense: numberOrNull(raw.pvpInjuriesDefense),
-        pvpCapturesAttack: numberOrNull(raw.pvpCapturesAttack),
-        pvpCapturesDefense: numberOrNull(raw.pvpCapturesDefense)
+        pvpCapturesAttack: numberOrNull(raw.pvpCapturesAttack)
     };
 }
 
@@ -121,41 +115,42 @@ function commanderHasJoinedAge(commander) {
     return Boolean(resolveCatalogNationKey(commander?.gameNation));
 }
 
-function serializeCommanderAgeRecord(commander, resolveDisplayName) {
+function serializeCommanderAgeRecord(commander, resolveDisplayName, rankingContext = {}) {
     const username = String(commander?.username || '').trim();
     const stats = normalizePlayerAgeRecords(commander?.ageRecords);
     const joinedAge = commanderHasJoinedAge(commander);
     const rankMeta = joinedAge ? buildCommanderRankMeta(commander) : null;
-    const currentRankTitle = joinedAge && rankMeta
+    const commanderRankTitle = joinedAge && rankMeta
         ? getCommanderRankDisplayTitle(
             rankMeta.rank,
             rankMeta.path,
             rankMeta.rankTitleGender
         )
         : null;
+    const rankingLive = rankingContext.rankingLive === true;
+    const overallRankScore = rankingLive
+        ? (stats.overallRankScore ?? computeOverallRankScoreFromCommander(commander))
+        : null;
+    const overallPvpScore = rankingLive
+        ? (stats.overallPvpScore ?? computeOverallPvpScoreFromStats(stats))
+        : null;
 
     return {
         username,
         playerName: resolveDisplayName(username) || username,
         hasJoinedAge: joinedAge,
-        currentRank: joinedAge && rankMeta ? rankMeta.rank : null,
-        currentRankTitle: currentRankTitle || null,
-        currentRankPath: joinedAge && rankMeta ? rankMeta.path : null,
-        currentRankTitleGender: joinedAge && rankMeta ? rankMeta.rankTitleGender : null,
-        ageRecordsRank: stats.currentRank,
-        overallPvpScore: stats.overallPvpScore,
-        overallRankScore: stats.overallRankScore,
-        armyStrength: stats.armyStrength,
+        commanderRank: joinedAge && rankMeta ? rankMeta.rank : null,
+        commanderRankTitle: commanderRankTitle || null,
+        commanderRankPath: joinedAge && rankMeta ? rankMeta.path : null,
+        commanderRankTitleGender: joinedAge && rankMeta ? rankMeta.rankTitleGender : null,
+        ranking: rankingLive && joinedAge ? stats.currentRank : null,
+        overallPvpScore,
+        overallRankScore,
         battlesWon: stats.battlesWon,
         battlesLost: stats.battlesLost,
         sfCityBattles: stats.sfCityBattles,
-        personalGold: stats.personalGold,
         pvpKillsAttack: stats.pvpKillsAttack,
-        pvpKillsDefense: stats.pvpKillsDefense,
-        pvpInjuriesAttack: stats.pvpInjuriesAttack,
-        pvpInjuriesDefense: stats.pvpInjuriesDefense,
-        pvpCapturesAttack: stats.pvpCapturesAttack,
-        pvpCapturesDefense: stats.pvpCapturesDefense
+        pvpCapturesAttack: stats.pvpCapturesAttack
     };
 }
 
@@ -239,8 +234,12 @@ function buildAgeRecordsPayload({
     readNationTreasuryForNation,
     readNationLeadershipForNation,
     resolveNationLeadershipDisplayName,
-    resolveCatalogNationDisplayName
+    resolveCatalogNationDisplayName,
+    ageCampaignActiveStartedAt = null,
+    nowMs = Date.now()
 }) {
+    const rankingMeta = resolveAgeRecordsRankingMeta(ageCampaignActiveStartedAt, nowMs);
+    const rankingContext = { rankingLive: rankingMeta.live };
     const catalog = loadCityCatalog();
     const catalogNations = Array.isArray(catalog.nations) ? catalog.nations : [];
     const recordsMap = nationRecordsMap && typeof nationRecordsMap === 'object' ? nationRecordsMap : {};
@@ -254,8 +253,26 @@ function buildAgeRecordsPayload({
 
     const players = (Array.isArray(commanders) ? commanders : [])
         .filter((commander) => commander?.username && !isHiddenUsername(commander.username))
-        .map((commander) => serializeCommanderAgeRecord(commander, resolveNationLeadershipDisplayName))
-        .sort((left, right) => left.playerName.localeCompare(right.playerName, undefined, { sensitivity: 'base' }));
+        .map((commander) => serializeCommanderAgeRecord(
+            commander,
+            resolveNationLeadershipDisplayName,
+            rankingContext
+        ))
+        .sort((left, right) => {
+            if (rankingMeta.live) {
+                const leftRank = Number(left.ranking);
+                const rightRank = Number(right.ranking);
+                const leftHasRank = Number.isFinite(leftRank) && leftRank > 0;
+                const rightHasRank = Number.isFinite(rightRank) && rightRank > 0;
+                if (leftHasRank && rightHasRank && leftRank !== rightRank) {
+                    return leftRank - rightRank;
+                }
+                if (leftHasRank !== rightHasRank) {
+                    return leftHasRank ? -1 : 1;
+                }
+            }
+            return left.playerName.localeCompare(right.playerName, undefined, { sensitivity: 'base' });
+        });
 
     const nationRows = catalogNations
         .map((nation) => {
@@ -289,6 +306,7 @@ function buildAgeRecordsPayload({
     return {
         players,
         nations,
+        recordsRanking: rankingMeta,
         updatedAt: new Date().toISOString()
     };
 }

@@ -164,6 +164,10 @@ const {
 } = require('./nexus-age-dispatch-alert');
 const { buildAgeRecordsPayload } = require('./nexus-age-records');
 const {
+    applyAgeRecordsBattleOutcome,
+    maybeRunAgePlayerRecordsRankingTick
+} = require('./nexus-age-player-records');
+const {
     normalizeNationArmyGroupsState,
     getDefaultNationArmyGroupsState,
     validateCreateArmyGroup,
@@ -5439,6 +5443,9 @@ app.get('/api/portal/age/records', (req, res) => {
         return sendApiError(res, 'NEXUS-GEN-004');
     }
 
+    const campaign = readPortalAgeCampaignPayload();
+    refreshAgePlayerRecordsRankingsIfDue();
+
     res.json({
         status: 'ok',
         ...buildAgeRecordsPayload({
@@ -5450,7 +5457,9 @@ app.get('/api/portal/age/records', (req, res) => {
             readNationTreasuryForNation,
             readNationLeadershipForNation,
             resolveNationLeadershipDisplayName,
-            resolveCatalogNationDisplayName
+            resolveCatalogNationDisplayName,
+            ageCampaignActiveStartedAt: campaign.activeStartedAt,
+            nowMs: Date.now()
         })
     });
 });
@@ -5835,6 +5844,11 @@ app.post('/api/portal/age/watchtower/seize', (req, res) => {
         defenderArmyAfter: battleResult.defender.ageArmy,
         attackerCommander: commander,
         defenderCommander: db.get('commanders').find({ username: targetCommander.username }).value()
+    });
+
+    recordAgeBattleReportOutcome(battleReport, {
+        attackerUsername: username,
+        defenderUsername: targetCommander.username
     });
 
     res.json({
@@ -6492,6 +6506,22 @@ function buildBorderPvpBattleReport({
     });
 }
 
+function recordAgeBattleReportOutcome(battleReport, options = {}) {
+    if (!battleReport) return;
+    applyAgeRecordsBattleOutcome(db, {
+        battleReport,
+        attackerUsername: options.attackerUsername,
+        defenderUsername: options.defenderUsername,
+        isSfCityBattle: options.isSfCityBattle === true,
+        participantUsernames: options.participantUsernames
+    });
+}
+
+function refreshAgePlayerRecordsRankingsIfDue() {
+    const campaign = readPortalAgeCampaignPayload();
+    return maybeRunAgePlayerRecordsRankingTick(db, campaign.activeStartedAt, Date.now());
+}
+
 function applyArmyGroupRelocationAssignments(assignments, nationKey, leaderMovePatch = null) {
     const relocations = [];
     Object.entries(assignments || {}).forEach(([memberUsername, catalogCityId]) => {
@@ -7017,6 +7047,12 @@ app.post('/api/portal/age/army-groups/attack', (req, res) => {
         assaultVictory: attackResult.assaultVictory,
         captureReward,
         attackerCommander: commander
+    });
+
+    recordAgeBattleReportOutcome(battleReport, {
+        attackerUsername: username,
+        isSfCityBattle: String(lookup?.type || '').trim().toLowerCase() === 'sf',
+        participantUsernames: Array.isArray(lookup?.memberUsernames) ? lookup.memberUsernames : []
     });
 
     respondArmyGroupsPayload(res, storageNation, commander, username, writeResult.state, {
@@ -8843,6 +8879,10 @@ app.post('/api/portal/age/assault', (req, res) => {
         attackerCommander: commander
     });
 
+    recordAgeBattleReportOutcome(battleReport, {
+        attackerUsername: username
+    });
+
     res.json({
         status: 'ok',
         action: 'assault',
@@ -9326,7 +9366,11 @@ app.listen(PORT, () => {
     clearPortalUpdateImminentFlag();
     ensureAgeCampaignRecord(db);
     tickAgeCampaignLifecycle();
-    setInterval(tickAgeCampaignLifecycle, AGE_CAMPAIGN_TICK_MS);
+    refreshAgePlayerRecordsRankingsIfDue();
+    setInterval(() => {
+        tickAgeCampaignLifecycle();
+        refreshAgePlayerRecordsRankingsIfDue();
+    }, AGE_CAMPAIGN_TICK_MS);
 
     const ownerRestore = restoreCommanderArmyFromLedgerSnapshot('caleb_admin');
     if (ownerRestore.ok && ownerRestore.restoredFromSnapshot && ownerRestore.unitsAfter > ownerRestore.unitsBefore) {

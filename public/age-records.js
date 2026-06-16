@@ -27,17 +27,15 @@
 
     const PLAYER_COLUMNS = [
         { key: 'playerName', label: 'Player Name', kind: 'text', alwaysShow: true },
-        { key: 'currentRankTitle', label: 'Current Rank', kind: 'text' },
+        { key: 'ranking', label: 'Ranking', kind: 'ranking', alwaysShow: true },
+        { key: 'commanderRankTitle', label: 'Commander', kind: 'text' },
         { key: 'overallPvpScore', label: 'Overall PvP Score', kind: 'number' },
         { key: 'overallRankScore', label: 'Overall Rank Score', kind: 'number' },
-        { key: 'armyStrength', label: 'Personal Army Strength', kind: 'number' },
         { key: 'battlesWon', label: 'Battles Won', kind: 'number' },
         { key: 'battlesLost', label: 'Battles Lost', kind: 'number' },
         { key: 'sfCityBattles', label: 'SF City Battles', kind: 'number' },
-        { key: 'personalGold', label: 'Personal Gold', kind: 'number' },
-        { key: 'pvpKills', label: 'Unit Kills (Atk / Def)', kind: 'pair', attackKey: 'pvpKillsAttack', defenseKey: 'pvpKillsDefense' },
-        { key: 'pvpInjuries', label: 'Unit Injuries (Atk / Def)', kind: 'pair', attackKey: 'pvpInjuriesAttack', defenseKey: 'pvpInjuriesDefense' },
-        { key: 'pvpCaptures', label: 'Unit Captures (Atk / Def)', kind: 'pair', attackKey: 'pvpCapturesAttack', defenseKey: 'pvpCapturesDefense' }
+        { key: 'pvpKillsAttack', label: 'Unit Kills', kind: 'number' },
+        { key: 'pvpCapturesAttack', label: 'Unit Captures', kind: 'number' }
     ];
 
     const NATION_COLUMNS = [
@@ -61,7 +59,7 @@
     const TAB_INTRO = {
         players: {
             eyebrow: 'Commander Ledger',
-            copy: 'All registered commanders on Royal Armies. Age stats appear as they are recorded through official round gameplay.'
+            copy: 'Participation standings for all commanders. Rankings unlock at the first half-hour tick after the Age begins, then refresh every tick.'
         },
         nations: {
             eyebrow: 'Nation Ledger',
@@ -72,6 +70,7 @@
     let bound = false;
     let activeTab = 'players';
     let loadPromise = null;
+    let recordsRankingLive = false;
 
     function resolveApiUrl(path) {
         if (typeof global.resolveRoyalArmiesApiUrl === 'function') {
@@ -134,41 +133,36 @@
         return {
             username: String(username || '').trim(),
             playerName: String(playerName || username || '').trim(),
-            currentRank: null,
-            currentRankTitle: null,
+            ranking: null,
+            commanderRank: null,
+            commanderRankTitle: null,
             overallPvpScore: null,
             overallRankScore: null,
-            armyStrength: null,
             battlesWon: null,
             battlesLost: null,
             sfCityBattles: null,
-            personalGold: null,
             pvpKillsAttack: null,
-            pvpKillsDefense: null,
-            pvpInjuriesAttack: null,
-            pvpInjuriesDefense: null,
-            pvpCapturesAttack: null,
-            pvpCapturesDefense: null
+            pvpCapturesAttack: null
         };
     }
 
     function resolveCommanderRankTitle(row) {
-        if (row?.currentRankTitle) return row.currentRankTitle;
-        const rank = row?.currentRank;
+        if (row?.commanderRankTitle) return row.commanderRankTitle;
+        const rank = row?.commanderRank;
         if (rank == null || rank === '') return null;
         const rankTitles = global.RoyalArmiesCommanderRankTitles;
         if (rankTitles?.formatCommanderRankLabel) {
             return rankTitles.formatCommanderRankLabel(
                 rank,
-                row.currentRankPath,
-                row.currentRankTitleGender
+                row.commanderRankPath,
+                row.commanderRankTitleGender
             );
         }
         if (rankTitles?.getCommanderRankDisplayTitle) {
             return rankTitles.getCommanderRankDisplayTitle(
                 rank,
-                row.currentRankPath,
-                row.currentRankTitleGender
+                row.commanderRankPath,
+                row.commanderRankTitleGender
             ) || null;
         }
         return null;
@@ -188,22 +182,47 @@
                     playerName
                 };
                 if (merged.hasJoinedAge === false) {
-                    merged.currentRank = null;
-                    merged.currentRankTitle = null;
-                    merged.currentRankPath = null;
-                    merged.currentRankTitleGender = null;
+                    merged.commanderRank = null;
+                    merged.commanderRankTitle = null;
+                    merged.commanderRankPath = null;
+                    merged.commanderRankTitleGender = null;
+                    merged.ranking = null;
                 } else {
-                    merged.currentRankTitle = resolveCommanderRankTitle(merged);
+                    merged.commanderRankTitle = resolveCommanderRankTitle(merged);
+                    if (!recordsRankingLive) {
+                        merged.ranking = null;
+                    }
                 }
                 return merged;
             })
             .filter(Boolean);
 
-        rows.sort((left, right) => left.playerName.localeCompare(right.playerName, undefined, { sensitivity: 'base' }));
+        rows.sort((left, right) => {
+            if (recordsRankingLive) {
+                const leftRank = Number(left.ranking);
+                const rightRank = Number(right.ranking);
+                const leftHasRank = Number.isFinite(leftRank) && leftRank > 0;
+                const rightHasRank = Number.isFinite(rightRank) && rightRank > 0;
+                if (leftHasRank && rightHasRank && leftRank !== rightRank) {
+                    return leftRank - rightRank;
+                }
+                if (leftHasRank !== rightHasRank) {
+                    return leftHasRank ? -1 : 1;
+                }
+            }
+            return left.playerName.localeCompare(right.playerName, undefined, { sensitivity: 'base' });
+        });
         return rows;
     }
 
     function resolveCellValue(row, column, options = {}) {
+        if (column.kind === 'ranking') {
+            if (!recordsRankingLive || row.hasJoinedAge === false) {
+                return PLACEHOLDER;
+            }
+            return formatCellValue(row.ranking, 'number', { emptyDisplay: PLACEHOLDER });
+        }
+
         if (column.kind === 'pair') {
             return formatPairCell(row, column, options);
         }
@@ -292,7 +311,8 @@
             const payload = await response.json();
             return {
                 players: Array.isArray(payload.players) ? payload.players : [],
-                nations: Array.isArray(payload.nations) ? payload.nations : []
+                nations: Array.isArray(payload.nations) ? payload.nations : [],
+                recordsRanking: payload.recordsRanking || null
             };
         } catch (error) {
             console.warn('[RIFT] Age Records snapshot fetch failed:', error);
@@ -332,7 +352,7 @@
                 const isEmptyCell = cellValue === (cellOptions.emptyDisplay ?? PLACEHOLDER);
                 const emptyClass = isEmptyCell ? ' is-empty' : ' has-value';
                 const identityClass = column.alwaysShow || columnIndex === 0 ? ' age-records-table-cell--identity' : '';
-                const rankClass = column.key === 'rank' ? ' age-records-table-cell--rank' : '';
+                const rankClass = column.key === 'rank' || column.key === 'ranking' ? ' age-records-table-cell--rank' : '';
                 return (
                     `<td class="age-records-table-cell age-records-table-cell--${column.kind}${identityClass}${rankClass}${emptyClass}" data-col="${escapeHtml(column.key)}">`
                     + `<span class="age-records-table-cell-inner">${escapeHtml(cellValue)}</span>`
@@ -408,6 +428,7 @@
         }
 
         const snapshot = await loadPromise;
+        recordsRankingLive = snapshot.recordsRanking?.live === true;
         renderPlayerPanel(snapshot.players);
         renderNationPanel(snapshot.nations);
     }
