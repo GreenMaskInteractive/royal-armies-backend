@@ -7,7 +7,7 @@
 (function initRoyalArmiesPlayerLocPins(global) {
     'use strict';
 
-    const CACHE_TOKEN = 'player-loc-pins-1';
+    const CACHE_TOKEN = 'player-loc-pins-2';
     const STORAGE_SUFFIX = 'ageDeploymentPinMode';
 
     /** Resolved pin shown on the map. */
@@ -20,7 +20,7 @@
 
     /**
      * Future group purpose when creating/joining a roster (Last Knights–style).
-     * hold / sf → grouped pin; transport → transport pin; main / temp-main → main pin.
+     * hold / sf / rally → grouped pin; taxi → transport pin; main / temp-main → main pin.
      */
     const GROUP_TYPES = Object.freeze({
         transport: 'transport',
@@ -48,6 +48,8 @@
     let mapPointToFrame = null;
     let resolveCatalogCity = null;
     let localPinEl = null;
+    /** Live pin mode — only changes when roster sync or explicit deployment actions update it. */
+    let runtimePinMode = PIN_MODES.alone;
 
     function resolveUsername() {
         const saved = global.localStorage.getItem('activeCommanderUser');
@@ -62,6 +64,16 @@
         const username = resolveUsername();
         if (!username) return '';
         return `royalArmies_${username}_${STORAGE_SUFFIX}`;
+    }
+
+    function clearLegacyDeploymentPinStorage() {
+        const key = storageKey();
+        if (!key) return;
+        try {
+            global.localStorage.removeItem(key);
+        } catch (_err) {
+            /* ignore */
+        }
     }
 
     function normalizePinMode(value) {
@@ -80,33 +92,22 @@
     }
 
     function resolvePinModeFromGroupType(groupType) {
-        const type = normalizeGroupType(groupType);
+        const raw = String(groupType || '').trim().toLowerCase();
+        const type = normalizeGroupType(groupType) || raw;
         if (!type) return PIN_MODES.alone;
-        if (type === GROUP_TYPES.transport) return PIN_MODES.transport;
+        if (type === GROUP_TYPES.transport || raw === 'taxi') return PIN_MODES.transport;
         if (type === GROUP_TYPES.main || type === GROUP_TYPES.tempMain) return PIN_MODES.main;
-        if (type === GROUP_TYPES.hold || type === GROUP_TYPES.sf) return PIN_MODES.grouped;
+        if (type === GROUP_TYPES.hold || type === GROUP_TYPES.sf || raw === 'rally') return PIN_MODES.grouped;
         return PIN_MODES.alone;
     }
 
     function getDeploymentPinMode() {
-        const key = storageKey();
-        if (!key) return PIN_MODES.alone;
-        try {
-            return normalizePinMode(global.localStorage.getItem(key));
-        } catch (_err) {
-            return PIN_MODES.alone;
-        }
+        return normalizePinMode(runtimePinMode);
     }
 
     function setDeploymentPinMode(mode) {
-        const key = storageKey();
-        if (!key) return PIN_MODES.alone;
         const next = normalizePinMode(mode);
-        try {
-            global.localStorage.setItem(key, next);
-        } catch (_err) {
-            /* ignore quota */
-        }
+        runtimePinMode = next;
         refreshLocalPlayerPin();
         return next;
     }
@@ -189,6 +190,8 @@
 
         if (!hostEl || !mapPointToFrame) return false;
 
+        runtimePinMode = PIN_MODES.alone;
+        clearLegacyDeploymentPinStorage();
         refreshLocalPlayerPin();
         return true;
     }
@@ -211,4 +214,6 @@
         PIN_ASSETS,
         PIN_LABELS
     };
+
+    clearLegacyDeploymentPinStorage();
 })(window);

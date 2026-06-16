@@ -1700,6 +1700,30 @@ function buildAgeCityPlayersPayload(catalogCityId, viewerUsername) {
     };
 }
 
+function filterWatchtowerForeignPlayers(players, viewerNation) {
+    const viewerNationKey = String(viewerNation || '').trim().toLowerCase();
+    return (players || []).filter((player) => {
+        if (player?.isSelf) return false;
+        const nation = String(player?.nationId || '').trim().toLowerCase();
+        if (!nation) return false;
+        if (viewerNationKey && nation === viewerNationKey) return false;
+        return true;
+    });
+}
+
+function filterWatchtowerForeignCommanders(commanders, viewerUsername, viewerNation) {
+    const viewerLower = String(viewerUsername || '').trim().toLowerCase();
+    const viewerNationKey = String(viewerNation || '').trim().toLowerCase();
+    return (commanders || []).filter((commander) => {
+        const username = String(commander?.username || '').trim();
+        if (!username) return false;
+        if (viewerLower && username.toLowerCase() === viewerLower) return false;
+        const nation = resolveCommanderMapNationKey(commander);
+        if (viewerNationKey && nation === viewerNationKey) return false;
+        return true;
+    });
+}
+
 function buildWatchtowerWorkspaceForCommander(commander, targetCityId) {
     const username = String(commander?.username || '').trim();
     const gameNation = resolveCommanderMapNationKey(commander);
@@ -1733,18 +1757,23 @@ function buildWatchtowerWorkspaceForCommander(commander, targetCityId) {
     const nationState = readNationHeadquartersForNation(gameNation);
     const watchtower = nationState.watchtower || {};
     const cityPlayersPayload = buildAgeCityPlayersPayload(cityId, username);
+    const foreignPlayers = filterWatchtowerForeignPlayers(cityPlayersPayload.players || [], gameNation);
     const commanders = db.get('commanders').value() || [];
-    const commandersInCity = commanders.filter((row) => (
-        String(row?.username || '').trim()
-        && resolveCommanderCatalogCityId(row) === cityId
-        && getAgeSessionForUsername(row.username)
-    ));
+    const commandersInCity = filterWatchtowerForeignCommanders(
+        commanders.filter((row) => (
+            String(row?.username || '').trim()
+            && resolveCommanderCatalogCityId(row) === cityId
+            && getAgeSessionForUsername(row.username)
+        )),
+        username,
+        gameNation
+    );
 
     return {
         workspace: buildWatchtowerWorkspacePayload({
             city,
             cityId,
-            players: cityPlayersPayload.players || [],
+            players: foreignPlayers,
             watchtower,
             viewerUsername: username,
             viewerGold: resolveCommanderAgeGold(commander),
@@ -5782,6 +5811,11 @@ app.post('/api/portal/age/watchtower/scout-player', (req, res) => {
         return sendApiError(res, 'NEXUS-AGE-034');
     }
 
+    const targetNation = resolveCommanderMapNationKey(targetCommander);
+    if (targetNation && targetNation === resolveCommanderMapNationKey(commander)) {
+        return sendApiError(res, 'NEXUS-AGE-035');
+    }
+
     const currentGold = resolveCommanderAgeGold(commander);
     if (currentGold < SCOUT_GOLD_COST) {
         return sendApiError(res, 'NEXUS-AGE-033');
@@ -5857,6 +5891,11 @@ app.post('/api/portal/age/watchtower/seize', (req, res) => {
     ));
     if (!targetCommander) {
         return sendApiError(res, 'NEXUS-AGE-034');
+    }
+
+    const targetNation = resolveCommanderMapNationKey(targetCommander);
+    if (targetNation && targetNation === gameNation) {
+        return sendApiError(res, 'NEXUS-AGE-035');
     }
 
     const storageNation = resolveArmyGroupsStorageNation(commander);

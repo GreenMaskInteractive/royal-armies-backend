@@ -39,7 +39,7 @@
         'script.js?v=settings-suicide-tab-1',
         'commander-hub.js?v=records-profile-links-1',
         'game-chat.js?v=commander-nametag-hub-2',
-        'portal-commander-identity-menu.js?v=remove-return-portal-1'
+        'portal-commander-identity-menu.js?v=commander-menu-suicide-1'
     ];
 
     const ageNametagHubScriptsLoaded = new Set();
@@ -711,6 +711,9 @@
         const clip = global.document.getElementById('game-mobile-commander-clip');
         if (!submenu || !toggle) return;
 
+        if (typeof global.collapseCommanderMenuSuicideOptions === 'function') {
+            global.collapseCommanderMenuSuicideOptions();
+        }
         submenu.hidden = true;
         toggle.setAttribute('aria-expanded', 'false');
         if (clip) clip.classList.remove('is-commander-open');
@@ -1245,6 +1248,7 @@
 
     global.returnToGameAgePortal = returnToAgePortal;
     global.toggleGameMobileCommanderSubmenu = toggleMobileCommanderSubmenu;
+    global.closeMobileCommanderSubmenu = closeMobileCommanderSubmenu;
     global.gameMobileNavCommanderAction = gameMobileNavCommanderAction;
 
     global.ensureAgeCommanderNametagHub = ensureAgeCommanderNametagHub;

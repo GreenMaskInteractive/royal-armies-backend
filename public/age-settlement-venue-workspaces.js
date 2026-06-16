@@ -1164,19 +1164,20 @@
     }
 
     function openChurch(detail) {
+        const venue = detail?.venue || {};
+        const venueLabel = venue.label || 'Church';
         const lockReason = resolveChurchRankLockReason();
         if (lockReason) {
             if (typeof global.showPortalAlert === 'function') {
-                void global.showPortalAlert(lockReason, 'Church');
+                void global.showPortalAlert(lockReason, venueLabel);
             }
             return;
         }
 
-        const venue = detail?.venue || {};
         openArmyWorkspace({
             venueId: 'church',
-            eyebrow: 'Church',
-            title: venue.label || 'Church',
+            eyebrow: venueLabel,
+            title: venueLabel,
             subtitle: venue.description || '',
             bodyHtml: renderChurchBody()
         });

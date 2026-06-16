@@ -151,7 +151,7 @@
             },
             {
                 id: 'church',
-                label: 'Church',
+                label: 'Monastery',
                 description: 'Obtain a blessed banner and manage its perk tree.'
             },
             {
@@ -183,7 +183,7 @@
             },
             {
                 id: 'church',
-                label: 'Church',
+                label: 'Cathedral',
                 description: 'Obtain a blessed banner and manage its perk tree.'
             },
             {

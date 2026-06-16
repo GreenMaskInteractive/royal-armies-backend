@@ -5052,6 +5052,15 @@
         }
     }
 
+    function isWatchtowerForeignBorderRelationship(relationship) {
+        const normalized = String(relationship || '').trim().toLowerCase();
+        return normalized !== 'own'
+            && normalized !== 'current'
+            && normalized !== 'remote'
+            && normalized !== 'restricted'
+            && normalized !== 'unknown';
+    }
+
     function listWatchtowerBorderTargets(playerCityId) {
         const playerCity = cityById.get(playerCityId);
         if (!playerCity || !Array.isArray(playerCity.neighbors)) return [];
@@ -5064,7 +5073,7 @@
             .filter((neighbor) => {
                 if (!neighbor || isMaskedCity(neighbor)) return false;
                 const neighborHints = movement.getBorderActionHints(neighbor, playerCityId) || {};
-                return String(neighborHints.relationship || '').trim().toLowerCase() === 'hostile';
+                return isWatchtowerForeignBorderRelationship(neighborHints.relationship);
             });
     }
 
@@ -5122,8 +5131,8 @@
         }
 
         button.title = hasBorderTarget
-            ? 'Open the Watchtower to spy the garrison, scout commanders, and seize hostile players at the border.'
-            : 'Border a hostile settlement to unlock Watchtower intel from this city.';
+            ? 'Open the Watchtower to spy the garrison, scout foreign commanders, and seize hostile players at the border.'
+            : 'Border an allied, neutral, or enemy settlement to unlock Watchtower intel from this city.';
     }
 
     const INFILTRATE_BUTTON_LABEL = 'Attempt Infiltration';
@@ -5549,7 +5558,7 @@
             resolveActivePlayerCatalogCityId()
         ) || {};
         if (
-            String(borderHints.relationship || '').trim().toLowerCase() === 'hostile'
+            isWatchtowerForeignBorderRelationship(borderHints.relationship)
             && city.id !== resolveActivePlayerCatalogCityId()
         ) {
             lastWatchtowerTargetCityId = city.id;

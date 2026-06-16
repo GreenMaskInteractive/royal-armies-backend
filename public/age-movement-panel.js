@@ -692,6 +692,21 @@
         return String(current);
     }
 
+    const ARMY_FOCUS_BALANCED_MIN_RANK_SHARE = 0.4;
+    const ARMY_FOCUS_BALANCED_MAX_RANK_SHARE = 0.6;
+
+    function computeArmyFocusFromWeights(rankingWeight, pvpWeight) {
+        const ranking = Math.max(0, Math.floor(Number(rankingWeight) || 0));
+        const pvp = Math.max(0, Math.floor(Number(pvpWeight) || 0));
+        const total = ranking + pvp;
+        if (!total) return '';
+
+        const rankShare = ranking / total;
+        if (rankShare > ARMY_FOCUS_BALANCED_MAX_RANK_SHARE) return 'ranking';
+        if (rankShare < ARMY_FOCUS_BALANCED_MIN_RANK_SHARE) return 'pvp';
+        return 'balanced';
+    }
+
     function computeLocalArmyFocus() {
         const army = global.player?.ageArmy || global.player?.army;
         if (!Array.isArray(army) || !army.length) return '';
@@ -714,22 +729,31 @@
             }
         });
 
-        if (!rankingWeight && !pvpWeight) return '';
-        if (rankingWeight === pvpWeight) return '';
-        return rankingWeight > pvpWeight ? 'ranking' : 'pvp';
+        return computeArmyFocusFromWeights(rankingWeight, pvpWeight);
     }
 
-    function formatArmyFocusLabel(armyFocus) {
+    function formatArmyFocusLabel(armyFocus, options = {}) {
         const focus = String(armyFocus || '').trim().toLowerCase();
-        if (focus === 'ranking') return 'Ranking';
+        const isWarRoom = options.variant === 'war-room';
+        if (focus === 'ranking') return isWarRoom ? 'Rank' : 'Ranking';
         if (focus === 'pvp') return 'PvP';
+        if (focus === 'balanced') return 'Balanced';
         return '';
     }
 
-    function formatArmyFocusBadgeHtml(player) {
-        const label = formatArmyFocusLabel(player?.armyFocus);
+    function resolveArmyFocusModifier(armyFocus) {
+        const focus = String(armyFocus || '').trim().toLowerCase();
+        if (focus === 'ranking') return 'ranking';
+        if (focus === 'pvp') return 'pvp';
+        if (focus === 'balanced') return 'balanced';
+        return '';
+    }
+
+    function formatArmyFocusBadgeHtml(player, options = {}) {
+        const label = formatArmyFocusLabel(player?.armyFocus, options);
         if (!label) return '';
-        const modifier = label === 'Ranking' ? 'ranking' : 'pvp';
+        const modifier = resolveArmyFocusModifier(player?.armyFocus);
+        if (!modifier) return '';
         return (
             `<span class="age-city-info-player-army-focus age-city-info-player-army-focus--${modifier}" `
             + `title="${escapePlayerHtml(label)} army" aria-label="${escapePlayerHtml(label)} army">${escapePlayerHtml(label)}</span>`
@@ -757,8 +781,9 @@
         const activeFilters = [];
 
         if (filters.onlineOnly) activeFilters.push('online');
-        if (filters.armyFocus === 'ranking') activeFilters.push('ranking army');
+        if (filters.armyFocus === 'ranking') activeFilters.push('rank army');
         else if (filters.armyFocus === 'pvp') activeFilters.push('PvP army');
+        else if (filters.armyFocus === 'balanced') activeFilters.push('balanced army');
 
         if (activeFilters.length) {
             parts.push(`filtered by ${activeFilters.join(', ')}`);
@@ -789,8 +814,9 @@
 
         const activeFilters = [];
         if (filters.onlineOnly) activeFilters.push('online');
-        if (filters.armyFocus === 'ranking') activeFilters.push('with a ranking army');
+        if (filters.armyFocus === 'ranking') activeFilters.push('with a rank army');
         else if (filters.armyFocus === 'pvp') activeFilters.push('with a PvP army');
+        else if (filters.armyFocus === 'balanced') activeFilters.push('with a balanced army');
 
         if (activeFilters.length) {
             return `No commanders in ${place} match ${activeFilters.join(' and ')}.`;
@@ -849,7 +875,7 @@
         }
 
         const armyFocus = String(filters?.armyFocus || 'all').trim().toLowerCase();
-        if (armyFocus === 'ranking' || armyFocus === 'pvp') {
+        if (armyFocus === 'ranking' || armyFocus === 'pvp' || armyFocus === 'balanced') {
             result = result.filter((player) => String(player?.armyFocus || '').toLowerCase() === armyFocus);
         }
 
@@ -946,7 +972,7 @@
             if (armyButton && root.contains(armyButton)) {
                 event.preventDefault();
                 const mode = String(armyButton.getAttribute('data-age-players-army-filter') || 'all').trim().toLowerCase();
-                hqPlayersArmyFocusFilter = (mode === 'ranking' || mode === 'pvp') ? mode : 'all';
+                hqPlayersArmyFocusFilter = (mode === 'ranking' || mode === 'pvp' || mode === 'balanced') ? mode : 'all';
                 syncHqPlayersFilterControls(root);
                 renderPlayersTab();
             }
@@ -1037,7 +1063,9 @@
         const royaltyMarkup = isRoyaltyMembershipTitle(player.membershipTitle)
             ? `<img class="${isWarRoom ? 'age-war-room-player-royalty-badge' : 'age-city-info-player-royalty-badge'}" src="images/royaltybadge.png" alt="Royalty premium member" loading="lazy" decoding="async">`
             : '';
-        const armyBadgeMarkup = showArmyBadge ? formatArmyFocusBadgeHtml(player) : '';
+        const armyBadgeMarkup = showArmyBadge
+            ? formatArmyFocusBadgeHtml(player, { variant: isWarRoom ? 'war-room' : 'map' })
+            : '';
         const presenceLabel = player.online ? 'Online' : 'Offline';
 
         if (isWarRoom) {

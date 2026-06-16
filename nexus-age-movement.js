@@ -255,13 +255,30 @@ function getNextMovePointTickBoundaryMs(timestampMs) {
     return getMovePointTickBoundaryMs(timestampMs) + MOVE_POINT_TICK_MS;
 }
 
+/** Rank-unit share above this → primarily a rank army; below min → primarily PvP; between → balanced. */
+const ARMY_FOCUS_BALANCED_MIN_RANK_SHARE = 0.4;
+const ARMY_FOCUS_BALANCED_MAX_RANK_SHARE = 0.6;
+
 function normalizeArmyFocusValue(value) {
     const normalized = String(value || '').trim().toLowerCase();
     if (normalized === 'ranking' || normalized === 'rank' || normalized === 'rankdrop' || normalized === 'rank_drop') {
         return 'ranking';
     }
     if (normalized === 'pvp') return 'pvp';
+    if (normalized === 'balanced') return 'balanced';
     return '';
+}
+
+function computeArmyFocusFromWeights(rankingWeight, pvpWeight) {
+    const ranking = Math.max(0, Math.floor(Number(rankingWeight) || 0));
+    const pvp = Math.max(0, Math.floor(Number(pvpWeight) || 0));
+    const total = ranking + pvp;
+    if (!total) return '';
+
+    const rankShare = ranking / total;
+    if (rankShare > ARMY_FOCUS_BALANCED_MAX_RANK_SHARE) return 'ranking';
+    if (rankShare < ARMY_FOCUS_BALANCED_MIN_RANK_SHARE) return 'pvp';
+    return 'balanced';
 }
 
 function computeArmyFocusFromStacks(stacks) {
@@ -280,9 +297,7 @@ function computeArmyFocusFromStacks(stacks) {
         else if (purpose === 'pvp') pvpWeight += qty;
     });
 
-    if (!rankingWeight && !pvpWeight) return '';
-    if (rankingWeight === pvpWeight) return '';
-    return rankingWeight > pvpWeight ? 'ranking' : 'pvp';
+    return computeArmyFocusFromWeights(rankingWeight, pvpWeight);
 }
 
 function resolveCommanderArmyFocus(commander, movementRecord) {
@@ -695,7 +710,10 @@ module.exports = {
     resolveMovementTargetCityId,
     resolveDefaultCapitalCityId,
     normalizeCommanderMovementRecord,
+    ARMY_FOCUS_BALANCED_MIN_RANK_SHARE,
+    ARMY_FOCUS_BALANCED_MAX_RANK_SHARE,
     normalizeArmyFocusValue,
+    computeArmyFocusFromWeights,
     computeArmyFocusFromStacks,
     resolveCommanderArmyFocus,
     getDefaultCommanderMovementRecord,

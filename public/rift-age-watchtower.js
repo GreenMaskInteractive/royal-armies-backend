@@ -181,8 +181,8 @@
         if (!players.length) {
             return (
                 `<section class="age-watchtower-section">`
-                + `<h3 class="age-watchtower-section-title">Commanders in City</h3>`
-                + `<p class="age-watchtower-empty">No commanders are currently stationed in this city.</p>`
+                + `<h3 class="age-watchtower-section-title">Border Commanders</h3>`
+                + `<p class="age-watchtower-empty">No foreign commanders are currently stationed in this city.</p>`
                 + `</section>`
             );
         }
@@ -209,8 +209,8 @@
 
         return (
             `<section class="age-watchtower-section">`
-            + `<h3 class="age-watchtower-section-title">Commanders in City</h3>`
-            + `<p class="age-watchtower-copy">Scout raids cost ${cost} gold each and yield rough army estimates. Seize launches border PvP against hostile commanders (1 Move).</p>`
+            + `<h3 class="age-watchtower-section-title">Border Commanders</h3>`
+            + `<p class="age-watchtower-copy">Allied, NAP, neutral, and enemy commanders only — your nation is excluded. Scout raids cost ${cost} gold each. Seize launches border PvP against hostile commanders (1 Move).</p>`
             + `<div class="age-watchtower-player-list">${rows}</div>`
             + `</section>`
         );

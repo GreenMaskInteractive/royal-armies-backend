@@ -474,11 +474,15 @@
 
     function syncDeploymentPinFromRoster(payload) {
         const pins = global.RoyalArmiesPlayerLocPins;
-        if (!pins || typeof pins.setDeploymentFromGroupType !== 'function') return;
+        if (!pins) return;
+
         const type = String(payload?.deploymentGroupType || '').trim();
-        if (type) {
+        if (type && typeof pins.setDeploymentFromGroupType === 'function') {
             pins.setDeploymentFromGroupType(type);
+        } else if (typeof pins.setDeploymentPinMode === 'function') {
+            pins.setDeploymentPinMode(pins.PIN_MODES?.alone || 'alone');
         }
+
         const pin = global.document.getElementById('age-world-map-player-pin-local');
         if (pin) {
             pin.classList.toggle('age-world-map-player-pin--taxi-aura', type === 'taxi');

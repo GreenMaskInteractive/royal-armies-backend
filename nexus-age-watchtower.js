@@ -564,8 +564,8 @@ function buildWatchtowerWorkspacePayload(options) {
         const myScout = scouts.find((row) => row.createdBy.toLowerCase() === viewerKey) || scouts[0] || null;
         return {
             ...player,
-            canScout: !player.isSelf,
-            canSeize: !player.isSelf && relationship === 'hostile',
+            canScout: true,
+            canSeize: relationship === 'hostile',
             scoutReport: myScout
         };
     });
