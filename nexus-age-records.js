@@ -3,7 +3,7 @@
  */
 'use strict';
 
-const { loadCityCatalog, resolveCatalogNationKey } = require('./nexus-age-movement');
+const { loadCityCatalog, resolveCatalogNationKey, resolveCityHolder } = require('./nexus-age-movement');
 const { buildCommanderRankMeta, getCommanderRankDisplayTitle } = require('./nexus-commander-rank-titles');
 const {
     resolveAgeRecordsRankingMeta,
@@ -12,6 +12,8 @@ const {
     normalizePlayerAgeRecords,
     resolveCommanderNationKey
 } = require('./nexus-age-player-records');
+
+const DEFAULT_NATION_TOTAL_CITIES = 15;
 
 function numberOrNull(value) {
     if (value === null || value === undefined || value === '') return null;
@@ -32,6 +34,148 @@ function buildCommanderRankTitle(commander, joinedAge) {
         rankMeta.path,
         rankMeta.rankTitleGender
     ) || null;
+}
+
+function normalizeNationAgeRecords(raw) {
+    if (!raw || typeof raw !== 'object') {
+        return {
+            points: null,
+            overallStrength: null,
+            cityCaptureBattlePoints: null,
+            cityCaptures: null,
+            overallPvpStrength: null,
+            successfulDropsPerformed: null,
+            successfulDropsAgainstNation: null
+        };
+    }
+
+    return {
+        points: numberOrNull(raw.points),
+        overallStrength: numberOrNull(raw.overallStrength),
+        cityCaptureBattlePoints: numberOrNull(raw.cityCaptureBattlePoints),
+        cityCaptures: numberOrNull(raw.cityCaptures),
+        overallPvpStrength: numberOrNull(raw.overallPvpStrength),
+        successfulDropsPerformed: numberOrNull(raw.successfulDropsPerformed),
+        successfulDropsAgainstNation: numberOrNull(raw.successfulDropsAgainstNation)
+    };
+}
+
+function buildNationCitiesOwnedMap(cityHolders) {
+    const catalog = loadCityCatalog();
+    const holders = cityHolders && typeof cityHolders === 'object' ? cityHolders : {};
+    const counts = new Map();
+
+    (catalog.cities || []).forEach((city) => {
+        const holderKey = resolveCatalogNationKey(resolveCityHolder(city, holders));
+        if (!holderKey) return;
+        counts.set(holderKey, (counts.get(holderKey) || 0) + 1);
+    });
+
+    return counts;
+}
+
+function buildNationTotalCitiesMap(catalog) {
+    const counts = new Map();
+
+    (catalog?.cities || []).forEach((city) => {
+        const nationKey = resolveCatalogNationKey(city?.nationId);
+        if (!nationKey) return;
+        counts.set(nationKey, (counts.get(nationKey) || 0) + 1);
+    });
+
+    return counts;
+}
+
+function buildNationPlayersInNationMap(commanders, isHiddenUsername, resolveCommanderMapNationKey) {
+    const counts = new Map();
+
+    (Array.isArray(commanders) ? commanders : []).forEach((commander) => {
+        if (!commander?.username || isHiddenUsername(commander.username)) return;
+
+        const nationId = resolveCatalogNationKey(resolveCommanderMapNationKey(commander));
+        if (!nationId) return;
+
+        counts.set(nationId, (counts.get(nationId) || 0) + 1);
+    });
+
+    return counts;
+}
+
+function resolveNationStatNumber(value, defaultValue = 0) {
+    const numeric = numberOrNull(value);
+    return numeric === null ? defaultValue : numeric;
+}
+
+function serializeNationAgeRecord({
+    nationId,
+    nationName,
+    leadership,
+    nationRecords,
+    citiesOwned,
+    totalCities,
+    playersInNation,
+    resolveNationLeadershipDisplayName
+}) {
+    const stats = normalizeNationAgeRecords(nationRecords);
+    const leaderUsername = leadership?.leaderUsername || '';
+    const viceLeaderUsername = leadership?.viceLeaderUsername || '';
+
+    return {
+        nationId,
+        nationName,
+        globalRanking: null,
+        points: resolveNationStatNumber(stats.points, 0),
+        citiesOwned: Number.isFinite(Number(citiesOwned)) ? Number(citiesOwned) : 0,
+        totalCities: Number.isFinite(Number(totalCities)) ? Number(totalCities) : DEFAULT_NATION_TOTAL_CITIES,
+        playersInNation: Number.isFinite(Number(playersInNation)) ? Number(playersInNation) : 0,
+        cityCaptures: resolveNationStatNumber(stats.cityCaptures, 0),
+        successfulDropsPerformed: resolveNationStatNumber(stats.successfulDropsPerformed, 0),
+        leaderUsername,
+        viceLeaderUsername,
+        leader: leaderUsername
+            ? (resolveNationLeadershipDisplayName(leaderUsername) || leaderUsername)
+            : 'None',
+        viceLeader: viceLeaderUsername
+            ? (resolveNationLeadershipDisplayName(viceLeaderUsername) || viceLeaderUsername)
+            : 'None'
+    };
+}
+
+function toGlobalNationRecord(record) {
+    return {
+        nationId: record.nationId,
+        nationName: record.nationName,
+        globalRanking: record.globalRanking,
+        points: record.points,
+        citiesOwned: record.citiesOwned,
+        totalCities: record.totalCities,
+        playersInNation: record.playersInNation,
+        cityCaptures: record.cityCaptures,
+        successfulDropsPerformed: record.successfulDropsPerformed,
+        leader: record.leader,
+        viceLeader: record.viceLeader
+    };
+}
+
+function sortGlobalNationRows(rows, rankingLive) {
+    const sorted = rows.slice().sort((left, right) => {
+        if (right.points !== left.points) {
+            return right.points - left.points;
+        }
+        if (right.cityCaptures !== left.cityCaptures) {
+            return right.cityCaptures - left.cityCaptures;
+        }
+        return left.nationName.localeCompare(right.nationName, undefined, { sensitivity: 'base' });
+    });
+
+    if (!rankingLive) {
+        return sorted.map((row) => ({ ...row, globalRanking: null }));
+    }
+
+    return sorted.map((row, index) => ({
+        ...row,
+        globalRanking: index + 1
+    }));
 }
 
 function buildFullPlayerRecord(commander, resolveDisplayName, rankingContext = {}) {
@@ -151,7 +295,11 @@ function sortNationalRows(rows, rankingLive) {
 
 function buildAgeRecordsPayload({
     commanders,
+    nationRecordsMap,
+    cityHolders,
     isHiddenUsername,
+    resolveCommanderMapNationKey,
+    readNationLeadershipForNation,
     resolveNationLeadershipDisplayName,
     resolveCatalogNationDisplayName,
     viewerUsername = '',
@@ -166,6 +314,16 @@ function buildAgeRecordsPayload({
     };
     const canonicalViewer = String(viewerUsername || '').trim().toLowerCase();
     const viewerNationKey = resolveCatalogNationKey(viewerNationId);
+    const catalog = loadCityCatalog();
+    const catalogNations = Array.isArray(catalog.nations) ? catalog.nations : [];
+    const recordsMap = nationRecordsMap && typeof nationRecordsMap === 'object' ? nationRecordsMap : {};
+    const citiesOwnedByNation = buildNationCitiesOwnedMap(cityHolders);
+    const totalCitiesByNation = buildNationTotalCitiesMap(catalog);
+    const playersInNationByNation = buildNationPlayersInNationMap(
+        commanders,
+        isHiddenUsername,
+        resolveCommanderMapNationKey
+    );
 
     const fullRows = (Array.isArray(commanders) ? commanders : [])
         .filter((commander) => commander?.username && !isHiddenUsername(commander.username))
@@ -187,10 +345,38 @@ function buildAgeRecordsPayload({
         rankingMeta.live
     );
 
+    const nationRows = catalogNations
+        .map((nation) => {
+            const nationId = resolveCatalogNationKey(nation.id);
+            if (!nationId) return null;
+
+            const nationName = resolveCatalogNationDisplayName(nationId) || String(nation.name || nationId).trim();
+            const leadership = readNationLeadershipForNation(nationId);
+            const nationRecords = recordsMap[nationId] || recordsMap[String(nationId).toLowerCase()] || null;
+
+            return serializeNationAgeRecord({
+                nationId,
+                nationName,
+                leadership,
+                nationRecords,
+                citiesOwned: citiesOwnedByNation.get(nationId) ?? 0,
+                totalCities: totalCitiesByNation.get(nationId) ?? DEFAULT_NATION_TOTAL_CITIES,
+                playersInNation: playersInNationByNation.get(nationId) ?? 0,
+                resolveNationLeadershipDisplayName
+            });
+        })
+        .filter(Boolean);
+
+    const globalNations = sortGlobalNationRows(
+        nationRows.map(toGlobalNationRecord),
+        rankingMeta.live
+    );
+
     return {
         personal,
         global: {
-            players: globalPlayers
+            players: globalPlayers,
+            nations: globalNations
         },
         national: {
             nationId: viewerNationKey,
@@ -209,5 +395,6 @@ module.exports = {
     buildAgeRecordsPayload,
     buildFullPlayerRecord,
     commanderHasJoinedAge,
-    normalizePlayerAgeRecords: normalizePlayerAgeRecords
+    normalizePlayerAgeRecords: normalizePlayerAgeRecords,
+    normalizeNationAgeRecords
 };

@@ -7,8 +7,9 @@
     const PLACEHOLDER = '—';
     const RECORDS_EMPTY = '';
     const VALID_TABS = new Set(['personal', 'national', 'global']);
+    const VALID_GLOBAL_SUBTABS = new Set(['players', 'nations']);
 
-    const GLOBAL_COLUMNS = [
+    const GLOBAL_PLAYER_COLUMNS = [
         { key: 'playerName', label: 'Player Name', kind: 'text', alwaysShow: true },
         { key: 'globalRanking', label: 'Global Ranking', kind: 'ranking', alwaysShow: true },
         { key: 'commanderRankTitle', label: 'Commander', kind: 'text' },
@@ -20,6 +21,19 @@
         { key: 'pvpBattlesLost', label: 'PvP Battles Lost', kind: 'number' },
         { key: 'pvpKillsAttack', label: 'PvP Unit Kills', kind: 'number' },
         { key: 'pvpCapturesAttack', label: 'PvP Unit Captures', kind: 'number' }
+    ];
+
+    const GLOBAL_NATION_COLUMNS = [
+        { key: 'nationName', label: 'Nation Name', kind: 'text', alwaysShow: true },
+        { key: 'globalRanking', label: 'Global Ranking', kind: 'ranking', alwaysShow: true },
+        { key: 'points', label: 'Points', kind: 'number', alwaysShow: true, defaultValue: 0 },
+        { key: 'citiesOwned', label: 'Cities (Owned)', kind: 'number', alwaysShow: true, defaultValue: 0 },
+        { key: 'totalCities', label: 'Cities (Total)', kind: 'number', alwaysShow: true, defaultValue: 15 },
+        { key: 'playersInNation', label: 'Players', kind: 'number', alwaysShow: true, defaultValue: 0 },
+        { key: 'cityCaptures', label: 'Captures', kind: 'number', alwaysShow: true, defaultValue: 0 },
+        { key: 'successfulDropsPerformed', label: 'Drops (Attacker)', kind: 'number', alwaysShow: true, defaultValue: 0 },
+        { key: 'leader', label: 'Leader', kind: 'text', alwaysShow: true, defaultValue: 'None' },
+        { key: 'viceLeader', label: 'Vice Leader', kind: 'text', alwaysShow: true, defaultValue: 'None' }
     ];
 
     const NATIONAL_COLUMNS = [
@@ -85,12 +99,18 @@
         },
         global: {
             eyebrow: 'Global Rankings',
-            copy: 'Amnek-wide standings. PvP scores and public participation stats visible to every commander in the Age.'
+            copy: 'Amnek-wide standings. Switch between public player and nation leaderboards visible to every commander in the Age.'
         }
+    };
+
+    const GLOBAL_SUBTAB_INTRO = {
+        players: 'Global Rankings (Players) — PvP scores and public participation stats for every commander.',
+        nations: 'Global Rankings (Nations) — territorial points, captures, and leadership visible across Amnek.'
     };
 
     let bound = false;
     let activeTab = 'personal';
+    let activeGlobalSubTab = 'players';
     let loadPromise = null;
     let recordsRankingLive = false;
     let snapshotCache = null;
@@ -240,7 +260,8 @@
                     players: Array.isArray(payload.national?.players) ? payload.national.players : []
                 },
                 global: {
-                    players: Array.isArray(payload.global?.players) ? payload.global.players : []
+                    players: Array.isArray(payload.global?.players) ? payload.global.players : [],
+                    nations: Array.isArray(payload.global?.nations) ? payload.global.nations : []
                 },
                 recordsRanking: payload.recordsRanking || null,
                 viewerNationId: payload.viewerNationId || null
@@ -386,18 +407,60 @@
         const panel = global.document.getElementById('age-records-panel-global');
         if (!panel) return;
 
-        const rows = normalizeTableRows(globalSection?.players);
-        panel.innerHTML = (
-            rows.length
+        const playerRows = normalizeTableRows(globalSection?.players);
+        const nationRows = Array.isArray(globalSection?.nations) ? globalSection.nations : [];
+        const subTabIntro = GLOBAL_SUBTAB_INTRO[activeGlobalSubTab] || GLOBAL_SUBTAB_INTRO.players;
+
+        const subTabBar = (
+            '<div class="age-records-global-subtabs" role="tablist" aria-label="Global rankings view">'
+            + `<button type="button" class="age-records-global-subtab${activeGlobalSubTab === 'players' ? ' is-active' : ''}" data-age-records-global-subtab="players" role="tab" aria-selected="${activeGlobalSubTab === 'players' ? 'true' : 'false'}">Global Rankings (Players)</button>`
+            + `<button type="button" class="age-records-global-subtab${activeGlobalSubTab === 'nations' ? ' is-active' : ''}" data-age-records-global-subtab="nations" role="tab" aria-selected="${activeGlobalSubTab === 'nations' ? 'true' : 'false'}" tabindex="${activeGlobalSubTab === 'nations' ? '0' : '-1'}">Global Rankings (Nations)</button>`
+            + '</div>'
+        );
+
+        let bodyHtml = '';
+        if (activeGlobalSubTab === 'nations') {
+            bodyHtml = nationRows.length
                 ? renderRecordsTable({
-                    columns: GLOBAL_COLUMNS,
-                    rows,
+                    columns: GLOBAL_NATION_COLUMNS,
+                    rows: nationRows,
+                    rowKey: 'nationId',
+                    selfMatchKey: null,
+                    cellOptions: { emptyDisplay: RECORDS_EMPTY }
+                })
+                : '<p class="age-records-empty">No nation standings have been recorded for this Age yet.</p>';
+        } else {
+            bodyHtml = playerRows.length
+                ? renderRecordsTable({
+                    columns: GLOBAL_PLAYER_COLUMNS,
+                    rows: playerRows,
                     rowKey: 'username',
                     selfMatchKey: 'username',
                     cellOptions: { emptyDisplay: RECORDS_EMPTY }
                 })
-                : '<p class="age-records-empty">No global rankings have been recorded for this Age yet.</p>'
+                : '<p class="age-records-empty">No global player rankings have been recorded for this Age yet.</p>';
+        }
+
+        panel.innerHTML = (
+            subTabBar
+            + `<p class="age-records-global-subcopy">${escapeHtml(subTabIntro)}</p>`
+            + bodyHtml
         );
+
+        panel.querySelectorAll('[data-age-records-global-subtab]').forEach((button) => {
+            button.addEventListener('click', (event) => {
+                event.preventDefault();
+                setActiveGlobalSubTab(button.getAttribute('data-age-records-global-subtab'));
+            });
+        });
+    }
+
+    function setActiveGlobalSubTab(subTabId) {
+        activeGlobalSubTab = VALID_GLOBAL_SUBTABS.has(subTabId) ? subTabId : 'players';
+        if (snapshotCache) {
+            renderGlobalPanel(snapshotCache.global);
+        }
+        syncRecordsIntro();
     }
 
     function syncRecordsIntro() {
@@ -409,7 +472,11 @@
             eyebrowEl.textContent = meta.eyebrow;
         }
         if (copyEl) {
-            copyEl.textContent = meta.copy;
+            if (activeTab === 'global') {
+                copyEl.textContent = GLOBAL_SUBTAB_INTRO[activeGlobalSubTab] || meta.copy;
+            } else {
+                copyEl.textContent = meta.copy;
+            }
         }
     }
 
@@ -428,6 +495,9 @@
 
     function setActiveTab(tabId) {
         activeTab = VALID_TABS.has(tabId) ? tabId : 'personal';
+        if (activeTab === 'global') {
+            activeGlobalSubTab = VALID_GLOBAL_SUBTABS.has(activeGlobalSubTab) ? activeGlobalSubTab : 'players';
+        }
 
         global.document.querySelectorAll('[data-age-records-tab]').forEach((button) => {
             const isActive = button.getAttribute('data-age-records-tab') === activeTab;

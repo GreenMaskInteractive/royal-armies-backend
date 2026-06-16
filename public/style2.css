@@ -18908,6 +18908,48 @@ label.age-council-board-editor-tool {
     font-size: 12px;
 }
 
+.age-records-global-subtabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 0 0 10px;
+}
+
+.age-records-global-subtab {
+    min-height: 34px;
+    padding: 8px 14px;
+    border: 1px solid rgba(184, 144, 48, 0.34);
+    border-radius: 4px;
+    background: linear-gradient(180deg, rgba(28, 22, 14, 0.94), rgba(14, 11, 8, 0.96));
+    color: rgba(232, 200, 120, 0.82);
+    cursor: pointer;
+    font-family: 'Cinzel', serif;
+    font-size: 12px;
+    letter-spacing: 0.04em;
+    text-transform: none;
+}
+
+.age-records-global-subtab:hover,
+.age-records-global-subtab:focus-visible {
+    border-color: rgba(255, 217, 120, 0.48);
+    color: #ffd978;
+}
+
+.age-records-global-subtab.is-active {
+    border-color: rgba(255, 217, 120, 0.62);
+    background: linear-gradient(180deg, rgba(52, 38, 22, 0.96), rgba(24, 18, 12, 0.98));
+    color: #ffd978;
+    box-shadow: inset 0 0 0 1px rgba(255, 217, 120, 0.08);
+}
+
+.age-records-global-subcopy {
+    margin: 0 0 12px;
+    color: rgba(184, 168, 140, 0.88);
+    font-family: 'Cinzel', serif;
+    font-size: 12px;
+    line-height: 1.45;
+}
+
 #age-page-canvas[data-age-view="headquarters"] .age-map-anchor,
 #age-page-canvas[data-age-view="guild-training"] .age-map-anchor {
     display: none;

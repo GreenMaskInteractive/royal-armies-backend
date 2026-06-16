@@ -5450,7 +5450,11 @@ app.get('/api/portal/age/records', (req, res) => {
         status: 'ok',
         ...buildAgeRecordsPayload({
             commanders: db.get('commanders').value() || [],
+            nationRecordsMap: readNationAgeRecordsMap(),
+            cityHolders: readAgeMovementStore().cityHolders,
             isHiddenUsername: isHiddenRegistrationUsername,
+            resolveCommanderMapNationKey,
+            readNationLeadershipForNation,
             resolveNationLeadershipDisplayName,
             resolveCatalogNationDisplayName,
             viewerUsername: username,
