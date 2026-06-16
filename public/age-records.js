@@ -14,7 +14,7 @@
         { key: 'globalRanking', label: 'Global Ranking', kind: 'ranking', alwaysShow: true },
         { key: 'commanderRankTitle', label: 'Commander', kind: 'text' },
         { key: 'nationName', label: 'Nation', kind: 'text' },
-        { key: 'sfParticipations', label: 'Strike Force', kind: 'number' },
+        { key: 'cityBattles', label: 'City Battles', kind: 'number' },
         { key: 'overallPvpScore', label: 'PvP Score', kind: 'number' },
         { key: 'overallRankScore', label: 'Rank Score', kind: 'number' },
         { key: 'pvpBattlesWon', label: 'PvP Battles Won', kind: 'number' },
@@ -41,7 +41,7 @@
         { key: 'nationRanking', label: 'Nation Ranking', kind: 'ranking', alwaysShow: true },
         { key: 'commanderRankTitle', label: 'Commander', kind: 'text' },
         { key: 'globalRanking', label: 'Global Ranking', kind: 'ranking' },
-        { key: 'sfParticipations', label: 'Strike Force', kind: 'number' },
+        { key: 'cityBattles', label: 'City Battles', kind: 'number' },
         { key: 'cityBattlesWon', label: 'City Battles Won', kind: 'number' },
         { key: 'cityBattlesLost', label: 'City Battles Lost', kind: 'number' },
         { key: 'sfCityBattles', label: 'SF City Battles', kind: 'number' },
@@ -80,7 +80,7 @@
             stats: [
                 { key: 'cityBattlesWon', label: 'City Battles Won', kind: 'number' },
                 { key: 'cityBattlesLost', label: 'City Battles Lost', kind: 'number' },
-                { key: 'sfParticipations', label: 'Strike Force', kind: 'number' },
+                { key: 'cityBattles', label: 'City Battles', kind: 'number' },
                 { key: 'sfCityBattles', label: 'SF City Battles', kind: 'number' },
                 { key: 'cityKillsAttack', label: 'City Unit Kills', kind: 'number' },
                 { key: 'cityCapturesAttack', label: 'City Unit Captures', kind: 'number' }
@@ -91,7 +91,7 @@
     const TAB_INTRO = {
         personal: {
             eyebrow: 'Personal Rankings',
-            copy: 'Your full participation ledger — every score, battle, and strike force record tied to your commander.'
+            copy: 'Your full participation ledger — every score, battle, and city operation tied to your commander.'
         },
         national: {
             eyebrow: 'National Rankings',

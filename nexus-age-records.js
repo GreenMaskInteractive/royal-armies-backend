@@ -178,6 +178,11 @@ function sortGlobalNationRows(rows, rankingLive) {
     }));
 }
 
+function resolveCityBattlesTotal(cityBattlesWon, cityBattlesLost) {
+    if (cityBattlesWon == null && cityBattlesLost == null) return null;
+    return (cityBattlesWon || 0) + (cityBattlesLost || 0);
+}
+
 function buildFullPlayerRecord(commander, resolveDisplayName, rankingContext = {}) {
     const username = String(commander?.username || '').trim();
     const stats = normalizePlayerAgeRecords(commander?.ageRecords);
@@ -211,6 +216,7 @@ function buildFullPlayerRecord(commander, resolveDisplayName, rankingContext = {
         pvpBattlesLost: stats.pvpBattlesLost,
         cityBattlesWon: stats.cityBattlesWon,
         cityBattlesLost: stats.cityBattlesLost,
+        cityBattles: resolveCityBattlesTotal(stats.cityBattlesWon, stats.cityBattlesLost),
         sfParticipations: stats.sfParticipations,
         sfCityBattles: stats.sfCityBattles,
         pvpKillsAttack: stats.pvpKillsAttack,
@@ -229,7 +235,7 @@ function toGlobalPlayerRecord(record) {
         hasJoinedAge: record.hasJoinedAge,
         commanderRankTitle: record.commanderRankTitle,
         globalRanking: record.globalRanking,
-        sfParticipations: record.sfParticipations,
+        cityBattles: record.cityBattles,
         overallPvpScore: record.overallPvpScore,
         overallRankScore: record.overallRankScore,
         pvpBattlesWon: record.pvpBattlesWon,
@@ -248,7 +254,7 @@ function toNationalPlayerRecord(record) {
         commanderRankTitle: record.commanderRankTitle,
         globalRanking: record.globalRanking,
         nationRanking: record.nationRanking,
-        sfParticipations: record.sfParticipations,
+        cityBattles: record.cityBattles,
         cityBattlesWon: record.cityBattlesWon,
         cityBattlesLost: record.cityBattlesLost,
         sfCityBattles: record.sfCityBattles,
