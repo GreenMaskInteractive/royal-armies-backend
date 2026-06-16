@@ -19782,11 +19782,7 @@ html.age-world-map-pan-locked #cursor-click-fx-layer {
 
 .age-world-map-frame.is-color-map-on .age-world-nation-color-fill {
     fill-opacity: 0.88;
-    stroke: rgba(12, 8, 4, 0.42);
-    stroke-width: 1.5px;
-    stroke-opacity: 1;
-    vector-effect: non-scaling-stroke;
-    paint-order: stroke fill;
+    stroke: none;
     opacity: 1 !important;
     visibility: visible !important;
 }
@@ -19803,8 +19799,9 @@ html.age-world-map-pan-locked #cursor-click-fx-layer {
 }
 
 .age-world-map-frame.is-color-map-on .age-world-map-layer--nations path {
-    stroke: rgba(12, 8, 4, 0.55);
-    stroke-width: 1.5px;
+    stroke: none;
+    opacity: 0 !important;
+    visibility: hidden !important;
 }
 
 .age-world-map-frame.is-color-map-on .age-world-map-layer--cities .age-world-city-border-path {
@@ -19816,11 +19813,9 @@ html.age-world-map-pan-locked #cursor-click-fx-layer {
 
 .age-world-map-frame.is-color-map-on .age-world-region-border,
 .age-world-map-frame.is-color-map-on .age-world-map-layer--regions path {
-    stroke: rgba(0, 0, 0, 0.72);
-    stroke-width: 2px;
-    stroke-opacity: 1;
-    opacity: 1 !important;
-    visibility: visible !important;
+    stroke: none;
+    opacity: 0 !important;
+    visibility: hidden !important;
 }
 
 /* Color map: black city strokes for all settlements (diplomacy shown via fills elsewhere). */
