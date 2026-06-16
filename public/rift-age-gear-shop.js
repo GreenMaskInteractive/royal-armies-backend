@@ -903,18 +903,31 @@
         return Math.max(500, deltaGold);
     }
 
+    function formatGearStatToken(key, value) {
+        const qty = Math.max(0, Number(value) || 0);
+        if (!qty) return '';
+        const label = STAT_LABELS[key] || key;
+        if (key === 'injuryMitigation' || key === 'guildXp') {
+            const pct = Math.round(qty * 1000) / 10;
+            const scope = key === 'guildXp'
+                ? ' (city assault & border PvP)'
+                : ' (city assault & border PvP; not training)';
+            return `+${pct}% ${label}${scope}`;
+        }
+        const rounded = Math.round(qty * 10) / 10;
+        if (key === 'command') {
+            return `+${rounded} ${label} (city assault & border PvP attack starting morale)`;
+        }
+        if (key === 'morale') {
+            return `+${rounded} ${label} (morale shock & rout resistance — coming soon)`;
+        }
+        return `+${rounded} ${label}`;
+    }
+
     function formatStatSummary(stats) {
         if (!stats || typeof stats !== 'object') return '';
         return Object.entries(stats)
-            .map(([key, value]) => {
-                const qty = Math.max(0, Number(value) || 0);
-                if (!qty) return '';
-                const label = STAT_LABELS[key] || key;
-                if (key === 'injuryMitigation' || key === 'guildXp') {
-                    return `+${Math.round(qty * 1000) / 10}% ${label}`;
-                }
-                return `+${qty} ${label}`;
-            })
+            .map(([key, value]) => formatGearStatToken(key, value))
             .filter(Boolean)
             .join(' · ');
     }
@@ -1237,14 +1250,9 @@
     function buildLocalGearStatLines(statTotals, slots) {
         const lines = [];
         Object.entries(statTotals || {}).forEach(([key, value]) => {
-            const qty = Math.max(0, Number(value) || 0);
-            if (!qty) return;
-            const label = STAT_LABELS[key] || key;
-            if (key === 'injuryMitigation' || key === 'guildXp') {
-                lines.push({ label, formatted: `+${Math.round(qty * 1000) / 10}% ${label}` });
-            } else {
-                lines.push({ label, formatted: `+${Math.round(qty * 10) / 10} ${label}` });
-            }
+            const formatted = formatGearStatToken(key, value);
+            if (!formatted) return;
+            lines.push({ label: STAT_LABELS[key] || key, formatted });
         });
 
         (slots || []).forEach((slot) => {

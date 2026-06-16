@@ -35,6 +35,11 @@ const STAT_LABELS = Object.freeze({
     guildXp: 'Guild XP'
 });
 
+/** Effective +Command from acquired gear (diminishing cap for PvP assault bonuses). */
+const COMMAND_GEAR_EFFECTIVE_CAP = 12;
+const COMMAND_PVP_STARTING_MORALE_BONUS_CAP = 8;
+const PVP_COMMAND_MORALE_BATTLE_MODES = Object.freeze(['city-assault', 'border-pvp']);
+
 const GEAR_ITEMS = Object.freeze({
     'bm-patrol-blade': {
         name: 'Patrol Blade',
@@ -638,7 +643,49 @@ function formatStatLine(key, value) {
     }
 
     const rounded = Math.round(value * 10) / 10;
+
+    if (key === 'command') {
+        return {
+            key,
+            label,
+            value: rounded,
+            formatted: `+${rounded} ${label} (city assault & border PvP attack starting morale)`
+        };
+    }
+
+    if (key === 'morale') {
+        return {
+            key,
+            label,
+            value: rounded,
+            formatted: `+${rounded} ${label} (morale shock & rout resistance — coming soon)`
+        };
+    }
+
     return { key, label, value: rounded, formatted: `+${rounded} ${label}` };
+}
+
+function resolveEffectiveCommandFromGear(commander) {
+    if (!commanderHasAcquiredGear(commander)) return 0;
+    const totals = buildCommanderEquipmentBonuses(commander);
+    const raw = Math.max(0, Math.floor(Number(totals.command) || 0));
+    return Math.min(COMMAND_GEAR_EFFECTIVE_CAP, raw);
+}
+
+function resolveCommandPvpAttackerStartingMoraleBonus(commander) {
+    const command = resolveEffectiveCommandFromGear(commander);
+    if (!command) return 0;
+    return Math.min(COMMAND_PVP_STARTING_MORALE_BONUS_CAP, Math.floor(command / 2));
+}
+
+function resolveCommandPvpAttackerStartingMorale(commander, baseMorale = 100) {
+    const base = Math.max(0, Math.floor(Number(baseMorale) || 0));
+    return base + resolveCommandPvpAttackerStartingMoraleBonus(commander);
+}
+
+function isPvpCommandMoraleBattleMode(trainingMode) {
+    const mode = String(trainingMode || '').trim().toLowerCase();
+    return PVP_COMMAND_MORALE_BATTLE_MODES.includes(mode);
 }
 
 const BATTLE_EFFECT_COPY = Object.freeze({
@@ -745,11 +792,18 @@ function buildCommanderAgeGearSeedPatch() {
 module.exports = {
     GEAR_SLOT_ORDER,
     GEAR_ITEMS,
+    COMMAND_GEAR_EFFECTIVE_CAP,
+    COMMAND_PVP_STARTING_MORALE_BONUS_CAP,
+    PVP_COMMAND_MORALE_BATTLE_MODES,
     buildCommanderGearPanelPayload,
     buildCommanderEquipmentBonuses,
     buildCommanderAgeGearSeedPatch,
     resolveEquippedSlotMap,
     commanderHasAcquiredGear,
+    resolveEffectiveCommandFromGear,
+    resolveCommandPvpAttackerStartingMoraleBonus,
+    resolveCommandPvpAttackerStartingMorale,
+    isPvpCommandMoraleBattleMode,
     resolveAcquiredGuildTrainingXpMultiplier,
     resolvePreviewGearLoadout
 };

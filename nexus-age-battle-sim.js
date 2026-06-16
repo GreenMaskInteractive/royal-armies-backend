@@ -20,6 +20,10 @@ const fs = require('fs');
 const { loadUnitPurchaseCatalog, getCatalogUnitById } = require('./nexus-age-recruitment');
 const { resolveCommanderAgeArmy, normalizeAgeArmy } = require('./nexus-age-roster');
 const {
+    resolveCommandPvpAttackerStartingMoraleBonus,
+    isPvpCommandMoraleBattleMode
+} = require('./nexus-age-commander-gear');
+const {
     LANE_IDS,
     SETTLEMENT_DEFENSE_IDS,
     buildBattleContextFromCommander,
@@ -743,6 +747,22 @@ function buildForceSummary(army) {
     };
 }
 
+function applyPvpAttackerCommandStartingMorale(attackerArmy, trainingMode, battleOptions, log) {
+    if (!attackerArmy || battleOptions.disableCombatModifiers) return;
+    if (!isPvpCommandMoraleBattleMode(trainingMode)) return;
+
+    const attackerCommander = battleOptions.attackerCommander;
+    const moraleBonus = resolveCommandPvpAttackerStartingMoraleBonus(attackerCommander);
+    if (!moraleBonus) return;
+
+    attackerArmy.morale = MORALE_START + moraleBonus;
+    if (Array.isArray(log)) {
+        log.push(
+            `Command presence (+${moraleBonus} starting morale) — your assault opens at ${attackerArmy.morale} morale.`
+        );
+    }
+}
+
 function simulateTrainingBattle(attackerStacks, defenderStacks, catalog, trainingMode = 'street-patrol', battleOptions = {}) {
     const catalogRef = catalog || loadUnitPurchaseCatalog();
     const commander = buildBattleArmy('You', attackerStacks, catalogRef);
@@ -759,6 +779,8 @@ function simulateTrainingBattle(attackerStacks, defenderStacks, catalog, trainin
             log: ['Training battle requires units on both sides.']
         };
     }
+
+    applyPvpAttackerCommandStartingMorale(commander, trainingMode, battleOptions, log);
 
     const stripCombatModifiers = Boolean(battleOptions.disableCombatModifiers);
     const attackerContext = battleOptions.attackerContext

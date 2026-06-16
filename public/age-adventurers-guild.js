@@ -929,10 +929,22 @@
                 const numeric = Number(value) || 0;
                 if (!numeric) return '';
                 if (key === 'injuryMitigation' || key === 'guildXp') {
-                    return `+${Math.round(numeric * 1000) / 10}% ${key === 'guildXp' ? 'Guild XP' : 'Injury Mitigation'}`;
+                    const pct = Math.round(numeric * 1000) / 10;
+                    const scope = key === 'guildXp'
+                        ? ' (city assault & border PvP)'
+                        : ' (city assault & border PvP; not training)';
+                    const label = key === 'guildXp' ? 'Guild XP' : 'Injury Mitigation';
+                    return `+${pct}% ${label}${scope}`;
+                }
+                const rounded = Math.round(numeric * 10) / 10;
+                if (key === 'command') {
+                    return `+${rounded} Command (city assault & border PvP attack starting morale)`;
+                }
+                if (key === 'morale') {
+                    return `+${rounded} Morale (morale shock & rout resistance — coming soon)`;
                 }
                 const label = key.charAt(0).toUpperCase() + key.slice(1);
-                return `+${Math.round(numeric * 10) / 10} ${label}`;
+                return `+${rounded} ${label}`;
             })
             .filter(Boolean)
             .join(' · ');
