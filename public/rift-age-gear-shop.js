@@ -1218,15 +1218,117 @@
         return parts.join(' · ');
     }
 
-    function renderForgeStatRows(stats) {
+    function formatInspectStatParts(key, value) {
+        const qty = Math.max(0, Number(value) || 0);
+        if (!qty) return null;
+        const label = STAT_LABELS[key] || key;
+        if (key === 'injuryMitigation' || key === 'guildXp') {
+            const pct = Math.round(qty * 1000) / 10;
+            return {
+                label,
+                value: `+${pct}%`,
+                note: key === 'guildXp' ? 'City assault & border PvP' : 'City assault & border PvP; not training'
+            };
+        }
+        const rounded = Math.round(qty * 10) / 10;
+        if (key === 'command') {
+            return { label, value: `+${rounded}`, note: 'PvP attack starting morale' };
+        }
+        if (key === 'morale') {
+            return { label, value: `+${rounded}`, note: 'Shock & rout resistance (coming soon)' };
+        }
+        return { label, value: `+${rounded}`, note: '' };
+    }
+
+    function renderForgeStatTable(stats) {
         if (!stats || typeof stats !== 'object') return '';
         const rows = Object.entries(stats)
-            .map(([key, value]) => formatGearStatToken(key, value))
+            .map(([key, value]) => formatInspectStatParts(key, value))
             .filter(Boolean)
-            .map((line) => `<li class="age-gear-shop-inspect-stat">${escapeHtml(line)}</li>`)
+            .map((row) => (
+                '<div class="age-gear-shop-inspect-stat-row">'
+                + `<dt class="age-gear-shop-inspect-stat-label">${escapeHtml(row.label)}</dt>`
+                + '<dd class="age-gear-shop-inspect-stat-value">'
+                + `<span class="age-gear-shop-inspect-stat-qty">${escapeHtml(row.value)}</span>`
+                + (row.note ? `<span class="age-gear-shop-inspect-stat-note">${escapeHtml(row.note)}</span>` : '')
+                + '</dd>'
+                + '</div>'
+            ))
             .join('');
         if (!rows) return '';
-        return `<ul class="age-gear-shop-inspect-stat-list">${rows}</ul>`;
+        return (
+            '<section class="age-gear-shop-inspect-section" aria-labelledby="age-gear-shop-inspect-stats-title">'
+            + '<h4 id="age-gear-shop-inspect-stats-title" class="age-gear-shop-inspect-section-title">Attributes</h4>'
+            + `<dl class="age-gear-shop-inspect-stat-grid">${rows}</dl>`
+            + '</section>'
+        );
+    }
+
+    function formatRarityLabel(rarity) {
+        const id = String(rarity || 'common').trim().toLowerCase();
+        return id.charAt(0).toUpperCase() + id.slice(1);
+    }
+
+    function resolveForgeInspectStatus(item, state, rank, isTool) {
+        const owned = isTool ? resolveOwnedToolSet(state).has(item.id) : resolveOwnedGearSet(state).has(item.id);
+        const equipped = !isTool && isEquipped(state, item.id);
+        const rankLocked = rank < item.equipMinRank;
+        if (equipped) {
+            return { id: 'equipped', label: 'Equipped' };
+        }
+        if (owned && isTool) {
+            return { id: 'owned', label: 'Owned' };
+        }
+        if (owned) {
+            return rankLocked
+                ? { id: 'owned-locked', label: 'Owned · Rank Locked' }
+                : { id: 'owned', label: 'Owned' };
+        }
+        if (rankLocked) {
+            return { id: 'rank-locked', label: 'Rank Locked' };
+        }
+        return { id: 'for-sale', label: 'For Sale' };
+    }
+
+    function renderForgeInspectTags(item, state, rank, isTool, handMeta, subcategory) {
+        const tags = [];
+        const status = resolveForgeInspectStatus(item, state, rank, isTool);
+        tags.push(`<span class="age-gear-shop-inspect-tag is-status-${escapeHtml(status.id)}">${escapeHtml(status.label)}</span>`);
+        if (!isTool && item.rarity) {
+            tags.push(`<span class="age-gear-shop-inspect-tag is-rarity-${escapeHtml(item.rarity)}">${escapeHtml(formatRarityLabel(item.rarity))}</span>`);
+        }
+        if (!isTool && item.tier) {
+            tags.push(`<span class="age-gear-shop-inspect-tag is-tier">Tier ${escapeHtml(item.tier)}</span>`);
+        }
+        if (handMeta) {
+            tags.push(`<span class="age-gear-shop-inspect-tag is-hand">${escapeHtml(handMeta)}</span>`);
+        }
+        tags.push(`<span class="age-gear-shop-inspect-tag is-category">${escapeHtml(subcategory.label)}</span>`);
+        return `<div class="age-gear-shop-inspect-tags">${tags.join('')}</div>`;
+    }
+
+    function renderForgeInspectFooter(item, state, rank, isTool) {
+        const owned = isTool ? resolveOwnedToolSet(state).has(item.id) : resolveOwnedGearSet(state).has(item.id);
+        const equipped = !isTool && isEquipped(state, item.id);
+        const showPrice = !owned && !equipped;
+        const priceBlock = showPrice
+            ? (
+                '<div class="age-gear-shop-inspect-price-block">'
+                + '<span class="age-gear-shop-inspect-price-label">Purchase Cost</span>'
+                + `<span class="age-gear-shop-inspect-price-value">${escapeHtml(formatGold(item.purchaseGold))} <span class="age-gear-shop-inspect-price-unit">gold</span></span>`
+                + '</div>'
+            )
+            : (
+                '<div class="age-gear-shop-inspect-price-block is-owned">'
+                + `<span class="age-gear-shop-inspect-price-label">${equipped ? 'Currently Equipped' : 'In Your Inventory'}</span>`
+                + '</div>'
+            );
+        return (
+            '<footer class="age-gear-shop-inspect-footer">'
+            + priceBlock
+            + renderForgeActionPanel(item, state, rank, isTool)
+            + '</footer>'
+        );
     }
 
     function renderForgeItemCard(item, state, rank, isTool) {
@@ -1285,27 +1387,27 @@
         const canAfford = gold >= item.purchaseGold;
 
         if (equipped) {
-            return '<div class="age-gear-shop-detail-actions age-gear-shop-inspect-actions"><span class="age-defense-upgrade-status">Equipped</span></div>';
+            return '<div class="age-gear-shop-detail-actions age-gear-shop-inspect-actions"><span class="age-gear-shop-inspect-action-status is-equipped">Equipped</span></div>';
         }
         if (owned && !isTool) {
             if (!canEquip) {
-                return `<div class="age-gear-shop-detail-actions age-gear-shop-inspect-actions"><span class="age-defense-upgrade-status">Equip at ${escapeHtml(resolveRankThresholdLabel(item.equipMinRank))}</span></div>`;
+                return `<div class="age-gear-shop-detail-actions age-gear-shop-inspect-actions"><span class="age-gear-shop-inspect-action-status is-locked">Equip at ${escapeHtml(resolveRankThresholdLabel(item.equipMinRank))}</span></div>`;
             }
             return (
                 '<div class="age-gear-shop-detail-actions age-gear-shop-inspect-actions">'
-                + `<button type="button" class="age-barracks-purchase-btn is-ready" data-forge-equip="${escapeHtml(item.id)}">Equip</button>`
+                + `<button type="button" class="age-barracks-purchase-btn is-ready age-gear-shop-inspect-action-btn" data-forge-equip="${escapeHtml(item.id)}">Equip Gear</button>`
                 + '</div>'
             );
         }
         if (owned && isTool) {
-            return '<div class="age-gear-shop-detail-actions age-gear-shop-inspect-actions"><span class="age-defense-upgrade-status">Owned</span></div>';
+            return '<div class="age-gear-shop-detail-actions age-gear-shop-inspect-actions"><span class="age-gear-shop-inspect-action-status is-owned">Owned — stowed in inventory</span></div>';
         }
         const purchaseAttr = isTool ? 'data-forge-tool-purchase' : 'data-forge-purchase';
         const disabled = canAfford ? '' : ' disabled';
         return (
             '<div class="age-gear-shop-detail-actions age-gear-shop-inspect-actions">'
-            + `<button type="button" class="age-barracks-purchase-btn${canAfford ? ' is-ready' : ''}" ${purchaseAttr}="${escapeHtml(item.id)}"${disabled}>`
-            + `Purchase — ${escapeHtml(formatGold(item.purchaseGold))}`
+            + `<button type="button" class="age-barracks-purchase-btn${canAfford ? ' is-ready' : ''} age-gear-shop-inspect-action-btn" ${purchaseAttr}="${escapeHtml(item.id)}"${disabled}>`
+            + `Purchase`
             + '</button>'
             + '</div>'
         );
@@ -1317,8 +1419,12 @@
         panel.classList.remove('is-open');
         panel.innerHTML = (
             '<div class="age-gear-shop-inspect-empty">'
-            + '<p class="age-gear-shop-inspect-empty-title">Inspect Equipment</p>'
-            + '<p class="age-gear-shop-inspect-empty-copy">Select an item from the list to view its artwork, stats, and purchase options.</p>'
+            + '<div class="age-gear-shop-inspect-empty-frame" aria-hidden="true">'
+            + '<span class="age-gear-shop-inspect-empty-glyph">⧉</span>'
+            + '</div>'
+            + '<p class="age-gear-shop-inspect-empty-eyebrow">Equipment Inspector</p>'
+            + '<p class="age-gear-shop-inspect-empty-title">No Item Selected</p>'
+            + '<p class="age-gear-shop-inspect-empty-copy">Choose gear from the catalog to review artwork, attributes, requirements, and purchase options.</p>'
             + '</div>'
         );
     }
@@ -1332,6 +1438,7 @@
         }
 
         panel.classList.add('is-open');
+        const rarity = String(item.rarity || 'common').trim().toLowerCase();
         const imageSrc = resolveForgeItemImage(item, isTool);
         const subcategory = resolveForgeSubcategoryMeta(item.forgeCategory || (isTool ? 'tools' : 'weapons'));
         const progress = !isTool && BATTLE_XP_SLOTS.has(item.slot)
@@ -1341,47 +1448,88 @@
             ? GearEquipRules.formatHandSlotMeta(item)
             : '';
         const battleEffect = String(item.battleEffect || '').trim();
-        const battleEffectLine = battleEffect
-            ? `<p class="age-gear-shop-inspect-effect"><span class="age-gear-shop-inspect-label">Battle Effect</span> ${escapeHtml(battleEffect.replace(/-/g, ' ').replace(/\b\w/g, (char) => char.toUpperCase()))}</p>`
+        const slotLabel = !isTool && item.slot
+            ? (GEAR_SLOT_LABELS[item.slot] || item.slot)
+            : subcategory.label;
+        const statTable = renderForgeStatTable(item.stats);
+        const battleSection = battleEffect
+            ? (
+                '<section class="age-gear-shop-inspect-section" aria-labelledby="age-gear-shop-inspect-combat-title">'
+                + '<h4 id="age-gear-shop-inspect-combat-title" class="age-gear-shop-inspect-section-title">Combat Effect</h4>'
+                + '<div class="age-gear-shop-inspect-callout is-combat">'
+                + `<p class="age-gear-shop-inspect-callout-title">${escapeHtml(battleEffect.replace(/-/g, ' ').replace(/\b\w/g, (char) => char.toUpperCase()))}</p>`
+                + '<p class="age-gear-shop-inspect-callout-copy">Active in city assault and border PvP when equipped in main hand.</p>'
+                + '</div>'
+                + '</section>'
+            )
             : '';
-        const tierLine = !isTool && item.tier
-            ? `<p class="age-gear-shop-inspect-tier">Tier ${escapeHtml(item.tier)} · ${escapeHtml(item.rarity || 'common')}</p>`
-            : '';
-        const slotLine = !isTool && item.slot
-            ? `<p class="age-gear-shop-inspect-slot">${escapeHtml(GEAR_SLOT_LABELS[item.slot] || item.slot)} · ${escapeHtml(subcategory.label)}</p>`
-            : `<p class="age-gear-shop-inspect-slot">${escapeHtml(subcategory.label)}</p>`;
-        const handLine = handMeta
-            ? `<p class="age-gear-shop-inspect-hand">${escapeHtml(handMeta)}</p>`
-            : '';
-        const masteryLine = progress
-            ? `<p class="age-gear-shop-inspect-mastery">${escapeHtml(formatGearLevelLabel(progress.level))}`
+        const masterySection = progress
+            ? (
+                '<section class="age-gear-shop-inspect-section" aria-labelledby="age-gear-shop-inspect-mastery-title">'
+                + '<h4 id="age-gear-shop-inspect-mastery-title" class="age-gear-shop-inspect-section-title">Mastery</h4>'
+                + '<dl class="age-gear-shop-inspect-meta-grid">'
+                + '<div class="age-gear-shop-inspect-meta-row">'
+                + '<dt>Level</dt>'
+                + `<dd>${escapeHtml(formatGearLevelLabel(progress.level))}</dd>`
+                + '</div>'
                 + (progress.level < MAX_GEAR_LEVEL
-                    ? ` · ${escapeHtml(formatGearXpProgress(state, item.id))}`
-                    : ' · Max level')
-                + '</p>'
+                    ? (
+                        '<div class="age-gear-shop-inspect-meta-row">'
+                        + '<dt>Progress</dt>'
+                        + `<dd>${escapeHtml(formatGearXpProgress(state, item.id))}</dd>`
+                        + '</div>'
+                    )
+                    : (
+                        '<div class="age-gear-shop-inspect-meta-row">'
+                        + '<dt>Progress</dt>'
+                        + '<dd>Maximum mastery reached</dd>'
+                        + '</div>'
+                    ))
+                + '</dl>'
+                + '</section>'
+            )
             : '';
-        const rankLine = `<p class="age-gear-shop-inspect-rank">Equip at ${escapeHtml(resolveRankThresholdLabel(item.equipMinRank))}</p>`;
-        const priceLine = `<p class="age-gear-shop-inspect-price">${escapeHtml(formatGold(item.purchaseGold))} gold</p>`;
-        const statRows = renderForgeStatRows(item.stats);
+        const requirementsSection = (
+            '<section class="age-gear-shop-inspect-section" aria-labelledby="age-gear-shop-inspect-req-title">'
+            + '<h4 id="age-gear-shop-inspect-req-title" class="age-gear-shop-inspect-section-title">Requirements</h4>'
+            + '<dl class="age-gear-shop-inspect-meta-grid">'
+            + '<div class="age-gear-shop-inspect-meta-row">'
+            + '<dt>Equip Rank</dt>'
+            + `<dd>${escapeHtml(resolveRankThresholdLabel(item.equipMinRank))}</dd>`
+            + '</div>'
+            + (!isTool && item.slot
+                ? (
+                    '<div class="age-gear-shop-inspect-meta-row">'
+                    + '<dt>Equipment Slot</dt>'
+                    + `<dd>${escapeHtml(slotLabel)}</dd>`
+                    + '</div>'
+                )
+                : '')
+            + '</dl>'
+            + '</section>'
+        );
 
         panel.innerHTML = (
-            '<div class="age-gear-shop-inspect-inner">'
-            + `<div class="age-gear-shop-inspect-art is-rarity-${escapeHtml(item.rarity || 'common')}">`
+            `<div class="age-gear-shop-inspect-inner is-rarity-${escapeHtml(rarity)}">`
+            + '<div class="age-gear-shop-inspect-scroll">'
+            + `<div class="age-gear-shop-inspect-art is-rarity-${escapeHtml(rarity)}">`
             + `<img class="age-gear-shop-inspect-art-img" src="${escapeHtml(imageSrc)}" alt="${escapeHtml(item.name)}" loading="lazy" decoding="async">`
             + '</div>'
-            + '<div class="age-gear-shop-inspect-body">'
+            + '<header class="age-gear-shop-inspect-identity">'
+            + `<p class="age-gear-shop-inspect-eyebrow">${escapeHtml(subcategory.label)}${!isTool && item.slot ? ` · ${escapeHtml(slotLabel)}` : ''}</p>`
             + `<h3 class="age-gear-shop-inspect-title">${escapeHtml(item.name)}</h3>`
-            + tierLine
-            + slotLine
-            + handLine
+            + renderForgeInspectTags(item, state, rank, isTool, handMeta, subcategory)
+            + '</header>'
+            + '<section class="age-gear-shop-inspect-section" aria-labelledby="age-gear-shop-inspect-overview-title">'
+            + '<h4 id="age-gear-shop-inspect-overview-title" class="age-gear-shop-inspect-section-title">Overview</h4>'
             + `<p class="age-gear-shop-inspect-desc">${escapeHtml(item.desc)}</p>`
-            + (statRows ? `<div class="age-gear-shop-inspect-stats-block"><p class="age-gear-shop-inspect-label">Stats</p>${statRows}</div>` : '')
-            + battleEffectLine
-            + masteryLine
-            + rankLine
-            + priceLine
-            + renderForgeActionPanel(item, state, rank, isTool)
+            + '</section>'
+            + statTable
+            + battleSection
+            + masterySection
+            + requirementsSection
             + '</div>'
+            + renderForgeInspectFooter(item, state, rank, isTool)
             + '</div>'
         );
     }

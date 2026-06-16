@@ -1002,8 +1002,415 @@
     flex-direction: column;
     border: 1px solid rgba(212, 175, 90, 0.28);
     border-radius: 12px;
-    background: linear-gradient(180deg, rgba(28, 22, 16, 0.96), rgba(10, 8, 6, 0.98));
-    box-shadow: inset 0 0 0 1px rgba(255, 217, 120, 0.06);
+    background: linear-gradient(180deg, rgba(24, 19, 14, 0.98), rgba(8, 7, 5, 0.99));
+    box-shadow:
+        inset 0 1px 0 rgba(255, 217, 120, 0.08),
+        0 8px 28px rgba(0, 0, 0, 0.35);
+    overflow: hidden;
+    padding: 0 !important;
+}
+
+.age-settlement-venue-workspace .age-gear-shop-inspect-empty {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    min-height: 100%;
+    padding: 36px 28px;
+    text-align: center;
+    gap: 8px;
+}
+
+.age-settlement-venue-workspace .age-gear-shop-inspect-empty-frame {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 88px;
+    height: 88px;
+    margin-bottom: 8px;
+    border-radius: 12px;
+    border: 1px dashed rgba(212, 175, 90, 0.28);
+    background: rgba(0, 0, 0, 0.28);
+}
+
+.age-settlement-venue-workspace .age-gear-shop-inspect-empty-glyph {
+    font-size: 2rem;
+    color: rgba(255, 217, 120, 0.42);
+}
+
+.age-settlement-venue-workspace .age-gear-shop-inspect-empty-eyebrow {
+    margin: 0;
+    font-size: 0.68rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: rgba(255, 217, 120, 0.55);
+}
+
+.age-settlement-venue-workspace .age-gear-shop-inspect-empty-title {
+    margin: 0;
+    font-size: 1.05rem;
+    letter-spacing: 0.04em;
+    color: rgba(255, 217, 120, 0.88);
+}
+
+.age-settlement-venue-workspace .age-gear-shop-inspect-empty-copy {
+    margin: 0;
+    max-width: 300px;
+    font-size: 0.8rem;
+    line-height: 1.55;
+    color: rgba(236, 220, 180, 0.58);
+}
+
+.age-settlement-venue-workspace .age-gear-shop-inspect-inner {
+    display: flex;
+    flex-direction: column;
+    min-height: 100%;
+    height: 100%;
+}
+
+.age-settlement-venue-workspace .age-gear-shop-inspect-inner.is-rarity-uncommon {
+    box-shadow: inset 3px 0 0 rgba(120, 188, 255, 0.45);
+}
+
+.age-settlement-venue-workspace .age-gear-shop-inspect-inner.is-rarity-rare {
+    box-shadow: inset 3px 0 0 rgba(255, 217, 120, 0.55);
+}
+
+.age-settlement-venue-workspace .age-gear-shop-inspect-inner.is-rarity-epic {
+    box-shadow: inset 3px 0 0 rgba(200, 140, 255, 0.55);
+}
+
+.age-settlement-venue-workspace .age-gear-shop-inspect-scroll {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-x: hidden;
+    overflow-y: auto;
+    padding-bottom: 4px;
+}
+
+.age-settlement-venue-workspace .age-gear-shop-inspect-art {
+    position: relative;
+    flex-shrink: 0;
+    height: 200px;
+    border-bottom: 1px solid rgba(212, 175, 90, 0.16);
+    background:
+        radial-gradient(circle at 50% 28%, rgba(255, 217, 120, 0.09) 0%, transparent 64%),
+        linear-gradient(180deg, rgba(0, 0, 0, 0.18), rgba(0, 0, 0, 0.42));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px 20px;
+}
+
+.age-settlement-venue-workspace .age-gear-shop-inspect-art.is-rarity-uncommon {
+    background:
+        radial-gradient(circle at 50% 28%, rgba(120, 188, 255, 0.1) 0%, transparent 64%),
+        linear-gradient(180deg, rgba(0, 0, 0, 0.18), rgba(0, 0, 0, 0.42));
+}
+
+.age-settlement-venue-workspace .age-gear-shop-inspect-art.is-rarity-rare {
+    background:
+        radial-gradient(circle at 50% 28%, rgba(255, 217, 120, 0.12) 0%, transparent 64%),
+        linear-gradient(180deg, rgba(0, 0, 0, 0.18), rgba(0, 0, 0, 0.42));
+}
+
+.age-settlement-venue-workspace .age-gear-shop-inspect-art.is-rarity-epic {
+    background:
+        radial-gradient(circle at 50% 28%, rgba(200, 140, 255, 0.12) 0%, transparent 64%),
+        linear-gradient(180deg, rgba(0, 0, 0, 0.18), rgba(0, 0, 0, 0.42));
+}
+
+.age-settlement-venue-workspace .age-gear-shop-inspect-art-img {
+    width: 100%;
+    max-width: 180px;
+    max-height: 168px;
+    object-fit: contain;
+    display: block;
+    filter: drop-shadow(0 12px 20px rgba(0, 0, 0, 0.5));
+}
+
+.age-settlement-venue-workspace .age-gear-shop-inspect-identity {
+    padding: 16px 18px 12px;
+    border-bottom: 1px solid rgba(212, 175, 90, 0.12);
+    background: rgba(0, 0, 0, 0.16);
+}
+
+.age-settlement-venue-workspace .age-gear-shop-inspect-eyebrow {
+    margin: 0 0 6px;
+    font-size: 0.68rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: rgba(236, 220, 180, 0.52);
+}
+
+.age-settlement-venue-workspace .age-gear-shop-inspect-title {
+    margin: 0 0 10px;
+    font-size: 1.2rem;
+    line-height: 1.22;
+    font-weight: 700;
+    color: #ffd978;
+}
+
+.age-settlement-venue-workspace .age-gear-shop-inspect-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.age-settlement-venue-workspace .age-gear-shop-inspect-tag {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 9px;
+    border-radius: 999px;
+    border: 1px solid rgba(212, 175, 90, 0.22);
+    background: rgba(0, 0, 0, 0.28);
+    font-size: 0.66rem;
+    line-height: 1.2;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: rgba(236, 220, 180, 0.78);
+    white-space: nowrap;
+}
+
+.age-settlement-venue-workspace .age-gear-shop-inspect-tag.is-status-equipped {
+    border-color: rgba(255, 217, 120, 0.45);
+    color: #ffd978;
+    background: rgba(255, 217, 120, 0.1);
+}
+
+.age-settlement-venue-workspace .age-gear-shop-inspect-tag.is-status-owned,
+.age-settlement-venue-workspace .age-gear-shop-inspect-tag.is-status-owned-locked {
+    border-color: rgba(120, 188, 255, 0.35);
+    color: #b8dcff;
+}
+
+.age-settlement-venue-workspace .age-gear-shop-inspect-tag.is-status-rank-locked {
+    border-color: rgba(255, 160, 120, 0.35);
+    color: #ffb090;
+}
+
+.age-settlement-venue-workspace .age-gear-shop-inspect-tag.is-rarity-uncommon {
+    border-color: rgba(120, 188, 255, 0.35);
+    color: #b8dcff;
+}
+
+.age-settlement-venue-workspace .age-gear-shop-inspect-tag.is-rarity-rare {
+    border-color: rgba(255, 217, 120, 0.42);
+    color: #ffd978;
+}
+
+.age-settlement-venue-workspace .age-gear-shop-inspect-tag.is-rarity-epic {
+    border-color: rgba(200, 140, 255, 0.42);
+    color: #ddb8ff;
+}
+
+.age-settlement-venue-workspace .age-gear-shop-inspect-section {
+    padding: 14px 18px;
+    border-bottom: 1px solid rgba(212, 175, 90, 0.1);
+}
+
+.age-settlement-venue-workspace .age-gear-shop-inspect-section:last-child {
+    border-bottom: none;
+}
+
+.age-settlement-venue-workspace .age-gear-shop-inspect-section-title {
+    margin: 0 0 10px;
+    font-size: 0.68rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: rgba(255, 217, 120, 0.68);
+    font-weight: 700;
+}
+
+.age-settlement-venue-workspace .age-gear-shop-inspect-desc {
+    margin: 0;
+    font-size: 0.82rem;
+    line-height: 1.58;
+    color: rgba(236, 220, 180, 0.76);
+}
+
+.age-settlement-venue-workspace .age-gear-shop-inspect-stat-grid,
+.age-settlement-venue-workspace .age-gear-shop-inspect-meta-grid {
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    border: 1px solid rgba(212, 175, 90, 0.14);
+    border-radius: 8px;
+    overflow: hidden;
+    background: rgba(0, 0, 0, 0.22);
+}
+
+.age-settlement-venue-workspace .age-gear-shop-inspect-stat-row,
+.age-settlement-venue-workspace .age-gear-shop-inspect-meta-row {
+    display: grid;
+    grid-template-columns: minmax(108px, 38%) minmax(0, 1fr);
+    gap: 10px;
+    align-items: start;
+    padding: 9px 12px;
+    border-bottom: 1px solid rgba(212, 175, 90, 0.08);
+}
+
+.age-settlement-venue-workspace .age-gear-shop-inspect-stat-row:last-child,
+.age-settlement-venue-workspace .age-gear-shop-inspect-meta-row:last-child {
+    border-bottom: none;
+}
+
+.age-settlement-venue-workspace .age-gear-shop-inspect-stat-label,
+.age-settlement-venue-workspace .age-gear-shop-inspect-meta-row dt {
+    margin: 0;
+    font-size: 0.72rem;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: rgba(236, 220, 180, 0.55);
+    font-weight: 600;
+}
+
+.age-settlement-venue-workspace .age-gear-shop-inspect-stat-value,
+.age-settlement-venue-workspace .age-gear-shop-inspect-meta-row dd {
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    text-align: right;
+}
+
+.age-settlement-venue-workspace .age-gear-shop-inspect-stat-qty,
+.age-settlement-venue-workspace .age-gear-shop-inspect-meta-row dd {
+    font-size: 0.84rem;
+    line-height: 1.3;
+    color: rgba(120, 188, 255, 0.95);
+    font-weight: 700;
+}
+
+.age-settlement-venue-workspace .age-gear-shop-inspect-meta-row dd {
+    color: rgba(236, 220, 180, 0.88);
+}
+
+.age-settlement-venue-workspace .age-gear-shop-inspect-stat-note {
+    font-size: 0.68rem;
+    line-height: 1.35;
+    color: rgba(236, 220, 180, 0.48);
+    font-weight: 400;
+}
+
+.age-settlement-venue-workspace .age-gear-shop-inspect-callout {
+    padding: 10px 12px;
+    border-radius: 8px;
+    border: 1px solid rgba(212, 175, 90, 0.18);
+    background: rgba(0, 0, 0, 0.24);
+}
+
+.age-settlement-venue-workspace .age-gear-shop-inspect-callout.is-combat {
+    border-color: rgba(255, 160, 120, 0.28);
+    background: rgba(255, 120, 60, 0.06);
+}
+
+.age-settlement-venue-workspace .age-gear-shop-inspect-callout-title {
+    margin: 0 0 4px;
+    font-size: 0.84rem;
+    font-weight: 700;
+    color: #ffb090;
+}
+
+.age-settlement-venue-workspace .age-gear-shop-inspect-callout-copy {
+    margin: 0;
+    font-size: 0.74rem;
+    line-height: 1.45;
+    color: rgba(236, 220, 180, 0.58);
+}
+
+.age-settlement-venue-workspace .age-gear-shop-inspect-footer {
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 14px 18px 16px;
+    border-top: 1px solid rgba(212, 175, 90, 0.22);
+    background:
+        linear-gradient(180deg, rgba(18, 14, 10, 0.96), rgba(8, 7, 5, 0.99));
+    box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.28);
+}
+
+.age-settlement-venue-workspace .age-gear-shop-inspect-price-block {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.age-settlement-venue-workspace .age-gear-shop-inspect-price-block.is-owned {
+    padding-bottom: 2px;
+}
+
+.age-settlement-venue-workspace .age-gear-shop-inspect-price-label {
+    font-size: 0.68rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: rgba(236, 220, 180, 0.52);
+}
+
+.age-settlement-venue-workspace .age-gear-shop-inspect-price-value {
+    font-size: 1.35rem;
+    line-height: 1.1;
+    font-weight: 700;
+    color: #ffd978;
+    letter-spacing: 0.02em;
+}
+
+.age-settlement-venue-workspace .age-gear-shop-inspect-price-unit {
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: rgba(255, 217, 120, 0.72);
+    text-transform: lowercase;
+}
+
+.age-settlement-venue-workspace .age-gear-shop-inspect-actions {
+    margin: 0;
+    width: 100%;
+}
+
+.age-settlement-venue-workspace .age-gear-shop-inspect-actions .age-gear-shop-inspect-action-btn {
+    width: 100%;
+    justify-content: center;
+}
+
+.age-settlement-venue-workspace .age-gear-shop-inspect-action-status {
+    display: block;
+    width: 100%;
+    padding: 11px 14px;
+    border-radius: 8px;
+    border: 1px solid rgba(212, 175, 90, 0.22);
+    background: rgba(0, 0, 0, 0.28);
+    text-align: center;
+    font-size: 0.8rem;
+    letter-spacing: 0.04em;
+    color: rgba(236, 220, 180, 0.78);
+}
+
+.age-settlement-venue-workspace .age-gear-shop-inspect-action-status.is-equipped {
+    border-color: rgba(255, 217, 120, 0.38);
+    color: #ffd978;
+    background: rgba(255, 217, 120, 0.08);
+}
+
+.age-settlement-venue-workspace .age-gear-shop-inspect-action-status.is-owned {
+    border-color: rgba(120, 188, 255, 0.28);
+    color: #b8dcff;
+}
+
+.age-settlement-venue-workspace .age-gear-shop-inspect-action-status.is-locked {
+    border-color: rgba(255, 160, 120, 0.28);
+    color: #ffb090;
+}
+
+.age-settlement-venue-workspace .age-gear-shop-inspect-scroll::-webkit-scrollbar {
+    width: 8px;
+}
+
+.age-settlement-venue-workspace .age-gear-shop-inspect-scroll::-webkit-scrollbar-thumb {
+    border-radius: 999px;
+    background: rgba(212, 175, 90, 0.28);
 }
 
 .age-settlement-venue-workspace .age-gear-shop-forge-nav {
@@ -1079,135 +1486,6 @@
     height: 100%;
     object-fit: contain;
     display: block;
-}
-
-.age-settlement-venue-workspace .age-gear-shop-inspect-empty {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    min-height: 100%;
-    padding: 28px 24px;
-    text-align: center;
-    gap: 10px;
-}
-
-.age-settlement-venue-workspace .age-gear-shop-inspect-empty-title {
-    margin: 0;
-    font-size: 1rem;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: rgba(255, 217, 120, 0.82);
-}
-
-.age-settlement-venue-workspace .age-gear-shop-inspect-empty-copy {
-    margin: 0;
-    max-width: 280px;
-    font-size: 0.82rem;
-    line-height: 1.5;
-    color: rgba(236, 220, 180, 0.62);
-}
-
-.age-settlement-venue-workspace .age-gear-shop-inspect-inner {
-    display: flex;
-    flex-direction: column;
-    min-height: 100%;
-}
-
-.age-settlement-venue-workspace .age-gear-shop-inspect-art {
-    position: relative;
-    flex-shrink: 0;
-    height: 240px;
-    border-bottom: 1px solid rgba(212, 175, 90, 0.2);
-    background:
-        radial-gradient(circle at 50% 24%, rgba(255, 217, 120, 0.08) 0%, transparent 62%),
-        rgba(0, 0, 0, 0.35);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 18px;
-}
-
-.age-settlement-venue-workspace .age-gear-shop-inspect-art.is-rarity-uncommon {
-    box-shadow: inset 0 0 0 1px rgba(120, 188, 255, 0.18);
-}
-
-.age-settlement-venue-workspace .age-gear-shop-inspect-art.is-rarity-rare {
-    box-shadow: inset 0 0 0 1px rgba(255, 217, 120, 0.22);
-}
-
-.age-settlement-venue-workspace .age-gear-shop-inspect-art.is-rarity-epic {
-    box-shadow: inset 0 0 0 1px rgba(200, 140, 255, 0.28);
-}
-
-.age-settlement-venue-workspace .age-gear-shop-inspect-art-img {
-    width: 100%;
-    max-width: 220px;
-    max-height: 200px;
-    object-fit: contain;
-    display: block;
-    filter: drop-shadow(0 10px 18px rgba(0, 0, 0, 0.45));
-}
-
-.age-settlement-venue-workspace .age-gear-shop-inspect-body {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    padding: 18px 20px 22px;
-}
-
-.age-settlement-venue-workspace .age-gear-shop-inspect-title {
-    margin: 0;
-    font-size: 1.15rem;
-    line-height: 1.25;
-    color: #ffd978;
-}
-
-.age-settlement-venue-workspace .age-gear-shop-inspect-tier,
-.age-settlement-venue-workspace .age-gear-shop-inspect-slot,
-.age-settlement-venue-workspace .age-gear-shop-inspect-hand,
-.age-settlement-venue-workspace .age-gear-shop-inspect-desc,
-.age-settlement-venue-workspace .age-gear-shop-inspect-mastery,
-.age-settlement-venue-workspace .age-gear-shop-inspect-rank,
-.age-settlement-venue-workspace .age-gear-shop-inspect-price,
-.age-settlement-venue-workspace .age-gear-shop-inspect-effect {
-    margin: 0;
-    font-size: 0.8rem;
-    line-height: 1.45;
-    color: rgba(236, 220, 180, 0.72);
-}
-
-.age-settlement-venue-workspace .age-gear-shop-inspect-label {
-    margin: 0 0 6px;
-    font-size: 0.72rem;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: rgba(255, 217, 120, 0.72);
-}
-
-.age-settlement-venue-workspace .age-gear-shop-inspect-stat-list {
-    margin: 0;
-    padding: 0;
-    list-style: none;
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-}
-
-.age-settlement-venue-workspace .age-gear-shop-inspect-stat {
-    font-size: 0.8rem;
-    line-height: 1.4;
-    color: rgba(120, 188, 255, 0.9);
-    font-weight: 700;
-}
-
-.age-settlement-venue-workspace .age-gear-shop-inspect-price {
-    color: rgba(255, 217, 120, 0.88);
-    font-weight: 700;
-}
-
-.age-settlement-venue-workspace .age-gear-shop-inspect-actions {
-    margin-top: 8px;
 }
 
 .age-settlement-venue-workspace.is-gear-shop-venue .age-gear-shop-workspace .age-barracks-unit-list-panel {
