@@ -7,7 +7,8 @@ const { normalizeAgeArmy } = require('./nexus-age-roster');
 const {
     buildCommanderUnitLine,
     prependCommanderLine,
-    collectCommanderKills
+    collectCommanderKills,
+    resolveCommanderUsername
 } = require('./nexus-age-battle-report-commander');
 
 function stackKey(stack) {
@@ -99,20 +100,24 @@ function buildReportSide(options = {}) {
         unitLines = buildUnitLinesFromForceSummary(options.forceSummary);
     }
 
-    const commanderLine = buildCommanderUnitLine({
-        commander: options.commander,
-        battleType,
-        sideWon: options.sideWon === true,
-        armyBefore: options.armyBefore,
-        armyAfter: options.armyAfter,
-        endReason: options.endReason || '',
-        vulnerabilityBonus: options.vulnerabilityBonus
-    });
+    const isPlayerSide = options.isPlayerSide === true;
+    const commanderLine = isPlayerSide && resolveCommanderUsername(options.commander)
+        ? buildCommanderUnitLine({
+            commander: options.commander,
+            battleType,
+            sideWon: options.sideWon === true,
+            armyBefore: options.armyBefore,
+            armyAfter: options.armyAfter,
+            endReason: options.endReason || '',
+            vulnerabilityBonus: options.vulnerabilityBonus
+        })
+        : null;
     unitLines = prependCommanderLine(unitLines, commanderLine);
 
     return {
         label,
         username: options.username || null,
+        isPlayerSide,
         unitLines,
         totals: sumSideTotals(unitLines)
     };

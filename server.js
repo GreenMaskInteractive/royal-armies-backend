@@ -6435,12 +6435,14 @@ function buildCityAssaultBattleReport({
         assaultVictory: assaultVictory === true,
         attacker: {
             label: 'Your army',
+            isPlayerSide: true,
             commander: attackerCommander,
             armyBefore,
             armyAfter
         },
         defender: {
             label: 'City garrison',
+            isPlayerSide: false,
             forceSummary: battleResult?.npcForce || null
         },
         xpGain: battleResult?.xpGain,
@@ -6472,6 +6474,7 @@ function buildBorderPvpBattleReport({
         attacker: {
             label: attackerUsername,
             username: attackerUsername,
+            isPlayerSide: true,
             commander: attackerCommander,
             armyBefore: attackerArmyBefore,
             armyAfter: attackerArmyAfter
@@ -6479,6 +6482,7 @@ function buildBorderPvpBattleReport({
         defender: {
             label: defenderUsername,
             username: defenderUsername,
+            isPlayerSide: true,
             commander: defenderCommander,
             armyBefore: defenderArmyBefore,
             armyAfter: defenderArmyAfter

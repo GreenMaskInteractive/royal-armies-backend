@@ -52,7 +52,7 @@ function resolvePveCommanderOutcome({ sideWon, armyBefore, armyAfter, endReason 
             dead: 0,
             captured: 0,
             healthy: 0,
-            note: 'Commander withdrew under heavy pressure but survived (NPC battles rarely claim commanders).'
+            note: 'Commander withdrew under heavy pressure but survived — city garrisons cannot claim player commanders.'
         };
     }
 
@@ -75,7 +75,7 @@ function resolvePveCommanderOutcome({ sideWon, armyBefore, armyAfter, endReason 
         dead: 0,
         captured: 0,
         healthy: 1,
-        note: 'Commander held the field — garrison battles rarely end in commander deaths.'
+        note: 'Commander held the field — only player commanders appear on battle reports; garrisons are units only.'
     };
 }
 
@@ -209,6 +209,7 @@ function prependCommanderLine(unitLines, commanderLine) {
 function collectCommanderKills(attacker, defender) {
     const kills = [];
     [attacker, defender].forEach((side) => {
+        if (!side?.isPlayerSide) return;
         const commanderLine = (side?.unitLines || []).find((line) => line?.isCommander);
         if (commanderLine?.commanderStatus === 'killed' && commanderLine.commanderUsername) {
             kills.push({
@@ -226,6 +227,7 @@ module.exports = {
     prependCommanderLine,
     collectCommanderKills,
     resolveCommanderDisplayName,
+    resolveCommanderUsername,
     computeArmyInjuryRatio,
     isPvpBattleType
 };
