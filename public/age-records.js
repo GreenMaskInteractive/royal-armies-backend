@@ -9,11 +9,29 @@
     const VALID_TABS = new Set(['personal', 'national', 'global']);
     const VALID_GLOBAL_SUBTABS = new Set(['players', 'nations']);
 
+    const NATION_CREST_BY_ID = {
+        dravic: 'images/draviccrest.png',
+        aesthene: 'images/aesthenecrest.png',
+        vaerenth: 'images/vaerenthcrest.png',
+        lyllis: 'images/lylliscrest.png',
+        thruun: 'images/thruuncrest.png',
+        aethelgard: 'images/aethelgardcrest.png',
+        krall: 'images/krallcrest.png',
+        saelthine: 'images/saelthinecrest.png',
+        trex: 'images/trexcrest.png',
+        gorz: 'images/gorzcrest.png',
+        zevros: 'images/zevroscrest.png',
+        skaros: 'images/skaroscrest.png',
+        vaelior: 'images/vaeliorcrest.png',
+        mynor: 'images/mynorcrest.png',
+        khaerant: 'images/khaerantcrest.png'
+    };
+
     const GLOBAL_PLAYER_COLUMNS = [
         { key: 'playerName', label: 'Player Name', kind: 'text', alwaysShow: true },
         { key: 'globalRanking', label: 'Global Ranking', kind: 'ranking', alwaysShow: true },
         { key: 'commanderRankTitle', label: 'Commander', kind: 'text' },
-        { key: 'nationName', label: 'Nation', kind: 'text' },
+        { key: 'nationName', label: 'Nation', kind: 'nation' },
         { key: 'cityBattles', label: 'City Battles', kind: 'number' },
         { key: 'overallPvpScore', label: 'PvP Score', kind: 'number' },
         { key: 'overallRankScore', label: 'Rank Score', kind: 'number' },
@@ -24,7 +42,7 @@
     ];
 
     const GLOBAL_NATION_COLUMNS = [
-        { key: 'nationName', label: 'Nation Name', kind: 'text', alwaysShow: true },
+        { key: 'nationName', label: 'Nation Name', kind: 'nation', alwaysShow: true },
         { key: 'globalRanking', label: 'Global Ranking', kind: 'ranking', alwaysShow: true },
         { key: 'points', label: 'Points', kind: 'number', alwaysShow: true, defaultValue: 0 },
         { key: 'citiesOwned', label: 'Cities (Owned)', kind: 'number', alwaysShow: true, defaultValue: 0 },
@@ -203,6 +221,56 @@
             .filter(Boolean);
     }
 
+    function resolveNationCrestUrl(nationId) {
+        const key = String(nationId || '').trim().toLowerCase();
+        if (NATION_CREST_BY_ID[key]) return NATION_CREST_BY_ID[key];
+        if (key) return `images/${key}crest.png`;
+        return '';
+    }
+
+    function resolveNationCellLabel(row, column, options = {}) {
+        const emptyDisplay = options.emptyDisplay ?? PLACEHOLDER;
+        const rawValue = row[column.key];
+        const hasValue = rawValue !== null && rawValue !== undefined && rawValue !== '';
+        const value = hasValue ? rawValue : column.defaultValue;
+
+        if (column.alwaysShow && column.key) {
+            if (value === null || value === undefined || value === '') {
+                return String(column.defaultValue ?? emptyDisplay);
+            }
+            return formatCellValue(value, 'text', options);
+        }
+
+        if (!hasValue) {
+            return formatCellValue(column.defaultValue, 'text', options);
+        }
+        return formatCellValue(rawValue, 'text', options);
+    }
+
+    function renderNationCellHtml(row, column, options = {}) {
+        const nationId = row.nationId || row[column.nationIdKey || 'nationId'] || '';
+        const label = resolveNationCellLabel(row, column, options);
+        const emptyDisplay = options.emptyDisplay ?? PLACEHOLDER;
+        const isEmpty = label === emptyDisplay || label === RECORDS_EMPTY || label === '';
+
+        if (isEmpty) {
+            return escapeHtml(label || emptyDisplay);
+        }
+
+        const crestUrl = resolveNationCrestUrl(nationId);
+        const nameHtml = escapeHtml(label);
+        if (!crestUrl) {
+            return nameHtml;
+        }
+
+        return (
+            '<span class="age-records-nation-cell">'
+            + `<img class="age-records-nation-crest" src="${escapeHtml(crestUrl)}" alt="" aria-hidden="true" loading="lazy" decoding="async">`
+            + `<span class="age-records-nation-name">${nameHtml}</span>`
+            + '</span>'
+        );
+    }
+
     function resolveCellValue(row, column, options = {}) {
         if (column.kind === 'ranking') {
             if (!recordsRankingLive || row.hasJoinedAge === false) {
@@ -300,14 +368,21 @@
             );
             const rowClass = isSelf ? 'age-records-table-row is-self' : 'age-records-table-row';
             const cells = columns.map((column, columnIndex) => {
-                const cellValue = resolveCellValue(row, column, cellOptions);
+                const isNationCell = column.kind === 'nation';
+                const cellValue = isNationCell
+                    ? resolveNationCellLabel(row, column, cellOptions)
+                    : resolveCellValue(row, column, cellOptions);
+                const cellInner = isNationCell
+                    ? renderNationCellHtml(row, column, cellOptions)
+                    : escapeHtml(cellValue);
                 const isEmptyCell = cellValue === (cellOptions.emptyDisplay ?? PLACEHOLDER);
                 const emptyClass = isEmptyCell ? ' is-empty' : ' has-value';
                 const identityClass = column.alwaysShow || columnIndex === 0 ? ' age-records-table-cell--identity' : '';
                 const rankClass = column.kind === 'ranking' || column.key === 'rank' ? ' age-records-table-cell--rank' : '';
+                const nationClass = isNationCell ? ' age-records-table-cell--nation' : '';
                 return (
-                    `<td class="age-records-table-cell age-records-table-cell--${column.kind}${identityClass}${rankClass}${emptyClass}" data-col="${escapeHtml(column.key)}">`
-                    + `<span class="age-records-table-cell-inner">${escapeHtml(cellValue)}</span>`
+                    `<td class="age-records-table-cell age-records-table-cell--${column.kind}${identityClass}${rankClass}${nationClass}${emptyClass}" data-col="${escapeHtml(column.key)}">`
+                    + `<span class="age-records-table-cell-inner">${cellInner}</span>`
                     + '</td>'
                 );
             }).join('');

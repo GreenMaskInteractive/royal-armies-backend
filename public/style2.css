@@ -18950,6 +18950,39 @@ label.age-council-board-editor-tool {
     line-height: 1.45;
 }
 
+.age-records-table-cell--nation .age-records-table-cell-inner {
+    overflow: visible;
+    text-overflow: clip;
+    white-space: normal;
+}
+
+.age-records-nation-cell {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+    max-width: 100%;
+}
+
+.age-records-nation-crest {
+    width: 28px;
+    height: 28px;
+    flex: 0 0 28px;
+    object-fit: contain;
+}
+
+.age-records-nation-name {
+    min-width: 0;
+    color: inherit;
+    font-family: 'Cinzel', serif;
+    font-size: inherit;
+    line-height: 1.2;
+}
+
+.age-records-table-cell--nation.has-value .age-records-nation-name {
+    color: #f1e0ac;
+}
+
 #age-page-canvas[data-age-view="headquarters"] .age-map-anchor,
 #age-page-canvas[data-age-view="guild-training"] .age-map-anchor {
     display: none;
