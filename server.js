@@ -6390,9 +6390,13 @@ function applyArmyGroupCasualtyUpdates(casualtyUpdates, armiesBefore = null) {
         persistCommanderGuildLedger(entry.username, { ageArmy: entry.ageArmy });
         const beforeArmy = armiesBefore?.[entry.username];
         if (Array.isArray(beforeArmy) && beforeArmy.length) {
+            const snapshot = JSON.parse(JSON.stringify(beforeArmy));
             db.get('commanders')
                 .find({ username: entry.username })
-                .assign({ ageArmyPreBattleSnapshot: JSON.parse(JSON.stringify(beforeArmy)) })
+                .assign({
+                    ageArmyPreBattleSnapshot: snapshot,
+                    ageArmyLastAssaultArmy: snapshot
+                })
                 .write();
         }
     });
@@ -6401,9 +6405,13 @@ function applyArmyGroupCasualtyUpdates(casualtyUpdates, armiesBefore = null) {
 function saveCommanderArmyPreBattleSnapshot(username, army) {
     const canonical = resolveLedgerCommanderUsername(username);
     if (!canonical || !Array.isArray(army)) return;
+    const snapshot = JSON.parse(JSON.stringify(army));
     db.get('commanders')
         .find({ username: canonical })
-        .assign({ ageArmyPreBattleSnapshot: JSON.parse(JSON.stringify(army)) })
+        .assign({
+            ageArmyPreBattleSnapshot: snapshot,
+            ageArmyLastAssaultArmy: snapshot
+        })
         .write();
 }
 
@@ -7604,6 +7612,98 @@ app.post('/api/portal/age/admin/reset-age-rosters', (req, res) => {
     });
 });
 
+function assertMaintenanceDevKey(req, res) {
+    const devKey = String(req.headers['x-dev-key'] || req.body?.devKey || '').trim();
+    if (!devKey || devKey !== MAINTENANCE_ALERT_DEV_KEY) {
+        sendApiError(res, 'NEXUS-AUTH-011');
+        return false;
+    }
+    return true;
+}
+
+function restoreCommanderArmyFromLedgerSnapshot(username) {
+    const targetUsername = resolveLedgerCommanderUsername(username);
+    if (!targetUsername) {
+        return { ok: false, errorCode: 'NEXUS-GEN-004' };
+    }
+
+    let commander = db.get('commanders').find({ username: targetUsername }).value();
+    if (!commander) {
+        return { ok: false, errorCode: 'NEXUS-GEN-004' };
+    }
+
+    ensureCommanderAgeRoster(commander);
+    commander = db.get('commanders').find({ username: targetUsername }).value();
+    const beforeRoster = buildAgeRosterHudPayload(commander);
+    const revivePatch = reviveAdminCommanderArmy(commander);
+
+    db.get('commanders')
+        .find({ username: targetUsername })
+        .assign({ ageArmy: revivePatch.ageArmy })
+        .write();
+
+    commander = db.get('commanders').find({ username: targetUsername }).value();
+    const afterRoster = buildAgeRosterHudPayload(commander);
+
+    return {
+        ok: true,
+        username: targetUsername,
+        restoredFromSnapshot: revivePatch.restoredFromSnapshot,
+        unitsBefore: beforeRoster.unitsTotal,
+        unitsAfter: afterRoster.unitsTotal,
+        unitsUninjured: afterRoster.unitsUninjured,
+        ageArmy: revivePatch.ageArmy,
+        snapshotStacks: Array.isArray(commander?.ageArmyLastAssaultArmy)
+            ? commander.ageArmyLastAssaultArmy.length
+            : (Array.isArray(commander?.ageArmyPreBattleSnapshot)
+                ? commander.ageArmyPreBattleSnapshot.length
+                : 0)
+    };
+}
+
+app.post('/api/portal/admin/restore-commander-army', (req, res) => {
+    if (!assertMaintenanceDevKey(req, res)) return;
+
+    const targetUsername = resolveLedgerCommanderUsername(req.body?.username || 'caleb_admin');
+    const result = restoreCommanderArmyFromLedgerSnapshot(targetUsername);
+    if (!result.ok) {
+        return sendApiError(res, result.errorCode || 'NEXUS-GEN-004');
+    }
+
+    res.json({
+        status: 'ok',
+        action: 'restore-commander-army',
+        ...result
+    });
+});
+
+app.get('/api/portal/admin/commander-army-status', (req, res) => {
+    if (!assertMaintenanceDevKey(req, res)) return;
+
+    const targetUsername = resolveLedgerCommanderUsername(req.query?.username || 'caleb_admin');
+    const commander = db.get('commanders').find({ username: targetUsername }).value();
+    if (!commander) {
+        return sendApiError(res, 'NEXUS-GEN-004');
+    }
+
+    const roster = buildAgeRosterHudPayload(commander);
+    res.json({
+        status: 'ok',
+        username: targetUsername,
+        unitsTotal: roster.unitsTotal,
+        unitsUninjured: roster.unitsUninjured,
+        ageArmy: roster.ageArmy,
+        snapshotStacks: Array.isArray(commander?.ageArmyPreBattleSnapshot)
+            ? commander.ageArmyPreBattleSnapshot.length
+            : 0,
+        lastAssaultStacks: Array.isArray(commander?.ageArmyLastAssaultArmy)
+            ? commander.ageArmyLastAssaultArmy.length
+            : 0,
+        lastAssaultArmy: commander?.ageArmyLastAssaultArmy || null,
+        preBattleSnapshot: commander?.ageArmyPreBattleSnapshot || null
+    });
+});
+
 app.post('/api/portal/age/admin/revive-army', (req, res) => {
     const actingUsername = resolveLedgerCommanderUsername(req.body?.username || '');
     if (!actingUsername) {
@@ -7627,13 +7727,11 @@ app.post('/api/portal/age/admin/revive-army', (req, res) => {
 
     ensureCommanderAgeRoster(commander);
     commander = db.get('commanders').find({ username: targetUsername }).value();
-    const hadSnapshot = Array.isArray(commander?.ageArmyPreBattleSnapshot)
-        && commander.ageArmyPreBattleSnapshot.length > 0;
     const revivePatch = reviveAdminCommanderArmy(commander);
 
     db.get('commanders')
         .find({ username: targetUsername })
-        .assign(revivePatch)
+        .assign({ ageArmy: revivePatch.ageArmy })
         .write();
 
     commander = db.get('commanders').find({ username: targetUsername }).value();
@@ -7643,7 +7741,7 @@ app.post('/api/portal/age/admin/revive-army', (req, res) => {
         status: 'ok',
         action: 'revive-army',
         username: targetUsername,
-        restoredFromSnapshot: hadSnapshot,
+        restoredFromSnapshot: revivePatch.restoredFromSnapshot,
         ageArmy: revivePatch.ageArmy,
         unitsTotal: roster.unitsTotal,
         unitsUninjured: roster.unitsUninjured,

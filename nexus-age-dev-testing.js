@@ -34,22 +34,33 @@ function isDevAssaultNoPermanentDeathEnabled() {
 }
 
 function reviveCommanderArmyFromSnapshot(commander) {
-    const { normalizeAgeArmy, resolveCommanderAgeArmy } = require('./nexus-age-roster');
+    const { normalizeAgeArmy, resolveCommanderAgeArmy, countAgeArmyUnits } = require('./nexus-age-roster');
+    const lastAssault = commander?.ageArmyLastAssaultArmy;
     const snapshot = commander?.ageArmyPreBattleSnapshot;
+    const sourceArmy = (Array.isArray(lastAssault) && lastAssault.length)
+        ? lastAssault
+        : ((Array.isArray(snapshot) && snapshot.length) ? snapshot : null);
     let army;
 
-    if (Array.isArray(snapshot) && snapshot.length) {
-        army = normalizeAgeArmy(JSON.parse(JSON.stringify(snapshot)));
+    if (sourceArmy) {
+        army = normalizeAgeArmy(JSON.parse(JSON.stringify(sourceArmy)));
     } else {
         army = normalizeAgeArmy(resolveCommanderAgeArmy(commander));
     }
 
-    return army
+    const restored = army
         .map((stack) => ({
             ...stack,
             injuredQty: 0
         }))
         .filter((stack) => Math.max(0, Math.floor(Number(stack.qty) || 0)) > 0);
+
+    return {
+        ageArmy: restored,
+        restoredFromSnapshot: Boolean(sourceArmy),
+        unitsTotal: countAgeArmyUnits(restored).total,
+        unitsUninjured: countAgeArmyUnits(restored).uninjured
+    };
 }
 
 function getDevCityAssaultGarrisonMultiplier(commanderRank, city) {

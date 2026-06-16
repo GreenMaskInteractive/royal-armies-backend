@@ -53,10 +53,12 @@ function applyAdminLedgerRestore(commander) {
 }
 
 function reviveAdminCommanderArmy(commander) {
-    const revivedArmy = reviveCommanderArmyFromSnapshot(commander);
+    const revived = reviveCommanderArmyFromSnapshot(commander);
     return {
-        ageArmy: revivedArmy,
-        ageArmyPreBattleSnapshot: null
+        ageArmy: revived.ageArmy,
+        restoredFromSnapshot: revived.restoredFromSnapshot,
+        unitsTotal: revived.unitsTotal,
+        unitsUninjured: revived.unitsUninjured
     };
 }
 
