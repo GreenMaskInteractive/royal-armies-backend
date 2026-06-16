@@ -18,6 +18,7 @@ FORCED_CITY_BORDER_PAIRS = frozenset(
         frozenset({"saelthine-spaeskog", "trex-vehrakhan"}),
         frozenset({"saelthine-wyrdkrend", "trex-vehrakhan"}),
         frozenset({"lyllis-faelengrove", "trex-scorvekh"}),
+        frozenset({"thruun-ghuzorn", "zevros-rankhald"}),
     }
 )
 

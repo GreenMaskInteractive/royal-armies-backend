@@ -6778,6 +6778,7 @@
         "thruun-kharahden",
         "thruun-umgora",
         "vaelior-meenavel",
+        "zevros-rankhald",
         "zevros-tharnvex"
       ],
       "holderNationId": "thruun",
@@ -7161,6 +7162,7 @@
       "settlementTier": "town",
       "isCapital": false,
       "neighbors": [
+        "thruun-ghuzorn",
         "thruun-kharahden",
         "thruun-umvelgh",
         "zevros-echelvalor",
