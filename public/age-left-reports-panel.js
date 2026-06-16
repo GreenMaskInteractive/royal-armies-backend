@@ -780,5 +780,12 @@
         refreshElections: refreshElectionsPanel
     };
 
+    global.RoyalArmiesNationTerrainBonuses = {
+        terrainTypes: MAP_TERRAIN_TYPES.slice(),
+        terrainSwatchClass: { ...TERRAIN_SWATCH_CLASS },
+        getBonusesForNationId: generateNationTerrainBonuses,
+        isLive: isNationTerrainBonusDataLive
+    };
+
     global.enableAgeLeftReportsPanel = enableLeftReportsPanel;
 })(window);

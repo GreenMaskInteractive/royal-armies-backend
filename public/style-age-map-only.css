@@ -39,6 +39,8 @@ body.age-map-shell-only .commander-hub-overlay.is-visible,
 body.age-map-shell-only .commander-hub-overlay.is-visible *,
 body.age-map-shell-only .public-profile-overlay.is-visible,
 body.age-map-shell-only .public-profile-overlay.is-visible *,
+body.age-map-shell-only .age-nation-profile-overlay.is-visible,
+body.age-map-shell-only .age-nation-profile-overlay.is-visible *,
 body.age-map-shell-only .player-report-modal:not([hidden]),
 body.age-map-shell-only .player-report-modal:not([hidden]) * {
     pointer-events: auto !important;
@@ -47,7 +49,9 @@ body.age-map-shell-only .player-report-modal:not([hidden]) * {
 body.age-map-shell-only .commander-hub-overlay.is-visible,
 body.age-map-shell-only #commander-hub-modal.commander-hub-overlay.is-visible,
 body.age-map-shell-only .public-profile-overlay.is-visible,
-body.age-map-shell-only #public-commander-profile-overlay.public-profile-overlay.is-visible {
+body.age-map-shell-only #public-commander-profile-overlay.public-profile-overlay.is-visible,
+body.age-map-shell-only .age-nation-profile-overlay.is-visible,
+body.age-map-shell-only #age-nation-profile-overlay.age-nation-profile-overlay.is-visible {
     position: fixed !important;
     inset: 0 !important;
     z-index: 2147483646 !important;
@@ -59,6 +63,25 @@ body.age-map-shell-only #public-commander-profile-overlay.public-profile-overlay
 
 body.age-map-shell-only .player-report-modal:not([hidden]) {
     z-index: 2147483646 !important;
+    pointer-events: auto !important;
+}
+
+/* Secede rank / suicide-out / security — must stack above portaled commander hub (2147483646) */
+body.age-map-shell-only #commander-suicide-overlay:not(.suicide-overlay-hidden),
+body.age-map-shell-only #commander-penalty-overlay:not(.suicide-overlay-hidden),
+body.age-map-shell-only #commander-security-overlay:not(.suicide-overlay-hidden) {
+    position: fixed !important;
+    inset: 0 !important;
+    z-index: 2147483647 !important;
+    display: flex !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    pointer-events: auto !important;
+}
+
+body.age-map-shell-only #commander-suicide-overlay:not(.suicide-overlay-hidden) *,
+body.age-map-shell-only #commander-penalty-overlay:not(.suicide-overlay-hidden) *,
+body.age-map-shell-only #commander-security-overlay:not(.suicide-overlay-hidden) * {
     pointer-events: auto !important;
 }
 

@@ -7,6 +7,18 @@
     let workspaceEl = null;
     let mounted = false;
     let activeDiploTab = 'incoming';
+    let activeNationRecordsTab = 'relations';
+
+    const NATION_RECORDS_TAB_ORDER = [
+        'elections',
+        'relations',
+        'ledger',
+        'fortifications',
+        'defense',
+        'threat',
+        'spy',
+        'bounties'
+    ];
     let activeMarkerType = '';
     let leaderVote = '';
     let viceVote = '';
@@ -541,6 +553,75 @@
             planningBlock.classList.toggle('is-planning-locked', lockForMembers);
         }
         setMemberPlanningLock(lockForMembers);
+        syncNationRecordsTabs();
+    }
+
+    function isNationRecordsTabModeActive() {
+        const root = global.document.getElementById('age-council-room-workspace');
+        return Boolean(root?.classList.contains('is-hq-public-view'));
+    }
+
+    function isNationRecordsPanelAccessVisible(panel) {
+        if (!panel) return false;
+        return !panel.hidden;
+    }
+
+    function resolveFirstVisibleNationRecordsTab() {
+        for (let index = 0; index < NATION_RECORDS_TAB_ORDER.length; index += 1) {
+            const tabId = NATION_RECORDS_TAB_ORDER[index];
+            const panel = global.document.getElementById(`age-hq-nation-panel-${tabId}`);
+            if (isNationRecordsPanelAccessVisible(panel)) {
+                return tabId;
+            }
+        }
+        return null;
+    }
+
+    function setActiveNationRecordsTab(tabId) {
+        if (!isNationRecordsTabModeActive()) return;
+
+        const requestedPanel = tabId
+            ? global.document.getElementById(`age-hq-nation-panel-${tabId}`)
+            : null;
+        const resolvedTabId = isNationRecordsPanelAccessVisible(requestedPanel)
+            ? tabId
+            : resolveFirstVisibleNationRecordsTab();
+
+        if (!resolvedTabId) return;
+
+        activeNationRecordsTab = resolvedTabId;
+
+        global.document.querySelectorAll('.age-council-room-nation-records [data-hq-nation-panel]').forEach((panel) => {
+            const isActive = panel.getAttribute('data-hq-nation-panel') === resolvedTabId;
+            panel.classList.toggle('is-active', isActive);
+        });
+
+        global.document.querySelectorAll('#age-hq-nation-records-tabs [data-hq-nation-tab]').forEach((button) => {
+            const isActive = button.getAttribute('data-hq-nation-tab') === resolvedTabId;
+            button.classList.toggle('is-active', isActive);
+            button.setAttribute('aria-selected', isActive ? 'true' : 'false');
+            button.tabIndex = isActive ? 0 : -1;
+        });
+    }
+
+    function syncNationRecordsTabs() {
+        const tabsNav = global.document.getElementById('age-hq-nation-records-tabs');
+        if (!tabsNav) return;
+
+        if (!isNationRecordsTabModeActive()) {
+            global.document.querySelectorAll('.age-council-room-nation-records [data-hq-nation-panel]').forEach((panel) => {
+                panel.classList.remove('is-active');
+            });
+            return;
+        }
+
+        const activePanel = global.document.getElementById(`age-hq-nation-panel-${activeNationRecordsTab}`);
+        if (!isNationRecordsPanelAccessVisible(activePanel)) {
+            setActiveNationRecordsTab(resolveFirstVisibleNationRecordsTab());
+            return;
+        }
+
+        setActiveNationRecordsTab(activeNationRecordsTab);
     }
 
     function setCouncilAccessUI(hasAccess) {
@@ -1979,6 +2060,13 @@
                 });
                 renderDiploRequests();
             });
+        });
+
+        global.document.getElementById('age-hq-nation-records-tabs')?.addEventListener('click', (event) => {
+            const tab = event.target.closest('[data-hq-nation-tab]');
+            if (!tab || tab.hidden) return;
+            event.preventDefault();
+            setActiveNationRecordsTab(tab.getAttribute('data-hq-nation-tab') || 'relations');
         });
 
         global.document.getElementById('age-hq-diplo-compose-btn')?.addEventListener('click', () => {

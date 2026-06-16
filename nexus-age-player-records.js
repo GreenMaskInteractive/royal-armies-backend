@@ -31,6 +31,7 @@ function normalizePlayerAgeRecords(raw) {
             pvpBattlesLost: null,
             cityBattlesWon: null,
             cityBattlesLost: null,
+            cityBattlesParticipated: null,
             sfParticipations: null,
             sfCityBattles: null,
             pvpKillsAttack: null,
@@ -52,6 +53,7 @@ function normalizePlayerAgeRecords(raw) {
         pvpBattlesLost: numberOrNull(raw.pvpBattlesLost) ?? legacyBattlesLost,
         cityBattlesWon: numberOrNull(raw.cityBattlesWon),
         cityBattlesLost: numberOrNull(raw.cityBattlesLost),
+        cityBattlesParticipated: numberOrNull(raw.cityBattlesParticipated),
         sfParticipations: numberOrNull(raw.sfParticipations),
         sfCityBattles: numberOrNull(raw.sfCityBattles),
         pvpKillsAttack: numberOrNull(raw.pvpKillsAttack),
@@ -199,6 +201,7 @@ function buildAttackerBattlePatch(battleTypeKey, attackerWon, draw, combatTotals
         patch.pvpKillsAttack = combatTotals.dead;
         patch.pvpCapturesAttack = combatTotals.captured;
     } else {
+        patch.cityBattlesParticipated = 1;
         patch.cityBattlesWon = attackerWon ? 1 : 0;
         patch.cityBattlesLost = !attackerWon && !draw ? 1 : 0;
         patch.cityKillsAttack = combatTotals.dead;
@@ -222,6 +225,7 @@ function buildDefenderBattlePatch(battleTypeKey, attackerWon, draw, options = {}
         patch.pvpBattlesWon = !attackerWon && !draw ? 1 : 0;
         patch.pvpBattlesLost = attackerWon ? 1 : 0;
     } else {
+        patch.cityBattlesParticipated = 1;
         patch.cityBattlesWon = !attackerWon && !draw ? 1 : 0;
         patch.cityBattlesLost = attackerWon ? 1 : 0;
     }
@@ -243,6 +247,7 @@ function buildParticipantBattlePatch(battleTypeKey, attackerWon, draw, options =
         patch.pvpBattlesWon = attackerWon ? 1 : 0;
         patch.pvpBattlesLost = !attackerWon && !draw ? 1 : 0;
     } else {
+        patch.cityBattlesParticipated = 1;
         patch.cityBattlesWon = attackerWon ? 1 : 0;
         patch.cityBattlesLost = !attackerWon && !draw ? 1 : 0;
     }

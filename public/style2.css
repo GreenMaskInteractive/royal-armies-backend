@@ -18983,6 +18983,52 @@ label.age-council-board-editor-tool {
     color: #f1e0ac;
 }
 
+.age-records-commander-profile-link,
+.age-records-nation-profile-link {
+    display: inline;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    font: inherit;
+    color: inherit;
+    letter-spacing: inherit;
+    text-align: inherit;
+    cursor: pointer;
+    text-decoration: underline;
+    text-decoration-color: rgba(255, 196, 88, 0.35);
+    text-underline-offset: 0.14em;
+    transition: color 0.18s ease, text-decoration-color 0.18s ease, text-shadow 0.18s ease;
+}
+
+.age-records-nation-profile-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    text-decoration: none;
+}
+
+.age-records-commander-profile-link:hover,
+.age-records-commander-profile-link:focus-visible,
+.age-records-nation-profile-link:hover,
+.age-records-nation-profile-link:focus-visible {
+    color: #ffe7b0;
+    text-decoration-color: rgba(255, 215, 0, 0.72);
+    text-shadow: 0 0 10px rgba(255, 196, 88, 0.22);
+    outline: none;
+}
+
+.age-records-nation-profile-link .age-records-nation-name {
+    text-decoration: underline;
+    text-decoration-color: rgba(255, 196, 88, 0.35);
+    text-underline-offset: 0.14em;
+}
+
+.age-records-nation-profile-link:hover .age-records-nation-name,
+.age-records-nation-profile-link:focus-visible .age-records-nation-name {
+    text-decoration-color: rgba(255, 215, 0, 0.72);
+}
+
 #age-page-canvas[data-age-view="headquarters"] .age-map-anchor,
 #age-page-canvas[data-age-view="guild-training"] .age-map-anchor {
     display: none;
@@ -27133,7 +27179,7 @@ body.age-guild-overlay-open .age-guild-bounties-arena:not([hidden]) {
 #age-page-canvas .age-guild-battle-panel {
     position: absolute;
     top: 8px;
-    left: 200px;
+    left: 16px;
     width: min(400px, 44vw);
     max-height: min(48vh, 400px);
     display: flex;
@@ -29248,6 +29294,26 @@ body.player-report-modal-open {
     margin-top: 4px;
 }
 
+.public-profile-message-btn {
+    font-family: 'Cinzel', serif !important;
+    font-size: 0.78rem !important;
+    font-weight: bold !important;
+    padding: 9px 18px !important;
+    cursor: pointer !important;
+    border-radius: 2px !important;
+    border: 1px solid rgba(184, 144, 48, 0.45) !important;
+    color: #ffd700 !important;
+    background-image: url('images/borderedcontainer_thin.png') !important;
+    background-size: 100% 100% !important;
+    background-repeat: no-repeat !important;
+    background-color: transparent !important;
+    transition: filter 0.2s ease, transform 0.1s ease !important;
+}
+
+.public-profile-message-btn:hover {
+    filter: brightness(1.15);
+}
+
 .public-profile-report-btn {
     font-family: 'Cinzel', serif !important;
     font-size: 0.78rem !important;
@@ -29921,3 +29987,315 @@ body.age-gear-level-up-open #age-gear-level-up-overlay * {
     align-self: center;
 }
 
+/* ==========================================================================
+   Age nation public profile modal (Records + rankings)
+   ========================================================================== */
+
+.age-nation-profile-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 120000;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    background: rgba(4, 3, 2, 0.78);
+    backdrop-filter: blur(2px);
+    opacity: 0;
+    transition: opacity 0.22s ease;
+}
+
+.age-nation-profile-overlay.is-visible {
+    display: flex;
+    opacity: 1;
+}
+
+.age-nation-profile-dialog {
+    position: relative;
+    width: min(560px, calc(100vw - 32px));
+    max-height: min(86vh, 760px);
+}
+
+.age-nation-profile-close-btn {
+    position: absolute;
+    top: -10px;
+    right: -10px;
+    z-index: 3;
+    width: 34px;
+    height: 34px;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    cursor: pointer;
+}
+
+.age-nation-profile-close-icon {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+.age-nation-profile-frame {
+    position: relative;
+    border: 1px solid rgba(184, 144, 48, 0.48);
+    background:
+        linear-gradient(180deg, rgba(24, 18, 12, 0.98) 0%, rgba(10, 8, 6, 0.98) 100%);
+    box-shadow: 0 18px 48px rgba(0, 0, 0, 0.72), 0 0 24px rgba(255, 196, 88, 0.08);
+    overflow: hidden;
+}
+
+.age-nation-profile-banner {
+    height: 72px;
+    background:
+        linear-gradient(90deg, rgba(255, 196, 88, 0.12) 0%, rgba(255, 196, 88, 0.02) 55%, transparent 100%);
+    border-bottom: 1px solid rgba(184, 144, 48, 0.22);
+}
+
+.age-nation-profile-mount {
+    max-height: calc(min(86vh, 760px) - 72px);
+    overflow: auto;
+    padding: 18px 20px 20px;
+}
+
+.age-nation-profile-loading {
+    margin: 0;
+    padding: 24px 8px;
+    text-align: center;
+    color: rgba(236, 228, 200, 0.78);
+    font-family: 'Cinzel', serif;
+}
+
+.age-nation-profile-header {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+    margin-bottom: 16px;
+}
+
+.age-nation-profile-crest-ring {
+    flex: 0 0 72px;
+    width: 72px;
+    height: 72px;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    border: 1px solid rgba(184, 144, 48, 0.45);
+    background: rgba(0, 0, 0, 0.35);
+}
+
+.age-nation-profile-crest {
+    width: 56px;
+    height: 56px;
+    object-fit: contain;
+}
+
+.age-nation-profile-copy {
+    min-width: 0;
+}
+
+.age-nation-profile-eyebrow {
+    margin: 0 0 4px;
+    font-family: 'Cinzel', serif;
+    font-size: 0.68rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: rgba(255, 196, 88, 0.72);
+}
+
+.age-nation-profile-name {
+    margin: 0 0 8px;
+    font-family: 'Cinzel', serif;
+    font-size: 1.35rem;
+    color: #ffd978;
+    line-height: 1.15;
+}
+
+.age-nation-profile-meta-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px 18px;
+    font-size: 0.82rem;
+    color: rgba(236, 228, 200, 0.86);
+}
+
+.age-nation-profile-meta-row strong {
+    color: rgba(255, 215, 0, 0.82);
+}
+
+.age-nation-profile-body {
+    display: grid;
+    gap: 16px;
+}
+
+.age-nation-profile-section {
+    border: 1px solid rgba(184, 144, 48, 0.22);
+    background: rgba(0, 0, 0, 0.22);
+    padding: 12px 14px;
+}
+
+.age-nation-profile-section-title {
+    margin: 0 0 10px;
+    font-family: 'Cinzel', serif;
+    font-size: 0.82rem;
+    letter-spacing: 0.06em;
+    color: #f1e0ac;
+}
+
+.age-nation-profile-terrain-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 8px;
+}
+
+.age-nation-profile-terrain-tile {
+    display: grid;
+    grid-template-columns: 18px 1fr auto;
+    gap: 8px;
+    align-items: center;
+    padding: 8px 10px;
+    border: 1px solid rgba(184, 144, 48, 0.18);
+    background: rgba(12, 10, 8, 0.72);
+}
+
+.age-nation-profile-terrain-swatch {
+    width: 14px;
+    height: 14px;
+    border-radius: 2px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.age-nation-profile-terrain-swatch--mountains { background: #6b7280; }
+.age-nation-profile-terrain-swatch--marshlands { background: #4b7a52; }
+.age-nation-profile-terrain-swatch--forest { background: #2f6b3f; }
+.age-nation-profile-terrain-swatch--plains { background: #8f9b4a; }
+.age-nation-profile-terrain-swatch--desert { background: #b8894d; }
+
+.age-nation-profile-terrain-label {
+    font-size: 0.76rem;
+    color: rgba(236, 228, 200, 0.88);
+}
+
+.age-nation-profile-terrain-value {
+    font-size: 0.82rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+}
+
+.age-nation-profile-terrain-tile.is-positive .age-nation-profile-terrain-value {
+    color: rgba(128, 210, 148, 0.95);
+}
+
+.age-nation-profile-terrain-tile.is-negative .age-nation-profile-terrain-value {
+    color: rgba(255, 148, 128, 0.95);
+}
+
+.age-nation-profile-terrain-tile.is-neutral .age-nation-profile-terrain-value {
+    color: rgba(200, 190, 170, 0.82);
+}
+
+.age-nation-profile-terrain-empty,
+.age-nation-profile-council-empty {
+    margin: 0;
+    padding: 8px 0;
+    color: rgba(180, 170, 150, 0.78);
+    font-size: 0.8rem;
+}
+
+.age-nation-profile-leadership-grid {
+    display: grid;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+.age-nation-profile-leader-row {
+    display: grid;
+    grid-template-columns: 110px 1fr;
+    gap: 10px;
+    align-items: center;
+}
+
+.age-nation-profile-leader-role,
+.age-nation-profile-council-label {
+    font-family: 'Cinzel', serif;
+    font-size: 0.72rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: rgba(255, 196, 88, 0.72);
+}
+
+.age-nation-profile-council-label {
+    margin: 0 0 8px;
+}
+
+.age-nation-profile-leader-name {
+    font-size: 0.84rem;
+    color: rgba(236, 228, 200, 0.9);
+}
+
+.age-nation-profile-leader-name.is-empty {
+    color: rgba(180, 170, 150, 0.72);
+}
+
+.age-nation-profile-council-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 6px;
+}
+
+.age-nation-profile-council-item {
+    font-size: 0.84rem;
+    color: rgba(236, 228, 200, 0.9);
+}
+
+.age-nation-profile-commander-link {
+    margin: 0;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    font: inherit;
+    color: #ffd978;
+    cursor: pointer;
+    text-decoration: underline;
+    text-decoration-color: rgba(255, 196, 88, 0.35);
+    text-underline-offset: 0.14em;
+}
+
+.age-nation-profile-commander-link:hover,
+.age-nation-profile-commander-link:focus-visible {
+    color: #ffe7b0;
+    text-decoration-color: rgba(255, 215, 0, 0.72);
+    outline: none;
+}
+
+.age-nation-profile-actions {
+    display: flex;
+    justify-content: center;
+    margin-top: 16px;
+    padding-top: 14px;
+    border-top: 1px double rgba(212, 175, 55, 0.28);
+}
+
+.age-nation-profile-dismiss-btn {
+    font-family: 'Cinzel', serif;
+    font-size: 0.78rem;
+    font-weight: bold;
+    padding: 9px 18px;
+    cursor: pointer;
+    border-radius: 2px;
+    border: 1px solid rgba(184, 144, 48, 0.25);
+    color: #f1e0ac;
+    background: rgba(12, 10, 8, 0.85);
+}
+
+.age-nation-profile-dismiss-btn:hover {
+    filter: brightness(1.15);
+}
+
+body.age-nation-profile-open {
+    overflow: hidden;
+}

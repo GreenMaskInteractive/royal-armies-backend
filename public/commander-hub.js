@@ -31,6 +31,14 @@ function bindCommanderHubModalChromeHandlers() {
         }
         if (event.target.closest('.public-profile-close-btn')) {
             closePublicCommanderProfileCard(event);
+            return;
+        }
+        if (event.target.closest('[data-public-profile-message]')) {
+            const trigger = event.target.closest('[data-public-profile-message]');
+            const targetUsername = String(trigger.getAttribute('data-public-profile-message') || '').trim();
+            if (targetUsername && typeof openMessageComposeToCommander === 'function') {
+                openMessageComposeToCommander(targetUsername, event);
+            }
         }
     });
 
@@ -849,6 +857,9 @@ function renderPublicProfileCardContent(snapshot, options) {
     const footerMarkup = context === 'hub'
         ? ''
         : `<footer class="public-profile-card-actions">
+            ${!viewingSelf
+                ? `<button type="button" class="public-profile-message-btn" data-public-profile-message="${escapePublicProfileHtml(snapshot.name)}">Message Commander</button>`
+                : ''}
             ${!viewingSelf
                 ? `<button type="button" class="public-profile-report-btn" data-player-report-open data-player-report-target="${escapePublicProfileHtml(snapshot.name)}" data-player-report-source="profile">Report Commander</button>`
                 : ''}

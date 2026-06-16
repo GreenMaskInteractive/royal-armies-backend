@@ -1101,6 +1101,7 @@ module.exports = {
     listWarTargetNations,
     listNationVoteCandidates,
     buildHeadquartersWorkspacePayload,
+    buildCabinetSlice,
     buildVoteWorkspaceSlice,
     reconcileHeadquartersElection,
     tryFinalizeElectionFromVotes,

@@ -1279,6 +1279,7 @@ function checkSystemLoginPenalties() {
     } 
     
     // 5. Open the global canvas masking container layers smoothly via style engine class overrides
+    raiseCommanderCriticalOverlay(overlay);
     overlay.classList.remove('suicide-overlay-hidden'); 
     overlay.style.setProperty('display', 'flex', 'important'); 
 }
@@ -1356,6 +1357,7 @@ function mountSecurityOverlayActions(primaryLabel, onPrimary, onCancel) {
 function openSecurityOverlayWindow() {
     const overlay = document.getElementById('commander-security-overlay');
     if (!overlay) return;
+    raiseCommanderCriticalOverlay(overlay);
     overlay.classList.remove('suicide-overlay-hidden');
     overlay.style.setProperty('display', 'flex', 'important');
     overlay.setAttribute('aria-hidden', 'false');
@@ -4010,9 +4012,21 @@ function canUseCommanderReset(mode) {
     return getCommanderResetRemaining(mode) > 0;
 }
 
+function raiseCommanderCriticalOverlay(overlay) {
+    if (!overlay) return;
+    const host = document.body || document.documentElement;
+    if (!host) return;
+    if (overlay.parentNode !== host || host.lastElementChild !== overlay) {
+        host.appendChild(overlay);
+    }
+}
+
 function ensureCommanderResetOverlayMounted() {
     let overlay = document.getElementById('commander-suicide-overlay');
-    if (overlay) return overlay;
+    if (overlay) {
+        raiseCommanderCriticalOverlay(overlay);
+        return overlay;
+    }
 
     const host = document.body || document.documentElement;
     if (!host) return null;
@@ -4061,6 +4075,7 @@ function showCommanderResetUnavailableDialog(mode) {
     overlay.classList.remove('mailbox-reading-overlay');
     overlay.style.setProperty('display', 'flex', 'important');
     overlay.classList.remove('suicide-overlay-hidden');
+    raiseCommanderCriticalOverlay(overlay);
 }
 
 function incrementCommanderResetUsage(mode) {
@@ -5552,6 +5567,7 @@ function triggerCommanderSuicide(mode) {
     
     const overlay = ensureCommanderResetOverlayMounted();
     if (overlay) {
+        raiseCommanderCriticalOverlay(overlay);
         overlay.classList.remove('mailbox-reading-overlay');
         // 2. Clear the inline display constraints to unlock visual rendering passes
         overlay.style.setProperty('display', 'flex', 'important');
@@ -6004,6 +6020,41 @@ function focusMessagesSendSubnav(callback) {
     if (items[0]) items[0].click();
     window.setTimeout(callback, 50);
 }
+
+function openMessageComposeToCommander(targetUsername, clickEvent) {
+    if (clickEvent) clickEvent.stopPropagation();
+
+    const name = String(targetUsername || '').trim();
+    if (!name) return;
+
+    if (typeof closeSuicideOverlayWindow === 'function') {
+        closeSuicideOverlayWindow();
+    }
+    if (typeof closePublicCommanderProfileCard === 'function') {
+        closePublicCommanderProfileCard();
+    }
+    if (window.RoyalArmiesAgeNationProfile?.close) {
+        window.RoyalArmiesAgeNationProfile.close();
+    }
+
+    clearMessageComposeContext();
+    messageComposeApplyingFromDossier = true;
+
+    if (typeof openCommanderHubModal === 'function') {
+        openCommanderHubModal('messages', clickEvent);
+    }
+
+    focusMessagesSendSubnav(() => {
+        resetMessageComposeFields();
+        appendRecipientPill(name);
+        applyMessageComposeFieldLocks();
+        renderMessageComposeContextBanner();
+        messageComposeApplyingFromDossier = false;
+        document.getElementById('msg-body-input-element')?.focus();
+    });
+}
+
+window.openMessageComposeToCommander = openMessageComposeToCommander;
 
 function openMessageComposeFromDossier(msg, mode) {
     if (!msg) return;

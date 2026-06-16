@@ -4,6 +4,7 @@
 'use strict';
 
 const { loadCityCatalog, resolveCatalogNationKey, resolveCityHolder } = require('./nexus-age-movement');
+const { buildCabinetSlice } = require('./nexus-age-headquarters');
 const { buildCommanderRankMeta, getCommanderRankDisplayTitle } = require('./nexus-commander-rank-titles');
 const {
     resolveAgeRecordsRankingMeta,
@@ -114,6 +115,7 @@ function serializeNationAgeRecord({
     citiesOwned,
     totalCities,
     playersInNation,
+    cityBattlesParticipated = 0,
     resolveNationLeadershipDisplayName
 }) {
     const stats = normalizeNationAgeRecords(nationRecords);
@@ -128,6 +130,7 @@ function serializeNationAgeRecord({
         citiesOwned: Number.isFinite(Number(citiesOwned)) ? Number(citiesOwned) : 0,
         totalCities: Number.isFinite(Number(totalCities)) ? Number(totalCities) : DEFAULT_NATION_TOTAL_CITIES,
         playersInNation: Number.isFinite(Number(playersInNation)) ? Number(playersInNation) : 0,
+        cityBattles: Number.isFinite(Number(cityBattlesParticipated)) ? Number(cityBattlesParticipated) : 0,
         cityCaptures: resolveNationStatNumber(stats.cityCaptures, 0),
         successfulDropsPerformed: resolveNationStatNumber(stats.successfulDropsPerformed, 0),
         leaderUsername,
@@ -150,6 +153,7 @@ function toGlobalNationRecord(record) {
         citiesOwned: record.citiesOwned,
         totalCities: record.totalCities,
         playersInNation: record.playersInNation,
+        cityBattles: record.cityBattles,
         cityCaptures: record.cityCaptures,
         successfulDropsPerformed: record.successfulDropsPerformed,
         leader: record.leader,
@@ -181,6 +185,25 @@ function sortGlobalNationRows(rows, rankingLive) {
 function resolveCityBattlesTotal(cityBattlesWon, cityBattlesLost) {
     if (cityBattlesWon == null && cityBattlesLost == null) return null;
     return (cityBattlesWon || 0) + (cityBattlesLost || 0);
+}
+
+function resolvePlayerCityBattlesParticipated(stats) {
+    const participated = numberOrNull(stats?.cityBattlesParticipated);
+    if (participated !== null) return participated;
+    return resolveCityBattlesTotal(stats?.cityBattlesWon, stats?.cityBattlesLost);
+}
+
+function buildNationCityBattlesParticipatedMap(fullRows) {
+    const totals = new Map();
+
+    (Array.isArray(fullRows) ? fullRows : []).forEach((row) => {
+        if (!row?.hasJoinedAge || !row.nationId) return;
+        const count = numberOrNull(row.cityBattles);
+        if (count === null) return;
+        totals.set(row.nationId, (totals.get(row.nationId) || 0) + count);
+    });
+
+    return totals;
 }
 
 function buildFullPlayerRecord(commander, resolveDisplayName, rankingContext = {}) {
@@ -216,7 +239,7 @@ function buildFullPlayerRecord(commander, resolveDisplayName, rankingContext = {
         pvpBattlesLost: stats.pvpBattlesLost,
         cityBattlesWon: stats.cityBattlesWon,
         cityBattlesLost: stats.cityBattlesLost,
-        cityBattles: resolveCityBattlesTotal(stats.cityBattlesWon, stats.cityBattlesLost),
+        cityBattles: resolvePlayerCityBattlesParticipated(stats),
         sfParticipations: stats.sfParticipations,
         sfCityBattles: stats.sfCityBattles,
         pvpKillsAttack: stats.pvpKillsAttack,
@@ -351,6 +374,10 @@ function buildAgeRecordsPayload({
         rankingMeta.live
     );
 
+    const cityBattlesByNation = buildNationCityBattlesParticipatedMap(
+        fullRows.filter((row) => row.hasJoinedAge)
+    );
+
     const nationRows = catalogNations
         .map((nation) => {
             const nationId = resolveCatalogNationKey(nation.id);
@@ -368,6 +395,7 @@ function buildAgeRecordsPayload({
                 citiesOwned: citiesOwnedByNation.get(nationId) ?? 0,
                 totalCities: totalCitiesByNation.get(nationId) ?? DEFAULT_NATION_TOTAL_CITIES,
                 playersInNation: playersInNationByNation.get(nationId) ?? 0,
+                cityBattlesParticipated: cityBattlesByNation.get(nationId) ?? 0,
                 resolveNationLeadershipDisplayName
             });
         })
@@ -397,8 +425,64 @@ function buildAgeRecordsPayload({
     };
 }
 
+function buildNationPublicProfile(options = {}) {
+    const {
+        nationId,
+        commanders,
+        nationRecordsMap,
+        readNationLeadershipForNation,
+        resolveCatalogNationDisplayName,
+        listNationVoteCandidates,
+        resolveCouncilBoardNationKey,
+        getCouncilBoardStorageKey,
+        ageCampaignActiveStartedAt,
+        nowMs = Date.now()
+    } = options;
+
+    const nationKey = resolveCatalogNationKey(nationId);
+    if (!nationKey) return null;
+
+    const recordsPayload = buildAgeRecordsPayload({
+        commanders: commanders || [],
+        nationRecordsMap: nationRecordsMap || {},
+        cityHolders: options.cityHolders || {},
+        isHiddenUsername: options.isHiddenUsername || (() => false),
+        resolveCommanderMapNationKey: options.resolveCommanderMapNationKey || (() => null),
+        readNationLeadershipForNation,
+        resolveNationLeadershipDisplayName: options.resolveNationLeadershipDisplayName || ((username) => username),
+        resolveCatalogNationDisplayName,
+        viewerUsername: '',
+        viewerNationId: null,
+        ageCampaignActiveStartedAt,
+        nowMs
+    });
+
+    const standing = (recordsPayload.global?.nations || []).find((row) => row.nationId === nationKey) || null;
+    const leadership = readNationLeadershipForNation?.(nationKey) || null;
+    const voteCandidates = listNationVoteCandidates
+        ? listNationVoteCandidates(
+            commanders || [],
+            nationKey,
+            (entry) => getCouncilBoardStorageKey(resolveCouncilBoardNationKey(entry))
+        )
+        : [];
+    const cabinet = buildCabinetSlice(leadership, voteCandidates);
+
+    return {
+        nationId: nationKey,
+        nationName: resolveCatalogNationDisplayName?.(nationKey) || standing?.nationName || nationKey,
+        globalRanking: standing?.globalRanking ?? null,
+        points: standing?.points ?? 0,
+        recordsRankingLive: recordsPayload.recordsRanking?.live === true,
+        leader: cabinet.leader,
+        viceLeader: cabinet.viceLeader,
+        councilMembers: cabinet.councilMembers
+    };
+}
+
 module.exports = {
     buildAgeRecordsPayload,
+    buildNationPublicProfile,
     buildFullPlayerRecord,
     commanderHasJoinedAge,
     normalizePlayerAgeRecords: normalizePlayerAgeRecords,

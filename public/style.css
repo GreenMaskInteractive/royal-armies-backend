@@ -2825,8 +2825,8 @@ body #commander-suicide-overlay,
     align-items: center !important;
     justify-content: center !important;
     
-    /* MAXIMUM LAYER FORCE: Forces rendering pass in front of all text boxes, headers, and wheels */
-    z-index: 2147483600 !important; /* Keep below custom cursor shell layer */
+    /* MAXIMUM LAYER FORCE: Above commander hub / profile modals (incl. Age map shell at 2147483646) */
+    z-index: 2147483647 !important; /* Below custom cursor shell (pointer-events: none) */
     
     box-sizing: border-box !important;
     margin: 0 !important;
@@ -2872,7 +2872,7 @@ body #commander-security-overlay,
     height: 100vh !important;
     background-color: rgba(6, 6, 6, 0.85) !important; /* Midnight onyx masking curtain layer */
     backdrop-filter: blur(4px) !important;
-    z-index: 2147483645 !important; /* Layers directly behind the critical penalty overlay logs */
+    z-index: 2147483646 !important; /* Below suicide / critical confirmation overlays */
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
@@ -2970,7 +2970,7 @@ body #commander-penalty-overlay,
     height: 100vh !important;
     background-color: rgba(12, 4, 4, 0.9) !important; /* Crimson-tinted heavy isolation screening */
     backdrop-filter: blur(5px) !important;
-    z-index: 2147483646 !important; /* Layers directly below the critical suicide mask */
+    z-index: 2147483646 !important; /* Below suicide / critical confirmation overlays */
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;

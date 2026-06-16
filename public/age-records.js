@@ -48,6 +48,7 @@
         { key: 'citiesOwned', label: 'Cities (Owned)', kind: 'number', alwaysShow: true, defaultValue: 0 },
         { key: 'totalCities', label: 'Cities (Total)', kind: 'number', alwaysShow: true, defaultValue: 15 },
         { key: 'playersInNation', label: 'Players', kind: 'number', alwaysShow: true, defaultValue: 0 },
+        { key: 'cityBattles', label: 'City Battles', kind: 'number', alwaysShow: true, defaultValue: 0 },
         { key: 'cityCaptures', label: 'Captures', kind: 'number', alwaysShow: true, defaultValue: 0 },
         { key: 'successfulDropsPerformed', label: 'Drops (Attacker)', kind: 'number', alwaysShow: true, defaultValue: 0 },
         { key: 'leader', label: 'Leader', kind: 'text', alwaysShow: true, defaultValue: 'None' },
@@ -96,9 +97,9 @@
         {
             title: 'City Operations',
             stats: [
+                { key: 'cityBattles', label: 'City Battles', kind: 'number' },
                 { key: 'cityBattlesWon', label: 'City Battles Won', kind: 'number' },
                 { key: 'cityBattlesLost', label: 'City Battles Lost', kind: 'number' },
-                { key: 'cityBattles', label: 'City Battles', kind: 'number' },
                 { key: 'sfCityBattles', label: 'SF City Battles', kind: 'number' },
                 { key: 'cityKillsAttack', label: 'City Unit Kills', kind: 'number' },
                 { key: 'cityCapturesAttack', label: 'City Unit Captures', kind: 'number' }
@@ -113,7 +114,7 @@
         },
         national: {
             eyebrow: 'National Rankings',
-            copy: 'Nation-only intelligence for your realm. City operations and confidential stats are visible here — never shared with rival nations.'
+            copy: 'Nation-only intelligence for your realm. City Battles counts each battle a commander joined; city wins, losses, and SF ops stay confidential to your nation.'
         },
         global: {
             eyebrow: 'Global Rankings',
@@ -259,15 +260,39 @@
 
         const crestUrl = resolveNationCrestUrl(nationId);
         const nameHtml = escapeHtml(label);
-        if (!crestUrl) {
-            return nameHtml;
+        const innerHtml = crestUrl
+            ? (
+                '<span class="age-records-nation-cell">'
+                + `<img class="age-records-nation-crest" src="${escapeHtml(crestUrl)}" alt="" aria-hidden="true" loading="lazy" decoding="async">`
+                + `<span class="age-records-nation-name">${nameHtml}</span>`
+                + '</span>'
+            )
+            : nameHtml;
+
+        if (options.linkableNations && nationId) {
+            return (
+                `<button type="button" class="age-records-nation-profile-link" data-age-records-nation-profile="${escapeHtml(nationId)}" aria-label="Open ${nameHtml} nation profile">`
+                + innerHtml
+                + '</button>'
+            );
+        }
+
+        return innerHtml;
+    }
+
+    function renderCommanderProfileLinkHtml(row, column, cellValue, options = {}) {
+        const username = String(row.username || row.playerName || '').trim();
+        const label = escapeHtml(cellValue);
+        const isEmpty = !username || cellValue === (options.emptyDisplay ?? PLACEHOLDER) || cellValue === RECORDS_EMPTY;
+
+        if (isEmpty || !options.linkableCommanders) {
+            return label;
         }
 
         return (
-            '<span class="age-records-nation-cell">'
-            + `<img class="age-records-nation-crest" src="${escapeHtml(crestUrl)}" alt="" aria-hidden="true" loading="lazy" decoding="async">`
-            + `<span class="age-records-nation-name">${nameHtml}</span>`
-            + '</span>'
+            `<button type="button" class="age-records-commander-profile-link" data-age-records-commander-profile="${escapeHtml(username)}" aria-label="Open ${label} commander profile">`
+            + label
+            + '</button>'
         );
     }
 
@@ -372,9 +397,14 @@
                 const cellValue = isNationCell
                     ? resolveNationCellLabel(row, column, cellOptions)
                     : resolveCellValue(row, column, cellOptions);
-                const cellInner = isNationCell
-                    ? renderNationCellHtml(row, column, cellOptions)
-                    : escapeHtml(cellValue);
+                let cellInner;
+                if (isNationCell) {
+                    cellInner = renderNationCellHtml(row, column, cellOptions);
+                } else if (column.key === 'playerName') {
+                    cellInner = renderCommanderProfileLinkHtml(row, column, cellValue, cellOptions);
+                } else {
+                    cellInner = escapeHtml(cellValue);
+                }
                 const isEmptyCell = cellValue === (cellOptions.emptyDisplay ?? PLACEHOLDER);
                 const emptyClass = isEmptyCell ? ' is-empty' : ' has-value';
                 const identityClass = column.alwaysShow || columnIndex === 0 ? ' age-records-table-cell--identity' : '';
@@ -472,7 +502,10 @@
                     rows,
                     rowKey: 'username',
                     selfMatchKey: 'username',
-                    cellOptions: { emptyDisplay: RECORDS_EMPTY }
+                    cellOptions: {
+                        emptyDisplay: RECORDS_EMPTY,
+                        linkableCommanders: true
+                    }
                 })
                 : `<p class="age-records-empty">No commanders from ${escapeHtml(nationLabel)} have recorded stats yet.</p>`)
         );
@@ -501,7 +534,10 @@
                     rows: nationRows,
                     rowKey: 'nationId',
                     selfMatchKey: null,
-                    cellOptions: { emptyDisplay: RECORDS_EMPTY }
+                    cellOptions: {
+                        emptyDisplay: RECORDS_EMPTY,
+                        linkableNations: true
+                    }
                 })
                 : '<p class="age-records-empty">No nation standings have been recorded for this Age yet.</p>';
         } else {
@@ -511,7 +547,11 @@
                     rows: playerRows,
                     rowKey: 'username',
                     selfMatchKey: 'username',
-                    cellOptions: { emptyDisplay: RECORDS_EMPTY }
+                    cellOptions: {
+                        emptyDisplay: RECORDS_EMPTY,
+                        linkableCommanders: true,
+                        linkableNations: true
+                    }
                 })
                 : '<p class="age-records-empty">No global player rankings have been recorded for this Age yet.</p>';
         }
@@ -644,6 +684,42 @@
         }
     }
 
+    async function ensureCommanderHubReady() {
+        if (typeof global.openPublicCommanderProfileCard === 'function') return;
+        if (typeof global.ensureAgeCommanderNametagHub === 'function') {
+            await global.ensureAgeCommanderNametagHub();
+        }
+    }
+
+    async function handleRecordsCommanderProfileClick(username, event) {
+        if (event) {
+            event.preventDefault();
+            event.stopPropagation();
+        }
+        const target = String(username || '').trim();
+        if (!target) return;
+
+        await ensureCommanderHubReady();
+        if (typeof global.openPublicCommanderProfileCard === 'function') {
+            await global.openPublicCommanderProfileCard(event, target);
+        }
+    }
+
+    function handleRecordsNationProfileClick(nationId, event) {
+        if (event) {
+            event.preventDefault();
+            event.stopPropagation();
+        }
+        const target = String(nationId || '').trim();
+        if (!target) return;
+
+        if (typeof global.openAgeNationProfileModal === 'function') {
+            void global.openAgeNationProfileModal(target, event);
+        } else if (global.RoyalArmiesAgeNationProfile?.open) {
+            void global.RoyalArmiesAgeNationProfile.open(target, event);
+        }
+    }
+
     function bindRecords() {
         if (bound) return;
         bound = true;
@@ -664,6 +740,25 @@
                 event.preventDefault();
                 setActiveTab(button.getAttribute('data-age-records-tab'));
             });
+        });
+
+        global.document.addEventListener('click', (event) => {
+            const commanderTrigger = event.target.closest('[data-age-records-commander-profile]');
+            if (commanderTrigger) {
+                void handleRecordsCommanderProfileClick(
+                    commanderTrigger.getAttribute('data-age-records-commander-profile'),
+                    event
+                );
+                return;
+            }
+
+            const nationTrigger = event.target.closest('[data-age-records-nation-profile]');
+            if (nationTrigger) {
+                handleRecordsNationProfileClick(
+                    nationTrigger.getAttribute('data-age-records-nation-profile'),
+                    event
+                );
+            }
         });
     }
 

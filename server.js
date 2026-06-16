@@ -160,7 +160,7 @@ const {
     applyDispatchAlertPatch,
     getActiveDispatchAlert
 } = require('./nexus-age-dispatch-alert');
-const { buildAgeRecordsPayload } = require('./nexus-age-records');
+const { buildAgeRecordsPayload, buildNationPublicProfile } = require('./nexus-age-records');
 const {
     applyAgeRecordsBattleOutcome,
     maybeRunAgePlayerRecordsRankingTick
@@ -5507,6 +5507,41 @@ app.get('/api/portal/age/records', (req, res) => {
             ageCampaignActiveStartedAt: campaign.activeStartedAt,
             nowMs: Date.now()
         })
+    });
+});
+
+app.get('/api/portal/age/nations/:nationId/public-profile', (req, res) => {
+    const nationKey = resolveCatalogNationKey(req.params?.nationId || '');
+    if (!nationKey) {
+        return sendApiError(res, 'NEXUS-GEN-002');
+    }
+
+    const campaign = readPortalAgeCampaignPayload();
+    const profile = buildNationPublicProfile({
+        nationId: nationKey,
+        commanders: db.get('commanders').value() || [],
+        nationRecordsMap: readNationAgeRecordsMap(),
+        cityHolders: readAgeMovementStore().cityHolders,
+        isHiddenUsername: isHiddenRegistrationUsername,
+        resolveCommanderMapNationKey,
+        readNationLeadershipForNation,
+        resolveNationLeadershipDisplayName,
+        resolveCatalogNationDisplayName,
+        listNationVoteCandidates,
+        resolveCouncilBoardNationKey,
+        getCouncilBoardStorageKey,
+        ageCampaignActiveStartedAt: campaign.activeStartedAt,
+        nowMs: Date.now()
+    });
+
+    if (!profile) {
+        return sendApiError(res, 'NEXUS-GEN-004');
+    }
+
+    res.set('Cache-Control', 'no-store');
+    res.json({
+        status: 'ok',
+        profile
     });
 });
 

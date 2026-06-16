@@ -4,11 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Royal Armies — Age Alpha</title>
-    <link rel="stylesheet" href="style.css?v=cursor-modal-layer-fix-1">
-    <link rel="stylesheet" href="style2.css?v=loadout-bonuses-tab-1">
+    <link rel="stylesheet" href="style.css?v=suicide-overlay-stack-1">
+    <link rel="stylesheet" href="style2.css?v=guild-battle-panel-left-1">
     <link rel="stylesheet" href="style-age-headquarters.css?v=utf8-content-fix-1">
     <link rel="stylesheet" href="style-age-center-modals.css?v=records-modal-wide-1">
-    <link rel="stylesheet" href="style-age-council-room.css?v=leadership-visibility-2">
+    <link rel="stylesheet" href="style-age-council-room.css?v=nation-records-tabs-1">
     <link rel="stylesheet" href="style-age-hq-arcane-flare.css?v=hq-border-blue-pulse-1">
     <link rel="stylesheet" href="style-age-hq-intel.css?v=hq-site-blend-1">
     <link rel="stylesheet" href="mobile-responsive.css?v=commander-nametag-hub-2">
@@ -18,7 +18,7 @@
     <link rel="stylesheet" href="style-age-banner-workspace.css?v=banner-advisor-profile-1">
     <link rel="stylesheet" href="style-blessed-banners-modal.css?v=banner-skill-select-1">
     <link rel="stylesheet" href="style-age-enrollment-loading.css?v=age-enrollment-loading-1">
-    <link rel="stylesheet" href="style-age-map-only.css?v=gear-shop-scale-4">
+    <link rel="stylesheet" href="style-age-map-only.css?v=suicide-overlay-stack-1">
     <link rel="stylesheet" href="style-age-immersive-workspace.css?v=gear-shop-compact-2">
     <link rel="stylesheet" href="style-age-nation-hub-radial.css?v=radialmenu-saved-1">
     <link rel="stylesheet" href="style-age-nation-hub-box.css?v=hub-disabled-actions-1">
@@ -1670,8 +1670,17 @@
                                     </section>
                                 </div>
                             </aside>
+                            <nav id="age-hq-nation-records-tabs" class="age-hq-nation-records-tabs" role="tablist" aria-label="Nation records views" data-hq-public hidden>
+                                <button type="button" class="age-hq-nation-records-tab is-active" data-hq-nation-tab="relations" role="tab" aria-selected="true" aria-controls="age-hq-nation-panel-relations" id="age-hq-nation-tab-btn-relations">Allied &amp; NAP</button>
+                                <button type="button" class="age-hq-nation-records-tab" data-hq-nation-tab="ledger" role="tab" aria-selected="false" aria-controls="age-hq-nation-panel-ledger" id="age-hq-nation-tab-btn-ledger" tabindex="-1">War Ledger</button>
+                                <button type="button" class="age-hq-nation-records-tab" data-hq-nation-tab="fortifications" role="tab" aria-selected="false" aria-controls="age-hq-nation-panel-fortifications" id="age-hq-nation-tab-btn-fortifications" tabindex="-1">Fortifications</button>
+                                <button type="button" class="age-hq-nation-records-tab" data-hq-nation-tab="defense" role="tab" aria-selected="false" aria-controls="age-hq-nation-panel-defense" id="age-hq-nation-tab-btn-defense" tabindex="-1">Settlement Defense</button>
+                                <button type="button" class="age-hq-nation-records-tab" data-hq-nation-tab="threat" role="tab" aria-selected="false" aria-controls="age-hq-nation-panel-threat" id="age-hq-nation-tab-btn-threat" tabindex="-1" data-hq-leadership-only hidden>Threat Matrix</button>
+                                <button type="button" class="age-hq-nation-records-tab" data-hq-nation-tab="spy" role="tab" aria-selected="false" aria-controls="age-hq-nation-panel-spy" id="age-hq-nation-tab-btn-spy" tabindex="-1" data-hq-leadership-only hidden>Spy Logs</button>
+                                <button type="button" class="age-hq-nation-records-tab" data-hq-nation-tab="bounties" role="tab" aria-selected="false" aria-controls="age-hq-nation-panel-bounties" id="age-hq-nation-tab-btn-bounties" tabindex="-1" data-hq-leadership-only hidden>Nation Bounties</button>
+                            </nav>
                             <div class="age-council-room-nation-records">
-                            <section class="age-headquarters-ops-card age-headquarters-ops-card--relations age-council-room-panel" data-hq-public hidden aria-labelledby="age-hq-relations-title">
+                            <section id="age-hq-nation-panel-relations" class="age-headquarters-ops-card age-headquarters-ops-card--relations age-council-room-panel is-active" data-hq-nation-panel="relations" data-hq-public hidden aria-labelledby="age-hq-relations-title">
                                 <header class="age-headquarters-ops-card-head">
                                     <h3 class="age-headquarters-ops-card-title" id="age-hq-relations-title">Allied &amp; NAP</h3>
                                     <p class="age-headquarters-ops-card-sub" id="age-hq-relations-meta">Accords with neutral nations — not at war.</p>
@@ -1680,7 +1689,7 @@
                                     <ul class="age-hq-relations-list" id="age-hq-relations-list" aria-live="polite"></ul>
                                 </div>
                             </section>
-                            <section class="age-headquarters-ops-card age-headquarters-ops-card--ledger age-council-room-panel" data-hq-public hidden aria-labelledby="age-hq-ledger-title">
+                            <section id="age-hq-nation-panel-ledger" class="age-headquarters-ops-card age-headquarters-ops-card--ledger age-council-room-panel" data-hq-nation-panel="ledger" data-hq-public hidden aria-labelledby="age-hq-ledger-title">
                                 <header class="age-headquarters-ops-card-head">
                                     <h3 class="age-headquarters-ops-card-title" id="age-hq-ledger-title">War Ledger</h3>
                                     <p class="age-headquarters-ops-card-sub" id="age-hq-ledger-meta">Recognized wars are permanent until a belligerent is eliminated.</p>
@@ -1689,7 +1698,7 @@
                                     <ul class="age-hq-war-ledger-list" id="age-hq-war-ledger-list" aria-live="polite"></ul>
                                 </div>
                             </section>
-                            <section class="age-headquarters-ops-card age-headquarters-ops-card--treasury age-council-room-panel age-council-room-fortifications" data-hq-public hidden aria-label="Nation fortifications">
+                            <section id="age-hq-nation-panel-fortifications" class="age-headquarters-ops-card age-headquarters-ops-card--treasury age-council-room-panel age-council-room-fortifications" data-hq-nation-panel="fortifications" data-hq-public hidden aria-label="Nation fortifications">
                                 <header class="age-headquarters-ops-card-head">
                                     <h3 class="age-headquarters-ops-card-title">Fortifications</h3>
                                     <p class="age-headquarters-ops-card-sub">Cities with active defensive fortifications.</p>
@@ -1699,14 +1708,14 @@
                                     <p id="age-hq-treasury-fort-empty" class="age-hq-treasury-empty">No fortified cities on record.</p>
                                 </div>
                             </section>
-                            <section class="age-headquarters-ops-card age-headquarters-ops-card--defense age-council-room-panel" data-hq-public hidden aria-labelledby="age-hq-defense-title">
+                            <section id="age-hq-nation-panel-defense" class="age-headquarters-ops-card age-headquarters-ops-card--defense age-council-room-panel" data-hq-nation-panel="defense" data-hq-public hidden aria-labelledby="age-hq-defense-title">
                                 <header class="age-headquarters-ops-card-head">
                                     <h3 class="age-headquarters-ops-card-title" id="age-hq-defense-title">Settlement Defense</h3>
                                     <p class="age-headquarters-ops-card-sub">Queue treasury-funded improvements for your nation's settlements.</p>
                                 </header>
                                 <div class="age-headquarters-ops-card-body" id="age-hq-defense-upgrades-host" aria-live="polite"></div>
                             </section>
-                            <section class="age-headquarters-ops-card age-council-room-panel age-hq-intel-card" data-hq-leadership-only hidden aria-labelledby="age-hq-threat-title">
+                            <section id="age-hq-nation-panel-threat" class="age-headquarters-ops-card age-council-room-panel age-hq-intel-card" data-hq-nation-panel="threat" data-hq-leadership-only hidden aria-labelledby="age-hq-threat-title">
                                 <header class="age-headquarters-ops-card-head">
                                     <h3 class="age-headquarters-ops-card-title" id="age-hq-threat-title">Threat Assessment Matrix</h3>
                                     <p class="age-headquarters-ops-card-sub">Bordering nations ranked by military power, hostility, and distance.</p>
@@ -1715,7 +1724,7 @@
                                     <div id="age-hq-threat-matrix" class="age-hq-threat-matrix" aria-live="polite"></div>
                                 </div>
                             </section>
-                            <section class="age-headquarters-ops-card age-council-room-panel age-hq-intel-card" data-hq-leadership-only hidden aria-labelledby="age-hq-spy-title">
+                            <section id="age-hq-nation-panel-spy" class="age-headquarters-ops-card age-council-room-panel age-hq-intel-card" data-hq-nation-panel="spy" data-hq-leadership-only hidden aria-labelledby="age-hq-spy-title">
                                 <header class="age-headquarters-ops-card-head">
                                     <h3 class="age-headquarters-ops-card-title" id="age-hq-spy-title">Spy Logs</h3>
                                     <p class="age-headquarters-ops-card-sub">Public army intel (3 max). Reports stale after +10% enemy growth.</p>
@@ -1736,7 +1745,7 @@
                                     </section>
                                 </div>
                             </section>
-                            <section class="age-headquarters-ops-card age-council-room-panel age-hq-intel-card age-hq-intel-card--bounties" data-hq-leadership-only hidden aria-labelledby="age-hq-bounty-title">
+                            <section id="age-hq-nation-panel-bounties" class="age-headquarters-ops-card age-council-room-panel age-hq-intel-card age-hq-intel-card--bounties" data-hq-nation-panel="bounties" data-hq-leadership-only hidden aria-labelledby="age-hq-bounty-title">
                                 <header class="age-headquarters-ops-card-head">
                                     <h3 class="age-headquarters-ops-card-title" id="age-hq-bounty-title">Nation Bounties</h3>
                                     <p class="age-headquarters-ops-card-sub" id="age-hq-bounty-meta">Live feed · 24-hour hunt window per cycle.</p>
@@ -2170,6 +2179,18 @@
         </div>
     </div>
 
+    <div id="age-nation-profile-overlay" class="age-nation-profile-overlay" aria-hidden="true" hidden>
+        <div class="age-nation-profile-dialog" role="dialog" aria-modal="true" aria-labelledby="age-nation-profile-title">
+            <button type="button" class="age-nation-profile-close-btn" aria-label="Close nation profile">
+                <img src="images/closebtn.png" alt="" class="age-nation-profile-close-icon">
+            </button>
+            <div class="age-nation-profile-frame">
+                <div class="age-nation-profile-banner" aria-hidden="true"></div>
+                <div id="age-nation-profile-mount" class="age-nation-profile-mount"></div>
+            </div>
+        </div>
+    </div>
+
     <div id="commander-hub-modal" class="commander-hub-overlay" aria-hidden="true">
         <div class="commander-hub-dialog" role="dialog" aria-modal="true" aria-label="Account hub">
             <button type="button" class="commander-hub-close-btn" aria-label="Close account hub">
@@ -2342,7 +2363,7 @@
     <script src="rift-unit-purchase-catalog.js?v=commander-rank-names-2"></script>
     <script src="age-barracks.js?v=garrison-roster-menu-1"></script>
     <script src="age-army-groups.js?v=commander-rank-names-2"></script>
-    <script src="age-records.js?v=records-city-battles-participation-1"></script>
+    <script src="age-records.js?v=records-profile-links-1"></script>
     <script src="age-council-board.js?v=leadership-visibility-2"></script>
     <script src="age-war-ledger.js?v=modal-close-audit-1"></script>
     <script src="rift-song-manuscript-catalog.js?v=blood-tithe-manuscript-1"></script>
@@ -2351,12 +2372,13 @@
     <script src="age-nation-hub.js?v=hub-disabled-actions-1"></script>
     <script src="rift-official-age.js?v=age-join-after-reset-1"></script>
     <script src="age-headquarters-intel.js?v=leadership-visibility-1"></script>
-    <script src="age-headquarters.js?v=leadership-visibility-2"></script>
-    <script src="age-left-reports-panel.js?v=intelligence-enemy-terrain-1"></script>
+    <script src="age-headquarters.js?v=nation-records-tabs-1"></script>
+    <script src="age-left-reports-panel.js?v=records-profile-links-1"></script>
+    <script src="rift-age-nation-profile.js?v=records-profile-links-1"></script>
     <script src="age-quick-tips-panel.js?v=quick-tips-left-hud-1"></script>
     <script src="nexus-player-report-catalog.js?v=modal-close-audit-1"></script>
     <script src="rift-player-report.js?v=modal-close-audit-1"></script>
-    <script src="age-map-only-page.js?v=age-enrollment-loading-1"></script>
+    <script src="age-map-only-page.js?v=suicide-overlay-stack-1"></script>
     <script src="dev-page-navigator.js?v=dev-nav-drag-handle-1"></script>
     <script src="custom-cursor.js?v=finger-press-hold-1"></script>
 
