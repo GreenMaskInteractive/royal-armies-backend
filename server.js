@@ -12,8 +12,6 @@
 
 /* Block 1: Core Module Imports */
 const path = require('path');
-const low = require('lowdb');
-const FileSync = require('lowdb/adapters/FileSync');
 const { sendApiError, sendStoreError, storeErrorHttpStatus } = require('./nexus-response-errors');
 const { validateRegistrationUsername } = require('./public/nexus-account-validation');
 const {
@@ -263,6 +261,26 @@ const {
     writeTrailerRenderRemoteStatus,
     sanitizeTrailerRenderProgressPayload,
 } = require('./nexus-trailer-render');
+const { createNexusLedger, prepareNexusLedger } = require('./nexus-pg-ledger');
+const {
+    resolveServiceTierConfig,
+    createServiceTierGateMiddleware,
+    createTierStaticFilterMiddleware,
+    shouldRunAgeCampaignLifecycle,
+    shouldRunPortalBackgroundJobs,
+    shouldRunStatusMonitor
+} = require('./nexus-service-tier');
+const {
+    registerHealthRoutes,
+    registerStatusRoutes,
+    startStatusMonitorLoop
+} = require('./nexus-status-monitor');
+const {
+    sendTransactionalEmail,
+    DEFAULT_FROM
+} = require('./nexus-mail-delivery');
+
+const NEXUS_TIER_CONFIG = resolveServiceTierConfig();
 
 /* Block 2: Environment Path Resolution */
 const isProduction = process.env.RENDER === 'true';
@@ -276,9 +294,7 @@ const dbPath = isProduction ? '/data/db.json' : path.join(__dirname, 'db.json');
 const BATTLE_PASS_SERVER_ENABLED = false;
 
 /* Block 3: Ledger Database Initialization */
-const adapter = new FileSync(dbPath);
-const db = low(adapter);
-db.defaults({
+const NEXUS_LEDGER_DEFAULTS = {
     commanders: [],
     portal: {
         maintenanceAlert: {
@@ -332,7 +348,13 @@ db.defaults({
         messages: [],
         drafts: []
     }
-}).write();
+};
+
+const db = createNexusLedger({
+    dbPath,
+    defaults: NEXUS_LEDGER_DEFAULTS,
+    isProduction
+});
 
 const PORTAL_EARLY_ACCESS_MAINTENANCE = {
     active: true,
@@ -3554,18 +3576,18 @@ const express = require('express');
 const session = require('express-session');
 const fs = require('fs');
 const compression = require('compression');
-const { Resend } = require('resend');
 const crypto = require('crypto');
 const bcrypt = require('bcrypt');
 
 /* Block 5: Runtime Constants & Express Instance */
 const app = express();
 const PORT = process.env.PORT || 3000;
-const resend = new Resend('re_eMzwshB5_EmorLivvuzwbHk6jpAzWtpWE');
 
 if (isProduction) {
     app.set('trust proxy', 1);
 }
+
+app.use(createServiceTierGateMiddleware(NEXUS_TIER_CONFIG));
 
 /* ==========================================
    NEXUS MODULE: SECURITY & MIDDLEWARE
@@ -3737,7 +3759,17 @@ app.use((req, res, next) => {
         '/api/portal/metrics',
         '/api/portal/presence',
         '/api/portal/presence/leave',
-        '/api/portal/legal/terms-version'
+        '/api/portal/legal/terms-version',
+        '/api/portal/maintenance-alert',
+        '/api/health/live',
+        '/api/health/community-chat',
+        '/api/health/messaging',
+        '/api/health/authentication',
+        '/api/health/game-chat',
+        '/api/health/battle-sim',
+        '/api/health/age-movement',
+        '/api/status/snapshot',
+        '/api/status/components'
     ]);
     if (inactivityExemptPaths.has(path)) return next();
 
@@ -3760,9 +3792,14 @@ const OFFICIAL_AGE_HTML_PAGES = {
     headquarters: 'headquarters.html'
 };
 
+const STATUS_HTML_PAGES = {
+    status: 'status.html'
+};
+
 const ALL_HTML_PAGE_ROUTES = {
     ...PORTAL_HTML_PAGES,
-    ...OFFICIAL_AGE_HTML_PAGES
+    ...OFFICIAL_AGE_HTML_PAGES,
+    ...(NEXUS_TIER_CONFIG.isUnified || NEXUS_TIER_CONFIG.isStatus ? STATUS_HTML_PAGES : {})
 };
 
 /* Extensionless canonical URLs — serve at /slug, redirect legacy /slug.html (before static). */
@@ -3773,6 +3810,9 @@ function redirectWithQuery(req, res, targetPath) {
 }
 
 app.get(['/ageportal', '/ageportal.html', '/index.html', '/', '/index'], (req, res) => {
+    if (NEXUS_TIER_CONFIG.isStatus) {
+        return redirectWithQuery(req, res, '/status');
+    }
     redirectWithQuery(req, res, '/main');
 });
 
@@ -3848,6 +3888,11 @@ app.use('/season-0', express.static(SEASON_0_DIR, {
     }
 }));
 
+app.use(createTierStaticFilterMiddleware(NEXUS_TIER_CONFIG));
+
+registerHealthRoutes(app, { db, tierConfig: NEXUS_TIER_CONFIG });
+registerStatusRoutes(app, { tierConfig: NEXUS_TIER_CONFIG });
+
 app.use(express.static(PUBLIC_DIR, {
     setHeaders(res, filePath) {
         if (path.basename(filePath) === AGE_OF_WAR_TRAILER_FILE) {
@@ -3867,8 +3912,8 @@ const sendWelcomeEmail = async (playerEmail, playerName, token) => {
     try {
         const verificationLink = `https://royalarmies.com/verify?token=${token}`;
 
-        const { data, error } = await resend.emails.send({
-            from: 'Royal Armies <noreply@royalarmies.com>',
+        const result = await sendTransactionalEmail({
+            from: DEFAULT_FROM,
             to: [playerEmail],
             subject: '📜 Email Verification: Royal Armies',
             html: `
@@ -3894,15 +3939,15 @@ const sendWelcomeEmail = async (playerEmail, playerName, token) => {
             `
         });
 
-        if (error) {
-            console.error("❌ Resend Error:", error);
-            throw error; 
+        if (!result.ok) {
+            console.error('❌ Resend Error:', result.error);
+            throw result.error || new Error('verification-email-failed');
         }
-        console.log("📜 Verification Scroll Sent! ID:", data.id);
-        return data;
+        console.log('📜 Verification Scroll Sent! ID:', result.data?.id || 'sent');
+        return result.data;
     } catch (err) {
-        console.error("❌ Fatal Post Office Failure:", err);
-        throw err; 
+        console.error('❌ Fatal Post Office Failure:', err);
+        throw err;
     }
 };
 
@@ -3912,8 +3957,8 @@ const PORTAL_PASSWORD_RESET_OK_MESSAGE =
 const sendPasswordResetEmail = async (req, commanderEmail, commanderUsername, resetToken) => {
     const origin = getPublicSiteOrigin(req);
     const resetLink = `${origin}/reset-password?token=${encodeURIComponent(resetToken)}`;
-    const { data, error } = await resend.emails.send({
-        from: 'Royal Armies <noreply@royalarmies.com>',
+    const result = await sendTransactionalEmail({
+        from: DEFAULT_FROM,
         to: [commanderEmail],
         subject: '📜 Password Reset: Royal Armies',
         html: `
@@ -3928,15 +3973,15 @@ const sendPasswordResetEmail = async (req, commanderEmail, commanderUsername, re
                 <p style="font-size:0.8rem; color:#888;">If the button does not work, copy and paste this link:<br>${resetLink}</p>
             </div>`
     });
-    if (error) throw error;
-    return data;
+    if (!result.ok) throw result.error || new Error('password-reset-email-failed');
+    return result.data;
 };
 
 const sendEmailChangeVerificationEmail = async (req, newEmail, commanderUsername, emailChangeToken) => {
     const origin = getPublicSiteOrigin(req);
     const verifyLink = `${origin}/verify-email-change?token=${encodeURIComponent(emailChangeToken)}`;
-    const { data, error } = await resend.emails.send({
-        from: 'Royal Armies <noreply@royalarmies.com>',
+    const result = await sendTransactionalEmail({
+        from: DEFAULT_FROM,
         to: [newEmail],
         subject: '📜 Confirm Your New Email: Royal Armies',
         html: `
@@ -3952,8 +3997,8 @@ const sendEmailChangeVerificationEmail = async (req, newEmail, commanderUsername
                 <p style="font-size:0.8rem; color:#888;">If the button does not work, copy and paste this link:<br>${verifyLink}</p>
             </div>`
     });
-    if (error) throw error;
-    return data;
+    if (!result.ok) throw result.error || new Error('email-change-verification-failed');
+    return result.data;
 };
 
 /* --- Section: API Route Handlers --- */
@@ -9364,26 +9409,47 @@ function runAgeRosterResetMigrationOnce() {
     console.log(`[NEXUS] Age roster reset migration applied (${resetCount} commanders).`);
 }
 
-app.listen(PORT, () => {
-    runAgeRosterResetMigrationOnce();
-    backfillWelcomeSystemMessagesForAllCommanders();
-    backfillFirstTimerAchievementForAllCommanders();
-    clearPortalUpdateImminentFlag();
-    ensureAgeCampaignRecord(db);
-    tickAgeCampaignLifecycle();
-    refreshAgePlayerRecordsRankingsIfDue();
-    setInterval(() => {
-        tickAgeCampaignLifecycle();
-        refreshAgePlayerRecordsRankingsIfDue();
-    }, AGE_CAMPAIGN_TICK_MS);
+async function bootNexusEngine() {
+    await prepareNexusLedger(db);
 
-    const ownerRestore = restoreCommanderArmyFromLedgerSnapshot('caleb_admin');
-    if (ownerRestore.ok && ownerRestore.restoredFromSnapshot && ownerRestore.unitsAfter > ownerRestore.unitsBefore) {
-        console.log(`[NEXUS] Restored caleb_admin army from assault snapshot (${ownerRestore.unitsBefore} → ${ownerRestore.unitsAfter} units).`);
-    }
+    app.listen(PORT, () => {
+        runAgeRosterResetMigrationOnce();
+        if (shouldRunPortalBackgroundJobs(NEXUS_TIER_CONFIG)) {
+            backfillWelcomeSystemMessagesForAllCommanders();
+            backfillFirstTimerAchievementForAllCommanders();
+            clearPortalUpdateImminentFlag();
+        }
+        if (shouldRunAgeCampaignLifecycle(NEXUS_TIER_CONFIG)) {
+            ensureAgeCampaignRecord(db);
+            tickAgeCampaignLifecycle();
+            refreshAgePlayerRecordsRankingsIfDue();
+            setInterval(() => {
+                tickAgeCampaignLifecycle();
+                refreshAgePlayerRecordsRankingsIfDue();
+            }, AGE_CAMPAIGN_TICK_MS);
+        }
 
-    console.log(`========================================`);
-    console.log(` NEXUS ENGINE ONLINE: Port ${PORT}`);
-    console.log(` GREEN MASK INTERACTIVE: ALPHA 0.1.11`);
-    console.log(`========================================`);
+        if (shouldRunStatusMonitor(NEXUS_TIER_CONFIG)) {
+            startStatusMonitorLoop({ tierConfig: NEXUS_TIER_CONFIG });
+        }
+
+        const ownerRestore = shouldRunAgeCampaignLifecycle(NEXUS_TIER_CONFIG)
+            ? restoreCommanderArmyFromLedgerSnapshot('caleb_admin')
+            : { ok: false };
+        if (ownerRestore.ok && ownerRestore.restoredFromSnapshot && ownerRestore.unitsAfter > ownerRestore.unitsBefore) {
+            console.log(`[NEXUS] Restored caleb_admin army from assault snapshot (${ownerRestore.unitsBefore} → ${ownerRestore.unitsAfter} units).`);
+        }
+
+        console.log(`========================================`);
+        console.log(` NEXUS ENGINE ONLINE: Port ${PORT}`);
+        console.log(` SERVICE TIER: ${NEXUS_TIER_CONFIG.tier.toUpperCase()}`);
+        console.log(` LEDGER MODE: ${db.__nexusLedgerMode || 'file'}`);
+        console.log(` GREEN MASK INTERACTIVE: ALPHA 0.1.11`);
+        console.log(`========================================`);
+    });
+}
+
+bootNexusEngine().catch((err) => {
+    console.error('[NEXUS] Engine boot failed:', err?.message || err);
+    process.exit(1);
 });

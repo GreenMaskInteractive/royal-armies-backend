@@ -40,3 +40,5 @@ On VM startup, run `npm install` from repo root (see cloud update script). No Do
 
 - Trailer render: `npm run render:trailer` (Puppeteer + ffmpeg; heavy).
 - Python scripts under `scripts/` for map/asset maintenance (run per script as needed).
+- **Split services:** `npm run start:portal`, `start:game`, `start:status` — see `docs/nexus-service-tier-deployment.md`.
+- **Status page:** `/status` (component health + email alerts when split or unified with monitor enabled).

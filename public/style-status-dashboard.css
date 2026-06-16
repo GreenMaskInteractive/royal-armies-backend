@@ -1,0 +1,363 @@
+/* FLEX — Royal Armies public operational status dashboard */
+
+.status-dashboard-body {
+    margin: 0;
+    min-height: 100vh;
+    background:
+        radial-gradient(circle at top, rgba(212, 175, 55, 0.12), transparent 34%),
+        linear-gradient(180deg, #090807 0%, #11100d 42%, #080706 100%);
+    color: #f1e0ac;
+}
+
+.status-dashboard-shell {
+    width: min(1180px, calc(100vw - 48px));
+    margin: 0 auto;
+    padding: 36px 0 56px;
+}
+
+.status-dashboard-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+    margin-bottom: 28px;
+}
+
+.status-dashboard-brand {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+}
+
+.status-dashboard-logo {
+    width: 220px;
+    max-width: 38vw;
+    height: auto;
+    display: block;
+}
+
+.status-dashboard-eyebrow {
+    margin: 0 0 4px;
+    font-size: 0.78rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: #b8a06a;
+}
+
+.status-dashboard-title {
+    margin: 0;
+    font-size: clamp(1.8rem, 3vw, 2.6rem);
+    color: #f6e8c3;
+    font-weight: 700;
+}
+
+.status-dashboard-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.status-dashboard-link-button,
+.status-dashboard-refresh-button {
+    appearance: none;
+    border: 1px solid rgba(212, 175, 55, 0.55);
+    background: rgba(18, 16, 13, 0.92);
+    color: #f1e0ac;
+    padding: 11px 16px;
+    border-radius: 6px;
+    font: inherit;
+    cursor: pointer;
+    text-decoration: none;
+    transition: border-color 0.18s ease, transform 0.18s ease, background 0.18s ease;
+}
+
+.status-dashboard-link-button:hover,
+.status-dashboard-refresh-button:hover {
+    border-color: #d4af37;
+    background: rgba(28, 24, 18, 0.98);
+    transform: translateY(-1px);
+}
+
+.status-dashboard-summary {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 18px;
+    align-items: stretch;
+    margin-bottom: 28px;
+}
+
+.status-dashboard-overall-card {
+    display: flex;
+    gap: 18px;
+    align-items: center;
+    padding: 22px 24px;
+    border-radius: 14px;
+    border: 1px solid rgba(212, 175, 55, 0.28);
+    background: linear-gradient(135deg, rgba(22, 19, 15, 0.96), rgba(12, 11, 9, 0.98));
+    box-shadow: 0 18px 40px rgba(0, 0, 0, 0.28);
+}
+
+.status-dashboard-overall-card--healthy {
+    border-color: rgba(76, 175, 125, 0.45);
+}
+
+.status-dashboard-overall-card--degraded {
+    border-color: rgba(240, 192, 64, 0.55);
+}
+
+.status-dashboard-overall-card--critical {
+    border-color: rgba(255, 107, 107, 0.55);
+}
+
+.status-dashboard-overall-card--loading {
+    border-color: rgba(212, 175, 55, 0.28);
+}
+
+.status-dashboard-overall-indicator {
+    width: 22px;
+    height: 22px;
+    border-radius: 999px;
+    flex: 0 0 auto;
+    box-shadow: 0 0 18px currentColor;
+}
+
+.status-dashboard-overall-label {
+    margin: 0 0 6px;
+    font-size: 0.82rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: #b8a06a;
+}
+
+.status-dashboard-overall-title {
+    margin: 0 0 8px;
+    font-size: clamp(1.35rem, 2.4vw, 1.9rem);
+    color: #f8eed1;
+}
+
+.status-dashboard-overall-detail,
+.status-dashboard-checked-at {
+    margin: 0;
+    color: #c8b990;
+    line-height: 1.55;
+}
+
+.status-dashboard-checked-at {
+    margin-top: 10px;
+    font-size: 0.92rem;
+    color: #968664;
+}
+
+.status-dashboard-legend {
+    min-width: 180px;
+    padding: 18px 20px;
+    border-radius: 14px;
+    border: 1px solid rgba(212, 175, 55, 0.18);
+    background: rgba(14, 12, 10, 0.88);
+    display: grid;
+    gap: 12px;
+    align-content: center;
+}
+
+.status-dashboard-legend-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: #dcc89f;
+    font-size: 0.95rem;
+}
+
+.status-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 999px;
+    display: inline-block;
+    flex: 0 0 auto;
+}
+
+.status-dot--healthy {
+    background: #49c787;
+    color: #49c787;
+    box-shadow: 0 0 12px rgba(73, 199, 135, 0.65);
+}
+
+.status-dot--degraded {
+    background: #f0c040;
+    color: #f0c040;
+    box-shadow: 0 0 12px rgba(240, 192, 64, 0.65);
+}
+
+.status-dot--critical {
+    background: #ff6b6b;
+    color: #ff6b6b;
+    box-shadow: 0 0 12px rgba(255, 107, 107, 0.65);
+}
+
+.status-dashboard-groups {
+    display: grid;
+    gap: 22px;
+}
+
+.status-dashboard-group {
+    padding: 0;
+}
+
+.status-dashboard-group-title {
+    margin: 0 0 14px;
+    font-size: 1.05rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #d4af37;
+}
+
+.status-dashboard-component-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+}
+
+.status-dashboard-component {
+    padding: 18px 18px 16px;
+    border-radius: 12px;
+    border: 1px solid rgba(212, 175, 55, 0.16);
+    background: rgba(15, 13, 11, 0.92);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
+}
+
+.status-dashboard-component--healthy {
+    border-color: rgba(73, 199, 135, 0.24);
+}
+
+.status-dashboard-component--degraded {
+    border-color: rgba(240, 192, 64, 0.34);
+}
+
+.status-dashboard-component--critical {
+    border-color: rgba(255, 107, 107, 0.34);
+}
+
+.status-dashboard-component-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 10px;
+}
+
+.status-dashboard-component-title-wrap {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.status-dashboard-component-title {
+    margin: 0;
+    font-size: 1.08rem;
+    color: #f6e8c3;
+}
+
+.status-dashboard-component-badge {
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-size: 0.78rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    border: 1px solid transparent;
+}
+
+.status-dashboard-component-badge--healthy {
+    color: #9ef0c3;
+    background: rgba(73, 199, 135, 0.12);
+    border-color: rgba(73, 199, 135, 0.28);
+}
+
+.status-dashboard-component-badge--degraded {
+    color: #ffe08a;
+    background: rgba(240, 192, 64, 0.12);
+    border-color: rgba(240, 192, 64, 0.28);
+}
+
+.status-dashboard-component-badge--critical {
+    color: #ffb3b3;
+    background: rgba(255, 107, 107, 0.12);
+    border-color: rgba(255, 107, 107, 0.28);
+}
+
+.status-dashboard-component-description,
+.status-dashboard-component-meta {
+    margin: 0;
+    color: #c8b990;
+    line-height: 1.55;
+    font-size: 0.94rem;
+}
+
+.status-dashboard-component-meta {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid rgba(212, 175, 55, 0.12);
+    color: #968664;
+    font-size: 0.84rem;
+}
+
+.status-dashboard-loading,
+.status-dashboard-error {
+    padding: 28px;
+    border-radius: 12px;
+    border: 1px dashed rgba(212, 175, 55, 0.24);
+    background: rgba(12, 11, 9, 0.88);
+    color: #c8b990;
+    text-align: center;
+}
+
+.status-dashboard-footer {
+    margin-top: 30px;
+    padding-top: 18px;
+    border-top: 1px solid rgba(212, 175, 55, 0.14);
+    color: #968664;
+    line-height: 1.6;
+    font-size: 0.92rem;
+}
+
+.status-dashboard-footer-links {
+    margin: 10px 0 0;
+}
+
+.status-dashboard-footer-links a {
+    color: #d4af37;
+    text-decoration: none;
+}
+
+.status-dashboard-footer-links a:hover {
+    text-decoration: underline;
+}
+
+@media (max-width: 920px) {
+    .status-dashboard-shell {
+        width: min(100vw - 24px, 1180px);
+        padding-top: 24px;
+    }
+
+    .status-dashboard-header,
+    .status-dashboard-summary {
+        grid-template-columns: 1fr;
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .status-dashboard-header {
+        display: grid;
+    }
+
+    .status-dashboard-component-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .status-dashboard-component-meta {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+}

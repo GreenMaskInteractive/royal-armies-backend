@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Royal Armies — Operational Status</title>
+    <link rel="stylesheet" href="style.css?v=status-dashboard-1">
+    <link rel="stylesheet" href="style2.css?v=status-dashboard-1">
+    <link rel="stylesheet" href="style-status-dashboard.css?v=status-dashboard-1">
+    <link rel="stylesheet" href="custom-cursor.css?v=status-dashboard-1">
+    <script src="dev-environment.js?v=status-dashboard-1"></script>
+</head>
+<body class="status-dashboard-body" id="status-dashboard-body">
+    <div class="status-dashboard-shell">
+        <header class="status-dashboard-header">
+            <div class="status-dashboard-brand">
+                <img src="images/royalarmiestitle.png?v=logo-trim-gimp-1" alt="Royal Armies" class="status-dashboard-logo">
+                <div class="status-dashboard-brand-copy">
+                    <p class="status-dashboard-eyebrow">Royal Armies Operations</p>
+                    <h1 class="status-dashboard-title">System Status</h1>
+                </div>
+            </div>
+            <div class="status-dashboard-header-actions">
+                <a href="/main" class="status-dashboard-link-button">Return to Main Portal</a>
+                <button type="button" id="status-dashboard-refresh-btn" class="status-dashboard-refresh-button">Refresh Now</button>
+            </div>
+        </header>
+
+        <section class="status-dashboard-summary" aria-live="polite">
+            <div id="status-dashboard-overall-card" class="status-dashboard-overall-card status-dashboard-overall-card--loading">
+                <div class="status-dashboard-overall-indicator" id="status-dashboard-overall-indicator" aria-hidden="true"></div>
+                <div class="status-dashboard-overall-copy">
+                    <p class="status-dashboard-overall-label">Overall Status</p>
+                    <h2 id="status-dashboard-overall-title" class="status-dashboard-overall-title">Checking systems…</h2>
+                    <p id="status-dashboard-overall-detail" class="status-dashboard-overall-detail">Running live probes across the portal and game services.</p>
+                    <p id="status-dashboard-checked-at" class="status-dashboard-checked-at">Last checked —</p>
+                </div>
+            </div>
+
+            <div class="status-dashboard-legend" aria-label="Status legend">
+                <div class="status-dashboard-legend-item"><span class="status-dot status-dot--healthy"></span> Online</div>
+                <div class="status-dashboard-legend-item"><span class="status-dot status-dot--degraded"></span> Hiccups</div>
+                <div class="status-dashboard-legend-item"><span class="status-dot status-dot--critical"></span> Offline</div>
+            </div>
+        </section>
+
+        <section class="status-dashboard-groups" id="status-dashboard-groups">
+            <div class="status-dashboard-loading">Loading component health…</div>
+        </section>
+
+        <footer class="status-dashboard-footer">
+            <p>Status checks refresh automatically every 30 seconds. Degraded and offline incidents are emailed to Royal Armies operations staff.</p>
+            <p class="status-dashboard-footer-links">
+                <a href="/main">Main Portal</a>
+                <span aria-hidden="true">·</span>
+                <a href="/game">Game Client</a>
+            </p>
+        </footer>
+    </div>
+
+    <script src="custom-cursor.js?v=status-dashboard-1"></script>
+    <script src="rift-status-dashboard.js?v=status-dashboard-1"></script>
+</body>
+</html>

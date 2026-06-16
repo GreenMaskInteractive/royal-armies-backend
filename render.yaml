@@ -1,0 +1,100 @@
+# Render blueprint — Royal Armies split services
+# Docs: docs/nexus-service-tier-deployment.md
+
+databases:
+  - name: royal-armies-db
+    databaseName: royal_armies
+    plan: basic-256mb
+    region: oregon
+
+services:
+  - type: web
+    name: royal-armies-portal
+    runtime: node
+    plan: starter
+    region: oregon
+    buildCommand: npm install
+    startCommand: node server-portal.js
+    healthCheckPath: /api/health/live
+    envVars:
+      - key: NEXUS_SERVICE_TIER
+        value: portal
+      - key: NODE_VERSION
+        value: 22.16.0
+      - key: SESSION_SECRET
+        generateValue: true
+      - key: RESEND_API_KEY
+        sync: false
+      - key: STATUS_ALERT_EMAIL
+        sync: false
+      - key: ROYAL_ARMIES_PUBLIC_URL
+        value: https://royalarmies.com
+      - key: DATABASE_URL
+        fromDatabase:
+          name: royal-armies-db
+          property: connectionString
+      - key: NEXUS_GAME_PEER_URL
+        sync: false
+      - key: NEXUS_STATUS_PEER_URL
+        sync: false
+
+  - type: web
+    name: royal-armies-game
+    runtime: node
+    plan: starter
+    region: oregon
+    buildCommand: npm install
+    startCommand: node server-game.js
+    healthCheckPath: /api/health/live
+    envVars:
+      - key: NEXUS_SERVICE_TIER
+        value: game
+      - key: NODE_VERSION
+        value: 22.16.0
+      - key: SESSION_SECRET
+        fromService:
+          type: web
+          name: royal-armies-portal
+          envVarKey: SESSION_SECRET
+      - key: DATABASE_URL
+        fromDatabase:
+          name: royal-armies-db
+          property: connectionString
+      - key: NEXUS_PORTAL_PEER_URL
+        sync: false
+      - key: NEXUS_STATUS_PEER_URL
+        sync: false
+
+  - type: web
+    name: royal-armies-status
+    runtime: node
+    plan: starter
+    region: oregon
+    buildCommand: npm install
+    startCommand: node server-status.js
+    healthCheckPath: /api/health/live
+    envVars:
+      - key: NEXUS_SERVICE_TIER
+        value: status
+      - key: NODE_VERSION
+        value: 22.16.0
+      - key: RESEND_API_KEY
+        fromService:
+          type: web
+          name: royal-armies-portal
+          envVarKey: RESEND_API_KEY
+      - key: STATUS_ALERT_EMAIL
+        fromService:
+          type: web
+          name: royal-armies-portal
+          envVarKey: STATUS_ALERT_EMAIL
+      - key: ROYAL_ARMIES_PUBLIC_URL
+        value: https://royalarmies.com
+      - key: NEXUS_PORTAL_PEER_URL
+        sync: false
+      - key: NEXUS_GAME_PEER_URL
+        sync: false
+      - key: DATABASE_URL
+        fromDatabase:
+          name: royal-armies-db
+          property: connectionString
