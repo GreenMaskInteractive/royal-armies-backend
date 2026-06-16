@@ -321,9 +321,8 @@
 
         if (typeof global.showPortalConfirm === 'function') {
             dismissConfirmPending = true;
-            const confirmed = await global.showPortalConfirm({
+            const confirmed = await global.showPortalConfirm(confirmMessage, {
                 title: 'Dismiss garrison units',
-                message: confirmMessage,
                 confirmLabel: 'Dismiss',
                 cancelLabel: 'Keep units'
             });

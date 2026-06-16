@@ -232,13 +232,19 @@
     }
 
     function showPortalConfirm(message, options) {
-        const opts = options && typeof options === 'object' ? options : {};
+        let msg = message;
+        let opts = options;
+        if (message && typeof message === 'object' && options === undefined) {
+            opts = message;
+            msg = String(opts.message || '').trim();
+        }
+        const resolved = opts && typeof opts === 'object' ? opts : {};
         return openPortalAlertModal({
             mode: 'confirm',
-            message,
-            title: opts.title || 'Confirm',
-            confirmLabel: opts.confirmLabel || 'Confirm',
-            cancelLabel: opts.cancelLabel || 'Cancel'
+            message: msg,
+            title: resolved.title || 'Confirm',
+            confirmLabel: resolved.confirmLabel || 'Confirm',
+            cancelLabel: resolved.cancelLabel || 'Cancel'
         });
     }
 

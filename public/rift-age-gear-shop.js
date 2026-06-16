@@ -1283,8 +1283,7 @@
             : resolveOwnedGearSet(state).has(item.id);
         const equipped = !options.isTool && isEquipped(state, item.id);
         const parts = [];
-        if (equipped) parts.push('Equipped');
-        else if (owned) parts.push('Owned');
+        if (equipped || owned) parts.push('Purchased');
         else parts.push(`${formatGold(item.purchaseGold)} gold`);
         if (!owned && rank < item.equipMinRank) {
             parts.push(`Equip ${resolveRankThresholdLabel(item.equipMinRank)}`);
@@ -1366,16 +1365,11 @@
         const owned = isTool ? resolveOwnedToolSet(state).has(item.id) : resolveOwnedGearSet(state).has(item.id);
         const equipped = !isTool && isEquipped(state, item.id);
         const rankLocked = rank < item.equipMinRank;
-        if (equipped) {
-            return { id: 'equipped', label: 'Equipped' };
-        }
-        if (owned && isTool) {
-            return { id: 'owned', label: 'Owned' };
-        }
-        if (owned) {
-            return rankLocked
-                ? { id: 'owned-locked', label: 'Owned · Rank Locked' }
-                : { id: 'owned', label: 'Owned' };
+        if (equipped || owned) {
+            if (owned && !isTool && rankLocked) {
+                return { id: 'owned-locked', label: 'Purchased · Rank Locked' };
+            }
+            return { id: equipped ? 'equipped' : 'owned', label: 'Purchased' };
         }
         if (rankLocked) {
             return { id: 'rank-locked', label: 'Rank Locked' };
@@ -1414,7 +1408,7 @@
             )
             : (
                 '<div class="age-gear-shop-inspect-price-block is-owned">'
-                + `<span class="age-gear-shop-inspect-price-label">${equipped ? 'Currently Equipped' : 'In Your Inventory'}</span>`
+                + `<span class="age-gear-shop-inspect-price-label">Purchased</span>`
                 + '</div>'
             );
         return (
@@ -1508,7 +1502,7 @@
         const canAfford = gold >= item.purchaseGold;
 
         if (equipped) {
-            return '<div class="age-gear-shop-detail-actions age-gear-shop-inspect-actions"><span class="age-gear-shop-inspect-action-status is-equipped">Equipped</span></div>';
+            return '<div class="age-gear-shop-detail-actions age-gear-shop-inspect-actions"><span class="age-gear-shop-inspect-action-status is-equipped">Purchased</span></div>';
         }
         if (owned && !isTool) {
             if (!canEquip) {
@@ -1521,7 +1515,7 @@
             );
         }
         if (owned && isTool) {
-            return '<div class="age-gear-shop-detail-actions age-gear-shop-inspect-actions"><span class="age-gear-shop-inspect-action-status is-owned">Owned — stowed in inventory</span></div>';
+            return '<div class="age-gear-shop-detail-actions age-gear-shop-inspect-actions"><span class="age-gear-shop-inspect-action-status is-owned">Purchased — stowed in inventory</span></div>';
         }
         const purchaseAttr = isTool ? 'data-forge-tool-purchase' : 'data-forge-purchase';
         const disabled = canAfford ? '' : ' disabled';

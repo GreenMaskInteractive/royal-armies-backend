@@ -574,9 +574,8 @@
         );
 
         if (typeof global.showPortalConfirm === 'function') {
-            const confirmed = await global.showPortalConfirm({
+            const confirmed = await global.showPortalConfirm(confirmMessage, {
                 title: 'Promote all eligible ranks',
-                message: confirmMessage,
                 confirmLabel: 'Promote All',
                 cancelLabel: 'Cancel'
             });
@@ -626,9 +625,8 @@
         );
 
         if (typeof global.showPortalConfirm === 'function') {
-            const confirmed = await global.showPortalConfirm({
+            const confirmed = await global.showPortalConfirm(confirmMessage, {
                 title: 'Evolve all eligible tiers',
-                message: confirmMessage,
                 confirmLabel: 'Evolve All',
                 cancelLabel: 'Cancel'
             });

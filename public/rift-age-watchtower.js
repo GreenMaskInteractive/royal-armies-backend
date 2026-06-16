@@ -336,12 +336,14 @@
                 });
                 showMessage(`Scout raid filed on ${targetUsername}.`, 'success');
             } else if (action === 'seize') {
-                const confirmed = await global.showPortalConfirm?.({
-                    title: 'Seize Commander',
-                    message: `Launch border PvP against ${targetUsername}? This spends 1 Move and may injure your army.`,
-                    confirmLabel: 'Seize',
-                    cancelLabel: 'Cancel'
-                });
+                const confirmed = await global.showPortalConfirm?.(
+                    `Launch border PvP against ${targetUsername}? This spends 1 Move and may injure your army.`,
+                    {
+                        title: 'Seize Commander',
+                        confirmLabel: 'Seize',
+                        cancelLabel: 'Cancel'
+                    }
+                );
                 if (!confirmed) return;
 
                 payload = await postAction('/api/portal/age/watchtower/seize', {
