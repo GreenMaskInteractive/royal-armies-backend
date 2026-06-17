@@ -2,6 +2,15 @@
  * FLEX — Game Hub box menu (premium centered popup).
  */
 
+/* Portaled to document.body — enforce closed state without #age-page-canvas ancestor. */
+.age-nation-hub-menu.age-nation-hub-menu--box[hidden],
+.age-nation-hub-menu.age-nation-hub-menu--box:not(.is-open) {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+}
+
 /* Portaled to document.body — cannot rely on #age-page-canvas ancestor for open-state chrome. */
 .age-nation-hub-menu.age-nation-hub-menu--box.is-open {
     display: flex !important;
@@ -588,6 +597,12 @@ body.age-nation-hub-suicide-popup-open {
     border-color: rgba(255, 215, 0, 0.48);
     color: #fff6d8;
     outline: none;
+}
+
+.age-nation-hub-suicide-popup.is-loading .age-nation-hub-suicide-popup-option {
+    opacity: 0.58;
+    pointer-events: none;
+    cursor: wait;
 }
 
 .age-nation-hub-menu-footer {

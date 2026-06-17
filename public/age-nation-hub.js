@@ -7,7 +7,7 @@
     /** Set true to restore full-screen radial menu (go-to design in style-age-nation-hub-radial.css). */
     const ENABLE_RADIAL_HUB_MENU = false;
 
-    const BOX_BUILD_VERSION = 'hub-suicide-popup-1';
+    const BOX_BUILD_VERSION = 'hub-suicide-popup-2';
 
     const HUB_DISABLED_ITEM_IDS = Object.freeze(['discoveries', 'banner', 'battle-pass']);
 
@@ -88,7 +88,7 @@
         menu.dataset.ageBoxPortaled = 'true';
     }
 
-    function setHubOpen(open) {
+    function setHubOpen(open, options = {}) {
         const hub = getHub();
         const toggle = getToggle();
         if (!hub || !toggle) return;
@@ -98,7 +98,7 @@
         if (ENABLE_RADIAL_HUB_MENU) {
             setHubOpenRadial(nextOpen, hub, toggle);
         } else {
-            setHubOpenBox(nextOpen, hub, toggle);
+            setHubOpenBox(nextOpen, hub, toggle, options);
         }
 
         if (nextOpen) {
@@ -123,7 +123,7 @@
         }
     }
 
-    function setHubOpenBox(open, hub, toggle) {
+    function setHubOpenBox(open, hub, toggle, options = {}) {
         const menu = getMenu();
         const nextOpen = Boolean(open);
 
@@ -147,7 +147,13 @@
         menu.hidden = true;
         menu.setAttribute('hidden', '');
         menu.setAttribute('aria-hidden', 'true');
-        closeHubSuicidePopup();
+        if (!options.preserveSuicidePopup) {
+            closeHubSuicidePopup();
+        }
+    }
+
+    function closeHubMenuOnly() {
+        setHubOpen(false, { preserveSuicidePopup: true });
     }
 
     function setHubOpenRadial(open, hub, toggle) {
@@ -308,7 +314,6 @@
         event.preventDefault();
         const itemId = item.getAttribute('data-age-hub-menu');
         if (itemId === 'suicide') {
-            closeHub();
             void openHubSuicidePopup(event);
             return;
         }
@@ -414,12 +419,22 @@
             event.stopPropagation();
         }
 
+        closeHubMenuOnly();
+
         const popup = ensureHubSuicidePopupMounted();
         if (!popup) return;
+
+        popup.hidden = false;
+        popup.removeAttribute('hidden');
+        popup.setAttribute('aria-hidden', 'false');
+        popup.classList.add('is-loading');
+        global.document.body.classList.add('age-nation-hub-suicide-popup-open');
 
         try {
             await ensureSuicideFlowReady();
         } catch (err) {
+            popup.classList.remove('is-loading');
+            closeHubSuicidePopup();
             console.warn('[RIFT] Game Hub suicide scripts failed to load:', err);
             if (typeof global.showPortalAlert === 'function') {
                 void global.showPortalAlert('Suicide options are unavailable in this session.', 'Suicide');
@@ -427,14 +442,11 @@
             return;
         }
 
+        popup.classList.remove('is-loading');
+
         if (typeof global.applyProfileRankResetButtonState === 'function') {
             global.applyProfileRankResetButtonState();
         }
-
-        popup.hidden = false;
-        popup.removeAttribute('hidden');
-        popup.setAttribute('aria-hidden', 'false');
-        global.document.body.classList.add('age-nation-hub-suicide-popup-open');
 
         const firstOption = popup.querySelector('[data-age-hub-suicide-mode]');
         firstOption?.focus?.();
@@ -547,7 +559,6 @@
             event.preventDefault();
             event.stopPropagation();
             if (itemId === 'suicide') {
-                closeHub();
                 void openHubSuicidePopup(event);
                 return;
             }
@@ -653,7 +664,6 @@
                         if (item.getAttribute('data-age-hub-menu') === 'suicide') {
                             event.preventDefault();
                             event.stopPropagation();
-                            closeHub();
                             void openHubSuicidePopup(event);
                             return;
                         }
