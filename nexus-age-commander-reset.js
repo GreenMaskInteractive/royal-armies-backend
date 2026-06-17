@@ -11,13 +11,25 @@ const {
 const COMMANDER_RANK_RESET_LIMIT = 3;
 const COMMANDER_EXILE_RESET_LIMIT = 1;
 
+function buildCommanderAgeGearResetLedgerPatch() {
+    return {
+        ageGearSlots: null,
+        ageGearLocked: false,
+        ageGuildMerch: [],
+        ageGuildPerks: null,
+        ageGuildBonuses: null,
+        ageGuildUnlockSkills: []
+    };
+}
+
 function buildCommanderRankResetLedgerPatch() {
     return {
         rank: 1,
         ageGuildXp: 0,
         ageGuildAcceptedBountyId: null,
         ...buildAdminGoldRestorePatch(),
-        ...buildCommanderAgeArmyResetPatch()
+        ...buildCommanderAgeArmyResetPatch(),
+        ...buildCommanderAgeGearResetLedgerPatch()
     };
 }
 
@@ -88,6 +100,7 @@ function incrementAgeResetUsage(usage, userKey, sessionKey, mode) {
 module.exports = {
     COMMANDER_RANK_RESET_LIMIT,
     COMMANDER_EXILE_RESET_LIMIT,
+    buildCommanderAgeGearResetLedgerPatch,
     buildCommanderRankResetLedgerPatch,
     buildCommanderExileResetLedgerPatch,
     resolveAgeResetUsageEntry,

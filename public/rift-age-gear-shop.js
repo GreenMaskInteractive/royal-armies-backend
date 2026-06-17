@@ -962,6 +962,22 @@
         pumpGearLevelUpQueue();
     }
 
+    function resetCommanderProgressState() {
+        const empty = createDefaultState();
+        writeState(empty);
+        if (global.player) {
+            global.player.ageGearSlots = null;
+        }
+        try {
+            global.dispatchEvent(new CustomEvent('royalarmies:age-gear-progress-updated', {
+                detail: { source: 'commander-reset' }
+            }));
+        } catch (_error) {
+            /* ignore */
+        }
+        return empty;
+    }
+
     function syncPlayerGearSlots(equipped) {
         if (!global.player || typeof equipped !== 'object') return;
         const slots = {};
@@ -2394,6 +2410,7 @@
         applyLocalEquippedOverlay,
         readState,
         writeState,
+        resetCommanderProgressState,
         grantBattleXpFromTraining,
         resolveGearProgress,
         formatGearLevelLabel

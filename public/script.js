@@ -5636,6 +5636,23 @@ function syncCommanderAgeResetUsageFromServer(ageResetUsage) {
     }
 }
 
+function clearCommanderPurchasedGearProgress() {
+    if (typeof global.RoyalArmiesAgeGearShop?.resetCommanderProgressState === 'function') {
+        global.RoyalArmiesAgeGearShop.resetCommanderProgressState();
+        return;
+    }
+
+    try {
+        global.localStorage.removeItem('royalarmies:age-gear-shop-state');
+    } catch (_err) {
+        /* ignore */
+    }
+
+    if (typeof player !== 'undefined' && player) {
+        player.ageGearSlots = null;
+    }
+}
+
 function applyCommanderAgeResetPayload(mode, payload) {
     if (typeof player === 'undefined' || !payload || typeof payload !== 'object') return;
 
@@ -5643,6 +5660,13 @@ function applyCommanderAgeResetPayload(mode, payload) {
     player.ageGuildXp = Math.max(0, Math.floor(Number(payload.ageGuildXp) || 0));
     player.ageArmy = Array.isArray(payload.ageArmy) ? payload.ageArmy.slice() : [];
     player.army = [];
+    clearCommanderPurchasedGearProgress();
+
+    if (typeof player === 'object' && payload) {
+        if (Array.isArray(payload.ageGuildMerch)) {
+            player.ageGuildMerch = payload.ageGuildMerch.slice();
+        }
+    }
 
     if (typeof setAgeCommanderRank === 'function') {
         setAgeCommanderRank(player.rank, { source: 'commander-reset', silent: true });
@@ -5677,6 +5701,14 @@ function applyCommanderAgeResetPayload(mode, payload) {
     }
     if (typeof refreshAgeHudProvisions === 'function') {
         refreshAgeHudProvisions();
+    }
+
+    try {
+        global.dispatchEvent(new CustomEvent('royalarmies:commander-age-reset-applied', {
+            detail: { mode, payload }
+        }));
+    } catch (_err) {
+        /* ignore */
     }
 }
 

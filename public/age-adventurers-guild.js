@@ -2016,6 +2016,14 @@
                 if (isOpen()) renderGuildPanel();
             });
         });
+        global.addEventListener('royalarmies:commander-age-reset-applied', (event) => {
+            mergeGuildState(event?.detail?.payload || {});
+            if (guildJobsExpanded) renderSettlementGuildJobs();
+            if (isOpen()) {
+                renderGuildPanel();
+                refreshTrainingLoadout();
+            }
+        });
 
         global.document.getElementById('age-settlement-menu-list')?.addEventListener('click', onSettlementMenuClick, true);
 

@@ -32,11 +32,6 @@ const before = commanders[index];
 commanders[index] = {
     ...before,
     ...buildCommanderRankResetLedgerPatch(),
-    ageGearSlots: null,
-    ageGearLocked: false,
-    ageGuildMerch: [],
-    ageGuildPerks: null,
-    ageGuildBonuses: null,
     army: []
 };
 db.commanders = commanders;

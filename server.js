@@ -7755,11 +7755,6 @@ app.post('/api/portal/age/admin/reset-age-rosters', (req, res) => {
         commanders[index] = {
             ...commander,
             ...buildCommanderRankResetLedgerPatch(),
-            ageGearSlots: null,
-            ageGearLocked: false,
-            ageGuildMerch: [],
-            ageGuildPerks: null,
-            ageGuildBonuses: null,
             ageResetUsage: {}
         };
     });
@@ -7986,11 +7981,6 @@ app.post('/api/portal/age/admin/reset-commander-progress', (req, res) => {
         .find({ username: targetUsername })
         .assign({
             ...buildCommanderRankResetLedgerPatch(),
-            ageGearSlots: null,
-            ageGearLocked: false,
-            ageGuildMerch: [],
-            ageGuildPerks: null,
-            ageGuildBonuses: null,
             army: [],
             dossierUpdatedAt: new Date().toISOString()
         })
@@ -9449,7 +9439,10 @@ app.post('/api/portal/age/commander-reset', (req, res) => {
         ageGuildXp: Math.max(0, Math.floor(Number(commander.ageGuildXp) || 0)),
         gameNation: String(commander.gameNation || '').trim(),
         ageArmy: [],
+        ageGearSlots: null,
+        ageGearLocked: false,
         ageResetUsage: normalizeCommanderAgeResetUsage(commander.ageResetUsage),
+        ...buildGuildStatePayload(commander),
         ...getPortalLiveMetricsPayload()
     });
 });

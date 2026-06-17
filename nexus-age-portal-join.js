@@ -4,7 +4,8 @@
 'use strict';
 
 const {
-    buildCommanderExileResetLedgerPatch
+    buildCommanderExileResetLedgerPatch,
+    buildCommanderAgeGearResetLedgerPatch
 } = require('./nexus-age-commander-reset');
 const {
     normalizeCommanderMovementRecord,
@@ -80,12 +81,7 @@ function buildCommanderAccountResetPatch(commander) {
         ...buildCommanderExileResetLedgerPatch(),
         awards,
         medals,
-        ageGearSlots: null,
-        ageGearLocked: false,
-        ageGuildMerch: [],
-        ageGuildPerks: null,
-        ageGuildBonuses: null,
-        ageGuildUnlockSkills: [],
+        ...buildCommanderAgeGearResetLedgerPatch(),
         ageResetUsage: {},
         path: '',
         ageClassPerkChoices: null,
