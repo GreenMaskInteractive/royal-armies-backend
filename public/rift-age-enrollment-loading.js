@@ -121,6 +121,13 @@
         const body = global.document.body;
         if (!body) return;
         body.setAttribute('data-ra-page-loading', 'off');
+
+        const gate = global.document.getElementById('ra-page-loading-gate');
+        if (gate) {
+            gate.hidden = true;
+            gate.classList.remove('is-visible');
+            gate.setAttribute('aria-busy', 'false');
+        }
     }
 
     function ensureOverlay() {
@@ -136,12 +143,6 @@
         overlay.setAttribute('aria-busy', 'true');
         overlay.innerHTML = (
             '<div class="age-enrollment-loading-inner">'
-            + '<div class="age-enrollment-loading-head">'
-            + `<img class="age-enrollment-loading-lore-tool" src="${LORE_TOOL_SRC}" alt="" width="96" height="96" decoding="async">`
-            + '<div class="age-enrollment-loading-status-wrap">'
-            + `<p class="age-enrollment-loading-status" id="${OVERLAY_ID}-status">${STATUS_LINES[0]}</p>`
-            + '</div>'
-            + '</div>'
             + '<div class="age-enrollment-loading-tip">'
             + `<div class="age-enrollment-loading-tip-visual" id="${OVERLAY_ID}-tip-visual">`
             + '<span class="age-enrollment-loading-tip-visual-label">Tip illustration forthcoming</span>'
@@ -149,6 +150,12 @@
             + '</div>'
             + `<h2 class="age-enrollment-loading-tip-title" id="${OVERLAY_ID}-tip-title"></h2>`
             + `<p class="age-enrollment-loading-tip-body" id="${OVERLAY_ID}-tip-body"></p>`
+            + '</div>'
+            + '</div>'
+            + '<div class="age-enrollment-loading-status-corner">'
+            + `<img class="age-enrollment-loading-lore-tool" src="${LORE_TOOL_SRC}" alt="" width="88" height="88" decoding="async">`
+            + '<div class="age-enrollment-loading-status-wrap">'
+            + `<p class="age-enrollment-loading-status" id="${OVERLAY_ID}-status">${STATUS_LINES[0]}</p>`
             + '</div>'
             + '</div>'
         );
@@ -191,25 +198,13 @@
     }
 
     function fadeSwapStatus() {
-        const statusEl = global.document.getElementById(`${OVERLAY_ID}-status`);
-        if (!statusEl) return;
-        statusEl.classList.add('is-fading');
-        global.setTimeout(() => {
-            statusIndex = (statusIndex + 1) % STATUS_LINES.length;
-            renderStatusLine(statusIndex);
-            statusEl.classList.remove('is-fading');
-        }, 180);
+        statusIndex = (statusIndex + 1) % STATUS_LINES.length;
+        renderStatusLine(statusIndex);
     }
 
     function fadeSwapTip() {
-        const bodyEl = global.document.getElementById(`${OVERLAY_ID}-tip-body`);
-        if (!bodyEl) return;
-        bodyEl.classList.add('is-fading');
-        global.setTimeout(() => {
-            tipIndex = (tipIndex + 1) % ENROLLMENT_TIPS.length;
-            renderTip(tipIndex);
-            bodyEl.classList.remove('is-fading');
-        }, 180);
+        tipIndex = (tipIndex + 1) % ENROLLMENT_TIPS.length;
+        renderTip(tipIndex);
     }
 
     function startRotators() {
