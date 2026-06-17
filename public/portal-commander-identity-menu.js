@@ -119,7 +119,6 @@
         const menu = global.document.getElementById('portal-desktop-commander-menu');
         const trigger = getPortalCommanderIdentityTrigger();
 
-        collapseCommanderMenuSuicideOptions();
         if (card) card.classList.remove('is-commander-menu-open');
         if (menu) {
             menu.hidden = true;
@@ -297,150 +296,15 @@
         });
     }
 
-    let commanderMenuSuicideInjectSeq = 0;
-
-    function findCommanderMenuLogoutButton(menu) {
-        if (!menu) return null;
-        return menu.querySelector(
-            '.dropdown-action-item-logout, .portal-mobile-submenu-item-logout, [id*="logout"][role="menuitem"], [onclick*="logout"]'
-        );
-    }
-
-    function collapseCommanderMenuSuicideOptions() {
+    function removeCommanderMenuSuicideItems() {
         global.document.querySelectorAll('[data-commander-menu-suicide-block]').forEach((block) => {
-            block.classList.remove('is-suicide-open');
-            const options = block.querySelector('[data-commander-menu-suicide-options]');
-            if (options) options.hidden = true;
-            const toggle = block.querySelector('[data-commander-menu-action="suicide-toggle"]');
-            if (toggle) toggle.setAttribute('aria-expanded', 'false');
+            block.remove();
         });
-    }
-
-    function buildCommanderMenuSuicideOptionButton(mode, label, isMobile) {
-        const button = global.document.createElement('button');
-        button.type = 'button';
-        button.className = isMobile
-            ? 'portal-mobile-submenu-item commander-menu-suicide-option'
-            : 'dropdown-action-item commander-menu-suicide-option';
-        button.setAttribute('role', 'menuitem');
-        button.setAttribute('data-commander-menu-action', mode === 'rank' ? 'suicide-rank' : 'suicide-exile');
-        button.setAttribute('data-commander-reset-mode', mode);
-        button.textContent = label;
-        return button;
-    }
-
-    function buildCommanderMenuSuicideBlock(isMobile) {
-        commanderMenuSuicideInjectSeq += 1;
-        const optionsId = `commander-menu-suicide-options-${commanderMenuSuicideInjectSeq}`;
-
-        const block = global.document.createElement('div');
-        block.className = isMobile
-            ? 'commander-menu-suicide-block portal-mobile-commander-suicide-block'
-            : 'commander-menu-suicide-block';
-        block.setAttribute('data-commander-menu-suicide-block', '');
-
-        const toggle = global.document.createElement('button');
-        toggle.type = 'button';
-        toggle.className = isMobile
-            ? 'portal-mobile-submenu-item dropdown-action-item-suicide'
-            : 'dropdown-action-item dropdown-action-item-suicide';
-        toggle.setAttribute('role', 'menuitem');
-        toggle.setAttribute('data-commander-menu-action', 'suicide-toggle');
-        toggle.setAttribute('aria-expanded', 'false');
-        toggle.setAttribute('aria-controls', optionsId);
-        toggle.textContent = 'Suicide';
-
-        const options = global.document.createElement('div');
-        options.id = optionsId;
-        options.className = 'commander-menu-suicide-options';
-        options.setAttribute('data-commander-menu-suicide-options', '');
-        options.hidden = true;
-        options.appendChild(buildCommanderMenuSuicideOptionButton('rank', 'Secede Rank', isMobile));
-        options.appendChild(buildCommanderMenuSuicideOptionButton('exile', 'Suicide out of Country', isMobile));
-
-        block.appendChild(toggle);
-        block.appendChild(options);
-        return block;
-    }
-
-    function toggleCommanderMenuSuicideOptions(block) {
-        if (!block) return;
-
-        const willOpen = !block.classList.contains('is-suicide-open');
-        collapseCommanderMenuSuicideOptions();
-
-        if (!willOpen) return;
-
-        block.classList.add('is-suicide-open');
-        const options = block.querySelector('[data-commander-menu-suicide-options]');
-        const toggle = block.querySelector('[data-commander-menu-action="suicide-toggle"]');
-        if (options) options.hidden = false;
-        if (toggle) toggle.setAttribute('aria-expanded', 'true');
-
-        if (typeof global.applyProfileRankResetButtonState === 'function') {
-            global.applyProfileRankResetButtonState();
-        }
-    }
-
-    function handleCommanderMenuSuicideClick(event) {
-        const button = event.target.closest('[data-commander-menu-action]');
-        if (!button) return;
-
-        const action = button.getAttribute('data-commander-menu-action');
-        if (action === 'suicide-toggle') {
-            event.preventDefault();
-            event.stopPropagation();
-            toggleCommanderMenuSuicideOptions(button.closest('[data-commander-menu-suicide-block]'));
-            return;
-        }
-
-        if (action !== 'suicide-rank' && action !== 'suicide-exile') return;
-
-        event.preventDefault();
-        event.stopPropagation();
-
-        collapseCommanderMenuSuicideOptions();
-        if (typeof global.closeMobileCommanderSubmenu === 'function') {
-            global.closeMobileCommanderSubmenu();
-        }
-        closePortalCommanderIdentityMenu();
-
-        const mode = action === 'suicide-rank' ? 'rank' : 'exile';
-        if (typeof global.triggerCommanderSuicide === 'function') {
-            global.triggerCommanderSuicide(mode);
-        }
-    }
-
-    function injectCommanderMenuSuicideItems() {
-        global.document.querySelectorAll('#portal-desktop-commander-menu').forEach((menu) => {
-            if (menu.querySelector('[data-commander-menu-suicide-block]')) return;
-            const logoutBtn = findCommanderMenuLogoutButton(menu);
-            if (!logoutBtn) return;
-            logoutBtn.insertAdjacentElement('beforebegin', buildCommanderMenuSuicideBlock(false));
-        });
-
-        [
-            'game-mobile-commander-submenu',
-            'portal-mobile-commander-submenu'
-        ].forEach((submenuId) => {
-            const submenu = global.document.getElementById(submenuId);
-            if (!submenu || submenu.querySelector('[data-commander-menu-suicide-block]')) return;
-            const logoutBtn = findCommanderMenuLogoutButton(submenu);
-            if (!logoutBtn) return;
-            logoutBtn.insertAdjacentElement('beforebegin', buildCommanderMenuSuicideBlock(true));
-        });
-    }
-
-    function bindCommanderMenuSuicideHandlers() {
-        if (global.document.documentElement.dataset.commanderMenuSuicideBound === 'true') return;
-        global.document.documentElement.dataset.commanderMenuSuicideBound = 'true';
-        global.document.addEventListener('click', handleCommanderMenuSuicideClick);
     }
 
     function initPortalCommanderIdentityMenuBindings() {
         removeChroniclesBattlePassMenuItems();
-        injectCommanderMenuSuicideItems();
-        bindCommanderMenuSuicideHandlers();
+        removeCommanderMenuSuicideItems();
         bindPortalCommanderIdentityTriggerHandlers();
         bindPortalCommanderIdentityMenuActionHandlers();
         bindPortalCommanderIdentityMenuDismissHandlers();
@@ -457,8 +321,7 @@
     global.bindPortalCommanderIdentityMenuDismissHandlers = bindPortalCommanderIdentityMenuDismissHandlers;
     global.bindPortalCommanderIdentityMenu = bindPortalCommanderIdentityMenu;
     global.removeChroniclesBattlePassMenuItems = removeChroniclesBattlePassMenuItems;
-    global.injectCommanderMenuSuicideItems = injectCommanderMenuSuicideItems;
-    global.collapseCommanderMenuSuicideOptions = collapseCommanderMenuSuicideOptions;
+    global.removeCommanderMenuSuicideItems = removeCommanderMenuSuicideItems;
 
     if (global.document.readyState === 'loading') {
         global.document.addEventListener('DOMContentLoaded', initPortalCommanderIdentityMenuBindings, { once: true });

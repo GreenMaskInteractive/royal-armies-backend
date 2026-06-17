@@ -32,8 +32,8 @@ On VM startup, run `npm install` from repo root (see cloud update script). No Do
 
 ### Deploy / branch rules (summary)
 
+- **Always auto push:** after implementation, commit and push to `main` — see `.cursor/rules/auto-commit-deploy.mdc`.
 - Pushing `main` deploys production ([royalarmies.com](https://royalarmies.com)).
-- **Age of War** seasonal paths must not go to `main` until release — see `.cursor/rules/age-of-war-season-hold.mdc`.
 - After changing cached static assets under `public/`, bump `?v=` on all HTML references — see `.cursor/rules/cloudflare-static-cache.mdc`.
 
 ### Optional tooling

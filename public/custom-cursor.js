@@ -195,12 +195,23 @@
             trackPointer(event.clientX, event.clientY);
         }, true);
 
-        window.addEventListener('mousedown', (event) => {
+        /* pointerdown on window capture — Age map / game shells call preventDefault on
+           pointerdown, which suppresses the compatibility mousedown event. */
+        window.addEventListener('pointerdown', (event) => {
             if (!shouldEnableCustomCursor() || event.button !== 0) return;
             pointerButtonHeld = true;
             trackPointer(event.clientX, event.clientY);
             handlePress(event.clientX, event.clientY);
         }, true);
+
+        if (!window.PointerEvent) {
+            window.addEventListener('mousedown', (event) => {
+                if (!shouldEnableCustomCursor() || event.button !== 0) return;
+                pointerButtonHeld = true;
+                trackPointer(event.clientX, event.clientY);
+                handlePress(event.clientX, event.clientY);
+            }, true);
+        }
 
         window.addEventListener('mouseup', (event) => {
             if (!shouldEnableCustomCursor()) return;
@@ -280,6 +291,52 @@
         }
     }
 
+    function buildCursorFingerStack() {
+        const cursorStack = document.createElement('div');
+        cursorStack.className = 'royal-armies-cursor-stack';
+
+        const cursorHand = document.createElement('img');
+        cursorHand.className = 'royal-armies-cursor-hand';
+        cursorHand.src = CURSOR_IMAGE_SRC;
+        cursorHand.width = CURSOR_DISPLAY_PX;
+        cursorHand.height = CURSOR_DISPLAY_PX;
+        cursorHand.alt = '';
+        cursorHand.draggable = false;
+        cursorHand.decoding = 'async';
+
+        const cursorFinger = document.createElement('img');
+        cursorFinger.className = 'royal-armies-cursor-finger';
+        cursorFinger.src = CURSOR_IMAGE_SRC;
+        cursorFinger.width = CURSOR_DISPLAY_PX;
+        cursorFinger.height = CURSOR_DISPLAY_PX;
+        cursorFinger.alt = '';
+        cursorFinger.draggable = false;
+        cursorFinger.decoding = 'async';
+        cursorFinger.setAttribute('aria-hidden', 'true');
+
+        cursorStack.appendChild(cursorHand);
+        cursorStack.appendChild(cursorFinger);
+        return cursorStack;
+    }
+
+    /** Upgrade legacy single-image shells to the hand + fingertip stack. */
+    function ensureCursorFingerStack() {
+        if (!cursorShell) return;
+        if (cursorShell.querySelector('.royal-armies-cursor-stack')) return;
+
+        const wasVisible = cursorShell.classList.contains('is-visible');
+        const wasClicking = cursorShell.classList.contains('is-clicking');
+        const left = cursorShell.style.left;
+        const top = cursorShell.style.top;
+
+        cursorShell.replaceChildren(buildCursorFingerStack());
+
+        if (left) cursorShell.style.left = left;
+        if (top) cursorShell.style.top = top;
+        cursorShell.classList.toggle('is-visible', wasVisible);
+        cursorShell.classList.toggle('is-clicking', wasClicking);
+    }
+
     function mountCustomCursorElements() {
         const existingShell = document.getElementById('royal-armies-custom-cursor');
         const existingFxLayer = document.getElementById('cursor-click-fx-layer');
@@ -290,32 +347,9 @@
             cursorShell = document.createElement('div');
             cursorShell.id = 'royal-armies-custom-cursor';
             cursorShell.setAttribute('aria-hidden', 'true');
-
-            const cursorStack = document.createElement('div');
-            cursorStack.className = 'royal-armies-cursor-stack';
-
-            const cursorHand = document.createElement('img');
-            cursorHand.className = 'royal-armies-cursor-hand';
-            cursorHand.src = CURSOR_IMAGE_SRC;
-            cursorHand.width = CURSOR_DISPLAY_PX;
-            cursorHand.height = CURSOR_DISPLAY_PX;
-            cursorHand.alt = '';
-            cursorHand.draggable = false;
-            cursorHand.decoding = 'async';
-
-            const cursorFinger = document.createElement('img');
-            cursorFinger.className = 'royal-armies-cursor-finger';
-            cursorFinger.src = CURSOR_IMAGE_SRC;
-            cursorFinger.width = CURSOR_DISPLAY_PX;
-            cursorFinger.height = CURSOR_DISPLAY_PX;
-            cursorFinger.alt = '';
-            cursorFinger.draggable = false;
-            cursorFinger.decoding = 'async';
-            cursorFinger.setAttribute('aria-hidden', 'true');
-
-            cursorStack.appendChild(cursorHand);
-            cursorStack.appendChild(cursorFinger);
-            cursorShell.appendChild(cursorStack);
+            cursorShell.appendChild(buildCursorFingerStack());
+        } else {
+            ensureCursorFingerStack();
         }
 
         if (!clickFxLayer) {

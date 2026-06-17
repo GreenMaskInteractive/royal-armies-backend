@@ -1102,18 +1102,28 @@
                             </div>
                         </aside>
 
-                        <aside class="age-guild-commander-gear-panel" aria-label="Commander equipment">
-                            <div class="age-guild-commander-gear-inner">
+                        <aside class="age-guild-commander-loadout-panel" aria-label="Commander loadout">
+                            <div class="age-guild-commander-loadout-inner">
                                 <header class="age-guild-commander-gear-head">
                                     <p class="age-guild-commander-gear-eyebrow">Commander</p>
                                     <h3 id="age-guild-commander-name" class="age-guild-commander-gear-name">Commander</h3>
                                     <p id="age-guild-commander-class" class="age-guild-commander-gear-class">Battlemaster · Rank 1</p>
                                 </header>
-                                <div id="age-guild-gear-sheet" class="age-guild-gear-sheet" aria-label="Equipped gear"></div>
-                                <section class="age-guild-gear-stats" aria-label="Equipment bonuses">
-                                    <h4 class="age-guild-gear-stats-title">Commander Bonuses</h4>
-                                    <ul id="age-guild-gear-stat-lines" class="age-guild-gear-stat-lines"></ul>
-                                </section>
+                                <div class="age-hud-rail-tabs age-guild-loadout-tabs" role="tablist" aria-label="Commander loadout tabs">
+                                    <button type="button" class="age-hud-rail-tab age-guild-loadout-tab is-active" data-guild-loadout-tab="equipment" role="tab" aria-selected="true" aria-controls="age-guild-loadout-tab-equipment" id="age-guild-loadout-tab-btn-equipment">Equipment</button>
+                                    <button type="button" class="age-hud-rail-tab age-guild-loadout-tab" data-guild-loadout-tab="inventory" role="tab" aria-selected="false" aria-controls="age-guild-loadout-tab-inventory" id="age-guild-loadout-tab-btn-inventory" tabindex="-1">Inventory</button>
+                                </div>
+                                <div id="age-guild-loadout-tab-equipment" class="age-hud-rail-tabpanel age-guild-loadout-tabpanel is-active" role="tabpanel" aria-labelledby="age-guild-loadout-tab-btn-equipment">
+                                    <div id="age-guild-gear-sheet" class="age-guild-gear-sheet" aria-label="Equipped gear"></div>
+                                    <section class="age-guild-gear-stats" aria-label="Equipment bonuses">
+                                        <h4 class="age-guild-gear-stats-title">Commander Bonuses</h4>
+                                        <ul id="age-guild-gear-stat-lines" class="age-guild-gear-stat-lines"></ul>
+                                    </section>
+                                </div>
+                                <div id="age-guild-loadout-tab-inventory" class="age-hud-rail-tabpanel age-guild-loadout-tabpanel" role="tabpanel" aria-labelledby="age-guild-loadout-tab-btn-inventory" hidden aria-live="polite">
+                                    <p id="age-guild-training-inventory-capacity" class="age-guild-inventory-capacity" aria-live="polite"></p>
+                                    <div id="age-guild-training-inventory-grid" class="age-guild-inventory-grid" aria-live="polite"></div>
+                                </div>
                             </div>
                         </aside>
 
@@ -1294,7 +1304,6 @@
                                 </button>
                                 <button type="button" class="portal-mobile-submenu-item" onclick="gameMobileNavCommanderAction('settings', event)">Settings</button>
                                 <button type="button" class="portal-mobile-submenu-item" onclick="gameMobileNavCommanderAction('chronicles-battle-pass', event)">The Chronicles Battle Pass</button>
-                                <button type="button" id="game-mobile-dropdown-return-portal-btn" class="portal-mobile-submenu-item portal-mobile-submenu-item-return-portal" onclick="gameMobileNavCommanderAction('return-to-portal', event)">Return to Age Portal</button>
                                 <button type="button" id="game-mobile-dropdown-logout-btn" class="portal-mobile-submenu-item portal-mobile-submenu-item-logout" onclick="gameMobileNavCommanderAction('logout', event)">Log Out</button>
                             </div>
                         </div>
@@ -1332,7 +1341,6 @@
                                     </button>
                                     <button type="button" class="dropdown-action-item" role="menuitem" onclick="portalDesktopCommanderMenuAction('settings', event)">Settings</button>
                                     <button type="button" class="dropdown-action-item dropdown-action-item-chronicles-bp" role="menuitem" onclick="portalDesktopCommanderMenuAction('chronicles-battle-pass', event)">The Chronicles Battle Pass</button>
-                                    <button type="button" id="game-nav-dropdown-return-portal-btn" class="dropdown-action-item dropdown-action-item-return-portal" role="menuitem" onclick="portalDesktopCommanderMenuAction('return-to-portal', event)">Return to Age Portal</button>
                                     <button type="button" id="game-nav-dropdown-logout-btn" class="dropdown-action-item dropdown-action-item-logout" role="menuitem" onclick="portalDesktopCommanderMenuAction('logout', event)">Log Out</button>
                                 </div>
                             </div>

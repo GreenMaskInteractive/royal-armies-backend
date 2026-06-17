@@ -53,8 +53,10 @@ html.royal-armies-custom-cursor *::-webkit-scrollbar {
     pointer-events: none;
 }
 
-#royal-armies-custom-cursor.is-clicking .royal-armies-cursor-stack {
-    transform: rotate(-4deg);
+#royal-armies-custom-cursor.is-clicking .royal-armies-cursor-stack,
+html.royal-armies-custom-cursor body#age-page-canvas #royal-armies-custom-cursor.is-clicking .royal-armies-cursor-stack,
+html.royal-armies-custom-cursor body#game-page-canvas #royal-armies-custom-cursor.is-clicking .royal-armies-cursor-stack {
+    transform: rotate(-4deg) !important;
 }
 
 /* Palm + gauntlet body — fingertip tip is drawn on the finger layer only. */
@@ -80,9 +82,11 @@ html.royal-armies-custom-cursor *::-webkit-scrollbar {
     transition: transform 0.08s ease, filter 0.08s ease;
 }
 
-#royal-armies-custom-cursor.is-clicking .royal-armies-cursor-finger {
-    transform: rotate(-13deg) translateY(3px) scale(0.94);
-    filter: brightness(1.08);
+#royal-armies-custom-cursor.is-clicking .royal-armies-cursor-finger,
+html.royal-armies-custom-cursor body#age-page-canvas #royal-armies-custom-cursor.is-clicking .royal-armies-cursor-finger,
+html.royal-armies-custom-cursor body#game-page-canvas #royal-armies-custom-cursor.is-clicking .royal-armies-cursor-finger {
+    transform: rotate(-13deg) translateY(3px) scale(0.94) !important;
+    filter: brightness(1.08) !important;
 }
 
 #cursor-click-fx-layer {

@@ -86,5 +86,5 @@ To change a rank title: edit `public/rift-commander-rank-titles.js` **and**
 
 - New server helpers: `nexus-*.js` at repo root, required from `server.js`.
 - New client modules: IIFE exposing one `RoyalArmies*` global under `public/`.
-- Seasonal Age of War files must not be pushed to `main`
-  (`.cursor/rules/age-of-war-season-hold.mdc`).
+- After implementation, always commit and push to `main`
+  (`.cursor/rules/auto-commit-deploy.mdc`).

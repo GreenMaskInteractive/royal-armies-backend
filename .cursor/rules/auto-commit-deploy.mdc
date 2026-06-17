@@ -1,59 +1,47 @@
 ---
-description: ALWAYS COMMIT and push to main after implementation unless user opts out
+description: Always commit and push to main after implementation — no exceptions
 alwaysApply: true
 ---
 
-# ALWAYS COMMIT (auto deploy)
+# ALWAYS AUTO PUSH
 
-**User confirmed (2026-06-10): auto deploy from here on out.** This repo uses automatic commit + push to `main` after implementation unless the user opts out for a task.
+**Mandatory.** After completing any implementation (code changes, fixes, assets, rules), **always commit and push to `main` immediately**. Do **not** wait for the user to say "commit", "deploy", or "push".
 
-**ALWAYS COMMIT** after completing requested code changes or fixes in this repo. Do **not** wait for a separate "commit", "deploy", or "push" message. Immediately commit and push to `main` when implementation is done.
+Pushing `main` deploys production ([royalarmies.com](https://royalarmies.com) via Render).
 
-Pushing to `main` deploys [royalarmies.com](https://royalarmies.com) via Render.
+This rule overrides any other guidance that says to ask before committing, hold seasonal work, skip deploy, or wait for explicit deploy approval.
 
-## When to skip
+## Only skip when literally nothing to do
 
-- User asked for review, planning, or questions only (no implementation)
-- User explicitly opted out for that task, e.g. "don't commit", "don't deploy", "no push", "local only", "stop auto deploy", "don't auto deploy"
-- There are no changes to commit
-- Changes likely contain secrets (`.env`, credentials) — warn instead of committing
-- **Age of War seasonal work** — see `age-of-war-season-hold.mdc`: do **not** push seasonal paths to `main`. Commit non-seasonal files only, or use branch `season/age-of-war` and skip push.
+- **Questions / review / planning only** — no files were changed
+- **Empty working tree** — nothing to commit after the task
 
-## Seasonal hold (Age of War)
+## Never commit (warn the user; do not push)
 
-If staged files match the seasonal inventory in `age-of-war-season-hold.mdc`, do **not** push to `main`. Push non-seasonal changes in a separate commit, or commit seasonal work only on `season/age-of-war`.
+- Secrets or credentials (`.env`, API keys, `production-db.json`, etc.)
 
 ## Commit workflow
 
 1. Run in parallel: `git status`, `git diff`, `git log -1 --oneline`
-2. Stage only relevant files; **do not commit** local test ledger data in `db.json` unless the user asked to
+2. Stage all relevant task files (exclude `db.json` unless the task changed ledger data intentionally)
 3. Write a concise commit message focused on **why**
-4. Optionally run `node scripts/signal-update-imminent.js` before `git push` so live players get the update notice within a few seconds (requires `MAINTENANCE_ALERT_DEV_KEY` on production).
-5. Commit, then `git push origin main`
-6. Run `git status` after commit to verify success
-7. If pre-commit hook fails, fix and create a **new** commit (do not amend unless amend rules allow)
+4. Optionally run `node scripts/signal-update-imminent.js` before push (live update notice)
+5. `git commit`, then `git push origin main`
+6. Run `git status` after push to verify success
+7. If a pre-commit hook fails, fix and create a **new** commit (do not amend unless amend rules allow)
 
-## Git safety (always)
+## Git safety (still required)
 
 - Never update git config
 - Never force-push to `main`
 - Never skip hooks unless the user explicitly requests it
-- Do not push if the user opted out for that task
 
 ## Deploy confirmation
 
-After push, briefly confirm deploy (commit hash + that production was checked if behavior changed). Optionally verify a key endpoint (e.g. `/api/portal/metrics`).
+After push, briefly confirm deploy (commit hash). Optionally hit `/api/portal/metrics` if behavior changed.
 
-## Examples
+## Example
 
 User: "Fix the mailbox reply bug."
 
-→ Implement fix → **ALWAYS COMMIT** → push to `main` → confirm deploy.
-
-User: "Fix the mailbox reply bug but don't deploy yet."
-
-→ Implement fix → stop before commit/push.
-
-User: "Stop auto deploying from now on."
-
-→ Do not commit/push after future tasks until they ask again or revoke the opt-out.
+→ Implement fix → **commit** → **push `main`** → confirm deploy. No follow-up question.

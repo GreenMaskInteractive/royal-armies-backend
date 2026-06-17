@@ -7,7 +7,7 @@
     /** Set true to restore full-screen radial menu (go-to design in style-age-nation-hub-radial.css). */
     const ENABLE_RADIAL_HUB_MENU = false;
 
-    const BOX_BUILD_VERSION = 'hub-disabled-actions-1';
+    const BOX_BUILD_VERSION = 'hub-suicide-menu-1';
 
     const HUB_DISABLED_ITEM_IDS = Object.freeze(['discoveries', 'banner', 'battle-pass']);
 
@@ -129,6 +129,7 @@
             return;
         }
 
+        collapseHubSuicideOptions();
         menu.classList.remove('is-open');
         menu.hidden = true;
         menu.setAttribute('hidden', '');
@@ -307,6 +308,143 @@
         return HUB_ITEMS.find((item) => item.id === itemId);
     }
 
+    function collapseHubSuicideOptions() {
+        global.document.querySelectorAll('[data-age-hub-suicide-block]').forEach((block) => {
+            block.classList.remove('is-suicide-open');
+            const options = block.querySelector('[data-age-hub-suicide-options]');
+            if (options) options.hidden = true;
+            const toggle = block.querySelector('[data-age-hub-suicide-toggle]');
+            if (toggle) toggle.setAttribute('aria-expanded', 'false');
+        });
+    }
+
+    async function toggleHubSuicideOptions(block) {
+        if (!block) return;
+
+        const willOpen = !block.classList.contains('is-suicide-open');
+        collapseHubSuicideOptions();
+        if (!willOpen) return;
+
+        block.classList.add('is-suicide-open');
+        const options = block.querySelector('[data-age-hub-suicide-options]');
+        const toggle = block.querySelector('[data-age-hub-suicide-toggle]');
+        if (options) options.hidden = false;
+        if (toggle) toggle.setAttribute('aria-expanded', 'true');
+
+        try {
+            await ensureSuicideFlowReady();
+        } catch (err) {
+            console.warn('[RIFT] Game Hub suicide state scripts failed to load:', err);
+        }
+
+        if (typeof global.applyProfileRankResetButtonState === 'function') {
+            global.applyProfileRankResetButtonState();
+        }
+    }
+
+    function loadAgeHubScript(src) {
+        const existing = global.document.querySelector(`script[src="${src}"]`);
+        if (existing) return Promise.resolve();
+
+        return new Promise((resolve, reject) => {
+            const script = global.document.createElement('script');
+            script.src = src;
+            script.async = false;
+            script.onload = () => resolve();
+            script.onerror = () => reject(new Error(`[RIFT] Failed to load ${src}`));
+            global.document.head.appendChild(script);
+        });
+    }
+
+    async function ensureSuicideFlowReady() {
+        if (typeof global.triggerCommanderSuicide === 'function') return;
+
+        if (typeof global.ensureAgeCommanderNametagHub === 'function') {
+            await global.ensureAgeCommanderNametagHub();
+            return;
+        }
+
+        await loadAgeHubScript('script.js?v=settings-suicide-tab-1');
+    }
+
+    async function activateHubSuicideMode(mode, event) {
+        if (event) {
+            event.preventDefault();
+            event.stopPropagation();
+        }
+
+        const normalizedMode = mode === 'rank' ? 'rank' : 'exile';
+        closeHub();
+        collapseHubSuicideOptions();
+
+        try {
+            await ensureSuicideFlowReady();
+        } catch (err) {
+            console.warn('[RIFT] Game Hub suicide scripts failed to load:', err);
+            if (typeof global.showPortalAlert === 'function') {
+                void global.showPortalAlert('Suicide options are unavailable in this session.', 'Suicide');
+            }
+            return;
+        }
+
+        if (typeof global.triggerCommanderSuicide === 'function') {
+            global.triggerCommanderSuicide(normalizedMode);
+            return;
+        }
+
+        if (typeof global.showPortalAlert === 'function') {
+            void global.showPortalAlert('Suicide options are unavailable in this session.', 'Suicide');
+        }
+    }
+
+    function renderHubSuicideBlock(itemIndex) {
+        const delaySec = (0.04 + 0.05 * itemIndex).toFixed(2);
+        return (
+            '<div class="age-nation-hub-suicide-block" data-age-hub-suicide-block>'
+            + `<button type="button" class="age-nation-hub-menu-item age-nation-hub-menu-item--suicide"`
+            + ` data-age-hub-suicide-toggle role="menuitem" aria-expanded="false"`
+            + ` style="--age-hub-menu-item-delay: ${delaySec}s;">`
+            + '<span class="age-nation-hub-menu-item-glyph" aria-hidden="true">☠</span>'
+            + '<span class="age-nation-hub-menu-item-copy">'
+            + '<span class="age-nation-hub-menu-item-label">Suicide</span>'
+            + '<span class="age-nation-hub-menu-item-hint">Rank reset & exile</span>'
+            + '</span>'
+            + '<span class="age-nation-hub-menu-item-chevron age-nation-hub-menu-item-chevron--suicide" aria-hidden="true"></span>'
+            + '</button>'
+            + '<div class="age-nation-hub-suicide-options" data-age-hub-suicide-options hidden>'
+            + '<button type="button" class="age-nation-hub-suicide-option" data-age-hub-suicide-mode="rank" data-commander-reset-mode="rank" role="menuitem">Secede Rank</button>'
+            + '<button type="button" class="age-nation-hub-suicide-option" data-age-hub-suicide-mode="exile" data-commander-reset-mode="exile" role="menuitem">Suicide out of Country</button>'
+            + '</div>'
+            + '</div>'
+        );
+    }
+
+    function bindHubSuicideBlockHandlers(colsRoot) {
+        const suicideBlock = colsRoot?.querySelector('[data-age-hub-suicide-block]');
+        if (!suicideBlock || suicideBlock.dataset.ageHubSuicideBound === 'true') return;
+        suicideBlock.dataset.ageHubSuicideBound = 'true';
+
+        const toggle = suicideBlock.querySelector('[data-age-hub-suicide-toggle]');
+        const onToggleActivate = (event) => {
+            if (event.type === 'pointerup' && event.button !== 0) return;
+            event.preventDefault();
+            event.stopPropagation();
+            void toggleHubSuicideOptions(suicideBlock);
+        };
+        toggle?.addEventListener('pointerup', onToggleActivate);
+        toggle?.addEventListener('click', onToggleActivate);
+
+        suicideBlock.querySelectorAll('[data-age-hub-suicide-mode]').forEach((button) => {
+            const onOptionActivate = (event) => {
+                if (event.type === 'pointerup' && event.button !== 0) return;
+                const mode = button.getAttribute('data-age-hub-suicide-mode');
+                void activateHubSuicideMode(mode, event);
+            };
+            button.addEventListener('pointerup', onOptionActivate);
+            button.addEventListener('click', onOptionActivate);
+        });
+    }
+
     function renderBoxMenuItem(item, itemIndex) {
         const disabled = isHubItemDisabled(item.id);
         const meta = BOX_ITEM_META[item.id] || { glyph: '•', hint: '' };
@@ -334,9 +472,11 @@
 
         colsRoot.innerHTML = HUB_ITEMS.map((item, itemIndex) => (
             renderBoxMenuItem(item, itemIndex)
-        )).join('');
+        )).join('') + renderHubSuicideBlock(HUB_ITEMS.length);
 
         colsRoot.dataset.ageMenuVersion = BOX_BUILD_VERSION;
+
+        bindHubSuicideBlockHandlers(colsRoot);
 
         colsRoot.querySelectorAll('[data-age-hub-menu]').forEach((btn) => {
             if (btn.disabled || btn.classList.contains('is-disabled')) return;
@@ -450,8 +590,11 @@
         close: closeHub,
         toggle: toggleHub,
         isOpen: isHubOpen,
-        useRadialMenu: ENABLE_RADIAL_HUB_MENU
+        useRadialMenu: ENABLE_RADIAL_HUB_MENU,
+        collapseSuicideOptions: collapseHubSuicideOptions
     };
+
+    global.collapseAgeNationHubSuicideOptions = collapseHubSuicideOptions;
 
     init();
 })(window);
