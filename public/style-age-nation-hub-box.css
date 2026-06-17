@@ -423,6 +423,10 @@
     display: none !important;
 }
 
+.age-nation-hub-suicide-block.is-suicide-open .age-nation-hub-suicide-options {
+    display: flex !important;
+}
+
 .age-nation-hub-suicide-option {
     width: 100%;
     min-height: 42px;

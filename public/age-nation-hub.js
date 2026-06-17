@@ -7,9 +7,16 @@
     /** Set true to restore full-screen radial menu (go-to design in style-age-nation-hub-radial.css). */
     const ENABLE_RADIAL_HUB_MENU = false;
 
-    const BOX_BUILD_VERSION = 'hub-suicide-menu-1';
+    const BOX_BUILD_VERSION = 'hub-suicide-menu-2';
 
     const HUB_DISABLED_ITEM_IDS = Object.freeze(['discoveries', 'banner', 'battle-pass']);
+
+    const AGE_SUICIDE_SCRIPT_CHAIN = Object.freeze([
+        'rift-error-codes.js?v=update-notice-momentarily-1',
+        'rift-error-display.js?v=update-notice-momentarily-1',
+        'commander-dossier-sync.js?v=map-ambient-effects-1',
+        'script.js?v=settings-suicide-tab-2'
+    ]);
 
     const BOX_ITEM_META = Object.freeze({
         nation: { glyph: '◆', hint: 'Council & command' },
@@ -342,15 +349,26 @@
         }
     }
 
-    function loadAgeHubScript(src) {
-        const existing = global.document.querySelector(`script[src="${src}"]`);
-        if (existing) return Promise.resolve();
+    let ageSuicideScriptsLoaded = new Set();
+    let ageSuicideEnsurePromise = null;
 
-        return new Promise((resolve, reject) => {
+    async function loadAgeSuicideScript(src) {
+        if (ageSuicideScriptsLoaded.has(src)) return;
+
+        const existing = global.document.querySelector(`script[src="${src}"]`);
+        if (existing) {
+            ageSuicideScriptsLoaded.add(src);
+            return;
+        }
+
+        await new Promise((resolve, reject) => {
             const script = global.document.createElement('script');
             script.src = src;
             script.async = false;
-            script.onload = () => resolve();
+            script.onload = () => {
+                ageSuicideScriptsLoaded.add(src);
+                resolve();
+            };
             script.onerror = () => reject(new Error(`[RIFT] Failed to load ${src}`));
             global.document.head.appendChild(script);
         });
@@ -361,10 +379,54 @@
 
         if (typeof global.ensureAgeCommanderNametagHub === 'function') {
             await global.ensureAgeCommanderNametagHub();
+            if (typeof global.triggerCommanderSuicide === 'function') return;
+        }
+
+        if (ageSuicideEnsurePromise) {
+            await ageSuicideEnsurePromise;
             return;
         }
 
-        await loadAgeHubScript('script.js?v=settings-suicide-tab-1');
+        ageSuicideEnsurePromise = (async () => {
+            for (const src of AGE_SUICIDE_SCRIPT_CHAIN) {
+                await loadAgeSuicideScript(src);
+            }
+        })();
+
+        try {
+            await ageSuicideEnsurePromise;
+        } catch (err) {
+            ageSuicideEnsurePromise = null;
+            throw err;
+        }
+    }
+
+    function resolveHubSuicideBlockFromTarget(target) {
+        if (!(target instanceof Element)) return null;
+        return target.closest('[data-age-hub-suicide-block]');
+    }
+
+    function handleHubSuicideMenuActivate(event) {
+        if (!event || (event.type === 'pointerup' && event.button !== 0)) return false;
+        if (!getMenu()?.contains(event.target)) return false;
+
+        const optionButton = event.target.closest('[data-age-hub-suicide-mode]');
+        if (optionButton) {
+            event.preventDefault();
+            event.stopPropagation();
+            void activateHubSuicideMode(optionButton.getAttribute('data-age-hub-suicide-mode'), event);
+            return true;
+        }
+
+        const toggleButton = event.target.closest('[data-age-hub-suicide-toggle]');
+        if (toggleButton) {
+            event.preventDefault();
+            event.stopPropagation();
+            void toggleHubSuicideOptions(resolveHubSuicideBlockFromTarget(toggleButton));
+            return true;
+        }
+
+        return false;
     }
 
     async function activateHubSuicideMode(mode, event) {
@@ -419,32 +481,6 @@
         );
     }
 
-    function bindHubSuicideBlockHandlers(colsRoot) {
-        const suicideBlock = colsRoot?.querySelector('[data-age-hub-suicide-block]');
-        if (!suicideBlock || suicideBlock.dataset.ageHubSuicideBound === 'true') return;
-        suicideBlock.dataset.ageHubSuicideBound = 'true';
-
-        const toggle = suicideBlock.querySelector('[data-age-hub-suicide-toggle]');
-        const onToggleActivate = (event) => {
-            if (event.type === 'pointerup' && event.button !== 0) return;
-            event.preventDefault();
-            event.stopPropagation();
-            void toggleHubSuicideOptions(suicideBlock);
-        };
-        toggle?.addEventListener('pointerup', onToggleActivate);
-        toggle?.addEventListener('click', onToggleActivate);
-
-        suicideBlock.querySelectorAll('[data-age-hub-suicide-mode]').forEach((button) => {
-            const onOptionActivate = (event) => {
-                if (event.type === 'pointerup' && event.button !== 0) return;
-                const mode = button.getAttribute('data-age-hub-suicide-mode');
-                void activateHubSuicideMode(mode, event);
-            };
-            button.addEventListener('pointerup', onOptionActivate);
-            button.addEventListener('click', onOptionActivate);
-        });
-    }
-
     function renderBoxMenuItem(item, itemIndex) {
         const disabled = isHubItemDisabled(item.id);
         const meta = BOX_ITEM_META[item.id] || { glyph: '•', hint: '' };
@@ -475,8 +511,6 @@
         )).join('') + renderHubSuicideBlock(HUB_ITEMS.length);
 
         colsRoot.dataset.ageMenuVersion = BOX_BUILD_VERSION;
-
-        bindHubSuicideBlockHandlers(colsRoot);
 
         colsRoot.querySelectorAll('[data-age-hub-menu]').forEach((btn) => {
             if (btn.disabled || btn.classList.contains('is-disabled')) return;
@@ -540,6 +574,7 @@
                 menu.dataset.ageMenuClickBound = 'true';
                 const onBoxMenuPointer = (event) => {
                     if (event.button !== 0) return;
+                    if (handleHubSuicideMenuActivate(event)) return;
                     if (event.target.closest('[data-age-hub-menu]')) {
                         onMenuActivate(event);
                         return;

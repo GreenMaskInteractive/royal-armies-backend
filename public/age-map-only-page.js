@@ -154,13 +154,19 @@
 
     function isInsideNationHub(target) {
         if (!target || typeof target.closest !== 'function') return false;
-        return Boolean(
-            target.closest('.age-nation-hub')
-            || target.closest('[data-age-hub-menu]')
-            || target.closest('.age-nation-hub-menu--box.is-open')
-            || target.closest('#age-nation-hub-menu:not([hidden])')
-            || target.closest('#age-nation-hub-radial.is-open')
-        );
+        if (target.closest('.age-nation-hub')) return true;
+        if (target.closest('#age-nation-hub-radial.is-open')) return true;
+        if (target.closest('[data-age-hub-menu]')) return true;
+        if (target.closest('[data-age-hub-suicide-block], [data-age-hub-suicide-toggle], [data-age-hub-suicide-mode], [data-age-hub-suicide-options]')) {
+            return true;
+        }
+
+        const boxMenu = global.document.getElementById('age-nation-hub-menu');
+        if (boxMenu && boxMenu.classList.contains('is-open') && boxMenu.contains(target)) {
+            return true;
+        }
+
+        return Boolean(target.closest('.age-nation-hub-menu--box.is-open'));
     }
 
     /** Open age workspaces/modals — must stay clickable on map-only shell (capture-phase block bypass). */

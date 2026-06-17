@@ -5243,6 +5243,7 @@ window.resolveActiveAgeHandoffUrl = resolveActiveAgeHandoffUrl;
 window.resolveGamePageHandoffUrl = resolveGamePageHandoffUrl;
 window.enforceActiveAgePortalLock = enforceActiveAgePortalLock;
 window.applyProfileRankResetButtonState = applyProfileRankResetButtonState;
+window.triggerCommanderSuicide = triggerCommanderSuicide;
 window.applyPortalMobileVisualSettingsRestrictions = applyPortalMobileVisualSettingsRestrictions;
 window.stageDisplayResolution = stageDisplayResolution;
 window.beginCommanderAgeResetSession = beginCommanderAgeResetSession;
