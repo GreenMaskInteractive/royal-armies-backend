@@ -2,6 +2,27 @@
  * FLEX — Game Hub box menu (premium centered popup).
  */
 
+/* Portaled to document.body — cannot rely on #age-page-canvas ancestor for open-state chrome. */
+.age-nation-hub-menu.age-nation-hub-menu--box.is-open {
+    display: flex !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    pointer-events: auto !important;
+    z-index: 2147483646 !important;
+}
+
+.age-nation-hub-menu.age-nation-hub-menu--box.is-open .age-nation-hub-menu-dialog,
+.age-nation-hub-menu.age-nation-hub-menu--box.is-open .age-nation-hub-menu-item,
+.age-nation-hub-menu.age-nation-hub-menu--box.is-open .age-nation-hub-menu-suicide-label {
+    pointer-events: auto !important;
+}
+
+.age-nation-hub-menu.age-nation-hub-menu--box.is-open .age-nation-hub-menu-item,
+.age-nation-hub-menu.age-nation-hub-menu--box.is-open .age-nation-hub-menu-suicide-label {
+    opacity: 1 !important;
+    transform: translateY(0) !important;
+}
+
 #age-page-canvas .age-nation-hub-menu.age-nation-hub-menu--box {
     position: fixed;
     inset: 0;
@@ -369,98 +390,64 @@
     box-shadow: none;
 }
 
-.age-nation-hub-suicide-block {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    width: 100%;
-    margin-top: 4px;
-}
-
-.age-nation-hub-menu-item--suicide {
+.age-nation-hub-menu-item--danger,
+.age-nation-hub-menu-item--secede-rank,
+.age-nation-hub-menu-item--suicide-exile {
     border-color: rgba(168, 56, 48, 0.52) !important;
     background:
         linear-gradient(105deg, rgba(220, 72, 48, 0.12) 0%, transparent 48%),
         rgba(24, 8, 6, 0.72) !important;
 }
 
-.age-nation-hub-menu-item--suicide .age-nation-hub-menu-item-glyph {
+.age-nation-hub-menu-item--danger .age-nation-hub-menu-item-glyph,
+.age-nation-hub-menu-item--secede-rank .age-nation-hub-menu-item-glyph,
+.age-nation-hub-menu-item--suicide-exile .age-nation-hub-menu-item-glyph {
     border-color: rgba(220, 88, 72, 0.48);
     color: rgba(255, 168, 148, 0.96);
     text-shadow: 0 0 10px rgba(220, 72, 48, 0.35);
 }
 
-.age-nation-hub-menu-item--suicide .age-nation-hub-menu-item-label {
+.age-nation-hub-menu-item--danger .age-nation-hub-menu-item-label,
+.age-nation-hub-menu-item--secede-rank .age-nation-hub-menu-item-label,
+.age-nation-hub-menu-item--suicide-exile .age-nation-hub-menu-item-label {
     color: rgba(255, 196, 176, 0.96);
 }
 
-.age-nation-hub-menu-item--suicide .age-nation-hub-menu-item-hint {
+.age-nation-hub-menu-item--danger .age-nation-hub-menu-item-hint,
+.age-nation-hub-menu-item--secede-rank .age-nation-hub-menu-item-hint,
+.age-nation-hub-menu-item--suicide-exile .age-nation-hub-menu-item-hint {
     color: rgba(255, 148, 128, 0.58);
 }
 
-.age-nation-hub-menu-item--suicide:hover,
-.age-nation-hub-menu-item--suicide:focus-visible,
-.age-nation-hub-suicide-block.is-suicide-open .age-nation-hub-menu-item--suicide {
+.age-nation-hub-menu-item--danger:hover,
+.age-nation-hub-menu-item--danger:focus-visible,
+.age-nation-hub-menu-item--secede-rank:hover,
+.age-nation-hub-menu-item--secede-rank:focus-visible,
+.age-nation-hub-menu-item--suicide-exile:hover,
+.age-nation-hub-menu-item--suicide-exile:focus-visible {
     border-color: rgba(220, 88, 72, 0.72) !important;
     background:
         linear-gradient(105deg, rgba(220, 72, 48, 0.22) 0%, rgba(220, 72, 48, 0.04) 55%, transparent 100%),
         rgba(42, 14, 10, 0.88) !important;
 }
 
-.age-nation-hub-suicide-block.is-suicide-open .age-nation-hub-menu-item-chevron--suicide {
-    transform: rotate(45deg) translateX(-2px);
-}
-
-.age-nation-hub-suicide-options {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    padding: 0 0 0 12px;
-    box-sizing: border-box;
-}
-
-.age-nation-hub-suicide-options[hidden] {
-    display: none !important;
-}
-
-.age-nation-hub-suicide-block.is-suicide-open .age-nation-hub-suicide-options {
-    display: flex !important;
-}
-
-.age-nation-hub-suicide-option {
-    width: 100%;
-    min-height: 42px;
-    margin: 0;
-    padding: 8px 12px;
-    border: 1px solid rgba(168, 56, 48, 0.42);
-    border-radius: 4px;
-    background: rgba(18, 8, 6, 0.92);
+.age-nation-hub-menu-suicide-label {
+    margin: 8px 0 2px;
+    padding: 0 4px;
     font-family: 'Cinzel', serif;
-    font-size: 0.72rem;
+    font-size: 0.58rem;
     font-weight: 700;
-    letter-spacing: 0.06em;
+    letter-spacing: 0.18em;
     text-transform: uppercase;
-    text-align: left;
-    color: rgba(255, 196, 176, 0.92);
-    cursor: pointer;
+    text-align: center;
+    color: rgba(255, 148, 128, 0.72);
+    opacity: 0;
+    transform: translateY(10px);
     transition:
-        border-color 0.14s ease,
-        background 0.14s ease,
-        color 0.14s ease;
-}
-
-.age-nation-hub-suicide-option:hover,
-.age-nation-hub-suicide-option:focus-visible {
-    border-color: rgba(220, 88, 72, 0.62);
-    color: #ffd0c4;
-    background: rgba(42, 14, 10, 0.96);
-    outline: none;
-}
-
-.age-nation-hub-suicide-option.rank-reset-limited,
-.age-nation-hub-suicide-option.rank-reset-disabled {
-    opacity: 0.58;
-    cursor: not-allowed;
+        opacity 0.28s ease,
+        transform 0.32s cubic-bezier(0.16, 1, 0.28, 1);
+    transition-delay: var(--age-hub-menu-item-delay, 0s);
+    pointer-events: none;
 }
 
 .age-nation-hub-menu-footer {

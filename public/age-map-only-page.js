@@ -152,6 +152,12 @@
         return Boolean(target.closest(`#${MAP_ROOT_ID}`));
     }
 
+    function isOpenGameHubMenuTarget(target) {
+        if (!target || typeof target.closest !== 'function') return false;
+        const menu = global.document.getElementById('age-nation-hub-menu');
+        return Boolean(menu?.classList.contains('is-open') && menu.contains(target));
+    }
+
     function isInsideNationHub(target) {
         if (!target || typeof target.closest !== 'function') return false;
         if (target.closest('.age-nation-hub')) return true;
@@ -260,6 +266,9 @@
             || target.closest('.public-profile-overlay.is-visible')
             || target.closest('.age-nation-profile-overlay.is-visible')
             || target.closest('#player-report-modal:not([hidden])')
+            || target.closest('#commander-suicide-overlay:not(.suicide-overlay-hidden)')
+            || target.closest('#commander-penalty-overlay:not(.suicide-overlay-hidden)')
+            || target.closest('#commander-security-overlay:not(.suicide-overlay-hidden)')
         );
     }
 
@@ -315,7 +324,8 @@
     }
 
     function isMapInteractionAllowed(target) {
-        return isInsideMap(target)
+        return isOpenGameHubMenuTarget(target)
+            || isInsideMap(target)
             || isAgeMapHudTarget(target)
             || isInsideNationHub(target)
             || isOpenAgeOverlayTarget(target)

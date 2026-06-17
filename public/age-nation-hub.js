@@ -7,9 +7,14 @@
     /** Set true to restore full-screen radial menu (go-to design in style-age-nation-hub-radial.css). */
     const ENABLE_RADIAL_HUB_MENU = false;
 
-    const BOX_BUILD_VERSION = 'hub-suicide-menu-2';
+    const BOX_BUILD_VERSION = 'hub-suicide-menu-3';
 
     const HUB_DISABLED_ITEM_IDS = Object.freeze(['discoveries', 'banner', 'battle-pass']);
+
+    const HUB_SUICIDE_ITEMS = Object.freeze([
+        { id: 'secede-rank', label: 'Secede Rank', glyph: '↓', hint: 'Return to rank 1' },
+        { id: 'suicide-exile', label: 'Suicide out of Country', glyph: '☠', hint: 'Leave this Age' }
+    ]);
 
     const AGE_SUICIDE_SCRIPT_CHAIN = Object.freeze([
         'rift-error-codes.js?v=update-notice-momentarily-1',
@@ -133,10 +138,10 @@
             menu.hidden = false;
             menu.removeAttribute('hidden');
             menu.setAttribute('aria-hidden', 'false');
+            void ensureSuicideFlowReady();
             return;
         }
 
-        collapseHubSuicideOptions();
         menu.classList.remove('is-open');
         menu.hidden = true;
         menu.setAttribute('hidden', '');
@@ -281,6 +286,12 @@
             case 'battle-pass':
                 openBattlePassWorkspace(event);
                 break;
+            case 'secede-rank':
+                void activateHubSuicideMode('rank', event);
+                break;
+            case 'suicide-exile':
+                void activateHubSuicideMode('exile', event);
+                break;
             default:
                 break;
         }
@@ -312,41 +323,8 @@
     }
 
     function getHubItem(itemId) {
-        return HUB_ITEMS.find((item) => item.id === itemId);
-    }
-
-    function collapseHubSuicideOptions() {
-        global.document.querySelectorAll('[data-age-hub-suicide-block]').forEach((block) => {
-            block.classList.remove('is-suicide-open');
-            const options = block.querySelector('[data-age-hub-suicide-options]');
-            if (options) options.hidden = true;
-            const toggle = block.querySelector('[data-age-hub-suicide-toggle]');
-            if (toggle) toggle.setAttribute('aria-expanded', 'false');
-        });
-    }
-
-    async function toggleHubSuicideOptions(block) {
-        if (!block) return;
-
-        const willOpen = !block.classList.contains('is-suicide-open');
-        collapseHubSuicideOptions();
-        if (!willOpen) return;
-
-        block.classList.add('is-suicide-open');
-        const options = block.querySelector('[data-age-hub-suicide-options]');
-        const toggle = block.querySelector('[data-age-hub-suicide-toggle]');
-        if (options) options.hidden = false;
-        if (toggle) toggle.setAttribute('aria-expanded', 'true');
-
-        try {
-            await ensureSuicideFlowReady();
-        } catch (err) {
-            console.warn('[RIFT] Game Hub suicide state scripts failed to load:', err);
-        }
-
-        if (typeof global.applyProfileRankResetButtonState === 'function') {
-            global.applyProfileRankResetButtonState();
-        }
+        return HUB_ITEMS.find((item) => item.id === itemId)
+            || HUB_SUICIDE_ITEMS.find((item) => item.id === itemId);
     }
 
     let ageSuicideScriptsLoaded = new Set();
@@ -401,34 +379,6 @@
         }
     }
 
-    function resolveHubSuicideBlockFromTarget(target) {
-        if (!(target instanceof Element)) return null;
-        return target.closest('[data-age-hub-suicide-block]');
-    }
-
-    function handleHubSuicideMenuActivate(event) {
-        if (!event || (event.type === 'pointerup' && event.button !== 0)) return false;
-        if (!getMenu()?.contains(event.target)) return false;
-
-        const optionButton = event.target.closest('[data-age-hub-suicide-mode]');
-        if (optionButton) {
-            event.preventDefault();
-            event.stopPropagation();
-            void activateHubSuicideMode(optionButton.getAttribute('data-age-hub-suicide-mode'), event);
-            return true;
-        }
-
-        const toggleButton = event.target.closest('[data-age-hub-suicide-toggle]');
-        if (toggleButton) {
-            event.preventDefault();
-            event.stopPropagation();
-            void toggleHubSuicideOptions(resolveHubSuicideBlockFromTarget(toggleButton));
-            return true;
-        }
-
-        return false;
-    }
-
     async function activateHubSuicideMode(mode, event) {
         if (event) {
             event.preventDefault();
@@ -436,8 +386,6 @@
         }
 
         const normalizedMode = mode === 'rank' ? 'rank' : 'exile';
-        closeHub();
-        collapseHubSuicideOptions();
 
         try {
             await ensureSuicideFlowReady();
@@ -459,39 +407,50 @@
         }
     }
 
-    function renderHubSuicideBlock(itemIndex) {
-        const delaySec = (0.04 + 0.05 * itemIndex).toFixed(2);
+    function renderHubSuicideSection(startIndex) {
+        const labelDelay = (0.04 + 0.05 * startIndex).toFixed(2);
+        const rowsHtml = HUB_SUICIDE_ITEMS.map((item, offset) => (
+            renderBoxMenuItem(item, startIndex + 1 + offset, { danger: true })
+        )).join('');
+
         return (
-            '<div class="age-nation-hub-suicide-block" data-age-hub-suicide-block>'
-            + `<button type="button" class="age-nation-hub-menu-item age-nation-hub-menu-item--suicide"`
-            + ` data-age-hub-suicide-toggle role="menuitem" aria-expanded="false"`
-            + ` style="--age-hub-menu-item-delay: ${delaySec}s;">`
-            + '<span class="age-nation-hub-menu-item-glyph" aria-hidden="true">☠</span>'
-            + '<span class="age-nation-hub-menu-item-copy">'
-            + '<span class="age-nation-hub-menu-item-label">Suicide</span>'
-            + '<span class="age-nation-hub-menu-item-hint">Rank reset & exile</span>'
-            + '</span>'
-            + '<span class="age-nation-hub-menu-item-chevron age-nation-hub-menu-item-chevron--suicide" aria-hidden="true"></span>'
-            + '</button>'
-            + '<div class="age-nation-hub-suicide-options" data-age-hub-suicide-options hidden>'
-            + '<button type="button" class="age-nation-hub-suicide-option" data-age-hub-suicide-mode="rank" data-commander-reset-mode="rank" role="menuitem">Secede Rank</button>'
-            + '<button type="button" class="age-nation-hub-suicide-option" data-age-hub-suicide-mode="exile" data-commander-reset-mode="exile" role="menuitem">Suicide out of Country</button>'
-            + '</div>'
-            + '</div>'
+            `<p class="age-nation-hub-menu-suicide-label" style="--age-hub-menu-item-delay: ${labelDelay}s;">Suicide</p>`
+            + rowsHtml
         );
     }
 
-    function renderBoxMenuItem(item, itemIndex) {
+    function bindHubMenuButton(btn, itemId) {
+        if (!btn || btn.dataset.ageHubMenuBound === 'true') return;
+        btn.dataset.ageHubMenuBound = 'true';
+
+        const activate = (event) => {
+            if (event.type === 'pointerup' && event.button !== 0) return;
+            event.preventDefault();
+            event.stopPropagation();
+            closeHub();
+            activateHubItem(itemId, event);
+        };
+
+        btn.addEventListener('pointerup', activate, true);
+        btn.addEventListener('click', activate, true);
+    }
+
+    function renderBoxMenuItem(item, itemIndex, options = {}) {
         const disabled = isHubItemDisabled(item.id);
-        const meta = BOX_ITEM_META[item.id] || { glyph: '•', hint: '' };
+        const meta = BOX_ITEM_META[item.id] || {
+            glyph: item.glyph || '•',
+            hint: item.hint || ''
+        };
+        const danger = options.danger === true;
         const hint = disabled ? 'Coming soon' : meta.hint;
         const delaySec = (0.04 + 0.05 * itemIndex).toFixed(2);
         return (
-            `<button type="button" class="age-nation-hub-menu-item age-nation-hub-menu-item--${item.id}${disabled ? ' is-disabled' : ''}"`
+            `<button type="button" class="age-nation-hub-menu-item age-nation-hub-menu-item--${item.id}${danger ? ' age-nation-hub-menu-item--danger' : ''}${disabled ? ' is-disabled' : ''}"`
             + ` data-age-hub-menu="${item.id}" role="menuitem"`
+            + (danger ? ` data-commander-reset-mode="${item.id === 'secede-rank' ? 'rank' : 'exile'}"` : '')
             + (disabled ? ' disabled aria-disabled="true"' : '')
             + ` style="--age-hub-menu-item-delay: ${delaySec}s;">`
-            + `<span class="age-nation-hub-menu-item-glyph" aria-hidden="true">${meta.glyph}</span>`
+            + `<span class="age-nation-hub-menu-item-glyph" aria-hidden="true">${meta.glyph || item.glyph || '•'}</span>`
             + '<span class="age-nation-hub-menu-item-copy">'
             + `<span class="age-nation-hub-menu-item-label">${item.label}</span>`
             + `<span class="age-nation-hub-menu-item-hint">${hint}</span>`
@@ -508,22 +467,13 @@
 
         colsRoot.innerHTML = HUB_ITEMS.map((item, itemIndex) => (
             renderBoxMenuItem(item, itemIndex)
-        )).join('') + renderHubSuicideBlock(HUB_ITEMS.length);
+        )).join('') + renderHubSuicideSection(HUB_ITEMS.length);
 
         colsRoot.dataset.ageMenuVersion = BOX_BUILD_VERSION;
 
         colsRoot.querySelectorAll('[data-age-hub-menu]').forEach((btn) => {
             if (btn.disabled || btn.classList.contains('is-disabled')) return;
-            const onItemActivate = (event) => {
-                if (event.type === 'pointerup' && event.button !== 0) return;
-                event.preventDefault();
-                event.stopPropagation();
-                const itemId = btn.getAttribute('data-age-hub-menu');
-                closeHub();
-                activateHubItem(itemId, event);
-            };
-            btn.addEventListener('pointerup', onItemActivate);
-            btn.addEventListener('click', onItemActivate);
+            bindHubMenuButton(btn, btn.getAttribute('data-age-hub-menu'));
         });
     }
 
@@ -574,8 +524,8 @@
                 menu.dataset.ageMenuClickBound = 'true';
                 const onBoxMenuPointer = (event) => {
                     if (event.button !== 0) return;
-                    if (handleHubSuicideMenuActivate(event)) return;
-                    if (event.target.closest('[data-age-hub-menu]')) {
+                    const item = event.target.closest('[data-age-hub-menu]');
+                    if (item && !item.disabled && !item.classList.contains('is-disabled')) {
                         onMenuActivate(event);
                         return;
                     }
@@ -586,8 +536,8 @@
                     event.stopPropagation();
                     closeHub();
                 };
-                menu.addEventListener('pointerup', onBoxMenuPointer);
-                menu.addEventListener('click', onBoxMenuPointer);
+                menu.addEventListener('pointerup', onBoxMenuPointer, true);
+                menu.addEventListener('click', onBoxMenuPointer, true);
             }
         }
 
@@ -625,11 +575,8 @@
         close: closeHub,
         toggle: toggleHub,
         isOpen: isHubOpen,
-        useRadialMenu: ENABLE_RADIAL_HUB_MENU,
-        collapseSuicideOptions: collapseHubSuicideOptions
+        useRadialMenu: ENABLE_RADIAL_HUB_MENU
     };
-
-    global.collapseAgeNationHubSuicideOptions = collapseHubSuicideOptions;
 
     init();
 })(window);
