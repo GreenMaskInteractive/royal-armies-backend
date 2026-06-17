@@ -152,6 +152,11 @@
         return Boolean(target.closest(`#${MAP_ROOT_ID}`));
     }
 
+    function isHubSuicidePopupTarget(target) {
+        if (!target || typeof target.closest !== 'function') return false;
+        return Boolean(target.closest('#age-nation-hub-suicide-popup:not([hidden])'));
+    }
+
     function isOpenGameHubMenuTarget(target) {
         if (!target || typeof target.closest !== 'function') return false;
         const menu = global.document.getElementById('age-nation-hub-menu');
@@ -164,6 +169,9 @@
         if (target.closest('#age-nation-hub-radial.is-open')) return true;
         if (target.closest('[data-age-hub-menu]')) return true;
         if (target.closest('[data-age-hub-suicide-block], [data-age-hub-suicide-toggle], [data-age-hub-suicide-mode], [data-age-hub-suicide-options]')) {
+            return true;
+        }
+        if (target.closest('#age-nation-hub-suicide-popup:not([hidden])')) {
             return true;
         }
 
@@ -324,7 +332,8 @@
     }
 
     function isMapInteractionAllowed(target) {
-        return isOpenGameHubMenuTarget(target)
+        return isHubSuicidePopupTarget(target)
+            || isOpenGameHubMenuTarget(target)
             || isInsideMap(target)
             || isAgeMapHudTarget(target)
             || isInsideNationHub(target)

@@ -7,14 +7,11 @@
     /** Set true to restore full-screen radial menu (go-to design in style-age-nation-hub-radial.css). */
     const ENABLE_RADIAL_HUB_MENU = false;
 
-    const BOX_BUILD_VERSION = 'hub-suicide-menu-3';
+    const BOX_BUILD_VERSION = 'hub-suicide-popup-1';
 
     const HUB_DISABLED_ITEM_IDS = Object.freeze(['discoveries', 'banner', 'battle-pass']);
 
-    const HUB_SUICIDE_ITEMS = Object.freeze([
-        { id: 'secede-rank', label: 'Secede Rank', glyph: '↓', hint: 'Return to rank 1' },
-        { id: 'suicide-exile', label: 'Suicide out of Country', glyph: '☠', hint: 'Leave this Age' }
-    ]);
+    const HUB_SUICIDE_POPUP_ID = 'age-nation-hub-suicide-popup';
 
     const AGE_SUICIDE_SCRIPT_CHAIN = Object.freeze([
         'rift-error-codes.js?v=update-notice-momentarily-1',
@@ -108,6 +105,10 @@
             if (!escapeHandler) {
                 escapeHandler = (event) => {
                     if (event.key === 'Escape') {
+                        if (isHubSuicidePopupOpen()) {
+                            closeHubSuicidePopup();
+                            return;
+                        }
                         setHubOpen(false);
                     }
                 };
@@ -146,6 +147,7 @@
         menu.hidden = true;
         menu.setAttribute('hidden', '');
         menu.setAttribute('aria-hidden', 'true');
+        closeHubSuicidePopup();
     }
 
     function setHubOpenRadial(open, hub, toggle) {
@@ -182,6 +184,13 @@
     }
 
     function onDocumentPointerDown(event) {
+        if (isHubSuicidePopupOpen()) {
+            const popup = getHubSuicidePopup();
+            if (popup?.contains(event.target)) return;
+            closeHubSuicidePopup();
+            return;
+        }
+
         if (!isHubOpen()) return;
         const hub = getHub();
         const radial = getRadial();
@@ -286,12 +295,6 @@
             case 'battle-pass':
                 openBattlePassWorkspace(event);
                 break;
-            case 'secede-rank':
-                void activateHubSuicideMode('rank', event);
-                break;
-            case 'suicide-exile':
-                void activateHubSuicideMode('exile', event);
-                break;
             default:
                 break;
         }
@@ -304,6 +307,11 @@
 
         event.preventDefault();
         const itemId = item.getAttribute('data-age-hub-menu');
+        if (itemId === 'suicide') {
+            closeHub();
+            void openHubSuicidePopup(event);
+            return;
+        }
         closeHub();
         activateHubItem(itemId, event);
     }
@@ -323,8 +331,123 @@
     }
 
     function getHubItem(itemId) {
-        return HUB_ITEMS.find((item) => item.id === itemId)
-            || HUB_SUICIDE_ITEMS.find((item) => item.id === itemId);
+        if (String(itemId || '').trim().toLowerCase() === 'suicide') {
+            return { id: 'suicide', label: 'Suicide' };
+        }
+        return HUB_ITEMS.find((item) => item.id === itemId);
+    }
+
+    function getHubSuicidePopup() {
+        return global.document.getElementById(HUB_SUICIDE_POPUP_ID);
+    }
+
+    function isHubSuicidePopupOpen() {
+        const popup = getHubSuicidePopup();
+        return Boolean(popup && !popup.hidden);
+    }
+
+    function ensureHubSuicidePopupMounted() {
+        let popup = getHubSuicidePopup();
+        if (popup) return popup;
+
+        popup = global.document.createElement('div');
+        popup.id = HUB_SUICIDE_POPUP_ID;
+        popup.className = 'age-nation-hub-suicide-popup';
+        popup.hidden = true;
+        popup.setAttribute('aria-hidden', 'true');
+        popup.innerHTML = (
+            '<div class="age-nation-hub-suicide-popup-backdrop" data-age-hub-suicide-dismiss aria-hidden="true"></div>'
+            + '<div class="age-nation-hub-suicide-popup-dialog" role="dialog" aria-modal="true" aria-labelledby="age-nation-hub-suicide-popup-title">'
+            + '<header class="age-nation-hub-suicide-popup-header">'
+            + '<p class="age-nation-hub-suicide-popup-eyebrow">Danger zone</p>'
+            + '<h2 id="age-nation-hub-suicide-popup-title" class="age-nation-hub-suicide-popup-title">Suicide</h2>'
+            + '<button type="button" class="age-nation-hub-suicide-popup-close" data-age-hub-suicide-dismiss aria-label="Close suicide options">&times;</button>'
+            + '</header>'
+            + '<p class="age-nation-hub-suicide-popup-copy">'
+            + 'Secede Rank returns you to rank 1 while remaining in your nation. '
+            + 'Suicide out of Country removes you from the active realm for this Age.'
+            + '</p>'
+            + '<div class="age-nation-hub-suicide-popup-actions">'
+            + '<button type="button" class="age-nation-hub-suicide-popup-option" data-age-hub-suicide-mode="rank" data-commander-reset-mode="rank">Secede Rank</button>'
+            + '<button type="button" class="age-nation-hub-suicide-popup-option" data-age-hub-suicide-mode="exile" data-commander-reset-mode="exile">Suicide out of Country</button>'
+            + '<button type="button" class="age-nation-hub-suicide-popup-cancel" data-age-hub-suicide-dismiss>Cancel</button>'
+            + '</div>'
+            + '</div>'
+        ).trim();
+
+        global.document.body.appendChild(popup);
+        bindHubSuicidePopupHandlers(popup);
+        return popup;
+    }
+
+    function bindHubSuicidePopupHandlers(popup) {
+        if (!popup || popup.dataset.ageHubSuicidePopupBound === 'true') return;
+        popup.dataset.ageHubSuicidePopupBound = 'true';
+
+        const onPopupActivate = (event) => {
+            if (event.type === 'pointerup' && event.button !== 0) return;
+
+            const modeButton = event.target.closest('[data-age-hub-suicide-mode]');
+            if (modeButton) {
+                event.preventDefault();
+                event.stopPropagation();
+                const mode = modeButton.getAttribute('data-age-hub-suicide-mode');
+                closeHubSuicidePopup();
+                void activateHubSuicideMode(mode, event);
+                return;
+            }
+
+            if (event.target.closest('[data-age-hub-suicide-dismiss]')) {
+                event.preventDefault();
+                event.stopPropagation();
+                closeHubSuicidePopup();
+            }
+        };
+
+        popup.addEventListener('pointerup', onPopupActivate, true);
+        popup.addEventListener('click', onPopupActivate, true);
+    }
+
+    async function openHubSuicidePopup(event) {
+        if (event) {
+            event.preventDefault();
+            event.stopPropagation();
+        }
+
+        const popup = ensureHubSuicidePopupMounted();
+        if (!popup) return;
+
+        try {
+            await ensureSuicideFlowReady();
+        } catch (err) {
+            console.warn('[RIFT] Game Hub suicide scripts failed to load:', err);
+            if (typeof global.showPortalAlert === 'function') {
+                void global.showPortalAlert('Suicide options are unavailable in this session.', 'Suicide');
+            }
+            return;
+        }
+
+        if (typeof global.applyProfileRankResetButtonState === 'function') {
+            global.applyProfileRankResetButtonState();
+        }
+
+        popup.hidden = false;
+        popup.removeAttribute('hidden');
+        popup.setAttribute('aria-hidden', 'false');
+        global.document.body.classList.add('age-nation-hub-suicide-popup-open');
+
+        const firstOption = popup.querySelector('[data-age-hub-suicide-mode]');
+        firstOption?.focus?.();
+    }
+
+    function closeHubSuicidePopup() {
+        const popup = getHubSuicidePopup();
+        if (!popup) return;
+
+        popup.hidden = true;
+        popup.setAttribute('hidden', '');
+        popup.setAttribute('aria-hidden', 'true');
+        global.document.body.classList.remove('age-nation-hub-suicide-popup-open');
     }
 
     let ageSuicideScriptsLoaded = new Set();
@@ -407,15 +530,11 @@
         }
     }
 
-    function renderHubSuicideSection(startIndex) {
-        const labelDelay = (0.04 + 0.05 * startIndex).toFixed(2);
-        const rowsHtml = HUB_SUICIDE_ITEMS.map((item, offset) => (
-            renderBoxMenuItem(item, startIndex + 1 + offset, { danger: true })
-        )).join('');
-
-        return (
-            `<p class="age-nation-hub-menu-suicide-label" style="--age-hub-menu-item-delay: ${labelDelay}s;">Suicide</p>`
-            + rowsHtml
+    function renderHubSuicideMenuItem(itemIndex) {
+        return renderBoxMenuItem(
+            { id: 'suicide', label: 'Suicide', glyph: '☠', hint: 'Rank reset & exile' },
+            itemIndex,
+            { danger: true }
         );
     }
 
@@ -427,6 +546,11 @@
             if (event.type === 'pointerup' && event.button !== 0) return;
             event.preventDefault();
             event.stopPropagation();
+            if (itemId === 'suicide') {
+                closeHub();
+                void openHubSuicidePopup(event);
+                return;
+            }
             closeHub();
             activateHubItem(itemId, event);
         };
@@ -447,7 +571,7 @@
         return (
             `<button type="button" class="age-nation-hub-menu-item age-nation-hub-menu-item--${item.id}${danger ? ' age-nation-hub-menu-item--danger' : ''}${disabled ? ' is-disabled' : ''}"`
             + ` data-age-hub-menu="${item.id}" role="menuitem"`
-            + (danger ? ` data-commander-reset-mode="${item.id === 'secede-rank' ? 'rank' : 'exile'}"` : '')
+            + (danger && item.id !== 'suicide' ? ` data-commander-reset-mode="${item.id === 'secede-rank' ? 'rank' : 'exile'}"` : '')
             + (disabled ? ' disabled aria-disabled="true"' : '')
             + ` style="--age-hub-menu-item-delay: ${delaySec}s;">`
             + `<span class="age-nation-hub-menu-item-glyph" aria-hidden="true">${meta.glyph || item.glyph || '•'}</span>`
@@ -467,7 +591,7 @@
 
         colsRoot.innerHTML = HUB_ITEMS.map((item, itemIndex) => (
             renderBoxMenuItem(item, itemIndex)
-        )).join('') + renderHubSuicideSection(HUB_ITEMS.length);
+        )).join('') + renderHubSuicideMenuItem(HUB_ITEMS.length);
 
         colsRoot.dataset.ageMenuVersion = BOX_BUILD_VERSION;
 
@@ -526,6 +650,13 @@
                     if (event.button !== 0) return;
                     const item = event.target.closest('[data-age-hub-menu]');
                     if (item && !item.disabled && !item.classList.contains('is-disabled')) {
+                        if (item.getAttribute('data-age-hub-menu') === 'suicide') {
+                            event.preventDefault();
+                            event.stopPropagation();
+                            closeHub();
+                            void openHubSuicidePopup(event);
+                            return;
+                        }
                         onMenuActivate(event);
                         return;
                     }
@@ -575,7 +706,10 @@
         close: closeHub,
         toggle: toggleHub,
         isOpen: isHubOpen,
-        useRadialMenu: ENABLE_RADIAL_HUB_MENU
+        useRadialMenu: ENABLE_RADIAL_HUB_MENU,
+        openSuicidePopup: openHubSuicidePopup,
+        closeSuicidePopup: closeHubSuicidePopup,
+        isSuicidePopupOpen: isHubSuicidePopupOpen
     };
 
     init();
